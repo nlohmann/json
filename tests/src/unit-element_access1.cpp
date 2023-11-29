@@ -45,9 +45,11 @@ TEST_CASE("element access 1")
             SECTION("access outside bounds")
             {
                 CHECK_THROWS_WITH_AS(j.at(8),
-                                     "[json.exception.out_of_range.401] array index 8 is out of range", json::out_of_range&);
+                                     "[json.exception.out_of_range.401] array index 8 is out of range",
+                                     json::out_of_range&);
                 CHECK_THROWS_WITH_AS(j_const.at(8),
-                                     "[json.exception.out_of_range.401] array index 8 is out of range", json::out_of_range&);
+                                     "[json.exception.out_of_range.401] array index 8 is out of range",
+                                     json::out_of_range&);
             }
 
             SECTION("access on non-array type")
@@ -359,26 +361,34 @@ TEST_CASE("element access 1")
                         json jarray2 = {"foo", "bar"};
 
                         CHECK_THROWS_WITH_AS(jarray.erase(jarray2.begin()),
-                                             "[json.exception.invalid_iterator.202] iterator does not fit current value", json::invalid_iterator&);
+                                             "[json.exception.invalid_iterator.202] iterator does not fit current value",
+                                             json::invalid_iterator&);
                         CHECK_THROWS_WITH_AS(jarray.erase(jarray.begin(), jarray2.end()),
-                                             "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
+                                             "[json.exception.invalid_iterator.203] iterators do not fit current value",
+                                             json::invalid_iterator&);
                         CHECK_THROWS_WITH_AS(jarray.erase(jarray2.begin(), jarray.end()),
-                                             "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
+                                             "[json.exception.invalid_iterator.203] iterators do not fit current value",
+                                             json::invalid_iterator&);
                         CHECK_THROWS_WITH_AS(jarray.erase(jarray2.begin(), jarray2.end()),
-                                             "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
+                                             "[json.exception.invalid_iterator.203] iterators do not fit current value",
+                                             json::invalid_iterator&);
                     }
                     {
                         json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
                         json const jarray2 = {"foo", "bar"};
 
                         CHECK_THROWS_WITH_AS(jarray.erase(jarray2.cbegin()),
-                                             "[json.exception.invalid_iterator.202] iterator does not fit current value", json::invalid_iterator&);
+                                             "[json.exception.invalid_iterator.202] iterator does not fit current value",
+                                             json::invalid_iterator&);
                         CHECK_THROWS_WITH_AS(jarray.erase(jarray.cbegin(), jarray2.cend()),
-                                             "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
+                                             "[json.exception.invalid_iterator.203] iterators do not fit current value",
+                                             json::invalid_iterator&);
                         CHECK_THROWS_WITH_AS(jarray.erase(jarray2.cbegin(), jarray.cend()),
-                                             "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
+                                             "[json.exception.invalid_iterator.203] iterators do not fit current value",
+                                             json::invalid_iterator&);
                         CHECK_THROWS_WITH_AS(jarray.erase(jarray2.cbegin(), jarray2.cend()),
-                                             "[json.exception.invalid_iterator.203] iterators do not fit current value", json::invalid_iterator&);
+                                             "[json.exception.invalid_iterator.203] iterators do not fit current value",
+                                             json::invalid_iterator&);
                     }
                 }
             }
@@ -530,7 +540,8 @@ TEST_CASE("element access 1")
                 {
                     json j;
                     CHECK_THROWS_WITH_AS(j.erase(j.begin()),
-                                         "[json.exception.type_error.307] cannot use erase() with null", json::type_error&);
+                                         "[json.exception.type_error.307] cannot use erase() with null",
+                                         json::type_error&);
                 }
             }
 

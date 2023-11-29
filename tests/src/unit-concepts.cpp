@@ -130,7 +130,7 @@ TEST_CASE("concepts")
         SECTION("Swappable")
         {
             {
-                json j {1, 2, 3};
+                json j{1, 2, 3};
                 json::iterator it1 = j.begin();
                 json::iterator it2 = j.end();
                 swap(it1, it2);
@@ -138,7 +138,7 @@ TEST_CASE("concepts")
                 CHECK(it2 == j.begin());
             }
             {
-                json j {1, 2, 3};
+                json j{1, 2, 3};
                 json::const_iterator it1 = j.cbegin();
                 json::const_iterator it2 = j.cend();
                 swap(it1, it2);

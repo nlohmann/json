@@ -11,10 +11,10 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-#include <climits> // SIZE_MAX
-#include <limits> // numeric_limits
+#include <climits>  // SIZE_MAX
+#include <limits>   // numeric_limits
 
-template <typename OfType, typename T, bool MinInRange, bool MaxInRange>
+template<typename OfType, typename T, bool MinInRange, bool MaxInRange>
 struct trait_test_arg
 {
     using of_type = OfType;
@@ -92,10 +92,10 @@ TEST_CASE("32bit")
     REQUIRE(SIZE_MAX == 0xffffffff);
 }
 
-TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test, \
-                          trait_test_arg<std::size_t, std::int32_t, false, true>, \
-                          trait_test_arg<std::size_t, std::uint32_t, true, true>, \
-                          trait_test_arg<std::size_t, std::int64_t, false, false>, \
+TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test,
+                          trait_test_arg<std::size_t, std::int32_t, false, true>,
+                          trait_test_arg<std::size_t, std::uint32_t, true, true>,
+                          trait_test_arg<std::size_t, std::int64_t, false, false>,
                           trait_test_arg<std::size_t, std::uint64_t, true, false>);
 
 TEST_CASE("BJData")

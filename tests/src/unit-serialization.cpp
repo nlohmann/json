@@ -11,8 +11,8 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-#include <sstream>
 #include <iomanip>
+#include <sstream>
 
 TEST_CASE("serialization")
 {
@@ -118,41 +118,90 @@ TEST_CASE("serialization")
             // https://www.unicode.org/versions/Unicode11.0.0/ch03.pdf
             // Section 3.9 -- U+FFFD Substitution of Maximal Subparts
 
-            auto test = [&](std::string const & input, std::string const & expected)
-            {
+            auto test = [&](std::string const& input, std::string const& expected) {
                 const json j = input;
                 CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == "\"" + expected + "\"");
             };
 
             test("\xC2", "\\ufffd");
-            test("\xC2\x41\x42", "\\ufffd" "\x41" "\x42");
-            test("\xC2\xF4", "\\ufffd" "\\ufffd");
+            test("\xC2\x41\x42", "\\ufffd"
+                                 "\x41"
+                                 "\x42");
+            test("\xC2\xF4", "\\ufffd"
+                             "\\ufffd");
 
-            test("\xF0\x80\x80\x41", "\\ufffd" "\\ufffd" "\\ufffd" "\x41");
-            test("\xF1\x80\x80\x41", "\\ufffd" "\x41");
-            test("\xF2\x80\x80\x41", "\\ufffd" "\x41");
-            test("\xF3\x80\x80\x41", "\\ufffd" "\x41");
-            test("\xF4\x80\x80\x41", "\\ufffd" "\x41");
-            test("\xF5\x80\x80\x41", "\\ufffd" "\\ufffd" "\\ufffd" "\x41");
+            test("\xF0\x80\x80\x41", "\\ufffd"
+                                     "\\ufffd"
+                                     "\\ufffd"
+                                     "\x41");
+            test("\xF1\x80\x80\x41", "\\ufffd"
+                                     "\x41");
+            test("\xF2\x80\x80\x41", "\\ufffd"
+                                     "\x41");
+            test("\xF3\x80\x80\x41", "\\ufffd"
+                                     "\x41");
+            test("\xF4\x80\x80\x41", "\\ufffd"
+                                     "\x41");
+            test("\xF5\x80\x80\x41", "\\ufffd"
+                                     "\\ufffd"
+                                     "\\ufffd"
+                                     "\x41");
 
-            test("\xF0\x90\x80\x41", "\\ufffd" "\x41");
-            test("\xF1\x90\x80\x41", "\\ufffd" "\x41");
-            test("\xF2\x90\x80\x41", "\\ufffd" "\x41");
-            test("\xF3\x90\x80\x41", "\\ufffd" "\x41");
-            test("\xF4\x90\x80\x41", "\\ufffd" "\\ufffd" "\\ufffd" "\x41");
-            test("\xF5\x90\x80\x41", "\\ufffd" "\\ufffd" "\\ufffd" "\x41");
+            test("\xF0\x90\x80\x41", "\\ufffd"
+                                     "\x41");
+            test("\xF1\x90\x80\x41", "\\ufffd"
+                                     "\x41");
+            test("\xF2\x90\x80\x41", "\\ufffd"
+                                     "\x41");
+            test("\xF3\x90\x80\x41", "\\ufffd"
+                                     "\x41");
+            test("\xF4\x90\x80\x41", "\\ufffd"
+                                     "\\ufffd"
+                                     "\\ufffd"
+                                     "\x41");
+            test("\xF5\x90\x80\x41", "\\ufffd"
+                                     "\\ufffd"
+                                     "\\ufffd"
+                                     "\x41");
 
-            test("\xC0\xAF\xE0\x80\xBF\xF0\x81\x82\x41", "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\x41");
-            test("\xED\xA0\x80\xED\xBF\xBF\xED\xAF\x41", "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\x41");
-            test("\xF4\x91\x92\x93\xFF\x41\x80\xBF\x42", "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\x41" "\\ufffd""\\ufffd" "\x42");
-            test("\xE1\x80\xE2\xF0\x91\x92\xF1\xBF\x41", "\\ufffd" "\\ufffd" "\\ufffd" "\\ufffd" "\x41");
+            test("\xC0\xAF\xE0\x80\xBF\xF0\x81\x82\x41", "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\x41");
+            test("\xED\xA0\x80\xED\xBF\xBF\xED\xAF\x41", "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\x41");
+            test("\xF4\x91\x92\x93\xFF\x41\x80\xBF\x42", "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\x41"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\x42");
+            test("\xE1\x80\xE2\xF0\x91\x92\xF1\xBF\x41", "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\\ufffd"
+                                                         "\x41");
         }
     }
 
     SECTION("to_string")
     {
-        auto test = [&](std::string const & input, std::string const & expected)
-        {
+        auto test = [&](std::string const& input, std::string const& expected) {
             using std::to_string;
             const json j = input;
             CHECK(to_string(j) == "\"" + expected + "\"");
@@ -220,78 +269,78 @@ TEST_CASE("dump with binary values")
     SECTION("pretty-printed")
     {
         CHECK(binary.dump(4) == "{\n"
-              "    \"bytes\": [1, 2, 3, 4],\n"
-              "    \"subtype\": null\n"
-              "}");
+                                "    \"bytes\": [1, 2, 3, 4],\n"
+                                "    \"subtype\": null\n"
+                                "}");
         CHECK(binary_empty.dump(4) == "{\n"
-              "    \"bytes\": [],\n"
-              "    \"subtype\": null\n"
-              "}");
+                                      "    \"bytes\": [],\n"
+                                      "    \"subtype\": null\n"
+                                      "}");
         CHECK(binary_with_subtype.dump(4) == "{\n"
-              "    \"bytes\": [1, 2, 3, 4],\n"
-              "    \"subtype\": 128\n"
-              "}");
+                                             "    \"bytes\": [1, 2, 3, 4],\n"
+                                             "    \"subtype\": 128\n"
+                                             "}");
         CHECK(binary_empty_with_subtype.dump(4) == "{\n"
-              "    \"bytes\": [],\n"
-              "    \"subtype\": 128\n"
-              "}");
+                                                   "    \"bytes\": [],\n"
+                                                   "    \"subtype\": 128\n"
+                                                   "}");
 
         CHECK(object.dump(4) == "{\n"
-              "    \"key\": {\n"
-              "        \"bytes\": [1, 2, 3, 4],\n"
-              "        \"subtype\": null\n"
-              "    }\n"
-              "}");
+                                "    \"key\": {\n"
+                                "        \"bytes\": [1, 2, 3, 4],\n"
+                                "        \"subtype\": null\n"
+                                "    }\n"
+                                "}");
         CHECK(object_empty.dump(4) == "{\n"
-              "    \"key\": {\n"
-              "        \"bytes\": [],\n"
-              "        \"subtype\": null\n"
-              "    }\n"
-              "}");
+                                      "    \"key\": {\n"
+                                      "        \"bytes\": [],\n"
+                                      "        \"subtype\": null\n"
+                                      "    }\n"
+                                      "}");
         CHECK(object_with_subtype.dump(4) == "{\n"
-              "    \"key\": {\n"
-              "        \"bytes\": [1, 2, 3, 4],\n"
-              "        \"subtype\": 128\n"
-              "    }\n"
-              "}");
+                                             "    \"key\": {\n"
+                                             "        \"bytes\": [1, 2, 3, 4],\n"
+                                             "        \"subtype\": 128\n"
+                                             "    }\n"
+                                             "}");
         CHECK(object_empty_with_subtype.dump(4) == "{\n"
-              "    \"key\": {\n"
-              "        \"bytes\": [],\n"
-              "        \"subtype\": 128\n"
-              "    }\n"
-              "}");
+                                                   "    \"key\": {\n"
+                                                   "        \"bytes\": [],\n"
+                                                   "        \"subtype\": 128\n"
+                                                   "    }\n"
+                                                   "}");
 
         CHECK(array.dump(4) == "[\n"
-              "    \"value\",\n"
-              "    1,\n"
-              "    {\n"
-              "        \"bytes\": [1, 2, 3, 4],\n"
-              "        \"subtype\": null\n"
-              "    }\n"
-              "]");
+                               "    \"value\",\n"
+                               "    1,\n"
+                               "    {\n"
+                               "        \"bytes\": [1, 2, 3, 4],\n"
+                               "        \"subtype\": null\n"
+                               "    }\n"
+                               "]");
         CHECK(array_empty.dump(4) == "[\n"
-              "    \"value\",\n"
-              "    1,\n"
-              "    {\n"
-              "        \"bytes\": [],\n"
-              "        \"subtype\": null\n"
-              "    }\n"
-              "]");
+                                     "    \"value\",\n"
+                                     "    1,\n"
+                                     "    {\n"
+                                     "        \"bytes\": [],\n"
+                                     "        \"subtype\": null\n"
+                                     "    }\n"
+                                     "]");
         CHECK(array_with_subtype.dump(4) == "[\n"
-              "    \"value\",\n"
-              "    1,\n"
-              "    {\n"
-              "        \"bytes\": [1, 2, 3, 4],\n"
-              "        \"subtype\": 128\n"
-              "    }\n"
-              "]");
+                                            "    \"value\",\n"
+                                            "    1,\n"
+                                            "    {\n"
+                                            "        \"bytes\": [1, 2, 3, 4],\n"
+                                            "        \"subtype\": 128\n"
+                                            "    }\n"
+                                            "]");
         CHECK(array_empty_with_subtype.dump(4) == "[\n"
-              "    \"value\",\n"
-              "    1,\n"
-              "    {\n"
-              "        \"bytes\": [],\n"
-              "        \"subtype\": 128\n"
-              "    }\n"
-              "]");
+                                                  "    \"value\",\n"
+                                                  "    1,\n"
+                                                  "    {\n"
+                                                  "        \"bytes\": [],\n"
+                                                  "        \"subtype\": 128\n"
+                                                  "    }\n"
+                                                  "]");
     }
 }

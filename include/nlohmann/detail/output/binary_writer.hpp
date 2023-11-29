@@ -8,16 +8,16 @@
 
 #pragma once
 
-#include <algorithm> // reverse
-#include <array> // array
-#include <map> // map
-#include <cmath> // isnan, isinf
-#include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
-#include <cstring> // memcpy
-#include <limits> // numeric_limits
-#include <string> // string
-#include <utility> // move
-#include <vector> // vector
+#include <algorithm>  // reverse
+#include <array>      // array
+#include <cmath>      // isnan, isinf
+#include <cstdint>    // uint8_t, uint16_t, uint32_t, uint64_t
+#include <cstring>    // memcpy
+#include <limits>     // numeric_limits
+#include <map>        // map
+#include <string>     // string
+#include <utility>    // move
+#include <vector>     // vector
 
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
@@ -25,8 +25,7 @@
 #include <nlohmann/detail/string_concat.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
+namespace detail {
 
 ///////////////////
 // binary writer //
@@ -48,7 +47,8 @@ class binary_writer
 
     @param[in] adapter  output adapter to write to
     */
-    explicit binary_writer(output_adapter_t<CharType> adapter) : oa(std::move(adapter))
+    explicit binary_writer(output_adapter_t<CharType> adapter)
+      : oa(std::move(adapter))
     {
         JSON_ASSERT(oa);
     }
@@ -99,8 +99,8 @@ class binary_writer
             case value_t::boolean:
             {
                 oa->write_character(j.m_data.m_value.boolean
-                                    ? to_char_type(0xF5)
-                                    : to_char_type(0xF4));
+                                        ? to_char_type(0xF5)
+                                        : to_char_type(0xF4));
                 break;
             }
 
@@ -414,17 +414,17 @@ class binary_writer
     {
         switch (j.type())
         {
-            case value_t::null: // nil
+            case value_t::null:  // nil
             {
                 oa->write_character(to_char_type(0xC0));
                 break;
             }
 
-            case value_t::boolean: // true and false
+            case value_t::boolean:  // true and false
             {
                 oa->write_character(j.m_data.m_value.boolean
-                                    ? to_char_type(0xC3)
-                                    : to_char_type(0xC2));
+                                        ? to_char_type(0xC3)
+                                        : to_char_type(0xC2));
                 break;
             }
 
@@ -626,30 +626,29 @@ class binary_writer
                         switch (N)
                         {
                             case 1:
-                                output_type = 0xD4; // fixext 1
+                                output_type = 0xD4;  // fixext 1
                                 break;
                             case 2:
-                                output_type = 0xD5; // fixext 2
+                                output_type = 0xD5;  // fixext 2
                                 break;
                             case 4:
-                                output_type = 0xD6; // fixext 4
+                                output_type = 0xD6;  // fixext 4
                                 break;
                             case 8:
-                                output_type = 0xD7; // fixext 8
+                                output_type = 0xD7;  // fixext 8
                                 break;
                             case 16:
-                                output_type = 0xD8; // fixext 16
+                                output_type = 0xD8;  // fixext 16
                                 break;
                             default:
-                                output_type = 0xC7; // ext 8
+                                output_type = 0xC7;  // ext 8
                                 fixed = false;
                                 break;
                         }
-
                     }
                     else
                     {
-                        output_type = 0xC4; // bin 8
+                        output_type = 0xC4;  // bin 8
                         fixed = false;
                     }
 
@@ -662,8 +661,8 @@ class binary_writer
                 else if (N <= (std::numeric_limits<std::uint16_t>::max)())
                 {
                     const std::uint8_t output_type = use_ext
-                                                     ? 0xC8 // ext 16
-                                                     : 0xC5; // bin 16
+                                                         ? 0xC8   // ext 16
+                                                         : 0xC5;  // bin 16
 
                     oa->write_character(to_char_type(output_type));
                     write_number(static_cast<std::uint16_t>(N));
@@ -671,8 +670,8 @@ class binary_writer
                 else if (N <= (std::numeric_limits<std::uint32_t>::max)())
                 {
                     const std::uint8_t output_type = use_ext
-                                                     ? 0xC9 // ext 32
-                                                     : 0xC6; // bin 32
+                                                         ? 0xC9   // ext 32
+                                                         : 0xC6;  // bin 32
 
                     oa->write_character(to_char_type(output_type));
                     write_number(static_cast<std::uint32_t>(N));
@@ -736,9 +735,7 @@ class binary_writer
     @param[in] add_prefix  whether prefixes need to be used for this value
     @param[in] use_bjdata  whether write in BJData format, default is false
     */
-    void write_ubjson(const BasicJsonType& j, const bool use_count,
-                      const bool use_type, const bool add_prefix = true,
-                      const bool use_bjdata = false)
+    void write_ubjson(const BasicJsonType& j, const bool use_count, const bool use_type, const bool add_prefix = true, const bool use_bjdata = false)
     {
         switch (j.type())
         {
@@ -756,8 +753,8 @@ class binary_writer
                 if (add_prefix)
                 {
                     oa->write_character(j.m_data.m_value.boolean
-                                        ? to_char_type('T')
-                                        : to_char_type('F'));
+                                            ? to_char_type('T')
+                                            : to_char_type('F'));
                 }
                 break;
             }
@@ -805,13 +802,11 @@ class binary_writer
                 {
                     JSON_ASSERT(use_count);
                     const CharType first_prefix = ubjson_prefix(j.front(), use_bjdata);
-                    const bool same_prefix = std::all_of(j.begin() + 1, j.end(),
-                                                         [this, first_prefix, use_bjdata](const BasicJsonType & v)
-                    {
+                    const bool same_prefix = std::all_of(j.begin() + 1, j.end(), [this, first_prefix, use_bjdata](const BasicJsonType& v) {
                         return ubjson_prefix(v, use_bjdata) == first_prefix;
                     });
 
-                    std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'}; // excluded markers in bjdata optimized type
+                    std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'};  // excluded markers in bjdata optimized type
 
                     if (same_prefix && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
                     {
@@ -903,13 +898,11 @@ class binary_writer
                 {
                     JSON_ASSERT(use_count);
                     const CharType first_prefix = ubjson_prefix(j.front(), use_bjdata);
-                    const bool same_prefix = std::all_of(j.begin(), j.end(),
-                                                         [this, first_prefix, use_bjdata](const BasicJsonType & v)
-                    {
+                    const bool same_prefix = std::all_of(j.begin(), j.end(), [this, first_prefix, use_bjdata](const BasicJsonType& v) {
                         return ubjson_prefix(v, use_bjdata) == first_prefix;
                     });
 
-                    std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'}; // excluded markers in bjdata optimized type
+                    std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'};  // excluded markers in bjdata optimized type
 
                     if (same_prefix && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
                     {
@@ -966,7 +959,7 @@ class binary_writer
             static_cast<void>(j);
         }
 
-        return /*id*/ 1ul + name.size() + /*zero-terminator*/1u;
+        return /*id*/ 1ul + name.size() + /*zero-terminator*/ 1u;
     }
 
     /*!
@@ -975,7 +968,7 @@ class binary_writer
     void write_bson_entry_header(const string_t& name,
                                  const std::uint8_t element_type)
     {
-        oa->write_character(to_char_type(element_type)); // boolean
+        oa->write_character(to_char_type(element_type));  // boolean
         oa->write_characters(
             reinterpret_cast<const CharType*>(name.c_str()),
             name.size() + 1u);
@@ -1037,8 +1030,8 @@ class binary_writer
     static std::size_t calc_bson_integer_size(const std::int64_t value)
     {
         return (std::numeric_limits<std::int32_t>::min)() <= value && value <= (std::numeric_limits<std::int32_t>::max)()
-               ? sizeof(std::int32_t)
-               : sizeof(std::int64_t);
+                   ? sizeof(std::int32_t)
+                   : sizeof(std::int64_t);
     }
 
     /*!
@@ -1049,12 +1042,12 @@ class binary_writer
     {
         if ((std::numeric_limits<std::int32_t>::min)() <= value && value <= (std::numeric_limits<std::int32_t>::max)())
         {
-            write_bson_entry_header(name, 0x10); // int32
+            write_bson_entry_header(name, 0x10);  // int32
             write_number<std::int32_t>(static_cast<std::int32_t>(value), true);
         }
         else
         {
-            write_bson_entry_header(name, 0x12); // int64
+            write_bson_entry_header(name, 0x12);  // int64
             write_number<std::int64_t>(static_cast<std::int64_t>(value), true);
         }
     }
@@ -1065,8 +1058,8 @@ class binary_writer
     static constexpr std::size_t calc_bson_unsigned_size(const std::uint64_t value) noexcept
     {
         return (value <= static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()))
-               ? sizeof(std::int32_t)
-               : sizeof(std::int64_t);
+                   ? sizeof(std::int32_t)
+                   : sizeof(std::int64_t);
     }
 
     /*!
@@ -1097,7 +1090,7 @@ class binary_writer
     void write_bson_object_entry(const string_t& name,
                                  const typename BasicJsonType::object_t& value)
     {
-        write_bson_entry_header(name, 0x03); // object
+        write_bson_entry_header(name, 0x03);  // object
         write_bson_object(value);
     }
 
@@ -1108,8 +1101,7 @@ class binary_writer
     {
         std::size_t array_index = 0ul;
 
-        const std::size_t embedded_document_size = std::accumulate(std::begin(value), std::end(value), static_cast<std::size_t>(0), [&array_index](std::size_t result, const typename BasicJsonType::array_t::value_type & el)
-        {
+        const std::size_t embedded_document_size = std::accumulate(std::begin(value), std::end(value), static_cast<std::size_t>(0), [&array_index](std::size_t result, const typename BasicJsonType::array_t::value_type& el) {
             return result + calc_bson_element_size(std::to_string(array_index++), el);
         });
 
@@ -1130,7 +1122,7 @@ class binary_writer
     void write_bson_array(const string_t& name,
                           const typename BasicJsonType::array_t& value)
     {
-        write_bson_entry_header(name, 0x04); // array
+        write_bson_entry_header(name, 0x04);  // array
         write_number<std::int32_t>(static_cast<std::int32_t>(calc_bson_array_size(value)), true);
 
         std::size_t array_index = 0ul;
@@ -1162,7 +1154,7 @@ class binary_writer
     @return The calculated size for the BSON document entry for @a j with the given @a name.
     */
     static std::size_t calc_bson_element_size(const string_t& name,
-            const BasicJsonType& j)
+                                              const BasicJsonType& j)
     {
         const auto header_size = calc_bson_entry_header_size(name, j);
         switch (j.type())
@@ -1197,7 +1189,7 @@ class binary_writer
             // LCOV_EXCL_START
             case value_t::discarded:
             default:
-                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
+                JSON_ASSERT(false);  // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
                 return 0ul;
                 // LCOV_EXCL_STOP
         }
@@ -1244,7 +1236,7 @@ class binary_writer
             // LCOV_EXCL_START
             case value_t::discarded:
             default:
-                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
+                JSON_ASSERT(false);  // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
                 return;
                 // LCOV_EXCL_STOP
         }
@@ -1258,9 +1250,7 @@ class binary_writer
     */
     static std::size_t calc_bson_object_size(const typename BasicJsonType::object_t& value)
     {
-        const std::size_t document_size = std::accumulate(value.begin(), value.end(), static_cast<std::size_t>(0),
-                                          [](size_t result, const typename BasicJsonType::object_t::value_type & el)
-        {
+        const std::size_t document_size = std::accumulate(value.begin(), value.end(), static_cast<std::size_t>(0), [](size_t result, const typename BasicJsonType::object_t::value_type& el) {
             return result += calc_bson_element_size(el.first, el.second);
         });
 
@@ -1316,8 +1306,7 @@ class binary_writer
     ////////////
 
     // UBJSON: write number (floating point)
-    template<typename NumberType, typename std::enable_if<
-                 std::is_floating_point<NumberType>::value, int>::type = 0>
+    template<typename NumberType, typename std::enable_if<std::is_floating_point<NumberType>::value, int>::type = 0>
     void write_number_with_ubjson_prefix(const NumberType n,
                                          const bool add_prefix,
                                          const bool use_bjdata)
@@ -1330,8 +1319,7 @@ class binary_writer
     }
 
     // UBJSON: write number (unsigned integer)
-    template<typename NumberType, typename std::enable_if<
-                 std::is_unsigned<NumberType>::value, int>::type = 0>
+    template<typename NumberType, typename std::enable_if<std::is_unsigned<NumberType>::value, int>::type = 0>
     void write_number_with_ubjson_prefix(const NumberType n,
                                          const bool add_prefix,
                                          const bool use_bjdata)
@@ -1417,9 +1405,7 @@ class binary_writer
     }
 
     // UBJSON: write number (signed integer)
-    template < typename NumberType, typename std::enable_if <
-                   std::is_signed<NumberType>::value&&
-                   !std::is_floating_point<NumberType>::value, int >::type = 0 >
+    template<typename NumberType, typename std::enable_if<std::is_signed<NumberType>::value && !std::is_floating_point<NumberType>::value, int>::type = 0>
     void write_number_with_ubjson_prefix(const NumberType n,
                                          const bool add_prefix,
                                          const bool use_bjdata)
@@ -1542,7 +1528,7 @@ class binary_writer
                     return 'L';
                 }
                 // anything else is treated as high-precision number
-                return 'H'; // LCOV_EXCL_LINE
+                return 'H';  // LCOV_EXCL_LINE
             }
 
             case value_t::number_unsigned:
@@ -1580,7 +1566,7 @@ class binary_writer
                     return 'M';
                 }
                 // anything else is treated as high-precision number
-                return 'H'; // LCOV_EXCL_LINE
+                return 'H';  // LCOV_EXCL_LINE
             }
 
             case value_t::number_float:
@@ -1589,7 +1575,7 @@ class binary_writer
             case value_t::string:
                 return 'S';
 
-            case value_t::array: // fallthrough
+            case value_t::array:  // fallthrough
             case value_t::binary:
                 return '[';
 
@@ -1617,9 +1603,7 @@ class binary_writer
     */
     bool write_bjdata_ndarray(const typename BasicJsonType::object_t& value, const bool use_count, const bool use_type)
     {
-        std::map<string_t, CharType> bjdtype = {{"uint8", 'U'},  {"int8", 'i'},  {"uint16", 'u'}, {"int16", 'I'},
-            {"uint32", 'm'}, {"int32", 'l'}, {"uint64", 'M'}, {"int64", 'L'}, {"single", 'd'}, {"double", 'D'}, {"char", 'C'}
-        };
+        std::map<string_t, CharType> bjdtype = {{"uint8", 'U'}, {"int8", 'i'}, {"uint16", 'u'}, {"int16", 'I'}, {"uint32", 'm'}, {"int32", 'l'}, {"uint64", 'M'}, {"int64", 'L'}, {"single", 'd'}, {"double", 'D'}, {"char", 'C'}};
 
         string_t key = "_ArrayType_";
         auto it = bjdtype.find(static_cast<string_t>(value.at(key)));
@@ -1648,7 +1632,7 @@ class binary_writer
         oa->write_character('#');
 
         key = "_ArraySize_";
-        write_ubjson(value.at(key), use_count, use_type, true,  true);
+        write_ubjson(value.at(key), use_count, use_type, true, true);
 
         key = "_ArrayData_";
         if (dtype == 'U' || dtype == 'C')
@@ -1761,27 +1745,27 @@ class binary_writer
     void write_compact_float(const number_float_t n, detail::input_format_t format)
     {
 #ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
         if (static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
-                static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
-                static_cast<double>(static_cast<float>(n)) == static_cast<double>(n))
+            static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
+            static_cast<double>(static_cast<float>(n)) == static_cast<double>(n))
         {
             oa->write_character(format == detail::input_format_t::cbor
-                                ? get_cbor_float_prefix(static_cast<float>(n))
-                                : get_msgpack_float_prefix(static_cast<float>(n)));
+                                    ? get_cbor_float_prefix(static_cast<float>(n))
+                                    : get_msgpack_float_prefix(static_cast<float>(n)));
             write_number(static_cast<float>(n));
         }
         else
         {
             oa->write_character(format == detail::input_format_t::cbor
-                                ? get_cbor_float_prefix(n)
-                                : get_msgpack_float_prefix(n));
+                                    ? get_cbor_float_prefix(n)
+                                    : get_msgpack_float_prefix(n));
             write_number(n);
         }
 #ifdef __GNUC__
-#pragma GCC diagnostic pop
+    #pragma GCC diagnostic pop
 #endif
     }
 
@@ -1790,15 +1774,15 @@ class binary_writer
     // between uint8_t and CharType. In case CharType is not unsigned,
     // such a conversion is required to allow values greater than 128.
     // See <https://github.com/nlohmann/json/issues/1286> for a discussion.
-    template < typename C = CharType,
-               enable_if_t < std::is_signed<C>::value && std::is_signed<char>::value > * = nullptr >
+    template<typename C = CharType,
+             enable_if_t<std::is_signed<C>::value && std::is_signed<char>::value>* = nullptr>
     static constexpr CharType to_char_type(std::uint8_t x) noexcept
     {
         return *reinterpret_cast<char*>(&x);
     }
 
-    template < typename C = CharType,
-               enable_if_t < std::is_signed<C>::value && std::is_unsigned<char>::value > * = nullptr >
+    template<typename C = CharType,
+             enable_if_t<std::is_signed<C>::value && std::is_unsigned<char>::value>* = nullptr>
     static CharType to_char_type(std::uint8_t x) noexcept
     {
         static_assert(sizeof(std::uint8_t) == sizeof(CharType), "size of CharType must be equal to std::uint8_t");
@@ -1815,12 +1799,7 @@ class binary_writer
         return x;
     }
 
-    template < typename InputCharType, typename C = CharType,
-               enable_if_t <
-                   std::is_signed<C>::value &&
-                   std::is_signed<char>::value &&
-                   std::is_same<char, typename std::remove_cv<InputCharType>::type>::value
-                   > * = nullptr >
+    template<typename InputCharType, typename C = CharType, enable_if_t<std::is_signed<C>::value && std::is_signed<char>::value && std::is_same<char, typename std::remove_cv<InputCharType>::type>::value>* = nullptr>
     static constexpr CharType to_char_type(InputCharType x) noexcept
     {
         return x;

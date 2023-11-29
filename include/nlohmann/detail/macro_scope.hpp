@@ -8,9 +8,9 @@
 
 #pragma once
 
-#include <utility> // declval, pair
 #include <nlohmann/detail/meta/detected.hpp>
 #include <nlohmann/thirdparty/hedley/hedley.hpp>
+#include <utility>  // declval, pair
 
 // This file contains all internal macro definitions (except those affecting ABI)
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
@@ -37,7 +37,7 @@
         #define JSON_HAS_CPP_20
         #define JSON_HAS_CPP_17
         #define JSON_HAS_CPP_14
-    #elif (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1) // fix for issue #464
+    #elif (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1)  // fix for issue #464
         #define JSON_HAS_CPP_17
         #define JSON_HAS_CPP_14
     #elif (defined(__cplusplus) && __cplusplus >= 201402L) || (defined(_HAS_CXX14) && _HAS_CXX14 == 1)
@@ -114,8 +114,7 @@
 #endif
 
 #ifndef JSON_HAS_THREE_WAY_COMPARISON
-    #if defined(__cpp_impl_three_way_comparison) && __cpp_impl_three_way_comparison >= 201907L \
-        && defined(__cpp_lib_three_way_comparison) && __cpp_lib_three_way_comparison >= 201907L
+    #if defined(__cpp_impl_three_way_comparison) && __cpp_impl_three_way_comparison >= 201907L && defined(__cpp_lib_three_way_comparison) && __cpp_lib_three_way_comparison >= 201907L
         #define JSON_HAS_THREE_WAY_COMPARISON 1
     #else
         #define JSON_HAS_THREE_WAY_COMPARISON 0
@@ -164,14 +163,14 @@
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
     #define JSON_THROW(exception) throw exception
     #define JSON_TRY try
-    #define JSON_CATCH(exception) catch(exception)
-    #define JSON_INTERNAL_CATCH(exception) catch(exception)
+    #define JSON_CATCH(exception) catch (exception)
+    #define JSON_INTERNAL_CATCH(exception) catch (exception)
 #else
     #include <cstdlib>
     #define JSON_THROW(exception) std::abort()
-    #define JSON_TRY if(true)
-    #define JSON_CATCH(exception) if(false)
-    #define JSON_INTERNAL_CATCH(exception) if(false)
+    #define JSON_TRY if (true)
+    #define JSON_CATCH(exception) if (false)
+    #define JSON_INTERNAL_CATCH(exception) if (false)
 #endif
 
 // override exception macros
@@ -196,7 +195,7 @@
 
 // allow overriding assert
 #if !defined(JSON_ASSERT)
-    #include <cassert> // assert
+    #include <cassert>  // assert
     #define JSON_ASSERT(x) assert(x)
 #endif
 
@@ -212,119 +211,119 @@
 @def NLOHMANN_JSON_SERIALIZE_ENUM
 @since version 3.4.0
 */
-#define NLOHMANN_JSON_SERIALIZE_ENUM(ENUM_TYPE, ...)                                            \
-    template<typename BasicJsonType>                                                            \
-    inline void to_json(BasicJsonType& j, const ENUM_TYPE& e)                                   \
-    {                                                                                           \
-        static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");          \
-        static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                     \
-        auto it = std::find_if(std::begin(m), std::end(m),                                      \
-                               [e](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool  \
-        {                                                                                       \
-            return ej_pair.first == e;                                                          \
-        });                                                                                     \
-        j = ((it != std::end(m)) ? it : std::begin(m))->second;                                 \
-    }                                                                                           \
-    template<typename BasicJsonType>                                                            \
-    inline void from_json(const BasicJsonType& j, ENUM_TYPE& e)                                 \
-    {                                                                                           \
-        static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");          \
-        static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                     \
-        auto it = std::find_if(std::begin(m), std::end(m),                                      \
-                               [&j](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool \
-        {                                                                                       \
-            return ej_pair.second == j;                                                         \
-        });                                                                                     \
-        e = ((it != std::end(m)) ? it : std::begin(m))->first;                                  \
+#define NLOHMANN_JSON_SERIALIZE_ENUM(ENUM_TYPE, ...)                                                                          \
+    template<typename BasicJsonType>                                                                                          \
+    inline void to_json(BasicJsonType& j, const ENUM_TYPE& e)                                                                 \
+    {                                                                                                                         \
+        static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");                                        \
+        static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                                                   \
+        auto it = std::find_if(std::begin(m), std::end(m), [e](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool {  \
+            return ej_pair.first == e;                                                                                        \
+        });                                                                                                                   \
+        j = ((it != std::end(m)) ? it : std::begin(m))->second;                                                               \
+    }                                                                                                                         \
+    template<typename BasicJsonType>                                                                                          \
+    inline void from_json(const BasicJsonType& j, ENUM_TYPE& e)                                                               \
+    {                                                                                                                         \
+        static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");                                        \
+        static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                                                   \
+        auto it = std::find_if(std::begin(m), std::end(m), [&j](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool { \
+            return ej_pair.second == j;                                                                                       \
+        });                                                                                                                   \
+        e = ((it != std::end(m)) ? it : std::begin(m))->first;                                                                \
     }
 
 // Ugly macros to avoid uglier copy-paste when specializing basic_json. They
 // may be removed in the future once the class is split.
 
-#define NLOHMANN_BASIC_JSON_TPL_DECLARATION                                \
-    template<template<typename, typename, typename...> class ObjectType,   \
-             template<typename, typename...> class ArrayType,              \
-             class StringType, class BooleanType, class NumberIntegerType, \
-             class NumberUnsignedType, class NumberFloatType,              \
-             template<typename> class AllocatorType,                       \
-             template<typename, typename = void> class JSONSerializer,     \
-             class BinaryType,                                             \
+#define NLOHMANN_BASIC_JSON_TPL_DECLARATION                              \
+    template<template<typename, typename, typename...> class ObjectType, \
+             template<typename, typename...>                             \
+             class ArrayType,                                            \
+             class StringType,                                           \
+             class BooleanType,                                          \
+             class NumberIntegerType,                                    \
+             class NumberUnsignedType,                                   \
+             class NumberFloatType,                                      \
+             template<typename>                                          \
+             class AllocatorType,                                        \
+             template<typename, typename = void>                         \
+             class JSONSerializer,                                       \
+             class BinaryType,                                           \
              class CustomBaseClass>
 
-#define NLOHMANN_BASIC_JSON_TPL                                            \
-    basic_json<ObjectType, ArrayType, StringType, BooleanType,             \
-    NumberIntegerType, NumberUnsignedType, NumberFloatType,                \
-    AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>
+#define NLOHMANN_BASIC_JSON_TPL \
+    basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>
 
 // Macros to simplify conversion from/to types
 
-#define NLOHMANN_JSON_EXPAND( x ) x
-#define NLOHMANN_JSON_GET_MACRO(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44, _45, _46, _47, _48, _49, _50, _51, _52, _53, _54, _55, _56, _57, _58, _59, _60, _61, _62, _63, _64, NAME,...) NAME
-#define NLOHMANN_JSON_PASTE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_GET_MACRO(__VA_ARGS__, \
-        NLOHMANN_JSON_PASTE64, \
-        NLOHMANN_JSON_PASTE63, \
-        NLOHMANN_JSON_PASTE62, \
-        NLOHMANN_JSON_PASTE61, \
-        NLOHMANN_JSON_PASTE60, \
-        NLOHMANN_JSON_PASTE59, \
-        NLOHMANN_JSON_PASTE58, \
-        NLOHMANN_JSON_PASTE57, \
-        NLOHMANN_JSON_PASTE56, \
-        NLOHMANN_JSON_PASTE55, \
-        NLOHMANN_JSON_PASTE54, \
-        NLOHMANN_JSON_PASTE53, \
-        NLOHMANN_JSON_PASTE52, \
-        NLOHMANN_JSON_PASTE51, \
-        NLOHMANN_JSON_PASTE50, \
-        NLOHMANN_JSON_PASTE49, \
-        NLOHMANN_JSON_PASTE48, \
-        NLOHMANN_JSON_PASTE47, \
-        NLOHMANN_JSON_PASTE46, \
-        NLOHMANN_JSON_PASTE45, \
-        NLOHMANN_JSON_PASTE44, \
-        NLOHMANN_JSON_PASTE43, \
-        NLOHMANN_JSON_PASTE42, \
-        NLOHMANN_JSON_PASTE41, \
-        NLOHMANN_JSON_PASTE40, \
-        NLOHMANN_JSON_PASTE39, \
-        NLOHMANN_JSON_PASTE38, \
-        NLOHMANN_JSON_PASTE37, \
-        NLOHMANN_JSON_PASTE36, \
-        NLOHMANN_JSON_PASTE35, \
-        NLOHMANN_JSON_PASTE34, \
-        NLOHMANN_JSON_PASTE33, \
-        NLOHMANN_JSON_PASTE32, \
-        NLOHMANN_JSON_PASTE31, \
-        NLOHMANN_JSON_PASTE30, \
-        NLOHMANN_JSON_PASTE29, \
-        NLOHMANN_JSON_PASTE28, \
-        NLOHMANN_JSON_PASTE27, \
-        NLOHMANN_JSON_PASTE26, \
-        NLOHMANN_JSON_PASTE25, \
-        NLOHMANN_JSON_PASTE24, \
-        NLOHMANN_JSON_PASTE23, \
-        NLOHMANN_JSON_PASTE22, \
-        NLOHMANN_JSON_PASTE21, \
-        NLOHMANN_JSON_PASTE20, \
-        NLOHMANN_JSON_PASTE19, \
-        NLOHMANN_JSON_PASTE18, \
-        NLOHMANN_JSON_PASTE17, \
-        NLOHMANN_JSON_PASTE16, \
-        NLOHMANN_JSON_PASTE15, \
-        NLOHMANN_JSON_PASTE14, \
-        NLOHMANN_JSON_PASTE13, \
-        NLOHMANN_JSON_PASTE12, \
-        NLOHMANN_JSON_PASTE11, \
-        NLOHMANN_JSON_PASTE10, \
-        NLOHMANN_JSON_PASTE9, \
-        NLOHMANN_JSON_PASTE8, \
-        NLOHMANN_JSON_PASTE7, \
-        NLOHMANN_JSON_PASTE6, \
-        NLOHMANN_JSON_PASTE5, \
-        NLOHMANN_JSON_PASTE4, \
-        NLOHMANN_JSON_PASTE3, \
-        NLOHMANN_JSON_PASTE2, \
-        NLOHMANN_JSON_PASTE1)(__VA_ARGS__))
+#define NLOHMANN_JSON_EXPAND(x) x
+#define NLOHMANN_JSON_GET_MACRO(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44, _45, _46, _47, _48, _49, _50, _51, _52, _53, _54, _55, _56, _57, _58, _59, _60, _61, _62, _63, _64, NAME, ...) NAME
+#define NLOHMANN_JSON_PASTE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_GET_MACRO(__VA_ARGS__,           \
+                                                                              NLOHMANN_JSON_PASTE64, \
+                                                                              NLOHMANN_JSON_PASTE63, \
+                                                                              NLOHMANN_JSON_PASTE62, \
+                                                                              NLOHMANN_JSON_PASTE61, \
+                                                                              NLOHMANN_JSON_PASTE60, \
+                                                                              NLOHMANN_JSON_PASTE59, \
+                                                                              NLOHMANN_JSON_PASTE58, \
+                                                                              NLOHMANN_JSON_PASTE57, \
+                                                                              NLOHMANN_JSON_PASTE56, \
+                                                                              NLOHMANN_JSON_PASTE55, \
+                                                                              NLOHMANN_JSON_PASTE54, \
+                                                                              NLOHMANN_JSON_PASTE53, \
+                                                                              NLOHMANN_JSON_PASTE52, \
+                                                                              NLOHMANN_JSON_PASTE51, \
+                                                                              NLOHMANN_JSON_PASTE50, \
+                                                                              NLOHMANN_JSON_PASTE49, \
+                                                                              NLOHMANN_JSON_PASTE48, \
+                                                                              NLOHMANN_JSON_PASTE47, \
+                                                                              NLOHMANN_JSON_PASTE46, \
+                                                                              NLOHMANN_JSON_PASTE45, \
+                                                                              NLOHMANN_JSON_PASTE44, \
+                                                                              NLOHMANN_JSON_PASTE43, \
+                                                                              NLOHMANN_JSON_PASTE42, \
+                                                                              NLOHMANN_JSON_PASTE41, \
+                                                                              NLOHMANN_JSON_PASTE40, \
+                                                                              NLOHMANN_JSON_PASTE39, \
+                                                                              NLOHMANN_JSON_PASTE38, \
+                                                                              NLOHMANN_JSON_PASTE37, \
+                                                                              NLOHMANN_JSON_PASTE36, \
+                                                                              NLOHMANN_JSON_PASTE35, \
+                                                                              NLOHMANN_JSON_PASTE34, \
+                                                                              NLOHMANN_JSON_PASTE33, \
+                                                                              NLOHMANN_JSON_PASTE32, \
+                                                                              NLOHMANN_JSON_PASTE31, \
+                                                                              NLOHMANN_JSON_PASTE30, \
+                                                                              NLOHMANN_JSON_PASTE29, \
+                                                                              NLOHMANN_JSON_PASTE28, \
+                                                                              NLOHMANN_JSON_PASTE27, \
+                                                                              NLOHMANN_JSON_PASTE26, \
+                                                                              NLOHMANN_JSON_PASTE25, \
+                                                                              NLOHMANN_JSON_PASTE24, \
+                                                                              NLOHMANN_JSON_PASTE23, \
+                                                                              NLOHMANN_JSON_PASTE22, \
+                                                                              NLOHMANN_JSON_PASTE21, \
+                                                                              NLOHMANN_JSON_PASTE20, \
+                                                                              NLOHMANN_JSON_PASTE19, \
+                                                                              NLOHMANN_JSON_PASTE18, \
+                                                                              NLOHMANN_JSON_PASTE17, \
+                                                                              NLOHMANN_JSON_PASTE16, \
+                                                                              NLOHMANN_JSON_PASTE15, \
+                                                                              NLOHMANN_JSON_PASTE14, \
+                                                                              NLOHMANN_JSON_PASTE13, \
+                                                                              NLOHMANN_JSON_PASTE12, \
+                                                                              NLOHMANN_JSON_PASTE11, \
+                                                                              NLOHMANN_JSON_PASTE10, \
+                                                                              NLOHMANN_JSON_PASTE9,  \
+                                                                              NLOHMANN_JSON_PASTE8,  \
+                                                                              NLOHMANN_JSON_PASTE7,  \
+                                                                              NLOHMANN_JSON_PASTE6,  \
+                                                                              NLOHMANN_JSON_PASTE5,  \
+                                                                              NLOHMANN_JSON_PASTE4,  \
+                                                                              NLOHMANN_JSON_PASTE3,  \
+                                                                              NLOHMANN_JSON_PASTE2,  \
+                                                                              NLOHMANN_JSON_PASTE1)(__VA_ARGS__))
 #define NLOHMANN_JSON_PASTE2(func, v1) func(v1)
 #define NLOHMANN_JSON_PASTE3(func, v1, v2) NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE2(func, v2)
 #define NLOHMANN_JSON_PASTE4(func, v1, v2, v3) NLOHMANN_JSON_PASTE2(func, v1) NLOHMANN_JSON_PASTE3(func, v2, v3)
@@ -398,32 +397,64 @@
 @def NLOHMANN_DEFINE_TYPE_INTRUSIVE
 @since version 3.9.0
 */
-#define NLOHMANN_DEFINE_TYPE_INTRUSIVE(Type, ...)  \
-    friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
-    friend void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE(Type, ...)                                       \
+    friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t)   \
+    {                                                                                   \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__))        \
+    }                                                                                   \
+    friend void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) \
+    {                                                                                   \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__))      \
+    }
 
-#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Type, ...)  \
-    friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
-    friend void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) }
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Type, ...)                                  \
+    friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t)           \
+    {                                                                                           \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__))                \
+    }                                                                                           \
+    friend void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t)         \
+    {                                                                                           \
+        const Type nlohmann_json_default_obj{};                                                 \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) \
+    }
 
-#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(Type, ...)  \
-    friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) }
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(Type, ...)                      \
+    friend void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) \
+    {                                                                                 \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__))      \
+    }
 
 /*!
 @brief macro
 @def NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE
 @since version 3.9.0
 */
-#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Type, ...)  \
-    inline void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
-    inline void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__)) }
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Type, ...)                                   \
+    inline void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t)   \
+    {                                                                                   \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__))        \
+    }                                                                                   \
+    inline void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) \
+    {                                                                                   \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, __VA_ARGS__))      \
+    }
 
-#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(Type, ...)  \
-    inline void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) }
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(Type, ...)                  \
+    inline void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) \
+    {                                                                                 \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__))      \
+    }
 
-#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Type, ...)  \
-    inline void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) } \
-    inline void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) }
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Type, ...)                              \
+    inline void to_json(nlohmann::json& nlohmann_json_j, const Type& nlohmann_json_t)           \
+    {                                                                                           \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__))                \
+    }                                                                                           \
+    inline void from_json(const nlohmann::json& nlohmann_json_j, Type& nlohmann_json_t)         \
+    {                                                                                           \
+        const Type nlohmann_json_default_obj{};                                                 \
+        NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) \
+    }
 
 // inspired from https://stackoverflow.com/a/26745591
 // allows to call any std function as if (e.g. with begin):
@@ -434,30 +465,30 @@
 #define NLOHMANN_CAN_CALL_STD_FUNC_IMPL(std_name)                                 \
     namespace detail {                                                            \
     using std::std_name;                                                          \
-    \
+                                                                                  \
     template<typename... T>                                                       \
     using result_of_##std_name = decltype(std_name(std::declval<T>()...));        \
     }                                                                             \
-    \
+                                                                                  \
     namespace detail2 {                                                           \
     struct std_name##_tag                                                         \
     {                                                                             \
     };                                                                            \
-    \
+                                                                                  \
     template<typename... T>                                                       \
     std_name##_tag std_name(T&&...);                                              \
-    \
+                                                                                  \
     template<typename... T>                                                       \
     using result_of_##std_name = decltype(std_name(std::declval<T>()...));        \
-    \
+                                                                                  \
     template<typename... T>                                                       \
     struct would_call_std_##std_name                                              \
     {                                                                             \
         static constexpr auto const value = ::nlohmann::detail::                  \
-                                            is_detected_exact<std_name##_tag, result_of_##std_name, T...>::value; \
+            is_detected_exact<std_name##_tag, result_of_##std_name, T...>::value; \
     };                                                                            \
-    } /* namespace detail2 */ \
-    \
+    } /* namespace detail2 */                                                     \
+                                                                                  \
     template<typename... T>                                                       \
     struct would_call_std_##std_name : detail2::would_call_std_##std_name<T...>   \
     {                                                                             \

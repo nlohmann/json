@@ -59,14 +59,14 @@ TEST_CASE("iterators 2")
             // comparison: not equal
             {
                 // check definition
-                CHECK( (it1 != it1) == !(it1 == it1) );
-                CHECK( (it1 != it2) == !(it1 == it2) );
-                CHECK( (it1 != it3) == !(it1 == it3) );
-                CHECK( (it2 != it3) == !(it2 == it3) );
-                CHECK( (it1_c != it1_c) == !(it1_c == it1_c) );
-                CHECK( (it1_c != it2_c) == !(it1_c == it2_c) );
-                CHECK( (it1_c != it3_c) == !(it1_c == it3_c) );
-                CHECK( (it2_c != it3_c) == !(it2_c == it3_c) );
+                CHECK((it1 != it1) == !(it1 == it1));
+                CHECK((it1 != it2) == !(it1 == it2));
+                CHECK((it1 != it3) == !(it1 == it3));
+                CHECK((it2 != it3) == !(it2 == it3));
+                CHECK((it1_c != it1_c) == !(it1_c == it1_c));
+                CHECK((it1_c != it2_c) == !(it1_c == it2_c));
+                CHECK((it1_c != it3_c) == !(it1_c == it3_c));
+                CHECK((it2_c != it3_c) == !(it2_c == it3_c));
             }
 
             // comparison: smaller
@@ -133,14 +133,14 @@ TEST_CASE("iterators 2")
                 else
                 {
                     // check definition
-                    CHECK( (it1 <= it1) == !(it1 < it1) );
-                    CHECK( (it1 <= it2) == !(it2 < it1) );
-                    CHECK( (it1 <= it3) == !(it3 < it1) );
-                    CHECK( (it2 <= it3) == !(it3 < it2) );
-                    CHECK( (it1_c <= it1_c) == !(it1_c < it1_c) );
-                    CHECK( (it1_c <= it2_c) == !(it2_c < it1_c) );
-                    CHECK( (it1_c <= it3_c) == !(it3_c < it1_c) );
-                    CHECK( (it2_c <= it3_c) == !(it3_c < it2_c) );
+                    CHECK((it1 <= it1) == !(it1 < it1));
+                    CHECK((it1 <= it2) == !(it2 < it1));
+                    CHECK((it1 <= it3) == !(it3 < it1));
+                    CHECK((it2 <= it3) == !(it3 < it2));
+                    CHECK((it1_c <= it1_c) == !(it1_c < it1_c));
+                    CHECK((it1_c <= it2_c) == !(it2_c < it1_c));
+                    CHECK((it1_c <= it3_c) == !(it3_c < it1_c));
+                    CHECK((it2_c <= it3_c) == !(it3_c < it2_c));
                 }
             }
 
@@ -171,14 +171,14 @@ TEST_CASE("iterators 2")
                 else
                 {
                     // check definition
-                    CHECK( (it1 > it1) == (it1 < it1) );
-                    CHECK( (it1 > it2) == (it2 < it1) );
-                    CHECK( (it1 > it3) == (it3 < it1) );
-                    CHECK( (it2 > it3) == (it3 < it2) );
-                    CHECK( (it1_c > it1_c) == (it1_c < it1_c) );
-                    CHECK( (it1_c > it2_c) == (it2_c < it1_c) );
-                    CHECK( (it1_c > it3_c) == (it3_c < it1_c) );
-                    CHECK( (it2_c > it3_c) == (it3_c < it2_c) );
+                    CHECK((it1 > it1) == (it1 < it1));
+                    CHECK((it1 > it2) == (it2 < it1));
+                    CHECK((it1 > it3) == (it3 < it1));
+                    CHECK((it2 > it3) == (it3 < it2));
+                    CHECK((it1_c > it1_c) == (it1_c < it1_c));
+                    CHECK((it1_c > it2_c) == (it2_c < it1_c));
+                    CHECK((it1_c > it3_c) == (it3_c < it1_c));
+                    CHECK((it2_c > it3_c) == (it3_c < it2_c));
                 }
             }
 
@@ -209,14 +209,14 @@ TEST_CASE("iterators 2")
                 else
                 {
                     // check definition
-                    CHECK( (it1 >= it1) == !(it1 < it1) );
-                    CHECK( (it1 >= it2) == !(it1 < it2) );
-                    CHECK( (it1 >= it3) == !(it1 < it3) );
-                    CHECK( (it2 >= it3) == !(it2 < it3) );
-                    CHECK( (it1_c >= it1_c) == !(it1_c < it1_c) );
-                    CHECK( (it1_c >= it2_c) == !(it1_c < it2_c) );
-                    CHECK( (it1_c >= it3_c) == !(it1_c < it3_c) );
-                    CHECK( (it2_c >= it3_c) == !(it2_c < it3_c) );
+                    CHECK((it1 >= it1) == !(it1 < it1));
+                    CHECK((it1 >= it2) == !(it1 < it2));
+                    CHECK((it1 >= it3) == !(it1 < it3));
+                    CHECK((it2 >= it3) == !(it2 < it3));
+                    CHECK((it1_c >= it1_c) == !(it1_c < it1_c));
+                    CHECK((it1_c >= it2_c) == !(it1_c < it2_c));
+                    CHECK((it1_c >= it3_c) == !(it1_c < it3_c));
+                    CHECK((it2_c >= it3_c) == !(it2_c < it3_c));
                 }
             }
         }
@@ -483,14 +483,14 @@ TEST_CASE("iterators 2")
             // comparison: not equal
             {
                 // check definition
-                CHECK( (it1 != it1) == !(it1 == it1) );
-                CHECK( (it1 != it2) == !(it1 == it2) );
-                CHECK( (it1 != it3) == !(it1 == it3) );
-                CHECK( (it2 != it3) == !(it2 == it3) );
-                CHECK( (it1_c != it1_c) == !(it1_c == it1_c) );
-                CHECK( (it1_c != it2_c) == !(it1_c == it2_c) );
-                CHECK( (it1_c != it3_c) == !(it1_c == it3_c) );
-                CHECK( (it2_c != it3_c) == !(it2_c == it3_c) );
+                CHECK((it1 != it1) == !(it1 == it1));
+                CHECK((it1 != it2) == !(it1 == it2));
+                CHECK((it1 != it3) == !(it1 == it3));
+                CHECK((it2 != it3) == !(it2 == it3));
+                CHECK((it1_c != it1_c) == !(it1_c == it1_c));
+                CHECK((it1_c != it2_c) == !(it1_c == it2_c));
+                CHECK((it1_c != it3_c) == !(it1_c == it3_c));
+                CHECK((it2_c != it3_c) == !(it2_c == it3_c));
             }
 
             // comparison: smaller
@@ -557,14 +557,14 @@ TEST_CASE("iterators 2")
                 else
                 {
                     // check definition
-                    CHECK( (it1 <= it1) == !(it1 < it1) );
-                    CHECK( (it1 <= it2) == !(it2 < it1) );
-                    CHECK( (it1 <= it3) == !(it3 < it1) );
-                    CHECK( (it2 <= it3) == !(it3 < it2) );
-                    CHECK( (it1_c <= it1_c) == !(it1_c < it1_c) );
-                    CHECK( (it1_c <= it2_c) == !(it2_c < it1_c) );
-                    CHECK( (it1_c <= it3_c) == !(it3_c < it1_c) );
-                    CHECK( (it2_c <= it3_c) == !(it3_c < it2_c) );
+                    CHECK((it1 <= it1) == !(it1 < it1));
+                    CHECK((it1 <= it2) == !(it2 < it1));
+                    CHECK((it1 <= it3) == !(it3 < it1));
+                    CHECK((it2 <= it3) == !(it3 < it2));
+                    CHECK((it1_c <= it1_c) == !(it1_c < it1_c));
+                    CHECK((it1_c <= it2_c) == !(it2_c < it1_c));
+                    CHECK((it1_c <= it3_c) == !(it3_c < it1_c));
+                    CHECK((it2_c <= it3_c) == !(it3_c < it2_c));
                 }
             }
 
@@ -595,14 +595,14 @@ TEST_CASE("iterators 2")
                 else
                 {
                     // check definition
-                    CHECK( (it1 > it1) == (it1 < it1) );
-                    CHECK( (it1 > it2) == (it2 < it1) );
-                    CHECK( (it1 > it3) == (it3 < it1) );
-                    CHECK( (it2 > it3) == (it3 < it2) );
-                    CHECK( (it1_c > it1_c) == (it1_c < it1_c) );
-                    CHECK( (it1_c > it2_c) == (it2_c < it1_c) );
-                    CHECK( (it1_c > it3_c) == (it3_c < it1_c) );
-                    CHECK( (it2_c > it3_c) == (it3_c < it2_c) );
+                    CHECK((it1 > it1) == (it1 < it1));
+                    CHECK((it1 > it2) == (it2 < it1));
+                    CHECK((it1 > it3) == (it3 < it1));
+                    CHECK((it2 > it3) == (it3 < it2));
+                    CHECK((it1_c > it1_c) == (it1_c < it1_c));
+                    CHECK((it1_c > it2_c) == (it2_c < it1_c));
+                    CHECK((it1_c > it3_c) == (it3_c < it1_c));
+                    CHECK((it2_c > it3_c) == (it3_c < it2_c));
                 }
             }
 
@@ -633,14 +633,14 @@ TEST_CASE("iterators 2")
                 else
                 {
                     // check definition
-                    CHECK( (it1 >= it1) == !(it1 < it1) );
-                    CHECK( (it1 >= it2) == !(it1 < it2) );
-                    CHECK( (it1 >= it3) == !(it1 < it3) );
-                    CHECK( (it2 >= it3) == !(it2 < it3) );
-                    CHECK( (it1_c >= it1_c) == !(it1_c < it1_c) );
-                    CHECK( (it1_c >= it2_c) == !(it1_c < it2_c) );
-                    CHECK( (it1_c >= it3_c) == !(it1_c < it3_c) );
-                    CHECK( (it2_c >= it3_c) == !(it2_c < it3_c) );
+                    CHECK((it1 >= it1) == !(it1 < it1));
+                    CHECK((it1 >= it2) == !(it1 < it2));
+                    CHECK((it1 >= it3) == !(it1 < it3));
+                    CHECK((it2 >= it3) == !(it2 < it3));
+                    CHECK((it1_c >= it1_c) == !(it1_c < it1_c));
+                    CHECK((it1_c >= it2_c) == !(it1_c < it2_c));
+                    CHECK((it1_c >= it3_c) == !(it1_c < it3_c));
+                    CHECK((it2_c >= it3_c) == !(it2_c < it3_c));
                 }
             }
         }
@@ -894,7 +894,7 @@ TEST_CASE("iterators 2")
         }
 
         // libstdc++ algorithms don't work with Clang 15 (04/2022)
-#if !DOCTEST_CLANG || (DOCTEST_CLANG && defined(__GLIBCXX__))
+    #if !DOCTEST_CLANG || (DOCTEST_CLANG && defined(__GLIBCXX__))
         SECTION("algorithms")
         {
             SECTION("copy")
@@ -912,28 +912,26 @@ TEST_CASE("iterators 2")
                 json j{1, 3, 2, 4};
                 auto j_even = json::array();
 
-#if JSON_USE_IMPLICIT_CONVERSIONS
-                auto it = std::ranges::find_if(j, [](int v) noexcept
-                {
+        #if JSON_USE_IMPLICIT_CONVERSIONS
+                auto it = std::ranges::find_if(j, [](int v) noexcept {
                     return (v % 2) == 0;
                 });
-#else
-                auto it = std::ranges::find_if(j, [](const json & j) noexcept
-                {
+        #else
+                auto it = std::ranges::find_if(j, [](const json& j) noexcept {
                     int v;
                     j.get_to(v);
                     return (v % 2) == 0;
                 });
-#endif
+        #endif
 
                 CHECK(*it == 2);
             }
         }
-#endif
+    #endif
 
         // libstdc++ views don't work with Clang 15 (04/2022)
         // libc++ hides limited ranges implementation behind guard macro
-#if !(DOCTEST_CLANG && (defined(__GLIBCXX__) || defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)))
+    #if !(DOCTEST_CLANG && (defined(__GLIBCXX__) || defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)))
         SECTION("views")
         {
             SECTION("reverse")
@@ -947,25 +945,23 @@ TEST_CASE("iterators 2")
 
             SECTION("transform")
             {
-                json j
-                {
-                    { "a_key", "a_value"},
-                    { "b_key", "b_value"},
-                    { "c_key", "c_value"},
+                json j{
+                    {"a_key", "a_value"},
+                    {"b_key", "b_value"},
+                    {"c_key", "c_value"},
                 };
                 json j_expected{"a_key", "b_key", "c_key"};
 
-                auto transformed = j.items() | std::views::transform([](const auto & item)
-                {
-                    return item.key();
-                });
+                auto transformed = j.items() | std::views::transform([](const auto& item) {
+                                       return item.key();
+                                   });
                 auto j_transformed = json::array();
                 std::ranges::copy(transformed, std::back_inserter(j_transformed));
 
                 CHECK(j_transformed == j_expected);
             }
         }
-#endif
+    #endif
     }
 #endif
 }

@@ -8,18 +8,18 @@
 
 #pragma once
 
-#include <algorithm> // all_of
-#include <cctype> // isdigit
-#include <cerrno> // errno, ERANGE
-#include <cstdlib> // strtoull
+#include <algorithm>  // all_of
+#include <cctype>     // isdigit
+#include <cerrno>     // errno, ERANGE
+#include <cstdlib>    // strtoull
 #ifndef JSON_NO_IO
-    #include <iosfwd> // ostream
-#endif  // JSON_NO_IO
-#include <limits> // max
-#include <numeric> // accumulate
-#include <string> // string
-#include <utility> // move
-#include <vector> // vector
+    #include <iosfwd>  // ostream
+#endif                 // JSON_NO_IO
+#include <limits>      // max
+#include <numeric>     // accumulate
+#include <string>      // string
+#include <utility>     // move
+#include <vector>      // vector
 
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
@@ -60,17 +60,14 @@ class json_pointer
     /// @brief create JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/json_pointer/
     explicit json_pointer(const string_t& s = "")
-        : reference_tokens(split(s))
+      : reference_tokens(split(s))
     {}
 
     /// @brief return a string representation of the JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/to_string/
     string_t to_string() const
     {
-        return std::accumulate(reference_tokens.begin(), reference_tokens.end(),
-                               string_t{},
-                               [](const string_t& a, const string_t& b)
-        {
+        return std::accumulate(reference_tokens.begin(), reference_tokens.end(), string_t{}, [](const string_t& a, const string_t& b) {
             return detail::concat(a, '/', detail::escape(b));
         });
     }
@@ -128,7 +125,7 @@ class json_pointer
 
     /// @brief create a new JSON pointer by appending the unescaped token at the end of the JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slash/
-    friend json_pointer operator/(const json_pointer& lhs, string_t token) // NOLINT(performance-unnecessary-value-param)
+    friend json_pointer operator/(const json_pointer& lhs, string_t token)  // NOLINT(performance-unnecessary-value-param)
     {
         return json_pointer(lhs) /= std::move(token);
     }
@@ -229,11 +226,11 @@ class json_pointer
 
         const char* p = s.c_str();
         char* p_end = nullptr;
-        errno = 0; // strtoull doesn't reset errno
-        const unsigned long long res = std::strtoull(p, &p_end, 10); // NOLINT(runtime/int)
-        if (p == p_end // invalid input or empty string
-                || errno == ERANGE // out of range
-                || JSON_HEDLEY_UNLIKELY(static_cast<std::size_t>(p_end - p) != s.size())) // incomplete read
+        errno = 0;                                                                     // strtoull doesn't reset errno
+        const unsigned long long res = std::strtoull(p, &p_end, 10);                   // NOLINT(runtime/int)
+        if (p == p_end                                                                 // invalid input or empty string
+            || errno == ERANGE                                                         // out of range
+            || JSON_HEDLEY_UNLIKELY(static_cast<std::size_t>(p_end - p) != s.size()))  // incomplete read
         {
             JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", s, "'"), nullptr));
         }
@@ -242,14 +239,13 @@ class json_pointer
         // https://github.com/nlohmann/json/pull/2203
         if (res >= static_cast<unsigned long long>((std::numeric_limits<size_type>::max)()))  // NOLINT(runtime/int)
         {
-            JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));   // LCOV_EXCL_LINE
+            JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));  // LCOV_EXCL_LINE
         }
 
         return static_cast<size_type>(res);
     }
 
-  JSON_PRIVATE_UNLESS_TESTED:
-    json_pointer top() const
+    JSON_PRIVATE_UNLESS_TESTED : json_pointer top() const
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
@@ -360,16 +356,14 @@ class json_pointer
             {
                 // check if reference token is a number
                 const bool nums =
-                    std::all_of(reference_token.begin(), reference_token.end(),
-                                [](const unsigned char x)
-                {
-                    return std::isdigit(x);
-                });
+                    std::all_of(reference_token.begin(), reference_token.end(), [](const unsigned char x) {
+                        return std::isdigit(x);
+                    });
 
                 // change value to array for numbers or "-" or to object otherwise
                 *ptr = (nums || reference_token == "-")
-                       ? detail::value_t::array
-                       : detail::value_t::object;
+                           ? detail::value_t::array
+                           : detail::value_t::object;
             }
 
             switch (ptr->type())
@@ -437,9 +431,7 @@ class json_pointer
                     if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
                     {
                         // "-" always fails the range check
-                        JSON_THROW(detail::out_of_range::create(402, detail::concat(
-                                "array index '-' (", std::to_string(ptr->m_data.m_value.array->size()),
-                                ") is out of range"), ptr));
+                        JSON_THROW(detail::out_of_range::create(402, detail::concat("array index '-' (", std::to_string(ptr->m_data.m_value.array->size()), ") is out of range"), ptr));
                     }
 
                     // note: at performs range check
@@ -544,9 +536,7 @@ class json_pointer
                     if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
                     {
                         // "-" always fails the range check
-                        JSON_THROW(detail::out_of_range::create(402, detail::concat(
-                                "array index '-' (", std::to_string(ptr->m_data.m_value.array->size()),
-                                ") is out of range"), ptr));
+                        JSON_THROW(detail::out_of_range::create(402, detail::concat("array index '-' (", std::to_string(ptr->m_data.m_value.array->size()), ") is out of range"), ptr));
                     }
 
                     // note: at performs range check
@@ -685,14 +675,14 @@ class json_pointer
         for (
             // search for the first slash after the first character
             std::size_t slash = reference_string.find_first_of('/', 1),
-            // set the beginning of the first reference token
+                        // set the beginning of the first reference token
             start = 1;
             // we can stop if start == 0 (if slash == string_t::npos)
             start != 0;
             // set the beginning of the next reference token
             // (will eventually be 0 if slash == string_t::npos)
             start = (slash == string_t::npos) ? 0 : slash + 1,
-            // find next slash
+                        // find next slash
             slash = reference_string.find_first_of('/', start))
         {
             // use the text between the beginning of the reference token
@@ -701,8 +691,8 @@ class json_pointer
 
             // check reference tokens are properly escaped
             for (std::size_t pos = reference_token.find_first_of('~');
-                    pos != string_t::npos;
-                    pos = reference_token.find_first_of('~', pos + 1))
+                 pos != string_t::npos;
+                 pos = reference_token.find_first_of('~', pos + 1))
             {
                 JSON_ASSERT(reference_token[pos] == '~');
 
@@ -751,7 +741,8 @@ class json_pointer
                     for (std::size_t i = 0; i < value.m_data.m_value.array->size(); ++i)
                     {
                         flatten(detail::concat(reference_string, '/', std::to_string(i)),
-                                value.m_data.m_value.array->operator[](i), result);
+                                value.m_data.m_value.array->operator[](i),
+                                result);
                     }
                 }
                 break;
@@ -839,7 +830,7 @@ class json_pointer
         return result;
     }
 
-    json_pointer<string_t> convert()&&
+    json_pointer<string_t> convert() &&
     {
         json_pointer<string_t> result;
         result.reference_tokens = std::move(reference_tokens);
@@ -866,9 +857,9 @@ class json_pointer
 
     /// @brief 3-way compares two JSON pointers
     template<typename RefStringTypeRhs>
-    std::strong_ordering operator<=>(const json_pointer<RefStringTypeRhs>& rhs) const noexcept // *NOPAD*
+        std::strong_ordering operator<= > (const json_pointer<RefStringTypeRhs>& rhs) const noexcept  // *NOPAD*
     {
-        return  reference_tokens <=> rhs.reference_tokens; // *NOPAD*
+        return reference_tokens <= > rhs.reference_tokens;  // *NOPAD*
     }
 #else
     /// @brief compares two JSON pointers for equality

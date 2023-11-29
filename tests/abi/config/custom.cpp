@@ -11,7 +11,7 @@
 #include "config.hpp"
 
 // define custom namespace
-#define NLOHMANN_JSON_NAMESPACE nlohmann // this line may be omitted
+#define NLOHMANN_JSON_NAMESPACE nlohmann  // this line may be omitted
 #define NLOHMANN_JSON_NAMESPACE_BEGIN namespace nlohmann {
 #define NLOHMANN_JSON_NAMESPACE_END }
 #include <nlohmann/json_fwd.hpp>

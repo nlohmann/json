@@ -8,13 +8,12 @@
 
 #pragma once
 
-#include <cstddef> // size_t
+#include <cstddef>  // size_t
 
 #include <nlohmann/detail/abi_macros.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
+namespace detail {
 
 /// struct to capture the start position of the current token
 struct position_t

@@ -9,16 +9,15 @@
 
 #pragma once
 
-#include <array> // array
-#include <cstddef> // size_t
-#include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
-#include <utility> // index_sequence, make_index_sequence, index_sequence_for
+#include <array>        // array
+#include <cstddef>      // size_t
+#include <type_traits>  // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
+#include <utility>      // index_sequence, make_index_sequence, index_sequence_for
 
 #include <nlohmann/detail/macro_scope.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
+namespace detail {
 
 template<typename T>
 using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
@@ -28,8 +27,8 @@ using uncvref_t = typename std::remove_cv<typename std::remove_reference<T>::typ
 // the following utilities are natively available in C++14
 using std::enable_if_t;
 using std::index_sequence;
-using std::make_index_sequence;
 using std::index_sequence_for;
+using std::make_index_sequence;
 
 #else
 
@@ -61,7 +60,7 @@ using enable_if_t = typename std::enable_if<B, T>::type;
 //     // will be deduced to `0, 1, 2, 3, 4`.
 //     user_function(make_integer_sequence<int, 5>());
 //   }
-template <typename T, T... Ints>
+template<typename T, T... Ints>
 struct integer_sequence
 {
     using value_type = T;
@@ -76,38 +75,37 @@ struct integer_sequence
 // A helper template for an `integer_sequence` of `size_t`,
 // `absl::index_sequence` is designed to be a drop-in replacement for C++14's
 // `std::index_sequence`.
-template <size_t... Ints>
+template<size_t... Ints>
 using index_sequence = integer_sequence<size_t, Ints...>;
 
-namespace utility_internal
-{
+namespace utility_internal {
 
-template <typename Seq, size_t SeqSize, size_t Rem>
+template<typename Seq, size_t SeqSize, size_t Rem>
 struct Extend;
 
 // Note that SeqSize == sizeof...(Ints). It's passed explicitly for efficiency.
-template <typename T, T... Ints, size_t SeqSize>
+template<typename T, T... Ints, size_t SeqSize>
 struct Extend<integer_sequence<T, Ints...>, SeqSize, 0>
 {
-    using type = integer_sequence < T, Ints..., (Ints + SeqSize)... >;
+    using type = integer_sequence<T, Ints..., (Ints + SeqSize)...>;
 };
 
-template <typename T, T... Ints, size_t SeqSize>
+template<typename T, T... Ints, size_t SeqSize>
 struct Extend<integer_sequence<T, Ints...>, SeqSize, 1>
 {
-    using type = integer_sequence < T, Ints..., (Ints + SeqSize)..., 2 * SeqSize >;
+    using type = integer_sequence<T, Ints..., (Ints + SeqSize)..., 2 * SeqSize>;
 };
 
 // Recursion helper for 'make_integer_sequence<T, N>'.
 // 'Gen<T, N>::type' is an alias for 'integer_sequence<T, 0, 1, ... N-1>'.
-template <typename T, size_t N>
+template<typename T, size_t N>
 struct Gen
 {
     using type =
-        typename Extend < typename Gen < T, N / 2 >::type, N / 2, N % 2 >::type;
+        typename Extend<typename Gen<T, N / 2>::type, N / 2, N % 2>::type;
 };
 
-template <typename T>
+template<typename T>
 struct Gen<T, 0>
 {
     using type = integer_sequence<T>;
@@ -122,7 +120,7 @@ struct Gen<T, 0>
 // This template alias is equivalent to
 // `integer_sequence<int, 0, 1, ..., N-1>`, and is designed to be a drop-in
 // replacement for C++14's `std::make_integer_sequence`.
-template <typename T, T N>
+template<typename T, T N>
 using make_integer_sequence = typename utility_internal::Gen<T, N>::type;
 
 // make_index_sequence
@@ -130,7 +128,7 @@ using make_integer_sequence = typename utility_internal::Gen<T, N>::type;
 // This template alias is equivalent to `index_sequence<0, 1, ..., N-1>`,
 // and is designed to be a drop-in replacement for C++14's
 // `std::make_index_sequence`.
-template <size_t N>
+template<size_t N>
 using make_index_sequence = make_integer_sequence<size_t, N>;
 
 // index_sequence_for
@@ -138,7 +136,7 @@ using make_index_sequence = make_integer_sequence<size_t, N>;
 // Converts a typename pack into an index sequence of the same length, and
 // is designed to be a drop-in replacement for C++14's
 // `std::index_sequence_for()`
-template <typename... Ts>
+template<typename... Ts>
 using index_sequence_for = make_index_sequence<sizeof...(Ts)>;
 
 //// END OF CODE FROM GOOGLE ABSEIL
@@ -146,8 +144,12 @@ using index_sequence_for = make_index_sequence<sizeof...(Ts)>;
 #endif
 
 // dispatch utility (taken from ranges-v3)
-template<unsigned N> struct priority_tag : priority_tag < N - 1 > {};
-template<> struct priority_tag<0> {};
+template<unsigned N>
+struct priority_tag : priority_tag<N - 1>
+{};
+template<>
+struct priority_tag<0>
+{};
 
 // taken from ranges-v3
 template<typename T>
@@ -157,14 +159,14 @@ struct static_const
 };
 
 #ifndef JSON_HAS_CPP_17
-    template<typename T>
-    constexpr T static_const<T>::value;
+template<typename T>
+constexpr T static_const<T>::value;
 #endif
 
 template<typename T, typename... Args>
-inline constexpr std::array<T, sizeof...(Args)> make_array(Args&& ... args)
+inline constexpr std::array<T, sizeof...(Args)> make_array(Args&&... args)
 {
-    return std::array<T, sizeof...(Args)> {{static_cast<T>(std::forward<Args>(args))...}};
+    return std::array<T, sizeof...(Args)>{{static_cast<T>(std::forward<Args>(args))...}};
 }
 
 }  // namespace detail

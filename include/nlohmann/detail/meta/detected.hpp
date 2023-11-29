@@ -13,8 +13,7 @@
 #include <nlohmann/detail/meta/void_t.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
+namespace detail {
 
 // https://en.cppreference.com/w/cpp/experimental/is_detected
 struct nonesuch
@@ -29,7 +28,8 @@ struct nonesuch
 
 template<class Default,
          class AlwaysVoid,
-         template<class...> class Op,
+         template<class...>
+         class Op,
          class... Args>
 struct detector
 {
@@ -48,7 +48,8 @@ template<template<class...> class Op, class... Args>
 using is_detected = typename detector<nonesuch, void, Op, Args...>::value_t;
 
 template<template<class...> class Op, class... Args>
-struct is_detected_lazy : is_detected<Op, Args...> { };
+struct is_detected_lazy : is_detected<Op, Args...>
+{};
 
 template<template<class...> class Op, class... Args>
 using detected_t = typename detector<nonesuch, void, Op, Args...>::type;

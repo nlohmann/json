@@ -14,7 +14,7 @@ using nlohmann::json;
 // This test suite uses range for loops where values are copied. This is inefficient in usual code, but required to achieve 100% coverage.
 DOCTEST_GCC_SUPPRESS_WARNING_PUSH
 #if DOCTEST_GCC >= DOCTEST_COMPILER(11, 0, 0)
-    DOCTEST_GCC_SUPPRESS_WARNING("-Wrange-loop-construct")
+DOCTEST_GCC_SUPPRESS_WARNING("-Wrange-loop-construct")
 #endif
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
 DOCTEST_CLANG_SUPPRESS_WARNING("-Wrange-loop-construct")
@@ -25,10 +25,10 @@ TEST_CASE("iterator_wrapper")
     {
         SECTION("value")
         {
-            json j = { {"A", 1}, {"B", 2} };
+            json j = {{"A", 1}, {"B", 2}};
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
+            for (auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -58,10 +58,10 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("reference")
         {
-            json j = { {"A", 1}, {"B", 2} };
+            json j = {{"A", 1}, {"B", 2}};
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j)) // NOLINT(readability-qualified-auto)
+            for (auto& i : json::iterator_wrapper(j))  // NOLINT(readability-qualified-auto)
             {
                 switch (counter++)
                 {
@@ -97,15 +97,15 @@ TEST_CASE("iterator_wrapper")
             CHECK(counter == 3);
 
             // check if values where changed
-            CHECK(j == json({ {"A", 11}, {"B", 22} }));
+            CHECK(j == json({{"A", 11}, {"B", 22}}));
         }
 
         SECTION("const value")
         {
-            json j = { {"A", 1}, {"B", 2} };
+            json j = {{"A", 1}, {"B", 2}};
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
+            for (const auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -135,7 +135,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const reference")
         {
-            json j = { {"A", 1}, {"B", 2} };
+            json j = {{"A", 1}, {"B", 2}};
             int counter = 1;
 
             for (const auto& i : json::iterator_wrapper(j))
@@ -171,10 +171,10 @@ TEST_CASE("iterator_wrapper")
     {
         SECTION("value")
         {
-            const json j = { {"A", 1}, {"B", 2} };
+            const json j = {{"A", 1}, {"B", 2}};
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
+            for (auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -204,10 +204,10 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("reference")
         {
-            const json j = { {"A", 1}, {"B", 2} };
+            const json j = {{"A", 1}, {"B", 2}};
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j)) // NOLINT(readability-qualified-auto)
+            for (auto& i : json::iterator_wrapper(j))  // NOLINT(readability-qualified-auto)
             {
                 switch (counter++)
                 {
@@ -237,10 +237,10 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const value")
         {
-            const json j = { {"A", 1}, {"B", 2} };
+            const json j = {{"A", 1}, {"B", 2}};
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
+            for (const auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -270,7 +270,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const reference")
         {
-            const json j = { {"A", 1}, {"B", 2} };
+            const json j = {{"A", 1}, {"B", 2}};
             int counter = 1;
 
             for (const auto& i : json::iterator_wrapper(j))
@@ -306,10 +306,10 @@ TEST_CASE("iterator_wrapper")
     {
         SECTION("value")
         {
-            json j = { "A", "B" };
+            json j = {"A", "B"};
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
+            for (auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -339,10 +339,10 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("reference")
         {
-            json j = { "A", "B" };
+            json j = {"A", "B"};
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j)) // NOLINT(readability-qualified-auto)
+            for (auto& i : json::iterator_wrapper(j))  // NOLINT(readability-qualified-auto)
             {
                 switch (counter++)
                 {
@@ -378,15 +378,15 @@ TEST_CASE("iterator_wrapper")
             CHECK(counter == 3);
 
             // check if values where changed
-            CHECK(j == json({ "AA", "BB" }));
+            CHECK(j == json({"AA", "BB"}));
         }
 
         SECTION("const value")
         {
-            json j = { "A", "B" };
+            json j = {"A", "B"};
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
+            for (const auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -416,7 +416,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const reference")
         {
-            json j = { "A", "B" };
+            json j = {"A", "B"};
             int counter = 1;
 
             for (const auto& i : json::iterator_wrapper(j))
@@ -452,10 +452,10 @@ TEST_CASE("iterator_wrapper")
     {
         SECTION("value")
         {
-            const json j = { "A", "B" };
+            const json j = {"A", "B"};
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
+            for (auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -485,10 +485,10 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("reference")
         {
-            const json j = { "A", "B" };
+            const json j = {"A", "B"};
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j)) // NOLINT(readability-qualified-auto)
+            for (auto& i : json::iterator_wrapper(j))  // NOLINT(readability-qualified-auto)
             {
                 switch (counter++)
                 {
@@ -518,10 +518,10 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const value")
         {
-            const json j = { "A", "B" };
+            const json j = {"A", "B"};
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
+            for (const auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
             {
                 switch (counter++)
                 {
@@ -551,7 +551,7 @@ TEST_CASE("iterator_wrapper")
 
         SECTION("const reference")
         {
-            const json j = { "A", "B" };
+            const json j = {"A", "B"};
             int counter = 1;
 
             for (const auto& i : json::iterator_wrapper(j))
@@ -590,7 +590,7 @@ TEST_CASE("iterator_wrapper")
             json j = 1;
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
+            for (auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -605,7 +605,7 @@ TEST_CASE("iterator_wrapper")
             json j = 1;
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j)) // NOLINT(readability-qualified-auto)
+            for (auto& i : json::iterator_wrapper(j))  // NOLINT(readability-qualified-auto)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -626,7 +626,7 @@ TEST_CASE("iterator_wrapper")
             json j = 1;
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
+            for (const auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -659,7 +659,7 @@ TEST_CASE("iterator_wrapper")
             const json j = 1;
             int counter = 1;
 
-            for (auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
+            for (auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -674,7 +674,7 @@ TEST_CASE("iterator_wrapper")
             const json j = 1;
             int counter = 1;
 
-            for (auto& i : json::iterator_wrapper(j)) // NOLINT(readability-qualified-auto)
+            for (auto& i : json::iterator_wrapper(j))  // NOLINT(readability-qualified-auto)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -689,7 +689,7 @@ TEST_CASE("iterator_wrapper")
             const json j = 1;
             int counter = 1;
 
-            for (const auto i : json::iterator_wrapper(j)) // NOLINT(performance-for-range-copy)
+            for (const auto i : json::iterator_wrapper(j))  // NOLINT(performance-for-range-copy)
             {
                 ++counter;
                 CHECK(i.key() == "");
@@ -718,715 +718,713 @@ TEST_CASE("iterator_wrapper")
 
 TEST_CASE("items()")
 {
-    SECTION("object")
+    SECTION("object"){
+        SECTION("value"){
+            json j = {{"A", 1}, {"B", 2}};
+    int counter = 1;
+
+    for (auto i : j.items())  // NOLINT(performance-for-range-copy)
     {
-        SECTION("value")
+        switch (counter++)
         {
-            json j = { {"A", 1}, {"B", 2} };
-            int counter = 1;
-
-            for (auto i : j.items()) // NOLINT(performance-for-range-copy)
+            case 1:
             {
-                switch (counter++)
-                {
-                    case 1:
-                    {
-                        CHECK(i.key() == "A");
-                        CHECK(i.value() == json(1));
-                        break;
-                    }
-
-                    case 2:
-                    {
-                        CHECK(i.key() == "B");
-                        CHECK(i.value() == json(2));
-                        break;
-                    }
-
-                    default:
-                    {
-                        break;
-                    }
-                }
+                CHECK(i.key() == "A");
+                CHECK(i.value() == json(1));
+                break;
             }
 
-            CHECK(counter == 3);
-        }
-
-        SECTION("reference")
-        {
-            json j = { {"A", 1}, {"B", 2} };
-            int counter = 1;
-
-            for (auto& i : j.items()) // NOLINT(readability-qualified-auto)
+            case 2:
             {
-                switch (counter++)
-                {
-                    case 1:
-                    {
-                        CHECK(i.key() == "A");
-                        CHECK(i.value() == json(1));
-
-                        // change the value
-                        i.value() = json(11);
-                        CHECK(i.value() == json(11));
-                        break;
-                    }
-
-                    case 2:
-                    {
-                        CHECK(i.key() == "B");
-                        CHECK(i.value() == json(2));
-
-                        // change the value
-                        i.value() = json(22);
-                        CHECK(i.value() == json(22));
-                        break;
-                    }
-
-                    default:
-                    {
-                        break;
-                    }
-                }
+                CHECK(i.key() == "B");
+                CHECK(i.value() == json(2));
+                break;
             }
 
-            CHECK(counter == 3);
-
-            // check if values where changed
-            CHECK(j == json({ {"A", 11}, {"B", 22} }));
-        }
-
-        SECTION("const value")
-        {
-            json j = { {"A", 1}, {"B", 2} };
-            int counter = 1;
-
-            for (const auto i : j.items()) // NOLINT(performance-for-range-copy)
+            default:
             {
-                switch (counter++)
-                {
-                    case 1:
-                    {
-                        CHECK(i.key() == "A");
-                        CHECK(i.value() == json(1));
-                        break;
-                    }
+                break;
+            }
+        }
+    }
 
-                    case 2:
-                    {
-                        CHECK(i.key() == "B");
-                        CHECK(i.value() == json(2));
-                        break;
-                    }
+    CHECK(counter == 3);
+}
 
-                    default:
-                    {
-                        break;
-                    }
-                }
+SECTION("reference")
+{
+    json j = {{"A", 1}, {"B", 2}};
+    int counter = 1;
+
+    for (auto& i : j.items())  // NOLINT(readability-qualified-auto)
+    {
+        switch (counter++)
+        {
+            case 1:
+            {
+                CHECK(i.key() == "A");
+                CHECK(i.value() == json(1));
+
+                // change the value
+                i.value() = json(11);
+                CHECK(i.value() == json(11));
+                break;
             }
 
-            CHECK(counter == 3);
-        }
-
-        SECTION("const reference")
-        {
-            json j = { {"A", 1}, {"B", 2} };
-            int counter = 1;
-
-            for (const auto& i : j.items())
+            case 2:
             {
-                switch (counter++)
-                {
-                    case 1:
-                    {
-                        CHECK(i.key() == "A");
-                        CHECK(i.value() == json(1));
-                        break;
-                    }
+                CHECK(i.key() == "B");
+                CHECK(i.value() == json(2));
 
-                    case 2:
-                    {
-                        CHECK(i.key() == "B");
-                        CHECK(i.value() == json(2));
-                        break;
-                    }
-
-                    default:
-                    {
-                        break;
-                    }
-                }
+                // change the value
+                i.value() = json(22);
+                CHECK(i.value() == json(22));
+                break;
             }
 
-            CHECK(counter == 3);
+            default:
+            {
+                break;
+            }
         }
+    }
+
+    CHECK(counter == 3);
+
+    // check if values where changed
+    CHECK(j == json({{"A", 11}, {"B", 22}}));
+}
+
+SECTION("const value")
+{
+    json j = {{"A", 1}, {"B", 2}};
+    int counter = 1;
+
+    for (const auto i : j.items())  // NOLINT(performance-for-range-copy)
+    {
+        switch (counter++)
+        {
+            case 1:
+            {
+                CHECK(i.key() == "A");
+                CHECK(i.value() == json(1));
+                break;
+            }
+
+            case 2:
+            {
+                CHECK(i.key() == "B");
+                CHECK(i.value() == json(2));
+                break;
+            }
+
+            default:
+            {
+                break;
+            }
+        }
+    }
+
+    CHECK(counter == 3);
+}
+
+SECTION("const reference")
+{
+    json j = {{"A", 1}, {"B", 2}};
+    int counter = 1;
+
+    for (const auto& i : j.items())
+    {
+        switch (counter++)
+        {
+            case 1:
+            {
+                CHECK(i.key() == "A");
+                CHECK(i.value() == json(1));
+                break;
+            }
+
+            case 2:
+            {
+                CHECK(i.key() == "B");
+                CHECK(i.value() == json(2));
+                break;
+            }
+
+            default:
+            {
+                break;
+            }
+        }
+    }
+
+    CHECK(counter == 3);
+}
 
 #ifdef JSON_HAS_CPP_17
-        SECTION("structured bindings")
-        {
-            json j = { {"A", 1}, {"B", 2} };
+SECTION("structured bindings")
+{
+    json j = {{"A", 1}, {"B", 2}};
 
-            std::map<std::string, int> m;
+    std::map<std::string, int> m;
 
-            for (auto const&[key, value] : j.items())
-            {
-                m.emplace(key, value);
-            }
+    for (auto const& [key, value] : j.items())
+    {
+        m.emplace(key, value);
+    }
 
-            CHECK(j.get<decltype(m)>() == m);
-        }
+    CHECK(j.get<decltype(m)>() == m);
+}
 #endif
-    }
+}
 
-    SECTION("const object")
+SECTION("const object")
+{
+    SECTION("value")
     {
-        SECTION("value")
+        const json j = {{"A", 1}, {"B", 2}};
+        int counter = 1;
+
+        for (auto i : j.items())  // NOLINT(performance-for-range-copy)
         {
-            const json j = { {"A", 1}, {"B", 2} };
-            int counter = 1;
-
-            for (auto i : j.items()) // NOLINT(performance-for-range-copy)
+            switch (counter++)
             {
-                switch (counter++)
+                case 1:
                 {
-                    case 1:
-                    {
-                        CHECK(i.key() == "A");
-                        CHECK(i.value() == json(1));
-                        break;
-                    }
+                    CHECK(i.key() == "A");
+                    CHECK(i.value() == json(1));
+                    break;
+                }
 
-                    case 2:
-                    {
-                        CHECK(i.key() == "B");
-                        CHECK(i.value() == json(2));
-                        break;
-                    }
+                case 2:
+                {
+                    CHECK(i.key() == "B");
+                    CHECK(i.value() == json(2));
+                    break;
+                }
 
-                    default:
-                    {
-                        break;
-                    }
+                default:
+                {
+                    break;
                 }
             }
-
-            CHECK(counter == 3);
         }
 
-        SECTION("reference")
-        {
-            const json j = { {"A", 1}, {"B", 2} };
-            int counter = 1;
-
-            for (auto& i : j.items()) // NOLINT(readability-qualified-auto)
-            {
-                switch (counter++)
-                {
-                    case 1:
-                    {
-                        CHECK(i.key() == "A");
-                        CHECK(i.value() == json(1));
-                        break;
-                    }
-
-                    case 2:
-                    {
-                        CHECK(i.key() == "B");
-                        CHECK(i.value() == json(2));
-                        break;
-                    }
-
-                    default:
-                    {
-                        break;
-                    }
-                }
-            }
-
-            CHECK(counter == 3);
-        }
-
-        SECTION("const value")
-        {
-            const json j = { {"A", 1}, {"B", 2} };
-            int counter = 1;
-
-            for (const auto i : j.items()) // NOLINT(performance-for-range-copy)
-            {
-                switch (counter++)
-                {
-                    case 1:
-                    {
-                        CHECK(i.key() == "A");
-                        CHECK(i.value() == json(1));
-                        break;
-                    }
-
-                    case 2:
-                    {
-                        CHECK(i.key() == "B");
-                        CHECK(i.value() == json(2));
-                        break;
-                    }
-
-                    default:
-                    {
-                        break;
-                    }
-                }
-            }
-
-            CHECK(counter == 3);
-        }
-
-        SECTION("const reference")
-        {
-            const json j = { {"A", 1}, {"B", 2} };
-            int counter = 1;
-
-            for (const auto& i : j.items())
-            {
-                switch (counter++)
-                {
-                    case 1:
-                    {
-                        CHECK(i.key() == "A");
-                        CHECK(i.value() == json(1));
-                        break;
-                    }
-
-                    case 2:
-                    {
-                        CHECK(i.key() == "B");
-                        CHECK(i.value() == json(2));
-                        break;
-                    }
-
-                    default:
-                    {
-                        break;
-                    }
-                }
-            }
-
-            CHECK(counter == 3);
-        }
+        CHECK(counter == 3);
     }
 
-    SECTION("array")
+    SECTION("reference")
     {
-        SECTION("value")
+        const json j = {{"A", 1}, {"B", 2}};
+        int counter = 1;
+
+        for (auto& i : j.items())  // NOLINT(readability-qualified-auto)
         {
-            json j = { "A", "B" };
-            int counter = 1;
-
-            for (auto i : j.items()) // NOLINT(performance-for-range-copy)
+            switch (counter++)
             {
-                switch (counter++)
+                case 1:
                 {
-                    case 1:
-                    {
-                        CHECK(i.key() == "0");
-                        CHECK(i.value() == "A");
-                        break;
-                    }
+                    CHECK(i.key() == "A");
+                    CHECK(i.value() == json(1));
+                    break;
+                }
 
-                    case 2:
-                    {
-                        CHECK(i.key() == "1");
-                        CHECK(i.value() == "B");
-                        break;
-                    }
+                case 2:
+                {
+                    CHECK(i.key() == "B");
+                    CHECK(i.value() == json(2));
+                    break;
+                }
 
-                    default:
-                    {
-                        break;
-                    }
+                default:
+                {
+                    break;
                 }
             }
-
-            CHECK(counter == 3);
         }
 
-        SECTION("reference")
-        {
-            json j = { "A", "B" };
-            int counter = 1;
-
-            for (auto& i : j.items()) // NOLINT(readability-qualified-auto)
-            {
-                switch (counter++)
-                {
-                    case 1:
-                    {
-                        CHECK(i.key() == "0");
-                        CHECK(i.value() == "A");
-
-                        // change the value
-                        i.value() = "AA";
-                        CHECK(i.value() == "AA");
-                        break;
-                    }
-
-                    case 2:
-                    {
-                        CHECK(i.key() == "1");
-                        CHECK(i.value() == "B");
-
-                        // change the value
-                        i.value() = "BB";
-                        CHECK(i.value() == "BB");
-                        break;
-                    }
-
-                    default:
-                    {
-                        break;
-                    }
-                }
-            }
-
-            CHECK(counter == 3);
-
-            // check if values where changed
-            CHECK(j == json({ "AA", "BB" }));
-        }
-
-        SECTION("const value")
-        {
-            json j = { "A", "B" };
-            int counter = 1;
-
-            for (const auto i : j.items()) // NOLINT(performance-for-range-copy)
-            {
-                switch (counter++)
-                {
-                    case 1:
-                    {
-                        CHECK(i.key() == "0");
-                        CHECK(i.value() == "A");
-                        break;
-                    }
-
-                    case 2:
-                    {
-                        CHECK(i.key() == "1");
-                        CHECK(i.value() == "B");
-                        break;
-                    }
-
-                    default:
-                    {
-                        break;
-                    }
-                }
-            }
-
-            CHECK(counter == 3);
-        }
-
-        SECTION("const reference")
-        {
-            json j = { "A", "B" };
-            int counter = 1;
-
-            for (const auto& i : j.items())
-            {
-                switch (counter++)
-                {
-                    case 1:
-                    {
-                        CHECK(i.key() == "0");
-                        CHECK(i.value() == "A");
-                        break;
-                    }
-
-                    case 2:
-                    {
-                        CHECK(i.key() == "1");
-                        CHECK(i.value() == "B");
-                        break;
-                    }
-
-                    default:
-                    {
-                        break;
-                    }
-                }
-            }
-
-            CHECK(counter == 3);
-        }
+        CHECK(counter == 3);
     }
 
-    SECTION("const array")
+    SECTION("const value")
     {
-        SECTION("value")
+        const json j = {{"A", 1}, {"B", 2}};
+        int counter = 1;
+
+        for (const auto i : j.items())  // NOLINT(performance-for-range-copy)
         {
-            const json j = { "A", "B" };
-            int counter = 1;
-
-            for (auto i : j.items()) // NOLINT(performance-for-range-copy)
+            switch (counter++)
             {
-                switch (counter++)
+                case 1:
                 {
-                    case 1:
-                    {
-                        CHECK(i.key() == "0");
-                        CHECK(i.value() == "A");
-                        break;
-                    }
+                    CHECK(i.key() == "A");
+                    CHECK(i.value() == json(1));
+                    break;
+                }
 
-                    case 2:
-                    {
-                        CHECK(i.key() == "1");
-                        CHECK(i.value() == "B");
-                        break;
-                    }
+                case 2:
+                {
+                    CHECK(i.key() == "B");
+                    CHECK(i.value() == json(2));
+                    break;
+                }
 
-                    default:
-                    {
-                        break;
-                    }
+                default:
+                {
+                    break;
                 }
             }
-
-            CHECK(counter == 3);
         }
 
-        SECTION("reference")
-        {
-            const json j = { "A", "B" };
-            int counter = 1;
-
-            for (auto& i : j.items()) // NOLINT(readability-qualified-auto)
-            {
-                switch (counter++)
-                {
-                    case 1:
-                    {
-                        CHECK(i.key() == "0");
-                        CHECK(i.value() == "A");
-                        break;
-                    }
-
-                    case 2:
-                    {
-                        CHECK(i.key() == "1");
-                        CHECK(i.value() == "B");
-                        break;
-                    }
-
-                    default:
-                    {
-                        break;
-                    }
-                }
-            }
-
-            CHECK(counter == 3);
-        }
-
-        SECTION("const value")
-        {
-            const json j = { "A", "B" };
-            int counter = 1;
-
-            for (const auto i : j.items()) // NOLINT(performance-for-range-copy)
-            {
-                switch (counter++)
-                {
-                    case 1:
-                    {
-                        CHECK(i.key() == "0");
-                        CHECK(i.value() == "A");
-                        break;
-                    }
-
-                    case 2:
-                    {
-                        CHECK(i.key() == "1");
-                        CHECK(i.value() == "B");
-                        break;
-                    }
-
-                    default:
-                    {
-                        break;
-                    }
-                }
-            }
-
-            CHECK(counter == 3);
-        }
-
-        SECTION("const reference")
-        {
-            const json j = { "A", "B" };
-            int counter = 1;
-
-            for (const auto& i : j.items())
-            {
-                switch (counter++)
-                {
-                    case 1:
-                    {
-                        CHECK(i.key() == "0");
-                        CHECK(i.value() == "A");
-                        break;
-                    }
-
-                    case 2:
-                    {
-                        CHECK(i.key() == "1");
-                        CHECK(i.value() == "B");
-                        break;
-                    }
-
-                    default:
-                    {
-                        break;
-                    }
-                }
-            }
-
-            CHECK(counter == 3);
-        }
+        CHECK(counter == 3);
     }
 
-    SECTION("primitive")
+    SECTION("const reference")
     {
-        SECTION("value")
+        const json j = {{"A", 1}, {"B", 2}};
+        int counter = 1;
+
+        for (const auto& i : j.items())
         {
-            json j = 1;
-            int counter = 1;
-
-            for (auto i : j.items()) // NOLINT(performance-for-range-copy)
+            switch (counter++)
             {
-                ++counter;
-                CHECK(i.key() == "");
-                CHECK(i.value() == json(1));
-            }
+                case 1:
+                {
+                    CHECK(i.key() == "A");
+                    CHECK(i.value() == json(1));
+                    break;
+                }
 
-            CHECK(counter == 2);
+                case 2:
+                {
+                    CHECK(i.key() == "B");
+                    CHECK(i.value() == json(2));
+                    break;
+                }
+
+                default:
+                {
+                    break;
+                }
+            }
         }
 
-        SECTION("reference")
-        {
-            json j = 1;
-            int counter = 1;
-
-            for (auto& i : j.items()) // NOLINT(readability-qualified-auto)
-            {
-                ++counter;
-                CHECK(i.key() == "");
-                CHECK(i.value() == json(1));
-
-                // change value
-                i.value() = json(2);
-            }
-
-            CHECK(counter == 2);
-
-            // check if value has changed
-            CHECK(j == json(2));
-        }
-
-        SECTION("const value")
-        {
-            json j = 1;
-            int counter = 1;
-
-            for (const auto i : j.items()) // NOLINT(performance-for-range-copy)
-            {
-                ++counter;
-                CHECK(i.key() == "");
-                CHECK(i.value() == json(1));
-            }
-
-            CHECK(counter == 2);
-        }
-
-        SECTION("const reference")
-        {
-            json j = 1;
-            int counter = 1;
-
-            for (const auto& i : j.items())
-            {
-                ++counter;
-                CHECK(i.key() == "");
-                CHECK(i.value() == json(1));
-            }
-
-            CHECK(counter == 2);
-        }
+        CHECK(counter == 3);
     }
+}
 
-    SECTION("const primitive")
+SECTION("array")
+{
+    SECTION("value")
     {
-        SECTION("value")
+        json j = {"A", "B"};
+        int counter = 1;
+
+        for (auto i : j.items())  // NOLINT(performance-for-range-copy)
         {
-            const json j = 1;
-            int counter = 1;
-
-            for (auto i : j.items()) // NOLINT(performance-for-range-copy)
+            switch (counter++)
             {
-                ++counter;
-                CHECK(i.key() == "");
-                CHECK(i.value() == json(1));
-            }
+                case 1:
+                {
+                    CHECK(i.key() == "0");
+                    CHECK(i.value() == "A");
+                    break;
+                }
 
-            CHECK(counter == 2);
+                case 2:
+                {
+                    CHECK(i.key() == "1");
+                    CHECK(i.value() == "B");
+                    break;
+                }
+
+                default:
+                {
+                    break;
+                }
+            }
         }
 
-        SECTION("reference")
-        {
-            const json j = 1;
-            int counter = 1;
-
-            for (auto& i : j.items()) // NOLINT(readability-qualified-auto)
-            {
-                ++counter;
-                CHECK(i.key() == "");
-                CHECK(i.value() == json(1));
-            }
-
-            CHECK(counter == 2);
-        }
-
-        SECTION("const value")
-        {
-            const json j = 1;
-            int counter = 1;
-
-            for (const auto i : j.items()) // NOLINT(performance-for-range-copy)
-            {
-                ++counter;
-                CHECK(i.key() == "");
-                CHECK(i.value() == json(1));
-            }
-
-            CHECK(counter == 2);
-        }
-
-        SECTION("const reference")
-        {
-            const json j = 1;
-            int counter = 1;
-
-            for (const auto& i : j.items())
-            {
-                ++counter;
-                CHECK(i.key() == "");
-                CHECK(i.value() == json(1));
-            }
-
-            CHECK(counter == 2);
-        }
+        CHECK(counter == 3);
     }
+
+    SECTION("reference")
+    {
+        json j = {"A", "B"};
+        int counter = 1;
+
+        for (auto& i : j.items())  // NOLINT(readability-qualified-auto)
+        {
+            switch (counter++)
+            {
+                case 1:
+                {
+                    CHECK(i.key() == "0");
+                    CHECK(i.value() == "A");
+
+                    // change the value
+                    i.value() = "AA";
+                    CHECK(i.value() == "AA");
+                    break;
+                }
+
+                case 2:
+                {
+                    CHECK(i.key() == "1");
+                    CHECK(i.value() == "B");
+
+                    // change the value
+                    i.value() = "BB";
+                    CHECK(i.value() == "BB");
+                    break;
+                }
+
+                default:
+                {
+                    break;
+                }
+            }
+        }
+
+        CHECK(counter == 3);
+
+        // check if values where changed
+        CHECK(j == json({"AA", "BB"}));
+    }
+
+    SECTION("const value")
+    {
+        json j = {"A", "B"};
+        int counter = 1;
+
+        for (const auto i : j.items())  // NOLINT(performance-for-range-copy)
+        {
+            switch (counter++)
+            {
+                case 1:
+                {
+                    CHECK(i.key() == "0");
+                    CHECK(i.value() == "A");
+                    break;
+                }
+
+                case 2:
+                {
+                    CHECK(i.key() == "1");
+                    CHECK(i.value() == "B");
+                    break;
+                }
+
+                default:
+                {
+                    break;
+                }
+            }
+        }
+
+        CHECK(counter == 3);
+    }
+
+    SECTION("const reference")
+    {
+        json j = {"A", "B"};
+        int counter = 1;
+
+        for (const auto& i : j.items())
+        {
+            switch (counter++)
+            {
+                case 1:
+                {
+                    CHECK(i.key() == "0");
+                    CHECK(i.value() == "A");
+                    break;
+                }
+
+                case 2:
+                {
+                    CHECK(i.key() == "1");
+                    CHECK(i.value() == "B");
+                    break;
+                }
+
+                default:
+                {
+                    break;
+                }
+            }
+        }
+
+        CHECK(counter == 3);
+    }
+}
+
+SECTION("const array")
+{
+    SECTION("value")
+    {
+        const json j = {"A", "B"};
+        int counter = 1;
+
+        for (auto i : j.items())  // NOLINT(performance-for-range-copy)
+        {
+            switch (counter++)
+            {
+                case 1:
+                {
+                    CHECK(i.key() == "0");
+                    CHECK(i.value() == "A");
+                    break;
+                }
+
+                case 2:
+                {
+                    CHECK(i.key() == "1");
+                    CHECK(i.value() == "B");
+                    break;
+                }
+
+                default:
+                {
+                    break;
+                }
+            }
+        }
+
+        CHECK(counter == 3);
+    }
+
+    SECTION("reference")
+    {
+        const json j = {"A", "B"};
+        int counter = 1;
+
+        for (auto& i : j.items())  // NOLINT(readability-qualified-auto)
+        {
+            switch (counter++)
+            {
+                case 1:
+                {
+                    CHECK(i.key() == "0");
+                    CHECK(i.value() == "A");
+                    break;
+                }
+
+                case 2:
+                {
+                    CHECK(i.key() == "1");
+                    CHECK(i.value() == "B");
+                    break;
+                }
+
+                default:
+                {
+                    break;
+                }
+            }
+        }
+
+        CHECK(counter == 3);
+    }
+
+    SECTION("const value")
+    {
+        const json j = {"A", "B"};
+        int counter = 1;
+
+        for (const auto i : j.items())  // NOLINT(performance-for-range-copy)
+        {
+            switch (counter++)
+            {
+                case 1:
+                {
+                    CHECK(i.key() == "0");
+                    CHECK(i.value() == "A");
+                    break;
+                }
+
+                case 2:
+                {
+                    CHECK(i.key() == "1");
+                    CHECK(i.value() == "B");
+                    break;
+                }
+
+                default:
+                {
+                    break;
+                }
+            }
+        }
+
+        CHECK(counter == 3);
+    }
+
+    SECTION("const reference")
+    {
+        const json j = {"A", "B"};
+        int counter = 1;
+
+        for (const auto& i : j.items())
+        {
+            switch (counter++)
+            {
+                case 1:
+                {
+                    CHECK(i.key() == "0");
+                    CHECK(i.value() == "A");
+                    break;
+                }
+
+                case 2:
+                {
+                    CHECK(i.key() == "1");
+                    CHECK(i.value() == "B");
+                    break;
+                }
+
+                default:
+                {
+                    break;
+                }
+            }
+        }
+
+        CHECK(counter == 3);
+    }
+}
+
+SECTION("primitive")
+{
+    SECTION("value")
+    {
+        json j = 1;
+        int counter = 1;
+
+        for (auto i : j.items())  // NOLINT(performance-for-range-copy)
+        {
+            ++counter;
+            CHECK(i.key() == "");
+            CHECK(i.value() == json(1));
+        }
+
+        CHECK(counter == 2);
+    }
+
+    SECTION("reference")
+    {
+        json j = 1;
+        int counter = 1;
+
+        for (auto& i : j.items())  // NOLINT(readability-qualified-auto)
+        {
+            ++counter;
+            CHECK(i.key() == "");
+            CHECK(i.value() == json(1));
+
+            // change value
+            i.value() = json(2);
+        }
+
+        CHECK(counter == 2);
+
+        // check if value has changed
+        CHECK(j == json(2));
+    }
+
+    SECTION("const value")
+    {
+        json j = 1;
+        int counter = 1;
+
+        for (const auto i : j.items())  // NOLINT(performance-for-range-copy)
+        {
+            ++counter;
+            CHECK(i.key() == "");
+            CHECK(i.value() == json(1));
+        }
+
+        CHECK(counter == 2);
+    }
+
+    SECTION("const reference")
+    {
+        json j = 1;
+        int counter = 1;
+
+        for (const auto& i : j.items())
+        {
+            ++counter;
+            CHECK(i.key() == "");
+            CHECK(i.value() == json(1));
+        }
+
+        CHECK(counter == 2);
+    }
+}
+
+SECTION("const primitive")
+{
+    SECTION("value")
+    {
+        const json j = 1;
+        int counter = 1;
+
+        for (auto i : j.items())  // NOLINT(performance-for-range-copy)
+        {
+            ++counter;
+            CHECK(i.key() == "");
+            CHECK(i.value() == json(1));
+        }
+
+        CHECK(counter == 2);
+    }
+
+    SECTION("reference")
+    {
+        const json j = 1;
+        int counter = 1;
+
+        for (auto& i : j.items())  // NOLINT(readability-qualified-auto)
+        {
+            ++counter;
+            CHECK(i.key() == "");
+            CHECK(i.value() == json(1));
+        }
+
+        CHECK(counter == 2);
+    }
+
+    SECTION("const value")
+    {
+        const json j = 1;
+        int counter = 1;
+
+        for (const auto i : j.items())  // NOLINT(performance-for-range-copy)
+        {
+            ++counter;
+            CHECK(i.key() == "");
+            CHECK(i.value() == json(1));
+        }
+
+        CHECK(counter == 2);
+    }
+
+    SECTION("const reference")
+    {
+        const json j = 1;
+        int counter = 1;
+
+        for (const auto& i : j.items())
+        {
+            ++counter;
+            CHECK(i.key() == "");
+            CHECK(i.value() == json(1));
+        }
+
+        CHECK(counter == 2);
+    }
+}
 }
 
 DOCTEST_GCC_SUPPRESS_WARNING_POP

@@ -11,8 +11,7 @@
 #include <nlohmann/detail/abi_macros.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
+namespace detail {
 
 /*!
 @brief replace all occurrences of a substring by another string
@@ -28,14 +27,13 @@ enforced with an assertion.**
 @since version 2.0.0
 */
 template<typename StringType>
-inline void replace_substring(StringType& s, const StringType& f,
-                              const StringType& t)
+inline void replace_substring(StringType& s, const StringType& f, const StringType& t)
 {
     JSON_ASSERT(!f.empty());
-    for (auto pos = s.find(f);                // find first occurrence of f
-            pos != StringType::npos;          // make sure f was found
-            s.replace(pos, f.size(), t),      // replace with t, and
-            pos = s.find(f, pos + t.size()))  // find next occurrence of f
+    for (auto pos = s.find(f);             // find first occurrence of f
+         pos != StringType::npos;          // make sure f was found
+         s.replace(pos, f.size(), t),      // replace with t, and
+         pos = s.find(f, pos + t.size()))  // find next occurrence of f
     {}
 }
 

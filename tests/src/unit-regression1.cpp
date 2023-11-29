@@ -15,15 +15,15 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 #ifdef JSON_TEST_NO_GLOBAL_UDLS
-    using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
+using namespace nlohmann::literals;  // NOLINT(google-build-using-namespace)
 #endif
 
-#include <fstream>
-#include <sstream>
-#include <list>
-#include <limits>
-#include <cstdio>
 #include "make_test_data_available.hpp"
+#include <cstdio>
+#include <fstream>
+#include <limits>
+#include <list>
+#include <sstream>
 
 #ifdef JSON_HAS_CPP_17
     #include <variant>
@@ -43,57 +43,54 @@ using my_json = nlohmann::basic_json<my_workaround_fifo_map>;
 // for #977
 /////////////////////////////////////////////////////////////////////
 
-namespace ns
-{
+namespace ns {
 struct foo
 {
     int x;
 };
 
-template <typename, typename SFINAE = void>
+template<typename, typename SFINAE = void>
 struct foo_serializer;
 
 template<typename T>
 struct foo_serializer<T, typename std::enable_if<std::is_same<foo, T>::value>::type>
 {
-    template <typename BasicJsonType>
+    template<typename BasicJsonType>
     static void to_json(BasicJsonType& j, const T& value)
     {
         j = BasicJsonType{{"x", value.x}};
     }
-    template <typename BasicJsonType>
-    static void from_json(const BasicJsonType& j, T& value)     // !!!
+    template<typename BasicJsonType>
+    static void from_json(const BasicJsonType& j, T& value)  // !!!
     {
         nlohmann::from_json(j.at("x"), value.x);
     }
 };
 
 template<typename T>
-struct foo_serializer < T, typename std::enable_if < !std::is_same<foo, T>::value >::type >
+struct foo_serializer<T, typename std::enable_if<!std::is_same<foo, T>::value>::type>
 {
-    template <typename BasicJsonType>
-    static void to_json(BasicJsonType& j, const T& value) noexcept // NOLINT(bugprone-exception-escape)
+    template<typename BasicJsonType>
+    static void to_json(BasicJsonType& j, const T& value) noexcept  // NOLINT(bugprone-exception-escape)
     {
         ::nlohmann::to_json(j, value);
     }
-    template <typename BasicJsonType>
-    static void from_json(const BasicJsonType& j, T& value)   //!!!
+    template<typename BasicJsonType>
+    static void from_json(const BasicJsonType& j, T& value)  //!!!
     {
         ::nlohmann::from_json(j, value);
     }
 };
-} // namespace ns
+}  // namespace ns
 
-using foo_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t,
-      std::uint64_t, double, std::allocator, ns::foo_serializer, std::vector<std::uint8_t>>;
+using foo_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, double, std::allocator, ns::foo_serializer, std::vector<std::uint8_t>>;
 
 /////////////////////////////////////////////////////////////////////
 // for #805
 /////////////////////////////////////////////////////////////////////
 
-namespace
-{
-struct nocopy // NOLINT(cppcoreguidelines-special-member-functions,hicpp-special-member-functions)
+namespace {
+struct nocopy  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-special-member-functions)
 {
     nocopy() = default;
     nocopy(const nocopy&) = delete;
@@ -108,7 +105,7 @@ struct nocopy // NOLINT(cppcoreguidelines-special-member-functions,hicpp-special
         j = {{"val", n.val}};
     }
 };
-} // namespace
+}  // namespace
 
 TEST_CASE("regression tests 1")
 {
@@ -171,7 +168,11 @@ TEST_CASE("regression tests 1")
 
     SECTION("pull request #71 - handle enum type")
     {
-        enum { t = 0, u = 102};
+        enum
+        {
+            t = 0,
+            u = 102
+        };
         json j = json::array();
         j.push_back(t);
 
@@ -187,9 +188,7 @@ TEST_CASE("regression tests 1")
         static_assert(std::is_same<decltype(anon_enum_value), decltype(u)>::value, "types must be the same");
 
         j.push_back(json::object(
-        {
-            {"game_type", t}
-        }));
+            {{"game_type", t}}));
     }
 
     SECTION("issue #76 - dump() / parse() not idempotent")
@@ -258,22 +257,22 @@ TEST_CASE("regression tests 1")
         // tests for correct handling of non-standard integers that overflow the type selected by the user
 
         // unsigned integer object creation - expected to wrap and still be stored as an integer
-        j = 4294967296U; // 2^32
+        j = 4294967296U;  // 2^32
         CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_unsigned));
         CHECK(j.get<uint32_t>() == 0);  // Wrap
 
         // unsigned integer parsing - expected to overflow and be stored as a float
-        j = custom_json::parse("4294967296"); // 2^32
+        j = custom_json::parse("4294967296");  // 2^32
         CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_float));
         CHECK(j.get<float>() == 4294967296.0f);
 
         // integer object creation - expected to wrap and still be stored as an integer
-        j = -2147483649LL; // -2^31-1
+        j = -2147483649LL;  // -2^31-1
         CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_integer));
         CHECK(j.get<int32_t>() == 2147483647);  // Wrap
 
         // integer parsing - expected to overflow and be stored as a float with rounding
-        j = custom_json::parse("-2147483649"); // -2^31
+        j = custom_json::parse("-2147483649");  // -2^31
         CHECK(static_cast<int>(j.type()) == static_cast<int>(custom_json::value_t::number_float));
         CHECK(j.get<float>() == -2147483650.0f);
     }
@@ -298,8 +297,7 @@ TEST_CASE("regression tests 1")
             json::reverse_iterator rit = a.rbegin();
             ++rit;
             json b = {0, 0, 0};
-            std::transform(rit, a.rend(), b.rbegin(), [](json el)
-            {
+            std::transform(rit, a.rend(), b.rbegin(), [](json el) {
                 return el;
             });
             CHECK(b == json({0, 1, 2}));
@@ -307,8 +305,7 @@ TEST_CASE("regression tests 1")
         {
             json a = {1, 2, 3};
             json b = {0, 0, 0};
-            std::transform(++a.rbegin(), a.rend(), b.rbegin(), [](json el)
-            {
+            std::transform(++a.rbegin(), a.rend(), b.rbegin(), [](json el) {
                 return el;
             });
             CHECK(b == json({0, 1, 2}));
@@ -318,11 +315,10 @@ TEST_CASE("regression tests 1")
     SECTION("issue #100 - failed to iterator json object with reverse_iterator")
     {
         json config =
-        {
-            { "111", 111 },
-            { "112", 112 },
-            { "113", 113 }
-        };
+            {
+                {"111", 111},
+                {"112", 112},
+                {"113", 113}};
 
         std::stringstream ss;
 
@@ -342,7 +338,9 @@ TEST_CASE("regression tests 1")
     SECTION("issue #101 - binary string causes numbers to be dumped as hex")
     {
         int64_t const number = 10;
-        std::string const bytes{"\x00" "asdf\n", 6};
+        std::string const bytes{"\x00"
+                                "asdf\n",
+                                6};
         json j;
         j["int64"] = number;
         j["binary string"] = bytes;
@@ -374,11 +372,11 @@ TEST_CASE("regression tests 1")
 
         // improve coverage
         o["int"] = 1;
-#if JSON_DIAGNOSTICS
+    #if JSON_DIAGNOSTICS
         CHECK_THROWS_WITH_AS(s2 = o["int"], "[json.exception.type_error.302] (/int) type must be string, but is number", json::type_error);
-#else
+    #else
         CHECK_THROWS_WITH_AS(s2 = o["int"], "[json.exception.type_error.302] type must be string, but is number", json::type_error);
-#endif
+    #endif
     }
 #endif
 
@@ -392,18 +390,18 @@ TEST_CASE("regression tests 1")
         json j;
 
         // Non-const access with key as "char []"
-        char array_key[] = "Key1"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        char array_key[] = "Key1";  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         CHECK_NOTHROW(j[array_key] = 1);
         CHECK(j[array_key] == json(1));
 
         // Non-const access with key as "const char[]"
-        const char const_array_key[] = "Key2"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        const char const_array_key[] = "Key2";  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         CHECK_NOTHROW(j[const_array_key] = 2);
         CHECK(j[const_array_key] == json(2));
 
         // Non-const access with key as "char *"
-        char _ptr_key[] = "Key3"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-        char* ptr_key = &_ptr_key[0]; // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+        char _ptr_key[] = "Key3";      // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        char* ptr_key = &_ptr_key[0];  // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
         CHECK_NOTHROW(j[ptr_key] = 3);
         CHECK(j[ptr_key] == json(3));
 
@@ -476,8 +474,7 @@ TEST_CASE("regression tests 1")
         CHECK(j_double.get<double>() == 1.23e35);
 
         // long double
-        nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, long double>
-        const j_long_double = 1.23e45L;
+        nlohmann::basic_json<std::map, std::vector, std::string, bool, int64_t, uint64_t, long double> const j_long_double = 1.23e45L;
         CHECK(j_long_double.get<long double>() == 1.23e45L);
     }
 
@@ -596,9 +593,9 @@ TEST_CASE("regression tests 1")
     SECTION("issue #283 - value() does not work with _json_pointer types")
     {
         json j =
-        {
-            {"object", {{"key1", 1}, {"key2", 2}}},
-        };
+            {
+                {"object", {{"key1", 1}, {"key2", 2}}},
+            };
 
         int at_integer{j.at("/object/key2"_json_pointer)};
         int val_integer = j.value("/object/key2"_json_pointer, 0);
@@ -618,10 +615,9 @@ TEST_CASE("regression tests 1")
     SECTION("issue #306 - Parsing fails without space at end of file")
     {
         for (const auto* filename :
-                {
-                    TEST_DATA_DIRECTORY "/regression/broken_file.json",
-                    TEST_DATA_DIRECTORY "/regression/working_file.json"
-                })
+             {
+                 TEST_DATA_DIRECTORY "/regression/broken_file.json",
+                 TEST_DATA_DIRECTORY "/regression/working_file.json"})
         {
             CAPTURE(filename)
             json j;
@@ -633,12 +629,11 @@ TEST_CASE("regression tests 1")
     SECTION("issue #310 - make json_benchmarks no longer working in 2.0.4")
     {
         for (const auto* filename :
-                {
-                    TEST_DATA_DIRECTORY "/regression/floats.json",
-                    TEST_DATA_DIRECTORY "/regression/signed_ints.json",
-                    TEST_DATA_DIRECTORY "/regression/unsigned_ints.json",
-                    TEST_DATA_DIRECTORY "/regression/small_signed_ints.json"
-                })
+             {
+                 TEST_DATA_DIRECTORY "/regression/floats.json",
+                 TEST_DATA_DIRECTORY "/regression/signed_ints.json",
+                 TEST_DATA_DIRECTORY "/regression/unsigned_ints.json",
+                 TEST_DATA_DIRECTORY "/regression/small_signed_ints.json"})
         {
             CAPTURE(filename)
             json j;
@@ -662,8 +657,7 @@ TEST_CASE("regression tests 1")
 
     SECTION("issue #360 - Loss of precision when serializing <double>")
     {
-        auto check_roundtrip = [](double number)
-        {
+        auto check_roundtrip = [](double number) {
             CAPTURE(number)
 
             json j = number;
@@ -714,7 +708,7 @@ TEST_CASE("regression tests 1")
         check_roundtrip(83623297654460.33);
         check_roundtrip(701466573254773.6);
         check_roundtrip(1369013370304513);
-        check_roundtrip(96963648023094720); // NOLINT(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
+        check_roundtrip(96963648023094720);  // NOLINT(bugprone-narrowing-conversions,cppcoreguidelines-narrowing-conversions)
         check_roundtrip(3.478237409280108e+17);
     }
 
@@ -754,7 +748,8 @@ TEST_CASE("regression tests 1")
             ss << "   ";
             json j;
             CHECK_THROWS_WITH_AS(ss >> j,
-                                 "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
+                                 "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal",
+                                 json::parse_error&);
         }
 
         SECTION("one value")
@@ -777,7 +772,8 @@ TEST_CASE("regression tests 1")
             CHECK(j == 222);
 
             CHECK_THROWS_WITH_AS(ss >> j,
-                                 "[json.exception.parse_error.101] parse error at line 2, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
+                                 "[json.exception.parse_error.101] parse error at line 2, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal",
+                                 json::parse_error&);
         }
 
         SECTION("whitespace + one value")
@@ -900,7 +896,7 @@ TEST_CASE("regression tests 1")
     SECTION("issue #405 - Heap-buffer-overflow (OSS-Fuzz issue 342)")
     {
         // original test case
-        std::vector<uint8_t> const vec {0x65, 0xf5, 0x0a, 0x48, 0x21};
+        std::vector<uint8_t> const vec{0x65, 0xf5, 0x0a, 0x48, 0x21};
         json _;
         CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec), "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing CBOR string: unexpected end of input", json::parse_error&);
     }
@@ -910,23 +906,23 @@ TEST_CASE("regression tests 1")
         json _;
 
         // original test case: incomplete float64
-        std::vector<uint8_t> const vec1 {0xcb, 0x8f, 0x0a};
+        std::vector<uint8_t> const vec1{0xcb, 0x8f, 0x0a};
         CHECK_THROWS_WITH_AS(_ = json::from_msgpack(vec1), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
 
         // related test case: incomplete float32
-        std::vector<uint8_t> const vec2 {0xca, 0x8f, 0x0a};
+        std::vector<uint8_t> const vec2{0xca, 0x8f, 0x0a};
         CHECK_THROWS_WITH_AS(_ = json::from_msgpack(vec2), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
 
         // related test case: incomplete Half-Precision Float (CBOR)
-        std::vector<uint8_t> const vec3 {0xf9, 0x8f};
+        std::vector<uint8_t> const vec3{0xf9, 0x8f};
         CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec3), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
 
         // related test case: incomplete Single-Precision Float (CBOR)
-        std::vector<uint8_t> const vec4 {0xfa, 0x8f, 0x0a};
+        std::vector<uint8_t> const vec4{0xfa, 0x8f, 0x0a};
         CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec4), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
 
         // related test case: incomplete Double-Precision Float (CBOR)
-        std::vector<uint8_t> const vec5 {0xfb, 0x8f, 0x0a};
+        std::vector<uint8_t> const vec5{0xfb, 0x8f, 0x0a};
         CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec5), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
     }
 
@@ -935,17 +931,73 @@ TEST_CASE("regression tests 1")
         json _;
 
         // original test case
-        std::vector<uint8_t> const vec1 {0x87};
+        std::vector<uint8_t> const vec1{0x87};
         CHECK_THROWS_WITH_AS(_ = json::from_msgpack(vec1), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack string: unexpected end of input", json::parse_error&);
 
         // more test cases for MessagePack
         for (auto b :
-                {
-                    0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f, // fixmap
-                    0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d, 0x9e, 0x9f, // fixarray
-                    0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7, 0xa8, 0xa9, 0xaa, 0xab, 0xac, 0xad, 0xae, 0xaf, // fixstr
-                    0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf
-                })
+             {
+                 0x81,
+                 0x82,
+                 0x83,
+                 0x84,
+                 0x85,
+                 0x86,
+                 0x87,
+                 0x88,
+                 0x89,
+                 0x8a,
+                 0x8b,
+                 0x8c,
+                 0x8d,
+                 0x8e,
+                 0x8f,  // fixmap
+                 0x91,
+                 0x92,
+                 0x93,
+                 0x94,
+                 0x95,
+                 0x96,
+                 0x97,
+                 0x98,
+                 0x99,
+                 0x9a,
+                 0x9b,
+                 0x9c,
+                 0x9d,
+                 0x9e,
+                 0x9f,  // fixarray
+                 0xa1,
+                 0xa2,
+                 0xa3,
+                 0xa4,
+                 0xa5,
+                 0xa6,
+                 0xa7,
+                 0xa8,
+                 0xa9,
+                 0xaa,
+                 0xab,
+                 0xac,
+                 0xad,
+                 0xae,
+                 0xaf,  // fixstr
+                 0xb0,
+                 0xb1,
+                 0xb2,
+                 0xb3,
+                 0xb4,
+                 0xb5,
+                 0xb6,
+                 0xb7,
+                 0xb8,
+                 0xb9,
+                 0xba,
+                 0xbb,
+                 0xbc,
+                 0xbd,
+                 0xbe,
+                 0xbf})
         {
             std::vector<uint8_t> const vec(1, static_cast<uint8_t>(b));
             CHECK_THROWS_AS(_ = json::from_msgpack(vec), json::parse_error&);
@@ -953,14 +1005,77 @@ TEST_CASE("regression tests 1")
 
         // more test cases for CBOR
         for (auto b :
-                {
-                    0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f,
-                    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, // UTF-8 string
-                    0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f,
-                    0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, // array
-                    0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7, 0xa8, 0xa9, 0xaa, 0xab, 0xac, 0xad, 0xae, 0xaf,
-                    0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7 // map
-                })
+             {
+                 0x61,
+                 0x62,
+                 0x63,
+                 0x64,
+                 0x65,
+                 0x66,
+                 0x67,
+                 0x68,
+                 0x69,
+                 0x6a,
+                 0x6b,
+                 0x6c,
+                 0x6d,
+                 0x6e,
+                 0x6f,
+                 0x70,
+                 0x71,
+                 0x72,
+                 0x73,
+                 0x74,
+                 0x75,
+                 0x76,
+                 0x77,  // UTF-8 string
+                 0x81,
+                 0x82,
+                 0x83,
+                 0x84,
+                 0x85,
+                 0x86,
+                 0x87,
+                 0x88,
+                 0x89,
+                 0x8a,
+                 0x8b,
+                 0x8c,
+                 0x8d,
+                 0x8e,
+                 0x8f,
+                 0x90,
+                 0x91,
+                 0x92,
+                 0x93,
+                 0x94,
+                 0x95,
+                 0x96,
+                 0x97,  // array
+                 0xa1,
+                 0xa2,
+                 0xa3,
+                 0xa4,
+                 0xa5,
+                 0xa6,
+                 0xa7,
+                 0xa8,
+                 0xa9,
+                 0xaa,
+                 0xab,
+                 0xac,
+                 0xad,
+                 0xae,
+                 0xaf,
+                 0xb0,
+                 0xb1,
+                 0xb2,
+                 0xb3,
+                 0xb4,
+                 0xb5,
+                 0xb6,
+                 0xb7  // map
+             })
         {
             std::vector<uint8_t> const vec(1, static_cast<uint8_t>(b));
             CHECK_THROWS_AS(_ = json::from_cbor(vec), json::parse_error&);
@@ -977,64 +1092,181 @@ TEST_CASE("regression tests 1")
         json _;
 
         // original test case: empty UTF-8 string (indefinite length)
-        std::vector<uint8_t> const vec1 {0x7f};
+        std::vector<uint8_t> const vec1{0x7f};
         CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec1), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR string: unexpected end of input", json::parse_error&);
 
         // related test case: empty array (indefinite length)
-        std::vector<uint8_t> const vec2 {0x9f};
+        std::vector<uint8_t> const vec2{0x9f};
         CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec2), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR value: unexpected end of input", json::parse_error&);
 
         // related test case: empty map (indefinite length)
-        std::vector<uint8_t> const vec3 {0xbf};
+        std::vector<uint8_t> const vec3{0xbf};
         CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec3), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR string: unexpected end of input", json::parse_error&);
     }
 
     SECTION("issue #412 - Heap-buffer-overflow (OSS-Fuzz issue 367)")
     {
         // original test case
-        std::vector<uint8_t> const vec
-        {
-            0xab, 0x98, 0x98, 0x98, 0x98, 0x98, 0x98, 0x98,
-            0x98, 0x98, 0x98, 0x98, 0x98, 0x00, 0x00, 0x00,
-            0x60, 0xab, 0x98, 0x98, 0x98, 0x98, 0x98, 0x98,
-            0x98, 0x98, 0x98, 0x98, 0x98, 0x00, 0x00, 0x00,
-            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
-            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
-            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
-            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
-            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
-            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
-            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0xa0, 0x9f,
-            0x9f, 0x97, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
-            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
-            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
-            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
-            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60,
-            0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60
-        };
+        std::vector<uint8_t> const vec{
+            0xab,
+            0x98,
+            0x98,
+            0x98,
+            0x98,
+            0x98,
+            0x98,
+            0x98,
+            0x98,
+            0x98,
+            0x98,
+            0x98,
+            0x98,
+            0x00,
+            0x00,
+            0x00,
+            0x60,
+            0xab,
+            0x98,
+            0x98,
+            0x98,
+            0x98,
+            0x98,
+            0x98,
+            0x98,
+            0x98,
+            0x98,
+            0x98,
+            0x98,
+            0x00,
+            0x00,
+            0x00,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0xa0,
+            0x9f,
+            0x9f,
+            0x97,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60,
+            0x60};
 
         json _;
         CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x98", json::parse_error&);
 
         // related test case: nonempty UTF-8 string (indefinite length)
-        std::vector<uint8_t> const vec1 {0x7f, 0x61, 0x61};
+        std::vector<uint8_t> const vec1{0x7f, 0x61, 0x61};
         CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec1), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing CBOR string: unexpected end of input", json::parse_error&);
 
         // related test case: nonempty array (indefinite length)
-        std::vector<uint8_t> const vec2 {0x9f, 0x01};
+        std::vector<uint8_t> const vec2{0x9f, 0x01};
         CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec2), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR value: unexpected end of input", json::parse_error&);
 
         // related test case: nonempty map (indefinite length)
-        std::vector<uint8_t> const vec3 {0xbf, 0x61, 0x61, 0x01};
+        std::vector<uint8_t> const vec3{0xbf, 0x61, 0x61, 0x01};
         CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec3), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing CBOR string: unexpected end of input", json::parse_error&);
     }
 
     SECTION("issue #414 - compare with literal 0)")
     {
-#define CHECK_TYPE(v) \
-    CHECK((json(v) == (v)));\
-    CHECK(((v) == json(v)));\
-    CHECK_FALSE((json(v) != (v)));\
+#define CHECK_TYPE(v)              \
+    CHECK((json(v) == (v)));       \
+    CHECK(((v) == json(v)));       \
+    CHECK_FALSE((json(v) != (v))); \
     CHECK_FALSE(((v) != json(v)));
 
         CHECK_TYPE(nullptr)
@@ -1042,7 +1274,7 @@ TEST_CASE("regression tests 1")
         CHECK_TYPE(0u)
         CHECK_TYPE(0L)
         CHECK_TYPE(0.0)
-        CHECK_TYPE("") // NOLINT(readability-container-size-empty)
+        CHECK_TYPE("")  // NOLINT(readability-container-size-empty)
 
 #undef CHECK_TYPE
     }
@@ -1050,29 +1282,109 @@ TEST_CASE("regression tests 1")
     SECTION("issue #416 - Use-of-uninitialized-value (OSS-Fuzz issue 377)")
     {
         // original test case
-        std::vector<uint8_t> const vec1
-        {
-            0x94, 0xfa, 0xfa, 0xfa, 0xfa, 0xfa, 0xfa, 0xfa,
-            0x3a, 0x96, 0x96, 0xb4, 0xb4, 0xb4, 0xb4, 0xb4,
-            0xb4, 0xb4, 0xb4, 0xb4, 0xb4, 0xb4, 0xb4, 0x71,
-            0xb4, 0xb4, 0xfa, 0xfa, 0xfa, 0xfa, 0xfa, 0x3a,
-            0x96, 0x96, 0xb4, 0xb4, 0xfa, 0x94, 0x94, 0x61,
-            0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0xfa
-        };
+        std::vector<uint8_t> const vec1{
+            0x94,
+            0xfa,
+            0xfa,
+            0xfa,
+            0xfa,
+            0xfa,
+            0xfa,
+            0xfa,
+            0x3a,
+            0x96,
+            0x96,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0x71,
+            0xb4,
+            0xb4,
+            0xfa,
+            0xfa,
+            0xfa,
+            0xfa,
+            0xfa,
+            0x3a,
+            0x96,
+            0x96,
+            0xb4,
+            0xb4,
+            0xfa,
+            0x94,
+            0x94,
+            0x61,
+            0x61,
+            0x61,
+            0x61,
+            0x61,
+            0x61,
+            0x61,
+            0x61,
+            0xfa};
 
         json _;
         CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec1), "[json.exception.parse_error.113] parse error at byte 13: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0xB4", json::parse_error&);
 
         // related test case: double-precision
-        std::vector<uint8_t> const vec2
-        {
-            0x94, 0xfa, 0xfa, 0xfa, 0xfa, 0xfa, 0xfa, 0xfa,
-            0x3a, 0x96, 0x96, 0xb4, 0xb4, 0xb4, 0xb4, 0xb4,
-            0xb4, 0xb4, 0xb4, 0xb4, 0xb4, 0xb4, 0xb4, 0x71,
-            0xb4, 0xb4, 0xfa, 0xfa, 0xfa, 0xfa, 0xfa, 0x3a,
-            0x96, 0x96, 0xb4, 0xb4, 0xfa, 0x94, 0x94, 0x61,
-            0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0xfb
-        };
+        std::vector<uint8_t> const vec2{
+            0x94,
+            0xfa,
+            0xfa,
+            0xfa,
+            0xfa,
+            0xfa,
+            0xfa,
+            0xfa,
+            0x3a,
+            0x96,
+            0x96,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0xb4,
+            0x71,
+            0xb4,
+            0xb4,
+            0xfa,
+            0xfa,
+            0xfa,
+            0xfa,
+            0xfa,
+            0x3a,
+            0x96,
+            0x96,
+            0xb4,
+            0xb4,
+            0xfa,
+            0x94,
+            0x94,
+            0x61,
+            0x61,
+            0x61,
+            0x61,
+            0x61,
+            0x61,
+            0x61,
+            0x61,
+            0xfb};
         CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec2), "[json.exception.parse_error.113] parse error at byte 13: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0xB4", json::parse_error&);
     }
 
@@ -1117,8 +1429,7 @@ TEST_CASE("regression tests 1")
 
         SECTION("std::vector")
         {
-            auto create = [](const json & j)
-            {
+            auto create = [](const json& j) {
                 std::vector<int> const v = j;
             };
 
@@ -1129,8 +1440,7 @@ TEST_CASE("regression tests 1")
 
         SECTION("std::list")
         {
-            auto create = [](const json & j)
-            {
+            auto create = [](const json& j) {
                 std::list<int> const v = j;
             };
 
@@ -1141,8 +1451,7 @@ TEST_CASE("regression tests 1")
 
         SECTION("std::forward_list")
         {
-            auto create = [](const json & j)
-            {
+            auto create = [](const json& j) {
                 std::forward_list<int> const v = j;
             };
 
@@ -1156,7 +1465,7 @@ TEST_CASE("regression tests 1")
     SECTION("issue #486 - json::value_t can't be a map's key type in VC++ 2015")
     {
         // the code below must compile with MSVC
-        std::map<json::value_t, std::string> jsonTypes ;
+        std::map<json::value_t, std::string> jsonTypes;
         jsonTypes[json::value_t::array] = "array";
     }
 
@@ -1199,28 +1508,28 @@ TEST_CASE("regression tests 1")
         CHECK(j["a"] != 4);
 
         CHECK(j["a"] <= 7);
-        CHECK(j["a"] <  7);
+        CHECK(j["a"] < 7);
         CHECK(j["a"] >= 3);
-        CHECK(j["a"] >  3);
+        CHECK(j["a"] > 3);
 
         CHECK(!(j["a"] <= 4));
-        CHECK(!(j["a"] <  4));
+        CHECK(!(j["a"] < 4));
         CHECK(!(j["a"] >= 6));
-        CHECK(!(j["a"] >  6));
+        CHECK(!(j["a"] > 6));
 
         // scalar op json
         CHECK(5 == j["a"]);
         CHECK(4 != j["a"]);
 
         CHECK(7 >= j["a"]);
-        CHECK(7 >  j["a"]);
+        CHECK(7 > j["a"]);
         CHECK(3 <= j["a"]);
-        CHECK(3 <  j["a"]);
+        CHECK(3 < j["a"]);
 
         CHECK(!(4 >= j["a"]));
-        CHECK(!(4 >  j["a"]));
+        CHECK(!(4 > j["a"]));
         CHECK(!(6 <= j["a"]));
-        CHECK(!(6 <  j["a"]));
+        CHECK(!(6 < j["a"]));
     }
 
     SECTION("issue #575 - heap-buffer-overflow (OSS-Fuzz 1400)")
@@ -1236,7 +1545,7 @@ TEST_CASE("regression tests 1")
         SECTION("example 1")
         {
             // create a map
-            std::map<std::string, int> m1 {{"key", 1}};
+            std::map<std::string, int> m1{{"key", 1}};
 
             // create and print a JSON from the map
             json const j = m1;
@@ -1251,7 +1560,7 @@ TEST_CASE("regression tests 1")
         SECTION("example 2")
         {
             // create a map
-            std::map<std::string, std::string> m1 {{"key", "val"}};
+            std::map<std::string, std::string> m1{{"key", "val"}};
 
             // create and print a JSON from the map
             json const j = m1;
@@ -1305,7 +1614,7 @@ TEST_CASE("regression tests 1")
     {
         SECTION("example 1")
         {
-            std::istringstream i1_2_3( R"({"first": "one" }{"second": "two"}3)" );
+            std::istringstream i1_2_3(R"({"first": "one" }{"second": "two"}3)");
             json j1;
             json j2;
             json j3;
@@ -1317,9 +1626,9 @@ TEST_CASE("regression tests 1")
             auto m2 = j2.get<std::map<std::string, std::string>>();
             int i3{j3};
 
-            CHECK( m1 == ( std::map<std::string, std::string> {{ "first",  "one" }} ));
-            CHECK( m2 == ( std::map<std::string, std::string> {{ "second", "two" }} ));
-            CHECK( i3 == 3 );
+            CHECK(m1 == (std::map<std::string, std::string>{{"first", "one"}}));
+            CHECK(m2 == (std::map<std::string, std::string>{{"second", "two"}}));
+            CHECK(i3 == 3);
         }
     }
 
@@ -1328,10 +1637,7 @@ TEST_CASE("regression tests 1")
         {
             std::ifstream is;
             is.exceptions(
-                is.exceptions()
-                | std::ios_base::failbit
-                | std::ios_base::badbit
-            ); // handle different exceptions as 'file not found', 'permission denied'
+                is.exceptions() | std::ios_base::failbit | std::ios_base::badbit);  // handle different exceptions as 'file not found', 'permission denied'
 
             is.open(TEST_DATA_DIRECTORY "/regression/working_file.json");
             json _;
@@ -1341,10 +1647,7 @@ TEST_CASE("regression tests 1")
         {
             std::ifstream is;
             is.exceptions(
-                is.exceptions()
-                | std::ios_base::failbit
-                | std::ios_base::badbit
-            ); // handle different exceptions as 'file not found', 'permission denied'
+                is.exceptions() | std::ios_base::failbit | std::ios_base::badbit);  // handle different exceptions as 'file not found', 'permission denied'
 
             is.open(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json.cbor",
                     std::ios_base::in | std::ios_base::binary);
@@ -1363,7 +1666,7 @@ TEST_CASE("regression tests 1")
 
     SECTION("issue #838 - incorrect parse error with binary data in keys")
     {
-        std::array<uint8_t, 28> key1 = {{ 103, 92, 117, 48, 48, 48, 55, 92, 114, 215, 126, 214, 95, 92, 34, 174, 40, 71, 38, 174, 40, 71, 38, 223, 134, 247, 127, 0 }};
+        std::array<uint8_t, 28> key1 = {{103, 92, 117, 48, 48, 48, 55, 92, 114, 215, 126, 214, 95, 92, 34, 174, 40, 71, 38, 174, 40, 71, 38, 223, 134, 247, 127, 0}};
         std::string const key1_str(reinterpret_cast<char*>(key1.data()));
         json const j = key1_str;
         CHECK_THROWS_WITH_AS(j.dump(), "[json.exception.type_error.316] invalid UTF-8 byte at index 10: 0x7E", json::type_error&);
@@ -1394,26 +1697,32 @@ TEST_CASE("regression tests 1")
                        "from": "/one/two/three",
                        "path": "/a/b/c"}])"_json;
         CHECK_THROWS_WITH_AS(model.patch(p1),
-                             "[json.exception.out_of_range.403] key 'a' not found", json::out_of_range&);
+                             "[json.exception.out_of_range.403] key 'a' not found",
+                             json::out_of_range&);
 
         auto p2 = R"([{"op": "copy",
                        "from": "/one/two/three",
                        "path": "/a/b/c"}])"_json;
         CHECK_THROWS_WITH_AS(model.patch(p2),
-                             "[json.exception.out_of_range.403] key 'a' not found", json::out_of_range&);
+                             "[json.exception.out_of_range.403] key 'a' not found",
+                             json::out_of_range&);
     }
 
     SECTION("issue #961 - incorrect parsing of indefinite length CBOR strings")
     {
         std::vector<uint8_t> const v_cbor =
-        {
-            0x7F,
-            0x64,
-            'a', 'b', 'c', 'd',
-            0x63,
-            '1', '2', '3',
-            0xFF
-        };
+            {
+                0x7F,
+                0x64,
+                'a',
+                'b',
+                'c',
+                'd',
+                0x63,
+                '1',
+                '2',
+                '3',
+                0xFF};
         json j = json::from_cbor(v_cbor);
         CHECK(j == "abcd123");
     }
@@ -1453,8 +1762,7 @@ TEST_CASE("regression tests 1")
     )";
 
         // define parser callback
-        json::parser_callback_t const cb = [](int /*depth*/, json::parse_event_t event, json & parsed)
-        {
+        json::parser_callback_t const cb = [](int /*depth*/, json::parse_event_t event, json& parsed) {
             // skip object elements with key "Thumbnail"
             return !(event == json::parse_event_t::key && parsed == json("Thumbnail"));
         };
@@ -1478,7 +1786,7 @@ TEST_CASE("regression tests 1")
         CHECK(lj.size() == 1);
         CHECK(lj["x"] == 3);
         CHECK(ff.x == 3);
-        nlohmann::json const nj = lj;                // This line works as expected
+        nlohmann::json const nj = lj;  // This line works as expected
     }
 }
 
@@ -1504,10 +1812,22 @@ TEST_CASE("regression tests, exceptions dependent")
 // the code below fails with Clang on Windows, so we need to exclude it there
 #if DOCTEST_CLANG && (defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__))
 #else
-template <typename T> class array {};
-template <typename T> class object {};
-template <typename T> class string {};
-template <typename T> class number_integer {};
-template <typename T> class number_unsigned {};
-template <typename T> class number_float {};
+template<typename T>
+class array
+{};
+template<typename T>
+class object
+{};
+template<typename T>
+class string
+{};
+template<typename T>
+class number_integer
+{};
+template<typename T>
+class number_unsigned
+{};
+template<typename T>
+class number_float
+{};
 #endif

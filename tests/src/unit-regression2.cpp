@@ -23,7 +23,7 @@
 using json = nlohmann::json;
 using ordered_json = nlohmann::ordered_json;
 #ifdef JSON_TEST_NO_GLOBAL_UDLS
-    using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
+using namespace nlohmann::literals;  // NOLINT(google-build-using-namespace)
 #endif
 
 #include <cstdio>
@@ -55,8 +55,7 @@ using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool
 /////////////////////////////////////////////////////////////////////
 // for #1647
 /////////////////////////////////////////////////////////////////////
-namespace
-{
+namespace {
 struct NonDefaultFromJsonStruct
 {};
 
@@ -73,10 +72,10 @@ enum class for_1647
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): this is a false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(for_1647,
-{
-    {for_1647::one, "one"},
-    {for_1647::two, "two"},
-})
+                             {
+                                 {for_1647::one, "one"},
+                                 {for_1647::two, "two"},
+                             })
 }  // namespace
 
 /////////////////////////////////////////////////////////////////////
@@ -87,8 +86,8 @@ struct Data
 {
     Data() = default;
     Data(std::string a_, std::string b_)
-        : a(std::move(a_))
-        , b(std::move(b_))
+      : a(std::move(a_))
+      , b(std::move(b_))
     {}
     std::string a{};
     std::string b{};
@@ -112,8 +111,7 @@ bool operator==(Data const& lhs, Data const& rhs)
 //    return !(lhs == rhs);
 //}
 
-namespace nlohmann
-{
+namespace nlohmann {
 template<>
 struct adl_serializer<NonDefaultFromJsonStruct>
 {
@@ -141,13 +139,12 @@ struct NotSerializableData
 struct NonDefaultConstructible
 {
     explicit NonDefaultConstructible(int a)
-        : x(a)
+      : x(a)
     {}
     int x;
 };
 
-namespace nlohmann
-{
+namespace nlohmann {
 template<>
 struct adl_serializer<NonDefaultConstructible>
 {
@@ -166,7 +163,7 @@ class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json>
 {
   public:
     explicit sax_no_exception(json& j)
-        : nlohmann::detail::json_sax_dom_parser<json>(j, false)
+      : nlohmann::detail::json_sax_dom_parser<json>(j, false)
     {}
 
     static bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& ex)
@@ -191,9 +188,11 @@ class my_allocator : public std::allocator<T>
     using std::allocator<T>::allocator;
 
     my_allocator() = default;
-    template<class U> my_allocator(const my_allocator<U>& /*unused*/) { }
+    template<class U>
+    my_allocator(const my_allocator<U>& /*unused*/)
+    {}
 
-    template <class U>
+    template<class U>
     struct rebind
     {
         using other = my_allocator<U>;
@@ -230,7 +229,7 @@ inline void from_json(const nlohmann::json& j, FooBar& fb)
 // for #3171
 /////////////////////////////////////////////////////////////////////
 
-struct for_3171_base // NOLINT(cppcoreguidelines-special-member-functions)
+struct for_3171_base  // NOLINT(cppcoreguidelines-special-member-functions)
 {
     for_3171_base(const std::string& /*unused*/ = {}) {}
     virtual ~for_3171_base() = default;
@@ -246,7 +245,7 @@ struct for_3171_base // NOLINT(cppcoreguidelines-special-member-functions)
 struct for_3171_derived : public for_3171_base
 {
     for_3171_derived() = default;
-    explicit for_3171_derived(const std::string& /*unused*/) { }
+    explicit for_3171_derived(const std::string& /*unused*/) {}
 };
 
 inline void from_json(const json& j, for_3171_base& tb)
@@ -277,7 +276,7 @@ inline void from_json(const json& j, for_3312& obj)
 struct for_3204_foo
 {
     for_3204_foo() = default;
-    explicit for_3204_foo(std::string /*unused*/) {} // NOLINT(performance-unnecessary-value-param)
+    explicit for_3204_foo(std::string /*unused*/) {}  // NOLINT(performance-unnecessary-value-param)
 };
 
 struct for_3204_bar
@@ -289,10 +288,12 @@ struct for_3204_bar
         constructed_from_json = 2
     };
 
-    explicit for_3204_bar(std::function<void(for_3204_foo)> /*unused*/) noexcept // NOLINT(performance-unnecessary-value-param)
-        : constructed_from(constructed_from_foo) {}
-    explicit for_3204_bar(std::function<void(json)> /*unused*/) noexcept // NOLINT(performance-unnecessary-value-param)
-        : constructed_from(constructed_from_json) {}
+    explicit for_3204_bar(std::function<void(for_3204_foo)> /*unused*/) noexcept  // NOLINT(performance-unnecessary-value-param)
+      : constructed_from(constructed_from_foo)
+    {}
+    explicit for_3204_bar(std::function<void(json)> /*unused*/) noexcept  // NOLINT(performance-unnecessary-value-param)
+      : constructed_from(constructed_from_json)
+    {}
 
     constructed_from_t constructed_from = constructed_from_none;
 };
@@ -303,9 +304,12 @@ struct for_3204_bar
 
 struct for_3333 final
 {
-    for_3333(int x_ = 0, int y_ = 0) : x(x_), y(y_) {}
+    for_3333(int x_ = 0, int y_ = 0)
+      : x(x_)
+      , y(y_)
+    {}
 
-    template <class T>
+    template<class T>
     for_3333(const T& /*unused*/)
     {
         CHECK(false);
@@ -315,9 +319,9 @@ struct for_3333 final
     int y = 0;
 };
 
-template <>
+template<>
 inline for_3333::for_3333(const json& j)
-    : for_3333(j.value("x", 0), j.value("y", 0))
+  : for_3333(j.value("x", 0), j.value("y", 0))
 {}
 
 TEST_CASE("regression tests 2")
@@ -359,8 +363,7 @@ TEST_CASE("regression tests 2")
                ]
              })";
 
-        const json::parser_callback_t cb = [&](int /*level*/, json::parse_event_t event, json & parsed) noexcept
-        {
+        const json::parser_callback_t cb = [&](int /*level*/, json::parse_event_t event, json& parsed) noexcept {
             // skip uninteresting events
             if (event == json::parse_event_t::value && !parsed.is_primitive())
             {
@@ -432,11 +435,10 @@ TEST_CASE("regression tests 2")
             p2.begin(),
             p2.end(),
             std::inserter(diffs, diffs.end()),
-            [&](const it_type & e1, const it_type & e2) -> bool
-        {
-            using comper_pair = std::pair<std::string, decltype(e1.value())>;              // Trying to avoid unneeded copy
-            return comper_pair(e1.key(), e1.value()) < comper_pair(e2.key(), e2.value());  // Using pair comper
-        });
+            [&](const it_type& e1, const it_type& e2) -> bool {
+                using comper_pair = std::pair<std::string, decltype(e1.value())>;              // Trying to avoid unneeded copy
+                return comper_pair(e1.key(), e1.value()) < comper_pair(e2.key(), e2.value());  // Using pair comper
+            });
 
         CHECK(diffs.size() == 1);  // Note the change here, was 2
     }
@@ -452,14 +454,13 @@ TEST_CASE("regression tests 2")
             "with std::pair")
     {
         const json j =
-        {
-            {"1", {{"a", "testa_1"}, {"b", "testb_1"}}},
-            {"2", {{"a", "testa_2"}, {"b", "testb_2"}}},
-            {"3", {{"a", "testa_3"}, {"b", "testb_3"}}},
-        };
+            {
+                {"1", {{"a", "testa_1"}, {"b", "testb_1"}}},
+                {"2", {{"a", "testa_2"}, {"b", "testb_2"}}},
+                {"3", {{"a", "testa_3"}, {"b", "testb_3"}}},
+            };
 
-        std::map<std::string, Data> expected
-        {
+        std::map<std::string, Data> expected{
             {"1", {"testa_1", "testb_1"}},
             {"2", {"testa_2", "testb_2"}},
             {"3", {"testa_3", "testb_3"}},
@@ -508,9 +509,8 @@ TEST_CASE("regression tests 2")
         {
             nlohmann::json dump_test;
             const std::array<int, 108> data =
-            {
-                {109, 108, 103, 125, -122, -53, 115, 18, 3, 0, 102, 19, 1, 15, -110, 13, -3, -1, -81, 32, 2, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -80, 2, 0, 0, 96, -118, 46, -116, 46, 109, -84, -87, 108, 14, 109, -24, -83, 13, -18, -51, -83, -52, -115, 14, 6, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 3, 0, 0, 0, 35, -74, -73, 55, 57, -128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 33, 0, 0, 0, -96, -54, -28, -26}
-            };
+                {
+                    {109, 108, 103, 125, -122, -53, 115, 18, 3, 0, 102, 19, 1, 15, -110, 13, -3, -1, -81, 32, 2, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -80, 2, 0, 0, 96, -118, 46, -116, 46, 109, -84, -87, 108, 14, 109, -24, -83, 13, -18, -51, -83, -52, -115, 14, 6, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 3, 0, 0, 0, 35, -74, -73, 55, 57, -128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 33, 0, 0, 0, -96, -54, -28, -26}};
             std::string s;
             for (const int i : data)
             {
@@ -614,7 +614,7 @@ TEST_CASE("regression tests 2")
                    ' ',                           // Indent char
                    false,                         // Ensure ascii
                    json::error_handler_t::strict  // Error
-                  ));
+                   ));
     }
 
     SECTION("PR #2181 - regression bug with lvalue")
@@ -629,18 +629,17 @@ TEST_CASE("regression tests 2")
     SECTION("issue #2293 - eof doesn't cause parsing to stop")
     {
         const std::vector<uint8_t> data =
-        {
-            0x7B,
-            0x6F,
-            0x62,
-            0x6A,
-            0x65,
-            0x63,
-            0x74,
-            0x20,
-            0x4F,
-            0x42
-        };
+            {
+                0x7B,
+                0x6F,
+                0x62,
+                0x6A,
+                0x65,
+                0x63,
+                0x74,
+                0x20,
+                0x4F,
+                0x42};
         const json result = json::from_cbor(data, true, false);
         CHECK(result.is_discarded());
     }
@@ -656,8 +655,7 @@ TEST_CASE("regression tests 2")
         CHECK(jsonAnimals == jsonAnimals_parsed);
 
         const std::vector<std::pair<std::string, int64_t>> intData = {std::make_pair("aaaa", 11),
-                                                                      std::make_pair("bbb", 222)
-                                                                     };
+                                                                      std::make_pair("bbb", 222)};
         nlohmann::ordered_json jsonObj;
         for (const auto& data : intData)
         {
@@ -675,15 +673,15 @@ TEST_CASE("regression tests 2")
     }
 
 #ifdef JSON_HAS_CPP_20
-#if __has_include(<span>)
+    #if __has_include(<span>)
     SECTION("issue #2546 - parsing containers of std::byte")
     {
-        const char DATA[] = R"("Hello, world!")"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        const char DATA[] = R"("Hello, world!")";  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         const auto s = std::as_bytes(std::span(DATA));
         const json j = json::parse(s);
         CHECK(j.dump() == "\"Hello, world!\"");
     }
-#endif
+    #endif
 #endif
 
     SECTION("issue #2574 - Deserialization to std::array, std::pair, and std::tuple with non-default constructable types fails")
@@ -834,10 +832,10 @@ TEST_CASE("regression tests 2")
         const auto j_path = j.get<nlohmann::detail::std_fs::path>();
         CHECK(j_path == text_path);
 
-#if DOCTEST_CLANG || DOCTEST_GCC >= DOCTEST_COMPILER(8, 4, 0)
+    #if DOCTEST_CLANG || DOCTEST_GCC >= DOCTEST_COMPILER(8, 4, 0)
         // only known to work on Clang and GCC >=8.4
         CHECK_THROWS_WITH_AS(nlohmann::detail::std_fs::path(json(1)), "[json.exception.type_error.302] type must be string, but is number", json::type_error);
-#endif
+    #endif
     }
 #endif
 
@@ -858,17 +856,17 @@ TEST_CASE("regression tests 2")
 
         CHECK(j.dump() == "[1,2,4]");
 
-        j.erase(std::remove_if(j.begin(), j.end(), [](const ordered_json & val)
-        {
-            return val == 2;
-        }), j.end());
+        j.erase(std::remove_if(j.begin(), j.end(), [](const ordered_json& val) {
+                    return val == 2;
+                }),
+                j.end());
 
         CHECK(j.dump() == "[1,4]");
     }
 
     SECTION("issue #3343 - json and ordered_json are not interchangable")
     {
-        json::object_t jobj({ { "product", "one" } });
+        json::object_t jobj({{"product", "one"}});
         ordered_json::object_t ojobj({{"product", "one"}});
 
         auto jit = jobj.begin();
@@ -880,7 +878,7 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #3171 - if class is_constructible from std::string wrong from_json overload is being selected, compilation failed")
     {
-        const json j{{ "str", "value"}};
+        const json j{{"str", "value"}};
 
         // failed with: error: no match for ‘operator=’ (operand types are ‘for_3171_derived’ and ‘const nlohmann::basic_json<>::string_t’
         //                                               {aka ‘const std::__cxx11::basic_string<char>’})
@@ -917,8 +915,8 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #3204 - ambiguous regression")
     {
-        for_3204_bar bar_from_foo([](for_3204_foo) noexcept {}); // NOLINT(performance-unnecessary-value-param)
-        for_3204_bar bar_from_json([](json) noexcept {}); // NOLINT(performance-unnecessary-value-param)
+        for_3204_bar bar_from_foo([](for_3204_foo) noexcept {});  // NOLINT(performance-unnecessary-value-param)
+        for_3204_bar bar_from_json([](json) noexcept {});         // NOLINT(performance-unnecessary-value-param)
 
         CHECK(bar_from_foo.constructed_from == for_3204_bar::constructed_from_foo);
         CHECK(bar_from_json.constructed_from == for_3204_bar::constructed_from_json);
@@ -926,11 +924,9 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #3333 - Ambiguous conversion from nlohmann::basic_json<> to custom class")
     {
-        const json j
-        {
+        const json j{
             {"x", 1},
-            {"y", 2}
-        };
+            {"y", 2}};
         for_3333 p = j;
 
         CHECK(p.x == 1);

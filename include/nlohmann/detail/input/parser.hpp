@@ -8,12 +8,12 @@
 
 #pragma once
 
-#include <cmath> // isfinite
-#include <cstdint> // uint8_t
-#include <functional> // function
-#include <string> // string
-#include <utility> // move
-#include <vector> // vector
+#include <cmath>       // isfinite
+#include <cstdint>     // uint8_t
+#include <functional>  // function
+#include <string>      // string
+#include <utility>     // move
+#include <vector>      // vector
 
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
@@ -25,8 +25,7 @@
 #include <nlohmann/detail/value_t.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
+namespace detail {
 ////////////
 // parser //
 ////////////
@@ -72,9 +71,9 @@ class parser
                     const parser_callback_t<BasicJsonType> cb = nullptr,
                     const bool allow_exceptions_ = true,
                     const bool skip_comments = false)
-        : callback(cb)
-        , m_lexer(std::move(adapter), skip_comments)
-        , allow_exceptions(allow_exceptions_)
+      : callback(cb)
+      , m_lexer(std::move(adapter), skip_comments)
+      , allow_exceptions(allow_exceptions_)
     {
         // read first token
         get_token();
@@ -102,8 +101,7 @@ class parser
             {
                 sdp.parse_error(m_lexer.get_position(),
                                 m_lexer.get_token_string(),
-                                parse_error::create(101, m_lexer.get_position(),
-                                                    exception_message(token_type::end_of_input, "value"), nullptr));
+                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
             }
 
             // in case of an error, return discarded value
@@ -160,7 +158,7 @@ class parser
     JSON_HEDLEY_NON_NULL(2)
     bool sax_parse(SAX* sax, const bool strict = true)
     {
-        (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
+        (void)detail::is_sax_static_asserts<SAX, BasicJsonType>{};
         const bool result = sax_parse_internal(sax);
 
         // strict mode: next byte must be EOF
@@ -347,8 +345,7 @@ class parser
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(),
-                                                            "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
+                                                    parse_error::create(101, m_lexer.get_position(), "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
                         }
 
                         return sax->parse_error(m_lexer.get_position(),
@@ -361,7 +358,7 @@ class parser
                     case token_type::name_separator:
                     case token_type::value_separator:
                     case token_type::literal_or_value:
-                    default: // the last token was unexpected
+                    default:  // the last token was unexpected
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
@@ -488,8 +485,7 @@ class parser
 
         if (last_token == token_type::parse_error)
         {
-            error_msg += concat(m_lexer.get_error_message(), "; last read: '",
-                                m_lexer.get_token_string(), '\'');
+            error_msg += concat(m_lexer.get_error_message(), "; last read: '", m_lexer.get_token_string(), '\'');
         }
         else
         {

@@ -11,11 +11,11 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include "make_test_data_available.hpp"
+#include "test_utils.hpp"
 #include <fstream>
 #include <limits>
 #include <sstream>
-#include "make_test_data_available.hpp"
-#include "test_utils.hpp"
 
 TEST_CASE("BSON")
 {
@@ -62,7 +62,7 @@ TEST_CASE("BSON")
 
         SECTION("array")
         {
-            json const j = std::vector<int> {1, 2, 3, 4, 5, 6, 7};
+            json const j = std::vector<int>{1, 2, 3, 4, 5, 6, 7};
             CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is array", json::type_error&);
         }
     }
@@ -70,9 +70,8 @@ TEST_CASE("BSON")
     SECTION("keys containing code-point U+0000 cannot be serialized to BSON")
     {
         json const j =
-        {
-            { std::string("en\0try", 6), true }
-        };
+            {
+                {std::string("en\0try", 6), true}};
 #if JSON_DIAGNOSTICS
         CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.out_of_range.409] (/en) BSON key cannot contain code point U+0000 (at byte 2)", json::out_of_range&);
 #else
@@ -84,12 +83,17 @@ TEST_CASE("BSON")
     {
         // from https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=11175
         std::vector<std::uint8_t> const v =
-        {
-            0x20, 0x20, 0x20, 0x20,
-            0x02,
-            0x00,
-            0x00, 0x00, 0x00, 0x80
-        };
+            {
+                0x20,
+                0x20,
+                0x20,
+                0x20,
+                0x02,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x80};
         json _;
         CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 10: syntax error while parsing BSON string: string length must be at least 1, is -2147483648", json::parse_error&);
     }
@@ -100,11 +104,14 @@ TEST_CASE("BSON")
         {
             json const j = json::object();
             std::vector<std::uint8_t> const expected =
-            {
-                0x05, 0x00, 0x00, 0x00, // size (little endian)
-                // no entries
-                0x00 // end marker
-            };
+                {
+                    0x05,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    // no entries
+                    0x00  // end marker
+                };
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -117,18 +124,25 @@ TEST_CASE("BSON")
         SECTION("non-empty object with bool")
         {
             json const j =
-            {
-                { "entry", true }
-            };
+                {
+                    {"entry", true}};
 
             std::vector<std::uint8_t> const expected =
-            {
-                0x0D, 0x00, 0x00, 0x00, // size (little endian)
-                0x08,               // entry: boolean
-                'e', 'n', 't', 'r', 'y', '\x00',
-                0x01,           // value = true
-                0x00                    // end marker
-            };
+                {
+                    0x0D,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    0x08,  // entry: boolean
+                    'e',
+                    'n',
+                    't',
+                    'r',
+                    'y',
+                    '\x00',
+                    0x01,  // value = true
+                    0x00   // end marker
+                };
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -141,18 +155,25 @@ TEST_CASE("BSON")
         SECTION("non-empty object with bool")
         {
             json const j =
-            {
-                { "entry", false }
-            };
+                {
+                    {"entry", false}};
 
             std::vector<std::uint8_t> const expected =
-            {
-                0x0D, 0x00, 0x00, 0x00, // size (little endian)
-                0x08,               // entry: boolean
-                'e', 'n', 't', 'r', 'y', '\x00',
-                0x00,           // value = false
-                0x00                    // end marker
-            };
+                {
+                    0x0D,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    0x08,  // entry: boolean
+                    'e',
+                    'n',
+                    't',
+                    'r',
+                    'y',
+                    '\x00',
+                    0x00,  // value = false
+                    0x00   // end marker
+                };
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -165,18 +186,32 @@ TEST_CASE("BSON")
         SECTION("non-empty object with double")
         {
             json const j =
-            {
-                { "entry", 4.2 }
-            };
+                {
+                    {"entry", 4.2}};
 
             std::vector<std::uint8_t> const expected =
-            {
-                0x14, 0x00, 0x00, 0x00, // size (little endian)
-                0x01, /// entry: double
-                'e', 'n', 't', 'r', 'y', '\x00',
-                0xcd, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0x10, 0x40,
-                0x00 // end marker
-            };
+                {
+                    0x14,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    0x01,  /// entry: double
+                    'e',
+                    'n',
+                    't',
+                    'r',
+                    'y',
+                    '\x00',
+                    0xcd,
+                    0xcc,
+                    0xcc,
+                    0xcc,
+                    0xcc,
+                    0xcc,
+                    0x10,
+                    0x40,
+                    0x00  // end marker
+                };
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -189,18 +224,36 @@ TEST_CASE("BSON")
         SECTION("non-empty object with string")
         {
             json const j =
-            {
-                { "entry", "bsonstr" }
-            };
+                {
+                    {"entry", "bsonstr"}};
 
             std::vector<std::uint8_t> const expected =
-            {
-                0x18, 0x00, 0x00, 0x00, // size (little endian)
-                0x02, /// entry: string (UTF-8)
-                'e', 'n', 't', 'r', 'y', '\x00',
-                0x08, 0x00, 0x00, 0x00, 'b', 's', 'o', 'n', 's', 't', 'r', '\x00',
-                0x00 // end marker
-            };
+                {
+                    0x18,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    0x02,  /// entry: string (UTF-8)
+                    'e',
+                    'n',
+                    't',
+                    'r',
+                    'y',
+                    '\x00',
+                    0x08,
+                    0x00,
+                    0x00,
+                    0x00,
+                    'b',
+                    's',
+                    'o',
+                    'n',
+                    's',
+                    't',
+                    'r',
+                    '\x00',
+                    0x00  // end marker
+                };
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -213,17 +266,24 @@ TEST_CASE("BSON")
         SECTION("non-empty object with null member")
         {
             json const j =
-            {
-                { "entry", nullptr }
-            };
+                {
+                    {"entry", nullptr}};
 
             std::vector<std::uint8_t> const expected =
-            {
-                0x0C, 0x00, 0x00, 0x00, // size (little endian)
-                0x0A, /// entry: null
-                'e', 'n', 't', 'r', 'y', '\x00',
-                0x00 // end marker
-            };
+                {
+                    0x0C,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    0x0A,  /// entry: null
+                    'e',
+                    'n',
+                    't',
+                    'r',
+                    'y',
+                    '\x00',
+                    0x00  // end marker
+                };
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -236,18 +296,28 @@ TEST_CASE("BSON")
         SECTION("non-empty object with integer (32-bit) member")
         {
             json const j =
-            {
-                { "entry", std::int32_t{0x12345678} }
-            };
+                {
+                    {"entry", std::int32_t{0x12345678}}};
 
             std::vector<std::uint8_t> const expected =
-            {
-                0x10, 0x00, 0x00, 0x00, // size (little endian)
-                0x10, /// entry: int32
-                'e', 'n', 't', 'r', 'y', '\x00',
-                0x78, 0x56, 0x34, 0x12,
-                0x00 // end marker
-            };
+                {
+                    0x10,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    0x10,  /// entry: int32
+                    'e',
+                    'n',
+                    't',
+                    'r',
+                    'y',
+                    '\x00',
+                    0x78,
+                    0x56,
+                    0x34,
+                    0x12,
+                    0x00  // end marker
+                };
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -260,18 +330,32 @@ TEST_CASE("BSON")
         SECTION("non-empty object with integer (64-bit) member")
         {
             json const j =
-            {
-                { "entry", std::int64_t{0x1234567804030201} }
-            };
+                {
+                    {"entry", std::int64_t{0x1234567804030201}}};
 
             std::vector<std::uint8_t> const expected =
-            {
-                0x14, 0x00, 0x00, 0x00, // size (little endian)
-                0x12, /// entry: int64
-                'e', 'n', 't', 'r', 'y', '\x00',
-                0x01, 0x02, 0x03, 0x04, 0x78, 0x56, 0x34, 0x12,
-                0x00 // end marker
-            };
+                {
+                    0x14,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    0x12,  /// entry: int64
+                    'e',
+                    'n',
+                    't',
+                    'r',
+                    'y',
+                    '\x00',
+                    0x01,
+                    0x02,
+                    0x03,
+                    0x04,
+                    0x78,
+                    0x56,
+                    0x34,
+                    0x12,
+                    0x00  // end marker
+                };
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -284,18 +368,28 @@ TEST_CASE("BSON")
         SECTION("non-empty object with negative integer (32-bit) member")
         {
             json const j =
-            {
-                { "entry", std::int32_t{-1} }
-            };
+                {
+                    {"entry", std::int32_t{-1}}};
 
             std::vector<std::uint8_t> const expected =
-            {
-                0x10, 0x00, 0x00, 0x00, // size (little endian)
-                0x10, /// entry: int32
-                'e', 'n', 't', 'r', 'y', '\x00',
-                0xFF, 0xFF, 0xFF, 0xFF,
-                0x00 // end marker
-            };
+                {
+                    0x10,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    0x10,  /// entry: int32
+                    'e',
+                    'n',
+                    't',
+                    'r',
+                    'y',
+                    '\x00',
+                    0xFF,
+                    0xFF,
+                    0xFF,
+                    0xFF,
+                    0x00  // end marker
+                };
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -308,18 +402,28 @@ TEST_CASE("BSON")
         SECTION("non-empty object with negative integer (64-bit) member")
         {
             json const j =
-            {
-                { "entry", std::int64_t{-1} }
-            };
+                {
+                    {"entry", std::int64_t{-1}}};
 
             std::vector<std::uint8_t> const expected =
-            {
-                0x10, 0x00, 0x00, 0x00, // size (little endian)
-                0x10, /// entry: int32
-                'e', 'n', 't', 'r', 'y', '\x00',
-                0xFF, 0xFF, 0xFF, 0xFF,
-                0x00 // end marker
-            };
+                {
+                    0x10,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    0x10,  /// entry: int32
+                    'e',
+                    'n',
+                    't',
+                    'r',
+                    'y',
+                    '\x00',
+                    0xFF,
+                    0xFF,
+                    0xFF,
+                    0xFF,
+                    0x00  // end marker
+                };
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -333,18 +437,32 @@ TEST_CASE("BSON")
         {
             // directly encoding uint64 is not supported in bson (only for timestamp values)
             json const j =
-            {
-                { "entry", std::uint64_t{0x1234567804030201} }
-            };
+                {
+                    {"entry", std::uint64_t{0x1234567804030201}}};
 
             std::vector<std::uint8_t> const expected =
-            {
-                0x14, 0x00, 0x00, 0x00, // size (little endian)
-                0x12, /// entry: int64
-                'e', 'n', 't', 'r', 'y', '\x00',
-                0x01, 0x02, 0x03, 0x04, 0x78, 0x56, 0x34, 0x12,
-                0x00 // end marker
-            };
+                {
+                    0x14,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    0x12,  /// entry: int64
+                    'e',
+                    'n',
+                    't',
+                    'r',
+                    'y',
+                    '\x00',
+                    0x01,
+                    0x02,
+                    0x03,
+                    0x04,
+                    0x78,
+                    0x56,
+                    0x34,
+                    0x12,
+                    0x00  // end marker
+                };
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -357,18 +475,28 @@ TEST_CASE("BSON")
         SECTION("non-empty object with small unsigned integer member")
         {
             json const j =
-            {
-                { "entry", std::uint64_t{0x42} }
-            };
+                {
+                    {"entry", std::uint64_t{0x42}}};
 
             std::vector<std::uint8_t> const expected =
-            {
-                0x10, 0x00, 0x00, 0x00, // size (little endian)
-                0x10, /// entry: int32
-                'e', 'n', 't', 'r', 'y', '\x00',
-                0x42, 0x00, 0x00, 0x00,
-                0x00 // end marker
-            };
+                {
+                    0x10,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    0x10,  /// entry: int32
+                    'e',
+                    'n',
+                    't',
+                    'r',
+                    'y',
+                    '\x00',
+                    0x42,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00  // end marker
+                };
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -381,22 +509,32 @@ TEST_CASE("BSON")
         SECTION("non-empty object with object member")
         {
             json const j =
-            {
-                { "entry", json::object() }
-            };
+                {
+                    {"entry", json::object()}};
 
             std::vector<std::uint8_t> const expected =
-            {
-                0x11, 0x00, 0x00, 0x00, // size (little endian)
-                0x03, /// entry: embedded document
-                'e', 'n', 't', 'r', 'y', '\x00',
+                {
+                    0x11,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    0x03,  /// entry: embedded document
+                    'e',
+                    'n',
+                    't',
+                    'r',
+                    'y',
+                    '\x00',
 
-                0x05, 0x00, 0x00, 0x00, // size (little endian)
-                // no entries
-                0x00, // end marker (embedded document)
+                    0x05,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    // no entries
+                    0x00,  // end marker (embedded document)
 
-                0x00 // end marker
-            };
+                    0x00  // end marker
+                };
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -409,22 +547,32 @@ TEST_CASE("BSON")
         SECTION("non-empty object with array member")
         {
             json const j =
-            {
-                { "entry", json::array() }
-            };
+                {
+                    {"entry", json::array()}};
 
             std::vector<std::uint8_t> const expected =
-            {
-                0x11, 0x00, 0x00, 0x00, // size (little endian)
-                0x04, /// entry: embedded document
-                'e', 'n', 't', 'r', 'y', '\x00',
+                {
+                    0x11,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    0x04,  /// entry: embedded document
+                    'e',
+                    'n',
+                    't',
+                    'r',
+                    'y',
+                    '\x00',
 
-                0x05, 0x00, 0x00, 0x00, // size (little endian)
-                // no entries
-                0x00, // end marker (embedded document)
+                    0x05,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    // no entries
+                    0x00,  // end marker (embedded document)
 
-                0x00 // end marker
-            };
+                    0x00  // end marker
+                };
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -437,29 +585,87 @@ TEST_CASE("BSON")
         SECTION("non-empty object with non-empty array member")
         {
             json const j =
-            {
-                { "entry", json::array({1, 2, 3, 4, 5, 6, 7, 8}) }
-            };
+                {
+                    {"entry", json::array({1, 2, 3, 4, 5, 6, 7, 8})}};
 
             std::vector<std::uint8_t> const expected =
-            {
-                0x49, 0x00, 0x00, 0x00, // size (little endian)
-                0x04, /// entry: embedded document
-                'e', 'n', 't', 'r', 'y', '\x00',
+                {
+                    0x49,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    0x04,  /// entry: embedded document
+                    'e',
+                    'n',
+                    't',
+                    'r',
+                    'y',
+                    '\x00',
 
-                0x3D, 0x00, 0x00, 0x00, // size (little endian)
-                0x10, '0', 0x00, 0x01, 0x00, 0x00, 0x00,
-                0x10, '1', 0x00, 0x02, 0x00, 0x00, 0x00,
-                0x10, '2', 0x00, 0x03, 0x00, 0x00, 0x00,
-                0x10, '3', 0x00, 0x04, 0x00, 0x00, 0x00,
-                0x10, '4', 0x00, 0x05, 0x00, 0x00, 0x00,
-                0x10, '5', 0x00, 0x06, 0x00, 0x00, 0x00,
-                0x10, '6', 0x00, 0x07, 0x00, 0x00, 0x00,
-                0x10, '7', 0x00, 0x08, 0x00, 0x00, 0x00,
-                0x00, // end marker (embedded document)
+                    0x3D,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    0x10,
+                    '0',
+                    0x00,
+                    0x01,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x10,
+                    '1',
+                    0x00,
+                    0x02,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x10,
+                    '2',
+                    0x00,
+                    0x03,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x10,
+                    '3',
+                    0x00,
+                    0x04,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x10,
+                    '4',
+                    0x00,
+                    0x05,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x10,
+                    '5',
+                    0x00,
+                    0x06,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x10,
+                    '6',
+                    0x00,
+                    0x07,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x10,
+                    '7',
+                    0x00,
+                    0x08,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,  // end marker (embedded document)
 
-                0x00 // end marker
-            };
+                    0x00  // end marker
+                };
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -474,22 +680,41 @@ TEST_CASE("BSON")
             const size_t N = 10;
             const auto s = std::vector<std::uint8_t>(N, 'x');
             json const j =
-            {
-                { "entry", json::binary(s, 0) }
-            };
+                {
+                    {"entry", json::binary(s, 0)}};
 
             std::vector<std::uint8_t> const expected =
-            {
-                0x1B, 0x00, 0x00, 0x00, // size (little endian)
-                0x05, // entry: binary
-                'e', 'n', 't', 'r', 'y', '\x00',
+                {
+                    0x1B,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    0x05,  // entry: binary
+                    'e',
+                    'n',
+                    't',
+                    'r',
+                    'y',
+                    '\x00',
 
-                0x0A, 0x00, 0x00, 0x00, // size of binary (little endian)
-                0x00, // Generic binary subtype
-                0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78,
+                    0x0A,
+                    0x00,
+                    0x00,
+                    0x00,  // size of binary (little endian)
+                    0x00,  // Generic binary subtype
+                    0x78,
+                    0x78,
+                    0x78,
+                    0x78,
+                    0x78,
+                    0x78,
+                    0x78,
+                    0x78,
+                    0x78,
+                    0x78,
 
-                0x00 // end marker
-            };
+                    0x00  // end marker
+                };
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -504,22 +729,47 @@ TEST_CASE("BSON")
             // an MD5 hash
             const std::vector<std::uint8_t> md5hash = {0xd7, 0x7e, 0x27, 0x54, 0xbe, 0x12, 0x37, 0xfe, 0xd6, 0x0c, 0x33, 0x98, 0x30, 0x3b, 0x8d, 0xc4};
             json const j =
-            {
-                { "entry", json::binary(md5hash, 5) }
-            };
+                {
+                    {"entry", json::binary(md5hash, 5)}};
 
             std::vector<std::uint8_t> const expected =
-            {
-                0x21, 0x00, 0x00, 0x00, // size (little endian)
-                0x05, // entry: binary
-                'e', 'n', 't', 'r', 'y', '\x00',
+                {
+                    0x21,
+                    0x00,
+                    0x00,
+                    0x00,  // size (little endian)
+                    0x05,  // entry: binary
+                    'e',
+                    'n',
+                    't',
+                    'r',
+                    'y',
+                    '\x00',
 
-                0x10, 0x00, 0x00, 0x00, // size of binary (little endian)
-                0x05, // MD5 binary subtype
-                0xd7, 0x7e, 0x27, 0x54, 0xbe, 0x12, 0x37, 0xfe, 0xd6, 0x0c, 0x33, 0x98, 0x30, 0x3b, 0x8d, 0xc4,
+                    0x10,
+                    0x00,
+                    0x00,
+                    0x00,  // size of binary (little endian)
+                    0x05,  // MD5 binary subtype
+                    0xd7,
+                    0x7e,
+                    0x27,
+                    0x54,
+                    0xbe,
+                    0x12,
+                    0x37,
+                    0xfe,
+                    0xd6,
+                    0x0c,
+                    0x33,
+                    0x98,
+                    0x30,
+                    0x3b,
+                    0x8d,
+                    0xc4,
 
-                0x00 // end marker
-            };
+                    0x00  // end marker
+                };
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -533,25 +783,93 @@ TEST_CASE("BSON")
         {
             // directly encoding uint64 is not supported in bson (only for timestamp values)
             json const j =
-            {
-                {"double", 42.5},
-                {"entry", 4.2},
-                {"number", 12345},
-                {"object", {{ "string", "value" }}}
-            };
+                {
+                    {"double", 42.5},
+                    {"entry", 4.2},
+                    {"number", 12345},
+                    {"object", {{"string", "value"}}}};
 
             std::vector<std::uint8_t> const expected =
-            {
-                /*size */ 0x4f, 0x00, 0x00, 0x00,
-                /*entry*/ 0x01, 'd',  'o',  'u',  'b',  'l',  'e',  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x45, 0x40,
-                /*entry*/ 0x01, 'e',  'n',  't',  'r',  'y',  0x00, 0xcd, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0x10, 0x40,
-                /*entry*/ 0x10, 'n',  'u',  'm',  'b',  'e',  'r',  0x00, 0x39, 0x30, 0x00, 0x00,
-                /*entry*/ 0x03, 'o',  'b',  'j',  'e',  'c',  't',  0x00,
-                /*entry: obj-size */ 0x17, 0x00, 0x00, 0x00,
-                /*entry: obj-entry*/0x02, 's',  't',  'r',  'i',  'n',  'g', 0x00, 0x06, 0x00, 0x00, 0x00, 'v', 'a', 'l', 'u', 'e', 0,
-                /*entry: obj-term.*/0x00,
-                /*obj-term*/ 0x00
-            };
+                {
+                    /*size */ 0x4f,
+                    0x00,
+                    0x00,
+                    0x00,
+                    /*entry*/ 0x01,
+                    'd',
+                    'o',
+                    'u',
+                    'b',
+                    'l',
+                    'e',
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x40,
+                    0x45,
+                    0x40,
+                    /*entry*/ 0x01,
+                    'e',
+                    'n',
+                    't',
+                    'r',
+                    'y',
+                    0x00,
+                    0xcd,
+                    0xcc,
+                    0xcc,
+                    0xcc,
+                    0xcc,
+                    0xcc,
+                    0x10,
+                    0x40,
+                    /*entry*/ 0x10,
+                    'n',
+                    'u',
+                    'm',
+                    'b',
+                    'e',
+                    'r',
+                    0x00,
+                    0x39,
+                    0x30,
+                    0x00,
+                    0x00,
+                    /*entry*/ 0x03,
+                    'o',
+                    'b',
+                    'j',
+                    'e',
+                    'c',
+                    't',
+                    0x00,
+                    /*entry: obj-size */ 0x17,
+                    0x00,
+                    0x00,
+                    0x00,
+                    /*entry: obj-entry*/ 0x02,
+                    's',
+                    't',
+                    'r',
+                    'i',
+                    'n',
+                    'g',
+                    0x00,
+                    0x06,
+                    0x00,
+                    0x00,
+                    0x00,
+                    'v',
+                    'a',
+                    'l',
+                    'u',
+                    'e',
+                    0,
+                    /*entry: obj-term.*/ 0x00,
+                    /*obj-term*/ 0x00};
 
             const auto result = json::to_bson(j);
             CHECK(result == expected);
@@ -591,25 +909,93 @@ TEST_CASE("BSON")
 TEST_CASE("BSON input/output_adapters")
 {
     json json_representation =
-    {
-        {"double", 42.5},
-        {"entry", 4.2},
-        {"number", 12345},
-        {"object", {{ "string", "value" }}}
-    };
+        {
+            {"double", 42.5},
+            {"entry", 4.2},
+            {"number", 12345},
+            {"object", {{"string", "value"}}}};
 
     std::vector<std::uint8_t> const bson_representation =
-    {
-        /*size */ 0x4f, 0x00, 0x00, 0x00,
-        /*entry*/ 0x01, 'd',  'o',  'u',  'b',  'l',  'e',  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x45, 0x40,
-        /*entry*/ 0x01, 'e',  'n',  't',  'r',  'y',  0x00, 0xcd, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0x10, 0x40,
-        /*entry*/ 0x10, 'n',  'u',  'm',  'b',  'e',  'r',  0x00, 0x39, 0x30, 0x00, 0x00,
-        /*entry*/ 0x03, 'o',  'b',  'j',  'e',  'c',  't',  0x00,
-        /*entry: obj-size */ 0x17, 0x00, 0x00, 0x00,
-        /*entry: obj-entry*/0x02, 's',  't',  'r',  'i',  'n',  'g', 0x00, 0x06, 0x00, 0x00, 0x00, 'v', 'a', 'l', 'u', 'e', 0,
-        /*entry: obj-term.*/0x00,
-        /*obj-term*/ 0x00
-    };
+        {
+            /*size */ 0x4f,
+            0x00,
+            0x00,
+            0x00,
+            /*entry*/ 0x01,
+            'd',
+            'o',
+            'u',
+            'b',
+            'l',
+            'e',
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x40,
+            0x45,
+            0x40,
+            /*entry*/ 0x01,
+            'e',
+            'n',
+            't',
+            'r',
+            'y',
+            0x00,
+            0xcd,
+            0xcc,
+            0xcc,
+            0xcc,
+            0xcc,
+            0xcc,
+            0x10,
+            0x40,
+            /*entry*/ 0x10,
+            'n',
+            'u',
+            'm',
+            'b',
+            'e',
+            'r',
+            0x00,
+            0x39,
+            0x30,
+            0x00,
+            0x00,
+            /*entry*/ 0x03,
+            'o',
+            'b',
+            'j',
+            'e',
+            'c',
+            't',
+            0x00,
+            /*entry: obj-size */ 0x17,
+            0x00,
+            0x00,
+            0x00,
+            /*entry: obj-entry*/ 0x02,
+            's',
+            't',
+            'r',
+            'i',
+            'n',
+            'g',
+            0x00,
+            0x06,
+            0x00,
+            0x00,
+            0x00,
+            'v',
+            'a',
+            'l',
+            'u',
+            'e',
+            0,
+            /*entry: obj-term.*/ 0x00,
+            /*obj-term*/ 0x00};
 
     json j2;
     CHECK_NOTHROW(j2 = json::from_bson(bson_representation));
@@ -645,12 +1031,12 @@ TEST_CASE("BSON input/output_adapters")
     }
 }
 
-namespace
-{
+namespace {
 class SaxCountdown
 {
   public:
-    explicit SaxCountdown(const int count) : events_left(count)
+    explicit SaxCountdown(const int count)
+      : events_left(count)
     {}
 
     bool null()
@@ -713,7 +1099,7 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/) // NOLINT(readability-convert-member-functions-to-static)
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/)  // NOLINT(readability-convert-member-functions-to-static)
     {
         return false;
     }
@@ -721,18 +1107,23 @@ class SaxCountdown
   private:
     int events_left = 0;
 };
-} // namespace
+}  // namespace
 
 TEST_CASE("Incomplete BSON Input")
 {
     SECTION("Incomplete BSON Input 1")
     {
         std::vector<std::uint8_t> const incomplete_bson =
-        {
-            0x0D, 0x00, 0x00, 0x00, // size (little endian)
-            0x08,                   // entry: boolean
-            'e', 'n', 't'           // unexpected EOF
-        };
+            {
+                0x0D,
+                0x00,
+                0x00,
+                0x00,  // size (little endian)
+                0x08,  // entry: boolean
+                'e',
+                'n',
+                't'  // unexpected EOF
+            };
 
         json _;
         CHECK_THROWS_WITH_AS(_ = json::from_bson(incomplete_bson), "[json.exception.parse_error.110] parse error at byte 9: syntax error while parsing BSON cstring: unexpected end of input", json::parse_error&);
@@ -746,10 +1137,13 @@ TEST_CASE("Incomplete BSON Input")
     SECTION("Incomplete BSON Input 2")
     {
         std::vector<std::uint8_t> const incomplete_bson =
-        {
-            0x0D, 0x00, 0x00, 0x00, // size (little endian)
-            0x08,                   // entry: boolean, unexpected EOF
-        };
+            {
+                0x0D,
+                0x00,
+                0x00,
+                0x00,  // size (little endian)
+                0x08,  // entry: boolean, unexpected EOF
+            };
 
         json _;
         CHECK_THROWS_WITH_AS(_ = json::from_bson(incomplete_bson), "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing BSON cstring: unexpected end of input", json::parse_error&);
@@ -762,16 +1156,37 @@ TEST_CASE("Incomplete BSON Input")
     SECTION("Incomplete BSON Input 3")
     {
         std::vector<std::uint8_t> const incomplete_bson =
-        {
-            0x41, 0x00, 0x00, 0x00, // size (little endian)
-            0x04, /// entry: embedded document
-            'e', 'n', 't', 'r', 'y', '\x00',
+            {
+                0x41,
+                0x00,
+                0x00,
+                0x00,  // size (little endian)
+                0x04,  /// entry: embedded document
+                'e',
+                'n',
+                't',
+                'r',
+                'y',
+                '\x00',
 
-            0x35, 0x00, 0x00, 0x00, // size (little endian)
-            0x10, 0x00, 0x01, 0x00, 0x00, 0x00,
-            0x10, 0x00, 0x02, 0x00, 0x00, 0x00
-            // missing input data...
-        };
+                0x35,
+                0x00,
+                0x00,
+                0x00,  // size (little endian)
+                0x10,
+                0x00,
+                0x01,
+                0x00,
+                0x00,
+                0x00,
+                0x10,
+                0x00,
+                0x02,
+                0x00,
+                0x00,
+                0x00
+                // missing input data...
+            };
 
         json _;
         CHECK_THROWS_WITH_AS(_ = json::from_bson(incomplete_bson), "[json.exception.parse_error.110] parse error at byte 28: syntax error while parsing BSON element list: unexpected end of input", json::parse_error&);
@@ -784,9 +1199,10 @@ TEST_CASE("Incomplete BSON Input")
     SECTION("Incomplete BSON Input 4")
     {
         std::vector<std::uint8_t> const incomplete_bson =
-        {
-            0x0D, 0x00, // size (incomplete), unexpected EOF
-        };
+            {
+                0x0D,
+                0x00,  // size (incomplete), unexpected EOF
+            };
 
         json _;
         CHECK_THROWS_WITH_AS(_ = json::from_bson(incomplete_bson), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BSON number: unexpected end of input", json::parse_error&);
@@ -809,9 +1225,8 @@ TEST_CASE("Incomplete BSON Input")
         SECTION("array")
         {
             json const j =
-            {
-                { "entry", json::array() }
-            };
+                {
+                    {"entry", json::array()}};
             auto bson_vec = json::to_bson(j);
             SaxCountdown scp(2);
             CHECK(!json::sax_parse(bson_vec, &scp, json::input_format_t::bson));
@@ -823,17 +1238,43 @@ TEST_CASE("Negative size of binary value")
 {
     // invalid BSON: the size of the binary value is -1
     std::vector<std::uint8_t> const input =
-    {
-        0x21, 0x00, 0x00, 0x00, // size (little endian)
-        0x05, // entry: binary
-        'e', 'n', 't', 'r', 'y', '\x00',
+        {
+            0x21,
+            0x00,
+            0x00,
+            0x00,  // size (little endian)
+            0x05,  // entry: binary
+            'e',
+            'n',
+            't',
+            'r',
+            'y',
+            '\x00',
 
-        0xFF, 0xFF, 0xFF, 0xFF, // size of binary (little endian)
-        0x05, // MD5 binary subtype
-        0xd7, 0x7e, 0x27, 0x54, 0xbe, 0x12, 0x37, 0xfe, 0xd6, 0x0c, 0x33, 0x98, 0x30, 0x3b, 0x8d, 0xc4,
+            0xFF,
+            0xFF,
+            0xFF,
+            0xFF,  // size of binary (little endian)
+            0x05,  // MD5 binary subtype
+            0xd7,
+            0x7e,
+            0x27,
+            0x54,
+            0xbe,
+            0x12,
+            0x37,
+            0xfe,
+            0xd6,
+            0x0c,
+            0x33,
+            0x98,
+            0x30,
+            0x3b,
+            0x8d,
+            0xc4,
 
-        0x00 // end marker
-    };
+            0x00  // end marker
+        };
     json _;
     CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 15: syntax error while parsing BSON binary: byte array length cannot be negative, is -1", json::parse_error);
 }
@@ -841,12 +1282,20 @@ TEST_CASE("Negative size of binary value")
 TEST_CASE("Unsupported BSON input")
 {
     std::vector<std::uint8_t> const bson =
-    {
-        0x0C, 0x00, 0x00, 0x00, // size (little endian)
-        0xFF,                   // entry type: Min key (not supported yet)
-        'e', 'n', 't', 'r', 'y', '\x00',
-        0x00 // end marker
-    };
+        {
+            0x0C,
+            0x00,
+            0x00,
+            0x00,  // size (little endian)
+            0xFF,  // entry type: Min key (not supported yet)
+            'e',
+            'n',
+            't',
+            'r',
+            'y',
+            '\x00',
+            0x00  // end marker
+        };
 
     json _;
     CHECK_THROWS_WITH_AS(_ = json::from_bson(bson), "[json.exception.parse_error.114] parse error at byte 5: Unsupported BSON record type 0xFF", json::parse_error&);
@@ -864,8 +1313,7 @@ TEST_CASE("BSON numerical data")
         {
             SECTION("std::int64_t: INT64_MIN .. INT32_MIN-1")
             {
-                std::vector<int64_t> const numbers
-                {
+                std::vector<int64_t> const numbers{
                     (std::numeric_limits<int64_t>::min)(),
                     -1000000000000000000LL,
                     -100000000000000000LL,
@@ -881,31 +1329,37 @@ TEST_CASE("BSON numerical data")
 
                 for (const auto i : numbers)
                 {
-
                     CAPTURE(i)
 
                     json const j =
-                    {
-                        { "entry", i }
-                    };
+                        {
+                            {"entry", i}};
                     CHECK(j.at("entry").is_number_integer());
 
                     std::uint64_t const iu = *reinterpret_cast<const std::uint64_t*>(&i);
                     std::vector<std::uint8_t> const expected_bson =
-                    {
-                        0x14u, 0x00u, 0x00u, 0x00u, // size (little endian)
-                        0x12u, /// entry: int64
-                        'e', 'n', 't', 'r', 'y', '\x00',
-                        static_cast<std::uint8_t>((iu >> (8u * 0u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 1u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 2u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 3u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 4u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 5u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 6u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 7u)) & 0xffu),
-                        0x00u // end marker
-                    };
+                        {
+                            0x14u,
+                            0x00u,
+                            0x00u,
+                            0x00u,  // size (little endian)
+                            0x12u,  /// entry: int64
+                            'e',
+                            'n',
+                            't',
+                            'r',
+                            'y',
+                            '\x00',
+                            static_cast<std::uint8_t>((iu >> (8u * 0u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 1u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 2u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 3u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 4u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 5u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 6u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 7u)) & 0xffu),
+                            0x00u  // end marker
+                        };
 
                     const auto bson = json::to_bson(j);
                     CHECK(bson == expected_bson);
@@ -915,14 +1369,12 @@ TEST_CASE("BSON numerical data")
                     CHECK(j_roundtrip.at("entry").is_number_integer());
                     CHECK(j_roundtrip == j);
                     CHECK(json::from_bson(bson, true, false) == j);
-
                 }
             }
 
             SECTION("signed std::int32_t: INT32_MIN .. INT32_MAX")
             {
-                std::vector<int32_t> const numbers
-                {
+                std::vector<int32_t> const numbers{
                     (std::numeric_limits<int32_t>::min)(),
                     -2147483647L,
                     -1000000000L,
@@ -947,32 +1399,37 @@ TEST_CASE("BSON numerical data")
                     100000000L,
                     1000000000L,
                     2147483646L,
-                    (std::numeric_limits<int32_t>::max)()
-                };
+                    (std::numeric_limits<int32_t>::max)()};
 
                 for (const auto i : numbers)
                 {
-
                     CAPTURE(i)
 
                     json const j =
-                    {
-                        { "entry", i }
-                    };
+                        {
+                            {"entry", i}};
                     CHECK(j.at("entry").is_number_integer());
 
                     std::uint32_t const iu = *reinterpret_cast<const std::uint32_t*>(&i);
                     std::vector<std::uint8_t> const expected_bson =
-                    {
-                        0x10u, 0x00u, 0x00u, 0x00u, // size (little endian)
-                        0x10u, /// entry: int32
-                        'e', 'n', 't', 'r', 'y', '\x00',
-                        static_cast<std::uint8_t>((iu >> (8u * 0u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 1u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 2u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 3u)) & 0xffu),
-                        0x00u // end marker
-                    };
+                        {
+                            0x10u,
+                            0x00u,
+                            0x00u,
+                            0x00u,  // size (little endian)
+                            0x10u,  /// entry: int32
+                            'e',
+                            'n',
+                            't',
+                            'r',
+                            'y',
+                            '\x00',
+                            static_cast<std::uint8_t>((iu >> (8u * 0u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 1u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 2u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 3u)) & 0xffu),
+                            0x00u  // end marker
+                        };
 
                     const auto bson = json::to_bson(j);
                     CHECK(bson == expected_bson);
@@ -982,14 +1439,12 @@ TEST_CASE("BSON numerical data")
                     CHECK(j_roundtrip.at("entry").is_number_integer());
                     CHECK(j_roundtrip == j);
                     CHECK(json::from_bson(bson, true, false) == j);
-
                 }
             }
 
             SECTION("signed std::int64_t: INT32_MAX+1 .. INT64_MAX")
             {
-                std::vector<int64_t> const numbers
-                {
+                std::vector<int64_t> const numbers{
                     (std::numeric_limits<int64_t>::max)(),
                     1000000000000000000LL,
                     100000000000000000LL,
@@ -1005,31 +1460,37 @@ TEST_CASE("BSON numerical data")
 
                 for (const auto i : numbers)
                 {
-
                     CAPTURE(i)
 
                     json const j =
-                    {
-                        { "entry", i }
-                    };
+                        {
+                            {"entry", i}};
                     CHECK(j.at("entry").is_number_integer());
 
                     std::uint64_t const iu = *reinterpret_cast<const std::uint64_t*>(&i);
                     std::vector<std::uint8_t> const expected_bson =
-                    {
-                        0x14u, 0x00u, 0x00u, 0x00u, // size (little endian)
-                        0x12u, /// entry: int64
-                        'e', 'n', 't', 'r', 'y', '\x00',
-                        static_cast<std::uint8_t>((iu >> (8u * 0u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 1u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 2u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 3u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 4u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 5u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 6u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 7u)) & 0xffu),
-                        0x00u // end marker
-                    };
+                        {
+                            0x14u,
+                            0x00u,
+                            0x00u,
+                            0x00u,  // size (little endian)
+                            0x12u,  /// entry: int64
+                            'e',
+                            'n',
+                            't',
+                            'r',
+                            'y',
+                            '\x00',
+                            static_cast<std::uint8_t>((iu >> (8u * 0u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 1u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 2u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 3u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 4u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 5u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 6u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 7u)) & 0xffu),
+                            0x00u  // end marker
+                        };
 
                     const auto bson = json::to_bson(j);
                     CHECK(bson == expected_bson);
@@ -1039,7 +1500,6 @@ TEST_CASE("BSON numerical data")
                     CHECK(j_roundtrip.at("entry").is_number_integer());
                     CHECK(j_roundtrip == j);
                     CHECK(json::from_bson(bson, true, false) == j);
-
                 }
             }
         }
@@ -1048,8 +1508,7 @@ TEST_CASE("BSON numerical data")
         {
             SECTION("unsigned std::uint64_t: 0 .. INT32_MAX")
             {
-                std::vector<std::uint64_t> const numbers
-                {
+                std::vector<std::uint64_t> const numbers{
                     0ULL,
                     1ULL,
                     10ULL,
@@ -1062,31 +1521,36 @@ TEST_CASE("BSON numerical data")
                     100000000ULL,
                     1000000000ULL,
                     2147483646ULL,
-                    static_cast<std::uint64_t>((std::numeric_limits<int32_t>::max)())
-                };
+                    static_cast<std::uint64_t>((std::numeric_limits<int32_t>::max)())};
 
                 for (const auto i : numbers)
                 {
-
                     CAPTURE(i)
 
                     json const j =
-                    {
-                        { "entry", i }
-                    };
+                        {
+                            {"entry", i}};
 
                     auto iu = i;
                     std::vector<std::uint8_t> const expected_bson =
-                    {
-                        0x10u, 0x00u, 0x00u, 0x00u, // size (little endian)
-                        0x10u, /// entry: int32
-                        'e', 'n', 't', 'r', 'y', '\x00',
-                        static_cast<std::uint8_t>((iu >> (8u * 0u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 1u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 2u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 3u)) & 0xffu),
-                        0x00u // end marker
-                    };
+                        {
+                            0x10u,
+                            0x00u,
+                            0x00u,
+                            0x00u,  // size (little endian)
+                            0x10u,  /// entry: int32
+                            'e',
+                            'n',
+                            't',
+                            'r',
+                            'y',
+                            '\x00',
+                            static_cast<std::uint8_t>((iu >> (8u * 0u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 1u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 2u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 3u)) & 0xffu),
+                            0x00u  // end marker
+                        };
 
                     const auto bson = json::to_bson(j);
                     CHECK(bson == expected_bson);
@@ -1097,14 +1561,12 @@ TEST_CASE("BSON numerical data")
                     CHECK(j_roundtrip.at("entry").is_number_integer());
                     CHECK(j_roundtrip == j);
                     CHECK(json::from_bson(bson, true, false) == j);
-
                 }
             }
 
             SECTION("unsigned std::uint64_t: INT32_MAX+1 .. INT64_MAX")
             {
-                std::vector<std::uint64_t> const numbers
-                {
+                std::vector<std::uint64_t> const numbers{
                     static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()) + 1,
                     4000000000ULL,
                     static_cast<std::uint64_t>((std::numeric_limits<std::uint32_t>::max)()),
@@ -1122,30 +1584,36 @@ TEST_CASE("BSON numerical data")
 
                 for (const auto i : numbers)
                 {
-
                     CAPTURE(i)
 
                     json const j =
-                    {
-                        { "entry", i }
-                    };
+                        {
+                            {"entry", i}};
 
                     auto iu = i;
                     std::vector<std::uint8_t> const expected_bson =
-                    {
-                        0x14u, 0x00u, 0x00u, 0x00u, // size (little endian)
-                        0x12u, /// entry: int64
-                        'e', 'n', 't', 'r', 'y', '\x00',
-                        static_cast<std::uint8_t>((iu >> (8u * 0u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 1u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 2u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 3u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 4u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 5u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 6u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 7u)) & 0xffu),
-                        0x00u // end marker
-                    };
+                        {
+                            0x14u,
+                            0x00u,
+                            0x00u,
+                            0x00u,  // size (little endian)
+                            0x12u,  /// entry: int64
+                            'e',
+                            'n',
+                            't',
+                            'r',
+                            'y',
+                            '\x00',
+                            static_cast<std::uint8_t>((iu >> (8u * 0u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 1u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 2u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 3u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 4u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 5u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 6u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 7u)) & 0xffu),
+                            0x00u  // end marker
+                        };
 
                     const auto bson = json::to_bson(j);
                     CHECK(bson == expected_bson);
@@ -1161,8 +1629,7 @@ TEST_CASE("BSON numerical data")
 
             SECTION("unsigned std::uint64_t: INT64_MAX+1 .. UINT64_MAX")
             {
-                std::vector<std::uint64_t> const numbers
-                {
+                std::vector<std::uint64_t> const numbers{
                     static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()) + 1ULL,
                     10000000000000000000ULL,
                     18000000000000000000ULL,
@@ -1172,30 +1639,36 @@ TEST_CASE("BSON numerical data")
 
                 for (const auto i : numbers)
                 {
-
                     CAPTURE(i)
 
                     json const j =
-                    {
-                        { "entry", i }
-                    };
+                        {
+                            {"entry", i}};
 
                     auto iu = i;
                     std::vector<std::uint8_t> const expected_bson =
-                    {
-                        0x14u, 0x00u, 0x00u, 0x00u, // size (little endian)
-                        0x12u, /// entry: int64
-                        'e', 'n', 't', 'r', 'y', '\x00',
-                        static_cast<std::uint8_t>((iu >> (8u * 0u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 1u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 2u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 3u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 4u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 5u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 6u)) & 0xffu),
-                        static_cast<std::uint8_t>((iu >> (8u * 7u)) & 0xffu),
-                        0x00u // end marker
-                    };
+                        {
+                            0x14u,
+                            0x00u,
+                            0x00u,
+                            0x00u,  // size (little endian)
+                            0x12u,  /// entry: int64
+                            'e',
+                            'n',
+                            't',
+                            'r',
+                            'y',
+                            '\x00',
+                            static_cast<std::uint8_t>((iu >> (8u * 0u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 1u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 2u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 3u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 4u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 5u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 6u)) & 0xffu),
+                            static_cast<std::uint8_t>((iu >> (8u * 7u)) & 0xffu),
+                            0x00u  // end marker
+                        };
 
                     CHECK_THROWS_AS(json::to_bson(j), json::out_of_range&);
 #if JSON_DIAGNOSTICS
@@ -1205,7 +1678,6 @@ TEST_CASE("BSON numerical data")
 #endif
                 }
             }
-
         }
     }
 }
@@ -1215,13 +1687,12 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
     SECTION("reference files")
     {
         for (const std::string filename :
-                {
-                    TEST_DATA_DIRECTORY "/json.org/1.json",
-                    TEST_DATA_DIRECTORY "/json.org/2.json",
-                    TEST_DATA_DIRECTORY "/json.org/3.json",
-                    TEST_DATA_DIRECTORY "/json.org/4.json",
-                    TEST_DATA_DIRECTORY "/json.org/5.json"
-                })
+             {
+                 TEST_DATA_DIRECTORY "/json.org/1.json",
+                 TEST_DATA_DIRECTORY "/json.org/2.json",
+                 TEST_DATA_DIRECTORY "/json.org/3.json",
+                 TEST_DATA_DIRECTORY "/json.org/4.json",
+                 TEST_DATA_DIRECTORY "/json.org/5.json"})
         {
             CAPTURE(filename)
 

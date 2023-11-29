@@ -14,18 +14,17 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <iomanip>
 #include "make_test_data_available.hpp"
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
 
 // this test suite uses static variables with non-trivial destructors
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
 DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
 
-namespace
-{
+namespace {
 extern size_t calls;
 size_t calls = 0;
 
@@ -123,7 +122,7 @@ void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte
 {
     if (++calls % 100000 == 0)
     {
-        std::cout << calls << " of 5517507 UTF-8 strings checked" << std::endl; // NOLINT(performance-avoid-endl)
+        std::cout << calls << " of 5517507 UTF-8 strings checked" << std::endl;  // NOLINT(performance-avoid-endl)
     }
 
     static std::string json_string;
@@ -164,7 +163,7 @@ void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte
         CHECK_THROWS_AS(_ = json::parse(json_string), json::parse_error&);
     }
 }
-} // namespace
+}  // namespace
 
 TEST_CASE("Unicode (4/5)" * doctest::skip())
 {

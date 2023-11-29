@@ -15,8 +15,7 @@
 #include <nlohmann/detail/meta/type_traits.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
+namespace detail {
 
 template<typename BasicJsonType>
 class json_ref
@@ -25,22 +24,22 @@ class json_ref
     using value_type = BasicJsonType;
 
     json_ref(value_type&& value)
-        : owned_value(std::move(value))
+      : owned_value(std::move(value))
     {}
 
     json_ref(const value_type& value)
-        : value_ref(&value)
+      : value_ref(&value)
     {}
 
     json_ref(std::initializer_list<json_ref> init)
-        : owned_value(init)
+      : owned_value(init)
     {}
 
-    template <
+    template<
         class... Args,
-        enable_if_t<std::is_constructible<value_type, Args...>::value, int> = 0 >
-    json_ref(Args && ... args)
-        : owned_value(std::forward<Args>(args)...)
+        enable_if_t<std::is_constructible<value_type, Args...>::value, int> = 0>
+    json_ref(Args&&... args)
+      : owned_value(std::forward<Args>(args)...)
     {}
 
     // class should be movable only
@@ -66,7 +65,7 @@ class json_ref
 
     value_type const* operator->() const
     {
-        return &** this;
+        return &**this;
     }
 
   private:

@@ -8,15 +8,15 @@ set(N 10)
 include(FindPython3)
 find_package(Python3 COMPONENTS Interpreter)
 
-find_program(ASTYLE_TOOL NAMES astyle)
-execute_process(COMMAND ${ASTYLE_TOOL} --version OUTPUT_VARIABLE ASTYLE_TOOL_VERSION ERROR_VARIABLE ASTYLE_TOOL_VERSION)
-string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" ASTYLE_TOOL_VERSION "${ASTYLE_TOOL_VERSION}")
-message(STATUS "🔖 Artistic Style ${ASTYLE_TOOL_VERSION} (${ASTYLE_TOOL})")
-
 find_program(CLANG_TOOL NAMES clang++-HEAD clang++ clang++-17 clang++-16 clang++-15 clang++-14 clang++-13 clang++-12 clang++-11 clang++)
 execute_process(COMMAND ${CLANG_TOOL} --version OUTPUT_VARIABLE CLANG_TOOL_VERSION ERROR_VARIABLE CLANG_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TOOL_VERSION "${CLANG_TOOL_VERSION}")
 message(STATUS "🔖 Clang ${CLANG_TOOL_VERSION} (${CLANG_TOOL})")
+
+find_program(CLANG_FORMAT_TOOL NAMES clang-format)
+execute_process(COMMAND ${CLANG_FORMAT_TOOL} --version OUTPUT_VARIABLE CLANG_FORMAT_TOOL_VERSION ERROR_VARIABLE CLANG_FORMAT_TOOL_VERSION)
+string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_FORMAT_TOOL_VERSION "${CLANG_FORMAT_TOOL_VERSION}")
+message(STATUS "🔖 Clang-Format ${CLANG_FORMAT_TOOL_VERSION} (${CLANG_FORMAT_TOOL})")
 
 find_program(CLANG_TIDY_TOOL NAMES clang-tidy-17 clang-tidy-16 clang-tidy-15 clang-tidy-14 clang-tidy-13 clang-tidy-12 clang-tidy-11 clang-tidy)
 execute_process(COMMAND ${CLANG_TIDY_TOOL} --version OUTPUT_VARIABLE CLANG_TIDY_TOOL_VERSION ERROR_VARIABLE CLANG_TIDY_TOOL_VERSION)
@@ -581,33 +581,8 @@ add_custom_target(ci_test_clang_sanitizer
 # Check if header is amalgamated and sources are properly indented.
 ###############################################################################
 
-set(ASTYLE_FLAGS --style=allman --indent=spaces=4 --indent-modifiers --indent-switches --indent-preproc-block --indent-preproc-define --indent-col1-comments --pad-oper --pad-header --align-pointer=type --align-reference=type --add-brackets --convert-tabs --close-templates --lineend=linux --preserve-date --formatted)
-
-file(GLOB_RECURSE INDENT_FILES
-    ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp
-        ${PROJECT_SOURCE_DIR}/tests/src/*.cpp
-        ${PROJECT_SOURCE_DIR}/tests/src/*.hpp
-        ${PROJECT_SOURCE_DIR}/tests/benchmarks/src/benchmarks.cpp
-    ${PROJECT_SOURCE_DIR}/docs/examples/*.cpp
-)
-
-set(include_dir ${PROJECT_SOURCE_DIR}/single_include/nlohmann)
-set(tool_dir ${PROJECT_SOURCE_DIR}/tools/amalgamate)
 add_custom_target(ci_test_amalgamation
-    COMMAND rm -fr ${include_dir}/json.hpp~ ${include_dir}/json_fwd.hpp~
-    COMMAND cp ${include_dir}/json.hpp ${include_dir}/json.hpp~
-    COMMAND cp ${include_dir}/json_fwd.hpp ${include_dir}/json_fwd.hpp~
-
-    COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json.json -s .
-    COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json_fwd.json -s .
-    COMMAND ${ASTYLE_TOOL} ${ASTYLE_FLAGS} --suffix=none --quiet ${include_dir}/json.hpp ${include_dir}/json_fwd.hpp
-
-    COMMAND diff ${include_dir}/json.hpp~ ${include_dir}/json.hpp
-    COMMAND diff ${include_dir}/json_fwd.hpp~ ${include_dir}/json_fwd.hpp
-
-    COMMAND ${ASTYLE_TOOL} ${ASTYLE_FLAGS} ${INDENT_FILES}
-    COMMAND for FILE in `find . -name '*.orig'`\; do false \; done
-
+    COMMAND make check-amalgamation
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     COMMENT "Check amalgamation and indentation"
 )

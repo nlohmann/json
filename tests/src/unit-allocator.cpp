@@ -12,8 +12,7 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-namespace
-{
+namespace {
 // special test case to check if memory is leaked if constructor throws
 template<class T>
 struct bad_allocator : std::allocator<T>
@@ -21,21 +20,23 @@ struct bad_allocator : std::allocator<T>
     using std::allocator<T>::allocator;
 
     bad_allocator() = default;
-    template<class U> bad_allocator(const bad_allocator<U>& /*unused*/) { }
+    template<class U>
+    bad_allocator(const bad_allocator<U>& /*unused*/)
+    {}
 
     template<class... Args>
-    void construct(T* /*unused*/, Args&& ... /*unused*/) // NOLINT(cppcoreguidelines-missing-std-forward)
+    void construct(T* /*unused*/, Args&&... /*unused*/)  // NOLINT(cppcoreguidelines-missing-std-forward)
     {
         throw std::bad_alloc();
     }
 
-    template <class U>
+    template<class U>
     struct rebind
     {
         using other = bad_allocator<U>;
     };
 };
-} // namespace
+}  // namespace
 
 TEST_CASE("bad_alloc")
 {
@@ -43,21 +44,20 @@ TEST_CASE("bad_alloc")
     {
         // create JSON type using the throwing allocator
         using bad_json = nlohmann::basic_json<std::map,
-              std::vector,
-              std::string,
-              bool,
-              std::int64_t,
-              std::uint64_t,
-              double,
-              bad_allocator>;
+                                              std::vector,
+                                              std::string,
+                                              bool,
+                                              std::int64_t,
+                                              std::uint64_t,
+                                              double,
+                                              bad_allocator>;
 
         // creating an object should throw
         CHECK_THROWS_AS(bad_json(bad_json::value_t::object), std::bad_alloc&);
     }
 }
 
-namespace
-{
+namespace {
 bool next_construct_fails = false;
 bool next_destroy_fails = false;
 bool next_deallocate_fails = false;
@@ -68,7 +68,7 @@ struct my_allocator : std::allocator<T>
     using std::allocator<T>::allocator;
 
     template<class... Args>
-    void construct(T* p, Args&& ... args)
+    void construct(T* p, Args&&... args)
     {
         if (next_construct_fails)
         {
@@ -98,11 +98,11 @@ struct my_allocator : std::allocator<T>
             throw std::bad_alloc();
         }
 
-        static_cast<void>(p); // fix MSVC's C4100 warning
+        static_cast<void>(p);  // fix MSVC's C4100 warning
         p->~T();
     }
 
-    template <class U>
+    template<class U>
     struct rebind
     {
         using other = my_allocator<U>;
@@ -118,19 +118,19 @@ void my_allocator_clean_up(T* p)
     alloc.destroy(p);
     alloc.deallocate(p, 1);
 }
-} // namespace
+}  // namespace
 
 TEST_CASE("controlled bad_alloc")
 {
     // create JSON type using the throwing allocator
     using my_json = nlohmann::basic_json<std::map,
-          std::vector,
-          std::string,
-          bool,
-          std::int64_t,
-          std::uint64_t,
-          double,
-          my_allocator>;
+                                         std::vector,
+                                         std::string,
+                                         bool,
+                                         std::int64_t,
+                                         std::uint64_t,
+                                         double,
+                                         my_allocator>;
 
     SECTION("class json_value")
     {
@@ -181,7 +181,7 @@ TEST_CASE("controlled bad_alloc")
         SECTION("basic_json(const CompatibleObjectType&)")
         {
             next_construct_fails = false;
-            const std::map<std::string, std::string> v {{"foo", "bar"}};
+            const std::map<std::string, std::string> v{{"foo", "bar"}};
             CHECK_NOTHROW(my_json(v));
             next_construct_fails = true;
             CHECK_THROWS_AS(my_json(v), std::bad_alloc&);
@@ -191,7 +191,7 @@ TEST_CASE("controlled bad_alloc")
         SECTION("basic_json(const CompatibleArrayType&)")
         {
             next_construct_fails = false;
-            const std::vector<std::string> v {"foo", "bar", "baz"};
+            const std::vector<std::string> v{"foo", "bar", "baz"};
             CHECK_NOTHROW(my_json(v));
             next_construct_fails = true;
             CHECK_THROWS_AS(my_json(v), std::bad_alloc&);
@@ -219,42 +219,42 @@ TEST_CASE("controlled bad_alloc")
     }
 }
 
-namespace
-{
+namespace {
 template<class T>
 struct allocator_no_forward : std::allocator<T>
 {
     allocator_no_forward() = default;
-    template <class U>
-    allocator_no_forward(allocator_no_forward<U> /*unused*/) {}
+    template<class U>
+    allocator_no_forward(allocator_no_forward<U> /*unused*/)
+    {}
 
-    template <class U>
+    template<class U>
     struct rebind
     {
-        using other =  allocator_no_forward<U>;
+        using other = allocator_no_forward<U>;
     };
 
-    template <class... Args>
-    void construct(T* p, const Args& ... args) noexcept(noexcept(::new (static_cast<void*>(p)) T(args...)))
+    template<class... Args>
+    void construct(T* p, const Args&... args) noexcept(noexcept(::new(static_cast<void*>(p)) T(args...)))
     {
         // force copy even if move is available
         ::new (static_cast<void*>(p)) T(args...);
     }
 };
-} // namespace
+}  // namespace
 
 TEST_CASE("bad my_allocator::construct")
 {
     SECTION("my_allocator::construct doesn't forward")
     {
         using bad_alloc_json = nlohmann::basic_json<std::map,
-              std::vector,
-              std::string,
-              bool,
-              std::int64_t,
-              std::uint64_t,
-              double,
-              allocator_no_forward>;
+                                                    std::vector,
+                                                    std::string,
+                                                    bool,
+                                                    std::int64_t,
+                                                    std::uint64_t,
+                                                    double,
+                                                    allocator_no_forward>;
 
         bad_alloc_json j;
         j["test"] = bad_alloc_json::array_t();

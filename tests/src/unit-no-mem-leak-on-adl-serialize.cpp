@@ -8,9 +8,9 @@
 
 #include "doctest_compatibility.h"
 
-#include <nlohmann/json.hpp>
 #include <exception>
 #include <iostream>
+#include <nlohmann/json.hpp>
 
 struct Foo
 {
@@ -18,9 +18,8 @@ struct Foo
     int b;
 };
 
-namespace nlohmann
-{
-template <>
+namespace nlohmann {
+template<>
 struct adl_serializer<Foo>
 {
     static void to_json(json& j, Foo const& f)
@@ -42,16 +41,16 @@ struct adl_serializer<Foo>
         }
     }
 };
-} // namespace nlohmann
+}  // namespace nlohmann
 
 TEST_CASE("check_for_mem_leak_on_adl_to_json-1")
 {
     try
     {
-        const nlohmann::json j = Foo {1, 0};
+        const nlohmann::json j = Foo{1, 0};
         std::cout << j.dump() << "\n";
     }
-    catch (...) // NOLINT(bugprone-empty-catch)
+    catch (...)  // NOLINT(bugprone-empty-catch)
     {
         // just ignore the exception in this POC
     }
@@ -61,10 +60,10 @@ TEST_CASE("check_for_mem_leak_on_adl_to_json-2")
 {
     try
     {
-        const nlohmann::json j = Foo {1, 1};
+        const nlohmann::json j = Foo{1, 1};
         std::cout << j.dump() << "\n";
     }
-    catch (...) // NOLINT(bugprone-empty-catch)
+    catch (...)  // NOLINT(bugprone-empty-catch)
     {
         // just ignore the exception in this POC
     }
@@ -74,13 +73,11 @@ TEST_CASE("check_for_mem_leak_on_adl_to_json-2")
 {
     try
     {
-        const nlohmann::json j = Foo {1, 2};
+        const nlohmann::json j = Foo{1, 2};
         std::cout << j.dump() << "\n";
     }
-    catch (...) // NOLINT(bugprone-empty-catch)
+    catch (...)  // NOLINT(bugprone-empty-catch)
     {
         // just ignore the exception in this POC
     }
 }
-
-

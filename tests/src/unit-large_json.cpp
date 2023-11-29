@@ -26,4 +26,3 @@ TEST_CASE("tests on very large JSONs")
         CHECK_NOTHROW(_ = nlohmann::json::parse(s));
     }
 }
-

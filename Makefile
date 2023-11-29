@@ -142,33 +142,9 @@ pvs_studio:
 # Code format and source amalgamation
 ##########################################################################
 
-# call the Artistic Style pretty printer on all source files
-pretty:
-	astyle \
-	    --style=allman \
-	    --indent=spaces=4 \
-	    --indent-modifiers \
-	    --indent-switches \
-	    --indent-preproc-block \
-	    --indent-preproc-define \
-	    --indent-col1-comments \
-	    --pad-oper \
-	    --pad-header \
-	    --align-pointer=type \
-	    --align-reference=type \
-	    --add-braces \
-	    --squeeze-lines=2 \
-	    --convert-tabs \
-	    --close-templates \
-	    --lineend=linux \
-	    --preserve-date \
-	    --suffix=none \
-	    --formatted \
-	   $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) docs/examples/*.cpp
-
 # call the Clang-Format on all source files
-pretty_format:
-	for FILE in $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) docs/examples/*.cpp; do echo $$FILE; clang-format -i $$FILE; done
+pretty:
+	clang-format --Werror --verbose -i $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE)
 
 # create single header files and pretty print
 amalgamate: $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE)

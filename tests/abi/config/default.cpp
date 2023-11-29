@@ -20,13 +20,13 @@ TEST_CASE("default namespace")
     {
         std::string expected = "nlohmann::json_abi";
 
-#if JSON_DIAGNOSTICS
+    #if JSON_DIAGNOSTICS
         expected += "_diag";
-#endif
+    #endif
 
-#if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+    #if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
         expected += "_ldvcmp";
-#endif
+    #endif
 
         expected += "_v" STRINGIZE(NLOHMANN_JSON_VERSION_MAJOR);
         expected += "_" STRINGIZE(NLOHMANN_JSON_VERSION_MINOR);

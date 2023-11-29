@@ -17,7 +17,7 @@ TEST_CASE("user-defined string literals")
 
     SECTION("using namespace nlohmann::literals::json_literals")
     {
-        using namespace nlohmann::literals::json_literals; // NOLINT(google-build-using-namespace)
+        using namespace nlohmann::literals::json_literals;  // NOLINT(google-build-using-namespace)
 
         CHECK(R"({"foo": "bar", "baz": 42})"_json == j_expected);
         CHECK("/foo/bar"_json_pointer == ptr_expected);
@@ -25,7 +25,7 @@ TEST_CASE("user-defined string literals")
 
     SECTION("using namespace nlohmann::json_literals")
     {
-        using namespace nlohmann::json_literals; // NOLINT(google-build-using-namespace)
+        using namespace nlohmann::json_literals;  // NOLINT(google-build-using-namespace)
 
         CHECK(R"({"foo": "bar", "baz": 42})"_json == j_expected);
         CHECK("/foo/bar"_json_pointer == ptr_expected);
@@ -33,7 +33,7 @@ TEST_CASE("user-defined string literals")
 
     SECTION("using namespace nlohmann::literals")
     {
-        using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
+        using namespace nlohmann::literals;  // NOLINT(google-build-using-namespace)
 
         CHECK(R"({"foo": "bar", "baz": 42})"_json == j_expected);
         CHECK("/foo/bar"_json_pointer == ptr_expected);
@@ -41,7 +41,7 @@ TEST_CASE("user-defined string literals")
 
     SECTION("using namespace nlohmann")
     {
-        using namespace nlohmann; // NOLINT(google-build-using-namespace)
+        using namespace nlohmann;  // NOLINT(google-build-using-namespace)
 
         CHECK(R"({"foo": "bar", "baz": 42})"_json == j_expected);
         CHECK("/foo/bar"_json_pointer == ptr_expected);

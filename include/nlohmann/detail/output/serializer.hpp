@@ -9,18 +9,18 @@
 
 #pragma once
 
-#include <algorithm> // reverse, remove, fill, find, none_of
-#include <array> // array
-#include <clocale> // localeconv, lconv
-#include <cmath> // labs, isfinite, isnan, signbit
-#include <cstddef> // size_t, ptrdiff_t
-#include <cstdint> // uint8_t
-#include <cstdio> // snprintf
-#include <limits> // numeric_limits
-#include <string> // string, char_traits
-#include <iomanip> // setfill, setw
-#include <type_traits> // is_same
-#include <utility> // move
+#include <algorithm>    // reverse, remove, fill, find, none_of
+#include <array>        // array
+#include <clocale>      // localeconv, lconv
+#include <cmath>        // labs, isfinite, isnan, signbit
+#include <cstddef>      // size_t, ptrdiff_t
+#include <cstdint>      // uint8_t
+#include <cstdio>       // snprintf
+#include <iomanip>      // setfill, setw
+#include <limits>       // numeric_limits
+#include <string>       // string, char_traits
+#include <type_traits>  // is_same
+#include <utility>      // move
 
 #include <nlohmann/detail/conversions/to_chars.hpp>
 #include <nlohmann/detail/exceptions.hpp>
@@ -32,8 +32,7 @@
 #include <nlohmann/detail/value_t.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
+namespace detail {
 
 ///////////////////
 // serialization //
@@ -42,9 +41,9 @@ namespace detail
 /// how to treat decoding errors
 enum class error_handler_t
 {
-    strict,  ///< throw a type_error exception in case of invalid UTF-8
-    replace, ///< replace invalid UTF-8 sequences with U+FFFD
-    ignore   ///< ignore invalid UTF-8 sequences
+    strict,   ///< throw a type_error exception in case of invalid UTF-8
+    replace,  ///< replace invalid UTF-8 sequences with U+FFFD
+    ignore    ///< ignore invalid UTF-8 sequences
 };
 
 template<typename BasicJsonType>
@@ -64,15 +63,14 @@ class serializer
     @param[in] ichar  indentation character to use
     @param[in] error_handler_  how to react on decoding errors
     */
-    serializer(output_adapter_t<char> s, const char ichar,
-               error_handler_t error_handler_ = error_handler_t::strict)
-        : o(std::move(s))
-        , loc(std::localeconv())
-        , thousands_sep(loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->thousands_sep)))
-        , decimal_point(loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->decimal_point)))
-        , indent_char(ichar)
-        , indent_string(512, indent_char)
-        , error_handler(error_handler_)
+    serializer(output_adapter_t<char> s, const char ichar, error_handler_t error_handler_ = error_handler_t::strict)
+      : o(std::move(s))
+      , loc(std::localeconv())
+      , thousands_sep(loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type(*(loc->thousands_sep)))
+      , decimal_point(loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type(*(loc->decimal_point)))
+      , indent_char(ichar)
+      , indent_string(512, indent_char)
+      , error_handler(error_handler_)
     {}
 
     // delete because of pointer members
@@ -206,7 +204,8 @@ class serializer
 
                     // first n-1 elements
                     for (auto i = val.m_data.m_value.array->cbegin();
-                            i != val.m_data.m_value.array->cend() - 1; ++i)
+                         i != val.m_data.m_value.array->cend() - 1;
+                         ++i)
                     {
                         o->write_characters(indent_string.c_str(), new_indent);
                         dump(*i, true, ensure_ascii, indent_step, new_indent);
@@ -228,7 +227,8 @@ class serializer
 
                     // first n-1 elements
                     for (auto i = val.m_data.m_value.array->cbegin();
-                            i != val.m_data.m_value.array->cend() - 1; ++i)
+                         i != val.m_data.m_value.array->cend() - 1;
+                         ++i)
                     {
                         dump(*i, false, ensure_ascii, indent_step, current_indent);
                         o->write_character(',');
@@ -272,7 +272,8 @@ class serializer
                     if (!val.m_data.m_value.binary->empty())
                     {
                         for (auto i = val.m_data.m_value.binary->cbegin();
-                                i != val.m_data.m_value.binary->cend() - 1; ++i)
+                             i != val.m_data.m_value.binary->cend() - 1;
+                             ++i)
                         {
                             dump_integer(*i);
                             o->write_characters(", ", 2);
@@ -303,7 +304,8 @@ class serializer
                     if (!val.m_data.m_value.binary->empty())
                     {
                         for (auto i = val.m_data.m_value.binary->cbegin();
-                                i != val.m_data.m_value.binary->cend() - 1; ++i)
+                             i != val.m_data.m_value.binary->cend() - 1;
+                             ++i)
                         {
                             dump_integer(*i);
                             o->write_character(',');
@@ -368,13 +370,13 @@ class serializer
                 return;
             }
 
-            default:            // LCOV_EXCL_LINE
-                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
+            default:                 // LCOV_EXCL_LINE
+                JSON_ASSERT(false);  // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
     }
 
-  JSON_PRIVATE_UNLESS_TESTED:
-    /*!
+    JSON_PRIVATE_UNLESS_TESTED :
+      /*!
     @brief dump escaped string
 
     Escape a string by replacing certain special characters by a sequence of an
@@ -388,7 +390,8 @@ class serializer
 
     @complexity Linear in the length of string @a s.
     */
-    void dump_escaped(const string_t& s, const bool ensure_ascii)
+      void
+      dump_escaped(const string_t& s, const bool ensure_ascii)
     {
         std::uint32_t codepoint{};
         std::uint8_t state = UTF8_ACCEPT;
@@ -408,49 +411,49 @@ class serializer
                 {
                     switch (codepoint)
                     {
-                        case 0x08: // backspace
+                        case 0x08:  // backspace
                         {
                             string_buffer[bytes++] = '\\';
                             string_buffer[bytes++] = 'b';
                             break;
                         }
 
-                        case 0x09: // horizontal tab
+                        case 0x09:  // horizontal tab
                         {
                             string_buffer[bytes++] = '\\';
                             string_buffer[bytes++] = 't';
                             break;
                         }
 
-                        case 0x0A: // newline
+                        case 0x0A:  // newline
                         {
                             string_buffer[bytes++] = '\\';
                             string_buffer[bytes++] = 'n';
                             break;
                         }
 
-                        case 0x0C: // formfeed
+                        case 0x0C:  // formfeed
                         {
                             string_buffer[bytes++] = '\\';
                             string_buffer[bytes++] = 'f';
                             break;
                         }
 
-                        case 0x0D: // carriage return
+                        case 0x0D:  // carriage return
                         {
                             string_buffer[bytes++] = '\\';
                             string_buffer[bytes++] = 'r';
                             break;
                         }
 
-                        case 0x22: // quotation mark
+                        case 0x22:  // quotation mark
                         {
                             string_buffer[bytes++] = '\\';
                             string_buffer[bytes++] = '\"';
                             break;
                         }
 
-                        case 0x5C: // reverse solidus
+                        case 0x5C:  // reverse solidus
                         {
                             string_buffer[bytes++] = '\\';
                             string_buffer[bytes++] = '\\';
@@ -466,16 +469,13 @@ class serializer
                                 if (codepoint <= 0xFFFF)
                                 {
                                     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-                                    static_cast<void>((std::snprintf)(string_buffer.data() + bytes, 7, "\\u%04x",
-                                                                      static_cast<std::uint16_t>(codepoint)));
+                                    static_cast<void>((std::snprintf)(string_buffer.data() + bytes, 7, "\\u%04x", static_cast<std::uint16_t>(codepoint)));
                                     bytes += 6;
                                 }
                                 else
                                 {
                                     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-                                    static_cast<void>((std::snprintf)(string_buffer.data() + bytes, 13, "\\u%04x\\u%04x",
-                                                                      static_cast<std::uint16_t>(0xD7C0u + (codepoint >> 10u)),
-                                                                      static_cast<std::uint16_t>(0xDC00u + (codepoint & 0x3FFu))));
+                                    static_cast<void>((std::snprintf)(string_buffer.data() + bytes, 13, "\\u%04x\\u%04x", static_cast<std::uint16_t>(0xD7C0u + (codepoint >> 10u)), static_cast<std::uint16_t>(0xDC00u + (codepoint & 0x3FFu))));
                                     bytes += 12;
                                 }
                             }
@@ -567,8 +567,8 @@ class serializer
                             break;
                         }
 
-                        default:            // LCOV_EXCL_LINE
-                            JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
+                        default:                 // LCOV_EXCL_LINE
+                            JSON_ASSERT(false);  // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -628,8 +628,8 @@ class serializer
                     break;
                 }
 
-                default:            // LCOV_EXCL_LINE
-                    JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
+                default:                 // LCOV_EXCL_LINE
+                    JSON_ASSERT(false);  // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
             }
         }
     }
@@ -684,13 +684,13 @@ class serializer
     }
 
     // templates to avoid warnings about useless casts
-    template <typename NumberType, enable_if_t<std::is_signed<NumberType>::value, int> = 0>
+    template<typename NumberType, enable_if_t<std::is_signed<NumberType>::value, int> = 0>
     bool is_negative_number(NumberType x)
     {
         return x < 0;
     }
 
-    template < typename NumberType, enable_if_t <std::is_unsigned<NumberType>::value, int > = 0 >
+    template<typename NumberType, enable_if_t<std::is_unsigned<NumberType>::value, int> = 0>
     bool is_negative_number(NumberType /*unused*/)
     {
         return false;
@@ -705,29 +705,112 @@ class serializer
     @param[in] x  integer number (signed or unsigned) to dump
     @tparam NumberType either @a number_integer_t or @a number_unsigned_t
     */
-    template < typename NumberType, detail::enable_if_t <
-                   std::is_integral<NumberType>::value ||
-                   std::is_same<NumberType, number_unsigned_t>::value ||
-                   std::is_same<NumberType, number_integer_t>::value ||
-                   std::is_same<NumberType, binary_char_t>::value,
-                   int > = 0 >
+    template<typename NumberType, detail::enable_if_t<std::is_integral<NumberType>::value || std::is_same<NumberType, number_unsigned_t>::value || std::is_same<NumberType, number_integer_t>::value || std::is_same<NumberType, binary_char_t>::value, int> = 0>
     void dump_integer(NumberType x)
     {
-        static constexpr std::array<std::array<char, 2>, 100> digits_to_99
-        {
+        static constexpr std::array<std::array<char, 2>, 100> digits_to_99{
             {
-                {{'0', '0'}}, {{'0', '1'}}, {{'0', '2'}}, {{'0', '3'}}, {{'0', '4'}}, {{'0', '5'}}, {{'0', '6'}}, {{'0', '7'}}, {{'0', '8'}}, {{'0', '9'}},
-                {{'1', '0'}}, {{'1', '1'}}, {{'1', '2'}}, {{'1', '3'}}, {{'1', '4'}}, {{'1', '5'}}, {{'1', '6'}}, {{'1', '7'}}, {{'1', '8'}}, {{'1', '9'}},
-                {{'2', '0'}}, {{'2', '1'}}, {{'2', '2'}}, {{'2', '3'}}, {{'2', '4'}}, {{'2', '5'}}, {{'2', '6'}}, {{'2', '7'}}, {{'2', '8'}}, {{'2', '9'}},
-                {{'3', '0'}}, {{'3', '1'}}, {{'3', '2'}}, {{'3', '3'}}, {{'3', '4'}}, {{'3', '5'}}, {{'3', '6'}}, {{'3', '7'}}, {{'3', '8'}}, {{'3', '9'}},
-                {{'4', '0'}}, {{'4', '1'}}, {{'4', '2'}}, {{'4', '3'}}, {{'4', '4'}}, {{'4', '5'}}, {{'4', '6'}}, {{'4', '7'}}, {{'4', '8'}}, {{'4', '9'}},
-                {{'5', '0'}}, {{'5', '1'}}, {{'5', '2'}}, {{'5', '3'}}, {{'5', '4'}}, {{'5', '5'}}, {{'5', '6'}}, {{'5', '7'}}, {{'5', '8'}}, {{'5', '9'}},
-                {{'6', '0'}}, {{'6', '1'}}, {{'6', '2'}}, {{'6', '3'}}, {{'6', '4'}}, {{'6', '5'}}, {{'6', '6'}}, {{'6', '7'}}, {{'6', '8'}}, {{'6', '9'}},
-                {{'7', '0'}}, {{'7', '1'}}, {{'7', '2'}}, {{'7', '3'}}, {{'7', '4'}}, {{'7', '5'}}, {{'7', '6'}}, {{'7', '7'}}, {{'7', '8'}}, {{'7', '9'}},
-                {{'8', '0'}}, {{'8', '1'}}, {{'8', '2'}}, {{'8', '3'}}, {{'8', '4'}}, {{'8', '5'}}, {{'8', '6'}}, {{'8', '7'}}, {{'8', '8'}}, {{'8', '9'}},
-                {{'9', '0'}}, {{'9', '1'}}, {{'9', '2'}}, {{'9', '3'}}, {{'9', '4'}}, {{'9', '5'}}, {{'9', '6'}}, {{'9', '7'}}, {{'9', '8'}}, {{'9', '9'}},
-            }
-        };
+                {{'0', '0'}},
+                {{'0', '1'}},
+                {{'0', '2'}},
+                {{'0', '3'}},
+                {{'0', '4'}},
+                {{'0', '5'}},
+                {{'0', '6'}},
+                {{'0', '7'}},
+                {{'0', '8'}},
+                {{'0', '9'}},
+                {{'1', '0'}},
+                {{'1', '1'}},
+                {{'1', '2'}},
+                {{'1', '3'}},
+                {{'1', '4'}},
+                {{'1', '5'}},
+                {{'1', '6'}},
+                {{'1', '7'}},
+                {{'1', '8'}},
+                {{'1', '9'}},
+                {{'2', '0'}},
+                {{'2', '1'}},
+                {{'2', '2'}},
+                {{'2', '3'}},
+                {{'2', '4'}},
+                {{'2', '5'}},
+                {{'2', '6'}},
+                {{'2', '7'}},
+                {{'2', '8'}},
+                {{'2', '9'}},
+                {{'3', '0'}},
+                {{'3', '1'}},
+                {{'3', '2'}},
+                {{'3', '3'}},
+                {{'3', '4'}},
+                {{'3', '5'}},
+                {{'3', '6'}},
+                {{'3', '7'}},
+                {{'3', '8'}},
+                {{'3', '9'}},
+                {{'4', '0'}},
+                {{'4', '1'}},
+                {{'4', '2'}},
+                {{'4', '3'}},
+                {{'4', '4'}},
+                {{'4', '5'}},
+                {{'4', '6'}},
+                {{'4', '7'}},
+                {{'4', '8'}},
+                {{'4', '9'}},
+                {{'5', '0'}},
+                {{'5', '1'}},
+                {{'5', '2'}},
+                {{'5', '3'}},
+                {{'5', '4'}},
+                {{'5', '5'}},
+                {{'5', '6'}},
+                {{'5', '7'}},
+                {{'5', '8'}},
+                {{'5', '9'}},
+                {{'6', '0'}},
+                {{'6', '1'}},
+                {{'6', '2'}},
+                {{'6', '3'}},
+                {{'6', '4'}},
+                {{'6', '5'}},
+                {{'6', '6'}},
+                {{'6', '7'}},
+                {{'6', '8'}},
+                {{'6', '9'}},
+                {{'7', '0'}},
+                {{'7', '1'}},
+                {{'7', '2'}},
+                {{'7', '3'}},
+                {{'7', '4'}},
+                {{'7', '5'}},
+                {{'7', '6'}},
+                {{'7', '7'}},
+                {{'7', '8'}},
+                {{'7', '9'}},
+                {{'8', '0'}},
+                {{'8', '1'}},
+                {{'8', '2'}},
+                {{'8', '3'}},
+                {{'8', '4'}},
+                {{'8', '5'}},
+                {{'8', '6'}},
+                {{'8', '7'}},
+                {{'8', '8'}},
+                {{'8', '9'}},
+                {{'9', '0'}},
+                {{'9', '1'}},
+                {{'9', '2'}},
+                {{'9', '3'}},
+                {{'9', '4'}},
+                {{'9', '5'}},
+                {{'9', '6'}},
+                {{'9', '7'}},
+                {{'9', '8'}},
+                {{'9', '9'}},
+            }};
 
         // special case for "0"
         if (x == 0)
@@ -737,7 +820,7 @@ class serializer
         }
 
         // use a pointer to fill the buffer
-        auto buffer_ptr = number_buffer.begin(); // NOLINT(llvm-qualified-auto,readability-qualified-auto,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+        auto buffer_ptr = number_buffer.begin();  // NOLINT(llvm-qualified-auto,readability-qualified-auto,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
 
         number_unsigned_t abs_value;
 
@@ -810,9 +893,8 @@ class serializer
         // guaranteed to round-trip, using strtof and strtod, resp.
         //
         // NB: The test below works if <long double> == <double>.
-        static constexpr bool is_ieee_single_or_double
-            = (std::numeric_limits<number_float_t>::is_iec559 && std::numeric_limits<number_float_t>::digits == 24 && std::numeric_limits<number_float_t>::max_exponent == 128) ||
-              (std::numeric_limits<number_float_t>::is_iec559 && std::numeric_limits<number_float_t>::digits == 53 && std::numeric_limits<number_float_t>::max_exponent == 1024);
+        static constexpr bool is_ieee_single_or_double = (std::numeric_limits<number_float_t>::is_iec559 && std::numeric_limits<number_float_t>::digits == 24 && std::numeric_limits<number_float_t>::max_exponent == 128) ||
+                                                         (std::numeric_limits<number_float_t>::is_iec559 && std::numeric_limits<number_float_t>::digits == 53 && std::numeric_limits<number_float_t>::max_exponent == 1024);
 
         dump_float(x, std::integral_constant<bool, is_ieee_single_or_double>());
     }
@@ -864,11 +946,9 @@ class serializer
 
         // determine if we need to append ".0"
         const bool value_is_int_like =
-            std::none_of(number_buffer.begin(), number_buffer.begin() + len + 1,
-                         [](char c)
-        {
-            return c == '.' || c == 'e';
-        });
+            std::none_of(number_buffer.begin(), number_buffer.begin() + len + 1, [](char c) {
+                return c == '.' || c == 'e';
+            });
 
         if (value_is_int_like)
         {
@@ -900,31 +980,416 @@ class serializer
     static std::uint8_t decode(std::uint8_t& state, std::uint32_t& codep, const std::uint8_t byte) noexcept
     {
         static const std::array<std::uint8_t, 400> utf8d =
-        {
             {
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 00..1F
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 20..3F
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 40..5F
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 60..7F
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, // 80..9F
-                7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, // A0..BF
-                8, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // C0..DF
-                0xA, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x4, 0x3, 0x3, // E0..EF
-                0xB, 0x6, 0x6, 0x6, 0x5, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, // F0..FF
-                0x0, 0x1, 0x2, 0x3, 0x5, 0x8, 0x7, 0x1, 0x1, 0x1, 0x4, 0x6, 0x1, 0x1, 0x1, 0x1, // s0..s0
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, // s1..s2
-                1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, // s3..s4
-                1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, // s5..s6
-                1, 3, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 // s7..s8
-            }
-        };
+                {
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,  // 00..1F
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,  // 20..3F
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,  // 40..5F
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,  // 60..7F
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    9,
+                    9,
+                    9,
+                    9,
+                    9,
+                    9,
+                    9,
+                    9,
+                    9,
+                    9,
+                    9,
+                    9,
+                    9,
+                    9,
+                    9,
+                    9,  // 80..9F
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,
+                    7,  // A0..BF
+                    8,
+                    8,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,  // C0..DF
+                    0xA,
+                    0x3,
+                    0x3,
+                    0x3,
+                    0x3,
+                    0x3,
+                    0x3,
+                    0x3,
+                    0x3,
+                    0x3,
+                    0x3,
+                    0x3,
+                    0x3,
+                    0x4,
+                    0x3,
+                    0x3,  // E0..EF
+                    0xB,
+                    0x6,
+                    0x6,
+                    0x6,
+                    0x5,
+                    0x8,
+                    0x8,
+                    0x8,
+                    0x8,
+                    0x8,
+                    0x8,
+                    0x8,
+                    0x8,
+                    0x8,
+                    0x8,
+                    0x8,  // F0..FF
+                    0x0,
+                    0x1,
+                    0x2,
+                    0x3,
+                    0x5,
+                    0x8,
+                    0x7,
+                    0x1,
+                    0x1,
+                    0x1,
+                    0x4,
+                    0x6,
+                    0x1,
+                    0x1,
+                    0x1,
+                    0x1,  // s0..s0
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    0,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    0,
+                    1,
+                    0,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,  // s1..s2
+                    1,
+                    2,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    2,
+                    1,
+                    2,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    2,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,  // s3..s4
+                    1,
+                    2,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    2,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    3,
+                    1,
+                    3,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,  // s5..s6
+                    1,
+                    3,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    3,
+                    1,
+                    3,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    3,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1  // s7..s8
+                }};
 
         JSON_ASSERT(byte < utf8d.size());
         const std::uint8_t type = utf8d[byte];
 
         codep = (state != UTF8_ACCEPT)
-                ? (byte & 0x3fu) | (codep << 6u)
-                : (0xFFu >> type) & (byte);
+                    ? (byte & 0x3fu) | (codep << 6u)
+                    : (0xFFu >> type) & (byte);
 
         const std::size_t index = 256u + static_cast<size_t>(state) * 16u + static_cast<size_t>(type);
         JSON_ASSERT(index < utf8d.size());
@@ -939,8 +1404,8 @@ class serializer
      */
     number_unsigned_t remove_sign(number_unsigned_t x)
     {
-        JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
-        return x; // LCOV_EXCL_LINE
+        JSON_ASSERT(false);  // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
+        return x;            // LCOV_EXCL_LINE
     }
 
     /*
@@ -954,7 +1419,7 @@ class serializer
      */
     inline number_unsigned_t remove_sign(number_integer_t x) noexcept
     {
-        JSON_ASSERT(x < 0 && x < (std::numeric_limits<number_integer_t>::max)()); // NOLINT(misc-redundant-expression)
+        JSON_ASSERT(x < 0 && x < (std::numeric_limits<number_integer_t>::max)());  // NOLINT(misc-redundant-expression)
         return static_cast<number_unsigned_t>(-(x + 1)) + 1;
     }
 

@@ -21,13 +21,13 @@ TEST_CASE("default namespace without version component")
     {
         std::string expected = "nlohmann::json_abi";
 
-#if JSON_DIAGNOSTICS
+    #if JSON_DIAGNOSTICS
         expected += "_diag";
-#endif
+    #endif
 
-#if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+    #if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
         expected += "_ldvcmp";
-#endif
+    #endif
 
         expected += "::basic_json";
 

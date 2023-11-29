@@ -11,8 +11,8 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-#include <fstream>
 #include "make_test_data_available.hpp"
+#include <fstream>
 
 TEST_CASE("Binary Formats" * doctest::skip())
 {
@@ -142,7 +142,7 @@ TEST_CASE("Binary Formats" * doctest::skip())
         const auto bjdata_1_size = json::to_bjdata(j).size();
         const auto bjdata_2_size = json::to_bjdata(j, true).size();
         const auto bjdata_3_size = json::to_bjdata(j, true, true).size();
-        const auto bson_size = json::to_bson({{"", j}}).size(); // wrap array in object for BSON
+        const auto bson_size = json::to_bson({{"", j}}).size();  // wrap array in object for BSON
         const auto cbor_size = json::to_cbor(j).size();
         const auto msgpack_size = json::to_msgpack(j).size();
         const auto ubjson_1_size = json::to_ubjson(j).size();

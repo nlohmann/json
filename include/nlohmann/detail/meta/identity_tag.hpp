@@ -11,11 +11,12 @@
 #include <nlohmann/detail/abi_macros.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
+namespace detail {
 
 // dispatching helper struct
-template <class T> struct identity_tag {};
+template<class T>
+struct identity_tag
+{};
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
