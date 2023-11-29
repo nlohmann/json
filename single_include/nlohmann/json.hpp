@@ -4241,7 +4241,7 @@ Returns an ordering that is similar to Python:
 @since version 1.0.0
 */
 #if JSON_HAS_THREE_WAY_COMPARISON
-inline std::partial_ordering operator<= > (const value_t lhs, const value_t rhs) noexcept  // *NOPAD*
+inline std::partial_ordering operator<=> (const value_t lhs, const value_t rhs) noexcept  // *NOPAD*
 #else
 inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 #endif
