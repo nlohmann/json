@@ -3671,7 +3671,8 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
     /// @brief comparison: equal
     /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
     template<typename ScalarType>
-    requires std::is_scalar_v<ScalarType> bool operator==(ScalarType rhs) const noexcept
+        requires std::is_scalar_v<ScalarType>
+    bool operator==(ScalarType rhs) const noexcept
     {
         return *this == basic_json(rhs);
     }
@@ -3689,24 +3690,24 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
 
     /// @brief comparison: 3-way
     /// @sa https://json.nlohmann.me/api/basic_json/operator_spaceship/
-    std::partial_ordering operator<= > (const_reference rhs) const noexcept  // *NOPAD*
+    std::partial_ordering operator<=>(const_reference rhs) const noexcept  // *NOPAD*
     {
         const_reference lhs = *this;
         // default_result is used if we cannot compare values. In that case,
         // we compare types.
-        JSON_IMPLEMENT_OPERATOR(<= >,  // *NOPAD*
+        JSON_IMPLEMENT_OPERATOR(<=>,  // *NOPAD*
                                 std::partial_ordering::equivalent,
                                 std::partial_ordering::unordered,
-                                lhs_type <= > rhs_type)  // *NOPAD*
+                                lhs_type <=> rhs_type)  // *NOPAD*
     }
 
     /// @brief comparison: 3-way
     /// @sa https://json.nlohmann.me/api/basic_json/operator_spaceship/
     template<typename ScalarType>
         requires std::is_scalar_v<ScalarType>
-            std::partial_ordering operator<= > (ScalarType rhs) const noexcept  // *NOPAD*
+    std::partial_ordering operator<=>(ScalarType rhs) const noexcept  // *NOPAD*
     {
-        return *this <= > basic_json(rhs);  // *NOPAD*
+        return *this <=> basic_json(rhs);  // *NOPAD*
     }
 
     #if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
@@ -3728,7 +3729,8 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
     /// @brief comparison: less than or equal
     /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
     template<typename ScalarType>
-    requires std::is_scalar_v<ScalarType> bool operator<=(ScalarType rhs) const noexcept
+        requires std::is_scalar_v<ScalarType>
+    bool operator<=(ScalarType rhs) const noexcept
     {
         return *this <= basic_json(rhs);
     }
@@ -3748,7 +3750,8 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
     /// @brief comparison: greater than or equal
     /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
     template<typename ScalarType>
-    requires std::is_scalar_v<ScalarType> bool operator>=(ScalarType rhs) const noexcept
+        requires std::is_scalar_v<ScalarType>
+    bool operator>=(ScalarType rhs) const noexcept
     {
         return *this >= basic_json(rhs);
     }
@@ -5117,7 +5120,7 @@ struct less<::nlohmann::detail::value_t>  // do not remove the space after '<', 
                     ::nlohmann::detail::value_t rhs) const noexcept
     {
 #if JSON_HAS_THREE_WAY_COMPARISON
-        return std::is_lt(lhs <= > rhs);  // *NOPAD*
+        return std::is_lt(lhs <=> rhs);  // *NOPAD*
 #else
         return ::nlohmann::detail::operator<(lhs, rhs);
 #endif

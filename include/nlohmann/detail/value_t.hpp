@@ -77,7 +77,7 @@ Returns an ordering that is similar to Python:
 @since version 1.0.0
 */
 #if JSON_HAS_THREE_WAY_COMPARISON
-inline std::partial_ordering operator<= > (const value_t lhs, const value_t rhs) noexcept  // *NOPAD*
+inline std::partial_ordering operator<=>(const value_t lhs, const value_t rhs) noexcept  // *NOPAD*
 #else
 inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 #endif
@@ -99,7 +99,7 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 #if JSON_HAS_THREE_WAY_COMPARISON
     if (l_index < order.size() && r_index < order.size())
     {
-        return order[l_index] <= > order[r_index];  // *NOPAD*
+        return order[l_index] <=> order[r_index];  // *NOPAD*
     }
     return std::partial_ordering::unordered;
 #else
@@ -114,7 +114,7 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 #if JSON_HAS_THREE_WAY_COMPARISON && defined(__GNUC__)
 inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 {
-    return std::is_lt(lhs <= > rhs);  // *NOPAD*
+    return std::is_lt(lhs <=> rhs);  // *NOPAD*
 }
 #endif
 

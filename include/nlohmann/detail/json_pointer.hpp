@@ -857,9 +857,9 @@ class json_pointer
 
     /// @brief 3-way compares two JSON pointers
     template<typename RefStringTypeRhs>
-        std::strong_ordering operator<= > (const json_pointer<RefStringTypeRhs>& rhs) const noexcept  // *NOPAD*
+    std::strong_ordering operator<=>(const json_pointer<RefStringTypeRhs>& rhs) const noexcept  // *NOPAD*
     {
-        return reference_tokens <= > rhs.reference_tokens;  // *NOPAD*
+        return reference_tokens <=> rhs.reference_tokens;  // *NOPAD*
     }
 #else
     /// @brief compares two JSON pointers for equality

@@ -703,7 +703,7 @@ TEST_CASE("JSON pointers")
         // build with C++20
         // JSON_HAS_CPP_20
 #if JSON_HAS_THREE_WAY_COMPARISON
-        CHECK((ptr1 <= > ptr2) == std::strong_ordering::less);  // *NOPAD*
+        CHECK((ptr1 <=> ptr2) == std::strong_ordering::less);  // *NOPAD*
         CHECK(ptr2 > ptr1);
 #endif
     }

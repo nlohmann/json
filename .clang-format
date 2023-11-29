@@ -78,6 +78,6 @@ SpacesInConditionalStatement: false
 SpacesInContainerLiterals: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
-Standard: c++11
+Standard: Latest
 TabWidth: 4
 UseTab: Never

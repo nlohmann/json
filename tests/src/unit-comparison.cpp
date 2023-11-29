@@ -175,7 +175,7 @@ TEST_CASE("lexicographical comparison operators")
                 {
                     CAPTURE(i)
                     CAPTURE(j)
-                    CHECK((j_types[i] <= > j_types[j]) == expected[i][j]);  // *NOPAD*
+                    CHECK((j_types[i] <=> j_types[j]) == expected[i][j]);  // *NOPAD*
                 }
             }
         }
@@ -561,7 +561,7 @@ TEST_CASE("lexicographical comparison operators")
                 {
                     CAPTURE(i)
                     CAPTURE(j)
-                    CHECK((j_values[i] <= > j_values[j]) == expected[i][j]);  // *NOPAD*
+                    CHECK((j_values[i] <=> j_values[j]) == expected[i][j]);  // *NOPAD*
                 }
             }
         }

@@ -4263,7 +4263,7 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 #if JSON_HAS_THREE_WAY_COMPARISON
     if (l_index < order.size() && r_index < order.size())
     {
-        return order[l_index] <= > order[r_index];  // *NOPAD*
+        return order[l_index] <=> order[r_index];  // *NOPAD*
     }
     return std::partial_ordering::unordered;
 #else
@@ -4278,7 +4278,7 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 #if JSON_HAS_THREE_WAY_COMPARISON && defined(__GNUC__)
 inline bool operator<(const value_t lhs, const value_t rhs) noexcept
 {
-    return std::is_lt(lhs <= > rhs);  // *NOPAD*
+    return std::is_lt(lhs <=> rhs);  // *NOPAD*
 }
 #endif
 
@@ -14444,9 +14444,9 @@ class json_pointer
 
     /// @brief 3-way compares two JSON pointers
     template<typename RefStringTypeRhs>
-        std::strong_ordering operator<= > (const json_pointer<RefStringTypeRhs>& rhs) const noexcept  // *NOPAD*
+        std::strong_ordering operator<=> (const json_pointer<RefStringTypeRhs>& rhs) const noexcept  // *NOPAD*
     {
-        return reference_tokens <= > rhs.reference_tokens;  // *NOPAD*
+        return reference_tokens <=> rhs.reference_tokens;  // *NOPAD*
     }
 #else
     /// @brief compares two JSON pointers for equality
@@ -23182,24 +23182,24 @@ class basic_json  // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spe
 
     /// @brief comparison: 3-way
     /// @sa https://json.nlohmann.me/api/basic_json/operator_spaceship/
-    std::partial_ordering operator<= > (const_reference rhs) const noexcept  // *NOPAD*
+    std::partial_ordering operator<=> (const_reference rhs) const noexcept  // *NOPAD*
     {
         const_reference lhs = *this;
         // default_result is used if we cannot compare values. In that case,
         // we compare types.
-        JSON_IMPLEMENT_OPERATOR(<= >,  // *NOPAD*
+        JSON_IMPLEMENT_OPERATOR(<=>,  // *NOPAD*
                                 std::partial_ordering::equivalent,
                                 std::partial_ordering::unordered,
-                                lhs_type <= > rhs_type)  // *NOPAD*
+                                lhs_type <=> rhs_type)  // *NOPAD*
     }
 
     /// @brief comparison: 3-way
     /// @sa https://json.nlohmann.me/api/basic_json/operator_spaceship/
     template<typename ScalarType>
         requires std::is_scalar_v<ScalarType>
-            std::partial_ordering operator<= > (ScalarType rhs) const noexcept  // *NOPAD*
+            std::partial_ordering operator<=> (ScalarType rhs) const noexcept  // *NOPAD*
     {
-        return *this <= > basic_json(rhs);  // *NOPAD*
+        return *this <=> basic_json(rhs);  // *NOPAD*
     }
 
     #if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
@@ -24610,7 +24610,7 @@ struct less<::nlohmann::detail::value_t>  // do not remove the space after '<', 
                     ::nlohmann::detail::value_t rhs) const noexcept
     {
 #if JSON_HAS_THREE_WAY_COMPARISON
-        return std::is_lt(lhs <= > rhs);  // *NOPAD*
+        return std::is_lt(lhs <=> rhs);  // *NOPAD*
 #else
         return ::nlohmann::detail::operator<(lhs, rhs);
 #endif
