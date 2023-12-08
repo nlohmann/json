@@ -5697,7 +5697,14 @@ template<typename BasicJsonType, typename EnumType,
 inline void to_json(BasicJsonType& j, EnumType e) noexcept
 {
     using underlying_type = typename std::underlying_type<EnumType>::type;
-    external_constructor<value_t::number_integer>::construct(j, static_cast<underlying_type>(e));
+    if (std::is_unsigned<underlying_type>::value)
+    {
+        external_constructor<value_t::number_unsigned>::construct(j, static_cast<underlying_type>(e));
+    }
+    else
+    {
+        external_constructor<value_t::number_integer>::construct(j, static_cast<underlying_type>(e));
+    }
 }
 #endif  // JSON_DISABLE_ENUM_SERIALIZATION
 
