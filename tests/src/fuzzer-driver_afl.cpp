@@ -12,9 +12,9 @@ an implementation of the `LLVMFuzzerTestOneInput` function which processes a
 passed byte array.
 */
 
-#include <vector>    // for vector
 #include <cstdint>   // for uint8_t
 #include <iostream>  // for cin
+#include <vector>    // for vector
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size);
 

@@ -49,7 +49,7 @@ TEST_CASE("const_iterator class")
         {
             SECTION("create from uninitialized iterator")
             {
-                const json::iterator it {};
+                const json::iterator it{};
                 json::const_iterator const cit(it);
             }
 
@@ -141,14 +141,14 @@ TEST_CASE("const_iterator class")
 
             SECTION("object")
             {
-                json const j({{"foo", "bar"}});
+                json const j({ { "foo", "bar" } });
                 json::const_iterator const it = j.cbegin();
                 CHECK(*it == json("bar"));
             }
 
             SECTION("array")
             {
-                json const j({1, 2, 3, 4});
+                json const j({ 1, 2, 3, 4 });
                 json::const_iterator const it = j.cbegin();
                 CHECK(*it == json(1));
             }
@@ -174,14 +174,14 @@ TEST_CASE("const_iterator class")
 
             SECTION("object")
             {
-                json const j({{"foo", "bar"}});
+                json const j({ { "foo", "bar" } });
                 json::const_iterator const it = j.cbegin();
                 CHECK(std::string(it->type_name()) == "string");
             }
 
             SECTION("array")
             {
-                json const j({1, 2, 3, 4});
+                json const j({ 1, 2, 3, 4 });
                 json::const_iterator const it = j.cbegin();
                 CHECK(std::string(it->type_name()) == "number");
             }
@@ -214,7 +214,7 @@ TEST_CASE("const_iterator class")
 
             SECTION("object")
             {
-                json const j({{"foo", "bar"}});
+                json const j({ { "foo", "bar" } });
                 json::const_iterator it = j.cbegin();
                 CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->begin()));
                 it++;
@@ -223,7 +223,7 @@ TEST_CASE("const_iterator class")
 
             SECTION("array")
             {
-                json const j({1, 2, 3, 4});
+                json const j({ 1, 2, 3, 4 });
                 json::const_iterator it = j.cbegin();
                 CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->begin()));
                 it++;
@@ -265,7 +265,7 @@ TEST_CASE("const_iterator class")
 
             SECTION("object")
             {
-                json const j({{"foo", "bar"}});
+                json const j({ { "foo", "bar" } });
                 json::const_iterator it = j.cbegin();
                 CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->begin()));
                 ++it;
@@ -274,7 +274,7 @@ TEST_CASE("const_iterator class")
 
             SECTION("array")
             {
-                json const j({1, 2, 3, 4});
+                json const j({ 1, 2, 3, 4 });
                 json::const_iterator it = j.cbegin();
                 CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->begin()));
                 ++it;
@@ -314,7 +314,7 @@ TEST_CASE("const_iterator class")
 
             SECTION("object")
             {
-                json const j({{"foo", "bar"}});
+                json const j({ { "foo", "bar" } });
                 json::const_iterator it = j.cend();
                 CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->end()));
                 it--;
@@ -323,7 +323,7 @@ TEST_CASE("const_iterator class")
 
             SECTION("array")
             {
-                json const j({1, 2, 3, 4});
+                json const j({ 1, 2, 3, 4 });
                 json::const_iterator it = j.cend();
                 CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->end()));
                 it--;
@@ -363,7 +363,7 @@ TEST_CASE("const_iterator class")
 
             SECTION("object")
             {
-                json const j({{"foo", "bar"}});
+                json const j({ { "foo", "bar" } });
                 json::const_iterator it = j.cend();
                 CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->end()));
                 --it;
@@ -372,7 +372,7 @@ TEST_CASE("const_iterator class")
 
             SECTION("array")
             {
-                json const j({1, 2, 3, 4});
+                json const j({ 1, 2, 3, 4 });
                 json::const_iterator it = j.cend();
                 CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->end()));
                 --it;

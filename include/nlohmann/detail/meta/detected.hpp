@@ -27,10 +27,7 @@ struct nonesuch
     void operator=(nonesuch&&) = delete;
 };
 
-template<class Default,
-         class AlwaysVoid,
-         template<class...> class Op,
-         class... Args>
+template<class Default, class AlwaysVoid, template<class...> class Op, class... Args>
 struct detector
 {
     using value_t = std::false_type;
@@ -48,7 +45,8 @@ template<template<class...> class Op, class... Args>
 using is_detected = typename detector<nonesuch, void, Op, Args...>::value_t;
 
 template<template<class...> class Op, class... Args>
-struct is_detected_lazy : is_detected<Op, Args...> { };
+struct is_detected_lazy : is_detected<Op, Args...>
+{};
 
 template<template<class...> class Op, class... Args>
 using detected_t = typename detector<nonesuch, void, Op, Args...>::type;
@@ -63,8 +61,7 @@ template<class Expected, template<class...> class Op, class... Args>
 using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
 
 template<class To, template<class...> class Op, class... Args>
-using is_detected_convertible =
-    std::is_convertible<detected_t<Op, Args...>, To>;
+using is_detected_convertible = std::is_convertible<detected_t<Op, Args...>, To>;
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END

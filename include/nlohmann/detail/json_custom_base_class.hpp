@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include <type_traits> // conditional, is_same
+#include <type_traits>  // conditional, is_same
 
 #include <nlohmann/detail/abi_macros.hpp>
 
@@ -26,14 +26,11 @@ of @ref basic_json do not require complex case distinctions
 By default, this class is used because it is empty and thus has no effect
 on the behavior of @ref basic_json.
 */
-struct json_default_base {};
+struct json_default_base
+{};
 
 template<class T>
-using json_base_class = typename std::conditional <
-                        std::is_same<T, void>::value,
-                        json_default_base,
-                        T
-                        >::type;
+using json_base_class = typename std::conditional<std::is_same<T, void>::value, json_default_base, T>::type;
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END

@@ -32,7 +32,9 @@ TEST_CASE("Better diagnostics")
         json j;
         j["a"]["b"]["c"] = 1;
         std::string s;
-        CHECK_THROWS_WITH_AS(s = j["a"]["b"]["c"].get<std::string>(), "[json.exception.type_error.302] (/a/b/c) type must be string, but is number", json::type_error);
+        CHECK_THROWS_WITH_AS(s = j["a"]["b"]["c"].get<std::string>(),
+                             "[json.exception.type_error.302] (/a/b/c) type must be string, but is number",
+                             json::type_error);
     }
 
     SECTION("missing key")
@@ -53,14 +55,18 @@ TEST_CASE("Better diagnostics")
     {
         json j;
         j["array"][4] = true;
-        CHECK_THROWS_WITH_AS(j["array"][4][5], "[json.exception.type_error.305] (/array/4) cannot use operator[] with a numeric argument with boolean", json::type_error);
+        CHECK_THROWS_WITH_AS(j["array"][4][5],
+                             "[json.exception.type_error.305] (/array/4) cannot use operator[] with a numeric argument with boolean",
+                             json::type_error);
     }
 
     SECTION("wrong iterator")
     {
         json j;
         j["array"] = json::array();
-        CHECK_THROWS_WITH_AS(j["array"].erase(j.begin()), "[json.exception.invalid_iterator.202] (/array) iterator does not fit current value", json::invalid_iterator);
+        CHECK_THROWS_WITH_AS(j["array"].erase(j.begin()),
+                             "[json.exception.invalid_iterator.202] (/array) iterator does not fit current value",
+                             json::invalid_iterator);
     }
 
     SECTION("JSON Pointer escaping")
@@ -68,21 +74,28 @@ TEST_CASE("Better diagnostics")
         json j;
         j["a/b"]["m~n"] = 1;
         std::string s;
-        CHECK_THROWS_WITH_AS(s = j["a/b"]["m~n"].get<std::string>(), "[json.exception.type_error.302] (/a~1b/m~0n) type must be string, but is number", json::type_error);
+        CHECK_THROWS_WITH_AS(s = j["a/b"]["m~n"].get<std::string>(),
+                             "[json.exception.type_error.302] (/a~1b/m~0n) type must be string, but is number",
+                             json::type_error);
     }
 
     SECTION("Parse error")
     {
         json _;
-        CHECK_THROWS_WITH_AS(_ = json::parse(""), "[json.exception.parse_error.101] parse error at line 1, column 1: attempting to parse an empty input; check that your input string or stream contains the expected JSON", json::parse_error);
+        CHECK_THROWS_WITH_AS(
+            _ = json::parse(""),
+            "[json.exception.parse_error.101] parse error at line 1, column 1: attempting to parse an empty input; check that your input string or stream contains the expected JSON",
+            json::parse_error);
     }
 
     SECTION("Wrong type in update()")
     {
-        json j = {{"foo", "bar"}};
-        json k = {{"bla", 1}};
+        json j = { { "foo", "bar" } };
+        json k = { { "bla", 1 } };
 
-        CHECK_THROWS_WITH_AS(j.update(k["bla"].begin(), k["bla"].end()), "[json.exception.type_error.312] (/bla) cannot use update() with number", json::type_error);
+        CHECK_THROWS_WITH_AS(j.update(k["bla"].begin(), k["bla"].end()),
+                             "[json.exception.type_error.312] (/bla) cannot use update() with number",
+                             json::type_error);
         CHECK_THROWS_WITH_AS(j.update(k["bla"]), "[json.exception.type_error.312] (/bla) cannot use update() with number", json::type_error);
     }
 }
@@ -91,14 +104,14 @@ TEST_CASE("Regression tests for extended diagnostics")
 {
     SECTION("Regression test for https://github.com/nlohmann/json/pull/2562#pullrequestreview-574858448")
     {
-        CHECK_THROWS_WITH_AS(json({"0", "0"})[1].get<int>(), "[json.exception.type_error.302] (/1) type must be number, but is string", json::type_error);
-        CHECK_THROWS_WITH_AS(json({"0", "1"})[1].get<int>(), "[json.exception.type_error.302] (/1) type must be number, but is string", json::type_error);
+        CHECK_THROWS_WITH_AS(json({ "0", "0" })[1].get<int>(), "[json.exception.type_error.302] (/1) type must be number, but is string", json::type_error);
+        CHECK_THROWS_WITH_AS(json({ "0", "1" })[1].get<int>(), "[json.exception.type_error.302] (/1) type must be number, but is string", json::type_error);
     }
 
     SECTION("Regression test for https://github.com/nlohmann/json/pull/2562/files/380a613f2b5d32425021129cd1f371ddcfd54ddf#r563259793")
     {
         json j;
-        j["/foo"] = {1, 2, 3};
+        j["/foo"] = { 1, 2, 3 };
         CHECK_THROWS_WITH_AS(j.unflatten(), "[json.exception.type_error.315] (/~1foo) values in object must be primitive", json::type_error);
     }
 
@@ -160,7 +173,7 @@ TEST_CASE("Regression tests for extended diagnostics")
         // iterator insert(const_iterator pos, const_iterator first, const_iterator last)
         {
             json j_arr = json::array();
-            json j_objects = {json::object(), json::object()};
+            json j_objects = { json::object(), json::object() };
             j_arr.insert(j_arr.begin(), j_objects.begin(), j_objects.end());
             json j_obj = json::object();
             j_obj["key"] = j_arr;

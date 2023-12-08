@@ -11,8 +11,10 @@
 #include "config.hpp"
 
 // define custom namespace
-#define NLOHMANN_JSON_NAMESPACE nlohmann // this line may be omitted
-#define NLOHMANN_JSON_NAMESPACE_BEGIN namespace nlohmann {
+#define NLOHMANN_JSON_NAMESPACE nlohmann  // this line may be omitted
+#define NLOHMANN_JSON_NAMESPACE_BEGIN                                                                                                                          \
+    namespace nlohmann                                                                                                                                         \
+    {
 #define NLOHMANN_JSON_NAMESPACE_END }
 #include <nlohmann/json_fwd.hpp>
 
@@ -25,7 +27,7 @@ TEST_CASE("custom namespace")
         std::string expected = "nlohmann::basic_json";
 
         // fallback for Clang
-        const std::string ns{STRINGIZE(NLOHMANN_JSON_NAMESPACE) "::basic_json"};
+        const std::string ns{ STRINGIZE(NLOHMANN_JSON_NAMESPACE) "::basic_json" };
 
         CHECK(namespace_name<nlohmann::json>(ns) == expected);
     }

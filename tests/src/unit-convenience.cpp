@@ -20,7 +20,7 @@ struct alt_string_iter
 {
     alt_string_iter() = default;
     alt_string_iter(const char* cstr)
-        : impl(cstr)
+      : impl(cstr)
     {}
 
     void reserve(std::size_t s)
@@ -62,7 +62,7 @@ struct alt_string_data
 {
     alt_string_data() = default;
     alt_string_data(const char* cstr)
-        : impl(cstr)
+      : impl(cstr)
     {}
 
     void reserve(std::size_t s)
@@ -102,7 +102,7 @@ void check_escaped(const char* original, const char* escaped, const bool ensure_
     s.dump_escaped(original, ensure_ascii);
     CHECK(ss.str() == escaped);
 }
-} // namespace
+}  // namespace
 
 TEST_CASE("convenience functions")
 {
@@ -173,8 +173,8 @@ TEST_CASE("convenience functions")
         using nlohmann::detail::concat;
 
         const char* expected = "Hello, world!";
-        alt_string_iter const hello_iter{"Hello, "};
-        alt_string_data const hello_data{"Hello, "};
+        alt_string_iter const hello_iter{ "Hello, " };
+        alt_string_data const hello_data{ "Hello, " };
         std::string const world = "world";
 
         SECTION("std::string")

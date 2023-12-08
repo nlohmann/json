@@ -11,9 +11,9 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include "make_test_data_available.hpp"
 #include <fstream>
 #include <sstream>
-#include "make_test_data_available.hpp"
 
 TEST_CASE("object inspection")
 {
@@ -21,7 +21,7 @@ TEST_CASE("object inspection")
     {
         SECTION("object")
         {
-            json const j {{"foo", 1}, {"bar", false}};
+            json const j{ { "foo", 1 }, { "bar", false } };
             CHECK(!j.is_null());
             CHECK(!j.is_boolean());
             CHECK(!j.is_number());
@@ -39,7 +39,7 @@ TEST_CASE("object inspection")
 
         SECTION("array")
         {
-            json const j {"foo", 1, 1u, 42.23, false};
+            json const j{ "foo", 1, 1u, 42.23, false };
             CHECK(!j.is_null());
             CHECK(!j.is_boolean());
             CHECK(!j.is_number());
@@ -202,12 +202,12 @@ TEST_CASE("object inspection")
 
     SECTION("serialization")
     {
-        json const j {{"object", json::object()}, {"array", {1, 2, 3, 4}}, {"number", 42}, {"boolean", false}, {"null", nullptr}, {"string", "Hello world"} };
+        json const j{ { "object", json::object() }, { "array", { 1, 2, 3, 4 } }, { "number", 42 },
+                      { "boolean", false },         { "null", nullptr },         { "string", "Hello world" } };
 
         SECTION("no indent / indent=-1")
         {
-            CHECK(j.dump() ==
-                  "{\"array\":[1,2,3,4],\"boolean\":false,\"null\":null,\"number\":42,\"object\":{},\"string\":\"Hello world\"}");
+            CHECK(j.dump() == "{\"array\":[1,2,3,4],\"boolean\":false,\"null\":null,\"number\":42,\"object\":{},\"string\":\"Hello world\"}");
 
             CHECK(j.dump() == j.dump(-1));
         }
@@ -220,14 +220,16 @@ TEST_CASE("object inspection")
 
         SECTION("indent=1, space='\t'")
         {
-            CHECK(j.dump(1, '\t') ==
-                  "{\n\t\"array\": [\n\t\t1,\n\t\t2,\n\t\t3,\n\t\t4\n\t],\n\t\"boolean\": false,\n\t\"null\": null,\n\t\"number\": 42,\n\t\"object\": {},\n\t\"string\": \"Hello world\"\n}");
+            CHECK(
+                j.dump(1, '\t') ==
+                "{\n\t\"array\": [\n\t\t1,\n\t\t2,\n\t\t3,\n\t\t4\n\t],\n\t\"boolean\": false,\n\t\"null\": null,\n\t\"number\": 42,\n\t\"object\": {},\n\t\"string\": \"Hello world\"\n}");
         }
 
         SECTION("indent=4")
         {
-            CHECK(j.dump(4) ==
-                  "{\n    \"array\": [\n        1,\n        2,\n        3,\n        4\n    ],\n    \"boolean\": false,\n    \"null\": null,\n    \"number\": 42,\n    \"object\": {},\n    \"string\": \"Hello world\"\n}");
+            CHECK(
+                j.dump(4) ==
+                "{\n    \"array\": [\n        1,\n        2,\n        3,\n        4\n    ],\n    \"boolean\": false,\n    \"null\": null,\n    \"number\": 42,\n    \"object\": {},\n    \"string\": \"Hello world\"\n}");
         }
 
         SECTION("indent=x")
@@ -241,7 +243,7 @@ TEST_CASE("object inspection")
             // inside the dump() function
             CHECK(j.dump(1024).size() == 15472);
 
-            const auto binary = json::binary({1, 2, 3}, 128);
+            const auto binary = json::binary({ 1, 2, 3 }, 128);
             CHECK(binary.dump(1024).size() == 2086);
         }
 
@@ -291,8 +293,7 @@ TEST_CASE("object inspection")
                 json const value = json::parse(f_unescaped);
                 std::string text = value.dump(4, ' ', true);
 
-                std::string expected((std::istreambuf_iterator<char>(f_escaped)),
-                                     std::istreambuf_iterator<char>());
+                std::string expected((std::istreambuf_iterator<char>(f_escaped)), std::istreambuf_iterator<char>());
                 CHECK(text == expected);
             }
         }
@@ -328,9 +329,7 @@ TEST_CASE("object inspection")
 
     SECTION("round trips")
     {
-        for (const auto& s :
-                {"3.141592653589793", "1000000000000000010E5"
-                })
+        for (const auto& s : { "3.141592653589793", "1000000000000000010E5" })
         {
             json const j1 = json::parse(s);
             std::string s1 = j1.dump();
@@ -350,13 +349,13 @@ TEST_CASE("object inspection")
 
         SECTION("object")
         {
-            json const j = {{"foo", "bar"}};
+            json const j = { { "foo", "bar" } };
             CHECK(j.type() == json::value_t::object);
         }
 
         SECTION("array")
         {
-            json const j = {1, 2, 3, 4};
+            json const j = { 1, 2, 3, 4 };
             CHECK(j.type() == json::value_t::array);
         }
 
@@ -402,14 +401,14 @@ TEST_CASE("object inspection")
 
         SECTION("object")
         {
-            json const j = {{"foo", "bar"}};
+            json const j = { { "foo", "bar" } };
             json::value_t t = j;
             CHECK(t == j.type());
         }
 
         SECTION("array")
         {
-            json const j = {1, 2, 3, 4};
+            json const j = { 1, 2, 3, 4 };
             json::value_t t = j;
             CHECK(t == j.type());
         }

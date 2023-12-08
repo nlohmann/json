@@ -51,7 +51,7 @@ TEST_CASE("modifiers")
 
             SECTION("filled array")
             {
-                json j = {1, 2, 3};
+                json j = { 1, 2, 3 };
                 json const k = j;
 
                 j.clear();
@@ -76,7 +76,7 @@ TEST_CASE("modifiers")
 
             SECTION("filled object")
             {
-                json j = {{"one", 1}, {"two", 2}, {"three", 3}};
+                json j = { { "one", 1 }, { "two", 2 }, { "three", 3 } };
                 json const k = j;
 
                 j.clear();
@@ -101,7 +101,7 @@ TEST_CASE("modifiers")
 
             SECTION("filled binary")
             {
-                json j = json::binary({1, 2, 3, 4, 5});
+                json j = json::binary({ 1, 2, 3, 4, 5 });
                 json const k = j;
 
                 j.clear();
@@ -164,15 +164,15 @@ TEST_CASE("modifiers")
                     j.push_back(1);
                     j.push_back(2);
                     CHECK(j.type() == json::value_t::array);
-                    CHECK(j == json({1, 2}));
+                    CHECK(j == json({ 1, 2 }));
                 }
 
                 SECTION("array")
                 {
-                    json j = {1, 2, 3};
+                    json j = { 1, 2, 3 };
                     j.push_back("Hello");
                     CHECK(j.type() == json::value_t::array);
-                    CHECK(j == json({1, 2, 3, "Hello"}));
+                    CHECK(j == json({ 1, 2, 3, "Hello" }));
                 }
 
                 SECTION("other type")
@@ -191,16 +191,16 @@ TEST_CASE("modifiers")
                     j.push_back(k);
                     j.push_back(k);
                     CHECK(j.type() == json::value_t::array);
-                    CHECK(j == json({1, 1}));
+                    CHECK(j == json({ 1, 1 }));
                 }
 
                 SECTION("array")
                 {
-                    json j = {1, 2, 3};
+                    json j = { 1, 2, 3 };
                     json const k("Hello");
                     j.push_back(k);
                     CHECK(j.type() == json::value_t::array);
-                    CHECK(j == json({1, 2, 3, "Hello"}));
+                    CHECK(j == json({ 1, 2, 3, "Hello" }));
                 }
 
                 SECTION("other type")
@@ -217,8 +217,8 @@ TEST_CASE("modifiers")
             SECTION("null")
             {
                 json j;
-                j.push_back(json::object_t::value_type({"one", 1}));
-                j.push_back(json::object_t::value_type({"two", 2}));
+                j.push_back(json::object_t::value_type({ "one", 1 }));
+                j.push_back(json::object_t::value_type({ "two", 2 }));
                 CHECK(j.type() == json::value_t::object);
                 CHECK(j.size() == 2);
                 CHECK(j["one"] == json(1));
@@ -228,8 +228,8 @@ TEST_CASE("modifiers")
             SECTION("object")
             {
                 json j(json::value_t::object);
-                j.push_back(json::object_t::value_type({"one", 1}));
-                j.push_back(json::object_t::value_type({"two", 2}));
+                j.push_back(json::object_t::value_type({ "one", 1 }));
+                j.push_back(json::object_t::value_type({ "two", 2 }));
                 CHECK(j.size() == 2);
                 CHECK(j["one"] == json(1));
                 CHECK(j["two"] == json(2));
@@ -239,7 +239,9 @@ TEST_CASE("modifiers")
             {
                 json j = 1;
                 json const k("Hello");
-                CHECK_THROWS_WITH_AS(j.push_back(json::object_t::value_type({"one", 1})), "[json.exception.type_error.308] cannot use push_back() with number", json::type_error&);
+                CHECK_THROWS_WITH_AS(j.push_back(json::object_t::value_type({ "one", 1 })),
+                                     "[json.exception.type_error.308] cannot use push_back() with number",
+                                     json::type_error&);
             }
         }
 
@@ -248,35 +250,35 @@ TEST_CASE("modifiers")
             SECTION("null")
             {
                 json j;
-                j.push_back({"foo", "bar"});
-                CHECK(j == json::array({{"foo", "bar"}}));
+                j.push_back({ "foo", "bar" });
+                CHECK(j == json::array({ { "foo", "bar" } }));
 
                 json k;
-                k.push_back({1, 2, 3});
-                CHECK(k == json::array({{1, 2, 3}}));
+                k.push_back({ 1, 2, 3 });
+                CHECK(k == json::array({ { 1, 2, 3 } }));
             }
 
             SECTION("array")
             {
-                json j = {1, 2, 3};
-                j.push_back({"foo", "bar"});
-                CHECK(j == json({1, 2, 3, {"foo", "bar"}}));
+                json j = { 1, 2, 3 };
+                j.push_back({ "foo", "bar" });
+                CHECK(j == json({ 1, 2, 3, { "foo", "bar" } }));
 
-                json k = {1, 2, 3};
-                k.push_back({1, 2, 3});
-                CHECK(k == json({1, 2, 3, {1, 2, 3}}));
+                json k = { 1, 2, 3 };
+                k.push_back({ 1, 2, 3 });
+                CHECK(k == json({ 1, 2, 3, { 1, 2, 3 } }));
             }
 
             SECTION("object")
             {
-                json j = {{"key1", 1}};
-                j.push_back({"key2", "bar"});
-                CHECK(j == json({{"key1", 1}, {"key2", "bar"}}));
+                json j = { { "key1", 1 } };
+                j.push_back({ "key2", "bar" });
+                CHECK(j == json({ { "key1", 1 }, { "key2", "bar" } }));
 
                 // invalid values (no string/val pair)
-                CHECK_THROWS_WITH_AS(j.push_back({1}), "[json.exception.type_error.308] cannot use push_back() with object", json::type_error&);
-                CHECK_THROWS_WITH_AS(j.push_back({1, 2}), "[json.exception.type_error.308] cannot use push_back() with object", json::type_error&);
-                CHECK_THROWS_WITH_AS(j.push_back({1, 2, 3, 4}), "[json.exception.type_error.308] cannot use push_back() with object", json::type_error&);
+                CHECK_THROWS_WITH_AS(j.push_back({ 1 }), "[json.exception.type_error.308] cannot use push_back() with object", json::type_error&);
+                CHECK_THROWS_WITH_AS(j.push_back({ 1, 2 }), "[json.exception.type_error.308] cannot use push_back() with object", json::type_error&);
+                CHECK_THROWS_WITH_AS(j.push_back({ 1, 2, 3, 4 }), "[json.exception.type_error.308] cannot use push_back() with object", json::type_error&);
             }
         }
     }
@@ -293,25 +295,25 @@ TEST_CASE("modifiers")
                 auto& x2 = j.emplace_back(2);
                 CHECK(x2 == 2);
                 CHECK(j.type() == json::value_t::array);
-                CHECK(j == json({1, 2}));
+                CHECK(j == json({ 1, 2 }));
             }
 
             SECTION("array")
             {
-                json j = {1, 2, 3};
+                json j = { 1, 2, 3 };
                 auto& x = j.emplace_back("Hello");
                 CHECK(x == "Hello");
                 CHECK(j.type() == json::value_t::array);
-                CHECK(j == json({1, 2, 3, "Hello"}));
+                CHECK(j == json({ 1, 2, 3, "Hello" }));
             }
 
             SECTION("multiple values")
             {
                 json j;
                 auto& x = j.emplace_back(3, "foo");
-                CHECK(x == json({"foo", "foo", "foo"}));
+                CHECK(x == json({ "foo", "foo", "foo" }));
                 CHECK(j.type() == json::value_t::array);
-                CHECK(j == json({{"foo", "foo", "foo"}}));
+                CHECK(j == json({ { "foo", "foo", "foo" } }));
             }
         }
 
@@ -350,13 +352,13 @@ TEST_CASE("modifiers")
                 CHECK(*res3.first == "bam");
 
                 // the final object
-                CHECK(j == json({{"baz", "bam"}, {"foo", "bar"}}));
+                CHECK(j == json({ { "baz", "bam" }, { "foo", "bar" } }));
             }
 
             SECTION("object")
             {
                 // start with an object
-                json j = {{"foo", "bar"}};
+                json j = { { "foo", "bar" } };
 
                 // add a new key
                 auto res1 = j.emplace("baz", "bam");
@@ -369,7 +371,7 @@ TEST_CASE("modifiers")
                 CHECK(*res2.first == "bar");
 
                 // check final object
-                CHECK(j == json({{"baz", "bam"}, {"foo", "bar"}}));
+                CHECK(j == json({ { "baz", "bam" }, { "foo", "bar" } }));
             }
         }
 
@@ -392,15 +394,15 @@ TEST_CASE("modifiers")
                     j += 1;
                     j += 2;
                     CHECK(j.type() == json::value_t::array);
-                    CHECK(j == json({1, 2}));
+                    CHECK(j == json({ 1, 2 }));
                 }
 
                 SECTION("array")
                 {
-                    json j = {1, 2, 3};
+                    json j = { 1, 2, 3 };
                     j += "Hello";
                     CHECK(j.type() == json::value_t::array);
-                    CHECK(j == json({1, 2, 3, "Hello"}));
+                    CHECK(j == json({ 1, 2, 3, "Hello" }));
                 }
 
                 SECTION("other type")
@@ -419,16 +421,16 @@ TEST_CASE("modifiers")
                     j += k;
                     j += k;
                     CHECK(j.type() == json::value_t::array);
-                    CHECK(j == json({1, 1}));
+                    CHECK(j == json({ 1, 1 }));
                 }
 
                 SECTION("array")
                 {
-                    json j = {1, 2, 3};
+                    json j = { 1, 2, 3 };
                     json const k("Hello");
                     j += k;
                     CHECK(j.type() == json::value_t::array);
-                    CHECK(j == json({1, 2, 3, "Hello"}));
+                    CHECK(j == json({ 1, 2, 3, "Hello" }));
                 }
 
                 SECTION("other type")
@@ -445,8 +447,8 @@ TEST_CASE("modifiers")
             SECTION("null")
             {
                 json j;
-                j += json::object_t::value_type({"one", 1});
-                j += json::object_t::value_type({"two", 2});
+                j += json::object_t::value_type({ "one", 1 });
+                j += json::object_t::value_type({ "two", 2 });
                 CHECK(j.type() == json::value_t::object);
                 CHECK(j.size() == 2);
                 CHECK(j["one"] == json(1));
@@ -456,8 +458,8 @@ TEST_CASE("modifiers")
             SECTION("object")
             {
                 json j(json::value_t::object);
-                j += json::object_t::value_type({"one", 1});
-                j += json::object_t::value_type({"two", 2});
+                j += json::object_t::value_type({ "one", 1 });
+                j += json::object_t::value_type({ "two", 2 });
                 CHECK(j.size() == 2);
                 CHECK(j["one"] == json(1));
                 CHECK(j["two"] == json(2));
@@ -467,7 +469,9 @@ TEST_CASE("modifiers")
             {
                 json j = 1;
                 json const k("Hello");
-                CHECK_THROWS_WITH_AS(j += json::object_t::value_type({"one", 1}), "[json.exception.type_error.308] cannot use push_back() with number", json::type_error&);
+                CHECK_THROWS_WITH_AS(j += json::object_t::value_type({ "one", 1 }),
+                                     "[json.exception.type_error.308] cannot use push_back() with number",
+                                     json::type_error&);
             }
         }
 
@@ -476,40 +480,40 @@ TEST_CASE("modifiers")
             SECTION("null")
             {
                 json j;
-                j += {"foo", "bar"};
-                CHECK(j == json::array({{"foo", "bar"}}));
+                j += { "foo", "bar" };
+                CHECK(j == json::array({ { "foo", "bar" } }));
 
                 json k;
-                k += {1, 2, 3};
-                CHECK(k == json::array({{1, 2, 3}}));
+                k += { 1, 2, 3 };
+                CHECK(k == json::array({ { 1, 2, 3 } }));
             }
 
             SECTION("array")
             {
-                json j = {1, 2, 3};
-                j += {"foo", "bar"};
-                CHECK(j == json({1, 2, 3, {"foo", "bar"}}));
+                json j = { 1, 2, 3 };
+                j += { "foo", "bar" };
+                CHECK(j == json({ 1, 2, 3, { "foo", "bar" } }));
 
-                json k = {1, 2, 3};
-                k += {1, 2, 3};
-                CHECK(k == json({1, 2, 3, {1, 2, 3}}));
+                json k = { 1, 2, 3 };
+                k += { 1, 2, 3 };
+                CHECK(k == json({ 1, 2, 3, { 1, 2, 3 } }));
             }
 
             SECTION("object")
             {
-                json j = {{"key1", 1}};
-                j += {"key2", "bar"};
-                CHECK(j == json({{"key1", 1}, {"key2", "bar"}}));
+                json j = { { "key1", 1 } };
+                j += { "key2", "bar" };
+                CHECK(j == json({ { "key1", 1 }, { "key2", "bar" } }));
 
-                json k = {{"key1", 1}};
-                CHECK_THROWS_WITH_AS((k += {1, 2, 3, 4}), "[json.exception.type_error.308] cannot use push_back() with object", json::type_error&);
+                json k = { { "key1", 1 } };
+                CHECK_THROWS_WITH_AS((k += { 1, 2, 3, 4 }), "[json.exception.type_error.308] cannot use push_back() with object", json::type_error&);
             }
         }
     }
 
     SECTION("insert()")
     {
-        json j_array = {1, 2, 3, 4};
+        json j_array = { 1, 2, 3, 4 };
         json j_value = 5;
 
         SECTION("value at position")
@@ -520,7 +524,7 @@ TEST_CASE("modifiers")
                 CHECK(j_array.size() == 5);
                 CHECK(*it == j_value);
                 CHECK(j_array.begin() == it);
-                CHECK(j_array == json({5, 1, 2, 3, 4}));
+                CHECK(j_array == json({ 5, 1, 2, 3, 4 }));
             }
 
             SECTION("insert in the middle")
@@ -529,7 +533,7 @@ TEST_CASE("modifiers")
                 CHECK(j_array.size() == 5);
                 CHECK(*it == j_value);
                 CHECK((it - j_array.begin()) == 2);
-                CHECK(j_array == json({1, 2, 5, 3, 4}));
+                CHECK(j_array == json({ 1, 2, 5, 3, 4 }));
             }
 
             SECTION("insert before end()")
@@ -538,7 +542,7 @@ TEST_CASE("modifiers")
                 CHECK(j_array.size() == 5);
                 CHECK(*it == j_value);
                 CHECK((j_array.end() - it) == 1);
-                CHECK(j_array == json({1, 2, 3, 4, 5}));
+                CHECK(j_array == json({ 1, 2, 3, 4, 5 }));
             }
         }
 
@@ -550,7 +554,7 @@ TEST_CASE("modifiers")
                 CHECK(j_array.size() == 5);
                 CHECK(*it == j_value);
                 CHECK(j_array.begin() == it);
-                CHECK(j_array == json({5, 1, 2, 3, 4}));
+                CHECK(j_array == json({ 5, 1, 2, 3, 4 }));
             }
 
             SECTION("insert in the middle")
@@ -559,7 +563,7 @@ TEST_CASE("modifiers")
                 CHECK(j_array.size() == 5);
                 CHECK(*it == j_value);
                 CHECK((it - j_array.begin()) == 2);
-                CHECK(j_array == json({1, 2, 5, 3, 4}));
+                CHECK(j_array == json({ 1, 2, 5, 3, 4 }));
             }
 
             SECTION("insert before end()")
@@ -568,7 +572,7 @@ TEST_CASE("modifiers")
                 CHECK(j_array.size() == 5);
                 CHECK(*it == j_value);
                 CHECK((j_array.end() - it) == 1);
-                CHECK(j_array == json({1, 2, 3, 4, 5}));
+                CHECK(j_array == json({ 1, 2, 3, 4, 5 }));
             }
         }
 
@@ -580,7 +584,7 @@ TEST_CASE("modifiers")
                 CHECK(j_array.size() == 7);
                 CHECK(*it == j_value);
                 CHECK(j_array.begin() == it);
-                CHECK(j_array == json({5, 5, 5, 1, 2, 3, 4}));
+                CHECK(j_array == json({ 5, 5, 5, 1, 2, 3, 4 }));
             }
 
             SECTION("insert in the middle")
@@ -589,7 +593,7 @@ TEST_CASE("modifiers")
                 CHECK(j_array.size() == 7);
                 CHECK(*it == j_value);
                 CHECK((it - j_array.begin()) == 2);
-                CHECK(j_array == json({1, 2, 5, 5, 5, 3, 4}));
+                CHECK(j_array == json({ 1, 2, 5, 5, 5, 3, 4 }));
             }
 
             SECTION("insert before end()")
@@ -598,7 +602,7 @@ TEST_CASE("modifiers")
                 CHECK(j_array.size() == 7);
                 CHECK(*it == j_value);
                 CHECK((j_array.end() - it) == 3);
-                CHECK(j_array == json({1, 2, 3, 4, 5, 5, 5}));
+                CHECK(j_array == json({ 1, 2, 3, 4, 5, 5, 5 }));
             }
 
             SECTION("insert nothing (count = 0)")
@@ -608,13 +612,13 @@ TEST_CASE("modifiers")
                 // the returned iterator points to the first inserted element;
                 // there were 4 elements, so it should point to the 5th
                 CHECK(it == j_array.begin() + 4);
-                CHECK(j_array == json({1, 2, 3, 4}));
+                CHECK(j_array == json({ 1, 2, 3, 4 }));
             }
         }
 
         SECTION("range for array")
         {
-            json j_other_array = {"first", "second"};
+            json j_other_array = { "first", "second" };
 
             SECTION("proper usage")
             {
@@ -622,7 +626,7 @@ TEST_CASE("modifiers")
                 CHECK(j_array.size() == 6);
                 CHECK(*it == *j_other_array.begin());
                 CHECK((j_array.end() - it) == 2);
-                CHECK(j_array == json({1, 2, 3, 4, "first", "second"}));
+                CHECK(j_array == json({ 1, 2, 3, 4, "first", "second" }));
             }
 
             SECTION("empty range")
@@ -630,24 +634,26 @@ TEST_CASE("modifiers")
                 auto it = j_array.insert(j_array.end(), j_other_array.begin(), j_other_array.begin());
                 CHECK(j_array.size() == 4);
                 CHECK(it == j_array.end());
-                CHECK(j_array == json({1, 2, 3, 4}));
+                CHECK(j_array == json({ 1, 2, 3, 4 }));
             }
 
             SECTION("invalid iterators")
             {
-                json j_other_array2 = {"first", "second"};
+                json j_other_array2 = { "first", "second" };
 
-                CHECK_THROWS_WITH_AS(j_array.insert(j_array.end(), j_array.begin(), j_array.end()), "[json.exception.invalid_iterator.211] passed iterators may not belong to container",
+                CHECK_THROWS_WITH_AS(j_array.insert(j_array.end(), j_array.begin(), j_array.end()),
+                                     "[json.exception.invalid_iterator.211] passed iterators may not belong to container",
                                      json::invalid_iterator&);
-                CHECK_THROWS_WITH_AS(j_array.insert(j_array.end(), j_other_array.begin(), j_other_array2.end()), "[json.exception.invalid_iterator.210] iterators do not fit",
+                CHECK_THROWS_WITH_AS(j_array.insert(j_array.end(), j_other_array.begin(), j_other_array2.end()),
+                                     "[json.exception.invalid_iterator.210] iterators do not fit",
                                      json::invalid_iterator&);
             }
         }
 
         SECTION("range for object")
         {
-            json j_object1 = {{"one", "eins"}, {"two", "zwei"}};
-            json j_object2 = {{"eleven", "elf"}, {"seventeen", "siebzehn"}};
+            json j_object1 = { { "one", "eins" }, { "two", "zwei" } };
+            json j_object2 = { { "eleven", "elf" }, { "seventeen", "siebzehn" } };
 
             SECTION("proper usage")
             {
@@ -663,11 +669,17 @@ TEST_CASE("modifiers")
 
             SECTION("invalid iterators")
             {
-                json const j_other_array2 = {"first", "second"};
+                json const j_other_array2 = { "first", "second" };
 
-                CHECK_THROWS_WITH_AS(j_array.insert(j_object2.begin(), j_object2.end()), "[json.exception.type_error.309] cannot use insert() with array", json::type_error&);
-                CHECK_THROWS_WITH_AS(j_object1.insert(j_object1.begin(), j_object2.end()), "[json.exception.invalid_iterator.210] iterators do not fit", json::invalid_iterator&);
-                CHECK_THROWS_WITH_AS(j_object1.insert(j_array.begin(), j_array.end()), "[json.exception.invalid_iterator.202] iterators first and last must point to objects", json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(j_array.insert(j_object2.begin(), j_object2.end()),
+                                     "[json.exception.type_error.309] cannot use insert() with array",
+                                     json::type_error&);
+                CHECK_THROWS_WITH_AS(j_object1.insert(j_object1.begin(), j_object2.end()),
+                                     "[json.exception.invalid_iterator.210] iterators do not fit",
+                                     json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(j_object1.insert(j_array.begin(), j_array.end()),
+                                     "[json.exception.invalid_iterator.202] iterators first and last must point to objects",
+                                     json::invalid_iterator&);
             }
         }
 
@@ -675,54 +687,72 @@ TEST_CASE("modifiers")
         {
             SECTION("insert before begin()")
             {
-                auto it = j_array.insert(j_array.begin(), {7, 8, 9});
+                auto it = j_array.insert(j_array.begin(), { 7, 8, 9 });
                 CHECK(j_array.size() == 7);
                 CHECK(*it == json(7));
                 CHECK(j_array.begin() == it);
-                CHECK(j_array == json({7, 8, 9, 1, 2, 3, 4}));
+                CHECK(j_array == json({ 7, 8, 9, 1, 2, 3, 4 }));
             }
 
             SECTION("insert in the middle")
             {
-                auto it = j_array.insert(j_array.begin() + 2, {7, 8, 9});
+                auto it = j_array.insert(j_array.begin() + 2, { 7, 8, 9 });
                 CHECK(j_array.size() == 7);
                 CHECK(*it == json(7));
                 CHECK((it - j_array.begin()) == 2);
-                CHECK(j_array == json({1, 2, 7, 8, 9, 3, 4}));
+                CHECK(j_array == json({ 1, 2, 7, 8, 9, 3, 4 }));
             }
 
             SECTION("insert before end()")
             {
-                auto it = j_array.insert(j_array.end(), {7, 8, 9});
+                auto it = j_array.insert(j_array.end(), { 7, 8, 9 });
                 CHECK(j_array.size() == 7);
                 CHECK(*it == json(7));
                 CHECK((j_array.end() - it) == 3);
-                CHECK(j_array == json({1, 2, 3, 4, 7, 8, 9}));
+                CHECK(j_array == json({ 1, 2, 3, 4, 7, 8, 9 }));
             }
         }
 
         SECTION("invalid iterator")
         {
             // pass iterator to a different array
-            json j_another_array = {1, 2};
-            json j_yet_another_array = {"first", "second"};
-            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), 10), "[json.exception.invalid_iterator.202] iterator does not fit current value", json::invalid_iterator&);
-            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), j_value), "[json.exception.invalid_iterator.202] iterator does not fit current value", json::invalid_iterator&);
-            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), 10, 11), "[json.exception.invalid_iterator.202] iterator does not fit current value", json::invalid_iterator&);
-            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), j_yet_another_array.begin(), j_yet_another_array.end()), "[json.exception.invalid_iterator.202] iterator does not fit current value", json::invalid_iterator&);
-            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), {1, 2, 3, 4}), "[json.exception.invalid_iterator.202] iterator does not fit current value", json::invalid_iterator&);
+            json j_another_array = { 1, 2 };
+            json j_yet_another_array = { "first", "second" };
+            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), 10),
+                                 "[json.exception.invalid_iterator.202] iterator does not fit current value",
+                                 json::invalid_iterator&);
+            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), j_value),
+                                 "[json.exception.invalid_iterator.202] iterator does not fit current value",
+                                 json::invalid_iterator&);
+            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), 10, 11),
+                                 "[json.exception.invalid_iterator.202] iterator does not fit current value",
+                                 json::invalid_iterator&);
+            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), j_yet_another_array.begin(), j_yet_another_array.end()),
+                                 "[json.exception.invalid_iterator.202] iterator does not fit current value",
+                                 json::invalid_iterator&);
+            CHECK_THROWS_WITH_AS(j_array.insert(j_another_array.end(), { 1, 2, 3, 4 }),
+                                 "[json.exception.invalid_iterator.202] iterator does not fit current value",
+                                 json::invalid_iterator&);
         }
 
         SECTION("non-array type")
         {
             // call insert on a non-array type
             json j_nonarray = 3;
-            json j_yet_another_array = {"first", "second"};
+            json j_yet_another_array = { "first", "second" };
             CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), 10), "[json.exception.type_error.309] cannot use insert() with number", json::type_error&);
-            CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), j_value), "[json.exception.type_error.309] cannot use insert() with number", json::type_error&);
-            CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), 10, 11), "[json.exception.type_error.309] cannot use insert() with number", json::type_error&);
-            CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), j_yet_another_array.begin(), j_yet_another_array.end()), "[json.exception.type_error.309] cannot use insert() with number", json::type_error&);
-            CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), {1, 2, 3, 4}), "[json.exception.type_error.309] cannot use insert() with number", json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), j_value),
+                                 "[json.exception.type_error.309] cannot use insert() with number",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), 10, 11),
+                                 "[json.exception.type_error.309] cannot use insert() with number",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), j_yet_another_array.begin(), j_yet_another_array.end()),
+                                 "[json.exception.type_error.309] cannot use insert() with number",
+                                 json::type_error&);
+            CHECK_THROWS_WITH_AS(j_nonarray.insert(j_nonarray.end(), { 1, 2, 3, 4 }),
+                                 "[json.exception.type_error.309] cannot use insert() with number",
+                                 json::type_error&);
         }
     }
 
@@ -730,16 +760,16 @@ TEST_CASE("modifiers")
     {
         SECTION("non-recursive (default)")
         {
-            json j_object1 = {{"one", "eins"}, {"two", "zwei"}};
-            json j_object2 = {{"three", "drei"}, {"two", "zwo"}};
-            json j_array = {1, 2, 3, 4};
+            json j_object1 = { { "one", "eins" }, { "two", "zwei" } };
+            json j_object2 = { { "three", "drei" }, { "two", "zwo" } };
+            json j_array = { 1, 2, 3, 4 };
 
             SECTION("const reference")
             {
                 SECTION("proper usage")
                 {
                     j_object1.update(j_object2);
-                    CHECK(j_object1 == json({{"one", "eins"}, {"two", "zwo"}, {"three", "drei"}}));
+                    CHECK(j_object1 == json({ { "one", "eins" }, { "two", "zwo" }, { "three", "drei" } }));
 
                     json j_null;
                     j_null.update(j_object2);
@@ -759,7 +789,7 @@ TEST_CASE("modifiers")
                 SECTION("proper usage")
                 {
                     j_object1.update(j_object2.begin(), j_object2.end());
-                    CHECK(j_object1 == json({{"one", "eins"}, {"two", "zwo"}, {"three", "drei"}}));
+                    CHECK(j_object1 == json({ { "one", "eins" }, { "two", "zwo" }, { "three", "drei" } }));
 
                     json j_null;
                     j_null.update(j_object2.begin(), j_object2.end());
@@ -769,16 +799,22 @@ TEST_CASE("modifiers")
                 SECTION("empty range")
                 {
                     j_object1.update(j_object2.begin(), j_object2.begin());
-                    CHECK(j_object1 == json({{"one", "eins"}, {"two", "zwei"}}));
+                    CHECK(j_object1 == json({ { "one", "eins" }, { "two", "zwei" } }));
                 }
 
                 SECTION("invalid iterators")
                 {
-                    json const j_other_array2 = {"first", "second"};
+                    json const j_other_array2 = { "first", "second" };
 
-                    CHECK_THROWS_WITH_AS(j_array.update(j_object2.begin(), j_object2.end()), "[json.exception.type_error.312] cannot use update() with array", json::type_error&);
-                    CHECK_THROWS_WITH_AS(j_object1.update(j_object1.begin(), j_object2.end()), "[json.exception.invalid_iterator.210] iterators do not fit", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(j_object1.update(j_array.begin(), j_array.end()), "[json.exception.type_error.312] cannot use update() with array", json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_array.update(j_object2.begin(), j_object2.end()),
+                                         "[json.exception.type_error.312] cannot use update() with array",
+                                         json::type_error&);
+                    CHECK_THROWS_WITH_AS(j_object1.update(j_object1.begin(), j_object2.end()),
+                                         "[json.exception.invalid_iterator.210] iterators do not fit",
+                                         json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(j_object1.update(j_array.begin(), j_array.end()),
+                                         "[json.exception.type_error.312] cannot use update() with array",
+                                         json::type_error&);
                 }
             }
         }
@@ -789,18 +825,18 @@ TEST_CASE("modifiers")
             {
                 SECTION("extend object")
                 {
-                    json j1 = {{"string", "s"}, {"numbers", {{"one", 1}}}};
-                    json const j2 = {{"string", "t"}, {"numbers", {{"two", 2}}}};
+                    json j1 = { { "string", "s" }, { "numbers", { { "one", 1 } } } };
+                    json const j2 = { { "string", "t" }, { "numbers", { { "two", 2 } } } };
                     j1.update(j2, true);
-                    CHECK(j1 == json({{"string", "t"}, {"numbers", {{"one", 1}, {"two", 2}}}}));
+                    CHECK(j1 == json({ { "string", "t" }, { "numbers", { { "one", 1 }, { "two", 2 } } } }));
                 }
 
                 SECTION("replace object")
                 {
-                    json j1 = {{"string", "s"}, {"numbers", {{"one", 1}}}};
-                    json const j2 = {{"string", "t"}, {"numbers", 1}};
+                    json j1 = { { "string", "s" }, { "numbers", { { "one", 1 } } } };
+                    json const j2 = { { "string", "t" }, { "numbers", 1 } };
                     j1.update(j2, true);
-                    CHECK(j1 == json({{"string", "t"}, {"numbers", 1}}));
+                    CHECK(j1 == json({ { "string", "t" }, { "numbers", 1 } }));
                 }
             }
         }
@@ -838,22 +874,22 @@ TEST_CASE("modifiers")
         {
             SECTION("array_t type")
             {
-                json j = {1, 2, 3, 4};
-                json::array_t a = {"foo", "bar", "baz"};
+                json j = { 1, 2, 3, 4 };
+                json::array_t a = { "foo", "bar", "baz" };
 
                 j.swap(a);
 
-                CHECK(j == json({"foo", "bar", "baz"}));
+                CHECK(j == json({ "foo", "bar", "baz" }));
 
                 j.swap(a);
 
-                CHECK(j == json({1, 2, 3, 4}));
+                CHECK(j == json({ 1, 2, 3, 4 }));
             }
 
             SECTION("non-array_t type")
             {
                 json j = 17;
-                json::array_t a = {"foo", "bar", "baz"};
+                json::array_t a = { "foo", "bar", "baz" };
 
                 CHECK_THROWS_WITH_AS(j.swap(a), "[json.exception.type_error.310] cannot use swap(array_t&) with number", json::type_error&);
             }
@@ -863,22 +899,22 @@ TEST_CASE("modifiers")
         {
             SECTION("object_t type")
             {
-                json j = {{"one", 1}, {"two", 2}};
-                json::object_t o = {{"cow", "Kuh"}, {"chicken", "Huhn"}};
+                json j = { { "one", 1 }, { "two", 2 } };
+                json::object_t o = { { "cow", "Kuh" }, { "chicken", "Huhn" } };
 
                 j.swap(o);
 
-                CHECK(j == json({{"cow", "Kuh"}, {"chicken", "Huhn"}}));
+                CHECK(j == json({ { "cow", "Kuh" }, { "chicken", "Huhn" } }));
 
                 j.swap(o);
 
-                CHECK(j == json({{"one", 1}, {"two", 2}}));
+                CHECK(j == json({ { "one", 1 }, { "two", 2 } }));
             }
 
             SECTION("non-object_t type")
             {
                 json j = 17;
-                json::object_t o = {{"cow", "Kuh"}, {"chicken", "Huhn"}};
+                json::object_t o = { { "cow", "Kuh" }, { "chicken", "Huhn" } };
 
                 CHECK_THROWS_WITH_AS(j.swap(o), "[json.exception.type_error.310] cannot use swap(object_t&) with number", json::type_error&);
             }
@@ -913,37 +949,37 @@ TEST_CASE("modifiers")
         {
             SECTION("binary_t type")
             {
-                json j = json::binary({1, 2, 3, 4});
-                json::binary_t s = {{5, 6, 7, 8}};
+                json j = json::binary({ 1, 2, 3, 4 });
+                json::binary_t s = { { 5, 6, 7, 8 } };
 
                 j.swap(s);
 
-                CHECK(j == json::binary({5, 6, 7, 8}));
+                CHECK(j == json::binary({ 5, 6, 7, 8 }));
 
                 j.swap(s);
 
-                CHECK(j == json::binary({1, 2, 3, 4}));
+                CHECK(j == json::binary({ 1, 2, 3, 4 }));
             }
 
             SECTION("binary_t::container_type type")
             {
-                json j = json::binary({1, 2, 3, 4});
-                std::vector<std::uint8_t> s = {{5, 6, 7, 8}};
+                json j = json::binary({ 1, 2, 3, 4 });
+                std::vector<std::uint8_t> s = { { 5, 6, 7, 8 } };
 
                 j.swap(s);
 
-                CHECK(j == json::binary({5, 6, 7, 8}));
+                CHECK(j == json::binary({ 5, 6, 7, 8 }));
 
                 j.swap(s);
 
-                CHECK(j == json::binary({1, 2, 3, 4}));
+                CHECK(j == json::binary({ 1, 2, 3, 4 }));
             }
 
             SECTION("non-binary_t type")
             {
                 json j = 17;
-                json::binary_t s1 = {{1, 2, 3, 4}};
-                std::vector<std::uint8_t> s2 = {{5, 6, 7, 8}};
+                json::binary_t s1 = { { 1, 2, 3, 4 } };
+                std::vector<std::uint8_t> s2 = { { 5, 6, 7, 8 } };
 
                 CHECK_THROWS_WITH_AS(j.swap(s1), "[json.exception.type_error.310] cannot use swap(binary_t&) with number", json::type_error);
                 CHECK_THROWS_WITH_AS(j.swap(s2), "[json.exception.type_error.310] cannot use swap(binary_t::container_type&) with number", json::type_error);

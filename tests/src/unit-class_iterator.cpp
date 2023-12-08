@@ -131,14 +131,14 @@ TEST_CASE("iterator class")
 
             SECTION("object")
             {
-                json j({{"foo", "bar"}});
+                json j({ { "foo", "bar" } });
                 json::iterator const it = j.begin();
                 CHECK(*it == json("bar"));
             }
 
             SECTION("array")
             {
-                json j({1, 2, 3, 4});
+                json j({ 1, 2, 3, 4 });
                 json::iterator const it = j.begin();
                 CHECK(*it == json(1));
             }
@@ -164,14 +164,14 @@ TEST_CASE("iterator class")
 
             SECTION("object")
             {
-                json j({{"foo", "bar"}});
+                json j({ { "foo", "bar" } });
                 json::iterator const it = j.begin();
                 CHECK(std::string(it->type_name()) == "string");
             }
 
             SECTION("array")
             {
-                json j({1, 2, 3, 4});
+                json j({ 1, 2, 3, 4 });
                 json::iterator const it = j.begin();
                 CHECK(std::string(it->type_name()) == "number");
             }
@@ -204,7 +204,7 @@ TEST_CASE("iterator class")
 
             SECTION("object")
             {
-                json j({{"foo", "bar"}});
+                json j({ { "foo", "bar" } });
                 json::iterator it = j.begin();
                 CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->begin()));
                 it++;
@@ -213,7 +213,7 @@ TEST_CASE("iterator class")
 
             SECTION("array")
             {
-                json j({1, 2, 3, 4});
+                json j({ 1, 2, 3, 4 });
                 json::iterator it = j.begin();
                 CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->begin()));
                 it++;
@@ -255,7 +255,7 @@ TEST_CASE("iterator class")
 
             SECTION("object")
             {
-                json j({{"foo", "bar"}});
+                json j({ { "foo", "bar" } });
                 json::iterator it = j.begin();
                 CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->begin()));
                 ++it;
@@ -264,7 +264,7 @@ TEST_CASE("iterator class")
 
             SECTION("array")
             {
-                json j({1, 2, 3, 4});
+                json j({ 1, 2, 3, 4 });
                 json::iterator it = j.begin();
                 CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->begin()));
                 ++it;
@@ -304,7 +304,7 @@ TEST_CASE("iterator class")
 
             SECTION("object")
             {
-                json j({{"foo", "bar"}});
+                json j({ { "foo", "bar" } });
                 json::iterator it = j.end();
                 CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->end()));
                 it--;
@@ -313,7 +313,7 @@ TEST_CASE("iterator class")
 
             SECTION("array")
             {
-                json j({1, 2, 3, 4});
+                json j({ 1, 2, 3, 4 });
                 json::iterator it = j.end();
                 CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->end()));
                 it--;
@@ -353,7 +353,7 @@ TEST_CASE("iterator class")
 
             SECTION("object")
             {
-                json j({{"foo", "bar"}});
+                json j({ { "foo", "bar" } });
                 json::iterator it = j.end();
                 CHECK((it.m_it.object_iterator == it.m_object->m_data.m_value.object->end()));
                 --it;
@@ -362,7 +362,7 @@ TEST_CASE("iterator class")
 
             SECTION("array")
             {
-                json j({1, 2, 3, 4});
+                json j({ 1, 2, 3, 4 });
                 json::iterator it = j.end();
                 CHECK((it.m_it.array_iterator == it.m_object->m_data.m_value.array->end()));
                 --it;
@@ -387,18 +387,18 @@ TEST_CASE("iterator class")
             SECTION("primitive_iterator_t")
             {
                 using Iter = nlohmann::detail::primitive_iterator_t;
-                CHECK(std::is_same < decltype(std::declval<Iter&>()++), Iter >::value);
+                CHECK(std::is_same<decltype(std::declval<Iter&>()++), Iter>::value);
             }
             SECTION("iter_impl")
             {
                 using Iter = nlohmann::detail::iter_impl<json>;
-                CHECK(std::is_same < decltype(std::declval<Iter&>()++), Iter >::value);
+                CHECK(std::is_same<decltype(std::declval<Iter&>()++), Iter>::value);
             }
             SECTION("json_reverse_iterator")
             {
                 using Base = nlohmann::detail::iter_impl<json>;
                 using Iter = nlohmann::detail::json_reverse_iterator<Base>;
-                CHECK(std::is_same < decltype(std::declval<Iter&>()++), Iter >::value);
+                CHECK(std::is_same<decltype(std::declval<Iter&>()++), Iter>::value);
             }
         }
         SECTION("post-decrement")
@@ -406,18 +406,18 @@ TEST_CASE("iterator class")
             SECTION("primitive_iterator_t")
             {
                 using Iter = nlohmann::detail::primitive_iterator_t;
-                CHECK(std::is_same < decltype(std::declval<Iter&>()--), Iter >::value);
+                CHECK(std::is_same<decltype(std::declval<Iter&>()--), Iter>::value);
             }
             SECTION("iter_impl")
             {
                 using Iter = nlohmann::detail::iter_impl<json>;
-                CHECK(std::is_same < decltype(std::declval<Iter&>()--), Iter >::value );
+                CHECK(std::is_same<decltype(std::declval<Iter&>()--), Iter>::value);
             }
             SECTION("json_reverse_iterator")
             {
                 using Base = nlohmann::detail::iter_impl<json>;
                 using Iter = nlohmann::detail::json_reverse_iterator<Base>;
-                CHECK(std::is_same < decltype(std::declval<Iter&>()--), Iter >::value );
+                CHECK(std::is_same<decltype(std::declval<Iter&>()--), Iter>::value);
             }
         }
     }
@@ -462,7 +462,6 @@ TEST_CASE("iterator class")
                 using Iter = nlohmann::detail::json_reverse_iterator<Base>;
                 CHECK_FALSE(is_detected<can_post_decrement_temporary, Iter&>::value);
             }
-
         }
     }
 }

@@ -32,7 +32,7 @@ bool u32string_is_utf32()
 {
     return (std::u32string(U"💩") == std::u32string(U"\U0001F4A9"));
 }
-} // namespace
+}  // namespace
 
 TEST_CASE("wide strings")
 {

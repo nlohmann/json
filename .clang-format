@@ -1,4 +1,3 @@
-#AccessModifierOffset: 2
 AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: false
 #AlignConsecutiveBitFields: false
@@ -12,7 +11,7 @@ AllowAllConstructorInitializersOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: Empty
 AllowShortCaseLabelsOnASingleLine: false
-#AllowShortEnumsOnASingleLine: true
+AllowShortEnumsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLambdasOnASingleLine: Empty
@@ -30,27 +29,26 @@ BraceWrapping:
   AfterControlStatement: Always
   AfterEnum: true
   AfterFunction: true
-  AfterNamespace: false
+  AfterNamespace: true
   AfterStruct: true
   AfterUnion: true
   AfterExternBlock: false
   BeforeCatch: true
   BeforeElse: true
-  #BeforeLambdaBody: false
-  #BeforeWhile: false
+  BeforeLambdaBody: false
+  BeforeWhile: false
   SplitEmptyFunction: false
   SplitEmptyRecord: false
   SplitEmptyNamespace: false
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeComma
 BreakStringLiterals: false
-ColumnLimit: 0
+ColumnLimit: 160
 CompactNamespaces: false
 ConstructorInitializerIndentWidth: 2
-Cpp11BracedListStyle: true
+Cpp11BracedListStyle: false
 PointerAlignment: Left
 FixNamespaceComments: true
-IncludeBlocks: Preserve
 #IndentCaseBlocks: false
 IndentCaseLabels: true
 IndentGotoLabels: false
@@ -60,7 +58,6 @@ KeepEmptyLinesAtTheStartOfBlocks: false
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
 ReflowComments: false
-SortIncludes: true
 SortUsingDeclarations: true
 SpaceAfterCStyleCast: false
 SpaceAfterLogicalNot: false
@@ -79,6 +76,22 @@ SpacesInConditionalStatement: false
 SpacesInContainerLiterals: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
-Standard: c++11
+Standard: Latest
 TabWidth: 4
 UseTab: Never
+
+# what to do with include blocks
+SortIncludes: true
+IncludeBlocks: Preserve
+IncludeCategories:
+  - Regex:           '^".*"'
+    Priority:        1
+  - Regex:           '<[^\/]+>'
+    Priority:        2
+  - Regex:           '^<(nlohmann)\/-*'
+    Priority:        3
+  - Regex:           '.*'
+    Priority:        4
+
+Macros:
+  - JSON_PRIVATE_UNLESS_TESTED=private

@@ -13,18 +13,17 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-#include <fstream>
-#include <sstream>
-#include <iomanip>
 #include "make_test_data_available.hpp"
+#include <fstream>
+#include <iomanip>
+#include <sstream>
 
 TEST_CASE("Unicode (1/5)" * doctest::skip())
 {
     SECTION("\\uxxxx sequences")
     {
         // create an escaped string from a code point
-        const auto codepoint_to_unicode = [](std::size_t cp)
-        {
+        const auto codepoint_to_unicode = [](std::size_t cp) {
             // code points are represented as a six-character sequence: a
             // reverse solidus, followed by the lowercase letter u, followed
             // by four hexadecimal digits that encode the character's code
@@ -86,23 +85,44 @@ TEST_CASE("Unicode (1/5)" * doctest::skip())
             {
                 json _;
 
-                CHECK_THROWS_WITH_AS(_ = json::parse("\"\\uDC00\\uDC00\""), "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must follow U+D800..U+DBFF; last read: '\"\\uDC00'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::parse("\"\\uDC00\\uDC00\""),
+                    "[json.exception.parse_error.101] parse error at line 1, column 7: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must follow U+D800..U+DBFF; last read: '\"\\uDC00'",
+                    json::parse_error&);
 
-                CHECK_THROWS_WITH_AS(_ = json::parse("\"\\uD7FF\\uDC00\""), "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must follow U+D800..U+DBFF; last read: '\"\\uD7FF\\uDC00'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::parse("\"\\uD7FF\\uDC00\""),
+                    "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+DC00..U+DFFF must follow U+D800..U+DBFF; last read: '\"\\uD7FF\\uDC00'",
+                    json::parse_error&);
 
-                CHECK_THROWS_WITH_AS(_ = json::parse("\"\\uD800]\""), "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800]'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::parse("\"\\uD800]\""),
+                    "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800]'",
+                    json::parse_error&);
 
-                CHECK_THROWS_WITH_AS(_ = json::parse("\"\\uD800\\v\""), "[json.exception.parse_error.101] parse error at line 1, column 9: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800\\v'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::parse("\"\\uD800\\v\""),
+                    "[json.exception.parse_error.101] parse error at line 1, column 9: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800\\v'",
+                    json::parse_error&);
 
-                CHECK_THROWS_WITH_AS(_ = json::parse("\"\\uD800\\u123\""), "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\uD800\\u123\"'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::parse("\"\\uD800\\u123\""),
+                    "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: '\\u' must be followed by 4 hex digits; last read: '\"\\uD800\\u123\"'",
+                    json::parse_error&);
 
-                CHECK_THROWS_WITH_AS(_ = json::parse("\"\\uD800\\uDBFF\""), "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800\\uDBFF'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::parse("\"\\uD800\\uDBFF\""),
+                    "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800\\uDBFF'",
+                    json::parse_error&);
 
-                CHECK_THROWS_WITH_AS(_ = json::parse("\"\\uD800\\uE000\""), "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800\\uE000'", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::parse("\"\\uD800\\uE000\""),
+                    "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800\\uE000'",
+                    json::parse_error&);
             }
         }
 
-#if 0 // NOLINT(readability-avoid-unconditional-preprocessor-if)
+#if 0  // NOLINT(readability-avoid-unconditional-preprocessor-if)
         SECTION("incorrect sequences")
         {
             SECTION("high surrogate without low surrogate")
@@ -265,7 +285,7 @@ void roundtrip(bool success_expected, const std::string& s)
         CHECK_THROWS_AS(_ = json::parse(ps), json::parse_error&);
     }
 }
-} // namespace
+}  // namespace
 
 TEST_CASE("Markus Kuhn's UTF-8 decoder capability and stress test")
 {
@@ -355,13 +375,17 @@ TEST_CASE("Markus Kuhn's UTF-8 decoder capability and stress test")
             roundtrip(false, "\x80\xbf\x80\xbf\x80\xbf\x80");
 
             // 3.1.9  Sequence of all 64 possible continuation bytes (0x80-0xbf)
-            roundtrip(false, "\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf");
+            roundtrip(
+                false,
+                "\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf");
         }
 
         SECTION("3.2  Lonely start characters")
         {
             // 3.2.1  All 32 first bytes of 2-byte sequences (0xc0-0xdf)
-            roundtrip(false, "\xc0 \xc1 \xc2 \xc3 \xc4 \xc5 \xc6 \xc7 \xc8 \xc9 \xca \xcb \xcc \xcd \xce \xcf \xd0 \xd1 \xd2 \xd3 \xd4 \xd5 \xd6 \xd7 \xd8 \xd9 \xda \xdb \xdc \xdd \xde \xdf");
+            roundtrip(
+                false,
+                "\xc0 \xc1 \xc2 \xc3 \xc4 \xc5 \xc6 \xc7 \xc8 \xc9 \xca \xcb \xcc \xcd \xce \xcf \xd0 \xd1 \xd2 \xd3 \xd4 \xd5 \xd6 \xd7 \xd8 \xd9 \xda \xdb \xdc \xdd \xde \xdf");
             // 3.2.2  All 16 first bytes of 3-byte sequences (0xe0-0xef)
             roundtrip(false, "\xe0 \xe1 \xe2 \xe3 \xe4 \xe5 \xe6 \xe7 \xe8 \xe9 \xea \xeb \xec \xed \xee \xef");
             // 3.2.3  All 8 first bytes of 4-byte sequences (0xf0-0xf7)

@@ -20,20 +20,20 @@ TEST_CASE("default namespace")
     {
         std::string expected = "nlohmann::json_abi";
 
-#if JSON_DIAGNOSTICS
+    #if JSON_DIAGNOSTICS
         expected += "_diag";
-#endif
+    #endif
 
-#if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+    #if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
         expected += "_ldvcmp";
-#endif
+    #endif
 
         expected += "_v" STRINGIZE(NLOHMANN_JSON_VERSION_MAJOR);
         expected += "_" STRINGIZE(NLOHMANN_JSON_VERSION_MINOR);
         expected += "_" STRINGIZE(NLOHMANN_JSON_VERSION_PATCH) "::basic_json";
 
         // fallback for Clang
-        const std::string ns{STRINGIZE(NLOHMANN_JSON_NAMESPACE) "::basic_json"};
+        const std::string ns{ STRINGIZE(NLOHMANN_JSON_NAMESPACE) "::basic_json" };
 
         CHECK(namespace_name<nlohmann::json>(ns) == expected);
     }

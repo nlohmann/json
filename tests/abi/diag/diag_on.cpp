@@ -25,6 +25,6 @@ std::size_t json_sizeof_diag_on_explicit()
 void json_at_diag_on()
 {
     using nlohmann::json;
-    json j = json{{"foo", json::object()}};
+    json j = json{ { "foo", json::object() } };
     j.at(json::json_pointer("/foo/bar"));
 }

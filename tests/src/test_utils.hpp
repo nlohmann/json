@@ -8,9 +8,9 @@
 
 #pragma once
 
-#include <cstdint> // uint8_t
-#include <fstream> // ifstream, istreambuf_iterator, ios
-#include <vector> // vector
+#include <cstdint>  // uint8_t
+#include <fstream>  // ifstream, istreambuf_iterator, ios
+#include <vector>   // vector
 
 namespace utils
 {
@@ -30,4 +30,4 @@ inline std::vector<std::uint8_t> read_binary_file(const std::string& filename)
     return byte_vector;
 }
 
-} // namespace utils
+}  // namespace utils

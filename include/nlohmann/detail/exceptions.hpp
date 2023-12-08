@@ -8,22 +8,22 @@
 
 #pragma once
 
-#include <cstddef> // nullptr_t
-#include <exception> // exception
+#include <cstddef>    // nullptr_t
+#include <exception>  // exception
 #if JSON_DIAGNOSTICS
-    #include <numeric> // accumulate
+    #include <numeric>  // accumulate
 #endif
-#include <stdexcept> // runtime_error
-#include <string> // to_string
-#include <vector> // vector
+#include <stdexcept>  // runtime_error
+#include <string>     // to_string
+#include <vector>     // vector
 
-#include <nlohmann/detail/value_t.hpp>
-#include <nlohmann/detail/string_escape.hpp>
 #include <nlohmann/detail/input/position_t.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/string_concat.hpp>
+#include <nlohmann/detail/string_escape.hpp>
+#include <nlohmann/detail/value_t.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -45,11 +45,14 @@ class exception : public std::exception
     }
 
     /// the id of the exception
-    const int id; // NOLINT(cppcoreguidelines-non-private-member-variables-in-classes)
+    const int id;  // NOLINT(cppcoreguidelines-non-private-member-variables-in-classes)
 
   protected:
     JSON_HEDLEY_NON_NULL(3)
-    exception(int id_, const char* what_arg) : id(id_), m(what_arg) {} // NOLINT(bugprone-throw-keyword-missing)
+    exception(int id_, const char* what_arg)
+      : id(id_)
+      , m(what_arg)  // NOLINT(bugprone-throw-keyword-missing)
+    {}
 
     static std::string name(const std::string& ename, int id_)
     {
@@ -96,16 +99,16 @@ class exception : public std::exception
                     break;
                 }
 
-                case value_t::null: // LCOV_EXCL_LINE
-                case value_t::string: // LCOV_EXCL_LINE
-                case value_t::boolean: // LCOV_EXCL_LINE
-                case value_t::number_integer: // LCOV_EXCL_LINE
-                case value_t::number_unsigned: // LCOV_EXCL_LINE
-                case value_t::number_float: // LCOV_EXCL_LINE
-                case value_t::binary: // LCOV_EXCL_LINE
-                case value_t::discarded: // LCOV_EXCL_LINE
-                default:   // LCOV_EXCL_LINE
-                    break; // LCOV_EXCL_LINE
+                case value_t::null:             // LCOV_EXCL_LINE
+                case value_t::string:           // LCOV_EXCL_LINE
+                case value_t::boolean:          // LCOV_EXCL_LINE
+                case value_t::number_integer:   // LCOV_EXCL_LINE
+                case value_t::number_unsigned:  // LCOV_EXCL_LINE
+                case value_t::number_float:     // LCOV_EXCL_LINE
+                case value_t::binary:           // LCOV_EXCL_LINE
+                case value_t::discarded:        // LCOV_EXCL_LINE
+                default:                        // LCOV_EXCL_LINE
+                    break;                      // LCOV_EXCL_LINE
             }
         }
 
@@ -114,9 +117,7 @@ class exception : public std::exception
             return "";
         }
 
-        auto str = std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
-                                   [](const std::string & a, const std::string & b)
-        {
+        auto str = std::accumulate(tokens.rbegin(), tokens.rend(), std::string{}, [](const std::string& a, const std::string& b) {
             return concat(a, '/', detail::escape(b));
         });
         return concat('(', str, ") ");
@@ -148,18 +149,20 @@ class parse_error : public exception
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static parse_error create(int id_, const position_t& pos, const std::string& what_arg, BasicJsonContext context)
     {
-        const std::string w = concat(exception::name("parse_error", id_), "parse error",
-                                     position_string(pos), ": ", exception::diagnostics(context), what_arg);
-        return {id_, pos.chars_read_total, w.c_str()};
+        const std::string w = concat(exception::name("parse_error", id_), "parse error", position_string(pos), ": ", exception::diagnostics(context), what_arg);
+        return { id_, pos.chars_read_total, w.c_str() };
     }
 
     template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
     static parse_error create(int id_, std::size_t byte_, const std::string& what_arg, BasicJsonContext context)
     {
-        const std::string w = concat(exception::name("parse_error", id_), "parse error",
+        const std::string w = concat(exception::name("parse_error", id_),
+                                     "parse error",
                                      (byte_ != 0 ? (concat(" at byte ", std::to_string(byte_))) : ""),
-                                     ": ", exception::diagnostics(context), what_arg);
-        return {id_, byte_, w.c_str()};
+                                     ": ",
+                                     exception::diagnostics(context),
+                                     what_arg);
+        return { id_, byte_, w.c_str() };
     }
 
     /*!
@@ -175,12 +178,13 @@ class parse_error : public exception
 
   private:
     parse_error(int id_, std::size_t byte_, const char* what_arg)
-        : exception(id_, what_arg), byte(byte_) {}
+      : exception(id_, what_arg)
+      , byte(byte_)
+    {}
 
     static std::string position_string(const position_t& pos)
     {
-        return concat(" at line ", std::to_string(pos.lines_read + 1),
-                      ", column ", std::to_string(pos.chars_read_current_line));
+        return concat(" at line ", std::to_string(pos.lines_read + 1), ", column ", std::to_string(pos.chars_read_current_line));
     }
 };
 
@@ -193,13 +197,14 @@ class invalid_iterator : public exception
     static invalid_iterator create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
         const std::string w = concat(exception::name("invalid_iterator", id_), exception::diagnostics(context), what_arg);
-        return {id_, w.c_str()};
+        return { id_, w.c_str() };
     }
 
   private:
     JSON_HEDLEY_NON_NULL(3)
     invalid_iterator(int id_, const char* what_arg)
-        : exception(id_, what_arg) {}
+      : exception(id_, what_arg)
+    {}
 };
 
 /// @brief exception indicating executing a member function with a wrong type
@@ -211,12 +216,14 @@ class type_error : public exception
     static type_error create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
         const std::string w = concat(exception::name("type_error", id_), exception::diagnostics(context), what_arg);
-        return {id_, w.c_str()};
+        return { id_, w.c_str() };
     }
 
   private:
     JSON_HEDLEY_NON_NULL(3)
-    type_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
+    type_error(int id_, const char* what_arg)
+      : exception(id_, what_arg)
+    {}
 };
 
 /// @brief exception indicating access out of the defined range
@@ -228,12 +235,14 @@ class out_of_range : public exception
     static out_of_range create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
         const std::string w = concat(exception::name("out_of_range", id_), exception::diagnostics(context), what_arg);
-        return {id_, w.c_str()};
+        return { id_, w.c_str() };
     }
 
   private:
     JSON_HEDLEY_NON_NULL(3)
-    out_of_range(int id_, const char* what_arg) : exception(id_, what_arg) {}
+    out_of_range(int id_, const char* what_arg)
+      : exception(id_, what_arg)
+    {}
 };
 
 /// @brief exception indicating other library errors
@@ -245,12 +254,14 @@ class other_error : public exception
     static other_error create(int id_, const std::string& what_arg, BasicJsonContext context)
     {
         const std::string w = concat(exception::name("other_error", id_), exception::diagnostics(context), what_arg);
-        return {id_, w.c_str()};
+        return { id_, w.c_str() };
     }
 
   private:
     JSON_HEDLEY_NON_NULL(3)
-    other_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
+    other_error(int id_, const char* what_arg)
+      : exception(id_, what_arg)
+    {}
 };
 
 }  // namespace detail

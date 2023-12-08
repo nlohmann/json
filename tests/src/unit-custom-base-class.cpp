@@ -30,25 +30,23 @@ class json_metadata
     {
         return m_metadata;
     }
+
   private:
     metadata_t m_metadata = {};
 };
 
 template<class T>
-using json_with_metadata =
-    nlohmann::basic_json <
-    std::map,
-    std::vector,
-    std::string,
-    bool,
-    std::int64_t,
-    std::uint64_t,
-    double,
-    std::allocator,
-    nlohmann::adl_serializer,
-    std::vector<std::uint8_t>,
-    json_metadata<T>
-    >;
+using json_with_metadata = nlohmann::basic_json<std::map,
+                                                std::vector,
+                                                std::string,
+                                                bool,
+                                                std::int64_t,
+                                                std::uint64_t,
+                                                double,
+                                                std::allocator,
+                                                nlohmann::adl_serializer,
+                                                std::vector<std::uint8_t>,
+                                                json_metadata<T>>;
 
 TEST_CASE("JSON Node Metadata")
 {
@@ -56,18 +54,18 @@ TEST_CASE("JSON Node Metadata")
     {
         using json = json_with_metadata<int>;
         json null;
-        auto obj   = json::object();
+        auto obj = json::object();
         auto array = json::array();
 
-        null.metadata()  = 1;
-        obj.metadata()   = 2;
+        null.metadata() = 1;
+        obj.metadata() = 2;
         array.metadata() = 3;
         auto copy = array;
 
-        CHECK(null.metadata()  == 1);
-        CHECK(obj.metadata()   == 2);
+        CHECK(null.metadata() == 1);
+        CHECK(obj.metadata() == 2);
         CHECK(array.metadata() == 3);
-        CHECK(copy.metadata()  == 3);
+        CHECK(copy.metadata() == 3);
     }
     SECTION("type vector<int>")
     {
@@ -77,11 +75,11 @@ TEST_CASE("JSON Node Metadata")
         auto copy = value;
         value.metadata().emplace_back(2);
 
-        CHECK(copy.metadata().size()  == 1);
-        CHECK(copy.metadata().at(0)   == 1);
+        CHECK(copy.metadata().size() == 1);
+        CHECK(copy.metadata().at(0) == 1);
         CHECK(value.metadata().size() == 2);
-        CHECK(value.metadata().at(0)  == 1);
-        CHECK(value.metadata().at(1)  == 2);
+        CHECK(value.metadata().at(0) == 1);
+        CHECK(value.metadata().at(1) == 2);
     }
     SECTION("copy ctor")
     {
@@ -92,15 +90,15 @@ TEST_CASE("JSON Node Metadata")
 
         json copy = value;
 
-        CHECK(copy.metadata().size()  == 2);
-        CHECK(copy.metadata().at(0)   == 1);
-        CHECK(copy.metadata().at(1)   == 2);
+        CHECK(copy.metadata().size() == 2);
+        CHECK(copy.metadata().at(0) == 1);
+        CHECK(copy.metadata().at(1) == 2);
         CHECK(value.metadata().size() == 2);
-        CHECK(value.metadata().at(0)  == 1);
-        CHECK(value.metadata().at(1)  == 2);
+        CHECK(value.metadata().at(0) == 1);
+        CHECK(value.metadata().at(1) == 2);
 
         value.metadata().clear();
-        CHECK(copy.metadata().size()  == 2);
+        CHECK(copy.metadata().size() == 2);
         CHECK(value.metadata().size() == 0);
     }
     SECTION("move ctor")
@@ -112,9 +110,9 @@ TEST_CASE("JSON Node Metadata")
 
         const json moved = std::move(value);
 
-        CHECK(moved.metadata().size()  == 2);
-        CHECK(moved.metadata().at(0)   == 1);
-        CHECK(moved.metadata().at(1)   == 2);
+        CHECK(moved.metadata().size() == 2);
+        CHECK(moved.metadata().at(0) == 1);
+        CHECK(moved.metadata().at(1) == 2);
     }
     SECTION("move assign")
     {
@@ -126,9 +124,9 @@ TEST_CASE("JSON Node Metadata")
         json moved;
         moved = std::move(value);
 
-        CHECK(moved.metadata().size()  == 2);
-        CHECK(moved.metadata().at(0)   == 1);
-        CHECK(moved.metadata().at(1)   == 2);
+        CHECK(moved.metadata().size() == 2);
+        CHECK(moved.metadata().at(0) == 1);
+        CHECK(moved.metadata().at(1) == 2);
     }
     SECTION("copy assign")
     {
@@ -140,22 +138,22 @@ TEST_CASE("JSON Node Metadata")
         json copy;
         copy = value;
 
-        CHECK(copy.metadata().size()  == 2);
-        CHECK(copy.metadata().at(0)   == 1);
-        CHECK(copy.metadata().at(1)   == 2);
+        CHECK(copy.metadata().size() == 2);
+        CHECK(copy.metadata().at(0) == 1);
+        CHECK(copy.metadata().at(1) == 2);
         CHECK(value.metadata().size() == 2);
-        CHECK(value.metadata().at(0)  == 1);
-        CHECK(value.metadata().at(1)  == 2);
+        CHECK(value.metadata().at(0) == 1);
+        CHECK(value.metadata().at(1) == 2);
 
         value.metadata().clear();
-        CHECK(copy.metadata().size()  == 2);
+        CHECK(copy.metadata().size() == 2);
         CHECK(value.metadata().size() == 0);
     }
     SECTION("type unique_ptr<int>")
     {
         using json = json_with_metadata<std::unique_ptr<int>>;
         json value;
-        value.metadata().reset(new int(42)); // NOLINT(cppcoreguidelines-owning-memory)
+        value.metadata().reset(new int(42));  // NOLINT(cppcoreguidelines-owning-memory)
         auto moved = std::move(value);
 
         CHECK(moved.metadata() != nullptr);
@@ -171,14 +169,14 @@ TEST_CASE("JSON Node Metadata")
         json const array(10, value);
 
         CHECK(value.metadata().size() == 2);
-        CHECK(value.metadata().at(0)  == 1);
-        CHECK(value.metadata().at(1)  == 2);
+        CHECK(value.metadata().at(0) == 1);
+        CHECK(value.metadata().at(1) == 2);
 
         for (const auto& val : array)
         {
             CHECK(val.metadata().size() == 2);
-            CHECK(val.metadata().at(0)  == 1);
-            CHECK(val.metadata().at(1)  == 2);
+            CHECK(val.metadata().at(0) == 1);
+            CHECK(val.metadata().at(1) == 2);
         }
     }
 }
@@ -188,38 +186,37 @@ TEST_CASE("JSON Node Metadata")
 class visitor_adaptor
 {
   public:
-    template <class Fnc>
+    template<class Fnc>
     void visit(const Fnc& fnc) const;
+
   private:
-    template <class Ptr, class Fnc>
+    template<class Ptr, class Fnc>
     void do_visit(const Ptr& ptr, const Fnc& fnc) const;
 };
 
-using json_with_visitor_t = nlohmann::basic_json <
-                            std::map,
-                            std::vector,
-                            std::string,
-                            bool,
-                            std::int64_t,
-                            std::uint64_t,
-                            double,
-                            std::allocator,
-                            nlohmann::adl_serializer,
-                            std::vector<std::uint8_t>,
-                            visitor_adaptor
-                            >;
+using json_with_visitor_t = nlohmann::basic_json<std::map,
+                                                 std::vector,
+                                                 std::string,
+                                                 bool,
+                                                 std::int64_t,
+                                                 std::uint64_t,
+                                                 double,
+                                                 std::allocator,
+                                                 nlohmann::adl_serializer,
+                                                 std::vector<std::uint8_t>,
+                                                 visitor_adaptor>;
 
-template <class Fnc>
+template<class Fnc>
 void visitor_adaptor::visit(const Fnc& fnc) const
 {
     do_visit(json_with_visitor_t::json_pointer{}, fnc);
 }
 
-template <class Ptr, class Fnc>
+template<class Ptr, class Fnc>
 void visitor_adaptor::do_visit(const Ptr& ptr, const Fnc& fnc) const
 {
     using value_t = nlohmann::detail::value_t;
-    const json_with_visitor_t& json = *static_cast<const json_with_visitor_t*>(this); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
+    const json_with_visitor_t& json = *static_cast<const json_with_visitor_t*>(this);  // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
     switch (json.type())
     {
         case value_t::object:
@@ -252,7 +249,7 @@ TEST_CASE("JSON Visit Node")
 {
     json_with_visitor_t json;
     json["null"];
-    json["int"]  = -1;
+    json["int"] = -1;
     json["uint"] = 1U;
     json["float"] = 1.0;
     json["boolean"] = true;
@@ -261,33 +258,27 @@ TEST_CASE("JSON Visit Node")
     json["array"].push_back(1);
     json["array"].push_back(json);
 
-    std::set<std::string> expected
-    {
-        "/null - null - null",
-        "/int - number_integer - -1",
-        "/uint - number_unsigned - 1",
-        "/float - number_float - 1.0",
-        "/boolean - boolean - true",
-        "/string - string - \"string\"",
-        "/array/0 - number_integer - 0",
-        "/array/1 - number_integer - 1",
+    std::set<std::string> expected{ "/null - null - null",
+                                    "/int - number_integer - -1",
+                                    "/uint - number_unsigned - 1",
+                                    "/float - number_float - 1.0",
+                                    "/boolean - boolean - true",
+                                    "/string - string - \"string\"",
+                                    "/array/0 - number_integer - 0",
+                                    "/array/1 - number_integer - 1",
 
-        "/array/2/null - null - null",
-        "/array/2/int - number_integer - -1",
-        "/array/2/uint - number_unsigned - 1",
-        "/array/2/float - number_float - 1.0",
-        "/array/2/boolean - boolean - true",
-        "/array/2/string - string - \"string\"",
-        "/array/2/array/0 - number_integer - 0",
-        "/array/2/array/1 - number_integer - 1"
-    };
+                                    "/array/2/null - null - null",
+                                    "/array/2/int - number_integer - -1",
+                                    "/array/2/uint - number_unsigned - 1",
+                                    "/array/2/float - number_float - 1.0",
+                                    "/array/2/boolean - boolean - true",
+                                    "/array/2/string - string - \"string\"",
+                                    "/array/2/array/0 - number_integer - 0",
+                                    "/array/2/array/1 - number_integer - 1" };
 
-    json.visit(
-        [&](const json_with_visitor_t::json_pointer & p,
-            const json_with_visitor_t& j)
-    {
+    json.visit([&](const json_with_visitor_t::json_pointer& p, const json_with_visitor_t& j) {
         std::stringstream str;
-        str << p.to_string() << " - " ;
+        str << p.to_string() << " - ";
         using value_t = nlohmann::detail::value_t;
         switch (j.type())
         {
@@ -325,12 +316,11 @@ TEST_CASE("JSON Visit Node")
                 str << "error";
                 break;
         }
-        str << " - "  << j.dump();
+        str << " - " << j.dump();
         CHECK(json.at(p) == j);
         INFO(str.str());
         CHECK(expected.count(str.str()) == 1);
         expected.erase(str.str());
-    }
-    );
+    });
     CHECK(expected.empty());
 }

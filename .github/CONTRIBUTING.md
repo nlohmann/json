@@ -50,7 +50,7 @@ To make changes, you need to edit the following files:
 ## Note
 
 - If you open a pull request, the code will be automatically tested with [Valgrind](http://valgrind.org)'s Memcheck tool to detect memory leaks. Please be aware that the execution with Valgrind _may_ in rare cases yield different behavior than running the code directly. This can result in failing unit tests which run successfully without Valgrind.
-- There is a Makefile target `make pretty` which runs [Artistic Style](http://astyle.sourceforge.net) to fix indentation. If possible, run it before opening the pull request. Otherwise, we shall run it afterward.
+- There is a Makefile target `make pretty` which runs [Clang-Format](https://clang.llvm.org/docs/ClangFormat.html) to fix indentation. If possible, run it before opening the pull request. Otherwise, we shall run it afterward.
 
 ## Please don't
 

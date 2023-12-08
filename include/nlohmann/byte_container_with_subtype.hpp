@@ -8,9 +8,9 @@
 
 #pragma once
 
-#include <cstdint> // uint8_t, uint64_t
-#include <tuple> // tie
-#include <utility> // move
+#include <cstdint>  // uint8_t, uint64_t
+#include <tuple>    // tie
+#include <utility>  // move
 
 #include <nlohmann/detail/abi_macros.hpp>
 
@@ -27,31 +27,31 @@ class byte_container_with_subtype : public BinaryType
 
     /// @sa https://json.nlohmann.me/api/byte_container_with_subtype/byte_container_with_subtype/
     byte_container_with_subtype() noexcept(noexcept(container_type()))
-        : container_type()
+      : container_type()
     {}
 
     /// @sa https://json.nlohmann.me/api/byte_container_with_subtype/byte_container_with_subtype/
     byte_container_with_subtype(const container_type& b) noexcept(noexcept(container_type(b)))
-        : container_type(b)
+      : container_type(b)
     {}
 
     /// @sa https://json.nlohmann.me/api/byte_container_with_subtype/byte_container_with_subtype/
     byte_container_with_subtype(container_type&& b) noexcept(noexcept(container_type(std::move(b))))
-        : container_type(std::move(b))
+      : container_type(std::move(b))
     {}
 
     /// @sa https://json.nlohmann.me/api/byte_container_with_subtype/byte_container_with_subtype/
     byte_container_with_subtype(const container_type& b, subtype_type subtype_) noexcept(noexcept(container_type(b)))
-        : container_type(b)
-        , m_subtype(subtype_)
-        , m_has_subtype(true)
+      : container_type(b)
+      , m_subtype(subtype_)
+      , m_has_subtype(true)
     {}
 
     /// @sa https://json.nlohmann.me/api/byte_container_with_subtype/byte_container_with_subtype/
     byte_container_with_subtype(container_type&& b, subtype_type subtype_) noexcept(noexcept(container_type(std::move(b))))
-        : container_type(std::move(b))
-        , m_subtype(subtype_)
-        , m_has_subtype(true)
+      : container_type(std::move(b))
+      , m_subtype(subtype_)
+      , m_has_subtype(true)
     {}
 
     bool operator==(const byte_container_with_subtype& rhs) const

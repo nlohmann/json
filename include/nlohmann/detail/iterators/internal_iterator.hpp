@@ -21,14 +21,15 @@ namespace detail
 @note This structure could easily be a union, but MSVC currently does not allow
 unions members with complex constructors, see https://github.com/nlohmann/json/pull/105.
 */
-template<typename BasicJsonType> struct internal_iterator
+template<typename BasicJsonType>
+struct internal_iterator
 {
     /// iterator for JSON objects
-    typename BasicJsonType::object_t::iterator object_iterator {};
+    typename BasicJsonType::object_t::iterator object_iterator{};
     /// iterator for JSON arrays
-    typename BasicJsonType::array_t::iterator array_iterator {};
+    typename BasicJsonType::array_t::iterator array_iterator{};
     /// generic iterator for all other types
-    primitive_iterator_t primitive_iterator {};
+    primitive_iterator_t primitive_iterator{};
 };
 
 }  // namespace detail

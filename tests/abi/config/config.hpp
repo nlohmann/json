@@ -18,7 +18,7 @@
 #define STRINGIZE(x) STRINGIZE_EX(x)
 
 template<typename T>
-std::string namespace_name(std::string ns, T* /*unused*/ = nullptr) // NOLINT(performance-unnecessary-value-param)
+std::string namespace_name(std::string ns, T* /*unused*/ = nullptr)  // NOLINT(performance-unnecessary-value-param)
 {
 #if DOCTEST_MSVC && !DOCTEST_CLANG
     ns = __FUNCSIG__;

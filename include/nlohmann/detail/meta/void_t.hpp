@@ -14,11 +14,13 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
-template<typename ...Ts> struct make_void
+template<typename... Ts>
+struct make_void
 {
     using type = void;
 };
-template<typename ...Ts> using void_t = typename make_void<Ts...>::type;
+template<typename... Ts>
+using void_t = typename make_void<Ts...>::type;
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END

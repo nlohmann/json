@@ -11,10 +11,10 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-#include <climits> // SIZE_MAX
-#include <limits> // numeric_limits
+#include <climits>  // SIZE_MAX
+#include <limits>   // numeric_limits
 
-template <typename OfType, typename T, bool MinInRange, bool MaxInRange>
+template<typename OfType, typename T, bool MinInRange, bool MaxInRange>
 struct trait_test_arg
 {
     using of_type = OfType;
@@ -92,10 +92,10 @@ TEST_CASE("32bit")
     REQUIRE(SIZE_MAX == 0xffffffff);
 }
 
-TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test, \
-                          trait_test_arg<std::size_t, std::int32_t, false, true>, \
-                          trait_test_arg<std::size_t, std::uint32_t, true, true>, \
-                          trait_test_arg<std::size_t, std::int64_t, false, false>, \
+TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test,
+                          trait_test_arg<std::size_t, std::int32_t, false, true>,
+                          trait_test_arg<std::size_t, std::uint32_t, true, true>,
+                          trait_test_arg<std::size_t, std::int64_t, false, false>,
                           trait_test_arg<std::size_t, std::uint64_t, true, false>);
 
 TEST_CASE("BJData")
@@ -106,27 +106,35 @@ TEST_CASE("BJData")
         {
             SECTION("optimized array: negative size")
             {
-                std::vector<uint8_t> const vM = {'[', '$', 'M', '#', '[', 'I', 0x00, 0x20, 'M', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0xFF, ']'};
-                std::vector<uint8_t> const vMX = {'[', '$', 'U', '#', '[', 'M', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 'U', 0x01, ']'};
+                std::vector<uint8_t> const vM = { '[', '$', 'M', '#', '[', 'I', 0x00, 0x20, 'M', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0xFF, ']' };
+                std::vector<uint8_t> const vMX = { '[', '$', 'U', '#', '[', 'M', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 'U', 0x01, ']' };
 
                 json _;
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM),
+                                     "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow",
+                                     json::out_of_range&);
                 CHECK(json::from_bjdata(vM, true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vMX), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vMX),
+                                     "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow",
+                                     json::out_of_range&);
                 CHECK(json::from_bjdata(vMX, true, false).is_discarded());
             }
 
             SECTION("optimized array: integer value overflow")
             {
-                std::vector<uint8_t> const vL = {'[', '#', 'L', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7F};
-                std::vector<uint8_t> const vM = {'[', '$', 'M', '#', '[', 'I', 0x00, 0x20, 'M', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0xFF, ']'};
+                std::vector<uint8_t> const vL = { '[', '#', 'L', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7F };
+                std::vector<uint8_t> const vM = { '[', '$', 'M', '#', '[', 'I', 0x00, 0x20, 'M', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0xFF, ']' };
 
                 json _;
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vL), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vL),
+                                     "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow",
+                                     json::out_of_range&);
                 CHECK(json::from_bjdata(vL, true, false).is_discarded());
 
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM),
+                                     "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow",
+                                     json::out_of_range&);
                 CHECK(json::from_bjdata(vM, true, false).is_discarded());
             }
         }

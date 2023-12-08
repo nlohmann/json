@@ -11,23 +11,24 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 #ifdef JSON_TEST_NO_GLOBAL_UDLS
-    using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
+using namespace nlohmann::literals;  // NOLINT(google-build-using-namespace)
 #endif
 
+#include "make_test_data_available.hpp"
+#include "test_utils.hpp"
 #include <fstream>
-#include <sstream>
 #include <iomanip>
 #include <limits>
 #include <set>
-#include "make_test_data_available.hpp"
-#include "test_utils.hpp"
+#include <sstream>
 
 namespace
 {
 class SaxCountdown
 {
   public:
-    explicit SaxCountdown(const int count) : events_left(count)
+    explicit SaxCountdown(const int count)
+      : events_left(count)
     {}
 
     bool null()
@@ -90,7 +91,9 @@ class SaxCountdown
         return events_left-- > 0;
     }
 
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/) // NOLINT(readability-convert-member-functions-to-static)
+    bool parse_error(std::size_t /*unused*/,
+                     const std::string& /*unused*/,
+                     const json::exception& /*unused*/)  // NOLINT(readability-convert-member-functions-to-static)
     {
         return false;
     }
@@ -98,7 +101,7 @@ class SaxCountdown
   private:
     int events_left = 0;
 };
-} // namespace
+}  // namespace
 
 TEST_CASE("MessagePack")
 {
@@ -115,7 +118,7 @@ TEST_CASE("MessagePack")
         SECTION("null")
         {
             json const j = nullptr;
-            std::vector<uint8_t> const expected = {0xc0};
+            std::vector<uint8_t> const expected = { 0xc0 };
             const auto result = json::to_msgpack(j);
             CHECK(result == expected);
 
@@ -129,7 +132,7 @@ TEST_CASE("MessagePack")
             SECTION("true")
             {
                 json const j = true;
-                std::vector<uint8_t> const expected = {0xc3};
+                std::vector<uint8_t> const expected = { 0xc3 };
                 const auto result = json::to_msgpack(j);
                 CHECK(result == expected);
 
@@ -141,7 +144,7 @@ TEST_CASE("MessagePack")
             SECTION("false")
             {
                 json const j = false;
-                std::vector<uint8_t> const expected = {0xc2};
+                std::vector<uint8_t> const expected = { 0xc2 };
                 const auto result = json::to_msgpack(j);
                 CHECK(result == expected);
 
@@ -168,10 +171,7 @@ TEST_CASE("MessagePack")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> const expected
-                        {
-                            static_cast<uint8_t>(i)
-                        };
+                        std::vector<uint8_t> const expected{ static_cast<uint8_t>(i) };
 
                         // compare result + size
                         const auto result = json::to_msgpack(j);
@@ -201,7 +201,7 @@ TEST_CASE("MessagePack")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> const expected{static_cast<uint8_t>(i)};
+                        std::vector<uint8_t> const expected{ static_cast<uint8_t>(i) };
 
                         // compare result + size
                         const auto result = json::to_msgpack(j);
@@ -231,8 +231,7 @@ TEST_CASE("MessagePack")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> const expected
-                        {
+                        std::vector<uint8_t> const expected{
                             0xcc,
                             static_cast<uint8_t>(i),
                         };
@@ -267,8 +266,7 @@ TEST_CASE("MessagePack")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> const expected
-                        {
+                        std::vector<uint8_t> const expected{
                             0xcd,
                             static_cast<uint8_t>((i >> 8) & 0xff),
                             static_cast<uint8_t>(i & 0xff),
@@ -292,10 +290,7 @@ TEST_CASE("MessagePack")
 
                 SECTION("65536..4294967295 (int 32)")
                 {
-                    for (uint32_t i :
-                            {
-                                65536u, 77777u, 1048576u, 4294967295u
-                            })
+                    for (uint32_t i : { 65536u, 77777u, 1048576u, 4294967295u })
                     {
                         CAPTURE(i)
 
@@ -307,8 +302,7 @@ TEST_CASE("MessagePack")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> const expected
-                        {
+                        std::vector<uint8_t> const expected{
                             0xce,
                             static_cast<uint8_t>((i >> 24) & 0xff),
                             static_cast<uint8_t>((i >> 16) & 0xff),
@@ -323,10 +317,8 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xce);
-                        uint32_t const restored = (static_cast<uint32_t>(result[1]) << 030) +
-                                                  (static_cast<uint32_t>(result[2]) << 020) +
-                                                  (static_cast<uint32_t>(result[3]) << 010) +
-                                                  static_cast<uint32_t>(result[4]);
+                        uint32_t const restored = (static_cast<uint32_t>(result[1]) << 030) + (static_cast<uint32_t>(result[2]) << 020) +
+                                                  (static_cast<uint32_t>(result[3]) << 010) + static_cast<uint32_t>(result[4]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -337,10 +329,7 @@ TEST_CASE("MessagePack")
 
                 SECTION("4294967296..9223372036854775807 (int 64)")
                 {
-                    for (uint64_t i :
-                            {
-                                4294967296LU, 9223372036854775807LU
-                            })
+                    for (uint64_t i : { 4294967296LU, 9223372036854775807LU })
                     {
                         CAPTURE(i)
 
@@ -352,8 +341,7 @@ TEST_CASE("MessagePack")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> const expected
-                        {
+                        std::vector<uint8_t> const expected{
                             0xcf,
                             static_cast<uint8_t>((i >> 070) & 0xff),
                             static_cast<uint8_t>((i >> 060) & 0xff),
@@ -372,14 +360,10 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xcf);
-                        uint64_t const restored = (static_cast<uint64_t>(result[1]) << 070) +
-                                                  (static_cast<uint64_t>(result[2]) << 060) +
-                                                  (static_cast<uint64_t>(result[3]) << 050) +
-                                                  (static_cast<uint64_t>(result[4]) << 040) +
-                                                  (static_cast<uint64_t>(result[5]) << 030) +
-                                                  (static_cast<uint64_t>(result[6]) << 020) +
-                                                  (static_cast<uint64_t>(result[7]) << 010) +
-                                                  static_cast<uint64_t>(result[8]);
+                        uint64_t const restored = (static_cast<uint64_t>(result[1]) << 070) + (static_cast<uint64_t>(result[2]) << 060) +
+                                                  (static_cast<uint64_t>(result[3]) << 050) + (static_cast<uint64_t>(result[4]) << 040) +
+                                                  (static_cast<uint64_t>(result[5]) << 030) + (static_cast<uint64_t>(result[6]) << 020) +
+                                                  (static_cast<uint64_t>(result[7]) << 010) + static_cast<uint64_t>(result[8]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -401,8 +385,7 @@ TEST_CASE("MessagePack")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> const expected
-                        {
+                        std::vector<uint8_t> const expected{
                             0xd0,
                             static_cast<uint8_t>(i),
                         };
@@ -425,7 +408,7 @@ TEST_CASE("MessagePack")
                 SECTION("-9263 (int 16)")
                 {
                     json const j = -9263;
-                    std::vector<uint8_t> const expected = {0xd1, 0xdb, 0xd1};
+                    std::vector<uint8_t> const expected = { 0xd1, 0xdb, 0xd1 };
 
                     const auto result = json::to_msgpack(j);
                     CHECK(result == expected);
@@ -451,8 +434,7 @@ TEST_CASE("MessagePack")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> const expected
-                        {
+                        std::vector<uint8_t> const expected{
                             0xd1,
                             static_cast<uint8_t>((i >> 8) & 0xff),
                             static_cast<uint8_t>(i & 0xff),
@@ -476,14 +458,9 @@ TEST_CASE("MessagePack")
 
                 SECTION("-32769..-2147483648")
                 {
-                    std::vector<int32_t> const numbers
-                    {
-                        -32769,
-                            -65536,
-                            -77777,
-                            -1048576,
-                            -2147483648LL,
-                        };
+                    std::vector<int32_t> const numbers{
+                        -32769, -65536, -77777, -1048576, -2147483648LL,
+                    };
                     for (auto i : numbers)
                     {
                         CAPTURE(i)
@@ -495,8 +472,7 @@ TEST_CASE("MessagePack")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> const expected
-                        {
+                        std::vector<uint8_t> const expected{
                             0xd2,
                             static_cast<uint8_t>((i >> 24) & 0xff),
                             static_cast<uint8_t>((i >> 16) & 0xff),
@@ -511,10 +487,8 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xd2);
-                        uint32_t const restored = (static_cast<uint32_t>(result[1]) << 030) +
-                                                  (static_cast<uint32_t>(result[2]) << 020) +
-                                                  (static_cast<uint32_t>(result[3]) << 010) +
-                                                  static_cast<uint32_t>(result[4]);
+                        uint32_t const restored = (static_cast<uint32_t>(result[1]) << 030) + (static_cast<uint32_t>(result[2]) << 020) +
+                                                  (static_cast<uint32_t>(result[3]) << 010) + static_cast<uint32_t>(result[4]);
                         CHECK(static_cast<std::int32_t>(restored) == i);
 
                         // roundtrip
@@ -525,8 +499,7 @@ TEST_CASE("MessagePack")
 
                 SECTION("-9223372036854775808..-2147483649 (int 64)")
                 {
-                    std::vector<int64_t> const numbers
-                    {
+                    std::vector<int64_t> const numbers{
                         (std::numeric_limits<int64_t>::min)(),
                         -2147483649LL,
                     };
@@ -541,8 +514,7 @@ TEST_CASE("MessagePack")
                         CHECK(j.is_number_integer());
 
                         // create expected byte vector
-                        std::vector<uint8_t> const expected
-                        {
+                        std::vector<uint8_t> const expected{
                             0xd3,
                             static_cast<uint8_t>((i >> 070) & 0xff),
                             static_cast<uint8_t>((i >> 060) & 0xff),
@@ -561,14 +533,10 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xd3);
-                        int64_t const restored = (static_cast<int64_t>(result[1]) << 070) +
-                                                 (static_cast<int64_t>(result[2]) << 060) +
-                                                 (static_cast<int64_t>(result[3]) << 050) +
-                                                 (static_cast<int64_t>(result[4]) << 040) +
-                                                 (static_cast<int64_t>(result[5]) << 030) +
-                                                 (static_cast<int64_t>(result[6]) << 020) +
-                                                 (static_cast<int64_t>(result[7]) << 010) +
-                                                 static_cast<int64_t>(result[8]);
+                        int64_t const restored = (static_cast<int64_t>(result[1]) << 070) + (static_cast<int64_t>(result[2]) << 060) +
+                                                 (static_cast<int64_t>(result[3]) << 050) + (static_cast<int64_t>(result[4]) << 040) +
+                                                 (static_cast<int64_t>(result[5]) << 030) + (static_cast<int64_t>(result[6]) << 020) +
+                                                 (static_cast<int64_t>(result[7]) << 010) + static_cast<int64_t>(result[8]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -593,7 +561,7 @@ TEST_CASE("MessagePack")
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> const expected{static_cast<uint8_t>(i)};
+                        std::vector<uint8_t> const expected{ static_cast<uint8_t>(i) };
 
                         // compare result + size
                         const auto result = json::to_msgpack(j);
@@ -622,8 +590,7 @@ TEST_CASE("MessagePack")
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> const expected
-                        {
+                        std::vector<uint8_t> const expected{
                             0xcc,
                             static_cast<uint8_t>(i),
                         };
@@ -657,8 +624,7 @@ TEST_CASE("MessagePack")
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> const expected
-                        {
+                        std::vector<uint8_t> const expected{
                             0xcd,
                             static_cast<uint8_t>((i >> 8) & 0xff),
                             static_cast<uint8_t>(i & 0xff),
@@ -682,10 +648,7 @@ TEST_CASE("MessagePack")
 
                 SECTION("65536..4294967295 (uint 32)")
                 {
-                    for (const uint32_t i :
-                            {
-                                65536u, 77777u, 1048576u, 4294967295u
-                            })
+                    for (const uint32_t i : { 65536u, 77777u, 1048576u, 4294967295u })
                     {
                         CAPTURE(i)
 
@@ -696,8 +659,7 @@ TEST_CASE("MessagePack")
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> const expected
-                        {
+                        std::vector<uint8_t> const expected{
                             0xce,
                             static_cast<uint8_t>((i >> 24) & 0xff),
                             static_cast<uint8_t>((i >> 16) & 0xff),
@@ -712,10 +674,8 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xce);
-                        uint32_t const restored = (static_cast<uint32_t>(result[1]) << 030) +
-                                                  (static_cast<uint32_t>(result[2]) << 020) +
-                                                  (static_cast<uint32_t>(result[3]) << 010) +
-                                                  static_cast<uint32_t>(result[4]);
+                        uint32_t const restored = (static_cast<uint32_t>(result[1]) << 030) + (static_cast<uint32_t>(result[2]) << 020) +
+                                                  (static_cast<uint32_t>(result[3]) << 010) + static_cast<uint32_t>(result[4]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -726,10 +686,7 @@ TEST_CASE("MessagePack")
 
                 SECTION("4294967296..18446744073709551615 (uint 64)")
                 {
-                    for (const uint64_t i :
-                            {
-                                4294967296LU, 18446744073709551615LU
-                            })
+                    for (const uint64_t i : { 4294967296LU, 18446744073709551615LU })
                     {
                         CAPTURE(i)
 
@@ -740,8 +697,7 @@ TEST_CASE("MessagePack")
                         CHECK(j.is_number_unsigned());
 
                         // create expected byte vector
-                        std::vector<uint8_t> const expected
-                        {
+                        std::vector<uint8_t> const expected{
                             0xcf,
                             static_cast<uint8_t>((i >> 070) & 0xff),
                             static_cast<uint8_t>((i >> 060) & 0xff),
@@ -760,14 +716,10 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xcf);
-                        uint64_t const restored = (static_cast<uint64_t>(result[1]) << 070) +
-                                                  (static_cast<uint64_t>(result[2]) << 060) +
-                                                  (static_cast<uint64_t>(result[3]) << 050) +
-                                                  (static_cast<uint64_t>(result[4]) << 040) +
-                                                  (static_cast<uint64_t>(result[5]) << 030) +
-                                                  (static_cast<uint64_t>(result[6]) << 020) +
-                                                  (static_cast<uint64_t>(result[7]) << 010) +
-                                                  static_cast<uint64_t>(result[8]);
+                        uint64_t const restored = (static_cast<uint64_t>(result[1]) << 070) + (static_cast<uint64_t>(result[2]) << 060) +
+                                                  (static_cast<uint64_t>(result[3]) << 050) + (static_cast<uint64_t>(result[4]) << 040) +
+                                                  (static_cast<uint64_t>(result[5]) << 030) + (static_cast<uint64_t>(result[6]) << 020) +
+                                                  (static_cast<uint64_t>(result[7]) << 010) + static_cast<uint64_t>(result[8]);
                         CHECK(restored == i);
 
                         // roundtrip
@@ -783,10 +735,7 @@ TEST_CASE("MessagePack")
                 {
                     double const v = 3.1415925;
                     json const j = v;
-                    std::vector<uint8_t> const expected =
-                    {
-                        0xcb, 0x40, 0x09, 0x21, 0xfb, 0x3f, 0xa6, 0xde, 0xfc
-                    };
+                    std::vector<uint8_t> const expected = { 0xcb, 0x40, 0x09, 0x21, 0xfb, 0x3f, 0xa6, 0xde, 0xfc };
                     const auto result = json::to_msgpack(j);
                     CHECK(result == expected);
 
@@ -800,10 +749,7 @@ TEST_CASE("MessagePack")
                 {
                     double const v = 1.0;
                     json const j = v;
-                    std::vector<uint8_t> const expected =
-                    {
-                        0xca, 0x3f, 0x80, 0x00, 0x00
-                    };
+                    std::vector<uint8_t> const expected = { 0xca, 0x3f, 0x80, 0x00, 0x00 };
                     const auto result = json::to_msgpack(j);
                     CHECK(result == expected);
 
@@ -817,10 +763,7 @@ TEST_CASE("MessagePack")
                 {
                     double const v = 128.1280059814453125;
                     json const j = v;
-                    std::vector<uint8_t> const expected =
-                    {
-                        0xca, 0x43, 0x00, 0x20, 0xc5
-                    };
+                    std::vector<uint8_t> const expected = { 0xca, 0x43, 0x00, 0x20, 0xc5 };
                     const auto result = json::to_msgpack(j);
                     CHECK(result == expected);
 
@@ -837,13 +780,8 @@ TEST_CASE("MessagePack")
             SECTION("N = 0..31")
             {
                 // explicitly enumerate the first byte for all 32 strings
-                const std::vector<uint8_t> first_bytes =
-                {
-                    0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7, 0xa8,
-                    0xa9, 0xaa, 0xab, 0xac, 0xad, 0xae, 0xaf, 0xb0, 0xb1,
-                    0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba,
-                    0xbb, 0xbc, 0xbd, 0xbe, 0xbf
-                };
+                const std::vector<uint8_t> first_bytes = { 0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7, 0xa8, 0xa9, 0xaa, 0xab, 0xac, 0xad, 0xae, 0xaf,
+                                                           0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf };
 
                 for (size_t N = 0; N < first_bytes.size(); ++N)
                 {
@@ -914,10 +852,7 @@ TEST_CASE("MessagePack")
 
             SECTION("N = 256..65535")
             {
-                for (size_t N :
-                        {
-                            256u, 999u, 1025u, 3333u, 2048u, 65535u
-                        })
+                for (size_t N : { 256u, 999u, 1025u, 3333u, 2048u, 65535u })
                 {
                     CAPTURE(N)
 
@@ -947,10 +882,7 @@ TEST_CASE("MessagePack")
 
             SECTION("N = 65536..4294967295")
             {
-                for (size_t N :
-                        {
-                            65536u, 77777u, 1048576u
-                        })
+                for (size_t N : { 65536u, 77777u, 1048576u })
                 {
                     CAPTURE(N)
 
@@ -986,7 +918,7 @@ TEST_CASE("MessagePack")
             SECTION("empty")
             {
                 json const j = json::array();
-                std::vector<uint8_t> const expected = {0x90};
+                std::vector<uint8_t> const expected = { 0x90 };
                 const auto result = json::to_msgpack(j);
                 CHECK(result == expected);
 
@@ -997,8 +929,8 @@ TEST_CASE("MessagePack")
 
             SECTION("[null]")
             {
-                json const j = {nullptr};
-                std::vector<uint8_t> const expected = {0x91, 0xc0};
+                json const j = { nullptr };
+                std::vector<uint8_t> const expected = { 0x91, 0xc0 };
                 const auto result = json::to_msgpack(j);
                 CHECK(result == expected);
 
@@ -1010,7 +942,7 @@ TEST_CASE("MessagePack")
             SECTION("[1,2,3,4,5]")
             {
                 json const j = json::parse("[1,2,3,4,5]");
-                std::vector<uint8_t> const expected = {0x95, 0x01, 0x02, 0x03, 0x04, 0x05};
+                std::vector<uint8_t> const expected = { 0x95, 0x01, 0x02, 0x03, 0x04, 0x05 };
                 const auto result = json::to_msgpack(j);
                 CHECK(result == expected);
 
@@ -1022,7 +954,7 @@ TEST_CASE("MessagePack")
             SECTION("[[[[]]]]")
             {
                 json const j = json::parse("[[[[]]]]");
-                std::vector<uint8_t> const expected = {0x91, 0x91, 0x91, 0x90};
+                std::vector<uint8_t> const expected = { 0x91, 0x91, 0x91, 0x90 };
                 const auto result = json::to_msgpack(j);
                 CHECK(result == expected);
 
@@ -1034,10 +966,10 @@ TEST_CASE("MessagePack")
             SECTION("array 16")
             {
                 json j(16, nullptr);
-                std::vector<uint8_t> expected(j.size() + 3, 0xc0); // all null
-                expected[0] = 0xdc; // array 16
-                expected[1] = 0x00; // size (0x0010), byte 0
-                expected[2] = 0x10; // size (0x0010), byte 1
+                std::vector<uint8_t> expected(j.size() + 3, 0xc0);  // all null
+                expected[0] = 0xdc;                                 // array 16
+                expected[1] = 0x00;                                 // size (0x0010), byte 0
+                expected[2] = 0x10;                                 // size (0x0010), byte 1
                 const auto result = json::to_msgpack(j);
                 CHECK(result == expected);
 
@@ -1049,12 +981,12 @@ TEST_CASE("MessagePack")
             SECTION("array 32")
             {
                 json j(65536, nullptr);
-                std::vector<uint8_t> expected(j.size() + 5, 0xc0); // all null
-                expected[0] = 0xdd; // array 32
-                expected[1] = 0x00; // size (0x00100000), byte 0
-                expected[2] = 0x01; // size (0x00100000), byte 1
-                expected[3] = 0x00; // size (0x00100000), byte 2
-                expected[4] = 0x00; // size (0x00100000), byte 3
+                std::vector<uint8_t> expected(j.size() + 5, 0xc0);  // all null
+                expected[0] = 0xdd;                                 // array 32
+                expected[1] = 0x00;                                 // size (0x00100000), byte 0
+                expected[2] = 0x01;                                 // size (0x00100000), byte 1
+                expected[3] = 0x00;                                 // size (0x00100000), byte 2
+                expected[4] = 0x00;                                 // size (0x00100000), byte 3
                 const auto result = json::to_msgpack(j);
                 //CHECK(result == expected);
 
@@ -1076,7 +1008,7 @@ TEST_CASE("MessagePack")
             SECTION("empty")
             {
                 json const j = json::object();
-                std::vector<uint8_t> const expected = {0x80};
+                std::vector<uint8_t> const expected = { 0x80 };
                 const auto result = json::to_msgpack(j);
                 CHECK(result == expected);
 
@@ -1087,8 +1019,8 @@ TEST_CASE("MessagePack")
 
             SECTION("{\"\":null}")
             {
-                json const j = {{"", nullptr}};
-                std::vector<uint8_t> const expected = {0x81, 0xa0, 0xc0};
+                json const j = { { "", nullptr } };
+                std::vector<uint8_t> const expected = { 0x81, 0xa0, 0xc0 };
                 const auto result = json::to_msgpack(j);
                 CHECK(result == expected);
 
@@ -1100,10 +1032,7 @@ TEST_CASE("MessagePack")
             SECTION("{\"a\": {\"b\": {\"c\": {}}}}")
             {
                 json const j = json::parse(R"({"a": {"b": {"c": {}}}})");
-                std::vector<uint8_t> const expected =
-                {
-                    0x81, 0xa1, 0x61, 0x81, 0xa1, 0x62, 0x81, 0xa1, 0x63, 0x80
-                };
+                std::vector<uint8_t> const expected = { 0x81, 0xa1, 0x61, 0x81, 0xa1, 0x62, 0x81, 0xa1, 0x63, 0x80 };
                 const auto result = json::to_msgpack(j);
                 CHECK(result == expected);
 
@@ -1126,10 +1055,10 @@ TEST_CASE("MessagePack")
                 // pairs are made. We therefore only check the prefix (type and
                 // size) and the overall size. The rest is then handled in the
                 // roundtrip check.
-                CHECK(result.size() == 67); // 1 type, 2 size, 16*4 content
-                CHECK(result[0] == 0xde); // map 16
-                CHECK(result[1] == 0x00); // byte 0 of size (0x0010)
-                CHECK(result[2] == 0x10); // byte 1 of size (0x0010)
+                CHECK(result.size() == 67);  // 1 type, 2 size, 16*4 content
+                CHECK(result[0] == 0xde);    // map 16
+                CHECK(result[1] == 0x00);    // byte 0 of size (0x0010)
+                CHECK(result[2] == 0x10);    // byte 1 of size (0x0010)
 
                 // roundtrip
                 CHECK(json::from_msgpack(result) == j);
@@ -1155,12 +1084,12 @@ TEST_CASE("MessagePack")
                 // pairs are made. We therefore only check the prefix (type and
                 // size) and the overall size. The rest is then handled in the
                 // roundtrip check.
-                CHECK(result.size() == 458757); // 1 type, 4 size, 65536*7 content
-                CHECK(result[0] == 0xdf); // map 32
-                CHECK(result[1] == 0x00); // byte 0 of size (0x00010000)
-                CHECK(result[2] == 0x01); // byte 1 of size (0x00010000)
-                CHECK(result[3] == 0x00); // byte 2 of size (0x00010000)
-                CHECK(result[4] == 0x00); // byte 3 of size (0x00010000)
+                CHECK(result.size() == 458757);  // 1 type, 4 size, 65536*7 content
+                CHECK(result[0] == 0xdf);        // map 32
+                CHECK(result[1] == 0x00);        // byte 0 of size (0x00010000)
+                CHECK(result[2] == 0x01);        // byte 1 of size (0x00010000)
+                CHECK(result[3] == 0x00);        // byte 2 of size (0x00010000)
+                CHECK(result[4] == 0x00);        // byte 3 of size (0x00010000)
 
                 // roundtrip
                 CHECK(json::from_msgpack(result) == j);
@@ -1244,10 +1173,7 @@ TEST_CASE("MessagePack")
 
             SECTION("N = 256..65535")
             {
-                for (std::size_t N :
-                        {
-                            256u, 999u, 1025u, 3333u, 2048u, 65535u
-                        })
+                for (std::size_t N : { 256u, 999u, 1025u, 3333u, 2048u, 65535u })
                 {
                     CAPTURE(N)
 
@@ -1280,10 +1206,7 @@ TEST_CASE("MessagePack")
 
             SECTION("N = 65536..4294967295")
             {
-                for (std::size_t N :
-                        {
-                            65536u, 77777u, 1048576u
-                        })
+                for (std::size_t N : { 65536u, 77777u, 1048576u })
                 {
                     CAPTURE(N)
 
@@ -1356,10 +1279,7 @@ TEST_CASE("MessagePack")
 
             SECTION("N = 256..65535")
             {
-                for (std::size_t N :
-                        {
-                            256u, 999u, 1025u, 3333u, 2048u, 65535u
-                        })
+                for (std::size_t N : { 256u, 999u, 1025u, 3333u, 2048u, 65535u })
                 {
                     CAPTURE(N)
 
@@ -1389,10 +1309,7 @@ TEST_CASE("MessagePack")
 
             SECTION("N = 65536..4294967295")
             {
-                for (std::size_t N :
-                        {
-                            65536u, 77777u, 1048576u
-                        })
+                for (std::size_t N : { 65536u, 77777u, 1048576u })
                 {
                     CAPTURE(N)
 
@@ -1426,7 +1343,7 @@ TEST_CASE("MessagePack")
 
     SECTION("from float32")
     {
-        auto given = std::vector<uint8_t>({0xca, 0x41, 0xc8, 0x00, 0x01});
+        auto given = std::vector<uint8_t>({ 0xca, 0x41, 0xc8, 0x00, 0x01 });
         json const j = json::from_msgpack(given);
         CHECK(j.get<double>() == Approx(25.0000019073486));
     }
@@ -1436,7 +1353,10 @@ TEST_CASE("MessagePack")
         SECTION("empty byte vector")
         {
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>()), "[json.exception.parse_error.110] parse error at byte 1: syntax error while parsing MessagePack value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>()),
+                "[json.exception.parse_error.110] parse error at byte 1: syntax error while parsing MessagePack value: unexpected end of input",
+                json::parse_error&);
             CHECK(json::from_msgpack(std::vector<uint8_t>(), true, false).is_discarded());
         }
 
@@ -1444,68 +1364,108 @@ TEST_CASE("MessagePack")
         {
             json _;
 
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0x87})),
-                                 "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack string: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xcc})),
-                                 "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xcd})),
-                                 "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xcd, 0x00})),
-                                 "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xce})),
-                                 "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xce, 0x00})),
-                                 "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xce, 0x00, 0x00})),
-                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xce, 0x00, 0x00, 0x00})),
-                                 "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xcf})),
-                                 "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00})),
-                                 "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00})),
-                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00})),
-                                 "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00, 0x00})),
-                                 "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00, 0x00, 0x00})),
-                                 "[json.exception.parse_error.110] parse error at byte 7: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})),
-                                 "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})),
-                                 "[json.exception.parse_error.110] parse error at byte 9: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xa5, 0x68, 0x65})),
-                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing MessagePack string: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0x92, 0x01})),
-                                 "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing MessagePack value: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0x81, 0xa1, 0x61})),
-                                 "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing MessagePack value: unexpected end of input", json::parse_error&);
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xc4, 0x02})),
-                                 "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing MessagePack binary: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0x87 })),
+                "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack string: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0xcc })),
+                "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack number: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0xcd })),
+                "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack number: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0xcd, 0x00 })),
+                "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing MessagePack number: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0xce })),
+                "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack number: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0xce, 0x00 })),
+                "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing MessagePack number: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0xce, 0x00, 0x00 })),
+                "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing MessagePack number: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0xce, 0x00, 0x00, 0x00 })),
+                "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing MessagePack number: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0xcf })),
+                "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack number: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0xcf, 0x00 })),
+                "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing MessagePack number: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0xcf, 0x00, 0x00 })),
+                "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing MessagePack number: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0xcf, 0x00, 0x00, 0x00 })),
+                "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing MessagePack number: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0xcf, 0x00, 0x00, 0x00, 0x00 })),
+                "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing MessagePack number: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0xcf, 0x00, 0x00, 0x00, 0x00, 0x00 })),
+                "[json.exception.parse_error.110] parse error at byte 7: syntax error while parsing MessagePack number: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0xcf, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 })),
+                "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing MessagePack number: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0xcf, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 })),
+                "[json.exception.parse_error.110] parse error at byte 9: syntax error while parsing MessagePack number: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0xa5, 0x68, 0x65 })),
+                "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing MessagePack string: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0x92, 0x01 })),
+                "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing MessagePack value: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0x81, 0xa1, 0x61 })),
+                "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing MessagePack value: unexpected end of input",
+                json::parse_error&);
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0xc4, 0x02 })),
+                "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing MessagePack binary: unexpected end of input",
+                json::parse_error&);
 
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0x87}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xcc}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xcd}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xcd, 0x00}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xce}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xce, 0x00}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xce, 0x00, 0x00}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xce, 0x00, 0x00, 0x00}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xcf}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00, 0x00}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00, 0x00, 0x00}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xcf, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xa5, 0x68, 0x65}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0x92, 0x01}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0x81, 0xA1, 0x61}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xc4, 0x02}), true, false).is_discarded());
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xc4}), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0x87 }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xcc }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xcd }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xcd, 0x00 }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xce }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xce, 0x00 }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xce, 0x00, 0x00 }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xce, 0x00, 0x00, 0x00 }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xcf }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xcf, 0x00 }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xcf, 0x00, 0x00 }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xcf, 0x00, 0x00, 0x00 }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xcf, 0x00, 0x00, 0x00, 0x00 }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xcf, 0x00, 0x00, 0x00, 0x00, 0x00 }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xcf, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xcf, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xa5, 0x68, 0x65 }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0x92, 0x01 }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0x81, 0xA1, 0x61 }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xc4, 0x02 }), true, false).is_discarded());
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0xc4 }), true, false).is_discarded());
         }
 
         SECTION("unsupported bytes")
@@ -1513,20 +1473,19 @@ TEST_CASE("MessagePack")
             SECTION("concrete examples")
             {
                 json _;
-                CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xc1})), "[json.exception.parse_error.112] parse error at byte 1: syntax error while parsing MessagePack value: invalid byte: 0xC1", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({ 0xc1 })),
+                                     "[json.exception.parse_error.112] parse error at byte 1: syntax error while parsing MessagePack value: invalid byte: 0xC1",
+                                     json::parse_error&);
             }
 
             SECTION("all unsupported bytes")
             {
-                for (auto byte :
-                        {
-                            // never used
-                            0xc1
-                        })
+                for (auto byte : { // never used
+                                   0xc1 })
                 {
                     json _;
-                    CHECK_THROWS_AS(_ = json::from_msgpack(std::vector<uint8_t>({static_cast<uint8_t>(byte)})), json::parse_error&);
-                    CHECK(json::from_msgpack(std::vector<uint8_t>({static_cast<uint8_t>(byte)}), true, false).is_discarded());
+                    CHECK_THROWS_AS(_ = json::from_msgpack(std::vector<uint8_t>({ static_cast<uint8_t>(byte) })), json::parse_error&);
+                    CHECK(json::from_msgpack(std::vector<uint8_t>({ static_cast<uint8_t>(byte) }), true, false).is_discarded());
                 }
             }
         }
@@ -1534,13 +1493,16 @@ TEST_CASE("MessagePack")
         SECTION("invalid string in map")
         {
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack string: expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0xFF", json::parse_error&);
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01}), true, false).is_discarded());
+            CHECK_THROWS_WITH_AS(
+                _ = json::from_msgpack(std::vector<uint8_t>({ 0x81, 0xff, 0x01 })),
+                "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack string: expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0xFF",
+                json::parse_error&);
+            CHECK(json::from_msgpack(std::vector<uint8_t>({ 0x81, 0xff, 0x01 }), true, false).is_discarded());
         }
 
         SECTION("strict mode")
         {
-            std::vector<uint8_t> const vec = {0xc0, 0xc0};
+            std::vector<uint8_t> const vec = { 0xc0, 0xc0 };
             SECTION("non-strict mode")
             {
                 const auto result = json::from_msgpack(vec, false);
@@ -1550,7 +1512,10 @@ TEST_CASE("MessagePack")
             SECTION("strict mode")
             {
                 json _;
-                CHECK_THROWS_WITH_AS(_ = json::from_msgpack(vec), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack value: expected end of input; last byte: 0xC0", json::parse_error&);
+                CHECK_THROWS_WITH_AS(
+                    _ = json::from_msgpack(vec),
+                    "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack value: expected end of input; last byte: 0xC0",
+                    json::parse_error&);
                 CHECK(json::from_msgpack(vec, true, false).is_discarded());
             }
         }
@@ -1560,21 +1525,21 @@ TEST_CASE("MessagePack")
     {
         SECTION("start_array(len)")
         {
-            std::vector<uint8_t> const v = {0x93, 0x01, 0x02, 0x03};
+            std::vector<uint8_t> const v = { 0x93, 0x01, 0x02, 0x03 };
             SaxCountdown scp(0);
             CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
         }
 
         SECTION("start_object(len)")
         {
-            std::vector<uint8_t> const v = {0x81, 0xa3, 0x66, 0x6F, 0x6F, 0xc2};
+            std::vector<uint8_t> const v = { 0x81, 0xa3, 0x66, 0x6F, 0x6F, 0xc2 };
             SaxCountdown scp(0);
             CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
         }
 
         SECTION("key()")
         {
-            std::vector<uint8_t> const v = {0x81, 0xa3, 0x66, 0x6F, 0x6F, 0xc2};
+            std::vector<uint8_t> const v = { 0x81, 0xa3, 0x66, 0x6F, 0x6F, 0xc2 };
             SaxCountdown scp(1);
             CHECK(!json::sax_parse(v, &scp, json::input_format_t::msgpack));
         }
@@ -1636,7 +1601,7 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
         exclude_packed.insert(TEST_DATA_DIRECTORY "/json.org/3.json");
         exclude_packed.insert(TEST_DATA_DIRECTORY "/json.org/4.json");
         exclude_packed.insert(TEST_DATA_DIRECTORY "/json.org/5.json");
-        exclude_packed.insert(TEST_DATA_DIRECTORY "/json_testsuite/sample.json"); // kills AppVeyor
+        exclude_packed.insert(TEST_DATA_DIRECTORY "/json_testsuite/sample.json");  // kills AppVeyor
         exclude_packed.insert(TEST_DATA_DIRECTORY "/json_tests/pass1.json");
         exclude_packed.insert(TEST_DATA_DIRECTORY "/regression/working_file.json");
         exclude_packed.insert(TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object.json");
@@ -1646,154 +1611,151 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
         exclude_packed.insert(TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_simple.json");
         exclude_packed.insert(TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_string_unicode.json");
 
-        for (std::string filename :
-                {
-                    TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json",
-                    TEST_DATA_DIRECTORY "/json.org/1.json",
-                    TEST_DATA_DIRECTORY "/json.org/2.json",
-                    TEST_DATA_DIRECTORY "/json.org/3.json",
-                    TEST_DATA_DIRECTORY "/json.org/4.json",
-                    TEST_DATA_DIRECTORY "/json.org/5.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip01.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip02.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip03.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip04.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip05.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip06.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip07.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip08.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip09.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip10.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip11.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip12.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip13.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip14.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip15.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip16.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip17.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip18.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip19.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip20.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip21.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip22.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip23.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip24.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip25.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip26.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip27.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip28.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip29.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip30.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip31.json",
-                    TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip32.json",
-                    TEST_DATA_DIRECTORY "/json_testsuite/sample.json", // kills AppVeyor
-                    TEST_DATA_DIRECTORY "/json_tests/pass1.json",
-                    TEST_DATA_DIRECTORY "/json_tests/pass2.json",
-                    TEST_DATA_DIRECTORY "/json_tests/pass3.json",
-                    TEST_DATA_DIRECTORY "/regression/floats.json",
-                    TEST_DATA_DIRECTORY "/regression/signed_ints.json",
-                    TEST_DATA_DIRECTORY "/regression/unsigned_ints.json",
-                    TEST_DATA_DIRECTORY "/regression/working_file.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_arraysWithSpaces.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_empty-string.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_empty.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_ending_with_newline.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_false.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_heterogeneous.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_null.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_1_and_newline.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_leading_space.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_several_null.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_trailing_space.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_0e+1.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_0e1.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_after_space.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_double_close_to_zero.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_double_huge_neg_exp.json",
-                    //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_huge_exp.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_int_with_exp.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_minus_zero.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_int.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_one.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_zero.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e_neg_exp.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e_pos_exp.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_exponent.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_fraction_exponent.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_neg_exp.json",
-                    //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_neg_overflow.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_pos_exponent.json",
-                    //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_pos_overflow.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_underflow.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_simple_int.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_simple_real.json",
-                    //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_too_big_neg_int.json",
-                    //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_too_big_pos_int.json",
-                    //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_very_big_negative_int.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_basic.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key_and_value.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_empty.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_empty_key.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_escaped_null_in_key.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_extreme_numbers.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_long_strings.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_simple.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_string_unicode.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_with_newlines.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_1_2_3_bytes_UTF-8_sequences.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_UTF-16_Surrogates_U+1D11E_MUSICAL_SYMBOL_G_CLEF.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_accepted_surrogate_pair.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_accepted_surrogate_pairs.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_allowed_escapes.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_backslash_and_u_escaped_zero.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_backslash_doublequotes.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_comments.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_double_escape_a.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_double_escape_n.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_escaped_control_character.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_escaped_noncharacter.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_in_array.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_in_array_with_leading_space.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_last_surrogates_1_and_2.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_newline_uescaped.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+10FFFF.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+1FFFF.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+FFFF.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_null_escape.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_one-byte-utf-8.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_pi.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_simple_ascii.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_space.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_three-byte-utf-8.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_two-byte-utf-8.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_u+2028_line_sep.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_u+2029_par_sep.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_uEscape.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unescaped_char_delete.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicodeEscapedBackslash.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_2.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_U+200B_ZERO_WIDTH_SPACE.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_U+2064_invisible_plus.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_escaped_double_quote.json",
-                    // TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_utf16.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_utf8.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_with_del_character.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_false.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_int.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_negative_real.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_null.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_string.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_true.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_string_empty.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_trailing_newline.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_true_in_array.json",
-                    TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_whitespace_array.json"
-                })
+        for (std::string filename : { TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json",
+                                      TEST_DATA_DIRECTORY "/json.org/1.json",
+                                      TEST_DATA_DIRECTORY "/json.org/2.json",
+                                      TEST_DATA_DIRECTORY "/json.org/3.json",
+                                      TEST_DATA_DIRECTORY "/json.org/4.json",
+                                      TEST_DATA_DIRECTORY "/json.org/5.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip01.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip02.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip03.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip04.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip05.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip06.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip07.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip08.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip09.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip10.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip11.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip12.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip13.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip14.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip15.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip16.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip17.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip18.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip19.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip20.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip21.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip22.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip23.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip24.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip25.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip26.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip27.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip28.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip29.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip30.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip31.json",
+                                      TEST_DATA_DIRECTORY "/json_roundtrip/roundtrip32.json",
+                                      TEST_DATA_DIRECTORY "/json_testsuite/sample.json",  // kills AppVeyor
+                                      TEST_DATA_DIRECTORY "/json_tests/pass1.json",
+                                      TEST_DATA_DIRECTORY "/json_tests/pass2.json",
+                                      TEST_DATA_DIRECTORY "/json_tests/pass3.json",
+                                      TEST_DATA_DIRECTORY "/regression/floats.json",
+                                      TEST_DATA_DIRECTORY "/regression/signed_ints.json",
+                                      TEST_DATA_DIRECTORY "/regression/unsigned_ints.json",
+                                      TEST_DATA_DIRECTORY "/regression/working_file.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_arraysWithSpaces.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_empty-string.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_empty.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_ending_with_newline.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_false.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_heterogeneous.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_null.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_1_and_newline.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_leading_space.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_several_null.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_array_with_trailing_space.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_0e+1.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_0e1.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_after_space.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_double_close_to_zero.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_double_huge_neg_exp.json",
+                                      //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_huge_exp.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_int_with_exp.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_minus_zero.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_int.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_one.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_negative_zero.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e_neg_exp.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_capital_e_pos_exp.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_exponent.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_fraction_exponent.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_neg_exp.json",
+                                      //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_neg_overflow.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_pos_exponent.json",
+                                      //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_pos_overflow.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_real_underflow.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_simple_int.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_simple_real.json",
+                                      //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_too_big_neg_int.json",
+                                      //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_too_big_pos_int.json",
+                                      //TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_number_very_big_negative_int.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_basic.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_duplicated_key_and_value.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_empty.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_empty_key.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_escaped_null_in_key.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_extreme_numbers.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_long_strings.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_simple.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_string_unicode.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_object_with_newlines.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_1_2_3_bytes_UTF-8_sequences.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_UTF-16_Surrogates_U+1D11E_MUSICAL_SYMBOL_G_CLEF.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_accepted_surrogate_pair.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_accepted_surrogate_pairs.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_allowed_escapes.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_backslash_and_u_escaped_zero.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_backslash_doublequotes.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_comments.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_double_escape_a.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_double_escape_n.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_escaped_control_character.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_escaped_noncharacter.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_in_array.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_in_array_with_leading_space.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_last_surrogates_1_and_2.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_newline_uescaped.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+10FFFF.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+1FFFF.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_nonCharacterInUTF-8_U+FFFF.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_null_escape.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_one-byte-utf-8.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_pi.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_simple_ascii.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_space.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_three-byte-utf-8.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_two-byte-utf-8.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_u+2028_line_sep.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_u+2029_par_sep.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_uEscape.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unescaped_char_delete.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicodeEscapedBackslash.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_2.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_U+200B_ZERO_WIDTH_SPACE.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_U+2064_invisible_plus.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_unicode_escaped_double_quote.json",
+                                      // TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_utf16.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_utf8.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_string_with_del_character.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_false.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_int.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_negative_real.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_null.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_string.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_lonely_true.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_string_empty.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_trailing_newline.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_true_in_array.json",
+                                      TEST_DATA_DIRECTORY "/nst_json_testsuite/test_parsing/y_structure_whitespace_array.json" })
         {
             CAPTURE(filename)
 
@@ -1836,7 +1798,7 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
                 // parse MessagePack file
                 auto packed = utils::read_binary_file(filename + ".msgpack");
                 json j2;
-                CHECK_NOTHROW(j2 = json::from_msgpack({packed.data(), packed.size()}));
+                CHECK_NOTHROW(j2 = json::from_msgpack({ packed.data(), packed.size() }));
 
                 // compare parsed JSON values
                 CHECK(j1 == j2);

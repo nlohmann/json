@@ -39,19 +39,17 @@ const char* begin(const MyContainer& c)
 
 const char* end(const MyContainer& c)
 {
-    return c.data + strlen(c.data); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    return c.data + strlen(c.data);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 }
 
 TEST_CASE("Custom container non-member begin/end")
 {
-
-    const MyContainer data{"[1,2,3,4]"};
+    const MyContainer data{ "[1,2,3,4]" };
     json as_json = json::parse(data);
     CHECK(as_json.at(0) == 1);
     CHECK(as_json.at(1) == 2);
     CHECK(as_json.at(2) == 3);
     CHECK(as_json.at(3) == 4);
-
 }
 
 TEST_CASE("Custom container member begin/end")
@@ -67,11 +65,11 @@ TEST_CASE("Custom container member begin/end")
 
         const char* end() const
         {
-            return data + strlen(data); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            return data + strlen(data);  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         }
     };
 
-    const MyContainer2 data{"[1,2,3,4]"};
+    const MyContainer2 data{ "[1,2,3,4]" };
     json as_json = json::parse(data);
     CHECK(as_json.at(0) == 1);
     CHECK(as_json.at(1) == 2);
@@ -93,7 +91,7 @@ TEST_CASE("Custom iterator")
 
         MyIterator& operator++()
         {
-            ++ptr; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            ++ptr;  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             return *this;
         }
 
@@ -117,8 +115,8 @@ TEST_CASE("Custom iterator")
     CHECK(std::is_same<MyIterator::reference, const char&>::value);
     CHECK(std::is_same<MyIterator::iterator_category, std::input_iterator_tag>::value);
 
-    const MyIterator begin{raw_data};
-    const MyIterator end{raw_data + strlen(raw_data)}; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    const MyIterator begin{ raw_data };
+    const MyIterator end{ raw_data + strlen(raw_data) };  // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
     json as_json = json::parse(begin, end);
     CHECK(as_json.at(0) == 1);
@@ -127,4 +125,4 @@ TEST_CASE("Custom iterator")
     CHECK(as_json.at(3) == 4);
 }
 
-} // namespace
+}  // namespace
