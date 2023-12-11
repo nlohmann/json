@@ -67,7 +67,7 @@ struct contact
     contact(person p, address a) : m_person(std::move(p)), m_address(std::move(a)) {}
 };
 
-enum class book_id : uint64_t;
+enum class book_id : std::uint64_t;
 
 struct contact_book
 {
@@ -75,7 +75,7 @@ struct contact_book
     book_id m_book_id{};
     std::vector<contact> m_contacts{};
     contact_book() = default;
-    contact_book(name n, book_id i, std::vector<contact> c) : m_book_name(std::move(n)), m_book_id(std::move(i)), m_contacts(std::move(c)) {}
+    contact_book(name n, book_id i, std::vector<contact> c) : m_book_name(std::move(n)), m_book_id(i), m_contacts(std::move(c)) {}
 };
 } // namespace udt
 
@@ -241,8 +241,8 @@ TEST_CASE("basic usage" * doctest::test_suite("udt"))
     const udt::person senior_programmer{{42}, {"王芳"}, udt::country::china};
     const udt::address addr{"Paris"};
     const udt::contact cpp_programmer{sfinae_addict, addr};
-    const udt::book_id large_id{udt::book_id(uint64_t(1) << 63)}; // verify large unsigned enums are handled correctly
-    const udt::contact_book book{{"C++"}, {udt::book_id(42u)}, {cpp_programmer, {senior_programmer, addr}}};
+    const udt::book_id large_id{static_cast<udt::book_id>(static_cast<std::uint64_t>(1) << 63)}; // verify large unsigned enums are handled correctly
+    const udt::contact_book book{{"C++"}, static_cast<udt::book_id>(42u), {cpp_programmer, {senior_programmer, addr}}};
 
     SECTION("conversion to json via free-functions")
     {
@@ -253,7 +253,7 @@ TEST_CASE("basic usage" * doctest::test_suite("udt"))
         CHECK(json("Paris") == json(addr));
         CHECK(json(cpp_programmer) ==
               R"({"person" : {"age":23, "name":"theo", "country":"France"}, "address":"Paris"})"_json);
-        CHECK(json(large_id) == json(uint64_t(1) << 63));
+        CHECK(json(large_id) == json(static_cast<std::uint64_t>(1) << 63));
         CHECK(json(large_id) > 0u);
         CHECK(to_string(json(large_id)) == "9223372036854775808");
         CHECK(json(large_id).is_number_unsigned());
@@ -332,7 +332,7 @@ TEST_CASE("basic usage" * doctest::test_suite("udt"))
             CHECK(contact == cpp_programmer);
             CHECK(contacts == book.m_contacts);
             CHECK(book_name == udt::name{"C++"});
-            CHECK(book_id == udt::book_id(42u));
+            CHECK(book_id == static_cast<udt::book_id>(42u));
             CHECK(book == parsed_book);
         }
 #endif
