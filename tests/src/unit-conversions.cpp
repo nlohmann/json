@@ -344,6 +344,64 @@ TEST_CASE("value conversion")
             CHECK(std::equal(std::begin(nbs), std::end(nbs), std::begin(nbs2)));
         }
 
+        SECTION("built-in arrays: 2D")
+        {
+            const int nbs[][3] = {{0, 1, 2}, {3, 4, 5}}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            int nbs2[][3] = {{0, 0, 0}, {0, 0, 0}}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+
+            const json j2 = nbs;
+            j2.get_to(nbs2);
+            CHECK(std::equal(std::begin(nbs[0]), std::end(nbs[1]), std::begin(nbs2[0])));
+        }
+
+        SECTION("built-in arrays: 3D")
+        {
+            const int nbs[][2][3] = {\
+                {{0, 1, 2}, {3, 4, 5}}, \
+                {{10, 11, 12}, {13, 14, 15}}\
+            }; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            int nbs2[][2][3] = {\
+                {{0, 0, 0}, {0, 0, 0}}, \
+                {{0, 0, 0}, {0, 0, 0}}\
+            }; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+
+            const json j2 = nbs;
+            j2.get_to(nbs2);
+            CHECK(std::equal(std::begin(nbs[0][0]), std::end(nbs[1][1]), std::begin(nbs2[0][0])));
+        }
+
+        SECTION("built-in arrays: 4D")
+        {
+            const int nbs[][2][2][3] = {\
+                {
+                    \
+                    {{0, 1, 2}, {3, 4, 5}}, \
+                    {{10, 11, 12}, {13, 14, 15}}\
+                }, \
+                {
+                    \
+                    {{20, 21, 22}, {23, 24, 25}}, \
+                    {{30, 31, 32}, {33, 34, 35}}\
+                }\
+            }; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            int nbs2[][2][2][3] = {\
+                {
+                    \
+                    {{0, 0, 0}, {0, 0, 0}}, \
+                    {{0, 0, 0}, {0, 0, 0}}\
+                }, \
+                {
+                    \
+                    {{0, 0, 0}, {0, 0, 0}}, \
+                    {{0, 0, 0}, {0, 0, 0}}\
+                }\
+            }; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+
+            const json j2 = nbs;
+            j2.get_to(nbs2);
+            CHECK(std::equal(std::begin(nbs[0][0][0]), std::end(nbs[1][1][1]), std::begin(nbs2[0][0][0])));
+        }
+
         SECTION("std::deque<json>")
         {
             std::deque<json> a{"previous", "value"};
