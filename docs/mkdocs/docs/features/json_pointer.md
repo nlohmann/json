@@ -71,10 +71,10 @@ auto j = json::parse(R"({
 })");
 
 // access values
-auto val = j["/"_json_pointer];                             // {"array":["A","B","C"],...}
+auto val = j[""_json_pointer];                              // {"array":["A","B","C"],...}
 auto val1 = j["/nested/one"_json_pointer];                  // 1
-auto val2 = j.at[json::json_pointer("/nested/three/1")];    // false
-auto val3 = j.value[json::json_pointer("/nested/four", 0)]; // 0
+auto val2 = j.at(json::json_pointer("/nested/three/1"));    // false
+auto val3 = j.value(json::json_pointer("/nested/four"), 0); // 0
 ```
 
 ## Flatten / unflatten
