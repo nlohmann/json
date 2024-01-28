@@ -218,7 +218,7 @@ class Foo
 class FooBar
 {
   public:
-    Foo foo{};
+    Foo foo{}; // NOLINT(readability-redundant-member-init)
 };
 
 inline void from_json(const nlohmann::json& j, FooBar& fb)
@@ -622,8 +622,8 @@ TEST_CASE("regression tests 2")
         // see https://github.com/nlohmann/json/pull/2181#issuecomment-653326060
         const json j{{"x", "test"}};
         const std::string defval = "default value";
-        auto val = j.value("x", defval);
-        auto val2 = j.value("y", defval);
+        auto val = j.value("x", defval); // NOLINT(bugprone-unused-local-non-trivial-variable)
+        auto val2 = j.value("y", defval); // NOLINT(bugprone-unused-local-non-trivial-variable)
     }
 
     SECTION("issue #2293 - eof doesn't cause parsing to stop")
