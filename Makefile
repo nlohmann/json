@@ -157,7 +157,6 @@ pretty:
 	    --align-pointer=type \
 	    --align-reference=type \
 	    --add-braces \
-	    --squeeze-lines=2 \
 	    --convert-tabs \
 	    --close-templates \
 	    --lineend=linux \
