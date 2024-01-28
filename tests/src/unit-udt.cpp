@@ -52,9 +52,9 @@ struct address
 
 struct person
 {
-    age m_age{};
-    name m_name{};
-    country m_country{};
+    age m_age{}; // NOLINT(readability-redundant-member-init)
+    name m_name{}; // NOLINT(readability-redundant-member-init)
+    country m_country{}; // NOLINT(readability-redundant-member-init)
     person() = default;
     person(const age& a, name  n, const country& c) : m_age(a), m_name(std::move(n)), m_country(c) {}
 };
@@ -71,9 +71,9 @@ enum class book_id : std::uint64_t;
 
 struct contact_book
 {
-    name m_book_name{};
+    name m_book_name{}; // NOLINT(readability-redundant-member-init)
     book_id m_book_id{};
-    std::vector<contact> m_contacts{};
+    std::vector<contact> m_contacts{}; // NOLINT(readability-redundant-member-init)
     contact_book() = default;
     contact_book(name n, book_id i, std::vector<contact> c) : m_book_name(std::move(n)), m_book_id(i), m_contacts(std::move(c)) {}
 };
