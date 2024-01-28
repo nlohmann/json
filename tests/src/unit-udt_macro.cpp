@@ -18,7 +18,7 @@ namespace persons
 class person_with_private_data
 {
   private:
-    std::string name{};
+    std::string name{}; // NOLINT(readability-redundant-member-init)
     int age = 0;
     json metadata = nullptr;
 
@@ -41,7 +41,7 @@ class person_with_private_data
 class person_with_private_data_2
 {
   private:
-    std::string name{};
+    std::string name{}; // NOLINT(readability-redundant-member-init)
     int age = 0;
     json metadata = nullptr;
 
@@ -77,7 +77,7 @@ class person_with_private_data_2
 class person_without_private_data_1
 {
   public:
-    std::string name{};
+    std::string name{}; // NOLINT(readability-redundant-member-init)
     int age = 0;
     json metadata = nullptr;
 
@@ -99,7 +99,7 @@ class person_without_private_data_1
 class person_without_private_data_2
 {
   public:
-    std::string name{};
+    std::string name{}; // NOLINT(readability-redundant-member-init)
     int age = 0;
     json metadata = nullptr;
 
@@ -121,7 +121,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_without_private_data_2, age, name, met
 class person_without_private_data_3
 {
   public:
-    std::string name{};
+    std::string name{}; // NOLINT(readability-redundant-member-init)
     int age = 0;
     json metadata = nullptr;
 

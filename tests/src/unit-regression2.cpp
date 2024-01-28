@@ -90,8 +90,8 @@ struct Data
         : a(std::move(a_))
         , b(std::move(b_))
     {}
-    std::string a{};
-    std::string b{};
+    std::string a{}; // NOLINT(readability-redundant-member-init)
+    std::string b{}; // NOLINT(readability-redundant-member-init)
 };
 
 void from_json(const json& j, Data& data);
@@ -218,7 +218,7 @@ class Foo
 class FooBar
 {
   public:
-    Foo foo{};
+    Foo foo{}; // NOLINT(readability-redundant-member-init)
 };
 
 inline void from_json(const nlohmann::json& j, FooBar& fb)
@@ -240,7 +240,7 @@ struct for_3171_base // NOLINT(cppcoreguidelines-special-member-functions)
         j.at("str").get_to(str);
     }
 
-    std::string str{};
+    std::string str{}; // NOLINT(readability-redundant-member-init)
 };
 
 struct for_3171_derived : public for_3171_base
@@ -622,8 +622,8 @@ TEST_CASE("regression tests 2")
         // see https://github.com/nlohmann/json/pull/2181#issuecomment-653326060
         const json j{{"x", "test"}};
         const std::string defval = "default value";
-        auto val = j.value("x", defval);
-        auto val2 = j.value("y", defval);
+        auto val = j.value("x", defval); // NOLINT(bugprone-unused-local-non-trivial-variable)
+        auto val2 = j.value("y", defval); // NOLINT(bugprone-unused-local-non-trivial-variable)
     }
 
     SECTION("issue #2293 - eof doesn't cause parsing to stop")

@@ -124,7 +124,7 @@ class SaxEventLogger
         return false;
     }
 
-    std::vector<std::string> events {};
+    std::vector<std::string> events {}; // NOLINT(readability-redundant-member-init)
     bool errored = false;
 };
 

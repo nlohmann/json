@@ -115,7 +115,7 @@ TEST_CASE("README" * doctest::skip())
             auto j3 = json::parse(R"({"happy": true, "pi": 3.141})");
 
             // explicit conversion to string
-            std::string const s = j.dump();    // {\"happy\":true,\"pi\":3.141}
+            std::string const s = j.dump();     // NOLINT(bugprone-unused-local-non-trivial-variable) // {\"happy\":true,\"pi\":3.141}
 
             // serialization with pretty printing
             // pass in the amount of spaces to indent
@@ -152,7 +152,7 @@ TEST_CASE("README" * doctest::skip())
             }
 
             // getter/setter
-            const auto tmp = j[0].get<std::string>();
+            const auto tmp = j[0].get<std::string>(); // NOLINT(bugprone-unused-local-non-trivial-variable)
             j[1] = 42;
             bool foo{j.at(2)};
             CHECK(foo == true);
@@ -237,7 +237,7 @@ TEST_CASE("README" * doctest::skip())
             // strings
             std::string const s1 = "Hello, world!";
             json const js = s1;
-            auto s2 = js.get<std::string>();
+            auto s2 = js.get<std::string>(); // NOLINT(bugprone-unused-local-non-trivial-variable)
 
             // Booleans
             bool const b1 = true;
@@ -253,7 +253,7 @@ TEST_CASE("README" * doctest::skip())
 
             // etc.
 
-            std::string const vs = js.get<std::string>();
+            std::string const vs = js.get<std::string>(); // NOLINT(bugprone-unused-local-non-trivial-variable)
             bool vb = jb.get<bool>();
             CHECK(vb == true);
             int vi = jn.get<int>();

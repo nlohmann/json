@@ -158,7 +158,7 @@ class alt_string
     }
 
   private:
-    std::string str_impl {};
+    std::string str_impl {}; // NOLINT(readability-redundant-member-init)
 
     friend bool operator<(const char* /*op1*/, const alt_string& /*op2*/) noexcept;
 };
