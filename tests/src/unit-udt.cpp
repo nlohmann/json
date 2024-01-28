@@ -61,8 +61,8 @@ struct person
 
 struct contact
 {
-    person m_person{};
-    address m_address{};
+    person m_person{}; // NOLINT(readability-redundant-member-init)
+    address m_address{}; // NOLINT(readability-redundant-member-init)
     contact() = default;
     contact(person p, address a) : m_person(std::move(p)), m_address(std::move(a)) {}
 };
