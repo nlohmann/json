@@ -90,8 +90,8 @@ struct Data
         : a(std::move(a_))
         , b(std::move(b_))
     {}
-    std::string a{};
-    std::string b{};
+    std::string a{}; // NOLINT(readability-redundant-member-init)
+    std::string b{}; // NOLINT(readability-redundant-member-init)
 };
 
 void from_json(const json& j, Data& data);
@@ -240,7 +240,7 @@ struct for_3171_base // NOLINT(cppcoreguidelines-special-member-functions)
         j.at("str").get_to(str);
     }
 
-    std::string str{};
+    std::string str{}; // NOLINT(readability-redundant-member-init)
 };
 
 struct for_3171_derived : public for_3171_base

@@ -55,7 +55,7 @@ struct alt_string_iter
         return *this;
     }
 
-    std::string impl{};
+    std::string impl{}; // NOLINT(readability-redundant-member-init)
 };
 
 struct alt_string_data
@@ -91,7 +91,7 @@ struct alt_string_data
         return *this;
     }
 
-    std::string impl{};
+    std::string impl{}; // NOLINT(readability-redundant-member-init)
 };
 
 void check_escaped(const char* original, const char* escaped = "", bool ensure_ascii = false);

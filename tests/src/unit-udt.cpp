@@ -343,7 +343,7 @@ namespace udt
 {
 struct legacy_type
 {
-    std::string number{};
+    std::string number{}; // NOLINT(readability-redundant-member-init)
     legacy_type() = default;
     legacy_type(std::string n) : number(std::move(n)) {}
 };
@@ -616,7 +616,7 @@ struct small_pod
 
 struct non_pod
 {
-    std::string s{};
+    std::string s{}; // NOLINT(readability-redundant-member-init)
     non_pod() = default;
     non_pod(std::string S) : s(std::move(S)) {}
 };
