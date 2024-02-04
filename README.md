@@ -1204,7 +1204,6 @@ The following compilers are currently used in continuous integration at [AppVeyo
 | Visual Studio 16 2019 MSVC 19.28.29912.0 (Build Engine version 16.9.0+57a23d249 for .NET Framework)    | Windows-10.0.17763 | AppVeyor       |
 | Visual Studio 17 2022 MSVC 19.30.30709.0 (Build Engine version 17.0.31804.368 for .NET Framework)      | Windows-10.0.20348 | GitHub Actions |
 
-
 ## Integration
 
 [`json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp) is the single required file in `single_include/nlohmann` or [released here](https://github.com/nlohmann/json/releases). You need to add
