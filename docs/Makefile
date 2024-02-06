@@ -40,6 +40,6 @@ check_output: $(EXAMPLES:.cpp=.test)
 check_output_portable: $(filter-out examples/meta.test examples/max_size.test examples/std_hash.test examples/basic_json__CompatibleType.test,$(EXAMPLES:.cpp=.test))
 
 clean:
-	rm -fr $(EXAMPLES:.cpp=)
+	rm -fr $(EXAMPLES:.cpp=.output)
 	$(MAKE) clean -C docset
 	$(MAKE) clean -C mkdocs
