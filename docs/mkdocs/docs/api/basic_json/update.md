@@ -139,4 +139,4 @@ function.
 ## Version history
 
 - Added in version 3.0.0.
-- Added `merge_objects` parameter in 3.10.4.
+- Added `merge_objects` parameter in 3.10.5.
