@@ -20516,11 +20516,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     basic_json(basic_json&& other) noexcept
         : json_base_class_t(std::forward<json_base_class_t>(other)),
-          m_data(std::move(other.m_data))
+          // check that passed value is valid (has to be done before moving)
+          m_data(std::move((other.assert_invariant(false), other.m_data)))
     {
-        // check that passed value is valid
-        other.assert_invariant(false);
-
         // invalidate payload
         other.m_data.m_type = value_t::null;
         other.m_data.m_value = {};
