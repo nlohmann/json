@@ -79,8 +79,8 @@ int main()
 
     // visit and output
     j.visit(
-        [&](const json::json_pointer & p,
-            const json & j)
+         [&](const json::json_pointer & p,
+             const json & j)
     {
         std::cout << (p.empty() ? std::string{"/"} : p.to_string())
                   << " - metadata = " << j.metadata << " -> " << j.dump() << '\n';

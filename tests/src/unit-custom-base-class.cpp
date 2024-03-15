@@ -283,8 +283,8 @@ TEST_CASE("JSON Visit Node")
     };
 
     json.visit(
-        [&](const json_with_visitor_t::json_pointer & p,
-            const json_with_visitor_t& j)
+            [&](const json_with_visitor_t::json_pointer & p,
+                const json_with_visitor_t& j)
     {
         std::stringstream str;
         str << p.to_string() << " - " ;
@@ -331,6 +331,6 @@ TEST_CASE("JSON Visit Node")
         CHECK(expected.count(str.str()) == 1);
         expected.erase(str.str());
     }
-    );
+        );
     CHECK(expected.empty());
 }
