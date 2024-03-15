@@ -261,19 +261,19 @@ struct is_default_constructible : std::is_default_constructible<T> {};
 
 template <typename T1, typename T2>
 struct is_default_constructible<std::pair<T1, T2>>
-    : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
+            : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
 
 template <typename T1, typename T2>
 struct is_default_constructible<const std::pair<T1, T2>>
-    : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
+            : conjunction<is_default_constructible<T1>, is_default_constructible<T2>> {};
 
 template <typename... Ts>
 struct is_default_constructible<std::tuple<Ts...>>
-    : conjunction<is_default_constructible<Ts>...> {};
+            : conjunction<is_default_constructible<Ts>...> {};
 
 template <typename... Ts>
 struct is_default_constructible<const std::tuple<Ts...>>
-    : conjunction<is_default_constructible<Ts>...> {};
+            : conjunction<is_default_constructible<Ts>...> {};
 
 template <typename T, typename... Args>
 struct is_constructible : std::is_constructible<T, Args...> {};
@@ -471,8 +471,8 @@ is_detected<range_value_t, ConstructibleArrayType>::value&&
 // special case for types like std::filesystem::path whose iterator's value_type are themselves
 // c.f. https://github.com/nlohmann/json/pull/3073
 !std::is_same<ConstructibleArrayType, detected_t<range_value_t, ConstructibleArrayType>>::value&&
-is_complete_type <
-detected_t<range_value_t, ConstructibleArrayType >>::value >>
+        is_complete_type <
+        detected_t<range_value_t, ConstructibleArrayType >>::value >>
 {
     using value_type = range_value_t<ConstructibleArrayType>;
 
@@ -595,12 +595,12 @@ using is_usable_as_key_type = typename std::conditional <
 template<typename BasicJsonType, typename KeyTypeCVRef, bool RequireTransparentComparator = true,
          bool ExcludeObjectKeyType = RequireTransparentComparator, typename KeyType = uncvref_t<KeyTypeCVRef>>
 using is_usable_as_basic_json_key_type = typename std::conditional <
-    is_usable_as_key_type<typename BasicJsonType::object_comparator_t,
-    typename BasicJsonType::object_t::key_type, KeyTypeCVRef,
-    RequireTransparentComparator, ExcludeObjectKeyType>::value
-    && !is_json_iterator_of<BasicJsonType, KeyType>::value,
-    std::true_type,
-    std::false_type >::type;
+        is_usable_as_key_type<typename BasicJsonType::object_comparator_t,
+        typename BasicJsonType::object_t::key_type, KeyTypeCVRef,
+        RequireTransparentComparator, ExcludeObjectKeyType>::value
+        && !is_json_iterator_of<BasicJsonType, KeyType>::value,
+        std::true_type,
+        std::false_type >::type;
 
 template<typename ObjectType, typename KeyType>
 using detect_erase_with_key_type = decltype(std::declval<ObjectType&>().erase(std::declval<KeyType>()));
