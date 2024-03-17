@@ -42,3 +42,5 @@
 
 # Swift Package Manager build directory
 /.build
+
+MODULE.bazel.lock

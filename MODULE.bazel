@@ -1,0 +1,4 @@
+module(
+    name = "nlohmann_json",
+    compatibility_level = 1,
+)
