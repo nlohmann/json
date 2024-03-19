@@ -35,10 +35,33 @@ class alt_string
     alt_string(size_t count, char chr): str_impl(count, chr) {}
     alt_string() = default;
 
-    template <typename...TParams>
-    alt_string& append(TParams&& ...params)
+    alt_string& append(std::size_t count, char ch)
     {
-        str_impl.append(std::forward<TParams>(params)...);
+        str_impl.append(count, ch);
+        return *this;
+    }
+
+    alt_string& append(const alt_string& str)
+    {
+        str_impl.append(str.str_impl);
+        return *this;
+    }
+
+    alt_string& append(const char* s, std::size_t count)
+    {
+        str_impl.append(s, count);
+        return *this;
+    }
+
+    alt_string& append(const char* s)
+    {
+        str_impl.append(s);
+        return *this;
+    }
+
+    alt_string& operator+=(char ch)
+    {
+        str_impl += ch;
         return *this;
     }
 
@@ -72,6 +95,11 @@ class alt_string
     std::size_t size() const noexcept
     {
         return str_impl.size();
+    }
+
+    void reserve (std::size_t n)
+    {
+        str_impl.reserve(n);
     }
 
     void resize (std::size_t n)
@@ -318,5 +346,18 @@ TEST_CASE("alternative string type")
 
         CHECK(j.at(alt_json::json_pointer("/foo/0")) == j["foo"][0]);
         CHECK(j.at(alt_json::json_pointer("/foo/1")) == j["foo"][1]);
+
+        // ensures successful compilation
+        CHECK(alt_json::json_pointer("/foo/0").to_string() == "/foo/0");
+    }
+
+    SECTION("JSON patch")
+    {
+        // for now, just ensures successful compilation (see #4134)
+        alt_json base, target;
+        alt_json patch = alt_json::array();
+
+        base.patch(patch);
+        CHECK_NOTHROW(alt_json::diff(target, base));
     }
 }
