@@ -31,6 +31,15 @@ using nlohmann::json;
 // NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
 DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wunused-macros")
+
+// For testing copy-initialization of std::optional and nlohmann::optional
+// (clang doesn't need the suppressing)
+#define SUPPRESS_CONVERSION_WARNING \
+    DOCTEST_GCC_SUPPRESS_WARNING_WITH_PUSH("-Wconversion")
+
+#define RESTORE_CONVERSION_WARNING \
+    DOCTEST_GCC_SUPPRESS_WARNING_POP
 
 TEST_CASE("value conversion")
 {
@@ -1568,5 +1577,148 @@ TEST_CASE("JSON to enum mapping")
         CHECK(TS_INVALID == json("what?").get<TaskState>());
     }
 }
+
+#ifdef JSON_HAS_CPP_17
+TEST_CASE("std::optional")
+{
+    SECTION("null")
+    {
+        json j_null;
+        std::optional<std::string> const opt_null;
+
+        CHECK(json(opt_null) == j_null);
+        CHECK(j_null.get<std::optional<std::string>>() == std::nullopt);
+
+        using opt_int = std::optional<int>;
+
+        auto opt1 = []() -> opt_int { return json().get<opt_int>(); };
+        auto opt2 = []() -> opt_int { return opt_int(json()); }; // NOLINT(modernize-return-braced-init-list)
+
+        CHECK(opt1() == std::nullopt);
+        CHECK_THROWS_AS(opt2(), json::type_error&);
+
+#if JSON_USE_IMPLICIT_CONVERSIONS
+        SUPPRESS_CONVERSION_WARNING
+        auto opt3 = []() -> opt_int { return json(); };
+        RESTORE_CONVERSION_WARNING
+        CHECK_THROWS_AS(opt3(), json::type_error&);
+#endif
+    }
+
+    SECTION("string")
+    {
+        json j_string = "string";
+        std::optional<std::string> opt_string = "string";
+
+        CHECK(json(opt_string) == j_string);
+        CHECK(std::optional<std::string>(j_string) == opt_string);
+    }
+
+    SECTION("bool")
+    {
+        json j_bool = true;
+        std::optional<bool> opt_bool = true;
+
+        CHECK(json(opt_bool) == j_bool);
+        CHECK(std::optional<bool>(j_bool) == opt_bool);
+    }
+
+    SECTION("number")
+    {
+        json j_number = 1;
+        std::optional<int> opt_int = 1;
+
+        CHECK(json(opt_int) == j_number);
+        CHECK(std::optional<int>(j_number) == opt_int);
+    }
+
+    SECTION("array")
+    {
+        json j_array = {1, 2, nullptr};
+        std::vector<std::optional<int>> opt_array = {{1, 2, std::nullopt}};
+
+        CHECK(json(opt_array) == j_array);
+        CHECK(j_array.get<std::vector<std::optional<int>>>() == opt_array);
+    }
+
+    SECTION("object")
+    {
+        json j_object = {{"one", 1}, {"two", 2}, {"zero", nullptr}};
+        std::map<std::string, std::optional<int>> opt_object {{"one", 1}, {"two", 2}, {"zero", std::nullopt}};
+
+        CHECK(json(opt_object) == j_object);
+        CHECK(j_object.get<std::map<std::string, std::optional<int>>>() == opt_object);
+    }
+}
+
+TEST_CASE("nlohmann::optional")
+{
+    SECTION("null")
+    {
+        json j_null;
+        nlohmann::optional<std::string> const opt_null;
+
+        CHECK(json(opt_null) == j_null);
+        CHECK(j_null.get<nlohmann::optional<std::string>>() == std::nullopt);
+
+        using opt_int = nlohmann::optional<int>;
+
+        auto opt1 = []() -> opt_int { return json().get<opt_int>(); };
+        auto opt2 = []() -> opt_int { return opt_int(json()); }; // NOLINT(modernize-return-braced-init-list)
+        SUPPRESS_CONVERSION_WARNING
+        auto opt3 = []() -> opt_int { return json(); };
+        RESTORE_CONVERSION_WARNING
+
+        CHECK(opt1() == std::nullopt);
+        CHECK(opt2() == std::nullopt);
+        CHECK(opt3() == std::nullopt);
+    }
+
+    SECTION("string")
+    {
+        json j_string = "string";
+        nlohmann::optional<std::string> opt_string = "string";
+
+        CHECK(json(opt_string) == j_string);
+        CHECK(nlohmann::optional<std::string>(j_string) == opt_string);
+    }
+
+    SECTION("bool")
+    {
+        json j_bool = true;
+        nlohmann::optional<bool> opt_bool = true;
+
+        CHECK(json(opt_bool) == j_bool);
+        CHECK(nlohmann::optional<bool>(j_bool) == opt_bool);
+    }
+
+    SECTION("number")
+    {
+        json j_number = 1;
+        nlohmann::optional<int> opt_int = 1;
+
+        CHECK(json(opt_int) == j_number);
+        CHECK(nlohmann::optional<int>(j_number) == opt_int);
+    }
+
+    SECTION("array")
+    {
+        json j_array = {1, 2, nullptr};
+        std::vector<nlohmann::optional<int>> opt_array = {{1, 2, std::nullopt}};
+
+        CHECK(json(opt_array) == j_array);
+        CHECK(j_array.get<std::vector<nlohmann::optional<int>>>() == opt_array);
+    }
+
+    SECTION("object")
+    {
+        json j_object = {{"one", 1}, {"two", 2}, {"zero", nullptr}};
+        std::map<std::string, nlohmann::optional<int>> opt_object{{"one", 1}, {"two", 2}, {"zero", std::nullopt}};
+
+        CHECK(json(opt_object) == j_object);
+        CHECK(j_object.get<std::map<std::string, nlohmann::optional<int>>>() == opt_object);
+    }
+}
+#endif
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP

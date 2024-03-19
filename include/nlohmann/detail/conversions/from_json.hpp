@@ -28,6 +28,7 @@
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/value_t.hpp>
+#include <nlohmann/optional.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -42,6 +43,34 @@ inline void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
     }
     n = nullptr;
 }
+
+#ifdef JSON_HAS_CPP_17
+template<typename BasicJsonType, typename T>
+void from_json(const BasicJsonType& j, std::optional<T>& opt)
+{
+    if (j.is_null())
+    {
+        opt = std::nullopt;
+    }
+    else
+    {
+        opt = j.template get<T>();
+    }
+}
+
+template<typename BasicJsonType, typename T>
+void from_json(const BasicJsonType& j, optional<T>& opt)
+{
+    if (j.is_null())
+    {
+        opt = std::nullopt;
+    }
+    else
+    {
+        opt = j.template get<T>();
+    }
+}
+#endif
 
 // overloads for basic_json template parameters
 template < typename BasicJsonType, typename ArithmeticType,
