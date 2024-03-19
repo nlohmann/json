@@ -357,6 +357,7 @@ TEST_CASE("lexicographical comparison operators")
                     CAPTURE(i)
                     CAPTURE(j)
                     CHECK((j_values[i] == j_values[j]) == expected_eq[i][j]);
+                    CHECK(expected_eq[i][j] == (j_values[i] == j_values[j]));
                 }
             }
 

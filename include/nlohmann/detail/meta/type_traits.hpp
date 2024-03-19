@@ -742,6 +742,13 @@ inline constexpr bool value_in_range_of(T val)
 template<bool Value>
 using bool_constant = std::integral_constant<bool, Value>;
 
+
+template <typename T, typename BasicJsonType, typename U = uncvref_t<T>>
+struct json_compatible_type
+{
+    static constexpr bool value = !is_basic_json<U>::value && is_compatible_type<BasicJsonType, U>::value;
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 // is_c_string
 ///////////////////////////////////////////////////////////////////////////////

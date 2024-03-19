@@ -4155,6 +4155,13 @@ inline constexpr bool value_in_range_of(T val)
 template<bool Value>
 using bool_constant = std::integral_constant<bool, Value>;
 
+
+template <typename T, typename BasicJsonType, typename U = uncvref_t<T>>
+struct json_compatible_type
+{
+    static constexpr bool value = !is_basic_json<U>::value && is_compatible_type<BasicJsonType, U>::value;
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 // is_c_string
 ///////////////////////////////////////////////////////////////////////////////
@@ -22997,9 +23004,24 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @brief comparison: equal
     /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
-    template<typename ScalarType>
-    requires std::is_scalar_v<ScalarType>
-    bool operator==(ScalarType rhs) const noexcept
+    template <typename T>
+    requires detail::json_compatible_type<T, basic_json_t>::value
+    bool operator==(T rhs) const noexcept
+    {
+        return *this == basic_json(rhs);
+    }
+
+    /// @brief comparison: not equal
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
+    template <typename T>
+    requires detail::json_compatible_type<T, basic_json_t>::value
+    bool operator!=(T rhs) const noexcept
+    {
+        return *this != basic_json(rhs);
+    }
+
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
+    bool operator==(std::nullptr_t rhs) const noexcept
     {
         return *this == basic_json(rhs);
     }
@@ -23030,9 +23052,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @brief comparison: 3-way
     /// @sa https://json.nlohmann.me/api/basic_json/operator_spaceship/
-    template<typename ScalarType>
-    requires std::is_scalar_v<ScalarType>
-    std::partial_ordering operator<=>(ScalarType rhs) const noexcept // *NOPAD*
+    template <typename T>
+    requires detail::json_compatible_type<T, basic_json_t>::value
+    std::partial_ordering operator<=>(T rhs) const noexcept // *NOPAD*
     {
         return *this <=> basic_json(rhs); // *NOPAD*
     }
