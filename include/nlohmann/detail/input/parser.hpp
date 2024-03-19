@@ -56,14 +56,14 @@ using parser_callback_t =
 
 This class implements a recursive descent parser.
 */
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType, typename AllocatorJson, typename AllocatorChar, typename  AllocatorBool>
 class parser
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
     using string_t = typename BasicJsonType::string_t;
-    using lexer_t = lexer<BasicJsonType, InputAdapterType>;
+    using lexer_t = lexer<BasicJsonType, InputAdapterType, AllocatorChar>;
     using token_type = typename lexer_t::token_type;
 
   public:
@@ -122,7 +122,7 @@ class parser
         }
         else
         {
-            json_sax_dom_parser<BasicJsonType> sdp(result, allow_exceptions);
+            json_sax_dom_parser<BasicJsonType,  AllocatorJson> sdp(result, allow_exceptions);
             sax_parse_internal(&sdp);
 
             // in strict mode, input must be completely read
@@ -181,7 +181,8 @@ class parser
     {
         // stack to remember the hierarchy of structured values we are parsing
         // true = array; false = object
-        std::vector<bool> states;
+        std::vector<bool, AllocatorBool> states;
+
         // value to avoid a goto (see comment where set to true)
         bool skip_to_state_evaluation = false;
 

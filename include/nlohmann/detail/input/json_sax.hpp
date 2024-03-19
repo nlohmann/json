@@ -12,6 +12,7 @@
 #include <string> // string
 #include <utility> // move
 #include <vector> // vector
+#include <memory>
 
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
@@ -157,7 +158,7 @@ constructor contains the parsed value.
 
 @tparam BasicJsonType  the JSON type
 */
-template<typename BasicJsonType>
+template<typename BasicJsonType, typename Allocator = std::allocator<BasicJsonType*>>
 class json_sax_dom_parser
 {
   public:
@@ -331,7 +332,7 @@ class json_sax_dom_parser
     /// the parsed JSON value
     BasicJsonType& root;
     /// stack to model hierarchy of values
-    std::vector<BasicJsonType*> ref_stack {};
+    std::vector<BasicJsonType*, Allocator> ref_stack {};
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
     /// whether a syntax error occurred

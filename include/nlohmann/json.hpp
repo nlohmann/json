@@ -105,16 +105,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // can be restored when json_pointer backwards compatibility is removed
     // friend ::nlohmann::json_pointer<StringType>;
 
-    template<typename BasicJsonType, typename InputType>
+    template<typename BasicJsonType, typename InputType, typename AllocatorJson, typename AllocatorChar, typename AllocatorBool>
     friend class ::nlohmann::detail::parser;
     friend ::nlohmann::detail::serializer<basic_json>;
     template<typename BasicJsonType>
     friend class ::nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType>
     friend class ::nlohmann::detail::binary_writer;
-    template<typename BasicJsonType, typename InputType, typename SAX>
+    template<typename BasicJsonType, typename InputType, typename AllocatorJson, typename AllocatorChar, typename SAX>
     friend class ::nlohmann::detail::binary_reader;
-    template<typename BasicJsonType>
+    template<typename BasicJsonType, typename Allocator>
     friend class ::nlohmann::detail::json_sax_dom_parser;
     template<typename BasicJsonType>
     friend class ::nlohmann::detail::json_sax_dom_callback_parser;
@@ -129,14 +129,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     using lexer = ::nlohmann::detail::lexer_base<basic_json>;
 
     template<typename InputAdapterType>
-    static ::nlohmann::detail::parser<basic_json, InputAdapterType> parser(
-        InputAdapterType adapter,
-        detail::parser_callback_t<basic_json>cb = nullptr,
-        const bool allow_exceptions = true,
-        const bool ignore_comments = false
-    )
+    static ::nlohmann::detail::parser<basic_json, InputAdapterType, AllocatorType<basic_json*>, AllocatorType<typename InputAdapterType::char_type>, AllocatorType<bool>> parser(
+                InputAdapterType adapter,
+                detail::parser_callback_t<basic_json>cb = nullptr,
+                const bool allow_exceptions = true,
+                const bool ignore_comments = false
+            )
     {
-        return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
+        return ::nlohmann::detail::parser<basic_json, InputAdapterType, AllocatorType<basic_json*>, AllocatorType<typename InputAdapterType::char_type>, AllocatorType<bool>>(std::move(adapter),
                 std::move(cb), allow_exceptions, ignore_comments);
     }
 
@@ -153,8 +153,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template<typename CharType>
     using output_adapter_t = ::nlohmann::detail::output_adapter_t<CharType>;
 
-    template<typename InputType>
-    using binary_reader = ::nlohmann::detail::binary_reader<basic_json, InputType>;
+    template<typename InputType, typename CharType = char>
+    using binary_reader = ::nlohmann::detail::binary_reader<basic_json, InputType, AllocatorType<basic_json*>, AllocatorType<CharType>>;
     template<typename CharType> using binary_writer = ::nlohmann::detail::binary_writer<basic_json, CharType>;
 
   JSON_PRIVATE_UNLESS_TESTED:
@@ -218,7 +218,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// the allocator type
     using allocator_type = AllocatorType<basic_json>;
-
+    using allocator_type_ptr = AllocatorType<basic_json*>;
+    using allocator_type_char = AllocatorType<char>;
     /// the type of an element pointer
     using pointer = typename std::allocator_traits<allocator_type>::pointer;
     /// the type of an element const pointer
@@ -566,7 +567,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             if (t == value_t::array || t == value_t::object)
             {
                 // flatten the current json_value to a heap-allocated stack
-                std::vector<basic_json> stack;
+                std::vector<basic_json, AllocatorType<basic_json>> stack;
 
                 // move the top-level items to stack
                 if (t == value_t::array)
@@ -4087,7 +4088,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         return format == input_format_t::json
                ? parser(std::move(ia), nullptr, true, ignore_comments).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(format, sax, strict);
+               : detail::binary_reader<basic_json, decltype(ia), allocator_type_ptr, allocator_type_char, SAX>(std::move(ia), format).sax_parse(format, sax, strict);
     }
 
     /// @brief generate SAX events
@@ -4102,7 +4103,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         return format == input_format_t::json
                ? parser(std::move(ia), nullptr, true, ignore_comments).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(format, sax, strict);
+               : detail::binary_reader<basic_json, decltype(ia), allocator_type_ptr, allocator_type_char, SAX>(std::move(ia), format).sax_parse(format, sax, strict);
     }
 
     /// @brief generate SAX events
@@ -4123,7 +4124,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
                ? parser(std::move(ia), nullptr, true, ignore_comments).sax_parse(sax, strict)
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(format, sax, strict);
+               : detail::binary_reader<basic_json, decltype(ia), allocator_type_ptr, allocator_type_char, SAX>(std::move(ia), format).sax_parse(format, sax, strict);
     }
 #ifndef JSON_NO_IO
     /// @brief deserialize from stream
@@ -4365,7 +4366,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                 const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         basic_json result;
-        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, allocator_type_ptr> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler);
         return res ? result : basic_json(value_t::discarded);
@@ -4381,7 +4382,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                 const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         basic_json result;
-        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, allocator_type_ptr> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler);
         return res ? result : basic_json(value_t::discarded);
@@ -4406,7 +4407,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                 const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         basic_json result;
-        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, allocator_type_ptr> sdp(result, allow_exceptions);
         auto ia = i.get();
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler);
@@ -4422,7 +4423,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                    const bool allow_exceptions = true)
     {
         basic_json result;
-        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, allocator_type_ptr> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
@@ -4437,7 +4438,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                    const bool allow_exceptions = true)
     {
         basic_json result;
-        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, allocator_type_ptr> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
@@ -4460,7 +4461,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                    const bool allow_exceptions = true)
     {
         basic_json result;
-        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, allocator_type_ptr> sdp(result, allow_exceptions);
         auto ia = i.get();
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict);
@@ -4476,7 +4477,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                   const bool allow_exceptions = true)
     {
         basic_json result;
-        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, allocator_type_ptr> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
@@ -4491,7 +4492,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                   const bool allow_exceptions = true)
     {
         basic_json result;
-        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, allocator_type_ptr> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
@@ -4514,7 +4515,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                   const bool allow_exceptions = true)
     {
         basic_json result;
-        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, allocator_type_ptr> sdp(result, allow_exceptions);
         auto ia = i.get();
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict);
@@ -4530,7 +4531,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                   const bool allow_exceptions = true)
     {
         basic_json result;
-        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, allocator_type_ptr> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(input_format_t::bjdata, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
@@ -4545,7 +4546,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                   const bool allow_exceptions = true)
     {
         basic_json result;
-        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, allocator_type_ptr> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(input_format_t::bjdata, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
@@ -4560,7 +4561,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                 const bool allow_exceptions = true)
     {
         basic_json result;
-        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, allocator_type_ptr> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
@@ -4575,7 +4576,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                 const bool allow_exceptions = true)
     {
         basic_json result;
-        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, allocator_type_ptr> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
@@ -4598,7 +4599,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                 const bool allow_exceptions = true)
     {
         basic_json result;
-        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, allocator_type_ptr> sdp(result, allow_exceptions);
         auto ia = i.get();
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict);

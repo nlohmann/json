@@ -124,7 +124,10 @@ class output_adapter
   public:
     template<typename AllocatorType = std::allocator<CharType>>
     output_adapter(std::vector<CharType, AllocatorType>& vec)
-        : oa(std::make_shared<output_vector_adapter<CharType, AllocatorType>>(vec)) {}
+    {
+        AllocatorType alloc;
+        oa = std::allocate_shared<output_vector_adapter<CharType, AllocatorType>>(alloc, vec);
+    }
 
 #ifndef JSON_NO_IO
     output_adapter(std::basic_ostream<CharType>& s)

@@ -261,3 +261,90 @@ TEST_CASE("bad my_allocator::construct")
         j["test"].push_back("should not leak");
     }
 }
+
+
+TEST_CASE("controlled bad_alloc_rt_string")
+{
+    using RtString = std::basic_string<char, std::char_traits<char>, my_allocator<char>>;
+    // create JSON type using the throwing allocator
+    using my_json = nlohmann::basic_json<std::map,
+          std::vector,
+          RtString,
+          bool,
+          std::int64_t,
+          std::uint64_t,
+          double,
+          my_allocator>;
+
+
+
+    SECTION("class json_value")
+    {
+
+        SECTION("json_value(value_t)")
+        {
+
+            SECTION("string")
+            {
+                next_construct_fails = false;
+                auto t = my_json::value_t::string;
+                CHECK_NOTHROW(my_allocator_clean_up(my_json::json_value(t).string));
+                next_construct_fails = true;
+                CHECK_THROWS_AS(my_json::json_value(t), std::bad_alloc&);
+                next_construct_fails = false;
+            }
+        }
+
+        SECTION("json_value(const string_t&)")
+        {
+            next_construct_fails = false;
+            const my_json::string_t v("foo");
+            CHECK_NOTHROW(my_allocator_clean_up(my_json::json_value(v).string));
+            next_construct_fails = true;
+            CHECK_THROWS_AS(my_json::json_value(v), std::bad_alloc&);
+            next_construct_fails = false;
+        }
+    }
+
+    SECTION("class basic_json_rt_string")
+    {
+        SECTION("basic_json(const CompatibleObjectType&)")
+        {
+            next_construct_fails = false;
+            const std::map<RtString, RtString> v {{"foo", "bar"}};
+            CHECK_NOTHROW(my_json(v));
+            next_construct_fails = true;
+            CHECK_THROWS_AS(my_json(v), std::bad_alloc&);
+            next_construct_fails = false;
+        }
+
+        SECTION("basic_json(const CompatibleArrayType&)")
+        {
+            next_construct_fails = false;
+            const std::vector<RtString> v {"foo", "bar", "baz"};
+            CHECK_NOTHROW(my_json(v));
+            next_construct_fails = true;
+            CHECK_THROWS_AS(my_json(v), std::bad_alloc&);
+            next_construct_fails = false;
+        }
+
+        SECTION("basic_json(const typename string_t::value_type*)")
+        {
+            next_construct_fails = false;
+            CHECK_NOTHROW(my_json("foo"));
+            next_construct_fails = true;
+            CHECK_THROWS_AS(my_json("foo"), std::bad_alloc&);
+            next_construct_fails = false;
+        }
+
+        SECTION("basic_json(const typename string_t::value_type*)")
+        {
+            next_construct_fails = false;
+            const RtString s("foo");
+            CHECK_NOTHROW(my_json(s));
+            next_construct_fails = true;
+            CHECK_THROWS_AS(my_json(s), std::bad_alloc&);
+            next_construct_fails = false;
+        }
+    }
+}
