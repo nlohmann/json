@@ -1259,7 +1259,7 @@ scan_number_done:
             if (errno == 0)
             {
                 value_unsigned = static_cast<number_unsigned_t>(x);
-                if (value_unsigned == x)
+                if (static_cast<decltype(x)>(value_unsigned) == x)
                 {
                     return token_type::value_unsigned;
                 }
@@ -1275,7 +1275,7 @@ scan_number_done:
             if (errno == 0)
             {
                 value_integer = static_cast<number_integer_t>(x);
-                if (value_integer == x)
+                if (static_cast<decltype(x)>(value_integer) == x)
                 {
                     return token_type::value_integer;
                 }

@@ -3910,8 +3910,8 @@ struct is_compatible_integer_type_impl : std::false_type {};
 template<typename RealIntegerType, typename CompatibleNumberIntegerType>
 struct is_compatible_integer_type_impl <
     RealIntegerType, CompatibleNumberIntegerType,
-    enable_if_t < std::is_integral<RealIntegerType>::value&&
-    std::is_integral<CompatibleNumberIntegerType>::value&&
+    enable_if_t < std::numeric_limits<RealIntegerType>::is_integer&&
+    std::numeric_limits<CompatibleNumberIntegerType>::is_integer&&
     !std::is_same<bool, CompatibleNumberIntegerType>::value >>
 {
     // is there an assert somewhere on overflows?
@@ -4672,7 +4672,7 @@ inline void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
 
 // overloads for basic_json template parameters
 template < typename BasicJsonType, typename ArithmeticType,
-           enable_if_t < std::is_arithmetic<ArithmeticType>::value&&
+           enable_if_t < std::numeric_limits<ArithmeticType>::is_specialized&&
                          !std::is_same<ArithmeticType, typename BasicJsonType::boolean_t>::value,
                          int > = 0 >
 void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
@@ -8631,7 +8631,7 @@ scan_number_done:
             if (errno == 0)
             {
                 value_unsigned = static_cast<number_unsigned_t>(x);
-                if (value_unsigned == x)
+                if (static_cast<typeof(x)>(value_unsigned) == x)
                 {
                     return token_type::value_unsigned;
                 }
@@ -8647,7 +8647,7 @@ scan_number_done:
             if (errno == 0)
             {
                 value_integer = static_cast<number_integer_t>(x);
-                if (value_integer == x)
+                if (static_cast<typeof(x)>(value_integer) == x)
                 {
                     return token_type::value_integer;
                 }
@@ -18693,13 +18693,13 @@ class serializer
     }
 
     // templates to avoid warnings about useless casts
-    template <typename NumberType, enable_if_t<std::is_signed<NumberType>::value, int> = 0>
+    template <typename NumberType, enable_if_t<std::numeric_limits<NumberType>::is_signed, int> = 0>
     bool is_negative_number(NumberType x)
     {
-        return x < 0;
+        return x < NumberType(0);
     }
 
-    template < typename NumberType, enable_if_t <std::is_unsigned<NumberType>::value, int > = 0 >
+    template < typename NumberType, enable_if_t < !std::numeric_limits<NumberType>::is_signed, int > = 0 >
     bool is_negative_number(NumberType /*unused*/)
     {
         return false;
@@ -18715,7 +18715,7 @@ class serializer
     @tparam NumberType either @a number_integer_t or @a number_unsigned_t
     */
     template < typename NumberType, detail::enable_if_t <
-                   std::is_integral<NumberType>::value ||
+                   std::numeric_limits<NumberType>::is_integer ||
                    std::is_same<NumberType, number_unsigned_t>::value ||
                    std::is_same<NumberType, number_integer_t>::value ||
                    std::is_same<NumberType, binary_char_t>::value,
@@ -18739,7 +18739,7 @@ class serializer
         };
 
         // special case for "0"
-        if (x == 0)
+        if (x == NumberType(0))
         {
             o->write_character('0');
             return;
@@ -18775,15 +18775,16 @@ class serializer
 
         // Fast int2ascii implementation inspired by "Fastware" talk by Andrei Alexandrescu
         // See: https://www.youtube.com/watch?v=o4-CwDo2zpg
-        while (abs_value >= 100)
+        const NumberType hundred = 100;
+        while (abs_value >= hundred)
         {
-            const auto digits_index = static_cast<unsigned>((abs_value % 100));
-            abs_value /= 100;
+            const auto digits_index = static_cast<unsigned>((abs_value % hundred));
+            abs_value /= hundred;
             *(--buffer_ptr) = digits_to_99[digits_index][1];
             *(--buffer_ptr) = digits_to_99[digits_index][0];
         }
 
-        if (abs_value >= 10)
+        if (abs_value >= NumberType(10))
         {
             const auto digits_index = static_cast<unsigned>(abs_value);
             *(--buffer_ptr) = digits_to_99[digits_index][1];

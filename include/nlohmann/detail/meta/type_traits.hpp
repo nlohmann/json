@@ -497,8 +497,8 @@ struct is_compatible_integer_type_impl : std::false_type {};
 template<typename RealIntegerType, typename CompatibleNumberIntegerType>
 struct is_compatible_integer_type_impl <
     RealIntegerType, CompatibleNumberIntegerType,
-    enable_if_t < std::is_integral<RealIntegerType>::value&&
-    std::is_integral<CompatibleNumberIntegerType>::value&&
+    enable_if_t < std::numeric_limits<RealIntegerType>::is_integer&&
+    std::numeric_limits<CompatibleNumberIntegerType>::is_integer&&
     !std::is_same<bool, CompatibleNumberIntegerType>::value >>
 {
     // is there an assert somewhere on overflows?
