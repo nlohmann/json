@@ -293,6 +293,8 @@ nav:
         - 'NLOHMANN_JSON_VERSION_MAJOR': api/macros/nlohmann_json_version_major.md
         - 'NLOHMANN_JSON_VERSION_MINOR': api/macros/nlohmann_json_version_major.md
         - 'NLOHMANN_JSON_VERSION_PATCH': api/macros/nlohmann_json_version_major.md
+      - Internal:
+        - api/internal/index.md
 
 # Extras
 extra:
@@ -358,6 +360,9 @@ plugins:
             'api/basic_json/operator_literal_json.md': api/operator_literal_json.md
             'api/basic_json/operator_literal_json_pointer.md': api/operator_literal_json_pointer.md
             'api/json_pointer/operator_string.md': api/json_pointer/operator_string_t.md
+    - mkdocs-simple-hooks:
+        hooks:
+          on_page_context: scripts.internal_section:on_page_context
 
 extra_css:
     - css/custom.css
