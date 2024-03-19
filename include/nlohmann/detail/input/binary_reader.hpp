@@ -128,6 +128,10 @@ class binary_reader
                 result = parse_ubjson_internal();
                 break;
 
+            case input_format_t::bon8:
+                result = parse_bon8_internal(true);
+                break;
+
             case input_format_t::json: // LCOV_EXCL_LINE
             default:            // LCOV_EXCL_LINE
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
@@ -2735,6 +2739,301 @@ class binary_reader
         }
     }
 
+    //////////
+    // BON8 //
+    //////////
+
+    /*!
+    @param[in] get_char  whether a new character should be retrieved from the
+                         input (true) or whether the last read character should
+                         be considered instead (false)
+
+    @return whether a valid BON8 value was passed to the SAX parser
+    */
+    bool parse_bon8_internal(const bool get_char)
+    {
+        switch (get_char ? get() : current)
+        {
+            case 0x80:
+            case 0x81:
+            case 0x82:
+            case 0x83:
+            case 0x84:
+                return get_bon8_array(static_cast<std::size_t>(current - 0x80));
+
+            case 0x85:
+                return get_bon8_array(static_cast<std::size_t>(-1));
+
+            case 0x86:
+            case 0x87:
+            case 0x88:
+            case 0x89:
+            case 0x8A:
+                return get_bon8_object(static_cast<std::size_t>(current - 0x86));
+
+            case 0x8B:
+                return get_bon8_object(static_cast<std::size_t>(-1));
+
+            case 0x8C:
+            {
+                std::int32_t number{};
+                return get_number(input_format_t::bon8, number) && sax->number_integer(number);
+            }
+
+            case 0x8D:
+            {
+                std::int64_t number{};
+                return get_number(input_format_t::bon8, number) && sax->number_integer(number);
+            }
+
+            case 0x8E:
+            {
+                float number{};
+                return get_number(input_format_t::bon8, number) && sax->number_float(static_cast<number_float_t>(number), "");
+            }
+
+            case 0x8F:
+            {
+                double number{};
+                return get_number(input_format_t::bon8, number) && sax->number_float(static_cast<number_float_t>(number), "");
+            }
+
+            case 0x90:
+            case 0x91:
+            case 0x92:
+            case 0x93:
+            case 0x94:
+            case 0x95:
+            case 0x96:
+            case 0x97:
+            case 0x98:
+            case 0x99:
+            case 0x9A:
+            case 0x9B:
+            case 0x9C:
+            case 0x9D:
+            case 0x9E:
+            case 0x9F:
+            case 0xA0:
+            case 0xA1:
+            case 0xA2:
+            case 0xA3:
+            case 0xA4:
+            case 0xA5:
+            case 0xA6:
+            case 0xA7:
+            case 0xA8:
+            case 0xA9:
+            case 0xAA:
+            case 0xAB:
+            case 0xAC:
+            case 0xAD:
+            case 0xAE:
+            case 0xAF:
+            case 0xB0:
+            case 0xB1:
+            case 0xB2:
+            case 0xB3:
+            case 0xB4:
+            case 0xB5:
+            case 0xB6:
+            case 0xB7:
+                return sax->number_unsigned(static_cast<number_unsigned_t>(current) - static_cast<number_unsigned_t>(0x90));
+
+            case 0xB8:
+            case 0xB9:
+            case 0xBA:
+            case 0xBB:
+            case 0xBC:
+            case 0xBD:
+            case 0xBE:
+            case 0xBF:
+            case 0xC0:
+            case 0xC1:
+                return sax->number_integer(static_cast<number_integer_t>(0xB7) - static_cast<number_integer_t>(current));
+
+            case 0xF8:
+                return sax->boolean(false);
+
+            case 0xF9:
+                return sax->boolean(true);
+
+            case 0xFA:
+                return sax->null();
+
+            case 0xFB:
+                return sax->number_float(-1.0, "");
+
+            case 0xFC:
+                return sax->number_float(0.0, "");
+
+            case 0xFD:
+                return sax->number_float(1.0, "");
+
+            case 0xFE:
+            {
+                auto last_token = get_token_string();
+                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::bon8, "invalid byte: 0x" + last_token, "value"), nullptr));
+            }
+
+            default:
+            {
+                string_t s;
+                return get_bon8_string(s) && sax->string(s);
+            }
+        }
+    }
+
+    bool get_bon8_array(const std::size_t len)
+    {
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(len)))
+        {
+            return false;
+        }
+
+        if (len != static_cast<std::size_t>(-1))
+        {
+            for (std::size_t i = 0; i < len; ++i)
+            {
+                if (JSON_HEDLEY_UNLIKELY(!parse_bon8_internal(true)))
+                {
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            while (get() != 0xFE)
+            {
+                if (JSON_HEDLEY_UNLIKELY(!parse_bon8_internal(false)))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return sax->end_array();
+    }
+
+    bool get_bon8_object(const std::size_t len)
+    {
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(len)))
+        {
+            return false;
+        }
+
+        if (len != 0)
+        {
+            string_t key;
+            if (len != static_cast<std::size_t>(-1))
+            {
+                for (std::size_t i = 0; i < len; ++i)
+                {
+                    get();
+                    if (JSON_HEDLEY_UNLIKELY(!get_bon8_string(key) || !sax->key(key)))
+                    {
+                        return false;
+                    }
+
+                    if (JSON_HEDLEY_UNLIKELY(!parse_bon8_internal(false)))
+                    {
+                        return false;
+                    }
+                    key.clear();
+                }
+            }
+            else
+            {
+                while (get() != 0xFE)
+                {
+                    if (JSON_HEDLEY_UNLIKELY(!get_bon8_string(key) || !sax->key(key)))
+                    {
+                        return false;
+                    }
+
+                    if (JSON_HEDLEY_UNLIKELY(!parse_bon8_internal(false)))
+                    {
+                        return false;
+                    }
+                    key.clear();
+                }
+            }
+        }
+
+        return sax->end_object();
+    }
+
+    bool get_bon8_string(string_t& result)
+    {
+        while (true)
+        {
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+            {
+                return false;
+            }
+
+            if ((current & 0x80) == 0x00)
+            {
+                result.push_back(static_cast<typename string_t::value_type>(current));
+                get();
+            }
+            else if ((current & 0xE0) == 0xC0)
+            {
+                result.push_back(static_cast<typename string_t::value_type>(current));
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
+                get();
+            }
+            else if ((current & 0xF0) == 0xE0)
+            {
+                result.push_back(static_cast<typename string_t::value_type>(current));
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
+                get();
+            }
+            else if ((current & 0xF8) == 0xF0)
+            {
+                result.push_back(static_cast<typename string_t::value_type>(current));
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
+                get();
+            }
+            else if (current == 0xFF)
+            {
+                get();
+                return true;
+            }
+            else
+            {
+                return true;
+            }
+        }
+    }
+
     ///////////////////////
     // Utility functions //
     ///////////////////////
@@ -2932,6 +3231,10 @@ class binary_reader
 
             case input_format_t::bson:
                 error_msg += "BSON";
+                break;
+
+            case input_format_t::bon8:
+                error_msg += "BON8";
                 break;
 
             case input_format_t::bjdata:

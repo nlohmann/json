@@ -6174,7 +6174,7 @@ namespace detail
 {
 
 /// the supported input formats
-enum class input_format_t { json, cbor, msgpack, ubjson, bson, bjdata };
+enum class input_format_t { json, cbor, msgpack, ubjson, bson, bjdata, bon8 };
 
 ////////////////////
 // input adapters //
@@ -9274,6 +9274,10 @@ class binary_reader
                 result = parse_ubjson_internal();
                 break;
 
+            case input_format_t::bon8:
+                result = parse_bon8_internal(true);
+                break;
+
             case input_format_t::json: // LCOV_EXCL_LINE
             default:            // LCOV_EXCL_LINE
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
@@ -11881,6 +11885,301 @@ class binary_reader
         }
     }
 
+    //////////
+    // BON8 //
+    //////////
+
+    /*!
+    @param[in] get_char  whether a new character should be retrieved from the
+                         input (true) or whether the last read character should
+                         be considered instead (false)
+
+    @return whether a valid BON8 value was passed to the SAX parser
+    */
+    bool parse_bon8_internal(const bool get_char)
+    {
+        switch (get_char ? get() : current)
+        {
+            case 0x80:
+            case 0x81:
+            case 0x82:
+            case 0x83:
+            case 0x84:
+                return get_bon8_array(static_cast<std::size_t>(current - 0x80));
+
+            case 0x85:
+                return get_bon8_array(static_cast<std::size_t>(-1));
+
+            case 0x86:
+            case 0x87:
+            case 0x88:
+            case 0x89:
+            case 0x8A:
+                return get_bon8_object(static_cast<std::size_t>(current - 0x86));
+
+            case 0x8B:
+                return get_bon8_object(static_cast<std::size_t>(-1));
+
+            case 0x8C:
+            {
+                std::int32_t number{};
+                return get_number(input_format_t::bon8, number) && sax->number_integer(number);
+            }
+
+            case 0x8D:
+            {
+                std::int64_t number{};
+                return get_number(input_format_t::bon8, number) && sax->number_integer(number);
+            }
+
+            case 0x8E:
+            {
+                float number{};
+                return get_number(input_format_t::bon8, number) && sax->number_float(static_cast<number_float_t>(number), "");
+            }
+
+            case 0x8F:
+            {
+                double number{};
+                return get_number(input_format_t::bon8, number) && sax->number_float(static_cast<number_float_t>(number), "");
+            }
+
+            case 0x90:
+            case 0x91:
+            case 0x92:
+            case 0x93:
+            case 0x94:
+            case 0x95:
+            case 0x96:
+            case 0x97:
+            case 0x98:
+            case 0x99:
+            case 0x9A:
+            case 0x9B:
+            case 0x9C:
+            case 0x9D:
+            case 0x9E:
+            case 0x9F:
+            case 0xA0:
+            case 0xA1:
+            case 0xA2:
+            case 0xA3:
+            case 0xA4:
+            case 0xA5:
+            case 0xA6:
+            case 0xA7:
+            case 0xA8:
+            case 0xA9:
+            case 0xAA:
+            case 0xAB:
+            case 0xAC:
+            case 0xAD:
+            case 0xAE:
+            case 0xAF:
+            case 0xB0:
+            case 0xB1:
+            case 0xB2:
+            case 0xB3:
+            case 0xB4:
+            case 0xB5:
+            case 0xB6:
+            case 0xB7:
+                return sax->number_unsigned(static_cast<number_unsigned_t>(current) - static_cast<number_unsigned_t>(0x90));
+
+            case 0xB8:
+            case 0xB9:
+            case 0xBA:
+            case 0xBB:
+            case 0xBC:
+            case 0xBD:
+            case 0xBE:
+            case 0xBF:
+            case 0xC0:
+            case 0xC1:
+                return sax->number_integer(static_cast<number_integer_t>(0xB7) - static_cast<number_integer_t>(current));
+
+            case 0xF8:
+                return sax->boolean(false);
+
+            case 0xF9:
+                return sax->boolean(true);
+
+            case 0xFA:
+                return sax->null();
+
+            case 0xFB:
+                return sax->number_float(-1.0, "");
+
+            case 0xFC:
+                return sax->number_float(0.0, "");
+
+            case 0xFD:
+                return sax->number_float(1.0, "");
+
+            case 0xFE:
+            {
+                auto last_token = get_token_string();
+                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::bon8, "invalid byte: 0x" + last_token, "value"), nullptr));
+            }
+
+            default:
+            {
+                string_t s;
+                return get_bon8_string(s) && sax->string(s);
+            }
+        }
+    }
+
+    bool get_bon8_array(const std::size_t len)
+    {
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(len)))
+        {
+            return false;
+        }
+
+        if (len != static_cast<std::size_t>(-1))
+        {
+            for (std::size_t i = 0; i < len; ++i)
+            {
+                if (JSON_HEDLEY_UNLIKELY(!parse_bon8_internal(true)))
+                {
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            while (get() != 0xFE)
+            {
+                if (JSON_HEDLEY_UNLIKELY(!parse_bon8_internal(false)))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return sax->end_array();
+    }
+
+    bool get_bon8_object(const std::size_t len)
+    {
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(len)))
+        {
+            return false;
+        }
+
+        if (len != 0)
+        {
+            string_t key;
+            if (len != static_cast<std::size_t>(-1))
+            {
+                for (std::size_t i = 0; i < len; ++i)
+                {
+                    get();
+                    if (JSON_HEDLEY_UNLIKELY(!get_bon8_string(key) || !sax->key(key)))
+                    {
+                        return false;
+                    }
+
+                    if (JSON_HEDLEY_UNLIKELY(!parse_bon8_internal(false)))
+                    {
+                        return false;
+                    }
+                    key.clear();
+                }
+            }
+            else
+            {
+                while (get() != 0xFE)
+                {
+                    if (JSON_HEDLEY_UNLIKELY(!get_bon8_string(key) || !sax->key(key)))
+                    {
+                        return false;
+                    }
+
+                    if (JSON_HEDLEY_UNLIKELY(!parse_bon8_internal(false)))
+                    {
+                        return false;
+                    }
+                    key.clear();
+                }
+            }
+        }
+
+        return sax->end_object();
+    }
+
+    bool get_bon8_string(string_t& result)
+    {
+        while (true)
+        {
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+            {
+                return false;
+            }
+
+            if ((current & 0x80) == 0x00)
+            {
+                result.push_back(static_cast<typename string_t::value_type>(current));
+                get();
+            }
+            else if ((current & 0xE0) == 0xC0)
+            {
+                result.push_back(static_cast<typename string_t::value_type>(current));
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
+                get();
+            }
+            else if ((current & 0xF0) == 0xE0)
+            {
+                result.push_back(static_cast<typename string_t::value_type>(current));
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
+                get();
+            }
+            else if ((current & 0xF8) == 0xF0)
+            {
+                result.push_back(static_cast<typename string_t::value_type>(current));
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
+                result.push_back(static_cast<typename string_t::value_type>(get()));
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "string")))
+                {
+                    return false;
+                }
+                get();
+            }
+            else if (current == 0xFF)
+            {
+                get();
+                return true;
+            }
+            else
+            {
+                return true;
+            }
+        }
+    }
+
     ///////////////////////
     // Utility functions //
     ///////////////////////
@@ -12078,6 +12377,10 @@ class binary_reader
 
             case input_format_t::bson:
                 error_msg += "BSON";
+                break;
+
+            case input_format_t::bon8:
+                error_msg += "BON8";
                 break;
 
             case input_format_t::bjdata:
@@ -15988,6 +16291,18 @@ class binary_writer
         }
     }
 
+    /*!
+    @param[in] j  JSON value to serialize
+    */
+    void write_bon8(const BasicJsonType& j)
+    {
+        const bool last_written_value_is_string = write_bon8_internal(j);
+        if (last_written_value_is_string)
+        {
+            oa->write_character(to_char_type(0xFF));
+        }
+    }
+
   private:
     //////////
     // BSON //
@@ -16764,6 +17079,279 @@ class binary_writer
         return false;
     }
 
+    //////////
+    // BON8 //
+    //////////
+
+    /*!
+     * @param j
+     * @return whether the last written value was a string
+     */
+    bool write_bon8_internal(const BasicJsonType& j)
+    {
+        switch (j.type())
+        {
+            case value_t::null:
+            {
+                oa->write_character(to_char_type(0xFA));
+                return false;
+            }
+
+            case value_t::boolean:
+            {
+                oa->write_character(j.m_value.boolean
+                                    ? to_char_type(0xF9)
+                                    : to_char_type(0xF8));
+                return false;
+            }
+
+            case value_t::number_unsigned:
+            {
+                if (j.m_value.number_unsigned > static_cast<typename BasicJsonType::number_unsigned_t>((std::numeric_limits<std::int64_t>::max)()))
+                {
+                    JSON_THROW(out_of_range::create(407, "integer number " + std::to_string(j.m_value.number_unsigned) + " cannot be represented by BON8 as it does not fit int64", &j));
+                }
+                write_bon8_integer(static_cast<typename BasicJsonType::number_integer_t>(j.m_value.number_unsigned));
+                return false;
+            }
+
+            case value_t::number_integer:
+            {
+                write_bon8_integer(j.m_value.number_integer);
+                return false;
+            }
+
+            case value_t::number_float:
+            {
+                // special values
+                if (j.m_value.number_float == -1.0)
+                {
+                    oa->write_character(to_char_type(0xFB));
+                }
+                else if (j.m_value.number_float == 0.0 && !std::signbit(j.m_value.number_float))
+                {
+                    oa->write_character(to_char_type(0xFC));
+                }
+                else if (j.m_value.number_float == 1.0)
+                {
+                    oa->write_character(to_char_type(0xFD));
+                }
+                else if (std::isnan(j.m_value.number_float))
+                {
+                    oa->write_character(to_char_type(0x8E));
+                    oa->write_character(to_char_type(0x7F));
+                    oa->write_character(to_char_type(0x80));
+                    oa->write_character(to_char_type(0x00));
+                    oa->write_character(to_char_type(0x01));
+                }
+                else
+                {
+                    // write float with prefix
+                    write_compact_float(j.m_value.number_float, detail::input_format_t::bon8);
+                }
+                return false;
+            }
+
+            case value_t::string:
+            {
+                // empty string: use end-of-text symbol
+                if (j.m_value.string->empty())
+                {
+                    oa->write_character(to_char_type(0xFF));
+                    return false; // already wrote 0xFF byte
+                }
+
+                // write strings as is
+                oa->write_characters(
+                    reinterpret_cast<const CharType*>(j.m_value.string->c_str()),
+                    j.m_value.string->size());
+                return true;
+            }
+
+            case value_t::array:
+            {
+                bool last_written_value_is_string = false;
+                const auto N = j.m_value.array->size();
+                if (N <= 4)
+                {
+                    // start array with count (80..84)
+                    oa->write_character(static_cast<std::uint8_t>(0x80 + N));
+                }
+                else
+                {
+                    // start array
+                    oa->write_character(to_char_type(0x85));
+                }
+
+                // write each element
+                for (std::size_t i = 0; i < N; ++i)
+                {
+                    const auto& el = j.m_value.array->operator[](i);
+
+                    // check if 0xFF after nonempty string and string is required
+                    if (i > 0)
+                    {
+                        const auto& prev = j.m_value.array->operator[](i - 1);
+                        if (el.is_string() && prev.is_string() && !prev.m_value.string->empty())
+                        {
+                            oa->write_character(to_char_type(0xFF));
+                        }
+                    }
+
+                    last_written_value_is_string = write_bon8_internal(el);
+                }
+
+                if (N > 4)
+                {
+                    // end of container
+                    oa->write_character(to_char_type(0xFE));
+                    last_written_value_is_string = false; // 0xFE is not a string byte
+                }
+
+                return last_written_value_is_string;
+            }
+
+            case value_t::object:
+            {
+                bool last_written_value_is_string = false;
+                const auto N = j.m_value.object->size();
+                if (N <= 4)
+                {
+                    // start object with count (86..8A)
+                    oa->write_character(static_cast<std::uint8_t>(0x86 + N));
+                }
+                else
+                {
+                    // start object
+                    oa->write_character(to_char_type(0x8B));
+                }
+
+                // write each element
+                for (auto it = j.m_value.object->begin(); it != j.m_value.object->end(); ++it)
+                {
+                    const auto& key = it->first;
+                    const auto& value = it->second;
+
+                    write_bon8_internal(key);
+
+                    // check if we need a 0xFF separator between key and value
+                    if (!key.empty() && value.is_string())
+                    {
+                        oa->write_character(to_char_type(0xFF));
+                    }
+
+                    last_written_value_is_string = write_bon8_internal(value);
+
+                    // check if we need a 0xFF separator between the value and the next key
+                    if (value.is_string() && !value.m_value.string->empty() && std::next(it) != j.m_value.object->end())
+                    {
+                        oa->write_character(to_char_type(0xFF));
+                    }
+                }
+
+                if (N > 4)
+                {
+                    // end of container
+                    oa->write_character(to_char_type(0xFE));
+                    last_written_value_is_string = false; // 0xFE is not a string byte
+                }
+
+                return last_written_value_is_string;
+            }
+
+            case value_t::binary:
+            case value_t::discarded:
+            default:
+                return false;
+        }
+    }
+
+    void write_bon8_integer(typename BasicJsonType::number_integer_t value)
+    {
+        if (value < (std::numeric_limits<std::int32_t>::min)() || value > (std::numeric_limits<std::int32_t>::max)())
+        {
+            // 64 bit integers
+            oa->write_character(to_char_type(0x8D));
+            write_number(static_cast<std::int64_t>(value));
+        }
+        else if (value < -33818506 || value > 67637031)
+        {
+            // 32 bit integers
+            oa->write_character(to_char_type(0x8C));
+            write_number(static_cast<std::int32_t>(value));
+        }
+        else if (value <= -264075)
+        {
+            JSON_ASSERT(value >= -33818506);
+            value = -(value + 264075);
+            oa->write_character(static_cast<std::uint8_t>(0xF0 + (value >> 22 & 0x07)));
+            oa->write_character(static_cast<std::uint8_t>(0xC0 + (value >> 16 & 0x3F)));
+            oa->write_character(static_cast<std::uint8_t>(value >> 8));
+            oa->write_character(static_cast<std::uint8_t>(value));
+        }
+        else if (value <= -1931)
+        {
+            JSON_ASSERT(value >= -264074);
+            value = -(value + 1931);
+            oa->write_character(static_cast<std::uint8_t>(0xE0 + (value >> 14 & 0x0F)));
+            oa->write_character(static_cast<std::uint8_t>(0xC0 + (value >> 8 & 0x3F)));
+            oa->write_character(static_cast<std::uint8_t>(value));
+        }
+        else if (value <= -11)
+        {
+            JSON_ASSERT(value >= -1930);
+            value = -(value + 11);
+            oa->write_character(static_cast<std::uint8_t>(0xC2 + (value >> 6 & 0x1F)));
+            oa->write_character(static_cast<std::uint8_t>(0xC0 + (value & 0x3F)));
+        }
+        else if (value <= -1)
+        {
+            JSON_ASSERT(value >= -10);
+            value = -(value + 1);
+            oa->write_character(static_cast<std::uint8_t>(0xB8 + value));
+        }
+        else if (value <= 39)
+        {
+            JSON_ASSERT(value >= 0);
+            oa->write_character(static_cast<std::uint8_t>(0x90 + value));
+        }
+        else if (value <= 3879)
+        {
+            JSON_ASSERT(value >= 40);
+            value -= 40;
+            oa->write_character(static_cast<std::uint8_t>(0xC2 + (value >> 7 & 0x1F)));
+            oa->write_character(static_cast<std::uint8_t>(value & 0x7F));
+        }
+        else if (value <= 528167)
+        {
+            JSON_ASSERT(value >= 3880);
+            value -= 3880;
+            oa->write_character(static_cast<std::uint8_t>(0xE0 + (value >> 15 & 0x0F)));
+            oa->write_character(static_cast<std::uint8_t>(value >> 8 & 0x7F));
+            oa->write_character(static_cast<std::uint8_t>(value));
+        }
+        else
+        {
+            JSON_ASSERT(value >= 528168);
+            JSON_ASSERT(value <= 67637031);
+            value -= 528168;
+            oa->write_character(static_cast<std::uint8_t>(0xF0 + (value >> 23 & 0x17)));
+            oa->write_character(static_cast<std::uint8_t>(value >> 16 & 0x7F));
+            oa->write_character(static_cast<std::uint8_t>(value >> 8));
+            oa->write_character(static_cast<std::uint8_t>(value));
+        }
+    }
+
+    static constexpr CharType get_bon8_float_prefix(float /*unused*/)
+    {
+        return to_char_type(0x8E);
+    }
+
+    static constexpr CharType get_bon8_float_prefix(double /*unused*/)
+    {
+        return to_char_type(0x8F);
+    }
+
     ///////////////////////
     // Utility functions //
     ///////////////////////
@@ -16804,20 +17392,54 @@ class binary_writer
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
-        if (static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
-                static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
-                static_cast<double>(static_cast<float>(n)) == static_cast<double>(n))
+        if (std::isnan(n) || std::isinf(n) || (static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
+                                               static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
+                                               static_cast<double>(static_cast<float>(n)) == static_cast<double>(n)))
         {
-            oa->write_character(format == detail::input_format_t::cbor
-                                ? get_cbor_float_prefix(static_cast<float>(n))
-                                : get_msgpack_float_prefix(static_cast<float>(n)));
+            switch (format)
+            {
+                case input_format_t::cbor:
+                    oa->write_character(get_cbor_float_prefix(static_cast<float>(n)));
+                    break;
+                case input_format_t::msgpack:
+                    oa->write_character(get_msgpack_float_prefix(static_cast<float>(n)));
+                    break;
+                case input_format_t::bon8:
+                    oa->write_character(get_bon8_float_prefix(static_cast<float>(n)));
+                    break;
+                // LCOV_EXCL_START
+                case input_format_t::bson:
+                case input_format_t::json:
+                case input_format_t::ubjson:
+                case input_format_t::bjdata:
+                default:
+                    break;
+                    // LCOV_EXCL_STOP
+            }
             write_number(static_cast<float>(n));
         }
         else
         {
-            oa->write_character(format == detail::input_format_t::cbor
-                                ? get_cbor_float_prefix(n)
-                                : get_msgpack_float_prefix(n));
+            switch (format)
+            {
+                case input_format_t::cbor:
+                    oa->write_character(get_cbor_float_prefix(n));
+                    break;
+                case input_format_t::msgpack:
+                    oa->write_character(get_msgpack_float_prefix(n));
+                    break;
+                case input_format_t::bon8:
+                    oa->write_character(get_bon8_float_prefix(n));
+                    break;
+                // LCOV_EXCL_START
+                case input_format_t::bson:
+                case input_format_t::json:
+                case input_format_t::ubjson:
+                case input_format_t::bjdata:
+                default:
+                    break;
+                    // LCOV_EXCL_STOP
+            }
             write_number(n);
         }
 #ifdef __GNUC__
@@ -23658,6 +24280,29 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         binary_writer<char>(o).write_bson(j);
     }
 
+    /// @brief create a BSON serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_bon8/
+    static std::vector<std::uint8_t> to_bon8(const basic_json& j)
+    {
+        std::vector<std::uint8_t> result;
+        to_bon8(j, result);
+        return result;
+    }
+
+    /// @brief create a BSON serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_bon8/
+    static void to_bon8(const basic_json& j, detail::output_adapter<std::uint8_t> o)
+    {
+        binary_writer<std::uint8_t>(o).write_bon8(j);
+    }
+
+    /// @brief create a BSON serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_bon8/
+    static void to_bon8(const basic_json& j, detail::output_adapter<char> o)
+    {
+        binary_writer<char>(o).write_bon8(j);
+    }
+
     /// @brief create a JSON value from an input in CBOR format
     /// @sa https://json.nlohmann.me/api/basic_json/from_cbor/
     template<typename InputType>
@@ -23907,6 +24552,36 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
+
+    template<typename InputType>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_bon8(InputType&& i,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
+    {
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        auto ia = detail::input_adapter(std::forward<InputType>(i));
+        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::bon8, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
+    }
+
+    /*!
+    @copydoc from_bon8(InputType&&, const bool, const bool)
+    */
+    template<typename IteratorType>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_bon8(IteratorType first, IteratorType last,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
+    {
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        auto ia = detail::input_adapter(std::move(first), std::move(last));
+        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::bon8, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
+    }
+
     /// @}
 
     //////////////////////////

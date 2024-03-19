@@ -948,6 +948,18 @@ class binary_writer
         }
     }
 
+    /*!
+    @param[in] j  JSON value to serialize
+    */
+    void write_bon8(const BasicJsonType& j)
+    {
+        const bool last_written_value_is_string = write_bon8_internal(j);
+        if (last_written_value_is_string)
+        {
+            oa->write_character(to_char_type(0xFF));
+        }
+    }
+
   private:
     //////////
     // BSON //
@@ -1724,6 +1736,279 @@ class binary_writer
         return false;
     }
 
+    //////////
+    // BON8 //
+    //////////
+
+    /*!
+     * @param j
+     * @return whether the last written value was a string
+     */
+    bool write_bon8_internal(const BasicJsonType& j)
+    {
+        switch (j.type())
+        {
+            case value_t::null:
+            {
+                oa->write_character(to_char_type(0xFA));
+                return false;
+            }
+
+            case value_t::boolean:
+            {
+                oa->write_character(j.m_value.boolean
+                                    ? to_char_type(0xF9)
+                                    : to_char_type(0xF8));
+                return false;
+            }
+
+            case value_t::number_unsigned:
+            {
+                if (j.m_value.number_unsigned > static_cast<typename BasicJsonType::number_unsigned_t>((std::numeric_limits<std::int64_t>::max)()))
+                {
+                    JSON_THROW(out_of_range::create(407, "integer number " + std::to_string(j.m_value.number_unsigned) + " cannot be represented by BON8 as it does not fit int64", &j));
+                }
+                write_bon8_integer(static_cast<typename BasicJsonType::number_integer_t>(j.m_value.number_unsigned));
+                return false;
+            }
+
+            case value_t::number_integer:
+            {
+                write_bon8_integer(j.m_value.number_integer);
+                return false;
+            }
+
+            case value_t::number_float:
+            {
+                // special values
+                if (j.m_value.number_float == -1.0)
+                {
+                    oa->write_character(to_char_type(0xFB));
+                }
+                else if (j.m_value.number_float == 0.0 && !std::signbit(j.m_value.number_float))
+                {
+                    oa->write_character(to_char_type(0xFC));
+                }
+                else if (j.m_value.number_float == 1.0)
+                {
+                    oa->write_character(to_char_type(0xFD));
+                }
+                else if (std::isnan(j.m_value.number_float))
+                {
+                    oa->write_character(to_char_type(0x8E));
+                    oa->write_character(to_char_type(0x7F));
+                    oa->write_character(to_char_type(0x80));
+                    oa->write_character(to_char_type(0x00));
+                    oa->write_character(to_char_type(0x01));
+                }
+                else
+                {
+                    // write float with prefix
+                    write_compact_float(j.m_value.number_float, detail::input_format_t::bon8);
+                }
+                return false;
+            }
+
+            case value_t::string:
+            {
+                // empty string: use end-of-text symbol
+                if (j.m_value.string->empty())
+                {
+                    oa->write_character(to_char_type(0xFF));
+                    return false; // already wrote 0xFF byte
+                }
+
+                // write strings as is
+                oa->write_characters(
+                    reinterpret_cast<const CharType*>(j.m_value.string->c_str()),
+                    j.m_value.string->size());
+                return true;
+            }
+
+            case value_t::array:
+            {
+                bool last_written_value_is_string = false;
+                const auto N = j.m_value.array->size();
+                if (N <= 4)
+                {
+                    // start array with count (80..84)
+                    oa->write_character(static_cast<std::uint8_t>(0x80 + N));
+                }
+                else
+                {
+                    // start array
+                    oa->write_character(to_char_type(0x85));
+                }
+
+                // write each element
+                for (std::size_t i = 0; i < N; ++i)
+                {
+                    const auto& el = j.m_value.array->operator[](i);
+
+                    // check if 0xFF after nonempty string and string is required
+                    if (i > 0)
+                    {
+                        const auto& prev = j.m_value.array->operator[](i - 1);
+                        if (el.is_string() && prev.is_string() && !prev.m_value.string->empty())
+                        {
+                            oa->write_character(to_char_type(0xFF));
+                        }
+                    }
+
+                    last_written_value_is_string = write_bon8_internal(el);
+                }
+
+                if (N > 4)
+                {
+                    // end of container
+                    oa->write_character(to_char_type(0xFE));
+                    last_written_value_is_string = false; // 0xFE is not a string byte
+                }
+
+                return last_written_value_is_string;
+            }
+
+            case value_t::object:
+            {
+                bool last_written_value_is_string = false;
+                const auto N = j.m_value.object->size();
+                if (N <= 4)
+                {
+                    // start object with count (86..8A)
+                    oa->write_character(static_cast<std::uint8_t>(0x86 + N));
+                }
+                else
+                {
+                    // start object
+                    oa->write_character(to_char_type(0x8B));
+                }
+
+                // write each element
+                for (auto it = j.m_value.object->begin(); it != j.m_value.object->end(); ++it)
+                {
+                    const auto& key = it->first;
+                    const auto& value = it->second;
+
+                    write_bon8_internal(key);
+
+                    // check if we need a 0xFF separator between key and value
+                    if (!key.empty() && value.is_string())
+                    {
+                        oa->write_character(to_char_type(0xFF));
+                    }
+
+                    last_written_value_is_string = write_bon8_internal(value);
+
+                    // check if we need a 0xFF separator between the value and the next key
+                    if (value.is_string() && !value.m_value.string->empty() && std::next(it) != j.m_value.object->end())
+                    {
+                        oa->write_character(to_char_type(0xFF));
+                    }
+                }
+
+                if (N > 4)
+                {
+                    // end of container
+                    oa->write_character(to_char_type(0xFE));
+                    last_written_value_is_string = false; // 0xFE is not a string byte
+                }
+
+                return last_written_value_is_string;
+            }
+
+            case value_t::binary:
+            case value_t::discarded:
+            default:
+                return false;
+        }
+    }
+
+    void write_bon8_integer(typename BasicJsonType::number_integer_t value)
+    {
+        if (value < (std::numeric_limits<std::int32_t>::min)() || value > (std::numeric_limits<std::int32_t>::max)())
+        {
+            // 64 bit integers
+            oa->write_character(to_char_type(0x8D));
+            write_number(static_cast<std::int64_t>(value));
+        }
+        else if (value < -33818506 || value > 67637031)
+        {
+            // 32 bit integers
+            oa->write_character(to_char_type(0x8C));
+            write_number(static_cast<std::int32_t>(value));
+        }
+        else if (value <= -264075)
+        {
+            JSON_ASSERT(value >= -33818506);
+            value = -(value + 264075);
+            oa->write_character(static_cast<std::uint8_t>(0xF0 + (value >> 22 & 0x07)));
+            oa->write_character(static_cast<std::uint8_t>(0xC0 + (value >> 16 & 0x3F)));
+            oa->write_character(static_cast<std::uint8_t>(value >> 8));
+            oa->write_character(static_cast<std::uint8_t>(value));
+        }
+        else if (value <= -1931)
+        {
+            JSON_ASSERT(value >= -264074);
+            value = -(value + 1931);
+            oa->write_character(static_cast<std::uint8_t>(0xE0 + (value >> 14 & 0x0F)));
+            oa->write_character(static_cast<std::uint8_t>(0xC0 + (value >> 8 & 0x3F)));
+            oa->write_character(static_cast<std::uint8_t>(value));
+        }
+        else if (value <= -11)
+        {
+            JSON_ASSERT(value >= -1930);
+            value = -(value + 11);
+            oa->write_character(static_cast<std::uint8_t>(0xC2 + (value >> 6 & 0x1F)));
+            oa->write_character(static_cast<std::uint8_t>(0xC0 + (value & 0x3F)));
+        }
+        else if (value <= -1)
+        {
+            JSON_ASSERT(value >= -10);
+            value = -(value + 1);
+            oa->write_character(static_cast<std::uint8_t>(0xB8 + value));
+        }
+        else if (value <= 39)
+        {
+            JSON_ASSERT(value >= 0);
+            oa->write_character(static_cast<std::uint8_t>(0x90 + value));
+        }
+        else if (value <= 3879)
+        {
+            JSON_ASSERT(value >= 40);
+            value -= 40;
+            oa->write_character(static_cast<std::uint8_t>(0xC2 + (value >> 7 & 0x1F)));
+            oa->write_character(static_cast<std::uint8_t>(value & 0x7F));
+        }
+        else if (value <= 528167)
+        {
+            JSON_ASSERT(value >= 3880);
+            value -= 3880;
+            oa->write_character(static_cast<std::uint8_t>(0xE0 + (value >> 15 & 0x0F)));
+            oa->write_character(static_cast<std::uint8_t>(value >> 8 & 0x7F));
+            oa->write_character(static_cast<std::uint8_t>(value));
+        }
+        else
+        {
+            JSON_ASSERT(value >= 528168);
+            JSON_ASSERT(value <= 67637031);
+            value -= 528168;
+            oa->write_character(static_cast<std::uint8_t>(0xF0 + (value >> 23 & 0x17)));
+            oa->write_character(static_cast<std::uint8_t>(value >> 16 & 0x7F));
+            oa->write_character(static_cast<std::uint8_t>(value >> 8));
+            oa->write_character(static_cast<std::uint8_t>(value));
+        }
+    }
+
+    static constexpr CharType get_bon8_float_prefix(float /*unused*/)
+    {
+        return to_char_type(0x8E);
+    }
+
+    static constexpr CharType get_bon8_float_prefix(double /*unused*/)
+    {
+        return to_char_type(0x8F);
+    }
+
     ///////////////////////
     // Utility functions //
     ///////////////////////
@@ -1764,20 +2049,54 @@ class binary_writer
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
-        if (static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
-                static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
-                static_cast<double>(static_cast<float>(n)) == static_cast<double>(n))
+        if (std::isnan(n) || std::isinf(n) || (static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
+                                               static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
+                                               static_cast<double>(static_cast<float>(n)) == static_cast<double>(n)))
         {
-            oa->write_character(format == detail::input_format_t::cbor
-                                ? get_cbor_float_prefix(static_cast<float>(n))
-                                : get_msgpack_float_prefix(static_cast<float>(n)));
+            switch (format)
+            {
+                case input_format_t::cbor:
+                    oa->write_character(get_cbor_float_prefix(static_cast<float>(n)));
+                    break;
+                case input_format_t::msgpack:
+                    oa->write_character(get_msgpack_float_prefix(static_cast<float>(n)));
+                    break;
+                case input_format_t::bon8:
+                    oa->write_character(get_bon8_float_prefix(static_cast<float>(n)));
+                    break;
+                // LCOV_EXCL_START
+                case input_format_t::bson:
+                case input_format_t::json:
+                case input_format_t::ubjson:
+                case input_format_t::bjdata:
+                default:
+                    break;
+                    // LCOV_EXCL_STOP
+            }
             write_number(static_cast<float>(n));
         }
         else
         {
-            oa->write_character(format == detail::input_format_t::cbor
-                                ? get_cbor_float_prefix(n)
-                                : get_msgpack_float_prefix(n));
+            switch (format)
+            {
+                case input_format_t::cbor:
+                    oa->write_character(get_cbor_float_prefix(n));
+                    break;
+                case input_format_t::msgpack:
+                    oa->write_character(get_msgpack_float_prefix(n));
+                    break;
+                case input_format_t::bon8:
+                    oa->write_character(get_bon8_float_prefix(n));
+                    break;
+                // LCOV_EXCL_START
+                case input_format_t::bson:
+                case input_format_t::json:
+                case input_format_t::ubjson:
+                case input_format_t::bjdata:
+                default:
+                    break;
+                    // LCOV_EXCL_STOP
+            }
             write_number(n);
         }
 #ifdef __GNUC__

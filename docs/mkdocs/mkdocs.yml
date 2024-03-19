@@ -196,6 +196,7 @@ nav:
         - 'swap': api/basic_json/swap.md
         - 'std::swap&lt;basic_json&gt;': api/basic_json/std_swap.md
         - 'to_bjdata': api/basic_json/to_bjdata.md
+        - 'to_bon8': api/basic_json/to_bon8.md
         - 'to_bson': api/basic_json/to_bson.md
         - 'to_cbor': api/basic_json/to_cbor.md
         - 'to_msgpack': api/basic_json/to_msgpack.md
