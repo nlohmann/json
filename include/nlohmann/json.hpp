@@ -2326,8 +2326,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
     ValueType value(const json_pointer& ptr, const ValueType& default_value) const
     {
-        // value only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
+        // value only works for arrays and objects
+        if (JSON_HEDLEY_LIKELY(is_structured()))
         {
             // if pointer resolves a value, return it or use default value
             JSON_TRY
@@ -2351,8 +2351,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
     ReturnType value(const json_pointer& ptr, ValueType && default_value) const
     {
-        // value only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
+        // value only works for arrays and objects
+        if (JSON_HEDLEY_LIKELY(is_structured()))
         {
             // if pointer resolves a value, return it or use default value
             JSON_TRY

@@ -422,10 +422,33 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
 
                     SECTION("array")
                     {
-                        Json j_nonobject(Json::value_t::array);
-                        const Json j_nonobject_const(Json::value_t::array);
-                        CHECK_THROWS_WITH_AS(j_nonobject.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with array", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with array", typename Json::type_error&);
+                        Json j_array = Json::array({j});
+                        const Json j_array_const = Json::array({j});
+
+                        CHECK(j_array.value("/0/integer"_json_pointer, 2) == 1);
+                        CHECK(j_array.value("/0/integer"_json_pointer, 1.0) == Approx(1));
+                        CHECK(j_array.value("/0/unsigned"_json_pointer, 2) == 1u);
+                        CHECK(j_array.value("/0/unsigned"_json_pointer, 1.0) == Approx(1u));
+                        CHECK(j_array.value("/0/null"_json_pointer, Json(1)) == Json());
+                        CHECK(j_array.value("/0/boolean"_json_pointer, false) == true);
+                        CHECK(j_array.value("/0/string"_json_pointer, "bar") == "hello world");
+                        CHECK(j_array.value("/0/string"_json_pointer, std::string("bar")) == "hello world");
+                        CHECK(j_array.value("/0/floating"_json_pointer, 12.34) == Approx(42.23));
+                        CHECK(j_array.value("/0/floating"_json_pointer, 12) == 42);
+                        CHECK(j_array.value("/0/object"_json_pointer, Json({{"foo", "bar"}})) == Json::object());
+                        CHECK(j_array.value("/0/array"_json_pointer, Json({10, 100})) == Json({1, 2, 3}));
+
+                        CHECK(j_array_const.value("/0/integer"_json_pointer, 2) == 1);
+                        CHECK(j_array_const.value("/0/integer"_json_pointer, 1.0) == Approx(1));
+                        CHECK(j_array_const.value("/0/unsigned"_json_pointer, 2) == 1u);
+                        CHECK(j_array_const.value("/0/unsigned"_json_pointer, 1.0) == Approx(1u));
+                        CHECK(j_array_const.value("/0/boolean"_json_pointer, false) == true);
+                        CHECK(j_array_const.value("/0/string"_json_pointer, "bar") == "hello world");
+                        CHECK(j_array_const.value("/0/string"_json_pointer, std::string("bar")) == "hello world");
+                        CHECK(j_array_const.value("/0/floating"_json_pointer, 12.34) == Approx(42.23));
+                        CHECK(j_array_const.value("/0/floating"_json_pointer, 12) == 42);
+                        CHECK(j_array_const.value("/0/object"_json_pointer, Json({{"foo", "bar"}})) == Json::object());
+                        CHECK(j_array_const.value("/0/array"_json_pointer, Json({10, 100})) == Json({1, 2, 3}));
                     }
 
                     SECTION("number (integer)")
