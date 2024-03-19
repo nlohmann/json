@@ -53,7 +53,7 @@ void from_json(const BasicJsonType& j, std::optional<T>& opt)
     }
     else
     {
-        opt = j.template get<T>();
+        opt.emplace(j.template get<T>());
     }
 }
 #endif
