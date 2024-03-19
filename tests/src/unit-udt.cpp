@@ -653,8 +653,7 @@ static std::ostream& operator<<(std::ostream& os, small_pod l)
 TEST_CASE("custom serializer for pods" * doctest::test_suite("udt"))
 {
     using custom_json =
-        nlohmann::basic_json<std::map, std::vector, std::string, bool,
-        std::int64_t, std::uint64_t, double, std::allocator, pod_serializer>;
+        nlohmann::json::with_changed_json_serializer_t<pod_serializer>;
 
     auto p = udt::small_pod{42, '/', 42};
     custom_json const j = p;
@@ -672,7 +671,7 @@ TEST_CASE("custom serializer for pods" * doctest::test_suite("udt"))
 template <typename T, typename>
 struct another_adl_serializer;
 
-using custom_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, double, std::allocator, another_adl_serializer>;
+using custom_json = nlohmann::json::with_changed_json_serializer_t<another_adl_serializer>;
 
 template <typename T, typename>
 struct another_adl_serializer

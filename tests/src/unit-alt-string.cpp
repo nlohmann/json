@@ -168,16 +168,7 @@ void int_to_string(alt_string& target, std::size_t value)
     target = std::to_string(value).c_str();
 }
 
-using alt_json = nlohmann::basic_json <
-                 std::map,
-                 std::vector,
-                 alt_string,
-                 bool,
-                 std::int64_t,
-                 std::uint64_t,
-                 double,
-                 std::allocator,
-                 nlohmann::adl_serializer >;
+using alt_json = nlohmann::json::with_changed_string_t<alt_string>;
 
 bool operator<(const char* op1, const alt_string& op2) noexcept
 {
