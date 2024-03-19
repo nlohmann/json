@@ -15,8 +15,11 @@ cxx_standard = $(lastword c++11 $(filter c++%, $(subst ., ,$1)))
 %.output: %.cpp
 	@echo "standard $(call cxx_standard $(<:.cpp=))"
 	$(MAKE) $(<:.cpp=) \
-		CPPFLAGS="-I $(SRCDIR) -DJSON_USE_GLOBAL_UDLS=0" \
-		CXXFLAGS="-std=$(call cxx_standard,$(<:.cpp=)) -Wno-deprecated-declarations"
+		
+		CPPFLAGS="-I ../single_include -DJSON_USE_GLOBAL_UDLS=0" \
+		CXXFLAGS="-std=c++2a -Wno-deprecated-declarations"
+		CPPFLAGS += -include <compare>
+		examples/operator_spaceship__const_reference.c++20: examples/operator_spaceship__const_reference.c++20.cpp $(CXX) $(CXXFLAGS) $(CPPFLAGS) $< -o $@
 	./$(<:.cpp=) > $@
 	rm $(<:.cpp=)
 
@@ -41,5 +44,6 @@ check_output_portable: $(filter-out examples/meta.test examples/max_size.test ex
 
 clean:
 	rm -fr $(EXAMPLES:.cpp=)
+	rm -f examples/operator_spaceship__const_reference.c++20
 	$(MAKE) clean -C docset
 	$(MAKE) clean -C mkdocs
