@@ -1570,6 +1570,7 @@ TEST_CASE("JSON to enum mapping")
 }
 
 #ifdef JSON_HAS_CPP_17
+#ifndef JSON_USE_IMPLICIT_CONVERSIONS
 TEST_CASE("std::optional")
 {
     SECTION("null")
@@ -1605,7 +1606,7 @@ TEST_CASE("std::optional")
         std::optional<int> opt_int = 1;
 
         CHECK(json(opt_int) == j_number);
-        CHECK(std::optional<int>(j_number) == opt_int);
+        CHECK(j_number.get<std::optional<int>>() == opt_int);
     }
 
     SECTION("array")
@@ -1614,7 +1615,7 @@ TEST_CASE("std::optional")
         std::vector<std::optional<int>> opt_array = {{1, 2, std::nullopt}};
 
         CHECK(json(opt_array) == j_array);
-        CHECK(std::vector<std::optional<int>>(j_array) == opt_array);
+        CHECK(j_array.get<std::vector<std::optional<int>>>() == opt_array);
     }
 
     SECTION("object")
@@ -1626,6 +1627,7 @@ TEST_CASE("std::optional")
         CHECK(std::map<std::string, std::optional<int>>(j_object) == opt_object);
     }
 }
+#endif
 #endif
 
 #ifdef JSON_HAS_CPP_17
