@@ -734,7 +734,7 @@ struct value_in_range_of_impl1<OfType, T, true>
 };
 
 template<typename OfType, typename T>
-inline constexpr bool value_in_range_of(T val)
+constexpr bool value_in_range_of(T val)
 {
     return value_in_range_of_impl1<OfType, T>::test(val);
 }
@@ -750,7 +750,7 @@ namespace impl
 {
 
 template<typename T>
-inline constexpr bool is_c_string()
+constexpr bool is_c_string()
 {
     using TUnExt = typename std::remove_extent<T>::type;
     using TUnCVExt = typename std::remove_cv<TUnExt>::type;
@@ -778,7 +778,7 @@ namespace impl
 {
 
 template<typename T>
-inline constexpr bool is_transparent()
+constexpr bool is_transparent()
 {
     return is_detected<detect_is_transparent, T>::value;
 }

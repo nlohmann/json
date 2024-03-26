@@ -3219,7 +3219,7 @@ struct static_const
 #endif
 
 template<typename T, typename... Args>
-inline constexpr std::array<T, sizeof...(Args)> make_array(Args&& ... args)
+constexpr std::array<T, sizeof...(Args)> make_array(Args&& ... args)
 {
     return std::array<T, sizeof...(Args)> {{static_cast<T>(std::forward<Args>(args))...}};
 }
@@ -4147,7 +4147,7 @@ struct value_in_range_of_impl1<OfType, T, true>
 };
 
 template<typename OfType, typename T>
-inline constexpr bool value_in_range_of(T val)
+constexpr bool value_in_range_of(T val)
 {
     return value_in_range_of_impl1<OfType, T>::test(val);
 }
@@ -4163,7 +4163,7 @@ namespace impl
 {
 
 template<typename T>
-inline constexpr bool is_c_string()
+constexpr bool is_c_string()
 {
     using TUnExt = typename std::remove_extent<T>::type;
     using TUnCVExt = typename std::remove_cv<TUnExt>::type;
@@ -4191,7 +4191,7 @@ namespace impl
 {
 
 template<typename T>
-inline constexpr bool is_transparent()
+constexpr bool is_transparent()
 {
     return is_detected<detect_is_transparent, T>::value;
 }
@@ -18652,7 +18652,7 @@ class serializer
     @param[in] x  unsigned integer number to count its digits
     @return    number of decimal digits
     */
-    inline unsigned int count_digits(number_unsigned_t x) noexcept
+    unsigned int count_digits(number_unsigned_t x) noexcept
     {
         unsigned int n_digits = 1;
         for (;;)
@@ -18961,7 +18961,7 @@ class serializer
      * absolute values of INT_MIN and INT_MAX are usually not the same. See
      * #1708 for details.
      */
-    inline number_unsigned_t remove_sign(number_integer_t x) noexcept
+    number_unsigned_t remove_sign(number_integer_t x) noexcept
     {
         JSON_ASSERT(x < 0 && x < (std::numeric_limits<number_integer_t>::max)()); // NOLINT(misc-redundant-expression)
         return static_cast<number_unsigned_t>(-(x + 1)) + 1;
@@ -20515,15 +20515,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief move constructor
     /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     basic_json(basic_json&& other) noexcept
-        : json_base_class_t(std::forward<json_base_class_t>(other)),
-          m_data(std::move(other.m_data))
+    // check that passed value is valid (has to be done before forwarding)
+        : json_base_class_t((other.assert_invariant(false), std::forward<json_base_class_t>(other))),
+          m_data(std::move(other.m_data))// NOLINT(bugprone-use-after-move,hicpp-invalid-access-moved)
     {
-        // check that passed value is valid
-        other.assert_invariant(false);
-
         // invalidate payload
-        other.m_data.m_type = value_t::null;
-        other.m_data.m_value = {};
+        other.m_data.m_type = value_t::null; // NOLINT(bugprone-use-after-move,hicpp-invalid-access-moved)
+        other.m_data.m_value = {};// NOLINT(bugprone-use-after-move,hicpp-invalid-access-moved)
 
         set_parents();
         assert_invariant();
