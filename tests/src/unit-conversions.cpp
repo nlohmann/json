@@ -1164,7 +1164,7 @@ TEST_CASE("value conversion")
 
             SECTION("non-const")
             {
-                const json j_const = j;
+                const json j_const = j; // NOLINT(performance-unnecessary-copy-initialization)
                 const auto& b = j_const.get_binary();
                 CHECK(*json(b).m_data.m_value.binary == *j.m_data.m_value.binary);
             }
