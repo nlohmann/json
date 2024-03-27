@@ -319,6 +319,43 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(person_without_default_constru
 
 } // namespace persons
 
+namespace emptys
+{
+class empty_intrusive
+{
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(empty_intrusive)
+};
+
+class empty_intrusive_with_default
+{
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(empty_intrusive_with_default)
+};
+
+class empty_only_serialize
+{
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(empty_only_serialize)
+};
+
+class empty_non_intrusive
+{
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(empty_non_intrusive)
+
+class empty_intrusive_non_intrusive_only_serialize
+{
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(empty_intrusive_non_intrusive_only_serialize)
+
+class empty_non_intrusive_with_default
+{
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(empty_non_intrusive_with_default)
+
+} // namespace emptys
+
 TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", T,
                    persons::person_with_private_data,
                    persons::person_without_private_data_1,
@@ -469,6 +506,40 @@ TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHM
                 {"Kyle", 2}
             };
             CHECK(json(two_persons).dump() == "[{\"age\":1,\"name\":\"Erik\"},{\"age\":2,\"name\":\"Kyle\"}]");
+        }
+    }
+}
+
+TEST_CASE_TEMPLATE("Serialization of classes with no member variables", T,
+                   emptys::empty_intrusive_non_intrusive_only_serialize,
+                   emptys::empty_only_serialize)
+{
+    SECTION("empty")
+    {
+        {
+            T empty;
+            std::string const s = json(empty).dump();
+            CHECK(s == "{}");
+        }
+    }
+}
+
+TEST_CASE_TEMPLATE("Serialization/deserialization of classes with no member variables", T,
+                   emptys::empty_intrusive,
+                   emptys::empty_intrusive_with_default,
+                   emptys::empty_non_intrusive,
+                   emptys::empty_non_intrusive_with_default)
+{
+    SECTION("empty")
+    {
+        {
+            T empty;
+            std::string const s = json(empty).dump();
+            CHECK(s == "{}");
+
+            nlohmann::json const json_empty = nlohmann::json::parse(s);
+            T empty2;
+            json_empty.get_to(empty2);
         }
     }
 }
