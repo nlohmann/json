@@ -9,7 +9,7 @@ basic_json(std::nullptr_t = nullptr) noexcept;
 
 // (3)
 template<typename CompatibleType>
-basic_json(CompatibleType&& val) noexcept(noexcept(
+JSON_EXPLICIT basic_json(CompatibleType&& val) noexcept(noexcept(
            JSONSerializer<U>::to_json(std::declval<basic_json_t&>(),
                                       std::forward<CompatibleType>(val))));
 
@@ -58,6 +58,7 @@ basic_json(basic_json&& other) noexcept;
 3. This is a "catch all" constructor for all compatible JSON types; that is, types for which a `to_json()` method
    exists. The constructor forwards the parameter `val` to that method (to `json_serializer<U>::to_json` method with
    `U = uncvref_t<CompatibleType>`, to be exact).
+   See [Notes](#notes) for the meaning of `JSON_EXPLICIT`.
    
     Template type `CompatibleType` includes, but is not limited to, the following types:
 
@@ -238,6 +239,38 @@ basic_json(basic_json&& other) noexcept;
 9. Constant.
 
 ## Notes
+
+- Overload 3:
+
+    !!! note "Definition of `JSON_EXPLICIT`"
+
+        By default, `JSON_EXPLICIT` is defined to the empty string, so the signature is:
+
+        ```cpp
+        template<typename CompatibleType>
+        basic_json(CompatibleType&& val)
+        ```
+
+        If [`JSON_USE_IMPLICIT_CONVERSIONS`](../macros/json_use_implicit_conversions.md) is set to `0`,
+        `JSON_EXPLICIT` is defined to `#!cpp explicit`:
+
+        ```cpp
+        template<typename CompatibleType>
+        explicit basic_json(CompatibleType&& val)
+        ```
+
+        That is, implicit conversions can be switched off by defining
+        [`JSON_USE_IMPLICIT_CONVERSIONS`](../macros/json_use_implicit_conversions.md) to `0`.
+
+    !!! info "Future behavior change"
+
+        Implicit conversions will be switched off by default in the next major release of the library. That is,
+        `JSON_EXPLICIT` will be set to `#!cpp explicit` by default.
+
+        You can prepare existing code by already defining
+        [`JSON_USE_IMPLICIT_CONVERSIONS`](../macros/json_use_implicit_conversions.md) to `0` and replace any implicit
+        conversions with explicit calls to [the constructor](../basic_json/basic_json.md) or `static_cast`.
+
 
 - Overload 5:
 
