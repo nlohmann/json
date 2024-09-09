@@ -15,6 +15,8 @@ endif
 cpp_args = [
     '-DJSON_USE_GLOBAL_UDLS=@0@'.format(
         (not get_option('GlobalUDLs')).to_int()),
+    '-DJSON_USE_IMPLICIT_CONVERSIONS=@0@'.format(
+        (not get_option('ImplicitConversions')).to_int()),
 ]
 
 nlohmann_json_dep = declare_dependency(
