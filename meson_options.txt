@@ -10,3 +10,9 @@ option(
     value: true,
     description: 'Place user-defined string literals in the global namespace',
 )
+option(
+    'ImplicitConversions',
+    type: 'boolean',
+    value: true,
+    description: 'Enable implicit conversions',
+)
