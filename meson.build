@@ -16,8 +16,11 @@ nlohmann_json_multiple_headers = declare_dependency(
 meson.override_dependency('nlohmann_json_multiple_headers', nlohmann_json_multiple_headers)
 
 if not meson.is_subproject()
-    install_headers('single_include/nlohmann/json.hpp', subdir: 'nlohmann')
-    install_headers('single_include/nlohmann/json_fwd.hpp', subdir: 'nlohmann')
+    install_subdir(
+        'single_include/nlohmann',
+        install_dir: get_option('includedir'),
+        install_tag: 'devel',
+    )
 
     pkgc = import('pkgconfig')
     pkgc.generate(name: 'nlohmann_json',
