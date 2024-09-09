@@ -1,0 +1,6 @@
+option(
+    'MultipleHeaders',
+    type: 'boolean',
+    value: true,
+    description: 'Use non-amalgamated version of the library',
+)
