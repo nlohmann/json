@@ -3,6 +3,7 @@ project('nlohmann_json',
     version : '3.12.0',
     license : 'MIT',
     meson_version : '>= 0.64',
+    default_options: ['cpp_std=c++11'],
 )
 
 nlohmann_json_dep = declare_dependency(
