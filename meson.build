@@ -12,7 +12,13 @@ else
     incdir = 'single_include'
 endif
 
+cpp_args = [
+    '-DJSON_USE_GLOBAL_UDLS=@0@'.format(
+        (not get_option('GlobalUDLs')).to_int()),
+]
+
 nlohmann_json_dep = declare_dependency(
+    compile_args: cpp_args,
     include_directories: include_directories(incdir)
 )
 meson.override_dependency('nlohmann_json', nlohmann_json_dep)
