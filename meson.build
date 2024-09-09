@@ -13,12 +13,12 @@ nlohmann_json_multiple_headers = declare_dependency(
 )
 
 if not meson.is_subproject()
-install_headers('single_include/nlohmann/json.hpp', subdir: 'nlohmann')
-install_headers('single_include/nlohmann/json_fwd.hpp', subdir: 'nlohmann')
+    install_headers('single_include/nlohmann/json.hpp', subdir: 'nlohmann')
+    install_headers('single_include/nlohmann/json_fwd.hpp', subdir: 'nlohmann')
 
-pkgc = import('pkgconfig')
-pkgc.generate(name: 'nlohmann_json',
-    version: meson.project_version(),
-    description: 'JSON for Modern C++'
-)
+    pkgc = import('pkgconfig')
+    pkgc.generate(name: 'nlohmann_json',
+        version: meson.project_version(),
+        description: 'JSON for Modern C++'
+    )
 endif
