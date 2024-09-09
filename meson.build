@@ -6,19 +6,20 @@ project('nlohmann_json',
     default_options: ['cpp_std=c++11'],
 )
 
+if get_option('MultipleHeaders')
+    incdir = 'include'
+else
+    incdir = 'single_include'
+endif
+
 nlohmann_json_dep = declare_dependency(
-    include_directories: include_directories('single_include')
+    include_directories: include_directories(incdir)
 )
 meson.override_dependency('nlohmann_json', nlohmann_json_dep)
 
-nlohmann_json_multiple_headers = declare_dependency(
-    include_directories: include_directories('include')
-)
-meson.override_dependency('nlohmann_json_multiple_headers', nlohmann_json_multiple_headers)
-
 if not meson.is_subproject()
     install_subdir(
-        'single_include/nlohmann',
+        incdir / 'nlohmann',
         install_dir: get_option('includedir'),
         install_tag: 'devel',
     )
