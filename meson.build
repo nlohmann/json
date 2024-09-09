@@ -8,10 +8,12 @@ project('nlohmann_json',
 nlohmann_json_dep = declare_dependency(
     include_directories: include_directories('single_include')
 )
+meson.override_dependency('nlohmann_json', nlohmann_json_dep)
 
 nlohmann_json_multiple_headers = declare_dependency(
     include_directories: include_directories('include')
 )
+meson.override_dependency('nlohmann_json_multiple_headers', nlohmann_json_multiple_headers)
 
 if not meson.is_subproject()
     install_headers('single_include/nlohmann/json.hpp', subdir: 'nlohmann')
