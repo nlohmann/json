@@ -363,7 +363,7 @@ and follow the then displayed descriptions. Please see the vcpkg project for any
         ```cmake title="CMakeLists.txt"
         --8<-- "integration/vcpkg/CMakeLists.txt"
         ```
-    
+
         ```cpp title="example.cpp"
         --8<-- "integration/vcpkg/example.cpp"
         ```
@@ -408,7 +408,7 @@ installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nl
         ```cmake title="CMakeLists.txt"
         --8<-- "integration/vcpkg/CMakeLists.txt"
         ```
-    
+
         ```cpp title="example.cpp"
         --8<-- "integration/vcpkg/example.cpp"
         ```
@@ -418,7 +418,7 @@ installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nl
         ```shell
         cget init
         ```
- 
+
     3. Install the library
 
         ```shell
@@ -476,15 +476,15 @@ dotnet add package nlohmann.json
     Most of the packages in NuGet gallery are .NET packages and would not be useful in a C++ project. Microsoft
     recommends adding “native” and “nativepackage” tags to C++ NuGet packages to distinguish them, but even adding
     “native” to search query would still show many .NET-only packages in the list.
-    
-    Nevertheless, after finding the package you want, click on “Install” button and accept confirmation dialogs.
-    After the package is successfully added to the projects, you should be able to build and execute the project
+
+    Nevertheless, after finding the package you want, just click on “Install” button and accept confirmation dialogs.
+    After the package is successfully added to the projects, you should be able to just build and execute the project
     without the need for making any more changes to build settings.
 
     !!! note
 
         A few notes:
-    
+
         - NuGet packages are installed per project and not system-wide. The header and binaries for the package are only
           available to the project it is added to, and not other projects (obviously unless we add the package to those
           projects as well)
@@ -502,9 +502,9 @@ dotnet add package nlohmann.json
 
     After you add a NuGet package, three changes occur in the project source directory. Of course, we could make these
     changes manually instead of using GUI:
-    
+
     ![](nuget/nuget-project-changes.png)
-    
+
     1. A `packages.config` file will be created (or updated to include the package name if one such file already
        exists). This file contains a list of the packages required by this project (name and minimum version) and must
        be added to the project source code repository, so if you move the source code to a new machine, MSBuild/NuGet
@@ -519,29 +519,29 @@ dotnet add package nlohmann.json
 
     2. A `packages` folder which contains actual files in the packages (these are header and binary files required for
        a successful build, plus a few metadata files). In case of this library for example, it contains `json.hpp`:
-    
+
         ![](nuget/nuget-package-content.png)
-    
+
         !!! note
 
             This directory should not be added to the project source code repository, as it will be restored before each
             build by MSBuild/NuGet. If you go ahead and delete this folder, then build the project again, it will
             magically re-appear!
-    
+
     3. Project MSBuild makefile (which for Visual C++ projects has a .vcxproj extension) will be updated to include
        settings from the package.
-    
+
         ![](nuget/nuget-project-makefile.png)
-    
+
         The important bit for us here is line 170, which tells MSBuild to import settings from
         `packages\nlohmann.json.3.5.0\build\native\nlohmann.json.targets` file. This is a file the package creator
         created and added to the package (you can see it is one of the two files I created in this repository, the other
         just contains package attributes like name and version number). What does it contain?
-    
+
         For our header-only repository, the only setting we need is to add our include directory to the list of
         `AdditionalIncludeDirectories`:
 
-        ```xml    
+        ```xml
         <?xml version="1.0" encoding="utf-8"?>
         <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
             <ItemDefinitionGroup>
@@ -554,21 +554,21 @@ dotnet add package nlohmann.json
 
         For libraries with binary files, we will need to add `.lib` files to linker inputs and add settings to copy
         `.dll` and other redistributable files to output directory, if needed.
-    
+
         There are other changes to the makefile as well:
-    
+
         - Lines 165-167 add the `packages.config` as one of project files (so it is shown in Solution Explorer tree
           view). It is added as None (no build action) and removing it wouldn’t affect build.
-    
+
         - Lines 172-177 check to ensure the required packages are present. This will display a build error if package
           directory is empty (for example when NuGet cannot restore packages because Internet connection is down).
           Again, if you omit this section, the only change in build would be a more cryptic error message if build
           fails.
-    
+
         !!! note
 
             Changes to .vcxproj makefile should also be added to project source code repository.
-    
+
     As you can see, the mechanism NuGet uses to modify project settings is through MSBuild makefiles, so using NuGet
     with other build systems and compilers (like CMake) as a dependency manager is either impossible or more problematic
     than useful.
@@ -645,7 +645,7 @@ If you are using [MSYS2](http://www.msys2.org/), you can use the [mingw-w64-nloh
     - :octicons-file-24: File issues at the [MacPorts issue tracker](https://trac.macports.org/newticket?port=nlohmann-json)
     - :octicons-question-24: [MacPorts website](https://www.macports.org)
 
-If you are using [MacPorts](https://ports.macports.org), execute 
+If you are using [MacPorts](https://ports.macports.org), execute
 
 ```shell
 sudo port install nlohmann-json
@@ -700,13 +700,73 @@ to install the [nlohmann-json](https://ports.macports.org/port/nlohmann-json/) p
 
 ## build2
 
-If you are using [`build2`](https://build2.org), you can use the [`nlohmann-json`](https://cppget.org/nlohmann-json)
-package from the public repository <http://cppget.org> or directly from the
-[package's sources repository](https://github.com/build2-packaging/nlohmann-json). In your project's `manifest` file,
-add `depends: nlohmann-json` (probably with some [version constraints](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml#guide-add-remove-deps)). If you are not familiar with using dependencies in `build2`, [please read this introduction](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml).
-Please file issues [here](https://github.com/build2-packaging/nlohmann-json) if you experience problems with the packages.
+!!! abstract "Summary"
 
-:material-update: The [package](https://cppget.org/nlohmann-json) is updated automatically.
+    package: **`nlohmann-json`**
+    library target: **`nlohmann-json%`**
+    available in package repositories:
+      - [`cppget.org` (recommended)](https://cppget.org/nlohmann-json)
+      - [package's sources (for advanced users)](https://github.com/build2-packaging/nlohmann-json/)
+
+    - :octicons-tag-24: Available versions: current version and older versions since `3.7.3` (see [cppget.org](https://cppget.org/nlohmann-json))
+    - :octicons-rocket-24: The package is maintained and published by the community in [this the repository][(https://github.com/conan-io/conan-center-index/tree/master/recipes/nlohmann_json](https://github.com/build2-packaging/nlohmann-json/)).
+    - :octicons-file-24: File issues at the [package source repository](https://github.com/build2-packaging/nlohmann-json/issues/)
+    - :octicons-question-24: [`build2` website](https://build2)
+
+To use this package in an exising [`build2`](https://build2.org) project, the general steps are:
+
+  0. <details><summary>Make the package available to download from a package repository that provides it.</b></summary>
+
+      Your project's `repositories.manifest` specifies where the package manager will try to acquire packages by default. Make sure one of the repositories specified in this file provides `nlhomann-json` package.
+      The recommended open-source repository is [`cppget.org`](https://cppget.org/).
+
+      If the project has been created using [`bdep new`](https://build2.org/bdep/doc/bdep-new.xhtml), `cppget.org` is already specified in `repositories.manifest` but commented, just uncomment these lines:
+      ```
+      :
+      role: prerequisite
+      location: https://pkg.cppget.org/1/stable
+      ```
+      </details>
+
+  1. <details><summary>Add this package as dependency of your project.</summary>
+
+       In your project's `manifest` add the dependency to the package, like `depends: nlohmann-json`, probably with some [version constraints](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml#guide-add-remove-deps).
+       For example, to depend on the latest `3.x` version available:
+       ```
+       depends: nlohmann-json ^3.0.0
+       ```
+       </details>
+
+
+  2. <details><summary>Add this library (from the package) as dependency of your target that uses it.</summary>
+
+      In the `buildfile` defining the target that will use this library:
+        - import the target from the `nlhomann-json` package, for example:
+           ```
+           import nljson = nlhomann-json%json
+           ```
+        - add the library's target as requirement for your target using it, for example:
+           ```
+           exe{example} : ... $nljson
+           ```
+      </details>
+
+  3. <details><summary>Use the library in your project's code and build it.</summary>
+
+      At this point, any `b` or `bdep update` command that will update/build the project will also acquire the missing dependency automatically, then build it and link it with your target.
+
+      If you just want to trigger the dependencies synchronization for all your configurations:
+        ```
+        bdep sync -af
+        ```
+      </details>
+
+??? example "Example: from scratch, using `build2`'s [`bdep new` command](https://build2.org/bdep/doc/bdep-new.xhtml)"
+```
+# create a simple executable project from scratch, with a simplfied directory layout, using `.hpp/.cpp` file extensions:
+bdep new example -exe,no-subdirs,no-tests -l c++,cpp
+
+```
 
 ```shell
 bdep new -t exe -l c++
@@ -784,7 +844,7 @@ CPMAddPackage("gh:nlohmann/json@3.12.0")
         ```shell
         xmake
         ```
-    
+
     3. Run
 
         ```shell
