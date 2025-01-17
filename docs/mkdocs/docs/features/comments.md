@@ -11,7 +11,9 @@ This library does not support comments *by default*. It does so for three reason
 
 3. It is dangerous for interoperability if some libraries add comment support while others do not. Please check [The Harmful Consequences of the Robustness Principle](https://tools.ietf.org/html/draft-iab-protocol-maintenance-01) on this.
 
-However, you can pass set parameter `ignore_comments` to `#!c true` in the parse function to ignore `//` or `/* */` comments. Comments will then be treated as whitespace.
+However, you can set parameter `ignore_comments` to `#!cpp true` in the [`parse`](../api/basic_json/parse.md) function to ignore `//` or `/* */` comments. Comments will then be treated as whitespace.
+
+For more information, see [JSON With Commas and Comments (JWCC)](https://nigeltao.github.io/blog/2021/json-with-commas-comments.html).
 
 !!! example
 
@@ -28,56 +30,11 @@ However, you can pass set parameter `ignore_comments` to `#!c true` in the parse
     When calling `parse` without additional argument, a parse error exception is thrown. If `ignore_comments` is set to `#! true`, the comments are ignored during parsing:
 
     ```cpp
-    #include <iostream>
-    #include "json.hpp"
-    
-    using json = nlohmann::json;
-    
-    int main()
-    {
-        std::string s = R"(
-        {
-            // update in 2006: removed Pluto
-            "planets": ["Mercury", "Venus", "Earth", "Mars",
-                        "Jupiter", "Uranus", "Neptune" /*, "Pluto" */]
-        }
-        )";
-        
-        try
-        {
-            json j = json::parse(s);
-        }
-        catch (json::exception &e)
-        {
-            std::cout << e.what() << std::endl;
-        }
-        
-        json j = json::parse(s,
-                             /* callback */ nullptr,
-                             /* allow exceptions */ true,
-                             /* ignore_comments */ true);
-        std::cout << j.dump(2) << '\n';
-    }
+    --8<-- "examples/comments.cpp"
     ```
 
     Output:
     
     ```
-    [json.exception.parse_error.101] parse error at line 3, column 9:
-    syntax error while parsing object key - invalid literal;
-    last read: '<U+000A>    {<U+000A>        /'; expected string literal
-    ```
-    
-    ```json
-    {
-      "planets": [
-        "Mercury",
-        "Venus",
-        "Earth",
-        "Mars",
-        "Jupiter",
-        "Uranus",
-        "Neptune"
-      ]
-    }
+    --8<-- "examples/comments.output"
     ```

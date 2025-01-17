@@ -67,6 +67,7 @@ nav:
           - features/binary_formats/ubjson.md
       - features/binary_values.md
       - features/comments.md
+      - features/trailing_commas.md
       - Element Access:
           - features/element_access/index.md
           - features/element_access/unchecked_access.md

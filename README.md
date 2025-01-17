@@ -1801,7 +1801,17 @@ This library does not support comments by default. It does so for three reasons:
   
 3. It is dangerous for interoperability if some libraries would add comment support while others don't. Please check [The Harmful Consequences of the Robustness Principle](https://tools.ietf.org/html/draft-iab-protocol-maintenance-01) on this.
 
-However, you can pass set parameter `ignore_comments` to true in the `parse` function to ignore `//` or `/* */` comments. Comments will then be treated as whitespace.
+However, you can set set parameter `ignore_comments` to true in the `parse` function to ignore `//` or `/* */` comments. Comments will then be treated as whitespace.
+
+### Trailing commas
+
+The JSON specification does not allow trailing commas in arrays and objects, and hence this library is treating them as parsing errors by default.
+
+Like comments, you can set parameter `ignore_trailing_commas` to true in the `parse` function to ignore trailing commas in arrays and objects. Note that a single comma as the only content of the array or object (`[,]` or `{,}`) is not allowed, and multiple trailing commas (`[1,,]`) are not allowed either.
+
+This library does not add trailing commas when serializing JSON data.
+
+For more information, see [JSON With Commas and Comments (JWCC)](https://nigeltao.github.io/blog/2021/json-with-commas-comments.html).
 
 ### Order of object keys
 

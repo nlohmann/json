@@ -206,6 +206,7 @@ class SaxCountdown : public nlohmann::json::json_sax_t
 json parser_helper(const std::string& s);
 bool accept_helper(const std::string& s);
 void comments_helper(const std::string& s);
+void trailing_comma_helper(const std::string& s);
 
 json parser_helper(const std::string& s)
 {
@@ -224,6 +225,8 @@ json parser_helper(const std::string& s)
     CHECK(j_sax == j);
 
     comments_helper(s);
+
+    trailing_comma_helper(s);
 
     return j;
 }
@@ -259,10 +262,11 @@ bool accept_helper(const std::string& s)
     // 6. check if this approach came to the same result
     CHECK(ok_noexcept == ok_noexcept_cb);
 
-    // 7. check if comments are properly ignored
+    // 7. check if comments or trailing commas are properly ignored
     if (ok_accept)
     {
         comments_helper(s);
+        trailing_comma_helper(s);
     }
 
     // 8. return result
@@ -299,6 +303,38 @@ void comments_helper(const std::string& s)
 
         CHECK_NOTHROW(_ = json::parse(json_with_comment, nullptr, true, true));
         CHECK(json::accept(json_with_comment, true));
+    }
+}
+
+void trailing_comma_helper(const std::string& s)
+{
+    json _;
+
+    // parse/accept with default parser
+    CHECK_NOTHROW(_ = json::parse(s));
+    CHECK(json::accept(s));
+
+    // parse/accept while allowing trailing commas
+    CHECK_NOTHROW(_ = json::parse(s, nullptr, false, false, true));
+    CHECK(json::accept(s, false, true));
+
+    // note: [,] and {,} are not allowed
+    if (s.size() > 1 && (s.back() == ']' || s.back() == '}') && !_.empty())
+    {
+        std::vector<std::string> json_with_trailing_commas;
+        json_with_trailing_commas.push_back(s.substr(0, s.size() - 1) + " ," + s.back());
+        json_with_trailing_commas.push_back(s.substr(0, s.size() - 1) + "," + s.back());
+        json_with_trailing_commas.push_back(s.substr(0, s.size() - 1) + ", " + s.back());
+
+        for (const auto& json_with_trailing_comma : json_with_trailing_commas)
+        {
+            CAPTURE(json_with_trailing_comma)
+            CHECK_THROWS_AS(_ = json::parse(json_with_trailing_comma), json::parse_error);
+            CHECK(!json::accept(json_with_trailing_comma));
+
+            CHECK_NOTHROW(_ = json::parse(json_with_trailing_comma, nullptr, true, false, true));
+            CHECK(json::accept(json_with_trailing_comma, false, true));
+        }
     }
 }
 

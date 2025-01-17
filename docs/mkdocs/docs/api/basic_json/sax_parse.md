@@ -7,7 +7,8 @@ static bool sax_parse(InputType&& i,
                       SAX* sax,
                       input_format_t format = input_format_t::json,
                       const bool strict = true,
-                      const bool ignore_comments = false);
+                      const bool ignore_comments = false,
+                      const bool ignore_trailing_commas = false);
 
 // (2)
 template<class IteratorType, class SAX>
@@ -15,7 +16,8 @@ static bool sax_parse(IteratorType first, IteratorType last,
                       SAX* sax,
                       input_format_t format = input_format_t::json,
                       const bool strict = true,
-                      const bool ignore_comments = false);
+                      const bool ignore_comments = false,
+                      const bool ignore_trailing_commas = false);
 ```
 
 Read from input and generate SAX events
@@ -65,6 +67,10 @@ The SAX event lister must follow the interface of [`json_sax`](../json_sax/index
 :   whether comments should be ignored and treated like whitespace (`#!cpp true`) or yield a parse error
     (`#!cpp false`); (optional, `#!cpp false` by default)
 
+`ignore_trailing_commas` (in)
+:   whether trailing commas in arrays or objects should be ignored and treated like whitespace (`#!cpp true`) or yield a parse error
+    (`#!cpp false`); (optional, `#!cpp false` by default)
+
 `first` (in)
 :   iterator to the start of a character range
 
@@ -107,6 +113,7 @@ A UTF-8 byte order mark is silently ignored.
 
 - Added in version 3.2.0.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
+- Added `ignore_trailing_commas` in version 3.12.1.
 
 !!! warning "Deprecation"
 
