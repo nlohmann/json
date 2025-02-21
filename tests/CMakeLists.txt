@@ -181,6 +181,10 @@ json_test_add_test_for(src/unit-comparison.cpp
 
 add_subdirectory(abi)
 
+if (JSON_ClangTidyPlugin)
+    add_subdirectory(clang_tidy_plugin)
+endif()
+
 #############################################################################
 # Test the generated build configs
 #############################################################################

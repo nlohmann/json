@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.5...4.0)
 ## PROJECT
 ## name and version
 ##
-project(nlohmann_json VERSION 3.12.0 LANGUAGES CXX)
+project(nlohmann_json VERSION 3.12.0 LANGUAGES C CXX)
 
 ##
 ## MAIN_PROJECT CHECK
@@ -60,6 +60,7 @@ option(JSON_LegacyDiscardedValueComparison "Enable legacy discarded value compar
 option(JSON_Install                        "Install CMake targets during install step." ${MAIN_PROJECT})
 option(JSON_MultipleHeaders                "Use non-amalgamated version of the library." ON)
 option(JSON_SystemInclude                  "Include as system headers (skip for clang-tidy)." OFF)
+option(JSON_ClangTidyPlugin                "Build clang-tidy plug-in." OFF)
 
 if (JSON_CI)
     include(ci)
@@ -169,6 +170,12 @@ CONFIGURE_FILE(
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
     @ONLY
 )
+
+if (JSON_ClangTidyPlugin)
+    find_package(LLVM REQUIRED CONFIG)
+    find_package(Clang REQUIRED CONFIG)
+    add_subdirectory(clang_tidy_plugin)
+endif()
 
 ##
 ## TESTS
