@@ -1,0 +1,60 @@
+name: Ubuntu
+
+on:
+  push:
+    branches:
+      - develop
+      - master
+      - release/*
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci_test_clang_tidy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # clang-tidy plugins require at least Clang 16. This means that
+        # anything older than Ubuntu 24.04 and Debian 12 can't work at all.
+        include:
+          - distro: ubuntu:24.04
+            clang_version: 16
+          - distro: ubuntu:24.04
+            clang_version: 17
+          - distro: ubuntu:24.04
+            clang_version: 18
+          - distro: debian:12
+            clang_version: 16
+          - distro: debian:12
+            clang_version: 19
+          - distro: debian:trixie
+            clang_version: 17
+          - distro: debian:trixie
+            clang_version: 18
+          - distro: debian:trixie
+            clang_version: 19
+    container: ${{ matrix.distro }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: List files
+        run: ls -l
+      - name: Install packages
+        run: >-
+          echo distro=${{matrix.distro}} &&
+          echo clang_version=${{matrix.clang_version}} &&
+          apt-get update &&
+          apt-get install -y
+          build-essential
+          clang-${{ matrix.clang_version }}
+          clang-tidy-${{ matrix.clang_version }}
+          libclang-${{matrix.clang_version}}-dev
+          cmake ninja-build
+      - name: Run CMake
+        run: cmake -S . -B build -G Ninja -DJSON_CI=On -DJSON_ClangTidyPlugin=ON
+      - name: Build clang-tidy plugin
+        run: cmake --build build --target clang_tidy_plugin/libNlohmannJsonClangTidyPlugin.so
+      - name: Test clang-tidy plugin
+        run: cd build && ctest -V --output-on-failure -R modernize-nlohmann-json-explicit-conversions-check
