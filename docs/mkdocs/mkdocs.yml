@@ -95,6 +95,7 @@ nav:
   - Integration:
       - integration/index.md
       - integration/migration_guide.md
+      - integration/clang-tidy.md
       - integration/cmake.md
       - integration/package_managers.md
       - integration/pkg-config.md

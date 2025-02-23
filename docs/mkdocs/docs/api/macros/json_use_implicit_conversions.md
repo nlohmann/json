@@ -23,6 +23,8 @@ By default, implicit conversions are enabled.
 
     You can prepare existing code by already defining `JSON_USE_IMPLICIT_CONVERSIONS` to `0` and replace any implicit
     conversions with calls to [`get`](../basic_json/get.md).
+    The [clang-tidy modernize-nlohmann-json-explicit-conversions](../../integration/clang-tidy.md#modernize-nlohmann-json-explicit-conversions)
+	check can help to do this automatically.
 
 !!! hint "CMake option"
 
