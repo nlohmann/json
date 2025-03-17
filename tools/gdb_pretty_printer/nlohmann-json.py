@@ -19,9 +19,10 @@ def json_lookup_function(val):
         if name and name.startswith('basic_json<') and name.endswith('>'):
             m = ns_pattern.fullmatch(str(val["m_data"]['m_type']))
             t = m.group('name')
-            if t and t.startswith('detail::value_t::'):
+            prefix = 'detail::value_t::'
+            if t and t.startswith(prefix):
                 try:
-                    union_val = val['m_data']['m_value'][t.replace('detail::value_t::', '', 1)]
+                    union_val = val['m_data']['m_value'][t.replace(prefix, '', 1)]
                     if union_val.type.code == gdb.TYPE_CODE_PTR:
                         return gdb.default_visualizer(union_val.dereference())
                     else:
