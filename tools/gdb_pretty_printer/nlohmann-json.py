@@ -21,7 +21,7 @@ def json_lookup_function(val):
           t = m.group('name')
           if t and t.startswith('detail::value_t::'):
               try:
-                  union_val = val["m_data"]['m_value'][t.removeprefix('detail::value_t::')]
+                  union_val = val['m_data']['m_value'][t.replace('detail::value_t::', '', 1)]
                   if union_val.type.code == gdb.TYPE_CODE_PTR:
                       return gdb.default_visualizer(union_val.dereference())
                   else:
