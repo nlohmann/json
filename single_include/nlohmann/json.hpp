@@ -20839,7 +20839,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                        std::forward<CompatibleType>(val))))
     {
         JSONSerializer<U>::to_json(*this, std::forward<CompatibleType>(val));
+        // in some optimization modes (-O3, or -O2 with NDEBUG), GCC gives false warning about out-of-bounds access, see
+        // https://github.com/nlohmann/json/issues/4657
+#ifdef JSON_HEDLEY_GNUC_VERSION
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
         set_parents();
+#ifdef JSON_HEDLEY_GNUC_VERSION
+#pragma GCC diagnostic pop
+#endif
         assert_invariant();
     }
 
