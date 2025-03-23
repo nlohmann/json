@@ -656,7 +656,7 @@ TEST_CASE("JSON pointers")
     SECTION("equality comparison")
     {
         const char* ptr_cpstring = "/foo/bar";
-        const char ptr_castring[] = "/foo/bar"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+        const char ptr_castring[] = "/foo/bar"; // NOLINT(misc-const-correctness,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
         std::string ptr_string{"/foo/bar"};
         auto ptr1 = json::json_pointer(ptr_string);
         auto ptr2 = json::json_pointer(ptr_string);
