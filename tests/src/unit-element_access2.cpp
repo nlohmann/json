@@ -1565,9 +1565,9 @@ TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann
 
         SECTION("const char(&)[] key")
         {
-            const char key[] = "foo"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-            const char key2[] = "baz"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-            const char key_notfound[] = "bar"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+            const char key[] = "foo"; // NOLINT(misc-const-correctness,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+            const char key2[] = "baz"; // NOLINT(misc-const-correctness,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+            const char key_notfound[] = "bar"; // NOLINT(misc-const-correctness,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
 
             CHECK(j.value(key, "default") == "bar");
             CHECK(j.value(key, cpstr) == "bar");
@@ -1699,9 +1699,9 @@ TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann
 
         SECTION("const char(&)[] key")
         {
-            const char key[] = "foo"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-            const char key2[] = "baz"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-            const char key_notfound[] = "bar"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+            const char key[] = "foo"; // NOLINT(misc-const-correctness,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+            const char key2[] = "baz"; // NOLINT(misc-const-correctness,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+            const char key_notfound[] = "bar"; // NOLINT(misc-const-correctness,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
 
             CHECK(j.template value<string_t>(key, "default") == "bar");
             CHECK(j.template value<string_t>(key, cpstr) == "bar");
