@@ -71,7 +71,7 @@ enum class for_1647
     two
 };
 
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): this is a false positive
+// NOLINTNEXTLINE(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): this is a false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(for_1647,
 {
     {for_1647::one, "one"},
@@ -388,7 +388,7 @@ struct Example_3810
     Example_3810() = default;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Example_3810, bla);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Example_3810, bla); // NOLINT(misc-use-internal-linkage)
 
 TEST_CASE("regression tests 2")
 {
