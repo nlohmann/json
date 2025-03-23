@@ -749,7 +749,7 @@ TEST_CASE("regression tests 2")
 #if __has_include(<span>)
     SECTION("issue #2546 - parsing containers of std::byte")
     {
-        const char DATA[] = R"("Hello, world!")"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        const char DATA[] = R"("Hello, world!")"; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         const auto s = std::as_bytes(std::span(DATA));
         const json j = json::parse(s);
         CHECK(j.dump() == "\"Hello, world!\"");
