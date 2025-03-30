@@ -548,7 +548,7 @@ function(ci_get_cmake version var)
         COMMAND wget -nc https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}.tar.gz
         COMMAND tar xfz cmake-${version}.tar.gz
         COMMAND rm cmake-${version}.tar.gz
-        COMMAND cmake -S cmake-${version} -B cmake-${version}
+        COMMAND cmake -S cmake-${version} -B cmake-${version} -DCMAKE_POLICY_VERSION_MINIMUM=3.5
         COMMAND cmake --build cmake-${version} --parallel 10
         WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
         COMMENT "Download CMake ${version}"
