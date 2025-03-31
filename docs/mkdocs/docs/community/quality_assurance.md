@@ -208,4 +208,7 @@ violations will result in a failed build.
     All library functions are exposed and usable by CMake.
 
 - [x] All library options are exposed as [CMake options](https://json.nlohmann.me/integration/cmake/) and tested.
-- [x] The library is tested against the earliest supported CMake version.
+- [x] The library is tested against relevant CMake versions:
+  - CMake 3.5 (the earliest supported)
+  - CMake 3.31.6 (the latest 3.x release)
+  - CMake 4.0.0 (a very recent release)

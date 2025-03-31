@@ -15,7 +15,7 @@ and use the namespaced imported target from the generated package configuration:
 !!! example
 
     ```cmake title="CMakeLists.txt"
-    cmake_minimum_required(VERSION 3.1)
+    cmake_minimum_required(VERSION 3.5)
     project(ExampleProject LANGUAGES CXX)
     
     find_package(nlohmann_json 3.11.3 REQUIRED)
@@ -35,7 +35,7 @@ To embed the library directly into an existing CMake project, place the entire s
 !!! example
 
     ```cmake title="CMakeLists.txt"
-    cmake_minimum_required(VERSION 3.1)
+    cmake_minimum_required(VERSION 3.5)
     project(ExampleProject LANGUAGES CXX)
 
     # If you only include this third party in PRIVATE source files, you do not need to install it

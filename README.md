@@ -1144,7 +1144,7 @@ The library is used in multiple projects, applications, operating systems, etc. 
 Though it's 2025 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
 - GCC 4.8 - 14.2 (and possibly later)
-- Clang 3.4 - 20.0 (and possibly later)
+- Clang 3.4 - 21.0 (and possibly later)
 - Apple Clang 9.1 - 16.0 (and possibly later)
 - Intel C++ Compiler 17.0.2 (and possibly later)
 - Nvidia CUDA Compiler 11.0.221 (and possibly later)
