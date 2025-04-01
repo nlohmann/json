@@ -340,7 +340,7 @@ class binary_reader
                 static_cast<void>((std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(element_type))); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                 const std::string cr_str{cr.data()};
                 return sax->parse_error(element_type_parse_position, cr_str,
-                                        parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr));
+                                        parse_error::create<std::nullptr_t>(static_cast<int>(114), element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr));
             }
         }
     }
@@ -1942,7 +1942,7 @@ class binary_reader
         {
             message = "expected length type specification (U, i, u, I, m, l, M, L); last byte: 0x" + last_token;
         }
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "string"), nullptr));
+        return sax->parse_error(chars_read, last_token, parse_error::create<std::nullptr_t>(static_cast<int>(113), chars_read, exception_message(input_format, message, "string"), nullptr));
     }
 
     /*!
@@ -2161,7 +2161,7 @@ class binary_reader
                 }
                 if (is_ndarray) // ndarray dimensional vector can only contain integers, and can not embed another array
                 {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read, exception_message(input_format, "ndarray dimensional vector is not allowed", "size"), nullptr));
+                    return sax->parse_error(chars_read, get_token_string(), parse_error::create<std::nullptr_t>(static_cast<int>(113), chars_read, exception_message(input_format, "ndarray dimensional vector is not allowed", "size"), nullptr));
                 }
                 std::vector<size_t> dim;
                 if (JSON_HEDLEY_UNLIKELY(!get_ubjson_ndarray_size(dim)))
@@ -2195,7 +2195,7 @@ class binary_reader
                         result *= i;
                         if (result == 0 || result == npos) // because dim elements shall not have zeros, result = 0 means overflow happened; it also can't be npos as it is used to initialize size in get_ubjson_size_type()
                         {
-                            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
+                            return sax->parse_error(chars_read, get_token_string(), out_of_range::create<std::nullptr_t>(static_cast<int>(408), exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
                         }
                         if (JSON_HEDLEY_UNLIKELY(!sax->number_unsigned(static_cast<number_unsigned_t>(i))))
                         {
@@ -2223,7 +2223,7 @@ class binary_reader
         {
             message = "expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x" + last_token;
         }
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "size"), nullptr));
+        return sax->parse_error(chars_read, last_token, parse_error::create<std::nullptr_t>(static_cast<int>(113), chars_read, exception_message(input_format, message, "size"), nullptr));
     }
 
     /*!
@@ -2491,7 +2491,7 @@ class binary_reader
                 break;
         }
         auto last_token = get_token_string();
-        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format, "invalid byte: 0x" + last_token, "value"), nullptr));
+        return sax->parse_error(chars_read, last_token, parse_error::create<std::nullptr_t>(static_cast<int>(112), chars_read, exception_message(input_format, "invalid byte: 0x" + last_token, "value"), nullptr));
     }
 
     /*!
@@ -2947,7 +2947,7 @@ class binary_reader
         if (JSON_HEDLEY_UNLIKELY(current == char_traits<char_type>::eof()))
         {
             return sax->parse_error(chars_read, "<end of file>",
-                                    parse_error::create(110, chars_read, exception_message(format, "unexpected end of input", context), nullptr));
+                                    parse_error::create<std::nullptr_t>(static_cast<int>(110), chars_read, exception_message(format, "unexpected end of input", context), nullptr));
         }
         return true;
     }

@@ -517,7 +517,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     object = nullptr;  // silence warning, see #821
                     if (JSON_HEDLEY_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.11.3", nullptr)); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create<std::nullptr_t>(static_cast<int>(500), "961c151d2e87f2686a955a9be24d316f1362bf21 3.11.3", nullptr)); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -934,7 +934,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             // if object is wanted but impossible, throw an exception
             if (JSON_HEDLEY_UNLIKELY(manual_type == value_t::object && !is_an_object))
             {
-                JSON_THROW(type_error::create(301, "cannot create object from initializer list", nullptr));
+                JSON_THROW(type_error::create<std::nullptr_t>(static_cast<int>(301), "cannot create object from initializer list", nullptr));
             }
         }
 
@@ -1045,7 +1045,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // make sure iterator fits the current value
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(201, "iterators are not compatible", nullptr));
+            JSON_THROW(invalid_iterator::create<std::nullptr_t>(static_cast<int>(201), "iterators are not compatible", nullptr));
         }
 
         // copy type from first iterator

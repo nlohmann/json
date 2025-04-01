@@ -10101,7 +10101,7 @@ class binary_reader
                 static_cast<void>((std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(element_type))); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                 const std::string cr_str{cr.data()};
                 return sax->parse_error(element_type_parse_position, cr_str,
-                                        parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr));
+                                        parse_error::create<std::nullptr_t>(static_cast<int>(114), element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr));
             }
         }
     }
@@ -11703,7 +11703,7 @@ class binary_reader
         {
             message = "expected length type specification (U, i, u, I, m, l, M, L); last byte: 0x" + last_token;
         }
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "string"), nullptr));
+        return sax->parse_error(chars_read, last_token, parse_error::create<std::nullptr_t>(static_cast<int>(113), chars_read, exception_message(input_format, message, "string"), nullptr));
     }
 
     /*!
@@ -11922,7 +11922,7 @@ class binary_reader
                 }
                 if (is_ndarray) // ndarray dimensional vector can only contain integers, and can not embed another array
                 {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read, exception_message(input_format, "ndarray dimensional vector is not allowed", "size"), nullptr));
+                    return sax->parse_error(chars_read, get_token_string(), parse_error::create<std::nullptr_t>(static_cast<int>(113), chars_read, exception_message(input_format, "ndarray dimensional vector is not allowed", "size"), nullptr));
                 }
                 std::vector<size_t> dim;
                 if (JSON_HEDLEY_UNLIKELY(!get_ubjson_ndarray_size(dim)))
@@ -11956,7 +11956,7 @@ class binary_reader
                         result *= i;
                         if (result == 0 || result == npos) // because dim elements shall not have zeros, result = 0 means overflow happened; it also can't be npos as it is used to initialize size in get_ubjson_size_type()
                         {
-                            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
+                            return sax->parse_error(chars_read, get_token_string(), out_of_range::create<std::nullptr_t>(static_cast<int>(408), exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
                         }
                         if (JSON_HEDLEY_UNLIKELY(!sax->number_unsigned(static_cast<number_unsigned_t>(i))))
                         {
@@ -11984,7 +11984,7 @@ class binary_reader
         {
             message = "expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x" + last_token;
         }
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "size"), nullptr));
+        return sax->parse_error(chars_read, last_token, parse_error::create<std::nullptr_t>(static_cast<int>(113), chars_read, exception_message(input_format, message, "size"), nullptr));
     }
 
     /*!
@@ -12252,7 +12252,7 @@ class binary_reader
                 break;
         }
         auto last_token = get_token_string();
-        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format, "invalid byte: 0x" + last_token, "value"), nullptr));
+        return sax->parse_error(chars_read, last_token, parse_error::create<std::nullptr_t>(static_cast<int>(112), chars_read, exception_message(input_format, "invalid byte: 0x" + last_token, "value"), nullptr));
     }
 
     /*!
@@ -12708,7 +12708,7 @@ class binary_reader
         if (JSON_HEDLEY_UNLIKELY(current == char_traits<char_type>::eof()))
         {
             return sax->parse_error(chars_read, "<end of file>",
-                                    parse_error::create(110, chars_read, exception_message(format, "unexpected end of input", context), nullptr));
+                                    parse_error::create<std::nullptr_t>(static_cast<int>(110), chars_read, exception_message(format, "unexpected end of input", context), nullptr));
         }
         return true;
     }
@@ -12973,7 +12973,7 @@ class parser
             {
                 sdp.parse_error(m_lexer.get_position(),
                                 m_lexer.get_token_string(),
-                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
+                                parse_error::create<std::nullptr_t>(static_cast<int>(101), m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
             }
 
             // in case of an error, return discarded value
@@ -13011,7 +13011,7 @@ class parser
         {
             return sax->parse_error(m_lexer.get_position(),
                                     m_lexer.get_token_string(),
-                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
+                                    parse_error::create<std::nullptr_t>(static_cast<int>(101), m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
         }
 
         return result;
@@ -13057,7 +13057,7 @@ class parser
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string, "object key"), nullptr));
+                                                    parse_error::create<std::nullptr_t>(static_cast<int>(101), m_lexer.get_position(), exception_message(token_type::value_string, "object key"), nullptr));
                         }
                         if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
                         {
@@ -13069,7 +13069,7 @@ class parser
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator, "object separator"), nullptr));
+                                                    parse_error::create<std::nullptr_t>(static_cast<int>(101), m_lexer.get_position(), exception_message(token_type::name_separator, "object separator"), nullptr));
                         }
 
                         // remember we are now inside an object
@@ -13112,7 +13112,7 @@ class parser
                         {
                             return sax->parse_error(m_lexer.get_position(),
                                                     m_lexer.get_token_string(),
-                                                    out_of_range::create(406, concat("number overflow parsing '", m_lexer.get_token_string(), '\''), nullptr));
+                                                    out_of_range::create<std::nullptr_t>(static_cast<int>(406), concat("number overflow parsing '", m_lexer.get_token_string(), '\''), nullptr));
                         }
 
                         if (JSON_HEDLEY_UNLIKELY(!sax->number_float(res, m_lexer.get_string())))
@@ -13182,7 +13182,7 @@ class parser
                         // using "uninitialized" to avoid "expected" message
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::uninitialized, "value"), nullptr));
+                                                parse_error::create<std::nullptr_t>(static_cast<int>(101), m_lexer.get_position(), exception_message(token_type::uninitialized, "value"), nullptr));
                     }
                     case token_type::end_of_input:
                     {
@@ -13196,7 +13196,7 @@ class parser
 
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value, "value"), nullptr));
+                                                parse_error::create<std::nullptr_t>(static_cast<int>(101), m_lexer.get_position(), exception_message(token_type::literal_or_value, "value"), nullptr));
                     }
                     case token_type::uninitialized:
                     case token_type::end_array:
@@ -13208,7 +13208,7 @@ class parser
                     {
                         return sax->parse_error(m_lexer.get_position(),
                                                 m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value, "value"), nullptr));
+                                                parse_error::create<std::nullptr_t>(static_cast<int>(101), m_lexer.get_position(), exception_message(token_type::literal_or_value, "value"), nullptr));
                     }
                 }
             }
@@ -13254,7 +13254,7 @@ class parser
 
                 return sax->parse_error(m_lexer.get_position(),
                                         m_lexer.get_token_string(),
-                                        parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_array, "array"), nullptr));
+                                        parse_error::create<std::nullptr_t>(static_cast<int>(101), m_lexer.get_position(), exception_message(token_type::end_array, "array"), nullptr));
             }
 
             // states.back() is false -> object
@@ -13267,7 +13267,7 @@ class parser
                 {
                     return sax->parse_error(m_lexer.get_position(),
                                             m_lexer.get_token_string(),
-                                            parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string, "object key"), nullptr));
+                                            parse_error::create<std::nullptr_t>(static_cast<int>(101), m_lexer.get_position(), exception_message(token_type::value_string, "object key"), nullptr));
                 }
 
                 if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
@@ -13280,7 +13280,7 @@ class parser
                 {
                     return sax->parse_error(m_lexer.get_position(),
                                             m_lexer.get_token_string(),
-                                            parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator, "object separator"), nullptr));
+                                            parse_error::create<std::nullptr_t>(static_cast<int>(101), m_lexer.get_position(), exception_message(token_type::name_separator, "object separator"), nullptr));
                 }
 
                 // parse values
@@ -13308,7 +13308,7 @@ class parser
 
             return sax->parse_error(m_lexer.get_position(),
                                     m_lexer.get_token_string(),
-                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_object, "object"), nullptr));
+                                    parse_error::create<std::nullptr_t>(static_cast<int>(101), m_lexer.get_position(), exception_message(token_type::end_object, "object"), nullptr));
         }
     }
 
@@ -14649,7 +14649,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+            JSON_THROW(detail::out_of_range::create<std::nullptr_t>(static_cast<int>(405), "JSON pointer has no parent", nullptr));
         }
 
         reference_tokens.pop_back();
@@ -14661,7 +14661,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+            JSON_THROW(detail::out_of_range::create<std::nullptr_t>(static_cast<int>(405), "JSON pointer has no parent", nullptr));
         }
 
         return reference_tokens.back();
@@ -14707,13 +14707,13 @@ class json_pointer
         // error condition (cf. RFC 6901, Sect. 4)
         if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && s[0] == '0'))
         {
-            JSON_THROW(detail::parse_error::create(106, 0, detail::concat("array index '", s, "' must not begin with '0'"), nullptr));
+            JSON_THROW(detail::parse_error::create<std::nullptr_t>(static_cast<int>(106), 0, detail::concat("array index '", s, "' must not begin with '0'"), nullptr));
         }
 
         // error condition (cf. RFC 6901, Sect. 4)
         if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && !(s[0] >= '1' && s[0] <= '9')))
         {
-            JSON_THROW(detail::parse_error::create(109, 0, detail::concat("array index '", s, "' is not a number"), nullptr));
+            JSON_THROW(detail::parse_error::create<std::nullptr_t>(static_cast<int>(109), 0, detail::concat("array index '", s, "' is not a number"), nullptr));
         }
 
         const char* p = s.c_str();
@@ -14724,14 +14724,14 @@ class json_pointer
                 || errno == ERANGE // out of range
                 || JSON_HEDLEY_UNLIKELY(static_cast<std::size_t>(p_end - p) != s.size())) // incomplete read
         {
-            JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", s, "'"), nullptr));
+            JSON_THROW(detail::out_of_range::create<std::nullptr_t>(static_cast<int>(404), detail::concat("unresolved reference token '", s, "'"), nullptr));
         }
 
         // only triggered on special platforms (like 32bit), see also
         // https://github.com/nlohmann/json/pull/2203
         if (res >= static_cast<unsigned long long>((std::numeric_limits<size_type>::max)()))  // NOLINT(runtime/int)
         {
-            JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));   // LCOV_EXCL_LINE
+            JSON_THROW(detail::out_of_range::create<std::nullptr_t>(static_cast<int>(410), detail::concat("array index ", s, " exceeds size_type"), nullptr));   // LCOV_EXCL_LINE
         }
 
         return static_cast<size_type>(res);
@@ -14742,7 +14742,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+            JSON_THROW(detail::out_of_range::create<std::nullptr_t>(static_cast<int>(405), "JSON pointer has no parent", nullptr));
         }
 
         json_pointer result = *this;
@@ -15165,7 +15165,7 @@ class json_pointer
         // check if nonempty reference string begins with slash
         if (JSON_HEDLEY_UNLIKELY(reference_string[0] != '/'))
         {
-            JSON_THROW(detail::parse_error::create(107, 1, detail::concat("JSON pointer must be empty or begin with '/' - was: '", reference_string, "'"), nullptr));
+            JSON_THROW(detail::parse_error::create<std::nullptr_t>(static_cast<int>(107), 1, detail::concat("JSON pointer must be empty or begin with '/' - was: '", reference_string, "'"), nullptr));
         }
 
         // extract the reference tokens:
@@ -15200,7 +15200,7 @@ class json_pointer
                                          (reference_token[pos + 1] != '0' &&
                                           reference_token[pos + 1] != '1')))
                 {
-                    JSON_THROW(detail::parse_error::create(108, 0, "escape character '~' must be followed with '0' or '1'", nullptr));
+                    JSON_THROW(detail::parse_error::create<std::nullptr_t>(static_cast<int>(108), 0, "escape character '~' must be followed with '0' or '1'", nullptr));
                 }
             }
 
@@ -19216,7 +19216,7 @@ class serializer
                     {
                         case error_handler_t::strict:
                         {
-                            JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(i), ": 0x", hex_bytes(byte | 0)), nullptr));
+                            JSON_THROW(type_error::create<std::nullptr_t>(static_cast<int>(316), concat("invalid UTF-8 byte at index ", std::to_string(i), ": 0x", hex_bytes(byte | 0)), nullptr));
                         }
 
                         case error_handler_t::ignore:
@@ -19308,7 +19308,7 @@ class serializer
             {
                 case error_handler_t::strict:
                 {
-                    JSON_THROW(type_error::create(316, concat("incomplete UTF-8 string; last byte: 0x", hex_bytes(static_cast<std::uint8_t>(s.back() | 0))), nullptr));
+                    JSON_THROW(type_error::create<std::nullptr_t>(static_cast<int>(316), concat("incomplete UTF-8 string; last byte: 0x", hex_bytes(static_cast<std::uint8_t>(s.back() | 0))), nullptr));
                 }
 
                 case error_handler_t::ignore:
@@ -20516,7 +20516,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     object = nullptr;  // silence warning, see #821
                     if (JSON_HEDLEY_UNLIKELY(t == value_t::null))
                     {
-                        JSON_THROW(other_error::create(500, "961c151d2e87f2686a955a9be24d316f1362bf21 3.11.3", nullptr)); // LCOV_EXCL_LINE
+                        JSON_THROW(other_error::create<std::nullptr_t>(static_cast<int>(500), "961c151d2e87f2686a955a9be24d316f1362bf21 3.11.3", nullptr)); // LCOV_EXCL_LINE
                     }
                     break;
                 }
@@ -20933,7 +20933,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             // if object is wanted but impossible, throw an exception
             if (JSON_HEDLEY_UNLIKELY(manual_type == value_t::object && !is_an_object))
             {
-                JSON_THROW(type_error::create(301, "cannot create object from initializer list", nullptr));
+                JSON_THROW(type_error::create<std::nullptr_t>(static_cast<int>(301), "cannot create object from initializer list", nullptr));
             }
         }
 
@@ -21044,7 +21044,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // make sure iterator fits the current value
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
-            JSON_THROW(invalid_iterator::create(201, "iterators are not compatible", nullptr));
+            JSON_THROW(invalid_iterator::create<std::nullptr_t>(static_cast<int>(201), "iterators are not compatible", nullptr));
         }
 
         // copy type from first iterator

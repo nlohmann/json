@@ -160,7 +160,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+            JSON_THROW(detail::out_of_range::create<std::nullptr_t>(static_cast<int>(405), "JSON pointer has no parent", nullptr));
         }
 
         reference_tokens.pop_back();
@@ -172,7 +172,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+            JSON_THROW(detail::out_of_range::create<std::nullptr_t>(static_cast<int>(405), "JSON pointer has no parent", nullptr));
         }
 
         return reference_tokens.back();
@@ -218,13 +218,13 @@ class json_pointer
         // error condition (cf. RFC 6901, Sect. 4)
         if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && s[0] == '0'))
         {
-            JSON_THROW(detail::parse_error::create(106, 0, detail::concat("array index '", s, "' must not begin with '0'"), nullptr));
+            JSON_THROW(detail::parse_error::create<std::nullptr_t>(static_cast<int>(106), 0, detail::concat("array index '", s, "' must not begin with '0'"), nullptr));
         }
 
         // error condition (cf. RFC 6901, Sect. 4)
         if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && !(s[0] >= '1' && s[0] <= '9')))
         {
-            JSON_THROW(detail::parse_error::create(109, 0, detail::concat("array index '", s, "' is not a number"), nullptr));
+            JSON_THROW(detail::parse_error::create<std::nullptr_t>(static_cast<int>(109), 0, detail::concat("array index '", s, "' is not a number"), nullptr));
         }
 
         const char* p = s.c_str();
@@ -235,14 +235,14 @@ class json_pointer
                 || errno == ERANGE // out of range
                 || JSON_HEDLEY_UNLIKELY(static_cast<std::size_t>(p_end - p) != s.size())) // incomplete read
         {
-            JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", s, "'"), nullptr));
+            JSON_THROW(detail::out_of_range::create<std::nullptr_t>(static_cast<int>(404), detail::concat("unresolved reference token '", s, "'"), nullptr));
         }
 
         // only triggered on special platforms (like 32bit), see also
         // https://github.com/nlohmann/json/pull/2203
         if (res >= static_cast<unsigned long long>((std::numeric_limits<size_type>::max)()))  // NOLINT(runtime/int)
         {
-            JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));   // LCOV_EXCL_LINE
+            JSON_THROW(detail::out_of_range::create<std::nullptr_t>(static_cast<int>(410), detail::concat("array index ", s, " exceeds size_type"), nullptr));   // LCOV_EXCL_LINE
         }
 
         return static_cast<size_type>(res);
@@ -253,7 +253,7 @@ class json_pointer
     {
         if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+            JSON_THROW(detail::out_of_range::create<std::nullptr_t>(static_cast<int>(405), "JSON pointer has no parent", nullptr));
         }
 
         json_pointer result = *this;
@@ -676,7 +676,7 @@ class json_pointer
         // check if nonempty reference string begins with slash
         if (JSON_HEDLEY_UNLIKELY(reference_string[0] != '/'))
         {
-            JSON_THROW(detail::parse_error::create(107, 1, detail::concat("JSON pointer must be empty or begin with '/' - was: '", reference_string, "'"), nullptr));
+            JSON_THROW(detail::parse_error::create<std::nullptr_t>(static_cast<int>(107), 1, detail::concat("JSON pointer must be empty or begin with '/' - was: '", reference_string, "'"), nullptr));
         }
 
         // extract the reference tokens:
@@ -711,7 +711,7 @@ class json_pointer
                                          (reference_token[pos + 1] != '0' &&
                                           reference_token[pos + 1] != '1')))
                 {
-                    JSON_THROW(detail::parse_error::create(108, 0, "escape character '~' must be followed with '0' or '1'", nullptr));
+                    JSON_THROW(detail::parse_error::create<std::nullptr_t>(static_cast<int>(108), 0, "escape character '~' must be followed with '0' or '1'", nullptr));
                 }
             }
 
