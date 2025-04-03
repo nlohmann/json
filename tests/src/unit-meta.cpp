@@ -1,6 +1,6 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.11.4
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
 // SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
@@ -22,10 +22,10 @@ TEST_CASE("version information")
         CHECK(j["url"] == "https://github.com/nlohmann/json");
         CHECK(j["version"] == json(
         {
-            {"string", "3.11.3"},
+            {"string", "3.11.4"},
             {"major", 3},
             {"minor", 11},
-            {"patch", 3}
+            {"patch", 4}
         }));
 
         CHECK(j.find("platform") != j.end());
