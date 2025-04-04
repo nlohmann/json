@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -1617,7 +1617,7 @@ TEST_CASE("UBJSON")
                 CHECK_THROWS_AS(_ = json::from_ubjson(v_ubjson), json::out_of_range&);
 
                 json j;
-                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
+                nlohmann::detail::json_sax_dom_callback_parser<json, decltype(nlohmann::detail::input_adapter(v_ubjson))> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
                 {
                     return true;
                 });
@@ -1631,7 +1631,7 @@ TEST_CASE("UBJSON")
                 CHECK_THROWS_AS(_ = json::from_ubjson(v_ubjson), json::out_of_range&);
 
                 json j;
-                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
+                nlohmann::detail::json_sax_dom_callback_parser<json, decltype(nlohmann::detail::input_adapter(v_ubjson))> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
                 {
                     return true;
                 });

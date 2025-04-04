@@ -1,4 +1,0 @@
-path_classifiers:
-  thirdparty:
-    - /tools/amalgamate
-    - /tools/cpplint

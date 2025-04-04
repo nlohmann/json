@@ -1,3 +1,20 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_license//rules:license.bzl", "license")
+
+package(
+    default_applicable_licenses = [":license"],
+)
+
+exports_files([
+    "LICENSE.MIT",
+])
+
+license(
+    name = "license",
+    license_kinds = ["@rules_license//licenses/spdx:MIT"],
+    license_text = "LICENSE.MIT",
+)
+
 cc_library(
     name = "json",
     hdrs = [
@@ -40,6 +57,7 @@ cc_library(
         "include/nlohmann/detail/output/serializer.hpp",
         "include/nlohmann/detail/string_concat.hpp",
         "include/nlohmann/detail/string_escape.hpp",
+        "include/nlohmann/detail/string_utils.hpp",
         "include/nlohmann/detail/value_t.hpp",
         "include/nlohmann/json.hpp",
         "include/nlohmann/json_fwd.hpp",
@@ -48,5 +66,15 @@ cc_library(
         "include/nlohmann/thirdparty/hedley/hedley_undef.hpp",
     ],
     includes = ["include"],
+    visibility = ["//visibility:public"],
+    alwayslink = True,
+)
+
+cc_library(
+    name = "singleheader-json",
+    hdrs = [
+        "single_include/nlohmann/json.hpp",
+    ],
+    includes = ["single_include"],
     visibility = ["//visibility:public"],
 )

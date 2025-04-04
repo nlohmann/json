@@ -6,24 +6,33 @@
 
 All exceptions inherit from class `json::exception` (which in turn inherits from `std::exception`). It is used as the base class for all exceptions thrown by the `basic_json` class. This class can hence be used as "wildcard" to catch exceptions.
 
-```plantuml
-std::exception <|-- json::exception
-json::exception <|-- json::parse_error
-json::exception <|-- json::invalid_iterator
-json::exception <|-- json::type_error
-json::exception <|-- json::out_of_range
-json::exception <|-- json::other_error
+``` mermaid
+classDiagram
+  direction LR
+    class `std::exception` {
+        <<interface>>
+    }
 
-interface std::exception {}
+    class `json::exception` {
+        +const int id
+        +const char* what() const
+    }
 
-class json::exception {
-    + const int id
-    + const char* what() const
-}
+    class `json::parse_error` {
+        +const std::size_t byte
+    }
 
-class json::parse_error {
-    + const std::size_t byte
-}
+    class `json::invalid_iterator`
+    class `json::type_error`
+    class `json::out_of_range`
+    class `json::other_error`
+
+    `std::exception` <|-- `json::exception`
+    `json::exception` <|-- `json::parse_error`
+    `json::exception` <|-- `json::invalid_iterator`
+    `json::exception` <|-- `json::type_error`
+    `json::exception` <|-- `json::out_of_range`
+    `json::exception` <|-- `json::other_error`
 ```
 
 ### Switch off exceptions
@@ -830,17 +839,14 @@ A parsed number could not be stored as without changing it to NaN or INF.
 
 ### json.exception.out_of_range.407
 
-UBJSON and BSON only support integer numbers up to 9223372036854775807.
+This exception previously indicated that the UBJSON and BSON binary formats did not support integer numbers greater than
+9223372036854775807 due to limitations in the implemented mapping. However, these limitations have since been resolved,
+and this exception no longer occurs.
 
-!!! failure "Example message"
+!!! success "Exception cannot occur any more"
 
-    ```
-    number overflow serializing '9223372036854775808'
-    ```
-
-!!! note
-
-    Since version 3.9.0, integer numbers beyond int64 are serialized as high-precision UBJSON numbers, and this exception does not further occur. 
+    - Since version 3.9.0, integer numbers beyond int64 are serialized as high-precision UBJSON numbers.
+    - Since version 3.12.0, integer numbers beyond int64 are serialized as uint64 BSON numbers.
 
 ### json.exception.out_of_range.408
 

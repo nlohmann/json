@@ -103,29 +103,42 @@ behavior and yields a runtime assertion.
     Assertion failed: (m_object != nullptr), function operator++, file iter_impl.hpp, line 368.
     ```
 
-### Reading from a null `FILE` pointer
+## Changes
 
-Reading from a null `#!cpp FILE` pointer is undefined behavior and yields a runtime assertion. This can happen when
-calling `#!cpp std::fopen` on a nonexistent file.
+### Reading from a null `FILE` or `char` pointer
 
-??? example "Example 4: Uninitialized iterator"
+Reading from a null `#!cpp FILE` or `#!cpp char` pointer in C++ is undefined behavior.  Until version 3.11.4, this
+library asserted that the pointer was not `nullptr` using a runtime assertion. If assertions were disabled, this would
+result in undefined behavior. Since version 3.11.4, this library checks for `nullptr` and throws a
+[`parse_error.101`](../home/exceptions.md#jsonexceptionparse_error101) to prevent the undefined behavior.
+
+??? example "Example 4: Reading from null pointer"
 
     The following code will trigger an assertion at runtime:
 
     ```cpp
+    #include <iostream>
     #include <nlohmann/json.hpp>
     
     using json = nlohmann::json;
     
     int main()
     {
-      std::FILE* f = std::fopen("nonexistent_file.json", "r");
-      json j = json::parse(f);
+        std::FILE* f = std::fopen("nonexistent_file.json", "r");
+        try {
+            json j = json::parse(f);
+        } catch (std::exception& e) {
+            std::cerr << e.what() << std::endl;
+        }
     }
     ```
 
     Output:
 
     ```
-    Assertion failed: (m_file != nullptr), function file_input_adapter, file input_adapters.hpp, line 55.
+    [json.exception.parse_error.101] parse error: attempting to parse an empty input; check that your input string or stream contains the expected JSON
     ```
+
+## See also
+
+- [JSON_ASSERT](../api/macros/json_assert.md) - control behavior of runtime assertions

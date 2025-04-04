@@ -4,7 +4,7 @@ Upstream-Contact: Niels Lohmann <mail@nlohmann.me>
 Source: https://github.com/nlohmann/json
 
 Files: *
-Copyright: 2013-2024 Niels Lohmann <https://nlohmann.me>
+Copyright: 2013-2025 Niels Lohmann <https://nlohmann.me>
 License: MIT
 
 Files: include/nlohmann/thirdparty/hedley.hpp
@@ -12,7 +12,7 @@ Copyright: 2016-2021 Evan Nemerson <evan@nemerson.com>
 License: CC0
 
 Files: tests/thirdparty/doctest/*
-Copyright: 2016-2021 Viktor Kirilov
+Copyright: 2016-2023 Viktor Kirilov
 License: MIT
 
 Files: tests/thirdparty/fifo_map/*
@@ -31,6 +31,6 @@ Files: tools/amalgamate/*
 Copyright: 2012 Erik Edlund <erik.edlund@32767.se>
 License: BSD-3-Clause
 
-Files: tools/gdb_pretty_printer
+Files: tools/gdb_pretty_printer/*
 Copyright: 2020 Hannes Domani <https://github.com/ssbssa>
 License: MIT

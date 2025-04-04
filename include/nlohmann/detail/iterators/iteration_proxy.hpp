@@ -3,14 +3,13 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #pragma once
 
 #include <cstddef> // size_t
 #include <iterator> // forward_iterator_tag
-#include <string> // string, to_string
 #include <tuple> // tuple_size, get, tuple_element
 #include <utility> // move
 
@@ -20,19 +19,13 @@
 
 #include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
+#include <nlohmann/detail/string_utils.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
-template<typename string_type>
-void int_to_string( string_type& target, std::size_t value )
-{
-    // For ADL
-    using std::to_string;
-    target = to_string(value);
-}
 template<typename IteratorType> class iteration_proxy_value
 {
   public:
@@ -220,7 +213,7 @@ namespace std
 #endif
 template<typename IteratorType>
 class tuple_size<::nlohmann::detail::iteration_proxy_value<IteratorType>> // NOLINT(cert-dcl58-cpp)
-            : public std::integral_constant<std::size_t, 2> {};
+    : public std::integral_constant<std::size_t, 2> {};
 
 template<std::size_t N, typename IteratorType>
 class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >> // NOLINT(cert-dcl58-cpp)

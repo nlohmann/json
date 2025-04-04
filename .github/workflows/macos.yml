@@ -9,12 +9,12 @@ on:
   pull_request:
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
 # macos-11 is deprecated
@@ -27,7 +27,7 @@ jobs:
 #      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 #
 #    steps:
-#      - uses: actions/checkout@v4
+#      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 #      - name: Run CMake
 #        run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
 #      - name: Build
@@ -45,7 +45,7 @@ jobs:
 #      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 #
 #    steps:
-#      - uses: actions/checkout@v4
+#      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 #      - name: Run CMake
 #        run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
 #      - name: Build
@@ -62,7 +62,7 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Run CMake
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
       - name: Build
@@ -79,7 +79,7 @@ jobs:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Run CMake
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
       - name: Build
@@ -91,12 +91,12 @@ jobs:
     runs-on: macos-15 # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
     strategy:
       matrix:
-        xcode: ['16.0', '16.1']
+        xcode: ['16.0', '16.1', '16.2']
     env:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Run CMake
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
       - name: Build
@@ -108,10 +108,10 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        standard: [11, 14, 17, 20, 23]
+        standard: [11, 14, 17, 20, 23, 26]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Run CMake
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_TestStandards=${{ matrix.standard }}
       - name: Build

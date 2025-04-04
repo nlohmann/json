@@ -1,9 +1,10 @@
 #include <nlohmann/json.hpp>
 #include <iostream>
+#include <iomanip>
 
 using json = nlohmann::json;
 
 int main()
 {
-    std::cout << json::meta() << std::endl;
+    std::cout << std::setw(4) << json::meta() << std::endl;
 }

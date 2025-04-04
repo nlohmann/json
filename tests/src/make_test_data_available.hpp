@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #pragma once
@@ -18,7 +18,8 @@ namespace utils
 
 inline bool check_testsuite_downloaded()
 {
-    const std::unique_ptr<std::FILE, decltype(&std::fclose)> file(std::fopen(TEST_DATA_DIRECTORY "/README.md", "r"), &std::fclose);
+    using FilePtr = std::unique_ptr<FILE, int(*)(FILE*)>;
+    const FilePtr file(std::fopen(TEST_DATA_DIRECTORY "/README.md", "r"), std::fclose);
     return file != nullptr;
 }
 

@@ -100,7 +100,7 @@ for (auto& [key, val] : j_object.items())
     
 !!! warning
 
-    Using `items()` on temporary objects is dangerous. Make sure the object's lifetime exceeds the iteration. See <https://github.com/nlohmann/json/issues/2040> for more information.
+    Using `items()` on temporary objects is dangerous. Make sure the object's lifetime exceeds the iteration. See [#2040](https://github.com/nlohmann/json/issues/2040) for more information.
 
 ### Reverse iteration order
 

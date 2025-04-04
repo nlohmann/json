@@ -13,7 +13,7 @@ body:
         
         Note that this form is for bug reports only. Please
         [open a discussion](https://github.com/nlohmann/json/discussions/new)
-        for questions, feature requests, or support requests
+        for questions, feature requests, or support requests.
   - type: textarea
     id: summary
     attributes:

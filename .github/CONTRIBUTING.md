@@ -1,69 +1,222 @@
-# How to contribute
+# Contribution Guidelines
 
-This project started as a little excuse to exercise some of the cool new C++11 features. Over time, people actually started to use the JSON library (yey!) and started to help improve it by proposing features, finding bugs, or even fixing my mistakes. I am really [thankful](https://github.com/nlohmann/json/blob/master/README.md#thanks) for this and try to keep track of all the helpers.
+Thank you for your interest in contributing to this project! What began as an exercise to explore the exciting features
+of C++11 has evolved into a [widely-used](https://json.nlohmann.me/home/customers/) JSON library. I truly appreciate all
+the contributions from the community, whether it's proposing features, identifying bugs, or fixing mistakes! To ensure
+that our collaboration is efficient and effective, please follow these guidelines.
 
-To make it as easy as possible for you to contribute and for me to keep an overview, here are a few guidelines which should help us avoid all kinds of unnecessary work or disappointment. And of course, this document is subject to discussion, so please [create an issue](https://github.com/nlohmann/json/issues/new/choose) or a pull request if you find a way to improve it!
+Feel free to discuss or suggest improvements to this document
+[by submitting a pull request](https://github.com/nlohmann/json/edit/develop/.github/CONTRIBUTING.md).
 
-## Private reports
+## Ways to Contribute
 
-Usually, all issues are tracked publicly on [GitHub](https://github.com/nlohmann/json/issues). If you want to make a private report (e.g., for a vulnerability or to attach an example that is not meant to be published), please send an email to <mail@nlohmann.me>.
+There are multiple ways to contribute.
 
-## Prerequisites
+### Reporting an issue
 
-Please [create an issue](https://github.com/nlohmann/json/issues/new/choose), assuming one does not already exist, and describe your concern. Note you need a [GitHub account](https://github.com/signup/free) for this.
-
-## Describe your issue
+Please [create an issue](https://github.com/nlohmann/json/issues/new/choose), assuming one does not already exist, and
+describe your concern. Note you need a [GitHub account](https://github.com/signup/free) for this.
 
 Clearly describe the issue:
 
-- If it is a bug, please describe how to **reproduce** it. If possible, attach a complete example which demonstrates the error. Please also state what you **expected** to happen instead of the error.
-- If you propose a change or addition, try to give an **example** how the improved code could look like or how to use it.
-- If you found a compilation error, please tell us which **compiler** (version and operating system) you used and paste the (relevant part of) the error messages to the ticket.
+- If it is a bug, please describe how to **reproduce** it. If possible, attach a _complete example_ which demonstrates
+  the error. Please also state what you **expected** to happen instead of the error.
+- If you propose a change or addition, try to give an **example** how the improved code could look like or how to use
+  it.
+- If you found a compilation error, please tell us which **compiler** (version and operating system) you used and paste
+  the (relevant part of) the error messages to the ticket.
 
-Please stick to the provided issue template ([bug report](https://github.com/nlohmann/json/blob/develop/.github/ISSUE_TEMPLATE/bug.yaml) if possible. For questions, feature or support requests, please [open a discussion](https://github.com/nlohmann/json/discussions/new).
+Please stick to the provided issue template
+[bug report](https://github.com/nlohmann/json/blob/develop/.github/ISSUE_TEMPLATE/bug.yaml) if possible.
 
-## Files to change
+### Reporting a security vulnerability
 
-:exclamation: Before you make any changes, note the single-header files [`single_include/nlohmann/json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp) and [`single_include/nlohmann/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_fwd.hpp) are **generated** from the source files in the [`include/nlohmann` directory](https://github.com/nlohmann/json/tree/develop/include/nlohmann). Please **do not** edit the files `single_include/nlohmann/json.hpp` and `single_include/nlohmann/json_fwd.hpp` directly, but change the `include/nlohmann` sources and regenerate the files by executing `make amalgamate`.
+You can report a security vulnerability according to our
+[security policy](https://github.com/nlohmann/json/security/policy).
 
-To make changes, you need to edit the following files:
+### Discussing a new feature
 
-1. [`include/nlohmann/*`](https://github.com/nlohmann/json/tree/develop/include/nlohmann) - These files are the sources of the library. Before testing or creating a pull request, execute `make amalgamate` to regenerate `single_include/nlohmann/json.hpp` and `single_include/nlohmann/json_fwd.hpp`.
+For questions, feature or support requests, please
+[open a discussion](https://github.com/nlohmann/json/discussions/new). If you find a proposed answer satisfactory,
+please use the "Mark as answer" button to make it easier for readers to see what helped and for the community to filter
+for open questions.
 
-2. [`tests/src/unit-*.cpp`](https://github.com/nlohmann/json/tree/develop/tests/src) - These files contain the [doctest](https://github.com/onqtam/doctest) unit tests which currently cover [100 %](https://coveralls.io/github/nlohmann/json) of the library's code.  Before creating a pull request, execute `make pretty` to make sure that the style is correct, as this will be checked by the CI. 
+### Proposing a fix or an improvement
 
-   If you add or change a feature, please also add a unit test to this file. The unit tests can be compiled and executed with
+Join an ongoing discussion or comment on an existing issue before starting to code. This can help to avoid duplicate
+efforts or other frustration during the later review.
 
-   ```sh
-   $ mkdir build
-   $ cd build
-   $ cmake ..
-   $ cmake --build .
-   $ ctest
-   ```
+Create a [pull request](https://github.com/nlohmann/json/pulls?q=sort%3Aupdated-desc+is%3Apr+is%3Aopen) against the
+`develop` branch and follow the pull request template. In particular,
 
-   The test cases are also executed with several different compilers on [Travis](https://travis-ci.org/nlohmann/json) once you open a pull request.
+- describe the changes in detail, both the what and why,
+- reference existing issues where applicable,
+- add tests to maintain 100% test coverage,
+- update the documentation as needed, and
+- ensure the source code is amalgamated.
 
+We describe all points in detail below.
 
-## Note
+All contributions (including pull requests) must agree to the
+[Developer Certificate of Origin (DCO) version 1.1](https://developercertificate.org). This is exactly the same one
+created and used by the Linux kernel developers and posted on http://developercertificate.org/. This is a developer's
+certification that he or she has the right to submit the patch for inclusion into the project.
 
-- If you open a pull request, the code will be automatically tested with [Valgrind](http://valgrind.org)'s Memcheck tool to detect memory leaks. Please be aware that the execution with Valgrind _may_ in rare cases yield different behavior than running the code directly. This can result in failing unit tests which run successfully without Valgrind.
-- There is a Makefile target `make pretty` which runs [Artistic Style](http://astyle.sourceforge.net) to fix indentation. If possible, run it before opening the pull request. Otherwise, we shall run it afterward.
+## How to...
 
-## Please don't
+### Describe your changes
 
-- The C++11 support varies between different **compilers** and versions. Please note the [list of supported compilers](https://github.com/nlohmann/json/blob/master/README.md#supported-compilers). Some compilers like GCC 4.7 (and earlier), Clang 3.3 (and earlier), or Microsoft Visual Studio 13.0 and earlier are known not to work due to missing or incomplete C++11 support. Please refrain from proposing changes that work around these compiler's limitations with `#ifdef`s or other means.
-- Specifically, I am aware of compilation problems with **Microsoft Visual Studio** (there even is an [issue label](https://github.com/nlohmann/json/issues?utf8=✓&q=label%3A%22visual+studio%22+) for this kind of bug). I understand that even in 2016, complete C++11 support isn't there yet. But please also understand that I do not want to drop features or uglify the code just to make Microsoft's sub-standard compiler happy. The past has shown that there are ways to express the functionality such that the code compiles with the most recent MSVC - unfortunately, this is not the main objective of the project.
-- Please refrain from proposing changes that would **break [JSON](https://json.org) conformance**. If you propose a conformant extension of JSON to be supported by the library, please motivate this extension.
-  - We shall not extend the library to **support comments**. There is quite some [controversy](https://www.reddit.com/r/programming/comments/4v6chu/why_json_doesnt_support_comments_douglas_crockford/) around this topic, and there were quite some [issues](https://github.com/nlohmann/json/issues/376) on this. We believe that JSON is fine without comments.
-  - We do not preserve the **insertion order of object elements**. The [JSON standard](https://tools.ietf.org/html/rfc8259.html) defines objects as "an unordered collection of zero or more name/value pairs". To this end, this library does not preserve insertion order of name/value pairs. (In fact, keys will be traversed in alphabetical order as `std::map` with `std::less` is used by default.) Note this behavior conforms to the standard, and we shall not change it to any other order. If you do want to preserve the insertion order, you can specialize the object type with containers like [`tsl::ordered_map`](https://github.com/Tessil/ordered-map) or [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map).
+This library is primarily maintained as a spare-time project. As such, I can not make any guarantee how quickly changes
+are merged and released. Therefore, it is very important to make the review as smooth as possible by explaining not only
+_what_ you changed, but _why_. This rationale can be very valuable down the road when improvements or bugs are discussed
+years later.
 
-- Please do not open pull requests that address **multiple issues**.
+### Reference existing issues
+
+[Link a pull request to an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue)
+to clarify that a fix is forthcoming and which issue can be closed after merging. Only few cases (e.g., fixing typos)
+don’t require prior discussions.
+
+### Write tests
+
+The library has an extensive test suite that currently covers [100 %](https://coveralls.io/github/nlohmann/json) of the
+library's code. These test are crucial to maintain API stability and give future contributors confidence that they do
+not accidentally break things. As Titus Winters aptly put it:
+
+> If you liked it, you should have put a test on it.
+
+#### Run the tests
+
+First, ensure the test suite runs before making any changes:
+
+```sh
+$ cmake -S. -B build
+$ cmake --build build -j 10
+$ ctest --test-dir build -j 10
+```
+
+The test suite should report:
+
+```
+100% tests passed, 0 tests failed out of 98
+```
+
+#### Add tests
+
+The tests are located in [`tests/src/unit-*.cpp`](https://github.com/nlohmann/json/tree/develop/tests/src) and contain
+[doctest assertions](https://github.com/doctest/doctest/blob/master/doc/markdown/assertions.md) like `CHECK`. The tests
+are structured along the features of the library or the nature of the tests. Usually, it should be clear from the
+context which existing file needs to be extended, and only very few cases require creating new test files.
+
+When fixing a bug, edit `unit-regression2.cpp` and add a section referencing the fixed issue.
+
+#### Exceptions
+
+When you test exceptions, please use `CHECK_THROWS_WITH_AS` which also takes the `what()` argument of the thrown
+exception into account.
+
+#### Coverage
+
+If test coverage decreases, an automatic warning comment will be posted on the pull request. You can access a code
+coverage report as artifact to the “Ubuntu” workflow.
+
+### Update the documentation
+
+The [main documentation](https://json.nlohmann.me) of the library is generated from the files
+[`docs/mkdocs/docs`](https://github.com/nlohmann/json/blob/develop/docs/mkdocs/docs). This folder contains dedicated
+pages for [certain features](https://github.com/nlohmann/json/tree/develop/docs/mkdocs/docs/features), a list of
+[all exceptions](https://github.com/nlohmann/json/blob/develop/docs/mkdocs/docs/home/exceptions.md), and an
+[extensive API documentation](https://github.com/nlohmann/json/tree/develop/docs/mkdocs/docs/api) with details on every
+public API function.
+
+Build the documentation locally using:
+
+```shell
+make install_venv -C docs/mkdocs
+make serve -C docs/mkdocs
+```
+
+The documentation will then available at <http://127.0.0.1:8000/>. See the documentation of
+[mkdocs](https://www.mkdocs.org) and [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/) for more
+information.
+
+### Amalgamate the source code
+
+The single-header files
+[`single_include/nlohmann/json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp) and
+[`single_include/nlohmann/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_fwd.hpp)
+are **generated** from the source files in the
+[`include/nlohmann` directory](https://github.com/nlohmann/json/tree/develop/include/nlohmann). **Do not** edit the
+files directly; instead, modify the include/nlohmann sources and regenerate the files by executing:
+
+```shell
+make amalgamate
+```
+
+## Recommended documentation
+
+- The library’s [README file](https://github.com/nlohmann/json/blob/master/README.md) is an excellent starting point to
+  understand its functionality.
+- The [documentation page](https://json.nlohmann.me) is the reference documentation of the library.
+- [RFC 8259](https://datatracker.ietf.org/doc/html/rfc8259) is the reference for the JavaScript Object Notation (JSON)
+  Data Interchange Format.
+
+## Please don't...
+
+Certain contributions are not helpful.
+
+### Break the public API
+
+We take pride in the library being used by
+[numerous customers across various industries](https://json.nlohmann.me/home/customers/). They all rely on the
+guarantees provided by [semantic versioning](https://semver.org). Please do not change the library such that the public
+API of the 3.x.y version is broken. This includes:
+
+- Changing function signatures (altering parameter types, return types, number of parameters) or changing the const-ness
+  of member functions.
+- Removing functions.
+- Renaming functions or classes.
+- Changing exception handling.
+- Changing exception ids.
+- Changing access specifiers.
+- Changing default arguments.
+
+Although these guidelines may seem restrictive, they are essential for maintaining the library’s utility.
+
+Breaking changes may be introduced when they are guarded with a feature macro such as
+[`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/) which allows to
+selectively change the behavior of the library. In next steps, the current behavior can then be deprecated. Using
+feature macros then allows users to test their code against the library in the next major release.
+
+### Break C++11 language conformance
+
+This library is designed to work with C++11 and later. This means that any
+[supported C++11 compiler](https://github.com/nlohmann/json/blob/master/README.md#supported-compilers) should compile
+the library without problems. Some compilers like GCC 4.7 (and earlier), Clang 3.3 (and earlier), or Microsoft Visual
+Studio 13.0 and earlier are known not to work due to missing or incomplete C++11 support.
+
+Please do not add features that do not work with the mentioned supported compilers. Please guard features from C++14 and
+later against the respective [`JSON_HAS_CPP_14`](https://json.nlohmann.me/api/macros/json_has_cpp_11/) macros.
+
+### Break JSON conformance
+
+Please refrain from proposing changes that would **break [JSON](https://datatracker.ietf.org/doc/html/rfc8259)
+conformance**. If you propose a conformant extension of JSON to be supported by the library, please motivate this
+extension.
 
 ## Wanted
 
-The following areas really need contribution:
+The following areas really need contribution and are always welcomed:
 
-- Extending the **continuous integration** toward more exotic compilers such as Android NDK, Intel's Compiler, or the bleeding-edge versions Clang.
-- Improving the efficiency of the **JSON parser**. The current parser is implemented as a naive recursive descent parser with hand coded string handling. More sophisticated approaches like LALR parsers would be really appreciated. That said, parser generators like Bison or ANTLR do not play nice with single-header files -- I really would like to keep the parser inside the `json.hpp` header, and I am not aware of approaches similar to [`re2c`](http://re2c.org) for parsing.
-- Extending and updating existing **benchmarks** to include (the most recent version of) this library. Though efficiency is not everything, speed and memory consumption are very important characteristics for C++ developers, so having proper comparisons would be interesting.
+- Extending the **continuous integration** toward more exotic compilers such as Android NDK, Intel's Compiler, or the
+  bleeding-edge versions Clang.
+- Improving the efficiency of the **JSON parser**. The current parser is implemented as a naive recursive descent parser
+  with hand coded string handling. More sophisticated approaches like LALR parsers would be really appreciated. That
+  said, parser generators like Bison or ANTLR do not play nice with single-header files -- I really would like to keep
+  the parser inside the `json.hpp` header, and I am not aware of approaches similar to [`re2c`](http://re2c.org) for
+  parsing.
+- Extending and updating existing **benchmarks** to include (the most recent version of) this library. Though efficiency
+  is not everything, speed and memory consumption are very important characteristics for C++ developers, so having
+  proper comparisons would be interesting.
+
+We look forward to your contributions and collaboration to enhance the library!

@@ -42,7 +42,15 @@ class basic_json;
 
 ## Iterator invalidation
 
-Todo
+All operations that add values to an **array** ([`push_back`](push_back.md) , [`operator+=`](operator+=.md),
+[`emplace_back`](emplace_back.md), [`insert`](insert.md), and [`operator[]`](operator%5B%5D.md) for a non-existing
+index) can yield a reallocation, in which case all iterators (including the [`end()`](end.md) iterator) and all
+references to the elements are invalidated.
+
+For [`ordered_json`](../ordered_json.md), also all operations that add a value to an **object**
+([`push_back`](push_back.md), [`operator+=`](operator+=.md), [`emplace`](emplace.md), [`insert`](insert.md),
+[`update`](update.md), and [`operator[]`](operator%5B%5D.md) for a non-existing key) can yield a reallocation, in
+which case all iterators (including the [`end()`](end.md) iterator) and all references to the elements are invalidated.
 
 ## Requirements
 
@@ -148,9 +156,9 @@ The class satisfies the following concept requirements:
 - [(constructor)](basic_json.md)
 - [(destructor)](~basic_json.md)
 - [**operator=**](operator=.md) - copy assignment
-- [**array**](array_t.md) (_static_) - explicitly create an array
+- [**array**](array.md) (_static_) - explicitly create an array
 - [**binary**](binary.md) (_static_) - explicitly create a binary array
-- [**object**](object_t.md) (_static_) - explicitly create an object
+- [**object**](object.md) (_static_) - explicitly create an object
 
 ### Object inspection
 
@@ -172,6 +180,11 @@ Functions to inspect the type of a JSON value.
 - [**is_string**](is_string.md) - return whether value is a string
 - [**is_binary**](is_binary.md) - return whether value is a binary array
 - [**is_discarded**](is_discarded.md) - return whether value is discarded
+
+Optional functions to access the [diagnostic positions](../macros/json_diagnostic_positions.md).
+
+- [**start_pos**](start_pos.md) - return the start position of the value
+- [**end_pos**](end_pos.md) - return the one past the end position of the value
 
 ### Value access
 

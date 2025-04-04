@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -241,5 +241,25 @@ TEST_CASE("Regression tests for extended diagnostics")
             j_arr[7] = 7;
             json const j_arr_copy = j_arr;
         }
+    }
+
+    SECTION("Regression test for issue #3915 - JSON_DIAGNOSTICS trigger assertion")
+    {
+        json j = json::object();
+        j["root"] = "root_str";
+
+        json jj = json::object();
+        jj["child"] = json::object();
+
+        // If do not push anything in object, then no assert will be produced
+        jj["child"]["prop1"] = "prop1_value";
+
+        // Push all properties of child in parent
+        j.insert(jj.at("child").begin(), jj.at("child").end());
+
+        // Here assert is generated when construct new json
+        const json k(j);
+
+        CHECK(k.dump() == "{\"prop1\":\"prop1_value\",\"root\":\"root_str\"}");
     }
 }

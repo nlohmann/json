@@ -19,6 +19,14 @@ parameter is the name of the class/struct, and all remaining parameters name the
    default constructs an object and uses its values as the defaults when calling the `value` function.
 3. Only defines the serialization. Useful in cases when the type does not have a default constructor and only serialization in required.
 
+Summary:
+
+| Need access to private members                                   | Need only de-serialization                                       | Allow missing values when de-serializing                         | macro                                                 |
+|------------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------------------------|-------------------------------------------------------|
+| <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | **NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE**                |
+| <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: green;">:octicons-check-circle-fill-24:</div> | **NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT**   |
+| <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: green;">:octicons-check-circle-fill-24:</div> | <div style="color: grey;">:octicons-skip-fill-24:</div>          | **NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE** |
+
 ## Parameters
 
 `type` (in)
@@ -32,8 +40,10 @@ parameter is the name of the class/struct, and all remaining parameters name the
 The macros add two functions to the namespace which take care of the serialization and deserialization:
 
 ```cpp
-void to_json(nlohmann::json&, const type&);
-void from_json(const nlohmann::json&, type&); // except (3)
+template<typename BasicJsonType>
+void to_json(BasicJsonType&, const type&);
+template<typename BasicJsonType>
+void from_json(const BasicJsonType&, type&); // except (3)
 ```
 
 See examples below for the concrete generated code.
@@ -53,8 +63,6 @@ See examples below for the concrete generated code.
 
     - The current implementation is limited to at most 64 member variables. If you want to serialize/deserialize types
       with more than 64 member variables, you need to define the `to_json`/`from_json` functions manually.
-    - The macros only work for the [`nlohmann::json`](../json.md) type; other specializations such as
-      [`nlohmann::ordered_json`](../ordered_json.md) are currently unsupported.
 
 ## Examples
 
@@ -82,7 +90,7 @@ See examples below for the concrete generated code.
 
     The macro is equivalent to:
 
-    ```cpp hl_lines="16 17 18 19 20 21 22 23 24 25 26 27 28"
+    ```cpp hl_lines="16 17 18 19 20 21 22 23 24 25 26 27 28 29 30"
     --8<-- "examples/nlohmann_define_type_non_intrusive_explicit.cpp"
     ```
 
@@ -90,7 +98,7 @@ See examples below for the concrete generated code.
 
     Consider the following complete example:
 
-    ```cpp hl_lines="22"
+    ```cpp hl_lines="21"
     --8<-- "examples/nlohmann_define_type_non_intrusive_with_default_macro.cpp"
     ```
     
@@ -111,7 +119,7 @@ See examples below for the concrete generated code.
 
     The macro is equivalent to:
 
-    ```cpp hl_lines="22 23 24 25 26 27 28 29 30 31 32 33 34 35"
+    ```cpp hl_lines="21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36"
     --8<-- "examples/nlohmann_define_type_non_intrusive_with_default_explicit.cpp"
     ```
 
@@ -140,18 +148,24 @@ See examples below for the concrete generated code.
 
     The macro is equivalent to:
 
-    ```cpp hl_lines="16 17 18 19 20 21"
+    ```cpp hl_lines="16 17 18 19 20 21 22"
     --8<-- "examples/nlohmann_define_type_non_intrusive_only_serialize_explicit.cpp"
     ```
 
 ## See also
 
-- [NLOHMANN_DEFINE_TYPE_INTRUSIVE{_WITH_DEFAULT, _ONLY_SERIALIZE}](nlohmann_define_type_intrusive.md)
+- [NLOHMANN_DEFINE_TYPE_INTRUSIVE, NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT,
+  NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE](nlohmann_define_type_intrusive.md)
   for a similar macro that can be defined _inside_ the type.
+- [NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT,
+  NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE,
+  NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT,
+  NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE](nlohmann_define_derived_type.md) for similar macros for
+  derived types
 - [Arbitrary Type Conversions](../../features/arbitrary_types.md) for an overview.
 
 ## Version history
 
 1. Added in version 3.9.0.
 2. Added in version 3.11.0.
-3. Added in version TODO.
+3. Added in version 3.11.3.

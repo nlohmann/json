@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -1335,10 +1335,10 @@ TEST_CASE("regression tests 1")
         {
             std::ifstream is;
             is.exceptions(
-                is.exceptions()
-                | std::ios_base::failbit
-                | std::ios_base::badbit
-            ); // handle different exceptions as 'file not found', 'permission denied'
+                  is.exceptions()
+                  | std::ios_base::failbit
+                  | std::ios_base::badbit
+              ); // handle different exceptions as 'file not found', 'permission denied'
 
             is.open(TEST_DATA_DIRECTORY "/regression/working_file.json");
             json _;
@@ -1348,10 +1348,10 @@ TEST_CASE("regression tests 1")
         {
             std::ifstream is;
             is.exceptions(
-                is.exceptions()
-                | std::ios_base::failbit
-                | std::ios_base::badbit
-            ); // handle different exceptions as 'file not found', 'permission denied'
+                  is.exceptions()
+                  | std::ios_base::failbit
+                  | std::ios_base::badbit
+              ); // handle different exceptions as 'file not found', 'permission denied'
 
             is.open(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json.cbor",
                     std::ios_base::in | std::ios_base::binary);
@@ -1400,14 +1400,24 @@ TEST_CASE("regression tests 1")
         auto p1 = R"([{"op": "move",
                        "from": "/one/two/three",
                        "path": "/a/b/c"}])"_json;
+#if JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(model.patch(p1),
+                             "[json.exception.out_of_range.403] (bytes 0-158) key 'a' not found", json::out_of_range&);
+#else
         CHECK_THROWS_WITH_AS(model.patch(p1),
                              "[json.exception.out_of_range.403] key 'a' not found", json::out_of_range&);
+#endif
 
         auto p2 = R"([{"op": "copy",
                        "from": "/one/two/three",
                        "path": "/a/b/c"}])"_json;
+#if JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(model.patch(p2),
+                             "[json.exception.out_of_range.403] (bytes 0-158) key 'a' not found", json::out_of_range&);
+#else
         CHECK_THROWS_WITH_AS(model.patch(p2),
                              "[json.exception.out_of_range.403] key 'a' not found", json::out_of_range&);
+#endif
     }
 
     SECTION("issue #961 - incorrect parsing of indefinite length CBOR strings")

@@ -2,10 +2,10 @@
 
 The [BJData format](https://neurojson.org) was derived from and improved upon
 [Universal Binary JSON(UBJSON)](https://ubjson.org) specification (Draft 12). Specifically, it introduces an optimized
-array container for efficient storage of N-dimensional packed arrays (**ND-arrays**); it also adds 4 new type markers -
-`[u] - uint16`, `[m] - uint32`, `[M] - uint64` and `[h] - float16` - to unambiguously map common binary numeric types;
-furthermore, it uses little-endian (LE) to store all numerics instead of big-endian (BE) as in UBJSON to avoid
-unnecessary conversions on commonly available platforms.
+array container for efficient storage of N-dimensional packed arrays (**ND-arrays**); it also adds 5 new type markers -
+`[u] - uint16`, `[m] - uint32`, `[M] - uint64`, `[h] - float16` and `[B] - byte` - to unambiguously map common binary
+numeric types; furthermore, it uses little-endian (LE) to store all numerics instead of big-endian (BE) as in UBJSON to
+avoid  unnecessary conversions on commonly available platforms.
 
 Compared to other binary JSON-like formats such as MessagePack and CBOR, both BJData and UBJSON demonstrate a rare
 combination of being both binary and **quasi-human-readable**. This is because all semantic elements in BJData and
@@ -49,6 +49,7 @@ The library uses the following mapping from JSON values types to BJData types ac
 | string          | *with shortest length indicator*          | string         | `S`    |
 | array           | *see notes on optimized format/ND-array*  | array          | `[`    |
 | object          | *see notes on optimized format*           | map            | `{`    |
+| binary          | *see notes on binary values*              | array          | `[$B`  |
 
 !!! success "Complete mapping"
 
@@ -128,15 +129,24 @@ The library uses the following mapping from JSON values types to BJData types ac
 
     Due to diminished space saving, hampered readability, and increased security risks, in BJData, the allowed data
     types following the `$` marker in an optimized array and object container are restricted to
-    **non-zero-fixed-length** data types. Therefore, the valid optimized type markers can only be one of `UiuImlMLhdDC`.
-    This also means other variable (`[{SH`) or zero-length types (`TFN`) can not be used in an optimized array or object
-    in BJData.
+    **non-zero-fixed-length** data types. Therefore, the valid optimized type markers can only be one of
+    `UiuImlMLhdDCB`. This also means other variable (`[{SH`) or zero-length types (`TFN`) can not be used in an
+    optimized array or object in BJData.
 
 !!! info "Binary values"
 
-    If the JSON data contains the binary type, the value stored is a list of integers, as suggested by the BJData
-    documentation. In particular, this means that the serialization and the deserialization of JSON containing binary
-    values into BJData and back will result in a different JSON object.
+    BJData provides a dedicated `B` marker (defined in the [BJData specification (Draft 3)][BJDataBinArr]) that is used
+    in optimized arrays to designate binary data. This means that, unlike UBJSON, binary data can be both serialized and
+    deserialized.
+
+    To preserve compatibility with BJData Draft 2, the Draft 3 optimized binary array must be explicitly enabled using
+    the `version` parameter of [`to_bjdata`](../../api/basic_json/to_bjdata.md).
+
+    In Draft2 mode (default), if the JSON data contains the binary type, the value stored as a list of integers, as
+    suggested by the BJData documentation. In particular, this means that the serialization and the deserialization of
+    JSON containing binary values into BJData and back will result in a different JSON object.
+
+    [BJDataBinArr]: https://github.com/NeuroJSON/bjdata/blob/master/Binary_JData_Specification.md#optimized-binary-array)
 
 ??? example
 
@@ -154,28 +164,30 @@ The library uses the following mapping from JSON values types to BJData types ac
 
 The library maps BJData types to JSON value types as follows:
 
-| BJData type | JSON value type                         | marker |
-|-------------|-----------------------------------------|--------|
-| no-op       | *no value, next value is read*          | `N`    |
-| null        | `null`                                  | `Z`    |
-| false       | `false`                                 | `F`    |
-| true        | `true`                                  | `T`    |
-| float16     | number_float                            | `h`    |
-| float32     | number_float                            | `d`    |
-| float64     | number_float                            | `D`    |
-| uint8       | number_unsigned                         | `U`    |
-| int8        | number_integer                          | `i`    |
-| uint16      | number_unsigned                         | `u`    |
-| int16       | number_integer                          | `I`    |
-| uint32      | number_unsigned                         | `m`    |
-| int32       | number_integer                          | `l`    |
-| uint64      | number_unsigned                         | `M`    |
-| int64       | number_integer                          | `L`    |
-| string      | string                                  | `S`    |
-| char        | string                                  | `C`    |
-| array       | array (optimized values are supported)  | `[`    |
-| ND-array    | object (in JData annotated array format)|`[$.#[.`|
-| object      | object (optimized values are supported) | `{`    |
+| BJData type | JSON value type                          | marker   |
+|-------------|------------------------------------------|----------|
+| no-op       | *no value, next value is read*           | `N`      |
+| null        | `null`                                   | `Z`      |
+| false       | `false`                                  | `F`      |
+| true        | `true`                                   | `T`      |
+| float16     | number_float                             | `h`      |
+| float32     | number_float                             | `d`      |
+| float64     | number_float                             | `D`      |
+| uint8       | number_unsigned                          | `U`      |
+| int8        | number_integer                           | `i`      |
+| uint16      | number_unsigned                          | `u`      |
+| int16       | number_integer                           | `I`      |
+| uint32      | number_unsigned                          | `m`      |
+| int32       | number_integer                           | `l`      |
+| uint64      | number_unsigned                          | `M`      |
+| int64       | number_integer                           | `L`      |
+| byte        | number_unsigned                          | `B`      |
+| string      | string                                   | `S`      |
+| char        | string                                   | `C`      |
+| array       | array (optimized values are supported)   | `[`      |
+| ND-array    | object (in JData annotated array format) | `[$.#[.` |
+| object      | object (optimized values are supported)  | `{`      |
+| binary      | binary (strongly-typed byte array)       | `[$B`    |
 
 !!! success "Complete mapping"
 

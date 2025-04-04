@@ -19,8 +19,11 @@ Note there are three different types for numbers - when parsing JSON text, the b
 
 ## Storage
 
-```plantuml
-enum value_t {
+```mermaid
+classDiagram
+
+class value_t {
+    <<enumeration>>
     null
     object
     array
@@ -33,7 +36,8 @@ enum value_t {
     discarded
 }
 
-class json_value << (U,orchid) >> {
+class json_value {
+    <<union>>
     object_t* object
     array_t* array
     string_t* string
@@ -45,17 +49,15 @@ class json_value << (U,orchid) >> {
 }
 
 class basic_json {
-    -- type and value --
-    value_t m_type
-    json_value m_value
-    -- derived types --
-    + <u>typedef</u> object_t
-    + <u>typedef</u> array_t
-    + <u>typedef</u> binary_t
-    + <u>typedef</u> boolean_t
-    + <u>typedef</u> number_integer_t
-    + <u>typedef</u> number_unsigned_t
-    + <u>typedef</u> number_float_t
+    -value_t m_type
+    -json_value m_value
+    +typedef object_t
+    +typedef array_t
+    +typedef binary_t
+    +typedef boolean_t
+    +typedef number_integer_t
+    +typedef number_unsigned_t
+    +typedef number_float_t
 }
 
 basic_json .. json_value

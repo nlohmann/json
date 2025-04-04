@@ -28,9 +28,9 @@ static basic_json parse(IteratorType first, IteratorType last,
 :   A compatible input, for instance:
     
     - an `std::istream` object
-    - a `FILE` pointer (must not be null)
+    - a `FILE` pointer (throws if null)
     - a C-style array of characters
-    - a pointer to a null-terminated string of single byte characters
+    - a pointer to a null-terminated string of single byte characters (throws if null)
     - a `std::string`
     - an object `obj` for which `begin(obj)` and `end(obj)` produces a valid pair of iterators.
 
@@ -73,10 +73,11 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 ## Exceptions
 
-- Throws [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) in case of an unexpected token.
-- Throws [`parse_error.102`](../../home/exceptions.md#jsonexceptionparse_error102) if to_unicode fails or surrogate
+- Throws [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) in case of an unexpected token, or
+  empty input like a null `FILE*` or `char*` pointer.
+- Throws [`parse_error.102`](../../home/exceptions.md#jsonexceptionparse_error102) if `to_unicode` fails or surrogate
   error.
-- Throws [`parse_error.103`](../../home/exceptions.md#jsonexceptionparse_error103) if to_unicode fails.
+- Throws [`parse_error.103`](../../home/exceptions.md#jsonexceptionparse_error103) if `to_unicode` fails.
 
 ## Complexity
 
@@ -86,12 +87,7 @@ super-linear complexity.
 
 ## Notes
 
-(1) A UTF-8 byte order mark is silently ignored.
-
-!!! danger "Runtime assertion"
-
-    The precondition that a passed `#!cpp FILE` pointer must not be null is enforced with a
-    [runtime assertion](../../features/assertions.md).
+A UTF-8 byte order mark is silently ignored.
 
 ## Examples
 
@@ -203,6 +199,7 @@ super-linear complexity.
 - Added in version 1.0.0.
 - Overload for contiguous containers (1) added in version 2.0.3.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
+- Changed [runtime assertion](../../features/assertions.md) in case of `FILE*` null pointers to exception in version 3.11.4.
 
 !!! warning "Deprecation"
 

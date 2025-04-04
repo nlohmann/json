@@ -15,18 +15,21 @@ class JsonValuePrinter:
 
 def json_lookup_function(val):
     if m := ns_pattern.fullmatch(str(val.type.strip_typedefs().name)):
-      name = m.group('name')
-      if name and name.startswith('basic_json<') and name.endswith('>'):
-          m = ns_pattern.fullmatch(str(val["m_data"]['m_type']))
-          t = m.group('name')
-          if t and t.startswith('detail::value_t::'):
-              try:
-                  union_val = val["m_data"]['m_value'][t.removeprefix('detail::value_t::')]
-                  if union_val.type.code == gdb.TYPE_CODE_PTR:
-                      return gdb.default_visualizer(union_val.dereference())
-                  else:
-                      return JsonValuePrinter(union_val)
-              except Exception:
-                  return JsonValuePrinter(val["m_data"]['m_type'])
+        name = m.group('name')
+        if name and name.startswith('basic_json<') and name.endswith('>'):
+            m_data = val['m_data']
+            m_type = m_data['m_type']
+            m = ns_pattern.fullmatch(str(m_type))
+            t = m.group('name')
+            prefix = 'detail::value_t::'
+            if t and t.startswith(prefix):
+                try:
+                    union_val = m_data['m_value'][t.replace(prefix, '', 1)]
+                    if union_val.type.code == gdb.TYPE_CODE_PTR:
+                        return gdb.default_visualizer(union_val.dereference())
+                    else:
+                        return JsonValuePrinter(union_val)
+                except Exception:
+                    return JsonValuePrinter(m_type)
 
 gdb.pretty_printers.append(json_lookup_function)

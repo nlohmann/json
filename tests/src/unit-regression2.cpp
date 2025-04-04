@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 // cmake/test.cmake selects the C++ standard versions with which to build a
@@ -71,7 +71,7 @@ enum class for_1647
     two
 };
 
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): this is a false positive
+// NOLINTNEXTLINE(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): this is a false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(for_1647,
 {
     {for_1647::one, "one"},
@@ -162,11 +162,11 @@ struct adl_serializer<NonDefaultConstructible>
 // for #2824
 /////////////////////////////////////////////////////////////////////
 
-class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json>
+class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type>
 {
   public:
     explicit sax_no_exception(json& j)
-        : nlohmann::detail::json_sax_dom_parser<json>(j, false)
+        : nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type>(j, false)
     {}
 
     static bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& ex)
@@ -376,6 +376,19 @@ template <>
 inline for_3333::for_3333(const json& j)
     : for_3333(j.value("x", 0), j.value("y", 0))
 {}
+
+/////////////////////////////////////////////////////////////////////
+// for #3810
+/////////////////////////////////////////////////////////////////////
+
+struct Example_3810
+{
+    int bla{};
+
+    Example_3810() = default;
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Example_3810, bla); // NOLINT(misc-use-internal-linkage)
 
 TEST_CASE("regression tests 2")
 {
@@ -736,7 +749,7 @@ TEST_CASE("regression tests 2")
 #if __has_include(<span>)
     SECTION("issue #2546 - parsing containers of std::byte")
     {
-        const char DATA[] = R"("Hello, world!")"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        const char DATA[] = R"("Hello, world!")"; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         const auto s = std::as_bytes(std::span(DATA));
         const json j = json::parse(s);
         CHECK(j.dump() == "\"Hello, world!\"");
@@ -812,6 +825,15 @@ TEST_CASE("regression tests 2")
                 CHECK_THROWS_AS((j.get<std::tuple<NonDefaultConstructible>>()), json::type_error);
             }
         }
+    }
+
+    SECTION("issue #4530 - Serialization of empty tuple")
+    {
+        const auto source_tuple = std::tuple<>();
+        const nlohmann::json j = source_tuple;
+
+        CHECK(j.get<decltype(source_tuple)>() == source_tuple);
+        CHECK("[]" == j.dump());
     }
 
     SECTION("issue #2865 - ASAN detects memory leaks")
@@ -994,6 +1016,26 @@ TEST_CASE("regression tests 2")
 
         CHECK(p.x == 1);
         CHECK(p.y == 2);
+    }
+
+    SECTION("issue #3810 - ordered_json doesn't support construction from C array of custom type")
+    {
+        Example_3810 states[45]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+
+        // fix "not used" warning
+        states[0].bla = 1;
+
+        const auto* const expected = R"([{"bla":1},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0}])";
+
+        // This works:
+        nlohmann::json j;
+        j["test"] = states;
+        CHECK(j["test"].dump() == expected);
+
+        // This doesn't compile:
+        nlohmann::ordered_json oj;
+        oj["test"] = states;
+        CHECK(oj["test"].dump() == expected);
     }
 }
 

@@ -1,0 +1,34 @@
+name: 'Comment and close stale issues and PR'
+on:
+  schedule:
+    - cron: '0 0 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@c6295a65d1254861815972266d5933fd6e532bdf # v2.11.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/stale@5bef64f19d7facfb25b37b414482c7164d639639 # v9.1.0
+        with:
+          stale-issue-label: 'state: stale'
+          stale-pr-label: 'state: stale'
+          exempt-issue-labels: 'pinned,security'
+          stale-issue-message: 'This issue has been marked as stale because it has been open for 90 days without activity. If this issue is still relevant, please add a comment or remove the "stale" label. Otherwise, it will be closed in 10 days. Thank you for helping us prioritize our work!'
+          stale-pr-message: 'This pull request has been marked as stale because it has had no activity for 30 days. While we won’t close it automatically, we encourage you to update or comment if it is still relevant. Keeping pull requests active and up-to-date helps us review and merge changes more efficiently. Thank you for your contributions!'
+          close-issue-message: 'This issue has been closed after being marked as stale for 10 days without any further activity. If this was done in error or the issue is still relevant, please feel free to reopen it or create a new issue. We appreciate your understanding and contributions.'
+          days-before-stale: 90
+          days-before-pr-stale: 30
+          days-before-close: 10
+          days-before-pr-close: -1

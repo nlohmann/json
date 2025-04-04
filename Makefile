@@ -44,15 +44,6 @@ all:
 
 
 ##########################################################################
-# documentation tests
-##########################################################################
-
-# compile example files and check output
-doctest:
-	$(MAKE) check_output -C docs
-
-
-##########################################################################
 # benchmarks
 ##########################################################################
 
@@ -142,32 +133,20 @@ pvs_studio:
 # Code format and source amalgamation
 ##########################################################################
 
+ASTYLE=tools/astyle/venv/bin/astyle
+
+install_astyle:
+	@test -d tools/astyle/venv || python3 -mvenv tools/astyle/venv ; tools/astyle/venv/bin/pip3 install --quiet --upgrade pip
+	@test -f $(ASTYLE) || tools/astyle/venv/bin/pip3 install --quiet -r tools/astyle/requirements.txt
+	@$(ASTYLE) --version
+
 # call the Artistic Style pretty printer on all source files
-pretty:
-	astyle \
-	    --style=allman \
-	    --indent=spaces=4 \
-	    --indent-modifiers \
-	    --indent-switches \
-	    --indent-preproc-block \
-	    --indent-preproc-define \
-	    --indent-col1-comments \
-	    --pad-oper \
-	    --pad-header \
-	    --align-pointer=type \
-	    --align-reference=type \
-	    --add-braces \
-	    --convert-tabs \
-	    --close-templates \
-	    --lineend=linux \
-	    --preserve-date \
-	    --suffix=none \
-	    --formatted \
-	   $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) docs/examples/*.cpp
+pretty: install_astyle
+	$(ASTYLE) --project=tools/astyle/.astylerc $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) docs/mkdocs/docs/examples/*.cpp
 
 # call the Clang-Format on all source files
 pretty_format:
-	for FILE in $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) docs/examples/*.cpp; do echo $$FILE; clang-format -i $$FILE; done
+	for FILE in $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) docs/mkdocs/docs/examples/*.cpp; do echo $$FILE; clang-format -i $$FILE; done
 
 # create single header files and pretty print
 amalgamate: $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE)
@@ -215,7 +194,7 @@ ChangeLog.md:
 # Release files
 ##########################################################################
 
-# Create a tar.gz archive that contains sufficient files to be used as CMake project (e.g., using FetchContent). The
+# Create a tar.xz archive that contains sufficient files to be used as CMake project (e.g., using FetchContent). The
 # archive is created according to the advices of <https://reproducible-builds.org/docs/archives/>.
 json.tar.xz:
 	mkdir json
@@ -279,6 +258,9 @@ serve_header:
 ##########################################################################
 
 reuse:
-	pipx run reuse annotate --recursive single_include include -tjson --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2024" --merge-copyrights
-	pipx run reuse annotate $(TESTS_SRCS) -tjson_support --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2024" --merge-copyrights
+	pipx run reuse annotate --recursive single_include include -tjson --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2025" --merge-copyrights
+	pipx run reuse annotate $(TESTS_SRCS) -tjson_support --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2025" --merge-copyrights
 	pipx run reuse lint
+
+spdx:
+	pipx run reuse spdx --output nlohmann_json.spdx --creator-person "Niels Lohmann" --add-license-concluded

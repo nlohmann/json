@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 // cmake/test.cmake selects the C++ standard versions with which to build a
@@ -31,7 +31,6 @@ using nlohmann::json;
 #include <unordered_map>
 #include <unordered_set>
 #include <valarray>
-
 
 // NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
@@ -271,8 +270,8 @@ TEST_CASE("value conversion")
 
         SECTION("built-in arrays")
         {
-            const char str[] = "a string"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-            const int nbs[] = {0, 1, 2}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            const char str[] = "a string"; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            const int nbs[] = {0, 1, 2}; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 
             const json j2 = nbs;
             const json j3 = str;
@@ -361,12 +360,74 @@ TEST_CASE("value conversion")
 
         SECTION("built-in arrays")
         {
-            const int nbs[] = {0, 1, 2}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            const int nbs[] = {0, 1, 2}; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
             int nbs2[] = {0, 0, 0}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 
             const json j2 = nbs;
             j2.get_to(nbs2);
             CHECK(std::equal(std::begin(nbs), std::end(nbs), std::begin(nbs2)));
+        }
+
+        SECTION("built-in arrays: 2D")
+        {
+            const int nbs[][3] = {{0, 1, 2}, {3, 4, 5}}; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            int nbs2[][3] = {{0, 0, 0}, {0, 0, 0}}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+
+            const json j2 = nbs;
+            j2.get_to(nbs2);
+            CHECK(std::equal(std::begin(nbs[0]), std::end(nbs[1]), std::begin(nbs2[0])));
+        }
+
+        SECTION("built-in arrays: 3D")
+        {
+            // NOLINTBEGIN(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            const int nbs[][2][3] = {\
+                {{0, 1, 2}, {3, 4, 5}}, \
+                {{10, 11, 12}, {13, 14, 15}}\
+            };
+            int nbs2[][2][3] = {\
+                {{0, 0, 0}, {0, 0, 0}}, \
+                {{0, 0, 0}, {0, 0, 0}}\
+            };
+            // NOLINTEND(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+
+            const json j2 = nbs;
+            j2.get_to(nbs2);
+            CHECK(std::equal(std::begin(nbs[0][0]), std::end(nbs[1][1]), std::begin(nbs2[0][0])));
+        }
+
+        SECTION("built-in arrays: 4D")
+        {
+            // NOLINTBEGIN(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            const int nbs[][2][2][3] = {\
+                {
+                    \
+                    {{0, 1, 2}, {3, 4, 5}}, \
+                    {{10, 11, 12}, {13, 14, 15}}\
+                }, \
+                {
+                    \
+                    {{20, 21, 22}, {23, 24, 25}}, \
+                    {{30, 31, 32}, {33, 34, 35}}\
+                }\
+            };
+            int nbs2[][2][2][3] = {\
+                {
+                    \
+                    {{0, 0, 0}, {0, 0, 0}}, \
+                    {{0, 0, 0}, {0, 0, 0}}\
+                }, \
+                {
+                    \
+                    {{0, 0, 0}, {0, 0, 0}}, \
+                    {{0, 0, 0}, {0, 0, 0}}\
+                }\
+            };
+            // NOLINTEND(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+
+            const json j2 = nbs;
+            j2.get_to(nbs2);
+            CHECK(std::equal(std::begin(nbs[0][0][0]), std::end(nbs[1][1][1]), std::begin(nbs2[0][0][0])));
         }
 
         SECTION("std::deque<json>")
@@ -1530,7 +1591,7 @@ TEST_CASE("value conversion")
 
 enum class cards {kreuz, pik, herz, karo};
 
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+// NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(cards,
 {
     {cards::kreuz, "kreuz"},
@@ -1548,7 +1609,7 @@ enum TaskState // NOLINT(cert-int09-c,readability-enum-initial-value)
     TS_INVALID = -1,
 };
 
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+// NOLINTNEXTLINE(misc-const-correctness,misc-use-internal-linkage,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(TaskState,
 {
     {TS_INVALID, nullptr},
@@ -1596,8 +1657,32 @@ TEST_CASE("JSON to enum mapping")
     }
 }
 
-
 #ifdef JSON_HAS_CPP_17
+#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
+TEST_CASE("std::filesystem::path")
+{
+    SECTION("ascii")
+    {
+        json const j_string = "Path";
+        auto p = j_string.template get<nlohmann::detail::std_fs::path>();
+        json const j_path = p;
+
+        CHECK(j_path.template get<std::string>() ==
+              j_string.template get<std::string>());
+    }
+
+    SECTION("utf-8")
+    {
+        json const j_string = "P\xc4\x9b\xc5\xa1ina";
+        auto p = j_string.template get<nlohmann::detail::std_fs::path>();
+        json const j_path = p;
+
+        CHECK(j_path.template get<std::string>() ==
+              j_string.template get<std::string>());
+    }
+}
+#endif
+
 #if !JSON_USE_IMPLICIT_CONVERSIONS
 TEST_CASE("std::optional")
 {

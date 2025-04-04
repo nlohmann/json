@@ -20,7 +20,7 @@ Checks whether the input is valid JSON.
     The value_type of the iterator must be an integral type with size of 1, 2 or 4 bytes, which will be interpreted
     respectively as UTF-8, UTF-16 and UTF-32.
     
-Unlike the [`parse`](parse.md) function, this function neither throws an exception in case of invalid JSON input
+Unlike the [`parse()`](parse.md) function, this function neither throws an exception in case of invalid JSON input
 (i.e., a parse error) nor creates diagnostic information.
 
 ## Template parameters
@@ -29,9 +29,9 @@ Unlike the [`parse`](parse.md) function, this function neither throws an excepti
 :   A compatible input, for instance:
     
     - an `std::istream` object
-    - a `FILE` pointer (must not be null)
+    - a `#!c FILE` pointer (throws if null)
     - a C-style array of characters
-    - a pointer to a null-terminated string of single byte characters
+    - a pointer to a null-terminated string of single byte characters (throws if null)
     - a `std::string`
     - an object `obj` for which `begin(obj)` and `end(obj)` produces a valid pair of iterators.
 
@@ -64,18 +64,17 @@ Whether the input is valid JSON.
 
 Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
 
+## Exceptions
+
+Throws [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) in case of an empty input like a null `#!c FILE*` or `#!c char*` pointer.
+
 ## Complexity
 
 Linear in the length of the input. The parser is a predictive LL(1) parser.
 
 ## Notes
 
-(1) A UTF-8 byte order mark is silently ignored.
-
-!!! danger "Runtime assertion"
-
-    The precondition that a passed `#!cpp FILE` pointer must not be null is enforced with a
-    [runtime assertion](../../features/assertions.md).
+A UTF-8 byte order mark is silently ignored.
 
 ## Examples
 
@@ -102,6 +101,7 @@ Linear in the length of the input. The parser is a predictive LL(1) parser.
 
 - Added in version 3.0.0.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
+- Changed [runtime assertion](../../features/assertions.md) in case of `FILE*` null pointers to exception in version 3.11.4.
 
 !!! warning "Deprecation"
 

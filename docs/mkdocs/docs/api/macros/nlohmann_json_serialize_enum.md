@@ -20,7 +20,7 @@ The `NLOHMANN_JSON_SERIALIZE_ENUM` allows to define a user-defined serialization
 
 ## Default definition
 
-The macros add two friend functions to the class which take care of the serialization and deserialization:
+The macro adds two functions to the namespace which take care of the serialization and deserialization:
 
 ```cpp
 template<typename BasicJsonType>

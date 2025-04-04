@@ -7,7 +7,7 @@ all: create_output
 ##########################################################################
 
 # where are the example cpp files
-EXAMPLES = $(wildcard examples/*.cpp)
+EXAMPLES = $(wildcard mkdocs/docs/examples/*.cpp)
 
 cxx_standard = $(lastword c++11 $(filter c++%, $(subst ., ,$1)))
 
@@ -37,9 +37,8 @@ check_output: $(EXAMPLES:.cpp=.test)
 
 # check output of all stand-alone example files (exclude files with platform-dependent output.)
 # This target is used in the CI (ci_test_documentation).
-check_output_portable: $(filter-out examples/meta.test examples/max_size.test examples/std_hash.test examples/basic_json__CompatibleType.test,$(EXAMPLES:.cpp=.test))
+check_output_portable: $(filter-out mkdocs/docs/examples/meta.test mkdocs/docs/examples/max_size.test mkdocs/docs/examples/std_hash.test mkdocs/docs/examples/basic_json__CompatibleType.test,$(EXAMPLES:.cpp=.test))
 
 clean:
 	rm -fr $(EXAMPLES:.cpp=)
 	$(MAKE) clean -C docset
-	$(MAKE) clean -C mkdocs

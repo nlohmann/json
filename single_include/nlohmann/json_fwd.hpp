@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #ifndef INCLUDE_NLOHMANN_JSON_FWD_HPP_
@@ -21,7 +21,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -44,6 +44,10 @@
     #define JSON_DIAGNOSTICS 0
 #endif
 
+#ifndef JSON_DIAGNOSTIC_POSITIONS
+    #define JSON_DIAGNOSTIC_POSITIONS 0
+#endif
+
 #ifndef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
     #define JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON 0
 #endif
@@ -52,6 +56,12 @@
     #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS _diag
 #else
     #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS
+#endif
+
+#if JSON_DIAGNOSTIC_POSITIONS
+    #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTIC_POSITIONS _dp
+#else
+    #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTIC_POSITIONS
 #endif
 
 #if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
@@ -65,14 +75,15 @@
 #endif
 
 // Construct the namespace ABI tags component
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b) json_abi ## a ## b
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b) \
-    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b)
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c) json_abi ## a ## b ## c
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c) \
+    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c)
 
 #define NLOHMANN_JSON_ABI_TAGS                                       \
     NLOHMANN_JSON_ABI_TAGS_CONCAT(                                   \
             NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS,                       \
-            NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON)
+            NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON, \
+            NLOHMANN_JSON_ABI_TAG_DIAGNOSTIC_POSITIONS)
 
 // Construct the namespace version component
 #define NLOHMANN_JSON_NAMESPACE_VERSION_CONCAT_EX(major, minor, patch) \

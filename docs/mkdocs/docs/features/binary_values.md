@@ -10,17 +10,19 @@ serialized JSON text if they have been created manually or via a binary format.
 
 ## API for binary values
 
-```plantuml
-class json::binary_t {
-    -- setters --
+```mermaid
+classDiagram
+
+class binary_t ["json::binary_t"] {
     +void set_subtype(std::uint64_t subtype)
     +void clear_subtype()
-    -- getters --
     +std::uint64_t subtype() const
     +bool has_subtype() const
 }
 
-"std::vector<uint8_t>" <|-- json::binary_t
+class vector ["std::vector<uint8_t>"]
+
+vector <|-- binary_t
 ```
 
 By default, binary values are stored as `std::vector<std::uint8_t>`. This type can be changed by providing a template

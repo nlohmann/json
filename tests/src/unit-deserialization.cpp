@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -18,7 +18,6 @@ using nlohmann::json;
 #include <iterator>
 #include <sstream>
 #include <valarray>
-
 
 namespace
 {
@@ -77,7 +76,7 @@ struct SaxEventLogger : public nlohmann::json_sax<json>
 
     bool start_object(std::size_t elements) override
     {
-        if (elements == static_cast<std::size_t>(-1))
+        if (elements == (std::numeric_limits<std::size_t>::max)())
         {
             events.emplace_back("start_object()");
         }
@@ -102,7 +101,7 @@ struct SaxEventLogger : public nlohmann::json_sax<json>
 
     bool start_array(std::size_t elements) override
     {
-        if (elements == static_cast<std::size_t>(-1))
+        if (elements == (std::numeric_limits<std::size_t>::max)())
         {
             events.emplace_back("start_array()");
         }
@@ -132,7 +131,7 @@ struct SaxEventLoggerExitAfterStartObject : public SaxEventLogger
 {
     bool start_object(std::size_t elements) override
     {
-        if (elements == static_cast<std::size_t>(-1))
+        if (elements == (std::numeric_limits<std::size_t>::max)())
         {
             events.emplace_back("start_object()");
         }
@@ -157,7 +156,7 @@ struct SaxEventLoggerExitAfterStartArray : public SaxEventLogger
 {
     bool start_array(std::size_t elements) override
     {
-        if (elements == static_cast<std::size_t>(-1))
+        if (elements == (std::numeric_limits<std::size_t>::max)())
         {
             events.emplace_back("start_array()");
         }
@@ -587,7 +586,7 @@ TEST_CASE("deserialization")
                 auto first = str.begin();
                 auto last = str.end();
                 json j;
-                json_sax_dom_parser<json> sax(j, true);
+                json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type> sax(j, true);
 
                 CHECK(json::sax_parse(proxy(first), proxy(last), &sax,
                                       input_format_t::json, false));

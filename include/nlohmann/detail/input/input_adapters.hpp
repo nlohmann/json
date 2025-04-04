@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #pragma once
@@ -462,6 +462,9 @@ typename container_input_adapter_factory_impl::container_input_adapter_factory<C
     return container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::create(container);
 }
 
+// specialization for std::string
+using string_input_adapter_type = decltype(input_adapter(std::declval<std::string>()));
+
 #ifndef JSON_NO_IO
 // Special cases with fast paths
 inline file_input_adapter input_adapter(std::FILE* file)
@@ -502,7 +505,7 @@ contiguous_bytes_input_adapter input_adapter(CharT b)
     }
     auto length = std::strlen(reinterpret_cast<const char*>(b));
     const auto* ptr = reinterpret_cast<const char*>(b);
-    return input_adapter(ptr, ptr + length);
+    return input_adapter(ptr, ptr + length); // cppcheck-suppress[nullPointerArithmeticRedundantCheck]
 }
 
 template<typename T, std::size_t N>

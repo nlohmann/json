@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -215,8 +215,8 @@ TEST_CASE("reference access")
                              "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
         CHECK_THROWS_WITH_AS(value.get_ref<json::boolean_t&>(),
                              "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
-        //CHECK_THROWS_WITH_AS(value.get_ref<json::number_integer_t&>(),
-        //    "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
+        CHECK_THROWS_WITH_AS(value.get_ref<json::number_integer_t&>(),
+                             "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
         CHECK_NOTHROW(value.get_ref<json::number_unsigned_t&>());
         CHECK_THROWS_WITH_AS(value.get_ref<json::number_float_t&>(), "[json.exception.type_error.303] incompatible ReferenceType for get_ref, actual type is number", json::type_error&);
     }

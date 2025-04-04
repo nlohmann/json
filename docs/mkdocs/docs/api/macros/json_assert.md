@@ -79,6 +79,10 @@ Therefore, assertions can be switched off by defining `NDEBUG`.
     assertion error in operator[]
     ```
 
+## See also
+
+- [Runtime Assertions](../../features/assertions.md) - overview documentation
+
 ## Version history
 
 - Added in version 3.9.0.

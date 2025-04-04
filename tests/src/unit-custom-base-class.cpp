@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <set>
@@ -282,8 +282,8 @@ TEST_CASE("JSON Visit Node")
     };
 
     json.visit(
-        [&](const json_with_visitor_t::json_pointer & p,
-            const json_with_visitor_t& j)
+            [&](const json_with_visitor_t::json_pointer & p,
+                const json_with_visitor_t& j)
     {
         std::stringstream str;
         str << p.to_string() << " - " ;
@@ -330,6 +330,6 @@ TEST_CASE("JSON Visit Node")
         CHECK(expected.count(str.str()) == 1);
         expected.erase(str.str());
     }
-    );
+        );
     CHECK(expected.empty());
 }

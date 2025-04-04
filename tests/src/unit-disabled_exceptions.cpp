@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -19,10 +19,10 @@ using json = nlohmann::json;
 // for #2824
 /////////////////////////////////////////////////////////////////////
 
-class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json>
+class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type>
 {
   public:
-    explicit sax_no_exception(json& j) : nlohmann::detail::json_sax_dom_parser<json>(j, false) {}
+    explicit sax_no_exception(json& j) : nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type>(j, false) {}
 
     static bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& ex)
     {

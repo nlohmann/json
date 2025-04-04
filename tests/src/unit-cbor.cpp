@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -240,13 +240,13 @@ TEST_CASE("CBOR")
                     const std::vector<int64_t> numbers
                     {
                         -65537,
-                            -100000,
-                            -1000000,
-                            -10000000,
-                            -100000000,
-                            -1000000000,
-                            -4294967296,
-                        };
+                        -100000,
+                        -1000000,
+                        -10000000,
+                        -100000000,
+                        -1000000000,
+                        -4294967296,
+                    };
                     for (const auto i : numbers)
                     {
                         CAPTURE(i)
@@ -1631,7 +1631,7 @@ TEST_CASE("CBOR")
                 };
 
                 json j;
-                auto cbp = nlohmann::detail::json_sax_dom_callback_parser<json>(j, callback, true);
+                auto cbp = nlohmann::detail::json_sax_dom_callback_parser<json, nlohmann::detail::string_input_adapter_type>(j, callback, true);
                 CHECK(json::sax_parse(input, &cbp, json::input_format_t::cbor));
                 CHECK(j.at("foo").is_binary());
                 CHECK(binary_seen);

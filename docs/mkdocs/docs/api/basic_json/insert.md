@@ -24,6 +24,17 @@ void insert(const_iterator first, const_iterator last);
 4. Inserts elements from initializer list `ilist` into array before iterator `pos`.
 5. Inserts elements from range `[first, last)` into object.
 
+## Iterator invalidation
+
+For all cases where an element is added to an **array**, a reallocation can happen, in which case all iterators
+(including the [`end()`](end.md) iterator) and all references to the elements are invalidated. Otherwise, only the
+[`end()`](end.md) iterator is invalidated. Also, any iterator or reference after the insertion point will point to the
+same index which is now a different value.
+
+For [`ordered_json`](../ordered_json.md), also adding an element to an **object** can yield a reallocation which again
+invalidates all iterators and all references. Also, any iterator or reference after the insertion point will point to
+the same index which is now a different value.
+
 ## Parameters
 
 `pos` (in)

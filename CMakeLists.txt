@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1...3.14)
+cmake_minimum_required(VERSION 3.5...4.0)
 
 ##
 ## PROJECT
@@ -40,6 +40,7 @@ endif()
 option(JSON_BuildTests                     "Build the unit tests when BUILD_TESTING is enabled." ${JSON_BuildTests_INIT})
 option(JSON_CI                             "Enable CI build targets." OFF)
 option(JSON_Diagnostics                    "Use extended diagnostic messages." OFF)
+option(JSON_Diagnostic_Positions           "Enable diagnostic positions." OFF)
 option(JSON_GlobalUDLs                     "Place user-defined string literals in the global namespace." ON)
 option(JSON_ImplicitConversions            "Enable implicit conversions." ON)
 option(JSON_DisableEnumSerialization       "Disable default integer enum serialization." OFF)
@@ -81,23 +82,27 @@ else()
 endif()
 
 if (NOT JSON_ImplicitConversions)
-    message(STATUS "Implicit conversions are disabled")
+    message(STATUS "Implicit conversions are disabled (JSON_USE_IMPLICIT_CONVERSIONS=0)")
 endif()
 
 if (JSON_DisableEnumSerialization)
-    message(STATUS "Enum integer serialization is disabled")
+    message(STATUS "Enum integer serialization is disabled (JSON_DISABLE_ENUM_SERIALIZATION=0)")
 endif()
 
 if (JSON_LegacyDiscardedValueComparison)
-    message(STATUS "Legacy discarded value comparison enabled")
+    message(STATUS "Legacy discarded value comparison enabled (JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1)")
 endif()
 
 if (JSON_Diagnostics)
-    message(STATUS "Diagnostics enabled")
+    message(STATUS "Diagnostics enabled (JSON_DIAGNOSTICS=1)")
+endif()
+
+if (JSON_Diagnostic_Positions)
+    message(STATUS "Diagnostic positions enabled (JSON_DIAGNOSTIC_POSITIONS=1)")
 endif()
 
 if (NOT JSON_GlobalUDLs)
-    message(STATUS "User-defined string literals are not put in the global namespace")
+    message(STATUS "User-defined string literals are not put in the global namespace (JSON_USE_GLOBAL_UDLS=0)")
 endif()
 
 if (JSON_SystemInclude)
@@ -123,6 +128,7 @@ target_compile_definitions(
     $<$<NOT:$<BOOL:${JSON_ImplicitConversions}>>:JSON_USE_IMPLICIT_CONVERSIONS=0>
     $<$<BOOL:${JSON_DisableEnumSerialization}>:JSON_DISABLE_ENUM_SERIALIZATION=1>
     $<$<BOOL:${JSON_Diagnostics}>:JSON_DIAGNOSTICS=1>
+    $<$<BOOL:${JSON_Diagnostic_Positions}>:JSON_DIAGNOSTIC_POSITIONS=1>
     $<$<BOOL:${JSON_LegacyDiscardedValueComparison}>:JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1>
 )
 
