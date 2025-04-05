@@ -117,4 +117,4 @@ All functions can throw the following exception:
 
 1. Since version 1.0.0.
 2. Since version 1.0.0.
-2. Since version 2.0.0.
+3. Since version 2.0.0.

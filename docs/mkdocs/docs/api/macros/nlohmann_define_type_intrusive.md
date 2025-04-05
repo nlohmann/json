@@ -17,7 +17,7 @@ parameter is the name of the class/struct, and all remaining parameters name the
 2. Will use [`value`](../basic_json/value.md) during deserialization and fall back to the default value for the
    respective type of the member variable if a key in the JSON object is missing. The generated `from_json()` function
    default constructs an object and uses its values as the defaults when calling the `value` function.
-3. Only defines the serialization. Useful in cases when the type does not have a default constructor and only serialization in required.
+3. Only defines the serialization. Useful in cases when the type does not have a default constructor and only serialization is required.
 
 Summary:
 
@@ -33,7 +33,7 @@ Summary:
 :   name of the type (class, struct) to serialize/deserialize
 
 `member` (in)
-:   name of the member variable to serialize/deserialize; up to 64 members can be given as comma-separated list
+:   name of the member variable to serialize/deserialize; up to 64 members can be given as a comma-separated list
 
 ## Default definition
 

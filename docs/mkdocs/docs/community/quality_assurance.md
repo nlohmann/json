@@ -10,7 +10,7 @@ violations will result in a failed build.
 
     Any compiler with complete C++11 support can compile the library without warnings.
 
-- [x] The library is compiled library with 50+ different C++ compilers with different operating systems and platforms,
+- [x] The library is compiled with 50+ different C++ compilers with different operating systems and platforms,
   including the oldest versions known to compile the library.
 
     ??? abstract "Compilers used in continuous integration"
@@ -108,7 +108,7 @@ violations will result in a failed build.
 
     The library has no prerequisites other than the Standard Template Library (STL).
 
-- [x] The library compiled and tested with both [libc++](https://libcxx.llvm.org) and
+- [x] The library is compiled and tested with both [libc++](https://libcxx.llvm.org) and
   [libstdc++](https://gcc.gnu.org/onlinedocs/libstdc++/) to detect subtle differences or incompatibilities.
 - [x] The code checked with [Include What You Use (IWYU)](https://include-what-you-use.org) that all required standard
   headers are included.
@@ -123,8 +123,8 @@ violations will result in a failed build.
 
 - [x] All public API functions are tested with a variety of arguments.
 - [x] The library is compiled and tested with different template arguments for number, string, array, and object types.
-- [x] All lines of the code base are covered by unit tests.
-- [x] Every exception of the library is thrown in the test suite and the error messages and exception ids are checked.
+- [x] Unit tests cover all lines of the code base.
+- [x] Every exception of the library is thrown in the test suite, and the error messages and exception ids are checked.
 
 !!! success "Requirement: Complete documentation"
 
@@ -132,7 +132,7 @@ violations will result in a failed build.
 
 - [x] Every public API function has a dedicated page in the
   [API reference documentation](https://json.nlohmann.me/api/basic_json/) with a self-contained code example.
-- [x] All examples in the documentation are tested and changes in their output is treated as an error.
+- [x] All examples in the documentation are tested, and changes in their output are treated as an error.
 
 ## Robust input processing
 
@@ -200,7 +200,7 @@ violations will result in a failed build.
 
     The library can be used by adding a single header to a C++ project.
 
-- [x] An amalgamation script is used to check if the source code is exposed as self-contained single-header file.
+- [x] An amalgamation script is used to check if the source code is exposed as a self-contained single-header file.
 - [x] The test suite is checked against the amalgamated source file as well as the individual source file.
 
 !!! success "Requirement: CMake as primary development tool"

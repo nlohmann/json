@@ -21,8 +21,8 @@ the stream `i`
 ## Exceptions
 
 - Throws [`parse_error.101`](../home/exceptions.md#jsonexceptionparse_error101) in case of an unexpected token.
-- Throws [`parse_error.102`](../home/exceptions.md#jsonexceptionparse_error102) if to_unicode fails or surrogate error.
-- Throws [`parse_error.103`](../home/exceptions.md#jsonexceptionparse_error103) if to_unicode fails.
+- Throws [`parse_error.102`](../home/exceptions.md#jsonexceptionparse_error102) if `to_unicode` fails or surrogate error.
+- Throws [`parse_error.103`](../home/exceptions.md#jsonexceptionparse_error103) if `to_unicode` fails.
 
 ## Complexity
 

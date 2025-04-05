@@ -84,4 +84,4 @@ Linear.
 
 1. Added in version 1.0.0. Added support for indentation character and deprecated
    `#!cpp std::ostream& operator>>(const basic_json& j, std::ostream& o)` in version 3.0.0.
-3. Added in version 3.11.0.
+2. Added in version 3.11.0.

@@ -34,7 +34,7 @@ See [full documentation of `JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md
 
 When enabled, two new member functions [`start_pos()`](../api/basic_json/start_pos.md) and
 [`end_pos()`](../api/basic_json/end_pos.md) are added to [`basic_json`](../api/basic_json/index.md) values. If the value
-was created by calling the[`parse`](../api/basic_json/parse.md) function, then these functions allow to query the byte
+was created by calling the[`parse`](../api/basic_json/parse.md) function, then these functions allow querying the byte
 positions of the value in the input it was parsed from. The byte positions are also used in exceptions to help locate
 errors.
 
@@ -92,8 +92,8 @@ See [full documentation of `JSON_SKIP_LIBRARY_VERSION_CHECK`](../api/macros/json
 
 ## `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`
 
-When defined, the library will not create a compile error when a known unsupported compiler is detected. This allows to
-use the library with compilers that do not fully support C++11 and may only work if unsupported features are not used.
+When defined, the library will not create a compile error when a known unsupported compiler is detected. This allows 
+using the library with compilers that do not fully support C++11 and may only work if unsupported features are not used.
 
 See [full documentation of `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`](../api/macros/json_skip_unsupported_compiler_check.md).
 

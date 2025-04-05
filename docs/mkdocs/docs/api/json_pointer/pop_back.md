@@ -4,11 +4,11 @@
 void pop_back();
 ```
 
-Remove last reference token.
+Remove the last reference token.
 
 ## Exceptions
 
-Throws [out_of_range.405](../../home/exceptions.md#jsonexceptionout_of_range405) if JSON pointer has no parent.
+Throws [out_of_range.405](../../home/exceptions.md#jsonexceptionout_of_range405) if the JSON pointer has no parent.
 
 ## Complexity
 

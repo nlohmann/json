@@ -29,7 +29,7 @@ similar to a `#!cpp std::map` and a `#!cpp std::vector`, respectively.
     | `#!cpp j["hobbies"][1]` | `#!json "reading"`                                                           |
 
 The return value is a reference, so it can modify the original value. In case the passed object key is non-existing, a
-`#!json null` value is inserted which can be immediately be overwritten.
+`#!json null` value is inserted which can immediately be overwritten.
 
 ??? example "Write access"
 

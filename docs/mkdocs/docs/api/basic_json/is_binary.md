@@ -4,7 +4,7 @@
 constexpr bool is_binary() const noexcept;
 ```
 
-This function returns `#!cpp true` if and only if the JSON value is binary array.
+This function returns `#!cpp true` if and only if the JSON value is a binary array.
     
 ## Return value
 

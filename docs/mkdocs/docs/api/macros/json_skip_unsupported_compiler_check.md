@@ -4,8 +4,8 @@
 #define JSON_SKIP_UNSUPPORTED_COMPILER_CHECK
 ```
 
-When defined, the library will not create a compile error when a known unsupported compiler is detected. This allows to
-use the library with compilers that do not fully support C++11 and may only work if unsupported features are not used.
+When defined, the library will not create a compile error when a known unsupported compiler is detected. This allows 
+using the library with compilers that do not fully support C++11 and may only work if unsupported features are not used.
 
 ## Default definition
 

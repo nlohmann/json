@@ -13,7 +13,7 @@ The type used to store JSON numbers (unsigned).
 > cannot be represented in the grammar below (such as Infinity and NaN) are not permitted.
 
 This description includes both integer and floating-point numbers. However, C++ allows more precise storage if it is
-known whether the number is a signed integer, an unsigned integer or a floating-point number. Therefore, three different
+known whether the number is a signed integer, an unsigned integer, or a floating-point number. Therefore, three different
 types, [`number_integer_t`](number_integer_t.md), `number_unsigned_t` and [`number_float_t`](number_float_t.md) are
 used.
 
@@ -29,9 +29,9 @@ With the default values for `NumberUnsignedType` (`std::uint64_t`), the default 
 
 #### Default behavior
 
-- The restrictions about leading zeros is not enforced in C++. Instead, leading zeros in integer literals lead to an
-  interpretation as octal number. Internally, the value will be stored as decimal number. For instance, the C++ integer 
-  literal `010` will be serialized to `8`. During deserialization, leading zeros yield an error.
+- The restrictions about leading zeros are not enforced in C++. Instead, leading zeros in integer literals lead to an
+  interpretation as an octal number. Internally, the value will be stored as a decimal number. For instance, the C++
+  integer  literal `010` will be serialized to `8`. During deserialization, leading zeros yield an error.
 - Not-a-number (NaN) values will be serialized to `null`.
 
 #### Limits
@@ -41,7 +41,7 @@ With the default values for `NumberUnsignedType` (`std::uint64_t`), the default 
 
 When the default type is used, the maximal integer number that can be stored is `18446744073709551615` (UINT64_MAX) and
 the minimal integer number that can be stored is `0`. Integer numbers that are out of range will yield over/underflow
-when used in a constructor. During deserialization, too large or small integer numbers will be automatically be stored
+when used in a constructor. During deserialization, too large or small integer numbers will automatically be stored
 as [`number_integer_t`](number_integer_t.md) or [`number_float_t`](number_float_t.md).
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) further states:

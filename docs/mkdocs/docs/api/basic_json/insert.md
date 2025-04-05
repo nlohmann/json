@@ -18,11 +18,11 @@ iterator insert(const_iterator pos, initializer_list_t ilist);
 void insert(const_iterator first, const_iterator last);
 ```
 
-1. Inserts element `val` into array before iterator `pos`.
-2. Inserts `cnt` copies of `val` into array before iterator `pos`.
-3. Inserts elements from range `[first, last)` into array before iterator `pos`.
-4. Inserts elements from initializer list `ilist` into array before iterator `pos`.
-5. Inserts elements from range `[first, last)` into object.
+1. Inserts element `val` into an array before iterator `pos`.
+2. Inserts `cnt` copies of `val` into an array before iterator `pos`.
+3. Inserts elements from range `[first, last)` into an array before iterator `pos`.
+4. Inserts elements from initializer list `ilist` into an array before iterator `pos`.
+5. Inserts elements from range `[first, last)` into an object.
 
 ## Iterator invalidation
 
@@ -47,10 +47,10 @@ the same index which is now a different value.
 :   number of copies of `val` to insert
 
 `first` (in)
-:   begin of the range of elements to insert
+:   the start of the range of elements to insert
 
 `last` (in)
-:   end of the range of elements to insert
+:   the end of the range of elements to insert
 
 `ilist` (in)
 :   initializer list to insert the values from
@@ -139,7 +139,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/insert__count.output"
     ```
 
-??? example "Example (3): insert range of elements into array"
+??? example "Example (3): insert a range of elements into an array"
 
     The example shows how `insert()` is used.
     
@@ -153,7 +153,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/insert__range.output"
     ```
 
-??? example "Example (4): insert elements from initializer list into array"
+??? example "Example (4): insert elements from an initializer list into an array"
 
     The example shows how `insert()` is used.
     
@@ -167,7 +167,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/insert__ilist.output"
     ```
 
-??? example "Example (5): insert range of elements into object"
+??? example "Example (5): insert a range of elements into an object"
 
     The example shows how `insert()` is used.
     

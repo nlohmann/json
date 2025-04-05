@@ -9,7 +9,7 @@ This macro controls which code is executed for [runtime assertions](../../featur
 ## Parameters
 
 `x` (in)
-:   expression of scalar type
+:   expression of a scalar type
 
 ## Default definition
 

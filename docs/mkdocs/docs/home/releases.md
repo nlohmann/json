@@ -744,54 +744,54 @@ There are five different exceptions inheriting from [`json::exception`](http://n
 
 To support these exception, the `try`/`catch` blocks of your code need to be adjusted:
 
-| new exception | previous exception |
-|:--|:--|
-| parse_error.101 | invalid_argument |
-| parse_error.102 | invalid_argument |
-| parse_error.103 | invalid_argument |
-| parse_error.104 | invalid_argument |
-| parse_error.105 | invalid_argument |
-| parse_error.106 | domain_error |
-| parse_error.107 | domain_error |
-| parse_error.108 | domain_error |
-| parse_error.109 | invalid_argument |
-| parse_error.110 | out_of_range |
-| parse_error.111 | invalid_argument |
-| parse_error.112 | invalid_argument |
-| invalid_iterator.201 | domain_error |
-| invalid_iterator.202 | domain_error |
-| invalid_iterator.203 | domain_error |
-| invalid_iterator.204 | out_of_range |
-| invalid_iterator.205 | out_of_range |
-| invalid_iterator.206 | domain_error |
-| invalid_iterator.207 | domain_error |
-| invalid_iterator.208 | domain_error |
-| invalid_iterator.209 | domain_error |
-| invalid_iterator.210 | domain_error |
-| invalid_iterator.211 | domain_error |
-| invalid_iterator.212 | domain_error |
-| invalid_iterator.213 | domain_error |
-| invalid_iterator.214 | out_of_range |
-| type_error.301 | domain_error |
-| type_error.302 | domain_error |
-| type_error.303 | domain_error |
-| type_error.304 | domain_error |
-| type_error.305 | domain_error |
-| type_error.306 | domain_error |
-| type_error.307 | domain_error |
-| type_error.308 | domain_error |
-| type_error.309 | domain_error |
-| type_error.310 | domain_error |
-| type_error.311 | domain_error |
-| type_error.313 | domain_error |
-| type_error.314 | domain_error |
-| type_error.315 | domain_error |
-| out_of_range.401 | out_of_range |
-| out_of_range.402 | out_of_range |
-| out_of_range.403 | out_of_range |
-| out_of_range.404 | out_of_range |
-| out_of_range.405 | domain_error |
-| other_error.501 | domain_error |
+| new exception        | previous exception |
+|:---------------------|:-------------------|
+| parse_error.101      | invalid_argument   |
+| parse_error.102      | invalid_argument   |
+| parse_error.103      | invalid_argument   |
+| parse_error.104      | invalid_argument   |
+| parse_error.105      | invalid_argument   |
+| parse_error.106      | domain_error       |
+| parse_error.107      | domain_error       |
+| parse_error.108      | domain_error       |
+| parse_error.109      | invalid_argument   |
+| parse_error.110      | out_of_range       |
+| parse_error.111      | invalid_argument   |
+| parse_error.112      | invalid_argument   |
+| invalid_iterator.201 | domain_error       |
+| invalid_iterator.202 | domain_error       |
+| invalid_iterator.203 | domain_error       |
+| invalid_iterator.204 | out_of_range       |
+| invalid_iterator.205 | out_of_range       |
+| invalid_iterator.206 | domain_error       |
+| invalid_iterator.207 | domain_error       |
+| invalid_iterator.208 | domain_error       |
+| invalid_iterator.209 | domain_error       |
+| invalid_iterator.210 | domain_error       |
+| invalid_iterator.211 | domain_error       |
+| invalid_iterator.212 | domain_error       |
+| invalid_iterator.213 | domain_error       |
+| invalid_iterator.214 | out_of_range       |
+| type_error.301       | domain_error       |
+| type_error.302       | domain_error       |
+| type_error.303       | domain_error       |
+| type_error.304       | domain_error       |
+| type_error.305       | domain_error       |
+| type_error.306       | domain_error       |
+| type_error.307       | domain_error       |
+| type_error.308       | domain_error       |
+| type_error.309       | domain_error       |
+| type_error.310       | domain_error       |
+| type_error.311       | domain_error       |
+| type_error.313       | domain_error       |
+| type_error.314       | domain_error       |
+| type_error.315       | domain_error       |
+| out_of_range.401     | out_of_range       |
+| out_of_range.402     | out_of_range       |
+| out_of_range.403     | out_of_range       |
+| out_of_range.404     | out_of_range       |
+| out_of_range.405     | domain_error       |
+| other_error.501      | domain_error       |
 
 #### Handling of NaN and INF
 

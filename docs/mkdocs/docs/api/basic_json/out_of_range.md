@@ -5,7 +5,7 @@ class out_of_range : public exception;
 ```
 
 This exception is thrown in case a library function is called on an input parameter that exceeds the expected range, for
-instance in case of array indices or nonexisting object keys.
+instance, in the case of array indices or nonexisting object keys.
 
 Exceptions have ids 4xx (see [list of out-of-range errors](../../home/exceptions.md#out-of-range)).
 

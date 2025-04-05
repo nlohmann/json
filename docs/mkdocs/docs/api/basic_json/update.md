@@ -32,10 +32,10 @@ iterators (including the `end()` iterator) and all references to the elements ar
     `#!c false`)
 
 `first` (in)
-:   begin of the range of elements to insert
+:   the beginning of the range of elements to insert
 
 `last` (in)
-:   end of the range of elements to insert
+:   the end of the range of elements to insert
 
 ## Exceptions
 

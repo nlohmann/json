@@ -121,4 +121,4 @@ interpreted as `object_t::value_type` or `std::initializer_list<basic_json>`, se
 
 1. Since version 1.0.0.
 2. Since version 1.0.0.
-2. Since version 2.0.0.
+3. Since version 2.0.0.

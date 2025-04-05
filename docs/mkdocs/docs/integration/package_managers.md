@@ -163,7 +163,7 @@ using the subproject directly.
     - :octicons-question-24: [Bazel website](https://bazel.build)
 
 This repository provides a [Bazel](https://bazel.build/) `MODULE.bazel` and a corresponding `BUILD.bazel` file. Therefore, this
-repository can be referenced within a `MODULE.bazel` by rules such as `archive_override`, `git_override`, or `local_path_override`. To use the library you need to depend on the target `@nlohmann_json//:json` (i.e., via `deps` attribute).
+repository can be referenced within a `MODULE.bazel` by rules such as `archive_override`, `git_override`, or `local_path_override`. To use the library, you need to depend on the target `@nlohmann_json//:json` (i.e., via `deps` attribute).
 
 ??? example
 
@@ -307,7 +307,7 @@ the [nlohmann_json package](https://hunter.readthedocs.io/en/latest/packages/pkg
 hunter_add_package(nlohmann_json)
 ```
 
-Please see the  Hunter project for any issues regarding the packaging.
+Please see the Hunter project for any issues regarding the packaging.
 
 ??? example
 

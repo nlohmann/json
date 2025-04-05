@@ -90,7 +90,7 @@ to the following.
 ### FetchContent
 
 Since CMake v3.11, [FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) can be used to
-automatically download a release as a dependency at configure type.
+automatically download a release as a dependency at configure time.
 
 !!! example
 
@@ -167,12 +167,12 @@ Enable the (incorrect) legacy comparison behavior of discarded JSON values by de
 
 ### `JSON_MultipleHeaders`
 
-Use non-amalgamated version of the library. This option is `OFF` by default.
+Use the non-amalgamated version of the library. This option is `OFF` by default.
 
 ### `JSON_SystemInclude`
 
-Treat the library headers like system headers (i.e., adding `SYSTEM` to the [`target_include_directories`](https://cmake.org/cmake/help/latest/command/target_include_directories.html) call) to checks for this library by tools like Clang-Tidy. This option is `OFF` by default.
+Treat the library headers like system headers (i.e., adding `SYSTEM` to the [`target_include_directories`](https://cmake.org/cmake/help/latest/command/target_include_directories.html) call) to check for this library by tools like Clang-Tidy. This option is `OFF` by default.
 
 ### `JSON_Valgrind`
 
-Execute test suite with [Valgrind](https://valgrind.org). This option is `OFF` by default. Depends on `JSON_BuildTests`.
+Execute the test suite with [Valgrind](https://valgrind.org). This option is `OFF` by default. Depends on `JSON_BuildTests`.

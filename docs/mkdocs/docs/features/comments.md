@@ -9,7 +9,7 @@ This library does not support comments *by default*. It does so for three reason
 
     > Suppose you are using JSON to keep configuration files, which you would like to annotate. Go ahead and insert all the comments you like. Then pipe it through JSMin before handing it to your JSON parser.
 
-3. It is dangerous for interoperability if some libraries would add comment support while others don't. Please check [The Harmful Consequences of the Robustness Principle](https://tools.ietf.org/html/draft-iab-protocol-maintenance-01) on this.
+3. It is dangerous for interoperability if some libraries add comment support while others do not. Please check [The Harmful Consequences of the Robustness Principle](https://tools.ietf.org/html/draft-iab-protocol-maintenance-01) on this.
 
 However, you can pass set parameter `ignore_comments` to `#!c true` in the parse function to ignore `//` or `/* */` comments. Comments will then be treated as whitespace.
 

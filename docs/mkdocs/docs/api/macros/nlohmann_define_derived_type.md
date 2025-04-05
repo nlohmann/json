@@ -21,13 +21,13 @@
 These macros can be used to simplify the serialization/deserialization of derived types if you want to use a JSON
 object as serialization and want to use the member variable names as object keys in that object.
 
-- Macros 1, 2 and 3 are to be defined **inside** the class/struct to create code for.
+- Macros 1, 2, and 3 are to be defined **inside** the class/struct to create code for.
 Like [`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](nlohmann_define_type_intrusive.md), they can access private members.
-- Macros 4, 5 and 6 are to be defined **outside** the class/struct to create code for, but **inside** its namespace.
+- Macros 4, 5, and 6 are to be defined **outside** the class/struct to create code for, but **inside** its namespace.
 Like [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`](nlohmann_define_type_non_intrusive.md),
 they **cannot** access private members.
 
-The first  parameter is the name of the derived class/struct,
+The first parameter is the name of the derived class/struct,
 the second parameter is the name of the base class/struct and all remaining parameters name the members.
 The base type **must** be already serializable/deserializable.
 
@@ -57,7 +57,7 @@ Summary:
 :   name of the base type (class, struct) `type` is derived from
 
 `member` (in)
-:   name of the member variable to serialize/deserialize; up to 64 members can be given as comma-separated list
+:   name of the member variable to serialize/deserialize; up to 64 members can be given as a comma-separated list
 
 ## Default definition
 
@@ -79,7 +79,7 @@ template<typename BasicJsonType>
 void from_json(const BasicJsonType&, type&);
 ```
 
-Macros 3 and 6 add one function to the namespace which take care of the serialization only:
+Macros 3 and 6 add one function to the namespace which takes care of the serialization only:
 
 ```cpp
 template<typename BasicJsonType>
@@ -169,9 +169,9 @@ void to_json(BasicJsonType& j, const B& b) {
 
 ## Version history
 
-1. Added in version 3.11.x.
-2. Added in version 3.11.x.
-3. Added in version 3.11.x.
-4. Added in version 3.11.x.
-5. Added in version 3.11.x.
-6. Added in version 3.11.x.
+1. Added in version 3.12.0.
+2. Added in version 3.12.0.
+3. Added in version 3.12.0.
+4. Added in version 3.12.0.
+5. Added in version 3.12.0.
+6. Added in version 3.12.0.

@@ -17,8 +17,8 @@ Checks whether the input is valid JSON.
 1. Reads from a compatible input.
 2. Reads from a pair of character iterators
     
-    The value_type of the iterator must be an integral type with size of 1, 2 or 4 bytes, which will be interpreted
-    respectively as UTF-8, UTF-16 and UTF-32.
+    The value_type of the iterator must be an integral type with a size of 1, 2, or 4 bytes, which will be interpreted
+    respectively as UTF-8, UTF-16, and UTF-32.
     
 Unlike the [`parse()`](parse.md) function, this function neither throws an exception in case of invalid JSON input
 (i.e., a parse error) nor creates diagnostic information.
@@ -51,10 +51,10 @@ Unlike the [`parse()`](parse.md) function, this function neither throws an excep
     (`#!cpp false`); (optional, `#!cpp false` by default)
 
 `first` (in)
-:   iterator to start of character range
+:   iterator to the start of the character range
 
 `last` (in)
-:   iterator to end of character range
+:   iterator to the end of the character range
 
 ## Return value
 
@@ -101,7 +101,7 @@ A UTF-8 byte order mark is silently ignored.
 
 - Added in version 3.0.0.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
-- Changed [runtime assertion](../../features/assertions.md) in case of `FILE*` null pointers to exception in version 3.11.4.
+- Changed [runtime assertion](../../features/assertions.md) in case of `FILE*` null pointers to exception in version 3.12.0.
 
 !!! warning "Deprecation"
 

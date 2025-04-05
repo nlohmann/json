@@ -22,7 +22,7 @@ be more compact than JSON itself, yet more efficient to parse.
 1. Returns a byte vector containing the BJData serialization.
 2. Writes the BJData serialization to an output adapter.
 
-The exact mapping and its limitations is described on a [dedicated page](../../features/binary_formats/bjdata.md).
+The exact mapping and its limitations are described on a [dedicated page](../../features/binary_formats/bjdata.md).
 
 ## Parameters
 
