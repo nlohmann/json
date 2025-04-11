@@ -168,7 +168,6 @@
 
 
 
-#include <algorithm> // transform
 #include <array> // array
 #include <forward_list> // forward_list
 #include <iterator> // inserter, front_inserter, end
@@ -4962,11 +4961,11 @@ inline void from_json(const BasicJsonType& j, std::forward_list<T, Allocator>& l
         JSON_THROW(type_error::create(302, concat("type must be array, but is ", j.type_name()), &j));
     }
     l.clear();
-    std::transform(j.rbegin(), j.rend(),
-                   std::front_inserter(l), [](const BasicJsonType & i)
+
+    for (auto it = j.rbegin(); it != j.rend(); ++it)
     {
-        return i.template get<T>();
-    });
+        l.push_front(it->template get<T>());
+    }
 }
 
 // valarray doesn't have an insert method
@@ -4979,11 +4978,12 @@ inline void from_json(const BasicJsonType& j, std::valarray<T>& l)
         JSON_THROW(type_error::create(302, concat("type must be array, but is ", j.type_name()), &j));
     }
     l.resize(j.size());
-    std::transform(j.begin(), j.end(), std::begin(l),
-                   [](const BasicJsonType & elem)
+
+    auto outIt = std::begin(l);
+    for (auto it = j.begin(); it != j.end(); ++it)
     {
-        return elem.template get<T>();
-    });
+        *outIt++ = it->template get<T>();
+    }
 }
 
 template<typename BasicJsonType, typename T, std::size_t N>
@@ -5075,13 +5075,16 @@ auto from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr, p
 
     ConstructibleArrayType ret;
     ret.reserve(j.size());
-    std::transform(j.begin(), j.end(),
-                   std::inserter(ret, end(ret)), [](const BasicJsonType & i)
+
+    auto outIt = end(ret);
+    for (auto it = j.begin(); it != j.end(); ++it)
     {
         // get<BasicJsonType>() returns *this, this won't call a from_json
         // method when value_type is BasicJsonType
-        return i.template get<typename ConstructibleArrayType::value_type>();
-    });
+        outIt = ret.insert(outIt, it->template get<typename ConstructibleArrayType::value_type>());
+        ++outIt;
+    }
+
     arr = std::move(ret);
 }
 
@@ -5095,14 +5098,16 @@ inline void from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType&
     using std::end;
 
     ConstructibleArrayType ret;
-    std::transform(
-        j.begin(), j.end(), std::inserter(ret, end(ret)),
-        [](const BasicJsonType & i)
+
+    auto outIt = end(ret);
+    for (auto it = j.begin(); it != j.end(); ++it)
     {
         // get<BasicJsonType>() returns *this, this won't call a from_json
         // method when value_type is BasicJsonType
-        return i.template get<typename ConstructibleArrayType::value_type>();
-    });
+        outIt = ret.insert(outIt, it->template get<typename ConstructibleArrayType::value_type>());
+        ++outIt;
+    }
+
     arr = std::move(ret);
 }
 
@@ -5169,13 +5174,16 @@ inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
     ConstructibleObjectType ret;
     const auto* inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
     using value_type = typename ConstructibleObjectType::value_type;
-    std::transform(
-        inner_object->begin(), inner_object->end(),
-        std::inserter(ret, ret.begin()),
-        [](typename BasicJsonType::object_t::value_type const & p)
+
+    auto outIt = end(ret);
+    for (auto it = inner_object->begin(); it != inner_object->end(); ++it)
     {
-        return value_type(p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>());
-    });
+        // get<BasicJsonType>() returns *this, this won't call a from_json
+        // method when value_type is BasicJsonType
+        outIt = ret.insert(outIt, value_type(it->first, it->second.template get<typename ConstructibleObjectType::mapped_type>()));
+        ++outIt;
+    }
+
     obj = std::move(ret);
 }
 
