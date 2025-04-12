@@ -703,19 +703,21 @@ to install the [nlohmann-json](https://ports.macports.org/port/nlohmann-json/) p
 !!! abstract "Summary"
 
     package: **`nlohmann-json`**
-    library target: **`nlohmann-json%`**
+    library target: **`nlohmann-json%lib{json}`**
     available in package repositories:
       - [`cppget.org` (recommended)](https://cppget.org/nlohmann-json)
       - [package's sources (for advanced users)](https://github.com/build2-packaging/nlohmann-json/)
 
     - :octicons-tag-24: Available versions: current version and older versions since `3.7.3` (see [cppget.org](https://cppget.org/nlohmann-json))
-    - :octicons-rocket-24: The package is maintained and published by the community in [this the repository][(https://github.com/conan-io/conan-center-index/tree/master/recipes/nlohmann_json](https://github.com/build2-packaging/nlohmann-json/)).
+    - :octicons-rocket-24: The package is maintained and published by the `build2` community in [this the repository][(https://github.com/conan-io/conan-center-index/tree/master/recipes/nlohmann_json](https://github.com/build2-packaging/nlohmann-json/)).
     - :octicons-file-24: File issues at the [package source repository](https://github.com/build2-packaging/nlohmann-json/issues/)
     - :octicons-question-24: [`build2` website](https://build2)
 
+Note: [`build2`](https://build2.org) should not be considered as a standalone package-manager. It is a build-system + package manager + project manager, a set of tools that work hand-in-hand. `build2`-based projects do not rely on existing `CMake` scripts and the build scripts defining the project's targets are specific to `build2`.
+
 To use this package in an exising [`build2`](https://build2.org) project, the general steps are:
 
-  0. <details><summary>Make the package available to download from a package repository that provides it.</b></summary>
+  1. <details><summary>Make the package available to download from a package repository that provides it.</b></summary>
 
       Your project's `repositories.manifest` specifies where the package manager will try to acquire packages by default. Make sure one of the repositories specified in this file provides `nlhomann-json` package.
       The recommended open-source repository is [`cppget.org`](https://cppget.org/).
@@ -728,7 +730,7 @@ To use this package in an exising [`build2`](https://build2.org) project, the ge
       ```
       </details>
 
-  1. <details><summary>Add this package as dependency of your project.</summary>
+  2. <details><summary>Add this package as dependency of your project.</summary>
 
        In your project's `manifest` add the dependency to the package, like `depends: nlohmann-json`, probably with some [version constraints](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml#guide-add-remove-deps).
        For example, to depend on the latest `3.x` version available:
@@ -738,12 +740,12 @@ To use this package in an exising [`build2`](https://build2.org) project, the ge
        </details>
 
 
-  2. <details><summary>Add this library (from the package) as dependency of your target that uses it.</summary>
+  2. <details><summary>Add this library as dependency of your target that uses it.</summary>
 
       In the `buildfile` defining the target that will use this library:
-        - import the target from the `nlhomann-json` package, for example:
+        - import the target `lib{json}` from the `nlhomann-json` package, for example:
            ```
-           import nljson = nlhomann-json%json
+           import nljson = nlhomann-json%lib{json}
            ```
         - add the library's target as requirement for your target using it, for example:
            ```
@@ -753,7 +755,7 @@ To use this package in an exising [`build2`](https://build2.org) project, the ge
 
   3. <details><summary>Use the library in your project's code and build it.</summary>
 
-      At this point, any `b` or `bdep update` command that will update/build the project will also acquire the missing dependency automatically, then build it and link it with your target.
+      At this point, assuming your project is initialized in a build-configuration, any `b` or `bdep update` command that will update/build the project will also acquire the missing dependency automatically, then build it and link it with your target.
 
       If you just want to trigger the dependencies synchronization for all your configurations:
         ```
@@ -762,15 +764,90 @@ To use this package in an exising [`build2`](https://build2.org) project, the ge
       </details>
 
 ??? example "Example: from scratch, using `build2`'s [`bdep new` command](https://build2.org/bdep/doc/bdep-new.xhtml)"
-```
-# create a simple executable project from scratch, with a simplfied directory layout, using `.hpp/.cpp` file extensions:
-bdep new example -exe,no-subdirs,no-tests -l c++,cpp
 
-```
+    1. Create a new executable project "example" (see [`bdep new` command details](https://build2.org/bdep/doc/bdep-new.xhtml) for the various options to create a new project):
 
-```shell
-bdep new -t exe -l c++
-```
+        ```shell
+        bdep new example
+        ```
+
+    2. Enable acquiring packages from https://cppget.org by uncommenting these lines in `example/repositories.manifest`:
+
+        ```make
+        :
+        role: prerequisite
+        location: https://pkg.cppget.org/1/stable
+        ```
+
+        Your `example/manifest` should now look like this:
+
+        ```make title="project's `repositories.manifest`"
+        --8<-- "integration/build2/repositories.manifest"
+        ```
+
+    3. Add any available `3.x` version of the `nlohmann-json` package as dependency to the project by adding this line to `example/manifest`:
+
+        ```make
+        depends: nlohmann-json ^3.0.0
+        ```
+
+        Your `example/manifest` should now look like this:
+
+        ```make title="project's `manifest`"
+        --8<-- "integration/build2/manifest"
+        ```
+
+    4. In `example/example/buildfile`, import the library's target to be used as requirement for building the executable target `exe{example}` by replacing the top lines of that file by:
+
+        ```make
+        libs =
+        import libs = nlhomann-json%lib{json}
+
+        exe{example}: {hxx ixx txx cxx}{**} $libs testscript
+        ```
+
+        Your `example/example/buildfile` should now look like this:
+
+        ```make title="project's `buildfile`"
+        --8<-- "integration/build2/buildfile"
+        ```
+
+    5. Initialize the project in a C/C++ build configuration directory that we will create in the same command, with the default C++ build toolchain for simplicity:
+
+        ```shell
+        cd example/
+        bdep init -C @myconfig cc
+        ```
+
+        Note that this will also download the project's dependencies, here the package `nlhomann-json` into the newly created build configuration directory `example-myconfig/`.
+
+    6. Replace the C++ source code in `example/example/example.cxx` by this code:
+
+        ```cpp title="example.cxx"
+        --8<-- "integration/build2/example.cpp"
+        ```
+
+    7. Build the project by using [`b`](https://build2.org/build2/doc/b.xhtml) or [`bdep update`](https://build2.org/bdep/doc/bdep.xhtml):
+
+        ```shell
+        # in example/
+        b
+        ```
+
+        This should generate the executable in `example-myconfig/example/example/` and add a symbolic link to it in `example/example/`.
+
+        - If you want to be able to test that executable's output is correct, you can use build2's executable testing tooling `tescript` by changing the content of `example/example/testscript` to this code:
+
+            ```cpp title="`testscript` checking the output of the program"
+            --8<-- "integration/build2/testscript"
+            ```
+
+            Then run [`b test`](https://build2.org/build2/doc/b.xhtml) or [`bdep test`](https://build2.org/bdep/doc/bdep.xhtml) to automatically check the program's output. Assuming that the c++ code above didnt change, it should not fail as long as the library outputs the expected json format.
+
+            ```shell
+            # in example/
+            b test
+            ```
 
 ## CPM.cmake
 
