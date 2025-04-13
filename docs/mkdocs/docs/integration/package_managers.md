@@ -464,7 +464,7 @@ dotnet add package nlohmann.json
 
 ??? example
 
-    Probably the easiest way to use NuGet packages is through Visual Studio graphical interface. Just right-click on a
+    Probably the easiest way to use NuGet packages is through Visual Studio graphical interface. Right-click on a
     project (any C++ project would do) in “Solution Explorer” and select “Manage NuGet Packages…”
 
     ![](nuget/nuget-search-package.png)
@@ -477,8 +477,8 @@ dotnet add package nlohmann.json
     recommends adding “native” and “nativepackage” tags to C++ NuGet packages to distinguish them, but even adding
     “native” to search query would still show many .NET-only packages in the list.
 
-    Nevertheless, after finding the package you want, just click on “Install” button and accept confirmation dialogs.
-    After the package is successfully added to the projects, you should be able to just build and execute the project
+    Nevertheless, after finding the package you want, click on “Install” button and accept confirmation dialogs.
+    After the package is successfully added to the projects, you should be able to build and execute the project
     without the need for making any more changes to build settings.
 
     !!! note
