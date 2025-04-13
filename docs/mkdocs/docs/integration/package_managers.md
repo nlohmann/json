@@ -732,10 +732,10 @@ To use this package in an exising [`build2`](https://build2.org) project, the ge
 
   2. <details><summary>Add this package as dependency of your project.</summary>
 
-       In your project's `manifest` add the dependency to the package, like `depends: nlohmann-json`, probably with some [version constraints](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml#guide-add-remove-deps).
-       For example, to depend on the latest `3.x` version available:
+       In your project's `manifest` add the dependency to the package, like `depends: nlohmann-json`. You could also add some [version constraints](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml#guide-add-remove-deps).
+       For example, to depend on the latest version available:
        ```
-       depends: nlohmann-json ^3.0.0
+       depends: nlohmann-json
        ```
        </details>
 
@@ -771,83 +771,54 @@ To use this package in an exising [`build2`](https://build2.org) project, the ge
         bdep new example
         ```
 
-    2. Enable acquiring packages from https://cppget.org by uncommenting these lines in `example/repositories.manifest`:
+    2. Edit these files by replacing their content:
 
-        ```make
-        :
-        role: prerequisite
-        location: https://pkg.cppget.org/1/stable
-        ```
+        - `example/repositories.manifest`: Enable acquiring packages from https://cppget.org by uncommenting the related lines:
 
-        Your `example/manifest` should now look like this:
+            ```make title="project's `repositories.manifest`"
+            --8<-- "integration/build2/repositories.manifest"
+            ```
 
-        ```make title="project's `repositories.manifest`"
-        --8<-- "integration/build2/repositories.manifest"
-        ```
+       - `example/manifest`: Add the latest version of the `nlohmann-json` package as dependency to the project:
 
-    3. Add any available `3.x` version of the `nlohmann-json` package as dependency to the project by adding this line to `example/manifest`:
+            ```make title="project's `manifest`"
+            --8<-- "integration/build2/manifest"
+            ```
 
-        ```make
-        depends: nlohmann-json ^3.0.0
-        ```
+       - `example/example/buildfile`: import the library's target to be used as requirement for building the executable target `exe{example}`:
 
-        Your `example/manifest` should now look like this:
+            ```make title="project's `buildfile`"
+            --8<-- "integration/build2/buildfile"
+            ```
 
-        ```make title="project's `manifest`"
-        --8<-- "integration/build2/manifest"
-        ```
+        - `example/example/example.cxx`: `bdep new` generates a "hello world" by default, replace it by this:
 
-    4. In `example/example/buildfile`, import the library's target to be used as requirement for building the executable target `exe{example}` by replacing the top lines of that file by:
+            ```cpp title="example.cxx"
+            --8<-- "integration/build2/example.cpp"
+            ```
 
-        ```make
-        libs =
-        import libs = nlhomann-json%lib{json}
-
-        exe{example}: {hxx ixx txx cxx}{**} $libs testscript
-        ```
-
-        Your `example/example/buildfile` should now look like this:
-
-        ```make title="project's `buildfile`"
-        --8<-- "integration/build2/buildfile"
-        ```
-
-    5. Initialize the project in a C/C++ build configuration directory that we will create in the same command, with the default C++ build toolchain for simplicity:
-
-        ```shell
-        cd example/
-        bdep init -C @myconfig cc
-        ```
-
-        Note that this will also download the project's dependencies, here the package `nlhomann-json` into the newly created build configuration directory `example-myconfig/`.
-
-    6. Replace the C++ source code in `example/example/example.cxx` by this code:
-
-        ```cpp title="example.cxx"
-        --8<-- "integration/build2/example.cpp"
-        ```
-
-    7. Build the project by using [`b`](https://build2.org/build2/doc/b.xhtml) or [`bdep update`](https://build2.org/bdep/doc/bdep.xhtml):
-
-        ```shell
-        # in example/
-        b
-        ```
-
-        This should generate the executable in `example-myconfig/example/example/` and add a symbolic link to it in `example/example/`.
-
-        - If you want to be able to test that executable's output is correct, you can use build2's executable testing tooling `tescript` by changing the content of `example/example/testscript` to this code:
+        - `example/example/testscript`: (optional) if you want to be able to test that executable's output is correct using `b test`:
 
             ```cpp title="`testscript` checking the output of the program"
             --8<-- "integration/build2/testscript"
             ```
 
-            Then run [`b test`](https://build2.org/build2/doc/b.xhtml) or [`bdep test`](https://build2.org/bdep/doc/bdep.xhtml) to automatically check the program's output. Assuming that the c++ code above didnt change, it should not fail as long as the library outputs the expected json format.
 
-            ```shell
-            # in example/
-            b test
-            ```
+    3. Initialize the project in a default C/C++ build configuration directory, then build and test:
+
+        ```shell
+        cd example/
+
+        # create default C/C++ build configuration in ../example-myconfig/, initialize the project in it (downloads it's dependencies in it too)
+        bdep init -C @myconfig cc
+
+        # build only
+        b
+
+        # build and test the executable's output, will only work if the `tescript` is correct
+        b test
+
+        ```
 
 ## CPM.cmake
 

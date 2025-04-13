@@ -11,4 +11,4 @@ depends: * build2 >= 0.16.0
 depends: * bpkg >= 0.16.0
 #depends: libhello ^1.0.0
 
-depends: nlohmann-json ^3.0.0
+depends: nlohmann-json
