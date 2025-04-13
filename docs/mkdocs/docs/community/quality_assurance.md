@@ -57,6 +57,7 @@ violations will result in a failed build.
         | Clang 19.1.7                                 | x86_64       | Ubuntu 22.04.1 LTS       | GitHub    |
         | Clang 20.1.1                                 | x86_64       | Ubuntu 22.04.1 LTS       | GitHub    |
         | Clang 21.0.0                                 | x86_64       | Ubuntu 22.04.1 LTS       | GitHub    |
+        | Emscripten 4.0.6                             | x86_64       | Ubuntu 22.04.1 LTS       | GitHub    |
         | GNU 4.8.5                                    | x86_64       | Ubuntu 22.04.1 LTS       | GitHub    |
         | GNU 4.9.3                                    | x86_64       | Ubuntu 22.04.1 LTS       | GitHub    |
         | GNU 5.5.0                                    | x86_64       | Ubuntu 22.04.1 LTS       | GitHub    |
