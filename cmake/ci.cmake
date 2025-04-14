@@ -653,7 +653,6 @@ add_custom_target(ci_test_compiler_default_libcxx
         -DJSON_BuildTests=ON -DJSON_FastTests=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_compiler_default
         -DCMAKE_CXX_FLAGS="-stdlib=libc++"
-        -DCMAKE_EXE_LINKER_FLAGS="-lc++abi"
         ${ADDITIONAL_FLAGS}
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_compiler_default --parallel ${N}
     COMMAND cd ${PROJECT_BINARY_DIR}/build_compiler_default && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" -LE git_required --output-on-failure
