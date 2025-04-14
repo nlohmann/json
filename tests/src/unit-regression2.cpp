@@ -36,6 +36,14 @@ using ordered_json = nlohmann::ordered_json;
     #include <variant>
 #endif
 
+#ifdef JSON_HAS_CPP_17
+    #if __has_include(<optional>)
+        #include <optional>
+    #elif __has_include(<experimental/optional>)
+        #include <experimental/optional>
+    #endif
+#endif
+
 #ifdef JSON_HAS_CPP_20
     #if __has_include(<span>)
         #include <span>
@@ -389,6 +397,19 @@ struct Example_3810
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Example_3810, bla); // NOLINT(misc-use-internal-linkage)
+
+/////////////////////////////////////////////////////////////////////
+// for #4740
+/////////////////////////////////////////////////////////////////////
+
+#ifdef JSON_HAS_CPP_17
+struct Example_4740
+{
+    std::optional<std::string> host;
+    std::optional<int> port;
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Example_4740, host, port);
+};
+#endif
 
 TEST_CASE("regression tests 2")
 {
@@ -1037,6 +1058,18 @@ TEST_CASE("regression tests 2")
         oj["test"] = states;
         CHECK(oj["test"].dump() == expected);
     }
+
+#ifdef JSON_HAS_CPP_17
+    SECTION("issue #4740 - build issue with std::optional")
+    {
+        const auto t0 = Example_4740();
+        const auto j = nlohmann::json(t0);
+        CHECK(j.dump() == "{\"host\":null,\"port\":null}");
+        auto t1 = j.get<Example_4740>();
+        CHECK(!t1.host.has_value());
+        CHECK(!t1.port.has_value());
+    }
+#endif
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP

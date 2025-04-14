@@ -4832,7 +4832,7 @@ inline void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
 }
 
 #ifdef JSON_HAS_CPP_17
-#ifndef JSON_USE_IMPLICIT_CONVERSIONS
+//#if JSON_USE_IMPLICIT_CONVERSIONS == 1
 template<typename BasicJsonType, typename T>
 void from_json(const BasicJsonType& j, std::optional<T>& opt)
 {
@@ -4846,7 +4846,7 @@ void from_json(const BasicJsonType& j, std::optional<T>& opt)
     }
 }
 
-#endif // JSON_USE_IMPLICIT_CONVERSIONS
+//#endif // JSON_USE_IMPLICIT_CONVERSIONS
 #endif // JSON_HAS_CPP_17
 
 // overloads for basic_json template parameters
