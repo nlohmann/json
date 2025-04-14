@@ -172,12 +172,8 @@ jobs:
         if: ${{ matrix.compiler == '7' || matrix.compiler == '8' || matrix.compiler == '9' || matrix.compiler == '10' }}
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
-      - name: Build with libc++
-        run: ADDITIONAL_FLAGS=-DCLANG_DEFAULT_CXX_STDLIB=libc++ cmake --build build --target ci_test_compiler_default
-        if: ${{ matrix.stdlib == 'libcxx' }}
-      - name: Build with libstdc++
-        run: ADDITIONAL_FLAGS=-DCLANG_DEFAULT_CXX_STDLIB=libstdc++ cmake --build build --target ci_test_compiler_default
-        if: ${{ matrix.stdlib == 'libstdcxx' }}
+      - name: Build
+        run: cmake --build build --target ci_test_compiler_default_${{ matrix.stdlib }}
 
   ci_test_standards_gcc:
     runs-on: ubuntu-latest
