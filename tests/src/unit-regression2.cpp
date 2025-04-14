@@ -407,7 +407,7 @@ struct Example_4740
 {
     std::optional<std::string> host;
     std::optional<int> port;
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Example_4740, host, port);
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Example_4740, host, port)
 };
 #endif
 
