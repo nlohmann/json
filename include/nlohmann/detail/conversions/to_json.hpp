@@ -267,7 +267,7 @@ struct external_constructor<value_t::object>
 #ifdef JSON_HAS_CPP_17
 template<typename BasicJsonType, typename T,
          enable_if_t<std::is_constructible<BasicJsonType, T>::value, int> = 0>
-void to_json(BasicJsonType& j, const std::optional<T>& opt)
+void to_json(BasicJsonType& j, const std::optional<T>& opt) noexcept
 {
     if (opt.has_value())
     {

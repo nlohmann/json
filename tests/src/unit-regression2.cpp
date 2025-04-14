@@ -405,8 +405,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Example_3810, bla); // NOLINT(misc-use-intern
 #ifdef JSON_HAS_CPP_17
 struct Example_4740
 {
-    std::optional<std::string> host;
-    std::optional<int> port;
+    std::optional<std::string> host = std::nullopt;
+    std::optional<int> port = std::nullopt;
     NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Example_4740, host, port)
 };
 #endif
