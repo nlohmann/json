@@ -1062,12 +1062,22 @@ TEST_CASE("regression tests 2")
 #ifdef JSON_HAS_CPP_17
     SECTION("issue #4740 - build issue with std::optional")
     {
-        const auto t0 = Example_4740();
-        const auto j = nlohmann::json(t0);
-        CHECK(j.dump() == "{\"host\":null,\"port\":null}");
-        auto t1 = j.get<Example_4740>();
-        CHECK(!t1.host.has_value());
-        CHECK(!t1.port.has_value());
+        const auto t1 = Example_4740();
+        const auto j1 = nlohmann::json(t1);
+        CHECK(j1.dump() == "{\"host\":null,\"port\":null}");
+        const auto t2 = j1.get<Example_4740>();
+        CHECK(!t2.host.has_value());
+        CHECK(!t2.port.has_value());
+
+        // improve coverage
+        auto t3 = Example_4740();
+        t3.port = 80;
+        t3.host = "example.com";
+        const auto j2 = nlohmann::json(t3);
+        CHECK(j2.dump() == "{\"host\":\"example.com\",\"port\":80}");
+        const auto t4 = j2.get<Example_4740>();
+        CHECK(t4.host.has_value());
+        CHECK(t4.port.has_value());
     }
 #endif
 }
