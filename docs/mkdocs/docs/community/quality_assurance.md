@@ -76,6 +76,7 @@ violations will result in a failed build.
         | GNU 13.3.0                                   | x86_64       | Ubuntu 22.04.1 LTS       | GitHub    |
         | GNU 14.2.0                                   | x86_64       | Ubuntu 22.04.1 LTS       | GitHub    |
         | GNU 14.2.0                                   | arm64        | Linux 6.1.100            | Cirrus CI |
+        | icpc (ICC) 2021.5.0 20211109                 | x86_64       | Ubuntu 20.04.3 LTS       | GitHub    |
         | MSVC 19.0.24241.7                            | x86          | Windows 8.1              | AppVeyor  |
         | MSVC 19.16.27035.0                           | x86          | Windows-10 (Build 14393) | AppVeyor  |
         | MSVC 19.29.30157.0                           | x86          | Windows 10 (Build 17763) | GitHub    |
@@ -83,6 +84,7 @@ violations will result in a failed build.
         | MSVC 19.29.30157.0                           | x86          | Windows-10 (Build 17763) | AppVeyor  |
         | MSVC 19.42.34435.0                           | x86          | Windows 10 (Build 20348) | GitHub    |
         | MSVC 19.42.34435.0                           | x86_64       | Windows 10 (Build 20348) | GitHub    |
+        | nvc++ 25.3-0                                 | x86_64       | Linux-6.10.14-linuxkit   | GitHub    |
 
 - [x] The library is compiled with all C++ language revisions (C++11, C++14, C++17, C++20, C++23, and C++26) to detect
   and fix language deprecations early.

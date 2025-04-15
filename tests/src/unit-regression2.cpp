@@ -545,7 +545,7 @@ TEST_CASE("regression tests 2")
             const auto length = 300;
 
             json dump_test;
-            dump_test["1"] = std::string(length, -1);
+            dump_test["1"] = std::string(length, static_cast<std::string::value_type>(-1));
 
             std::string expected = R"({"1":")";
             for (int i = 0; i < length; ++i)
@@ -562,7 +562,7 @@ TEST_CASE("regression tests 2")
             const auto length = 500;
 
             json dump_test;
-            dump_test["1"] = std::string(length, -2);
+            dump_test["1"] = std::string(length, static_cast<std::string::value_type>(-2));
 
             std::string expected = R"({"1":")";
             for (int i = 0; i < length; ++i)
