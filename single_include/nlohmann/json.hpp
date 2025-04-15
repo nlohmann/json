@@ -4835,7 +4835,7 @@ inline void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
 
 #ifdef JSON_HAS_CPP_17
 template<typename BasicJsonType, typename T>
-inline void from_json(const BasicJsonType& j, std::optional<T>& opt)
+void from_json(const BasicJsonType& j, std::optional<T>& opt)
 {
     if (j.is_null())
     {
@@ -5913,7 +5913,7 @@ struct external_constructor<value_t::object>
 #ifdef JSON_HAS_CPP_17
 template<typename BasicJsonType, typename T,
          enable_if_t<std::is_constructible<BasicJsonType, T>::value, int> = 0>
-inline void to_json(BasicJsonType& j, const std::optional<T>& opt) noexcept
+void to_json(BasicJsonType& j, const std::optional<T>& opt) noexcept
 {
     if (opt.has_value())
     {

@@ -50,7 +50,7 @@ inline void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
 
 #ifdef JSON_HAS_CPP_17
 template<typename BasicJsonType, typename T>
-inline void from_json(const BasicJsonType& j, std::optional<T>& opt)
+void from_json(const BasicJsonType& j, std::optional<T>& opt)
 {
     if (j.is_null())
     {
