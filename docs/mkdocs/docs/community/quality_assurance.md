@@ -84,7 +84,6 @@ violations will result in a failed build.
         | MSVC 19.29.30157.0                           | x86          | Windows-10 (Build 17763) | AppVeyor  |
         | MSVC 19.42.34435.0                           | x86          | Windows 10 (Build 20348) | GitHub    |
         | MSVC 19.42.34435.0                           | x86_64       | Windows 10 (Build 20348) | GitHub    |
-        | nvc++ 25.3-0                                 | x86_64       | Linux-6.10.14-linuxkit   | GitHub    |
 
 - [x] The library is compiled with all C++ language revisions (C++11, C++14, C++17, C++20, C++23, and C++26) to detect
   and fix language deprecations early.
