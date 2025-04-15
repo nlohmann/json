@@ -251,16 +251,6 @@ jobs:
       - name: Build
         run: cmake --build build
 
-  ci_nvhpc:
-    runs-on: ubuntu-latest
-    container: nvcr.io/nvidia/nvhpc:25.3-devel-cuda_multi-ubuntu22.04
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - name: Run CMake
-        run: cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=/opt/nvidia/hpc_sdk/Linux_aarch64/2025/cmake/NVHPCConfig.cmake -DJSON_TestStandards=17
-      - name: Build
-        run: cmake --build build --parallel 10
-
   ci_test_documentation:
     runs-on: ubuntu-latest
     strategy:
