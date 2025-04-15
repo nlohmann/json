@@ -5580,6 +5580,9 @@ template<typename IteratorType> class iteration_proxy_value
 
 /// proxy class for the items() function
 template<typename IteratorType> class iteration_proxy
+#if JSON_HAS_RANGES
+    : public std::ranges::view_interface<iteration_proxy<IteratorType>>
+#endif
 {
   private:
     /// the container to iterate
