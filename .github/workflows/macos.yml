@@ -9,24 +9,60 @@ on:
   pull_request:
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
-  xcode_1:
-    runs-on: macos-11
+# macos-11 is deprecated
+#  macos-11:
+#    runs-on: macos-11
+#    strategy:
+#      matrix:
+#        xcode: ['11.7', '12.4', '12.5.1', '13.0']
+#    env:
+#      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
+#
+#    steps:
+#      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+#      - name: Run CMake
+#        run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
+#      - name: Build
+#        run: cmake --build build --parallel 10
+#      - name: Test
+#        run: cd build ; ctest -j 10 --output-on-failure
+
+# macos-12 is deprecated (https://github.com/actions/runner-images/issues/10721)
+#  macos-12:
+#    runs-on: macos-12 # https://github.com/actions/runner-images/blob/main/images/macos/macos-12-Readme.md
+#    strategy:
+#      matrix:
+#        xcode: ['13.1', '13.2.1', '13.3.1', '13.4.1', '14.0', '14.0.1', '14.1']
+#    env:
+#      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
+#
+#    steps:
+#      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+#      - name: Run CMake
+#        run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
+#      - name: Build
+#        run: cmake --build build --parallel 10
+#      - name: Test
+#        run: cd build ; ctest -j 10 --output-on-failure
+
+  macos-13:
+    runs-on: macos-13 # https://github.com/actions/runner-images/blob/main/images/macos/macos-13-Readme.md
     strategy:
       matrix:
-        xcode: ['11.7', '12.4', '12.5.1', '13.0']
+        xcode: ['14.1', '14.2', '14.3', '14.3.1', '15.0.1', '15.1', '15.2']
     env:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Run CMake
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
       - name: Build
@@ -34,16 +70,33 @@ jobs:
       - name: Test
         run: cd build ; ctest -j 10 --output-on-failure
 
-  xcode_2:
-    runs-on: macos-12
+  macos-14:
+    runs-on: macos-14 # https://github.com/actions/runner-images/blob/main/images/macos/macos-14-Readme.md
     strategy:
       matrix:
-        xcode: ['13.1', '13.2.1', '13.3.1', '13.4.1', '14.0', '14.0.1', '14.1']
+        xcode: ['15.3', '15.4']
     env:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Run CMake
+        run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
+      - name: Build
+        run: cmake --build build --parallel 10
+      - name: Test
+        run: cd build ; ctest -j 10 --output-on-failure
+
+  macos-15:
+    runs-on: macos-15 # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
+    strategy:
+      matrix:
+        xcode: ['16.0', '16.1', '16.2']
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Run CMake
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
       - name: Build
@@ -55,10 +108,10 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        standard: [11, 14, 17, 20, 23]
+        standard: [11, 14, 17, 20, 23, 26]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Run CMake
         run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_TestStandards=${{ matrix.standard }}
       - name: Build

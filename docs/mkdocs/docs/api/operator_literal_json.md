@@ -17,7 +17,7 @@ using namespace nlohmann;
 ```
 
 This is suggested to ease migration to the next major version release of the library. See
-['JSON_USE_GLOBAL_UDLS`](macros/json_use_global_udls.md#notes) for details.
+[`JSON_USE_GLOBAL_UDLS`](macros/json_use_global_udls.md#notes) for details.
 
 ## Parameters
 

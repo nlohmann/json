@@ -21,7 +21,7 @@ Constant.
 ## Possible implementation
 
 ```cpp
-constexpr bool is_primitive() const noexcept
+constexpr bool is_structured() const noexcept
 {
     return is_array() || is_object();
 }
@@ -55,8 +55,8 @@ Note that though strings are containers in C++, they are treated as primitive va
 ## See also
 
 - [is_primitive()](is_primitive.md) returns whether JSON value is primitive
-- [is_array()](is_array.md) returns whether value is an array
-- [is_object()](is_object.md) returns whether value is an object
+- [is_array()](is_array.md) returns whether the value is an array
+- [is_object()](is_object.md) returns whether the value is an object
 
 ## Version history
 

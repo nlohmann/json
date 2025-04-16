@@ -3,18 +3,24 @@ name: "Check amalgamation"
 on:
   pull_request:
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   save:
     runs-on: ubuntu-latest
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@c6295a65d1254861815972266d5933fd6e532bdf # v2.11.1
+        with:
+          egress-policy: audit
+
       - name: Save PR number
         run: |
           mkdir -p ./pr
           echo ${{ github.event.number }} > ./pr/number
           echo ${{ github.event.pull_request.user.login }} > ./pr/author
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: pr
           path: pr/
@@ -25,29 +31,29 @@ jobs:
       MAIN_DIR: ${{ github.workspace }}/main
       INCLUDE_DIR: ${{ github.workspace }}/main/single_include/nlohmann
       TOOL_DIR: ${{ github.workspace }}/tools/tools/amalgamate
-      ASTYLE_FLAGS: >
-        --style=allman --indent=spaces=4 --indent-modifiers --indent-switches --indent-preproc-block
-        --indent-preproc-define --indent-col1-comments --pad-oper --pad-header --align-pointer=type
-        --align-reference=type --add-brackets --convert-tabs --close-templates --lineend=linux --preserve-date
-        --formatted
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@c6295a65d1254861815972266d5933fd6e532bdf # v2.11.1
+        with:
+          egress-policy: audit
+
       - name: Checkout pull request
-        uses: actions/checkout@v3
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           path: main
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Checkout tools
-        uses: actions/checkout@v3
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           path: tools
           ref: develop
 
       - name: Install astyle
         run: |
-          sudo apt-get update
-          sudo apt-get install astyle
+          python3 -mvenv venv
+          venv/bin/pip3 install -r $MAIN_DIR/tools/astyle/requirements.txt
 
       - name: Check amalgamation
         run: |
@@ -60,11 +66,11 @@ jobs:
           python3 $TOOL_DIR/amalgamate.py -c $TOOL_DIR/config_json.json -s .
           python3 $TOOL_DIR/amalgamate.py -c $TOOL_DIR/config_json_fwd.json -s .
           echo "Format (1)"
-          astyle $ASTYLE_FLAGS --suffix=none --quiet $INCLUDE_DIR/json.hpp $INCLUDE_DIR/json_fwd.hpp
+          ${{ github.workspace }}/venv/bin/astyle --project=tools/astyle/.astylerc --suffix=none --quiet $INCLUDE_DIR/json.hpp $INCLUDE_DIR/json_fwd.hpp
 
           diff $INCLUDE_DIR/json.hpp~ $INCLUDE_DIR/json.hpp
           diff $INCLUDE_DIR/json_fwd.hpp~ $INCLUDE_DIR/json_fwd.hpp
 
-          astyle $ASTYLE_FLAGS $(find docs/examples include tests -type f \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' \) -not -path 'tests/thirdparty/*' -not -path 'tests/abi/include/nlohmann/*' | sort)
+          ${{ github.workspace }}/venv/bin/astyle --project=tools/astyle/.astylerc --suffix=orig $(find docs/examples include tests -type f \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' \) -not -path 'tests/thirdparty/*' -not -path 'tests/abi/include/nlohmann/*' | sort)
           echo Check
           find $MAIN_DIR -name '*.orig' -exec false {} \+

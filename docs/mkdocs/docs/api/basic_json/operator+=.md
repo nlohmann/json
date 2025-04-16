@@ -27,6 +27,15 @@ reference operator+=(initializer_list_t init);
     `init` is converted into an object element and added using `operator+=(const typename object_t::value_type&)`.
     Otherwise, `init` is converted to a JSON value and added using `operator+=(basic_json&&)`.
 
+## Iterator invalidation
+
+For all cases where an element is added to an **array**, a reallocation can happen, in which case all iterators (including
+the [`end()`](end.md) iterator) and all references to the elements are invalidated. Otherwise, only the
+[`end()`](end.md) iterator is invalidated.
+
+For [`ordered_json`](../ordered_json.md), also adding an element to an **object** can yield a reallocation which again
+invalidates all iterators and all references.
+
 ## Parameters
 
 `val` (in)
@@ -103,8 +112,13 @@ interpreted as `object_t::value_type` or `std::initializer_list<basic_json>`, se
     --8<-- "examples/push_back__initializer_list.output"
     ```
 
+## See also
+
+- [emplace_back](emplace_back.md) add a value to an array
+- [push_back](push_back.md) add a value to an array/object
+
 ## Version history
 
 1. Since version 1.0.0.
 2. Since version 1.0.0.
-2. Since version 2.0.0.
+3. Since version 2.0.0.

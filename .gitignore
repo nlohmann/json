@@ -4,9 +4,6 @@
 *.gcda
 .DS_Store
 
-.wsjcpp-logs/*
-.wsjcpp/*
-
 /.idea
 /cmake-build-*
 
@@ -26,12 +23,11 @@
 /tests/parse_*_fuzzer
 
 # documentation
-/docs/docset/docSet.dsidx
 /docs/docset/JSON_for_Modern_C++.docset/
 /docs/docset/JSON_for_Modern_C++.tgz
+/docs/docset/docSet.dsidx
+/docs/mkdocs/.cache/
 /docs/mkdocs/docs/__pycache__/
-/docs/mkdocs/docs/examples/
-/docs/mkdocs/docs/images/json.gif
 /docs/mkdocs/site/
 /docs/mkdocs/venv/
 
@@ -42,3 +38,10 @@
 
 # Swift Package Manager build directory
 /.build
+
+venv
+
+nlohmann_json.spdx
+
+# Bazel-related
+MODULE.bazel.lock

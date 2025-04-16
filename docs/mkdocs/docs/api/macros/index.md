@@ -11,6 +11,7 @@ header. See also the [macro overview page](../../features/macros.md).
 
 - [**JSON_CATCH_USER(exception)**<br>**JSON_THROW_USER(exception)**<br>**JSON_TRY_USER**](json_throw_user.md) - control exceptions
 - [**JSON_DIAGNOSTICS**](json_diagnostics.md) - control extended diagnostics
+- [**JSON_DIAGNOSTIC_POSITIONS**](json_diagnostic_positions.md) - access positions of elements
 - [**JSON_NOEXCEPTION**](json_noexception.md) - switch off exceptions
 
 ## Language support
@@ -42,7 +43,6 @@ header. See also the [macro overview page](../../features/macros.md).
 - [**JSON_DISABLE_ENUM_SERIALIZATION**](json_disable_enum_serialization.md) - switch off default serialization/deserialization functions for enums
 - [**JSON_USE_IMPLICIT_CONVERSIONS**](json_use_implicit_conversions.md) - control implicit conversions
 
-<!-- comment-->
 ## Comparison behavior
 
 - [**JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON**](json_use_legacy_discarded_value_comparison.md) -
@@ -50,13 +50,34 @@ header. See also the [macro overview page](../../features/macros.md).
 
 ## Serialization/deserialization macros
 
-- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE(type, member...)**<br>**NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(type, member...)**
-<br>**NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(type, member...)**][DefInt]
-  \- serialization/deserialization of types _with_ access to private variables
-- [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(type, member...)**<br>**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(type, member...)**
-<br>**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(type, member...)**][DefNonInt]
-  \- serialization/deserialization of types _without_ access to private variables
-- [**NLOHMANN_JSON_SERIALIZE_ENUM(type, ...)**](nlohmann_json_serialize_enum.md) - serialization/deserialization of enum types
+### Enums
 
-[DefInt]: nlohmann_define_type_intrusive.md
-[DefNonInt]: nlohmann_define_type_non_intrusive.md
+- [**NLOHMANN_JSON_SERIALIZE_ENUM**](nlohmann_json_serialize_enum.md) - serialize/deserialize an enum
+
+### Classes and structs
+
+- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE**](nlohmann_define_type_intrusive.md) - serialize/deserialize a non-derived class
+  with private members
+- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT**](nlohmann_define_type_intrusive.md) - serialize/deserialize a
+  non-derived class with private members; uses default values
+- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE**](nlohmann_define_type_intrusive.md) - serialize a non-derived class
+  with private members
+- [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE**](nlohmann_define_type_non_intrusive.md) - serialize/deserialize a non-derived
+  class
+- [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT**](nlohmann_define_type_non_intrusive.md) - serialize/deserialize a
+  non-derived class; uses default values
+- [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE**](nlohmann_define_type_non_intrusive.md) - serialize a
+  non-derived class
+
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE**](nlohmann_define_derived_type.md) - serialize/deserialize a derived class
+  with private members
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT**](nlohmann_define_derived_type.md) - serialize/deserialize a
+  derived class with private members; uses default values
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE**](nlohmann_define_derived_type.md) - serialize a derived
+  class with private members
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE**](nlohmann_define_derived_type.md) - serialize/deserialize a derived
+  class
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT**](nlohmann_define_derived_type.md) - serialize/deserialize
+  a derived class; uses default values
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE**](nlohmann_define_derived_type.md) - serialize a derived
+  class

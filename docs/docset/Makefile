@@ -16,6 +16,7 @@ JSON_for_Modern_C++.docset: Info.plist docSet.dsidx
 	cp icon*.png JSON_for_Modern_C++.docset
 	cp Info.plist JSON_for_Modern_C++.docset/Contents
 	# build and copy documentation
+	$(MAKE) install_venv -C ../mkdocs
 	$(MAKE) build -C ../mkdocs
 	cp -r ../mkdocs/site/* JSON_for_Modern_C++.docset/Contents/Resources/Documents
 	# patch CSS to hide navigation items

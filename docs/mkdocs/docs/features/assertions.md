@@ -1,7 +1,7 @@
 # Runtime Assertions
 
 The code contains numerous debug assertions to ensure class invariants are valid or to detect undefined behavior.
-Whereas the former class invariants are nothing to be concerned of, the latter checks for undefined behavior are to
+Whereas the former class invariants are nothing to be concerned with, the latter checks for undefined behavior are to
 detect bugs in client code.
 
 ## Switch off runtime assertions
@@ -19,8 +19,8 @@ before including the `json.hpp` header.
 ### Unchecked object access to a const value
 
 Function [`operator[]`](../api/basic_json/operator%5B%5D.md) implements unchecked access for objects. Whereas a missing
-key is added in case of non-const objects, accessing a const object with a missing key is undefined behavior (think of a
-dereferenced null pointer) and yields a runtime assertion.
+key is added in the case of non-const objects, accessing a const object with a missing key is undefined behavior (think
+of a dereferenced null pointer) and yields a runtime assertion.
 
 If you are not sure whether an element in an object exists, use checked access with the
 [`at` function](../api/basic_json/at.md) or call the [`contains` function](../api/basic_json/contains.md) before.
@@ -103,29 +103,42 @@ behavior and yields a runtime assertion.
     Assertion failed: (m_object != nullptr), function operator++, file iter_impl.hpp, line 368.
     ```
 
-### Reading from a null `FILE` pointer
+## Changes
 
-Reading from a null `#!cpp FILE` pointer is undefined behavior and yields a runtime assertion. This can happen when
-calling `#!cpp std::fopen` on a nonexistent file.
+### Reading from a null `FILE` or `char` pointer
 
-??? example "Example 4: Uninitialized iterator"
+Reading from a null `#!cpp FILE` or `#!cpp char` pointer in C++ is undefined behavior.  Until version 3.12.0, this
+library asserted that the pointer was not `nullptr` using a runtime assertion. If assertions were disabled, this would
+result in undefined behavior. Since version 3.12.0, this library checks for `nullptr` and throws a
+[`parse_error.101`](../home/exceptions.md#jsonexceptionparse_error101) to prevent the undefined behavior.
+
+??? example "Example 4: Reading from null pointer"
 
     The following code will trigger an assertion at runtime:
 
     ```cpp
+    #include <iostream>
     #include <nlohmann/json.hpp>
     
     using json = nlohmann::json;
     
     int main()
     {
-      std::FILE* f = std::fopen("nonexistent_file.json", "r");
-      json j = json::parse(f);
+        std::FILE* f = std::fopen("nonexistent_file.json", "r");
+        try {
+            json j = json::parse(f);
+        } catch (std::exception& e) {
+            std::cerr << e.what() << std::endl;
+        }
     }
     ```
 
     Output:
 
     ```
-    Assertion failed: (m_file != nullptr), function file_input_adapter, file input_adapters.hpp, line 55.
+    [json.exception.parse_error.101] parse error: attempting to parse an empty input; check that your input string or stream contains the expected JSON
     ```
+
+## See also
+
+- [JSON_ASSERT](../api/macros/json_assert.md) - control behavior of runtime assertions

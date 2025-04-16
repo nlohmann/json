@@ -596,7 +596,7 @@ This release adds support for the [**UBJSON**](http://ubjson.org) format and [**
 
 ### :sparkles: New features
 
-- The library now supports [**UBJSON**](http://ubjson.org) (Universal Binary JSON Specification) as binary format to read and write JSON values space-efficiently. See the [documentation overview](https://github.com/nlohmann/json/blob/develop/doc/binary_formats.md) for a comparison of the different formats CBOR, MessagePack, and UBJSON.
+- The library now supports [**UBJSON**](http://ubjson.org) (Universal Binary JSON Specification) as binary format to read and write JSON values space-efficiently. See the [documentation overview](https://json.nlohmann.me/features/binary_formats/) for a comparison of the different formats CBOR, MessagePack, and UBJSON.
 - [**JSON Merge Patch**](https://tools.ietf.org/html/rfc7386) (RFC 7386) offers an intuitive means to describe patches between JSON values (#876, #877). See the documentation of [`merge_patch`](http://nlohmann.github.io/json/doxygen/classnlohmann_1_1basic__json_a0ec0cd19cce42ae6071f3cc6870ea295.html#a0ec0cd19cce42ae6071f3cc6870ea295) for more information.
 
 ### :zap: Improvements
@@ -688,7 +688,7 @@ This section describes changes that change the public API of the library and may
 - The library now uses [**user-defined exceptions**](http://nlohmann.github.io/json/doxygen/classnlohmann_1_1basic__json_a9a0aced019cb1d65bb49703406c84970.html#a9a0aced019cb1d65bb49703406c84970) instead of re-using those defined in `<stdexcept>` (#244). This not only allows to add more information to the exceptions (every exception now has an identifier, and parse errors contain the position of the error), but also to easily catch all library exceptions with a single `catch(json::exception)`.
 - When strings with a different encoding as UTF-8 were stored in JSON values, their serialization could not be parsed by the library itself, as only UTF-8 is supported. To enforce this library limitation and improve consistency, **non-UTF-8 encoded strings now yield a `json::type_error` exception during serialization** (#838). The check for valid UTF-8 is realized with code from [Björn Hoehrmann](http://bjoern.hoehrmann.de/).
 - **NaN and infinity values can now be stored inside the JSON value** without throwing an exception. They are, however, still serialized as `null` (#388).
-- The library's iterator tag was changed from RandomAccessIterator to **[BidirectionalIterator](http://en.cppreference.com/w/cpp/concept/BidirectionalIterator)** (#593). Supporting RandomAccessIterator was incorrect as it assumed an ordering of values in a JSON objects which are unordered by definition.
+- The library's iterator tag was changed from RandomAccessIterator to **[BidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator)** (#593). Supporting RandomAccessIterator was incorrect as it assumed an ordering of values in a JSON objects which are unordered by definition.
 - The library does not include the standard headers `<iostream>`, `<ctype>`, and `<stdexcept>` any more. You may need to add these headers to code relying on them.
 - Removed constructor `explicit basic_json(std::istream& i, const parser_callback_t cb = nullptr)` which was deprecated in version 2.0.0 (#480).
 
@@ -744,54 +744,54 @@ There are five different exceptions inheriting from [`json::exception`](http://n
 
 To support these exception, the `try`/`catch` blocks of your code need to be adjusted:
 
-| new exception | previous exception |
-|:--|:--|
-| parse_error.101 | invalid_argument |
-| parse_error.102 | invalid_argument |
-| parse_error.103 | invalid_argument |
-| parse_error.104 | invalid_argument |
-| parse_error.105 | invalid_argument |
-| parse_error.106 | domain_error |
-| parse_error.107 | domain_error |
-| parse_error.108 | domain_error |
-| parse_error.109 | invalid_argument |
-| parse_error.110 | out_of_range |
-| parse_error.111 | invalid_argument |
-| parse_error.112 | invalid_argument |
-| invalid_iterator.201 | domain_error |
-| invalid_iterator.202 | domain_error |
-| invalid_iterator.203 | domain_error |
-| invalid_iterator.204 | out_of_range |
-| invalid_iterator.205 | out_of_range |
-| invalid_iterator.206 | domain_error |
-| invalid_iterator.207 | domain_error |
-| invalid_iterator.208 | domain_error |
-| invalid_iterator.209 | domain_error |
-| invalid_iterator.210 | domain_error |
-| invalid_iterator.211 | domain_error |
-| invalid_iterator.212 | domain_error |
-| invalid_iterator.213 | domain_error |
-| invalid_iterator.214 | out_of_range |
-| type_error.301 | domain_error |
-| type_error.302 | domain_error |
-| type_error.303 | domain_error |
-| type_error.304 | domain_error |
-| type_error.305 | domain_error |
-| type_error.306 | domain_error |
-| type_error.307 | domain_error |
-| type_error.308 | domain_error |
-| type_error.309 | domain_error |
-| type_error.310 | domain_error |
-| type_error.311 | domain_error |
-| type_error.313 | domain_error |
-| type_error.314 | domain_error |
-| type_error.315 | domain_error |
-| out_of_range.401 | out_of_range |
-| out_of_range.402 | out_of_range |
-| out_of_range.403 | out_of_range |
-| out_of_range.404 | out_of_range |
-| out_of_range.405 | domain_error |
-| other_error.501 | domain_error |
+| new exception        | previous exception |
+|:---------------------|:-------------------|
+| parse_error.101      | invalid_argument   |
+| parse_error.102      | invalid_argument   |
+| parse_error.103      | invalid_argument   |
+| parse_error.104      | invalid_argument   |
+| parse_error.105      | invalid_argument   |
+| parse_error.106      | domain_error       |
+| parse_error.107      | domain_error       |
+| parse_error.108      | domain_error       |
+| parse_error.109      | invalid_argument   |
+| parse_error.110      | out_of_range       |
+| parse_error.111      | invalid_argument   |
+| parse_error.112      | invalid_argument   |
+| invalid_iterator.201 | domain_error       |
+| invalid_iterator.202 | domain_error       |
+| invalid_iterator.203 | domain_error       |
+| invalid_iterator.204 | out_of_range       |
+| invalid_iterator.205 | out_of_range       |
+| invalid_iterator.206 | domain_error       |
+| invalid_iterator.207 | domain_error       |
+| invalid_iterator.208 | domain_error       |
+| invalid_iterator.209 | domain_error       |
+| invalid_iterator.210 | domain_error       |
+| invalid_iterator.211 | domain_error       |
+| invalid_iterator.212 | domain_error       |
+| invalid_iterator.213 | domain_error       |
+| invalid_iterator.214 | out_of_range       |
+| type_error.301       | domain_error       |
+| type_error.302       | domain_error       |
+| type_error.303       | domain_error       |
+| type_error.304       | domain_error       |
+| type_error.305       | domain_error       |
+| type_error.306       | domain_error       |
+| type_error.307       | domain_error       |
+| type_error.308       | domain_error       |
+| type_error.309       | domain_error       |
+| type_error.310       | domain_error       |
+| type_error.311       | domain_error       |
+| type_error.313       | domain_error       |
+| type_error.314       | domain_error       |
+| type_error.315       | domain_error       |
+| out_of_range.401     | out_of_range       |
+| out_of_range.402     | out_of_range       |
+| out_of_range.403     | out_of_range       |
+| out_of_range.404     | out_of_range       |
+| out_of_range.405     | domain_error       |
+| other_error.501      | domain_error       |
 
 #### Handling of NaN and INF
 
@@ -939,8 +939,8 @@ This release implements with **[CBOR](http://cbor.io)** and **[MessagePack](http
 - :bug: fixed an overflow detection error in the number parser
 - :memo: updated [contribution guidelines](https://github.com/nlohmann/json/blob/develop/.github/CONTRIBUTING.md) to a list of frequentely asked features that will most likely be never added to the library
 - :memo:  added a **table of contents** to the [README file](https://github.com/nlohmann/json/blob/develop/README.md) to add some structure
-- :memo: mentioned the many [examples](https://github.com/nlohmann/json/tree/develop/doc/examples) and the [documentation](https://nlohmann.github.io/json/) in the [README file]()
-- :hammer: split [unit tests](https://github.com/nlohmann/json/tree/develop/test/src) into individual independent binaries to speed up compilation and testing
+- :memo: mentioned the many [examples](https://github.com/nlohmann/json/tree/develop/docs/mkdocs/docs/examples) and the [documentation](https://nlohmann.github.io/json/) in the [README file]()
+- :hammer: split [unit tests](https://github.com/nlohmann/json/tree/develop/tests/src) into individual independent binaries to speed up compilation and testing
 - :white_check_mark: the test suite now contains **11201886** tests
 
 ## v2.0.8
@@ -982,10 +982,10 @@ This release combines a lot of small fixes and improvements. The fixes are backw
 
 ### Summary
 
-This release fixes a few bugs in the JSON parser found in the [Parsing JSON is a Minefield 💣](http://seriot.ch/parsing_json.html) article. The fixes are backwards compatible.
+This release fixes a few bugs in the JSON parser found in the [Parsing JSON is a Minefield 💣](https://seriot.ch/projects/parsing_json.html) article. The fixes are backwards compatible.
 
 ### Changes
-- The article [Parsing JSON is a Minefield 💣](http://seriot.ch/parsing_json.html) discusses a lot of pitfalls of the JSON specification. When investigating the published test cases, a few bugs in the library were found and fixed:
+- The article [Parsing JSON is a Minefield 💣](https://seriot.ch/projects/parsing_json.html) discusses a lot of pitfalls of the JSON specification. When investigating the published test cases, a few bugs in the library were found and fixed:
   - Files with less than 5 bytes can now be parsed without error.
   - The library now properly rejects any file encoding other than UTF-8. Furthermore, incorrect surrogate pairs are properly detected and rejected.
   - The library now accepts all but one "yes" test (y_string_utf16.json): UTF-16 is not supported.

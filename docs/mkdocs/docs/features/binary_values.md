@@ -5,22 +5,24 @@ these formats support binary values; that is, values that have semantics define 
 sequence of bytes to be stored.
 
 JSON itself does not have a binary value. As such, binary values are an extension that this library implements to store
-values received by a binary format. Binary values are never created by the JSON parser, and are only part of a
+values received by a binary format. Binary values are never created by the JSON parser and are only part of a
 serialized JSON text if they have been created manually or via a binary format.
 
 ## API for binary values
 
-```plantuml
-class json::binary_t {
-    -- setters --
+```mermaid
+classDiagram
+
+class binary_t ["json::binary_t"] {
     +void set_subtype(std::uint64_t subtype)
     +void clear_subtype()
-    -- getters --
     +std::uint64_t subtype() const
     +bool has_subtype() const
 }
 
-"std::vector<uint8_t>" <|-- json::binary_t
+class vector ["std::vector<uint8_t>"]
+
+vector <|-- binary_t
 ```
 
 By default, binary values are stored as `std::vector<std::uint8_t>`. This type can be changed by providing a template
@@ -128,8 +130,8 @@ is an integer or `null`.
 
 ### BJData
 
-[BJData](binary_formats/bjdata.md) neither supports binary values nor subtypes, and proposes to serialize binary values
-as array of uint8 values. This translation is implemented by the library.
+[BJData](binary_formats/bjdata.md) neither supports binary values nor subtypes and proposes to serialize binary values
+as an array of uint8 values. The library implements this translation.
 
 ??? example
 
@@ -313,8 +315,8 @@ If no subtype is given, the bin family (bin8, bin16, bin32) is used.
 
 ### UBJSON
 
-[UBJSON](binary_formats/ubjson.md) neither supports binary values nor subtypes, and proposes to serialize binary values
-as array of uint8 values. This translation is implemented by the library.
+[UBJSON](binary_formats/ubjson.md) neither supports binary values nor subtypes and proposes to serialize binary values
+as an array of uint8 values. The library implements this translation.
 
 ??? example
 

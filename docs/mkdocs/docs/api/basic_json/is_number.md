@@ -9,7 +9,7 @@ unsigned) and floating-point values.
     
 ## Return value
 
-`#!cpp true` if type is number (regardless whether integer, unsigned integer or floating-type), `#!cpp false` otherwise.
+`#!cpp true` if type is number (regardless whether integer, unsigned integer, or floating-type), `#!cpp false` otherwise.
 
 ## Exception safety
 
@@ -46,9 +46,9 @@ constexpr bool is_number() const noexcept
 
 ## See also
 
-- [is_number_integer()](is_number_integer.md) check if value is an integer or unsigned integer number
-- [is_number_unsigned()](is_number_unsigned.md) check if value is an unsigned integer number
-- [is_number_float()](is_number_float.md) check if value is a floating-point number
+- [is_number_integer()](is_number_integer.md) check if the value is an integer or unsigned integer number
+- [is_number_unsigned()](is_number_unsigned.md) check if the value is an unsigned integer number
+- [is_number_float()](is_number_float.md) check if the value is a floating-point number
 
 ## Version history
 

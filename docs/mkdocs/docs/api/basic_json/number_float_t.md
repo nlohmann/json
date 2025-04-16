@@ -13,7 +13,7 @@ The type used to store JSON numbers (floating-point).
 > cannot be represented in the grammar below (such as Infinity and NaN) are not permitted.
 
 This description includes both integer and floating-point numbers. However, C++ allows more precise storage if it is
-known whether the number is a signed integer, an unsigned integer or a floating-point number. Therefore, three different
+known whether the number is a signed integer, an unsigned integer, or a floating-point number. Therefore, three different
 types, [`number_integer_t`](number_integer_t.md), [`number_unsigned_t`](number_unsigned_t.md) and `number_float_t` are
 used.
 
@@ -28,9 +28,9 @@ With the default values for `NumberFloatType` (`double`), the default value for 
 
 #### Default behavior
 
-- The restrictions about leading zeros is not enforced in C++. Instead, leading zeros in floating-point literals will be
-  ignored. Internally, the value will be stored as decimal number. For instance, the C++ floating-point literal `01.2`
-  will be serialized to `1.2`. During deserialization, leading zeros yield an error.
+- The restrictions about leading zeros are not enforced in C++. Instead, leading zeros in floating-point literals will
+  be ignored. Internally, the value will be stored as a decimal number. For instance, the C++ floating-point literal
+  `01.2` will be serialized to `1.2`. During deserialization, leading zeros yield an error.
 - Not-a-number (NaN) values will be serialized to `null`.
 
 #### Limits

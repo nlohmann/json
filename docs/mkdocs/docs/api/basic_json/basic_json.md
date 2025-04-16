@@ -99,8 +99,8 @@ basic_json(basic_json&& other) noexcept;
     2. C++ has no way of describing mapped types other than to list a list of pairs. As JSON requires that keys must be
        of type string, rule 2 is the weakest constraint one can pose on initializer lists to interpret them as an
        object.
-    3. In all other cases, the initializer list could not be interpreted as JSON object type, so interpreting it as JSON
-       array type is safe.
+    3. In all other cases, the initializer list could not be interpreted as a JSON object type, so interpreting it as a
+       JSON array type is safe.
     
     With the rules described above, the following JSON values cannot be expressed by an initializer list:
     
@@ -113,7 +113,7 @@ basic_json(basic_json&& other) noexcept;
 6. Constructs a JSON array value by creating `cnt` copies of a passed value. In case `cnt` is `0`, an empty array is
    created.
 
-7. Constructs the JSON value with the contents of the range `[first, last)`. The semantics depends on the different
+7. Constructs the JSON value with the contents of the range `[first, last)`. The semantics depend on the different
    types a JSON value can have:
 
     - In case of a `#!json null` type, [invalid_iterator.206](../../home/exceptions.md#jsonexceptioninvalid_iterator206)
@@ -175,10 +175,10 @@ basic_json(basic_json&& other) noexcept;
 :   the number of JSON copies of `val` to create
 
 `first` (in)
-:   begin of the range to copy from (included)
+:   the beginning of the range to copy from (included)
 
 `last` (in)
-:   end of the range to copy from (excluded)
+:   the end of the range to copy from (excluded)
 
 `other` (in)
 :   the JSON value to copy/move
@@ -188,10 +188,10 @@ basic_json(basic_json&& other) noexcept;
 1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
 2. No-throw guarantee: this constructor never throws exceptions.
 3. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no
-   `to_json()` function was provided), strong guarantee holds: if an exception is thrown, there are no changes to any
+   `to_json()` function was provided), a strong guarantee holds: if an exception is thrown, there are no changes to any
    JSON value.
 4. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no
-   `to_json()` function was provided), strong guarantee holds: if an exception is thrown, there are no changes to any
+   `to_json()` function was provided), a strong guarantee holds: if an exception is thrown, there are no changes to any
    JSON value.
 5. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
 6. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
@@ -217,7 +217,7 @@ basic_json(basic_json&& other) noexcept;
       `[first, last)` is undefined.
     - Throws [`invalid_iterator.204`](../../home/exceptions.md#jsonexceptioninvalid_iterator204) if iterators `first`
       and `last` belong to a primitive type (number, boolean, or string), but `first` does not point to the first
-      element anymore. In this case, the range `[first, last)` is undefined. See example code below.
+      element anymore. In this case, the range `[first, last)` is undefined. See the example code below.
     - Throws [`invalid_iterator.206`](../../home/exceptions.md#jsonexceptioninvalid_iterator206) if iterators `first`
       and `last` belong to a `#!json null` value. In this case, the range `[first, last)` is undefined.
 8. (none)
@@ -333,7 +333,7 @@ basic_json(basic_json&& other) noexcept;
     --8<-- "examples/basic_json__list_init_t.output"
     ```
 
-??? example "Example: (6) construct an array with count copies of given value"
+??? example "Example: (6) construct an array with count copies of a given value"
 
     The following code shows examples for creating arrays with several copies of a given value.
      

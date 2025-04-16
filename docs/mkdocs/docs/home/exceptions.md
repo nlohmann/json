@@ -6,24 +6,33 @@
 
 All exceptions inherit from class `json::exception` (which in turn inherits from `std::exception`). It is used as the base class for all exceptions thrown by the `basic_json` class. This class can hence be used as "wildcard" to catch exceptions.
 
-```plantuml
-std::exception <|-- json::exception
-json::exception <|-- json::parse_error
-json::exception <|-- json::invalid_iterator
-json::exception <|-- json::type_error
-json::exception <|-- json::out_of_range
-json::exception <|-- json::other_error
+``` mermaid
+classDiagram
+  direction LR
+    class `std::exception` {
+        <<interface>>
+    }
 
-interface std::exception {}
+    class `json::exception` {
+        +const int id
+        +const char* what() const
+    }
 
-class json::exception {
-    + const int id
-    + const char* what() const
-}
+    class `json::parse_error` {
+        +const std::size_t byte
+    }
 
-class json::parse_error {
-    + const std::size_t byte
-}
+    class `json::invalid_iterator`
+    class `json::type_error`
+    class `json::out_of_range`
+    class `json::other_error`
+
+    `std::exception` <|-- `json::exception`
+    `json::exception` <|-- `json::parse_error`
+    `json::exception` <|-- `json::invalid_iterator`
+    `json::exception` <|-- `json::type_error`
+    `json::exception` <|-- `json::out_of_range`
+    `json::exception` <|-- `json::other_error`
 ```
 
 ### Switch off exceptions
@@ -72,7 +81,7 @@ Exceptions in the library are thrown in the local context of the JSON value they
 
     This exception can be hard to debug if storing the value `#!c "12"` and accessing it is further apart.
 
-To create better diagnostics messages, each JSON value needs a pointer to its parent value such that a global context (i.e., a path from the root value to the value that lead to the exception) can be created. That global context is provided as [JSON Pointer](../features/json_pointer.md).
+To create better diagnostics messages, each JSON value needs a pointer to its parent value such that a global context (i.e., a path from the root value to the value that led to the exception) can be created. That global context is provided as [JSON Pointer](../features/json_pointer.md).
 
 As this global context comes at the price of storing one additional pointer per JSON value and runtime overhead to maintain the parent relation, extended diagnostics are disabled by default. They can, however, be enabled by defining the preprocessor symbol [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) to `1` before including `json.hpp`.
 
@@ -94,7 +103,7 @@ See [documentation of `JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) for
 
 ## Parse errors
 
-This exception is thrown by the library when a parse error occurs. Parse errors
+The library throws this exception when a parse error occurs. Parse errors
 can occur during the deserialization of JSON text, CBOR, MessagePack, as well
 as when using JSON Patch.
 
@@ -471,7 +480,7 @@ The offset operators (`+`, `-`, `+=`, `-=`) cannot be used on iterators belongin
 
 ### json.exception.invalid_iterator.210
 
-The iterator range passed to the insert function are not compatible, meaning they do not belong to the same container. Therefore, the range (`first`, `last`) is invalid.
+The iterator range passed to the insert function is not compatible, meaning they do not belong to the same container. Therefore, the range (`first`, `last`) is invalid.
 
 !!! failure "Example message"
 
@@ -551,7 +560,7 @@ To create an object from an initializer list, the initializer list must consist 
 
 ### json.exception.type_error.302
 
-During implicit or explicit value conversion, the JSON type must be compatible to the target type. For instance, a JSON string can only be converted into string types, but not into numbers or boolean types.
+During implicit or explicit value conversion, the JSON type must be compatible with the target type. For instance, a JSON string can only be converted into string types, but not into numbers or boolean types.
 
 !!! failure "Example messages"
 
@@ -731,7 +740,7 @@ The `dump()` function only works with UTF-8 encoded strings; that is, if you ass
 
 ### json.exception.type_error.317
 
-The dynamic type of the object cannot be represented in the requested serialization format (e.g. a raw `true` or `null` JSON object cannot be serialized to BSON)
+The dynamic type of the object cannot be represented in the requested serialization format (e.g., a raw `true` or `null` JSON object cannot be serialized to BSON)
 
 !!! failure "Example messages"
 
@@ -750,7 +759,7 @@ The dynamic type of the object cannot be represented in the requested serializat
 
 ## Out of range
 
-This exception is thrown in case a library function is called on an input parameter that exceeds the expected range, for instance in case of array indices or nonexisting object keys.
+This exception is thrown in case a library function is called on an input parameter that exceeds the expected range, for instance, in the case of array indices or nonexisting object keys.
 
 Exceptions have ids 4xx.
 
@@ -810,7 +819,7 @@ A reference token in a JSON Pointer could not be resolved.
 
 ### json.exception.out_of_range.405
 
-The JSON Patch operations 'remove' and 'add' can not be applied to the root element of the JSON value.
+The JSON Patch operations 'remove' and 'add' cannot be applied to the root element of the JSON value.
 
 !!! failure "Example message"
 
@@ -830,17 +839,14 @@ A parsed number could not be stored as without changing it to NaN or INF.
 
 ### json.exception.out_of_range.407
 
-UBJSON and BSON only support integer numbers up to 9223372036854775807.
+This exception previously indicated that the UBJSON and BSON binary formats did not support integer numbers greater than
+9223372036854775807 due to limitations in the implemented mapping. However, these limitations have since been resolved,
+and this exception no longer occurs.
 
-!!! failure "Example message"
+!!! success "Exception cannot occur any more"
 
-    ```
-    number overflow serializing '9223372036854775808'
-    ```
-
-!!! note
-
-    Since version 3.9.0, integer numbers beyond int64 are serialized as high-precision UBJSON numbers, and this exception does not further occur. 
+    - Since version 3.9.0, integer numbers beyond int64 are serialized as high-precision UBJSON numbers.
+    - Since version 3.12.0, integer numbers beyond int64 are serialized as uint64 BSON numbers.
 
 ### json.exception.out_of_range.408
 

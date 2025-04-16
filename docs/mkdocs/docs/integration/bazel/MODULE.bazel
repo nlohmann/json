@@ -1,0 +1,1 @@
+bazel_dep(name = "nlohmann_json", version = "3.11.3.bcr.1")

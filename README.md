@@ -1,4 +1,4 @@
-[![JSON for Modern C++](docs/json.gif)](https://github.com/nlohmann/json/releases)
+[![JSON for Modern C++](docs/mkdocs/docs/images/json.gif)](https://github.com/nlohmann/json/releases)
 
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk/branch/develop?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
 [![Ubuntu](https://github.com/nlohmann/json/workflows/Ubuntu/badge.svg)](https://github.com/nlohmann/json/actions?query=workflow%3AUbuntu)
@@ -6,19 +6,19 @@
 [![Windows](https://github.com/nlohmann/json/workflows/Windows/badge.svg)](https://github.com/nlohmann/json/actions?query=workflow%3AWindows)
 [![Coverage Status](https://coveralls.io/repos/github/nlohmann/json/badge.svg?branch=develop)](https://coveralls.io/github/nlohmann/json?branch=develop)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/e0d1a9d5d6fd46fcb655c4cb930bb3e8)](https://www.codacy.com/gh/nlohmann/json/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nlohmann/json&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/e0d1a9d5d6fd46fcb655c4cb930bb3e8)](https://app.codacy.com/gh/nlohmann/json/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Cirrus CI](https://api.cirrus-ci.com/github/nlohmann/json.svg)](https://cirrus-ci.com/github/nlohmann/json)
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/json.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:json)
 [![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/1mp10JbaANo6FUc7)
 [![Documentation](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://json.nlohmann.me)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![GitHub Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
-[![Vcpkg Version](https://img.shields.io/vcpkg/v/nlohmann-json)](https://vcpkg.link/ports/nlohmann-json)
 [![Packaging status](https://repology.org/badge/tiny-repos/nlohmann-json.svg)](https://repology.org/project/nlohmann-json/versions)
 [![GitHub Downloads](https://img.shields.io/github/downloads/nlohmann/json/total)](https://github.com/nlohmann/json/releases)
 [![GitHub Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](https://github.com/nlohmann/json/issues)
 [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/nlohmann/json.svg)](https://isitmaintained.com/project/nlohmann/json "Average time to resolve an issue")
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/289/badge)](https://bestpractices.coreinfrastructure.org/projects/289)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nlohmann/json/badge)](https://scorecard.dev/viewer/?uri=github.com/nlohmann/json)
 [![GitHub Sponsors](https://img.shields.io/badge/GitHub-Sponsors-ff69b4)](https://github.com/sponsors/nlohmann)
 [![REUSE status](https://api.reuse.software/badge/github.com/nlohmann/json)](https://api.reuse.software/info/github.com/nlohmann/json)
 [![Discord](https://img.shields.io/discord/1003743314341793913)](https://discord.gg/6mrGXKvX7y)
@@ -26,6 +26,7 @@
 - [Design goals](#design-goals)
 - [Sponsors](#sponsors)
 - [Support](#support) ([documentation](https://json.nlohmann.me), [FAQ](https://json.nlohmann.me/home/faq/), [discussions](https://github.com/nlohmann/json/discussions), [API](https://json.nlohmann.me/api/basic_json/), [bug issues](https://github.com/nlohmann/json/issues))
+- [Quick reference](#quick-reference)
 - [Examples](#examples)
   - [Read JSON from a file](#read-json-from-a-file)
   - [Creating `json` objects from JSON literals](#creating-json-objects-from-json-literals)
@@ -39,6 +40,7 @@
   - [Conversions to/from arbitrary types](#arbitrary-types-conversions)
   - [Specializing enum conversion](#specializing-enum-conversion)
   - [Binary formats (BSON, CBOR, MessagePack, UBJSON, and BJData)](#binary-formats-bson-cbor-messagepack-ubjson-and-bjdata)
+- [Customers](#customers)
 - [Supported compilers](#supported-compilers)
 - [Integration](#integration)
   - [CMake](#cmake)
@@ -48,7 +50,6 @@
 - [Contact](#contact)
 - [Thanks](#thanks)
 - [Used third-party tools](#used-third-party-tools)
-- [Projects using JSON for Modern C++](#projects-using-json-for-modern-c)
 - [Notes](#notes)
 - [Execute unit tests](#execute-unit-tests)
 
@@ -58,9 +59,9 @@ There are myriads of [JSON](https://json.org) libraries out there, and each may 
 
 - **Intuitive syntax**. In languages such as Python, JSON feels like a first class data type. We used all the operator magic of modern C++ to achieve the same feeling in your code. Check out the [examples below](#examples) and you'll know what I mean.
 
-- **Trivial integration**. Our whole code consists of a single header file [`json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
+- **Trivial integration**. Our whole code consists of a single header file [`json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings. The library is also included in all popular [package managers](https://json.nlohmann.me/integration/package_managers/).
 
-- **Serious testing**. Our code is heavily [unit-tested](https://github.com/nlohmann/json/tree/develop/tests/src) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](https://valgrind.org) and the [Clang Sanitizers](https://clang.llvm.org/docs/index.html) that there are no memory leaks. [Google OSS-Fuzz](https://github.com/google/oss-fuzz/tree/master/projects/json) additionally runs fuzz tests against all parsers 24/7, effectively executing billions of tests so far. To maintain high quality, the project is following the [Core Infrastructure Initiative (CII) best practices](https://bestpractices.coreinfrastructure.org/projects/289).
+- **Serious testing**. Our code is heavily [unit-tested](https://github.com/nlohmann/json/tree/develop/tests/src) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](https://valgrind.org) and the [Clang Sanitizers](https://clang.llvm.org/docs/index.html) that there are no memory leaks. [Google OSS-Fuzz](https://github.com/google/oss-fuzz/tree/master/projects/json) additionally runs fuzz tests against all parsers 24/7, effectively executing billions of tests so far. To maintain high quality, the project is following the [Core Infrastructure Initiative (CII) best practices](https://bestpractices.coreinfrastructure.org/projects/289). See the [quality assurance](https://json.nlohmann.me/community/quality_assurance) overview documentation.
 
 Other aspects were not so important to us:
 
@@ -70,7 +71,6 @@ Other aspects were not so important to us:
 
 See the [contribution guidelines](https://github.com/nlohmann/json/blob/master/.github/CONTRIBUTING.md#please-dont) for more information.
 
-
 ## Sponsors
 
 You can sponsor this library at [GitHub Sponsors](https://github.com/sponsors/nlohmann).
@@ -78,6 +78,7 @@ You can sponsor this library at [GitHub Sponsors](https://github.com/sponsors/nl
 ### :raising_hand: Priority Sponsor
 
 - [Martti Laine](https://github.com/codeclown)
+- [Paul Harrington](https://github.com/phrrngtn)
 
 ### :label: Named Sponsors
 
@@ -88,19 +89,48 @@ You can sponsor this library at [GitHub Sponsors](https://github.com/sponsors/nl
 - [Steve Wagner](https://github.com/ciroque)
 - [Lion Yang](https://github.com/LionNatsu)
 
+### Further support
+
+The development of the library is further supported by JetBrains by providing free access to their IDE tools.
+
+[![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://jb.gg/OpenSourceSupport)
+
 Thanks everyone!
 
 ## Support
 
 :question: If you have a **question**, please check if it is already answered in the [**FAQ**](https://json.nlohmann.me/home/faq/) or the [**Q&A**](https://github.com/nlohmann/json/discussions/categories/q-a) section. If not, please [**ask a new question**](https://github.com/nlohmann/json/discussions/new) there.
 
-:books: If you want to **learn more** about how to use the library, check out the rest of the [**README**](#examples), have a look at [**code examples**](https://github.com/nlohmann/json/tree/develop/docs/examples), or browse through the [**help pages**](https://json.nlohmann.me).
+:books: If you want to **learn more** about how to use the library, check out the rest of the [**README**](#examples), have a look at [**code examples**](https://github.com/nlohmann/json/tree/develop/docs/mkdocs/docs/examples), or browse through the [**help pages**](https://json.nlohmann.me).
 
-:construction: If you want to understand the **API** better, check out the [**API Reference**](https://json.nlohmann.me/api/basic_json/).
+:construction: If you want to understand the **API** better, check out the [**API Reference**](https://json.nlohmann.me/api/basic_json/) or have a look at the [quick reference](#quick-reference) below.
 
 :bug: If you found a **bug**, please check the [**FAQ**](https://json.nlohmann.me/home/faq/) if it is a known issue or the result of a design decision. Please also have a look at the [**issue list**](https://github.com/nlohmann/json/issues) before you [**create a new issue**](https://github.com/nlohmann/json/issues/new/choose). Please provide as much information as possible to help us understand and reproduce your issue.
 
 There is also a [**docset**](https://github.com/Kapeli/Dash-User-Contributions/tree/master/docsets/JSON_for_Modern_C%2B%2B) for the documentation browsers [Dash](https://kapeli.com/dash), [Velocity](https://velocity.silverlakesoftware.com), and [Zeal](https://zealdocs.org) that contains the full [documentation](https://json.nlohmann.me) as offline resource.
+
+## Quick reference
+
+- **Constructors** [basic_json](https://json.nlohmann.me/api/basic_json/basic_json), [array](https://json.nlohmann.me/api/basic_json/array), [binary](https://json.nlohmann.me/api/basic_json/binary), [object](https://json.nlohmann.me/api/basic_json/object)
+- **Object inspection**: [type](https://json.nlohmann.me/api/basic_json/type), [operator value_t](https://json.nlohmann.me/api/basic_json/operator_value_t), [type_name](https://json.nlohmann.me/api/basic_json/type_name), [is_primitive](https://json.nlohmann.me/api/basic_json/is_primitive), [is_structured](https://json.nlohmann.me/api/basic_json/is_structured), [is_null](https://json.nlohmann.me/api/basic_json/is_null), [is_boolean](https://json.nlohmann.me/api/basic_json/is_boolean), [is_number](https://json.nlohmann.me/api/basic_json/is_number), [is_number_integer](https://json.nlohmann.me/api/basic_json/is_number_integer), [is_number_unsigned](https://json.nlohmann.me/api/basic_json/is_number_unsigned), [is_number_float](https://json.nlohmann.me/api/basic_json/is_number_float), [is_object](https://json.nlohmann.me/api/basic_json/is_object), [is_array](https://json.nlohmann.me/api/basic_json/is_array), [is_string](https://json.nlohmann.me/api/basic_json/is_string), [is_binary](https://json.nlohmann.me/api/basic_json/is_binary), [is_discarded](https://json.nlohmann.me/api/basic_json/is_discarded)
+- **Value access**; [get](https://json.nlohmann.me/api/basic_json/get), [get_to](https://json.nlohmann.me/api/basic_json/get_to), [get_ptr](https://json.nlohmann.me/api/basic_json/get_ptr), [get_ref](https://json.nlohmann.me/api/basic_json/get_ref), [operator ValueType](https://json.nlohmann.me/api/basic_json/operator_ValueType), [get_binary](https://json.nlohmann.me/api/basic_json/get_binary)
+- **Element access**: [at](https://json.nlohmann.me/api/basic_json/at), [operator[]](https://json.nlohmann.me/api/basic_json/operator[]), [value](https://json.nlohmann.me/api/basic_json/value), [front](https://json.nlohmann.me/api/basic_json/front), [back](https://json.nlohmann.me/api/basic_json/back)
+- **Lookup**: [find](https://json.nlohmann.me/api/basic_json/find), [count](https://json.nlohmann.me/api/basic_json/count), [contains](https://json.nlohmann.me/api/basic_json/contains)
+- **Iterators**: [begin](https://json.nlohmann.me/api/basic_json/begin), [cbegin](https://json.nlohmann.me/api/basic_json/cbegin), [end](https://json.nlohmann.me/api/basic_json/end), [cend](https://json.nlohmann.me/api/basic_json/cend), [rbegin](https://json.nlohmann.me/api/basic_json/rbegin), [rend](https://json.nlohmann.me/api/basic_json/rend), [crbegin](https://json.nlohmann.me/api/basic_json/crbegin), [crend](https://json.nlohmann.me/api/basic_json/crend), [items](https://json.nlohmann.me/api/basic_json/items)
+- **Capacity**: [empty](https://json.nlohmann.me/api/basic_json/empty), [size](https://json.nlohmann.me/api/basic_json/size), [max_size](https://json.nlohmann.me/api/basic_json/max_size)
+- **Modifiers**: [clear](https://json.nlohmann.me/api/basic_json/clear), [push_back](https://json.nlohmann.me/api/basic_json/push_back), [operator+=](https://json.nlohmann.me/api/basic_json/operator+=), [emplace_back](https://json.nlohmann.me/api/basic_json/emplace_back), [emplace](https://json.nlohmann.me/api/basic_json/emplace), [erase](https://json.nlohmann.me/api/basic_json/erase), [insert](https://json.nlohmann.me/api/basic_json/insert), [update](https://json.nlohmann.me/api/basic_json/update), [swap](https://json.nlohmann.me/api/basic_json/swap)
+- **Lexicographical comparison operators**: [operator==](https://json.nlohmann.me/api/basic_json/operator_eq), [operator!=](https://json.nlohmann.me/api/basic_json/operator_ne), [operator<](https://json.nlohmann.me/api/basic_json/operator_lt), [operator>](https://json.nlohmann.me/api/basic_json/operator_gt), [operator<=](https://json.nlohmann.me/api/basic_json/operator_le), [operator>=](https://json.nlohmann.me/api/basic_json/operator_ge), [operator<=>](https://json.nlohmann.me/api/basic_json/operator_spaceship)
+- **Serialization / Dumping**: [dump](https://json.nlohmann.me/api/basic_json/dump)
+- **Deserialization / Parsing**: [parse](https://json.nlohmann.me/api/basic_json/parse), [accept](https://json.nlohmann.me/api/basic_json/accept), [sax_parse](https://json.nlohmann.me/api/basic_json/sax_parse)
+- **JSON Pointer functions**: [flatten](https://json.nlohmann.me/api/basic_json/flatten), [unflatten](https://json.nlohmann.me/api/basic_json/unflatten)
+- **JSON Patch functions**: [patch](https://json.nlohmann.me/api/basic_json/patch), [patch_inplace](https://json.nlohmann.me/api/basic_json/patch_inplace), [diff](https://json.nlohmann.me/api/basic_json/diff), [merge_patch](https://json.nlohmann.me/api/basic_json/merge_patch)
+- **Static functions**: [meta](https://json.nlohmann.me/api/basic_json/meta), [get_allocator](https://json.nlohmann.me/api/basic_json/get_allocator)
+- **Binary formats**: [from_bjdata](https://json.nlohmann.me/api/basic_json/from_bjdata), [from_bson](https://json.nlohmann.me/api/basic_json/from_bson), [from_cbor](https://json.nlohmann.me/api/basic_json/from_cbor), [from_msgpack](https://json.nlohmann.me/api/basic_json/from_msgpack), [from_ubjson](https://json.nlohmann.me/api/basic_json/from_ubjson), [to_bjdata](https://json.nlohmann.me/api/basic_json/to_bjdata), [to_bson](https://json.nlohmann.me/api/basic_json/to_bson), [to_cbor](https://json.nlohmann.me/api/basic_json/to_cbor), [to_msgpack](https://json.nlohmann.me/api/basic_json/to_msgpack), [to_ubjson](https://json.nlohmann.me/api/basic_json/to_ubjson)
+- **Non-member functions**: [operator<<](https://json.nlohmann.me/api/operator_ltlt/), [operator>>](https://json.nlohmann.me/api/operator_gtgt/), [to_string](https://json.nlohmann.me/api/basic_json/to_string)
+- **Literals**: [operator""_json](https://json.nlohmann.me/api/operator_literal_json)
+- **Helper classes**: [std::hash&lt;basic_json&gt;](https://json.nlohmann.me/api/basic_json/std_hash), [std::swap&lt;basic_json&gt;](https://json.nlohmann.me/api/basic_json/std_swap)
+
+[**Full API documentation**](https://json.nlohmann.me/api/basic_json/)
 
 ## Examples
 
@@ -109,9 +139,8 @@ Here are some examples to give you an idea how to use the class.
 Beside the examples below, you may want to:
 
 → Check the [documentation](https://json.nlohmann.me/)\
-→ Browse the [standalone example files](https://github.com/nlohmann/json/tree/develop/docs/examples)
-
-Every API function (documented in the [API Documentation](https://json.nlohmann.me/api/basic_json/)) has a corresponding standalone example file. For example, the [`emplace()`](https://json.nlohmann.me/api/basic_json/emplace/) function has a matching [emplace.cpp](https://github.com/nlohmann/json/blob/develop/docs/examples/emplace.cpp) example file.
+→ Browse the [standalone example files](https://github.com/nlohmann/json/tree/develop/docs/mkdocs/docs/examples)\
+→ Read the full [API Documentation](https://json.nlohmann.me/api/basic_json/) with self-contained examples for every function
 
 ### Read JSON from a file
 
@@ -547,7 +576,6 @@ int fob_present = o.count("fob"); // 0
 o.erase("foo");
 ```
 
-
 ### Conversion from STL containers
 
 Any sequence container (`std::array`, `std::vector`, `std::deque`, `std::forward_list`, `std::list`) whose values can be used to construct JSON values (e.g., integers, floating point numbers, Booleans, string types, or again STL containers described in this section) can be used to create a JSON array. The same holds for similar associative containers (`std::set`, `std::multiset`, `std::unordered_set`, `std::unordered_multiset`), but in these cases the order of the elements of the array depends on how the elements are ordered in the respective STL container.
@@ -803,26 +831,21 @@ Likewise, when calling `template get<your_type>()` or `get_to(your_type&)`, the 
 
 Some important things:
 
-* Those methods **MUST** be in your type's namespace (which can be the global namespace), or the library will not be able to locate them (in this example, they are in namespace `ns`, where `person` is defined).
-* Those methods **MUST** be available (e.g., proper headers must be included) everywhere you use these conversions. Look at [issue 1108](https://github.com/nlohmann/json/issues/1108) for errors that may occur otherwise.
-* When using `template get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). (There is a way to bypass this requirement described later.)
-* In function `from_json`, use function [`at()`](https://json.nlohmann.me/api/basic_json/at/) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
-* You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
+- Those methods **MUST** be in your type's namespace (which can be the global namespace), or the library will not be able to locate them (in this example, they are in namespace `ns`, where `person` is defined).
+- Those methods **MUST** be available (e.g., proper headers must be included) everywhere you use these conversions. Look at [issue 1108](https://github.com/nlohmann/json/issues/1108) for errors that may occur otherwise.
+- When using `template get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). (There is a way to bypass this requirement described later.)
+- In function `from_json`, use function [`at()`](https://json.nlohmann.me/api/basic_json/at/) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
+- You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
 
 #### Simplify your life with macros
 
-If you just want to serialize/deserialize some structs, the `to_json`/`from_json` functions can be a lot of boilerplate.
+If you just want to serialize/deserialize some structs, the `to_json`/`from_json` functions can be a lot of boilerplate. There are [**several macros**](https://json.nlohmann.me/features/arbitrary_types/#simplify-your-life-with-macros) to make your life easier as long as you (1) want to use a JSON object as serialization and (2) want to use the member variable names as object keys in that object.
 
-There are two macros to make your life easier as long as you (1) want to use a JSON object as serialization and (2) want to use the member variable names as object keys in that object:
+Which macro to choose depends on whether private member variables need to be accessed, a deserialization is needed, missing values should yield an error or should be replaced by default values, and if derived classes are used. See [this overview to choose the right one for your use case](https://json.nlohmann.me/api/macros/#serializationdeserialization-macros).
 
-- `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(name, member1, member2, ...)` is to be defined inside the namespace of the class/struct to create code for.
-- `NLOHMANN_DEFINE_TYPE_INTRUSIVE(name, member1, member2, ...)` is to be defined inside the class/struct to create code for. This macro can also access private members.
+##### Example usage of macros
 
-In both macros, the first parameter is the name of the class/struct, and all remaining parameters name the members.
-
-##### Examples
-
-The `to_json`/`from_json` functions for the `person` struct above can be created with:
+The `to_json`/`from_json` functions for the `person` struct above can be created with [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`](https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/). In all macros, the first parameter is the name of the class/struct, and all remaining parameters name the members.
 
 ```cpp
 namespace ns {
@@ -830,7 +853,7 @@ namespace ns {
 }
 ```
 
-Here is an example with private members, where `NLOHMANN_DEFINE_TYPE_INTRUSIVE` is needed:
+Here is another example with private members, where [`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/) is needed:
 
 ```cpp
 namespace ns {
@@ -839,7 +862,7 @@ namespace ns {
         std::string street;
         int housenumber;
         int postcode;
-
+  
       public:
         NLOHMANN_DEFINE_TYPE_INTRUSIVE(address, street, housenumber, postcode)
     };
@@ -973,14 +996,14 @@ struct bad_serializer
 {
     template <typename BasicJsonType>
     static void to_json(BasicJsonType& j, const T& value) {
-      // this calls BasicJsonType::json_serializer<T>::to_json(j, value);
+      // this calls BasicJsonType::json_serializer<T>::to_json(j, value)
       // if BasicJsonType::json_serializer == bad_serializer ... oops!
       j = value;
     }
 
     template <typename BasicJsonType>
     static void to_json(const BasicJsonType& j, T& value) {
-      // this calls BasicJsonType::json_serializer<T>::from_json(j, value);
+      // this calls BasicJsonType::json_serializer<T>::from_json(j, value)
       // if BasicJsonType::json_serializer == bad_serializer ... oops!
       value = j.template get<T>(); // oops!
     }
@@ -1026,14 +1049,16 @@ assert(j3.template get<TaskState>() == TS_RUNNING);
 
 // undefined json value to enum (where the first map entry above is the default)
 json jPi = 3.14;
-assert(jPi.template get<TaskState>() == TS_INVALID );
+assert(jPi.template get<TaskState>() == TS_INVALID);
 ```
 
 Just as in [Arbitrary Type Conversions](#arbitrary-types-conversions) above,
+
 - `NLOHMANN_JSON_SERIALIZE_ENUM()` MUST be declared in your enum type's namespace (which can be the global namespace), or the library will not be able to locate it, and it will default to integer serialization.
 - It MUST be available (e.g., proper headers must be included) everywhere you use the conversions.
 
 Other Important points:
+
 - When using `template get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this default pair carefully.
 - If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the map will be returned when converting to or from JSON.
 
@@ -1108,14 +1133,19 @@ binary.set_subtype(0x10);
 auto cbor = json::to_msgpack(j); // 0xD5 (fixext2), 0x10, 0xCA, 0xFE
 ```
 
+## Customers
+
+The library is used in multiple projects, applications, operating systems, etc. The list below is not exhaustive, but the result of an internet search. If you know further customers of the library, please let me know, see [contact](#contact).
+
+[![logos of customers using the library](docs/mkdocs/docs/images/customers.png)](https://json.nlohmann.me/home/customers/)
 
 ## Supported compilers
 
-Though it's 2023 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
+Though it's 2025 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.8 - 12.0 (and possibly later)
-- Clang 3.4 - 15.0 (and possibly later)
-- Apple Clang 9.1 - 13.1 (and possibly later)
+- GCC 4.8 - 14.2 (and possibly later)
+- Clang 3.4 - 21.0 (and possibly later)
+- Apple Clang 9.1 - 16.0 (and possibly later)
 - Intel C++ Compiler 17.0.2 (and possibly later)
 - Nvidia CUDA Compiler 11.0.221 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
@@ -1127,10 +1157,10 @@ I would be happy to learn about other compilers/versions.
 
 Please note:
 
-- GCC 4.8 has a bug [57824](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57824)): multiline raw strings cannot be the arguments to macros. Don't use multiline raw strings directly in macros with this compiler.
+- GCC 4.8 has a bug [57824](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57824): multiline raw strings cannot be the arguments to macros. Don't use multiline raw strings directly in macros with this compiler.
 - Android defaults to using very old compilers and C++ libraries. To fix this, add the following to your `Application.mk`. This will switch to the LLVM C++ library, the Clang compiler, and enable C++11 and other features disabled by default.
 
-    ```
+    ```makefile
     APP_STL := c++_shared
     NDK_TOOLCHAIN_VERSION := clang3.6
     APP_CPPFLAGS += -frtti -fexceptions
@@ -1142,68 +1172,7 @@ Please note:
 
 - Unsupported versions of GCC and Clang are rejected by `#error` directives. This can be switched off by defining `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`. Note that you can expect no support in this case.
 
-The following compilers are currently used in continuous integration at [AppVeyor](https://ci.appveyor.com/project/nlohmann/json), [Cirrus CI](https://cirrus-ci.com/github/nlohmann/json), and [GitHub Actions](https://github.com/nlohmann/json/actions):
-
-| Compiler                                                                                               | Operating System   | CI Provider    |
-|--------------------------------------------------------------------------------------------------------|--------------------|----------------|
-| Apple Clang 11.0.3 (clang-1103.0.32.62);  Xcode 11.7                                                   | macOS 11.7.1       | GitHub Actions |
-| Apple Clang 12.0.0 (clang-1200.0.32.29);  Xcode 12.4                                                   | macOS 11.7.1       | GitHub Actions |
-| Apple Clang 12.0.5 (clang-1205.0.22.11);  Xcode 12.5.1                                                 | macOS 11.7.1       | GitHub Actions |
-| Apple Clang 13.0.0 (clang-1300.0.29.3);   Xcode 13.0                                                   | macOS 11.7.1       | GitHub Actions |
-| Apple Clang 13.0.0 (clang-1300.0.29.3);   Xcode 13.1                                                   | macOS 12.6.1       | GitHub Actions |
-| Apple Clang 13.0.0 (clang-1300.0.29.30);  Xcode 13.2.1                                                 | macOS 12.6.1       | GitHub Actions |
-| Apple Clang 13.1.6 (clang-1316.0.21.2.3); Xcode 13.3.1                                                 | macOS 12.6.1       | GitHub Actions |
-| Apple Clang 13.1.6 (clang-1316.0.21.2.5); Xcode 13.4.1                                                 | macOS 12.6.1       | GitHub Actions |
-| Apple Clang 14.0.0 (clang-1400.0.29.102); Xcode 14.0                                                   | macOS 12.6.1       | GitHub Actions |
-| Apple Clang 14.0.0 (clang-1400.0.29.102); Xcode 14.0.1                                                 | macOS 12.6.1       | GitHub Actions |
-| Apple Clang 14.0.0 (clang-1400.0.29.202); Xcode 14.1                                                   | macOS 12.6.1       | GitHub Actions |
-| Clang 3.5.2                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 3.6.2                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 3.7.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 3.8.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 3.9.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 4.0.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 5.0.2                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 6.0.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 7.0.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 8.0.0                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 9.0.0                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 10.0.0                                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 10.0.0 with GNU-like command-line                                                                | Windows-10.0.17763 | GitHub Actions |
-| Clang 11.0.0 with GNU-like command-line                                                                | Windows-10.0.17763 | GitHub Actions |
-| Clang 11.0.0 with MSVC-like command-line                                                               | Windows-10.0.17763 | GitHub Actions |
-| Clang 11.0.0                                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 12.0.0                                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 12.0.0 with GNU-like command-line                                                                | Windows-10.0.17763 | GitHub Actions |
-| Clang 13.0.0                                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 13.0.0 with GNU-like command-line                                                                | Windows-10.0.17763 | GitHub Actions |
-| Clang 14.0.0                                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 14.0.0 with GNU-like command-line                                                                | Windows-10.0.17763 | GitHub Actions |
-| Clang 15.0.0 with GNU-like command-line                                                                | Windows-10.0.17763 | GitHub Actions |
-| Clang 15.0.4                                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 16.0.0 (16.0.0-++20221031071727+500876226c60-1~exp1~20221031071831.439)                          | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 4.8.5 (Ubuntu 4.8.5-4ubuntu2)                                                                      | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 4.9.4                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 5.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 6.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 7.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 8.1.0 (i686-posix-dwarf-rev0, Built by MinGW-W64 project)                                          | Windows-10.0.17763 | GitHub Actions |
-| GCC 8.1.0 (x86_64-posix-seh-rev0, Built by MinGW-W64 project)                                          | Windows-10.0.17763 | GitHub Actions |
-| GCC 8.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 9.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 10.4.0                                                                                             | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 11.1.0                                                                                             | Ubuntu (aarch64)   | Cirrus CI      |
-| GCC 11.3.0                                                                                             | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 12.2.0                                                                                             | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 13.0.0 20220605 (experimental)                                                                     | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Intel C++ Compiler 2021.5.0.20211109                                                                   | Ubuntu 20.04.3 LTS | GitHub Actions |
-| NVCC 11.0.221                                                                                          | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Visual Studio 14 2015 MSVC 19.0.24241.7 (Build Engine version 14.0.25420.1)                            | Windows-6.3.9600   | AppVeyor       |
-| Visual Studio 15 2017 MSVC 19.16.27035.0 (Build Engine version 15.9.21+g9802d43bc3 for .NET Framework) | Windows-10.0.14393 | AppVeyor       |
-| Visual Studio 16 2019 MSVC 19.28.29912.0 (Build Engine version 16.9.0+57a23d249 for .NET Framework)    | Windows-10.0.17763 | GitHub Actions |
-| Visual Studio 16 2019 MSVC 19.28.29912.0 (Build Engine version 16.9.0+57a23d249 for .NET Framework)    | Windows-10.0.17763 | AppVeyor       |
-| Visual Studio 17 2022 MSVC 19.30.30709.0 (Build Engine version 17.0.31804.368 for .NET Framework)      | Windows-10.0.20348 | GitHub Actions |
-
+See the page [quality assurance](https://json.nlohmann.me/community/quality_assurance) on the compilers used to check the library in the CI.
 
 ## Integration
 
@@ -1230,7 +1199,7 @@ To use this library from a CMake project, you can locate it directly with `find_
 
 ```cmake
 # CMakeLists.txt
-find_package(nlohmann_json 3.2.0 REQUIRED)
+find_package(nlohmann_json 3.12.0 REQUIRED)
 ...
 add_library(foo ...)
 ...
@@ -1270,10 +1239,11 @@ Since CMake v3.11,
 be used to automatically download a release as a dependency at configure time.
 
 Example:
+
 ```cmake
 include(FetchContent)
 
-FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
 FetchContent_MakeAvailable(json)
 
 target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
@@ -1300,11 +1270,12 @@ add_library(foo ...)
 # import method
 target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
 ```
+
 ```cmake
 # thirdparty/CMakeLists.txt
 ...
 if(FOO_USE_EXTERNAL_JSON)
-  find_package(nlohmann_json 3.2.0 REQUIRED)
+  find_package(nlohmann_json 3.12.0 REQUIRED)
 else()
   set(JSON_BuildTests OFF CACHE INTERNAL "")
   add_subdirectory(nlohmann_json)
@@ -1316,51 +1287,24 @@ endif()
 
 ### Package Managers
 
-:beer: If you are using OS X and [Homebrew](https://brew.sh), just type `brew install nlohmann-json` and you're set. If you want the bleeding edge rather than the latest release, use `brew install nlohmann-json --HEAD`. See [nlohmann-json](https://formulae.brew.sh/formula/nlohmann-json) for more information.
+Use your favorite [**package manager**](https://json.nlohmann.me/integration/package_managers/) to use the library.
 
-If you are using the [Meson Build System](https://mesonbuild.com), add this source tree as a [meson subproject](https://mesonbuild.com/Subprojects.html#using-a-subproject). You may also use the `include.zip` published in this project's [Releases](https://github.com/nlohmann/json/releases) to reduce the size of the vendored source tree. Alternatively, you can get a wrap file by downloading it from [Meson WrapDB](https://wrapdb.mesonbuild.com/nlohmann_json), or simply use `meson wrap install nlohmann_json`. Please see the meson project for any issues regarding the packaging.
+- <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/homebrew.svg" height="20">&nbsp;[**Homebrew**](https://json.nlohmann.me/integration/package_managers/#homebrew) `nlohmann-json`
+- <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/meson.svg" height="20">&nbsp;[**Meson**](https://json.nlohmann.me/integration/package_managers/#meson) `nlohmann_json`
+- <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/bazel.svg" height="20">&nbsp;[**Bazel**](https://json.nlohmann.me/integration/package_managers/#bazel) `nlohmann_json`
+- <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/conan.svg" height="20">&nbsp;[**Conan**](https://json.nlohmann.me/integration/package_managers/#conan) `nlohmann_json`
+- <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/spack.svg" height="20">&nbsp;[**Spack**](https://json.nlohmann.me/integration/package_managers/#spack) `nlohmann-json`
+- [**Hunter**](https://json.nlohmann.me/integration/package_managers/#hunter) `nlohmann_json`
+- <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/vcpkg.png" height="20">&nbsp;[**vcpkg**](https://json.nlohmann.me/integration/package_managers/#vcpkg) `nlohmann-json`
+- [**cget**](https://json.nlohmann.me/integration/package_managers/#cget) `nlohmann/json`
+- <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/swift.svg" height="20">&nbsp;[**Swift Package Manager**](https://json.nlohmann.me/integration/package_managers/#swift-package-manager) `nlohmann/json`
+- <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/nuget.svg" height="20">&nbsp;[**Nuget**](https://json.nlohmann.me/integration/package_managers/#nuget) `nlohmann.json`
+- <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/conda.svg" height="20">&nbsp;[**Conda**](https://json.nlohmann.me/integration/package_managers/#conda) `nlohmann_json`
+- <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/macports.svg" height="20">&nbsp;[**MacPorts**](https://json.nlohmann.me/integration/package_managers/#macports) `nlohmann-json`
+- <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/CPM.png" height="20">&nbsp;[**cpm.cmake**](https://json.nlohmann.me/integration/package_managers/#cpmcmake) `gh:nlohmann/json`
+- <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/xmake.svg" height="20">&nbsp;[**xmake**](https://json.nlohmann.me/integration/package_managers/#xmake) `nlohmann_json`
 
-The provided `meson.build` can also be used as an alternative to CMake for installing `nlohmann_json` system-wide in which case a pkg-config file is installed. To use it, simply have your build system require the `nlohmann_json` pkg-config dependency. In Meson, it is preferred to use the [`dependency()`](https://mesonbuild.com/Reference-manual.html#dependency) object with a subproject fallback, rather than using the subproject directly.
-
-If you are using [Bazel](https://bazel.build/) you can simply reference this repository using `http_archive` or `git_repository` and depend on `@nlohmann_json//:json`.
-
-If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add [`nlohmann_json/x.y.z`](https://conan.io/center/nlohmann_json) to your `conanfile`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/conan-io/conan-center-index/issues) if you experience problems with the packages.
-
-If you are using [Spack](https://www.spack.io/) to manage your dependencies, you can use the [`nlohmann-json` package](https://spack.readthedocs.io/en/latest/package_list.html#nlohmann-json). Please see the [spack project](https://github.com/spack/spack) for any issues regarding the packaging.
-
-If you are using [hunter](https://github.com/cpp-pm/hunter) on your project for external dependencies, then you can use the [nlohmann_json package](https://hunter.readthedocs.io/en/latest/packages/pkg/nlohmann_json.html). Please see the hunter project for any issues regarding the packaging.
-
-If you are using [Buckaroo](https://buckaroo.pm), you can install this library's module with `buckaroo add github.com/buckaroo-pm/nlohmann-json`. Please file issues [here](https://github.com/buckaroo-pm/nlohmann-json). There is a demo repo [here](https://github.com/njlr/buckaroo-nholmann-json-example).
-
-If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can install the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json) with `vcpkg install nlohmann-json` and follow the then displayed descriptions. Please see the vcpkg project for any issues regarding the packaging.
-
-If you are using [cget](https://cget.readthedocs.io/en/latest/), you can install the latest development version with `cget install nlohmann/json`. A specific version can be installed with `cget install nlohmann/json@v3.1.0`. Also, the multiple header version can be installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nlohmann/json -DJSON_MultipleHeaders=ON`).
-
-If you are using [CocoaPods](https://cocoapods.org), you can use the library by adding pod `"nlohmann_json", '~>3.1.2'` to your podfile (see [an example](https://bitbucket.org/benman/nlohmann_json-cocoapod/src/master/)). Please file issues [here](https://bitbucket.org/benman/nlohmann_json-cocoapod/issues?status=new&status=open).
-
-If you are using [Swift Package Manager](https://swift.org/package-manager/), you can use the library by adding a package dependency to this repository. And target dependency as `.product(name: "nlohmann-json", package: "json")`.
-
-If you are using [NuGet](https://www.nuget.org), you can use the package [nlohmann.json](https://www.nuget.org/packages/nlohmann.json/). Please check [this extensive description](https://github.com/nlohmann/json/issues/1132#issuecomment-452250255) on how to use the package. Please file issues [here](https://github.com/hnkb/nlohmann-json-nuget/issues).
-
-If you are using [conda](https://conda.io/), you can use the package [nlohmann_json](https://github.com/conda-forge/nlohmann_json-feedstock) from [conda-forge](https://conda-forge.org) executing `conda install -c conda-forge nlohmann_json`. Please file issues [here](https://github.com/conda-forge/nlohmann_json-feedstock/issues).
-
-If you are using [MSYS2](https://www.msys2.org/), you can use the [mingw-w64-nlohmann-json](https://packages.msys2.org/base/mingw-w64-nlohmann-json) package, just type `pacman -S mingw-w64-i686-nlohmann-json` or `pacman -S mingw-w64-x86_64-nlohmann-json` for installation. Please file issues [here](https://github.com/msys2/MINGW-packages/issues/new?title=%5Bnlohmann-json%5D) if you experience problems with the packages.
-
-If you are using [MacPorts](https://ports.macports.org), execute `sudo port install nlohmann-json` to install the [nlohmann-json](https://ports.macports.org/port/nlohmann-json/) package.
-
-If you are using [`build2`](https://build2.org), you can use the [`nlohmann-json`](https://cppget.org/nlohmann-json) package from the public repository https://cppget.org or directly from the [package's sources repository](https://github.com/build2-packaging/nlohmann-json). In your project's `manifest` file, just add `depends: nlohmann-json` (probably with some [version constraints](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml#guide-add-remove-deps)). If you are not familiar with using dependencies in `build2`, [please read this introduction](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml).
-Please file issues [here](https://github.com/build2-packaging/nlohmann-json) if you experience problems with the packages.
-
-If you are using [`wsjcpp`](https://wsjcpp.org), you can use the command `wsjcpp install "https://github.com/nlohmann/json:develop"` to get the latest version. Note you can change the branch ":develop" to an existing tag or another branch.
-
-If you are using [`CPM.cmake`](https://github.com/TheLartians/CPM.cmake), you can check this [`example`](https://github.com/TheLartians/CPM.cmake/tree/master/examples/json). After [adding CPM script](https://github.com/TheLartians/CPM.cmake#adding-cpm) to your project, implement the following snippet to your CMake:
-
-```cmake
-CPMAddPackage(
-    NAME nlohmann_json
-    GITHUB_REPOSITORY nlohmann/json
-    VERSION 3.9.1)
-```
+The library is part of many package managers. See the [**documentation**](https://json.nlohmann.me/integration/package_managers/) for detailed descriptions and examples.
 
 ### Pkg-config
 
@@ -1370,20 +1314,13 @@ If you are using bare Makefiles, you can use `pkg-config` to generate the includ
 pkg-config nlohmann_json --cflags
 ```
 
-Users of the Meson build system will also be able to use a system-wide library, which will be found by `pkg-config`:
-
-```meson
-json = dependency('nlohmann_json', required: true)
-```
-
-
 ## License
 
-<img align="right" src="https://opensource.org/trademarks/opensource/OSI-Approved-License-100x137.png">
+<img align="right" src="https://149753425.v2.pressablecdn.com/wp-content/uploads/2009/06/OSIApproved_100X125.png" alt="OSI approved license">
 
 The class is licensed under the [MIT License](https://opensource.org/licenses/MIT):
 
-Copyright &copy; 2013-2022 [Niels Lohmann](https://nlohmann.me)
+Copyright &copy; 2013-2025 [Niels Lohmann](https://nlohmann.me)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -1393,13 +1330,19 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
 * * *
 
-The class contains the UTF-8 Decoder from Bjoern Hoehrmann which is licensed under the [MIT License](https://opensource.org/licenses/MIT) (see above). Copyright &copy; 2008-2009 [Björn Hoehrmann](https://bjoern.hoehrmann.de/) <bjoern@hoehrmann.de>
+- The class contains the UTF-8 Decoder from Bjoern Hoehrmann which is licensed under the [MIT License](https://opensource.org/licenses/MIT) (see above). Copyright &copy; 2008-2009 [Björn Hoehrmann](https://bjoern.hoehrmann.de/) <bjoern@hoehrmann.de>
+- The class contains a slightly modified version of the Grisu2 algorithm from Florian Loitsch which is licensed under the [MIT License](https://opensource.org/licenses/MIT) (see above). Copyright &copy; 2009 [Florian Loitsch](https://florian.loitsch.com/)
+- The class contains a copy of [Hedley](https://nemequ.github.io/hedley/) from Evan Nemerson which is licensed as [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/).
+- The class contains parts of [Google Abseil](https://github.com/abseil/abseil-cpp) which is licensed under the [Apache 2.0 License](https://opensource.org/licenses/Apache-2.0).
 
-The class contains a slightly modified version of the Grisu2 algorithm from Florian Loitsch which is licensed under the [MIT License](https://opensource.org/licenses/MIT) (see above). Copyright &copy; 2009 [Florian Loitsch](https://florian.loitsch.com/)
+<img align="right" src="https://git.fsfe.org/reuse/reuse-ci/raw/branch/master/reuse-horizontal.png" alt="REUSE Software">
 
-The class contains a copy of [Hedley](https://nemequ.github.io/hedley/) from Evan Nemerson which is licensed as [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/).
+The library is compliant to version 3.3 of the [**REUSE specification**](https://reuse.software):
 
-The class contains parts of [Google Abseil](https://github.com/abseil/abseil-cpp) which is licensed under the [Apache 2.0 License](https://opensource.org/licenses/Apache-2.0).
+- Every source file contains an SPDX copyright header.
+- The full text of all licenses used in the repository can be found in the `LICENSES` folder.
+- File `.reuse/dep5` contains an overview of all files' copyrights and licenses.
+- Run `pipx run reuse lint` to verify the project's REUSE compliance and `pipx run reuse spdx` to generate a SPDX SBOM.
 
 ## Contact
 
@@ -1415,7 +1358,7 @@ Only if your request would contain confidential information, please [send me an 
 
 I deeply appreciate the help of the following people.
 
-<img src="https://raw.githubusercontent.com/nlohmann/json/develop/docs/avatars.png" align="right">
+<img src="https://raw.githubusercontent.com/nlohmann/json/develop/docs/avatars.png" align="right" alt="GitHub avatars of the contributors">
 
 1. [Teemperor](https://github.com/Teemperor) implemented CMake support and lcov integration, realized escape and Unicode handling in the string parser, and fixed the JSON serialization.
 2. [elliotgoodrich](https://github.com/elliotgoodrich) fixed an issue with double deletion in the iterator classes.
@@ -1534,7 +1477,7 @@ I deeply appreciate the help of the following people.
 115. [Matthias Möller](https://github.com/TinyTinni) removed the dependency from `std::stringstream`.
 116. [agrianius](https://github.com/agrianius) added code to use alternative string implementations.
 117. [Daniel599](https://github.com/Daniel599) allowed to use more algorithms with the `items()` function.
-118. [Julius Rakow](https://github.com/jrakow) fixed the Meson include directory and fixed the links to [cppreference.com](cppreference.com).
+118. [Julius Rakow](https://github.com/jrakow) fixed the Meson include directory and fixed the links to [cppreference.com](https://cppreference.com).
 119. [Sonu Lohani](https://github.com/sonulohani) fixed the compilation with MSVC 2015 in debug mode.
 120. [grembo](https://github.com/grembo) fixed the test suite and re-enabled several test cases.
 121. [Hyeon Kim](https://github.com/simnalamburt) introduced the macro `JSON_INTERNAL_CATCH` to control the exception handling inside the library.
@@ -1763,9 +1706,46 @@ I deeply appreciate the help of the following people.
 344. [Aleksei Sapitskii](https://github.com/aleksproger) added support for Apple's Swift Package Manager.
 345. [Benjamin Buch](https://github.com/bebuch) fixed the installation path in CMake.
 346. [Colby Haskell](https://github.com/colbychaskell) clarified the parse error message in case a file cannot be opened.
+347. [Juan Carlos Arevalo Baeza](https://github.com/TheJCAB) fixed the enum conversion.
+348. [alferov](https://github.com/ALF-ONE) fixed a version in the documentation.
+349. [ss](https://github.com/serge-s) fixed the amalgamation call.
+350. [AniketDhemare](https://github.com/AniketDhemare) fixed a version in the documentation.
+351. [Philip Müller](https://github.com/philip-paul-mueller) fixed an example.
+352. [Leila Shcheglova](https://github.com/LeilaShcheglova) fixed a warning in a test.
+353. [Alex Prabhat Bara](https://github.com/alexprabhat99) fixed a function name in the documentation.
+354. [laterlaugh](https://github.com/laterlaugh) fixed some typos.
+355. [Yuanhao Jia](https://github.com/MrJia1997) fixed the GDB pretty printer.
+356. [Fallen_Breath](https://github.com/Fallen-Breath) fixed an example for JSON Pointer.
+357. [Nikhil Idiculla](https://github.com/tsnl) fixed some typos.
+358. [Griffin Myers](https://github.com/gmyers18) updated the Natvis file.
+359. [thetimr](https://github.com/thetimr) fixed a typo in the documentation.
+360. [Balazs Erseki](https://github.com/zerocukor287) fixed a URL in the contribution guidelines.
+361. [Niccolò Iardella](https://github.com/rotolof) added `NLOHMANN_DEFINE_DERIVED_TYPE_*` macros.
+362. [Borislav Stanimirov](https://github.com/iboB) allowed overriding the CMake target name.
+363. [Captain Crutches](https://github.com/captaincrutches) made `iterator_proxy_value` a `std::forward_iterator`.
+364. [Fredrik Sandhei](https://github.com/fsandhei) added type conversion support for `std::optional`.
+365. [jh96](https://github.com/jordan-hoang) added exceptions when `nullptr` is passed to `parse`.
+366. [Stuart Gorman](https://github.com/StuartGorman) fixed number parsing when `EINTR` set in `errno`.
+367. [Dylan Baker](https://github.com/dcbaker) generated a pkg-config file that follows the pkg-config conventions.
+368. [Tianyi Chen](https://github.com/TianyiChen) optimized the binary `get_number` implementation.
+369. [peng-wang-cn](https://github.com/peng-wang-cn) added type conversion support for multidimensional arrays.
+370. [Einars Netlis-Galejs](https://github.com/EinarsNG) added `ONLY_SERIALIZE` for `NLOHMANN_DEFINE_DERIVED_TYPE_*` macros.
+371. [Marcel](https://github.com/mering) removed `alwayslink=True` Bazel flag.
+372. [Harinath Nampally](https://github.com/hnampally) added diagnostic positions to exceptions.
+373. [Nissim Armand Ben Danan](https://github.com/NissimBendanan) fixed `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT` with an empty JSON instance.
+374. [Michael Valladolid](https://github.com/codenut) added support for BSON uint64 serialization/deserialization.
+375. [Nikhil](https://github.com/nikhilreddydev) updated the documentation.
+376. [Nebojša Cvetković](https://github.com/nebkat) added support for BJDATA optimized binary array type.
+377. [Sushrut Shringarputale](https://github.com/sushshring) added support for diagnostic positions. 
+378. [kimci86](https://github.com/kimci86) templated to `NLOHMANN_DEFINE_TYPE` macros to also support `ordered_json`.
+379. [Richard Topchii](https://github.com/richardtop) added support for VisionOS in the Swift Package Manager.
+380. [Robert Chisholm](https://github.com/Robadob) fixed a typo.
+381. [zjyhjqs](https://github.com/zjyhjqs) added CPack support.
+382. [bitFiedler](https://github.com/bitFiedler) made GDB pretty printer work with Python 3.8.
+383. [Gianfranco Costamagna](https://github.com/LocutusOfBorg) fixed a compiler warning.
+384. [risa2000](https://github.com/risa2000) made `std::filesystem::path` conversion to/from UTF-8 encoded string explicit.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
-
 
 ## Used third-party tools
 
@@ -1777,28 +1757,21 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**Artistic Style**](http://astyle.sourceforge.net) for automatic source code indentation
 - [**Clang**](https://clang.llvm.org) for compilation with code sanitizers
 - [**CMake**](https://cmake.org) for build automation
-- [**Codacy**](https://www.codacy.com) for further [code analysis](https://www.codacy.com/app/nlohmann/json)
+- [**Codacy**](https://www.codacy.com) for further [code analysis](https://app.codacy.com/gh/nlohmann/json/dashboard)
 - [**Coveralls**](https://coveralls.io) to measure [code coverage](https://coveralls.io/github/nlohmann/json)
 - [**Coverity Scan**](https://scan.coverity.com) for [static analysis](https://scan.coverity.com/projects/nlohmann-json)
 - [**cppcheck**](http://cppcheck.sourceforge.net) for static analysis
 - [**doctest**](https://github.com/onqtam/doctest) for the unit tests
-- [**git-update-ghpages**](https://github.com/rstacruz/git-update-ghpages) to upload the documentation to gh-pages
 - [**GitHub Changelog Generator**](https://github.com/skywinder/github-changelog-generator) to generate the [ChangeLog](https://github.com/nlohmann/json/blob/develop/ChangeLog.md)
 - [**Google Benchmark**](https://github.com/google/benchmark) to implement the benchmarks
 - [**Hedley**](https://nemequ.github.io/hedley/) to avoid re-inventing several compiler-agnostic feature macros
-- [**lcov**](http://ltp.sourceforge.net/coverage/lcov.php) to process coverage information and create an HTML view
+- [**lcov**](https://github.com/linux-test-project/lcov) to process coverage information and create an HTML view
 - [**libFuzzer**](https://llvm.org/docs/LibFuzzer.html) to implement fuzz testing for OSS-Fuzz
 - [**Material for MkDocs**](https://squidfunk.github.io/mkdocs-material/) for the style of the documentation site
 - [**MkDocs**](https://www.mkdocs.org) for the documentation site
 - [**OSS-Fuzz**](https://github.com/google/oss-fuzz) for continuous fuzz testing of the library ([project repository](https://github.com/google/oss-fuzz/tree/master/projects/json))
 - [**Probot**](https://probot.github.io) for automating maintainer tasks such as closing stale issues, requesting missing information, or detecting toxic comments.
 - [**Valgrind**](https://valgrind.org) to check for correct memory management
-
-
-## Projects using JSON for Modern C++
-
-The library is currently used in Apple macOS Sierra-Monterey and iOS 10-15. I am not sure what they are using the library for, but I am happy that it runs on so many devices.
-
 
 ## Notes
 
@@ -1821,11 +1794,11 @@ This library does not support comments by default. It does so for three reasons:
 
 1. Comments are not part of the [JSON specification](https://tools.ietf.org/html/rfc8259). You may argue that `//` or `/* */` are allowed in JavaScript, but JSON is not JavaScript.
 2. This was not an oversight: Douglas Crockford [wrote on this](https://plus.google.com/118095276221607585885/posts/RK8qyGVaGSr) in May 2012:
-
-	> I removed comments from JSON because I saw people were using them to hold parsing directives, a practice which would have destroyed interoperability.  I know that the lack of comments makes some people sad, but it shouldn't.
-
-	> Suppose you are using JSON to keep configuration files, which you would like to annotate. Go ahead and insert all the comments you like. Then pipe it through JSMin before handing it to your JSON parser.
-
+  
+    > I removed comments from JSON because I saw people were using them to hold parsing directives, a practice which would have destroyed interoperability.  I know that the lack of comments makes some people sad, but it shouldn't.
+    >
+    > Suppose you are using JSON to keep configuration files, which you would like to annotate. Go ahead and insert all the comments you like. Then pipe it through JSMin before handing it to your JSON parser.
+  
 3. It is dangerous for interoperability if some libraries would add comment support while others don't. Please check [The Harmful Consequences of the Robustness Principle](https://tools.ietf.org/html/draft-iab-protocol-maintenance-01) on this.
 
 However, you can pass set parameter `ignore_comments` to true in the `parse` function to ignore `//` or `/* */` comments. Comments will then be treated as whitespace.
@@ -1835,6 +1808,8 @@ However, you can pass set parameter `ignore_comments` to true in the `parse` fun
 By default, the library does not preserve the **insertion order of object elements**. This is standards-compliant, as the [JSON standard](https://tools.ietf.org/html/rfc8259.html) defines objects as "an unordered collection of zero or more name/value pairs".
 
 If you do want to preserve the insertion order, you can try the type [`nlohmann::ordered_json`](https://github.com/nlohmann/json/issues/2179). Alternatively, you can use a more sophisticated ordered map like [`tsl::ordered_map`](https://github.com/Tessil/ordered-map) ([integration](https://github.com/nlohmann/json/issues/546#issuecomment-304447518)) or [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map) ([integration](https://github.com/nlohmann/json/issues/485#issuecomment-333652309)).
+
+See the [**documentation on object order**](https://json.nlohmann.me/features/object_order/) for more information.
 
 ### Memory Release
 
@@ -1847,21 +1822,21 @@ Here is a related issue [#1924](https://github.com/nlohmann/json/issues/1924).
 
 ### Further notes
 
-- The code contains numerous debug **assertions** which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](https://en.cppreference.com/w/cpp/error/assert). In particular, note [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/) implements **unchecked access** for const objects: If the given key is not present, the behavior is undefined (think of a dereferenced null pointer) and yields an [assertion failure](https://github.com/nlohmann/json/issues/289) if assertions are switched on. If you are not sure whether an element in an object exists, use checked access with the [`at()` function](https://json.nlohmann.me/api/basic_json/at/). Furthermore, you can define `JSON_ASSERT(x)` to replace calls to `assert(x)`.
+- The code contains numerous debug **assertions** which can be switched off by defining the preprocessor macro `NDEBUG`, see the [documentation of `assert`](https://en.cppreference.com/w/cpp/error/assert). In particular, note [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/) implements **unchecked access** for const objects: If the given key is not present, the behavior is undefined (think of a dereferenced null pointer) and yields an [assertion failure](https://github.com/nlohmann/json/issues/289) if assertions are switched on. If you are not sure whether an element in an object exists, use checked access with the [`at()` function](https://json.nlohmann.me/api/basic_json/at/). Furthermore, you can define `JSON_ASSERT(x)` to replace calls to `assert(x)`. See the [**documentation on runtime assertions**](https://json.nlohmann.me/features/assertions/) for more information.
 - As the exact number type is not defined in the [JSON specification](https://tools.ietf.org/html/rfc8259.html), this library tries to choose the best fitting C++ number type automatically. As a result, the type `double` may be used to store numbers which may yield [**floating-point exceptions**](https://github.com/nlohmann/json/issues/181) in certain rare situations if floating-point exceptions have been unmasked in the calling code. These exceptions are not caused by the library and need to be fixed in the calling code, such as by re-masking the exceptions prior to calling library functions.
 - The code can be compiled without C++ **runtime type identification** features; that is, you can use the `-fno-rtti` compiler flag.
-- **Exceptions** are used widely within the library. They can, however, be switched off with either using the compiler flag `-fno-exceptions` or by defining the symbol `JSON_NOEXCEPTION`. In this case, exceptions are replaced by `abort()` calls. You can further control this behavior by defining `JSON_THROW_USER` (overriding `throw`), `JSON_TRY_USER` (overriding `try`), and `JSON_CATCH_USER` (overriding `catch`). Note that `JSON_THROW_USER` should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield undefined behavior. Note the explanatory [`what()`](https://en.cppreference.com/w/cpp/error/exception/what) string of exceptions is not available for MSVC if exceptions are disabled, see [#2824](https://github.com/nlohmann/json/discussions/2824).
+- **Exceptions** are used widely within the library. They can, however, be switched off with either using the compiler flag `-fno-exceptions` or by defining the symbol `JSON_NOEXCEPTION`. In this case, exceptions are replaced by `abort()` calls. You can further control this behavior by defining `JSON_THROW_USER` (overriding `throw`), `JSON_TRY_USER` (overriding `try`), and `JSON_CATCH_USER` (overriding `catch`). Note that `JSON_THROW_USER` should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield undefined behavior. Note the explanatory [`what()`](https://en.cppreference.com/w/cpp/error/exception/what) string of exceptions is not available for MSVC if exceptions are disabled, see [#2824](https://github.com/nlohmann/json/discussions/2824). See the [**documentation of exceptions**](https://json.nlohmann.me/home/exceptions/) for more information.
 
 ## Execute unit tests
 
 To compile and run the tests, you need to execute
 
-```sh
-$ mkdir build
-$ cd build
-$ cmake .. -DJSON_BuildTests=On
-$ cmake --build .
-$ ctest --output-on-failure
+```shell
+mkdir build
+cd build
+cmake .. -DJSON_BuildTests=On
+cmake --build .
+ctest --output-on-failure
 ```
 
 Note that during the `ctest` stage, several JSON test files are downloaded from an [external repository](https://github.com/nlohmann/json_test_data). If policies forbid downloading artifacts during testing, you can download the files yourself and pass the directory with the test files via `-DJSON_TestDataDirectory=path` to CMake. Then, no Internet connectivity is required. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
@@ -1884,8 +1859,8 @@ json/tests/src/make_test_data_available.hpp:23: FATAL ERROR: REQUIRE( utils::che
 
 In case you have downloaded the library rather than checked out the code via Git, test `cmake_fetch_content_configure` will fail. Please execute `ctest -LE git_required` to skip these tests. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
 
-Some tests change the installed files and hence make the whole process not reproducible. Please execute `ctest -LE not_reproducible` to skip these tests. See [issue #2324](https://github.com/nlohmann/json/issues/2324) for more information.
+Some tests change the installed files and hence make the whole process not reproducible. Please execute `ctest -LE not_reproducible` to skip these tests. See [issue #2324](https://github.com/nlohmann/json/issues/2324) for more information. Furthermore, assertions must be switched off to ensure reproducible builds (see [discussion 4494](https://github.com/nlohmann/json/discussions/4494)).
 
 Note you need to call `cmake -LE "not_reproducible|git_required"` to exclude both labels. See [issue #2596](https://github.com/nlohmann/json/issues/2596) for more information.
 
-As Intel compilers use unsafe floating point optimization by default, the unit tests may fail. Use flag [`/fp:precise`](https://software.intel.com/content/www/us/en/develop/documentation/cpp-compiler-developer-guide-and-reference/top/compiler-reference/compiler-options/compiler-option-details/floating-point-options/fp-model-fp.html) then.
+As Intel compilers use unsafe floating point optimization by default, the unit tests may fail. Use flag [`/fp:precise`](https://www.intel.com/content/www/us/en/docs/cpp-compiler/developer-guide-reference/2021-8/fp-model-fp.html) then.

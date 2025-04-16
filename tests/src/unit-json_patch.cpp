@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -60,7 +60,11 @@ TEST_CASE("JSON patch")
             json const doc2 = R"({ "q": { "bar": 2 } })"_json;
 
             // because "a" does not exist.
+#if JSON_DIAGNOSTIC_POSITIONS
+            CHECK_THROWS_WITH_AS(doc2.patch(patch1), "[json.exception.out_of_range.403] (bytes 0-21) key 'a' not found", json::out_of_range&);
+#else
             CHECK_THROWS_WITH_AS(doc2.patch(patch1), "[json.exception.out_of_range.403] key 'a' not found", json::out_of_range&);
+#endif
 
             json const doc3 = R"({ "a": {} })"_json;
             json const patch2 = R"([{ "op": "add", "path": "/a/b/c", "value": 1 }])"_json;
@@ -68,6 +72,8 @@ TEST_CASE("JSON patch")
             // should cause an error because "b" does not exist in doc3
 #if JSON_DIAGNOSTICS
             CHECK_THROWS_WITH_AS(doc3.patch(patch2), "[json.exception.out_of_range.403] (/a) key 'b' not found", json::out_of_range&);
+#elif JSON_DIAGNOSTIC_POSITIONS
+            CHECK_THROWS_WITH_AS(doc3.patch(patch2), "[json.exception.out_of_range.403] (bytes 7-9) key 'b' not found", json::out_of_range&);
 #else
             CHECK_THROWS_WITH_AS(doc3.patch(patch2), "[json.exception.out_of_range.403] key 'b' not found", json::out_of_range&);
 #endif
@@ -333,6 +339,8 @@ TEST_CASE("JSON patch")
             CHECK_THROWS_AS(doc.patch(patch), json::other_error&);
 #if JSON_DIAGNOSTICS
             CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] (/0) unsuccessful: " + patch[0].dump());
+#elif JSON_DIAGNOSTIC_POSITIONS
+            CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] (bytes 47-95) unsuccessful: " + patch[0].dump());
 #else
             CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
 #endif
@@ -417,8 +425,11 @@ TEST_CASE("JSON patch")
             // applied), because the "add" operation's target location that
             // references neither the root of the document, nor a member of
             // an existing object, nor a member of an existing array.
-
+#if JSON_DIAGNOSTIC_POSITIONS
+            CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.403] (bytes 21-37) key 'baz' not found", json::out_of_range&);
+#else
             CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.403] key 'baz' not found", json::out_of_range&);
+#endif
         }
 
         // A.13. Invalid JSON Patch Document
@@ -476,6 +487,8 @@ TEST_CASE("JSON patch")
             CHECK_THROWS_AS(doc.patch(patch), json::other_error&);
 #if JSON_DIAGNOSTICS
             CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] (/0) unsuccessful: " + patch[0].dump());
+#elif JSON_DIAGNOSTIC_POSITIONS
+            CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] (bytes 47-92) unsuccessful: " + patch[0].dump());
 #else
             CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
 #endif
@@ -1205,6 +1218,8 @@ TEST_CASE("JSON patch")
                 CHECK_THROWS_AS(doc.patch(patch), json::other_error&);
 #if JSON_DIAGNOSTICS
                 CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] (/0) unsuccessful: " + patch[0].dump());
+#elif JSON_DIAGNOSTIC_POSITIONS
+                CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] (bytes 47-117) unsuccessful: " + patch[0].dump());
 #else
                 CHECK_THROWS_WITH_STD_STR(doc.patch(patch), "[json.exception.other_error.501] unsuccessful: " + patch[0].dump());
 #endif
@@ -1305,7 +1320,7 @@ TEST_CASE("JSON patch")
                 const auto& doc = test["doc"];
                 const auto& patch = test["patch"];
 
-                if (test.count("error") == 0)
+                if (test.count("error") == 0) // NOLINT(readability-container-contains)
                 {
                     // if an expected value is given, use it; use doc otherwise
                     const auto& expected = test.value("expected", doc);

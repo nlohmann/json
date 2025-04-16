@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-FileCopyrightText: 2018 Vitaliy Manushkin <agri@akamo.info>
 // SPDX-License-Identifier: MIT
 
@@ -16,8 +16,8 @@
 
 /* forward declarations */
 class alt_string;
-bool operator<(const char* op1, const alt_string& op2) noexcept;
-void int_to_string(alt_string& target, std::size_t value);
+bool operator<(const char* op1, const alt_string& op2) noexcept; // NOLINT(misc-use-internal-linkage)
+void int_to_string(alt_string& target, std::size_t value); // NOLINT(misc-use-internal-linkage)
 
 /*
  * This is virtually a string class.
@@ -28,17 +28,28 @@ class alt_string
   public:
     using value_type = std::string::value_type;
 
-    static constexpr auto npos = static_cast<std::size_t>(-1);
+    static constexpr auto npos = (std::numeric_limits<std::size_t>::max)();
 
     alt_string(const char* str): str_impl(str) {}
     alt_string(const char* str, std::size_t count): str_impl(str, count) {}
     alt_string(size_t count, char chr): str_impl(count, chr) {}
     alt_string() = default;
 
-    template <typename...TParams>
-    alt_string& append(TParams&& ...params)
+    alt_string& append(char ch)
     {
-        str_impl.append(std::forward<TParams>(params)...);
+        str_impl.push_back(ch);
+        return *this;
+    }
+
+    alt_string& append(const alt_string& str)
+    {
+        str_impl.append(str.str_impl);
+        return *this;
+    }
+
+    alt_string& append(const char* s, std::size_t length)
+    {
+        str_impl.append(s, length);
         return *this;
     }
 
@@ -155,6 +166,11 @@ class alt_string
     {
         str_impl.replace(pos, count, str.str_impl);
         return *this;
+    }
+
+    void reserve( std::size_t new_cap = 0 )
+    {
+        str_impl.reserve(new_cap);
     }
 
   private:
@@ -318,5 +334,37 @@ TEST_CASE("alternative string type")
 
         CHECK(j.at(alt_json::json_pointer("/foo/0")) == j["foo"][0]);
         CHECK(j.at(alt_json::json_pointer("/foo/1")) == j["foo"][1]);
+    }
+
+    SECTION("patch")
+    {
+        alt_json const patch1 = alt_json::parse(R"([{ "op": "add", "path": "/a/b", "value": [ "foo", "bar" ] }])");
+        alt_json const doc1 = alt_json::parse(R"({ "a": { "foo": 1 } })");
+
+        CHECK_NOTHROW(doc1.patch(patch1));
+        alt_json doc1_ans = alt_json::parse(R"(
+                                            {
+                                                "a": {
+                                                    "foo": 1,
+                                                    "b": [ "foo", "bar" ]
+                                                }
+                                            }
+                                           )");
+        CHECK(doc1.patch(patch1) == doc1_ans);
+    }
+
+    SECTION("diff")
+    {
+        alt_json const j1 = {"foo", "bar", "baz"};
+        alt_json const j2 = {"foo", "bam"};
+        CHECK(alt_json::diff(j1, j2).dump() == "[{\"op\":\"replace\",\"path\":\"/1\",\"value\":\"bam\"},{\"op\":\"remove\",\"path\":\"/2\"}]");
+    }
+
+    SECTION("flatten")
+    {
+        // a JSON value
+        const alt_json j = alt_json::parse(R"({"foo": ["bar", "baz"]})");
+        const auto j2 = j.flatten();
+        CHECK(j2.dump() == R"({"/foo/0":"bar","/foo/1":"baz"})");
     }
 }

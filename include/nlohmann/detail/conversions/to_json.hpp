@@ -1,12 +1,17 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #pragma once
+
+#include <nlohmann/detail/macro_scope.hpp> // JSON_HAS_CPP_17
+#ifdef JSON_HAS_CPP_17
+    #include <optional> // optional
+#endif
 
 #include <algorithm> // copy
 #include <iterator> // begin, end
@@ -18,7 +23,6 @@
 #include <vector> // vector
 
 #include <nlohmann/detail/iterators/iteration_proxy.hpp>
-#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/std_fs.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
@@ -260,6 +264,22 @@ struct external_constructor<value_t::object>
 // to_json //
 /////////////
 
+#ifdef JSON_HAS_CPP_17
+template<typename BasicJsonType, typename T,
+         enable_if_t<std::is_constructible<BasicJsonType, T>::value, int> = 0>
+void to_json(BasicJsonType& j, const std::optional<T>& opt)
+{
+    if (opt.has_value())
+    {
+        j = *opt;
+    }
+    else
+    {
+        j = nullptr;
+    }
+}
+#endif
+
 template<typename BasicJsonType, typename T,
          enable_if_t<std::is_same<T, typename BasicJsonType::boolean_t>::value, int> = 0>
 inline void to_json(BasicJsonType& j, T b) noexcept
@@ -406,6 +426,13 @@ inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<
     j = { std::get<Idx>(t)... };
 }
 
+template<typename BasicJsonType, typename Tuple>
+inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& /*unused*/, index_sequence<> /*unused*/)
+{
+    using array_t = typename BasicJsonType::array_t;
+    j = array_t();
+}
+
 template<typename BasicJsonType, typename T, enable_if_t<is_constructible_tuple<BasicJsonType, T>::value, int > = 0>
 inline void to_json(BasicJsonType& j, const T& t)
 {
@@ -416,7 +443,12 @@ inline void to_json(BasicJsonType& j, const T& t)
 template<typename BasicJsonType>
 inline void to_json(BasicJsonType& j, const std_fs::path& p)
 {
-    j = p.string();
+#ifdef JSON_HAS_CPP_20
+    const std::u8string s = p.u8string();
+    j = std::string(s.begin(), s.end());
+#else
+    j = p.u8string(); // returns std::string in C++17
+#endif
 }
 #endif
 

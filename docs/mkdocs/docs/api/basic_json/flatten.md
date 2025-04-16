@@ -18,7 +18,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## Complexity
 
-Linear in the size the JSON value.
+Linear in the size of the JSON value.
 
 ## Notes
 

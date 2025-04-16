@@ -103,6 +103,30 @@ changes to any JSON value.
 2. Logarithmic in the size of the container.
 3. Logarithmic in the size of the container.
 
+## Notes
+
+!!! warning "Return type"
+
+    The value function is a template, and the return type of the function is determined by the type of the provided
+    default value unless otherwise specified. This can have unexpected effects. In the example below, we store a 64-bit
+    unsigned integer. We get exactly that value when using [`operator[]`](operator[].md). However, when we call `value`
+    and provide `#!c 0` as default value, then `#!c -1` is returned. The occurs, because `#!c 0` has type `#!c int`
+    which overflows when handling the value `#!c 18446744073709551615`.
+
+    To address this issue, either provide a correctly typed default value or use the template parameter to specify the
+    desired return type. Note that this issue occurs even when a value is stored at the provided key, and the default
+    value is not used as the return value.
+
+    ```cpp
+    --8<-- "examples/value__return_type.cpp"
+    ```
+
+    Output:
+    
+    ```json
+    --8<-- "examples/value__return_type.output"
+    ```
+
 ## Examples
 
 ??? example "Example: (1) access specified object element with default value"

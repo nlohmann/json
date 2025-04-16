@@ -13,6 +13,12 @@ Creates a JSON value from the passed parameters `args` to the end of the JSON va
 `Args`
 :   compatible types to create a `basic_json` object
 
+## Iterator invalidation
+
+By adding an element to the end of the array, a reallocation can happen, in which case all iterators (including the
+[`end()`](end.md) iterator) and all references to the elements are invalidated. Otherwise, only the [`end()`](end.md)
+iterator is invalidated.
+
 ## Parameters
 
 `args` (in)
@@ -47,6 +53,11 @@ Amortized constant.
     ```json
     --8<-- "examples/emplace_back.output"
     ```
+
+## See also
+
+- [operator+=](operator+=.md) add a value to an array/object
+- [push_back](push_back.md) add a value to an array/object
 
 ## Version history
 

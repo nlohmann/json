@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 // cmake/test.cmake selects the C++ standard versions with which to build a
@@ -71,7 +71,7 @@ enum class for_1647
     two
 };
 
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): this is a false positive
+// NOLINTNEXTLINE(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): this is a false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(for_1647,
 {
     {for_1647::one, "one"},
@@ -94,14 +94,14 @@ struct Data
     std::string b{}; // NOLINT(readability-redundant-member-init)
 };
 
-void from_json(const json& j, Data& data);
+void from_json(const json& j, Data& data); // NOLINT(misc-use-internal-linkage)
 void from_json(const json& j, Data& data)
 {
     j["a"].get_to(data.a);
     j["b"].get_to(data.b);
 }
 
-bool operator==(Data const& lhs, Data const& rhs);
+bool operator==(Data const& lhs, Data const& rhs); // NOLINT(misc-use-internal-linkage)
 bool operator==(Data const& lhs, Data const& rhs)
 {
     return lhs.a == rhs.a && lhs.b == rhs.b;
@@ -162,11 +162,11 @@ struct adl_serializer<NonDefaultConstructible>
 // for #2824
 /////////////////////////////////////////////////////////////////////
 
-class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json>
+class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type>
 {
   public:
     explicit sax_no_exception(json& j)
-        : nlohmann::detail::json_sax_dom_parser<json>(j, false)
+        : nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type>(j, false)
     {}
 
     static bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& ex)
@@ -221,7 +221,7 @@ class FooBar
     Foo foo{}; // NOLINT(readability-redundant-member-init)
 };
 
-inline void from_json(const nlohmann::json& j, FooBar& fb)
+inline void from_json(const nlohmann::json& j, FooBar& fb) // NOLINT(misc-use-internal-linkage)
 {
     j.at("value").get_to(fb.foo.value);
 }
@@ -233,7 +233,33 @@ inline void from_json(const nlohmann::json& j, FooBar& fb)
 struct for_3171_base // NOLINT(cppcoreguidelines-special-member-functions)
 {
     for_3171_base(const std::string& /*unused*/ = {}) {}
-    virtual ~for_3171_base() = default;
+    virtual ~for_3171_base();
+
+    for_3171_base(const for_3171_base& other) // NOLINT(hicpp-use-equals-default,modernize-use-equals-default)
+        : str(other.str)
+    {}
+
+    for_3171_base& operator=(const for_3171_base& other)
+    {
+        if (this != &other)
+        {
+            str = other.str;
+        }
+        return *this;
+    }
+
+    for_3171_base(for_3171_base&& other) noexcept
+        : str(std::move(other.str))
+    {}
+
+    for_3171_base& operator=(for_3171_base&& other) noexcept
+    {
+        if (this != &other)
+        {
+            str = std::move(other.str);
+        }
+        return *this;
+    }
 
     virtual void _from_json(const json& j)
     {
@@ -243,13 +269,44 @@ struct for_3171_base // NOLINT(cppcoreguidelines-special-member-functions)
     std::string str{}; // NOLINT(readability-redundant-member-init)
 };
 
+for_3171_base::~for_3171_base() = default;
+
 struct for_3171_derived : public for_3171_base
 {
     for_3171_derived() = default;
+    ~for_3171_derived() override;
     explicit for_3171_derived(const std::string& /*unused*/) { }
+
+    for_3171_derived(const for_3171_derived& other) // NOLINT(hicpp-use-equals-default,modernize-use-equals-default)
+        : for_3171_base(other)
+    {}
+
+    for_3171_derived& operator=(const for_3171_derived& other)
+    {
+        if (this != &other)
+        {
+            for_3171_base::operator=(other); // Call base class assignment operator
+        }
+        return *this;
+    }
+
+    for_3171_derived(for_3171_derived&& other) noexcept
+        : for_3171_base(std::move(other))
+    {}
+
+    for_3171_derived& operator=(for_3171_derived&& other) noexcept
+    {
+        if (this != &other)
+        {
+            for_3171_base::operator=(std::move(other)); // Call base class move assignment operator
+        }
+        return *this;
+    }
 };
 
-inline void from_json(const json& j, for_3171_base& tb)
+for_3171_derived::~for_3171_derived() = default;
+
+inline void from_json(const json& j, for_3171_base& tb) // NOLINT(misc-use-internal-linkage)
 {
     tb._from_json(j);
 }
@@ -264,7 +321,7 @@ struct for_3312
     std::string name;
 };
 
-inline void from_json(const json& j, for_3312& obj)
+inline void from_json(const json& j, for_3312& obj) // NOLINT(misc-use-internal-linkage)
 {
     j.at("name").get_to(obj.name);
 }
@@ -319,6 +376,19 @@ template <>
 inline for_3333::for_3333(const json& j)
     : for_3333(j.value("x", 0), j.value("y", 0))
 {}
+
+/////////////////////////////////////////////////////////////////////
+// for #3810
+/////////////////////////////////////////////////////////////////////
+
+struct Example_3810
+{
+    int bla{};
+
+    Example_3810() = default;
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Example_3810, bla); // NOLINT(misc-use-internal-linkage)
 
 TEST_CASE("regression tests 2")
 {
@@ -675,14 +745,16 @@ TEST_CASE("regression tests 2")
     }
 
 #ifdef JSON_HAS_CPP_20
+#ifndef _LIBCPP_VERSION // see https://github.com/nlohmann/json/issues/4490
 #if __has_include(<span>)
     SECTION("issue #2546 - parsing containers of std::byte")
     {
-        const char DATA[] = R"("Hello, world!")"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        const char DATA[] = R"("Hello, world!")"; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         const auto s = std::as_bytes(std::span(DATA));
         const json j = json::parse(s);
         CHECK(j.dump() == "\"Hello, world!\"");
     }
+#endif
 #endif
 #endif
 
@@ -753,6 +825,15 @@ TEST_CASE("regression tests 2")
                 CHECK_THROWS_AS((j.get<std::tuple<NonDefaultConstructible>>()), json::type_error);
             }
         }
+    }
+
+    SECTION("issue #4530 - Serialization of empty tuple")
+    {
+        const auto source_tuple = std::tuple<>();
+        const nlohmann::json j = source_tuple;
+
+        CHECK(j.get<decltype(source_tuple)>() == source_tuple);
+        CHECK("[]" == j.dump());
     }
 
     SECTION("issue #2865 - ASAN detects memory leaks")
@@ -935,6 +1016,26 @@ TEST_CASE("regression tests 2")
 
         CHECK(p.x == 1);
         CHECK(p.y == 2);
+    }
+
+    SECTION("issue #3810 - ordered_json doesn't support construction from C array of custom type")
+    {
+        Example_3810 states[45]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+
+        // fix "not used" warning
+        states[0].bla = 1;
+
+        const auto* const expected = R"([{"bla":1},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0}])";
+
+        // This works:
+        nlohmann::json j;
+        j["test"] = states;
+        CHECK(j["test"].dump() == expected);
+
+        // This doesn't compile:
+        nlohmann::ordered_json oj;
+        oj["test"] = states;
+        CHECK(oj["test"].dump() == expected);
     }
 }
 

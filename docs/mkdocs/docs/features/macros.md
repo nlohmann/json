@@ -24,10 +24,25 @@ When enabled, exception messages contain a [JSON Pointer](json_pointer.md) to th
 exception, see [Extended diagnostic messages](../home/exceptions.md#extended-diagnostic-messages) for an example. Note
 that enabling this macro increases the size of every JSON value by one pointer and adds some runtime overhead.
 
-The diagnostics messages can also be controlled with the CMake option `JSON_Diagnostics` (`OFF` by default) which sets
-`JSON_DIAGNOSTICS` accordingly.
+The diagnostics messages can also be controlled with the CMake option
+[`JSON_Diagnostics`](../integration/cmake.md#json_diagnostics) (`OFF` by default) which sets `JSON_DIAGNOSTICS`
+accordingly.
 
 See [full documentation of `JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md).
+
+## `JSON_DIAGNOSTIC_POSITIONS`
+
+When enabled, two new member functions [`start_pos()`](../api/basic_json/start_pos.md) and
+[`end_pos()`](../api/basic_json/end_pos.md) are added to [`basic_json`](../api/basic_json/index.md) values. If the value
+was created by calling the[`parse`](../api/basic_json/parse.md) function, then these functions allow querying the byte
+positions of the value in the input it was parsed from. The byte positions are also used in exceptions to help locate
+errors.
+
+The diagnostics positions can also be controlled with the CMake option
+[`JSON_Diagnostic_Positions`](../integration/cmake.md#json_diagnostic_positions) (`OFF` by default) which sets
+`JSON_DIAGNOSTIC_POSITIONS` accordingly.
+
+See [full documentation of `JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md)
 
 ## `JSON_HAS_CPP_11`, `JSON_HAS_CPP_14`, `JSON_HAS_CPP_17`, `JSON_HAS_CPP_20`
 
@@ -77,8 +92,8 @@ See [full documentation of `JSON_SKIP_LIBRARY_VERSION_CHECK`](../api/macros/json
 
 ## `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`
 
-When defined, the library will not create a compile error when a known unsupported compiler is detected. This allows to
-use the library with compilers that do not fully support C++11 and may only work if unsupported features are not used.
+When defined, the library will not create a compile error when a known unsupported compiler is detected. This allows 
+using the library with compilers that do not fully support C++11 and may only work if unsupported features are not used.
 
 See [full documentation of `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`](../api/macros/json_skip_unsupported_compiler_check.md).
 
@@ -100,57 +115,10 @@ When defined to `0`, implicit conversions are switched off. By default, implicit
 
 See [full documentation of `JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md).
 
-## `NLOHMANN_DEFINE_TYPE_INTRUSIVE(type, member...)`
+## `NLOHMANN_DEFINE_TYPE_*(...)`, `NLOHMANN_DEFINE_DERIVED_TYPE_*(...)`
 
-This macro can be used to simplify the serialization/deserialization of types if (1) want to use a JSON object as
-serialization and (2) want to use the member variable names as object keys in that object.
-
-The macro is to be defined inside the class/struct to create code for. Unlike
-[`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`](#nlohmann_define_type_non_intrusivetype-member), it can access private members.
-The first parameter is the name of the class/struct, and all remaining parameters name the members.
-
-See [full documentation of `NLOHMANN_DEFINE_TYPE_INTRUSIVE`](../api/macros/nlohmann_define_type_intrusive.md).
-
-## `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(type, member...)`
-
-This macro is similar to `NLOHMANN_DEFINE_TYPE_INTRUSIVE`. It will not throw an exception in `from_json()` due to a
-missing value in the JSON object, but can throw due to a mismatched type. The `from_json()` function default constructs
-an object and uses its values as the defaults when calling the [`value`](../api/basic_json/value.md) function.
-
-See [full documentation of `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT`](../api/macros/nlohmann_define_type_intrusive.md).
-
-## `NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(type, member...)`
-
-This macro is similar to `NLOHMANN_DEFINE_TYPE_INTRUSIVE` except that it defines only the serialization code. This is
-useful when the user type does not have a default constructor and only the serialization is required.
-
-See [full documentation of `NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE`](../api/macros//nlohmann_define_type_intrusive.md).
-
-## `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(type, member...)`
-
-This macro can be used to simplify the serialization/deserialization of types if (1) want to use a JSON object as
-serialization and (2) want to use the member variable names as object keys in that object.
-
-The macro is to be defined inside the namespace of the class/struct to create code for. Private members cannot be
-accessed. Use [`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](#nlohmann_define_type_intrusivetype-member) in these scenarios. The
-first parameter is the name of the class/struct, and all remaining parameters name the members.
-
-See [full documentation of `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`](../api/macros/nlohmann_define_type_non_intrusive.md).
-
-## `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(type, member...)`
-
-This macro is similar to `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`. It will not throw an exception in `from_json()` due to a
-missing value in the JSON object, but can throw due to a mismatched type. The `from_json()` function default constructs
-an object and uses its values as the defaults when calling the [`value`](../api/basic_json/value.md) function.
-
-See [full documentation of `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT`](../api/macros/nlohmann_define_type_non_intrusive.md).
-
-## `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(type, member...)`
-
-This macro is similar to `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE` except that it defines only the serialization code. This is
-useful when the user type does not have a default constructor and only the serialization is required.
-
-See [full documentation of `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE`](../api/macros//nlohmann_define_type_non_intrusive.md).
+The library defines 12 macros to simplify the serialization/deserialization of types. See the page on
+[arbitrary type conversion](arbitrary_types.md#simplify-your-life-with-macros) for a detailed discussion.
 
 ## `NLOHMANN_JSON_SERIALIZE_ENUM(type, ...)`
 

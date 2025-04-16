@@ -1,4 +1,7 @@
-Name: ${PROJECT_NAME}
+prefix=@CMAKE_INSTALL_PREFIX@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+
+Name: @PROJECT_NAME@
 Description: JSON for Modern C++
-Version: ${PROJECT_VERSION}
-Cflags: -I${CMAKE_INSTALL_FULL_INCLUDEDIR}
+Version: @PROJECT_VERSION@
+Cflags: -I${includedir}

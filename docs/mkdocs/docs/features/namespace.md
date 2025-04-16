@@ -30,15 +30,16 @@ nlohmann::json_abi_diag_v3_11_2
 Several incompatibilities have been observed. Amongst the most common ones is linking code compiled with different
 definitions of [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md). This is illustrated in the diagram below.
 
-```plantuml
-[**nlohmann_json (v3.10.5)**\nJSON_DIAGNOSTICS=0] as [json]
-[**nlohmann_json (v3.10.5)**\nJSON_DIAGNOSTICS=1] as [json_diag]
-[**some_library**] as [library]
-[**application**] as [app]
-
-[library] ..|> [json]
-[app] ..|> [json_diag]
-[app] ..|>[library]
+```mermaid
+graph
+    json["<strong>nlohmann_json (v3.10.5)</strong><br>JSON_DIAGNOSTICS=0"]
+    json_diag["<strong>nlohmann_json (v3.10.5)</strong><br>JSON_DIAGNOSTICS=1"]
+    library["<strong>some library</strong>"]
+    app["<strong>application</strong>"]
+    
+    library --> json
+    app --> json_diag
+    app --> library
 ```
 
 In releases prior to 3.11.0, mixing any version of the JSON library with different `JSON_DIAGNOSTICS` settings would

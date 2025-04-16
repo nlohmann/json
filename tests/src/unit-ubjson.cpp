@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -450,7 +450,7 @@ TEST_CASE("UBJSON")
 
                         // check individual bytes
                         CHECK(result[0] == 'I');
-                        auto const restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        auto const restored = static_cast<uint16_t>((static_cast<uint8_t>(result[1]) * 256) + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -655,7 +655,7 @@ TEST_CASE("UBJSON")
 
                         // check individual bytes
                         CHECK(result[0] == 'I');
-                        auto const restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        auto const restored = static_cast<uint16_t>((static_cast<uint8_t>(result[1]) * 256) + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -1617,7 +1617,7 @@ TEST_CASE("UBJSON")
                 CHECK_THROWS_AS(_ = json::from_ubjson(v_ubjson), json::out_of_range&);
 
                 json j;
-                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
+                nlohmann::detail::json_sax_dom_callback_parser<json, decltype(nlohmann::detail::input_adapter(v_ubjson))> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
                 {
                     return true;
                 });
@@ -1631,7 +1631,7 @@ TEST_CASE("UBJSON")
                 CHECK_THROWS_AS(_ = json::from_ubjson(v_ubjson), json::out_of_range&);
 
                 json j;
-                nlohmann::detail::json_sax_dom_callback_parser<json> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
+                nlohmann::detail::json_sax_dom_callback_parser<json, decltype(nlohmann::detail::input_adapter(v_ubjson))> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
                 {
                     return true;
                 });

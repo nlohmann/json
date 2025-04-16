@@ -8,7 +8,7 @@ string_t dump(const int indent = -1,
 ```
 
 Serialization function for JSON values. The function tries to mimic Python's
-[`json.dumps()` function](https://docs.python.org/2/library/json.html#json.dump), and currently  supports its `indent`
+[`json.dumps()` function](https://docs.python.org/2/library/json.html#json.dump), and currently supports its `indent`
 and `ensure_ascii` parameters.
     
 ## Parameters
@@ -49,7 +49,7 @@ Linear.
 
 ## Notes
 
-Binary values are serialized as object containing two keys:
+Binary values are serialized as an object containing two keys:
 
 - "bytes": an array of bytes as integers
 - "subtype": the subtype as integer or `#!json null` if the binary has no subtype

@@ -37,9 +37,9 @@ Constant.
 
 ## See also
 
-- [is_number()](is_number.md) check if value is a number
-- [is_number_integer()](is_number_integer.md) check if value is an integer or unsigned integer number
-- [is_number_unsigned()](is_number_unsigned.md) check if value is an unsigned integer number
+- [is_number()](is_number.md) check if the value is a number
+- [is_number_integer()](is_number_integer.md) check if the value is an integer or unsigned integer number
+- [is_number_unsigned()](is_number_unsigned.md) check if the value is an unsigned integer number
 
 ## Version history
 

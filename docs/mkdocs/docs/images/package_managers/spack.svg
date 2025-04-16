@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg width="256" height="256"
+     viewBox="-128 -128 256 256"
+     version="1.1"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:ev="http://www.w3.org/2001/xml-events">
+
+  <style>
+    .diamond     { fill:#0f3a80; }
+    circle.back  { fill:#ffa600; stroke:#0f3a80; stroke-width:6; }
+    circle.front { fill:#ffffff; stroke:#0f3a80; stroke-width:6; }
+    line.back    { stroke:#ffa600; stroke-width:7; }
+    line.front   { stroke:#ffffff; stroke-width:7; }
+    line.shadow  { stroke:#0f3a80; stroke-width:7; }
+  </style>
+
+  <defs>
+    <!-- need two arrows b/c we can't sync color with the marked element -->
+    <marker id="barrow" markerWidth="4" markerHeight="3" refX=".05" refY="1.5"
+            orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,3 L4,1.5 z" fill="#ffa600"/>
+    </marker>
+    <marker id="farrow" markerWidth="4" markerHeight="3" refX=".05" refY="1.5"
+            orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,3 L4,1.5 z" fill="#ffffff"/>
+    </marker>
+  </defs>
+
+  <!-- rounded diamond shape -->
+  <rect x="-97" y="-97" width="194" height="194" rx="26" ry="26"
+        transform="rotate(45)" class="diamond"/>
+
+  <!-- background dependency structure -->
+  <line x1="-11" y1="-80" x2="-11" y2="-29" transform="rotate(42 -11 -80)"
+        class="back" marker-end="url(#barrow)"/>
+  <line x1="-80" y1="0"   x2="-80" y2="57"  transform="rotate(-45 -80 0)"
+        class="back" marker-end="url(#barrow)"/>
+  <line x1="-11" y1="-80" x2="-11" y2="28" class="back"
+        marker-end="url(#barrow)"/>
+
+  <circle cx="-11" cy="-80" r="23" class="back"/>
+  <circle cx="0"   cy="80"  r="23" class="back"/>
+  <circle cx="-80" cy="0"   r="23" class="back"/>
+
+  <!-- foreground dependency structure -->
+  <line x1="18" y1="-80" x2="18" y2="0" transform="rotate(42 17 -80)"
+        class="shadow"/>
+  <line x1="13" y1="-80" x2="13" y2="-5" transform="rotate(42 11 -80)"
+        class="front" marker-end="url(#farrow)"/>
+
+  <line x1="11" y1="-80" x2="11" y2="-29" transform="rotate(-42 11 -80)"
+        class="front" marker-end="url(#farrow)"/>
+  <line x1="80" y1="0"   x2="80" y2="57"  transform="rotate(45 80 0)"
+        class="front" marker-end="url(#farrow)"/>
+  <line x1="11" y1="-80" x2="11" y2="28"  class="front"
+        marker-end="url(#farrow)"/>
+
+  <circle cx="11" cy="-80" r="23" class="front"/>
+  <circle cx="80" cy="0"   r="23" class="front"/>
+</svg>

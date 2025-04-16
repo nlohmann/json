@@ -10,8 +10,8 @@ Returns a reference to the first element in the container. For a JSON container 
     
 ## Return value
 
-In case of a structured type (array or object), a reference to the first element is returned. In case of number, string,
-boolean, or binary values, a reference to the value is returned.
+In the case of a structured type (array or object), a reference to the first element is returned. In the case of number,
+string, boolean, or binary values, a reference to the value is returned.
 
 ## Exception safety
 

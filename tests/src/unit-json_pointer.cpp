@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -203,11 +203,15 @@ TEST_CASE("JSON pointers")
             // escaped access
             CHECK(j[json::json_pointer("/a~1b")] == j["a/b"]);
             CHECK(j[json::json_pointer("/m~0n")] == j["m~n"]);
-
+#if JSON_DIAGNOSTIC_POSITIONS
+            // unescaped access
+            CHECK_THROWS_WITH_AS(j.at(json::json_pointer("/a/b")),
+                                 "[json.exception.out_of_range.403] (bytes 13-297) key 'a' not found", json::out_of_range&);
+#else
             // unescaped access
             CHECK_THROWS_WITH_AS(j.at(json::json_pointer("/a/b")),
                                  "[json.exception.out_of_range.403] key 'a' not found", json::out_of_range&);
-
+#endif
             // unresolved access
             const json j_primitive = 1;
             CHECK_THROWS_WITH_AS(j_primitive["/foo"_json_pointer],
@@ -652,7 +656,7 @@ TEST_CASE("JSON pointers")
     SECTION("equality comparison")
     {
         const char* ptr_cpstring = "/foo/bar";
-        const char ptr_castring[] = "/foo/bar"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+        const char ptr_castring[] = "/foo/bar"; // NOLINT(misc-const-correctness,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
         std::string ptr_string{"/foo/bar"};
         auto ptr1 = json::json_pointer(ptr_string);
         auto ptr2 = json::json_pointer(ptr_string);

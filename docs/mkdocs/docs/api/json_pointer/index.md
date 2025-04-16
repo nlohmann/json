@@ -34,10 +34,10 @@ are the base for JSON patches.
 - [**operator/=**](operator_slasheq.md) - append to the end of the JSON pointer
 - [**operator/**](operator_slash.md) - create JSON Pointer by appending
 - [**parent_pointer**](parent_pointer.md) - returns the parent of this JSON pointer
-- [**pop_back**](pop_back.md) - remove last reference token
+- [**pop_back**](pop_back.md) - remove the last reference token
 - [**back**](back.md) - return last reference token
 - [**push_back**](push_back.md) - append an unescaped token at the end of the pointer
-- [**empty**](empty.md) - return whether pointer points to the root document
+- [**empty**](empty.md) - return whether the pointer points to the root document
 
 ## Literals
 

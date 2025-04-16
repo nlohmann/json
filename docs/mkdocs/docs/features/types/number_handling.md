@@ -54,13 +54,13 @@ On number interoperability, the following remarks are made:
 
 ## Library implementation
 
-This section describes how the above number specification is implemented by this library.
+This section describes how this library implements the above number specification.
 
 ### Number storage
 
 In the default [`json`](../../api/json.md) type, numbers are stored as `#!c std::uint64_t`, `#!c std::int64_t`, and
-`#!c double`,  respectively. Thereby, `#!c std::uint64_t` and `#!c std::int64_t` are used only if they can store the 
-number without loss of  precision. If this is impossible (e.g., if the number is too large), the number is stored as
+`#!c double`, respectively. Thereby, `#!c std::uint64_t` and `#!c std::int64_t` are used only if they can store the 
+number without loss of precision. If this is impossible (e.g., if the number is too large), the number is stored as
 `#!c double`.
 
 !!! info "Notes"
@@ -116,7 +116,7 @@ That is, `-0` is stored as a signed integer, but the serialization does not repr
 - Integer numbers are serialized as is; that is, no scientific notation is used.
 - Floating-point numbers are serialized as specified by the `#!c %g` printf modifier with 
   [`std::numeric_limits<double>::max_digits10`](https://en.cppreference.com/w/cpp/types/numeric_limits/max_digits10)
-  significant digits. The rationale is to use the shortest representation while still allow round-tripping.
+  significant digits. The rationale is to use the shortest representation while still allowing round-tripping.
 
 !!! hint "Notes regarding precision of floating-point numbers"
 
@@ -151,7 +151,7 @@ NaN (not-a-number) cannot be expressed with the number syntax described above an
     Numeric values that cannot be represented in the grammar below (such
     as Infinity and NaN) are not permitted.
 
-That is, there is no way to *parse* a NaN value. However, NaN values can be stored in a JSON value by assignment.
+That is, there is no way to *parse* a NaN value. However, assignments can store NaN values in a JSON value.
 
 This library serializes NaN values  as `#!js null`. This corresponds to the behavior of JavaScript's
 [`JSON.stringify`](https://www.w3schools.com/js/js_json_stringify.asp) function.
@@ -230,7 +230,7 @@ Floating-point inside JSON values numbers are compared with `#!c json::number_fl
 ### Number conversion
 
 Just like the C++ language itself, the `get` family of functions allows conversions between unsigned and signed
-integers, and  between integers and floating-point values to integers. This behavior may be surprising.
+integers, and between integers and floating-point values to integers. This behavior may be surprising.
 
 !!! warning "Unconditional number conversions"
 
@@ -246,7 +246,7 @@ integers, and  between integers and floating-point values to integers. This beha
 The rationale is twofold:
 
 1. JSON does not define a number type or precision (see above).
-2. C++ also allows to silently convert between number types.
+2. C++ also allows silently converting between number types.
 
 !!! success "Conditional number conversion"
 

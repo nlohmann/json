@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -11,6 +11,11 @@
 // disable -Wnoexcept due to struct pod_bis
 DOCTEST_GCC_SUPPRESS_WARNING_PUSH
 DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
+
+// skip tests if JSON_DisableEnumSerialization=ON (#4384)
+#if defined(JSON_DISABLE_ENUM_SERIALIZATION) && (JSON_DISABLE_ENUM_SERIALIZATION == 1)
+    #define SKIP_TESTS_FOR_ENUM_SERIALIZATION
+#endif
 
 #include <nlohmann/json.hpp>
 
@@ -36,12 +41,16 @@ static_assert(noexcept(json{}), "");
 static_assert(noexcept(nlohmann::to_json(std::declval<json&>(), 2)), "");
 static_assert(noexcept(nlohmann::to_json(std::declval<json&>(), 2.5)), "");
 static_assert(noexcept(nlohmann::to_json(std::declval<json&>(), true)), "");
-static_assert(noexcept(nlohmann::to_json(std::declval<json&>(), test{})), "");
-static_assert(noexcept(nlohmann::to_json(std::declval<json&>(), pod{})), "");
+#ifndef SKIP_TESTS_FOR_ENUM_SERIALIZATION
+static_assert(noexcept(nlohmann::to_json(std::declval<json&>(), test {})), "");
+#endif
+static_assert(noexcept(nlohmann::to_json(std::declval<json&>(), pod {})), "");
 static_assert(!noexcept(nlohmann::to_json(std::declval<json&>(), pod_bis{})), "");
 static_assert(noexcept(json(2)), "");
-static_assert(noexcept(json(test{})), "");
-static_assert(noexcept(json(pod{})), "");
+#ifndef SKIP_TESTS_FOR_ENUM_SERIALIZATION
+static_assert(noexcept(json(test {})), "");
+#endif
+static_assert(noexcept(json(pod {})), "");
 static_assert(noexcept(std::declval<json>().get<pod>()), "");
 static_assert(!noexcept(std::declval<json>().get<pod_bis>()), "");
 static_assert(noexcept(json(pod{})), "");

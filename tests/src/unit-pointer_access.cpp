@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -326,7 +326,7 @@ TEST_CASE("pointer access")
         CHECK(value.get_ptr<json::array_t*>() == nullptr);
         CHECK(value.get_ptr<json::string_t*>() == nullptr);
         CHECK(value.get_ptr<json::boolean_t*>() == nullptr);
-        CHECK(value.get_ptr<json::number_integer_t*>() != nullptr);
+        CHECK(value.get_ptr<json::number_integer_t*>() == nullptr);
         CHECK(value.get_ptr<json::number_unsigned_t*>() != nullptr);
         CHECK(value.get_ptr<json::number_float_t*>() == nullptr);
         CHECK(value.get_ptr<json::binary_t*>() == nullptr);
@@ -355,7 +355,7 @@ TEST_CASE("pointer access")
         CHECK(value.get_ptr<const json::array_t*>() == nullptr);
         CHECK(value.get_ptr<const json::string_t*>() == nullptr);
         CHECK(value.get_ptr<const json::boolean_t*>() == nullptr);
-        CHECK(value.get_ptr<const json::number_integer_t*>() != nullptr);
+        CHECK(value.get_ptr<const json::number_integer_t*>() == nullptr);
         CHECK(value.get_ptr<const json::number_unsigned_t*>() != nullptr);
         CHECK(value.get_ptr<const json::number_float_t*>() == nullptr);
         CHECK(value.get_ptr<const json::binary_t*>() == nullptr);

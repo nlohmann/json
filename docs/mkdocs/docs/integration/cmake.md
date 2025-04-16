@@ -15,10 +15,10 @@ and use the namespaced imported target from the generated package configuration:
 !!! example
 
     ```cmake title="CMakeLists.txt"
-    cmake_minimum_required(VERSION 3.1)
+    cmake_minimum_required(VERSION 3.5)
     project(ExampleProject LANGUAGES CXX)
     
-    find_package(nlohmann_json 3.11.3 REQUIRED)
+    find_package(nlohmann_json 3.12.0 REQUIRED)
     
     add_executable(example example.cpp)
     target_link_libraries(example PRIVATE nlohmann_json::nlohmann_json)
@@ -35,7 +35,7 @@ To embed the library directly into an existing CMake project, place the entire s
 !!! example
 
     ```cmake title="CMakeLists.txt"
-    cmake_minimum_required(VERSION 3.1)
+    cmake_minimum_required(VERSION 3.5)
     project(ExampleProject LANGUAGES CXX)
 
     # If you only include this third party in PRIVATE source files, you do not need to install it
@@ -77,7 +77,7 @@ to the following.
     
     ```cmake title="thirdparty/CMakeLists.txt"
     if(EXAMPLE_USE_EXTERNAL_JSON)
-        find_package(nlohmann_json 3.11.3 REQUIRED)
+        find_package(nlohmann_json 3.12.0 REQUIRED)
     else()
         set(JSON_BuildTests OFF CACHE INTERNAL "")
         add_subdirectory(nlohmann_json)
@@ -90,7 +90,7 @@ to the following.
 ### FetchContent
 
 Since CMake v3.11, [FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) can be used to
-automatically download a release as a dependency at configure type.
+automatically download a release as a dependency at configure time.
 
 !!! example
 
@@ -100,7 +100,7 @@ automatically download a release as a dependency at configure type.
 
     include(FetchContent)
     
-    FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+    FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
     FetchContent_MakeAvailable(json)
     
     add_executable(example example.cpp)
@@ -115,13 +115,11 @@ automatically download a release as a dependency at configure type.
     ```cmake
     FetchContent_Declare(json
         GIT_REPOSITORY https://github.com/nlohmann/json
-        GIT_TAG v3.11.3
+        GIT_TAG v3.12.0
     )
     ```
 
-    However, the repository <https://github.com/nlohmann/json> download size is quite large. You might want to depend on
-    a smaller repository. For instance, you might want to replace the URL in the example by
-    <https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent>.
+    However, the repository <https://github.com/nlohmann/json> download size is quite large.
 
 ## CMake Options
 
@@ -136,6 +134,10 @@ Enable CI build targets. The exact targets are used during the several CI steps 
 ### `JSON_Diagnostics`
 
 Enable [extended diagnostic messages](../home/exceptions.md#extended-diagnostic-messages) by defining macro [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md). This option is `OFF` by default.
+
+### `JSON_Diagnostic_Positions`
+
+Enable position diagnostics by defining macro [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md). This option is `OFF` by default.
 
 ### `JSON_DisableEnumSerialization`
 
@@ -159,14 +161,18 @@ Enable implicit conversions by defining macro [`JSON_USE_IMPLICIT_CONVERSIONS`](
 
 Install CMake targets during install step. This option is `ON` by default if the library's CMake project is the top project.
 
+### `JSON_LegacyDiscardedValueComparison`
+
+Enable the (incorrect) legacy comparison behavior of discarded JSON values by defining macro [`JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](../api/macros/json_use_legacy_discarded_value_comparison.md). This option is `OFF` by default.
+
 ### `JSON_MultipleHeaders`
 
-Use non-amalgamated version of the library. This option is `OFF` by default.
+Use the non-amalgamated version of the library. This option is `OFF` by default.
 
 ### `JSON_SystemInclude`
 
-Treat the library headers like system headers (i.e., adding `SYSTEM` to the [`target_include_directories`](https://cmake.org/cmake/help/latest/command/target_include_directories.html) call) to checks for this library by tools like Clang-Tidy. This option is `OFF` by default.
+Treat the library headers like system headers (i.e., adding `SYSTEM` to the [`target_include_directories`](https://cmake.org/cmake/help/latest/command/target_include_directories.html) call) to check for this library by tools like Clang-Tidy. This option is `OFF` by default.
 
 ### `JSON_Valgrind`
 
-Execute test suite with [Valgrind](https://valgrind.org). This option is `OFF` by default. Depends on `JSON_BuildTests`.
+Execute the test suite with [Valgrind](https://valgrind.org). This option is `OFF` by default. Depends on `JSON_BuildTests`.

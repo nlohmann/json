@@ -23,8 +23,8 @@ Read from input and generate SAX events
 1. Read from a compatible input.
 2. Read from a pair of character iterators
     
-    The value_type of the iterator must be an integral type with size of 1, 2 or 4 bytes, which will be interpreted
-    respectively as UTF-8, UTF-16 and UTF-32.
+    The value_type of the iterator must be an integral type with a size of 1, 2, or 4 bytes, which will be interpreted
+    respectively as UTF-8, UTF-16, and UTF-32.
 
 The SAX event lister must follow the interface of [`json_sax`](../json_sax/index.md).
 
@@ -66,10 +66,10 @@ The SAX event lister must follow the interface of [`json_sax`](../json_sax/index
     (`#!cpp false`); (optional, `#!cpp false` by default)
 
 `first` (in)
-:   iterator to start of character range
+:   iterator to the start of a character range
 
 `last` (in)
-:   iterator to end of character range
+:   iterator to the end of a character range
 
 ## Return value
 

@@ -21,7 +21,7 @@ create a value for serialization to those formats.
 ## Parameters
 
 `init` (in)
-:   container containing bytes to use as binary type
+:   container containing bytes to use as a binary type
 
 `subtype` (in)
 :   subtype to use in CBOR, MessagePack, and BSON
@@ -42,8 +42,8 @@ Linear in the size of `init`; constant for `typename binary_t::container_type&& 
 
 Note, this function exists because of the difficulty in correctly specifying the correct template overload in the
 standard value ctor, as both JSON arrays and JSON binary arrays are backed with some form of a `std::vector`. Because
-JSON binary arrays are a non-standard extension it was decided that it would be best to prevent automatic initialization
-of a binary array type, for backwards compatibility and so it does not happen on accident.
+JSON binary arrays are a non-standard extension, it was decided that it would be best to prevent automatic
+initialization of a binary array type, for backwards compatibility and so it does not happen on accident.
 
 ## Examples
 

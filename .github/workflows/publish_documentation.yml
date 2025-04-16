@@ -10,23 +10,28 @@ on:
       - docs/examples/**
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 # we don't want to have concurrent jobs, and we don't want to cancel running jobs to avoid broken publications
 concurrency:
   group: documentation
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   publish_documentation:
+    permissions:
+      contents: write
+
     if: github.repository == 'nlohmann/json'
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - name: Harden Runner
+        uses: step-security/harden-runner@c6295a65d1254861815972266d5933fd6e532bdf # v2.11.1
+        with:
+          egress-policy: audit
 
-      - name: Install and update PlantUML
-        run: sudo apt-get update ; sudo apt-get install -y plantuml
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Install virtual environment
         run: make install_venv -C docs/mkdocs
@@ -35,7 +40,7 @@ jobs:
         run: make build -C docs/mkdocs
 
       - name: Deploy documentation
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs/mkdocs/site

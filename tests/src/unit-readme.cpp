@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -171,7 +171,7 @@ TEST_CASE("README" * doctest::skip())
 
             // find an entry
             CHECK(o.find("foo") != o.end());
-            if (o.find("foo") != o.end())
+            if (o.find("foo") != o.end()) // NOLINT(readability-container-contains)
             {
                 // there is an entry with key "foo"
             }

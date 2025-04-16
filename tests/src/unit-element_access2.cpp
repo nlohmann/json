@@ -1,10 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -17,7 +16,7 @@
 // build test with C++14
 // JSON_HAS_CPP_14
 
-TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_json)
+TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_json) // NOLINT(readability-math-missing-parentheses)
 {
     SECTION("object")
     {
@@ -83,7 +82,7 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                 SECTION("null")
                 {
                     Json j_nonobject(Json::value_t::null);
-                    const Json j_nonobject_const(j_nonobject);
+                    const Json j_nonobject_const(j_nonobject); // NOLINT(performance-unnecessary-copy-initialization)
                     CHECK_THROWS_WITH_AS(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with null", typename Json::type_error&);
                     CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with null", typename Json::type_error&);
 
@@ -96,7 +95,7 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                 SECTION("boolean")
                 {
                     Json j_nonobject(Json::value_t::boolean);
-                    const Json j_nonobject_const(j_nonobject);
+                    const Json j_nonobject_const(j_nonobject); // NOLINT(performance-unnecessary-copy-initialization)
                     CHECK_THROWS_WITH_AS(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with boolean", typename Json::type_error&);
                     CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with boolean", typename Json::type_error&);
 
@@ -109,7 +108,7 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                 SECTION("string")
                 {
                     Json j_nonobject(Json::value_t::string);
-                    const Json j_nonobject_const(j_nonobject);
+                    const Json j_nonobject_const(j_nonobject); // NOLINT(performance-unnecessary-copy-initialization)
                     CHECK_THROWS_WITH_AS(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with string", typename Json::type_error&);
                     CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with string", typename Json::type_error&);
 
@@ -122,7 +121,7 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                 SECTION("array")
                 {
                     Json j_nonobject(Json::value_t::array);
-                    const Json j_nonobject_const(j_nonobject);
+                    const Json j_nonobject_const(j_nonobject); // NOLINT(performance-unnecessary-copy-initialization)
                     CHECK_THROWS_WITH_AS(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with array", typename Json::type_error&);
                     CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with array", typename Json::type_error&);
 
@@ -135,7 +134,7 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                 SECTION("number (integer)")
                 {
                     Json j_nonobject(Json::value_t::number_integer);
-                    const Json j_nonobject_const(j_nonobject);
+                    const Json j_nonobject_const(j_nonobject); // NOLINT(performance-unnecessary-copy-initialization)
                     CHECK_THROWS_WITH_AS(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
                     CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
 
@@ -148,7 +147,7 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                 SECTION("number (unsigned)")
                 {
                     Json j_nonobject(Json::value_t::number_unsigned);
-                    const Json j_nonobject_const(j_nonobject);
+                    const Json j_nonobject_const(j_nonobject); // NOLINT(performance-unnecessary-copy-initialization)
                     CHECK_THROWS_WITH_AS(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
                     CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
 
@@ -161,7 +160,7 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                 SECTION("number (floating-point)")
                 {
                     Json j_nonobject(Json::value_t::number_float);
-                    const Json j_nonobject_const(j_nonobject);
+                    const Json j_nonobject_const(j_nonobject); // NOLINT(performance-unnecessary-copy-initialization)
                     CHECK_THROWS_WITH_AS(j_nonobject.at("foo"), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
                     CHECK_THROWS_WITH_AS(j_nonobject_const.at("foo"), "[json.exception.type_error.304] cannot use at() with number", typename Json::type_error&);
 
@@ -1456,7 +1455,7 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
 }
 
 #if !defined(JSON_NOEXCEPTION)
-TEST_CASE_TEMPLATE("element access 2 (throwing tests)", Json, nlohmann::json, nlohmann::ordered_json)
+TEST_CASE_TEMPLATE("element access 2 (throwing tests)", Json, nlohmann::json, nlohmann::ordered_json) // NOLINT(readability-math-missing-parentheses)
 {
     SECTION("object")
     {
@@ -1492,7 +1491,7 @@ TEST_CASE_TEMPLATE("element access 2 (throwing tests)", Json, nlohmann::json, nl
 #endif
 
 // TODO(falbrechtskirchinger) merge with the other test case; clean up
-TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann::json, nlohmann::ordered_json)
+TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann::json, nlohmann::ordered_json) // NOLINT(readability-math-missing-parentheses)
 {
     using string_t = typename Json::string_t;
     using number_integer_t = typename Json::number_integer_t;
@@ -1566,9 +1565,9 @@ TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann
 
         SECTION("const char(&)[] key")
         {
-            const char key[] = "foo"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-            const char key2[] = "baz"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-            const char key_notfound[] = "bar"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+            const char key[] = "foo"; // NOLINT(misc-const-correctness,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+            const char key2[] = "baz"; // NOLINT(misc-const-correctness,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+            const char key_notfound[] = "bar"; // NOLINT(misc-const-correctness,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
 
             CHECK(j.value(key, "default") == "bar");
             CHECK(j.value(key, cpstr) == "bar");
@@ -1700,9 +1699,9 @@ TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann
 
         SECTION("const char(&)[] key")
         {
-            const char key[] = "foo"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-            const char key2[] = "baz"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
-            const char key_notfound[] = "bar"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+            const char key[] = "foo"; // NOLINT(misc-const-correctness,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+            const char key2[] = "baz"; // NOLINT(misc-const-correctness,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+            const char key_notfound[] = "bar"; // NOLINT(misc-const-correctness,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
 
             CHECK(j.template value<string_t>(key, "default") == "bar");
             CHECK(j.template value<string_t>(key, cpstr) == "bar");

@@ -1,0 +1,50 @@
+Root diagnostic positions: 
+	start_pos: 5
+	end_pos:109
+Original string: 
+{
+        "address": {
+            "street": "Fake Street",
+            "housenumber": 1
+        }
+    }
+Parsed string: 
+{
+        "address": {
+            "street": "Fake Street",
+            "housenumber": 1
+        }
+    }
+
+address diagnostic positions: 
+	start_pos:26
+	end_pos:103
+
+Original string: 
+{            "street": "Fake Street",
+            "housenumber": 1
+        }
+Parsed string: 
+{
+            "street": "Fake Street",
+            "housenumber": 1
+        }
+
+street diagnostic positions: 
+	start_pos:50
+	end_pos:63
+
+Original string: 
+"Fake Street"
+Parsed string: 
+"Fake Street"
+
+housenumber diagnostic positions: 
+	start_pos:92
+	end_pos:93
+
+Original string: 
+1
+Parsed string: 
+1
+

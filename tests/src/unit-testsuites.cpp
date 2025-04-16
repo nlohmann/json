@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -163,7 +163,7 @@ TEST_CASE("compliance tests from nativejson-benchmark")
         TEST_DOUBLE("[2.2250738585072012e-308]",
                     2.2250738585072014e-308);
 
-        // More closer to normal/subnormal boundary
+        // Closer to normal/subnormal boundary
         // boundary = 2^-1022 - 2^-1075 = 2.225073858507201136057409796709131975934819546351645648... ¡Á 10^-308
         TEST_DOUBLE("[2.22507385850720113605740979670913197593481954635164564e-308]",
                     2.2250738585072009e-308);
@@ -312,7 +312,7 @@ TEST_CASE("test suite from json-test-suite")
 {
     SECTION("read all sample.json")
     {
-        // read a file with all unicode characters stored as single-character
+        // read a file with all Unicode characters stored as single-character
         // strings in a JSON array
         std::ifstream f(TEST_DATA_DIRECTORY "/json_testsuite/sample.json");
         json j;
@@ -326,6 +326,7 @@ TEST_CASE("test suite from json-test-suite")
 TEST_CASE("json.org examples")
 {
     // here, we list all JSON values from https://json.org/example
+    using FilePtr = std::unique_ptr<FILE, int(*)(FILE*)>;
 
     SECTION("1.json")
     {
@@ -363,35 +364,35 @@ TEST_CASE("json.org examples")
     }
     SECTION("FILE 1.json")
     {
-        const std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen(TEST_DATA_DIRECTORY "/json.org/1.json", "r"), &std::fclose);
+        const FilePtr f(std::fopen(TEST_DATA_DIRECTORY "/json.org/1.json", "r"), &std::fclose);
         json _;
         CHECK_NOTHROW(_ = json::parse(f.get()));
     }
 
     SECTION("FILE 2.json")
     {
-        const std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen(TEST_DATA_DIRECTORY "/json.org/2.json", "r"), &std::fclose);
+        const FilePtr f(std::fopen(TEST_DATA_DIRECTORY "/json.org/2.json", "r"), &std::fclose);
         json _;
         CHECK_NOTHROW(_ = json::parse(f.get()));
     }
 
     SECTION("FILE 3.json")
     {
-        const std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen(TEST_DATA_DIRECTORY "/json.org/3.json", "r"), &std::fclose);
+        const FilePtr f(std::fopen(TEST_DATA_DIRECTORY "/json.org/3.json", "r"), &std::fclose);
         json _;
         CHECK_NOTHROW(_ = json::parse(f.get()));
     }
 
     SECTION("FILE 4.json")
     {
-        const std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen(TEST_DATA_DIRECTORY "/json.org/4.json", "r"), &std::fclose);
+        const FilePtr f(std::fopen(TEST_DATA_DIRECTORY "/json.org/4.json", "r"), &std::fclose);
         json _;
         CHECK_NOTHROW(_ = json::parse(f.get()));
     }
 
     SECTION("FILE 5.json")
     {
-        const std::unique_ptr<std::FILE, decltype(&std::fclose)> f(std::fopen(TEST_DATA_DIRECTORY "/json.org/5.json", "r"), &std::fclose);
+        const FilePtr f(std::fopen(TEST_DATA_DIRECTORY "/json.org/5.json", "r"), &std::fclose);
         json _;
         CHECK_NOTHROW(_ = json::parse(f.get()));
     }

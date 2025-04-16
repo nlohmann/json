@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -281,7 +281,7 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xcd);
-                        auto const restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        auto const restored = static_cast<uint16_t>((static_cast<uint8_t>(result[1]) * 256) + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -479,11 +479,11 @@ TEST_CASE("MessagePack")
                     std::vector<int32_t> const numbers
                     {
                         -32769,
-                            -65536,
-                            -77777,
-                            -1048576,
-                            -2147483648LL,
-                        };
+                        -65536,
+                        -77777,
+                        -1048576,
+                        -2147483648LL,
+                    };
                     for (auto i : numbers)
                     {
                         CAPTURE(i)
@@ -671,7 +671,7 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xcd);
-                        auto const restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        auto const restored = static_cast<uint16_t>((static_cast<uint8_t>(result[1]) * 256) + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -1508,6 +1508,22 @@ TEST_CASE("MessagePack")
             CHECK(json::from_msgpack(std::vector<uint8_t>({0xc4}), true, false).is_discarded());
         }
 
+        SECTION("unexpected end inside int with stream")
+        {
+            json _;
+            const std::string data = {static_cast<char>(0xd2u), static_cast<char>(0x12u), static_cast<char>(0x34u), static_cast<char>(0x56u)};
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::istringstream(data, std::ios::binary)),
+                                 "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
+        }
+        SECTION("misuse wchar for binary")
+        {
+            json _;
+            // creates 0xd2 after UTF-8 decoding, triggers get_elements in wide_string_input_adapter for code coverage
+            const std::u32string data = {static_cast<char32_t>(0x0280)};
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(data),
+                                 "[json.exception.parse_error.112] parse error at byte 1: wide string type cannot be interpreted as binary data", json::parse_error&);
+        }
+
         SECTION("unsupported bytes")
         {
             SECTION("concrete examples")
@@ -1604,7 +1620,7 @@ TEST_CASE("single MessagePack roundtrip")
         {
             SECTION("std::ostringstream")
             {
-                std::basic_ostringstream<std::uint8_t> ss;
+                std::basic_ostringstream<char> ss;
                 json::to_msgpack(j1, ss);
                 json j3 = json::from_msgpack(ss.str());
                 CHECK(j1 == j3);
