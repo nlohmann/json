@@ -14,7 +14,7 @@
 #include <string> // string
 
 #include <nlohmann/detail/macro_scope.hpp>
-#if JSON_HAS_THREE_WAY_COMPARISON
+#ifdef JSON_HAS_THREE_WAY_COMPARISON
     #include <compare> // partial_ordering
 #endif
 
