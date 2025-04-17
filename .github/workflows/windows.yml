@@ -97,7 +97,7 @@ jobs:
       - name: Test
         run: cd build ; ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
 
-  clang-cl-11:
+  clang-cl-12:
     runs-on: windows-2019
     strategy:
       matrix:
