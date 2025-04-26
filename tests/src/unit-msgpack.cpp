@@ -1882,41 +1882,47 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
 }
 
 #ifdef JSON_HAS_CPP_17
+// Test suite for verifying MessagePack handling with std::byte input
 TEST_CASE("MessagePack with std::byte")
 {
+
     SECTION("std::byte compatibility")
     {
         SECTION("vector roundtrip")
         {
-            json original = {
+            json original =
+            {
                 {"name", "test"},
                 {"value", 42},
                 {"array", {1, 2, 3}}
             };
-            
+
             std::vector<uint8_t> temp = json::to_msgpack(original);
+            // Convert the uint8_t vector to std::byte vector
             std::vector<std::byte> msgpack_data(temp.size());
-            for (size_t i = 0; i < temp.size(); ++i) {
+            for (size_t i = 0; i < temp.size(); ++i)
+            {
                 msgpack_data[i] = std::byte(temp[i]);
             }
-            
+            // Deserialize from std::byte vector back to JSON
             json from_bytes;
             CHECK_NOTHROW(from_bytes = json::from_msgpack(msgpack_data));
-            
+
             CHECK(from_bytes == original);
         }
 
         SECTION("empty vector")
         {
             std::vector<std::byte> empty_data;
-            CHECK_THROWS_WITH_AS(json::from_msgpack(empty_data), 
-                                 "[json.exception.parse_error.110] parse error at byte 1: syntax error while parsing MessagePack value: unexpected end of input", 
+            CHECK_THROWS_WITH_AS(json::from_msgpack(empty_data),
+                                 "[json.exception.parse_error.110] parse error at byte 1: syntax error while parsing MessagePack value: unexpected end of input",
                                  json::parse_error&);
         }
 
         SECTION("comparison with workaround")
         {
-            json original = {
+            json original =
+            {
                 {"string", "hello"},
                 {"integer", 42},
                 {"float", 3.14},
@@ -1925,22 +1931,23 @@ TEST_CASE("MessagePack with std::byte")
                 {"array", {1, 2, 3}},
                 {"object", {{"key", "value"}}}
             };
-            
+
             std::vector<uint8_t> temp = json::to_msgpack(original);
-            
+
             std::vector<std::byte> msgpack_data(temp.size());
-            for (size_t i = 0; i < temp.size(); ++i) {
+            for (size_t i = 0; i < temp.size(); ++i)
+            {
                 msgpack_data[i] = std::byte(temp[i]);
             }
-            
+            // Attempt direct deserialization using std::byte input
             json direct_result = json::from_msgpack(msgpack_data);
-            
-            // 测试PR中的临时解决方案作为对比
+
+            // Test the workaround approach: reinterpret as unsigned char* and use iterator range
             auto const char_start = reinterpret_cast<unsigned char const*>(msgpack_data.data());
             auto const char_end = char_start + msgpack_data.size();
             json workaround_result = json::from_msgpack(char_start, char_end);
-            
-            // 验证两种方法产生相同的结果
+
+            // Verify that the final deserialized JSON matches the original JSON
             CHECK(direct_result == workaround_result);
             CHECK(direct_result == original);
         }
