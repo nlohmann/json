@@ -1880,3 +1880,70 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
         }
     }
 }
+
+#ifdef JSON_HAS_CPP_17
+TEST_CASE("MessagePack with std::byte")
+{
+    SECTION("std::byte compatibility")
+    {
+        SECTION("vector roundtrip")
+        {
+            json original = {
+                {"name", "test"},
+                {"value", 42},
+                {"array", {1, 2, 3}}
+            };
+            
+            std::vector<uint8_t> temp = json::to_msgpack(original);
+            std::vector<std::byte> msgpack_data(temp.size());
+            for (size_t i = 0; i < temp.size(); ++i) {
+                msgpack_data[i] = std::byte(temp[i]);
+            }
+            
+            json from_bytes;
+            CHECK_NOTHROW(from_bytes = json::from_msgpack(msgpack_data));
+            
+            CHECK(from_bytes == original);
+        }
+
+        SECTION("empty vector")
+        {
+            std::vector<std::byte> empty_data;
+            CHECK_THROWS_WITH_AS(json::from_msgpack(empty_data), 
+                                 "[json.exception.parse_error.110] parse error at byte 1: syntax error while parsing MessagePack value: unexpected end of input", 
+                                 json::parse_error&);
+        }
+
+        SECTION("comparison with workaround")
+        {
+            json original = {
+                {"string", "hello"},
+                {"integer", 42},
+                {"float", 3.14},
+                {"boolean", true},
+                {"null", nullptr},
+                {"array", {1, 2, 3}},
+                {"object", {{"key", "value"}}}
+            };
+            
+            std::vector<uint8_t> temp = json::to_msgpack(original);
+            
+            std::vector<std::byte> msgpack_data(temp.size());
+            for (size_t i = 0; i < temp.size(); ++i) {
+                msgpack_data[i] = std::byte(temp[i]);
+            }
+            
+            json direct_result = json::from_msgpack(msgpack_data);
+            
+            // 测试PR中的临时解决方案作为对比
+            auto const char_start = reinterpret_cast<unsigned char const*>(msgpack_data.data());
+            auto const char_end = char_start + msgpack_data.size();
+            json workaround_result = json::from_msgpack(char_start, char_end);
+            
+            // 验证两种方法产生相同的结果
+            CHECK(direct_result == workaround_result);
+            CHECK(direct_result == original);
+        }
+    }
+}
+#endif
