@@ -3126,7 +3126,7 @@ inline StringType escape(StringType s)
  * Note the order of escaping "~1" to "/" and "~0" to "~" is important.
  */
 template<typename StringType>
-static void unescape(StringType& s)
+inline void unescape(StringType& s)
 {
     replace_substring(s, StringType{"~1"}, StringType{"/"});
     replace_substring(s, StringType{"~0"}, StringType{"~"});
@@ -9838,7 +9838,7 @@ enum class cbor_tag_handler_t
 
 @note from https://stackoverflow.com/a/1001328/266378
 */
-static inline bool little_endianness(int num = 1) noexcept
+inline bool little_endianness(int num = 1) noexcept
 {
     return *reinterpret_cast<char*>(&num) == 1;
 }

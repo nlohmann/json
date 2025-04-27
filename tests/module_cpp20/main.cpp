@@ -1,5 +1,6 @@
 import json;
 
-int main() {
-  nlohmann::json j;
+int main()
+{
+    nlohmann::json j;
 }

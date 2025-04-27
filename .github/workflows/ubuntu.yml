@@ -222,8 +222,11 @@ jobs:
         run: cmake --build build --target ci_cuda_example
 
   ci_module_cpp20:
+    strategy:
+      matrix:
+        container: ['gcc:latest', 'silkeh/clang:latest']
     runs-on: ubuntu-latest
-    container: gcc:latest
+    container: ${{ matrix.container }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get latest CMake and ninja
