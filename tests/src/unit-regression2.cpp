@@ -396,7 +396,7 @@ struct Example_3810
     Example_3810() = default;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Example_3810, bla); // NOLINT(misc-use-internal-linkage)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Example_3810, bla) // NOLINT(misc-use-internal-linkage)
 
 /////////////////////////////////////////////////////////////////////
 // for #4740

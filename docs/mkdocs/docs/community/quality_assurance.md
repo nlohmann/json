@@ -76,6 +76,7 @@ violations will result in a failed build.
         | GNU 13.3.0                                   | x86_64       | Ubuntu 22.04.1 LTS       | GitHub    |
         | GNU 14.2.0                                   | x86_64       | Ubuntu 22.04.1 LTS       | GitHub    |
         | GNU 14.2.0                                   | arm64        | Linux 6.1.100            | Cirrus CI |
+        | GNU 15.1.0                                   | x86_64       | Ubuntu 22.04.1 LTS       | GitHub    |
         | icpc (ICC) 2021.5.0 20211109                 | x86_64       | Ubuntu 20.04.3 LTS       | GitHub    |
         | MSVC 19.0.24241.7                            | x86          | Windows 8.1              | AppVeyor  |
         | MSVC 19.16.27035.0                           | x86          | Windows-10 (Build 14393) | AppVeyor  |
