@@ -660,6 +660,17 @@ add_custom_target(ci_cuda_example
 )
 
 ###############################################################################
+# C++ 20 modules
+###############################################################################
+
+add_custom_target(ci_module_cpp20
+    COMMAND ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -S${PROJECT_SOURCE_DIR}/tests/module_cpp20 -B${PROJECT_BINARY_DIR}/ci_module_cpp20
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/ci_module_cpp20
+)
+
+###############################################################################
 # Intel C++ Compiler
 ###############################################################################
 
