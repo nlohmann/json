@@ -2192,8 +2192,16 @@ class binary_reader
                     result = 1;
                     for (auto i : dim)
                     {
+                        // Pre-multiplication overflow check: if i > 0 and result > SIZE_MAX/i, then result*i would overflow.
+                        // This check must happen before multiplication since overflow detection after the fact is unreliable
+                        // as modular arithmetic can produce any value, not just 0 or SIZE_MAX.
+                        if (JSON_HEDLEY_UNLIKELY(i > 0 && result > (std::numeric_limits<std::size_t>::max)() / i))
+                        {
+                            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
+                        }
                         result *= i;
-                        if (result == 0 || result == npos) // because dim elements shall not have zeros, result = 0 means overflow happened; it also can't be npos as it is used to initialize size in get_ubjson_size_type()
+                        // Additional post-multiplication check to catch any edge cases the pre-check might miss
+                        if (result == 0 || result == npos)
                         {
                             return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
                         }

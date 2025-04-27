@@ -2815,6 +2815,129 @@ TEST_CASE("BJData")
 #endif
             }
 
+            SECTION("overflow detection in dimension multiplication")
+            {
+                // Simple SAX handler just to monitor if overflow is detected
+                struct SimpleOverflowSaxHandler : public nlohmann::json_sax<json>
+                {
+                    bool overflow_detected = false;
+
+                    // Implement all required virtual methods with minimal implementation
+                    bool null() override
+                    {
+                        return true;
+                    }
+                    bool boolean(bool /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool number_integer(json::number_integer_t /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool number_unsigned(json::number_unsigned_t /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool number_float(json::number_float_t /*val*/, const std::string& /*s*/) override
+                    {
+                        return true;
+                    }
+                    bool string(std::string& /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool binary(json::binary_t& /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool start_object(std::size_t /*elements*/) override
+                    {
+                        return true;
+                    }
+                    bool key(std::string& /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool end_object() override
+                    {
+                        return true;
+                    }
+                    bool start_array(std::size_t /*elements*/) override
+                    {
+                        return true;
+                    }
+                    bool end_array() override
+                    {
+                        return true;
+                    }
+
+                    // This is the only method we care about - detecting error 408
+                    bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& ex) override
+                    {
+                        if (ex.id == 408)
+                        {
+                            overflow_detected = true;
+                        }
+                        return false;
+                    }
+                };
+
+                // Create BJData payload with overflow-causing dimensions (2^32+1) × (2^32)
+                const std::vector<uint8_t> bjdata_payload =
+                {
+                    0x5B,                                           // '[' start array
+                    0x24, 0x55,                                     // '$', 'U' (type uint8)
+                    0x23, 0x5B,                                     // '#', '[' (dimensions array)
+                    0x4D,                                           // 'M' (uint64)
+                    0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, // 2^32 + 1 (4294967297) as little-endian
+                    0x4D,                                           // 'M' (uint64)
+                    0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, // 2^32 (4294967296) as little-endian
+                    0x5D                                            // ']' end dimensions
+                    // No data - we don't need it for this test, we just want to hit the overflow check
+                };
+
+                // Test with overflow dimensions using SAX parser
+                {
+                    SimpleOverflowSaxHandler handler;
+                    const auto result = json::sax_parse(bjdata_payload, &handler,
+                                                        nlohmann::detail::input_format_t::bjdata, false);
+
+                    // Should detect overflow
+                    CHECK(handler.overflow_detected == true);
+                    CHECK(result == false);
+                }
+
+                // Test with DOM parser (should throw)
+                {
+                    json _;
+                    CHECK_THROWS_AS(_ = json::from_bjdata(bjdata_payload), json::out_of_range);
+                }
+
+                // Test with normal dimensions
+                const std::vector<uint8_t> normal_payload =
+                {
+                    0x5B,                                           // '[' start array
+                    0x24, 0x55,                                     // '$', 'U' (type uint8)
+                    0x23, 0x5B,                                     // '#', '[' (dimensions array)
+                    0x55, 0x02,                                     // 'U', 2 (uint8)
+                    0x55, 0x03,                                     // 'U', 3 (uint8)
+                    0x5D,                                           // ']' end dimensions
+                    // 6 data bytes for a 2×3 array (enough to avoid EOF but not entire array)
+                    0x01, 0x02, 0x03, 0x04, 0x05, 0x06
+                };
+
+                // For normal dimensions, overflow should not be detected
+                {
+                    SimpleOverflowSaxHandler handler;
+                    const auto result = json::sax_parse(normal_payload, &handler,
+                                                        nlohmann::detail::input_format_t::bjdata, false);
+
+                    CHECK(handler.overflow_detected == false);
+                    CHECK(result == true);
+                }
+            }
+
             SECTION("do not accept NTFZ markers in ndarray optimized type (with count)")
             {
                 json _;
