@@ -60,12 +60,12 @@ TEST_CASE("Custom container member begin/end")
     {
         const char* data;
 
-        const char* begin() const
+        const char* begin() const noexcept
         {
             return data;
         }
 
-        const char* end() const
+        const char* end() const noexcept
         {
             return data + strlen(data); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         }
