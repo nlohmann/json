@@ -1913,7 +1913,7 @@ TEST_CASE("MessagePack with std::byte")
 
         SECTION("empty vector")
         {
-            std::vector<std::byte> empty_data;
+            const std::vector<std::byte> empty_data;
             CHECK_THROWS_WITH_AS(json::from_msgpack(empty_data),
                                  "[json.exception.parse_error.110] parse error at byte 1: syntax error while parsing MessagePack value: unexpected end of input",
                                  json::parse_error&);
@@ -1943,8 +1943,8 @@ TEST_CASE("MessagePack with std::byte")
             json direct_result = json::from_msgpack(msgpack_data);
 
             // Test the workaround approach: reinterpret as unsigned char* and use iterator range
-            auto const char_start = reinterpret_cast<unsigned char const*>(msgpack_data.data());
-            auto const char_end = char_start + msgpack_data.size();
+            const auto *const char_start = reinterpret_cast<unsigned char const*>(msgpack_data.data());
+            const auto *const char_end = char_start + msgpack_data.size();
             json workaround_result = json::from_msgpack(char_start, char_end);
 
             // Verify that the final deserialized JSON matches the original JSON
