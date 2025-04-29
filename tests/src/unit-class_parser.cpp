@@ -117,15 +117,28 @@ class SaxEventLogger
         return true;
     }
 
-    bool parse_error(std::size_t position, const std::string& /*unused*/, const json::exception& /*unused*/)
+    bool parse_error(std::size_t position, const std::string& msg, const json::exception& exception)
     {
         errored = true;
-        events.push_back("parse_error(" + std::to_string(position) + ")");
-        return false;
+        events.push_back("parse_error(position=" + std::to_string(position) + ", token=<" + msg + ">, exception=" + exception.what() + ")");
+        return return_value_for_parse_error;
     }
 
     std::vector<std::string> events {}; // NOLINT(readability-redundant-member-init)
     bool errored = false;
+    const bool return_value_for_parse_error = false;
+    std::string event_string()
+    {
+        return std::accumulate(events.begin(), events.end(), std::string(),
+                               [](const std::string & a, const std::string & b)
+        {
+            return a.empty() ? b : a + '\n' + b;
+        });
+    }
+
+    explicit SaxEventLogger(bool continue_after_parse_error)
+        : return_value_for_parse_error(continue_after_parse_error)
+    {}
 };
 
 class SaxCountdown : public nlohmann::json::json_sax_t
@@ -244,7 +257,7 @@ bool accept_helper(const std::string& s)
     CHECK(ok_noexcept == ok_accept);
 
     // 4. parse with SAX (compare with relaxed accept result)
-    SaxEventLogger el;
+    SaxEventLogger el(false);
     CHECK_NOTHROW(json::sax_parse(s, &el, json::input_format_t::json, false));
     CHECK(json::parser(nlohmann::detail::input_adapter(s)).accept(false) == !el.errored);
 
@@ -1678,6 +1691,23 @@ TEST_CASE("parser class")
             {
                 SaxCountdown s(0);
                 CHECK(json::sax_parse("\"foo\"", &s) == false);
+            }
+        }
+
+        SECTION("SAX parser continuing after parse error")
+        {
+            SaxEventLogger sax(true);
+
+            SECTION("Foo")
+            {
+                CHECK(json::sax_parse("[{1}, \"a\"]", &sax));
+                CHECK(sax.event_string() == "start_array()\n"
+                      "start_object()\n"
+                      "parse_error(position=3, token=<1>, exception=[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing object key - unexpected number literal; expected string literal)\n"
+                      "key(1)\n"
+                      "parse_error(position=4, token=<1}>, exception=[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing object separator - unexpected '}'; expected ':')\n"
+                      "parse_error(position=5, token=<1},>, exception=[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - unexpected ','; expected '[', '{', or a literal)\n"
+                      "parse_error(position=9, token=<\"a\">, exception=[json.exception.parse_error.101] parse error at line 1, column 9: syntax error while parsing value - unexpected string literal; expected end of input)");
             }
         }
     }
