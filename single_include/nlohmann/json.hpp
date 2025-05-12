@@ -17606,7 +17606,8 @@ class binary_writer
     static CharType to_char_type(std::uint8_t x) noexcept
     {
         static_assert(sizeof(std::uint8_t) == sizeof(CharType), "size of CharType must be equal to std::uint8_t");
-        static_assert(std::is_trivial<CharType>::value, "CharType must be trivial");
+        static_assert(std::is_trivially_copyable<CharType>::value, "CharType must be trivially copyable");
+        static_assert(std::is_trivially_default_constructible<CharType>::value, "CharType must be trivially default constructible");
         CharType result;
         std::memcpy(&result, &x, sizeof(x));
         return result;
