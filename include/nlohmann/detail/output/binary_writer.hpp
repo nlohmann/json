@@ -1813,9 +1813,18 @@ class binary_writer
                enable_if_t < std::is_signed<C>::value && std::is_unsigned<char>::value > * = nullptr >
     static CharType to_char_type(std::uint8_t x) noexcept
     {
-        static_assert(sizeof(std::uint8_t) == sizeof(CharType), "size of CharType must be equal to std::uint8_t");
+        // Workaround missing "is_trivially_copyable" &&
+        // "is_trivially_default_constructible" in g++ < 5.0.
+        // Fallback to "is_trivial" check.
+        // See <https://github.com/nlohmann/json/issues/4778>.
+#if __GNUG__ && __GNUC__ < 5
+        static_assert(std::is_trivial<CharType>::value, "CharType must be trivial");
+#else
         static_assert(std::is_trivially_copyable<CharType>::value, "CharType must be trivially copyable");
         static_assert(std::is_trivially_default_constructible<CharType>::value, "CharType must be trivially default constructible");
+#endif
+
+        static_assert(sizeof(std::uint8_t) == sizeof(CharType), "size of CharType must be equal to std::uint8_t");
         CharType result;
         std::memcpy(&result, &x, sizeof(x));
         return result;
