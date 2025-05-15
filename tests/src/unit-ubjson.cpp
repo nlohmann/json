@@ -2515,7 +2515,7 @@ TEST_CASE("UBJSON roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": uint8_t* and size");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                const json j1 = json::parse(f_json);
 
                 // parse UBJSON file
                 auto const packed = utils::read_binary_file(filename + ".ubjson");

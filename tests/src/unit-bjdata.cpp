@@ -1226,21 +1226,21 @@ TEST_CASE("BJData")
                     SECTION("0 (0 00000 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0x00}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == 0.0);
                     }
 
                     SECTION("-0 (1 00000 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0x80}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == -0.0);
                     }
 
                     SECTION("2**-24 (0 00000 0000000001)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x01, 0x00}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == std::pow(2.0, -24.0));
                     }
                 }
@@ -1250,7 +1250,7 @@ TEST_CASE("BJData")
                     SECTION("infinity (0 11111 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0x7c}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == std::numeric_limits<json::number_float_t>::infinity());
                         CHECK(j.dump() == "null");
                     }
@@ -1258,7 +1258,7 @@ TEST_CASE("BJData")
                     SECTION("-infinity (1 11111 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0xfc}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == -std::numeric_limits<json::number_float_t>::infinity());
                         CHECK(j.dump() == "null");
                     }
@@ -1269,21 +1269,21 @@ TEST_CASE("BJData")
                     SECTION("1 (0 01111 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0x3c}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == 1);
                     }
 
                     SECTION("-2 (1 10000 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0xc0}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == -2);
                     }
 
                     SECTION("65504 (0 11110 1111111111)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0xff, 0x7b}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == 65504);
                     }
                 }
@@ -3789,7 +3789,7 @@ TEST_CASE("BJData roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": std::vector<uint8_t>");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                const json j1 = json::parse(f_json);
 
                 // parse BJData file
                 auto packed = utils::read_binary_file(filename + ".bjdata");
@@ -3804,7 +3804,7 @@ TEST_CASE("BJData roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": std::ifstream");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                const json j1 = json::parse(f_json);
 
                 // parse BJData file
                 std::ifstream f_bjdata(filename + ".bjdata", std::ios::binary);

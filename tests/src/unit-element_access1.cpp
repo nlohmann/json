@@ -16,7 +16,7 @@ TEST_CASE("element access 1")
     SECTION("array")
     {
         json j = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
-        const json j_const = j;
+        const json j_const = j; // NOLINT(performance-unnecessary-copy-initialization)
 
         SECTION("access specified element with bounds checking")
         {
@@ -289,13 +289,13 @@ TEST_CASE("element access 1")
                 {
                     {
                         json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
-                        json::iterator it2 = jarray.erase(jarray.begin(), jarray.end());
+                        const json::iterator it2 = jarray.erase(jarray.begin(), jarray.end());
                         CHECK(jarray == json::array());
                         CHECK(it2 == jarray.end());
                     }
                     {
                         json jarray = {1, 1u, true, nullptr, "string", 42.23, json::object(), {1, 2, 3}};
-                        json::const_iterator it2 = jarray.erase(jarray.cbegin(), jarray.cend());
+                        const json::const_iterator it2 = jarray.erase(jarray.cbegin(), jarray.cend());
                         CHECK(jarray == json::array());
                         CHECK(it2 == jarray.cend());
                     }
@@ -537,13 +537,13 @@ TEST_CASE("element access 1")
             {
                 {
                     json j = "foo";
-                    json::iterator it = j.erase(j.begin());
+                    const json::iterator it = j.erase(j.begin());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
                 {
                     json j = "bar";
-                    json::const_iterator it = j.erase(j.cbegin());
+                    const json::const_iterator it = j.erase(j.cbegin());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
@@ -553,13 +553,13 @@ TEST_CASE("element access 1")
             {
                 {
                     json j = false;
-                    json::iterator it = j.erase(j.begin());
+                    const json::iterator it = j.erase(j.begin());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
                 {
                     json j = true;
-                    json::const_iterator it = j.erase(j.cbegin());
+                    const json::const_iterator it = j.erase(j.cbegin());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
@@ -569,13 +569,13 @@ TEST_CASE("element access 1")
             {
                 {
                     json j = 17;
-                    json::iterator it = j.erase(j.begin());
+                    const json::iterator it = j.erase(j.begin());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
                 {
                     json j = 17;
-                    json::const_iterator it = j.erase(j.cbegin());
+                    const json::const_iterator it = j.erase(j.cbegin());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
@@ -585,13 +585,13 @@ TEST_CASE("element access 1")
             {
                 {
                     json j = 17u;
-                    json::iterator it = j.erase(j.begin());
+                    const json::iterator it = j.erase(j.begin());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
                 {
                     json j = 17u;
-                    json::const_iterator it = j.erase(j.cbegin());
+                    const json::const_iterator it = j.erase(j.cbegin());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
@@ -601,13 +601,13 @@ TEST_CASE("element access 1")
             {
                 {
                     json j = 23.42;
-                    json::iterator it = j.erase(j.begin());
+                    const json::iterator it = j.erase(j.begin());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
                 {
                     json j = 23.42;
-                    json::const_iterator it = j.erase(j.cbegin());
+                    const json::const_iterator it = j.erase(j.cbegin());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
@@ -617,13 +617,13 @@ TEST_CASE("element access 1")
             {
                 {
                     json j = json::binary({1, 2, 3});
-                    json::iterator it = j.erase(j.begin());
+                    const json::iterator it = j.erase(j.begin());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
                 {
                     json j = json::binary({1, 2, 3});
-                    json::const_iterator it = j.erase(j.cbegin());
+                    const json::const_iterator it = j.erase(j.cbegin());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
@@ -711,13 +711,13 @@ TEST_CASE("element access 1")
             {
                 {
                     json j = "foo";
-                    json::iterator it = j.erase(j.begin(), j.end());
+                    const json::iterator it = j.erase(j.begin(), j.end());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
                 {
                     json j = "bar";
-                    json::const_iterator it = j.erase(j.cbegin(), j.cend());
+                    const json::const_iterator it = j.erase(j.cbegin(), j.cend());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
@@ -727,13 +727,13 @@ TEST_CASE("element access 1")
             {
                 {
                     json j = false;
-                    json::iterator it = j.erase(j.begin(), j.end());
+                    const json::iterator it = j.erase(j.begin(), j.end());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
                 {
                     json j = true;
-                    json::const_iterator it = j.erase(j.cbegin(), j.cend());
+                    const json::const_iterator it = j.erase(j.cbegin(), j.cend());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
@@ -743,13 +743,13 @@ TEST_CASE("element access 1")
             {
                 {
                     json j = 17;
-                    json::iterator it = j.erase(j.begin(), j.end());
+                    const json::iterator it = j.erase(j.begin(), j.end());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
                 {
                     json j = 17;
-                    json::const_iterator it = j.erase(j.cbegin(), j.cend());
+                    const json::const_iterator it = j.erase(j.cbegin(), j.cend());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
@@ -759,13 +759,13 @@ TEST_CASE("element access 1")
             {
                 {
                     json j = 17u;
-                    json::iterator it = j.erase(j.begin(), j.end());
+                    const json::iterator it = j.erase(j.begin(), j.end());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
                 {
                     json j = 17u;
-                    json::const_iterator it = j.erase(j.cbegin(), j.cend());
+                    const json::const_iterator it = j.erase(j.cbegin(), j.cend());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
@@ -775,13 +775,13 @@ TEST_CASE("element access 1")
             {
                 {
                     json j = 23.42;
-                    json::iterator it = j.erase(j.begin(), j.end());
+                    const json::iterator it = j.erase(j.begin(), j.end());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
                 {
                     json j = 23.42;
-                    json::const_iterator it = j.erase(j.cbegin(), j.cend());
+                    const json::const_iterator it = j.erase(j.cbegin(), j.cend());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
@@ -791,13 +791,13 @@ TEST_CASE("element access 1")
             {
                 {
                     json j = json::binary({1, 2, 3});
-                    json::iterator it = j.erase(j.begin(), j.end());
+                    const json::iterator it = j.erase(j.begin(), j.end());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }
                 {
                     json j = json::binary({1, 2, 3});
-                    json::const_iterator it = j.erase(j.cbegin(), j.cend());
+                    const json::const_iterator it = j.erase(j.cbegin(), j.cend());
                     CHECK(j.type() == json::value_t::null);
                     CHECK(it == j.end());
                 }

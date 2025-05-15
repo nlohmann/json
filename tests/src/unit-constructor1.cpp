@@ -779,7 +779,7 @@ TEST_CASE("constructors")
 
         SECTION("integer literal with u suffix")
         {
-            json j(42u);
+            const json j(42u);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -793,7 +793,7 @@ TEST_CASE("constructors")
 
         SECTION("integer literal with ul suffix")
         {
-            json j(42ul);
+            const json j(42ul);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -807,7 +807,7 @@ TEST_CASE("constructors")
 
         SECTION("integer literal with ull suffix")
         {
-            json j(42ull);
+            const json j(42ull);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -1362,7 +1362,7 @@ TEST_CASE("constructors")
             {
                 {
                     json jarray = {1, 2, 3, 4, 5};
-                    json j_new(jarray.begin(), jarray.begin());
+                    const json j_new(jarray.begin(), jarray.begin());
                     CHECK(j_new == json::array());
                 }
                 {

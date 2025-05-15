@@ -136,7 +136,7 @@ TEST_CASE("README" * doctest::skip())
             j.push_back(true);
 
             // comparison
-            bool x = (j == R"(["foo", 1, true])"_json);  // true
+            const bool x = (j == R"(["foo", 1, true])"_json);  // true
             CHECK(x == true);
 
             // iterate the array
@@ -154,7 +154,7 @@ TEST_CASE("README" * doctest::skip())
             // getter/setter
             const auto tmp = j[0].get<std::string>(); // NOLINT(bugprone-unused-local-non-trivial-variable)
             j[1] = 42;
-            bool foo{j.at(2)};
+            const bool foo{j.at(2)};
             CHECK(foo == true);
 
             // other stuff
@@ -242,21 +242,21 @@ TEST_CASE("README" * doctest::skip())
             // Booleans
             bool const b1 = true;
             json const jb = b1;
-            bool b2{jb};
+            const bool b2{jb};
             CHECK(b2 == true);
 
             // numbers
             int const i = 42;
             json const jn = i;
-            double f{jn};
+            const double f{jn};
             CHECK(f == 42);
 
             // etc.
 
             std::string const vs = js.get<std::string>(); // NOLINT(bugprone-unused-local-non-trivial-variable)
-            bool vb = jb.get<bool>();
+            const bool vb = jb.get<bool>();
             CHECK(vb == true);
-            int vi = jn.get<int>();
+            const int vi = jn.get<int>();
             CHECK(vi == 42);
 
             // etc.

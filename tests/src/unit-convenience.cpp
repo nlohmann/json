@@ -179,9 +179,9 @@ TEST_CASE("convenience functions")
 
         SECTION("std::string")
         {
-            std::string str1 = concat(hello_iter, world, '!');
-            std::string str2 = concat(hello_data, world, '!');
-            std::string str3 = concat("Hello, ", world, '!');
+            const std::string str1 = concat(hello_iter, world, '!');
+            const std::string str2 = concat(hello_data, world, '!');
+            const std::string str3 = concat("Hello, ", world, '!');
 
             CHECK(str1 == expected);
             CHECK(str2 == expected);
@@ -190,14 +190,14 @@ TEST_CASE("convenience functions")
 
         SECTION("alt_string_iter")
         {
-            alt_string_iter str = concat<alt_string_iter>(hello_iter, world, '!');
+            const alt_string_iter str = concat<alt_string_iter>(hello_iter, world, '!');
 
             CHECK(str.impl == expected);
         }
 
         SECTION("alt_string_data")
         {
-            alt_string_data str = concat<alt_string_data>(hello_data, world, '!');
+            const alt_string_data str = concat<alt_string_data>(hello_data, world, '!');
 
             CHECK(str.impl == expected);
         }

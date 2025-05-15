@@ -340,7 +340,7 @@ TEST_CASE("formatting")
         {
             std::array<char, 33> buf{};
             char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, number); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-            std::string actual(buf.data(), end);
+            const std::string actual(buf.data(), end);
 
             CHECK(actual == expected);
         };
@@ -400,7 +400,7 @@ TEST_CASE("formatting")
         {
             std::array<char, 33> buf{};
             char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, number); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-            std::string actual(buf.data(), end);
+            const std::string actual(buf.data(), end);
 
             CHECK(actual == expected);
         };

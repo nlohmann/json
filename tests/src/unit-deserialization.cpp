@@ -227,7 +227,7 @@ TEST_CASE("deserialization")
             ss1 << R"(["foo",1,2,3,false,{"one":1}])";
             ss2 << R"(["foo",1,2,3,false,{"one":1}])";
             ss3 << R"(["foo",1,2,3,false,{"one":1}])";
-            json j = json::parse(ss1);
+            const json j = json::parse(ss1);
             CHECK(json::accept(ss2));
             CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
 
@@ -246,7 +246,7 @@ TEST_CASE("deserialization")
         SECTION("string literal")
         {
             const auto* s = R"(["foo",1,2,3,false,{"one":1}])";
-            json j = json::parse(s);
+            const json j = json::parse(s);
             CHECK(json::accept(s));
             CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
 
@@ -265,7 +265,7 @@ TEST_CASE("deserialization")
         SECTION("string_t")
         {
             json::string_t const s = R"(["foo",1,2,3,false,{"one":1}])";
-            json j = json::parse(s);
+            const json j = json::parse(s);
             CHECK(json::accept(s));
             CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
 

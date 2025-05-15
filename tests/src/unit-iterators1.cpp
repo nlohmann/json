@@ -18,10 +18,10 @@ TEST_CASE("iterators 1")
     {
         SECTION("uninitialized")
         {
-            json::iterator it;
+            json::iterator it; // NOLINT(misc-const-correctness)
             CHECK(it.m_object == nullptr);
 
-            json::const_iterator cit;
+            json::const_iterator cit; // NOLINT(misc-const-correctness)
             CHECK(cit.m_object == nullptr);
         }
 
@@ -1498,46 +1498,46 @@ TEST_CASE("iterators 1")
 
             SECTION("json + begin/end")
             {
-                json::iterator it = j.begin();
+                const json::iterator it = j.begin();
                 CHECK(it == j.end());
             }
 
             SECTION("const json + begin/end")
             {
-                json::const_iterator it_begin = j_const.begin();
+                const json::const_iterator it_begin = j_const.begin();
                 json::const_iterator it_end = j_const.end();
                 CHECK(it_begin == it_end);
             }
 
             SECTION("json + cbegin/cend")
             {
-                json::const_iterator it_begin = j.cbegin();
+                const json::const_iterator it_begin = j.cbegin();
                 json::const_iterator it_end = j.cend();
                 CHECK(it_begin == it_end);
             }
 
             SECTION("const json + cbegin/cend")
             {
-                json::const_iterator it_begin = j_const.cbegin();
+                const json::const_iterator it_begin = j_const.cbegin();
                 json::const_iterator it_end = j_const.cend();
                 CHECK(it_begin == it_end);
             }
 
             SECTION("json + rbegin/rend")
             {
-                json::reverse_iterator it = j.rbegin();
+                const json::reverse_iterator it = j.rbegin();
                 CHECK(it == j.rend());
             }
 
             SECTION("json + crbegin/crend")
             {
-                json::const_reverse_iterator it = j.crbegin();
+                const json::const_reverse_iterator it = j.crbegin();
                 CHECK(it == j.crend());
             }
 
             SECTION("const json + crbegin/crend")
             {
-                json::const_reverse_iterator it = j_const.crbegin();
+                const json::const_reverse_iterator it = j_const.crbegin();
                 CHECK(it == j_const.crend());
             }
 

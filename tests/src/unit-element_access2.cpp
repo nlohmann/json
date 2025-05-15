@@ -847,13 +847,13 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                 {
                     {
                         Json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
-                        typename Json::iterator it2 = jobject.erase(jobject.begin(), jobject.end());
+                        const typename Json::iterator it2 = jobject.erase(jobject.begin(), jobject.end());
                         CHECK(jobject == Json::object());
                         CHECK(it2 == jobject.end());
                     }
                     {
                         Json jobject = {{"a", "a"}, {"b", 1}, {"c", 17u}};
-                        typename Json::const_iterator it2 = jobject.erase(jobject.cbegin(), jobject.cend());
+                        const typename Json::const_iterator it2 = jobject.erase(jobject.cbegin(), jobject.cend());
                         CHECK(jobject == Json::object());
                         CHECK(it2 == jobject.cend());
                     }

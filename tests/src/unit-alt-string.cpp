@@ -207,49 +207,49 @@ TEST_CASE("alternative string type")
         {
             alt_json doc;
             doc["pi"] = 3.141;
-            alt_string dump = doc.dump();
+            const alt_string dump = doc.dump();
             CHECK(dump == R"({"pi":3.141})");
         }
 
         {
             alt_json doc;
             doc["happy"] = true;
-            alt_string dump = doc.dump();
+            const alt_string dump = doc.dump();
             CHECK(dump == R"({"happy":true})");
         }
 
         {
             alt_json doc;
             doc["name"] = "I'm Batman";
-            alt_string dump = doc.dump();
+            const alt_string dump = doc.dump();
             CHECK(dump == R"({"name":"I'm Batman"})");
         }
 
         {
             alt_json doc;
             doc["nothing"] = nullptr;
-            alt_string dump = doc.dump();
+            const alt_string dump = doc.dump();
             CHECK(dump == R"({"nothing":null})");
         }
 
         {
             alt_json doc;
             doc["answer"]["everything"] = 42;
-            alt_string dump = doc.dump();
+            const alt_string dump = doc.dump();
             CHECK(dump == R"({"answer":{"everything":42}})");
         }
 
         {
             alt_json doc;
             doc["list"] = { 1, 0, 2 };
-            alt_string dump = doc.dump();
+            const alt_string dump = doc.dump();
             CHECK(dump == R"({"list":[1,0,2]})");
         }
 
         {
             alt_json doc;
             doc["object"] = { {"currency", "USD"}, {"value", 42.99} };
-            alt_string dump = doc.dump();
+            const alt_string dump = doc.dump();
             CHECK(dump == R"({"object":{"currency":"USD","value":42.99}})");
         }
     }
@@ -257,7 +257,7 @@ TEST_CASE("alternative string type")
     SECTION("parse")
     {
         auto doc = alt_json::parse(R"({"foo": "bar"})");
-        alt_string dump = doc.dump();
+        const alt_string dump = doc.dump();
         CHECK(dump == R"({"foo":"bar"})");
     }
 

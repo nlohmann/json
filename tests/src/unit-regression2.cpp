@@ -549,7 +549,7 @@ TEST_CASE("regression tests 2")
             {"3", {{"a", "testa_3"}, {"b", "testb_3"}}},
         };
 
-        std::map<std::string, Data> expected
+        const std::map<std::string, Data> expected
         {
             {"1", {"testa_1", "testb_1"}},
             {"2", {"testa_2", "testb_2"}},
@@ -642,7 +642,7 @@ TEST_CASE("regression tests 2")
 #if !(defined(__INTEL_COMPILER) && __cplusplus >= 202000)
         {
             const json j;
-            NonDefaultFromJsonStruct x(j);
+            const NonDefaultFromJsonStruct x(j);
             NonDefaultFromJsonStruct y;
             CHECK(x == y);
         }
@@ -920,7 +920,7 @@ TEST_CASE("regression tests 2")
     SECTION("issue #2982 - to_{binary format} does not provide a mechanism for specifying a custom allocator for the returned type")
     {
         std::vector<std::uint8_t, my_allocator<std::uint8_t>> my_vector;
-        json j = {1, 2, 3, 4};
+        const json j = {1, 2, 3, 4};
         json::to_cbor(j, my_vector);
         json k = json::from_cbor(my_vector);
         CHECK(j == k);
@@ -1019,8 +1019,8 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #3204 - ambiguous regression")
     {
-        for_3204_bar bar_from_foo([](for_3204_foo) noexcept {}); // NOLINT(performance-unnecessary-value-param)
-        for_3204_bar bar_from_json([](json) noexcept {}); // NOLINT(performance-unnecessary-value-param)
+        const for_3204_bar bar_from_foo([](for_3204_foo) noexcept {}); // NOLINT(performance-unnecessary-value-param)
+        const for_3204_bar bar_from_json([](json) noexcept {}); // NOLINT(performance-unnecessary-value-param)
 
         CHECK(bar_from_foo.constructed_from == for_3204_bar::constructed_from_foo);
         CHECK(bar_from_json.constructed_from == for_3204_bar::constructed_from_json);
@@ -1033,7 +1033,7 @@ TEST_CASE("regression tests 2")
             {"x", 1},
             {"y", 2}
         };
-        for_3333 p = j;
+        const for_3333 p = j;
 
         CHECK(p.x == 1);
         CHECK(p.y == 2);

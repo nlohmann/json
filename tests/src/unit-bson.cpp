@@ -565,10 +565,10 @@ TEST_CASE("BSON")
         SECTION("Example 1")
         {
             std::vector<std::uint8_t> input = {0x16, 0x00, 0x00, 0x00, 0x02, 'h', 'e', 'l', 'l', 'o', 0x00, 0x06, 0x00, 0x00, 0x00, 'w', 'o', 'r', 'l', 'd', 0x00, 0x00};
-            json parsed = json::from_bson(input);
-            json expected = {{"hello", "world"}};
+            const json parsed = json::from_bson(input);
+            const json expected = {{"hello", "world"}};
             CHECK(parsed == expected);
-            auto dumped = json::to_bson(parsed);
+            const auto dumped = json::to_bson(parsed);
             CHECK(dumped == input);
             CHECK(json::from_bson(dumped) == expected);
         }
@@ -576,10 +576,10 @@ TEST_CASE("BSON")
         SECTION("Example 2")
         {
             std::vector<std::uint8_t> input = {0x31, 0x00, 0x00, 0x00, 0x04, 'B', 'S', 'O', 'N', 0x00, 0x26, 0x00, 0x00, 0x00, 0x02, 0x30, 0x00, 0x08, 0x00, 0x00, 0x00, 'a', 'w', 'e', 's', 'o', 'm', 'e', 0x00, 0x01, 0x31, 0x00, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x14, 0x40, 0x10, 0x32, 0x00, 0xc2, 0x07, 0x00, 0x00, 0x00, 0x00};
-            json parsed = json::from_bson(input);
-            json expected = {{"BSON", {"awesome", 5.05, 1986}}};
+            const json parsed = json::from_bson(input);
+            const json expected = {{"BSON", {"awesome", 5.05, 1986}}};
             CHECK(parsed == expected);
-            auto dumped = json::to_bson(parsed);
+            const auto dumped = json::to_bson(parsed);
             CHECK(dumped == input);
             CHECK(json::from_bson(dumped) == expected);
         }
@@ -588,7 +588,7 @@ TEST_CASE("BSON")
 
 TEST_CASE("BSON input/output_adapters")
 {
-    json json_representation =
+    const json json_representation =
     {
         {"double", 42.5},
         {"entry", 4.2},
@@ -596,7 +596,7 @@ TEST_CASE("BSON input/output_adapters")
         {"object", {{ "string", "value" }}}
     };
 
-    std::vector<std::uint8_t> const bson_representation =
+    const std::vector<std::uint8_t> bson_representation =
     {
         /*size */ 0x4f, 0x00, 0x00, 0x00,
         /*entry*/ 0x01, 'd',  'o',  'u',  'b',  'l',  'e',  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x45, 0x40,
@@ -621,7 +621,7 @@ TEST_CASE("BSON input/output_adapters")
         {
             std::basic_ostringstream<char> ss;
             json::to_bson(json_representation, ss);
-            json j3 = json::from_bson(ss.str());
+            const json j3 = json::from_bson(ss.str());
             CHECK(json_representation == j3);
         }
 
@@ -629,7 +629,7 @@ TEST_CASE("BSON input/output_adapters")
         {
             std::string s;
             json::to_bson(json_representation, s);
-            json j3 = json::from_bson(s);
+            const json j3 = json::from_bson(s);
             CHECK(json_representation == j3);
         }
 
@@ -637,7 +637,7 @@ TEST_CASE("BSON input/output_adapters")
         {
             std::vector<std::uint8_t> v;
             json::to_bson(json_representation, v);
-            json j3 = json::from_bson(v);
+            const json j3 = json::from_bson(v);
             CHECK(json_representation == j3);
         }
     }
@@ -1227,7 +1227,7 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": std::vector<std::uint8_t>");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                const json j1 = json::parse(f_json);
 
                 // parse BSON file
                 auto packed = utils::read_binary_file(filename + ".bson");
@@ -1242,7 +1242,7 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": std::ifstream");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                const json j1 = json::parse(f_json);
 
                 // parse BSON file
                 std::ifstream f_bson(filename + ".bson", std::ios::binary);
@@ -1257,7 +1257,7 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": uint8_t* and size");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                const json j1 = json::parse(f_json);
 
                 // parse BSON file
                 auto packed = utils::read_binary_file(filename + ".bson");

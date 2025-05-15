@@ -24,9 +24,9 @@ TEST_CASE("JSON patch")
         SECTION("4. Operations")
         {
             // the ordering of members in JSON objects is not significant:
-            json op1 = R"({ "op": "add", "path": "/a/b/c", "value": "foo" })"_json;
-            json op2 = R"({ "path": "/a/b/c", "op": "add", "value": "foo" })"_json;
-            json op3 = R"({ "value": "foo", "path": "/a/b/c", "op": "add" })"_json;
+            const json op1 = R"({ "op": "add", "path": "/a/b/c", "value": "foo" })"_json;
+            const json op2 = R"({ "path": "/a/b/c", "op": "add", "value": "foo" })"_json;
+            const json op3 = R"({ "value": "foo", "path": "/a/b/c", "op": "add" })"_json;
 
             // check if the operation objects are equivalent
             CHECK(op1 == op2);
@@ -642,12 +642,12 @@ TEST_CASE("JSON patch")
                     )"_json;
 
                 // apply the patch
-                json target = source.patch(p1);
+                const json target = source.patch(p1);
                 // target = { "D": "Berlin", "F": "Paris", "GB": "London" }
                 CHECK(target == R"({ "D": "Berlin", "F": "Paris", "GB": "London" })"_json);
 
                 // create a diff from two JSONs
-                json p2 = json::diff(target, source); // NOLINT(readability-suspicious-call-argument)
+                const json p2 = json::diff(target, source); // NOLINT(readability-suspicious-call-argument)
                 // p2 = [{"op": "delete", "path": "/GB"}]
                 CHECK(p2 == R"([{"op":"remove","path":"/GB"}])"_json);
             }
@@ -666,7 +666,7 @@ TEST_CASE("JSON patch")
                 j["/2/en"_json_pointer] = "ugly";
                 CHECK(j == R"(["good","bad",{"en":"ugly","it":"cattivo"}])"_json);
 
-                json flat = j.flatten();
+                const json flat = j.flatten();
                 CHECK(flat == R"({"/0":"good","/1":"bad","/2/en":"ugly","/2/it":"cattivo"})"_json);
             }
         }

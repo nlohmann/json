@@ -19,7 +19,7 @@ TEST_CASE("pointer access")
         json value = {{"one", 1}, {"two", 2}};
 
         // check if pointers are returned correctly
-        test_type* p1 = value.get_ptr<test_type*>();
+        const test_type* p1 = value.get_ptr<test_type*>();
         CHECK(p1 == value.get_ptr<test_type*>());
         CHECK(*p1 == value.get<test_type>());
 
@@ -77,7 +77,7 @@ TEST_CASE("pointer access")
         json value = {1, 2, 3, 4};
 
         // check if pointers are returned correctly
-        test_type* p1 = value.get_ptr<test_type*>();
+        const test_type* p1 = value.get_ptr<test_type*>();
         CHECK(p1 == value.get_ptr<test_type*>());
         CHECK(*p1 == value.get<test_type>());
 
@@ -135,7 +135,7 @@ TEST_CASE("pointer access")
         json value = "hello";
 
         // check if pointers are returned correctly
-        test_type* p1 = value.get_ptr<test_type*>();
+        const test_type* p1 = value.get_ptr<test_type*>();
         CHECK(p1 == value.get_ptr<test_type*>());
         CHECK(*p1 == value.get<test_type>());
 
@@ -193,7 +193,7 @@ TEST_CASE("pointer access")
         json value = false;
 
         // check if pointers are returned correctly
-        test_type* p1 = value.get_ptr<test_type*>();
+        const test_type* p1 = value.get_ptr<test_type*>();
         CHECK(p1 == value.get_ptr<test_type*>());
         CHECK(*p1 == value.get<test_type>());
 
@@ -251,7 +251,7 @@ TEST_CASE("pointer access")
         json value = 23;
 
         // check if pointers are returned correctly
-        test_type* p1 = value.get_ptr<test_type*>();
+        const test_type* p1 = value.get_ptr<test_type*>();
         CHECK(p1 == value.get_ptr<test_type*>());
         CHECK(*p1 == value.get<test_type>());
 
@@ -309,7 +309,7 @@ TEST_CASE("pointer access")
         json value = 23u;
 
         // check if pointers are returned correctly
-        test_type* p1 = value.get_ptr<test_type*>();
+        const test_type* p1 = value.get_ptr<test_type*>();
         CHECK(p1 == value.get_ptr<test_type*>());
         CHECK(*p1 == value.get<test_type>());
 
@@ -367,7 +367,7 @@ TEST_CASE("pointer access")
         json value = 42.23;
 
         // check if pointers are returned correctly
-        test_type* p1 = value.get_ptr<test_type*>();
+        const test_type* p1 = value.get_ptr<test_type*>();
         CHECK(p1 == value.get_ptr<test_type*>());
         CHECK(*p1 == Approx(value.get<test_type>()));
 
