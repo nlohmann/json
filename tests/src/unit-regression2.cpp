@@ -1080,6 +1080,16 @@ TEST_CASE("regression tests 2")
         CHECK(t4.port.has_value());
     }
 #endif
+
+    SECTION("issue #4762 - json exception 302 with unhelpful explanation : type must be number, but is number")
+    {
+        // In #4762, the main issue was that a json object with an invalid type
+        // returned "number" as type_name(), because this was the default case.
+        // This test makes sure we now return "invalid" instead.
+        json j;
+        j.m_data.m_type = static_cast<json::value_t>(100);
+        CHECK(j.type_name() == "invalid");
+    }
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP

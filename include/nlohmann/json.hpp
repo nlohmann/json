@@ -563,7 +563,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 (t == value_t::binary && binary == nullptr)
             )
             {
-                //not initialized (e.g., due to exception in the ctor)
+                // not initialized (e.g., due to exception in the ctor)
                 return;
             }
             if (t == value_t::array || t == value_t::object)
@@ -4206,8 +4206,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             case value_t::number_integer:
             case value_t::number_unsigned:
             case value_t::number_float:
-            default:
                 return "number";
+            default:
+                return "invalid";
         }
     }
 
