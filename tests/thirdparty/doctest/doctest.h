@@ -3904,7 +3904,7 @@ const char* skipPathFromFilename(const char* file) {
         {
             const auto prefix_start = pos;
             pos = std::min(prefixes.find(separator, prefix_start), prefixes.size());
-            
+
             const auto prefix_size = pos - prefix_start;
             if(prefix_size > longest_match)
             {
