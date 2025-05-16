@@ -1082,6 +1082,8 @@ TEST_CASE("regression tests 2")
 #endif
 
 #if !defined(_MSVC_LANG)
+    // MSVC returns garbage on invalid enum values, so this test is excluded
+    // there.
     SECTION("issue #4762 - json exception 302 with unhelpful explanation : type must be number, but is number")
     {
         // In #4762, the main issue was that a json object with an invalid type
