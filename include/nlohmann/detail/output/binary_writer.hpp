@@ -1813,11 +1813,14 @@ class binary_writer
                enable_if_t < std::is_signed<C>::value && std::is_unsigned<char>::value > * = nullptr >
     static CharType to_char_type(std::uint8_t x) noexcept
     {
-        // Workaround missing "is_trivially_copyable" &&
-        // "is_trivially_default_constructible" in multiple older compiler.
-        // Fallback to "is_trivial" check if C++26 not available.
-        // See <https://github.com/nlohmann/json/issues/4778>.
-#if (__cplusplus > 202302L) || (defined(_MSVC_LANG) && (_MSVC_LANG >= 202302L) && JSON_HEDLEY_MSVC_VERSION_CHECK(19,38,0))
+        // The std::is_trivial trait is deprecated in C++26. The replacement is to use
+        // std::is_trivially_copyable and std::is_trivially_default_constructible.
+        // However, some older library implementations support std::is_trivial
+        // but not all the std::is_trivially_* traits.
+        // Since detecting full support across all libraries is difficult,
+        // we use std::is_trivial unless we are using a standard where it has been deprecated.
+        // For more details, see: https://github.com/nlohmann/json/pull/4775#issuecomment-2884361627
+#ifdef JSON_HAS_CPP_26
         static_assert(std::is_trivially_copyable<CharType>::value, "CharType must be trivially copyable");
         static_assert(std::is_trivially_default_constructible<CharType>::value, "CharType must be trivially default constructible");
 #else

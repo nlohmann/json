@@ -32,8 +32,14 @@
 
 // C++ language standard detection
 // if the user manually specified the used C++ version, this is skipped
-#if !defined(JSON_HAS_CPP_23) && !defined(JSON_HAS_CPP_20) && !defined(JSON_HAS_CPP_17) && !defined(JSON_HAS_CPP_14) && !defined(JSON_HAS_CPP_11)
-    #if (defined(__cplusplus) && __cplusplus > 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG > 202002L)
+#if !defined(JSON_HAS_CPP_26) && !defined(JSON_HAS_CPP_23) && !defined(JSON_HAS_CPP_20) && !defined(JSON_HAS_CPP_17) && !defined(JSON_HAS_CPP_14) && !defined(JSON_HAS_CPP_11)
+    #if (defined(__cplusplus) && __cplusplus > 202302L) || (defined(_MSVC_LANG) && _MSVC_LANG > 202302L)
+        #define JSON_HAS_CPP_26
+        #define JSON_HAS_CPP_23
+        #define JSON_HAS_CPP_20
+        #define JSON_HAS_CPP_17
+        #define JSON_HAS_CPP_14
+    #elif (defined(__cplusplus) && __cplusplus > 202002L) || (defined(_MSVC_LANG) && _MSVC_LANG > 202002L)
         #define JSON_HAS_CPP_23
         #define JSON_HAS_CPP_20
         #define JSON_HAS_CPP_17
