@@ -4128,14 +4128,29 @@ struct is_specialization_of<Primary, Primary<Args...>> : std::true_type {};
 template<typename T>
 using is_json_pointer = is_specialization_of<::nlohmann::json_pointer, uncvref_t<T>>;
 
+// checks if B is a json_pointer<A>
+template <typename A, typename B>
+struct is_json_pointer_of : std::false_type {};
+
+template <typename A>
+struct is_json_pointer_of<A, ::nlohmann::json_pointer<A>> : std::true_type {};
+
+template <typename A>
+struct is_json_pointer_of<A, ::nlohmann::json_pointer<A>&> : std::true_type {};
+
 // checks if A and B are comparable using Compare functor
 template<typename Compare, typename A, typename B, typename = void>
 struct is_comparable : std::false_type {};
 
+// We exclude json_pointer here, because the checks using Compare(A, B) will
+// use json_pointer::operator string_t() which triggers a deprecation warning
+// for GCC. See https://github.com/nlohmann/json/issues/4621. The call to
+// is_json_pointer_of can be removed once the deprecated function has been
+// removed.
 template<typename Compare, typename A, typename B>
-struct is_comparable<Compare, A, B, void_t<
-decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>())),
-decltype(std::declval<Compare>()(std::declval<B>(), std::declval<A>()))
+struct is_comparable < Compare, A, B, enable_if_t < !is_json_pointer_of<A, B>::value
+&& std::is_constructible <decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>()))>::value
+&& std::is_constructible <decltype(std::declval<Compare>()(std::declval<B>(), std::declval<A>()))>::value
 >> : std::true_type {};
 
 template<typename T>
