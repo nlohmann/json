@@ -66,23 +66,19 @@ if(NOT DEFINED LIBCPP_VERSION_OUTPUT_CACHED)
 #include <ciso646>
 #endif
 
-#if defined(_MSC_VER)
-#include <yvals_core.h>
-#endif
-
 int main() {
 #if defined(_LIBCPP_VERSION)
-    std::printf(\"LLVM C++ Standard Library (libc++), _LIBCPP_VERSION=%d\\n\", _LIBCPP_VERSION);
+    std::printf(\"LLVM C++ Standard Library (libc++), _LIBCPP_VERSION=%d\", _LIBCPP_VERSION);
 #elif defined(__GLIBCXX__)
-    std::printf(\"GNU C++ Standard Library (libstdc++), __GLIBCXX__=%d\\n\", __GLIBCXX__);
+    std::printf(\"GNU C++ Standard Library (libstdc++), __GLIBCXX__=%d\", __GLIBCXX__);
 #elif defined(_MSVC_STL_VERSION)
-    std::printf(\"Microsoft C++ Standard Library (MSVC STL), _MSVC_STL_VERSION=%d\\n\", _MSVC_STL_VERSION);
+    std::printf(\"Microsoft C++ Standard Library (MSVC STL), _MSVC_STL_VERSION=%d\", _MSVC_STL_VERSION);
 #elif defined(_LIBCUDACXX_VERSION)
-    std::printf(\"NVIDIA C++ Standard Library (libcudacxx), _LIBCUDACXX_VERSION=%d\\n\", _LIBCUDACXX_VERSION);
+    std::printf(\"NVIDIA C++ Standard Library (libcudacxx), _LIBCUDACXX_VERSION=%d\", _LIBCUDACXX_VERSION);
 #elif defined(EASTL_VERSION)
-    std::printf(\"Electronic Arts Standard Template Library (EASTL), EASTL_VERSION=%d\\n\", EASTL_VERSION);
+    std::printf(\"Electronic Arts Standard Template Library (EASTL), EASTL_VERSION=%d\", EASTL_VERSION);
 #else
-    std::printf(\"unknown\\n\");
+    std::printf(\"unknown\");
 #endif
 }
 ")
@@ -90,10 +86,8 @@ int main() {
     try_run(RUN_RESULT_VAR COMPILE_RESULT_VAR
         "${CMAKE_BINARY_DIR}" "${CMAKE_BINARY_DIR}/check_libcpp_version.cpp"
         RUN_OUTPUT_VARIABLE LIBCPP_VERSION_OUTPUT
-        COMPILE_OUTPUT_VARIABLE LIBCPP_VERSION_COMPILE_OUTPUT
     )
     set(LIBCPP_VERSION_OUTPUT_CACHED "${LIBCPP_VERSION_OUTPUT}" CACHE STRING "Detected C++ standard library version")
-    message(STATUS "LIBCPP_VERSION_COMPILE_OUTPUT=${LIBCPP_VERSION_COMPILE_OUTPUT}")
 endif()
 
 message(STATUS "C++ standard library: ${LIBCPP_VERSION_OUTPUT_CACHED}")
