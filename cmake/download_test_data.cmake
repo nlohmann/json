@@ -66,6 +66,10 @@ if(NOT DEFINED LIBCPP_VERSION_OUTPUT_CACHED)
 #include <ciso646>
 #endif
 
+#if defined(_MSC_VER)
+#include <yvals_core.h>
+#endif
+
 int main() {
 #if defined(_LIBCPP_VERSION)
     std::cout << \"LLVM C++ Standard Library (libc++), _LIBCPP_VERSION=\" << _LIBCPP_VERSION;
@@ -80,6 +84,7 @@ int main() {
 #else
     std::cout << \"unknown\";
 #endif
+    std::cout << std::flush;
 }
 ")
 
