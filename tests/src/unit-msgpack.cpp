@@ -1914,10 +1914,12 @@ TEST_CASE("MessagePack with std::byte")
         SECTION("empty vector")
         {
             const std::vector<std::byte> empty_data;
-            CHECK_THROWS_WITH_AS([&]() {
+            CHECK_THROWS_WITH_AS([&]()
+            {
                 [[maybe_unused]] auto result = json::from_msgpack(empty_data);
                 return true;
-            }(),
+            }
+            (),
             "[json.exception.parse_error.110] parse error at byte 1: syntax error while parsing MessagePack value: unexpected end of input",
             json::parse_error&);
         }

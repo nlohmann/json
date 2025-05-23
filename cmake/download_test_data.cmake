@@ -57,36 +57,14 @@ message(STATUS "Compiler: ${CXX_VERSION_RESULT}")
 
 # determine used C++ standard library (for debug and support purposes)
 if(NOT DEFINED LIBCPP_VERSION_OUTPUT_CACHED)
-    file(WRITE "${CMAKE_BINARY_DIR}/check_libcpp_version.cpp" "
-#include <cstdio>
-
-#if __cplusplus >= 202002L
-#include <version>
-#else
-#include <ciso646>
-#endif
-
-int main() {
-#if defined(_LIBCPP_VERSION)
-    std::printf(\"LLVM C++ Standard Library (libc++), _LIBCPP_VERSION=%d\", _LIBCPP_VERSION);
-#elif defined(__GLIBCXX__)
-    std::printf(\"GNU C++ Standard Library (libstdc++), __GLIBCXX__=%d\", __GLIBCXX__);
-#elif defined(_MSVC_STL_VERSION)
-    std::printf(\"Microsoft C++ Standard Library (MSVC STL), _MSVC_STL_VERSION=%d\", _MSVC_STL_VERSION);
-#elif defined(_LIBCUDACXX_VERSION)
-    std::printf(\"NVIDIA C++ Standard Library (libcudacxx), _LIBCUDACXX_VERSION=%d\", _LIBCUDACXX_VERSION);
-#elif defined(EASTL_VERSION)
-    std::printf(\"Electronic Arts Standard Template Library (EASTL), EASTL_VERSION=%d\", EASTL_VERSION);
-#else
-    std::printf(\"unknown\");
-#endif
-}
-")
-
     try_run(RUN_RESULT_VAR COMPILE_RESULT_VAR
-        "${CMAKE_BINARY_DIR}" "${CMAKE_BINARY_DIR}/check_libcpp_version.cpp"
-        RUN_OUTPUT_VARIABLE LIBCPP_VERSION_OUTPUT
+        "${CMAKE_BINARY_DIR}" SOURCES "${CMAKE_SOURCE_DIR}/cmake/detect_libcpp_version.cpp"
+        RUN_OUTPUT_VARIABLE LIBCPP_VERSION_OUTPUT COMPILE_OUTPUT_VARIABLE LIBCPP_VERSION_COMPILE_OUTPUT
     )
+    if(NOT LIBCPP_VERSION_OUTPUT)
+        set(LIBCPP_VERSION_OUTPUT "Unknown")
+        message(AUTHOR_WARNING "Failed to compile cmake/detect_libcpp_version to detect. This is does not affect the library or the test cases. Please create an issue at https://github.com/nlohmann/json to investigate this.\n${LIBCPP_VERSION_COMPILE_OUTPUT}")
+    endif()
     set(LIBCPP_VERSION_OUTPUT_CACHED "${LIBCPP_VERSION_OUTPUT}" CACHE STRING "Detected C++ standard library version")
 endif()
 
