@@ -58,7 +58,7 @@ message(STATUS "Compiler: ${CXX_VERSION_RESULT}")
 # determine used C++ standard library (for debug and support purposes)
 if(NOT DEFINED LIBCPP_VERSION_OUTPUT_CACHED)
     file(WRITE "${CMAKE_BINARY_DIR}/check_libcpp_version.cpp" "
-#include <iostream>
+#include <cstdio>
 
 #if __cplusplus >= 202002L
 #include <version>
@@ -72,19 +72,18 @@ if(NOT DEFINED LIBCPP_VERSION_OUTPUT_CACHED)
 
 int main() {
 #if defined(_LIBCPP_VERSION)
-    std::cout << \"LLVM C++ Standard Library (libc++), _LIBCPP_VERSION=\" << _LIBCPP_VERSION;
+    std::printf(\"LLVM C++ Standard Library (libc++), _LIBCPP_VERSION=%d\\n\", _LIBCPP_VERSION);
 #elif defined(__GLIBCXX__)
-    std::cout << \"GNU C++ Standard Library (libstdc++), __GLIBCXX__=\" << __GLIBCXX__;
+    std::printf(\"GNU C++ Standard Library (libstdc++), __GLIBCXX__=%d\\n\", __GLIBCXX__);
 #elif defined(_MSVC_STL_VERSION)
-    std::cout << \"Microsoft C++ Standard Library (MSVC STL), _MSVC_STL_VERSION=\" << _MSVC_STL_VERSION;
+    std::printf(\"Microsoft C++ Standard Library (MSVC STL), _MSVC_STL_VERSION=%d\\n\", _MSVC_STL_VERSION);
 #elif defined(_LIBCUDACXX_VERSION)
-    std::cout << \"NVIDIA C++ Standard Library (libcudacxx), _LIBCUDACXX_VERSION=\" << _LIBCUDACXX_VERSION;
+    std::printf(\"NVIDIA C++ Standard Library (libcudacxx), _LIBCUDACXX_VERSION=%d\\n\", _LIBCUDACXX_VERSION);
 #elif defined(EASTL_VERSION)
-    std::cout << \"Electronic Arts Standard Template Library (EASTL), EASTL_VERSION=\" << EASTL_VERSION;
+    std::printf(\"Electronic Arts Standard Template Library (EASTL), EASTL_VERSION=%d\\n\", EASTL_VERSION);
 #else
-    std::cout << \"unknown\";
+    std::printf(\"unknown\\n\");
 #endif
-    std::cout << std::flush;
 }
 ")
 
