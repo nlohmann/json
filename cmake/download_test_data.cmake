@@ -54,3 +54,40 @@ else()
 endif()
 string(REGEX REPLACE "[ ]*\n" "; " CXX_VERSION_RESULT "${CXX_VERSION_RESULT}")
 message(STATUS "Compiler: ${CXX_VERSION_RESULT}")
+
+# determine used C++ standard library (for debug and support purposes)
+if(NOT DEFINED LIBCPP_VERSION_OUTPUT_CACHED)
+    file(WRITE "${CMAKE_BINARY_DIR}/check_libcpp_version.cpp" "
+#include <iostream>
+
+#if __cplusplus >= 202002L
+#include <version>
+#else
+#include <ciso646>
+#endif
+
+int main() {
+#if defined(_LIBCPP_VERSION)
+    std::cout << \"LLVM C++ Standard Library (libc++), _LIBCPP_VERSION=\" << _LIBCPP_VERSION;
+#elif defined(__GLIBCXX__)
+    std::cout << \"GNU C++ Standard Library (libstdc++), __GLIBCXX__=\" << __GLIBCXX__;
+#elif defined(_MSVC_STL_VERSION)
+    std::cout << \"Microsoft C++ Standard Library (MSVC STL), _MSVC_STL_VERSION=\" << _MSVC_STL_VERSION;
+#elif defined(_LIBCUDACXX_VERSION)
+    std::cout << \"NVIDIA C++ Standard Library (libcudacxx), _LIBCUDACXX_VERSION=\" << _LIBCUDACXX_VERSION;
+#elif defined(EASTL_VERSION)
+    std::cout << \"Electronic Arts Standard Template Library (EASTL), EASTL_VERSION=\" << EASTL_VERSION;
+#else
+    std::cout << \"unknown\";
+#endif
+}
+")
+
+    try_run(RUN_RESULT_VAR COMPILE_RESULT_VAR
+        "${CMAKE_BINARY_DIR}" "${CMAKE_BINARY_DIR}/check_libcpp_version.cpp"
+        RUN_OUTPUT_VARIABLE LIBCPP_VERSION_OUTPUT
+    )
+    set(LIBCPP_VERSION_OUTPUT_CACHED "${LIBCPP_VERSION_OUTPUT}" CACHE STRING "Detected C++ standard library version")
+endif()
+
+message(STATUS "C++ standard library: ${LIBCPP_VERSION_OUTPUT_CACHED}")
