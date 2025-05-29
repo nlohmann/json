@@ -77,6 +77,7 @@ nav:
       - features/json_pointer.md
       - features/json_patch.md
       - features/merge_patch.md
+      - features/modules.md
       - 'nlohmann Namespace': features/namespace.md
       - features/object_order.md
       - Parsing:

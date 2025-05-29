@@ -22,6 +22,20 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 include(ExternalProject)
 
+# ---- C++ Modules Support (optional) ----
+option(NLOHMANN_JSON_BUILD_MODULES "Build C++ modules support" ON)
+
+if(NLOHMANN_JSON_BUILD_MODULES)
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.28)
+        message(STATUS "Building nlohmann-json C++ modules (CMake ${CMAKE_VERSION} supports modules)")
+        add_subdirectory(modules)
+    else()
+        message(WARNING "Skipping nlohmann-json C++ modules (requires CMake 3.28+, found ${CMAKE_VERSION})")
+    endif()
+else()
+    message(STATUS "nlohmann-json C++ modules support is disabled. Enable with -NLOHMANN_JSON_BUILD_MODULES=ON")
+endif()
+
 ##
 ## OPTIONS
 ##
