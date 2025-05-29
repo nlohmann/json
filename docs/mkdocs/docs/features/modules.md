@@ -13,7 +13,7 @@ When using modules rather than headers, the previous example for creating a `jso
 import std;
 import nlohmann.json;
 
-using nlohmann::json;
+using json = nlohmann::json;
 
 // ...
 

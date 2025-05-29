@@ -12,7 +12,7 @@ The default type `nlohmann::json` uses a `std::map` to store JSON objects, and t
     #include <iostream>
     #include "json.hpp"
     
-    using nlohmann::json;
+    using json = nlohmann::json;
     
     int main()
     {
