@@ -5,10 +5,18 @@ module;
 export module nlohmann.json;
 
 export namespace nlohmann {
-    using ::nlohmann::adl_serializer;
-    using ::nlohmann::basic_json;
-    using ::nlohmann::json;
-    using ::nlohmann::json_pointer;
+    template <typename T = void, typename SFINAE = void>
+    using adl_serializer = ::nlohmann::adl_serializer<T, SFINAE>;
+
+    using basic_json = ::nlohmann::basic_json<>;
+
+    using json = ::nlohmann::json;
+
+    template <typename RefStringType>
+    using json_pointer = ::nlohmann::json_pointer<RefStringType>;
+
     using ::nlohmann::ordered_json;
-    using ::nlohmann::ordered_map;
+
+    template <class Key, class T, class IgnoredLess, class Allocator>
+    using ordered_map = ::nlohmann::ordered_map<Key, T, IgnoredLess, Allocator>;
 }  // namespace nlohmann

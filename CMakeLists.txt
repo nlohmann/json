@@ -23,7 +23,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 include(ExternalProject)
 
 # ---- C++ Modules Support (optional) ----
-option(NLOHMANN_JSON_BUILD_MODULES "Build C++ modules support" OFF)
+option(NLOHMANN_JSON_BUILD_MODULES "Build C++ modules support" ON)
 
 if(NLOHMANN_JSON_BUILD_MODULES)
     if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.28)
