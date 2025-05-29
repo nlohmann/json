@@ -45,5 +45,12 @@ jobs:
     - name: Autobuild
       uses: github/codeql-action/autobuild@ff0a06e83cb2de871e5a09832bc6a81e7276941f # v3.28.18
 
+    - name: Build module test with C++ modules support
+      run: |
+        if [ -d "tests/src" ] && grep -q "ci_module_cpp20" tests/CMakeLists.txt; then
+          cmake -S . -B build_modules -DJSON_CI=On -DNLOHMANN_JSON_BUILD_MODULES=ON -DJSON_BuildTests=ON
+          cmake --build build_modules --target ci_module_cpp20 --config Release
+        fi
+
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@ff0a06e83cb2de871e5a09832bc6a81e7276941f # v3.28.18
