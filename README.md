@@ -1758,7 +1758,6 @@ I deeply appreciate the help of the following people.
 382. [bitFiedler](https://github.com/bitFiedler) made GDB pretty printer work with Python 3.8.
 383. [Gianfranco Costamagna](https://github.com/LocutusOfBorg) fixed a compiler warning.
 384. [risa2000](https://github.com/risa2000) made `std::filesystem::path` conversion to/from UTF-8 encoded string explicit.
-385. [mikomikotaishi](https://github.com/mikomikotaishi) added support for C++20 modules.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
