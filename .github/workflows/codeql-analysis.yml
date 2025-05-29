@@ -47,9 +47,14 @@ jobs:
 
     - name: Build module test with C++ modules support
       run: |
-        if [ -d "tests/src" ] && grep -q "ci_module_cpp20" tests/CMakeLists.txt; then
-          cmake -S . -B build_modules -DJSON_CI=On -DNLOHMANN_JSON_BUILD_MODULES=ON -DJSON_BuildTests=ON
-          cmake --build build_modules --target ci_module_cpp20 --config Release
+        if [ -d "tests/module_cpp20" ]; then
+          cmake -S . -B build_modules -DJSON_CI=On -DNLOHMANN_JSON_BUILD_MODULES=ON -DJSON_Install=ON
+          cmake --build build_modules --config Release
+          cmake --install build_modules --prefix install_dir
+          
+          export CMAKE_PREFIX_PATH=$(pwd)/install_dir
+          cmake -S tests/module_cpp20 -B build_test
+          cmake --build build_test --config Release
         fi
 
     - name: Perform CodeQL Analysis
