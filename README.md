@@ -163,7 +163,7 @@ If using modules (enabled with `NLOHMANN_JSON_BUILD_MODULES`), this example beco
 import std;
 import nlohmann.json;
 
-using nlohmann::json;
+using json = nlohmann::json;
 
 // ...
 
