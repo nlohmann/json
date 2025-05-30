@@ -717,7 +717,7 @@ Note: [`build2`](https://build2.org) should not be considered as a standalone pa
 
 To use this package in an exising [`build2`](https://build2.org) project, the general steps are:
 
-  1. <details><summary>Make the package available to download from a package repository that provides it.</b></summary>
+  1. <details><summary>Make the package available to download from a package repository that provides it.</summary>
 
       Your project's `repositories.manifest` specifies where the package manager will try to acquire packages by default. Make sure one of the repositories specified in this file provides `nlhomann-json` package.
       The recommended open-source repository is [`cppget.org`](https://cppget.org/).
@@ -732,7 +732,7 @@ To use this package in an exising [`build2`](https://build2.org) project, the ge
 
   2. <details><summary>Add this package as dependency of your project.</summary>
 
-       In your project's `manifest` add the dependency to the package, like `depends: nlohmann-json`. You could also add some [version constraints](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml#guide-add-remove-deps).
+       In your project's `manifest` add the dependency to the package using `depends: nlohmann-json`. You could also add some [version constraints](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml#guide-add-remove-deps).
        For example, to depend on the latest version available:
        ```
        depends: nlohmann-json
@@ -747,7 +747,7 @@ To use this package in an exising [`build2`](https://build2.org) project, the ge
            ```
            import nljson = nlhomann-json%lib{json}
            ```
-        - add the library's target as requirement for your target using it, for example:
+        - then add the library's target as requirement for your target using it, for example:
            ```
            exe{example} : ... $nljson
            ```
@@ -757,7 +757,7 @@ To use this package in an exising [`build2`](https://build2.org) project, the ge
 
       At this point, assuming your project is initialized in a build-configuration, any `b` or `bdep update` command that will update/build the project will also acquire the missing dependency automatically, then build it and link it with your target.
 
-      If you just want to trigger the dependencies synchronization for all your configurations:
+      If you just want to synchronize dependencies for all your configurations to download the ones you just added:
         ```
         bdep sync -af
         ```
@@ -812,10 +812,10 @@ To use this package in an exising [`build2`](https://build2.org) project, the ge
         # create default C/C++ build configuration in ../example-myconfig/, initialize the project in it (downloads it's dependencies in it too)
         bdep init -C @myconfig cc
 
-        # build only
+        # build only,
         b
 
-        # build and test the executable's output, will only work if the `tescript` is correct
+        # or build and test the executable's output, will only work if the `tescript` is correct
         b test
 
         ```
