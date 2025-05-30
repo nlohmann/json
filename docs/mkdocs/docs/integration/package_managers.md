@@ -363,7 +363,7 @@ and follow the then displayed descriptions. Please see the vcpkg project for any
         ```cmake title="CMakeLists.txt"
         --8<-- "integration/vcpkg/CMakeLists.txt"
         ```
-
+    
         ```cpp title="example.cpp"
         --8<-- "integration/vcpkg/example.cpp"
         ```
@@ -408,7 +408,7 @@ installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nl
         ```cmake title="CMakeLists.txt"
         --8<-- "integration/vcpkg/CMakeLists.txt"
         ```
-
+    
         ```cpp title="example.cpp"
         --8<-- "integration/vcpkg/example.cpp"
         ```
@@ -418,7 +418,7 @@ installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nl
         ```shell
         cget init
         ```
-
+ 
     3. Install the library
 
         ```shell
@@ -476,7 +476,7 @@ dotnet add package nlohmann.json
     Most of the packages in NuGet gallery are .NET packages and would not be useful in a C++ project. Microsoft
     recommends adding “native” and “nativepackage” tags to C++ NuGet packages to distinguish them, but even adding
     “native” to search query would still show many .NET-only packages in the list.
-
+    
     Nevertheless, after finding the package you want, click on “Install” button and accept confirmation dialogs.
     After the package is successfully added to the projects, you should be able to build and execute the project
     without the need for making any more changes to build settings.
@@ -484,7 +484,7 @@ dotnet add package nlohmann.json
     !!! note
 
         A few notes:
-
+    
         - NuGet packages are installed per project and not system-wide. The header and binaries for the package are only
           available to the project it is added to, and not other projects (obviously unless we add the package to those
           projects as well)
@@ -502,9 +502,9 @@ dotnet add package nlohmann.json
 
     After you add a NuGet package, three changes occur in the project source directory. Of course, we could make these
     changes manually instead of using GUI:
-
+    
     ![](nuget/nuget-project-changes.png)
-
+    
     1. A `packages.config` file will be created (or updated to include the package name if one such file already
        exists). This file contains a list of the packages required by this project (name and minimum version) and must
        be added to the project source code repository, so if you move the source code to a new machine, MSBuild/NuGet
@@ -519,29 +519,29 @@ dotnet add package nlohmann.json
 
     2. A `packages` folder which contains actual files in the packages (these are header and binary files required for
        a successful build, plus a few metadata files). In case of this library for example, it contains `json.hpp`:
-
+    
         ![](nuget/nuget-package-content.png)
-
+    
         !!! note
 
             This directory should not be added to the project source code repository, as it will be restored before each
             build by MSBuild/NuGet. If you go ahead and delete this folder, then build the project again, it will
             magically re-appear!
-
+    
     3. Project MSBuild makefile (which for Visual C++ projects has a .vcxproj extension) will be updated to include
        settings from the package.
-
+    
         ![](nuget/nuget-project-makefile.png)
-
+    
         The important bit for us here is line 170, which tells MSBuild to import settings from
         `packages\nlohmann.json.3.5.0\build\native\nlohmann.json.targets` file. This is a file the package creator
         created and added to the package (you can see it is one of the two files I created in this repository, the other
         just contains package attributes like name and version number). What does it contain?
-
+    
         For our header-only repository, the only setting we need is to add our include directory to the list of
         `AdditionalIncludeDirectories`:
 
-        ```xml
+        ```xml    
         <?xml version="1.0" encoding="utf-8"?>
         <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
             <ItemDefinitionGroup>
@@ -554,21 +554,21 @@ dotnet add package nlohmann.json
 
         For libraries with binary files, we will need to add `.lib` files to linker inputs and add settings to copy
         `.dll` and other redistributable files to output directory, if needed.
-
+    
         There are other changes to the makefile as well:
-
+    
         - Lines 165-167 add the `packages.config` as one of project files (so it is shown in Solution Explorer tree
           view). It is added as None (no build action) and removing it wouldn’t affect build.
-
+    
         - Lines 172-177 check to ensure the required packages are present. This will display a build error if package
           directory is empty (for example when NuGet cannot restore packages because Internet connection is down).
           Again, if you omit this section, the only change in build would be a more cryptic error message if build
           fails.
-
+    
         !!! note
 
             Changes to .vcxproj makefile should also be added to project source code repository.
-
+    
     As you can see, the mechanism NuGet uses to modify project settings is through MSBuild makefiles, so using NuGet
     with other build systems and compilers (like CMake) as a dependency manager is either impossible or more problematic
     than useful.
@@ -645,7 +645,7 @@ If you are using [MSYS2](http://www.msys2.org/), you can use the [mingw-w64-nloh
     - :octicons-file-24: File issues at the [MacPorts issue tracker](https://trac.macports.org/newticket?port=nlohmann-json)
     - :octicons-question-24: [MacPorts website](https://www.macports.org)
 
-If you are using [MacPorts](https://ports.macports.org), execute
+If you are using [MacPorts](https://ports.macports.org), execute 
 
 ```shell
 sudo port install nlohmann-json
@@ -892,7 +892,7 @@ CPMAddPackage("gh:nlohmann/json@3.12.0")
         ```shell
         xmake
         ```
-
+    
     3. Run
 
         ```shell
