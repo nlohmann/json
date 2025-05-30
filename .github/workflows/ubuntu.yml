@@ -232,7 +232,7 @@ jobs:
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
-        run: cmake -S . -B build -DJSON_CI=On
+        run: cmake -S . -B build_modules -G Ninja -DJSON_CI=On -DNLOHMANN_JSON_BUILD_MODULES=ON -DJSON_Install=ON
       - name: Build
         run: cmake --build build --target ci_module_cpp20
 
