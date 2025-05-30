@@ -4501,7 +4501,9 @@ namespace {
         auto&  translators = getExceptionTranslators();
         for(auto& curr : translators)
             if(curr->translate(res))
+              DOCTEST_CLANG_SUPPRESS_WARNING("-Wnrvo")
                 return res;
+              DOCTEST_CLANG_SUPPRESS_WARNING_POP
         // clang-format off
         DOCTEST_GCC_SUPPRESS_WARNING_WITH_PUSH("-Wcatch-value")
         try {
