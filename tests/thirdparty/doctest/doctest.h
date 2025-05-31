@@ -4497,11 +4497,12 @@ namespace {
 
     String translateActiveException() {
 #ifndef DOCTEST_CONFIG_NO_EXCEPTIONS
-        String res;
         auto&  translators = getExceptionTranslators();
-        for(auto& curr : translators)
-            if(curr->translate(res))
+        for(auto& curr : translators) {
+            String res;
+            if (curr->translate(res))
                 return res;
+        }
         // clang-format off
         DOCTEST_GCC_SUPPRESS_WARNING_WITH_PUSH("-Wcatch-value")
         try {
