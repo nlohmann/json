@@ -32,8 +32,6 @@ if(NLOHMANN_JSON_BUILD_MODULES)
     else()
         message(WARNING "Skipping nlohmann-json C++ modules (requires CMake 3.28+, found ${CMAKE_VERSION})")
     endif()
-else()
-    message(STATUS "nlohmann-json C++ modules support is disabled. Enable with -DNLOHMANN_JSON_BUILD_MODULES=ON")
 endif()
 
 ##

@@ -665,7 +665,8 @@ add_custom_target(ci_cuda_example
 
 add_custom_target(ci_module_cpp20
     COMMAND ${CMAKE_COMMAND}
-        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DCMAKE_BUILD_TYPE=Debug -GNinja 
+        -DJSON_CI=On -DNLOHMANN_JSON_BUILD_MODULES=ON -DJSON_Install=ON
         -S${PROJECT_SOURCE_DIR}/tests/module_cpp20 -B${PROJECT_BINARY_DIR}/ci_module_cpp20
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/ci_module_cpp20
 )
