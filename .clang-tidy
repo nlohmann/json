@@ -1,4 +1,5 @@
 # TODO: The first three checks are only removed to get the CI going. They have to be addressed at some point.
+# TODO: portability-avoid-pragma-once: should be fixed eventually
 
 Checks: '*,
 
@@ -59,6 +60,7 @@ Checks: '*,
          -modernize-use-std-numbers,
          -modernize-use-trailing-return-type,
          -performance-enum-size,
+         -portability-avoid-pragma-once,
          -readability-function-cognitive-complexity,
          -readability-function-size,
          -readability-identifier-length,
