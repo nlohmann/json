@@ -1,7 +1,7 @@
 wheel==0.45.1
 
 mkdocs==1.6.1                                       # documentation framework
-mkdocs-git-revision-date-localized-plugin==1.4.6    # plugin "git-revision-date-localized"
+mkdocs-git-revision-date-localized-plugin==1.4.7    # plugin "git-revision-date-localized"
 mkdocs-material==9.6.14                             # theme for mkdocs
 mkdocs-material-extensions==1.3.1                   # extensions
 mkdocs-minify-plugin==0.8.0                         # plugin "minify"
