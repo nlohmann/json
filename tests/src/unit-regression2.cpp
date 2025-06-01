@@ -1096,7 +1096,7 @@ TEST_CASE("regression tests 2")
 #endif
 }
 
-TEST_CASE_TEMPLATE("issue #4798 - nlohmann::json::to_msgpack() encode float NaN as double", T, double, float)
+TEST_CASE_TEMPLATE("issue #4798 - nlohmann::json::to_msgpack() encode float NaN as double", T, double, float) // NOLINT(readability-math-missing-parentheses)
 {
     // With issue #4798, we encode NaN, infinity, and -infinity as float instead
     // of double to allow for smaller encodings.
