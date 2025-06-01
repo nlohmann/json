@@ -91,7 +91,7 @@ jobs:
     runs-on: macos-15 # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
     strategy:
       matrix:
-        xcode: ['16.0', '16.1', '16.2']
+        xcode: ['16.0', '16.1', '16.2', '16.3']
     env:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 
