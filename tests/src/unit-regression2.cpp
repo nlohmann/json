@@ -1114,8 +1114,9 @@ TEST_CASE("regression tests 2")
 #ifdef JSON_HAS_CPP_17
     SECTION("issue #4804: from_cbor incompatible with std::vector<std::byte> as binary_t")
     {
-        const std::vector<char> data;
+        const std::vector<std::uint8_t> data = {0x80};
         const auto decoded = json_4804::from_cbor(data);
+        CHECK((decoded == json_4804::array()));
     }
 #endif
 }
