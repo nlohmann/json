@@ -1,6 +1,8 @@
 # Modules
 
-This library supports C++ modules, introduced in C++20. The library can be imported by writing `import nlohmann.json;` instead of `#include <nlohmann/json.hpp>`. 
+This library has experimental support for C++ modules, introduced in C++20. The library can be imported by writing `import nlohmann.json;` instead of `#include <nlohmann/json.hpp>`. 
+
+Please be aware that the module is experimental and a full test is outstanding, and the exported symbols are subject to change.
 
 ## Requirements
 The `nlohmann.json` module requires that the build system is configured to build and resolve modules when imported. Obviously, as modules were introduced in C++20, this feature can only be used in C++20 and subsequent versions.

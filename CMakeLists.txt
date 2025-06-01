@@ -27,10 +27,10 @@ option(NLOHMANN_JSON_BUILD_MODULES "Build C++ modules support" OFF)
 
 if(NLOHMANN_JSON_BUILD_MODULES)
     if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.28)
-        message(STATUS "Building nlohmann-json C++ modules (CMake ${CMAKE_VERSION} supports modules)")
-        add_subdirectory(modules)
+        message(STATUS "Building nlohmann.json C++ module")
+        add_subdirectory(src/modules)
     else()
-        message(WARNING "Skipping nlohmann-json C++ modules (requires CMake 3.28+, found ${CMAKE_VERSION})")
+        message(WARNING "Skipping nlohmann.json C++ module (requires CMake 3.28+, found ${CMAKE_VERSION})")
     endif()
 endif()
 
