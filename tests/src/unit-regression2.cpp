@@ -1096,4 +1096,71 @@ TEST_CASE("regression tests 2")
 #endif
 }
 
+TEST_CASE_TEMPLATE("issue #4798 - nlohmann::json::to_msgpack() encode float NaN as double", T, double, float) // NOLINT(readability-math-missing-parentheses)
+{
+    // With issue #4798, we encode NaN, infinity, and -infinity as float instead
+    // of double to allow for smaller encodings.
+    const json jx = std::numeric_limits<T>::quiet_NaN();
+    const json jy = std::numeric_limits<T>::infinity();
+    const json jz = -std::numeric_limits<T>::infinity();
+
+    /////////////////////////////////////////////////////////////////////////
+    // MessagePack
+    /////////////////////////////////////////////////////////////////////////
+
+    // expected MessagePack values
+    const std::vector<std::uint8_t> msgpack_x = {{0xCA, 0x7F, 0xC0, 0x00, 0x00}};
+    const std::vector<std::uint8_t> msgpack_y = {{0xCA, 0x7F, 0x80, 0x00, 0x00}};
+    const std::vector<std::uint8_t> msgpack_z = {{0xCA, 0xFF, 0x80, 0x00, 0x00}};
+
+    CHECK(json::to_msgpack(jx) == msgpack_x);
+    CHECK(json::to_msgpack(jy) == msgpack_y);
+    CHECK(json::to_msgpack(jz) == msgpack_z);
+
+    CHECK(std::isnan(json::from_msgpack(msgpack_x).get<T>()));
+    CHECK(json::from_msgpack(msgpack_y).get<T>() == std::numeric_limits<T>::infinity());
+    CHECK(json::from_msgpack(msgpack_z).get<T>() == -std::numeric_limits<T>::infinity());
+
+    // Make sure the other MessagePakc encodings for NaN, infinity, and
+    // -infinity are still supported.
+    const std::vector<std::uint8_t> msgpack_x_2 = {{0xCB, 0x7F, 0xF8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
+    const std::vector<std::uint8_t> msgpack_y_2 = {{0xCB, 0x7F, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
+    const std::vector<std::uint8_t> msgpack_z_2 = {{0xCB, 0xFF, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
+    CHECK(std::isnan(json::from_msgpack(msgpack_x_2).get<T>()));
+    CHECK(json::from_msgpack(msgpack_y_2).get<T>() == std::numeric_limits<T>::infinity());
+    CHECK(json::from_msgpack(msgpack_z_2).get<T>() == -std::numeric_limits<T>::infinity());
+
+    /////////////////////////////////////////////////////////////////////////
+    // CBOR
+    /////////////////////////////////////////////////////////////////////////
+
+    // expected CBOR values
+    const std::vector<std::uint8_t> cbor_x = {{0xF9, 0x7E, 0x00}};
+    const std::vector<std::uint8_t> cbor_y = {{0xF9, 0x7C, 0x00}};
+    const std::vector<std::uint8_t> cbor_z = {{0xF9, 0xfC, 0x00}};
+
+    CHECK(json::to_cbor(jx) == cbor_x);
+    CHECK(json::to_cbor(jy) == cbor_y);
+    CHECK(json::to_cbor(jz) == cbor_z);
+
+    CHECK(std::isnan(json::from_cbor(cbor_x).get<T>()));
+    CHECK(json::from_cbor(cbor_y).get<T>() == std::numeric_limits<T>::infinity());
+    CHECK(json::from_cbor(cbor_z).get<T>() == -std::numeric_limits<T>::infinity());
+
+    // Make sure the other CBOR encodings for NaN, infinity, and -infinity are
+    // still supported.
+    const std::vector<std::uint8_t> cbor_x_2 = {{0xFA, 0x7F, 0xC0, 0x00, 0x00}};
+    const std::vector<std::uint8_t> cbor_y_2 = {{0xFA, 0x7F, 0x80, 0x00, 0x00}};
+    const std::vector<std::uint8_t> cbor_z_2 = {{0xFA, 0xFF, 0x80, 0x00, 0x00}};
+    const std::vector<std::uint8_t> cbor_x_3 = {{0xFB, 0x7F, 0xF8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
+    const std::vector<std::uint8_t> cbor_y_3 = {{0xFB, 0x7F, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
+    const std::vector<std::uint8_t> cbor_z_3 = {{0xFB, 0xFF, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
+    CHECK(std::isnan(json::from_cbor(cbor_x_2).get<T>()));
+    CHECK(json::from_cbor(cbor_y_2).get<T>() == std::numeric_limits<T>::infinity());
+    CHECK(json::from_cbor(cbor_z_2).get<T>() == -std::numeric_limits<T>::infinity());
+    CHECK(std::isnan(json::from_cbor(cbor_x_3).get<T>()));
+    CHECK(json::from_cbor(cbor_y_3).get<T>() == std::numeric_limits<T>::infinity());
+    CHECK(json::from_cbor(cbor_z_3).get<T>() == -std::numeric_limits<T>::infinity());
+}
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
