@@ -54,11 +54,10 @@ jobs:
 #        run: cd build ; ctest -j 10 --output-on-failure
 
   macos-13:
+    runs-on: macos-13 # https://github.com/actions/runner-images/blob/main/images/macos/macos-13-Readme.md
     strategy:
       matrix:
         xcode: ['14.1', '14.2', '14.3', '14.3.1', '15.0.1', '15.1', '15.2']
-        image: ['macos-13', 'macos-13-arm64']
-    runs-on: ${{ matrix.image }} # https://github.com/actions/runner-images/blob/main/images/macos/macos-13-Readme.md
     env:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 

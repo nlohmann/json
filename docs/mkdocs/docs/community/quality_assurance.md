@@ -28,6 +28,7 @@ violations will result in a failed build.
         | AppleClang 16.0.0.16000026; Xcode 16         | arm64        | macOS 15.2 (Sequoia)     | GitHub    |
         | AppleClang 16.0.0.16000026; Xcode 16.1       | arm64        | macOS 15.2 (Sequoia)     | GitHub    |
         | AppleClang 16.0.0.16000026; Xcode 16.2       | arm64        | macOS 15.2 (Sequoia)     | GitHub    |
+        | AppleClang 17.0.0.17000013; Xcode 16.3       | arm64        | macOS 15.5 (Sequoia)     | GitHub    |
         | Clang 3.5.2                                  | x86_64       | Ubuntu 22.04.1 LTS       | GitHub    |
         | Clang 3.6.2                                  | x86_64       | Ubuntu 22.04.1 LTS       | GitHub    |
         | Clang 3.7.1                                  | x86_64       | Ubuntu 22.04.1 LTS       | GitHub    |
