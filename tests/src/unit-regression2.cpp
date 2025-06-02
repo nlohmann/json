@@ -42,6 +42,22 @@ using ordered_json = nlohmann::ordered_json;
     #elif __has_include(<experimental/optional>)
         #include <experimental/optional>
     #endif
+
+    /////////////////////////////////////////////////////////////////////
+    // for #4804
+    /////////////////////////////////////////////////////////////////////
+    using json_4804 = nlohmann::basic_json<std::map,        // ObjectType
+    std::vector,     // ArrayType
+    std::string,     // StringType
+    bool,            // BooleanType
+    std::int64_t,    // NumberIntegerType
+    std::uint64_t,   // NumberUnsignedType
+    double,          // NumberFloatType
+    std::allocator,  // AllocatorType
+    nlohmann::adl_serializer,  // JSONSerializer
+    std::vector<std::byte>,    // BinaryType
+    void                       // CustomBaseClass
+    >;
 #endif
 
 #ifdef JSON_HAS_CPP_20
@@ -1092,6 +1108,15 @@ TEST_CASE("regression tests 2")
         json j;
         j.m_data.m_type = static_cast<json::value_t>(100); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
         CHECK(j.type_name() == "invalid");
+    }
+#endif
+
+#ifdef JSON_HAS_CPP_17
+    SECTION("issue #4804: from_cbor incompatible with std::vector<std::byte> as binary_t")
+    {
+        const std::vector<std::uint8_t> data = {0x80};
+        const auto decoded = json_4804::from_cbor(data);
+        CHECK((decoded == json_4804::array()));
     }
 #endif
 }
