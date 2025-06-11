@@ -189,11 +189,11 @@ using ordered_json = basic_json<nlohmann::ordered_map>;
 */
 namespace detail
 {
-    template<typename BasicJsonType>
-    class iter_impl;
+template<typename BasicJsonType>
+class iter_impl;
 
-    template<typename IteratorType>
-    class iteration_proxy;
+template<typename IteratorType>
+class iteration_proxy;
 }  // namespace detail
 
 NLOHMANN_JSON_NAMESPACE_END
