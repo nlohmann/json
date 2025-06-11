@@ -98,7 +98,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
+<<<<<<< HEAD
         uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+=======
+        uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
+>>>>>>> 572a2572 (:arrow_up: Bump step-security/harden-runner from 2.12.0 to 2.12.1 (#4815))
         with:
           egress-policy: audit
 
@@ -252,7 +256,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
+<<<<<<< HEAD
         uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+=======
+        uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
+>>>>>>> 572a2572 (:arrow_up: Bump step-security/harden-runner from 2.12.0 to 2.12.1 (#4815))
         with:
           egress-policy: audit
 
@@ -273,7 +281,11 @@ jobs:
         target: [ci_test_examples, ci_test_build_documentation]
     steps:
       - name: Harden Runner
+<<<<<<< HEAD
         uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+=======
+        uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
+>>>>>>> 572a2572 (:arrow_up: Bump step-security/harden-runner from 2.12.0 to 2.12.1 (#4815))
         with:
           egress-policy: audit
 
