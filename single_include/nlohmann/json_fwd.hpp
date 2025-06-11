@@ -182,6 +182,20 @@ struct ordered_map;
 /// @sa https://json.nlohmann.me/api/ordered_json/
 using ordered_json = basic_json<nlohmann::ordered_map>;
 
+/*!
+@brief namespace for Niels Lohmann detail
+@see https://github.com/nlohmann
+@since version 1.0.0
+*/
+namespace detail
+{
+    template<typename BasicJsonType>
+    class iter_impl;
+
+    template<typename IteratorType>
+    class iteration_proxy;
+}  // namespace detail
+
 NLOHMANN_JSON_NAMESPACE_END
 
 #endif  // INCLUDE_NLOHMANN_JSON_FWD_HPP_
