@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@ea004816823209b8d1211e47b216185caee12cc5 # v4.02
+        uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -46,7 +46,7 @@ jobs:
         target: [ci_test_amalgamation, ci_test_single_header, ci_cppcheck, ci_cpplint, ci_reproducible_tests, ci_non_git_tests, ci_offline_testdata, ci_reuse_compliance, ci_test_valgrind]
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
         with:
           egress-policy: audit
 
@@ -54,7 +54,7 @@ jobs:
         run: sudo apt-get update ; sudo apt-get install -y valgrind
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@ea004816823209b8d1211e47b216185caee12cc5 # v4.02
+        uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -71,7 +71,7 @@ jobs:
         run: apt-get update ; apt-get install -y git clang-tools iwyu unzip
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@ea004816823209b8d1211e47b216185caee12cc5 # v4.02
+        uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -88,7 +88,7 @@ jobs:
         run: apt-get update ; apt-get install -y build-essential unzip wget git libssl-dev
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@ea004816823209b8d1211e47b216185caee12cc5 # v4.02
+        uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -98,7 +98,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
         with:
           egress-policy: audit
 
@@ -148,7 +148,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@ea004816823209b8d1211e47b216185caee12cc5 # v4.02
+        uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -165,7 +165,7 @@ jobs:
         run: apt-get update ; apt-get install -y unzip git
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@ea004816823209b8d1211e47b216185caee12cc5 # v4.02
+        uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Set env FORCE_STDCPPFS_FLAG for clang 7 / 8 / 9 / 10
         run: echo "JSON_FORCED_GLOBAL_COMPILE_OPTIONS=-DJSON_HAS_FILESYSTEM=0;-DJSON_HAS_EXPERIMENTAL_FILESYSTEM=0" >> "$GITHUB_ENV"
         if: ${{ matrix.compiler == '7' || matrix.compiler == '8' || matrix.compiler == '9' || matrix.compiler == '10' }}
@@ -183,7 +183,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@ea004816823209b8d1211e47b216185caee12cc5 # v4.02
+        uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -201,7 +201,7 @@ jobs:
         run: apt-get update ; apt-get install -y git unzip
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@ea004816823209b8d1211e47b216185caee12cc5 # v4.02
+        uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build with libc++
@@ -230,7 +230,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@ea004816823209b8d1211e47b216185caee12cc5 # v4.02
+        uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -252,7 +252,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
         with:
           egress-policy: audit
 
@@ -260,7 +260,7 @@ jobs:
         uses: mymindstorm/setup-emsdk@v14
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@ea004816823209b8d1211e47b216185caee12cc5 # v4.02
+        uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -GNinja
       - name: Build
@@ -273,7 +273,7 @@ jobs:
         target: [ci_test_examples, ci_test_build_documentation]
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        uses: step-security/harden-runner@002fdce3c6a235733a90a27c80493a3241e56863 # v2.12.1
         with:
           egress-policy: audit
 
