@@ -254,6 +254,89 @@
 
 // #include <nlohmann/detail/abi_macros.hpp>
 
+//Knuth up arrow support implmentation
+
+namespace nlohmann
+{
+    
+    constexpr const char* kpszErrOverflow = "knuth_arrow: overflow";
+    constexpr const char* kpszErrArrowFormat = "Invalid Knuth up-arrow string: missing arrows";
+    constexpr const char* kpszErrBaseExpFormat = "Invalid Knuth up-arrow string: missing base or exponent";
+    // Control tokens
+    constexpr char kchCaret = '^';
+    constexpr char kchSpace = ' ';
+    constexpr char kchTab = '\t';
+}
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+
+inline std::string StrTrim(const std::string& pszStr)
+{
+    size_t nFirst = pszStr.find_first_not_of(nlohmann::kchSpace + std::string(1, nlohmann::kchTab));
+    if (nFirst == std::string::npos) return {};
+    size_t nLast = pszStr.find_last_not_of(nlohmann::kchSpace + std::string(1, nlohmann::kchTab));
+    return pszStr.substr(nFirst, nLast - nFirst + 1);
+}
+
+inline size_t CountKnuthArrows(const std::string& pszStr, size_t nStart)
+{
+    size_t nEnd = nStart;
+    while (nEnd < pszStr.size() && pszStr[nEnd] == nlohmann::kchCaret) ++nEnd;
+    return nEnd - nStart;
+}
+
+template<typename TUInt>
+inline TUInt StrToUInt(const std::string& pszStr)
+{
+    return static_cast<TUInt>(std::stoull(pszStr));
+}
+
+template <typename TUInt>
+constexpr TUInt KnuthArrow(TUInt nBase, size_t nArrows, TUInt nExp)
+{
+    if (nArrows == 0) return nBase;
+    if (nArrows == 1)
+    {
+        TUInt nResult = 1;
+        for (TUInt i = 0; i < nExp; ++i)
+        {
+            if (nResult > std::numeric_limits<TUInt>::max() / nBase)
+                throw std::overflow_error(nlohmann::kpszErrOverflow);
+            nResult *= nBase;
+        }
+        return nResult;
+    }
+    if (nExp == 0) return TUInt{1};
+    return KnuthArrow(nBase, nArrows - 1, KnuthArrow(nBase, nArrows, nExp - 1));
+}
+
+// Parses "2^^4", "2^10", or integer string
+template<typename TUInt = std::uint64_t, typename TString>
+inline TUInt ParseKnuthArrow(const TString& pszInput)
+{
+    std::string sInput(pszInput);
+    size_t nArrowStart = sInput.find(nlohmann::kchCaret);
+    if (nArrowStart == std::string::npos)
+        return StrToUInt<TUInt>(sInput);
+
+    size_t nArrows = CountKnuthArrows(sInput, nArrowStart);
+    if (nArrows == 0)
+        throw std::invalid_argument(nlohmann::kpszErrArrowFormat);
+
+    std::string sBase = StrTrim(sInput.substr(0, nArrowStart));
+    std::string sExp  = StrTrim(sInput.substr(nArrowStart + nArrows));
+    if (sBase.empty() || sExp.empty())
+        throw std::invalid_argument(nlohmann::kpszErrBaseExpFormat);
+
+    TUInt nBase = StrToUInt<TUInt>(sBase);
+    TUInt nExp = StrToUInt<TUInt>(sExp);
+    return KnuthArrow(nBase, nArrows, nExp);
+}
+
+NLOHMANN_JSON_NAMESPACE_END
+
+
+
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
