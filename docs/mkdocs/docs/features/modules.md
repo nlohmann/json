@@ -25,6 +25,7 @@ json data = json::parse(f);
 
 ## Modules do not export macros
 It should be noted that as modules do not export macros, the `nlohmann.json` module will not export any macros, but rather only the following symbols:
+
 - `nlohmann::adl_serializer`
 - `nlohmann::basic_json`
 - `nlohmann::json`
