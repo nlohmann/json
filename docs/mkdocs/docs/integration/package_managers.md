@@ -709,7 +709,7 @@ to install the [nlohmann-json](https://ports.macports.org/port/nlohmann-json/) p
       - [package's sources (for advanced users)](https://github.com/build2-packaging/nlohmann-json/)
 
     - :octicons-tag-24: Available versions: current version and older versions since `3.7.3` (see [cppget.org](https://cppget.org/nlohmann-json))
-    - :octicons-rocket-24: The package is maintained and published by the `build2` community in [this the repository][(https://github.com/conan-io/conan-center-index/tree/master/recipes/nlohmann_json](https://github.com/build2-packaging/nlohmann-json/)).
+    - :octicons-rocket-24: The package is maintained and published by the `build2` community in [this repository][(https://github.com/build2-packaging/nlohmann-json/](https://github.com/build2-packaging/nlohmann-json/)).
     - :octicons-file-24: File issues at the [package source repository](https://github.com/build2-packaging/nlohmann-json/issues/)
     - :octicons-question-24: [`build2` website](https://build2)
 
@@ -743,14 +743,17 @@ To use this package in an exising [`build2`](https://build2.org) project, the ge
   2. <details><summary>Add this library as dependency of your target that uses it.</summary>
 
       In the `buildfile` defining the target that will use this library:
+      
         - import the target `lib{json}` from the `nlhomann-json` package, for example:
-           ```
-           import nljson = nlhomann-json%lib{json}
-           ```
+            ```
+            import nljson = nlhomann-json%lib{json}
+            ```
+           
         - then add the library's target as requirement for your target using it, for example:
-           ```
-           exe{example} : ... $nljson
-           ```
+            ```
+            exe{example} : ... $nljson
+            ```
+           
       </details>
 
   3. <details><summary>Use the library in your project's code and build it.</summary>
@@ -779,13 +782,13 @@ To use this package in an exising [`build2`](https://build2.org) project, the ge
             --8<-- "integration/build2/repositories.manifest"
             ```
 
-       - `example/manifest`: Add the latest version of the `nlohmann-json` package as dependency to the project:
+        - `example/manifest`: Add the latest version of the `nlohmann-json` package as dependency to the project:
 
             ```make title="project's `manifest`"
             --8<-- "integration/build2/manifest"
             ```
 
-       - `example/example/buildfile`: import the library's target to be used as requirement for building the executable target `exe{example}`:
+        - `example/example/buildfile`: import the library's target to be used as requirement for building the executable target `exe{example}`:
 
             ```make title="project's `buildfile`"
             --8<-- "integration/build2/buildfile"
