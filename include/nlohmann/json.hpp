@@ -570,7 +570,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             if (t == value_t::array || t == value_t::object)
             {
                 // flatten the current json_value to a heap-allocated stack
-                std::vector<basic_json> stack;
+                std::vector<basic_json, allocator_type> stack;
 
                 // move the top-level items to stack
                 if (t == value_t::array)
