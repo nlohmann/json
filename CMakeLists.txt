@@ -60,6 +60,7 @@ option(JSON_LegacyDiscardedValueComparison "Enable legacy discarded value compar
 option(JSON_Install                        "Install CMake targets during install step." ${MAIN_PROJECT})
 option(JSON_MultipleHeaders                "Use non-amalgamated version of the library." ON)
 option(JSON_SystemInclude                  "Include as system headers (skip for clang-tidy)." OFF)
+option(JSON_BuildNatvis                    "Add natvis file for MSVC." ON)
 
 if (JSON_CI)
     include(ci)
@@ -152,7 +153,7 @@ target_include_directories(
 )
 
 ## add debug view definition file for msvc (natvis)
-if (MSVC)
+if (MSVC AND JSON_BuildNatvis)
     set(NLOHMANN_ADD_NATVIS TRUE)
     set(NLOHMANN_NATVIS_FILE "nlohmann_json.natvis")
     target_sources(
@@ -208,7 +209,7 @@ if(JSON_Install)
         FILES ${NLOHMANN_JSON_CMAKE_PROJECT_CONFIG_FILE} ${NLOHMANN_JSON_CMAKE_VERSION_CONFIG_FILE}
         DESTINATION ${NLOHMANN_JSON_CONFIG_INSTALL_DIR}
     )
-    if (NLOHMANN_ADD_NATVIS)
+    if (NLOHMANN_ADD_NATVIS AND JSON_BuildNatvis)
         install(
             FILES ${NLOHMANN_NATVIS_FILE}
             DESTINATION .
