@@ -87,10 +87,14 @@ set(NLOHMANN_JSON_PKGCONFIG_INSTALL_DIR     "${CMAKE_INSTALL_DATADIR}/pkgconfig"
 
 if (JSON_MultipleHeaders)
     set(NLOHMANN_JSON_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/include/")
-    message(STATUS "Using the multi-header code from ${NLOHMANN_JSON_INCLUDE_BUILD_DIR}")
+    set(NLOHMANN_JSON_CODE_VERSION_NOW "multi-header")
 else()
     set(NLOHMANN_JSON_INCLUDE_BUILD_DIR "${PROJECT_SOURCE_DIR}/single_include/")
-    message(STATUS "Using the single-header code from ${NLOHMANN_JSON_INCLUDE_BUILD_DIR}")
+    set(NLOHMANN_JSON_CODE_VERSION_NOW "single-header")
+endif()
+if(NOT "${NLOHMANN_JSON_CODE_VERSION_NOW}" STREQUAL "${NLOHMANN_JSON_CODE_VERSION}")
+    set(NLOHMANN_JSON_CODE_VERSION "${NLOHMANN_JSON_CODE_VERSION_NOW}" CACHE INTERNAL "")
+    message(STATUS "Using the ${NLOHMANN_JSON_CODE_VERSION} code from ${NLOHMANN_JSON_INCLUDE_BUILD_DIR}")
 endif()
 
 if (NOT JSON_ImplicitConversions)
