@@ -73,12 +73,12 @@ class alt_string
         return str_impl.begin();
     }
 
-    std::string::iterator end()
+    std::string::iterator end() noexcept
     {
         return str_impl.end();
     }
 
-    std::string::const_iterator end() const
+    std::string::const_iterator end() const noexcept
     {
         return str_impl.end();
     }
