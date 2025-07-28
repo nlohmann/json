@@ -3098,10 +3098,12 @@ inline StringType escape(StringType const& s)
 
     int esz = s.size();
     for (auto const ch : s)
+    {
         if (ch == CharT('~') || ch == CharT('/'))
         {
             ++esz;
         }
+    }
     if (esz == s.size())
     {
         res = s;
@@ -3109,15 +3111,21 @@ inline StringType escape(StringType const& s)
     else
     {
         res.reserve(esz);
-        for (auto const ch : s) // Yes, this is UTF8-safe
+        for (auto const ch : s)   // Yes, this is UTF8-safe
+        {
             if (ch == CharT('~'))
+            {
                 res.append(StringType{"~0"});
+            }
             else if (ch == CharT('/'))
+            {
                 res.append(StringType{"~1"});
+            }
             else
             {
                 res.push_back(ch);
             }
+        }
     }
     return res;
 }
@@ -3162,18 +3170,19 @@ inline void unescape(StringType& s)
     s.shrink_to_fit();
 }
 
-/*!
- * @brief Out Of Place string unescaping as described in RFC 6901 (Sect. 4)
- * @param[in] s string to unescape
- *
- */
-template<typename StringType> // [[nodiscard]]
-inline StringType unescape(StringType const& s)
-{
-    StringType res = s;
-    unescape(res);
-    return res;
-}
+// Left out, so far we don't use it, so it just lowers test coverage
+// /*!
+// * @brief Out Of Place string unescaping as described in RFC 6901 (Sect. 4)
+// * @param[in] s string to unescape
+// *
+// */
+// template<typename StringType> // [[nodiscard]]
+// inline StringType unescape(StringType const& s)
+// {
+//    StringType res = s;
+//    unescape(res);
+//    return res;
+// }
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
