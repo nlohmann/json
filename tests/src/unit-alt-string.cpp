@@ -83,6 +83,11 @@ class alt_string
         return str_impl.end();
     }
 
+    std::string::iterator erase(std::string::const_iterator first, std::string::const_iterator last )
+    {
+        return str_impl.erase(first, last);
+    }
+
     template <typename op_type>
     bool operator==(const op_type& op) const
     {

@@ -3158,7 +3158,7 @@ inline void unescape(StringType& s)
         }
         ++i;
     }
-    s.resize(j - s.begin());
+    s.erase(j, s.end());
     s.shrink_to_fit();
 }
 
