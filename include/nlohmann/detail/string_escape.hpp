@@ -26,7 +26,7 @@ inline StringType escape(StringType const& s)
     using CharT = typename StringType::value_type;
     StringType res;
 
-    int esz = s.size();
+    auto esz = s.size();
     for (auto const ch : s)
     {
         if (ch == CharT('~') || ch == CharT('/'))
