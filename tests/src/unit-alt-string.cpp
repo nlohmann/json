@@ -58,6 +58,26 @@ class alt_string
         str_impl.push_back(c);
     }
 
+    void  shrink_to_fit() {
+        str_impl.shrink_to_fit();
+    }
+
+    std::string::iterator begin() {
+        return str_impl.begin();
+    }
+
+    std::string::const_iterator begin() const {
+        return str_impl.begin();
+    }
+
+    std::string::iterator end() {
+        return str_impl.end();
+    }
+
+    std::string::const_iterator end() const {
+        return str_impl.end();
+    }
+
     template <typename op_type>
     bool operator==(const op_type& op) const
     {
