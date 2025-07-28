@@ -58,23 +58,28 @@ class alt_string
         str_impl.push_back(c);
     }
 
-    void  shrink_to_fit() {
+    void  shrink_to_fit()
+    {
         str_impl.shrink_to_fit();
     }
 
-    std::string::iterator begin() {
+    std::string::iterator begin()
+    {
         return str_impl.begin();
     }
 
-    std::string::const_iterator begin() const {
+    std::string::const_iterator begin() const
+    {
         return str_impl.begin();
     }
 
-    std::string::iterator end() {
+    std::string::iterator end()
+    {
         return str_impl.end();
     }
 
-    std::string::const_iterator end() const {
+    std::string::const_iterator end() const
+    {
         return str_impl.end();
     }
 

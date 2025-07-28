@@ -3085,57 +3085,94 @@ namespace detail
 {
 
 /*!
-@brief replace all occurrences of a substring by another string
-
-@param[in,out] s  the string to manipulate; changed so that all
-               occurrences of @a f are replaced with @a t
-@param[in]     f  the substring to replace with @a t
-@param[in]     t  the string to replace @a f
-
-@pre The search string @a f must not be empty. **This precondition is
-enforced with an assertion.**
-
-@since version 2.0.0
-*/
-template<typename StringType>
-inline void replace_substring(StringType& s, const StringType& f,
-                              const StringType& t)
-{
-    JSON_ASSERT(!f.empty());
-    for (auto pos = s.find(f);                // find the first occurrence of f
-            pos != StringType::npos;          // make sure f was found
-            s.replace(pos, f.size(), t),      // replace with t, and
-            pos = s.find(f, pos + t.size()))  // find the next occurrence of f
-    {}
-}
-
-/*!
- * @brief string escaping as described in RFC 6901 (Sect. 4)
+ * @brief Out Of Place string escaping as described in RFC 6901 (Sect. 4)
  * @param[in] s string to escape
  * @return    escaped string
  *
- * Note the order of escaping "~" to "~0" and "/" to "~1" is important.
  */
-template<typename StringType>
-inline StringType escape(StringType s)
+template<typename StringType> // [[nodiscard]]
+inline StringType escape(StringType const& s)
 {
-    replace_substring(s, StringType{"~"}, StringType{"~0"});
-    replace_substring(s, StringType{"/"}, StringType{"~1"});
-    return s;
+    using CharT = typename StringType::value_type;
+    StringType res;
+
+    int esz = s.size();
+    for (auto const ch : s)
+        if (ch == CharT('~') || ch == CharT('/'))
+        {
+            ++esz;
+        }
+    if (esz == s.size())
+    {
+        res = s;
+    }
+    else
+    {
+        res.reserve(esz);
+        for (auto const ch : s) // Yes, this is UTF8-safe
+            if (ch == CharT('~'))
+                res.append(StringType{"~0"});
+            else if (ch == CharT('/'))
+                res.append(StringType{"~1"});
+            else
+            {
+                res.push_back(ch);
+            }
+    }
+    return res;
 }
 
 /*!
- * @brief string unescaping as described in RFC 6901 (Sect. 4)
+ * @brief In Place string unescaping as described in RFC 6901 (Sect. 4)
  * @param[in] s string to unescape
- * @return    unescaped string
  *
- * Note the order of escaping "~1" to "/" and "~0" to "~" is important.
  */
 template<typename StringType>
 inline void unescape(StringType& s)
 {
-    replace_substring(s, StringType{"~1"}, StringType{"/"});
-    replace_substring(s, StringType{"~0"}, StringType{"~"});
+    using CharT = typename StringType::value_type;
+    auto j = s.begin();
+    while (j != s.end() && *j != CharT('~'))
+    {
+        ++j;
+    }
+    auto i = j;
+    while (i != s.end())
+    {
+        if (*i == CharT('~') && (i + 1) != s.end())
+        {
+            if (*(i + 1) == CharT('0'))
+            {
+                *j++ = CharT('~');
+                ++i;
+            }
+            else if (*(i + 1) == CharT('1'))
+            {
+                *j++ = CharT('/');
+                ++i;
+            } // ... else shouldn't we throw parse_error.108 here?
+        }
+        else
+        {
+            *j++ = *i;
+        }
+        ++i;
+    }
+    s.resize(j - s.begin());
+    s.shrink_to_fit();
+}
+
+/*!
+ * @brief Out Of Place string unescaping as described in RFC 6901 (Sect. 4)
+ * @param[in] s string to unescape
+ *
+ */
+template<typename StringType> // [[nodiscard]]
+inline StringType unescape(StringType const& s)
+{
+    StringType res = s;
+    unescape(res);
+    return res;
 }
 
 }  // namespace detail

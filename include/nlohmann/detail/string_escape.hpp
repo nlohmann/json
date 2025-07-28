@@ -21,73 +21,89 @@ namespace detail
  *
  */
 template<typename StringType> // [[nodiscard]]
-inline StringType escape(StringType const & s)
-    {
-        using CharT = typename StringType::value_type;
-        StringType res;
+inline StringType escape(StringType const& s)
+{
+    using CharT = typename StringType::value_type;
+    StringType res;
 
-        int esz=s.size();
-        for (auto const ch : s)
-            if(ch == CharT('~') || ch == CharT('/'))
-                ++esz;
-        if(esz == s.size())
-            res = s;
-        else {
-            res.reserve(esz);
-            for (auto const ch : s) // Yes, this is UTF8-safe
-                if(ch == CharT('~'))
-                    res.append(StringType{"~0"});
-                else if (ch == CharT('/'))
-                    res.append(StringType{"~1"});
-                else
-                    res.push_back(ch);
+    int esz = s.size();
+    for (auto const ch : s)
+        if (ch == CharT('~') || ch == CharT('/'))
+        {
+            ++esz;
         }
-        return res;
+    if (esz == s.size())
+    {
+        res = s;
     }
+    else
+    {
+        res.reserve(esz);
+        for (auto const ch : s) // Yes, this is UTF8-safe
+            if (ch == CharT('~'))
+                res.append(StringType{"~0"});
+            else if (ch == CharT('/'))
+                res.append(StringType{"~1"});
+            else
+            {
+                res.push_back(ch);
+            }
+    }
+    return res;
+}
 
 /*!
  * @brief In Place string unescaping as described in RFC 6901 (Sect. 4)
  * @param[in] s string to unescape
  *
  */
-    template<typename StringType>
-    inline void unescape(StringType& s)
+template<typename StringType>
+inline void unescape(StringType& s)
+{
+    using CharT = typename StringType::value_type;
+    auto j = s.begin();
+    while (j != s.end() && *j != CharT('~'))
     {
-        using CharT = typename StringType::value_type;
-        auto j = s.begin();
-        while(j != s.end() && *j != CharT('~'))
-            ++j;
-        auto i = j;
-        while(i != s.end()) {
-            if (*i == CharT('~') && (i + 1) != s.end()) {
-                if (*(i + 1) == CharT('0')) {
-                    *j++ = CharT('~');
-                    ++i;
-                } else if (*(i + 1) == CharT('1')) {
-                    *j++ = CharT('/');
-                    ++i;
-                } // ... else shouldn't we throw parse_error.108 here?
-            } else {
-                *j++ = *i;
-                }
-            ++i;
-        }
-        s.resize(j-s.begin());
-        s.shrink_to_fit();
+        ++j;
     }
+    auto i = j;
+    while (i != s.end())
+    {
+        if (*i == CharT('~') && (i + 1) != s.end())
+        {
+            if (*(i + 1) == CharT('0'))
+            {
+                *j++ = CharT('~');
+                ++i;
+            }
+            else if (*(i + 1) == CharT('1'))
+            {
+                *j++ = CharT('/');
+                ++i;
+            } // ... else shouldn't we throw parse_error.108 here?
+        }
+        else
+        {
+            *j++ = *i;
+        }
+        ++i;
+    }
+    s.resize(j - s.begin());
+    s.shrink_to_fit();
+}
 
 /*!
  * @brief Out Of Place string unescaping as described in RFC 6901 (Sect. 4)
  * @param[in] s string to unescape
  *
  */
-    template<typename StringType> // [[nodiscard]]
-    inline StringType unescape(StringType const& s)
-    {
-        StringType res = s;
-        unescape(res);
-        return res;
-    }
+template<typename StringType> // [[nodiscard]]
+inline StringType unescape(StringType const& s)
+{
+    StringType res = s;
+    unescape(res);
+    return res;
+}
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
