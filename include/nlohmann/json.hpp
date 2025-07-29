@@ -338,7 +338,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
           basic_json,
           default_object_comparator_t,
           AllocatorType<std::pair<const StringType,
-          basic_json >>>;
+          basic_json>>>;
 
     /// @brief a type for an array
     /// @sa https://json.nlohmann.me/api/basic_json/array_t/
@@ -1146,7 +1146,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     template<typename JsonRef,
              detail::enable_if_t<detail::conjunction<detail::is_json_ref<JsonRef>,
-                                 std::is_same<typename JsonRef::value_type, basic_json >>::value, int> = 0 >
+                                 std::is_same<typename JsonRef::value_type, basic_json>>::value, int> = 0 >
     basic_json(const JsonRef& ref) : basic_json(ref.moved_or_copied()) {}
 
     /// @brief copy constructor
@@ -4252,7 +4252,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         data(size_type cnt, const basic_json& val)
             : m_type(value_t::array)
         {
-            m_value.array = create < array_t > (cnt, val);
+            m_value.array = create<array_t>(cnt, val);
         }
 
         data() noexcept = default;
@@ -4301,133 +4301,133 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
   public:
     /// @brief create a CBOR serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_cbor/
-    static std::vector < std::uint8_t > to_cbor(const basic_json& j)
+    static std::vector<std::uint8_t> to_cbor(const basic_json& j)
     {
-        std::vector < std::uint8_t > result;
+        std::vector<std::uint8_t> result;
         to_cbor(j, result);
         return result;
     }
 
     /// @brief create a CBOR serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_cbor/
-    static void to_cbor(const basic_json& j, detail::output_adapter < std::uint8_t > o)
+    static void to_cbor(const basic_json& j, detail::output_adapter<std::uint8_t> o)
     {
-        binary_writer < std::uint8_t > (o).write_cbor(j);
+        binary_writer<std::uint8_t>(o).write_cbor(j);
     }
 
     /// @brief create a CBOR serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_cbor/
-    static void to_cbor(const basic_json& j, detail::output_adapter < char > o)
+    static void to_cbor(const basic_json& j, detail::output_adapter<char> o)
     {
-        binary_writer < char > (o).write_cbor(j);
+        binary_writer<char>(o).write_cbor(j);
     }
 
     /// @brief create a MessagePack serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_msgpack/
-    static std::vector < std::uint8_t > to_msgpack(const basic_json& j)
+    static std::vector<std::uint8_t> to_msgpack(const basic_json& j)
     {
-        std::vector < std::uint8_t > result;
+        std::vector<std::uint8_t> result;
         to_msgpack(j, result);
         return result;
     }
 
     /// @brief create a MessagePack serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_msgpack/
-    static void to_msgpack(const basic_json& j, detail::output_adapter < std::uint8_t > o)
+    static void to_msgpack(const basic_json& j, detail::output_adapter<std::uint8_t> o)
     {
-        binary_writer < std::uint8_t > (o).write_msgpack(j);
+        binary_writer<std::uint8_t>(o).write_msgpack(j);
     }
 
     /// @brief create a MessagePack serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_msgpack/
-    static void to_msgpack(const basic_json& j, detail::output_adapter < char > o)
+    static void to_msgpack(const basic_json& j, detail::output_adapter<char> o)
     {
-        binary_writer < char > (o).write_msgpack(j);
+        binary_writer<char>(o).write_msgpack(j);
     }
 
     /// @brief create a UBJSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_ubjson/
-    static std::vector < std::uint8_t > to_ubjson(const basic_json& j,
+    static std::vector<std::uint8_t> to_ubjson(const basic_json& j,
             const bool use_size = false,
             const bool use_type = false)
     {
-        std::vector < std::uint8_t > result;
+        std::vector<std::uint8_t> result;
         to_ubjson(j, result, use_size, use_type);
         return result;
     }
 
     /// @brief create a UBJSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_ubjson/
-    static void to_ubjson(const basic_json& j, detail::output_adapter < std::uint8_t > o,
+    static void to_ubjson(const basic_json& j, detail::output_adapter<std::uint8_t> o,
                           const bool use_size = false, const bool use_type = false)
     {
-        binary_writer < std::uint8_t > (o).write_ubjson(j, use_size, use_type);
+        binary_writer<std::uint8_t>(o).write_ubjson(j, use_size, use_type);
     }
 
     /// @brief create a UBJSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_ubjson/
-    static void to_ubjson(const basic_json& j, detail::output_adapter < char > o,
+    static void to_ubjson(const basic_json& j, detail::output_adapter<char> o,
                           const bool use_size = false, const bool use_type = false)
     {
-        binary_writer < char > (o).write_ubjson(j, use_size, use_type);
+        binary_writer<char>(o).write_ubjson(j, use_size, use_type);
     }
 
     /// @brief create a BJData serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bjdata/
-    static std::vector < std::uint8_t > to_bjdata(const basic_json& j,
+    static std::vector<std::uint8_t> to_bjdata(const basic_json& j,
             const bool use_size = false,
             const bool use_type = false,
             const bjdata_version_t version = bjdata_version_t::draft2)
     {
-        std::vector < std::uint8_t > result;
+        std::vector<std::uint8_t> result;
         to_bjdata(j, result, use_size, use_type, version);
         return result;
     }
 
     /// @brief create a BJData serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bjdata/
-    static void to_bjdata(const basic_json& j, detail::output_adapter < std::uint8_t > o,
+    static void to_bjdata(const basic_json& j, detail::output_adapter<std::uint8_t> o,
                           const bool use_size = false, const bool use_type = false,
                           const bjdata_version_t version = bjdata_version_t::draft2)
     {
-        binary_writer < std::uint8_t > (o).write_ubjson(j, use_size, use_type, true, true, version);
+        binary_writer<std::uint8_t>(o).write_ubjson(j, use_size, use_type, true, true, version);
     }
 
     /// @brief create a BJData serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bjdata/
-    static void to_bjdata(const basic_json& j, detail::output_adapter < char > o,
+    static void to_bjdata(const basic_json& j, detail::output_adapter<char> o,
                           const bool use_size = false, const bool use_type = false,
                           const bjdata_version_t version = bjdata_version_t::draft2)
     {
-        binary_writer < char > (o).write_ubjson(j, use_size, use_type, true, true, version);
+        binary_writer<char>(o).write_ubjson(j, use_size, use_type, true, true, version);
     }
 
     /// @brief create a BSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bson/
-    static std::vector < std::uint8_t > to_bson(const basic_json& j)
+    static std::vector<std::uint8_t> to_bson(const basic_json& j)
     {
-        std::vector < std::uint8_t > result;
+        std::vector<std::uint8_t> result;
         to_bson(j, result);
         return result;
     }
 
     /// @brief create a BSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bson/
-    static void to_bson(const basic_json& j, detail::output_adapter < std::uint8_t > o)
+    static void to_bson(const basic_json& j, detail::output_adapter<std::uint8_t> o)
     {
-        binary_writer < std::uint8_t > (o).write_bson(j);
+        binary_writer<std::uint8_t>(o).write_bson(j);
     }
 
     /// @brief create a BSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bson/
-    static void to_bson(const basic_json& j, detail::output_adapter < char > o)
+    static void to_bson(const basic_json& j, detail::output_adapter<char> o)
     {
-        binary_writer < char > (o).write_bson(j);
+        binary_writer<char>(o).write_bson(j);
     }
 
     /// @brief create a JSON value from an input in CBOR format
     /// @sa https://json.nlohmann.me/api/basic_json/from_cbor/
-    template < typename InputType >
+    template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_cbor(InputType&& i,
                                 const bool strict = true,
@@ -4435,15 +4435,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                 const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         basic_json result;
-        auto ia = detail::input_adapter(std::forward < InputType > (i));
-        detail::json_sax_dom_parser < basic_json, decltype(ia) > sdp(result, allow_exceptions);
-        const bool res = binary_reader < decltype(ia) > (std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler); // cppcheck-suppress[accessMoved]
+        auto ia = detail::input_adapter(std::forward<InputType>(i));
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler); // cppcheck-suppress[accessMoved]
         return res ? result : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in CBOR format
     /// @sa https://json.nlohmann.me/api/basic_json/from_cbor/
-    template < typename IteratorType >
+    template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_cbor(IteratorType first, IteratorType last,
                                 const bool strict = true,
@@ -4452,12 +4452,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));
-        detail::json_sax_dom_parser < basic_json, decltype(ia) > sdp(result, allow_exceptions);
-        const bool res = binary_reader < decltype(ia) > (std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler); // cppcheck-suppress[accessMoved]
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler); // cppcheck-suppress[accessMoved]
         return res ? result : basic_json(value_t::discarded);
     }
 
-    template < typename T >
+    template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_cbor(ptr, ptr + len))
     static basic_json from_cbor(const T* ptr, std::size_t len,
@@ -4477,30 +4477,30 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         basic_json result;
         auto ia = i.get();
-        detail::json_sax_dom_parser < basic_json, decltype(ia) > sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-        const bool res = binary_reader < decltype(ia) > (std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler); // cppcheck-suppress[accessMoved]
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler); // cppcheck-suppress[accessMoved]
         return res ? result : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in MessagePack format
     /// @sa https://json.nlohmann.me/api/basic_json/from_msgpack/
-    template < typename InputType >
+    template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_msgpack(InputType&& i,
                                    const bool strict = true,
                                    const bool allow_exceptions = true)
     {
         basic_json result;
-        auto ia = detail::input_adapter(std::forward < InputType > (i));
-        detail::json_sax_dom_parser < basic_json, decltype(ia) > sdp(result, allow_exceptions);
-        const bool res = binary_reader < decltype(ia) > (std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict); // cppcheck-suppress[accessMoved]
+        auto ia = detail::input_adapter(std::forward<InputType>(i));
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict); // cppcheck-suppress[accessMoved]
         return res ? result : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in MessagePack format
     /// @sa https://json.nlohmann.me/api/basic_json/from_msgpack/
-    template < typename IteratorType >
+    template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_msgpack(IteratorType first, IteratorType last,
                                    const bool strict = true,
@@ -4508,12 +4508,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));
-        detail::json_sax_dom_parser < basic_json, decltype(ia) > sdp(result, allow_exceptions);
-        const bool res = binary_reader < decltype(ia) > (std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict); // cppcheck-suppress[accessMoved]
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict); // cppcheck-suppress[accessMoved]
         return res ? result : basic_json(value_t::discarded);
     }
 
-    template < typename T >
+    template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_msgpack(ptr, ptr + len))
     static basic_json from_msgpack(const T* ptr, std::size_t len,
@@ -4531,30 +4531,30 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         basic_json result;
         auto ia = i.get();
-        detail::json_sax_dom_parser < basic_json, decltype(ia) > sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-        const bool res = binary_reader < decltype(ia) > (std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict); // cppcheck-suppress[accessMoved]
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict); // cppcheck-suppress[accessMoved]
         return res ? result : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in UBJSON format
     /// @sa https://json.nlohmann.me/api/basic_json/from_ubjson/
-    template < typename InputType >
+    template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_ubjson(InputType&& i,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)
     {
         basic_json result;
-        auto ia = detail::input_adapter(std::forward < InputType > (i));
-        detail::json_sax_dom_parser < basic_json, decltype(ia) > sdp(result, allow_exceptions);
-        const bool res = binary_reader < decltype(ia) > (std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict); // cppcheck-suppress[accessMoved]
+        auto ia = detail::input_adapter(std::forward<InputType>(i));
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict); // cppcheck-suppress[accessMoved]
         return res ? result : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in UBJSON format
     /// @sa https://json.nlohmann.me/api/basic_json/from_ubjson/
-    template < typename IteratorType >
+    template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_ubjson(IteratorType first, IteratorType last,
                                   const bool strict = true,
@@ -4562,12 +4562,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));
-        detail::json_sax_dom_parser < basic_json, decltype(ia) > sdp(result, allow_exceptions);
-        const bool res = binary_reader < decltype(ia) > (std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict); // cppcheck-suppress[accessMoved]
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict); // cppcheck-suppress[accessMoved]
         return res ? result : basic_json(value_t::discarded);
     }
 
-    template < typename T >
+    template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_ubjson(ptr, ptr + len))
     static basic_json from_ubjson(const T* ptr, std::size_t len,
@@ -4585,30 +4585,30 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         basic_json result;
         auto ia = i.get();
-        detail::json_sax_dom_parser < basic_json, decltype(ia) > sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-        const bool res = binary_reader < decltype(ia) > (std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict); // cppcheck-suppress[accessMoved]
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict); // cppcheck-suppress[accessMoved]
         return res ? result : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in BJData format
     /// @sa https://json.nlohmann.me/api/basic_json/from_bjdata/
-    template < typename InputType >
+    template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bjdata(InputType&& i,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)
     {
         basic_json result;
-        auto ia = detail::input_adapter(std::forward < InputType > (i));
-        detail::json_sax_dom_parser < basic_json, decltype(ia) > sdp(result, allow_exceptions);
-        const bool res = binary_reader < decltype(ia) > (std::move(ia), input_format_t::bjdata).sax_parse(input_format_t::bjdata, &sdp, strict); // cppcheck-suppress[accessMoved]
+        auto ia = detail::input_adapter(std::forward<InputType>(i));
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(input_format_t::bjdata, &sdp, strict); // cppcheck-suppress[accessMoved]
         return res ? result : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in BJData format
     /// @sa https://json.nlohmann.me/api/basic_json/from_bjdata/
-    template < typename IteratorType >
+    template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bjdata(IteratorType first, IteratorType last,
                                   const bool strict = true,
@@ -4616,29 +4616,29 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));
-        detail::json_sax_dom_parser < basic_json, decltype(ia) > sdp(result, allow_exceptions);
-        const bool res = binary_reader < decltype(ia) > (std::move(ia), input_format_t::bjdata).sax_parse(input_format_t::bjdata, &sdp, strict); // cppcheck-suppress[accessMoved]
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(input_format_t::bjdata, &sdp, strict); // cppcheck-suppress[accessMoved]
         return res ? result : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in BSON format
     /// @sa https://json.nlohmann.me/api/basic_json/from_bson/
-    template < typename InputType >
+    template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bson(InputType&& i,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
     {
         basic_json result;
-        auto ia = detail::input_adapter(std::forward < InputType > (i));
-        detail::json_sax_dom_parser < basic_json, decltype(ia) > sdp(result, allow_exceptions);
-        const bool res = binary_reader < decltype(ia) > (std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict); // cppcheck-suppress[accessMoved]
+        auto ia = detail::input_adapter(std::forward<InputType>(i));
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict); // cppcheck-suppress[accessMoved]
         return res ? result : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in BSON format
     /// @sa https://json.nlohmann.me/api/basic_json/from_bson/
-    template < typename IteratorType >
+    template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bson(IteratorType first, IteratorType last,
                                 const bool strict = true,
@@ -4646,12 +4646,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));
-        detail::json_sax_dom_parser < basic_json, decltype(ia) > sdp(result, allow_exceptions);
-        const bool res = binary_reader < decltype(ia) > (std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict); // cppcheck-suppress[accessMoved]
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict); // cppcheck-suppress[accessMoved]
         return res ? result : basic_json(value_t::discarded);
     }
 
-    template < typename T >
+    template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_bson(ptr, ptr + len))
     static basic_json from_bson(const T* ptr, std::size_t len,
@@ -4669,9 +4669,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         basic_json result;
         auto ia = i.get();
-        detail::json_sax_dom_parser < basic_json, decltype(ia) > sdp(result, allow_exceptions);
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-        const bool res = binary_reader < decltype(ia) > (std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict); // cppcheck-suppress[accessMoved]
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict); // cppcheck-suppress[accessMoved]
         return res ? result : basic_json(value_t::discarded);
     }
     /// @}
@@ -4690,9 +4690,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ptr.get_unchecked(this);
     }
 
-    template < typename BasicJsonType, detail::enable_if_t < detail::is_basic_json<BasicJsonType>::value, int > = 0 >
-    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer < basic_json::string_t > ) // NOLINT(readability/alt_tokens)
-    reference operator[](const ::nlohmann::json_pointer < BasicJsonType >& ptr)
+    template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr)
     {
         return ptr.get_unchecked(this);
     }
@@ -4704,9 +4704,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ptr.get_unchecked(this);
     }
 
-    template < typename BasicJsonType, detail::enable_if_t < detail::is_basic_json<BasicJsonType>::value, int > = 0 >
-    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer < basic_json::string_t > ) // NOLINT(readability/alt_tokens)
-    const_reference operator[](const ::nlohmann::json_pointer < BasicJsonType >& ptr) const
+    template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    const_reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr) const
     {
         return ptr.get_unchecked(this);
     }
@@ -4718,9 +4718,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ptr.get_checked(this);
     }
 
-    template < typename BasicJsonType, detail::enable_if_t < detail::is_basic_json<BasicJsonType>::value, int > = 0 >
-    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer < basic_json::string_t > ) // NOLINT(readability/alt_tokens)
-    reference at(const ::nlohmann::json_pointer < BasicJsonType >& ptr)
+    template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr)
     {
         return ptr.get_checked(this);
     }
@@ -4732,9 +4732,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ptr.get_checked(this);
     }
 
-    template < typename BasicJsonType, detail::enable_if_t < detail::is_basic_json<BasicJsonType>::value, int > = 0 >
-    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer < basic_json::string_t > ) // NOLINT(readability/alt_tokens)
-    const_reference at(const ::nlohmann::json_pointer < BasicJsonType >& ptr) const
+    template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
+    const_reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr) const
     {
         return ptr.get_checked(this);
     }
@@ -4844,7 +4844,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     }
                     else
                     {
-                        const auto idx = json_pointer::template array_index < basic_json_t > (last_path);
+                        const auto idx = json_pointer::template array_index<basic_json_t>(last_path);
                         if (JSON_HEDLEY_UNLIKELY(idx > parent.size()))
                         {
                             // avoid undefined behavior
@@ -4852,7 +4852,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                         }
 
                         // default case: insert add offset
-                        parent.insert(parent.begin() + static_cast < difference_type > (idx), val);
+                        parent.insert(parent.begin() + static_cast<difference_type>(idx), val);
                     }
                     break;
                 }
@@ -4895,7 +4895,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             else if (parent.is_array())
             {
                 // note erase performs range check
-                parent.erase(json_pointer::template array_index < basic_json_t > (last_path));
+                parent.erase(json_pointer::template array_index<basic_json_t>(last_path));
             }
         };
 
@@ -4944,8 +4944,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             }
 
             // collect mandatory members
-            const auto op = get_value("op", "op", true).template get < string_t > ();
-            const auto path = get_value(op, "path", true).template get < string_t > ();
+            const auto op = get_value("op", "op", true).template get<string_t>();
+            const auto path = get_value(op, "path", true).template get<string_t>();
             json_pointer ptr(path);
 
             switch (get_op(op))
@@ -4971,7 +4971,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
                 case patch_operations::move:
                 {
-                    const auto from_path = get_value("move", "from", true).template get < string_t > ();
+                    const auto from_path = get_value("move", "from", true).template get<string_t>();
                     json_pointer from_ptr(from_path);
 
                     // the "from" location must exist - use at()
@@ -4988,7 +4988,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
                 case patch_operations::copy:
                 {
-                    const auto from_path = get_value("copy", "from", true).template get < string_t > ();
+                    const auto from_path = get_value("copy", "from", true).template get<string_t>();
                     const json_pointer from_ptr(from_path);
 
                     // the "from" location must exist - use at()
@@ -5078,7 +5078,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 while (i < source.size() && i < target.size())
                 {
                     // recursive call to compare array values at index i
-                    auto temp_diff = diff(source[i], target[i], detail::concat < string_t > (path, '/', detail::to_string < string_t > (i)));
+                    auto temp_diff = diff(source[i], target[i], detail::concat<string_t>(path, '/', detail::to_string<string_t>(i)));
                     result.insert(result.end(), temp_diff.begin(), temp_diff.end());
                     ++i;
                 }
@@ -5087,7 +5087,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 // in a second pass, traverse the remaining elements
 
                 // remove my remaining elements
-                const auto end_index = static_cast < difference_type > (result.size());
+                const auto end_index = static_cast<difference_type>(result.size());
                 while (i < source.size())
                 {
                     // add operations in reverse order to avoid invalid
@@ -5095,7 +5095,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     result.insert(result.begin() + end_index, object(
                     {
                         {"op", "remove"},
-                        {"path", detail::concat < string_t > (path, '/', detail::to_string < string_t > (i))}
+                        {"path", detail::concat<string_t>(path, '/', detail::to_string<string_t>(i))}
                     }));
                     ++i;
                 }
@@ -5106,7 +5106,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     result.push_back(
                     {
                         {"op", "add"},
-                        {"path", detail::concat < string_t > (path, "/-")},
+                        {"path", detail::concat<string_t>(path, "/-")},
                         {"value", target[i]}
                     });
                     ++i;
@@ -5121,7 +5121,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 for (auto it = source.cbegin(); it != source.cend(); ++it)
                 {
                     // escape the key name to be used in a JSON patch
-                    const auto path_key = detail::concat < string_t > (path, '/', detail::escape(it.key()));
+                    const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
 
                     if (target.find(it.key()) != target.end())
                     {
@@ -5145,7 +5145,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     if (source.find(it.key()) == source.end())
                     {
                         // found a key that is not in this -> add it
-                        const auto path_key = detail::concat < string_t > (path, '/', detail::escape(it.key()));
+                        const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
                         result.push_back(
                         {
                             {"op", "add"}, {"path", path_key},
@@ -5269,7 +5269,7 @@ namespace std // NOLINT(cert-dcl58-cpp)
 /// @brief hash value for JSON objects
 /// @sa https://json.nlohmann.me/api/basic_json/std_hash/
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
-struct hash < nlohmann::NLOHMANN_BASIC_JSON_TPL > // NOLINT(cert-dcl58-cpp)
+struct hash<nlohmann::NLOHMANN_BASIC_JSON_TPL> // NOLINT(cert-dcl58-cpp)
 {
     std::size_t operator()(const nlohmann::NLOHMANN_BASIC_JSON_TPL& j) const
     {
@@ -5278,8 +5278,8 @@ struct hash < nlohmann::NLOHMANN_BASIC_JSON_TPL > // NOLINT(cert-dcl58-cpp)
 };
 
 // specialization for std::less<value_t>
-template < >
-struct less < ::nlohmann::detail::value_t > // do not remove the space after '<', see https://github.com/nlohmann/json/pull/679
+template<>
+struct less< ::nlohmann::detail::value_t> // do not remove the space after '<', see https://github.com/nlohmann/json/pull/679
 {
     /*!
     @brief compare two value_t enum values
@@ -5303,8 +5303,8 @@ struct less < ::nlohmann::detail::value_t > // do not remove the space after '<'
 /// @sa https://json.nlohmann.me/api/basic_json/std_swap/
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
 inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC_JSON_TPL& j2) noexcept(  // NOLINT(readability-inconsistent-declaration-parameter-name, cert-dcl58-cpp)
-    is_nothrow_move_constructible < nlohmann::NLOHMANN_BASIC_JSON_TPL >::value&&                       // NOLINT(misc-redundant-expression,cppcoreguidelines-noexcept-swap,performance-noexcept-swap)
-    is_nothrow_move_assignable < nlohmann::NLOHMANN_BASIC_JSON_TPL >::value)
+    is_nothrow_move_constructible<nlohmann::NLOHMANN_BASIC_JSON_TPL>::value&&                          // NOLINT(misc-redundant-expression,cppcoreguidelines-noexcept-swap,performance-noexcept-swap)
+    is_nothrow_move_assignable<nlohmann::NLOHMANN_BASIC_JSON_TPL>::value)
 {
     j1.swap(j2);
 }
