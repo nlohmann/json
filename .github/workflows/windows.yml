@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   mingw:
-    runs-on: windows-2019
+    runs-on: windows-2022
     strategy:
       matrix:
         architecture: [x64, x86]
@@ -40,24 +40,15 @@ jobs:
   msvc:
     strategy:
       matrix:
-        runs_on: [windows-2019, windows-2022]
+        runs_on: windows-2022
         build_type: [Debug, Release]
         architecture: [Win32, x64]
         std_version: [default, latest]
 
-    runs-on: ${{ matrix.runs_on }}
+    runs-on: windows-2022
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - name: Set generator
-        id: generator
-        run: |
-          if [ "${{ matrix.runs_on }}" = "windows-2019" ]; then
-            echo "generator=Visual Studio 16 2019" >> $GITHUB_ENV
-          else
-            echo "generator=Visual Studio 17 2022" >> $GITHUB_ENV
-          fi
-        shell: bash
       - name: Set extra CXX_FLAGS for latest std_version
         id: cxxflags
         run: |
@@ -68,11 +59,11 @@ jobs:
           fi
         shell: bash
       - name: Run CMake (Release)
-        run: cmake -S . -B build -G "$env:generator" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DCMAKE_CXX_FLAGS="$env:flags"
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DCMAKE_CXX_FLAGS="$env:flags"
         if: matrix.build_type == 'Release'
         shell: pwsh
       - name: Run CMake (Debug)
-        run: cmake -S . -B build -G "$env:generator" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DJSON_FastTests=ON -DCMAKE_CXX_FLAGS="$env:flags"
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DJSON_FastTests=ON -DCMAKE_CXX_FLAGS="$env:flags"
         if: matrix.build_type == 'Debug'
         shell: pwsh
       - name: Build
@@ -81,7 +72,7 @@ jobs:
         run: cd build ; ctest -j 10 -C ${{ matrix.build_type }} --output-on-failure
 
   clang:
-    runs-on: windows-2019
+    runs-on: windows-2022
     strategy:
       matrix:
         version: [11, 12, 13, 14, 15]
@@ -98,7 +89,7 @@ jobs:
         run: cd build ; ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
 
   clang-cl-12:
-    runs-on: windows-2019
+    runs-on: windows-2022
     strategy:
       matrix:
         architecture: [Win32, x64]
