@@ -427,6 +427,84 @@ struct Example_4740
 };
 #endif
 
+namespace
+{
+class SaxCountdown
+{
+  public:
+    explicit SaxCountdown(const int count) : events_left(count)
+    {}
+
+    bool null()
+    {
+        return events_left-- > 0;
+    }
+
+    bool boolean(bool /*unused*/)
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_integer(json::number_integer_t /*unused*/)
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_unsigned(json::number_unsigned_t /*unused*/)
+    {
+        return events_left-- > 0;
+    }
+
+    bool number_float(json::number_float_t /*unused*/, const std::string& /*unused*/)
+    {
+        return events_left-- > 0;
+    }
+
+    bool string(std::string& /*unused*/)
+    {
+        return events_left-- > 0;
+    }
+
+    bool binary(std::vector<std::uint8_t>& /*unused*/)
+    {
+        return events_left-- > 0;
+    }
+
+    bool start_object(std::size_t /*unused*/)
+    {
+        return events_left-- > 0;
+    }
+
+    bool key(std::string& /*unused*/)
+    {
+        return events_left-- > 0;
+    }
+
+    bool end_object()
+    {
+        return events_left-- > 0;
+    }
+
+    bool start_array(std::size_t /*unused*/)
+    {
+        return events_left-- > 0;
+    }
+
+    bool end_array()
+    {
+        return events_left-- > 0;
+    }
+
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/) // NOLINT(readability-convert-member-functions-to-static)
+    {
+        return false;
+    }
+
+  private:
+    int events_left = 0;
+};
+} // namespace
+
 TEST_CASE("regression tests 2")
 {
     SECTION("issue #1001 - Fix memory leak during parser callback")
@@ -1075,6 +1153,13 @@ TEST_CASE("regression tests 2")
         CHECK(oj["test"].dump() == expected);
     }
 
+    SECTION("issue #4854 sax_parse segfaults when given a null handler")
+    {
+        std::string s = "some_string";
+        SaxCountdown* p = nullptr;
+        nlohmann::json j;
+        CHECK_THROWS_AS(j.sax_parse(s, p), json::other_error);
+    }
 #ifdef JSON_HAS_CPP_17
     SECTION("issue #4740 - build issue with std::optional")
     {
