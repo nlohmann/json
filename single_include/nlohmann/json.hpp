@@ -3085,7 +3085,7 @@ namespace detail
 {
 
 /*!
- * @brief Out Of Place string escaping as described in RFC 6901 (Sect. 4)
+ * @brief Returns a copy of a string escaped as described in RFC 6901 (Sect. 4)
  * @param[in] s string to escape
  * @return    escaped string
  *
@@ -3115,11 +3115,13 @@ inline StringType escape(StringType const& s)
         {
             if (ch == CharT('~'))
             {
-                res.append(StringType{"~0"});
+                res.push_back(CharT('~'));
+                res.push_back(CharT{'0'});
             }
             else if (ch == CharT('/'))
             {
-                res.append(StringType{"~1"});
+                res.push_back(CharT{'~'});
+                res.push_back(CharT{'1'});
             }
             else
             {
@@ -3131,7 +3133,7 @@ inline StringType escape(StringType const& s)
 }
 
 /*!
- * @brief In Place string unescaping as described in RFC 6901 (Sect. 4)
+ * @brief Unescapes a string as described in RFC 6901 (Sect. 4), in-place
  * @param[in] s string to unescape
  *
  */

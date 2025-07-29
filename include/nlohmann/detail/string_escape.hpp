@@ -46,7 +46,7 @@ inline StringType escape(StringType const& s)
             if (ch == CharT('~'))
             {
                 res.push_back(CharT('~'));
-		res.push_back(CharT{'0'});
+                res.push_back(CharT{'0'});
             }
             else if (ch == CharT('/'))
             {
