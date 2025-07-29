@@ -23,8 +23,16 @@ struct bad_allocator : std::allocator<T>
     bad_allocator() = default;
     template<class U> bad_allocator(const bad_allocator<U>& /*unused*/) { }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
+
     template<class... Args>
-    [[noreturn]] void construct(T* /*unused*/, Args&& ... /*unused*/);
+    void construct(T* /*unused*/, Args&& ... /*unused*/) // NOLINT(cppcoreguidelines-missing-std-forward)
+    {
+        throw std::bad_alloc();
+    }
+
+#pragma clang diagnostic pop
 
     template <class U>
     struct rebind
@@ -32,14 +40,6 @@ struct bad_allocator : std::allocator<T>
         using other = bad_allocator<U>;
     };
 };
-
-template <class T>
-template <class... Args>
-[[noreturn]] void bad_allocator<T>::construct(T* /*unused*/, Args &&.../*unused*/) // NOLINT(cppcoreguidelines-missing-std-forward)
-{
-    throw std::bad_alloc();
-}
-
 } // namespace
 
 TEST_CASE("bad_alloc")
