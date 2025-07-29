@@ -24,10 +24,7 @@ struct bad_allocator : std::allocator<T>
     template<class U> bad_allocator(const bad_allocator<U>& /*unused*/) { }
 
     template<class... Args>
-    [[noreturn]] void construct(T* /*unused*/, Args&& ... /*unused*/) // NOLINT(cppcoreguidelines-missing-std-forward)
-    {
-        throw std::bad_alloc();
-    }
+    [[noreturn]] void construct(T* /*unused*/, Args&& ... /*unused*/);
 
     template <class U>
     struct rebind
@@ -35,6 +32,14 @@ struct bad_allocator : std::allocator<T>
         using other = bad_allocator<U>;
     };
 };
+
+template <class T>
+template <class... Args>
+[[noreturn]] void bad_allocator<T>::construct(T* /*unused*/, Args &&.../*unused*/) // NOLINT(cppcoreguidelines-missing-std-forward)
+{
+    throw std::bad_alloc();
+}
+
 } // namespace
 
 TEST_CASE("bad_alloc")
