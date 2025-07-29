@@ -40,7 +40,6 @@ jobs:
   msvc:
     strategy:
       matrix:
-        runs_on: windows-2022
         build_type: [Debug, Release]
         architecture: [Win32, x64]
         std_version: [default, latest]
