@@ -900,3 +900,15 @@ A JSON Patch operation 'test' failed. The unsuccessful operation is also printed
     ```
     [json.exception.other_error.501] unsuccessful: {"op":"test","path":"/baz","value":"bar"}
     ```
+
+### json.exception.other_error.502
+
+when sax_parse operation has failed due to sax handler being nulllptr
+
+!!! failure "Example message"
+
+    Executing `nlohmann::json.sax_parse(some_string, nullptrHandle)`:
+
+    ```
+    [json.exception.other_error.502] Sax handler cannot be null
+    ```
