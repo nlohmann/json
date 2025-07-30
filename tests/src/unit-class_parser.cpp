@@ -1644,6 +1644,14 @@ TEST_CASE("parser class")
 
         SECTION("SAX parser")
         {
+            SECTION("null sax handler")
+            {
+
+                std::string s = "some_string";
+                SaxCountdown* p = nullptr;
+                nlohmann::json j;
+                CHECK_THROWS_AS(j.sax_parse(s, p), json::other_error);
+            }
             SECTION("} without value")
             {
                 SaxCountdown s(1);
