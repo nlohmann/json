@@ -23,7 +23,7 @@ using nlohmann::json;
 
 namespace
 {
-enum test {};
+enum test {}; // NOLINT(cppcoreguidelines-use-enum-class)
 
 struct pod {};
 struct pod_bis {};
