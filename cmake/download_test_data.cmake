@@ -7,15 +7,16 @@ if(JSON_TestDataDirectory)
     add_custom_target(download_test_data)
     file(WRITE ${CMAKE_BINARY_DIR}/include/test_data.hpp "#define TEST_DATA_DIRECTORY \"${JSON_TestDataDirectory}\"\n")
 else()
-    find_package(Git)
+    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/test_files)
+
+    # create a header with the path to the downloaded test data
+    file(WRITE ${CMAKE_BINARY_DIR}/include/test_data.hpp "#define TEST_DATA_DIRECTORY \"${CMAKE_BINARY_DIR}/test_files/_deps/json_test_data-src\"\n")
+
     # target to download test data
     add_custom_target(download_test_data
-        COMMAND test -d json_test_data || ${GIT_EXECUTABLE} clone -c advice.detachedHead=false --branch v${JSON_TEST_DATA_VERSION} ${JSON_TEST_DATA_URL}.git --quiet --depth 1
-        COMMENT "Downloading test data from ${JSON_TEST_DATA_URL} (v${JSON_TEST_DATA_VERSION})"
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMAND ${CMAKE_COMMAND} ${CMAKE_SOURCE_DIR}/cmake/download_project -DJSON_TEST_DATA_URL=${JSON_TEST_DATA_URL} -DJSON_TEST_DATA_VERSION=${JSON_TEST_DATA_VERSION}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test_files
     )
-    # create a header with the path to the downloaded test data
-    file(WRITE ${CMAKE_BINARY_DIR}/include/test_data.hpp "#define TEST_DATA_DIRECTORY \"${CMAKE_BINARY_DIR}/json_test_data\"\n")
 endif()
 
 # determine the operating system (for debug and support purposes)
