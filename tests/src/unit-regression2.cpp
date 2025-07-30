@@ -363,7 +363,7 @@ struct for_3204_foo
 
 struct for_3204_bar
 {
-    enum constructed_from_t
+    enum constructed_from_t // NOLINT(cppcoreguidelines-use-enum-class)
     {
         constructed_from_none = 0,
         constructed_from_foo = 1,
