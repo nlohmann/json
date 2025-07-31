@@ -1646,12 +1646,12 @@ TEST_CASE("parser class")
         {
             SECTION("null sax handler")
             {
-
                 std::string s = "some_string";
                 SaxCountdown* p = nullptr;
                 nlohmann::json j;
-                CHECK_THROWS_AS(j.sax_parse(s, p), json::other_error);
+                CHECK_THROWS_WITH_AS(j.sax_parse(s, p), "[json.exception.other_error.502] SAX handler must not be null", json::other_error&);
             }
+
             SECTION("} without value")
             {
                 SaxCountdown s(1);

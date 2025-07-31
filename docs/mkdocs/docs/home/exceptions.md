@@ -903,12 +903,10 @@ A JSON Patch operation 'test' failed. The unsuccessful operation is also printed
 
 ### json.exception.other_error.502
 
-when sax_parse operation has failed due to sax handler being nulllptr
+This exception occurs when a null pointer is passed as SAX handler in json.sax_parse() operation.
 
 !!! failure "Example message"
 
-    Executing `nlohmann::json.sax_parse(some_string, nullptrHandle)`:
-
     ```
-    [json.exception.other_error.502] Sax handler cannot be null
+    [json.exception.other_error.502] SAX handler must not be null
     ```
