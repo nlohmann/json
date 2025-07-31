@@ -69,17 +69,21 @@ message(STATUS "Compiler: ${CXX_VERSION_RESULT}")
 
 # determine used C++ standard library (for debug and support purposes)
 if(NOT DEFINED LIBCPP_VERSION_OUTPUT_CACHED)
-    if(NOT CMAKE_CROSSCOMPILING)
+    if(CMAKE_CROSSCOMPILING)
+        set(LIBCPP_VERSION_OUTPUT "could not be detected due to cross-compiling")
+    else()
         try_run(RUN_RESULT_VAR COMPILE_RESULT_VAR
             "${CMAKE_BINARY_DIR}" SOURCES "${CMAKE_SOURCE_DIR}/cmake/detect_libcpp_version.cpp"
-            RUN_OUTPUT_VARIABLE LIBCPP_VERSION_OUTPUT COMPILE_OUTPUT_VARIABLE LIBCPP_VERSION_COMPILE_OUTPUT
+            RUN_OUTPUT_VARIABLE LIBCPP_VERSION_OUTPUT 
+            COMPILE_OUTPUT_VARIABLE LIBCPP_VERSION_COMPILE_OUTPUT
         )
         if(NOT LIBCPP_VERSION_OUTPUT)
             set(LIBCPP_VERSION_OUTPUT "Unknown")
             message(AUTHOR_WARNING "Failed to compile cmake/detect_libcpp_version to detect the used C++ standard library. This does not affect the library or the test cases. Please still create an issue at https://github.com/nlohmann/json to investigate this.\n${LIBCPP_VERSION_COMPILE_OUTPUT}")
         endif()
-    else()
-        set(LIBCPP_VERSION_OUTPUT_CACHED "${LIBCPP_VERSION_OUTPUT}" CACHE STRING "Detected C++ standard library version")
+    endif()
+    set(LIBCPP_VERSION_OUTPUT_CACHED "${LIBCPP_VERSION_OUTPUT}" CACHE STRING "Detected C++ standard library version")
 endif()
+     
 
 message(STATUS "C++ standard library: ${LIBCPP_VERSION_OUTPUT_CACHED}")
