@@ -402,7 +402,7 @@ template<typename T>
 struct is_iterator_of_multibyte
 {
     using value_type = typename std::iterator_traits<T>::value_type;
-    enum
+    enum // NOLINT(cppcoreguidelines-use-enum-class)
     {
         value = sizeof(value_type) > 1
     };

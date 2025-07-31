@@ -1,21 +1,33 @@
 set(JSON_TEST_DATA_URL     https://github.com/nlohmann/json_test_data)
 set(JSON_TEST_DATA_VERSION 3.1.0)
 
+include(ExternalProject)
+
 # if variable is set, use test data from given directory rather than downloading them
 if(JSON_TestDataDirectory)
     message(STATUS "Using test data in ${JSON_TestDataDirectory}.")
     add_custom_target(download_test_data)
     file(WRITE ${CMAKE_BINARY_DIR}/include/test_data.hpp "#define TEST_DATA_DIRECTORY \"${JSON_TestDataDirectory}\"\n")
 else()
-    find_package(Git)
+    # create a header with the path to the downloaded test data
+    file(WRITE ${CMAKE_BINARY_DIR}/include/test_data.hpp "#define TEST_DATA_DIRECTORY \"${CMAKE_BINARY_DIR}/test_files\"\n")
+
+    # download test data from GitHub release
+    ExternalProject_Add(download_test_data_project
+        URL "${JSON_TEST_DATA_URL}/archive/refs/tags/v${JSON_TEST_DATA_VERSION}.zip"
+        SOURCE_DIR "${CMAKE_BINARY_DIR}/test_files"
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND ""
+        INSTALL_COMMAND ""
+        LOG_DOWNLOAD TRUE
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        EXCLUDE_FROM_ALL TRUE
+    )
+
     # target to download test data
     add_custom_target(download_test_data
-        COMMAND test -d json_test_data || ${GIT_EXECUTABLE} clone -c advice.detachedHead=false --branch v${JSON_TEST_DATA_VERSION} ${JSON_TEST_DATA_URL}.git --quiet --depth 1
-        COMMENT "Downloading test data from ${JSON_TEST_DATA_URL} (v${JSON_TEST_DATA_VERSION})"
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        DEPENDS download_test_data_project
     )
-    # create a header with the path to the downloaded test data
-    file(WRITE ${CMAKE_BINARY_DIR}/include/test_data.hpp "#define TEST_DATA_DIRECTORY \"${CMAKE_BINARY_DIR}/json_test_data\"\n")
 endif()
 
 # determine the operating system (for debug and support purposes)
