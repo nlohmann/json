@@ -195,6 +195,8 @@ jobs:
         standard: [11, 14, 17, 20, 23, 26]
         stdlib: [libcxx, libstdcxx]
     steps:
+      - name: Install git and unzip
+        run: apt-get update ; apt-get install -y git unzip
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
