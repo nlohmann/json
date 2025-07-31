@@ -67,8 +67,8 @@ jobs:
       matrix:
         target: [ci_test_clang, ci_clang_tidy, ci_test_clang_sanitizer, ci_clang_analyze, ci_single_binaries]
     steps:
-      - name: Install git, clang-tools, iwyu (ci_single_binaries), and unzip
-        run: apt-get update ; apt-get install -y git clang-tools iwyu unzip
+      - name: Install clang-tools, iwyu (ci_single_binaries)
+        run: apt-get update ; apt-get install -y clang-tools iwyu
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
@@ -84,8 +84,6 @@ jobs:
       matrix:
         target: [ci_cmake_flags, ci_test_diagnostics, ci_test_diagnostic_positions, ci_test_noexceptions, ci_test_noimplicitconversions, ci_test_legacycomparison, ci_test_noglobaludls]
     steps:
-      - name: Install build-essential
-        run: apt-get update ; apt-get install -y build-essential unzip wget git libssl-dev
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
@@ -161,8 +159,6 @@ jobs:
         compiler: ['3.4', '3.5', '3.6', '3.7', '3.8', '3.9', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15-bullseye', '16', '17', '18', '19', '20', 'latest']
     container: silkeh/clang:${{ matrix.compiler }}
     steps:
-      #- name: Install unzip and git
-      #  run: apt-get update ; apt-get install -y unzip git
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
@@ -197,8 +193,6 @@ jobs:
         standard: [11, 14, 17, 20, 23, 26]
         stdlib: [libcxx, libstdcxx]
     steps:
-      - name: Install git and unzip
-        run: apt-get update ; apt-get install -y git unzip
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
