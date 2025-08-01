@@ -24245,7 +24245,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         if (sax == nullptr)
         {
-            JSON_THROW(other_error::create(502, "Sax handler must not be null", nullptr));
+            JSON_THROW(other_error::create(502, "SAX handler must not be null", nullptr));
         }
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         return format == input_format_t::json
@@ -24268,7 +24268,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         if (sax == nullptr)
         {
-            JSON_THROW(other_error::create(502, "Sax handler must not be null", nullptr));
+            JSON_THROW(other_error::create(502, "SAX handler must not be null", nullptr));
         }
         auto ia = i.get();
         return format == input_format_t::json
