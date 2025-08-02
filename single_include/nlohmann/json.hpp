@@ -24229,10 +24229,17 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wtautological-pointer-compare"
 #endif
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnonnull-compare"
+#endif
         if (sax == nullptr)
         {
             JSON_THROW(other_error::create(502, "SAX handler must not be null", nullptr));
         }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 #if defined (__clang__)
 #pragma clang diagnostic pop
 #endif
@@ -24256,10 +24263,17 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wtautological-pointer-compare"
 #endif
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnonnull-compare"
+#endif
         if (sax == nullptr)
         {
             JSON_THROW(other_error::create(502, "SAX handler must not be null", nullptr));
         }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 #if defined (__clang__)
 #pragma clang diagnostic pop
 #endif
@@ -24287,10 +24301,17 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wtautological-pointer-compare"
 #endif
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnonnull-compare"
+#endif
         if (sax == nullptr)
         {
             JSON_THROW(other_error::create(502, "SAX handler must not be null", nullptr));
         }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 #if defined (__clang__)
 #pragma clang diagnostic pop
 #endif
