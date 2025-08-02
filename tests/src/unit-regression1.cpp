@@ -177,7 +177,7 @@ TEST_CASE("regression tests 1")
 #ifndef SKIP_TESTS_FOR_ENUM_SERIALIZATION
     SECTION("pull request #71 - handle enum type")
     {
-        enum { t = 0, u = 102};
+        enum { t = 0, u = 102}; // NOLINT(cppcoreguidelines-use-enum-class)
         json j = json::array();
         j.push_back(t);
 
