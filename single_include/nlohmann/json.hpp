@@ -24225,6 +24225,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                           const bool ignore_comments = false,
                           const bool ignore_trailing_commas = false)
     {
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-pointer-compare"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnonnull-compare"
+#endif
+        if (sax == nullptr)
+        {
+            JSON_THROW(other_error::create(502, "SAX handler must not be null", nullptr));
+        }
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         return format == input_format_t::json
                ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
@@ -24241,6 +24257,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                           const bool ignore_comments = false,
                           const bool ignore_trailing_commas = false)
     {
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-pointer-compare"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnonnull-compare"
+#endif
+        if (sax == nullptr)
+        {
+            JSON_THROW(other_error::create(502, "SAX handler must not be null", nullptr));
+        }
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         return format == input_format_t::json
                ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
@@ -24261,6 +24293,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                           const bool ignore_comments = false,
                           const bool ignore_trailing_commas = false)
     {
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtautological-pointer-compare"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnonnull-compare"
+#endif
+        if (sax == nullptr)
+        {
+            JSON_THROW(other_error::create(502, "SAX handler must not be null", nullptr));
+        }
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
         auto ia = i.get();
         return format == input_format_t::json
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
