@@ -1657,8 +1657,12 @@ TEST_CASE("parser class")
 
             SECTION("valid sax handler")
             {
+                const std::string str = "some_string";
                 SaxCountdown s(1);
-                CHECK(json::sax_parse("{}", &s) == false);
+                CHECK(json::sax_parse(str, &s) == false);
+
+                nlohmann::detail::span_input_adapter ia(str.c_str(), str.size());
+                CHECK(json::sax_parse(std::move(ia), &s) == false);
             }
 
             SECTION("} without value")
