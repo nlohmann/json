@@ -1646,14 +1646,22 @@ TEST_CASE("parser class")
         {
             SECTION("null sax handler")
             {
+# if defined(__has_feature)
+#if !__has_feature(undefined_behavior_sanitizer)
                 const std::string s = "some_string";
                 SaxCountdown* p = nullptr;
-# if !(defined(__has_feature) && __has_feature(undefined_behaviour_sanitizer))
                 CHECK_THROWS_WITH_AS(json::sax_parse(s, p), "[json.exception.other_error.502] SAX handler must not be null", json::other_error&); // NOLINT(clang-analyzer-core.NonNullParamChecker)
                 CHECK_THROWS_WITH_AS(json::sax_parse(s.begin(), s.end(), p), "[json.exception.other_error.502] SAX handler must not be null", json::other_error&); // NOLINT(clang-analyzer-core.NonNullParamChecker)
                 CHECK_THROWS_WITH_AS(json::sax_parse(nlohmann::detail::span_input_adapter(s.c_str(), s.size()), p), "[json.exception.other_error.502] SAX handler must not be null", json::other_error&); // NOLINT(clang-analyzer-core.NonNullParamChecker)
-            }
 #endif
+#else
+                const std::string s = "some_string";
+                SaxCountdown* p = nullptr;
+                CHECK_THROWS_WITH_AS(json::sax_parse(s, p), "[json.exception.other_error.502] SAX handler must not be null", json::other_error&); // NOLINT(clang-analyzer-core.NonNullParamChecker)
+                CHECK_THROWS_WITH_AS(json::sax_parse(s.begin(), s.end(), p), "[json.exception.other_error.502] SAX handler must not be null", json::other_error&); // NOLINT(clang-analyzer-core.NonNullParamChecker)
+                CHECK_THROWS_WITH_AS(json::sax_parse(nlohmann::detail::span_input_adapter(s.c_str(), s.size()), p), "[json.exception.other_error.502] SAX handler must not be null", json::other_error&); // NOLINT(clang-analyzer-core.NonNullParamChecker)
+#endif
+            }
 
             SECTION("valid sax handler")
             {
