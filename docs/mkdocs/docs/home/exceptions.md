@@ -903,7 +903,7 @@ A JSON Patch operation 'test' failed. The unsuccessful operation is also printed
 
 ### json.exception.other_error.502
 
-This exception occurs when a null pointer is passed as SAX handler in [sax_parse](../api/basic_json/sax_parse.md) function.
+This exception is thrown when a null pointer is passed as SAX event listener to the [sax_parse](../api/basic_json/sax_parse.md) function.
 
 !!! failure "Example message"
 
