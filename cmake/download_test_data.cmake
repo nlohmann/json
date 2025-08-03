@@ -68,10 +68,14 @@ string(REGEX REPLACE "[ ]*\n" "; " CXX_VERSION_RESULT "${CXX_VERSION_RESULT}")
 message(STATUS "Compiler: ${CXX_VERSION_RESULT}")
 
 # determine used C++ standard library (for debug and support purposes)
+if(CMAKE_CROSSCOMPILING)
+    set(LIBCPP_VERSION_OUTPUT_CACHED "could not be detected due to cross-compiling" CACHE STRING "Detected C++ standard library version")
+endif()
 if(NOT DEFINED LIBCPP_VERSION_OUTPUT_CACHED)
     try_run(RUN_RESULT_VAR COMPILE_RESULT_VAR
         "${CMAKE_BINARY_DIR}" SOURCES "${CMAKE_SOURCE_DIR}/cmake/detect_libcpp_version.cpp"
-        RUN_OUTPUT_VARIABLE LIBCPP_VERSION_OUTPUT COMPILE_OUTPUT_VARIABLE LIBCPP_VERSION_COMPILE_OUTPUT
+        RUN_OUTPUT_VARIABLE LIBCPP_VERSION_OUTPUT
+        COMPILE_OUTPUT_VARIABLE LIBCPP_VERSION_COMPILE_OUTPUT
     )
     if(NOT LIBCPP_VERSION_OUTPUT)
         set(LIBCPP_VERSION_OUTPUT "Unknown")

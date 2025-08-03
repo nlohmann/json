@@ -1644,6 +1644,33 @@ TEST_CASE("parser class")
 
         SECTION("SAX parser")
         {
+            SECTION("null sax handler")
+            {
+# if defined(__has_feature)
+#if !__has_feature(undefined_behavior_sanitizer)
+                const std::string s = "some_string";
+                SaxCountdown* p = nullptr;
+                CHECK_THROWS_WITH_AS(json::sax_parse(s, p), "[json.exception.other_error.502] SAX handler must not be null", json::other_error&); // NOLINT(clang-analyzer-core.NonNullParamChecker)
+                CHECK_THROWS_WITH_AS(json::sax_parse(s.begin(), s.end(), p), "[json.exception.other_error.502] SAX handler must not be null", json::other_error&); // NOLINT(clang-analyzer-core.NonNullParamChecker)
+                CHECK_THROWS_WITH_AS(json::sax_parse(nlohmann::detail::span_input_adapter(s.c_str(), s.size()), p), "[json.exception.other_error.502] SAX handler must not be null", json::other_error&); // NOLINT(clang-analyzer-core.NonNullParamChecker)
+#endif
+#else
+                const std::string s = "some_string";
+                SaxCountdown* p = nullptr;
+                CHECK_THROWS_WITH_AS(json::sax_parse(s, p), "[json.exception.other_error.502] SAX handler must not be null", json::other_error&); // NOLINT(clang-analyzer-core.NonNullParamChecker)
+                CHECK_THROWS_WITH_AS(json::sax_parse(s.begin(), s.end(), p), "[json.exception.other_error.502] SAX handler must not be null", json::other_error&); // NOLINT(clang-analyzer-core.NonNullParamChecker)
+                CHECK_THROWS_WITH_AS(json::sax_parse(nlohmann::detail::span_input_adapter(s.c_str(), s.size()), p), "[json.exception.other_error.502] SAX handler must not be null", json::other_error&); // NOLINT(clang-analyzer-core.NonNullParamChecker)
+#endif
+            }
+
+            SECTION("valid sax handler")
+            {
+                const std::string str = "some_string";
+                SaxCountdown s(1);
+                CHECK(json::sax_parse(str, &s) == false);
+                CHECK(json::sax_parse(nlohmann::detail::span_input_adapter(str.c_str(), str.size()), &s) == false);
+            }
+
             SECTION("} without value")
             {
                 SaxCountdown s(1);
