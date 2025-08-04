@@ -19,15 +19,15 @@ concurrency:
 jobs:
   # 1) Simple MSVC build on latest image (Release)
   msvc-latest:
-  runs-on: windows-latest
-  steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2 (keep the hash!)
-    - name: Configure CMake
-      run: >
-        cmake -S . -B build -G "Visual Studio 17 2022"
-        -DJSON_BuildTests=ON
-    - name: Build with MSVC
-      run: cmake --build build --config Release --parallel 10
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2 (keep the hash!)
+      - name: Configure CMake
+        run: >
+          cmake -S . -B build -G "Visual Studio 17 2022"
+          -DJSON_BuildTests=ON
+      - name: Build with MSVC
+        run: cmake --build build --config Release --parallel 10
 
   # 2) Simple MinGW build on latest image
   mingw-latest:
@@ -45,7 +45,7 @@ jobs:
           cd build
           ctest -j 10 --output-on-failure
 
-  # 3) Full MSVC matrix (Win-2019 & Win-2022 • Debug/Release • 32/64 bit • default/latest std)
+  # 3) Full MSVC matrix
   msvc-matrix:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -56,7 +56,6 @@ jobs:
         std_version: [default, latest]
     steps:
       - uses: actions/checkout@v3
-
       - name: Select generator
         shell: bash
         run: |
@@ -65,7 +64,6 @@ jobs:
           else
             echo "GEN=Visual Studio 17 2022" >> $GITHUB_ENV
           fi
-
       - name: Extra CXX flags
         shell: bash
         run: |
@@ -74,7 +72,6 @@ jobs:
           else
             echo "FLAGS=/W4 /WX" >> $GITHUB_ENV
           fi
-
       - name: Configure
         shell: pwsh
         run: >
@@ -83,7 +80,6 @@ jobs:
           -A ${{ matrix.architecture }}
           -DJSON_BuildTests=On
           -DCMAKE_CXX_FLAGS="$env:FLAGS"
-
       - name: Build
         run: cmake --build build --config ${{ matrix.build_type }} --parallel 10
       - name: Test
@@ -91,7 +87,7 @@ jobs:
           cd build
           ctest -j 10 -C ${{ matrix.build_type }} --output-on-failure
 
-  # 4) LLVM/Clang on windows-2019 for multiple versions
+  # 4) LLVM/Clang matrix
   clang:
     runs-on: windows-2019
     strategy:
@@ -116,7 +112,7 @@ jobs:
           cd build
           ctest -j 10 --exclude-regex "test-unicode" --output-on-failure
 
-  # 5) Clang-CL on windows-2019 (Win32 & x64)
+  # 5) Clang-CL matrix
   clang-cl:
     runs-on: windows-2019
     strategy:
