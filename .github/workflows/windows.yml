@@ -2,10 +2,7 @@ name: Windows
 
 on:
   push:
-    branches:
-      - develop
-      - master
-      - release/*
+    branches: [develop, master, 'release/*']
   pull_request:
   workflow_dispatch:
 
@@ -17,50 +14,59 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ────────────────────────────────────────────────────────────────
-  # 1) Simple MSVC build on the latest image (Release)
-  # ────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────
+# 1) Simple MSVC build (latest image, Release)
+# ────────────────────────────────────────────
   msvc-latest:
     runs-on: windows-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2 (pinned)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
       - name: Configure CMake
-        run: |
-          cmake -S . -B build -G "Visual Studio 17 2022" -DJSON_BuildTests=ON
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -DJSON_BuildTests=ON
+
       - name: Build
         run: cmake --build build --config Release --parallel 10
 
-  # ────────────────────────────────────────────────────────────────
-  # 2) Simple MinGW build on the latest image
-  # ────────────────────────────────────────────────────────────────
+      - name: Test
+        run: |
+          cd build
+          ctest -j 10 -C Release --output-on-failure
+
+# ────────────────────────────────────────────
+# 2) Simple MinGW build (latest image)
+# ────────────────────────────────────────────
   mingw-latest:
     runs-on: windows-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683   # v4.2.2 (pinned)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
       - name: Set up MinGW
-        uses: egor-tensin/setup-mingw@84c781b557efd538dec66bde06988d81cd3138cf  # v2.2.0 (pinned)
+        uses: egor-tensin/setup-mingw@84c781b557efd538dec66bde06988d81cd3138cf  # v2.2.0
         with:
           version: 13.2.0
-          static: 0                     # workaround: do *not* remove libpthread.a
+          static: 0
+
       - name: Configure
         run: cmake -S . -B build -G "MinGW Makefiles" -DJSON_BuildTests=ON
+
       - name: Build
         run: cmake --build build --parallel 10
+
       - name: Test
         run: |
           cd build
           ctest -j 10 --output-on-failure
 
-  # ────────────────────────────────────────────────────────────────
-  # 3) Full MSVC matrix (Win-2022 • Debug/Release • x86/x64 • std ver)
-  # ────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────
+# 3) Full MSVC matrix (Win-2022, Debug/Release, x86/x64, std versions)
+# ────────────────────────────────────────────
   msvc-matrix:
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-2022
     strategy:
       matrix:
-        os:           [windows-2022]        # windows-2019 retired 2025-06-30
         build_type:   [Debug, Release]
         architecture: [Win32, x64]
         std_version:  [default, latest]
@@ -68,9 +74,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-
-      - name: Generator (VS 2022)
-        run: echo "GEN=Visual Studio 17 2022" >> $GITHUB_ENV
 
       - name: Extra CXX flags
         shell: bash
@@ -85,21 +88,22 @@ jobs:
         shell: pwsh
         run: |
           cmake -S . -B build `
-                -G "$env:GEN" `
+                -G "Visual Studio 17 2022" `
                 -A ${{ matrix.architecture }} `
                 -DJSON_BuildTests=ON `
                 -DCMAKE_CXX_FLAGS="$env:FLAGS"
 
       - name: Build
         run: cmake --build build --config ${{ matrix.build_type }} --parallel 10
+
       - name: Test
         run: |
           cd build
           ctest -j 10 -C ${{ matrix.build_type }} --output-on-failure
 
-  # ────────────────────────────────────────────────────────────────
-  # 4) LLVM/Clang matrix on Win-2022
-  # ────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────
+# 4) LLVM/Clang matrix (Win-2022)
+# ────────────────────────────────────────────
   clang:
     runs-on: windows-2022
     strategy:
@@ -117,21 +121,23 @@ jobs:
           7z x llvm.exe -y -o"C:/Program Files/LLVM"
 
       - name: Configure & build with clang++
+        shell: cmd
         run: |
           cmake -S . -B build ^
                 -G "MinGW Makefiles" ^
                 -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" ^
-                -DJSON_BuildTests=ON
-          cmake --build build --parallel 10
+                -DJSON_BuildTests=ON ^
+          && cmake --build build --parallel 10
 
       - name: Test
+        shell: cmd
         run: |
-          cd build
-          ctest -j 10 --exclude-regex "test-unicode" --output-on-failure
+          cd build ^
+          && ctest -j 10 --exclude-regex "test-unicode" --output-on-failure
 
-  # ────────────────────────────────────────────────────────────────
-  # 5) Clang-CL matrix (Win32 & x64) on Win-2022
-  # ────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────
+# 5) Clang-CL matrix (Win-2022, x86 & x64)
+# ────────────────────────────────────────────
   clang-cl:
     runs-on: windows-2022
     strategy:
@@ -143,15 +149,17 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Configure & build with Clang-CL (${{ matrix.arch }})
+        shell: cmd
         run: |
           cmake -S . -B build ^
                 -G "Visual Studio 17 2022" ^
                 -A ${{ matrix.arch }} ^
                 -T ClangCL ^
-                -DJSON_BuildTests=ON
-          cmake --build build --config Debug --parallel 10
+                -DJSON_BuildTests=ON ^
+          && cmake --build build --config Debug --parallel 10
 
       - name: Test
+        shell: cmd
         run: |
-          cd build
-          ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
+          cd build ^
+          && ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
