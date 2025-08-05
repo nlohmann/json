@@ -116,7 +116,7 @@ jobs:
 
       - name: Install LLVM ${{ matrix.llvm }}
         run: |
-          curl -fsSL -o llvm.exe ^
+          curl -fsSL -o llvm.exe 
             https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.llvm }}.0.0/LLVM-${{ matrix.llvm }}.0.0-win64.exe
           7z x llvm.exe -y -o"C:/Program Files/LLVM"
 
