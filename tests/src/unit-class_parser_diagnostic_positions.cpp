@@ -212,7 +212,7 @@ json parser_helper(const std::string& s);
 bool accept_helper(const std::string& s);
 void comments_helper(const std::string& s);
 
-json parser_helper(const std::string& s) // NOLINT(llvm-prefer-static-over-anonymous-namespace)
+json parser_helper(const std::string& s)
 {
     json j;
     json::parser(nlohmann::detail::input_adapter(s)).parse(true, j);
@@ -233,7 +233,7 @@ json parser_helper(const std::string& s) // NOLINT(llvm-prefer-static-over-anony
     return j;
 }
 
-bool accept_helper(const std::string& s) // NOLINT(llvm-prefer-static-over-anonymous-namespace)
+bool accept_helper(const std::string& s)
 {
     CAPTURE(s)
 
@@ -274,7 +274,7 @@ bool accept_helper(const std::string& s) // NOLINT(llvm-prefer-static-over-anony
     return ok_accept;
 }
 
-void comments_helper(const std::string& s) // NOLINT(llvm-prefer-static-over-anonymous-namespace)
+void comments_helper(const std::string& s)
 {
     json _;
 
@@ -313,7 +313,7 @@ void comments_helper(const std::string& s) // NOLINT(llvm-prefer-static-over-ano
  *
  * This check assumes that there is no whitespace around the json object in the original string.
  */
-void validate_generated_json_and_start_end_pos_helper(const std::string& original_string, const json& j, const json& check) // NOLINT(llvm-prefer-static-over-anonymous-namespace)
+void validate_generated_json_and_start_end_pos_helper(const std::string& original_string, const json& j, const json& check)
 {
     CHECK(j == check);
     CHECK(j.start_pos() == 0);
@@ -325,7 +325,7 @@ void validate_generated_json_and_start_end_pos_helper(const std::string& origina
  *
  * This checks that whitespace around the nested object is included in the start and end positions of the root object.
  */
-void validate_start_end_pos_for_nested_obj_helper(const std::string& nested_type_json_str, const std::string& root_type_json_str, const json& expected_json, const json::parser_callback_t& cb = nullptr) // NOLINT(llvm-prefer-static-over-anonymous-namespace)
+void validate_start_end_pos_for_nested_obj_helper(const std::string& nested_type_json_str, const std::string& root_type_json_str, const json& expected_json, const json::parser_callback_t& cb = nullptr)
 {
     json j;
 

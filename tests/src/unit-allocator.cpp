@@ -111,7 +111,7 @@ struct my_allocator : std::allocator<T>
 
 // allows deletion of raw pointer, usually hold by json_value
 template<class T>
-void my_allocator_clean_up(T* p) // NOLINT(llvm-prefer-static-over-anonymous-namespace)
+void my_allocator_clean_up(T* p)
 {
     assert(p != nullptr);
     my_allocator<T> alloc;
