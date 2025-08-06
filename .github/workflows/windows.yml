@@ -104,36 +104,42 @@ jobs:
 # ────────────────────────────────────────────
 # 4) LLVM/Clang matrix (Win-2022)
 # ────────────────────────────────────────────
-  clang:
-    runs-on: windows-2022
-    strategy:
-      matrix:
-        llvm: [11, 12, 13, 14, 15]
+  # ────────────────────────────────────────────────────────────────
+# Clang/LLVM matrix on Windows-2022 (uses MSVC CRT + Ninja)
+# ────────────────────────────────────────────────────────────────
+clang:
+  runs-on: windows-2022
+  strategy:
+    matrix:
+      llvm: [11, 12, 13, 14, 15]            # versions we still want to test
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2 pinned
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+    - name: Install LLVM ${{ matrix.llvm }}
+      shell: pwsh
+      run: |
+        $url   = "https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.llvm }}.0.0/LLVM-${{ matrix.llvm }}.0.0-win64.exe"
+        curl -fsSL -o llvm.exe $url
+        7z x llvm.exe -y -o"C:/Program Files/LLVM"
 
-      - name: Install LLVM ${{ matrix.llvm }}
-        run: |
-          curl -fsSL -o llvm.exe "https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.llvm }}.0.0/LLVM-${{ matrix.llvm }}.0.0-win64.exe"
-          7z x llvm.exe -y -o"C:/Program Files/LLVM"
+    - name: Add Ninja to PATH
+      uses: seanmiddleditch/gha-setup-ninja@v4           # small, cached action
 
+    - name: Configure & build with clang++
+      run: |
+        cmake -S . -B build `
+              -G "Ninja" `
+              -DCMAKE_C_COMPILER="C:/Program Files/LLVM/bin/clang.exe" `
+              -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" `
+              -DJSON_BuildTests=ON
+        cmake --build build --parallel 10
 
-      - name: Configure & build with clang++
-        shell: cmd
-        run: |
-          cmake -S . -B build ^
-                -G "MinGW Makefiles" ^
-                -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" ^
-                -DJSON_BuildTests=ON ^
-          && cmake --build build --parallel 10
+    - name: Test
+      run: |
+        cd build
+        ctest -j 10 --exclude-regex "test-unicode" --output-on-failure
 
-      - name: Test
-        shell: cmd
-        run: |
-          cd build ^
-          && ctest -j 10 --exclude-regex "test-unicode" --output-on-failure
 
 # ────────────────────────────────────────────
 # 5) Clang-CL matrix (Win-2022, x86 & x64)
