@@ -208,7 +208,7 @@ bool accept_helper(const std::string& s);
 void comments_helper(const std::string& s);
 void trailing_comma_helper(const std::string& s);
 
-json parser_helper(const std::string& s)
+json parser_helper(const std::string& s) // NOLINT(llvm-prefer-static-over-anonymous-namespace)
 {
     json j;
     json::parser(nlohmann::detail::input_adapter(s)).parse(true, j);
@@ -231,7 +231,7 @@ json parser_helper(const std::string& s)
     return j;
 }
 
-bool accept_helper(const std::string& s)
+bool accept_helper(const std::string& s) // NOLINT(llvm-prefer-static-over-anonymous-namespace)
 {
     CAPTURE(s)
 
@@ -273,7 +273,7 @@ bool accept_helper(const std::string& s)
     return ok_accept;
 }
 
-void comments_helper(const std::string& s)
+void comments_helper(const std::string& s) // NOLINT(llvm-prefer-static-over-anonymous-namespace)
 {
     json _;
 
@@ -306,7 +306,7 @@ void comments_helper(const std::string& s)
     }
 }
 
-void trailing_comma_helper(const std::string& s)
+void trailing_comma_helper(const std::string& s) // NOLINT(llvm-prefer-static-over-anonymous-namespace)
 {
     json _;
 
