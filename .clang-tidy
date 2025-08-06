@@ -67,7 +67,8 @@ Checks: '*,
          -readability-magic-numbers,
          -readability-redundant-access-specifiers,
          -readability-simplify-boolean-expr,
-         -readability-uppercase-literal-suffix'
+         -readability-uppercase-literal-suffix,
+         -readability-use-concise-preprocessor-directives'
 
 CheckOptions:
   - key: hicpp-special-member-functions.AllowSoleDefaultDtor
