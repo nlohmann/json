@@ -8,7 +8,7 @@ on:
       - release/*
   pull_request:
   schedule:
-    - cron: '0 19 * * 1'
+    - cron: "0 19 * * 1"
   workflow_dispatch:
 
 concurrency:
@@ -40,7 +40,6 @@ jobs:
           languages: c-cpp
 
       # Autobuild attempts to build any compiled languages (C/C++, C#, or Java).
-      
       - name: Autobuild
         uses: github/codeql-action/autobuild@e4e1a019f5e24969714ff6296aee04b736cbc3cf # v3.29.6
 
