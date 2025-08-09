@@ -45,5 +45,3 @@ nlohmann_json.spdx
 
 # Bazel-related
 MODULE.bazel.lock
-enum.log
-tidy.log
