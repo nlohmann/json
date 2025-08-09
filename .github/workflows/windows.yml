@@ -96,30 +96,41 @@ jobs:
   # ──────────────────────────────────────────────
   # 4) LLVM/Clang matrix (Win-2022, Ninja)
   # ──────────────────────────────────────────────
-  clang:
+    clang:
     runs-on: windows-2022
     strategy:
       matrix:
         llvm: [11, 12, 13, 14, 15]
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
       - name: Install LLVM ${{ matrix.llvm }}
         shell: pwsh
         run: |
-          $url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.llvm }}.0.0/LLVM-${{ matrix.llvm }}.0.0-win64.exe"
+          $ver='${{ matrix.llvm }}'
+          $url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$ver.0.0/LLVM-$ver.0.0-win64.exe"
           curl -fsSL -o llvm.exe $url
           7z x llvm.exe -y -o"C:/Program Files/LLVM"
+      - uses: seanmiddleditch/gha-setup-ninja@v4
 
-      - uses: seanmiddleditch/gha-setup-ninja@v4 # Ninja helper
-
-      - name: Run CMake
+      - name: Configure (Ninja + clang++)
         shell: pwsh
         run: |
+          $extraLd = ''
+          $extraArgs = ''
+          if ('${{ matrix.llvm }}' -eq '11') {
+            # Use MSVC link.exe (workaround for lld-link 11 missing EH-cont support)
+            $extraLd   = '-fuse-ld=link'
+            # Avoid CMake try-compile linking an EXE with lld
+            $extraArgs = '-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY'
+          }
           cmake -S . -B build `
                 -G "Ninja" `
                 -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" `
-                -DJSON_BuildTests=ON
+                -DJSON_BuildTests=ON `
+                $extraArgs `
+                -DCMAKE_EXE_LINKER_FLAGS="$extraLd" `
+                -DCMAKE_SHARED_LINKER_FLAGS="$extraLd" `
+                -DCMAKE_MODULE_LINKER_FLAGS="$extraLd"
 
       - name: Build
         run: cmake --build build --parallel 10
