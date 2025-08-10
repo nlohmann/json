@@ -25,9 +25,6 @@ jobs:
       security-events: write
 
     steps:
-
-      
-
     - name: Harden Runner
       uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
       with:
