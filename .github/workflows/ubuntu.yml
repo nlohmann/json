@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     container: gcc:latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/nlohmann/json-ci:v2.4.0
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -52,7 +52,7 @@ jobs:
 
       - name: Install Valgrind
         run: sudo apt-get update ; sudo apt-get install -y valgrind
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
@@ -69,7 +69,7 @@ jobs:
     steps:
       - name: Install git, clang-tools, iwyu (ci_single_binaries), and unzip
         run: apt-get update ; apt-get install -y git clang-tools iwyu unzip
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
@@ -86,7 +86,7 @@ jobs:
     steps:
       - name: Install build-essential
         run: apt-get update ; apt-get install -y build-essential unzip wget git libssl-dev
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
@@ -102,7 +102,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Install dependencies and de_DE locale
         run: |
           sudo apt-get clean
@@ -132,7 +132,7 @@ jobs:
         compiler: ['4.8', '4.9', '5', '6']
     container: ghcr.io/nlohmann/json-ci:v2.4.0
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Run CMake
         run: CXX=g++-${{ matrix.compiler }} cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -146,7 +146,7 @@ jobs:
         compiler: ['7', '8', '9', '10', '11', '12', '13', '14', '15', 'latest']
     container: gcc:${{ matrix.compiler }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
@@ -161,7 +161,7 @@ jobs:
         compiler: ['3.4', '3.5', '3.6', '3.7', '3.8', '3.9', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15-bullseye', '16', '17', '18', '19', '20', 'latest']
     container: silkeh/clang:${{ matrix.compiler }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Set env FORCE_STDCPPFS_FLAG for clang 7 / 8 / 9 / 10
@@ -179,7 +179,7 @@ jobs:
       matrix:
         standard: [11, 14, 17, 20, 23, 26]
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
@@ -197,7 +197,7 @@ jobs:
     steps:
       - name: Install git and unzip
         run: apt-get update ; apt-get install -y git unzip
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
@@ -213,7 +213,7 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/nlohmann/json-ci:v2.4.0
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -226,7 +226,7 @@ jobs:
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
@@ -238,7 +238,7 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/nlohmann/json-ci:v2.2.0
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -256,7 +256,7 @@ jobs:
 
       - name: Install emscripten
         uses: mymindstorm/setup-emsdk@v14
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@6b3e96a9bc9976b8b546346fdd102effedae0ca8 # v4.02
       - name: Run CMake
@@ -275,7 +275,7 @@ jobs:
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
