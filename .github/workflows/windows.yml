@@ -70,34 +70,34 @@ jobs:
       - name: Test
         run: cd build ; ctest -j 10 -C ${{ matrix.build_type }} --output-on-failure
 
-#  clang:
-#    runs-on: windows-2025
-#    strategy:
-#      matrix:
-#        version: [11, 12, 13, 14, 15]
-#
-#    steps:
-#      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-#      - name: Install Clang
-#        run: curl -fsSL -o LLVM${{ matrix.version }}.exe https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.version }}.0.0/LLVM-${{ matrix.version }}.0.0-win64.exe ; 7z x LLVM${{ matrix.version }}.exe -y -o"C:/Program Files/LLVM"
-#      - name: Run CMake
-#        run: cmake -S . -B build -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
-#      - name: Build
-#        run: cmake --build build --parallel 10
-#      - name: Test
-#        run: cd build ; ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
-#
-#  clang-cl-12:
-#    runs-on: windows-2025
-#    strategy:
-#      matrix:
-#        architecture: [Win32, x64]
-#
-#    steps:
-#      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-#      - name: Run CMake
-#        run: cmake -S . -B build -G "Visual Studio 16 2019" -A ${{ matrix.architecture }} -T ClangCL -DJSON_BuildTests=On
-#      - name: Build
-#        run: cmake --build build --config Debug --parallel 10
-#      - name: Test
-#        run: cd build ; ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
+  clang:
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        version: [12, 13, 14, 15]
+
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Install Clang
+        run: curl -fsSL -o LLVM${{ matrix.version }}.exe https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.version }}.0.0/LLVM-${{ matrix.version }}.0.0-win64.exe ; 7z x LLVM${{ matrix.version }}.exe -y -o"C:/Program Files/LLVM"
+      - name: Run CMake
+        run: cmake -S . -B build -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
+      - name: Build
+        run: cmake --build build --parallel 10
+      - name: Test
+        run: cd build ; ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
+
+  clang-cl-12:
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        architecture: [Win32, x64]
+
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Run CMake
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -T ClangCL -DJSON_BuildTests=On
+      - name: Build
+        run: cmake --build build --config Debug --parallel 10
+      - name: Test
+        run: cd build ; ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
