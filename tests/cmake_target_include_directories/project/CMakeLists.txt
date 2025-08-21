@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.5...3.14)
 
 project(DummyImport CXX)
 
+if(MSVC)
+    add_compile_options(/EHsc)
+endif()
+
 add_executable(with_private_target main.cpp)
 target_include_directories(with_private_target PRIVATE ${nlohmann_json_source}/include)
 set_target_properties(with_private_target PROPERTIES CXX_STANDARD 11)
