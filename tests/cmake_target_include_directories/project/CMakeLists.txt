@@ -7,7 +7,7 @@ target_include_directories(with_private_target PRIVATE ${nlohmann_json_source}/i
 set_target_properties(with_private_target PROPERTIES CXX_STANDARD 11)
 
 add_executable(with_private_system_target main.cpp)
-target_include_directories(with_private_system_target PRIVATE SYSTEM ${nlohmann_json_source}/include)
+target_include_directories(with_private_system_target SYSTEM PRIVATE ${nlohmann_json_source}/include)
 set_target_properties(with_private_system_target PROPERTIES CXX_STANDARD 11)
 
 # regression from https://github.com/nlohmann/json/discussions/2281
