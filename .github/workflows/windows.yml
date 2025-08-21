@@ -74,7 +74,7 @@ jobs:
     runs-on: windows-2022
     strategy:
       matrix:
-        version: [11.0.1, 12.0.1, 13.0.1, 14.0.6, 15.0.7, 16.0.6, 17.0.6, 18.1.8, 19.1.7, 20.1.8]
+        version: [11.0.1, 12.0.1, 13.0.1, 14.0.6, 15.0.7, 16.0.6, 18.1.8, 19.1.7, 20.1.8]
 
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
