@@ -1352,7 +1352,7 @@ TEST_CASE("value conversion")
 #ifndef SKIP_TESTS_FOR_ENUM_SERIALIZATION
     SECTION("get an enum")
     {
-        enum c_enum { value_1, value_2 };
+        enum c_enum { value_1, value_2 }; // NOLINT(cppcoreguidelines-use-enum-class)
         enum class cpp_enum { value_1, value_2 };
 
         CHECK(json(value_1).get<c_enum>() == value_1);
@@ -1601,7 +1601,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(cards,
     {cards::karo, "karo"}
 })
 
-enum TaskState // NOLINT(cert-int09-c,readability-enum-initial-value)
+enum TaskState // NOLINT(cert-int09-c,readability-enum-initial-value,cppcoreguidelines-use-enum-class)
 {
     TS_STOPPED,
     TS_RUNNING,

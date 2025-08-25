@@ -900,3 +900,13 @@ A JSON Patch operation 'test' failed. The unsuccessful operation is also printed
     ```
     [json.exception.other_error.501] unsuccessful: {"op":"test","path":"/baz","value":"bar"}
     ```
+
+### json.exception.other_error.502
+
+This exception is thrown when a null pointer is passed as SAX event listener to the [sax_parse](../api/basic_json/sax_parse.md) function.
+
+!!! failure "Example message"
+
+    ```
+    [json.exception.other_error.502] SAX handler must not be null
+    ```

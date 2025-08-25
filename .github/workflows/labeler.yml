@@ -17,10 +17,10 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
         with:
           egress-policy: audit
 
-      - uses: srvaroa/labeler@e7bef2249506ba9cbbd3ca5cee256abd9f930b04 # master
+      - uses: srvaroa/labeler@b4493338d7929ddc4ffc95fadf6f28c73bae2e90 # master
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

@@ -153,6 +153,9 @@ files directly; instead, modify the include/nlohmann sources and regenerate the 
 make amalgamate
 ```
 
+Running `make amalgamate` will also apply automatic formatting to the source files using
+[`Artistic Style`](https://astyle.sourceforge.net/). This formatting may modify your source files in-place. Be certain to review and commit any changes to avoid unintended formatting diffs in commits.
+
 ## Recommended documentation
 
 - The library’s [README file](https://github.com/nlohmann/json/blob/master/README.md) is an excellent starting point to
