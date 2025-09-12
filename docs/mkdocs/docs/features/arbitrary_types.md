@@ -24,9 +24,9 @@ j["age"] = p.age;
 
 // convert from JSON: copy each value from the JSON object
 ns::person p {
-    j["name"].template get<std::string>(),
-    j["address"].template get<std::string>(),
-    j["age"].template get<int>()
+    j["name"].get<std::string>(),
+    j["address"].get<std::string>(),
+    j["age"].get<int>()
 };
 ```
 
@@ -43,7 +43,7 @@ std::cout << j << std::endl;
 // {"address":"744 Evergreen Terrace","age":60,"name":"Ned Flanders"}
 
 // conversion: json -> person
-auto p2 = j.template get<ns::person>();
+auto p2 = j.get<ns::person>();
 
 // that's it
 assert(p == p2);
@@ -191,7 +191,7 @@ struct adl_serializer<boost::optional<T>> {
         if (j.is_null()) {
             opt = boost::none;
         } else {
-            opt = j.template get<T>(); // same as above, but with
+            opt = j.get<T>(); // same as above, but with
                               // adl_serializer<T>::from_json
         }
     }
@@ -224,7 +224,7 @@ namespace nlohmann {
         // note: the return type is no longer 'void', and the method only takes
         // one argument
         static move_only_type from_json(const json& j) {
-            return {j.template get<int>()};
+            return {j.get<int>()};
         }
 
         // Here's the catch! You must provide a to_json method! Otherwise, you

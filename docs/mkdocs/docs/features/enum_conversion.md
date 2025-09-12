@@ -36,11 +36,11 @@ assert(j == "stopped");
 
 // json string to enum
 json j3 = "running";
-assert(j3.template get<TaskState>() == TS_RUNNING);
+assert(j3.get<TaskState>() == TS_RUNNING);
 
 // undefined json value to enum (where the first map entry above is the default)
 json jPi = 3.14;
-assert(jPi.template get<TaskState>() == TS_INVALID );
+assert(jPi.get<TaskState>() == TS_INVALID );
 ```
 
 ## Notes
