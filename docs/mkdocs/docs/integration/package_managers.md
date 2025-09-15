@@ -38,7 +38,7 @@ When executed, this program should create output similar to
     formula: [**`nlohmann-json`**](https://formulae.brew.sh/formula/nlohmann-json)
 
     - [![Homebrew package](https://repology.org/badge/version-for-repo/homebrew/nlohmann-json.svg)](https://repology.org/project/nlohmann-json/versions)
-    - :octicons-tag-24: Availalbe versions: current version and development version (with `--HEAD` parameter)
+    - :octicons-tag-24: Available versions: current version and development version (with `--HEAD` parameter)
     - :octicons-rocket-24: The formula is updated with every release.
     - :octicons-person-24: Maintainer: Niels Lohmann
     - :octicons-file-24: File issues at the [Homebrew issue tracker](https://github.com/Homebrew/homebrew-core/issues)
@@ -103,7 +103,7 @@ The header can be used directly in your code or via CMake.
 
     wrap: **`nlohmann_json`**
 
-    - :octicons-tag-24: Availalbe versions: current version and select older versions (see
+    - :octicons-tag-24: Available versions: current version and select older versions (see
       [WrapDB](https://mesonbuild.com/Wrapdb-projects.html))
     - :octicons-rocket-24: The package is update automatically from file
       [`meson.build`](https://github.com/nlohmann/json/blob/develop/meson.build).
@@ -195,7 +195,7 @@ repository can be referenced within a `MODULE.bazel` by rules such as `archive_o
     recipe: [**`nlohmann_json`**](https://conan.io/center/recipes/nlohmann_json)
 
     - [![ConanCenter package](https://repology.org/badge/version-for-repo/conancenter/nlohmann-json.svg)](https://repology.org/project/nlohmann-json/versions)
-    - :octicons-tag-24: Availalbe versions: current version and older versions (see
+    - :octicons-tag-24: Available versions: current version and older versions (see
       [Conan Center](https://conan.io/center/recipes/nlohmann_json))
     - :octicons-rocket-24: The package is update automatically via
       [this recipe](https://github.com/conan-io/conan-center-index/tree/master/recipes/nlohmann_json).
@@ -241,7 +241,7 @@ requires, where `x.y.z` is the release version you want to use.
     package: [**`nlohmann-json`**](https://packages.spack.io/package.html?name=nlohmann-json)
 
     - [![Spack package](https://repology.org/badge/version-for-repo/spack/nlohmann-json.svg)](https://repology.org/project/nlohmann-json/versions)
-    - :octicons-tag-24: Availalbe versions: current version and older versions (see
+    - :octicons-tag-24: Available versions: current version and older versions (see
       [Spack package](https://packages.spack.io/package.html?name=nlohmann-json))
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-person-24: Maintainer: [Axel Huebl](https://github.com/ax3l)
@@ -294,7 +294,7 @@ Please see the [Spack project](https://github.com/spack/spack) for any issues re
 
     package: [**`nlohmann_json`**](https://hunter.readthedocs.io/en/latest/packages/pkg/nlohmann_json.html)
 
-    - :octicons-tag-24: Availalbe versions: current version and older versions (see
+    - :octicons-tag-24: Available versions: current version and older versions (see
       [Hunter package](https://hunter.readthedocs.io/en/latest/packages/pkg/nlohmann_json.html))
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-file-24: File issues at the [Hunter issue tracker](https://github.com/cpp-pm/hunter/issues)
@@ -342,7 +342,7 @@ Please see the Hunter project for any issues regarding the packaging.
     package: [**`nlohmann-json`**](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json)
 
     - [![Vcpkg package](https://repology.org/badge/version-for-repo/vcpkg/nlohmann-json.svg)](https://repology.org/project/nlohmann-json/versions)
-    - :octicons-tag-24: Availalbe versions: current version
+    - :octicons-tag-24: Available versions: current version
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-file-24: File issues at the [vcpkg issue tracker](https://github.com/microsoft/vcpkg/issues)
     - :octicons-question-24: [vcpkg website](https://vcpkg.io/)
@@ -387,7 +387,7 @@ and follow the then displayed descriptions. Please see the vcpkg project for any
 
     package: [**`nlohmann/json`**](https://github.com/pfultz2/cget-recipes/blob/master/recipes/nlohmann/json/package.txt)
 
-    - :octicons-tag-24: Availalbe versions: current version and older versions
+    - :octicons-tag-24: Available versions: current version and older versions
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-file-24: File issues at the [cget issue tracker](https://github.com/pfultz2/cget-recipes/issues)
     - :octicons-question-24: [cget website](https://cget.readthedocs.io/)
@@ -438,7 +438,7 @@ installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nl
 
     package: **`nlohmann/json`**
 
-    - :octicons-tag-24: Availalbe versions: current version and older versions
+    - :octicons-tag-24: Available versions: current version and older versions
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-file-24: File issues at the [library issue tracker](https://github.com/nlohmann/json/issues)
     - :octicons-question-24: [Xcode documentation](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app)
@@ -449,7 +449,7 @@ installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nl
 
     package: [**`nlohmann.json`**](https://www.nuget.org/packages/nlohmann.json/)
 
-    - :octicons-tag-24: Availalbe versions: current and previous versions
+    - :octicons-tag-24: Available versions: current and previous versions
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-person-24: Maintainer: [Hani Kaabi](https://github.com/hnkb)
     - :octicons-file-24: File issues at the [maintainer's issue tracker](https://github.com/hnkb/nlohmann-json-nuget/issues)
@@ -583,7 +583,7 @@ more information.
     package: [**`nlohmann_json`**](https://anaconda.org/conda-forge/nlohmann_json)
 
     - ![](https://img.shields.io/conda/v/conda-forge/nlohmann_json)
-    - :octicons-tag-24: Availalbe versions: current and previous versions
+    - :octicons-tag-24: Available versions: current and previous versions
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-file-24: File issues at the [feedstock's issue tracker](https://github.com/conda-forge/nlohmann_json-feedstock/issues)
     - :octicons-question-24: [Conda documentation](https://docs.conda.io/projects/conda/en/stable/user-guide/getting-started.html)
@@ -640,7 +640,7 @@ If you are using [MSYS2](http://www.msys2.org/), you can use the [mingw-w64-nloh
     port: [**`nlohmann-json`**](https://ports.macports.org/port/nlohmann-json/)
 
     - [![MacPorts package](https://repology.org/badge/version-for-repo/macports/nlohmann-json.svg)](https://repology.org/project/nlohmann-json/versions)
-    - :octicons-tag-24: Availalbe versions: current version
+    - :octicons-tag-24: Available versions: current version
     - :octicons-rocket-24: The port is updated with every release.
     - :octicons-file-24: File issues at the [MacPorts issue tracker](https://trac.macports.org/newticket?port=nlohmann-json)
     - :octicons-question-24: [MacPorts website](https://www.macports.org)
@@ -718,7 +718,7 @@ bdep new -t exe -l c++
 
     package: **`gh:nlohmann/json`**
 
-    - :octicons-tag-24: Availalbe versions: current and previous versions
+    - :octicons-tag-24: Available versions: current and previous versions
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-file-24: File issues at the [CPM.cmake issue tracker](https://github.com/cpm-cmake/CPM.cmake/issues)
     - :octicons-question-24: [CPM.cmake website](https://github.com/cpm-cmake/CPM.cmake)
@@ -762,7 +762,7 @@ CPMAddPackage("gh:nlohmann/json@3.12.0")
 
     package: [**`nlohmann_json`**](https://github.com/xmake-io/xmake-repo/blob/master/packages/n/nlohmann_json/xmake.lua)
 
-    - :octicons-tag-24: Availalbe versions: current and previous versions
+    - :octicons-tag-24: Available versions: current and previous versions
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-file-24: File issues at the [xmake issue tracker](https://github.com/xmake-io/xmake-repo/issues)
     - :octicons-question-24: [xmake website](https://xmake.io/#/)

@@ -265,7 +265,7 @@ class HeaderRequestHandler(SimpleHTTPRequestHandler): # lgtm[py/missing-call-to-
 
     def send_head(self):
         # check if the translated path matches a working tree
-        # and fullfill the request; otherwise, send 404
+        # and fulfill the request; otherwise, send 404
         path = self.translate_path(self.path)
         self.worktree = self.worktrees.find(path)
         if self.worktree is not None:

@@ -115,7 +115,7 @@ The library uses the following mapping from JSON values types to BJData types ac
     }
     ```
 
-    Likewise, when a JSON object in the above form is serialzed using
+    Likewise, when a JSON object in the above form is serialized using
     [`to_bjdata`](../../api/basic_json/to_bjdata.md), it is automatically converted into a compact BJData ND-array. The
     only exception is, that when the 1-dimensional vector stored in `"_ArraySize_"` contains a single integer or two
     integers with one being 1, a regular 1-D optimized array is generated.
