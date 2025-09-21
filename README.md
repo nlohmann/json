@@ -41,6 +41,7 @@
   - [Conversions to/from arbitrary types](#arbitrary-types-conversions)
   - [Specializing enum conversion](#specializing-enum-conversion)
   - [Binary formats (BSON, CBOR, MessagePack, UBJSON, and BJData)](#binary-formats-bson-cbor-messagepack-ubjson-and-bjdata)
+  - [Highly structured configuration management](https://www.der-it-pruefer.de/programming/CPlusPlus-Highly-Structured-Config-Management)
 - [Customers](#customers)
 - [Supported compilers](#supported-compilers)
 - [Integration](#integration)
