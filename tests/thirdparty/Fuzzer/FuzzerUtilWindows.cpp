@@ -1,34 +1,41 @@
 //===- FuzzerUtilWindows.cpp - Misc utils for Windows. --------------------===//
 //
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 // Misc utils implementation for Windows.
 //===----------------------------------------------------------------------===//
-#include "FuzzerDefs.h"
+#include "FuzzerPlatform.h"
 #if LIBFUZZER_WINDOWS
+#include "FuzzerCommand.h"
 #include "FuzzerIO.h"
 #include "FuzzerInternal.h"
 #include <cassert>
 #include <chrono>
 #include <cstring>
 #include <errno.h>
+#include <io.h>
 #include <iomanip>
 #include <signal.h>
-#include <sstream>
 #include <stdio.h>
 #include <sys/types.h>
+// clang-format off
 #include <windows.h>
-#include <Psapi.h>
+// These must be included after windows.h.
+// architecture need to be set before including
+// libloaderapi
+#include <libloaderapi.h>
+#include <stringapiset.h>
+#include <psapi.h>
+// clang-format on
 
 namespace fuzzer {
 
 static const FuzzingOptions* HandlerOpt = nullptr;
 
-LONG CALLBACK ExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo) {
+static LONG CALLBACK ExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo) {
   switch (ExceptionInfo->ExceptionRecord->ExceptionCode) {
     case EXCEPTION_ACCESS_VIOLATION:
     case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
@@ -58,6 +65,15 @@ LONG CALLBACK ExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo) {
       if (HandlerOpt->HandleFpe)
         Fuzzer::StaticCrashSignalCallback();
       break;
+    // This is an undocumented exception code corresponding to a Visual C++
+    // Exception.
+    //
+    // See: https://devblogs.microsoft.com/oldnewthing/20100730-00/?p=13273
+    case 0xE06D7363:
+      if (HandlerOpt->HandleWinExcept)
+        Fuzzer::StaticCrashSignalCallback();
+      break;
+      // TODO: Handle (Options.HandleXfsz)
   }
   return EXCEPTION_CONTINUE_SEARCH;
 }
@@ -83,11 +99,11 @@ void CALLBACK AlarmHandler(PVOID, BOOLEAN) {
 class TimerQ {
   HANDLE TimerQueue;
  public:
-  TimerQ() : TimerQueue(NULL) {};
+  TimerQ() : TimerQueue(NULL) {}
   ~TimerQ() {
     if (TimerQueue)
       DeleteTimerQueueEx(TimerQueue, NULL);
-  };
+  }
   void SetTimer(int Seconds) {
     if (!TimerQueue) {
       TimerQueue = CreateTimerQueue();
@@ -102,7 +118,7 @@ class TimerQ {
       Printf("libFuzzer: CreateTimerQueueTimer failed.\n");
       exit(1);
     }
-  };
+  }
 };
 
 static TimerQ Timer;
@@ -112,7 +128,7 @@ static void CrashHandler(int) { Fuzzer::StaticCrashSignalCallback(); }
 void SetSignalHandler(const FuzzingOptions& Options) {
   HandlerOpt = &Options;
 
-  if (Options.UnitTimeoutSec > 0)
+  if (Options.HandleAlrm && Options.UnitTimeoutSec > 0)
     Timer.SetTimer(Options.UnitTimeoutSec / 2 + 1);
 
   if (Options.HandleInt || Options.HandleTerm)
@@ -124,11 +140,8 @@ void SetSignalHandler(const FuzzingOptions& Options) {
     }
 
   if (Options.HandleSegv || Options.HandleBus || Options.HandleIll ||
-      Options.HandleFpe)
-    if (!AddVectoredExceptionHandler(1, ExceptionHandler)) {
-      Printf("libFuzzer: AddVectoredExceptionHandler failed.\n");
-      exit(1);
-    }
+      Options.HandleFpe || Options.HandleWinExcept)
+    SetUnhandledExceptionFilter(ExceptionHandler);
 
   if (Options.HandleAbrt)
     if (SIG_ERR == signal(SIGABRT, CrashHandler)) {
@@ -152,8 +165,26 @@ FILE *OpenProcessPipe(const char *Command, const char *Mode) {
   return _popen(Command, Mode);
 }
 
-int ExecuteCommand(const std::string &Command) {
-  return system(Command.c_str());
+int CloseProcessPipe(FILE *F) {
+  return _pclose(F);
+}
+
+int ExecuteCommand(const Command &Cmd) {
+  std::string CmdLine = Cmd.toString();
+  return system(CmdLine.c_str());
+}
+
+bool ExecuteCommand(const Command &Cmd, std::string *CmdOutput) {
+  FILE *Pipe = _popen(Cmd.toString().c_str(), "r");
+  if (!Pipe)
+    return false;
+
+  if (CmdOutput) {
+    char TmpBuffer[128];
+    while (fgets(TmpBuffer, sizeof(TmpBuffer), Pipe))
+      CmdOutput->append(TmpBuffer);
+  }
+  return _pclose(Pipe) == 0;
 }
 
 const void *SearchMemory(const void *Data, size_t DataLen, const void *Patt,
@@ -175,6 +206,59 @@ const void *SearchMemory(const void *Data, size_t DataLen, const void *Patt,
       return It;
 
   return NULL;
+}
+
+std::string DisassembleCmd(const std::string &FileName) {
+  std::vector<std::string> command_vector;
+  command_vector.push_back("dumpbin /summary > nul");
+  if (ExecuteCommand(Command(command_vector)) == 0)
+    return "dumpbin /disasm " + FileName;
+  Printf("libFuzzer: couldn't find tool to disassemble (dumpbin)\n");
+  exit(1);
+}
+
+std::string SearchRegexCmd(const std::string &Regex) {
+  return "findstr /r \"" + Regex + "\"";
+}
+
+void DiscardOutput(int Fd) {
+  FILE* Temp = fopen("nul", "w");
+  if (!Temp)
+    return;
+  _dup2(_fileno(Temp), Fd);
+  fclose(Temp);
+}
+
+size_t PageSize() {
+  static size_t PageSizeCached = []() -> size_t {
+    SYSTEM_INFO si;
+    GetSystemInfo(&si);
+    return si.dwPageSize;
+  }();
+  return PageSizeCached;
+}
+
+void SetThreadName(std::thread &thread, const std::string &name) {
+#ifndef __MINGW32__
+  // Not setting the thread name in MinGW environments. MinGW C++ standard
+  // libraries can either use native Windows threads or pthreads, so we
+  // don't know with certainty what kind of thread handle we're getting
+  // from thread.native_handle() here.
+  typedef HRESULT(WINAPI * proc)(HANDLE, PCWSTR);
+  HMODULE kbase = GetModuleHandleA("KernelBase.dll");
+  proc ThreadNameProc = reinterpret_cast<proc>(
+      (void *)GetProcAddress(kbase, "SetThreadDescription"));
+  if (ThreadNameProc) {
+    std::wstring buf;
+    auto sz = MultiByteToWideChar(CP_UTF8, 0, name.data(), -1, nullptr, 0);
+    if (sz > 0) {
+      buf.resize(sz);
+      if (MultiByteToWideChar(CP_UTF8, 0, name.data(), -1, &buf[0], sz) > 0) {
+        (void)ThreadNameProc(thread.native_handle(), buf.c_str());
+      }
+    }
+  }
+#endif
 }
 
 } // namespace fuzzer

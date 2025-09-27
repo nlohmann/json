@@ -1,9 +1,8 @@
 //===- FuzzerSHA1.h - Private copy of the SHA1 implementation ---*- C++ -* ===//
 //
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 // This code is taken from public domain
@@ -18,6 +17,7 @@
 
 #include "FuzzerSHA1.h"
 #include "FuzzerDefs.h"
+#include "FuzzerPlatform.h"
 
 /* This code is public-domain - it is based on libcrypt
  * placed in the public domain by Wei Dai and other contributors.
@@ -32,7 +32,8 @@ namespace {  // Added for LibFuzzer
 
 #ifdef __BIG_ENDIAN__
 # define SHA_BIG_ENDIAN
-#elif defined __LITTLE_ENDIAN__
+// Windows is always little endian and MSVC doesn't have <endian.h>
+#elif defined __LITTLE_ENDIAN__ || LIBFUZZER_WINDOWS
 /* override */
 #elif defined __BYTE_ORDER
 # if __BYTE_ORDER__ ==  __ORDER_BIG_ENDIAN__
@@ -133,12 +134,13 @@ void sha1_hashBlock(sha1nfo *s) {
 	s->state[4] += e;
 }
 
-void sha1_addUncounted(sha1nfo *s, uint8_t data) {
-	uint8_t * const b = (uint8_t*) s->buffer;
+// Adds the least significant byte of |data|.
+void sha1_addUncounted(sha1nfo *s, uint32_t data) {
+  uint8_t *const b = (uint8_t *)s->buffer;
 #ifdef SHA_BIG_ENDIAN
-	b[s->bufferOffset] = data;
+  b[s->bufferOffset] = static_cast<uint8_t>(data);
 #else
-	b[s->bufferOffset ^ 3] = data;
+  b[s->bufferOffset ^ 3] = static_cast<uint8_t>(data);
 #endif
 	s->bufferOffset++;
 	if (s->bufferOffset == BLOCK_LENGTH) {

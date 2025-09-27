@@ -1,4 +1,0 @@
-RUN: LLVMFuzzer-StandaloneInitializeTest %S/hi.txt %S/dict1.txt 2>&1 | FileCheck %s
-CHECK: StandaloneFuzzTargetMain: running 2 inputs
-CHECK: Done:    {{.*}}hi.txt: (3 bytes)
-CHECK: Done:    {{.*}}dict1.txt: (61 bytes)

@@ -1,9 +1,8 @@
 //===- FuzzerExtFunctionsWeak.cpp - Interface to external functions -------===//
 //
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 // Implementation for Linux. This relies on the linker's support for weak
@@ -12,8 +11,9 @@
 // weak symbols to be undefined. That is a complication we don't want to expose
 // to clients right now.
 //===----------------------------------------------------------------------===//
-#include "FuzzerDefs.h"
-#if LIBFUZZER_LINUX
+#include "FuzzerPlatform.h"
+#if LIBFUZZER_LINUX || LIBFUZZER_NETBSD || LIBFUZZER_FUCHSIA ||                \
+    LIBFUZZER_FREEBSD || LIBFUZZER_EMSCRIPTEN
 
 #include "FuzzerExtFunctions.h"
 #include "FuzzerIO.h"
@@ -21,7 +21,7 @@
 extern "C" {
 // Declare these symbols as weak to allow them to be optionally defined.
 #define EXT_FUNC(NAME, RETURN_TYPE, FUNC_SIG, WARN)                            \
-  __attribute__((weak)) RETURN_TYPE NAME FUNC_SIG
+  __attribute__((weak, visibility("default"))) RETURN_TYPE NAME FUNC_SIG
 
 #include "FuzzerExtFunctions.def"
 
@@ -41,7 +41,8 @@ namespace fuzzer {
 ExternalFunctions::ExternalFunctions() {
 #define EXT_FUNC(NAME, RETURN_TYPE, FUNC_SIG, WARN)                            \
   this->NAME = ::NAME;                                                         \
-  CheckFnPtr((void *)::NAME, #NAME, WARN);
+  CheckFnPtr(reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(::NAME)),    \
+             #NAME, WARN);
 
 #include "FuzzerExtFunctions.def"
 
@@ -50,4 +51,4 @@ ExternalFunctions::ExternalFunctions() {
 
 } // namespace fuzzer
 
-#endif // LIBFUZZER_LINUX
+#endif

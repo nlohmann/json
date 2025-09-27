@@ -1,21 +1,22 @@
-//===- FuzzerMain.cpp - main() function and flags -------------------------===//
+//===- FuzzerExtraCountersDarwin.cpp - Extra coverage counters for Darwin -===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
-// main() and flags.
+// Extra coverage counters defined by user code for Darwin.
 //===----------------------------------------------------------------------===//
 
-#include "FuzzerDefs.h"
 #include "FuzzerPlatform.h"
+#include <cstdint>
 
-extern "C" {
-// This function should be defined by the user.
-int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size);
-}  // extern "C"
+#if LIBFUZZER_APPLE
 
-ATTRIBUTE_INTERFACE int main(int argc, char **argv) {
-  return fuzzer::FuzzerDriver(&argc, &argv, LLVMFuzzerTestOneInput);
-}
+namespace fuzzer {
+uint8_t *ExtraCountersBegin() { return nullptr; }
+uint8_t *ExtraCountersEnd() { return nullptr; }
+void ClearExtraCounters() {}
+} // namespace fuzzer
+
+#endif

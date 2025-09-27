@@ -1,6 +1,0 @@
-RUN: echo 'Hi!rv349f34t3gg' > not_minimal_crash
-RUN: LLVMFuzzer-NullDerefTest -minimize_crash=1 not_minimal_crash -max_total_time=2 2>&1 | FileCheck %s
-CHECK: CRASH_MIN: failed to minimize beyond minimized-from-{{.*}} (3 bytes), exiting
-RUN: LLVMFuzzer-NullDerefTest -minimize_crash=1 not_minimal_crash -max_total_time=2 -exact_artifact_path=exact_minimized_path 2>&1 | FileCheck %s --check-prefix=CHECK_EXACT
-CHECK_EXACT: CRASH_MIN: failed to minimize beyond exact_minimized_path (3 bytes), exiting
-RUN: rm not_minimal_crash minimized-from-* exact_minimized_path

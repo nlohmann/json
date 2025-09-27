@@ -1,21 +1,23 @@
 //===- FuzzerUtilDarwin.cpp - Misc utils ----------------------------------===//
 //
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 // Misc utils for Darwin.
 //===----------------------------------------------------------------------===//
-#include "FuzzerDefs.h"
+#include "FuzzerPlatform.h"
 #if LIBFUZZER_APPLE
-
+#include "FuzzerCommand.h"
 #include "FuzzerIO.h"
 #include <mutex>
 #include <signal.h>
 #include <spawn.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 // There is no header for this on macOS so declare here
 extern "C" char **environ;
@@ -36,7 +38,8 @@ static sigset_t OldBlockedSignalsSet;
 // signal handlers when the first thread enters and restores them when the last
 // thread finishes execution of the function and ensures this is not racey by
 // using a mutex.
-int ExecuteCommand(const std::string &Command) {
+int ExecuteCommand(const Command &Cmd) {
+  std::string CmdLine = Cmd.toString();
   posix_spawnattr_t SpawnAttributes;
   if (posix_spawnattr_init(&SpawnAttributes))
     return -1;
@@ -96,12 +99,17 @@ int ExecuteCommand(const std::string &Command) {
 
   pid_t Pid;
   char **Environ = environ; // Read from global
-  const char *CommandCStr = Command.c_str();
-  const char *Argv[] = {"sh", "-c", CommandCStr, NULL};
+  const char *CommandCStr = CmdLine.c_str();
+  char *const Argv[] = {
+    strdup("sh"),
+    strdup("-c"),
+    strdup(CommandCStr),
+    NULL
+  };
   int ErrorCode = 0, ProcessStatus = 0;
   // FIXME: We probably shouldn't hardcode the shell path.
   ErrorCode = posix_spawn(&Pid, "/bin/sh", NULL, &SpawnAttributes,
-                          (char *const *)Argv, Environ);
+                          Argv, Environ);
   (void)posix_spawnattr_destroy(&SpawnAttributes);
   if (!ErrorCode) {
     pid_t SavedPid = Pid;
@@ -120,6 +128,8 @@ int ExecuteCommand(const std::string &Command) {
     // Shell execution failure.
     ProcessStatus = W_EXITCODE(127, 0);
   }
+  for (unsigned i = 0, n = sizeof(Argv) / sizeof(Argv[0]); i < n; ++i)
+    free(Argv[i]);
 
   // Restore the signal handlers of the current process when the last thread
   // using this function finishes.
@@ -145,6 +155,19 @@ int ExecuteCommand(const std::string &Command) {
     }
   }
   return ProcessStatus;
+}
+
+void DiscardOutput(int Fd) {
+  FILE* Temp = fopen("/dev/null", "w");
+  if (!Temp)
+    return;
+  dup2(fileno(Temp), Fd);
+  fclose(Temp);
+}
+
+void SetThreadName(std::thread &thread, const std::string &name) {
+  // TODO ?
+  // Darwin allows to set the name only on the current thread it seems
 }
 
 } // namespace fuzzer

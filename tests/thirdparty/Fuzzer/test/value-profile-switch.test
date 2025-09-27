@@ -1,3 +1,0 @@
-CHECK: BINGO
-RUN: not LLVMFuzzer-SwitchTest  -use_cmp=0 -use_value_profile=1 -runs=100000000 -seed=1 2>&1 | FileCheck %s
-RUN: not LLVMFuzzer-Switch2Test -use_cmp=0 -use_value_profile=1 -runs=100000000 -seed=1 2>&1 | FileCheck %s

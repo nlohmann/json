@@ -1,2 +1,1 @@
-Move to http://llvm.org/docs/LibFuzzer.html
-
+See http://llvm.org/docs/LibFuzzer.html
