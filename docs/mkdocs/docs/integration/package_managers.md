@@ -1,6 +1,6 @@
 # Package Managers
 
-<center>
+<p markdown style="text-align: center">
 ![Homebrew](../images/package_managers/homebrew.svg){: style="height:1em"}&nbsp;[**Homebrew**](#homebrew) `nlohmann-json` &emsp;
 ![Meson](../images/package_managers/meson.svg){: style="height:1em"}&nbsp;[**Meson**](#meson) `nlohmann_json` &emsp;
 ![Bazel](../images/package_managers/bazel.svg){: style="height:1em"}&nbsp;[**Bazel**](#bazel) `nlohmann_json`<br>
@@ -15,7 +15,7 @@
 ![MacPorts](../images/package_managers/macports.svg){: style="height:1em"}&nbsp;[**MacPorts**](#macports) `nlohmann-json`<br>
 ![cpm.cmake](../images/package_managers/CPM.png){: style="height:1em"}&nbsp;[**CPM.cmake**](#cpmcmake) `gh:nlohmann/json`
 ![xmake](../images/package_managers/xmake.svg){: style="height:1em"}&nbsp;[**xmake**](#xmake) `nlohmann_json`
-</center>
+</p>
 
 ## Running example
 

@@ -322,6 +322,7 @@ markdown_extensions:
       guess_lang: false
   - toc:
       permalink: true
+  - md_in_html
   - pymdownx.arithmatex
   - pymdownx.betterem:
       smart_enable: all
