@@ -769,7 +769,7 @@ json j_default = ch;                 // stores integer number 65
 json j_string = std::string(1, ch);  // stores string "A"
 ```
 
-### Arbitrary types conversions
+## Conversions to/from arbitrary types
 
 Every type can be serialized in JSON, not just STL containers and scalar types. Usually, you would do something along those lines:
 
@@ -1066,7 +1066,7 @@ json jPi = 3.14;
 assert(jPi.template get<TaskState>() == TS_INVALID);
 ```
 
-Just as in [Arbitrary Type Conversions](#arbitrary-types-conversions) above,
+Just as in [Arbitrary Type Conversions](#conversions-tofrom-arbitrary-types) above,
 
 - `NLOHMANN_JSON_SERIALIZE_ENUM()` MUST be declared in your enum type's namespace (which can be the global namespace), or the library will not be able to locate it, and it will default to integer serialization.
 - It MUST be available (e.g., proper headers must be included) everywhere you use the conversions.
