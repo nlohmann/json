@@ -52,9 +52,9 @@ template<class Key,
          class T,
          class IgnoredCompare = std::less<Key>, // Unused
          class Allocator = std::allocator<std::pair<const Key, T>>>
-struct ordered_map
+             struct ordered_map
 {
-private:
+    private:
     using value_pair    = std::pair<const Key, T>;
     using list_type     = std::list<value_pair, Allocator>;
     using list_iterator = typename list_type::iterator;
@@ -70,7 +70,7 @@ private:
     };
     struct key_ref_hash
     {
-        std::size_t operator()(const key_ref& kr) const noexcept
+        std::size_t operator()(const key_ref& kr) const
         {
             return std::hash<Key> {}(*kr.p);
         }
@@ -98,87 +98,87 @@ private:
         using reference         = Ref;
         using pointer           = Ptr;
 
-        iter_base() : it_() {}
-        explicit iter_base(ListIter it) : it_(it) {}
+    iter_base() : it_() {}
+    explicit iter_base(ListIter it) : it_(it) {}
 
-        reference operator*()  const
-        {
-            return *it_;
-        }
-        pointer   operator->() const
-        {
-            return std::addressof(*it_);
-        }
+    reference operator*()  const
+    {
+        return *it_;
+    }
+    pointer   operator->() const
+    {
+        return std::addressof(*it_);
+    }
 
-        Self& operator++()
-        {
-            ++it_;
-            return self();
-        }
-        Self  operator++(int)
-        {
-            Self tmp = self();
-            ++(*this);
-            return tmp;
-        }
-        Self& operator--()
-        {
-            --it_;
-            return self();
-        }
-        Self  operator--(int)
-        {
-            Self tmp = self();
-            --(*this);
-            return tmp;
-        }
+    Self& operator++()
+    {
+        ++it_;
+        return self();
+    }
+    Self  operator++(int)
+    {
+        Self tmp = self();
+        ++(*this);
+        return tmp;
+    }
+    Self& operator--()
+    {
+        --it_;
+        return self();
+    }
+    Self  operator--(int)
+    {
+        Self tmp = self();
+        --(*this);
+        return tmp;
+    }
 
-        // This is O(n), but used only by unit tests
-        Self operator+(difference_type n) const
-        {
-            Self tmp = self();
-            if (n >= 0)    // NOLINT(*-braces-around-statements)
-                while (n--)
-                {
-                    ++tmp.it_;
-                }
-            else            // NOLINT(*-braces-around-statements)
-                while (n++)
-                {
-                    --tmp.it_;
-                }
-            return tmp;
-        }
-        Self& operator+=(difference_type n)
-        {
-            *this = *this + n;
-            return self();
-        }
+    // This is O(n), but used only by unit tests
+    Self operator+(difference_type n) const
+    {
+        Self tmp = self();
+        if (n >= 0)    // NOLINT(*-braces-around-statements)
+            while (n--)
+            {
+                ++tmp.it_;
+            }
+        else            // NOLINT(*-braces-around-statements)
+            while (n++)
+            {
+                --tmp.it_;
+            }
+        return tmp;
+    }
+    Self& operator+=(difference_type n)
+    {
+        *this = *this + n;
+        return self();
+    }
 
-        bool operator==(const Self& o) const
-        {
-            return it_ == o.it_;
-        }
-        bool operator!=(const Self& o) const
-        {
-            return it_ != o.it_;
-        }
+    bool operator==(const Self& o) const
+    {
+        return it_ == o.it_;
+    }
+    bool operator!=(const Self& o) const
+    {
+        return it_ != o.it_;
+    }
 
-        ListIter base() const
-        {
-            return it_;
-        }
+    ListIter base() const
+    {
+        return it_;
+    }
 
     private:
-        ListIter it_;
-        Self& self()
-        {
-            return static_cast<Self&>(*this);
-        }
-        const Self& self() const
-        {
-            return static_cast<const Self&>(*this);
-        }
+    ListIter it_;
+    Self& self()
+    {
+        return static_cast<Self&>(*this);
+    }
+    const Self& self() const
+    {
+        return static_cast<const Self&>(*this);
+    }
     };
 
     // Strong-safety rebuild: build a temporary index, then swap.
@@ -318,7 +318,8 @@ public:
     {
         if (this != &other)
         {
-            m_list = other.m_list;
+            list_type tmp(other.m_list);  // may throw; strong guarantee
+            m_list.swap(tmp);
             rebuild_index();
         }
         return *this;
@@ -328,7 +329,8 @@ public:
     {
         if (this != &other)
         {
-            m_list = std::move(other.m_list);
+            list_type tmp(std::move(other.m_list)); // noexcept move-construct
+            m_list.swap(tmp);
             rebuild_index();
         }
         return *this;
