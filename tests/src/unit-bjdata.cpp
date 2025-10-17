@@ -173,6 +173,7 @@ TEST_CASE_TEMPLATE_DEFINE("value_in_range_of trait", T, value_in_range_of_test) 
     }
 }
 
+// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
 TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test, \
                           trait_test_arg<std::int32_t, std::int32_t, true, true>, \
                           trait_test_arg<std::int32_t, std::uint32_t, true, false>, \
@@ -198,6 +199,7 @@ TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test, \
                           trait_test_arg<std::size_t, std::int64_t, false, false>, \
                           trait_test_arg<std::size_t, std::uint64_t, true, false>);
 #else
+// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
 TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test, \
                           trait_test_arg<std::size_t, std::int32_t, false, true>, \
                           trait_test_arg<std::size_t, std::uint32_t, true, true>, \
