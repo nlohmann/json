@@ -20,7 +20,7 @@ using nlohmann::json;
 #endif
 
 #ifdef JSON_HAS_CPP_14
-TEST_CASE_TEMPLATE("checking forward-iterators", T, // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("checking forward-iterators", T, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    std::vector<int>, std::string, nlohmann::json)
 {
     auto it1 = typename T::iterator{};
