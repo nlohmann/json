@@ -1143,7 +1143,7 @@ TEST_CASE("deserialization")
     #define ASCII_TYPES TYPE_LIST(char, wchar_t, char16_t, char32_t)
 #endif
 
-TEST_CASE_TEMPLATE("deserialization of different character types (ASCII)", T, ASCII_TYPES) // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("deserialization of different character types (ASCII)", T, ASCII_TYPES) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
 {
     std::vector<T> const v = {'t', 'r', 'u', 'e'};
     CHECK(json::parse(v) == json(true));
@@ -1155,7 +1155,7 @@ TEST_CASE_TEMPLATE("deserialization of different character types (ASCII)", T, AS
     CHECK(l.events == std::vector<std::string>({"boolean(true)"}));
 }
 
-TEST_CASE_TEMPLATE("deserialization of different character types (UTF-8)", T, char, unsigned char, std::uint8_t) // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("deserialization of different character types (UTF-8)", T, char, unsigned char, std::uint8_t) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
 {
     // a star emoji
     std::vector<T> const v = {'"', static_cast<T>(0xe2u), static_cast<T>(0xadu), static_cast<T>(0x90u), static_cast<T>(0xefu), static_cast<T>(0xb8u), static_cast<T>(0x8fu), '"'};
@@ -1167,7 +1167,7 @@ TEST_CASE_TEMPLATE("deserialization of different character types (UTF-8)", T, ch
     CHECK(l.events.size() == 1);
 }
 
-TEST_CASE_TEMPLATE("deserialization of different character types (UTF-16)", T, char16_t) // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("deserialization of different character types (UTF-16)", T, char16_t) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
 {
     // a star emoji
     std::vector<T> const v = {static_cast<T>('"'), static_cast<T>(0x2b50), static_cast<T>(0xfe0f), static_cast<T>('"')};
@@ -1179,7 +1179,7 @@ TEST_CASE_TEMPLATE("deserialization of different character types (UTF-16)", T, c
     CHECK(l.events.size() == 1);
 }
 
-TEST_CASE_TEMPLATE("deserialization of different character types (UTF-32)", T, char32_t) // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("deserialization of different character types (UTF-32)", T, char32_t) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
 {
     // a star emoji
     std::vector<T> const v = {static_cast<T>('"'), static_cast<T>(0x2b50), static_cast<T>(0xfe0f), static_cast<T>('"')};
