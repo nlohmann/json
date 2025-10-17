@@ -165,7 +165,7 @@ TEST_CASE("serialization")
     }
 }
 
-TEST_CASE_TEMPLATE("serialization for extreme integer values", T, int32_t, uint32_t, int64_t, uint64_t) // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("serialization for extreme integer values", T, int32_t, uint32_t, int64_t, uint64_t) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
 {
     SECTION("minimum")
     {
