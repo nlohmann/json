@@ -83,7 +83,9 @@ jobs:
       - name: Run CMake
         run: cmake -S . -B build ^
            -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" ^
-           -DCMAKE_CXX_FLAGS="--target=x86_64-w64-mingw32 --gcc-toolchain=C:/mingw64 -stdlib=libstdc++ -pthread" ^
+           -DCMAKE_CXX_FLAGS="--target=x86_64-w64-mingw32 -stdlib=libstdc++ -pthread" ^
+           -DCMAKE_CXX_COMPILER_TARGET=x86_64-w64-mingw32 ^
+           -DCMAKE_CXX_COMPILER_EXTERNAL_TOOLCHAIN=C:/mingw64
            -DCMAKE_EXE_LINKER_FLAGS="-lwinpthread" ^
            -G"MinGW Makefiles" ^
            -DCMAKE_BUILD_TYPE=Debug ^
