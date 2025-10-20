@@ -83,8 +83,8 @@ jobs:
       - name: Run CMake
         run: cmake -S . -B build ^
           -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" ^
-          -DCMAKE_CXX_FLAGS="-stdlib=libc++ -pthread" ^
-          -DCMAKE_EXE_LINKER_FLAGS="-lc++ -lc++abi -lunwind -lwinpthread" ^
+          -DCMAKE_CXX_FLAGS="--target=x86_64-w64-mingw32 -stdlib=libc++ -pthread" ^
+          -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld -lc++ -lc++abi -lunwind -lwinpthread" ^
           -G"MinGW Makefiles" ^
           -DCMAKE_BUILD_TYPE=Debug ^
           -DJSON_BuildTests=On
