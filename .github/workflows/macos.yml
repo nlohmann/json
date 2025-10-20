@@ -53,28 +53,29 @@ jobs:
 #      - name: Test
 #        run: cd build ; ctest -j 10 --output-on-failure
 
-  macos-13:
-    runs-on: macos-13 # https://github.com/actions/runner-images/blob/main/images/macos/macos-13-Readme.md
-    strategy:
-      matrix:
-        xcode: ['14.1', '14.2', '14.3', '14.3.1', '15.0.1', '15.1', '15.2']
-    env:
-      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
-
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-      - name: Run CMake
-        run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
-      - name: Build
-        run: cmake --build build --parallel 10
-      - name: Test
-        run: cd build ; ctest -j 10 --output-on-failure
+# macos-13 is deprecated (https://github.com/actions/runner-images/issues/13046)
+#  macos-13:
+#    runs-on: macos-13 # https://github.com/actions/runner-images/blob/main/images/macos/macos-13-Readme.md
+#    strategy:
+#      matrix:
+#        xcode: ['14.1', '14.2', '14.3', '14.3.1', '15.0.1', '15.1', '15.2']
+#    env:
+#      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
+#
+#    steps:
+#      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+#      - name: Run CMake
+#        run: cmake -S . -B build -D CMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On -DJSON_FastTests=ON
+#      - name: Build
+#        run: cmake --build build --parallel 10
+#      - name: Test
+#        run: cd build ; ctest -j 10 --output-on-failure
 
   macos-14:
     runs-on: macos-14 # https://github.com/actions/runner-images/blob/main/images/macos/macos-14-Readme.md
     strategy:
       matrix:
-        xcode: ['15.3', '15.4']
+        xcode: ['15.0.1', '15.1', '15.2', '15.3', '15.4']
     env:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 

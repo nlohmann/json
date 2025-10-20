@@ -17,9 +17,6 @@ violations will result in a failed build.
       
         | Compiler                                     | Architecture | Operating System                  | CI        |
         |----------------------------------------------|--------------|-----------------------------------|-----------|
-        | AppleClang 14.0.0.14000029; Xcode 14.1       | x86_64       | macOS 13.7.2 (Ventura)            | GitHub    |
-        | AppleClang 14.0.0.14000029; Xcode 14.2       | x86_64       | macOS 13.7.2 (Ventura)            | GitHub    |
-        | AppleClang 14.0.3.14030022; Xcode 14.3.1     | x86_64       | macOS 13.7.2 (Ventura)            | GitHub    |
         | AppleClang 15.0.0.15000040; Xcode 15.0.1     | x86_64       | macOS 13.7.2 (Ventura)            | GitHub    |
         | AppleClang 15.0.0.15000100; Xcode 15.1       | x86_64       | macOS 13.7.2 (Ventura)            | GitHub    |
         | AppleClang 15.0.0.15000100; Xcode 15.2       | x86_64       | macOS 13.7.2 (Ventura)            | GitHub    |
