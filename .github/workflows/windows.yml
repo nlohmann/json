@@ -81,7 +81,13 @@ jobs:
       - name: Install Clang
         run: curl -fsSL -o LLVM${{ matrix.version }}.exe https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.version }}/LLVM-${{ matrix.version }}-win64.exe ; 7z x LLVM${{ matrix.version }}.exe -y -o"C:/Program Files/LLVM"
       - name: Run CMake
-        run: cmake -S . -B build -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" -DCMAKE_CXX_FLAGS="--target=x86_64-w64-mingw32 -stdlib=libstdc++ -pthread" -DCMAKE_EXE_LINKER_FLAGS="-lwinpthread" -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
+        run: cmake -S . -B build ^
+           -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" ^
+           -DCMAKE_CXX_FLAGS="--target=x86_64-w64-mingw32 --gcc-toolchain=C:/mingw64 -stdlib=libstdc++ -pthread" ^
+           -DCMAKE_EXE_LINKER_FLAGS="-lwinpthread" ^
+           -G"MinGW Makefiles" ^
+           -DCMAKE_BUILD_TYPE=Debug ^
+           -DJSON_BuildTests=On
       - name: Build
         run: cmake --build build --parallel 10
       - name: Test
