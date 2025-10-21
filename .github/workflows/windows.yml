@@ -83,7 +83,7 @@ jobs:
       - name: Set up MinGW
         uses: egor-tensin/setup-mingw@84c781b557efd538dec66bde06988d81cd3138cf # v2.2.0
         with:
-          platform: ${{ matrix.architecture }}
+          platform: x64
           version: 12.2.0 # https://github.com/egor-tensin/setup-mingw/issues/14
       - name: Run CMake
         run: cmake -S . -B build ^
