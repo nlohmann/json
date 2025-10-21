@@ -87,7 +87,7 @@ jobs:
         shell: pwsh
         run: |
           cmake -S . -B build `
-            -G "MinGW Makefiles" `
+            -G "Ninja" `
             -DCMAKE_C_COMPILER="C:/Program Files/LLVM/bin/clang.exe" `
             -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" `
             -DCMAKE_BUILD_TYPE=Debug `
