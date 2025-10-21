@@ -85,11 +85,14 @@ jobs:
 
       - name: Configure with CMake (MSVC toolchain)
         run: >
-          cmake -S . -B build
-          -G "Ninja"
-          -T ClangCL
-          -DCMAKE_BUILD_TYPE=Debug
-          -DJSON_BuildTests=On
+          cmake -S . -B build ^
+            -G "Visual Studio 17 2022" ^
+            -A x64 ^
+            -T ClangCL ^
+            -DCMAKE_C_COMPILER="C:/Program Files/LLVM/bin/clang-cl.exe" ^
+            -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang-cl.exe" ^
+            -DCMAKE_BUILD_TYPE=Debug ^
+            -DJSON_BuildTests=On
 
       - name: Build
         run: cmake --build build --parallel 10
