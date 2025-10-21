@@ -83,14 +83,13 @@ jobs:
           curl -fsSL -o LLVM${{ matrix.version }}.exe https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.version }}/LLVM-${{ matrix.version }}-win64.exe
           7z x LLVM${{ matrix.version }}.exe -y -o"C:/Program Files/LLVM"
 
-      - name: Configure with CMake (MSVC toolchain)
+      - name: Configure (LLVM Clang standalone)
+        shell: pwsh
         run: |
           cmake -S . -B build `
-            -G "Visual Studio 17 2022" `
-            -A x64 `
-            -T ClangCL `
-            -DCMAKE_C_COMPILER="C:/Program Files/LLVM/bin/clang-cl.exe" `
-            -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang-cl.exe" `
+            -G "MinGW Makefiles" `
+            -DCMAKE_C_COMPILER="C:/Program Files/LLVM/bin/clang.exe" `
+            -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" `
             -DCMAKE_BUILD_TYPE=Debug `
             -DJSON_BuildTests=On
 
