@@ -80,6 +80,11 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Install Clang
         run: curl -fsSL -o LLVM${{ matrix.version }}.exe https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.version }}/LLVM-${{ matrix.version }}-win64.exe ; 7z x LLVM${{ matrix.version }}.exe -y -o"C:/Program Files/LLVM"
+      - name: Set up MinGW
+        uses: egor-tensin/setup-mingw@84c781b557efd538dec66bde06988d81cd3138cf # v2.2.0
+        with:
+          platform: ${{ matrix.architecture }}
+          version: 12.2.0 # https://github.com/egor-tensin/setup-mingw/issues/14
       - name: Run CMake
         run: cmake -S . -B build ^
              -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" ^
