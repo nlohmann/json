@@ -2,6 +2,7 @@
 
 ```cpp
 json_pointer operator ""_json_pointer(const char* s, std::size_t n);
+json_pointer operator ""_json_pointer(const char8_t* s, std::size_t n);  // since C++20
 ```
 
 This operator implements a user-defined string literal for JSON Pointers. It can be used by adding `#!cpp _json_pointer`
@@ -62,3 +63,4 @@ Linear.
 
 - Added in version 2.0.0.
 - Moved to namespace `nlohmann::literals::json_literals` in 3.11.0.
+- Added `char8_t*` overload in 3.12.1.

@@ -788,4 +788,18 @@ TEST_CASE("JSON pointers")
             CHECK_FALSE(ptr_oj != ptr);
         }
     }
+
+    // build with C++20
+    // JSON_HAS_CPP_20
+#if defined(__cpp_char8_t)
+    SECTION("Using _json_pointer with char8_t literals #4945")
+    {
+        const json j = R"({"a": {"b": {"c": 123}}})"_json;
+        const auto p1 = "/a/b/c"_json_pointer;
+        CHECK(j[p1] == 123);
+
+        const auto p2 = u8"/a/b/c"_json_pointer;
+        CHECK(j[p2] == 123);
+    }
+#endif
 }

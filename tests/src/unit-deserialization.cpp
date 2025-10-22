@@ -1132,6 +1132,23 @@ TEST_CASE("deserialization")
             CHECK(object_count == 4);
         }
     }
+
+    // build with C++20
+    // JSON_HAS_CPP_20
+#if defined(__cpp_char8_t)
+    SECTION("Using _json with char8_t literals #4945")
+    {
+        // Regular narrow string literal
+        auto j1 = R"({"key": "value", "num": 42})"_json;
+        CHECK(j1["key"] == "value");
+        CHECK(j1["num"] == 42);
+
+        // UTF-8 prefixed literal (C++20 and later)
+        auto j2 = u8R"({"emoji": "😀", "msg": "hello"})"_json;
+        CHECK(j2["emoji"] == "😀");
+        CHECK(j2["msg"] == "hello");
+    }
+#endif
 }
 
 // select the types to test - char8_t is only available since C++20 if and only
