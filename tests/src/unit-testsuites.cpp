@@ -110,7 +110,6 @@ TEST_CASE("compliance tests from nativejson-benchmark")
         {
             CAPTURE(json_string)
             CAPTURE(expected)
-            CAPTURE(json::parse(json_string)[0].get<double>())
             CHECK(json::parse(json_string)[0].get<double>() == Approx(expected));
         };
 
