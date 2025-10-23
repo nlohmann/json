@@ -15802,6 +15802,9 @@ class output_string_adapter : public output_adapter_protocol<CharType>
     JSON_HEDLEY_NON_NULL(2)
     void write_characters(const CharType* s, std::size_t length) override
     {
+        if (s == nullptr) {
+        return;
+        }
         str.append(s, length);
     }
 
