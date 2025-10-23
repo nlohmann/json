@@ -15803,7 +15803,7 @@ class output_string_adapter : public output_adapter_protocol<CharType>
     void write_characters(const CharType* s, std::size_t length) override
     {
         if (s == nullptr) {
-        return;
+            return;
         }
         str.append(s, length);
     }
