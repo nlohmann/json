@@ -116,7 +116,7 @@ jobs:
   ci_module_cpp20:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Run CMake (Debug)
         run: cmake -S . -B build -G "Visual Studio 17 2022" -DJSON_CI=ON -DCMAKE_CXX_FLAGS="/permissive- /std:c++latest /utf-8 /W4 /WX"
       - name: Build
