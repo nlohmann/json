@@ -19,6 +19,11 @@ using nlohmann::json;
 #include <sstream>
 #include <valarray>
 
+#if defined(_WIN32)
+    #define NOMINMAX
+    #include <windows.h> // for GetACP()
+#endif
+
 namespace
 {
 struct SaxEventLogger : public nlohmann::json_sax<json>
@@ -214,20 +219,16 @@ class proxy_iterator
     iterator* m_it = nullptr;
 };
 
-// JSON_HAS_CPP_20
-#if defined(__cpp_char8_t)
-/// simple check to get an idea whether MSVC set /utf-8
-bool check_utf8() noexcept
+bool check_utf8()
 {
-    // "é" = U+00E9. In UTF-8: 0xC3 0xA9. In Windows-1252: 0xE9 0x00.
-    constexpr const char* test = "é";
-
-    // Compare the first byte of "é" to the known UTF-8 prefix 0xC3
-    return static_cast<unsigned char>(test[0]) == 0xC3
-           && static_cast<unsigned char>(test[1]) == 0xA9;
-}
+#if defined(_WIN32)
+    // Runtime check of the active ANSI code page
+    // 65001 == UTF-8
+    return GetACP() == 65001;
+#else
+    return true;
 #endif
-
+}
 } // namespace
 
 TEST_CASE("deserialization")
@@ -1154,7 +1155,7 @@ TEST_CASE("deserialization")
     SECTION("Using _json with char8_t literals #4945")
     {
         // Regular narrow string literal
-        auto j1 = R"({"key": "value", "num": 42})"_json;
+        const auto j1 = R"({"key": "value", "num": 42})"_json;
         CHECK(j1["key"] == "value");
         CHECK(j1["num"] == 42);
 
@@ -1162,16 +1163,14 @@ TEST_CASE("deserialization")
         // MSVC may not set /utf-8, so we need to check
         if (check_utf8())
         {
-            auto j2 = u8R"({"emoji": "😀", "msg": "hello"})"_json;
+            const auto j2 = u8R"({"emoji": "😀", "msg": "hello"})"_json;
             CHECK(j2["emoji"] == "😀");
             CHECK(j2["msg"] == "hello");
         }
-        else
-        {
-            auto j2 = u8R"({"key": "value", "num": 42})"_json;
-            CHECK(j2["key"] == "value");
-            CHECK(j2["num"] == 42);
-        }
+
+        const auto j3 = u8R"({"key": "value", "num": 42})"_json;
+        CHECK(j3["key"] == "value");
+        CHECK(j3["num"] == 42);
     }
 #endif
 }
