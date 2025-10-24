@@ -219,6 +219,8 @@ class proxy_iterator
     iterator* m_it = nullptr;
 };
 
+// JSON_HAS_CPP_20
+#if defined(__cpp_char8_t)
 bool check_utf8()
 {
 #if defined(_WIN32)
@@ -229,6 +231,7 @@ bool check_utf8()
     return true;
 #endif
 }
+#endif
 } // namespace
 
 TEST_CASE("deserialization")
