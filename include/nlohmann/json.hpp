@@ -5254,6 +5254,57 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
+    /// @brief creates a diff as a JSON Merge Patch
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json merge_diff(const basic_json& source, const basic_json& target)
+    {
+        if (!target.is_object())
+        {
+            return target;
+        }
+
+        basic_json result(value_t::object);
+
+        if (source.is_object())
+        {
+            for (auto it = source.begin(); it != source.end(); ++it)
+            {
+                auto itf = target.find(it.key());
+                if (itf != target.end())
+                {
+                    if (it.value() != itf.value())
+                    {
+                        auto diff = merge_diff(it.value(), itf.value());
+                        if (diff.is_null())
+                        {
+                            JSON_THROW(other_error::create(503, detail::concat("cannot set \"", itf.key(), "\" to null"), &target));
+                        }
+                        result[it.key()] = merge_diff(it.value(), itf.value());
+                    }
+                }
+                else
+                {
+                    result[it.key()] = value_t::null;
+                }
+            }
+        }
+
+        for (auto it = target.begin(); it != target.end(); ++it)
+        {
+            auto itf = source.find(it.key());
+            if (itf == source.end())
+            {
+                if (it.value().is_null())
+                {
+                    JSON_THROW(other_error::create(503, detail::concat("cannot set \"", it.key(), "\" to null"), &target));
+                }
+                result[it.key()] = it.value();
+            }
+        }
+
+        return result;
+    }
+
     /// @}
 };
 
