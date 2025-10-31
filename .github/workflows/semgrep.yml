@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Checkout project source
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       # Scan code using project's configuration on https://semgrep.dev/manage
       - uses: returntocorp/semgrep-action@fcd5ab7459e8d91cb1777481980d1b18b4fc6735
@@ -43,7 +43,7 @@ jobs:
 
       # Upload SARIF file generated in previous step
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@7434149006143a4d75b82a2f411ef15b03ccc2d7 # v4
         with:
           sarif_file: semgrep.sarif
         if: always()
