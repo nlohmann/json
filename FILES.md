@@ -260,7 +260,22 @@ make BUILD.bazel
 
 The "Check amalgamation" workflow fails if the file is out of date.
 
-### `meson.build`
+### `meson.build` and `meson_options.txt`
+
+Meson build definitions suitable for use as a subproject ("wrap" in Meson terminology).
+
+Projects wishing to use the wrap can execute:
+```sh
+meson wrap install nlohmann_json
+```
+
+Which allows Meson to build from source when a system provided dependency isn't available.
+
+To build directly:
+```sh
+meson setup builddir
+ninja -C builddir
+```
 
 The build definition for the [Meson](https://mesonbuild.com) build system. When installing, it also installs the CMake package config
 files so that `find_package(nlohmann_json)` works. As Meson cannot generate `nlohmann_jsonTargets.cmake` itself, it is
