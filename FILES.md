@@ -232,7 +232,22 @@ The file can be updated by calling
 make BUILD.bazel
 ```
 
-### `meson.build`
+### `meson.build` and `meson_options.txt`
+
+Meson build definitions suitable for use as a subproject ("wrap" in Meson terminology).
+
+Projects wishing to use the wrap can execute:
+```sh
+meson wrap install nlohmann_json
+```
+
+Which allows Meson to build from source when a system provided dependency isn't available.
+
+To build directly:
+```sh
+meson setup builddir
+ninja -C builddir
+```
 
 ### `Package.swift`
 
