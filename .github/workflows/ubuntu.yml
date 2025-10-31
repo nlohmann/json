@@ -256,7 +256,7 @@ jobs:
           egress-policy: audit
 
       - name: Install emscripten
-        uses: mymindstorm/setup-emsdk@v14
+        uses: mymindstorm/setup-emsdk@6ab9eb1bda2574c4ddb79809fc9247783eaf9021 # v14
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@628dd514bed37cb0a609e84a6186cbbaa2fc0140 # v4.02
