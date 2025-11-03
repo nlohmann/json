@@ -4164,11 +4164,14 @@ using is_usable_as_key_type = typename std::conditional <
 template<typename BasicJsonType, typename KeyTypeCVRef, bool RequireTransparentComparator = true,
          bool ExcludeObjectKeyType = RequireTransparentComparator, typename KeyType = uncvref_t<KeyTypeCVRef>>
 using is_usable_as_basic_json_key_type = typename std::conditional <
-    is_usable_as_key_type<typename BasicJsonType::object_comparator_t,
-    typename BasicJsonType::object_t::key_type, KeyTypeCVRef,
-    RequireTransparentComparator, ExcludeObjectKeyType>::value
-    && !is_json_iterator_of<BasicJsonType, KeyType>::value,
-    std::true_type,
+    (is_usable_as_key_type<typename BasicJsonType::object_comparator_t,
+     typename BasicJsonType::object_t::key_type, KeyTypeCVRef,
+     RequireTransparentComparator, ExcludeObjectKeyType>::value
+     && !is_json_iterator_of<BasicJsonType, KeyType>::value)
+#ifdef JSON_HAS_CPP_17
+    || std::is_convertible<KeyType, std::string_view>::value
+#endif
+    , std::true_type,
     std::false_type >::type;
 
 template<typename ObjectType, typename KeyType>
