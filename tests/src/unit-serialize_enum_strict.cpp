@@ -5,7 +5,7 @@ using json = nlohmann::json;
 namespace ns {
 enum class Color { red, green, blue, unknown };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(Color, {
+NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(Color, {
     { Color::unknown, "unknown" },
     { Color::red,     "red"     },
     { Color::green,   "green"   },
@@ -13,7 +13,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(Color, {
 })
 } // namespace ns
 
-TEST_CASE("NLOHMANN_JSON_SERIALIZE_ENUM throws on unknown input string")
+TEST_CASE("NLOHMANN_JSON_SERIALIZE_ENUM_STRICT throws on unknown input string")
 {
     json j = "purple"; // not mapped
     ns::Color c;
@@ -21,7 +21,7 @@ TEST_CASE("NLOHMANN_JSON_SERIALIZE_ENUM throws on unknown input string")
     CHECK_THROWS_AS((j.get_to(c)), nlohmann::detail::type_error);
 }
 
-TEST_CASE("NLOHMANN_JSON_SERIALIZE_ENUM still deserializes valid values")
+TEST_CASE("NLOHMANN_JSON_SERIALIZE_ENUM_STRICT still deserializes valid values")
 {
     json j = "green";
     auto c = j.get<ns::Color>();
