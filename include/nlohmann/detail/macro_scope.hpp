@@ -250,7 +250,14 @@
         {                                                                                       \
             return ej_pair.second == j;                                                         \
         });                                                                                     \
-        e = ((it != std::end(m)) ? it : std::begin(m))->first;                                  \
+        if (it == std::end(m))                                                                  \
+        {                                                                                       \
+            throw ::nlohmann::detail::type_error::create(                                       \
+                302,                                                                            \
+                std::string("invalid value for ") + #ENUM_TYPE + ": " + j.dump(),               \
+                nullptr);                                                                       \
+        }                                                                                       \
+        e = it->first;                                                                          \
     }
 
 // Ugly macros to avoid uglier copy-paste when specializing basic_json. They
