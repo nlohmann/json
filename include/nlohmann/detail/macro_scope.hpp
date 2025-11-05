@@ -16,7 +16,15 @@
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
 
 #include <nlohmann/detail/abi_macros.hpp>
-#include <nlohmann/detail/exceptions.hpp> // for type_error
+
+// forward declaration to avoid circular include with exceptions.hpp
+namespace nlohmann
+{
+namespace detail
+{
+class type_error;
+} // namespace detail
+} // namespace nlohmann
 
 // exclude unsupported compilers
 #if !defined(JSON_SKIP_UNSUPPORTED_COMPILER_CHECK)
