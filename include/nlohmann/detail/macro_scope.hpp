@@ -288,9 +288,9 @@
         if (it == std::end(m))                                                                  \
         {                                                                                       \
             throw ::nlohmann::detail::type_error::create(                                       \
-                302,                                                                            \
-                concat("invalid value for ", #ENUM_TYPE, ": ", j.dump()),                       \
-                j);                                                                             \
+                    302,                                                                            \
+                    concat("invalid value for ", #ENUM_TYPE, ": ", j.dump()),                       \
+                    j);                                                                             \
         }                                                                                       \
         e = it->first;                                                                          \
     }
