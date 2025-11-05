@@ -17,15 +17,6 @@
 
 #include <nlohmann/detail/abi_macros.hpp>
 
-// forward declaration to avoid circular include with exceptions.hpp
-namespace nlohmann
-{
-namespace detail
-{
-class type_error;
-} // namespace detail
-} // namespace nlohmann
-
 // exclude unsupported compilers
 #if !defined(JSON_SKIP_UNSUPPORTED_COMPILER_CHECK)
     #if defined(__clang__)
@@ -296,10 +287,10 @@ class type_error;
         });                                                                                     \
         if (it == std::end(m))                                                                  \
         {                                                                                       \
-            throw ::nlohmann::detail::type_error::create(                                       \
+            throw nlohmann::detail::type_error::create(                                                 \
                     302,                                                                        \
                     std::string("invalid value for ") + #ENUM_TYPE + ": " + j.dump(),           \
-                    j);                                                                         \
+                    &j);                                                                         \
         }                                                                                       \
         e = it->first;                                                                          \
     }
