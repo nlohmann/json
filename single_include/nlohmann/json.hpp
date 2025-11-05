@@ -2653,8 +2653,8 @@ JSON_HEDLEY_DIAGNOSTIC_POP
         {                                                                                       \
             throw ::nlohmann::detail::type_error::create(                                       \
                 302,                                                                            \
-                std::string("invalid value for ") + #ENUM_TYPE + ": " + j.dump(),               \
-                nullptr);                                                                       \
+                concat("invalid value for ", #ENUM_TYPE, ": ", j.dump()),                       \
+                j);                                                                             \
         }                                                                                       \
         e = it->first;                                                                          \
     }
