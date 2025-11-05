@@ -2,10 +2,12 @@
 #include "../doctest/doctest.h"
 using json = nlohmann::json;
 
-namespace ns {
+namespace ns
+{
 enum class Color { red, green, blue, unknown };
 
-NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(Color, {
+NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(Color,
+{
     { Color::unknown, "unknown" },
     { Color::red,     "red"     },
     { Color::green,   "green"   },
