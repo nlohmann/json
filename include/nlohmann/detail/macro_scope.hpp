@@ -8,8 +8,8 @@
 
 #pragma once
 
+#include <string>   
 #include <utility> // declval, pair
-#include <string>
 #include <nlohmann/detail/meta/detected.hpp>
 #include <nlohmann/thirdparty/hedley/hedley.hpp>
 
