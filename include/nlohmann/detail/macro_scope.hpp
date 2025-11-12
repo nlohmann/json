@@ -9,9 +9,9 @@
 #pragma once
 
 #include <utility> // declval, pair
+#include <string>
 #include <nlohmann/detail/meta/detected.hpp>
 #include <nlohmann/thirdparty/hedley/hedley.hpp>
-#include <string>
 
 // This file contains all internal macro definitions (except those affecting ABI)
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
@@ -288,10 +288,10 @@
         });                                                                                     \
         if (it == std::end(m))                                                                  \
         {                                                                                       \
-            throw ::nlohmann::detail::type_error::create(                                       \
-                    302,                                                                        \
-                    std::string("invalid value for ") + #ENUM_TYPE + ": " + j.dump(),           \
-                    &j);                                                                        \
+            JSON_THROW(::nlohmann::detail::type_error::create(                                  \
+                       302,                                                                     \
+                       std::string("invalid value for ") + #ENUM_TYPE + ": " + j.dump(),        \
+                       &j));                                                                    \
         }                                                                                       \
         e = it->first;                                                                          \
     }

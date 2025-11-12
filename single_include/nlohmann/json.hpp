@@ -228,6 +228,7 @@
 
 
 #include <utility> // declval, pair
+#include <string>
 // #include <nlohmann/detail/meta/detected.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -2374,7 +2375,6 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 
 #endif /* !defined(JSON_HEDLEY_VERSION) || (JSON_HEDLEY_VERSION < X) */
 
-#include <string>
 
 // This file contains all internal macro definitions (except those affecting ABI)
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
@@ -2652,10 +2652,10 @@ JSON_HEDLEY_DIAGNOSTIC_POP
         });                                                                                     \
         if (it == std::end(m))                                                                  \
         {                                                                                       \
-            throw ::nlohmann::detail::type_error::create(                                       \
-                    302,                                                                        \
-                    std::string("invalid value for ") + #ENUM_TYPE + ": " + j.dump(),           \
-                    &j);                                                                        \
+            JSON_THROW(::nlohmann::detail::type_error::create(                                  \
+                       302,                                                                     \
+                       std::string("invalid value for ") + #ENUM_TYPE + ": " + j.dump(),        \
+                       &j));                                                                    \
         }                                                                                       \
         e = it->first;                                                                          \
     }
