@@ -6,8 +6,13 @@
 // SPDX-FileCopyrightText: 2013-2025 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
+<<<<<<< HEAD
 #include "doctest_compatibility.h"
 #include <nlohmann/json.hpp>
+=======
+#include <nlohmann/json.hpp>
+#include "../doctest/doctest.h"
+>>>>>>> 988fdefee1963a7ab203012eb0fc425e861e08f5
 
 using json = nlohmann::json;
 

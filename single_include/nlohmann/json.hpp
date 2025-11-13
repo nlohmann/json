@@ -2375,6 +2375,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 
 #endif /* !defined(JSON_HEDLEY_VERSION) || (JSON_HEDLEY_VERSION < X) */
 
+#include <string>
 
 // This file contains all internal macro definitions (except those affecting ABI)
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
@@ -2652,10 +2653,17 @@ JSON_HEDLEY_DIAGNOSTIC_POP
         });                                                                                     \
         if (it == std::end(m))                                                                  \
         {                                                                                       \
+<<<<<<< HEAD
             JSON_THROW(::nlohmann::detail::type_error::create(                                  \
                        302,                                                                     \
                        std::string("invalid value for ") + #ENUM_TYPE + ": " + j.dump(),        \
                        &j));                                                                    \
+=======
+            throw ::nlohmann::detail::type_error::create(                                       \
+                    302,                                                                        \
+                    std::string("invalid value for ") + #ENUM_TYPE + ": " + j.dump(),           \
+                    &j);                                                                        \
+>>>>>>> 988fdefee1963a7ab203012eb0fc425e861e08f5
         }                                                                                       \
         e = it->first;                                                                          \
     }
