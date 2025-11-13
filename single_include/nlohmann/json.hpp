@@ -2375,7 +2375,6 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 
 #endif /* !defined(JSON_HEDLEY_VERSION) || (JSON_HEDLEY_VERSION < X) */
 
-#include <string>
 
 // This file contains all internal macro definitions (except those affecting ABI)
 // You MUST include macro_unscope.hpp at the end of json.hpp to undef all of them
@@ -2639,7 +2638,15 @@ JSON_HEDLEY_DIAGNOSTIC_POP
         });                                                                                     \
         j = ((it != std::end(m)) ? it : std::begin(m))->second;                                 \
     }                                                                                           \
+    /* helper for strict enum error reporting */                                                \
     template<typename BasicJsonType>                                                            \
+    inline void throw_enum_error(const BasicJsonType& j, const char* enum_type)                 \
+    {                                                                                           \
+        JSON_THROW(::nlohmann::detail::type_error::create(                                      \
+                   302,                                                                                \
+                   std::string("invalid value for ") + enum_type + ": " + j.dump(),                    \
+                   &j));                                                                               \
+    }                                                                                           \
     inline void from_json(const BasicJsonType& j, ENUM_TYPE& e)                                 \
     {                                                                                           \
         /* NOLINTNEXTLINE(modernize-type-traits) we use C++11 */                                \
@@ -2653,17 +2660,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
         });                                                                                     \
         if (it == std::end(m))                                                                  \
         {                                                                                       \
-<<<<<<< HEAD
-            JSON_THROW(::nlohmann::detail::type_error::create(                                  \
-                       302,                                                                     \
-                       std::string("invalid value for ") + #ENUM_TYPE + ": " + j.dump(),        \
-                       &j));                                                                    \
-=======
-            throw ::nlohmann::detail::type_error::create(                                       \
-                    302,                                                                        \
-                    std::string("invalid value for ") + #ENUM_TYPE + ": " + j.dump(),           \
-                    &j);                                                                        \
->>>>>>> 988fdefee1963a7ab203012eb0fc425e861e08f5
+            throw_enum_error(j, #ENUM_TYPE);                                                    \
         }                                                                                       \
         e = it->first;                                                                          \
     }
