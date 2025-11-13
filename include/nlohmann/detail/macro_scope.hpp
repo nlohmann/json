@@ -666,7 +666,7 @@
     struct would_call_std_##std_name                                              \
     {                                                                             \
         static constexpr auto const value = ::nlohmann::detail::                  \
-        is_detected_exact<std_name##_tag, result_of_##std_name, T...>::value; \
+                                            is_detected_exact<std_name##_tag, result_of_##std_name, T...>::value; \
     };                                                                            \
     } /* namespace detail2 */ \
     \
