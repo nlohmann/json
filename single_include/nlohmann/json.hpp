@@ -2772,9 +2772,10 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #define NLOHMANN_JSON_TO(v1) nlohmann_json_j[#v1] = nlohmann_json_t.v1;
 #define NLOHMANN_JSON_FROM(v1) nlohmann_json_j.at(#v1).get_to(nlohmann_json_t.v1);
 #define NLOHMANN_JSON_FROM_WITH_DEFAULT(v1) nlohmann_json_t.v1 = !nlohmann_json_j.is_null() ? nlohmann_json_j.value(#v1, nlohmann_json_default_obj.v1) : nlohmann_json_default_obj.v1;
-#define NLOHMANN_JSON_TO_DEFAULT nlohmann_json_j = nlohmann::json::parse("{}"); (void) nlohmann_json_t;
+#define NLOHMANN_JSON_TO_DEFAULT nlohmann_json_j = BasicJsonType::object(); (void) nlohmann_json_t;
 #define NLOHMANN_JSON_FROM_DEFAULT (void) nlohmann_json_j; (void) nlohmann_json_t;
 #define NLOHMANN_JSON_FROM_WITH_DEFAULT_DEFAULT (void) nlohmann_json_j; (void) nlohmann_json_t; (void) nlohmann_json_default_obj;
+
 /*!
 @brief macro
 @def NLOHMANN_DEFINE_TYPE_INTRUSIVE
@@ -3591,71 +3592,71 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 #ifndef INCLUDE_NLOHMANN_JSON_FWD_HPP_
-    #define INCLUDE_NLOHMANN_JSON_FWD_HPP_
+#define INCLUDE_NLOHMANN_JSON_FWD_HPP_
 
-    #include <cstdint> // int64_t, uint64_t
-    #include <map> // map
-    #include <memory> // allocator
-    #include <string> // string
-    #include <vector> // vector
+#include <cstdint> // int64_t, uint64_t
+#include <map> // map
+#include <memory> // allocator
+#include <string> // string
+#include <vector> // vector
 
-    // #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.hpp>
 
 
-    /*!
-    @brief namespace for Niels Lohmann
-    @see https://github.com/nlohmann
-    @since version 1.0.0
-    */
-    NLOHMANN_JSON_NAMESPACE_BEGIN
+/*!
+@brief namespace for Niels Lohmann
+@see https://github.com/nlohmann
+@since version 1.0.0
+*/
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
-    /*!
-    @brief default JSONSerializer template argument
+/*!
+@brief default JSONSerializer template argument
 
-    This serializer ignores the template arguments and uses ADL
-    ([argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl))
-    for serialization.
-    */
-    template<typename T = void, typename SFINAE = void>
-    struct adl_serializer;
+This serializer ignores the template arguments and uses ADL
+([argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl))
+for serialization.
+*/
+template<typename T = void, typename SFINAE = void>
+struct adl_serializer;
 
-    /// a class to store JSON values
-    /// @sa https://json.nlohmann.me/api/basic_json/
-    template<template<typename U, typename V, typename... Args> class ObjectType =
-    std::map,
-    template<typename U, typename... Args> class ArrayType = std::vector,
-    class StringType = std::string, class BooleanType = bool,
-    class NumberIntegerType = std::int64_t,
-    class NumberUnsignedType = std::uint64_t,
-    class NumberFloatType = double,
-    template<typename U> class AllocatorType = std::allocator,
-    template<typename T, typename SFINAE = void> class JSONSerializer =
-    adl_serializer,
-    class BinaryType = std::vector<std::uint8_t>, // cppcheck-suppress syntaxError
-    class CustomBaseClass = void>
-    class basic_json;
+/// a class to store JSON values
+/// @sa https://json.nlohmann.me/api/basic_json/
+template<template<typename U, typename V, typename... Args> class ObjectType =
+         std::map,
+         template<typename U, typename... Args> class ArrayType = std::vector,
+         class StringType = std::string, class BooleanType = bool,
+         class NumberIntegerType = std::int64_t,
+         class NumberUnsignedType = std::uint64_t,
+         class NumberFloatType = double,
+         template<typename U> class AllocatorType = std::allocator,
+         template<typename T, typename SFINAE = void> class JSONSerializer =
+         adl_serializer,
+         class BinaryType = std::vector<std::uint8_t>, // cppcheck-suppress syntaxError
+         class CustomBaseClass = void>
+class basic_json;
 
-    /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
-    /// @sa https://json.nlohmann.me/api/json_pointer/
-    template<typename RefStringType>
-    class json_pointer;
+/// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
+/// @sa https://json.nlohmann.me/api/json_pointer/
+template<typename RefStringType>
+class json_pointer;
 
-    /*!
-    @brief default specialization
-    @sa https://json.nlohmann.me/api/json/
-    */
-    using json = basic_json<>;
+/*!
+@brief default specialization
+@sa https://json.nlohmann.me/api/json/
+*/
+using json = basic_json<>;
 
-    /// @brief a minimal map-like container that preserves insertion order
-    /// @sa https://json.nlohmann.me/api/ordered_map/
-    template<class Key, class T, class IgnoredLess, class Allocator>
-    struct ordered_map;
+/// @brief a minimal map-like container that preserves insertion order
+/// @sa https://json.nlohmann.me/api/ordered_map/
+template<class Key, class T, class IgnoredLess, class Allocator>
+struct ordered_map;
 
-    /// @brief specialization that maintains the insertion order of object keys
-    /// @sa https://json.nlohmann.me/api/ordered_json/
-    using ordered_json = basic_json<nlohmann::ordered_map>;
+/// @brief specialization that maintains the insertion order of object keys
+/// @sa https://json.nlohmann.me/api/ordered_json/
+using ordered_json = basic_json<nlohmann::ordered_map>;
 
-    NLOHMANN_JSON_NAMESPACE_END
+NLOHMANN_JSON_NAMESPACE_END
 
 #endif  // INCLUDE_NLOHMANN_JSON_FWD_HPP_
 
@@ -5519,7 +5520,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 // #include <nlohmann/detail/macro_scope.hpp>
-// JSON_HAS_CPP_17
+ // JSON_HAS_CPP_17
 #ifdef JSON_HAS_CPP_17
     #include <optional> // optional
 #endif
@@ -18203,43 +18204,43 @@ inline cached_power get_cached_power_for_binary_exponent(int e)
             { 0xAB70FE17C79AC6CA, -1060, -300 },
             { 0xFF77B1FCBEBCDC4F, -1034, -292 },
             { 0xBE5691EF416BD60C, -1007, -284 },
-            { 0x8DD01FAD907FFC3C, -980, -276 },
-            { 0xD3515C2831559A83, -954, -268 },
-            { 0x9D71AC8FADA6C9B5, -927, -260 },
-            { 0xEA9C227723EE8BCB, -901, -252 },
-            { 0xAECC49914078536D, -874, -244 },
-            { 0x823C12795DB6CE57, -847, -236 },
-            { 0xC21094364DFB5637, -821, -228 },
-            { 0x9096EA6F3848984F, -794, -220 },
-            { 0xD77485CB25823AC7, -768, -212 },
-            { 0xA086CFCD97BF97F4, -741, -204 },
-            { 0xEF340A98172AACE5, -715, -196 },
-            { 0xB23867FB2A35B28E, -688, -188 },
-            { 0x84C8D4DFD2C63F3B, -661, -180 },
-            { 0xC5DD44271AD3CDBA, -635, -172 },
-            { 0x936B9FCEBB25C996, -608, -164 },
-            { 0xDBAC6C247D62A584, -582, -156 },
-            { 0xA3AB66580D5FDAF6, -555, -148 },
-            { 0xF3E2F893DEC3F126, -529, -140 },
-            { 0xB5B5ADA8AAFF80B8, -502, -132 },
-            { 0x87625F056C7C4A8B, -475, -124 },
-            { 0xC9BCFF6034C13053, -449, -116 },
-            { 0x964E858C91BA2655, -422, -108 },
-            { 0xDFF9772470297EBD, -396, -100 },
-            { 0xA6DFBD9FB8E5B88F, -369, -92 },
-            { 0xF8A95FCF88747D94, -343, -84 },
-            { 0xB94470938FA89BCF, -316, -76 },
-            { 0x8A08F0F8BF0F156B, -289, -68 },
-            { 0xCDB02555653131B6, -263, -60 },
-            { 0x993FE2C6D07B7FAC, -236, -52 },
-            { 0xE45C10C42A2B3B06, -210, -44 },
-            { 0xAA242499697392D3, -183, -36 },
-            { 0xFD87B5F28300CA0E, -157, -28 },
-            { 0xBCE5086492111AEB, -130, -20 },
-            { 0x8CBCCC096F5088CC, -103, -12 },
-            { 0xD1B71758E219652C, -77, -4 },
-            { 0x9C40000000000000, -50,    4 },
-            { 0xE8D4A51000000000, -24,   12 },
+            { 0x8DD01FAD907FFC3C,  -980, -276 },
+            { 0xD3515C2831559A83,  -954, -268 },
+            { 0x9D71AC8FADA6C9B5,  -927, -260 },
+            { 0xEA9C227723EE8BCB,  -901, -252 },
+            { 0xAECC49914078536D,  -874, -244 },
+            { 0x823C12795DB6CE57,  -847, -236 },
+            { 0xC21094364DFB5637,  -821, -228 },
+            { 0x9096EA6F3848984F,  -794, -220 },
+            { 0xD77485CB25823AC7,  -768, -212 },
+            { 0xA086CFCD97BF97F4,  -741, -204 },
+            { 0xEF340A98172AACE5,  -715, -196 },
+            { 0xB23867FB2A35B28E,  -688, -188 },
+            { 0x84C8D4DFD2C63F3B,  -661, -180 },
+            { 0xC5DD44271AD3CDBA,  -635, -172 },
+            { 0x936B9FCEBB25C996,  -608, -164 },
+            { 0xDBAC6C247D62A584,  -582, -156 },
+            { 0xA3AB66580D5FDAF6,  -555, -148 },
+            { 0xF3E2F893DEC3F126,  -529, -140 },
+            { 0xB5B5ADA8AAFF80B8,  -502, -132 },
+            { 0x87625F056C7C4A8B,  -475, -124 },
+            { 0xC9BCFF6034C13053,  -449, -116 },
+            { 0x964E858C91BA2655,  -422, -108 },
+            { 0xDFF9772470297EBD,  -396, -100 },
+            { 0xA6DFBD9FB8E5B88F,  -369,  -92 },
+            { 0xF8A95FCF88747D94,  -343,  -84 },
+            { 0xB94470938FA89BCF,  -316,  -76 },
+            { 0x8A08F0F8BF0F156B,  -289,  -68 },
+            { 0xCDB02555653131B6,  -263,  -60 },
+            { 0x993FE2C6D07B7FAC,  -236,  -52 },
+            { 0xE45C10C42A2B3B06,  -210,  -44 },
+            { 0xAA242499697392D3,  -183,  -36 },
+            { 0xFD87B5F28300CA0E,  -157,  -28 },
+            { 0xBCE5086492111AEB,  -130,  -20 },
+            { 0x8CBCCC096F5088CC,  -103,  -12 },
+            { 0xD1B71758E219652C,   -77,   -4 },
+            { 0x9C40000000000000,   -50,    4 },
+            { 0xE8D4A51000000000,   -24,   12 },
             { 0xAD78EBC5AC620000,     3,   20 },
             { 0x813F3978F8940984,    30,   28 },
             { 0xC097CE7BC90715B3,    56,   36 },
@@ -19940,7 +19941,7 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 /// for use within nlohmann::basic_json<ordered_map>
 template <class Key, class T, class IgnoredLess = std::less<Key>,
           class Allocator = std::allocator<std::pair<const Key, T>>>
-struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
+              struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
 {
     using key_type = Key;
     using mapped_type = T;
@@ -20255,7 +20256,7 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
 
     template<typename InputIt>
     using require_input_iter = typename std::enable_if<std::is_convertible<typename std::iterator_traits<InputIt>::iterator_category,
-          std::input_iterator_tag>::value>::type;
+        std::input_iterator_tag>::value>::type;
 
     template<typename InputIt, typename = require_input_iter<InputIt>>
     void insert(InputIt first, InputIt last)
@@ -20266,7 +20267,7 @@ struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>
         }
     }
 
-  private:
+private:
     JSON_NO_UNIQUE_ADDRESS key_compare m_compare = key_compare();
 };
 
@@ -22121,18 +22122,18 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                        detail::negation<std::is_pointer<ValueType>>,
                        detail::negation<std::is_same<ValueType, std::nullptr_t>>,
                        detail::negation<std::is_same<ValueType, detail::json_ref<basic_json>>>,
-                       detail::negation<std::is_same<ValueType, typename string_t::value_type>>,
-                       detail::negation<detail::is_basic_json<ValueType>>,
-                       detail::negation<std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>>,
+                                        detail::negation<std::is_same<ValueType, typename string_t::value_type>>,
+                                        detail::negation<detail::is_basic_json<ValueType>>,
+                                        detail::negation<std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>>,
 #if defined(JSON_HAS_CPP_17) && (defined(__GNUC__) || (defined(_MSC_VER) && _MSC_VER >= 1910 && _MSC_VER <= 1914))
-                       detail::negation<std::is_same<ValueType, std::string_view>>,
+                                                detail::negation<std::is_same<ValueType, std::string_view>>,
 #endif
 #if defined(JSON_HAS_CPP_17) && JSON_HAS_STATIC_RTTI
-                       detail::negation<std::is_same<ValueType, std::any>>,
+                                                detail::negation<std::is_same<ValueType, std::any>>,
 #endif
-                       detail::is_detected_lazy<detail::get_template_function, const basic_json_t&, ValueType>
-                       >::value, int >::type = 0 >
-    JSON_EXPLICIT operator ValueType() const
+                                                detail::is_detected_lazy<detail::get_template_function, const basic_json_t&, ValueType>
+                                                >::value, int >::type = 0 >
+                                        JSON_EXPLICIT operator ValueType() const
     {
         // delegate the call to get<>() const
         return get<ValueType>();
@@ -22448,12 +22449,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
   private:
     template<typename KeyType>
     using is_comparable_with_object_key = detail::is_comparable <
-                                          object_comparator_t, const typename object_t::key_type&, KeyType >;
+        object_comparator_t, const typename object_t::key_type&, KeyType >;
 
     template<typename ValueType>
     using value_return_type = std::conditional <
-                              detail::is_c_string_uncvref<ValueType>::value,
-                              string_t, typename std::decay<ValueType>::type >;
+        detail::is_c_string_uncvref<ValueType>::value,
+        string_t, typename std::decay<ValueType>::type >;
 
   public:
     /// @brief access specified object element with default value
