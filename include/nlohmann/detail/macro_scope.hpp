@@ -289,17 +289,14 @@
         });                                                                                     \
         if (it == std::end(m))                                                                  \
         {                                                                                       \
-<<<<<<< HEAD
             JSON_THROW(::nlohmann::detail::type_error::create(                                  \
                        302,                                                                     \
                        std::string("invalid value for ") + #ENUM_TYPE + ": " + j.dump(),        \
                        &j));                                                                    \
-=======
             throw ::nlohmann::detail::type_error::create(                                       \
                     302,                                                                        \
                     std::string("invalid value for ") + #ENUM_TYPE + ": " + j.dump(),           \
                     &j);                                                                        \
->>>>>>> 988fdefee1963a7ab203012eb0fc425e861e08f5
         }                                                                                       \
         e = it->first;                                                                          \
     }
