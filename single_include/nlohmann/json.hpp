@@ -2623,6 +2623,17 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 @def NLOHMANN_JSON_SERIALIZE_ENUM_STRICT
 @since version 3.12.0
 */
+
+/* helper for strict enum error reporting */
+template<typename BasicJsonType>
+inline void throw_enum_error(const BasicJsonType& j, const char* enum_type)
+{
+    JSON_THROW(::nlohmann::detail::type_error::create(
+                   302,
+                   std::string("invalid value for ") + enum_type + ": " + j.dump(),
+                   &j));
+}
+
 #define NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(ENUM_TYPE, ...)                                     \
     template<typename BasicJsonType>                                                            \
     inline void to_json(BasicJsonType& j, const ENUM_TYPE& e)                                   \
@@ -2638,15 +2649,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
         });                                                                                     \
         j = ((it != std::end(m)) ? it : std::begin(m))->second;                                 \
     }                                                                                           \
-    /* helper for strict enum error reporting */                                                \
     template<typename BasicJsonType>                                                            \
-    inline void throw_enum_error(const BasicJsonType& j, const char* enum_type)                 \
-    {                                                                                           \
-        JSON_THROW(::nlohmann::detail::type_error::create(                                      \
-                   302,                                                                                \
-                   std::string("invalid value for ") + enum_type + ": " + j.dump(),                    \
-                   &j));                                                                               \
-    }                                                                                           \
     inline void from_json(const BasicJsonType& j, ENUM_TYPE& e)                                 \
     {                                                                                           \
         /* NOLINTNEXTLINE(modernize-type-traits) we use C++11 */                                \
@@ -2658,11 +2661,12 @@ JSON_HEDLEY_DIAGNOSTIC_POP
         {                                                                                       \
             return ej_pair.second == j;                                                         \
         });                                                                                     \
-        if (it == std::end(m))                                                                  \
+        if (it != std::end(m))                                                                  \
         {                                                                                       \
-            throw_enum_error(j, #ENUM_TYPE);                                                    \
+            e = it->first;                                                                      \
+            return;                                                                             \
         }                                                                                       \
-        e = it->first;                                                                          \
+        throw_enum_error(j, #ENUM_TYPE);                                                        \
     }
 
 // Ugly macros to avoid uglier copy-paste when specializing basic_json. They
