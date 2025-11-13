@@ -260,16 +260,6 @@
 @since version 3.12.0
 */
 
-/* helper for strict enum error reporting */
-template<typename BasicJsonType>
-inline void throw_enum_error(const BasicJsonType& j, const char* enum_type)
-{
-    JSON_THROW(::nlohmann::detail::type_error::create(
-                   302,
-                   std::string("invalid value for ") + enum_type + ": " + j.dump(),
-                   &j));
-}
-
 #define NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(ENUM_TYPE, ...)                                     \
     template<typename BasicJsonType>                                                            \
     inline void to_json(BasicJsonType& j, const ENUM_TYPE& e)                                   \
