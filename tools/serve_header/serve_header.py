@@ -231,6 +231,12 @@ class WorkTrees(FileSystemEventHandler):
             elif event.event_type == 'deleted':
                 # check for deleted working trees
                 self.rescan(path)
+            elif event.event_type == 'moved':
+                # handle moved directories - treat source as deleted and dest as created
+                self.rescan(path)
+                if hasattr(event, 'dest_path'):
+                    dest_path = os.path.abspath(event.dest_path)
+                    self.created_bucket.add_dir(dest_path)
         elif event.event_type == 'closed':
             with self.tree_lock:
                 for tree in self.trees:
