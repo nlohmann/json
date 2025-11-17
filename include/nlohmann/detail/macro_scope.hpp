@@ -417,12 +417,19 @@
 @since version 3.9.0
 @sa https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/
 */
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE(Type, ...)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO,  ##__VA_ARGS__)) } \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM,  ##__VA_ARGS__)) }
+#else
 #define NLOHMANN_DEFINE_TYPE_INTRUSIVE(Type, ...)  \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO,  NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) } \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM,  NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) }
-
+#endif
 
 /*!
 @brief macro
@@ -430,11 +437,19 @@
 @since version 3.11.0
 @sa https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/
 */
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Type, ...)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, ##__VA_ARGS__)) } \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, ##__VA_ARGS__)) }
+#else
 #define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Type, ...)  \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) } \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) }
+#endif
 
 /*!
 @brief macro
@@ -442,9 +457,15 @@
 @since version 3.11.3
 @sa https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/
 */
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(Type, ...)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, ##__VA_ARGS__)) }
+#else
 #define NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(Type, ...)  \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) }
+#endif
 
 /*!
 @brief macro
@@ -452,11 +473,19 @@
 @since version 3.9.0
 @sa https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/
 */
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Type, ...)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, ##__VA_ARGS__)) } \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, ##__VA_ARGS__)) }
+#else
 #define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Type, ...)  \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) } \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) }
+#endif
 
 /*!
 @brief macro
@@ -464,52 +493,19 @@
 @since version 3.11.0
 @sa https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/
 */
-#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL(Type, ...) \
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Type, ...) \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, ##__VA_ARGS__)) } \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, ##__VA_ARGS__)) }
+#else
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Type, ...) \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) } \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) }
-
-#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_EMPTY(Type, ...) \
-    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
-    void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_TO_DEFAULT } \
-    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
-    void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_FROM_WITH_DEFAULT_DEFAULT }
-
-#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Type, ...) NLOHMANN_JSON_EXPAND( NLOHMANN_JSON_GET_MACRO(__VA_ARGS__, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_IMPL, \
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_EMPTY )(Type, __VA_ARGS__) )
+#endif
 
 /*!
 @brief macro
@@ -517,9 +513,15 @@
 @since version 3.11.3
 @sa https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/
 */
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(Type, ...)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, ##__VA_ARGS__)) }
+#else
 #define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(Type, ...)  \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) }
+#endif
 
 /*!
 @brief macro
@@ -527,11 +529,19 @@
 @since version 3.12.0
 @sa https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/
 */
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(Type, BaseType, ...)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, ##__VA_ARGS__)) } \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, ##__VA_ARGS__)) }
+#else
 #define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(Type, BaseType, ...)  \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) } \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) }
+#endif
 
 /*!
 @brief macro
@@ -539,11 +549,19 @@
 @since version 3.12.0
 @sa https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/
 */
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT(Type, BaseType, ...)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType&>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, ##__VA_ARGS__)) } \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, ##__VA_ARGS__)) }
+#else
 #define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT(Type, BaseType, ...)  \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType&>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) } \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) }
+#endif
 
 /*!
 @brief macro
@@ -551,9 +569,15 @@
 @since version 3.12.0
 @sa https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/
 */
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE(Type, BaseType, ...)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, ##__VA_ARGS__)) }
+#else
 #define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE(Type, BaseType, ...)  \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) }
+#endif
 
 /*!
 @brief macro
@@ -561,11 +585,19 @@
 @since version 3.12.0
 @sa https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/
 */
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(Type, BaseType, ...)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, ##__VA_ARGS__)) } \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, ##__VA_ARGS__)) }
+#else
 #define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(Type, BaseType, ...)  \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) } \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) }
+#endif
 
 /*!
 @brief macro
@@ -573,11 +605,19 @@
 @since version 3.12.0
 @sa https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/
 */
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Type, BaseType, ...)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, ##__VA_ARGS__)) } \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, ##__VA_ARGS__)) }
+#else
 #define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT(Type, BaseType, ...)  \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) } \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); const Type nlohmann_json_default_obj{}; NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) }
+#endif
 
 /*!
 @brief macro
@@ -585,9 +625,15 @@
 @since version 3.12.0
 @sa https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/
 */
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
 #define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(Type, BaseType, ...)  \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
-    void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, NLOHMANN_JSON_EXPAND_ARGS(__VA_ARGS__))) }
+    void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, ##__VA_ARGS__)) }
+#else
+#define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(Type, BaseType, ...)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, ##__VA_ARGS__)) }
+#endif
 
 // inspired from https://stackoverflow.com/a/26745591
 // allows calling any std function as if (e.g., with begin):
