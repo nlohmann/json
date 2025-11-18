@@ -38,9 +38,9 @@ MAX_LEN: MERGE-OUTER: 3 new files
 RUN: rm %tmp/T1/??*
 RUN: echo 'FUZZER' > %tmp/T2/FUZZER
 RUN: LLVMFuzzer-FullCoverageSetTest -merge=1 %tmp/T1 %tmp/T2 2>&1 | FileCheck %s --check-prefix=MERGE_WITH_CRASH
-MERGE_WITH_CRASH: MERGE-OUTER: succesfull in 2 attempt(s)
+MERGE_WITH_CRASH: MERGE-OUTER: successful in 2 attempt(s)
 MERGE_WITH_CRASH: MERGE-OUTER: 3 new files
 
 # Check that we actually limit the size with max_len
 RUN: LLVMFuzzer-FullCoverageSetTest -merge=1 %tmp/T1 %tmp/T2  -max_len=5 2>&1 | FileCheck %s --check-prefix=MERGE_LEN5
-MERGE_LEN5: MERGE-OUTER: succesfull in 1 attempt(s)
+MERGE_LEN5: MERGE-OUTER: successful in 1 attempt(s)

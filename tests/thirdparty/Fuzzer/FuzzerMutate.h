@@ -26,7 +26,7 @@ public:
   void StartMutationSequence();
   /// Print the current sequence of mutations.
   void PrintMutationSequence();
-  /// Indicate that the current sequence of mutations was successfull.
+  /// Indicate that the current sequence of mutations was successful.
   void RecordSuccessfulMutationSequence();
   /// Mutates data by invoking user-provided mutator.
   size_t Mutate_Custom(uint8_t *Data, size_t Size, size_t MaxSize);
@@ -123,7 +123,7 @@ private:
   // recreated periodically.
   Dictionary TempAutoDictionary;
   // Persistent dictionary modified by the fuzzer, consists of
-  // entries that led to successfull discoveries in the past mutations.
+  // entries that led to successful discoveries in the past mutations.
   Dictionary PersistentAutoDictionary;
 
   std::vector<Mutator> CurrentMutatorSequence;

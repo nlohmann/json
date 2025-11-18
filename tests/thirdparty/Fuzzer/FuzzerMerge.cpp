@@ -206,7 +206,7 @@ void Fuzzer::CrashResistantMergeInternalStep(const std::string &CFPath) {
   }
 }
 
-// Outer process. Does not call the target code and thus sohuld not fail.
+// Outer process. Does not call the target code and thus should not fail.
 void Fuzzer::CrashResistantMerge(const std::vector<std::string> &Args,
                                  const std::vector<std::string> &Corpora) {
   if (Corpora.size() <= 1) {
@@ -231,7 +231,7 @@ void Fuzzer::CrashResistantMerge(const std::vector<std::string> &Args,
     ControlFile << Path << "\n";
   ControlFile.close();
 
-  // Execute the inner process untill it passes.
+  // Execute the inner process until it passes.
   // Every inner process should execute at least one input.
   std::string BaseCmd = CloneArgsWithoutX(Args, "keep-all-flags");
   for (size_t i = 1; i <= AllFiles.size(); i++) {
@@ -239,7 +239,7 @@ void Fuzzer::CrashResistantMerge(const std::vector<std::string> &Args,
     auto ExitCode =
         ExecuteCommand(BaseCmd + " -merge_control_file=" + CFPath);
     if (!ExitCode) {
-      Printf("MERGE-OUTER: succesfull in %zd attempt(s)\n", i);
+      Printf("MERGE-OUTER: successful in %zd attempt(s)\n", i);
       break;
     }
   }

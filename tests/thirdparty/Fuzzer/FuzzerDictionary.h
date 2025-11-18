@@ -112,11 +112,11 @@ private:
 };
 
 // Parses one dictionary entry.
-// If successfull, write the enty to Unit and returns true,
+// If successful, write the enty to Unit and returns true,
 // otherwise returns false.
 bool ParseOneDictionaryEntry(const std::string &Str, Unit *U);
 // Parses the dictionary file, fills Units, returns true iff all lines
-// were parsed succesfully.
+// were parsed successfully.
 bool ParseDictionaryFile(const std::string &Text, std::vector<Unit> *Units);
 
 }  // namespace fuzzer

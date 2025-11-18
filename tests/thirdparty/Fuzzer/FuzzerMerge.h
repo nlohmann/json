@@ -14,7 +14,7 @@
 //   The process should tolerate the crashes, OOMs, leaks, etc.
 //
 // Algorithm:
-//   The outter process collects the set of files and writes their names
+//   The outer process collects the set of files and writes their names
 //   into a temporary "control" file, then repeatedly launches the inner
 //   process until all inputs are processed.
 //   The outer process does not actually execute the target code.
