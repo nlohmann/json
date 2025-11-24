@@ -1,5 +1,5 @@
-name: Bug Report
-description: Create a bug report
+name: Bug Report  
+description: Create a bug report  
 labels:
   - 'kind: bug'
 
@@ -14,10 +14,17 @@ body:
 
         Note that this form is for **bug reports only**.
 
-        **Please check the [FAQ](https://json.nlohmann.me/home/faq/) before reporting an issue.**
-        Common questions are answered there.
+        **Helpful links before you proceed:**  
+        - [GitHub repository](https://github.com/nlohmann/json)  
+        - [API Reference / Documentation](https://nlohmann.github.io/json/api/json/)  
+        - [FAQ](https://json.nlohmann.me/home/faq/) — check this first!  
+        - [Exception Types](https://nlohmann.github.io/json/home/exceptions/)  
+        - [Contribution Guidelines](https://json.nlohmann.me/community/contribution_guidelines/)  
+        - [GitHub Discussions](https://github.com/nlohmann/json/discussions)  
+        - [StackOverflow: nlohmann-json tag](https://stackoverflow.com/questions/tagged/nlohmann-json)  
+        - [Blog / Tutorial: Extending nlohmann::json](https://www.kdab.com/jsonify-with-nlohmann-json/)
 
-        For questions, feature requests, or support, please
+        For questions, feature requests, or support, please  
         [open a discussion](https://github.com/nlohmann/json/discussions/new).
 
   - type: textarea
@@ -44,7 +51,7 @@ body:
   - type: textarea
     id: results
     attributes:
-      label: Expected vs. actual results
+      label: Expected vs Actual results
       description: >
         Explain what you expected to happen and what actually occurred.
     validations:
@@ -53,48 +60,44 @@ body:
   - type: textarea
     id: code
     attributes:
-      label: Minimal code example
+      label: Minimal Code Example
       description: >
-        If possible, provide a small and self-contained code snippet that
-        triggers the bug. Avoid including large code bases. Do not paste screenshots.
-      render: Shell
+        If possible, provide a small self-contained code snippet that triggers
+        the bug. Avoid including large code bases.
+      render: shell
 
   - type: textarea
     id: output
     attributes:
-      label: Error messages
+      label: Error Messages / Output
       description: >
         Provide any compilation errors, exception messages, stack traces,
         or other output that helps diagnose the issue.
-      render: Shell
+      render: shell
 
   - type: input
     id: compiler
     attributes:
-      label: Compiler and operating system
+      label: Compiler & Operating System
       description: >
-        Specify the operating systems and compilers where you observed the issue.
-        Include all relevant details. Ensure you are using a
-        supported compiler.
+        Specify the OS and compiler where you observed the issue. Include
+        versions and any other relevant environment details.
     validations:
       required: true
 
   - type: input
     id: version
     attributes:
-      label: Library version
+      label: Library Version
       description: >
-        Which version of the library are you using?  
-        If you used a release, provide the version number (e.g., 3.12.0).  
-        If using a development build, provide the commit hash.  
-        If installed via a package manager, please mention that as well.
+        Which version of the library are you using? Provide a release version (e.g. `3.12.0`) or a commit hash if you're on a dev build.
     validations:
       required: true
 
   - type: checkboxes
     id: validation
     attributes:
-      label: Validation
+      label: Validation Checklist
       description: >
         Please confirm the following:
       options:
