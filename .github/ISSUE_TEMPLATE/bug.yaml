@@ -2,93 +2,101 @@ name: Bug Report
 description: Create a bug report
 labels:
   - 'kind: bug'
+
 body:
   - type: markdown
     attributes:
       value: >
         Thanks for taking the time to fill out this bug report!
-        
+
         Make sure you give it a short and specific **title** so that the report
         is searchable and uniquely identifiable.
-        
-        Note that this form is for bug reports only. Please
-        **Please check the [FAQ](https://json.nlohmann.me/home/faq/) before reporting an issue.** Common questions are answered there.
-        [open a discussion](https://github.com/nlohmann/json/discussions/new)
-        for questions, feature requests, or support requests.
+
+        Note that this form is for **bug reports only**.
+
+        **Please check the [FAQ](https://json.nlohmann.me/home/faq/) before reporting an issue.**
+        Common questions are answered there.
+
+        For questions, feature requests, or support, please
+        [open a discussion](https://github.com/nlohmann/json/discussions/new).
+
   - type: textarea
     id: summary
     attributes:
       label: Description
       description: >
-        Please provide an abstract description of the issue to the developers,
-        and why you consider it to be a bug. Please include any specific links
-        to the documentation, JSON specification, or code.
+        Provide a clear and concise description of the issue and explain why
+        you consider it a bug. Include any relevant documentation links,
+        JSON specifications, or references.
     validations:
       required: true
+
   - type: textarea
     id: reproduce
     attributes:
       label: Reproduction steps
       description: >
-        How do you trigger the bug? Please walk us through step by step. Be as
-        specific as possible.
+        Describe how to reproduce the issue step by step. Be as specific and
+        detailed as possible.
     validations:
       required: true
+
   - type: textarea
     id: results
     attributes:
       label: Expected vs. actual results
       description: >
-        Please describe what you expected to happen after the steps above and
-        what actually happened.
+        Explain what you expected to happen and what actually occurred.
     validations:
       required: true
+
   - type: textarea
     id: code
     attributes:
       label: Minimal code example
       description: >
-        If possible, provide a small and self-contained example that triggers
-        the bug. Please understand that we cannot analyze and debug large code
-        bases. Please do not paste screenshots here.
+        If possible, provide a small and self-contained code snippet that
+        triggers the bug. Avoid including large code bases. Do not paste screenshots.
       render: Shell
+
   - type: textarea
     id: output
     attributes:
       label: Error messages
       description: >
-        Please provide any kind of error output (compilation errors, exception
-        messages, stack traces, etc.) which can help to diagnose the error.
+        Provide any compilation errors, exception messages, stack traces,
+        or other output that helps diagnose the issue.
       render: Shell
+
   - type: input
     id: compiler
     attributes:
       label: Compiler and operating system
       description: >
-        On which operating systems and compilers have you observed the issue?
-        Include as many relevant details about the environment you experienced
-        the bug in. Make sure you use a
-        [supported compiler](https://github.com/nlohmann/json#supported-compilers).
+        Specify the operating systems and compilers where you observed the issue.
+        Include all relevant details. Ensure you are using a
+        supported compiler.
     validations:
       required: true
+
   - type: input
     id: version
     attributes:
       label: Library version
       description: >
-        Which version of the library did you use? If it is a released version,
-        please enter the version number (e.g., 3.12.0). Otherwise, please enter
-        the commit hash. If you got the library from another source as the
-        GitHub repository (e.g., via a package manager), please also state
-        this.
+        Which version of the library are you using?  
+        If you used a release, provide the version number (e.g., 3.12.0).  
+        If using a development build, provide the commit hash.  
+        If installed via a package manager, please mention that as well.
     validations:
       required: true
+
   - type: checkboxes
     id: validation
     attributes:
       label: Validation
       description: >
-        Please check these additional steps:
+        Please confirm the following:
       options:
-        - label: The bug also occurs if the latest version from the [`develop`](https://github.com/nlohmann/json/tree/develop) branch is used.
-        - label: I can successfully [compile and run the unit tests](https://github.com/nlohmann/json#execute-unit-tests).
+        - label: The bug also occurs when using the latest version from the [`develop`](https://github.com/nlohmann/json/tree/develop) branch.
+        - label: I can successfully compile and run the unit tests.
