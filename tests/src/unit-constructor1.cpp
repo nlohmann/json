@@ -281,6 +281,53 @@ TEST_CASE("constructors")
             // CHECK(std::get<2>(t) == j[2]); // commented out due to CI issue, see https://github.com/nlohmann/json/pull/3985 and https://github.com/nlohmann/json/issues/4025
         }
 
+        SECTION("std::tuple tie")
+        {
+            auto a = 1.0;
+            auto b = "string";
+            auto c = 42;
+            auto d = std::vector<int>{0, 2};
+            size_t e = 1234;
+            auto t = std::tie(a, b, c, d, e);
+            json const j(t);
+
+            double a_out;
+            std::string b_out;
+            int c_out;
+            std::vector<int> d_out;
+            int64_t e_out;
+            auto t_out = std::tie(a_out, b_out, c_out, d_out, e_out);
+            j.get_to(t_out);
+            CHECK(a_out == a);
+            CHECK(b_out == b);
+            CHECK(c_out == c);
+            CHECK(d_out == d);
+            CHECK(e_out == e);
+        }
+
+        SECTION("std::tuple of references to elements")
+        {
+            const auto a = 1.0;
+            const auto b = "string";
+            const auto c = 42;
+            const size_t d = 1234;
+            const auto t = std::tie(a, b, c, d);
+            json const j(t);
+
+            auto t_out = j.get<std::tuple<const json::number_float_t&,
+                                          const json::string_t&,
+                                          const json::number_integer_t&,
+                                          const json::number_unsigned_t&>>();
+            CHECK(&std::get<0>(t_out) == j[0].get_ptr<const json::number_float_t*>());
+            CHECK(&std::get<1>(t_out) == j[1].get_ptr<const json::string_t*>());
+            CHECK(&std::get<2>(t_out) == j[2].get_ptr<const json::number_integer_t*>());
+            CHECK(&std::get<3>(t_out) == j[3].get_ptr<const json::number_unsigned_t*>());
+            CHECK(std::get<0>(t_out) == a);
+            CHECK(std::get<1>(t_out) == b);
+            CHECK(std::get<2>(t_out) == c);
+            CHECK(std::get<3>(t_out) == d);
+        }
+
         SECTION("std::pair/tuple/array failures")
         {
             json const j{1};

@@ -559,6 +559,20 @@ template<typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
     : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
 
+template<typename BasicJsonType, typename CompatibleReferenceType, typename = void>
+struct is_compatible_reference_type_impl: std::false_type {};
+
+template<typename BasicJsonType, typename CompatibleReferenceType>
+struct is_compatible_reference_type_impl <
+    BasicJsonType, CompatibleReferenceType,
+    enable_if_t<std::is_reference<CompatibleReferenceType>::value,
+                void_t<decltype(std::declval<BasicJsonType>().template get_ptr<typename std::add_pointer<CompatibleReferenceType>::type>())>>>
+    : std::true_type {};
+
+template<typename BasicJsonType, typename CompatibleReferenceType>
+struct is_compatible_reference_type
+    : is_compatible_reference_type_impl<BasicJsonType, CompatibleReferenceType> {};
+
 template<typename T1, typename T2>
 struct is_constructible_tuple : std::false_type {};
 
