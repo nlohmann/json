@@ -3499,71 +3499,71 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 #ifndef INCLUDE_NLOHMANN_JSON_FWD_HPP_
-    #define INCLUDE_NLOHMANN_JSON_FWD_HPP_
+#define INCLUDE_NLOHMANN_JSON_FWD_HPP_
 
-    #include <cstdint> // int64_t, uint64_t
-    #include <map> // map
-    #include <memory> // allocator
-    #include <string> // string
-    #include <vector> // vector
+#include <cstdint> // int64_t, uint64_t
+#include <map> // map
+#include <memory> // allocator
+#include <string> // string
+#include <vector> // vector
 
-    // #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.hpp>
 
 
-    /*!
-    @brief namespace for Niels Lohmann
-    @see https://github.com/nlohmann
-    @since version 1.0.0
-    */
-    NLOHMANN_JSON_NAMESPACE_BEGIN
+/*!
+@brief namespace for Niels Lohmann
+@see https://github.com/nlohmann
+@since version 1.0.0
+*/
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
-    /*!
-    @brief default JSONSerializer template argument
+/*!
+@brief default JSONSerializer template argument
 
-    This serializer ignores the template arguments and uses ADL
-    ([argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl))
-    for serialization.
-    */
-    template<typename T = void, typename SFINAE = void>
-    struct adl_serializer;
+This serializer ignores the template arguments and uses ADL
+([argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl))
+for serialization.
+*/
+template<typename T = void, typename SFINAE = void>
+struct adl_serializer;
 
-    /// a class to store JSON values
-    /// @sa https://json.nlohmann.me/api/basic_json/
-    template<template<typename U, typename V, typename... Args> class ObjectType =
-    std::map,
-    template<typename U, typename... Args> class ArrayType = std::vector,
-    class StringType = std::string, class BooleanType = bool,
-    class NumberIntegerType = std::int64_t,
-    class NumberUnsignedType = std::uint64_t,
-    class NumberFloatType = double,
-    template<typename U> class AllocatorType = std::allocator,
-    template<typename T, typename SFINAE = void> class JSONSerializer =
-    adl_serializer,
-    class BinaryType = std::vector<std::uint8_t>, // cppcheck-suppress syntaxError
-    class CustomBaseClass = void>
-    class basic_json;
+/// a class to store JSON values
+/// @sa https://json.nlohmann.me/api/basic_json/
+template<template<typename U, typename V, typename... Args> class ObjectType =
+         std::map,
+         template<typename U, typename... Args> class ArrayType = std::vector,
+         class StringType = std::string, class BooleanType = bool,
+         class NumberIntegerType = std::int64_t,
+         class NumberUnsignedType = std::uint64_t,
+         class NumberFloatType = double,
+         template<typename U> class AllocatorType = std::allocator,
+         template<typename T, typename SFINAE = void> class JSONSerializer =
+         adl_serializer,
+         class BinaryType = std::vector<std::uint8_t>, // cppcheck-suppress syntaxError
+         class CustomBaseClass = void>
+class basic_json;
 
-    /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
-    /// @sa https://json.nlohmann.me/api/json_pointer/
-    template<typename RefStringType>
-    class json_pointer;
+/// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
+/// @sa https://json.nlohmann.me/api/json_pointer/
+template<typename RefStringType>
+class json_pointer;
 
-    /*!
-    @brief default specialization
-    @sa https://json.nlohmann.me/api/json/
-    */
-    using json = basic_json<>;
+/*!
+@brief default specialization
+@sa https://json.nlohmann.me/api/json/
+*/
+using json = basic_json<>;
 
-    /// @brief a minimal map-like container that preserves insertion order
-    /// @sa https://json.nlohmann.me/api/ordered_map/
-    template<class Key, class T, class IgnoredLess, class Allocator>
-    struct ordered_map;
+/// @brief a minimal map-like container that preserves insertion order
+/// @sa https://json.nlohmann.me/api/ordered_map/
+template<class Key, class T, class IgnoredLess, class Allocator>
+struct ordered_map;
 
-    /// @brief specialization that maintains the insertion order of object keys
-    /// @sa https://json.nlohmann.me/api/ordered_json/
-    using ordered_json = basic_json<nlohmann::ordered_map>;
+/// @brief specialization that maintains the insertion order of object keys
+/// @sa https://json.nlohmann.me/api/ordered_json/
+using ordered_json = basic_json<nlohmann::ordered_map>;
 
-    NLOHMANN_JSON_NAMESPACE_END
+NLOHMANN_JSON_NAMESPACE_END
 
 #endif  // INCLUDE_NLOHMANN_JSON_FWD_HPP_
 
@@ -4102,6 +4102,20 @@ struct is_compatible_type_impl <
 template<typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
     : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
+
+template<typename BasicJsonType, typename CompatibleReferenceType, typename = void>
+struct is_compatible_reference_type_impl: std::false_type {};
+
+template<typename BasicJsonType, typename CompatibleReferenceType>
+struct is_compatible_reference_type_impl <
+    BasicJsonType, CompatibleReferenceType,
+    enable_if_t<std::is_reference<CompatibleReferenceType>::value,
+                void_t<decltype(std::declval<BasicJsonType>().template get_ptr<typename std::add_pointer<CompatibleReferenceType>::type>())>>>
+    : std::true_type {};
+
+template<typename BasicJsonType, typename CompatibleReferenceType>
+struct is_compatible_reference_type
+    : is_compatible_reference_type_impl<BasicJsonType, CompatibleReferenceType> {};
 
 template<typename T1, typename T2>
 struct is_constructible_tuple : std::false_type {};
@@ -4857,6 +4871,63 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
+// #include <nlohmann/detail/meta/logic.hpp>
+
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+#ifdef JSON_HAS_CPP_17
+
+template<bool... Booleans>
+struct cxpr_or_impl : std::integral_constant<bool, (Booleans ||...)> {};
+
+template<bool... Booleans>
+struct cxpr_and_impl : std::integral_constant<bool, (Booleans &&...)> {};
+
+#else
+
+template<bool... Booleans>
+struct cxpr_or_impl : std::false_type {};
+
+template<bool... Booleans>
+struct cxpr_or_impl<true, Booleans...> : std::true_type {};
+
+template<bool... Booleans>
+struct cxpr_or_impl<false, Booleans...> : cxpr_or_impl<Booleans...> {};
+
+template<bool... Booleans>
+struct cxpr_and_impl : std::true_type {};
+
+template<bool... Booleans>
+struct cxpr_and_impl<true, Booleans...> : cxpr_and_impl<Booleans...> {};
+
+template<bool... Booleans>
+struct cxpr_and_impl<false, Booleans...> : std::false_type {};
+
+#endif
+
+template<class Boolean>
+struct cxpr_not : std::integral_constant<bool, !Boolean::value> {};
+
+template<class... Booleans>
+struct cxpr_or : cxpr_or_impl<Booleans::value...> {};
+
+template<bool... Booleans>
+struct cxpr_or_c : cxpr_or_impl<Booleans...> {};
+
+template<class... Booleans>
+struct cxpr_and : cxpr_and_impl<Booleans::value...> {};
+
+template<bool... Booleans>
+struct cxpr_and_c : cxpr_and_impl<Booleans...> {};
+
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
 // #include <nlohmann/detail/string_concat.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
@@ -5278,13 +5349,44 @@ inline void from_json(const BasicJsonType& j, ArithmeticType& val)
     }
 }
 
-template<typename BasicJsonType, typename... Args, std::size_t... Idx>
-std::tuple<Args...> from_json_tuple_impl_base(BasicJsonType&& j, index_sequence<Idx...> /*unused*/)
+template<typename BasicJsonType, typename Type>
+detail::uncvref_t<Type> from_json_tuple_get_impl(BasicJsonType&& j, detail::identity_tag<Type> /*unused*/, detail::priority_tag<0> /*unused*/)
 {
-    return std::make_tuple(std::forward<BasicJsonType>(j).at(Idx).template get<Args>()...);
+    return std::forward<BasicJsonType>(j).template get<detail::uncvref_t<Type>>();
 }
 
-template<typename BasicJsonType>
+template<typename BasicJsonType, typename Type,
+         typename ConstType = detail::enable_if_t<std::is_reference<Type>::value, typename std::remove_reference<Type>::type const&>>
+auto from_json_tuple_get_impl(BasicJsonType&& j, detail::identity_tag<Type> /*unused*/, detail::priority_tag<1> /*unused*/)
+    -> detail::enable_if_t<detail::is_compatible_reference_type<BasicJsonType, ConstType>::value, ConstType>
+{
+    return std::forward<BasicJsonType>(j).template get_ref<ConstType>();
+}
+
+template<typename BasicJsonType, typename Type>
+auto from_json_tuple_get_impl(BasicJsonType&& j, detail::identity_tag<Type> /*unused*/, detail::priority_tag<2> /*unused*/)
+    -> detail::enable_if_t<detail::is_compatible_reference_type<BasicJsonType, Type>::value, Type>
+{
+    return std::forward<BasicJsonType>(j).template get_ref<Type>();
+}
+
+template<typename BasicJsonType, typename Type>
+auto from_json_tuple_get_impl(BasicJsonType&& j, detail::identity_tag<Type> /*unused*/, detail::priority_tag<3> /*unused*/)
+    -> detail::enable_if_t<std::is_integral<uncvref_t<Type>>::value, detail::uncvref_t<Type>>
+{
+    return std::forward<BasicJsonType>(j).template get<detail::uncvref_t<Type>>();
+}
+
+template<std::size_t PTagValue, typename BasicJsonType, typename... Types>
+using tuple_type = std::tuple<decltype(from_json_tuple_get_impl(std::declval<BasicJsonType>(), detail::identity_tag<Types>{}, detail::priority_tag<PTagValue>{}))...>;
+
+template<std::size_t PTagValue, typename... Args, typename BasicJsonType, std::size_t... Idx>
+tuple_type<PTagValue, BasicJsonType, Args...> from_json_tuple_impl_base(BasicJsonType&& j, index_sequence<Idx...> /*unused*/)
+{
+    return tuple_type<PTagValue, BasicJsonType, Args...>(from_json_tuple_get_impl(std::forward<BasicJsonType>(j).at(Idx), detail::identity_tag<Args>{}, detail::priority_tag<PTagValue>{})...);
+}
+
+template<std::size_t PTagValue, typename BasicJsonType>
 std::tuple<> from_json_tuple_impl_base(BasicJsonType& /*unused*/, index_sequence<> /*unused*/)
 {
     return {};
@@ -5306,13 +5408,15 @@ inline void from_json_tuple_impl(BasicJsonType&& j, std::pair<A1, A2>& p, priori
 template<typename BasicJsonType, typename... Args>
 std::tuple<Args...> from_json_tuple_impl(BasicJsonType&& j, identity_tag<std::tuple<Args...>> /*unused*/, priority_tag<2> /*unused*/)
 {
-    return from_json_tuple_impl_base<BasicJsonType, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
+    static_assert(cxpr_and<cxpr_or<cxpr_not<std::is_reference<Args>>, is_compatible_reference_type<BasicJsonType, Args>>...>::value,
+        "Can not return a tuple containing references to types not contained in a Json, try Json::get_to()");
+    return from_json_tuple_impl_base<2, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
 }
 
 template<typename BasicJsonType, typename... Args>
 inline void from_json_tuple_impl(BasicJsonType&& j, std::tuple<Args...>& t, priority_tag<3> /*unused*/)
 {
-    t = from_json_tuple_impl_base<BasicJsonType, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
+    t = from_json_tuple_impl_base<3, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
 }
 
 template<typename BasicJsonType, typename TupleRelated>
@@ -5427,7 +5531,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 // #include <nlohmann/detail/macro_scope.hpp>
-// JSON_HAS_CPP_17
+ // JSON_HAS_CPP_17
 #ifdef JSON_HAS_CPP_17
     #include <optional> // optional
 #endif
@@ -20255,10 +20359,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         const bool allow_exceptions = true,
         const bool ignore_comments = false,
         const bool ignore_trailing_commas = false
-                                 )
+    )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
-            std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
+               std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
     }
 
   private:
@@ -20956,8 +21060,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                detail::enable_if_t <
                    !detail::is_basic_json<U>::value && detail::is_compatible_type<basic_json_t, U>::value, int > = 0 >
     basic_json(CompatibleType && val) noexcept(noexcept( // NOLINT(bugprone-forwarding-reference-overload,bugprone-exception-escape)
-            JSONSerializer<U>::to_json(std::declval<basic_json_t&>(),
-                                       std::forward<CompatibleType>(val))))
+                JSONSerializer<U>::to_json(std::declval<basic_json_t&>(),
+                                           std::forward<CompatibleType>(val))))
     {
         JSONSerializer<U>::to_json(*this, std::forward<CompatibleType>(val));
         set_parents();
@@ -21751,7 +21855,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    detail::has_from_json<basic_json_t, ValueType>::value,
                    int > = 0 >
     ValueType get_impl(detail::priority_tag<0> /*unused*/) const noexcept(noexcept(
-            JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), std::declval<ValueType&>())))
+                JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), std::declval<ValueType&>())))
     {
         auto ret = ValueType();
         JSONSerializer<ValueType>::from_json(*this, ret);
@@ -21793,7 +21897,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    detail::has_non_default_from_json<basic_json_t, ValueType>::value,
                    int > = 0 >
     ValueType get_impl(detail::priority_tag<1> /*unused*/) const noexcept(noexcept(
-            JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>())))
+                JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>())))
     {
         return JSONSerializer<ValueType>::from_json(*this);
     }
@@ -21943,7 +22047,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    detail::has_from_json<basic_json_t, ValueType>::value,
                    int > = 0 >
     ValueType & get_to(ValueType& v) const noexcept(noexcept(
-            JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), v)))
+                JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), v)))
     {
         JSONSerializer<ValueType>::from_json(*this, v);
         return v;
