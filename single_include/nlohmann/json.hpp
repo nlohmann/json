@@ -5356,23 +5356,15 @@ detail::uncvref_t<Type> from_json_tuple_get_impl(BasicJsonType&& j, detail::iden
 }
 
 template<typename BasicJsonType, typename Type,
-         typename ConstType = typename std::remove_reference<Type>::type const&,
-         detail::enable_if_t<detail::is_compatible_reference_type<BasicJsonType, ConstType>::value, int> = 0>
-ConstType from_json_tuple_get_impl(BasicJsonType && j, detail::identity_tag<Type> /*unused*/, detail::priority_tag<1> /*unused*/)
-{
-    return std::forward<BasicJsonType>(j).template get_ref<ConstType>();
-}
-
-template<typename BasicJsonType, typename Type,
          detail::enable_if_t<detail::is_compatible_reference_type<BasicJsonType, Type>::value, int> = 0>
-Type from_json_tuple_get_impl(BasicJsonType && j, detail::identity_tag<Type> /*unused*/, detail::priority_tag<2> /*unused*/)
+Type from_json_tuple_get_impl(BasicJsonType && j, detail::identity_tag<Type> /*unused*/, detail::priority_tag<1> /*unused*/)
 {
     return std::forward<BasicJsonType>(j).template get_ref<Type>();
 }
 
 template<typename BasicJsonType, typename Type,
          detail::enable_if_t<std::is_arithmetic<uncvref_t<Type>>::value, int> = 0>
-detail::uncvref_t<Type> from_json_tuple_get_impl(BasicJsonType && j, detail::identity_tag<Type> /*unused*/, detail::priority_tag<3> /*unused*/)
+detail::uncvref_t<Type> from_json_tuple_get_impl(BasicJsonType && j, detail::identity_tag<Type> /*unused*/, detail::priority_tag<2> /*unused*/)
 {
     return std::forward<BasicJsonType>(j).template get<detail::uncvref_t<Type>>();
 }
@@ -5410,13 +5402,13 @@ std::tuple<Args...> from_json_tuple_impl(BasicJsonType&& j, identity_tag<std::tu
 {
     static_assert(cxpr_and<cxpr_or<cxpr_not<std::is_reference<Args>>, is_compatible_reference_type<BasicJsonType, Args>>...>::value,
                   "Can not return a tuple containing references to types not contained in a Json, try Json::get_to()");
-    return from_json_tuple_impl_base<2, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
+    return from_json_tuple_impl_base<1, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
 }
 
 template<typename BasicJsonType, typename... Args>
 inline void from_json_tuple_impl(BasicJsonType&& j, std::tuple<Args...>& t, priority_tag<3> /*unused*/)
 {
-    t = from_json_tuple_impl_base<3, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
+    t = from_json_tuple_impl_base<2, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
 }
 
 template<typename BasicJsonType, typename TupleRelated>

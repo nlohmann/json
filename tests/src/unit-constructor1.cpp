@@ -283,19 +283,19 @@ TEST_CASE("constructors")
 
         SECTION("std::tuple tie")
         {
-            auto a = 1.0;
-            auto b = "string";
-            auto c = 42;
-            auto d = std::vector<int> {0, 2};
-            size_t e = 1234;
+            const auto a = 1.0;
+            const auto* const b = "string";
+            const auto c = 42;
+            const auto d = std::vector<int> {0, 2};
+            const size_t e = 1234;
             auto t = std::tie(a, b, c, d, e);
             json const j(t);
 
-            double a_out;
+            double a_out = 0;
             std::string b_out;
-            int c_out;
+            int c_out = 0;
             std::vector<int> d_out;
-            int64_t e_out;
+            int64_t e_out = 0;
             auto t_out = std::tie(a_out, b_out, c_out, d_out, e_out);
             j.get_to(t_out);
             CHECK(a_out == a);
@@ -308,7 +308,7 @@ TEST_CASE("constructors")
         SECTION("std::tuple of references to elements")
         {
             const auto a = 1.0;
-            const auto b = "string";
+            const auto* const b = "string";
             const auto c = 42;
             const size_t d = 1234;
             const auto t = std::tie(a, b, c, d);
@@ -326,6 +326,32 @@ TEST_CASE("constructors")
             CHECK(std::get<1>(t_out) == b);
             CHECK(std::get<2>(t_out) == c);
             CHECK(std::get<3>(t_out) == d);
+        }
+
+        SECTION("std::tuple mixed arithmetic types")
+        {
+            using j_float_t = json::number_float_t;
+            using j_int_t = json::number_integer_t;
+            using j_uint_t = json::number_unsigned_t;
+            const j_float_t a = 1.0;
+            const j_int_t b = 1234;
+            const j_uint_t c = 42;
+            json const j(std::tie(a, b, c, c));
+
+            auto t1 = j.get<std::tuple<j_int_t, j_uint_t, j_float_t, const j_uint_t&>>();
+            j_uint_t a2 = 0;
+            j_float_t b2 = 0;
+            j_int_t c2 = 0;
+            auto t2 = std::tie(a2, b2, c2);
+            j.get_to(t2);
+
+            CHECK(std::get<0>(t1) == a);
+            CHECK(std::get<1>(t1) == b);
+            CHECK(std::get<2>(t1) == c);
+            // t1[3] exists only to force usage of the no-default-constructor version
+            CHECK(a2 == a);
+            CHECK(b2 == b);
+            CHECK(c2 == c);
         }
 
         SECTION("std::pair/tuple/array failures")
