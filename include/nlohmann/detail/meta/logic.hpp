@@ -8,10 +8,10 @@ namespace detail
 #ifdef JSON_HAS_CPP_17
 
 template<bool... Booleans>
-struct cxpr_or_impl : std::integral_constant<bool, (Booleans ||...)> {};
+struct cxpr_or_impl : std::integral_constant < bool, (Booleans || ...) > {};
 
 template<bool... Booleans>
-struct cxpr_and_impl : std::integral_constant<bool, (Booleans &&...)> {};
+struct cxpr_and_impl : std::integral_constant < bool, (Booleans &&...) > {};
 
 #else
 
@@ -36,7 +36,7 @@ struct cxpr_and_impl<false, Booleans...> : std::false_type {};
 #endif
 
 template<class Boolean>
-struct cxpr_not : std::integral_constant<bool, !Boolean::value> {};
+struct cxpr_not : std::integral_constant < bool, !Boolean::value > {};
 
 template<class... Booleans>
 struct cxpr_or : cxpr_or_impl<Booleans::value...> {};

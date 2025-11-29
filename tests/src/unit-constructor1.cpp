@@ -286,7 +286,7 @@ TEST_CASE("constructors")
             auto a = 1.0;
             auto b = "string";
             auto c = 42;
-            auto d = std::vector<int>{0, 2};
+            auto d = std::vector<int> {0, 2};
             size_t e = 1234;
             auto t = std::tie(a, b, c, d, e);
             json const j(t);
@@ -315,9 +315,9 @@ TEST_CASE("constructors")
             json const j(t);
 
             auto t_out = j.get<std::tuple<const json::number_float_t&,
-                                          const json::string_t&,
-                                          const json::number_integer_t&,
-                                          const json::number_unsigned_t&>>();
+                 const json::string_t&,
+                 const json::number_integer_t&,
+                 const json::number_unsigned_t&>>();
             CHECK(&std::get<0>(t_out) == j[0].get_ptr<const json::number_float_t*>());
             CHECK(&std::get<1>(t_out) == j[1].get_ptr<const json::string_t*>());
             CHECK(&std::get<2>(t_out) == j[2].get_ptr<const json::number_integer_t*>());
