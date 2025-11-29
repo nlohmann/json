@@ -453,7 +453,7 @@ detail::uncvref_t<Type> from_json_tuple_get_impl(BasicJsonType&& j, detail::iden
 }
 
 template<typename BasicJsonType, typename Type,
-         typename ConstType = detail::enable_if_t<std::is_reference<Type>::value, typename std::remove_reference<Type>::type const&>>
+         typename ConstType = typename std::remove_reference<Type>::type const&>
 auto from_json_tuple_get_impl(BasicJsonType&& j, detail::identity_tag<Type> /*unused*/, detail::priority_tag<1> /*unused*/)
     -> detail::enable_if_t<detail::is_compatible_reference_type<BasicJsonType, ConstType>::value, ConstType>
 {
