@@ -469,7 +469,7 @@ auto from_json_tuple_get_impl(BasicJsonType&& j, detail::identity_tag<Type> /*un
 
 template<typename BasicJsonType, typename Type>
 auto from_json_tuple_get_impl(BasicJsonType&& j, detail::identity_tag<Type> /*unused*/, detail::priority_tag<3> /*unused*/)
-    -> detail::enable_if_t<std::is_integral<uncvref_t<Type>>::value, detail::uncvref_t<Type>>
+    -> detail::enable_if_t<std::is_arithmetic<uncvref_t<Type>>::value, detail::uncvref_t<Type>>
 {
     return std::forward<BasicJsonType>(j).template get<detail::uncvref_t<Type>>();
 }
