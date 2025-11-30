@@ -3478,16 +3478,30 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 if (it2 != m_data.m_value.object->end())
                 {
                     it2->second.update(it.value(), true);
+                    
+                    // Repair the child's subtree.
+                    #if JSON_DIAGNOSTICS
+                        it2->second.set_parents(); 
+                    #endif
                     continue;
                 }
             }
-            m_data.m_value.object->operator[](it.key()) = it.value();
-#if JSON_DIAGNOSTICS
-            m_data.m_value.object->operator[](it.key()).m_parent = this;
-#endif
-        }
-    }
 
+            // Insert/Overwrite logic
+            auto& ref = m_data.m_value.object->operator[](it.key());
+            ref = it.value();
+            
+            // We must traverse the entire tree of 'this' and reset everyone's parent
+            // because the old pointers are now invalid.
+            #if JSON_DIAGNOSTICS
+                set_parents(); 
+            #endif
+        }
+        
+        #if JSON_DIAGNOSTICS
+            set_parents();
+        #endif
+    }
     /// @brief exchanges the values
     /// @sa https://json.nlohmann.me/api/basic_json/swap/
     void swap(reference other) noexcept (
