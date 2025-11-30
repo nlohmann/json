@@ -1033,6 +1033,51 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         assert_invariant();
     }
 
+    ////////////////////////////////////////////////////////////////////////////
+    // PATCH START: C++20 Range Constructor (Strict Version)
+    ////////////////////////////////////////////////////////////////////////////
+
+    /// @brief create a JSON value from a C++20 Range/View
+    /// @note This allows nlohmann::json j(myView) where myView has .begin()/.end()
+    /// @param[in] r  range to read from
+    template <typename Range,
+              typename std::enable_if<
+                  // 1. It must not be a basic_json object itself
+                  !std::is_same<typename std::decay<Range>::type, basic_json>::value &&
+                  
+                  // 2. It must not be a JSON reference
+                  !detail::is_json_ref<Range>::value &&
+                  
+                  // 3. CRITICAL FIX: It must NOT be a String.
+                  // (Prevents ambiguity with the existing string constructor)
+                  !std::is_constructible<StringType, typename std::decay<Range>::type>::value &&
+                  
+                  // 4. It must NOT be a type the library already supports (like std::vector)
+                  !detail::is_compatible_type<basic_json, typename std::decay<Range>::type>::value,
+                  
+                  int>::type = 0,
+              
+              // 5. It MUST have .begin() and .end()
+              typename = decltype(std::declval<Range>().begin()),
+              typename = decltype(std::declval<Range>().end())
+             >
+    basic_json(Range&& r)
+    {
+        // Construct an array from any range by converting each element
+        // to a `basic_json` and appending it. This avoids calling the
+        // iterator-pair constructor which only accepts internal json
+        // iterators and would be a mismatch for arbitrary ranges
+        // (for example, views from <ranges>).
+        m_data.m_type = value_t::array;
+        m_data.m_value.array = create<array_t>();
+        for (auto&& el : r)
+        {
+            m_data.m_value.array->emplace_back(el);
+        }
+        set_parents();
+        assert_invariant();
+    }
+
     /// @brief construct a JSON container given an iterator range
     /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     template < class InputIT, typename std::enable_if <
