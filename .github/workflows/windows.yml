@@ -24,7 +24,7 @@ jobs:
         architecture: [x64, x86]
 
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Set up MinGW
         uses: egor-tensin/setup-mingw@84c781b557efd538dec66bde06988d81cd3138cf # v2.2.0
         with:
@@ -47,7 +47,7 @@ jobs:
     runs-on: windows-2022
 
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Set extra CXX_FLAGS for latest std_version
         id: cxxflags
         run: |
@@ -77,7 +77,7 @@ jobs:
         version: [11.0.1, 12.0.1, 13.0.1, 14.0.6, 15.0.7, 16.0.6, 18.1.8, 19.1.7, 20.1.8]
 
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Install Clang
         run: curl -fsSL -o LLVM${{ matrix.version }}.exe https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.version }}/LLVM-${{ matrix.version }}-win64.exe ; 7z x LLVM${{ matrix.version }}.exe -y -o"C:/Program Files/LLVM"
       - name: Set up MinGW
@@ -105,7 +105,7 @@ jobs:
         architecture: [Win32, x64]
 
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Run CMake
         run: cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -T ClangCL -DJSON_BuildTests=On
       - name: Build
@@ -116,7 +116,7 @@ jobs:
   ci_module_cpp20:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Run CMake (Debug)
         run: cmake -S . -B build -G "Visual Studio 17 2022" -DJSON_CI=ON -DCMAKE_CXX_FLAGS="/permissive- /std:c++latest /utf-8 /W4 /WX"
       - name: Build
