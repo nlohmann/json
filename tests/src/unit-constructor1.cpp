@@ -345,13 +345,13 @@ TEST_CASE("constructors")
             auto t2 = std::tie(a2, b2, c2);
             j.get_to(t2);
 
-            CHECK(std::get<0>(t1) == a);
-            CHECK(std::get<1>(t1) == b);
-            CHECK(std::get<2>(t1) == c);
+            CHECK(std::get<0>(t1) == static_cast<j_int_t>(a));
+            CHECK(std::get<1>(t1) == static_cast<j_uint_t>(b));
+            CHECK(std::get<2>(t1) == static_cast<j_float_t>(c));
             // t1[3] exists only to force usage of the no-default-constructor version
-            CHECK(a2 == a);
-            CHECK(b2 == b);
-            CHECK(c2 == c);
+            CHECK(a2 == static_cast<j_uint_t>(a));
+            CHECK(b2 == static_cast<j_float_t>(b));
+            CHECK(c2 == static_cast<j_int_t>(c));
         }
 
         SECTION("std::pair/tuple/array failures")
