@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@bb2faa721a800324b726fec00f7c1ff7641964d1 # v4.02
+        uses: lukka/get-cmake@9e07ecdcee1b12e5037e42f410b67f03e2f626e1 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -54,7 +54,7 @@ jobs:
         run: sudo apt-get update ; sudo apt-get install -y valgrind
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@bb2faa721a800324b726fec00f7c1ff7641964d1 # v4.02
+        uses: lukka/get-cmake@9e07ecdcee1b12e5037e42f410b67f03e2f626e1 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -71,7 +71,7 @@ jobs:
         run: apt-get update ; apt-get install -y git clang-tools iwyu unzip
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@bb2faa721a800324b726fec00f7c1ff7641964d1 # v4.02
+        uses: lukka/get-cmake@9e07ecdcee1b12e5037e42f410b67f03e2f626e1 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -88,7 +88,7 @@ jobs:
         run: apt-get update ; apt-get install -y build-essential unzip wget git libssl-dev
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@bb2faa721a800324b726fec00f7c1ff7641964d1 # v4.02
+        uses: lukka/get-cmake@9e07ecdcee1b12e5037e42f410b67f03e2f626e1 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -149,7 +149,7 @@ jobs:
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@bb2faa721a800324b726fec00f7c1ff7641964d1 # v4.02
+        uses: lukka/get-cmake@9e07ecdcee1b12e5037e42f410b67f03e2f626e1 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -164,7 +164,7 @@ jobs:
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@bb2faa721a800324b726fec00f7c1ff7641964d1 # v4.02
+        uses: lukka/get-cmake@9e07ecdcee1b12e5037e42f410b67f03e2f626e1 # v4.02
       - name: Set env FORCE_STDCPPFS_FLAG for clang 7 / 8 / 9 / 10
         run: echo "JSON_FORCED_GLOBAL_COMPILE_OPTIONS=-DJSON_HAS_FILESYSTEM=0;-DJSON_HAS_EXPERIMENTAL_FILESYSTEM=0" >> "$GITHUB_ENV"
         if: ${{ matrix.compiler == '7' || matrix.compiler == '8' || matrix.compiler == '9' || matrix.compiler == '10' }}
@@ -182,7 +182,7 @@ jobs:
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@bb2faa721a800324b726fec00f7c1ff7641964d1 # v4.02
+        uses: lukka/get-cmake@9e07ecdcee1b12e5037e42f410b67f03e2f626e1 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -200,7 +200,7 @@ jobs:
         run: apt-get update ; apt-get install -y git unzip
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@bb2faa721a800324b726fec00f7c1ff7641964d1 # v4.02
+        uses: lukka/get-cmake@9e07ecdcee1b12e5037e42f410b67f03e2f626e1 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build with libc++
@@ -229,7 +229,7 @@ jobs:
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@bb2faa721a800324b726fec00f7c1ff7641964d1 # v4.02
+        uses: lukka/get-cmake@9e07ecdcee1b12e5037e42f410b67f03e2f626e1 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -259,7 +259,7 @@ jobs:
         uses: mymindstorm/setup-emsdk@6ab9eb1bda2574c4ddb79809fc9247783eaf9021 # v14
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@bb2faa721a800324b726fec00f7c1ff7641964d1 # v4.02
+        uses: lukka/get-cmake@9e07ecdcee1b12e5037e42f410b67f03e2f626e1 # v4.02
       - name: Run CMake
         run: cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -GNinja
       - name: Build
