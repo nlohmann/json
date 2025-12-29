@@ -1865,7 +1865,7 @@ ctest --output-on-failure
 
 Note that during the `ctest` stage, several JSON test files are downloaded from an [external repository](https://github.com/nlohmann/json_test_data). If policies forbid downloading artifacts during testing, you can download the files yourself and pass the directory with the test files via `-DJSON_TestDataDirectory=path` to CMake. Then, no Internet connectivity is required. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
 
-If the test suite is not found, several test suites will fail like this:
+If the testdata is not found, several test suites will fail like this:
 
 ```
 ===============================================================================
