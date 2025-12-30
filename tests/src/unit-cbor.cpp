@@ -2689,22 +2689,37 @@ TEST_CASE("Tagged values")
 
     SECTION("negative integer overflow")
     {
-        // CBOR encodes negative integers as -1 - n, where n is uint64_t.
-        // When n > INT64_MAX, the result cannot be represented in int64_t.
-        // The library should reject such values with a parse error.
+        // CBOR type 0x3B encodes negative integers as: result = -1 - n
+        // where n is an 8-byte uint64_t. Valid range for n is [0, INT64_MAX]
+        // which produces results in [INT64_MIN, -1].
+        // When n > INT64_MAX, the result exceeds int64_t range and is rejected.
+        //
+        // Note: result = 0 is not possible with type 0x3B since n is an
+        // unsigned integer, so the formula -1 - n always produces a negative result.
+
+        SECTION("n = 0 is valid (result = -1)")
+        {
+            // n = 0, result = -1 - 0 = -1 (smallest magnitude negative)
+            const std::vector<uint8_t> input = {0x3B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+            const auto result = json::from_cbor(input);
+            CHECK(result.is_number_integer());
+            CHECK(result.get<int64_t>() == -1);
+        }
 
         SECTION("n = INT64_MAX is valid (result = INT64_MIN)")
         {
-            // n = 0x7FFFFFFFFFFFFFFF (INT64_MAX), result = -1 - INT64_MAX = INT64_MIN
+            // n = INT64_MAX (0x7FFFFFFFFFFFFFFF)
+            // result = -1 - INT64_MAX = INT64_MIN (-9223372036854775808)
             const std::vector<uint8_t> input = {0x3B, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
             const auto result = json::from_cbor(input);
             CHECK(result.is_number_integer());
             CHECK(result.get<int64_t>() == (std::numeric_limits<int64_t>::min)());
         }
 
-        SECTION("n = INT64_MAX + 1 causes overflow")
+        SECTION("n = INT64_MAX + 1 is rejected (overflow)")
         {
-            // n = 0x8000000000000000 (INT64_MAX + 1), result would be -9223372036854775809
+            // n = INT64_MAX + 1 (0x8000000000000000)
+            // result = -1 - n = -9223372036854775809, which exceeds int64_t range
             const std::vector<uint8_t> input = {0x3B, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
             json _;
             CHECK_THROWS_WITH_AS(_ = json::from_cbor(input),
@@ -2712,9 +2727,10 @@ TEST_CASE("Tagged values")
                                  json::parse_error);
         }
 
-        SECTION("n = UINT64_MAX causes overflow")
+        SECTION("n = UINT64_MAX is rejected (overflow)")
         {
-            // n = 0xFFFFFFFFFFFFFFFF (UINT64_MAX), result would be -18446744073709551616
+            // n = UINT64_MAX (0xFFFFFFFFFFFFFFFF)
+            // result = -1 - n = -18446744073709551616, which exceeds int64_t range
             const std::vector<uint8_t> input = {0x3B, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
             json _;
             CHECK_THROWS_WITH_AS(_ = json::from_cbor(input),
