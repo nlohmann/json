@@ -9,7 +9,7 @@ repo_url: https://github.com/nlohmann/json
 edit_uri: edit/develop/docs/mkdocs/docs
 
 # Copyright
-copyright: Copyright &copy; 2013-2025 Niels Lohmann
+copyright: Copyright &copy; 2013-2026 Niels Lohmann
 
 # Configuration
 theme:

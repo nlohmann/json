@@ -1155,7 +1155,7 @@ The library is used in multiple projects, applications, operating systems, etc. 
 
 ## Supported compilers
 
-Though it's 2025 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
+Though it's 2026 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
 - GCC 4.8 - 14.2 (and possibly later)
 - Clang 3.4 - 21.0 (and possibly later)
@@ -1334,7 +1334,7 @@ pkg-config nlohmann_json --cflags
 
 The class is licensed under the [MIT License](https://opensource.org/licenses/MIT):
 
-Copyright &copy; 2013-2025 [Niels Lohmann](https://nlohmann.me)
+Copyright &copy; 2013-2026 [Niels Lohmann](https://nlohmann.me)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
