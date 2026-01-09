@@ -176,6 +176,12 @@ class parser
         return result;
     }
 
+    /// return position of last read token
+    constexpr position_t get_position() const noexcept
+    {
+        return m_lexer.get_position();
+    }
+
   private:
     template<typename SAX>
     JSON_HEDLEY_NON_NULL(2)

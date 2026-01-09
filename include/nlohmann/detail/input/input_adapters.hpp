@@ -14,6 +14,7 @@
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
 #include <memory> // shared_ptr, make_shared, addressof
 #include <numeric> // accumulate
+#include <span> //span
 #include <streambuf> // streambuf
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
@@ -196,6 +197,17 @@ class iterator_input_adapter
         }
         return count * sizeof(T);
     }
+
+#ifdef __cpp_lib_span
+    inline constexpr std::span<char_type> as_span()
+    {
+        return std::span<char_type>(current, end);
+    }
+    inline constexpr std::span<const char_type> as_span() const
+    {
+        return std::span<const char_type>(current, end);
+    }
+#endif
 
   private:
     IteratorType current;

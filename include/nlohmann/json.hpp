@@ -27,6 +27,7 @@
 #endif  // JSON_NO_IO
 #include <iterator> // random_access_iterator_tag
 #include <memory> // unique_ptr
+#include <span> // span
 #include <string> // string, stoi, to_string
 #include <utility> // declval, forward, move, pair, swap
 #include <vector> // vector
@@ -4054,6 +4055,23 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
+    /// @brief deserialize one JSON object from a compatible input
+    /// @sa https://json.nlohmann.me/api/basic_json/parse/
+    template<typename InputType>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static std::pair<basic_json, detail::position_t> parse_some(InputType&& i,
+                                                                parser_callback_t cb = nullptr,
+                                                                const bool allow_exceptions = true,
+                                                                const bool ignore_comments = false,
+                                                                const bool ignore_trailing_commas = false)
+    {
+        basic_json result;
+        auto p = parser(detail::input_adapter(std::forward<InputType>(i)), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas); // cppcheck-suppress[accessMoved,accessForwarded]
+        p.parse(false, result);
+        detail::position_t& end = p.get_position();
+        return {result, end};
+    }
+
     /// @brief deserialize from a pair of character iterators
     /// @sa https://json.nlohmann.me/api/basic_json/parse/
     template<typename IteratorType>
@@ -4070,6 +4088,24 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
+    /// @brief deserialize from a pair of character iterators
+    /// @sa https://json.nlohmann.me/api/basic_json/parse/
+    template<typename IteratorType>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static std::pair<basic_json, IteratorType> parse_some(IteratorType first,
+                                                          IteratorType last,
+                                                          parser_callback_t cb = nullptr,
+                                                          const bool allow_exceptions = true,
+                                                          const bool ignore_comments = false,
+                                                          const bool ignore_trailing_commas = false)
+    {
+        basic_json result;
+        auto p = parser(detail::input_adapter(std::move(first), std::move(last)), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas); // cppcheck-suppress[accessMoved]
+        p.parse(false, result);
+        IteratorType end = first + p.get_position();
+        return {result, end};
+    }
+
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, parse(ptr, ptr + len))
     static basic_json parse(detail::span_input_adapter&& i,
@@ -4082,6 +4118,23 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         parser(i.get(), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas).parse(true, result); // cppcheck-suppress[accessMoved]
         return result;
     }
+
+#ifdef __cpp_lib_span
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    JSON_HEDLEY_DEPRECATED_FOR(3.8.0, parse(ptr, ptr + len))
+    static std::pair<basic_json, std::span<char>> parse_some(detail::span_input_adapter&& i,
+                                                             parser_callback_t cb = nullptr,
+                                                             const bool allow_exceptions = true,
+                                                             const bool ignore_comments = false,
+                                                             const bool ignore_trailing_commas = false)
+    {
+        basic_json result;
+        auto p = parser(i.get(), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas); // cppcheck-suppress[accessMoved]
+        p.parse(false, result);
+        ::std::span<char> remainder = i.get().as_span().subspan(p.get_position());
+        return {result, remainder};
+    }
+#endif
 
     /// @brief check if the input is valid JSON
     /// @sa https://json.nlohmann.me/api/basic_json/accept/
