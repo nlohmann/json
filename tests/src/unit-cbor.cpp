@@ -1705,6 +1705,13 @@ TEST_CASE("CBOR")
             CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00})), "[json.exception.parse_error.110] parse error at byte 7: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
             CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})), "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
             CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})), "[json.exception.parse_error.110] parse error at byte 9: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x38})), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x39})), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x39, 0x00})), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x3a})), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x3a, 0x00})), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x3a, 0x00, 0x00})), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x3a, 0x00, 0x00, 0x00})), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
             CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x3b})), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
             CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x3b, 0x00})), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
             CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x3b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})), "[json.exception.parse_error.110] parse error at byte 9: syntax error while parsing CBOR number: unexpected end of input", json::parse_error&);
@@ -1736,6 +1743,13 @@ TEST_CASE("CBOR")
             CHECK(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00}), true, false).is_discarded());
             CHECK(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}), true, false).is_discarded());
             CHECK(json::from_cbor(std::vector<uint8_t>({0x1b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}), true, false).is_discarded());
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x38}), true, false).is_discarded());
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x39}), true, false).is_discarded());
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x39, 0x00}), true, false).is_discarded());
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x3a}), true, false).is_discarded());
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x3a, 0x00}), true, false).is_discarded());
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x3a, 0x00, 0x00}), true, false).is_discarded());
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x3a, 0x00, 0x00, 0x00}), true, false).is_discarded());
             CHECK(json::from_cbor(std::vector<uint8_t>({0x3b}), true, false).is_discarded());
             CHECK(json::from_cbor(std::vector<uint8_t>({0x3b, 0x00}), true, false).is_discarded());
             CHECK(json::from_cbor(std::vector<uint8_t>({0x3b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}), true, false).is_discarded());
@@ -2689,13 +2703,10 @@ TEST_CASE("Tagged values")
 
     SECTION("negative integer overflow")
     {
-        // CBOR type 0x3B encodes negative integers as: result = -1 - n
-        // where n is an 8-byte uint64_t. Valid range for n is [0, INT64_MAX]
-        // which produces results in [INT64_MIN, -1].
+        // CBOR encodes negative integers as: result = -1 - n
+        // For type 0x3B, n is an 8-byte uint64_t. Valid range for n with
+        // the default int64_t is [0, INT64_MAX], producing results in [INT64_MIN, -1].
         // When n > INT64_MAX, the result exceeds int64_t range and is rejected.
-        //
-        // Note: result = 0 is not possible with type 0x3B since n is an
-        // unsigned integer, so the formula -1 - n always produces a negative result.
 
         SECTION("n = 0 is valid (result = -1)")
         {
