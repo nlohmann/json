@@ -1123,7 +1123,7 @@ TEST_CASE("regression tests 2")
     {
         constexpr const char* CFG_PROP_DEFAULT = "default";
 
-        json jval{};
+        const json jval{};
         auto GetValue = [&](const json & valRoot) -> std::optional<json>
         {
             if (valRoot.contains(CFG_PROP_DEFAULT))
