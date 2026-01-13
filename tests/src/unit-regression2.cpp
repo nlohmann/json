@@ -1121,14 +1121,12 @@ TEST_CASE("regression tests 2")
 
     SECTION("issue #5046 - implicit conversion of return json to std::optional no longer implicit")
     {
-        constexpr const char* CFG_PROP_DEFAULT = "default";
-
         const json jval{};
-        auto GetValue = [&](const json & valRoot) -> std::optional<json>
+        auto GetValue = [](const json & valRoot) -> std::optional<json>
         {
-            if (valRoot.contains(CFG_PROP_DEFAULT))
+            if (valRoot.contains("default"))
             {
-                return valRoot.at(CFG_PROP_DEFAULT);
+                return valRoot.at("default");
             }
             return std::nullopt;
         };
