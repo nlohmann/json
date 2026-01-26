@@ -80,6 +80,7 @@ You can sponsor this library at [GitHub Sponsors](https://github.com/sponsors/nl
 
 - [Martti Laine](https://github.com/codeclown)
 - [Paul Harrington](https://github.com/phrrngtn)
+- [Mercedes-Benz Group](https://github.com/mercedes-benz)
 
 ### :label: Named Sponsors
 
