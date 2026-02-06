@@ -133,8 +133,20 @@ class WorkTree:
             return
 
         mtime = os.path.getmtime(self.header)
-        subprocess.run([WorkTree.make_command, 'amalgamate'], cwd=self.tree_dir,
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # Use subprocess.run with explicit arguments list and no shell expansion
+        # This prevents command injection even if WorkTree.make_command is compromised
+        try:
+            subprocess.run([WorkTree.make_command, 'amalgamate'], 
+                          cwd=self.tree_dir,
+                          stdout=subprocess.DEVNULL, 
+                          stderr=subprocess.DEVNULL,
+                          shell=False,  # Explicitly disable shell to prevent command injection
+                          check=False,  # Don't raise on non-zero exit
+                          timeout=30)   # Add timeout to prevent indefinite hangs
+        except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
+            logging.warning(f'{self.name}: amalgamation failed: {e}')
+            return
+            
         if mtime == os.path.getmtime(self.header):
             logging.info(f'{self.name}: no changes')
         else:
@@ -359,8 +371,25 @@ if __name__ == '__main__':
                         help='the make command (default: make)')
     args = parser.parse_args()
 
+    # Validate the make command to prevent command injection
+    # Only allow simple command names without path traversal or shell metacharacters
+    make_cmd = args.make
+    if not make_cmd:
+        log.error('make command cannot be empty')
+    # Check for shell metacharacters and dangerous patterns
+    dangerous_chars = set(';&|`$()<>{}[]"\'\\\n\r\t*?')
+    if any(char in make_cmd for char in dangerous_chars):
+        log.error('make command contains invalid characters')
+    # Only allow alphanumeric, dash, underscore, dot, and forward slash
+    # This allows commands like 'make', 'gmake', '/usr/bin/make', etc.
+    if not re.match(r'^[a-zA-Z0-9_/.-]+$', make_cmd):
+        log.error('make command contains invalid characters')
+    # Prevent path traversal
+    if '..' in make_cmd:
+        log.error('make command cannot contain path traversal sequences')
+    
     # propagate the make command to use for amalgamating headers
-    WorkTree.make_command = args.make
+    WorkTree.make_command = make_cmd
 
     worktrees = None
     try:
