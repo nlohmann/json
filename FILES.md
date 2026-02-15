@@ -92,7 +92,7 @@ Further documentation:
 
 ### `.github/dependabot.yml`
 
-The configuration of [dependabot](https://github.com/dependabot) which ensures the dependencies (GitHub actions and Python packages used in the CI) remain up-to-date.
+The configuration of [dependabot](https://github.com/dependabot) which ensures the dependencies (GitHub actions and Python packages used in the CI) remain up to date.
 
 Further documentation:
 
@@ -185,7 +185,7 @@ Further documentation:
 
 ### `.reuse/dep5`
 
-The file defines the licenses of certain third-party component in the repository. The root `Makefile` contains a target `reuse` that checks for compliance.
+The file defines the licenses of certain third-party components in the repository. The root `Makefile` contains a target `reuse` that checks for compliance.
 
 Further documentation:
 
@@ -212,7 +212,7 @@ Further information:
 
 ### `LICENSES`
 
-A folder that contains every license of all licenses files (library and third-party code).
+A folder that contains every license of all license files (library and third-party code).
 
 Further documentation:
 

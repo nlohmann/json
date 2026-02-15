@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 // XXX:
@@ -340,7 +340,7 @@ TEST_CASE("formatting")
         {
             std::array<char, 33> buf{};
             char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, number); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-            std::string actual(buf.data(), end);
+            const std::string actual(buf.data(), end);
 
             CHECK(actual == expected);
         };
@@ -400,7 +400,7 @@ TEST_CASE("formatting")
         {
             std::array<char, 33> buf{};
             char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, number); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-            std::string actual(buf.data(), end);
+            const std::string actual(buf.data(), end);
 
             CHECK(actual == expected);
         };

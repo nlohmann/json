@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -139,7 +139,12 @@ TEST_CASE("locale-dependent test (LC_NUMERIC=de_DE)")
         {
             std::array<char, 6> buffer = {};
             CHECK(std::snprintf(buffer.data(), buffer.size(), "%.2f", 12.34) == 5); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-            CHECK(std::string(buffer.data()) == "12,34");
+            const auto snprintf_result = std::string(buffer.data());
+            if (snprintf_result != "12,34")
+            {
+                CAPTURE(snprintf_result)
+                MESSAGE("To test if number parsing is locale-independent, we set the locale to de_DE. However, on this system, the decimal separator doesn't change to `,` potentially due to a known musl issue (https://github.com/nlohmann/json/issues/4767).");
+            }
         }
 
         SECTION("parsing")

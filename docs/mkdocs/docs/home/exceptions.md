@@ -520,7 +520,7 @@ The order of object iterators cannot be compared, because JSON objects are unord
 
 ### json.exception.invalid_iterator.214
 
-Cannot get value for iterator: Either the iterator belongs to a null value or it is an iterator to a primitive type (number, boolean, or string), but the iterator is different to `begin()`.
+Cannot retrieve value from iterator: The iterator either refers to a null value, or it refers to a primitive type (number, boolean, or string), but does not match the iterator returned by `begin()`.
 
 !!! failure "Example message"
 
@@ -899,4 +899,14 @@ A JSON Patch operation 'test' failed. The unsuccessful operation is also printed
 
     ```
     [json.exception.other_error.501] unsuccessful: {"op":"test","path":"/baz","value":"bar"}
+    ```
+
+### json.exception.other_error.502
+
+This exception is thrown when a null pointer is passed as SAX event listener to the [sax_parse](../api/basic_json/sax_parse.md) function.
+
+!!! failure "Example message"
+
+    ```
+    [json.exception.other_error.502] SAX handler must not be null
     ```

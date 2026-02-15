@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -173,6 +173,7 @@ TEST_CASE_TEMPLATE_DEFINE("value_in_range_of trait", T, value_in_range_of_test) 
     }
 }
 
+// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
 TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test, \
                           trait_test_arg<std::int32_t, std::int32_t, true, true>, \
                           trait_test_arg<std::int32_t, std::uint32_t, true, false>, \
@@ -198,6 +199,7 @@ TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test, \
                           trait_test_arg<std::size_t, std::int64_t, false, false>, \
                           trait_test_arg<std::size_t, std::uint64_t, true, false>);
 #else
+// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
 TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test, \
                           trait_test_arg<std::size_t, std::int32_t, false, true>, \
                           trait_test_arg<std::size_t, std::uint32_t, true, true>, \
@@ -1226,21 +1228,21 @@ TEST_CASE("BJData")
                     SECTION("0 (0 00000 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0x00}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == 0.0);
                     }
 
                     SECTION("-0 (1 00000 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0x80}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == -0.0);
                     }
 
                     SECTION("2**-24 (0 00000 0000000001)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x01, 0x00}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == std::pow(2.0, -24.0));
                     }
                 }
@@ -1250,7 +1252,7 @@ TEST_CASE("BJData")
                     SECTION("infinity (0 11111 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0x7c}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == std::numeric_limits<json::number_float_t>::infinity());
                         CHECK(j.dump() == "null");
                     }
@@ -1258,7 +1260,7 @@ TEST_CASE("BJData")
                     SECTION("-infinity (1 11111 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0xfc}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == -std::numeric_limits<json::number_float_t>::infinity());
                         CHECK(j.dump() == "null");
                     }
@@ -1269,21 +1271,21 @@ TEST_CASE("BJData")
                     SECTION("1 (0 01111 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0x3c}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == 1);
                     }
 
                     SECTION("-2 (1 10000 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0xc0}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == -2);
                     }
 
                     SECTION("65504 (0 11110 1111111111)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0xff, 0x7b}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == 65504);
                     }
                 }
@@ -2815,6 +2817,129 @@ TEST_CASE("BJData")
 #endif
             }
 
+            SECTION("overflow detection in dimension multiplication")
+            {
+                // Simple SAX handler just to monitor if overflow is detected
+                struct SimpleOverflowSaxHandler : public nlohmann::json_sax<json>
+                {
+                    bool overflow_detected = false;
+
+                    // Implement all required virtual methods with minimal implementation
+                    bool null() override
+                    {
+                        return true;
+                    }
+                    bool boolean(bool /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool number_integer(json::number_integer_t /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool number_unsigned(json::number_unsigned_t /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool number_float(json::number_float_t /*val*/, const std::string& /*s*/) override
+                    {
+                        return true;
+                    }
+                    bool string(std::string& /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool binary(json::binary_t& /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool start_object(std::size_t /*elements*/) override
+                    {
+                        return true;
+                    }
+                    bool key(std::string& /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool end_object() override
+                    {
+                        return true;
+                    }
+                    bool start_array(std::size_t /*elements*/) override
+                    {
+                        return true;
+                    }
+                    bool end_array() override
+                    {
+                        return true;
+                    }
+
+                    // This is the only method we care about - detecting error 408
+                    bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& ex) override
+                    {
+                        if (ex.id == 408)
+                        {
+                            overflow_detected = true;
+                        }
+                        return false;
+                    }
+                };
+
+                // Create BJData payload with overflow-causing dimensions (2^32+1) × (2^32)
+                const std::vector<uint8_t> bjdata_payload =
+                {
+                    0x5B,                                           // '[' start array
+                    0x24, 0x55,                                     // '$', 'U' (type uint8)
+                    0x23, 0x5B,                                     // '#', '[' (dimensions array)
+                    0x4D,                                           // 'M' (uint64)
+                    0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, // 2^32 + 1 (4294967297) as little-endian
+                    0x4D,                                           // 'M' (uint64)
+                    0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, // 2^32 (4294967296) as little-endian
+                    0x5D                                            // ']' end dimensions
+                    // No data - we don't need it for this test, we just want to hit the overflow check
+                };
+
+                // Test with overflow dimensions using SAX parser
+                {
+                    SimpleOverflowSaxHandler handler;
+                    const auto result = json::sax_parse(bjdata_payload, &handler,
+                                                        nlohmann::detail::input_format_t::bjdata, false);
+
+                    // Should detect overflow
+                    CHECK(handler.overflow_detected == true);
+                    CHECK(result == false);
+                }
+
+                // Test with DOM parser (should throw)
+                {
+                    json _;
+                    CHECK_THROWS_AS(_ = json::from_bjdata(bjdata_payload), json::out_of_range);
+                }
+
+                // Test with normal dimensions
+                const std::vector<uint8_t> normal_payload =
+                {
+                    0x5B,                                           // '[' start array
+                    0x24, 0x55,                                     // '$', 'U' (type uint8)
+                    0x23, 0x5B,                                     // '#', '[' (dimensions array)
+                    0x55, 0x02,                                     // 'U', 2 (uint8)
+                    0x55, 0x03,                                     // 'U', 3 (uint8)
+                    0x5D,                                           // ']' end dimensions
+                    // 6 data bytes for a 2×3 array (enough to avoid EOF but not entire array)
+                    0x01, 0x02, 0x03, 0x04, 0x05, 0x06
+                };
+
+                // For normal dimensions, overflow should not be detected
+                {
+                    SimpleOverflowSaxHandler handler;
+                    const auto result = json::sax_parse(normal_payload, &handler,
+                                                        nlohmann::detail::input_format_t::bjdata, false);
+
+                    CHECK(handler.overflow_detected == false);
+                    CHECK(result == true);
+                }
+            }
+
             SECTION("do not accept NTFZ markers in ndarray optimized type (with count)")
             {
                 json _;
@@ -3666,7 +3791,7 @@ TEST_CASE("BJData roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": std::vector<uint8_t>");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                const json j1 = json::parse(f_json);
 
                 // parse BJData file
                 auto packed = utils::read_binary_file(filename + ".bjdata");
@@ -3681,7 +3806,7 @@ TEST_CASE("BJData roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": std::ifstream");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                const json j1 = json::parse(f_json);
 
                 // parse BJData file
                 std::ifstream f_bjdata(filename + ".bjdata", std::ios::binary);

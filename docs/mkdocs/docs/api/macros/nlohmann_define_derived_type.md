@@ -79,7 +79,7 @@ template<typename BasicJsonType>
 void from_json(const BasicJsonType&, type&);
 ```
 
-Macros 3 and 6 add one function to the namespace which takes care of the serialization only:
+Macros 3 and 6 add one function to the namespace, which takes care of the serialization only:
 
 ```cpp
 template<typename BasicJsonType>

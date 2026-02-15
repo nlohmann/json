@@ -46,7 +46,7 @@ template<typename BasicJsonType>
 friend void from_json(const BasicJsonType&, type&); // except (3)
 ```
 
-See examples below for the concrete generated code.
+See the examples below for the concrete generated code.
 
 ## Notes
 

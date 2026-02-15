@@ -4,7 +4,7 @@
 bool empty() const noexcept;
 ```
 
-Checks if a JSON value has no elements (i.e. whether its [`size()`](size.md) is `0`).
+Checks if a JSON value has no elements (i.e., whether its [`size()`](size.md) is `0`).
     
 ## Return value
 

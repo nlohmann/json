@@ -251,7 +251,7 @@ http://nlohmann.github.io/json/doxygen/classnlohmann_1_1basic__json_a0a45fc74063
 - Fixed typos and broken links in README. #1417 #1423 #1425 #1451 #1455 #1491
 - Fixed documentation of parse function. #1473
 - Suppressed warning that cannot be fixed inside the library. #1401 #1468
-- Imroved package manager suppert:
+- Improved package manager suppert:
     - Updated Buckaroo instructions. #1495
     - Improved Meson support. #1463
     - Added Conda package manager documentation. #1430
@@ -685,7 +685,7 @@ After almost a year, here is finally a new release of JSON for Modern C++, and i
 
 This section describes changes that change the public API of the library and may require changes in code using a previous version of the library. In section "Moving from 2.x.x to 3.0.0" at the end of the release notes, we describe in detail how existing code needs to be changed.
 
-- The library now uses [**user-defined exceptions**](http://nlohmann.github.io/json/doxygen/classnlohmann_1_1basic__json_a9a0aced019cb1d65bb49703406c84970.html#a9a0aced019cb1d65bb49703406c84970) instead of re-using those defined in `<stdexcept>` (#244). This not only allows to add more information to the exceptions (every exception now has an identifier, and parse errors contain the position of the error), but also to easily catch all library exceptions with a single `catch(json::exception)`.
+- The library now uses [**user-defined exceptions**](http://nlohmann.github.io/json/doxygen/classnlohmann_1_1basic__json_a9a0aced019cb1d65bb49703406c84970.html#a9a0aced019cb1d65bb49703406c84970) instead of reusing those defined in `<stdexcept>` (#244). This not only allows to add more information to the exceptions (every exception now has an identifier, and parse errors contain the position of the error), but also to easily catch all library exceptions with a single `catch(json::exception)`.
 - When strings with a different encoding as UTF-8 were stored in JSON values, their serialization could not be parsed by the library itself, as only UTF-8 is supported. To enforce this library limitation and improve consistency, **non-UTF-8 encoded strings now yield a `json::type_error` exception during serialization** (#838). The check for valid UTF-8 is realized with code from [Björn Hoehrmann](http://bjoern.hoehrmann.de/).
 - **NaN and infinity values can now be stored inside the JSON value** without throwing an exception. They are, however, still serialized as `null` (#388).
 - The library's iterator tag was changed from RandomAccessIterator to **[BidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator)** (#593). Supporting RandomAccessIterator was incorrect as it assumed an ordering of values in a JSON objects which are unordered by definition.
@@ -1071,7 +1071,7 @@ This release combines a lot of small fixes and improvements. The release is back
   - Improved the performance of the serialization by avoiding the re-creation of a locale object.
   - Fixed two MSVC warnings. Compiling the test suite with `/Wall` now only warns about non-inlined functions (C4710) and the deprecation of the constructor from input-stream (C4996).
 - Some project internals:
-  - <img align="right" src="https://bestpractices.coreinfrastructure.org/assets/questions_page_badge-17b338c0e8528d695d8676e23f39f17ca2b89bb88176370803ee69aeebcb5be4.png"> The project has qualified for the [Core Infrastructure Initiative Best Practices Badge](https://bestpractices.coreinfrastructure.org/projects/289). While most requirements where already satisfied, some led to a more explicit documentation of quality-ensuring procedures. For instance, static analysis is now executed with every commit on the build server. Furthermore, the [contribution guidelines document](https://github.com/nlohmann/json/blob/develop/.github/CONTRIBUTING.md) how to communicate security issues privately.
+  - <img align="right" src="https://bestpractices.coreinfrastructure.org/assets/questions_page_badge-17b338c0e8528d695d8676e23f39f17ca2b89bb88176370803ee69aeebcb5be4.png"> The project has qualified for the [Core Infrastructure Initiative Best Practices Badge](https://bestpractices.coreinfrastructure.org/projects/289). While most requirements where already satisfied, some led to more explicit documentation of quality-ensuring procedures. For instance, static analysis is now executed with every commit on the build server. Furthermore, the [contribution guidelines document](https://github.com/nlohmann/json/blob/develop/.github/CONTRIBUTING.md) how to communicate security issues privately.
   - The test suite has been overworked and split into several files to allow for faster compilation and analysis. The execute the test suite, simply execute `make check`.
   - The continuous integration with [Travis](https://travis-ci.org/nlohmann/json) was extended with Clang versions 3.6.0 to 3.8.1 and now includes 18 different compiler/OS combinations.
   - An 11-day run of [American fuzzy lop](http://lcamtuf.coredump.cx/afl/) checked 962 million inputs on the parser and found no issue.
@@ -1185,7 +1185,7 @@ As `noexcept` and `constexpr` specifier have been added to several functions, th
 This release fixes several small bugs and adds functionality in a backwards-compatible manner. Compared to the [last version (1.0.0)](https://github.com/nlohmann/json/releases/tag/v1.0.0), the following changes have been made:
 
 ### Changes
-- _Fixed_: **Floating-point numbers** are now serialized and deserialized properly such that rountripping works in more cases. [#185, #186, #190, #191, #194]
+- _Fixed_: **Floating-point numbers** are now serialized and deserialized properly such that roundtripping works in more cases. [#185, #186, #190, #191, #194]
 - _Added_: The code now contains **assertions** to detect undefined behavior during development. As the standard function `assert` is used, the assertions can be switched off by defining the preprocessor symbol `NDEBUG` during compilation. [#168]
 - _Added_: It is now possible to get a **reference** to the stored values via the newly added function `get_ref()`. [#128, #184]
 - _Fixed_: Access to object values via keys (**`operator[]`**) now works with all kind of string representations. [#171, #189]

@@ -6,14 +6,16 @@ template<typename InputType>
 static basic_json parse(InputType&& i,
                         const parser_callback_t cb = nullptr,
                         const bool allow_exceptions = true,
-                        const bool ignore_comments = false);
+                        const bool ignore_comments = false,
+                        const bool ignore_trailing_commas = false);
 
 // (2)
 template<typename IteratorType>
 static basic_json parse(IteratorType first, IteratorType last,
                         const parser_callback_t cb = nullptr,
                         const bool allow_exceptions = true,
-                        const bool ignore_comments = false);
+                        const bool ignore_comments = false,
+                        const bool ignore_trailing_commas = false);
 ```
 
 1. Deserialize from a compatible input.
@@ -54,6 +56,10 @@ static basic_json parse(IteratorType first, IteratorType last,
 
 `ignore_comments` (in)
 :   whether comments should be ignored and treated like whitespace (`#!cpp true`) or yield a parse error
+    (`#!cpp false`); (optional, `#!cpp false` by default)
+
+`ignore_trailing_commas` (in)
+:   whether trailing commas in arrays or objects should be ignored and treated like whitespace (`#!cpp true`) or yield a parse error
     (`#!cpp false`); (optional, `#!cpp false` by default)
 
 `first` (in)
@@ -189,6 +195,34 @@ A UTF-8 byte order mark is silently ignored.
     --8<-- "examples/parse__allow_exceptions.output"
     ```
 
+??? example "Effect of `ignore_comments` parameter"
+
+    The example below demonstrates the effect of the `ignore_comments` parameter in the `parse()` function.
+
+    ```cpp
+    --8<-- "examples/comments.cpp"
+    ```
+
+    Output:
+
+    ```
+    --8<-- "examples/comments.output"
+    ```
+
+??? example "Effect of `ignore_trailing_commas` parameter"
+
+    The example below demonstrates the effect of the `ignore_trailing_commas` parameter in the `parse()` function.
+
+    ```cpp
+    --8<-- "examples/trailing_commas.cpp"
+    ```
+
+    Output:
+
+    ```
+    --8<-- "examples/trailing_commas.output"
+    ```
+
 ## See also
 
 - [accept](accept.md) - check if the input is valid JSON
@@ -200,6 +234,7 @@ A UTF-8 byte order mark is silently ignored.
 - Overload for contiguous containers (1) added in version 2.0.3.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
 - Changed [runtime assertion](../../features/assertions.md) in case of `FILE*` null pointers to exception in version 3.12.0.
+- Added `ignore_trailing_commas` in version 3.12.1.
 
 !!! warning "Deprecation"
 

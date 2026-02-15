@@ -16,7 +16,7 @@ Examples of such functionality might be metadata, additional member functions (e
 
 #### Default type
 
-The default value for `CustomBaseClass` is `void`. In this case an
+The default value for `CustomBaseClass` is `void`. In this case, an
 [empty base class](https://en.cppreference.com/w/cpp/language/ebo) is used and no additional functionality is injected.
 
 #### Limitations

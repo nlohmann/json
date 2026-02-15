@@ -14,6 +14,8 @@ body:
         Note that this form is for bug reports only. Please
         [open a discussion](https://github.com/nlohmann/json/discussions/new)
         for questions, feature requests, or support requests.
+        **Please check the [FAQ](https://json.nlohmann.me/home/faq/) before
+        reporting an issue.** Common questions are answered there.        
   - type: textarea
     id: summary
     attributes:

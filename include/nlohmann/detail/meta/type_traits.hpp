@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #pragma once
@@ -13,7 +13,9 @@
 #include <tuple> // tuple
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
-
+#if defined(__cpp_lib_byte) && __cpp_lib_byte >= 201603L
+    #include <cstddef> // byte
+#endif
 #include <nlohmann/detail/iterators/iterator_traits.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/call_std/begin.hpp>
@@ -40,12 +42,12 @@ namespace detail
 
 // Note to maintainers:
 //
-// Every trait in this file expects a non CV-qualified type.
+// Every trait in this file expects a non-CV-qualified type.
 // The only exceptions are in the 'aliases for detected' section
-// (i.e. those of the form: decltype(T::member_function(std::declval<T>())))
+// (i.e., those of the form: decltype(T::member_function(std::declval<T>())))
 //
 // In this case, T has to be properly CV-qualified to constraint the function arguments
-// (e.g. to_json(BasicJsonType&, const T&))
+// (e.g., to_json(BasicJsonType&, const T&))
 
 template<typename> struct is_basic_json : std::false_type {};
 
@@ -53,7 +55,7 @@ NLOHMANN_BASIC_JSON_TPL_DECLARATION
 struct is_basic_json<NLOHMANN_BASIC_JSON_TPL> : std::true_type {};
 
 // used by exceptions create() member functions
-// true_type for pointer to possibly cv-qualified basic_json or std::nullptr_t
+// true_type for the pointer to possibly cv-qualified basic_json or std::nullptr_t
 // false_type otherwise
 template<typename BasicJsonContext>
 struct is_basic_json_context :
@@ -239,6 +241,30 @@ struct char_traits<signed char> : std::char_traits<char>
     }
 };
 
+#if defined(__cpp_lib_byte) && __cpp_lib_byte >= 201603L
+template<>
+struct char_traits<std::byte> : std::char_traits<char>
+{
+    using char_type = std::byte;
+    using int_type = uint64_t;
+
+    static int_type to_int_type(char_type c) noexcept
+    {
+        return static_cast<int_type>(std::to_integer<unsigned char>(c));
+    }
+
+    static char_type to_char_type(int_type i) noexcept
+    {
+        return std::byte(static_cast<unsigned char>(i));
+    }
+
+    static constexpr int_type eof() noexcept
+    {
+        return static_cast<int_type>(std::char_traits<char>::eof());
+    }
+};
+#endif
+
 ///////////////////
 // is_ functions //
 ///////////////////
@@ -255,7 +281,7 @@ template<class B> struct negation : std::integral_constant < bool, !B::value > {
 
 // Reimplementation of is_constructible and is_default_constructible, due to them being broken for
 // std::pair and std::tuple until LWG 2367 fix (see https://cplusplus.github.io/LWG/lwg-defects.html#2367).
-// This causes compile errors in e.g. clang 3.5 or gcc 4.9.
+// This causes compile errors in e.g., Clang 3.5 or GCC 4.9.
 template <typename T>
 struct is_default_constructible : std::is_default_constructible<T> {};
 
@@ -335,7 +361,7 @@ using range_value_t = value_type_t<iterator_traits<iterator_t<T>>>;
 
 // The following implementation of is_complete_type is taken from
 // https://blogs.msdn.microsoft.com/vcblog/2015/12/02/partial-support-for-expression-sfinae-in-vs-2015-update-1/
-// and is written by Xiang Fan who agreed to using it in this library.
+// and is written by Xiang Fan who agreed to use it in this library.
 
 template<typename T, typename = void>
 struct is_complete_type : std::false_type {};
@@ -533,6 +559,28 @@ template<typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
     : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
 
+template<typename BasicJsonType, typename CompatibleReferenceType>
+struct is_compatible_reference_type_impl
+{
+    using JsonType = uncvref_t<BasicJsonType>;
+    using CVType = typename std::remove_reference<CompatibleReferenceType>::type;
+    using Type = typename std::remove_cv<CVType>::type;
+    constexpr static bool value = std::is_reference<CompatibleReferenceType>::value &&
+                                  (!std::is_const<typename std::remove_reference<BasicJsonType>::type>::value || std::is_const<CVType>::value) &&
+                                  (std::is_same<typename JsonType::boolean_t, Type>::value ||
+                                   std::is_same<typename JsonType::number_float_t, Type>::value ||
+                                   std::is_same<typename JsonType::number_integer_t, Type>::value ||
+                                   std::is_same<typename JsonType::number_unsigned_t, Type>::value ||
+                                   std::is_same<typename JsonType::string_t, Type>::value ||
+                                   std::is_same<typename JsonType::binary_t, Type>::value ||
+                                   std::is_same<typename JsonType::object_t, Type>::value ||
+                                   std::is_same<typename JsonType::array_t, Type>::value);
+};
+
+template<typename BasicJsonType, typename CompatibleReferenceType>
+struct is_compatible_reference_type
+    : is_compatible_reference_type_impl<BasicJsonType, CompatibleReferenceType> {};
+
 template<typename T1, typename T2>
 struct is_constructible_tuple : std::false_type {};
 
@@ -559,20 +607,35 @@ struct is_specialization_of<Primary, Primary<Args...>> : std::true_type {};
 template<typename T>
 using is_json_pointer = is_specialization_of<::nlohmann::json_pointer, uncvref_t<T>>;
 
+// checks if B is a json_pointer<A>
+template <typename A, typename B>
+struct is_json_pointer_of : std::false_type {};
+
+template <typename A>
+struct is_json_pointer_of<A, ::nlohmann::json_pointer<A>> : std::true_type {};
+
+template <typename A>
+struct is_json_pointer_of<A, ::nlohmann::json_pointer<A>&> : std::true_type {};
+
 // checks if A and B are comparable using Compare functor
 template<typename Compare, typename A, typename B, typename = void>
 struct is_comparable : std::false_type {};
 
+// We exclude json_pointer here, because the checks using Compare(A, B) will
+// use json_pointer::operator string_t() which triggers a deprecation warning
+// for GCC. See https://github.com/nlohmann/json/issues/4621. The call to
+// is_json_pointer_of can be removed once the deprecated function has been
+// removed.
 template<typename Compare, typename A, typename B>
-struct is_comparable<Compare, A, B, void_t<
-decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>())),
-decltype(std::declval<Compare>()(std::declval<B>(), std::declval<A>()))
+struct is_comparable < Compare, A, B, enable_if_t < !is_json_pointer_of<A, B>::value
+&& std::is_constructible <decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>()))>::value
+&& std::is_constructible <decltype(std::declval<Compare>()(std::declval<B>(), std::declval<A>()))>::value
 >> : std::true_type {};
 
 template<typename T>
 using detect_is_transparent = typename T::is_transparent;
 
-// type trait to check if KeyType can be used as object key (without a BasicJsonType)
+// type trait to check if KeyType can be used as an object key (without a BasicJsonType)
 // see is_usable_as_basic_json_key_type below
 template<typename Comparator, typename ObjectKeyType, typename KeyTypeCVRef, bool RequireTransparentComparator = true,
          bool ExcludeObjectKeyType = RequireTransparentComparator, typename KeyType = uncvref_t<KeyTypeCVRef>>
@@ -586,7 +649,7 @@ using is_usable_as_key_type = typename std::conditional <
                               std::true_type,
                               std::false_type >::type;
 
-// type trait to check if KeyType can be used as object key
+// type trait to check if KeyType can be used as an object key
 // true if:
 //   - KeyType is comparable with BasicJsonType::object_t::key_type
 //   - if ExcludeObjectKeyType is true, KeyType is not BasicJsonType::object_t::key_type
@@ -595,11 +658,14 @@ using is_usable_as_key_type = typename std::conditional <
 template<typename BasicJsonType, typename KeyTypeCVRef, bool RequireTransparentComparator = true,
          bool ExcludeObjectKeyType = RequireTransparentComparator, typename KeyType = uncvref_t<KeyTypeCVRef>>
 using is_usable_as_basic_json_key_type = typename std::conditional <
-    is_usable_as_key_type<typename BasicJsonType::object_comparator_t,
-    typename BasicJsonType::object_t::key_type, KeyTypeCVRef,
-    RequireTransparentComparator, ExcludeObjectKeyType>::value
-    && !is_json_iterator_of<BasicJsonType, KeyType>::value,
-    std::true_type,
+    (is_usable_as_key_type<typename BasicJsonType::object_comparator_t,
+     typename BasicJsonType::object_t::key_type, KeyTypeCVRef,
+     RequireTransparentComparator, ExcludeObjectKeyType>::value
+     && !is_json_iterator_of<BasicJsonType, KeyType>::value)
+#ifdef JSON_HAS_CPP_17
+    || std::is_convertible<KeyType, std::string_view>::value
+#endif
+    , std::true_type,
     std::false_type >::type;
 
 template<typename ObjectType, typename KeyType>
@@ -629,7 +695,7 @@ struct is_ordered_map
     template <typename C> static one test( decltype(&C::capacity) ) ;
     template <typename C> static two test(...);
 
-    enum { value = sizeof(test<T>(nullptr)) == sizeof(char) }; // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+    enum { value = sizeof(test<T>(nullptr)) == sizeof(char) }; // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg,cppcoreguidelines-use-enum-class)
 };
 
 // to avoid useless casts (see https://github.com/nlohmann/json/issues/2893#issuecomment-889152324)

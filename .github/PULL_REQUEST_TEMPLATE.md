@@ -1,4 +1,4 @@
-[Describe your pull request here. Please read the text below the line, and make sure you follow the checklist.]
+[Describe your pull request here. Please read the text below the line and make sure you follow the checklist.]
 
 - [ ] The changes are described in detail, both the what and why.
 - [ ] If applicable, an [existing issue](https://github.com/nlohmann/json/issues) is referenced.

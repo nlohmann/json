@@ -42,7 +42,7 @@ Note `/` does not identify the root (i.e., the whole document), but an object en
 JSON Pointers can be created from a string:
 
 ```cpp
-json::json_pointer p = "/nested/one";
+json::json_pointer p("/nested/one");
 ```
 
 Furthermore, a user-defined string literal can be used to achieve the same result:

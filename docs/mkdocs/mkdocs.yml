@@ -9,7 +9,7 @@ repo_url: https://github.com/nlohmann/json
 edit_uri: edit/develop/docs/mkdocs/docs
 
 # Copyright
-copyright: Copyright &copy; 2013-2025 Niels Lohmann
+copyright: Copyright &copy; 2013-2026 Niels Lohmann
 
 # Configuration
 theme:
@@ -67,6 +67,7 @@ nav:
           - features/binary_formats/ubjson.md
       - features/binary_values.md
       - features/comments.md
+      - features/trailing_commas.md
       - Element Access:
           - features/element_access/index.md
           - features/element_access/unchecked_access.md
@@ -76,6 +77,7 @@ nav:
       - features/json_pointer.md
       - features/json_patch.md
       - features/merge_patch.md
+      - features/modules.md
       - 'nlohmann Namespace': features/namespace.md
       - features/object_order.md
       - Parsing:
@@ -320,6 +322,7 @@ markdown_extensions:
       guess_lang: false
   - toc:
       permalink: true
+  - md_in_html
   - pymdownx.arithmatex
   - pymdownx.betterem:
       smart_enable: all

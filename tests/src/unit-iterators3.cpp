@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -20,7 +20,7 @@ using nlohmann::json;
 #endif
 
 #ifdef JSON_HAS_CPP_14
-TEST_CASE_TEMPLATE("checking forward-iterators", T, // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("checking forward-iterators", T, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    std::vector<int>, std::string, nlohmann::json)
 {
     auto it1 = typename T::iterator{};

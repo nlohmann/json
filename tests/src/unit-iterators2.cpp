@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 // cmake/test.cmake selects the C++ standard versions with which to build a
@@ -955,7 +955,8 @@ TEST_CASE("iterators 2")
                 };
                 json j_expected{"a_key", "b_key", "c_key"};
 
-                auto transformed = j.items() | std::views::transform([](const auto & item)
+                // NOLINTNEXTLINE(fuchsia-trailing-return)
+                auto transformed = j.items() | std::views::transform([](const auto & item) -> std::string_view
                 {
                     return item.key();
                 });

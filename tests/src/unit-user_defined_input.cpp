@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -60,12 +60,12 @@ TEST_CASE("Custom container member begin/end")
     {
         const char* data;
 
-        const char* begin() const
+        const char* begin() const noexcept
         {
             return data;
         }
 
-        const char* end() const
+        const char* end() const noexcept
         {
             return data + strlen(data); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         }

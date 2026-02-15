@@ -1,7 +1,7 @@
 # Binary Values
 
 The library implements several [binary formats](binary_formats/index.md) that encode JSON in an efficient way. Most of
-these formats support binary values; that is, values that have semantics define outside the library and only define a
+these formats support binary values; that is, values that have semantics defined outside the library and only define a
 sequence of bytes to be stored.
 
 JSON itself does not have a binary value. As such, binary values are an extension that this library implements to store
@@ -189,7 +189,7 @@ as an array of uint8 values. The library implements this translation.
 
 ### BSON
 
-[BSON](binary_formats/bson.md) supports binary values and subtypes. If a subtype is given, it is used and added as
+[BSON](binary_formats/bson.md) supports binary values and subtypes. If a subtype is given, it is used and added as an
 unsigned 8-bit integer. If no subtype is given, the generic binary subtype 0x00 is used.
 
 ??? example
@@ -274,7 +274,7 @@ byte array.
 
 [MessagePack](binary_formats/messagepack.md) supports binary values and subtypes. If a subtype is given, the ext family
 is used. The library will choose the smallest representation among fixext1, fixext2, fixext4, fixext8, ext8, ext16, and
-ext32. The subtype is then added as signed 8-bit integer.
+ext32. The subtype is then added as a signed 8-bit integer.
 
 If no subtype is given, the bin family (bin8, bin16, bin32) is used.
 

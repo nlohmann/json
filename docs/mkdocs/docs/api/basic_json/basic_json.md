@@ -74,7 +74,7 @@ basic_json(basic_json&& other) noexcept;
     - **boolean**: `boolean_t` / `bool` can be used.
     - **binary**: `binary_t` / `std::vector<uint8_t>` may be used; unfortunately because string literals cannot be
      distinguished from binary character arrays by the C++ type system, all types compatible with `const char*` will be
-     directed to the string constructor instead. This is both for backwards compatibility, and due to the fact that a
+     directed to the string constructor instead. This is both for backwards compatibility and due to the fact that a
      binary type is not a standard JSON type.
     
     See the examples below.

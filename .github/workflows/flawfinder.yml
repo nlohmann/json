@@ -1,0 +1,46 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: flawfinder
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [ "develop" ]
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [ "develop" ]
+  schedule:
+    - cron: '41 14 * * 3'
+
+jobs:
+  flawfinder:
+    name: Flawfinder
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: flawfinder_scan
+        uses: david-a-wheeler/flawfinder@c57197cd6061453f10a496f30a732bc1905918d1 # v2.0.19
+        with:
+          arguments: '--sarif ./'
+          output: 'flawfinder_results.sarif'
+
+      - name: Upload analysis results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@6bc82e05fd0ea64601dd4b465378bbcf57de0314 # v4
+        with:
+          sarif_file: ${{github.workspace}}/flawfinder_results.sarif

@@ -1,0 +1,12 @@
+[json.exception.parse_error.101] parse error at line 11, column 9: syntax error while parsing value - unexpected ']'; expected '[', '{', or a literal
+{
+  "planets": [
+    "Mercury",
+    "Venus",
+    "Earth",
+    "Mars",
+    "Jupiter",
+    "Uranus",
+    "Neptune"
+  ]
+}
