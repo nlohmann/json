@@ -1517,7 +1517,7 @@ TEST_CASE("parser class")
 
             // removed all objects in array.
             CHECK (j_filtered2.size() == 1);
-            CHECK (j_filtered2 == json({1}));
+            CHECK (j_filtered2 == json::array({1}));
         }
 
         SECTION("filter specific events")
