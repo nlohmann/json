@@ -283,7 +283,8 @@ TEST_CASE("constructors")
 
         SECTION("std::pair/tuple/array failures")
         {
-            json const j{1};
+            // Use json::array() to explicitly create a single-element array
+            json const j = json::array({1});
 
             CHECK_THROWS_WITH_AS((j.get<std::pair<int, int>>()), "[json.exception.out_of_range.401] array index 1 is out of range", json::out_of_range&);
             CHECK_THROWS_WITH_AS((j.get<std::tuple<int, int>>()), "[json.exception.out_of_range.401] array index 1 is out of range", json::out_of_range&);
@@ -935,14 +936,18 @@ TEST_CASE("constructors")
             {
                 SECTION("explicit")
                 {
+                    // j is a copy of the empty array element, not [[]]
                     json const j(json::initializer_list_t {json(json::array_t())});
                     CHECK(j.type() == json::value_t::array);
+                    CHECK(j.empty());
                 }
 
                 SECTION("implicit")
                 {
+                    // j is a copy of the empty array element, not [[]]
                     json const j {json::array_t()};
                     CHECK(j.type() == json::value_t::array);
+                    CHECK(j.empty());
                 }
             }
 
@@ -951,13 +956,13 @@ TEST_CASE("constructors")
                 SECTION("explicit")
                 {
                     json const j(json::initializer_list_t {json(json::object_t())});
-                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j.type() == json::value_t::object);
                 }
 
                 SECTION("implicit")
                 {
                     json const j {json::object_t()};
-                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j.type() == json::value_t::object);
                 }
             }
 
@@ -966,13 +971,13 @@ TEST_CASE("constructors")
                 SECTION("explicit")
                 {
                     json const j(json::initializer_list_t {json("Hello world")});
-                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j.type() == json::value_t::string);
                 }
 
                 SECTION("implicit")
                 {
                     json const j {"Hello world"};
-                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j.type() == json::value_t::string);
                 }
             }
 
@@ -981,13 +986,13 @@ TEST_CASE("constructors")
                 SECTION("explicit")
                 {
                     json const j(json::initializer_list_t {json(true)});
-                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j.type() == json::value_t::boolean);
                 }
 
                 SECTION("implicit")
                 {
                     json const j {true};
-                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j.type() == json::value_t::boolean);
                 }
             }
 
@@ -996,13 +1001,13 @@ TEST_CASE("constructors")
                 SECTION("explicit")
                 {
                     json const j(json::initializer_list_t {json(1)});
-                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j.type() == json::value_t::number_integer);
                 }
 
                 SECTION("implicit")
                 {
                     json const j {1};
-                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j.type() == json::value_t::number_integer);
                 }
             }
 
@@ -1011,13 +1016,13 @@ TEST_CASE("constructors")
                 SECTION("explicit")
                 {
                     json const j(json::initializer_list_t {json(1u)});
-                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j.type() == json::value_t::number_unsigned);
                 }
 
                 SECTION("implicit")
                 {
                     json const j {1u};
-                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j.type() == json::value_t::number_unsigned);
                 }
             }
 
@@ -1026,13 +1031,13 @@ TEST_CASE("constructors")
                 SECTION("explicit")
                 {
                     json const j(json::initializer_list_t {json(42.23)});
-                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j.type() == json::value_t::number_float);
                 }
 
                 SECTION("implicit")
                 {
                     json const j {42.23};
-                    CHECK(j.type() == json::value_t::array);
+                    CHECK(j.type() == json::value_t::number_float);
                 }
             }
         }
@@ -1110,7 +1115,7 @@ TEST_CASE("constructors")
                     std::string source(1024, '!');
                     const auto* source_addr = source.data();
                     json j = {std::move(source)};
-                    const auto* target_addr = j[0].get_ref<std::string const&>().data();
+                    const auto* target_addr = j.get_ref<std::string const&>().data();
                     const bool success = (target_addr == source_addr);
                     CHECK(success);
                 }
@@ -1145,7 +1150,7 @@ TEST_CASE("constructors")
                     json::array_t source = {1, 2, 3};
                     const auto* source_addr = source.data();
                     json j {std::move(source)};
-                    const auto* target_addr = j[0].get_ref<json::array_t const&>().data();
+                    const auto* target_addr = j.get_ref<json::array_t const&>().data();
                     const bool success = (target_addr == source_addr);
                     CHECK(success);
                 }
@@ -1165,7 +1170,7 @@ TEST_CASE("constructors")
                     json::array_t source = {1, 2, 3};
                     const auto* source_addr = source.data();
                     json j = {std::move(source)};
-                    const auto* target_addr = j[0].get_ref<json::array_t const&>().data();
+                    const auto* target_addr = j.get_ref<json::array_t const&>().data();
                     const bool success = (target_addr == source_addr);
                     CHECK(success);
                 }
@@ -1188,7 +1193,7 @@ TEST_CASE("constructors")
                     json::object_t source = {{"hello", "world"}};
                     const json* source_addr = &source.at("hello");
                     json j {std::move(source)};
-                    CHECK(&(j[0].get_ref<json::object_t const&>().at("hello")) == source_addr);
+                    CHECK(&(j.get_ref<json::object_t const&>().at("hello")) == source_addr);
                 }
 
                 SECTION("constructor with implicit types (object)")
@@ -1204,7 +1209,7 @@ TEST_CASE("constructors")
                     json::object_t source = {{"hello", "world"}};
                     const json* source_addr = &source.at("hello");
                     json j = {std::move(source)};
-                    CHECK(&(j[0].get_ref<json::object_t const&>().at("hello")) == source_addr);
+                    CHECK(&(j.get_ref<json::object_t const&>().at("hello")) == source_addr);
                 }
 
                 SECTION("assignment with implicit types (object)")
