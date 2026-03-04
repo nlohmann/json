@@ -174,7 +174,7 @@ json data = json::parse(f);
 
 ### Creating `json` objects from JSON literals
 
-Assume you want to create hard-code this literal JSON value in a file, as a `json` object:
+Assume you want to hard-code this literal JSON value as a `json` object:
 
 ```json
 {
