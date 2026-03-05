@@ -462,6 +462,96 @@ class derived_person_only_serialize_private : person_without_default_constructor
 
 } // namespace persons
 
+namespace emptys
+{
+class empty_intrusive
+{
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(empty_intrusive)
+};
+
+class empty_intrusive_with_default
+{
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(empty_intrusive_with_default)
+};
+
+class empty_only_serialize
+{
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(empty_only_serialize)
+};
+
+class empty_non_intrusive
+{
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(empty_non_intrusive)
+
+class empty_intrusive_non_intrusive_only_serialize
+{
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(empty_intrusive_non_intrusive_only_serialize)
+
+class empty_non_intrusive_with_default
+{
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(empty_non_intrusive_with_default)
+
+// Base class with a member for derived-type tests
+class base_with_member
+{
+  public:
+    int value = 42;
+
+    bool operator==(const base_with_member& rhs) const
+    {
+        return value == rhs.value;
+    }
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(base_with_member, value)
+};
+
+class empty_derived_intrusive : public base_with_member
+{
+  public:
+    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(empty_derived_intrusive, base_with_member)
+};
+
+class empty_derived_intrusive_with_default : public base_with_member
+{
+  public:
+    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT(empty_derived_intrusive_with_default, base_with_member)
+};
+
+class empty_derived_intrusive_only_serialize : public base_with_member
+{
+  public:
+    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE(empty_derived_intrusive_only_serialize, base_with_member)
+};
+
+class empty_derived_non_intrusive : public base_with_member
+{
+  public:
+};
+
+NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(empty_derived_non_intrusive, base_with_member)
+
+class empty_derived_non_intrusive_with_default : public base_with_member
+{
+  public:
+};
+
+NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT(empty_derived_non_intrusive_with_default, base_with_member)
+
+class empty_derived_non_intrusive_only_serialize : public base_with_member
+{
+  public:
+};
+
+NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(empty_derived_non_intrusive_only_serialize, base_with_member)
+
+} // namespace emptys
+
 TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", Pair, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    std::pair<nlohmann::json, persons::person_with_private_data>,
                    std::pair<nlohmann::json, persons::person_without_private_data_1>,
@@ -705,5 +795,74 @@ TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHM
         CHECK(Json(two_persons).dump() == (is_ordered ?
                                            R"([{"name":"Erik","age":1,"hair_color":"brown"},{"name":"Kyle","age":2,"hair_color":"black"}])" :
                                            R"([{"age":1,"hair_color":"brown","name":"Erik"},{"age":2,"hair_color":"black","name":"Kyle"}])"));
+    }
+}
+
+TEST_CASE_TEMPLATE("Serialization of classes with no member variables", T,
+                   emptys::empty_intrusive_non_intrusive_only_serialize,
+                   emptys::empty_only_serialize)
+{
+    SECTION("empty")
+    {
+        {
+            T empty;
+            std::string const s = json(empty).dump();
+            CHECK(s == "{}");
+        }
+    }
+}
+
+TEST_CASE_TEMPLATE("Serialization/deserialization of classes with no member variables", T,
+                   emptys::empty_intrusive,
+                   emptys::empty_intrusive_with_default,
+                   emptys::empty_non_intrusive,
+                   emptys::empty_non_intrusive_with_default)
+{
+    SECTION("empty")
+    {
+        {
+            T empty;
+            std::string const s = json(empty).dump();
+            CHECK(s == "{}");
+
+            nlohmann::json const json_empty = nlohmann::json::parse(s);
+            T empty2;
+            json_empty.get_to(empty2);
+        }
+    }
+}
+
+TEST_CASE_TEMPLATE("Serialization of derived classes with no additional member variables", T,
+                   emptys::empty_derived_intrusive_only_serialize,
+                   emptys::empty_derived_non_intrusive_only_serialize)
+{
+    SECTION("empty derived")
+    {
+        {
+            T empty;
+            std::string const s = json(empty).dump();
+            CHECK(s == R"({"value":42})");
+        }
+    }
+}
+
+TEST_CASE_TEMPLATE("Serialization/deserialization of derived classes with no additional member variables", T,
+                   emptys::empty_derived_intrusive,
+                   emptys::empty_derived_intrusive_with_default,
+                   emptys::empty_derived_non_intrusive,
+                   emptys::empty_derived_non_intrusive_with_default)
+{
+    SECTION("empty derived")
+    {
+        {
+            T empty;
+            std::string const s = json(empty).dump();
+            CHECK(s == R"({"value":42})");
+
+            nlohmann::json const json_empty = nlohmann::json::parse(s);
+            T empty2;
+            json_empty.get_to(empty2);
+            CHECK(empty == empty2);
+        }
     }
 }
