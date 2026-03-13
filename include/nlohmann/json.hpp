@@ -912,6 +912,17 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                bool type_deduction = true,
                value_t manual_type = value_t::array)
     {
+        // Fix for Issue #5074: Prevent single-object brace initialization from wrapping into an array
+        if (type_deduction && init.size() == 1)
+        {
+            auto element = init.begin()->moved_or_copied();
+            if (element.is_object())
+            {
+                *this = std::move(element);
+                return;
+            }
+        }
+
         // check if each element is an array with two elements whose first
         // element is a string
         bool is_an_object = std::all_of(init.begin(), init.end(),
