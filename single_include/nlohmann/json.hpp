@@ -2917,7 +2917,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     friend void to_json(BasicJsonType& nlohmann_json_j, const Type&) { nlohmann_json_j = BasicJsonType::object(); } \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
-    friend void from_json(const BasicJsonType&, Type&) { }
+    friend void from_json(const BasicJsonType&, Type&) noexcept { }
 
 /*!
 @brief macro
@@ -2928,7 +2928,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
     void to_json(BasicJsonType& nlohmann_json_j, const Type&) { nlohmann_json_j = BasicJsonType::object(); } \
     template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
-    void from_json(const BasicJsonType&, Type&) { }
+    void from_json(const BasicJsonType&, Type&) noexcept { }
 
 // inspired from https://stackoverflow.com/a/26745591
 // allows calling any std function as if (e.g., with begin):
