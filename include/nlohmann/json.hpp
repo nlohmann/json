@@ -5272,14 +5272,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 auto itf = target.find(it.key());
                 if (itf != target.end())
                 {
-                    if (it.value() != itf.value())
+                    if (!it.value().is_null() && itf.value().is_null())
+                    {
+                        JSON_THROW(other_error::create(503, detail::concat("cannot set \"", it.key(), "\" to null"), &source));
+                    }
+
+                    if (it.value().is_object())
                     {
                         auto diff = merge_diff(it.value(), itf.value());
-                        if (diff.is_null())
+                        if (!diff.empty())
                         {
-                            JSON_THROW(other_error::create(503, detail::concat("cannot set \"", itf.key(), "\" to null"), &target));
+                            result[it.key()] = std::move(diff);
                         }
-                        result[it.key()] = merge_diff(it.value(), itf.value());
+                    }
+                    else if (it.value() != itf.value())
+                    {
+                        result[it.key()] = itf.value();
                     }
                 }
                 else
