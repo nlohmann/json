@@ -399,6 +399,24 @@ TEST_CASE("JSON Merge Patch")
             original.merge_patch(json::merge_diff(original, result));
             CHECK(original == result);
         }
+
+        SECTION("object to primitive")
+        {
+            json original = R"({"a":{"b":"c"}})"_json;
+            json result   = R"({"a":1})"_json;
+
+            original.merge_patch(json::merge_diff(original, result));
+            CHECK(original == result);
+        }
+
+        SECTION("primitive to object")
+        {
+            json original = R"({"a":1})"_json;
+            json result   = R"({"a":{"b":"c"}})"_json;
+
+            original.merge_patch(json::merge_diff(original, result));
+            CHECK(original == result);
+        }
     }
 
     SECTION("arrays")
@@ -425,6 +443,15 @@ TEST_CASE("JSON Merge Patch")
         {
             json original = R"([])"_json;
             json result   = R"([1,2,3])"_json;
+
+            original.merge_patch(json::merge_diff(original, result));
+            CHECK(original == result);
+        }
+
+        SECTION("same keys")
+        {
+            json original = R"(["a","b"])"_json;
+            json result   = R"({"a":1,"b":2})"_json;
 
             original.merge_patch(json::merge_diff(original, result));
             CHECK(original == result);
