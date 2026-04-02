@@ -844,7 +844,7 @@ TEST_CASE("regression tests 2")
         SECTION("std::tuple")
         {
             {
-                const json j = json::array({9});
+                const json j = {9};
                 auto t = j.get<std::tuple<NonDefaultConstructible>>();
                 CHECK(std::get<0>(t).x == 9);
             }
@@ -1119,57 +1119,6 @@ TEST_CASE("regression tests 2")
         CHECK((decoded == json_4804::array()));
     }
 #endif
-
-    SECTION("copy constructor changes semantics with brace initialization")
-    {
-        // object
-        {
-            json const j_obj = {{"key", "value"}, {"num", 42}};
-            json const j{j_obj};
-            CHECK(j.is_object());
-            CHECK(j == j_obj);
-        }
-
-        // array
-        {
-            json const j_arr = {1, 2, 3};
-            json const j{j_arr};
-            CHECK(j.is_array());
-            CHECK(j == j_arr);
-        }
-
-        // primitives
-        {
-            json const j_bool{true};
-            CHECK(j_bool.is_boolean());
-
-            json const j_num{42};
-            CHECK(j_num.is_number_integer());
-
-            json const j_float{3.14};
-            CHECK(j_float.is_number_float());
-
-            json const j_str{"hello"};
-            CHECK(j_str.is_string());
-        }
-
-        // passing by-value should still work correctly
-        {
-            auto receive_by_value = [](json j) { return j; };
-            json const j_obj = {{"key", "value"}};
-            json const result = receive_by_value(j_obj);
-            CHECK(result.is_object());
-            CHECK(result == j_obj);
-        }
-
-        // explicitly creating a single-element array still works via json::array()
-        {
-            json const j_arr = json::array({42});
-            CHECK(j_arr.is_array());
-            CHECK(j_arr.size() == 1);
-            CHECK(j_arr[0] == 42);
-        }
-    }
 }
 
 TEST_CASE_TEMPLATE("issue #4798 - nlohmann::json::to_msgpack() encode float NaN as double", T, double, float) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)

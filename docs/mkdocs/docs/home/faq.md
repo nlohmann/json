@@ -20,16 +20,7 @@
 
     yield different results (`#!json [true]` vs. `#!json true`)?
 
-Starting from this version, single-value brace initialization is treated as copy/move instead of wrapping in a single-element array:
-
-```cpp
-json j_orig = {{"key", "value"}};
-
-json j{j_orig};
-j_orig.method();
-```
-
-The root cause was the library's constructor overloads for initializer lists, which allow syntax like
+This is a known issue, and -- even worse -- the behavior differs between GCC and Clang. The "culprit" for this is the library's constructor overloads for initializer lists to allow syntax like
 
 ```cpp
 json array = {1, 2, 3, 4};
@@ -41,13 +32,11 @@ for arrays and
 json object = {{"one", 1}, {"two", 2}}; 
 ```
 
-for objects. Because C++ always prefers `initializer_list` constructors for brace initialization, a single-element brace-init `json j{someValue}` previously wrapped the value in an array instead of copying it.
+for objects.
 
-After the fix, a single-element brace-init behaves like copy/move initialization. To explicitly create a single-element array, use `json::array({value})`.
+!!! tip
 
-!!! note
-
-The fix changes the behavior of single-element brace initialization: `json j{x}` is now equivalent to `json j(x)` (copy/move) rather than `json j = json::array({x})` (single-element array). Code relying on the old behavior should be updated to use `json::array({x})` explicitly.
+    To avoid any confusion and ensure portable code, **do not** use brace initialization with the types `basic_json`, `json`, or `ordered_json` unless you want to create an object or array as shown in the examples above.
 
 ## Limitations
 

@@ -955,18 +955,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
         else
         {
-            // if there is exactly one element and type deduction is enabled,
-            // treat it as copy/move to avoid unintentionally wrapping a single
-            // json value in a single-element array
-            // (see https://github.com/nlohmann/json/issues/5074)
-            if (type_deduction && init.size() == 1)
-            {
-                *this = init.begin()->moved_or_copied();
-                set_parents();
-                assert_invariant();
-                return;
-            }
-
             // the initializer list describes an array -> create an array
             m_data.m_type = value_t::array;
             m_data.m_value.array = create<array_t>(init.begin(), init.end());

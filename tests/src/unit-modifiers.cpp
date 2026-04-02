@@ -310,7 +310,7 @@ TEST_CASE("modifiers")
                 auto& x = j.emplace_back(3, "foo");
                 CHECK(x == json({"foo", "foo", "foo"}));
                 CHECK(j.type() == json::value_t::array);
-                CHECK(j == json::array({json({"foo", "foo", "foo"})}));
+                CHECK(j == json({{"foo", "foo", "foo"}}));
             }
         }
 
