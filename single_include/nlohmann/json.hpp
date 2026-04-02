@@ -2964,6 +2964,10 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_USE_GLOBAL_UDLS 1
 #endif
 
+#ifndef JSON_BRACE_INIT_COPY_SEMANTICS
+    #define JSON_BRACE_INIT_COPY_SEMANTICS 0
+#endif
+
 #if JSON_HAS_THREE_WAY_COMPARISON
     #include <compare> // partial_ordering
 #endif
@@ -21074,6 +21078,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
         else
         {
+#if JSON_BRACE_INIT_COPY_SEMANTICS
+            if (type_deduction && init.size() == 1)
+            {
+                *this = init.begin()->moved_or_copied();
+                set_parents();
+                assert_invariant();
+                return;
+            }
+#endif
             // the initializer list describes an array -> create an array
             m_data.m_type = value_t::array;
             m_data.m_value.array = create<array_t>(init.begin(), init.end());
@@ -25529,6 +25542,7 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 #undef JSON_NO_UNIQUE_ADDRESS
 #undef JSON_DISABLE_ENUM_SERIALIZATION
 #undef JSON_USE_GLOBAL_UDLS
+#undef JSON_BRACE_INIT_COPY_SEMANTICS
 
 #ifndef JSON_TEST_KEEP_MACROS
     #undef JSON_CATCH

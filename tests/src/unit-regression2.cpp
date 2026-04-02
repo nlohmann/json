@@ -1188,4 +1188,52 @@ TEST_CASE_TEMPLATE("issue #4798 - nlohmann::json::to_msgpack() encode float NaN 
     CHECK(json::from_cbor(cbor_z_3).get<T>() == -std::numeric_limits<T>::infinity());
 }
 
+TEST_CASE("regression test #5074 - single-element brace init default behavior")
+{
+    json const j_obj = {{"key", "value"}};
+    json const j_arr = {1, 2, 3};
+
+    json const j1{j_obj};
+    CHECK(j1.is_array());
+    CHECK(j1.size() == 1);
+    CHECK(j1[0] == j_obj);
+
+    json const j2{j_arr};
+    CHECK(j2.is_array());
+    CHECK(j2.size() == 1);
+    CHECK(j2[0] == j_arr);
+
+    json const j3 = json::array({j_obj});
+    CHECK(j3.is_array());
+    CHECK(j3.size() == 1);
+    CHECK(j3[0] == j_obj);
+}
+
+#if JSON_BRACE_INIT_COPY_SEMANTICS
+TEST_CASE("regression test #5074 - single-element brace init with JSON_BRACE_INIT_COPY_SEMANTICS")
+{
+    // with JSON_BRACE_INIT_COPY_SEMANTICS: single-element brace init copies/moves
+    json const j_obj = {{"key", "value"}, {"num", 42}};
+    json const j_arr = {1, 2, 3};
+
+    // object: brace init copies instead of wrapping
+    json const j1{j_obj};
+    CHECK(j1.is_object());
+    CHECK(j1 == j_obj);
+
+    // array: brace init copies instead of wrapping
+    json const j2{j_arr};
+    CHECK(j2.is_array());
+    CHECK(j2.size() == 3);
+    CHECK(j2 == j_arr);
+
+    // primitives still work as initializer lists
+    json const j3{true};
+    CHECK(j3.is_boolean());
+
+    json const j4{42};
+    CHECK(j4.is_number_integer());
+}
+#endif
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
