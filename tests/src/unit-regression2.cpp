@@ -1198,7 +1198,7 @@ TEST_CASE("regression test #5074 - portable workaround for single-element brace 
     CHECK(j[0] == j_obj);
 }
 
-#if JSON_BRACE_INIT_COPY_SEMANTICS
+#if defined(JSON_BRACE_INIT_COPY_SEMANTICS) && (JSON_BRACE_INIT_COPY_SEMANTICS == 1)
 TEST_CASE("regression test #5074 - single-element brace init with JSON_BRACE_INIT_COPY_SEMANTICS")
 {
     // with JSON_BRACE_INIT_COPY_SEMANTICS: single-element brace init copies/moves
