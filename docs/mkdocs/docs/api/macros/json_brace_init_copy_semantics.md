@@ -7,6 +7,14 @@
 When defined to `1`, single-element brace initialization of a `basic_json` value is treated as a copy/move of the
 element rather than wrapping it in a single-element array.
 
+## Default definition
+
+The default value is `0` (disabled — existing behavior is preserved).
+
+```cpp
+#define JSON_BRACE_INIT_COPY_SEMANTICS 0
+```
+
 ## Notes
 
 !!! note "Background"
@@ -37,14 +45,6 @@ element rather than wrapping it in a single-element array.
     ```cpp
     json j = json::array({obj});  // always creates [obj]
     ```
-
-## Default definition
-
-The default value is `0` (disabled — existing behavior is preserved).
-
-```cpp
-#define JSON_BRACE_INIT_COPY_SEMANTICS 0
-```
 
 ## Examples
 
