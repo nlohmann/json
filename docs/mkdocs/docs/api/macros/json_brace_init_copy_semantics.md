@@ -7,30 +7,24 @@
 When defined to `1`, single-element brace initialization of a `basic_json` value is treated as a copy/move of the
 element rather than wrapping it in a single-element array.
 
-## Background
-
-C++ always prefers the `initializer_list` constructor over the copy/move constructor for brace initialization. This
-means that code like
-
-```cpp
-json obj = {{"key", "value"}};
-json j{obj};
-```
-
-creates a single-element **array** `[{"key":"value"}]` instead of a copy of `obj`. This behavior is compiler-dependent
-for older compilers (GCC wrapped, Clang did not), but starting from Clang 20, both compilers behave the same way.
-
-Enabling this macro opts into copy/move semantics for this case (see [#5074](https://github.com/nlohmann/json/issues/5074)).
-
-## Default definition
-
-The default value is `0` (disabled — existing behavior is preserved).
-
-```cpp
-#define JSON_BRACE_INIT_COPY_SEMANTICS 0
-```
-
 ## Notes
+
+!!! note "Background"
+
+    C++ always prefers the `initializer_list` constructor over the copy/move constructor for brace initialization. This
+    means that code like
+
+    ```cpp
+    json obj = {{"key", "value"}};
+    json j{obj};
+    ```
+
+    creates a single-element **array** `[{"key":"value"}]` instead of a copy of `obj`. This behavior is
+    compiler-dependent for older compilers (GCC wrapped, Clang did not), but starting from Clang 20, both compilers
+    behave the same way.
+
+    Enabling this macro opts into copy/move semantics for this case
+    (see [#5074](https://github.com/nlohmann/json/issues/5074)).
 
 !!! warning "Opt-in only"
 
@@ -43,6 +37,14 @@ The default value is `0` (disabled — existing behavior is preserved).
     ```cpp
     json j = json::array({obj});  // always creates [obj]
     ```
+
+## Default definition
+
+The default value is `0` (disabled — existing behavior is preserved).
+
+```cpp
+#define JSON_BRACE_INIT_COPY_SEMANTICS 0
+```
 
 ## Examples
 
