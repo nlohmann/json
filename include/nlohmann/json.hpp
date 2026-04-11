@@ -569,51 +569,126 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             }
             if (t == value_t::array || t == value_t::object)
             {
-                // flatten the current json_value to a heap-allocated stack
-                std::vector<basic_json> stack;
+                // Iteratively flatten nested containers to prevent
+                // stack overflow from recursive destruction. Children
+                // are promoted into the parent array's spare capacity
+                // (no allocation), with overflow to a heap stack. If
+                // the heap stack cannot be allocated, the catch block
+                // lets RAII recurse instead of calling std::terminate.
 
-                // move the top-level items to stack
-                if (t == value_t::array)
+#if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND))
+                try
                 {
-                    stack.reserve(array->size());
-                    std::move(array->begin(), array->end(), std::back_inserter(stack));
-                }
-                else
-                {
-                    stack.reserve(object->size());
-                    for (auto&& it : *object)
-                    {
-                        stack.push_back(std::move(it.second));
-                    }
-                }
+#endif
+                    // Uses the default allocator, we must not be
+                    // affected by a user allocator that throws or
+                    // copies on move.
+                    std::vector<basic_json> stack;
 
-                while (!stack.empty())
-                {
-                    // move the last item to a local variable to be processed
-                    basic_json current_item(std::move(stack.back()));
-                    stack.pop_back();
-
-                    // if current_item is array/object, move
-                    // its children to the stack to be processed later
-                    if (current_item.is_array())
+                    if (t == value_t::array)
                     {
-                        std::move(current_item.m_data.m_value.array->begin(), current_item.m_data.m_value.array->end(), std::back_inserter(stack));
-
-                        current_item.m_data.m_value.array->clear();
-                    }
-                    else if (current_item.is_object())
-                    {
-                        for (auto&& it : *current_item.m_data.m_value.object)
+                        // Move children from source into parent,
+                        // leaving `remain` behind. Stays within
+                        // spare capacity. Uses resize() rather than
+                        // erase() to avoid instantiating move-
+                        // assignment in MSVC module builds.
+                        auto* parent = array;
+                        auto promote = [parent](basic_json & source, size_type remain)
                         {
-                            stack.push_back(std::move(it.second));
-                        }
+                            if (source.is_array())
+                            {
+                                auto* src = source.m_data.m_value.array;
+                                auto first = src->begin() + static_cast<typename array_t::difference_type>(remain);
+                                std::move(first, src->end(), std::back_inserter(*parent));
+                                src->resize(remain);
+                            }
+                            else if (source.is_object())
+                            {
+                                auto* src = source.m_data.m_value.object;
+                                const auto to_move = src->size() - remain;
+                                for (size_type i = 0; i < to_move; ++i)
+                                {
+                                    parent->push_back(std::move(src->begin()->second));
+                                    src->erase(src->begin());
+                                }
+                            }
+                        };
 
-                        current_item.m_data.m_value.object->clear();
+                        while (!array->empty())
+                        {
+                            if (array->back().is_structured())
+                            {
+                                const auto spare = parent->capacity() - parent->size();
+                                const auto n = array->back().size();
+
+                                if (n <= spare + 1)
+                                {
+                                    // All fit (+1 from freeing container slot)
+                                    basic_json nested(std::move(array->back()));
+                                    array->pop_back();
+                                    promote(nested, 0);
+                                }
+                                else if (spare > 0)
+                                {
+                                    // Partial: revisited once promoted
+                                    // children are processed
+                                    promote(array->back(), n - spare);
+                                }
+                                else
+                                {
+                                    // No capacity: overflow to stack
+                                    stack.push_back(std::move(array->back()));
+                                    array->pop_back();
+                                }
+                            }
+                            else
+                            {
+                                array->pop_back();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Move structured values to the stack so that
+                        // the object's destruction only encounters leaves.
+                        for (auto& it : *object)
+                        {
+                            if (it.second.is_structured())
+                            {
+                                stack.push_back(std::move(it.second));
+                            }
+                        }
                     }
 
-                    // it's now safe that current_item gets destructed
-                    // since it doesn't have any children
+                    while (!stack.empty())
+                    {
+                        basic_json current(std::move(stack.back())); // NOLINT(misc-const-correctness)
+                        stack.pop_back();
+
+                        if (current.is_array())
+                        {
+                            auto* src = current.m_data.m_value.array;
+                            std::move(src->begin(), src->end(), std::back_inserter(stack));
+                            src->clear();
+                        }
+                        else if (current.is_object())
+                        {
+                            auto* src = current.m_data.m_value.object;
+                            for (auto& it : *src)
+                            {
+                                stack.push_back(std::move(it.second));
+                            }
+                            src->clear();
+                        }
+                    }
+#if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND))
                 }
+                catch (...)     // NOLINT(bugprone-empty-catch)
+                {
+                    // Stack allocation failed, RAII cleans up; remaining
+                    // elements are destroyed recursively below.
+                }
+#endif
             }
 
             switch (t)
