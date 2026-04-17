@@ -1758,6 +1758,10 @@ class binary_writer
     {
         // step 1: write the number to an array of length NumberType
         std::array<CharType, sizeof(NumberType)> vec{};
+        // Validate at compile time that the destination buffer is large enough
+        // to hold sizeof(NumberType) bytes before performing the memcpy.
+        static_assert(sizeof(vec) >= sizeof(NumberType),
+                      "Destination buffer must be large enough to hold NumberType bytes");
         std::memcpy(vec.data(), &n, sizeof(NumberType));
 
         // step 2: write the array to output (with possible reordering)
