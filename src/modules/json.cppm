@@ -27,8 +27,8 @@ inline namespace literals
 {
 inline namespace json_literals
 {
-    using NLOHMANN_JSON_NAMESPACE::literals::operator""_json;
-    using NLOHMANN_JSON_NAMESPACE::literals::operator""_json_pointer;
+    using NLOHMANN_JSON_NAMESPACE::literals::json_literals::operator""_json;
+    using NLOHMANN_JSON_NAMESPACE::literals::json_literals::operator""_json_pointer;
 } // namespace json_literals
 } // namespace literals
 
