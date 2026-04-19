@@ -24,11 +24,18 @@ json data = json::parse(f);
 ```
 
 ## Modules do not export macros
-It should be noted that as modules do not export macros, the `nlohmann.json` module will not export any macros, but rather only the following symbols:
+It should be noted that as modules do not export macros, the `nlohmann.json` module will not export any macros.
 
+## Exported symbols
+Only the following symbols are exported from `nlohmann.json`:
 - `nlohmann::adl_serializer`
 - `nlohmann::basic_json`
 - `nlohmann::json`
 - `nlohmann::json_pointer`
-- `nlohmann::ordered_map`
 - `nlohmann::ordered_json`
+- `nlohmann::ordered_map`
+- `nlohmann::to_string`
+- `nlohmann::detail::json_sax_dom_callback_parser`
+- `nlohmann::detail::unknown_size`
+- `nlohmann::literals::json_literals::operator""_json`
+- `nlohmann::literals::json_literals::operator""_json_pointer`
