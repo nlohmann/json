@@ -39,3 +39,8 @@ Only the following symbols are exported from `nlohmann.json`:
 - `nlohmann::detail::unknown_size`
 - `nlohmann::literals::json_literals::operator""_json`
 - `nlohmann::literals::json_literals::operator""_json_pointer`
+
+The following specialisations of `std` symbols are also exported:
+- `std::hash`
+- `std::less`
+- `std::swap`
