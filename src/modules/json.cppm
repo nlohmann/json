@@ -32,6 +32,14 @@ inline namespace json_literals
 } // namespace json_literals
 } // namespace literals
 
+// Note: the following nlohmann::detail symbols must be exported due to
+// an MSVC bug failing to compile without these symbols visible (ticket #3970)
+namespace detail
+{
+    using NLOHMANN_JSON_NAMESPACE::detail::json_sax_dom_callback_parser;
+    using NLOHMANN_JSON_NAMESPACE::detail::unknown_size;
+} // namespace detail
+
 NLOHMANN_JSON_NAMESPACE_END
 
 export namespace std
