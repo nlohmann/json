@@ -1660,7 +1660,7 @@ TEST_CASE("JSON to enum mapping")
 enum class strict_cards {kreuz, pik, herz, karo};
 
 // NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
-NLOHMANN_JSON_SERIALIZE_ENUM(strict_cards,
+NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(strict_cards,
 {
     {strict_cards::kreuz, "kreuz"},
     {strict_cards::pik, "pik"},
@@ -1678,7 +1678,7 @@ enum StrictTaskState // NOLINT(cert-int09-c,readability-enum-initial-value,cppco
 };
 
 // NOLINTNEXTLINE(misc-const-correctness,misc-use-internal-linkage,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
-NLOHMANN_JSON_SERIALIZE_ENUM(StrictTaskState,
+NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(StrictTaskState,
 {
     {STRICT_TS_INVALID, nullptr},
     {STRICT_TS_STOPPED, "stopped"},
@@ -1703,9 +1703,8 @@ TEST_CASE("Strict JSON to enum mapping")
         CHECK(strict_cards::karo == json("karo"));
 
         // invalid json -> exception thrown
-        CHECK(strict_cards::kreuz == json("what?").get<strict_cards>());
         json _;
-        CHECK_THROWS_WITH_AS(_ = json("what?").get<strict_cards>(), "[json.exception.out_of_range.403] enum value 'what?' out of range", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(_ = json("what?").get<strict_cards>(), "[json.exception.out_of_range.403] enum value out of range", json::out_of_range&);
     }
 
     SECTION("traditional enum")
@@ -1724,7 +1723,7 @@ TEST_CASE("Strict JSON to enum mapping")
 
         // invalid json -> exception thrown
         json _;
-        CHECK_THROWS_WITH_AS(_ = json("what?").get<StrictTaskState>(), "[json.exception.out_of_range.403] enum value 'what?' out of range", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(_ = json("what?").get<StrictTaskState>(), "[json.exception.out_of_range.403] enum value out of range", json::out_of_range&);
     }
 }
 

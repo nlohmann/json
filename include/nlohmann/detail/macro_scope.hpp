@@ -272,7 +272,8 @@
         {                                                                                       \
             return ej_pair.first == e;                                                          \
         });                                                                                     \
-        j = ((it != std::end(m)) ? it : std::begin(m))->second;                                 \
+	if (it != std::end(m)) j = it->second;                                                  \
+	else throw nlohmann::detail::out_of_range::create(403, "enum value out of range", nullptr);\
     }                                                                                           \
     template<typename BasicJsonType>                                                            \
     inline void from_json(const BasicJsonType& j, ENUM_TYPE& e)                                 \
@@ -286,7 +287,8 @@
         {                                                                                       \
             return ej_pair.second == j;                                                         \
         });                                                                                     \
-        e = ((it != std::end(m)) ? it : std::begin(m))->first;                                  \
+	if (it != std::end(m)) e = it->first;                                                   \
+	else throw nlohmann::detail::out_of_range::create(403, "enum value out of range", nullptr);\
     }
 
 
