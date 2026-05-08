@@ -653,6 +653,10 @@
          <lastmod>2026-05-08</lastmod>
     </url>
     <url>
+         <loc>https://json.nlohmann.me/api/macros/json_brace_init_copy_semantics/</loc>
+         <lastmod>2026-05-08</lastmod>
+    </url>
+    <url>
          <loc>https://json.nlohmann.me/api/macros/json_diagnostic_positions/</loc>
          <lastmod>2026-05-08</lastmod>
     </url>
