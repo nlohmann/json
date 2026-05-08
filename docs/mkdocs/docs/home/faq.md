@@ -38,6 +38,26 @@ for objects.
 
     To avoid any confusion and ensure portable code, **do not** use brace initialization with the types `basic_json`, `json`, or `ordered_json` unless you want to create an object or array as shown in the examples above.
 
+    To explicitly create a single-element array, use `json::array({value})`:
+
+    ```cpp
+    json j = json::array({true});  // [true]
+    ```
+
+**Opt-in copy semantics (since version 3.12.0)**
+
+If you define `JSON_BRACE_INIT_COPY_SEMANTICS` to `1` before including the library, single-element brace initialization is treated as copy/move instead of creating a single-element array:
+
+```cpp
+#define JSON_BRACE_INIT_COPY_SEMANTICS 1
+#include <nlohmann/json.hpp>
+
+json obj = {{"key", "value"}};
+json j{obj};   // -> {"key":"value"}  (copy, not array)
+```
+
+Without the macro (default behavior), `json j{obj}` creates `[{"key":"value"}]`. This opt-in macro fixes issue #5074 while preserving backwards compatibility for existing code.
+
 ## Limitations
 
 ### Relaxed parsing
