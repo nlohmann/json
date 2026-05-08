@@ -781,6 +781,38 @@ TEST_CASE("regression tests 2")
         CHECK(j.dump() == "{}");
     }
 
+    //new test2
+    SECTION("issue #2330 - ignore_comment=true works before an array")
+    {
+        const std::string ss = "// this is a comment\n[1, 2, 3]";
+        const json j = json::parse(ss, nullptr, true, true);
+        CHECK(j.is_array());
+        CHECK(j.dump() == "[1,2,3]");
+    }
+
+    SECTION("issue #2330 - ignore_comment=true works with block comment before value")
+    {
+        const std::string ss = "/* block comment */\n{\"key\": 1}";
+        const json j = json::parse(ss, nullptr, true, true);
+        CHECK(j["key"] == 1);
+    }
+
+    SECTION("issue #2330 - ignore_comment=true works with comment after value")
+    {
+        const std::string ss = "{\"key\": 1}\n// trailing comment";
+        const json j = json::parse(ss, nullptr, true, true);
+        CHECK(j["key"] == 1);
+    }
+
+    SECTION("issue #2330 - ignore_comment=false throws on comment in input")
+    {
+        const std::string ss = "// comment\n{}";
+        CHECK_THROWS_AS(
+            json::parse(ss, nullptr, true, false),
+            json::parse_error
+        );
+    }
+
 #ifdef JSON_HAS_CPP_20
 #ifndef _LIBCPP_VERSION // see https://github.com/nlohmann/json/issues/4490
 #if __has_include(<span>)
@@ -1212,6 +1244,8 @@ TEST_CASE("regression test #5074 - portable workaround for single-element brace 
     CHECK(j.size() == 1);
     CHECK(j[0] == j_obj);
 }
+
+
 
 #if defined(JSON_BRACE_INIT_COPY_SEMANTICS) && (JSON_BRACE_INIT_COPY_SEMANTICS == 1)
 TEST_CASE("regression test #5074 - single-element brace init with JSON_BRACE_INIT_COPY_SEMANTICS")
