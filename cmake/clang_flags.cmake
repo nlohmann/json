@@ -19,5 +19,4 @@ set(CLANG_CXXFLAGS
     -Wno-covered-switch-default
     -Wno-unsafe-buffer-usage
     -Wno-missing-noreturn
-    -Wno-gnu-zero-variadic-macro-arguments
 )
