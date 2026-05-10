@@ -19992,6 +19992,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         : Container{init, alloc} {}
     ordered_map(const ordered_map&) = default;
     ordered_map(ordered_map&&) noexcept(std::is_nothrow_move_constructible<Container>::value) = default;
+    ~ordered_map() = default;
 
     ordered_map& operator=(const ordered_map& other)
     {

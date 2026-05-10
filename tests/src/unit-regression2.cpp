@@ -1243,7 +1243,7 @@ TEST_CASE("regression test #5074 - single-element brace init with JSON_BRACE_INI
 struct Example_5122
 {
     float b = 2;
-    nlohmann::ordered_map<std::string, std::string> c;
+    nlohmann::ordered_map<std::string, std::string> c{};
     int a = 1;
     NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Example_5122, b, c, a)
 };
