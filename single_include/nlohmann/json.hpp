@@ -19990,17 +19990,6 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         : Container{first, last, alloc} {}
     ordered_map(std::initializer_list<value_type> init, const Allocator& alloc = Allocator() )
         : Container{init, alloc} {}
-
-    // The inherited std::vector copy/move assignment operators require
-    // value_type to be CopyAssignable / MoveAssignable when the element
-    // copy/move path triggers. value_type here is std::pair<const Key, T>,
-    // whose copy- and move-assignment are deleted because of the const Key.
-    // That breaks any code that assigns an ordered_map, including the
-    // NLOHMANN_JSON_FROM_WITH_DEFAULT macro's ternary which forces
-    // copy-assignment of the field. Provide assignment operators that
-    // rebuild via clear + push_back (copy) or transfer the underlying
-    // vector (move), both of which only need construction of value_type,
-    // never assignment. See nlohmann/json#5122.
     ordered_map(const ordered_map&) = default;
     ordered_map(ordered_map&&) noexcept(std::is_nothrow_move_constructible<Container>::value) = default;
 
