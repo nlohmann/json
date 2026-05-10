@@ -1240,4 +1240,33 @@ TEST_CASE("regression test #5074 - single-element brace init with JSON_BRACE_INI
 }
 #endif
 
+struct Example_5122
+{
+    float b = 2;
+    nlohmann::ordered_map<std::string, std::string> c;
+    int a = 1;
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Example_5122, b, c, a)
+};
+
+TEST_CASE("regression test #5122 - from_json into types holding nlohmann::ordered_map")
+{
+    Example_5122 src;
+    src.c.emplace("first", "1");
+    src.c.emplace("second", "2");
+
+    ordered_json const j = src;
+    Example_5122 const dst = j.get<Example_5122>();
+
+    CHECK(dst.b == src.b);
+    CHECK(dst.a == src.a);
+    REQUIRE(dst.c.size() == src.c.size());
+    auto src_it = src.c.begin();
+    auto dst_it = dst.c.begin();
+    for (; src_it != src.c.end(); ++src_it, ++dst_it)
+    {
+        CHECK(dst_it->first == src_it->first);
+        CHECK(dst_it->second == src_it->second);
+    }
+}
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP

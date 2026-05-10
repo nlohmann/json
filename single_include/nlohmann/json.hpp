@@ -5306,14 +5306,10 @@ inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
 
     ConstructibleObjectType ret;
     const auto* inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
-    using value_type = typename ConstructibleObjectType::value_type;
-    std::transform(
-        inner_object->begin(), inner_object->end(),
-        std::inserter(ret, ret.begin()),
-        [](typename BasicJsonType::object_t::value_type const & p)
+    for (const auto& p : *inner_object)
     {
-        return value_type(p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>());
-    });
+        ret.emplace(p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>());
+    }
     obj = std::move(ret);
 }
 
@@ -19994,6 +19990,39 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         : Container{first, last, alloc} {}
     ordered_map(std::initializer_list<value_type> init, const Allocator& alloc = Allocator() )
         : Container{init, alloc} {}
+
+    // The inherited std::vector copy/move assignment operators require
+    // value_type to be CopyAssignable / MoveAssignable when the element
+    // copy/move path triggers. value_type here is std::pair<const Key, T>,
+    // whose copy- and move-assignment are deleted because of the const Key.
+    // That breaks any code that assigns an ordered_map, including the
+    // NLOHMANN_JSON_FROM_WITH_DEFAULT macro's ternary which forces
+    // copy-assignment of the field. Provide assignment operators that
+    // rebuild via clear + push_back (copy) or transfer the underlying
+    // vector (move), both of which only need construction of value_type,
+    // never assignment. See nlohmann/json#5122.
+    ordered_map(const ordered_map&) = default;
+    ordered_map(ordered_map&&) noexcept(std::is_nothrow_move_constructible<Container>::value) = default;
+
+    ordered_map& operator=(const ordered_map& other)
+    {
+        if (this != &other)
+        {
+            Container::clear();
+            Container::reserve(other.size());
+            for (const auto& entry : other)
+            {
+                Container::push_back(entry);
+            }
+        }
+        return *this;
+    }
+
+    ordered_map& operator=(ordered_map&& other) noexcept(noexcept(std::declval<Container&>() = std::declval < Container && > ()))
+    {
+        Container::operator=(std::move(static_cast<Container&>(other)));
+        return *this;
+    }
 
     std::pair<iterator, bool> emplace(const key_type& key, T&& t)
     {
