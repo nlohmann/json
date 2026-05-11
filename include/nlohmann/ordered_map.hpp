@@ -56,19 +56,12 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 
     ordered_map& operator=(const ordered_map& other)
     {
-        if (this != &other)
-        {
-            Container::clear();
-            Container::reserve(other.size());
-            for (const auto& entry : other)
-            {
-                Container::push_back(entry);
-            }
-        }
+        ordered_map tmp(other);
+        Container::operator=(std::move(static_cast<Container&>(tmp)));
         return *this;
     }
 
-    ordered_map& operator=(ordered_map&& other) noexcept(noexcept(std::declval<Container&>() = std::declval < Container && > ()))
+    ordered_map& operator=(ordered_map&& other) noexcept(std::is_nothrow_move_assignable<Container>::value)
     {
         Container::operator=(std::move(static_cast<Container&>(other)));
         return *this;
