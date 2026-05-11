@@ -433,6 +433,7 @@ class person_without_private_data_5
     {}
 };
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES(person_without_private_data_5, "json_age", age, "json_name", name, "json_metadata", metadata)
 
 class derived_person_without_private_data_5 : public person_without_private_data_5
@@ -453,6 +454,7 @@ class derived_person_without_private_data_5 : public person_without_private_data
     {}
 };
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_NAMES(derived_person_without_private_data_5, person_without_private_data_5, "json_hair_color", hair_color)
 
 class person_without_private_data_6
@@ -488,6 +490,7 @@ class person_without_private_data_6
     }
 };
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES(person_without_private_data_6, "json_age", age, "json_name", name, "json_metadata", metadata)
 
 class derived_person_without_private_data_6 : public person_without_private_data_6
@@ -513,6 +516,7 @@ class derived_person_without_private_data_6 : public person_without_private_data
     }
 };
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES(derived_person_without_private_data_6, person_without_private_data_6, "json_hair_color", hair_color)
 
 class person_with_private_alphabet
@@ -717,6 +721,7 @@ class person_without_default_constructor_4
     {}
 };
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES(person_without_default_constructor_4, "json_name", name, "json_age", age)
 
 class derived_person_only_serialize_public_1 : public person_without_default_constructor_1
@@ -744,6 +749,7 @@ class derived_person_only_serialize_public_3 : public person_without_default_con
     {}
 };
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES(derived_person_only_serialize_public_3, person_without_default_constructor_3, "json_hair_color", hair_color)
 
 class derived_person_only_serialize_private_1 : person_without_default_constructor_1
@@ -844,7 +850,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_DERIVED_TY
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_NAMES and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES", T, // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_NAMES and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES", T, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    persons::person_with_private_data_3,
                    persons::person_without_private_data_4,
                    persons::person_without_private_data_5)
@@ -870,7 +876,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_NAMES and NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_NAMES", T, // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_NAMES and NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_NAMES", T, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    persons::derived_person_with_private_data_3,
                    persons::derived_person_without_private_data_4,
                    persons::derived_person_without_private_data_5)
@@ -993,7 +999,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_DERIVED_TY
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES", T, // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES", T, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    persons::person_with_private_data_4,
                    persons::person_without_private_data_6)
 {
@@ -1027,7 +1033,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES and NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES", T, // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES and NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES", T, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    persons::derived_person_with_private_data_4,
                    persons::derived_person_without_private_data_6)
 {
@@ -1063,7 +1069,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_DERIVED_TY
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/private member variables via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", Pair, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
+TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/private member variables via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", Pair, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization, bugprone-throwing-static-initialization)
                    std::pair<nlohmann::json, persons::person_with_private_alphabet>,
                    std::pair<nlohmann::json, persons::person_with_public_alphabet>,
                    std::pair<nlohmann::ordered_json, persons::person_with_private_alphabet>,
@@ -1082,7 +1088,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE", Pair, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
+TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE", Pair, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization, bugprone-throwing-static-initialization)
                    std::pair<nlohmann::json, persons::person_without_default_constructor_1>,
                    std::pair<nlohmann::json, persons::person_without_default_constructor_2>,
                    std::pair<nlohmann::ordered_json, persons::person_without_default_constructor_1>,
@@ -1112,7 +1118,7 @@ TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHM
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES", T, // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES", T, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    persons::person_without_default_constructor_3,
                    persons::person_without_default_constructor_4)
 {
@@ -1164,7 +1170,7 @@ TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHM
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES and NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES", T, // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES and NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES", T, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    persons::derived_person_only_serialize_public_3,
                    persons::derived_person_only_serialize_private_3)
 {
