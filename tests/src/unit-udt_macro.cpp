@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <string>
@@ -285,6 +285,7 @@ class person_without_private_data_2
     {}
 };
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_without_private_data_2, age, name, metadata)
 
 class derived_person_without_private_data_2 : public person_without_private_data_2
@@ -305,6 +306,7 @@ class derived_person_without_private_data_2 : public person_without_private_data
     {}
 };
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(derived_person_without_private_data_2, person_without_private_data_2, hair_color)
 
 class person_without_private_data_3
@@ -340,6 +342,7 @@ class person_without_private_data_3
     }
 };
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(person_without_private_data_3, age, name, metadata)
 
 class derived_person_without_private_data_3 : public person_without_private_data_3
@@ -365,6 +368,7 @@ class derived_person_without_private_data_3 : public person_without_private_data
     }
 };
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT(derived_person_without_private_data_3, person_without_private_data_3, hair_color)
 
 class person_without_private_data_4
@@ -635,6 +639,7 @@ class person_with_public_alphabet
     int z = 0;
 };
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_with_public_alphabet, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
 
 class person_without_default_constructor_1
@@ -673,6 +678,7 @@ class person_without_default_constructor_2
     {}
 };
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(person_without_default_constructor_2, name, age)
 
 class person_without_default_constructor_3
@@ -724,6 +730,7 @@ class derived_person_only_serialize_public_1 : public person_without_default_con
     {}
 };
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(derived_person_only_serialize_public_1, person_without_default_constructor_1, hair_color)
 
 class derived_person_only_serialize_public_3 : public person_without_default_constructor_3
@@ -767,7 +774,7 @@ class derived_person_only_serialize_private_3 : person_without_default_construct
 
 } // namespace persons
 
-TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", Pair, // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", Pair, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    std::pair<nlohmann::json, persons::person_with_private_data>,
                    std::pair<nlohmann::json, persons::person_without_private_data_1>,
                    std::pair<nlohmann::json, persons::person_without_private_data_2>,
@@ -802,7 +809,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE and NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE", Pair, // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE and NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE", Pair, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    std::pair<nlohmann::json, persons::derived_person_with_private_data>,
                    std::pair<nlohmann::json, persons::derived_person_without_private_data_1>,
                    std::pair<nlohmann::json, persons::derived_person_without_private_data_2>,
@@ -889,7 +896,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_DERIVED_TY
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT", Pair, // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT", Pair, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    std::pair<nlohmann::json, persons::person_with_private_data_2>,
                    std::pair<nlohmann::json, persons::person_without_private_data_3>,
                    std::pair<nlohmann::ordered_json, persons::person_with_private_data_2>,
@@ -940,7 +947,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT and NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT", Pair, // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT and NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT", Pair, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    std::pair<nlohmann::json, persons::derived_person_with_private_data_2>,
                    std::pair<nlohmann::json, persons::derived_person_without_private_data_3>,
                    std::pair<nlohmann::ordered_json, persons::derived_person_with_private_data_2>,
@@ -1056,7 +1063,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_DERIVED_TY
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/private member variables via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", Pair, // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/private member variables via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", Pair, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    std::pair<nlohmann::json, persons::person_with_private_alphabet>,
                    std::pair<nlohmann::json, persons::person_with_public_alphabet>,
                    std::pair<nlohmann::ordered_json, persons::person_with_private_alphabet>,
@@ -1067,7 +1074,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
 
     SECTION("alphabet")
     {
-        T obj1;
+        T obj1; // NOLINT(misc-const-correctness)
         Json const j = obj1;
         T obj2;
         j.get_to(obj2);
@@ -1075,7 +1082,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE", Pair, // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE", Pair, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    std::pair<nlohmann::json, persons::person_without_default_constructor_1>,
                    std::pair<nlohmann::json, persons::person_without_default_constructor_2>,
                    std::pair<nlohmann::ordered_json, persons::person_without_default_constructor_1>,
@@ -1127,7 +1134,7 @@ TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHM
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE and NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE", Pair, // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE and NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE", Pair, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    std::pair<nlohmann::json, persons::derived_person_only_serialize_public_1>,
                    std::pair<nlohmann::json, persons::derived_person_only_serialize_private_1>,
                    std::pair<nlohmann::ordered_json, persons::derived_person_only_serialize_public_1>,

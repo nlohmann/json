@@ -37,7 +37,7 @@ When iterating over objects, values are ordered with respect to the `object_comp
     
     The reason for the order is the lexicographic ordering of the object keys "one", "three", "two".
 
-### Access object key during iteration
+### Access object keys during iteration
 
 The JSON iterators have two member functions, `key()` and `value()` to access the object key and stored value, respectively. When calling `key()` on a non-object iterator, an [invalid_iterator.207](../home/exceptions.md#jsonexceptioninvalid_iterator207) exception is thrown.
 

@@ -53,7 +53,7 @@ The default value is `0`.
         const json j = Choice::first; 
 
         // normally invokes from_json parse function but with JSON_DISABLE_ENUM_SERIALIZATION defined, it does not
-        Choice ch = j.template get<Choice>();
+        Choice ch = j.get<Choice>();
     }
     ```
 
@@ -86,7 +86,7 @@ The default value is `0`.
         const json j = Choice::first; 
 
         // uses user-defined from_json function defined by macro
-        Choice ch = j.template get<Choice>();
+        Choice ch = j.get<Choice>();
     }
     ```
 
@@ -109,7 +109,7 @@ The default value is `0`.
 
     void from_json(const json& j, Choice& ch)
     {
-        auto value = j.template get<std::string>();
+        auto value = j.get<std::string>();
         if (value == "first")
         {
             ch = Choice::first;
@@ -122,7 +122,7 @@ The default value is `0`.
 
     void to_json(json& j, const Choice& ch)
     {
-        auto value = j.template get<std::string>();
+        auto value = j.get<std::string>();
         if (value == "first")
         {
             ch = Choice::first;
@@ -139,13 +139,15 @@ The default value is `0`.
         const json j = Choice::first; 
 
         // uses user-defined from_json function
-        Choice ch = j.template get<Choice>();
+        Choice ch = j.get<Choice>();
     }
     ```
 
 ## See also
 
-- [`NLOHMANN_JSON_SERIALIZE_ENUM`](nlohmann_json_serialize_enum.md)
+- [:simple-cmake: JSON_DisableEnumSerialization](../../integration/cmake.md#json_disableenumserialization) - CMake option to control
+  the macro
+- [`NLOHMANN_JSON_SERIALIZE_ENUM`](nlohmann_json_serialize_enum.md) - serialize/deserialize an enum
 
 ## Version history
 

@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 // cmake/test.cmake selects the C++ standard versions with which to build a
@@ -270,8 +270,8 @@ TEST_CASE("value conversion")
 
         SECTION("built-in arrays")
         {
-            const char str[] = "a string"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-            const int nbs[] = {0, 1, 2}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            const char str[] = "a string"; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            const int nbs[] = {0, 1, 2}; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 
             const json j2 = nbs;
             const json j3 = str;
@@ -360,7 +360,7 @@ TEST_CASE("value conversion")
 
         SECTION("built-in arrays")
         {
-            const int nbs[] = {0, 1, 2}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            const int nbs[] = {0, 1, 2}; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
             int nbs2[] = {0, 0, 0}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 
             const json j2 = nbs;
@@ -370,7 +370,7 @@ TEST_CASE("value conversion")
 
         SECTION("built-in arrays: 2D")
         {
-            const int nbs[][3] = {{0, 1, 2}, {3, 4, 5}}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            const int nbs[][3] = {{0, 1, 2}, {3, 4, 5}}; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
             int nbs2[][3] = {{0, 0, 0}, {0, 0, 0}}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 
             const json j2 = nbs;
@@ -380,7 +380,7 @@ TEST_CASE("value conversion")
 
         SECTION("built-in arrays: 3D")
         {
-            // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            // NOLINTBEGIN(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
             const int nbs[][2][3] = {\
                 {{0, 1, 2}, {3, 4, 5}}, \
                 {{10, 11, 12}, {13, 14, 15}}\
@@ -389,7 +389,7 @@ TEST_CASE("value conversion")
                 {{0, 0, 0}, {0, 0, 0}}, \
                 {{0, 0, 0}, {0, 0, 0}}\
             };
-            // NOLINTEND(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            // NOLINTEND(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 
             const json j2 = nbs;
             j2.get_to(nbs2);
@@ -398,7 +398,7 @@ TEST_CASE("value conversion")
 
         SECTION("built-in arrays: 4D")
         {
-            // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            // NOLINTBEGIN(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
             const int nbs[][2][2][3] = {\
                 {
                     \
@@ -423,7 +423,7 @@ TEST_CASE("value conversion")
                     {{0, 0, 0}, {0, 0, 0}}\
                 }\
             };
-            // NOLINTEND(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            // NOLINTEND(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 
             const json j2 = nbs;
             j2.get_to(nbs2);
@@ -1352,7 +1352,7 @@ TEST_CASE("value conversion")
 #ifndef SKIP_TESTS_FOR_ENUM_SERIALIZATION
     SECTION("get an enum")
     {
-        enum c_enum { value_1, value_2 };
+        enum c_enum { value_1, value_2 }; // NOLINT(cppcoreguidelines-use-enum-class)
         enum class cpp_enum { value_1, value_2 };
 
         CHECK(json(value_1).get<c_enum>() == value_1);
@@ -1514,7 +1514,7 @@ TEST_CASE("value conversion")
 
             SECTION("std::map (array of pairs)")
             {
-                std::map<int, int> m{{0, 1}, {1, 2}, {2, 3}};
+                const std::map<int, int> m{{0, 1}, {1, 2}, {2, 3}};
                 json const j6 = m;
 
                 auto m2 = j6.get<std::map<int, int>>();
@@ -1539,7 +1539,7 @@ TEST_CASE("value conversion")
 
             SECTION("std::unordered_map (array of pairs)")
             {
-                std::unordered_map<int, int> m{{0, 1}, {1, 2}, {2, 3}};
+                const std::unordered_map<int, int> m{{0, 1}, {1, 2}, {2, 3}};
                 json const j6 = m;
 
                 auto m2 = j6.get<std::unordered_map<int, int>>();
@@ -1591,7 +1591,7 @@ TEST_CASE("value conversion")
 
 enum class cards {kreuz, pik, herz, karo};
 
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+// NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(cards,
 {
     {cards::kreuz, "kreuz"},
@@ -1601,7 +1601,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(cards,
     {cards::karo, "karo"}
 })
 
-enum TaskState // NOLINT(cert-int09-c,readability-enum-initial-value)
+enum TaskState // NOLINT(cert-int09-c,readability-enum-initial-value,cppcoreguidelines-use-enum-class)
 {
     TS_STOPPED,
     TS_RUNNING,
@@ -1609,7 +1609,7 @@ enum TaskState // NOLINT(cert-int09-c,readability-enum-initial-value)
     TS_INVALID = -1,
 };
 
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+// NOLINTNEXTLINE(misc-const-correctness,misc-use-internal-linkage,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(TaskState,
 {
     {TS_INVALID, nullptr},
@@ -1658,6 +1658,31 @@ TEST_CASE("JSON to enum mapping")
 }
 
 #ifdef JSON_HAS_CPP_17
+#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
+TEST_CASE("std::filesystem::path")
+{
+    SECTION("ascii")
+    {
+        json const j_string = "Path";
+        auto p = j_string.template get<nlohmann::detail::std_fs::path>();
+        json const j_path = p;
+
+        CHECK(j_path.template get<std::string>() ==
+              j_string.template get<std::string>());
+    }
+
+    SECTION("utf-8")
+    {
+        json const j_string = "P\xc4\x9b\xc5\xa1ina";
+        auto p = j_string.template get<nlohmann::detail::std_fs::path>();
+        json const j_path = p;
+
+        CHECK(j_path.template get<std::string>() ==
+              j_string.template get<std::string>());
+    }
+}
+#endif
+
 #ifndef JSON_USE_IMPLICIT_CONVERSIONS
 TEST_CASE("std::optional")
 {

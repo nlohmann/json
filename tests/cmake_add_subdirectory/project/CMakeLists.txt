@@ -1,6 +1,10 @@
-cmake_minimum_required(VERSION 3.1...3.14)
+cmake_minimum_required(VERSION 3.5...3.14)
 
 project(DummyImport CXX)
+
+if(MSVC)
+    add_compile_options(/EHsc)
+endif()
 
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 add_subdirectory(${nlohmann_json_source}

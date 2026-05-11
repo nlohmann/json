@@ -46,7 +46,7 @@ bool number_float(number_float_t val, const string_t& s);
 // called when a string is parsed; value is passed and can be safely moved away
 bool string(string_t& val);
 // called when a binary value is parsed; value is passed and can be safely moved away
-bool binary(binary& val);
+bool binary(binary_t& val);
 
 // called when an object or array begins or ends, resp. The number of elements is passed (or -1 if not known)
 bool start_object(std::size_t elements);

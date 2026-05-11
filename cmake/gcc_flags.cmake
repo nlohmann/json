@@ -1,13 +1,13 @@
-# Warning flags determined for GCC 14.2.0 with https://github.com/nlohmann/gcc_flags:
+# Warning flags determined for GCC 15.1.0 with https://github.com/nlohmann/gcc_flags:
 # Ignored GCC warnings:
-# -Wno-abi-tag                    We do not care about ABI tags.
-# -Wno-aggregate-return           The library uses aggregate returns.
-# -Wno-long-long                  The library uses the long long type to interface with system functions.
-# -Wno-namespaces                 The library uses namespaces.
-# -Wno-nrvo                       Doctest triggers this warning.
-# -Wno-padded                     We do not care about padding warnings.
-# -Wno-system-headers             We do not care about warnings in system headers.
-# -Wno-templates                  The library uses templates.
+# -Wno-abi-tag           We do not care about ABI tags.
+# -Wno-aggregate-return  The library uses aggregate returns.
+# -Wno-long-long         The library uses the long long type to interface with system functions.
+# -Wno-namespaces        The library uses namespaces.
+# -Wno-nrvo              Doctest triggers this warning.
+# -Wno-padded            We do not care about padding warnings.
+# -Wno-system-headers    We do not care about warnings in system headers.
+# -Wno-templates         The library uses templates.
 
 set(GCC_CXXFLAGS
     -pedantic
@@ -65,6 +65,7 @@ set(GCC_CXXFLAGS
     -Wanalyzer-tainted-offset
     -Wanalyzer-tainted-size
     -Wanalyzer-too-complex
+    -Wanalyzer-undefined-behavior-ptrdiff
     -Wanalyzer-undefined-behavior-strtok
     -Wanalyzer-unsafe-call-within-signal-handler
     -Wanalyzer-use-after-free
@@ -123,6 +124,7 @@ set(GCC_CXXFLAGS
     -Wcoverage-invalid-line-number
     -Wcoverage-mismatch
     -Wcoverage-too-many-conditions
+    -Wcoverage-too-many-paths
     -Wcpp
     -Wctad-maybe-unsupported
     -Wctor-dtor-privacy
@@ -130,6 +132,7 @@ set(GCC_CXXFLAGS
     -Wdangling-pointer=2
     -Wdangling-reference
     -Wdate-time
+    -Wdefaulted-function-deleted
     -Wdelete-incomplete
     -Wdelete-non-virtual-dtor
     -Wdeprecated
@@ -138,6 +141,8 @@ set(GCC_CXXFLAGS
     -Wdeprecated-declarations
     -Wdeprecated-enum-enum-conversion
     -Wdeprecated-enum-float-conversion
+    -Wdeprecated-literal-operator
+    -Wdeprecated-variadic-comma-omission
     -Wdisabled-optimization
     -Wdiv-by-zero
     -Wdouble-promotion
@@ -157,20 +162,21 @@ set(GCC_CXXFLAGS
     -Wfloat-conversion
     -Wfloat-equal
     -Wformat -Wformat-contains-nul
+    -Wformat -Wformat-diag
     -Wformat -Wformat-extra-args
     -Wformat -Wformat-nonliteral
+    -Wformat -Wformat-overflow=2
     -Wformat -Wformat-security
+    -Wformat -Wformat-signedness
+    -Wformat -Wformat-truncation=2
     -Wformat -Wformat-y2k
     -Wformat -Wformat-zero-length
-    -Wformat-diag
-    -Wformat-overflow=2
-    -Wformat-signedness
-    -Wformat-truncation=2
     -Wformat=2
     -Wframe-address
     -Wfree-nonheap-object
     -Wglobal-module
     -Whardened
+    -Wheader-guard
     -Whsa
     -Wif-not-aligned
     -Wignored-attributes
@@ -197,6 +203,7 @@ set(GCC_CXXFLAGS
     -Wno-long-long
     -Wlto-type-mismatch
     -Wmain
+    -Wmaybe-musttail-local-addr
     -Wmaybe-uninitialized
     -Wmemset-elt-size
     -Wmemset-transposed-args
@@ -215,6 +222,7 @@ set(GCC_CXXFLAGS
     -Wmultichar
     -Wmultiple-inheritance
     -Wmultistatement-macros
+    -Wmusttail-local-addr
     -Wno-namespaces
     -Wnarrowing
     -Wnoexcept
@@ -245,6 +253,7 @@ set(GCC_CXXFLAGS
     -Wpmf-conversions
     -Wpointer-arith
     -Wpointer-compare
+    -Wpragma-once-outside-header
     -Wpragmas
     -Wprio-ctor-dtor
     -Wpsabi
@@ -276,10 +285,12 @@ set(GCC_CXXFLAGS
     -Wsizeof-pointer-div
     -Wsizeof-pointer-memaccess
     -Wstack-protector
+    -Wstrict-aliasing
     -Wstrict-aliasing=3
     -Wstrict-null-sentinel
     -Wstrict-overflow
     -Wstring-compare
+    -Wstringop-overflow
     -Wstringop-overflow=4
     -Wstringop-overread
     -Wstringop-truncation
@@ -304,8 +315,12 @@ set(GCC_CXXFLAGS
     -Wsynth
     -Wno-system-headers
     -Wtautological-compare
+    -Wtemplate-body
+    -Wtemplate-id-cdtor
+    -Wtemplate-names-tu-local
     -Wno-templates
     -Wterminate
+    -Wtrailing-whitespace
     -Wtrampolines
     -Wtrigraphs
     -Wtrivial-auto-var-init

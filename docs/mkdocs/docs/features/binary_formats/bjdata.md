@@ -5,12 +5,12 @@ The [BJData format](https://neurojson.org) was derived from and improved upon
 array container for efficient storage of N-dimensional packed arrays (**ND-arrays**); it also adds 5 new type markers -
 `[u] - uint16`, `[m] - uint32`, `[M] - uint64`, `[h] - float16` and `[B] - byte` - to unambiguously map common binary
 numeric types; furthermore, it uses little-endian (LE) to store all numerics instead of big-endian (BE) as in UBJSON to
-avoid  unnecessary conversions on commonly available platforms.
+avoid unnecessary conversions on commonly available platforms.
 
 Compared to other binary JSON-like formats such as MessagePack and CBOR, both BJData and UBJSON demonstrate a rare
 combination of being both binary and **quasi-human-readable**. This is because all semantic elements in BJData and
-UBJSON, including the data-type markers and name/string types are directly human-readable. Data stored in the
-BJData/UBJSON format are not only compact in size, fast to read/write, but also can be directly searched or read using
+UBJSON, including the data-type markers and name/string types, are directly human-readable. Data stored in the
+BJData/UBJSON format is not only compact in size, fast to read/write, but also can be directly searched or read using
 simple processing.
 
 !!! abstract "References"
@@ -115,7 +115,7 @@ The library uses the following mapping from JSON values types to BJData types ac
     }
     ```
 
-    Likewise, when a JSON object in the above form is serialzed using
+    Likewise, when a JSON object in the above form is serialized using
     [`to_bjdata`](../../api/basic_json/to_bjdata.md), it is automatically converted into a compact BJData ND-array. The
     only exception is, that when the 1-dimensional vector stored in `"_ArraySize_"` contains a single integer or two
     integers with one being 1, a regular 1-D optimized array is generated.

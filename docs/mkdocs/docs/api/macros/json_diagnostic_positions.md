@@ -8,14 +8,14 @@ This macro enables position diagnostics for generated JSON objects.
 
 When enabled, two new member functions [`start_pos()`](../basic_json/start_pos.md) and
 [`end_pos()`](../basic_json/end_pos.md) are added to [`basic_json`](../basic_json/index.md) values. If the value was
-created by calling the[`parse`](../basic_json/parse.md) function, then these functions allow to query the byte positions
+created by calling the[`parse`](../basic_json/parse.md) function, then these functions allow querying the byte positions
 of the value in the input it was parsed from. In case the value was constructed by other means, `std::string::npos` is
 returned.
 
 [`start_pos()`](../basic_json/start_pos.md) returns the position of the first character of a given value in the original
 JSON string, while [`end_pos()`](../basic_json/end_pos.md) returns the position of the character _following_ the last
 character. For objects and arrays, the first and last characters correspond to the opening or closing braces/brackets,
-respectively. For primitive values, the first and last character represent the opening and closing quotes (strings) or
+respectively. For primitive values, the first and last character represents the opening and closing quotes (strings) or
 the first and last character of the field's numerical or predefined value (`true`, `false`, `null`), respectively.
 
 | JSON type | return value [`start_pos()`](../basic_json/start_pos.md) | return value [`end_pos()`](../basic_json/end_pos.md) |
@@ -108,6 +108,12 @@ When the macro is not defined, the library will define it to its default value.
     ```
     
         The output shows the exception with diagnostic path info and start/end positions.
+
+## See also
+
+- [:simple-cmake: JSON_Diagnostic_Positions](../../integration/cmake.md#json_diagnostic_positions) - CMake option to control the macro
+- [JSON_DIAGNOSTICS](json_diagnostics.md) - macro to control extended diagnostics
+
 ## Version history
 
 - Added in version 3.12.0.

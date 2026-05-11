@@ -25,7 +25,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 Throws [`type_error.301`](../../home/exceptions.md#jsonexceptiontype_error301) if `init` is not a list of pairs whose
 first elements are strings. In this case, no object can be created. When such a value is passed to
 `basic_json(initializer_list_t, bool, value_t)`, an array would have been created from the passed initializer list
-`init`. See example below.
+`init`. See the example below.
 
 ## Complexity
 
@@ -34,7 +34,7 @@ Linear in the size of `init`.
 ## Notes
 
 This function is only added for symmetry reasons. In contrast to the related function `array(initializer_list_t)`, there
-are no cases which can only be expressed by this function. That is, any initializer list `init` can also be passed to
+are no cases that can only be expressed by this function. That is, any initializer list `init` can also be passed to
 the initializer list constructor `basic_json(initializer_list_t, bool, value_t)`.
     
 ## Examples

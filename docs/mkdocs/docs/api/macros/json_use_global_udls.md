@@ -92,6 +92,7 @@ When the macro is not defined, the library will define it to its default value.
 
 - [`operator""_json`](../operator_literal_json.md)
 - [`operator""_json_pointer`](../operator_literal_json_pointer.md)
+- [:simple-cmake: JSON_GlobalUDLs](../../integration/cmake.md#json_globaludls) - CMake option to control the macro
 
 ## Version history
 

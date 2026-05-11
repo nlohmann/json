@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-FileCopyrightText: 2018 Vitaliy Manushkin <agri@akamo.info>
 // SPDX-License-Identifier: MIT
 
@@ -207,49 +207,49 @@ TEST_CASE("alternative string type")
         {
             alt_json doc;
             doc["pi"] = 3.141;
-            alt_string dump = doc.dump();
+            const alt_string dump = doc.dump();
             CHECK(dump == R"({"pi":3.141})");
         }
 
         {
             alt_json doc;
             doc["happy"] = true;
-            alt_string dump = doc.dump();
+            const alt_string dump = doc.dump();
             CHECK(dump == R"({"happy":true})");
         }
 
         {
             alt_json doc;
             doc["name"] = "I'm Batman";
-            alt_string dump = doc.dump();
+            const alt_string dump = doc.dump();
             CHECK(dump == R"({"name":"I'm Batman"})");
         }
 
         {
             alt_json doc;
             doc["nothing"] = nullptr;
-            alt_string dump = doc.dump();
+            const alt_string dump = doc.dump();
             CHECK(dump == R"({"nothing":null})");
         }
 
         {
             alt_json doc;
             doc["answer"]["everything"] = 42;
-            alt_string dump = doc.dump();
+            const alt_string dump = doc.dump();
             CHECK(dump == R"({"answer":{"everything":42}})");
         }
 
         {
             alt_json doc;
             doc["list"] = { 1, 0, 2 };
-            alt_string dump = doc.dump();
+            const alt_string dump = doc.dump();
             CHECK(dump == R"({"list":[1,0,2]})");
         }
 
         {
             alt_json doc;
             doc["object"] = { {"currency", "USD"}, {"value", 42.99} };
-            alt_string dump = doc.dump();
+            const alt_string dump = doc.dump();
             CHECK(dump == R"({"object":{"currency":"USD","value":42.99}})");
         }
     }
@@ -257,7 +257,7 @@ TEST_CASE("alternative string type")
     SECTION("parse")
     {
         auto doc = alt_json::parse(R"({"foo": "bar"})");
-        alt_string dump = doc.dump();
+        const alt_string dump = doc.dump();
         CHECK(dump == R"({"foo":"bar"})");
     }
 
@@ -358,5 +358,13 @@ TEST_CASE("alternative string type")
         alt_json const j1 = {"foo", "bar", "baz"};
         alt_json const j2 = {"foo", "bam"};
         CHECK(alt_json::diff(j1, j2).dump() == "[{\"op\":\"replace\",\"path\":\"/1\",\"value\":\"bam\"},{\"op\":\"remove\",\"path\":\"/2\"}]");
+    }
+
+    SECTION("flatten")
+    {
+        // a JSON value
+        const alt_json j = alt_json::parse(R"({"foo": ["bar", "baz"]})");
+        const auto j2 = j.flatten();
+        CHECK(j2.dump() == R"({"/foo/0":"bar","/foo/1":"baz"})");
     }
 }

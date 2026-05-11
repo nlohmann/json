@@ -46,13 +46,14 @@ By default, implicit conversions are enabled.
 
     ```cpp
     json j = "Hello, world!";
-    auto s = j.template get<std::string>();
+    auto s = j.get<std::string>();
     ```
 
 ## See also
 
 - [**operator ValueType**](../basic_json/operator_ValueType.md) - get a value (implicit)
 - [**get**](../basic_json/get.md) - get a value (explicit)
+- [:simple-cmake: JSON_ImplicitConversions](../../integration/cmake.md#json_implicitconversions) - CMake option to control the macro
 
 ## Version history
 

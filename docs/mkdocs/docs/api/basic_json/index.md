@@ -38,7 +38,7 @@ class basic_json;
 ## Specializations
 
 - [**json**](../json.md) - default specialization
-- [**ordered_json**](../ordered_json.md) - specialization that maintains the insertion order of object keys
+- [**ordered_json**](../ordered_json.md) - a specialization that maintains the insertion order of object keys
 
 ## Iterator invalidation
 
@@ -58,8 +58,8 @@ The class satisfies the following concept requirements:
 
 ### Basic
 
-- [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible): JSON values can be default
-  constructed. The result will be a JSON null value.
+- [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible): JSON values can be
+  default-constructed. The result will be a JSON null value.
 - [MoveConstructible](https://en.cppreference.com/w/cpp/named_req/MoveConstructible): A JSON value can be constructed
   from an rvalue argument.
 - [CopyConstructible](https://en.cppreference.com/w/cpp/named_req/CopyConstructible): A JSON value can be
@@ -167,19 +167,19 @@ Functions to inspect the type of a JSON value.
 - [**type**](type.md) - return the type of the JSON value
 - [**operator value_t**](operator_value_t.md) - return the type of the JSON value
 - [**type_name**](type_name.md) - return the type as string
-- [**is_primitive**](is_primitive.md) - return whether type is primitive
-- [**is_structured**](is_structured.md) - return whether type is structured
-- [**is_null**](is_null.md) - return whether value is null
-- [**is_boolean**](is_boolean.md) - return whether value is a boolean
-- [**is_number**](is_number.md) - return whether value is a number
-- [**is_number_integer**](is_number_integer.md) - return whether value is an integer number
-- [**is_number_unsigned**](is_number_unsigned.md) - return whether value is an unsigned integer number
-- [**is_number_float**](is_number_float.md) - return whether value is a floating-point number
-- [**is_object**](is_object.md) - return whether value is an object
-- [**is_array**](is_array.md) - return whether value is an array
-- [**is_string**](is_string.md) - return whether value is a string
-- [**is_binary**](is_binary.md) - return whether value is a binary array
-- [**is_discarded**](is_discarded.md) - return whether value is discarded
+- [**is_primitive**](is_primitive.md) - return whether the type is primitive
+- [**is_structured**](is_structured.md) - return whether the type is structured
+- [**is_null**](is_null.md) - return whether the value is null
+- [**is_boolean**](is_boolean.md) - return whether the value is a boolean
+- [**is_number**](is_number.md) - return whether the value is a number
+- [**is_number_integer**](is_number_integer.md) - return whether the value is an integer number
+- [**is_number_unsigned**](is_number_unsigned.md) - return whether the value is an unsigned integer number
+- [**is_number_float**](is_number_float.md) - return whether the value is a floating-point number
+- [**is_object**](is_object.md) - return whether the value is an object
+- [**is_array**](is_array.md) - return whether the value is an array
+- [**is_string**](is_string.md) - return whether the value is a string
+- [**is_binary**](is_binary.md) - return whether the value is a binary array
+- [**is_discarded**](is_discarded.md) - return whether the value is discarded
 
 Optional functions to access the [diagnostic positions](../macros/json_diagnostic_positions.md).
 
@@ -237,7 +237,7 @@ Access to the JSON value
 - [**push_back**](push_back.md) - add a value to an array/object
 - [**operator+=**](operator+=.md) - add a value to an array/object
 - [**emplace_back**](emplace_back.md) - add a value to an array
-- [**emplace**](emplace.md) - add a value to an object if key does not exist
+- [**emplace**](emplace.md) - add a value to an object if a key does not exist
 - [**erase**](erase.md) - remove elements
 - [**insert**](insert.md) - inserts elements
 - [**update**](update.md) - updates a JSON object from another object, overwriting existing keys 

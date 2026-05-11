@@ -41,7 +41,7 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       configuration: Release
       platform: x86
-      CXX_FLAGS: "/permissive- /std:c++latest /utf-8 /W4 /WX"
+      CXX_FLAGS: "/permissive- /std:c++17 /utf-8 /W4 /WX"
       CMAKE_OPTIONS: ""
       GENERATOR: Visual Studio 15 2017
 
@@ -62,7 +62,7 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       configuration: Release
       platform: x64
-      CXX_FLAGS: "/permissive- /std:c++latest /Zc:__cplusplus /utf-8 /W4 /WX"
+      CXX_FLAGS: "/permissive- /std:c++17 /Zc:__cplusplus /utf-8 /W4 /WX"
       CMAKE_OPTIONS: ""
       GENERATOR: Visual Studio 15 2017
 

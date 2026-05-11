@@ -8,7 +8,7 @@ struct adl_serializer;
 Serializer that uses ADL ([Argument-Dependent Lookup](https://en.cppreference.com/w/cpp/language/adl)) to choose
 `to_json`/`from_json` functions from the types' namespaces.
 
-It is implemented similar to
+It is implemented similarly to
 
 ```cpp
 template<typename ValueType>

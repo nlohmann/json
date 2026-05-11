@@ -10,13 +10,13 @@ static void to_cbor(const basic_json& j, detail::output_adapter<char> o);
 ```
 
 Serializes a given JSON value `j` to a byte vector using the CBOR (Concise Binary Object Representation) serialization
-format. CBOR is a binary serialization format which aims to be more compact than JSON itself, yet more efficient to
+format. CBOR is a binary serialization format that aims to be more compact than JSON itself, yet more efficient to
 parse.
 
 1. Returns a byte vector containing the CBOR serialization.
 2. Writes the CBOR serialization to an output adapter.
 
-The exact mapping and its limitations is described on a [dedicated page](../../features/binary_formats/cbor.md).
+The exact mapping and its limitations are described on a [dedicated page](../../features/binary_formats/cbor.md).
 
 ## Parameters
 
@@ -28,7 +28,7 @@ The exact mapping and its limitations is described on a [dedicated page](../../f
 
 ## Return value
 
-1. CBOR serialization as byte vector
+1. CBOR serialization as a byte vector
 2. (none)
 
 ## Exception safety

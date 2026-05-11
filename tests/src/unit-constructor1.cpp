@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -281,6 +281,79 @@ TEST_CASE("constructors")
             // CHECK(std::get<2>(t) == j[2]); // commented out due to CI issue, see https://github.com/nlohmann/json/pull/3985 and https://github.com/nlohmann/json/issues/4025
         }
 
+        SECTION("std::tuple tie")
+        {
+            const auto a = 1.0;
+            const auto* const b = "string";
+            const auto c = 42;
+            const auto d = std::vector<int> {0, 2};
+            const size_t e = 1234;
+            auto t = std::tie(a, b, c, d, e);
+            json const j(t);
+
+            double a_out = 0;
+            std::string b_out;
+            int c_out = 0;
+            std::vector<int> d_out;
+            int64_t e_out = 0;
+            auto t_out = std::tie(a_out, b_out, c_out, d_out, e_out);
+            j.get_to(t_out);
+            CHECK(a_out == a);
+            CHECK(b_out == b);
+            CHECK(c_out == c);
+            CHECK(d_out == d);
+            CHECK(e_out == e);
+        }
+
+        SECTION("std::tuple of references to elements")
+        {
+            const auto a = 1.0;
+            const auto* const b = "string";
+            const auto c = 42;
+            const size_t d = 1234;
+            const auto t = std::tie(a, b, c, d);
+            json const j(t);
+
+            auto t_out = j.get<std::tuple<const json::number_float_t&,
+                 const json::string_t&,
+                 const json::number_integer_t&,
+                 const json::number_unsigned_t&>>();
+            CHECK(&std::get<0>(t_out) == j[0].get_ptr<const json::number_float_t*>());
+            CHECK(&std::get<1>(t_out) == j[1].get_ptr<const json::string_t*>());
+            CHECK(&std::get<2>(t_out) == j[2].get_ptr<const json::number_integer_t*>());
+            CHECK(&std::get<3>(t_out) == j[3].get_ptr<const json::number_unsigned_t*>());
+            CHECK(std::get<0>(t_out) == a);
+            CHECK(std::get<1>(t_out) == b);
+            CHECK(std::get<2>(t_out) == c);
+            CHECK(std::get<3>(t_out) == d);
+        }
+
+        SECTION("std::tuple mixed arithmetic types")
+        {
+            using j_float_t = json::number_float_t;
+            using j_int_t = json::number_integer_t;
+            using j_uint_t = json::number_unsigned_t;
+            const j_float_t a = 1.0;
+            const j_int_t b = 1234;
+            const j_uint_t c = 42;
+            json const j(std::tie(a, b, c, c));
+
+            auto t1 = j.get<std::tuple<j_int_t, j_uint_t, j_float_t, const j_uint_t&>>();
+            j_uint_t a2 = 0;
+            j_float_t b2 = 0;
+            j_int_t c2 = 0;
+            auto t2 = std::tie(a2, b2, c2);
+            j.get_to(t2);
+
+            CHECK(std::get<0>(t1) == static_cast<j_int_t>(a));
+            CHECK(std::get<1>(t1) == static_cast<j_uint_t>(b));
+            CHECK(std::get<2>(t1) == static_cast<j_float_t>(c));
+            // t1[3] exists only to force usage of the no-default-constructor version
+            CHECK(a2 == static_cast<j_uint_t>(a));
+            CHECK(b2 == static_cast<j_float_t>(b));
+            CHECK(c2 == static_cast<j_int_t>(c));
+        }
+
         SECTION("std::pair/tuple/array failures")
         {
             json const j{1};
@@ -412,7 +485,7 @@ TEST_CASE("constructors")
 
         SECTION("char[]")
         {
-            char const s[] {"Hello world"}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            const char s[] {"Hello world"}; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
             json const j(s);
             CHECK(j.type() == json::value_t::string);
             CHECK(j == j_reference);
@@ -779,7 +852,7 @@ TEST_CASE("constructors")
 
         SECTION("integer literal with u suffix")
         {
-            json j(42u);
+            const json j(42u);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -793,7 +866,7 @@ TEST_CASE("constructors")
 
         SECTION("integer literal with ul suffix")
         {
-            json j(42ul);
+            const json j(42ul);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -807,7 +880,7 @@ TEST_CASE("constructors")
 
         SECTION("integer literal with ull suffix")
         {
-            json j(42ull);
+            const json j(42ull);
             CHECK(j.type() == json::value_t::number_unsigned);
             CHECK(j == j_unsigned_reference);
         }
@@ -1362,7 +1435,7 @@ TEST_CASE("constructors")
             {
                 {
                     json jarray = {1, 2, 3, 4, 5};
-                    json j_new(jarray.begin(), jarray.begin());
+                    const json j_new(jarray.begin(), jarray.begin());
                     CHECK(j_new == json::array());
                 }
                 {

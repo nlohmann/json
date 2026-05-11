@@ -7,7 +7,7 @@ class byte_container_with_subtype : public BinaryType;
 
 This type extends the template parameter `BinaryType` provided to [`basic_json`](../basic_json/index.md) with a subtype
 used by BSON and MessagePack. This type exists so that the user does not have to specify a type themselves with a
-specific naming scheme in  order to override the binary type.
+specific naming scheme in order to override the binary type.
 
 ## Template parameters
 
@@ -32,4 +32,4 @@ specific naming scheme in  order to override the binary type.
 ## Version history
 
 - Added in version 3.8.0.
-- Changed type of subtypes to `#!cpp std::uint64_t` in 3.10.0.
+- Changed the type of subtypes to `#!cpp std::uint64_t` in 3.10.0.

@@ -72,6 +72,10 @@ When the macro is not defined, the library will define it to its default value.
     ...
     ```
 
+### See also
+
+- [:simple-cmake: JSON_LegacyDiscardedValueComparison](../../integration/cmake.md#json_legacydiscardedvaluecomparison) - CMake option to control the macro
+
 ## Version history
 
 - Added in version 3.11.0.

@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -735,14 +735,14 @@ TEST_CASE("different basic_json types conversions")
     SECTION("null")
     {
         json const j;
-        custom_json cj = j;
+        const custom_json cj = j;
         CHECK(cj == nullptr);
     }
 
     SECTION("boolean")
     {
         json const j = true;
-        custom_json cj = j;
+        const custom_json cj = j;
         CHECK(cj == true);
     }
 
@@ -764,28 +764,28 @@ TEST_CASE("different basic_json types conversions")
     SECTION("integer")
     {
         json const j = 42;
-        custom_json cj = j;
+        const custom_json cj = j;
         CHECK(cj == 42);
     }
 
     SECTION("float")
     {
         json const j = 42.0;
-        custom_json cj = j;
+        const custom_json cj = j;
         CHECK(cj == 42.0);
     }
 
     SECTION("unsigned")
     {
         json const j = 42u;
-        custom_json cj = j;
+        const custom_json cj = j;
         CHECK(cj == 42u);
     }
 
     SECTION("string")
     {
         json const j = "forty-two";
-        custom_json cj = j;
+        const custom_json cj = j;
         CHECK(cj == "forty-two");
     }
 
@@ -794,7 +794,7 @@ TEST_CASE("different basic_json types conversions")
         json j = json::binary({1, 2, 3}, 42);
         custom_json cj = j;
         CHECK(cj.get_binary().subtype() == 42);
-        std::vector<std::uint8_t> cv = cj.get_binary();
+        const std::vector<std::uint8_t>& cv = cj.get_binary();
         std::vector<std::uint8_t> v = j.get_binary();
         CHECK(cv == v);
     }
@@ -802,7 +802,7 @@ TEST_CASE("different basic_json types conversions")
     SECTION("object")
     {
         json const j = {{"forty", "two"}};
-        custom_json cj = j;
+        const custom_json cj = j;
         auto m = j.get<std::map<std::string, std::string>>();
         CHECK(cj == m);
     }
@@ -810,7 +810,7 @@ TEST_CASE("different basic_json types conversions")
     SECTION("get<custom_json>")
     {
         json const j = 42;
-        custom_json cj = j.get<custom_json>();
+        const custom_json cj = j.get<custom_json>();
         CHECK(cj == 42);
     }
 }
@@ -841,7 +841,7 @@ class Evil
   public:
     Evil() = default;
     template <typename T>
-    Evil(T t) : m_i(sizeof(t))
+    Evil(const T& t) : m_i(sizeof(t))
     {
         static_cast<void>(t); // fix MSVC's C4100 warning
     }
@@ -861,8 +861,12 @@ TEST_CASE("Issue #924")
     CHECK_NOTHROW(j.get<std::vector<Evil>>());
 
     // silence Wunused-template warnings
-    Evil e(1);
+    const Evil e(1);
     CHECK(e.m_i >= 0);
+
+    // suppress warning: function "<unnamed>::Evil::Evil(T) [with T=std::string]" was declared but never referenced [declared_but_not_referenced]
+    const Evil e2(std::string("foo"));
+    CHECK(e2.m_i >= 0);
 }
 
 TEST_CASE("Issue #1237")

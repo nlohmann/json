@@ -4,9 +4,6 @@
 *.gcda
 .DS_Store
 
-.wsjcpp-logs/*
-.wsjcpp/*
-
 /.idea
 /cmake-build-*
 

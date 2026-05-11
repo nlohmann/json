@@ -13,9 +13,9 @@ byte_container_with_subtype(const container_type& container, subtype_type subtyp
 byte_container_with_subtype(container_type&& container, subtype_type subtype);
 ```
 
-1. Create empty binary container without subtype.
-2. Create binary container without subtype.
-3. Create binary container with subtype.
+1. Create an empty binary container without a subtype.
+2. Create a binary container without a subtype.
+3. Create a binary container with a subtype.
 
 ## Parameters
 

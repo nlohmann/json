@@ -1,7 +1,7 @@
 # Contribution Guidelines
 
 Thank you for your interest in contributing to this project! What began as an exercise to explore the exciting features
-of C++11 has evolved into a [widely-used](https://json.nlohmann.me/home/customers/) JSON library. I truly appreciate all
+of C++11 has evolved into a [widely used](https://json.nlohmann.me/home/customers/) JSON library. I truly appreciate all
 the contributions from the community, whether it's proposing features, identifying bugs, or fixing mistakes! To ensure
 that our collaboration is efficient and effective, please follow these guidelines.
 
@@ -21,7 +21,7 @@ Clearly describe the issue:
 
 - If it is a bug, please describe how to **reproduce** it. If possible, attach a _complete example_ which demonstrates
   the error. Please also state what you **expected** to happen instead of the error.
-- If you propose a change or addition, try to give an **example** how the improved code could look like or how to use
+- If you propose a change or addition, try to give an **example** what the improved code could look like or how to use
   it.
 - If you found a compilation error, please tell us which **compiler** (version and operating system) you used and paste
   the (relevant part of) the error messages to the ticket.
@@ -66,21 +66,21 @@ certification that he or she has the right to submit the patch for inclusion int
 
 ### Describe your changes
 
-This library is primarily maintained as a spare-time project. As such, I can not make any guarantee how quickly changes
+This library is primarily maintained as a spare-time project. As such, I cannot make any guarantee how quickly changes
 are merged and released. Therefore, it is very important to make the review as smooth as possible by explaining not only
 _what_ you changed, but _why_. This rationale can be very valuable down the road when improvements or bugs are discussed
 years later.
 
-### Reference existing issues
+### Reference an existing issue
 
 [Link a pull request to an issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue)
-to clarify that a fix is forthcoming and which issue can be closed after merging. Only few cases (e.g., fixing typos)
-don’t require prior discussions.
+to clarify that a fix is forthcoming and which issue can be closed after merging. Only a few cases (e.g., fixing typos)
+do not require prior discussions.
 
 ### Write tests
 
 The library has an extensive test suite that currently covers [100 %](https://coveralls.io/github/nlohmann/json) of the
-library's code. These test are crucial to maintain API stability and give future contributors confidence that they do
+library's code. These tests are crucial to maintain API stability and give future contributors confidence that they do
 not accidentally break things. As Titus Winters aptly put it:
 
 > If you liked it, you should have put a test on it.
@@ -118,14 +118,14 @@ exception into account.
 #### Coverage
 
 If test coverage decreases, an automatic warning comment will be posted on the pull request. You can access a code
-coverage report as artifact to the “Ubuntu” workflow.
+coverage report as an artifact to the “Ubuntu” workflow.
 
 ### Update the documentation
 
 The [main documentation](https://json.nlohmann.me) of the library is generated from the files
 [`docs/mkdocs/docs`](https://github.com/nlohmann/json/blob/develop/docs/mkdocs/docs). This folder contains dedicated
 pages for [certain features](https://github.com/nlohmann/json/tree/develop/docs/mkdocs/docs/features), a list of
-[all exceptions](https://github.com/nlohmann/json/blob/develop/docs/mkdocs/docs/home/exceptions.md), and an
+[all exceptions](https://github.com/nlohmann/json/blob/develop/docs/mkdocs/docs/home/exceptions.md), and 
 [extensive API documentation](https://github.com/nlohmann/json/tree/develop/docs/mkdocs/docs/api) with details on every
 public API function.
 
@@ -136,7 +136,7 @@ make install_venv -C docs/mkdocs
 make serve -C docs/mkdocs
 ```
 
-The documentation will then available at <http://127.0.0.1:8000/>. See the documentation of
+The documentation will then be available at <http://127.0.0.1:8000/>. See the documentation of
 [mkdocs](https://www.mkdocs.org) and [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/) for more
 information.
 
@@ -152,6 +152,9 @@ files directly; instead, modify the include/nlohmann sources and regenerate the 
 ```shell
 make amalgamate
 ```
+
+Running `make amalgamate` will also apply automatic formatting to the source files using
+[`Artistic Style`](https://astyle.sourceforge.net/). This formatting may modify your source files in-place. Be certain to review and commit any changes to avoid unintended formatting diffs in commits.
 
 ## Recommended documentation
 
@@ -184,8 +187,8 @@ API of the 3.x.y version is broken. This includes:
 Although these guidelines may seem restrictive, they are essential for maintaining the library’s utility.
 
 Breaking changes may be introduced when they are guarded with a feature macro such as
-[`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/) which allows to
-selectively change the behavior of the library. In next steps, the current behavior can then be deprecated. Using
+[`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/) which allows 
+selectively changing the behavior of the library. In next steps, the current behavior can then be deprecated. Using
 feature macros then allows users to test their code against the library in the next major release.
 
 ### Break C++11 language conformance
@@ -211,7 +214,7 @@ The following areas really need contribution and are always welcomed:
 - Extending the **continuous integration** toward more exotic compilers such as Android NDK, Intel's Compiler, or the
   bleeding-edge versions Clang.
 - Improving the efficiency of the **JSON parser**. The current parser is implemented as a naive recursive descent parser
-  with hand coded string handling. More sophisticated approaches like LALR parsers would be really appreciated. That
+  with hand-coded string handling. More sophisticated approaches like LALR parsers would be really appreciated. That
   said, parser generators like Bison or ANTLR do not play nice with single-header files -- I really would like to keep
   the parser inside the `json.hpp` header, and I am not aware of approaches similar to [`re2c`](http://re2c.org) for
   parsing.
