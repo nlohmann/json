@@ -19996,8 +19996,11 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 
     ordered_map& operator=(const ordered_map& other)
     {
-        ordered_map tmp(other);
-        Container::operator=(std::move(static_cast<Container&>(tmp)));
+        if (this != &other)
+        {
+            ordered_map tmp(other);
+            Container::operator=(std::move(static_cast<Container&>(tmp)));
+        }
         return *this;
     }
 
