@@ -23,7 +23,7 @@
 // other module imports, GCC may report spurious redefinition errors for
 // STL templates. These pragmas suppress those false positives.
 // See: https://github.com/nlohmann/json/issues/5103
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && !defined(__clang__) && __cplusplus >= 202002L
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wignored-attributes"
 #endif
@@ -5355,7 +5355,7 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 #include <nlohmann/detail/macro_unscope.hpp>
 
 // End of GCC diagnostic pragmas for C++ modules support
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && !defined(__clang__) && __cplusplus >= 202002L
     #pragma GCC diagnostic pop
 #endif
 
