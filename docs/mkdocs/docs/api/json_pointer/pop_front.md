@@ -12,7 +12,7 @@ Throws [out_of_range.405](../../home/exceptions.md#jsonexceptionout_of_range405)
 
 ## Complexity
 
-Constant.
+Linear in the number of reference tokens in the `json_pointer`.
 
 ## Examples
 
@@ -31,4 +31,3 @@ Constant.
     ```
 
 ## Version history
-

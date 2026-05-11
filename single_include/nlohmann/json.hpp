@@ -14872,9 +14872,9 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/pop_front/
     void pop_front()
     {
-        if(JSON_HEDLEY_UNLIKELY(empty()))
+        if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405,"JSON pointer has no parent",nullptr));
+            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
         }
 
         reference_tokens.erase(reference_tokens.cbegin());
@@ -14884,9 +14884,9 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/front/
     const string_t& front() const
     {
-        if(JSON_HEDLEY_UNLIKELY(empty()))
+        if (JSON_HEDLEY_UNLIKELY(empty()))
         {
-            JSON_THROW(detail::out_of_range::create(405,"JSON pointer has no parent",nullptr));
+            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
         }
 
         return reference_tokens.front();
@@ -14896,14 +14896,14 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/push_front/
     void push_front(const string_t& token)
     {
-        reference_tokens.insert(reference_tokens.cbegin(),token);
+        reference_tokens.insert(reference_tokens.cbegin(), token);
     }
 
     /// @brief append an unescaped token at the start of the reference pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/push_front/
     void push_front(string_t&& token)
     {
-        reference_tokens.insert(reference_tokens.cbegin(),std::move(token));
+        reference_tokens.insert(reference_tokens.cbegin(), std::move(token));
     }
 
     /// @brief remove last reference token

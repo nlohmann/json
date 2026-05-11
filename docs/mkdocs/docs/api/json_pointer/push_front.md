@@ -15,7 +15,7 @@ Append an unescaped token at the start of the reference pointer.
 
 ## Complexity
 
-Amortized constant.
+Linear in the number of reference tokens in the `json_pointer`.
 
 ## Examples
 
@@ -34,4 +34,3 @@ Amortized constant.
     ```
 
 ## Version history
-

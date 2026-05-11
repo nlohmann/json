@@ -158,7 +158,7 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/pop_front/
     void pop_front()
     {
-        if(JSON_HEDLEY_UNLIKELY(empty()))
+        if (JSON_HEDLEY_UNLIKELY(empty()))
         {
             JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
         }
@@ -170,7 +170,7 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/front/
     const string_t& front() const
     {
-        if(JSON_HEDLEY_UNLIKELY(empty()))
+        if (JSON_HEDLEY_UNLIKELY(empty()))
         {
             JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
         }

@@ -35,5 +35,3 @@ Constant.
     ```
 
 ## Version history
-
-

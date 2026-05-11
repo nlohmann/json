@@ -597,16 +597,16 @@ TEST_CASE("JSON pointers")
         CHECK(j[ptr] == j);
 
         CHECK_THROWS_WITH_AS(ptr.pop_back(),
-                          "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
 
         CHECK_THROWS_WITH_AS(ptr.back(),
-                  "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
 
         CHECK_THROWS_WITH_AS(ptr.pop_front(),
-                  "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
 
         CHECK_THROWS_WITH_AS(ptr.front(),
-                  "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
     }
 
     SECTION("operators")
