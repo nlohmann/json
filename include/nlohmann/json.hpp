@@ -24,8 +24,8 @@
 // STL templates. These pragmas suppress those false positives.
 // See: https://github.com/nlohmann/json/issues/5103
 #if defined(__GNUC__) && !defined(__clang__) && __cplusplus >= 202002L
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wignored-attributes"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-attributes"
 #endif
 
 #include <algorithm> // all_of, find, for_each
@@ -33,7 +33,7 @@
 #include <functional> // hash, less
 #include <initializer_list> // initializer_list
 #ifndef JSON_NO_IO
-    #include <iosfwd> // istream, ostream
+#include <iosfwd> // istream, ostream
 #endif  // JSON_NO_IO
 #include <iterator> // random_access_iterator_tag
 #include <memory> // unique_ptr
@@ -73,10 +73,10 @@
 #include <nlohmann/ordered_map.hpp>
 
 #if defined(JSON_HAS_CPP_17)
-    #if JSON_HAS_STATIC_RTTI
-        #include <any>
-    #endif
-    #include <string_view>
+#if JSON_HAS_STATIC_RTTI
+#include <any>
+#endif
+#include <string_view>
 #endif
 
 /*!
@@ -5342,21 +5342,21 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 }  // namespace std
 
 #if JSON_USE_GLOBAL_UDLS
-    #if !defined(JSON_HEDLEY_GCC_VERSION) || JSON_HEDLEY_GCC_VERSION_CHECK(4,9,0)
-        using nlohmann::literals::json_literals::operator""_json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
-        using nlohmann::literals::json_literals::operator""_json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
-    #else
-        // GCC 4.8 requires a space between "" and suffix
-        using nlohmann::literals::json_literals::operator"" _json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
-        using nlohmann::literals::json_literals::operator"" _json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
-    #endif
+#if !defined(JSON_HEDLEY_GCC_VERSION) || JSON_HEDLEY_GCC_VERSION_CHECK(4,9,0)
+using nlohmann::literals::json_literals::operator""_json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
+using nlohmann::literals::json_literals::operator""_json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
+#else
+// GCC 4.8 requires a space between "" and suffix
+using nlohmann::literals::json_literals::operator"" _json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
+using nlohmann::literals::json_literals::operator"" _json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
+#endif
 #endif
 
 #include <nlohmann/detail/macro_unscope.hpp>
 
 // End of GCC diagnostic pragmas for C++ modules support
 #if defined(__GNUC__) && !defined(__clang__) && __cplusplus >= 202002L
-    #pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 #endif
 
 #endif  // INCLUDE_NLOHMANN_JSON_HPP_

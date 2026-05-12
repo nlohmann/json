@@ -25,11 +25,11 @@
 # indent switch cases to the switch block
 --indent-switches
 
-# indent preprocessor blocks
---indent-preproc-block
+# DO NOT indent preprocessor blocks
+# --indent-preproc-block
 
-# indent preprocessor defines
---indent-preproc-define
+# DO NOT indent preprocessor defines  
+# --indent-preproc-define
 
 # indent C++ comments
 --indent-col1-comments
