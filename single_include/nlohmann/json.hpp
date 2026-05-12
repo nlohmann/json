@@ -14877,7 +14877,7 @@ class json_pointer
             JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
         }
 
-        reference_tokens.erase(reference_tokens.cbegin());
+        reference_tokens.erase(reference_tokens.begin());
     }
 
     /// @brief return first reference token
@@ -14896,14 +14896,14 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/push_front/
     void push_front(const string_t& token)
     {
-        reference_tokens.insert(reference_tokens.cbegin(), token);
+        reference_tokens.insert(reference_tokens.begin(), token);
     }
 
     /// @brief append an unescaped token at the start of the reference pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/push_front/
     void push_front(string_t&& token)
     {
-        reference_tokens.insert(reference_tokens.cbegin(), std::move(token));
+        reference_tokens.insert(reference_tokens.begin(), std::move(token));
     }
 
     /// @brief remove last reference token
