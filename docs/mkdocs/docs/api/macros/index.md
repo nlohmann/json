@@ -106,4 +106,4 @@ header. See also the [macro overview page](../../features/macros.md).
 - [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize/deserialize
   a derived class; uses default values; uses custom names
 - [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize a derived
-  class
+  class; uses custom names

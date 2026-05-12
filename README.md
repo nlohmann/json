@@ -874,7 +874,7 @@ If you want to inherit the `person` struct and add a field to it, it can be done
 ```cpp
 namespace ns {
     struct person_derived : person {
-        std:string email;
+        std::string email;
     };
     
     NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(person_derived, person, email)
