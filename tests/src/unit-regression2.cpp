@@ -1269,4 +1269,52 @@ TEST_CASE("regression test #5122 - from_json into types holding nlohmann::ordere
     }
 }
 
+DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wself-assign-overloaded")
+
+TEST_CASE("regression test #5122 - nlohmann::ordered_map copy-assignment is self-assignment safe")
+{
+    nlohmann::ordered_map<std::string, std::string> m;
+    m.emplace("first", "1");
+    m.emplace("second", "2");
+
+    // Insertion order is preserved by ordered_map, so we can check it directly.
+    m = m;
+
+    REQUIRE(m.size() == 2);
+    auto it = m.begin();
+    CHECK(it->first == "first");
+    CHECK(it->second == "1");
+    ++it;
+    CHECK(it->first == "second");
+    CHECK(it->second == "2");
+}
+
+DOCTEST_CLANG_SUPPRESS_WARNING_POP
+
+TEST_CASE("regression test #5122 - nlohmann::ordered_map move-assignment transfers contents")
+{
+    nlohmann::ordered_map<std::string, std::string> src;
+    src.emplace("first", "1");
+    src.emplace("second", "2");
+
+    nlohmann::ordered_map<std::string, std::string> dst;
+    dst.emplace("stale", "x");
+    dst = std::move(src);
+
+    REQUIRE(dst.size() == 2);
+    auto it = dst.begin();
+    CHECK(it->first == "first");
+    CHECK(it->second == "1");
+    ++it;
+    CHECK(it->first == "second");
+    CHECK(it->second == "2");
+
+    // Re-assigning into the moved-from object must leave it in a usable state.
+    src = nlohmann::ordered_map<std::string, std::string>{};
+    src.emplace("after-move", "3");
+    REQUIRE(src.size() == 1);
+    CHECK(src.begin()->first == "after-move");
+}
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
