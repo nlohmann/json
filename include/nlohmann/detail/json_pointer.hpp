@@ -189,7 +189,7 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/push_front/
     void push_front(string_t&& token)
     {
-        reference_tokens.insert(reference_tokens.cbegin(), std::move(token));
+        reference_tokens.insert(reference_tokens.begin(), std::move(token));
     }
 
     /// @brief remove last reference token
