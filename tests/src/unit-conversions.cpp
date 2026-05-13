@@ -1704,7 +1704,7 @@ TEST_CASE("Strict JSON to enum mapping")
 
         // invalid json -> exception thrown
         json _;
-        CHECK_THROWS_WITH_AS(_ = json("what?").get<strict_cards>(), "[json.exception.out_of_range.403] enum value out of range", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(_ = json("what?").get<strict_cards>(), "[json.exception.out_of_range.410] enum value out of range", json::out_of_range&);
     }
 
     SECTION("traditional enum")
@@ -1723,7 +1723,7 @@ TEST_CASE("Strict JSON to enum mapping")
 
         // invalid json -> exception thrown
         json _;
-        CHECK_THROWS_WITH_AS(_ = json("what?").get<StrictTaskState>(), "[json.exception.out_of_range.403] enum value out of range", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(_ = json("what?").get<StrictTaskState>(), "[json.exception.out_of_range.410] enum value out of range", json::out_of_range&);
     }
 }
 

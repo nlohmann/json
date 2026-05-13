@@ -286,7 +286,7 @@ void templated_json_throw(ExceptionType exception)
             return ej_pair.first == e;                                                          \
         });                                                                                     \
         if (it != std::end(m)) j = it->second;                                                  \
-		else templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(403,"enum value out of range",nullptr)); \
+		else templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(410,"enum value out of range",nullptr)); \
     }                                                                                           \
     template<typename BasicJsonType>                                                            \
     inline void from_json(const BasicJsonType& j, ENUM_TYPE& e)                                 \
@@ -301,7 +301,7 @@ void templated_json_throw(ExceptionType exception)
             return ej_pair.second == j;                                                         \
         });                                                                                     \
         if (it != std::end(m)) e = it->first;                                                   \
-		else templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(403,"enum value out of range",nullptr)); \
+		else templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(410,"enum value out of range",nullptr)); \
     }
 
 
