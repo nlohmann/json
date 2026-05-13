@@ -69,3 +69,15 @@ TEST_CASE("ordered_json")
     CHECK(oj1.size() == 4);
     CHECK(oj1.dump() == "{\"c\":1,\"b\":2,\"a\":3,\"d\":42}");
 }
+
+TEST_CASE("regression test for issue #3732 - iteration_proxy_value<iter_impl<ordered_json>>")
+{
+    // Naming the proxy type in a function-parameter position forces eager
+    // instantiation of basic_json<ordered_map>; previously this hit an
+    // incomplete-type error in set_parents().
+    auto fn = [](nlohmann::detail::iteration_proxy_value<nlohmann::detail::iter_impl<nlohmann::ordered_json>> const& val)
+    {
+        return val.value();
+    };
+    static_cast<void>(fn);
+}
