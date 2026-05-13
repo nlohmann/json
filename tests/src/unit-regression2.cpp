@@ -1269,19 +1269,15 @@ TEST_CASE("regression test #5122 - from_json into types holding nlohmann::ordere
     }
 }
 
-#define JSON_TEST_5122_SUPPRESS_SELF_ASSIGN_OVERLOADED 0
-#if defined(__clang__)
-    #if defined(__has_warning)
-        #if __has_warning("-Wself-assign-overloaded")
-            #undef JSON_TEST_5122_SUPPRESS_SELF_ASSIGN_OVERLOADED
-            #define JSON_TEST_5122_SUPPRESS_SELF_ASSIGN_OVERLOADED 1
-        #endif
-    #endif
-#endif
-
-#if JSON_TEST_5122_SUPPRESS_SELF_ASSIGN_OVERLOADED
+// -Wself-assign-overloaded was introduced in Clang 7. Gate the pragma on
+// __has_warning so older Clang versions do not error with "unknown warning
+// group". The __has_warning check has to stay inside the __clang__ branch
+// because GCC does not provide it and would tokenize-error on the argument.
+#if defined(__clang__) && defined(__has_warning)
+    #if __has_warning("-Wself-assign-overloaded")
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
 DOCTEST_CLANG_SUPPRESS_WARNING("-Wself-assign-overloaded")
+    #endif
 #endif
 
 TEST_CASE("regression test #5122 - nlohmann::ordered_map copy-assignment is self-assignment safe")
@@ -1302,10 +1298,11 @@ TEST_CASE("regression test #5122 - nlohmann::ordered_map copy-assignment is self
     CHECK(it->second == "2");
 }
 
-#if JSON_TEST_5122_SUPPRESS_SELF_ASSIGN_OVERLOADED
+#if defined(__clang__) && defined(__has_warning)
+    #if __has_warning("-Wself-assign-overloaded")
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
+    #endif
 #endif
-#undef JSON_TEST_5122_SUPPRESS_SELF_ASSIGN_OVERLOADED
 
 TEST_CASE("regression test #5122 - nlohmann::ordered_map move-assignment transfers contents")
 {
