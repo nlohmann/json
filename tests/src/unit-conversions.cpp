@@ -1664,7 +1664,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(strict_cards,
 {
     {strict_cards::kreuz, "kreuz"},
     {strict_cards::pik, "pik"},
-    {strict_cards::pik, "puk"},  // second entry for cards::puk; will not be used
+    {strict_cards::pik, "puk"},  // second entry for cards::pik; will not be used
     {strict_cards::herz, "herz"},
     {strict_cards::karo, "karo"}
 })

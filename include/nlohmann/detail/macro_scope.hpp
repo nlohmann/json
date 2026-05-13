@@ -304,7 +304,6 @@ void templated_json_throw(ExceptionType exception)
         else templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(410,"enum value out of range",nullptr)); \
     }
 
-
 // Ugly macros to avoid uglier copy-paste when specializing basic_json. They
 // may be removed in the future once the class is split.
 
