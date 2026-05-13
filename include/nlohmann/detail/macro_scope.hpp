@@ -264,6 +264,10 @@ template<typename ExceptionType>
 void templated_json_throw(ExceptionType exception)
 {
     JSON_THROW(exception);
+
+    /* JSON_THROW(exception) discards exception and aborts - void cast needed to supress
+       compilation error if compiled with -Werror and Wunused-parameter */
+    (void)exception;
 }
 
 /*!
