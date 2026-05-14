@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -331,7 +331,6 @@ TEST_CASE("BSON")
 
         SECTION("non-empty object with unsigned integer (64-bit) member")
         {
-            // directly encoding uint64 is not supported in bson (only for timestamp values)
             json const j =
             {
                 { "entry", std::uint64_t{0x1234567804030201} }
@@ -531,7 +530,6 @@ TEST_CASE("BSON")
 
         SECTION("Some more complex document")
         {
-            // directly encoding uint64 is not supported in bson (only for timestamp values)
             json const j =
             {
                 {"double", 42.5},
@@ -562,15 +560,15 @@ TEST_CASE("BSON")
         }
     }
 
-    SECTION("Examples from http://bsonspec.org/faq.html")
+    SECTION("Examples from https://bsonspec.org/faq.html")
     {
         SECTION("Example 1")
         {
             std::vector<std::uint8_t> input = {0x16, 0x00, 0x00, 0x00, 0x02, 'h', 'e', 'l', 'l', 'o', 0x00, 0x06, 0x00, 0x00, 0x00, 'w', 'o', 'r', 'l', 'd', 0x00, 0x00};
-            json parsed = json::from_bson(input);
-            json expected = {{"hello", "world"}};
+            const json parsed = json::from_bson(input);
+            const json expected = {{"hello", "world"}};
             CHECK(parsed == expected);
-            auto dumped = json::to_bson(parsed);
+            const auto dumped = json::to_bson(parsed);
             CHECK(dumped == input);
             CHECK(json::from_bson(dumped) == expected);
         }
@@ -578,10 +576,10 @@ TEST_CASE("BSON")
         SECTION("Example 2")
         {
             std::vector<std::uint8_t> input = {0x31, 0x00, 0x00, 0x00, 0x04, 'B', 'S', 'O', 'N', 0x00, 0x26, 0x00, 0x00, 0x00, 0x02, 0x30, 0x00, 0x08, 0x00, 0x00, 0x00, 'a', 'w', 'e', 's', 'o', 'm', 'e', 0x00, 0x01, 0x31, 0x00, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x14, 0x40, 0x10, 0x32, 0x00, 0xc2, 0x07, 0x00, 0x00, 0x00, 0x00};
-            json parsed = json::from_bson(input);
-            json expected = {{"BSON", {"awesome", 5.05, 1986}}};
+            const json parsed = json::from_bson(input);
+            const json expected = {{"BSON", {"awesome", 5.05, 1986}}};
             CHECK(parsed == expected);
-            auto dumped = json::to_bson(parsed);
+            const auto dumped = json::to_bson(parsed);
             CHECK(dumped == input);
             CHECK(json::from_bson(dumped) == expected);
         }
@@ -590,7 +588,7 @@ TEST_CASE("BSON")
 
 TEST_CASE("BSON input/output_adapters")
 {
-    json json_representation =
+    const json json_representation =
     {
         {"double", 42.5},
         {"entry", 4.2},
@@ -598,7 +596,7 @@ TEST_CASE("BSON input/output_adapters")
         {"object", {{ "string", "value" }}}
     };
 
-    std::vector<std::uint8_t> const bson_representation =
+    const std::vector<std::uint8_t> bson_representation =
     {
         /*size */ 0x4f, 0x00, 0x00, 0x00,
         /*entry*/ 0x01, 'd',  'o',  'u',  'b',  'l',  'e',  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x45, 0x40,
@@ -621,9 +619,9 @@ TEST_CASE("BSON input/output_adapters")
     {
         SECTION("std::ostringstream")
         {
-            std::basic_ostringstream<std::uint8_t> ss;
+            std::basic_ostringstream<char> ss;
             json::to_bson(json_representation, ss);
-            json j3 = json::from_bson(ss.str());
+            const json j3 = json::from_bson(ss.str());
             CHECK(json_representation == j3);
         }
 
@@ -631,7 +629,7 @@ TEST_CASE("BSON input/output_adapters")
         {
             std::string s;
             json::to_bson(json_representation, s);
-            json j3 = json::from_bson(s);
+            const json j3 = json::from_bson(s);
             CHECK(json_representation == j3);
         }
 
@@ -639,7 +637,7 @@ TEST_CASE("BSON input/output_adapters")
         {
             std::vector<std::uint8_t> v;
             json::to_bson(json_representation, v);
-            json j3 = json::from_bson(v);
+            const json j3 = json::from_bson(v);
             CHECK(json_representation == j3);
         }
     }
@@ -919,7 +917,6 @@ TEST_CASE("BSON numerical data")
                 }
             }
 
-
             SECTION("signed std::int32_t: INT32_MIN .. INT32_MAX")
             {
                 std::vector<int32_t> const numbers
@@ -1165,10 +1162,7 @@ TEST_CASE("BSON numerical data")
                 std::vector<std::uint64_t> const numbers
                 {
                     static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()) + 1ULL,
-                    10000000000000000000ULL,
-                    18000000000000000000ULL,
-                    (std::numeric_limits<std::uint64_t>::max)() - 1ULL,
-                    (std::numeric_limits<std::uint64_t>::max)(),
+                    0xffffffffffffffff,
                 };
 
                 for (const auto i : numbers)
@@ -1185,7 +1179,7 @@ TEST_CASE("BSON numerical data")
                     std::vector<std::uint8_t> const expected_bson =
                     {
                         0x14u, 0x00u, 0x00u, 0x00u, // size (little endian)
-                        0x12u, /// entry: int64
+                        0x11u, /// entry: uint64
                         'e', 'n', 't', 'r', 'y', '\x00',
                         static_cast<std::uint8_t>((iu >> (8u * 0u)) & 0xffu),
                         static_cast<std::uint8_t>((iu >> (8u * 1u)) & 0xffu),
@@ -1198,12 +1192,15 @@ TEST_CASE("BSON numerical data")
                         0x00u // end marker
                     };
 
-                    CHECK_THROWS_AS(json::to_bson(j), json::out_of_range&);
-#if JSON_DIAGNOSTICS
-                    CHECK_THROWS_WITH_STD_STR(json::to_bson(j), "[json.exception.out_of_range.407] (/entry) integer number " + std::to_string(i) + " cannot be represented by BSON as it does not fit int64");
-#else
-                    CHECK_THROWS_WITH_STD_STR(json::to_bson(j), "[json.exception.out_of_range.407] integer number " + std::to_string(i) + " cannot be represented by BSON as it does not fit int64");
-#endif
+                    const auto bson = json::to_bson(j);
+                    CHECK(bson == expected_bson);
+
+                    auto j_roundtrip = json::from_bson(bson);
+
+                    CHECK(j.at("entry").is_number_unsigned());
+                    CHECK(j_roundtrip.at("entry").is_number_unsigned());
+                    CHECK(j_roundtrip == j);
+                    CHECK(json::from_bson(bson, true, false) == j);
                 }
             }
 
@@ -1230,7 +1227,7 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": std::vector<std::uint8_t>");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                const json j1 = json::parse(f_json);
 
                 // parse BSON file
                 auto packed = utils::read_binary_file(filename + ".bson");
@@ -1245,7 +1242,7 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": std::ifstream");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                const json j1 = json::parse(f_json);
 
                 // parse BSON file
                 std::ifstream f_bson(filename + ".bson", std::ios::binary);
@@ -1260,7 +1257,7 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": uint8_t* and size");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                const json j1 = json::parse(f_json);
 
                 // parse BSON file
                 auto packed = utils::read_binary_file(filename + ".bson");

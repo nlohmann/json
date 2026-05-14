@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -51,7 +51,7 @@ TEST_CASE("check_for_mem_leak_on_adl_to_json-1")
         const nlohmann::json j = Foo {1, 0};
         std::cout << j.dump() << "\n";
     }
-    catch (...)
+    catch (...) // NOLINT(bugprone-empty-catch)
     {
         // just ignore the exception in this POC
     }
@@ -64,7 +64,7 @@ TEST_CASE("check_for_mem_leak_on_adl_to_json-2")
         const nlohmann::json j = Foo {1, 1};
         std::cout << j.dump() << "\n";
     }
-    catch (...)
+    catch (...) // NOLINT(bugprone-empty-catch)
     {
         // just ignore the exception in this POC
     }
@@ -77,7 +77,7 @@ TEST_CASE("check_for_mem_leak_on_adl_to_json-2")
         const nlohmann::json j = Foo {1, 2};
         std::cout << j.dump() << "\n";
     }
-    catch (...)
+    catch (...) // NOLINT(bugprone-empty-catch)
     {
         // just ignore the exception in this POC
     }

@@ -10,7 +10,7 @@ types.
 The complete default namespace name is derived as follows:
 
 - The root namespace is always `nlohmann`.
-- The inline namespace starts with `json_abi` and is followed by serveral optional ABI tags according to the value of
+- The inline namespace starts with `json_abi` and is followed by several optional ABI tags according to the value of
   these ABI-affecting macros, in order:
     - [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) defined non-zero appends `_diag`.
     - [`JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](../api/macros/json_use_legacy_discarded_value_comparison.md)
@@ -30,15 +30,16 @@ nlohmann::json_abi_diag_v3_11_2
 Several incompatibilities have been observed. Amongst the most common ones is linking code compiled with different
 definitions of [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md). This is illustrated in the diagram below.
 
-```plantuml
-[**nlohmann_json (v3.10.5)**\nJSON_DIAGNOSTICS=0] as [json]
-[**nlohmann_json (v3.10.5)**\nJSON_DIAGNOSTICS=1] as [json_diag]
-[**some_library**] as [library]
-[**application**] as [app]
-
-[library] ..|> [json]
-[app] ..|> [json_diag]
-[app] ..|>[library]
+```mermaid
+graph
+    json["<strong>nlohmann_json (v3.10.5)</strong><br>JSON_DIAGNOSTICS=0"]
+    json_diag["<strong>nlohmann_json (v3.10.5)</strong><br>JSON_DIAGNOSTICS=1"]
+    library["<strong>some library</strong>"]
+    app["<strong>application</strong>"]
+    
+    library --> json
+    app --> json_diag
+    app --> library
 ```
 
 In releases prior to 3.11.0, mixing any version of the JSON library with different `JSON_DIAGNOSTICS` settings would
@@ -63,7 +64,7 @@ configurations – to be used in cases where the linker would otherwise output u
 
 To do so, define [`NLOHMANN_JSON_NAMESPACE_NO_VERSION`](../api/macros/nlohmann_json_namespace_no_version.md) to `1`.
 
-This applies to version 3.11.2 and above only, versions 3.11.0 and 3.11.1 can apply the technique described in the next
+This applies to version 3.11.2 and above only; versions 3.11.0 and 3.11.1 can apply the technique described in the next
 section to emulate the effect of the `NLOHMANN_JSON_NAMESPACE_NO_VERSION` macro.
 
 !!! danger "Use at your own risk"

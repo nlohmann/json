@@ -1,10 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// Copyright (c) 2013-2022 Niels Lohmann <http://nlohmann.me>.
-// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -74,7 +73,7 @@ TEST_CASE("Better diagnostics")
     SECTION("Parse error")
     {
         json _;
-        CHECK_THROWS_WITH_AS(_ = json::parse(""), "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error);
+        CHECK_THROWS_WITH_AS(_ = json::parse(""), "[json.exception.parse_error.101] parse error at line 1, column 1: attempting to parse an empty input; check that your input string or stream contains the expected JSON", json::parse_error);
     }
 
     SECTION("Wrong type in update()")
@@ -242,5 +241,25 @@ TEST_CASE("Regression tests for extended diagnostics")
             j_arr[7] = 7;
             json const j_arr_copy = j_arr;
         }
+    }
+
+    SECTION("Regression test for issue #3915 - JSON_DIAGNOSTICS trigger assertion")
+    {
+        json j = json::object();
+        j["root"] = "root_str";
+
+        json jj = json::object();
+        jj["child"] = json::object();
+
+        // If do not push anything in object, then no assert will be produced
+        jj["child"]["prop1"] = "prop1_value";
+
+        // Push all properties of child in parent
+        j.insert(jj.at("child").begin(), jj.at("child").end());
+
+        // Here assert is generated when construct new json
+        const json k(j);
+
+        CHECK(k.dump() == "{\"prop1\":\"prop1_value\",\"root\":\"root_str\"}");
     }
 }

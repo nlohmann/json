@@ -13,7 +13,7 @@ The type used to store JSON numbers (integers).
 > cannot be represented in the grammar below (such as Infinity and NaN) are not permitted.
 
 This description includes both integer and floating-point numbers. However, C++ allows more precise storage if it is
-known whether the number is a signed integer, an unsigned integer or a floating-point number. Therefore, three different
+known whether the number is a signed integer, an unsigned integer, or a floating-point number. Therefore, three different
 types, `number_integer_t`,  [`number_unsigned_t`](number_unsigned_t.md) and [`number_float_t`](number_float_t.md) are
 used.
 
@@ -29,9 +29,9 @@ With the default values for `NumberIntegerType` (`std::int64_t`), the default va
 
 #### Default behavior
 
-- The restrictions about leading zeros is not enforced in C++. Instead, leading zeros in integer literals lead to an
-  interpretation as octal number. Internally, the value will be stored as decimal number. For instance, the C++ integer
-  literal `010` will be serialized to `8`. During deserialization, leading zeros yield an error.
+- The restrictions about leading zeros are not enforced in C++. Instead, leading zeros in integer literals lead to an
+  interpretation as an octal number. Internally, the value will be stored as a decimal number. For instance, the C++
+  integer literal `010` will be serialized to `8`. During deserialization, leading zeros yield an error.
 - Not-a-number (NaN) values will be serialized to `null`.
 
 #### Limits
@@ -42,7 +42,7 @@ With the default values for `NumberIntegerType` (`std::int64_t`), the default va
 When the default type is used, the maximal integer number that can be stored is `9223372036854775807` (INT64_MAX) and
 the minimal integer number that can be stored is `-9223372036854775808` (INT64_MIN). Integer numbers that are out of
 range will yield over/underflow when used in a constructor. During deserialization, too large or small integer numbers
-will be automatically be stored as [`number_unsigned_t`](number_unsigned_t.md) or [`number_float_t`](number_float_t.md).
+will automatically be stored as [`number_unsigned_t`](number_unsigned_t.md) or [`number_float_t`](number_float_t.md).
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) further states:
 > Note that when such software is used, numbers that are integers and are in the range $[-2^{53}+1, 2^{53}-1]$ are

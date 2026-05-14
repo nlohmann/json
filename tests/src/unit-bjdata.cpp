@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -109,7 +109,7 @@ struct trait_test_arg
     static constexpr bool max_in_range = MaxInRange;
 };
 
-TEST_CASE_TEMPLATE_DEFINE("value_in_range_of trait", T, value_in_range_of_test)
+TEST_CASE_TEMPLATE_DEFINE("value_in_range_of trait", T, value_in_range_of_test) // NOLINT(readability-math-missing-parentheses)
 {
     using nlohmann::detail::value_in_range_of;
 
@@ -173,6 +173,7 @@ TEST_CASE_TEMPLATE_DEFINE("value_in_range_of trait", T, value_in_range_of_test)
     }
 }
 
+// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
 TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test, \
                           trait_test_arg<std::int32_t, std::int32_t, true, true>, \
                           trait_test_arg<std::int32_t, std::uint32_t, true, false>, \
@@ -198,6 +199,7 @@ TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test, \
                           trait_test_arg<std::size_t, std::int64_t, false, false>, \
                           trait_test_arg<std::size_t, std::uint64_t, true, false>);
 #else
+// NOLINTNEXTLINE(bugprone-throwing-static-initialization)
 TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test, \
                           trait_test_arg<std::size_t, std::int32_t, false, true>, \
                           trait_test_arg<std::size_t, std::uint32_t, true, true>, \
@@ -264,6 +266,34 @@ TEST_CASE("BJData")
                 // roundtrip
                 CHECK(json::from_bjdata(result) == j);
                 CHECK(json::from_bjdata(result, true, false) == j);
+            }
+        }
+
+        SECTION("byte")
+        {
+            SECTION("0..255 (uint8)")
+            {
+                for (size_t i = 0; i <= 255; ++i)
+                {
+                    CAPTURE(i)
+
+                    // create JSON value with integer number (no byte type in JSON)
+                    json j = -1;
+                    j.get_ref<json::number_integer_t&>() = static_cast<json::number_integer_t>(i);
+
+                    // check type
+                    CHECK(j.is_number_integer());
+
+                    // create byte vector
+                    std::vector<uint8_t> const value
+                    {
+                        static_cast<uint8_t>('B'),
+                        static_cast<uint8_t>(i),
+                    };
+
+                    // compare value
+                    CHECK(json::from_bjdata(value) == j);
+                }
             }
         }
 
@@ -339,13 +369,13 @@ TEST_CASE("BJData")
                     std::vector<int32_t> const numbers
                     {
                         -32769,
-                            -100000,
-                            -1000000,
-                            -10000000,
-                            -100000000,
-                            -1000000000,
-                            -2147483647 - 1, // https://stackoverflow.com/a/29356002/266378
-                        };
+                        -100000,
+                        -1000000,
+                        -10000000,
+                        -100000000,
+                        -1000000000,
+                        -2147483647 - 1, // https://stackoverflow.com/a/29356002/266378
+                    };
                     for (const auto i : numbers)
                     {
                         CAPTURE(i)
@@ -573,7 +603,7 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'I');
-                        auto const restored = static_cast<uint16_t>(static_cast<uint8_t>(result[2]) * 256 + static_cast<uint8_t>(result[1]));
+                        auto const restored = static_cast<uint16_t>((static_cast<uint8_t>(result[2]) * 256) + static_cast<uint8_t>(result[1]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -613,7 +643,7 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'u');
-                        auto const restored = static_cast<uint16_t>(static_cast<uint8_t>(result[2]) * 256 + static_cast<uint8_t>(result[1]));
+                        auto const restored = static_cast<uint16_t>((static_cast<uint8_t>(result[2]) * 256) + static_cast<uint8_t>(result[1]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -905,7 +935,7 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'I');
-                        auto const restored = static_cast<uint16_t>(static_cast<uint8_t>(result[2]) * 256 + static_cast<uint8_t>(result[1]));
+                        auto const restored = static_cast<uint16_t>((static_cast<uint8_t>(result[2]) * 256) + static_cast<uint8_t>(result[1]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -944,7 +974,7 @@ TEST_CASE("BJData")
 
                         // check individual bytes
                         CHECK(result[0] == 'u');
-                        auto const restored = static_cast<uint16_t>(static_cast<uint8_t>(result[2]) * 256 + static_cast<uint8_t>(result[1]));
+                        auto const restored = static_cast<uint16_t>((static_cast<uint8_t>(result[2]) * 256) + static_cast<uint8_t>(result[1]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -1198,21 +1228,21 @@ TEST_CASE("BJData")
                     SECTION("0 (0 00000 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0x00}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == 0.0);
                     }
 
                     SECTION("-0 (1 00000 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0x80}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == -0.0);
                     }
 
                     SECTION("2**-24 (0 00000 0000000001)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x01, 0x00}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == std::pow(2.0, -24.0));
                     }
                 }
@@ -1222,7 +1252,7 @@ TEST_CASE("BJData")
                     SECTION("infinity (0 11111 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0x7c}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == std::numeric_limits<json::number_float_t>::infinity());
                         CHECK(j.dump() == "null");
                     }
@@ -1230,7 +1260,7 @@ TEST_CASE("BJData")
                     SECTION("-infinity (1 11111 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0xfc}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == -std::numeric_limits<json::number_float_t>::infinity());
                         CHECK(j.dump() == "null");
                     }
@@ -1241,21 +1271,21 @@ TEST_CASE("BJData")
                     SECTION("1 (0 01111 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0x3c}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == 1);
                     }
 
                     SECTION("-2 (1 10000 0000000000)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0x00, 0xc0}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == -2);
                     }
 
                     SECTION("65504 (0 11110 1111111111)")
                     {
                         json const j = json::from_bjdata(std::vector<uint8_t>({'h', 0xff, 0x7b}));
-                        json::number_float_t d{j};
+                        const json::number_float_t d{j};
                         CHECK(d == 65504);
                     }
                 }
@@ -1499,265 +1529,318 @@ TEST_CASE("BJData")
             }
         }
 
-
         SECTION("binary")
         {
-            SECTION("N = 0..127")
-            {
-                for (std::size_t N = 0; N <= 127; ++N)
-                {
-                    CAPTURE(N)
-
-                    // create JSON value with byte array containing of N * 'x'
-                    const auto s = std::vector<std::uint8_t>(N, 'x');
-                    json const j = json::binary(s);
-
-                    // create expected byte vector
-                    std::vector<std::uint8_t> expected;
-                    expected.push_back(static_cast<std::uint8_t>('['));
-                    if (N != 0)
+            for (json::bjdata_version_t bjdata_version :
                     {
+                        json::bjdata_version_t::draft2, json::bjdata_version_t::draft3
+                    })
+            {
+                CAPTURE(bjdata_version)
+                const bool draft3 = (bjdata_version == json::bjdata_version_t::draft3);
+
+                SECTION("N = 0..127")
+                {
+                    for (std::size_t N = 0; N <= 127; ++N)
+                    {
+                        CAPTURE(N)
+
+                        // create JSON value with byte array containing of N * 'x'
+                        const auto s = std::vector<std::uint8_t>(N, 'x');
+                        json const j = json::binary(s);
+
+                        // create expected byte vector
+                        std::vector<std::uint8_t> expected;
+                        expected.push_back(static_cast<std::uint8_t>('['));
+                        if (draft3 || N != 0)
+                        {
+                            expected.push_back(static_cast<std::uint8_t>('$'));
+                            expected.push_back(static_cast<std::uint8_t>(draft3 ? 'B' : 'U'));
+                        }
+                        expected.push_back(static_cast<std::uint8_t>('#'));
+                        expected.push_back(static_cast<std::uint8_t>('i'));
+                        expected.push_back(static_cast<std::uint8_t>(N));
+                        for (size_t i = 0; i < N; ++i)
+                        {
+                            expected.push_back(0x78);
+                        }
+
+                        // compare result + size
+                        const auto result = json::to_bjdata(j, true, true, bjdata_version);
+                        CHECK(result == expected);
+                        if (!draft3 && N == 0)
+                        {
+                            CHECK(result.size() == N + 4);
+                        }
+                        else
+                        {
+                            CHECK(result.size() == N + 6);
+                        }
+
+                        // check that no null byte is appended
+                        if (N > 0)
+                        {
+                            CHECK(result.back() != '\x00');
+                        }
+
+                        if (draft3)
+                        {
+                            // roundtrip
+                            CHECK(json::from_bjdata(result) == j);
+                            CHECK(json::from_bjdata(result, true, false) == j);
+                        }
+                        else
+                        {
+                            // roundtrip only works to an array of numbers
+                            json j_out = s;
+                            CHECK(json::from_bjdata(result) == j_out);
+                            CHECK(json::from_bjdata(result, true, false) == j_out);
+                        }
+                    }
+                }
+
+                SECTION("N = 128..255")
+                {
+                    for (std::size_t N = 128; N <= 255; ++N)
+                    {
+                        CAPTURE(N)
+
+                        // create JSON value with byte array containing of N * 'x'
+                        const auto s = std::vector<std::uint8_t>(N, 'x');
+                        json const j = json::binary(s);
+
+                        // create expected byte vector
+                        std::vector<uint8_t> expected;
+                        expected.push_back(static_cast<std::uint8_t>('['));
                         expected.push_back(static_cast<std::uint8_t>('$'));
+                        expected.push_back(static_cast<std::uint8_t>(draft3 ? 'B' : 'U'));
+                        expected.push_back(static_cast<std::uint8_t>('#'));
                         expected.push_back(static_cast<std::uint8_t>('U'));
-                    }
-                    expected.push_back(static_cast<std::uint8_t>('#'));
-                    expected.push_back(static_cast<std::uint8_t>('i'));
-                    expected.push_back(static_cast<std::uint8_t>(N));
-                    for (size_t i = 0; i < N; ++i)
-                    {
-                        expected.push_back(0x78);
-                    }
+                        expected.push_back(static_cast<std::uint8_t>(N));
+                        for (size_t i = 0; i < N; ++i)
+                        {
+                            expected.push_back(0x78);
+                        }
 
-                    // compare result + size
-                    const auto result = json::to_bjdata(j, true, true);
-                    CHECK(result == expected);
-                    if (N == 0)
-                    {
-                        CHECK(result.size() == N + 4);
-                    }
-                    else
-                    {
+                        // compare result + size
+                        const auto result = json::to_bjdata(j, true, true, bjdata_version);
+                        CHECK(result == expected);
                         CHECK(result.size() == N + 6);
-                    }
-
-                    // check that no null byte is appended
-                    if (N > 0)
-                    {
+                        // check that no null byte is appended
                         CHECK(result.back() != '\x00');
-                    }
 
-                    // roundtrip only works to an array of numbers
-                    json j_out = s;
-                    CHECK(json::from_bjdata(result) == j_out);
-                    CHECK(json::from_bjdata(result, true, false) == j_out);
-                }
-            }
-
-            SECTION("N = 128..255")
-            {
-                for (std::size_t N = 128; N <= 255; ++N)
-                {
-                    CAPTURE(N)
-
-                    // create JSON value with byte array containing of N * 'x'
-                    const auto s = std::vector<std::uint8_t>(N, 'x');
-                    json const j = json::binary(s);
-
-                    // create expected byte vector
-                    std::vector<uint8_t> expected;
-                    expected.push_back(static_cast<std::uint8_t>('['));
-                    expected.push_back(static_cast<std::uint8_t>('$'));
-                    expected.push_back(static_cast<std::uint8_t>('U'));
-                    expected.push_back(static_cast<std::uint8_t>('#'));
-                    expected.push_back(static_cast<std::uint8_t>('U'));
-                    expected.push_back(static_cast<std::uint8_t>(N));
-                    for (size_t i = 0; i < N; ++i)
-                    {
-                        expected.push_back(0x78);
-                    }
-
-                    // compare result + size
-                    const auto result = json::to_bjdata(j, true, true);
-                    CHECK(result == expected);
-                    CHECK(result.size() == N + 6);
-                    // check that no null byte is appended
-                    CHECK(result.back() != '\x00');
-
-                    // roundtrip only works to an array of numbers
-                    json j_out = s;
-                    CHECK(json::from_bjdata(result) == j_out);
-                    CHECK(json::from_bjdata(result, true, false) == j_out);
-                }
-            }
-
-            SECTION("N = 256..32767")
-            {
-                for (const std::size_t N :
+                        if (draft3)
                         {
-                            256u, 999u, 1025u, 3333u, 2048u, 32767u
-                        })
-                {
-                    CAPTURE(N)
-
-                    // create JSON value with byte array containing of N * 'x'
-                    const auto s = std::vector<std::uint8_t>(N, 'x');
-                    json const j = json::binary(s);
-
-                    // create expected byte vector
-                    std::vector<std::uint8_t> expected(N + 7, 'x');
-                    expected[0] = '[';
-                    expected[1] = '$';
-                    expected[2] = 'U';
-                    expected[3] = '#';
-                    expected[4] = 'I';
-                    expected[5] = static_cast<std::uint8_t>(N & 0xFF);
-                    expected[6] = static_cast<std::uint8_t>((N >> 8) & 0xFF);
-
-                    // compare result + size
-                    const auto result = json::to_bjdata(j, true, true);
-                    CHECK(result == expected);
-                    CHECK(result.size() == N + 7);
-                    // check that no null byte is appended
-                    CHECK(result.back() != '\x00');
-
-                    // roundtrip only works to an array of numbers
-                    json j_out = s;
-                    CHECK(json::from_bjdata(result) == j_out);
-                    CHECK(json::from_bjdata(result, true, false) == j_out);
-                }
-            }
-
-            SECTION("N = 32768..65535")
-            {
-                for (const std::size_t N :
+                            // roundtrip
+                            CHECK(json::from_bjdata(result) == j);
+                            CHECK(json::from_bjdata(result, true, false) == j);
+                        }
+                        else
                         {
-                            32768u, 55555u, 65535u
-                        })
-                {
-                    CAPTURE(N)
-
-                    // create JSON value with byte array containing of N * 'x'
-                    const auto s = std::vector<std::uint8_t>(N, 'x');
-                    json const j = json::binary(s);
-
-                    // create expected byte vector
-                    std::vector<std::uint8_t> expected(N + 7, 'x');
-                    expected[0] = '[';
-                    expected[1] = '$';
-                    expected[2] = 'U';
-                    expected[3] = '#';
-                    expected[4] = 'u';
-                    expected[5] = static_cast<std::uint8_t>(N & 0xFF);
-                    expected[6] = static_cast<std::uint8_t>((N >> 8) & 0xFF);
-
-                    // compare result + size
-                    const auto result = json::to_bjdata(j, true, true);
-                    CHECK(result == expected);
-                    CHECK(result.size() == N + 7);
-                    // check that no null byte is appended
-                    CHECK(result.back() != '\x00');
-
-                    // roundtrip only works to an array of numbers
-                    json j_out = s;
-                    CHECK(json::from_bjdata(result) == j_out);
-                    CHECK(json::from_bjdata(result, true, false) == j_out);
+                            // roundtrip only works to an array of numbers
+                            json j_out = s;
+                            CHECK(json::from_bjdata(result) == j_out);
+                            CHECK(json::from_bjdata(result, true, false) == j_out);
+                        }
+                    }
                 }
-            }
 
-            SECTION("N = 65536..2147483647")
-            {
-                for (const std::size_t N :
+                SECTION("N = 256..32767")
+                {
+                    for (const std::size_t N :
+                            {
+                                256u, 999u, 1025u, 3333u, 2048u, 32767u
+                            })
+                    {
+                        CAPTURE(N)
+
+                        // create JSON value with byte array containing of N * 'x'
+                        const auto s = std::vector<std::uint8_t>(N, 'x');
+                        json const j = json::binary(s);
+
+                        // create expected byte vector
+                        std::vector<std::uint8_t> expected(N + 7, 'x');
+                        expected[0] = '[';
+                        expected[1] = '$';
+                        expected[2] = draft3 ? 'B' : 'U';
+                        expected[3] = '#';
+                        expected[4] = 'I';
+                        expected[5] = static_cast<std::uint8_t>(N & 0xFF);
+                        expected[6] = static_cast<std::uint8_t>((N >> 8) & 0xFF);
+
+                        // compare result + size
+                        const auto result = json::to_bjdata(j, true, true, bjdata_version);
+                        CHECK(result == expected);
+                        CHECK(result.size() == N + 7);
+                        // check that no null byte is appended
+                        CHECK(result.back() != '\x00');
+
+                        if (draft3)
                         {
-                            65536u, 77777u, 1048576u
-                        })
-                {
-                    CAPTURE(N)
+                            // roundtrip
+                            CHECK(json::from_bjdata(result) == j);
+                            CHECK(json::from_bjdata(result, true, false) == j);
+                        }
+                        else
+                        {
+                            // roundtrip only works to an array of numbers
+                            json j_out = s;
+                            CHECK(json::from_bjdata(result) == j_out);
+                            CHECK(json::from_bjdata(result, true, false) == j_out);
+                        }
+                    }
+                }
 
-                    // create JSON value with byte array containing of N * 'x'
+                SECTION("N = 32768..65535")
+                {
+                    for (const std::size_t N :
+                            {
+                                32768u, 55555u, 65535u
+                            })
+                    {
+                        CAPTURE(N)
+
+                        // create JSON value with byte array containing of N * 'x'
+                        const auto s = std::vector<std::uint8_t>(N, 'x');
+                        json const j = json::binary(s);
+
+                        // create expected byte vector
+                        std::vector<std::uint8_t> expected(N + 7, 'x');
+                        expected[0] = '[';
+                        expected[1] = '$';
+                        expected[2] = draft3 ? 'B' : 'U';
+                        expected[3] = '#';
+                        expected[4] = 'u';
+                        expected[5] = static_cast<std::uint8_t>(N & 0xFF);
+                        expected[6] = static_cast<std::uint8_t>((N >> 8) & 0xFF);
+
+                        // compare result + size
+                        const auto result = json::to_bjdata(j, true, true, bjdata_version);
+                        CHECK(result == expected);
+                        CHECK(result.size() == N + 7);
+                        // check that no null byte is appended
+                        CHECK(result.back() != '\x00');
+
+                        if (draft3)
+                        {
+                            // roundtrip
+                            CHECK(json::from_bjdata(result) == j);
+                            CHECK(json::from_bjdata(result, true, false) == j);
+                        }
+                        else
+                        {
+                            // roundtrip only works to an array of numbers
+                            json j_out = s;
+                            CHECK(json::from_bjdata(result) == j_out);
+                            CHECK(json::from_bjdata(result, true, false) == j_out);
+                        }
+                    }
+                }
+
+                SECTION("N = 65536..2147483647")
+                {
+                    for (const std::size_t N :
+                            {
+                                65536u, 77777u, 1048576u
+                            })
+                    {
+                        CAPTURE(N)
+
+                        // create JSON value with byte array containing of N * 'x'
+                        const auto s = std::vector<std::uint8_t>(N, 'x');
+                        json const j = json::binary(s);
+
+                        // create expected byte vector
+                        std::vector<std::uint8_t> expected(N + 9, 'x');
+                        expected[0] = '[';
+                        expected[1] = '$';
+                        expected[2] = draft3 ? 'B' : 'U';
+                        expected[3] = '#';
+                        expected[4] = 'l';
+                        expected[5] = static_cast<std::uint8_t>(N & 0xFF);
+                        expected[6] = static_cast<std::uint8_t>((N >> 8) & 0xFF);
+                        expected[7] = static_cast<std::uint8_t>((N >> 16) & 0xFF);
+                        expected[8] = static_cast<std::uint8_t>((N >> 24) & 0xFF);
+
+                        // compare result + size
+                        const auto result = json::to_bjdata(j, true, true, bjdata_version);
+                        CHECK(result == expected);
+                        CHECK(result.size() == N + 9);
+                        // check that no null byte is appended
+                        CHECK(result.back() != '\x00');
+
+                        if (draft3)
+                        {
+                            // roundtrip
+                            CHECK(json::from_bjdata(result) == j);
+                            CHECK(json::from_bjdata(result, true, false) == j);
+                        }
+                        else
+                        {
+                            // roundtrip only works to an array of numbers
+                            json j_out = s;
+                            CHECK(json::from_bjdata(result) == j_out);
+                            CHECK(json::from_bjdata(result, true, false) == j_out);
+                        }
+                    }
+                }
+
+                SECTION("Other Serializations")
+                {
+                    const std::size_t N = 10;
                     const auto s = std::vector<std::uint8_t>(N, 'x');
                     json const j = json::binary(s);
 
-                    // create expected byte vector
-                    std::vector<std::uint8_t> expected(N + 9, 'x');
-                    expected[0] = '[';
-                    expected[1] = '$';
-                    expected[2] = 'U';
-                    expected[3] = '#';
-                    expected[4] = 'l';
-                    expected[5] = static_cast<std::uint8_t>(N & 0xFF);
-                    expected[6] = static_cast<std::uint8_t>((N >> 8) & 0xFF);
-                    expected[7] = static_cast<std::uint8_t>((N >> 16) & 0xFF);
-                    expected[8] = static_cast<std::uint8_t>((N >> 24) & 0xFF);
-
-                    // compare result + size
-                    const auto result = json::to_bjdata(j, true, true);
-                    CHECK(result == expected);
-                    CHECK(result.size() == N + 9);
-                    // check that no null byte is appended
-                    CHECK(result.back() != '\x00');
-
-                    // roundtrip only works to an array of numbers
-                    json j_out = s;
-                    CHECK(json::from_bjdata(result) == j_out);
-                    CHECK(json::from_bjdata(result, true, false) == j_out);
-                }
-            }
-
-            SECTION("Other Serializations")
-            {
-                const std::size_t N = 10;
-                const auto s = std::vector<std::uint8_t>(N, 'x');
-                json const j = json::binary(s);
-
-                SECTION("No Count No Type")
-                {
-                    std::vector<uint8_t> expected;
-                    expected.push_back(static_cast<std::uint8_t>('['));
-                    for (std::size_t i = 0; i < N; ++i)
+                    SECTION("No Count No Type")
                     {
-                        expected.push_back(static_cast<std::uint8_t>('U'));
-                        expected.push_back(static_cast<std::uint8_t>(0x78));
-                    }
-                    expected.push_back(static_cast<std::uint8_t>(']'));
+                        std::vector<uint8_t> expected;
+                        expected.push_back(static_cast<std::uint8_t>('['));
+                        for (std::size_t i = 0; i < N; ++i)
+                        {
+                            expected.push_back(static_cast<std::uint8_t>(draft3 ? 'B' : 'U'));
+                            expected.push_back(static_cast<std::uint8_t>(0x78));
+                        }
+                        expected.push_back(static_cast<std::uint8_t>(']'));
 
-                    // compare result + size
-                    const auto result = json::to_bjdata(j, false, false);
-                    CHECK(result == expected);
-                    CHECK(result.size() == N + 12);
-                    // check that no null byte is appended
-                    CHECK(result.back() != '\x00');
+                        // compare result + size
+                        const auto result = json::to_bjdata(j, false, false, bjdata_version);
+                        CHECK(result == expected);
+                        CHECK(result.size() == N + 12);
+                        // check that no null byte is appended
+                        CHECK(result.back() != '\x00');
 
-                    // roundtrip only works to an array of numbers
-                    json j_out = s;
-                    CHECK(json::from_bjdata(result) == j_out);
-                    CHECK(json::from_bjdata(result, true, false) == j_out);
-                }
-
-                SECTION("Yes Count No Type")
-                {
-                    std::vector<std::uint8_t> expected;
-                    expected.push_back(static_cast<std::uint8_t>('['));
-                    expected.push_back(static_cast<std::uint8_t>('#'));
-                    expected.push_back(static_cast<std::uint8_t>('i'));
-                    expected.push_back(static_cast<std::uint8_t>(N));
-
-                    for (size_t i = 0; i < N; ++i)
-                    {
-                        expected.push_back(static_cast<std::uint8_t>('U'));
-                        expected.push_back(static_cast<std::uint8_t>(0x78));
+                        // roundtrip only works to an array of numbers
+                        json j_out = s;
+                        CHECK(json::from_bjdata(result) == j_out);
+                        CHECK(json::from_bjdata(result, true, false) == j_out);
                     }
 
-                    // compare result + size
-                    const auto result = json::to_bjdata(j, true, false);
-                    CHECK(result == expected);
-                    CHECK(result.size() == N + 14);
-                    // check that no null byte is appended
-                    CHECK(result.back() != '\x00');
+                    SECTION("Yes Count No Type")
+                    {
+                        std::vector<std::uint8_t> expected;
+                        expected.push_back(static_cast<std::uint8_t>('['));
+                        expected.push_back(static_cast<std::uint8_t>('#'));
+                        expected.push_back(static_cast<std::uint8_t>('i'));
+                        expected.push_back(static_cast<std::uint8_t>(N));
 
-                    // roundtrip only works to an array of numbers
-                    json j_out = s;
-                    CHECK(json::from_bjdata(result) == j_out);
-                    CHECK(json::from_bjdata(result, true, false) == j_out);
+                        for (size_t i = 0; i < N; ++i)
+                        {
+                            expected.push_back(static_cast<std::uint8_t>(draft3 ? 'B' : 'U'));
+                            expected.push_back(static_cast<std::uint8_t>(0x78));
+                        }
+
+                        // compare result + size
+                        const auto result = json::to_bjdata(j, true, false, bjdata_version);
+                        CHECK(result == expected);
+                        CHECK(result.size() == N + 14);
+                        // check that no null byte is appended
+                        CHECK(result.back() != '\x00');
+
+                        // roundtrip only works to an array of numbers
+                        json j_out = s;
+                        CHECK(json::from_bjdata(result) == j_out);
+                        CHECK(json::from_bjdata(result, true, false) == j_out);
+                    }
                 }
             }
         }
@@ -2335,6 +2418,7 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v_D = {'[', '#', 'i', 2, 'D', 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 'D', 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
                 std::vector<uint8_t> const v_S = {'[', '#', 'i', 2, 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> const v_C = {'[', '#', 'i', 2, 'C', 'a', 'C', 'a'};
+                std::vector<uint8_t> const v_B = {'[', '#', 'i', 2, 'B', 0xFF, 'B', 0xFF};
 
                 // check if vector is parsed correctly
                 CHECK(json::from_bjdata(v_TU) == json({true, true}));
@@ -2352,6 +2436,7 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(v_D) == json({3.1415926, 3.1415926}));
                 CHECK(json::from_bjdata(v_S) == json({"a", "a"}));
                 CHECK(json::from_bjdata(v_C) == json({"a", "a"}));
+                CHECK(json::from_bjdata(v_B) == json({255, 255}));
 
                 // roundtrip: output should be optimized
                 CHECK(json::to_bjdata(json::from_bjdata(v_T), true) == v_T);
@@ -2368,6 +2453,7 @@ TEST_CASE("BJData")
                 CHECK(json::to_bjdata(json::from_bjdata(v_D), true) == v_D);
                 CHECK(json::to_bjdata(json::from_bjdata(v_S), true) == v_S);
                 CHECK(json::to_bjdata(json::from_bjdata(v_C), true) == v_S); // char is serialized to string
+                CHECK(json::to_bjdata(json::from_bjdata(v_B), true) == v_U); // byte is serialized to uint8
             }
 
             SECTION("optimized version (type and length)")
@@ -2384,6 +2470,7 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v_D = {'[', '$', 'D', '#', 'i', 2, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
                 std::vector<uint8_t> const v_S = {'[', '#', 'i', 2, 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> const v_C = {'[', '$', 'C', '#', 'i', 2, 'a', 'a'};
+                std::vector<uint8_t> const v_B = {'[', '$', 'B', '#', 'i', 2, 0xFF, 0xFF};
 
                 // check if vector is parsed correctly
                 CHECK(json::from_bjdata(v_i) == json({127, 127}));
@@ -2397,6 +2484,7 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(v_D) == json({3.1415926, 3.1415926}));
                 CHECK(json::from_bjdata(v_S) == json({"a", "a"}));
                 CHECK(json::from_bjdata(v_C) == json({"a", "a"}));
+                CHECK(json::from_bjdata(v_B) == json::binary(std::vector<uint8_t>({static_cast<uint8_t>(255), static_cast<uint8_t>(255)})));
 
                 // roundtrip: output should be optimized
                 std::vector<uint8_t> const v_empty = {'[', '#', 'i', 0};
@@ -2411,6 +2499,8 @@ TEST_CASE("BJData")
                 CHECK(json::to_bjdata(json::from_bjdata(v_D), true, true) == v_D);
                 CHECK(json::to_bjdata(json::from_bjdata(v_S), true, true) == v_S);
                 CHECK(json::to_bjdata(json::from_bjdata(v_C), true, true) == v_S); // char is serialized to string
+                CHECK(json::to_bjdata(json::from_bjdata(v_B), true, true, json::bjdata_version_t::draft2) == v_U);
+                CHECK(json::to_bjdata(json::from_bjdata(v_B), true, true, json::bjdata_version_t::draft3) == v_B);
             }
 
             SECTION("optimized ndarray (type and vector-size as optimized 1D array)")
@@ -2429,6 +2519,7 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v_D = {'[', '$', 'D', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
                 std::vector<uint8_t> const v_S = {'[', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> const v_C = {'[', '$', 'C', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 'a', 'a'};
+                std::vector<uint8_t> const v_B = {'[', '$', 'B', '#', '[', '$', 'i', '#', 'i', 2, 1, 2, 0xFF, 0xFF};
 
                 // check if vector is parsed correctly
                 CHECK(json::from_bjdata(v_0) == json::array());
@@ -2444,6 +2535,7 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(v_D) == json({3.1415926, 3.1415926}));
                 CHECK(json::from_bjdata(v_S) == json({"a", "a"}));
                 CHECK(json::from_bjdata(v_C) == json({"a", "a"}));
+                CHECK(json::from_bjdata(v_B) == json::binary(std::vector<uint8_t>({static_cast<uint8_t>(255), static_cast<uint8_t>(255)})));
             }
 
             SECTION("optimized ndarray (type and vector-size ndarray with JData annotations)")
@@ -2461,6 +2553,7 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v_d = {'[', '$', 'd', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x80, 0x40, 0x00, 0x00, 0xA0, 0x40, 0x00, 0x00, 0xC0, 0x40};
                 std::vector<uint8_t> const v_D = {'[', '$', 'D', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF0, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x40};
                 std::vector<uint8_t> const v_C = {'[', '$', 'C', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 'a', 'b', 'c', 'd', 'e', 'f'};
+                std::vector<uint8_t> const v_B = {'[', '$', 'B', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
 
                 // check if vector is parsed correctly
                 CHECK(json::from_bjdata(v_e) == json({{"_ArrayData_", {254, 255}}, {"_ArraySize_", {2, 1}}, {"_ArrayType_", "uint8"}}));
@@ -2476,6 +2569,7 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(v_d) == json({{"_ArrayData_", {1.f, 2.f, 3.f, 4.f, 5.f, 6.f}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "single"}}));
                 CHECK(json::from_bjdata(v_D) == json({{"_ArrayData_", {1., 2., 3., 4., 5., 6.}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "double"}}));
                 CHECK(json::from_bjdata(v_C) == json({{"_ArrayData_", {'a', 'b', 'c', 'd', 'e', 'f'}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "char"}}));
+                CHECK(json::from_bjdata(v_B) == json({{"_ArrayData_", {1, 2, 3, 4, 5, 6}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "byte"}}));
 
                 // roundtrip: output should be optimized
                 CHECK(json::to_bjdata(json::from_bjdata(v_e), true, true) == v_e);
@@ -2490,6 +2584,7 @@ TEST_CASE("BJData")
                 CHECK(json::to_bjdata(json::from_bjdata(v_d), true, true) == v_d);
                 CHECK(json::to_bjdata(json::from_bjdata(v_D), true, true) == v_D);
                 CHECK(json::to_bjdata(json::from_bjdata(v_C), true, true) == v_C);
+                CHECK(json::to_bjdata(json::from_bjdata(v_B), true, true) == v_B);
             }
 
             SECTION("optimized ndarray (type and vector-size as 1D array)")
@@ -2508,6 +2603,7 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v_D = {'[', '$', 'D', '#', '[', 'i', 1, 'i', 2, ']', 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
                 std::vector<uint8_t> const v_S = {'[', '#', '[', 'i', 1, 'i', 2, ']', 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> const v_C = {'[', '$', 'C', '#', '[', 'i', 1, 'i', 2, ']', 'a', 'a'};
+                std::vector<uint8_t> const v_B = {'[', '$', 'B', '#', '[', 'i', 1, 'i', 2, ']', 0xFF, 0xFF};
                 std::vector<uint8_t> const v_R = {'[', '#', '[', 'i', 2, ']', 'i', 6, 'U', 7};
 
                 // check if vector is parsed correctly
@@ -2524,6 +2620,7 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(v_D) == json({3.1415926, 3.1415926}));
                 CHECK(json::from_bjdata(v_S) == json({"a", "a"}));
                 CHECK(json::from_bjdata(v_C) == json({"a", "a"}));
+                CHECK(json::from_bjdata(v_B) == json::binary(std::vector<uint8_t>({static_cast<uint8_t>(255), static_cast<uint8_t>(255)})));
                 CHECK(json::from_bjdata(v_R) == json({6, 7}));
             }
 
@@ -2541,6 +2638,7 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v_D = {'[', '$', 'D', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40, 0x4a, 0xd8, 0x12, 0x4d, 0xfb, 0x21, 0x09, 0x40};
                 std::vector<uint8_t> const v_S = {'[', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 'S', 'i', 1, 'a', 'S', 'i', 1, 'a'};
                 std::vector<uint8_t> const v_C = {'[', '$', 'C', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 'a', 'a'};
+                std::vector<uint8_t> const v_B = {'[', '$', 'B', '#', '[', '#', 'i', 2, 'i', 1, 'i', 2, 0xFF, 0xFF};
 
                 // check if vector is parsed correctly
                 CHECK(json::from_bjdata(v_i) == json({127, 127}));
@@ -2554,6 +2652,7 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(v_D) == json({3.1415926, 3.1415926}));
                 CHECK(json::from_bjdata(v_S) == json({"a", "a"}));
                 CHECK(json::from_bjdata(v_C) == json({"a", "a"}));
+                CHECK(json::from_bjdata(v_B) == json::binary(std::vector<uint8_t>({static_cast<uint8_t>(255), static_cast<uint8_t>(255)})));
             }
 
             SECTION("invalid ndarray annotations remains as object")
@@ -2592,6 +2691,17 @@ TEST_CASE("BJData")
                 std::vector<uint8_t> const v = {'C', 130};
                 json _;
                 CHECK_THROWS_WITH(_ = json::from_bjdata(v), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing BJData char: byte after 'C' must be in range 0x00..0x7F; last byte: 0x82");
+            }
+        }
+
+        SECTION("byte")
+        {
+            SECTION("parse bjdata markers in ubjson")
+            {
+                std::vector<uint8_t> const v = {'B', 1};
+
+                json _;
+                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v), "[json.exception.parse_error.112] parse error at byte 1: syntax error while parsing UBJSON value: invalid byte: 0x42", json::parse_error&);
             }
         }
 
@@ -2707,6 +2817,129 @@ TEST_CASE("BJData")
 #endif
             }
 
+            SECTION("overflow detection in dimension multiplication")
+            {
+                // Simple SAX handler just to monitor if overflow is detected
+                struct SimpleOverflowSaxHandler : public nlohmann::json_sax<json>
+                {
+                    bool overflow_detected = false;
+
+                    // Implement all required virtual methods with minimal implementation
+                    bool null() override
+                    {
+                        return true;
+                    }
+                    bool boolean(bool /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool number_integer(json::number_integer_t /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool number_unsigned(json::number_unsigned_t /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool number_float(json::number_float_t /*val*/, const std::string& /*s*/) override
+                    {
+                        return true;
+                    }
+                    bool string(std::string& /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool binary(json::binary_t& /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool start_object(std::size_t /*elements*/) override
+                    {
+                        return true;
+                    }
+                    bool key(std::string& /*val*/) override
+                    {
+                        return true;
+                    }
+                    bool end_object() override
+                    {
+                        return true;
+                    }
+                    bool start_array(std::size_t /*elements*/) override
+                    {
+                        return true;
+                    }
+                    bool end_array() override
+                    {
+                        return true;
+                    }
+
+                    // This is the only method we care about - detecting error 408
+                    bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& ex) override
+                    {
+                        if (ex.id == 408)
+                        {
+                            overflow_detected = true;
+                        }
+                        return false;
+                    }
+                };
+
+                // Create BJData payload with overflow-causing dimensions (2^32+1) × (2^32)
+                const std::vector<uint8_t> bjdata_payload =
+                {
+                    0x5B,                                           // '[' start array
+                    0x24, 0x55,                                     // '$', 'U' (type uint8)
+                    0x23, 0x5B,                                     // '#', '[' (dimensions array)
+                    0x4D,                                           // 'M' (uint64)
+                    0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, // 2^32 + 1 (4294967297) as little-endian
+                    0x4D,                                           // 'M' (uint64)
+                    0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, // 2^32 (4294967296) as little-endian
+                    0x5D                                            // ']' end dimensions
+                    // No data - we don't need it for this test, we just want to hit the overflow check
+                };
+
+                // Test with overflow dimensions using SAX parser
+                {
+                    SimpleOverflowSaxHandler handler;
+                    const auto result = json::sax_parse(bjdata_payload, &handler,
+                                                        nlohmann::detail::input_format_t::bjdata, false);
+
+                    // Should detect overflow
+                    CHECK(handler.overflow_detected == true);
+                    CHECK(result == false);
+                }
+
+                // Test with DOM parser (should throw)
+                {
+                    json _;
+                    CHECK_THROWS_AS(_ = json::from_bjdata(bjdata_payload), json::out_of_range);
+                }
+
+                // Test with normal dimensions
+                const std::vector<uint8_t> normal_payload =
+                {
+                    0x5B,                                           // '[' start array
+                    0x24, 0x55,                                     // '$', 'U' (type uint8)
+                    0x23, 0x5B,                                     // '#', '[' (dimensions array)
+                    0x55, 0x02,                                     // 'U', 2 (uint8)
+                    0x55, 0x03,                                     // 'U', 3 (uint8)
+                    0x5D,                                           // ']' end dimensions
+                    // 6 data bytes for a 2×3 array (enough to avoid EOF but not entire array)
+                    0x01, 0x02, 0x03, 0x04, 0x05, 0x06
+                };
+
+                // For normal dimensions, overflow should not be detected
+                {
+                    SimpleOverflowSaxHandler handler;
+                    const auto result = json::sax_parse(normal_payload, &handler,
+                                                        nlohmann::detail::input_format_t::bjdata, false);
+
+                    CHECK(handler.overflow_detected == false);
+                    CHECK(result == true);
+                }
+            }
+
             SECTION("do not accept NTFZ markers in ndarray optimized type (with count)")
             {
                 json _;
@@ -2803,6 +3036,10 @@ TEST_CASE("BJData")
 
             std::vector<uint8_t> const v0 = {'[', '#', 'T', ']'};
             CHECK_THROWS_WITH(_ = json::from_bjdata(v0), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x54");
+            CHECK(json::from_bjdata(v0, true, false).is_discarded());
+
+            std::vector<uint8_t> const vB = {'[', '#', 'B', ']'};
+            CHECK_THROWS_WITH(_ = json::from_bjdata(vB), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x42");
             CHECK(json::from_bjdata(v0, true, false).is_discarded());
         }
 
@@ -2902,6 +3139,10 @@ TEST_CASE("BJData")
             CHECK(json::from_bjdata(vM, true, false).is_discarded());
 
             std::vector<uint8_t> const vU = {'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 1, 2, 3, 4, 5};
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vU), "[json.exception.parse_error.110] parse error at byte 18: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK(json::from_bjdata(vU, true, false).is_discarded());
+
+            std::vector<uint8_t> const vB = {'[', '$', 'B', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 1, 2, 3, 4, 5};
             CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vU), "[json.exception.parse_error.110] parse error at byte 18: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
             CHECK(json::from_bjdata(vU, true, false).is_discarded());
 
@@ -3198,6 +3439,21 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
         CHECK(json::from_bjdata(v) == j);
     }
 
+    SECTION("Byte Type")
+    {
+        const auto s = std::vector<std::uint8_t>(
+        {
+            static_cast<std::uint8_t>(222),
+            static_cast<std::uint8_t>(173),
+            static_cast<std::uint8_t>(190),
+            static_cast<std::uint8_t>(239)
+        });
+        json const j = {{"binary", json::binary(s)}, {"val", 123}};
+        std::vector<uint8_t> const v = {'{', 'i', 6, 'b', 'i', 'n', 'a', 'r', 'y', '[', '$', 'B', '#', 'i', 4, 222, 173, 190, 239, 'i', 3, 'v', 'a', 'l', 'i', 123, '}'};
+        //CHECK(json::to_bjdata(j) == v); // 123 value gets encoded as uint8
+        CHECK(json::from_bjdata(v) == j);
+    }
+
     SECTION("String Type")
     {
         SECTION("English")
@@ -3449,7 +3705,7 @@ TEST_CASE("all BJData first bytes")
     // these bytes will fail immediately with exception parse_error.112
     std::set<uint8_t> supported =
     {
-        'T', 'F', 'Z', 'U', 'i', 'I', 'l', 'L', 'd', 'D', 'C', 'S', '[', '{', 'N', 'H', 'u', 'm', 'M', 'h'
+        'T', 'F', 'Z', 'B', 'U', 'i', 'I', 'l', 'L', 'd', 'D', 'C', 'S', '[', '{', 'N', 'H', 'u', 'm', 'M', 'h'
     };
 
     for (auto i = 0; i < 256; ++i)
@@ -3535,7 +3791,7 @@ TEST_CASE("BJData roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": std::vector<uint8_t>");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                const json j1 = json::parse(f_json);
 
                 // parse BJData file
                 auto packed = utils::read_binary_file(filename + ".bjdata");
@@ -3550,7 +3806,7 @@ TEST_CASE("BJData roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": std::ifstream");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                const json j1 = json::parse(f_json);
 
                 // parse BJData file
                 std::ifstream f_bjdata(filename + ".bjdata", std::ios::binary);

@@ -59,29 +59,29 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 1. The function can throw the following exceptions:
     - Throws [`type_error.304`](../../home/exceptions.md#jsonexceptiontype_error304) if the JSON value is not an array;
-      in this case, calling `at` with an index makes no sense. See example below.
+      in this case, calling `at` with an index makes no sense. See the example below.
     - Throws [`out_of_range.401`](../../home/exceptions.md#jsonexceptionout_of_range401) if the index `idx` is out of
-      range of the array; that is, `idx >= size()`. See example below.
+      range of the array; that is, `idx >= size()`. See the example below.
 2. The function can throw the following exceptions:
     - Throws [`type_error.304`](../../home/exceptions.md#jsonexceptiontype_error304) if the JSON value is not an object;
-      in this case, calling `at` with a key makes no sense. See example below.
+      in this case, calling `at` with a key makes no sense. See the example below.
     - Throws [`out_of_range.403`](../../home/exceptions.md#jsonexceptionout_of_range403) if the key `key` is not
-      stored in the object; that is, `find(key) == end()`. See example below.
+      stored in the object; that is, `find(key) == end()`. See the example below.
 3. See 2.
 4. The function can throw the following exceptions:
     - Throws [`parse_error.106`](../../home/exceptions.md#jsonexceptionparse_error106) if an array index in the passed
-      JSON pointer `ptr` begins with '0'. See example below.
+      JSON pointer `ptr` begins with '0'. See the example below.
     - Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) if an array index in the passed
-      JSON pointer `ptr` is not a number. See example below.
+      JSON pointer `ptr` is not a number. See the example below.
     - Throws [`out_of_range.401`](../../home/exceptions.md#jsonexceptionout_of_range401) if an array index in the passed
-      JSON pointer `ptr` is out of range. See example below.
+      JSON pointer `ptr` is out of range. See the example below.
     - Throws [`out_of_range.402`](../../home/exceptions.md#jsonexceptionout_of_range402) if the array index '-' is used
       in the passed JSON pointer `ptr`. As `at` provides checked access (and no elements are implicitly inserted), the
-      index '-' is always invalid. See example below.
+      index '-' is always invalid. See the example below.
     - Throws [`out_of_range.403`](../../home/exceptions.md#jsonexceptionout_of_range403) if the JSON pointer describes a
-      key of an object which cannot be found. See example below.
+      key of an object which cannot be found. See the example below.
     - Throws [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) if the JSON pointer `ptr` can
-      not be resolved. See example below.
+      not be resolved. See the example below.
 
 ## Complexity
 
@@ -215,8 +215,8 @@ Strong exception safety: if an exception occurs, the original value stays intact
 ## See also
 
 - documentation on [checked access](../../features/element_access/checked_access.md)
-- see [`operator[]`](operator%5B%5D.md) for unchecked access by reference
-- see [`value`](value.md) for access with default value
+- [`operator[]`](operator%5B%5D.md) for unchecked access by reference
+- [`value`](value.md) for access with default value
 
 ## Version history
 

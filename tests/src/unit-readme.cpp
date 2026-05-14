@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -115,17 +115,17 @@ TEST_CASE("README" * doctest::skip())
             auto j3 = json::parse(R"({"happy": true, "pi": 3.141})");
 
             // explicit conversion to string
-            std::string const s = j.dump();    // {\"happy\":true,\"pi\":3.141}
+            std::string const s = j.dump();     // NOLINT(bugprone-unused-local-non-trivial-variable) // {\"happy\":true,\"pi\":3.141}
 
             // serialization with pretty printing
             // pass in the amount of spaces to indent
-            std::cout << j.dump(4) << std::endl;
+            std::cout << j.dump(4) << std::endl; // NOLINT(performance-avoid-endl)
             // {
             //     "happy": true,
             //     "pi": 3.141
             // }
 
-            std::cout << std::setw(2) << j << std::endl;
+            std::cout << std::setw(2) << j << std::endl; // NOLINT(performance-avoid-endl)
         }
 
         {
@@ -136,7 +136,7 @@ TEST_CASE("README" * doctest::skip())
             j.push_back(true);
 
             // comparison
-            bool x = (j == R"(["foo", 1, true])"_json);  // true
+            const bool x = (j == R"(["foo", 1, true])"_json);  // true
             CHECK(x == true);
 
             // iterate the array
@@ -152,9 +152,9 @@ TEST_CASE("README" * doctest::skip())
             }
 
             // getter/setter
-            const auto tmp = j[0].get<std::string>();
+            const auto tmp = j[0].get<std::string>(); // NOLINT(bugprone-unused-local-non-trivial-variable)
             j[1] = 42;
-            bool foo{j.at(2)};
+            const bool foo{j.at(2)};
             CHECK(foo == true);
 
             // other stuff
@@ -171,7 +171,7 @@ TEST_CASE("README" * doctest::skip())
 
             // find an entry
             CHECK(o.find("foo") != o.end());
-            if (o.find("foo") != o.end())
+            if (o.find("foo") != o.end()) // NOLINT(readability-container-contains)
             {
                 // there is an entry with key "foo"
             }
@@ -237,26 +237,26 @@ TEST_CASE("README" * doctest::skip())
             // strings
             std::string const s1 = "Hello, world!";
             json const js = s1;
-            auto s2 = js.get<std::string>();
+            auto s2 = js.get<std::string>(); // NOLINT(bugprone-unused-local-non-trivial-variable)
 
             // Booleans
             bool const b1 = true;
             json const jb = b1;
-            bool b2{jb};
+            const bool b2{jb};
             CHECK(b2 == true);
 
             // numbers
             int const i = 42;
             json const jn = i;
-            double f{jn};
+            const double f{jn};
             CHECK(f == 42);
 
             // etc.
 
-            std::string const vs = js.get<std::string>();
-            bool vb = jb.get<bool>();
+            std::string const vs = js.get<std::string>(); // NOLINT(bugprone-unused-local-non-trivial-variable)
+            const bool vb = jb.get<bool>();
             CHECK(vb == true);
-            int vi = jn.get<int>();
+            const int vi = jn.get<int>();
             CHECK(vi == 42);
 
             // etc.

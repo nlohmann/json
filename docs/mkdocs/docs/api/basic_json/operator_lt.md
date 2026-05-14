@@ -27,7 +27,7 @@ bool operator<(ScalarType lhs, const const_reference rhs) noexcept;  // (2)
         7. binary
       For instance, any boolean value is considered less than any string.
 
-2. Compares wether a JSON value is less than a scalar or a scalar is less than a JSON value by converting
+2. Compares whether a JSON value is less than a scalar or a scalar is less than a JSON value by converting
    the scalar to a JSON value and comparing both JSON values according to 1.
 
 ## Template parameters

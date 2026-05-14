@@ -18,7 +18,7 @@ Deserializes a given input to a JSON value using the MessagePack serialization f
 1. Reads from a compatible input.
 2. Reads from an iterator range.
 
-The exact mapping and its limitations is described on a [dedicated page](../../features/binary_formats/messagepack.md).
+The exact mapping and its limitations are described on a [dedicated page](../../features/binary_formats/messagepack.md).
 
 ## Template parameters
 
@@ -40,10 +40,10 @@ The exact mapping and its limitations is described on a [dedicated page](../../f
 :   an input in MessagePack format convertible to an input adapter
 
 `first` (in)
-:   iterator to start of the input
+:   iterator to the start of the input
 
 `last` (in)
-:   iterator to end of the input
+:   iterator to the end of the input
 
 `strict` (in)
 :   whether to expect the input to be consumed until EOF (`#!cpp true` by default)
@@ -54,7 +54,7 @@ The exact mapping and its limitations is described on a [dedicated page](../../f
 ## Return value
 
 deserialized JSON value; in case of a parse error and `allow_exceptions` set to `#!cpp false`, the return value will be
-`value_t::discarded`.  The latter can be checked with [`is_discarded`](is_discarded.md).
+`value_t::discarded`. The latter can be checked with [`is_discarded`](is_discarded.md).
 
 ## Exception safety
 
@@ -63,10 +63,10 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 ## Exceptions
 
 - Throws [parse_error.110](../../home/exceptions.md#jsonexceptionparse_error110) if the given input ends prematurely or
-  the end of  file was not reached when `strict` was set to true
+  the end of the file was not reached when `strict` was set to true
 - Throws [parse_error.112](../../home/exceptions.md#jsonexceptionparse_error112) if unsupported features from
   MessagePack were used in the given input or if the input is not valid MessagePack
-- Throws [parse_error.113](../../home/exceptions.md#jsonexceptionparse_error113) if a string was expected as map key,
+- Throws [parse_error.113](../../home/exceptions.md#jsonexceptionparse_error113) if a string was expected as a map key,
   but not found
 
 ## Complexity

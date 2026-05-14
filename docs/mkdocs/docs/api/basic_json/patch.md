@@ -37,8 +37,8 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 ## Complexity
 
-Linear in the size of the JSON value and the length of the JSON patch. As usually only a fraction of the JSON value is
-affected by the patch, the complexity can usually be neglected.
+Linear in the size of the JSON value and the length of the JSON patch. As usually the patch affects only a fraction of
+the JSON value, the complexity can usually be neglected.
 
 ## Notes
 

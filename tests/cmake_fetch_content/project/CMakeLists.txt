@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.11...3.14)
 
 project(DummyImport CXX)
 
@@ -11,6 +11,10 @@ FetchContent_GetProperties(json)
 if(NOT json_POPULATED)
   FetchContent_Populate(json)
   add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+if(MSVC)
+  add_compile_options(/EHsc)
 endif()
 
 add_executable(with_namespace_target main.cpp)

@@ -23,6 +23,11 @@ A minimal map-like container that preserves insertion order for use within [`nlo
 `Allocator`
 :   allocator type
 
+## Iterator invalidation
+
+The type uses a `std::vector` to store object elements. Therefore, adding elements can yield a reallocation in which
+case all iterators (including the `end()` iterator) and all references to the elements are invalidated.
+
 ## Member types
 
 - **key_type** - key type (`Key`)

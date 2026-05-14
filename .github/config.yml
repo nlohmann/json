@@ -6,7 +6,7 @@ sentimentBotToxicityThreshold: .7
 
 # *Required* Comment to reply with
 sentimentBotReplyComment: >
-  Please be sure to review the [code of conduct](https://github.com/nlohmann/json/blob/develop/CODE_OF_CONDUCT.md) and be respectful of other users. cc/ @nlohmann
+  Please be sure to review the [code of conduct](https://github.com/nlohmann/json/blob/develop/.github/CODE_OF_CONDUCT.md) and be respectful of other users. cc/ @nlohmann
 
 
 # Configuration for request-info - https://github.com/behaviorbot/request-info
@@ -17,3 +17,6 @@ requestInfoReplyComment: >
 
 # *OPTIONAL* Label to be added to Issues and Pull Requests with insufficient information given
 requestInfoLabelToAdd: "state: needs more info"
+
+checkIssueTemplate: true
+checkPullRequestTemplate: true

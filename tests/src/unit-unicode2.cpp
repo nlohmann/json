@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -123,7 +123,7 @@ void check_utf8string(bool success_expected, int byte1, int byte2 = -1, int byte
 {
     if (++calls % 100000 == 0)
     {
-        std::cout << calls << " of 455355 UTF-8 strings checked" << std::endl;
+        std::cout << calls << " of 455355 UTF-8 strings checked" << std::endl; // NOLINT(performance-avoid-endl)
     }
 
     static std::string json_string;

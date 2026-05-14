@@ -17,6 +17,11 @@ recursively merges objects with common keys.
 The function is motivated by Python's [dict.update](https://docs.python.org/3.6/library/stdtypes.html#dict.update)
 function.
 
+## Iterator invalidation
+
+For [`ordered_json`](../ordered_json.md), adding a value to an object can yield a reallocation, in which case all
+iterators (including the `end()` iterator) and all references to the elements are invalidated.
+
 ## Parameters
 
 `j` (in)
@@ -27,10 +32,10 @@ function.
     `#!c false`)
 
 `first` (in)
-:   begin of the range of elements to insert
+:   the beginning of the range of elements to insert
 
 `last` (in)
-:   end of the range of elements to insert
+:   the end of the range of elements to insert
 
 ## Exceptions
 
@@ -139,4 +144,4 @@ function.
 ## Version history
 
 - Added in version 3.0.0.
-- Added `merge_objects` parameter in 3.10.4.
+- Added `merge_objects` parameter in 3.10.5.

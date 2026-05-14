@@ -1,8 +1,8 @@
 # Specializing enum conversion
 
-By default, enum values are serialized to JSON as integers. In some cases this could result in undesired behavior. If an
-enum is modified or re-ordered after data has been serialized to JSON, the later de-serialized JSON data may be
-undefined or a different enum value than was originally intended.
+By default, enum values are serialized to JSON as integers. In some cases, this could result in undesired behavior. If
+the integer values of any enum values are changed after data using those enum values has been serialized to JSON, then
+deserializing that JSON would result in a different enum value being restored, or the value not being found at all.
 
 It is possible to more precisely specify how a given enum is mapped to and from JSON as shown below:
 

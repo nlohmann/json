@@ -5,30 +5,40 @@ class out_of_range : public exception;
 ```
 
 This exception is thrown in case a library function is called on an input parameter that exceeds the expected range, for
-instance in case of array indices or nonexisting object keys.
+instance, in the case of array indices or nonexisting object keys.
 
 Exceptions have ids 4xx (see [list of out-of-range errors](../../home/exceptions.md#out-of-range)).
 
-```plantuml
-std::exception <|-- basic_json::exception
-basic_json::exception <|-- basic_json::parse_error
-basic_json::exception <|-- basic_json::invalid_iterator
-basic_json::exception <|-- basic_json::type_error
-basic_json::exception <|-- basic_json::out_of_range
-basic_json::exception <|-- basic_json::other_error
+```mermaid
+classDiagram
+  direction LR
+  
+    class std_exception ["std::exception"] {
+        <<interface>>
+    }
 
-interface std::exception {}
+    class json_exception ["basic_json::exception"] {
+        +const int id
+        +const char* what() const
+    }
+    
+    class json_parse_error ["basic_json::parse_error"] {
+        +const std::size_t byte
+    }
 
-class basic_json::exception {
-    + const int id
-    + const char* what() const
-}
+    class json_invalid_iterator ["basic_json::invalid_iterator"]
+    class json_type_error ["basic_json::type_error"]
+    class json_out_of_range ["basic_json::out_of_range"]
+    class json_other_error ["basic_json::other_error"]
 
-class basic_json::parse_error {
-    + const std::size_t byte
-}
+    std_exception <|-- json_exception
+    json_exception <|-- json_parse_error
+    json_exception <|-- json_invalid_iterator
+    json_exception <|-- json_type_error
+    json_exception <|-- json_out_of_range
+    json_exception <|-- json_other_error
 
-class basic_json::out_of_range #FFFF00 {}
+    style json_out_of_range fill:#CCCCFF
 ```
 
 ## Member functions

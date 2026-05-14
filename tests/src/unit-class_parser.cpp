@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -75,7 +75,7 @@ class SaxEventLogger
 
     bool start_object(std::size_t elements)
     {
-        if (elements == static_cast<std::size_t>(-1))
+        if (elements == (std::numeric_limits<std::size_t>::max)())
         {
             events.emplace_back("start_object()");
         }
@@ -100,7 +100,7 @@ class SaxEventLogger
 
     bool start_array(std::size_t elements)
     {
-        if (elements == static_cast<std::size_t>(-1))
+        if (elements == (std::numeric_limits<std::size_t>::max)())
         {
             events.emplace_back("start_array()");
         }
@@ -124,7 +124,7 @@ class SaxEventLogger
         return false;
     }
 
-    std::vector<std::string> events {};
+    std::vector<std::string> events {}; // NOLINT(readability-redundant-member-init)
     bool errored = false;
 };
 
@@ -206,6 +206,7 @@ class SaxCountdown : public nlohmann::json::json_sax_t
 json parser_helper(const std::string& s);
 bool accept_helper(const std::string& s);
 void comments_helper(const std::string& s);
+void trailing_comma_helper(const std::string& s);
 
 json parser_helper(const std::string& s)
 {
@@ -219,11 +220,13 @@ json parser_helper(const std::string& s)
     CHECK(j_nothrow == j);
 
     json j_sax;
-    nlohmann::detail::json_sax_dom_parser<json> sdp(j_sax);
+    nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type> sdp(j_sax);
     json::sax_parse(s, &sdp);
     CHECK(j_sax == j);
 
     comments_helper(s);
+
+    trailing_comma_helper(s);
 
     return j;
 }
@@ -259,10 +262,11 @@ bool accept_helper(const std::string& s)
     // 6. check if this approach came to the same result
     CHECK(ok_noexcept == ok_noexcept_cb);
 
-    // 7. check if comments are properly ignored
+    // 7. check if comments or trailing commas are properly ignored
     if (ok_accept)
     {
         comments_helper(s);
+        trailing_comma_helper(s);
     }
 
     // 8. return result
@@ -299,6 +303,38 @@ void comments_helper(const std::string& s)
 
         CHECK_NOTHROW(_ = json::parse(json_with_comment, nullptr, true, true));
         CHECK(json::accept(json_with_comment, true));
+    }
+}
+
+void trailing_comma_helper(const std::string& s)
+{
+    json _;
+
+    // parse/accept with default parser
+    CHECK_NOTHROW(_ = json::parse(s));
+    CHECK(json::accept(s));
+
+    // parse/accept while allowing trailing commas
+    CHECK_NOTHROW(_ = json::parse(s, nullptr, false, false, true));
+    CHECK(json::accept(s, false, true));
+
+    // note: [,] and {,} are not allowed
+    if (s.size() > 1 && (s.back() == ']' || s.back() == '}') && !_.empty())
+    {
+        std::vector<std::string> json_with_trailing_commas;
+        json_with_trailing_commas.push_back(s.substr(0, s.size() - 1) + " ," + s.back());
+        json_with_trailing_commas.push_back(s.substr(0, s.size() - 1) + "," + s.back());
+        json_with_trailing_commas.push_back(s.substr(0, s.size() - 1) + ", " + s.back());
+
+        for (const auto& json_with_trailing_comma : json_with_trailing_commas)
+        {
+            CAPTURE(json_with_trailing_comma)
+            CHECK_THROWS_AS(_ = json::parse(json_with_trailing_comma), json::parse_error);
+            CHECK(!json::accept(json_with_trailing_comma));
+
+            CHECK_NOTHROW(_ = json::parse(json_with_trailing_comma, nullptr, true, false, true));
+            CHECK(json::accept(json_with_trailing_comma, false, true));
+        }
     }
 }
 
@@ -542,13 +578,13 @@ TEST_CASE("parser class")
                     CHECK(parser_helper("9007199254740991").get<int64_t>() == 9007199254740991);
                 }
 
-                SECTION("over the edge cases")  // issue #178 - Integer conversion to unsigned (incorrect handling of 64 bit integers)
+                SECTION("over the edge cases")  // issue #178 - Integer conversion to unsigned (incorrect handling of 64-bit integers)
                 {
                     // While RFC8259, Section 6 specifies a preference for support
                     // for ranges in range of IEEE 754-2008 binary64 (double precision)
-                    // this does not accommodate 64 bit integers without loss of accuracy.
-                    // As 64 bit integers are now widely used in software, it is desirable
-                    // to expand support to to the full 64 bit (signed and unsigned) range
+                    // this does not accommodate 64-bit integers without loss of accuracy.
+                    // As 64-bit integers are now widely used in software, it is desirable
+                    // to expand support to the full 64 bit (signed and unsigned) range
                     // i.e. -(2**63) -> (2**64)-1.
 
                     // -(2**63)    ** Note: compilers see negative literals as negated positive numbers (hence the -1))
@@ -822,13 +858,13 @@ TEST_CASE("parser class")
                     CHECK(accept_helper("9007199254740991"));
                 }
 
-                SECTION("over the edge cases")  // issue #178 - Integer conversion to unsigned (incorrect handling of 64 bit integers)
+                SECTION("over the edge cases")  // issue #178 - Integer conversion to unsigned (incorrect handling of 64-bit integers)
                 {
                     // While RFC8259, Section 6 specifies a preference for support
                     // for ranges in range of IEEE 754-2008 binary64 (double precision)
                     // this does not accommodate 64 bit integers without loss of accuracy.
                     // As 64 bit integers are now widely used in software, it is desirable
-                    // to expand support to to the full 64 bit (signed and unsigned) range
+                    // to expand support to the full 64 bit (signed and unsigned) range
                     // i.e. -(2**63) -> (2**64)-1.
 
                     // -(2**63)    ** Note: compilers see negative literals as negated positive numbers (hence the -1))
@@ -1366,7 +1402,7 @@ TEST_CASE("parser class")
                 return event != json::parse_event_t::key;
             };
 
-            json x = json::parse("{\"key\": false}", cb);
+            const json x = json::parse("{\"key\": false}", cb);
             CHECK(x == json::object());
         }
     }
@@ -1400,14 +1436,14 @@ TEST_CASE("parser class")
 
         SECTION("filter nothing")
         {
-            json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
+            const json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
             {
                 return true;
             });
 
             CHECK (j_object == json({{"foo", 2}, {"bar", {{"baz", 1}}}}));
 
-            json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
+            const json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
             {
                 return true;
             });
@@ -1436,7 +1472,7 @@ TEST_CASE("parser class")
 
         SECTION("filter specific element")
         {
-            json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t event, const json & j) noexcept
+            const json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t event, const json & j) noexcept
             {
                 // filter all number(2) elements
                 return event != json::parse_event_t::value || j != json(2);
@@ -1444,7 +1480,7 @@ TEST_CASE("parser class")
 
             CHECK (j_object == json({{"bar", {{"baz", 1}}}}));
 
-            json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t event, const json & j) noexcept
+            const json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t event, const json & j) noexcept
             {
                 return event != json::parse_event_t::value || j != json(2);
             });
@@ -1454,7 +1490,7 @@ TEST_CASE("parser class")
 
         SECTION("filter object in array")
         {
-            json j_filtered1 = json::parse(structured_array, [](int /*unused*/, json::parse_event_t e, const json & parsed)
+            const json j_filtered1 = json::parse(structured_array, [](int /*unused*/, json::parse_event_t e, const json & parsed)
             {
                 return !(e == json::parse_event_t::object_end && parsed.contains("foo"));
             });
@@ -1463,7 +1499,7 @@ TEST_CASE("parser class")
             CHECK (j_filtered1.size() == 2);
             CHECK (j_filtered1 == json({1, {{"qux", "baz"}}}));
 
-            json j_filtered2 = json::parse(structured_array, [](int /*unused*/, json::parse_event_t e, const json& /*parsed*/) noexcept
+            const json j_filtered2 = json::parse(structured_array, [](int /*unused*/, json::parse_event_t e, const json& /*parsed*/) noexcept
             {
                 return e != json::parse_event_t::object_end;
             });
@@ -1478,7 +1514,7 @@ TEST_CASE("parser class")
             SECTION("first closing event")
             {
                 {
-                    json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t e, const json& /*unused*/) noexcept
+                    const json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t e, const json& /*unused*/) noexcept
                     {
                         static bool first = true;
                         if (e == json::parse_event_t::object_end && first)
@@ -1495,7 +1531,7 @@ TEST_CASE("parser class")
                 }
 
                 {
-                    json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t e, const json& /*unused*/) noexcept
+                    const json j_array = json::parse(s_array, [](int /*unused*/, json::parse_event_t e, const json& /*unused*/) noexcept
                     {
                         static bool first = true;
                         if (e == json::parse_event_t::array_end && first)
@@ -1519,13 +1555,13 @@ TEST_CASE("parser class")
             // object and array is discarded only after the closing character
             // has been read
 
-            json j_empty_object = json::parse("{}", [](int /*unused*/, json::parse_event_t e, const json& /*unused*/) noexcept
+            const json j_empty_object = json::parse("{}", [](int /*unused*/, json::parse_event_t e, const json& /*unused*/) noexcept
             {
                 return e != json::parse_event_t::object_end;
             });
             CHECK(j_empty_object == json());
 
-            json j_empty_array = json::parse("[]", [](int /*unused*/, json::parse_event_t e, const json& /*unused*/) noexcept
+            const json j_empty_array = json::parse("[]", [](int /*unused*/, json::parse_event_t e, const json& /*unused*/) noexcept
             {
                 return e != json::parse_event_t::array_end;
             });

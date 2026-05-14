@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -281,7 +281,7 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xcd);
-                        auto const restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        auto const restored = static_cast<uint16_t>((static_cast<uint8_t>(result[1]) * 256) + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -479,11 +479,11 @@ TEST_CASE("MessagePack")
                     std::vector<int32_t> const numbers
                     {
                         -32769,
-                            -65536,
-                            -77777,
-                            -1048576,
-                            -2147483648LL,
-                        };
+                        -65536,
+                        -77777,
+                        -1048576,
+                        -2147483648LL,
+                    };
                     for (auto i : numbers)
                     {
                         CAPTURE(i)
@@ -671,7 +671,7 @@ TEST_CASE("MessagePack")
 
                         // check individual bytes
                         CHECK(result[0] == 0xcd);
-                        auto const restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        auto const restored = static_cast<uint16_t>((static_cast<uint8_t>(result[1]) * 256) + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -1124,7 +1124,7 @@ TEST_CASE("MessagePack")
                 // Checking against an expected vector byte by byte is
                 // difficult, because no assumption on the order of key/value
                 // pairs are made. We therefore only check the prefix (type and
-                // size and the overall size. The rest is then handled in the
+                // size) and the overall size. The rest is then handled in the
                 // roundtrip check.
                 CHECK(result.size() == 67); // 1 type, 2 size, 16*4 content
                 CHECK(result[0] == 0xde); // map 16
@@ -1153,7 +1153,7 @@ TEST_CASE("MessagePack")
                 // Checking against an expected vector byte by byte is
                 // difficult, because no assumption on the order of key/value
                 // pairs are made. We therefore only check the prefix (type and
-                // size and the overall size. The rest is then handled in the
+                // size) and the overall size. The rest is then handled in the
                 // roundtrip check.
                 CHECK(result.size() == 458757); // 1 type, 4 size, 65536*7 content
                 CHECK(result[0] == 0xdf); // map 32
@@ -1508,6 +1508,22 @@ TEST_CASE("MessagePack")
             CHECK(json::from_msgpack(std::vector<uint8_t>({0xc4}), true, false).is_discarded());
         }
 
+        SECTION("unexpected end inside int with stream")
+        {
+            json _;
+            const std::string data = {static_cast<char>(0xd2u), static_cast<char>(0x12u), static_cast<char>(0x34u), static_cast<char>(0x56u)};
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::istringstream(data, std::ios::binary)),
+                                 "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
+        }
+        SECTION("misuse wchar for binary")
+        {
+            json _;
+            // creates 0xd2 after UTF-8 decoding, triggers get_elements in wide_string_input_adapter for code coverage
+            const std::u32string data = {static_cast<char32_t>(0x0280)};
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(data),
+                                 "[json.exception.parse_error.112] parse error at byte 1: wide string type cannot be interpreted as binary data", json::parse_error&);
+        }
+
         SECTION("unsupported bytes")
         {
             SECTION("concrete examples")
@@ -1590,7 +1606,7 @@ TEST_CASE("single MessagePack roundtrip")
 
         // parse JSON file
         std::ifstream f_json(filename);
-        json j1 = json::parse(f_json);
+        const json j1 = json::parse(f_json);
 
         // parse MessagePack file
         auto packed = utils::read_binary_file(filename + ".msgpack");
@@ -1604,7 +1620,7 @@ TEST_CASE("single MessagePack roundtrip")
         {
             SECTION("std::ostringstream")
             {
-                std::basic_ostringstream<std::uint8_t> ss;
+                std::basic_ostringstream<char> ss;
                 json::to_msgpack(j1, ss);
                 json j3 = json::from_msgpack(ss.str());
                 CHECK(j1 == j3);
@@ -1801,7 +1817,7 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": std::vector<uint8_t>");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                const json j1 = json::parse(f_json);
 
                 // parse MessagePack file
                 auto packed = utils::read_binary_file(filename + ".msgpack");
@@ -1816,7 +1832,7 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": std::ifstream");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                const json j1 = json::parse(f_json);
 
                 // parse MessagePack file
                 std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
@@ -1831,7 +1847,7 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
                 INFO_WITH_TEMP(filename + ": uint8_t* and size");
                 // parse JSON file
                 std::ifstream f_json(filename);
-                json j1 = json::parse(f_json);
+                const json j1 = json::parse(f_json);
 
                 // parse MessagePack file
                 auto packed = utils::read_binary_file(filename + ".msgpack");
@@ -1864,3 +1880,82 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
         }
     }
 }
+
+#ifdef JSON_HAS_CPP_17
+// Test suite for verifying MessagePack handling with std::byte input
+TEST_CASE("MessagePack with std::byte")
+{
+
+    SECTION("std::byte compatibility")
+    {
+        SECTION("vector roundtrip")
+        {
+            json original =
+            {
+                {"name", "test"},
+                {"value", 42},
+                {"array", {1, 2, 3}}
+            };
+
+            std::vector<uint8_t> temp = json::to_msgpack(original);
+            // Convert the uint8_t vector to std::byte vector
+            std::vector<std::byte> msgpack_data(temp.size());
+            for (size_t i = 0; i < temp.size(); ++i)
+            {
+                msgpack_data[i] = std::byte(temp[i]);
+            }
+            // Deserialize from std::byte vector back to JSON
+            json from_bytes;
+            CHECK_NOTHROW(from_bytes = json::from_msgpack(msgpack_data));
+
+            CHECK(from_bytes == original);
+        }
+
+        SECTION("empty vector")
+        {
+            const std::vector<std::byte> empty_data;
+            CHECK_THROWS_WITH_AS([&]()
+            {
+                [[maybe_unused]] auto result = json::from_msgpack(empty_data);
+                return true;
+            }
+            (),
+            "[json.exception.parse_error.110] parse error at byte 1: syntax error while parsing MessagePack value: unexpected end of input",
+            json::parse_error&);
+        }
+
+        SECTION("comparison with workaround")
+        {
+            json original =
+            {
+                {"string", "hello"},
+                {"integer", 42},
+                {"float", 3.14},
+                {"boolean", true},
+                {"null", nullptr},
+                {"array", {1, 2, 3}},
+                {"object", {{"key", "value"}}}
+            };
+
+            std::vector<uint8_t> temp = json::to_msgpack(original);
+
+            std::vector<std::byte> msgpack_data(temp.size());
+            for (size_t i = 0; i < temp.size(); ++i)
+            {
+                msgpack_data[i] = std::byte(temp[i]);
+            }
+            // Attempt direct deserialization using std::byte input
+            const json direct_result = json::from_msgpack(msgpack_data);
+
+            // Test the workaround approach: reinterpret as unsigned char* and use iterator range
+            const auto* const char_start = reinterpret_cast<unsigned char const*>(msgpack_data.data());
+            const auto* const char_end = char_start + msgpack_data.size();
+            json workaround_result = json::from_msgpack(char_start, char_end);
+
+            // Verify that the final deserialized JSON matches the original JSON
+            CHECK(direct_result == workaround_result);
+            CHECK(direct_result == original);
+        }
+    }
+}
+#endif

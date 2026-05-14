@@ -1,26 +1,28 @@
 # Binary Values
 
 The library implements several [binary formats](binary_formats/index.md) that encode JSON in an efficient way. Most of
-these formats support binary values; that is, values that have semantics define outside the library and only define a
+these formats support binary values; that is, values that have semantics defined outside the library and only define a
 sequence of bytes to be stored.
 
 JSON itself does not have a binary value. As such, binary values are an extension that this library implements to store
-values received by a binary format. Binary values are never created by the JSON parser, and are only part of a
+values received by a binary format. Binary values are never created by the JSON parser and are only part of a
 serialized JSON text if they have been created manually or via a binary format.
 
 ## API for binary values
 
-```plantuml
-class json::binary_t {
-    -- setters --
+```mermaid
+classDiagram
+
+class binary_t ["json::binary_t"] {
     +void set_subtype(std::uint64_t subtype)
     +void clear_subtype()
-    -- getters --
     +std::uint64_t subtype() const
     +bool has_subtype() const
 }
 
-"std::vector<uint8_t>" <|-- json::binary_t
+class vector ["std::vector<uint8_t>"]
+
+vector <|-- binary_t
 ```
 
 By default, binary values are stored as `std::vector<std::uint8_t>`. This type can be changed by providing a template
@@ -128,8 +130,8 @@ is an integer or `null`.
 
 ### BJData
 
-[BJData](binary_formats/bjdata.md) neither supports binary values nor subtypes, and proposes to serialize binary values
-as array of uint8 values. This translation is implemented by the library.
+[BJData](binary_formats/bjdata.md) neither supports binary values nor subtypes and proposes to serialize binary values
+as an array of uint8 values. The library implements this translation.
 
 ??? example
 
@@ -187,7 +189,7 @@ as array of uint8 values. This translation is implemented by the library.
 
 ### BSON
 
-[BSON](binary_formats/bson.md) supports binary values and subtypes. If a subtype is given, it is used and added as
+[BSON](binary_formats/bson.md) supports binary values and subtypes. If a subtype is given, it is used and added as an
 unsigned 8-bit integer. If no subtype is given, the generic binary subtype 0x00 is used.
 
 ??? example
@@ -272,7 +274,7 @@ byte array.
 
 [MessagePack](binary_formats/messagepack.md) supports binary values and subtypes. If a subtype is given, the ext family
 is used. The library will choose the smallest representation among fixext1, fixext2, fixext4, fixext8, ext8, ext16, and
-ext32. The subtype is then added as signed 8-bit integer.
+ext32. The subtype is then added as a signed 8-bit integer.
 
 If no subtype is given, the bin family (bin8, bin16, bin32) is used.
 
@@ -313,8 +315,8 @@ If no subtype is given, the bin family (bin8, bin16, bin32) is used.
 
 ### UBJSON
 
-[UBJSON](binary_formats/ubjson.md) neither supports binary values nor subtypes, and proposes to serialize binary values
-as array of uint8 values. This translation is implemented by the library.
+[UBJSON](binary_formats/ubjson.md) neither supports binary values nor subtypes and proposes to serialize binary values
+as an array of uint8 values. The library implements this translation.
 
 ??? example
 

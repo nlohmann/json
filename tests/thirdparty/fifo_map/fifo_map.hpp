@@ -300,7 +300,7 @@ template <
 
     /// insert value
     template<class P>
-    std::pair<iterator, bool> insert( P&& value )
+    std::pair<iterator, bool> insert( P&& value ) // NOLINT(cppcoreguidelines-missing-std-forward)
     {
         m_compare.add_key(value.first);
         return m_map.insert(value);
@@ -393,7 +393,7 @@ template <
     }
 
     /// swaps the contents
-    void swap(fifo_map& other)
+    void swap(fifo_map& other) // NOLINT(cppcoreguidelines-noexcept-swap,performance-noexcept-swap)
     {
         std::swap(m_map, other.m_map);
         std::swap(m_compare, other.m_compare);
@@ -520,7 +520,7 @@ template <
 namespace std // NOLINT(cert-dcl58-cpp,-warnings-as-errors)
 {
 template <class Key, class T, class Compare, class Allocator>
-inline void swap(nlohmann::fifo_map<Key, T, Compare, Allocator>& m1, // NOLINT(cert-dcl58-cpp)
+inline void swap(nlohmann::fifo_map<Key, T, Compare, Allocator>& m1, // NOLINT(cert-dcl58-cpp,cppcoreguidelines-noexcept-swap,performance-noexcept-swap)
                  nlohmann::fifo_map<Key, T, Compare, Allocator>& m2)
 {
     m1.swap(m2);

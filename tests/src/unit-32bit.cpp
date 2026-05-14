@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -14,7 +14,6 @@ using nlohmann::json;
 #include <climits> // SIZE_MAX
 #include <limits> // numeric_limits
 
-
 template <typename OfType, typename T, bool MinInRange, bool MaxInRange>
 struct trait_test_arg
 {
@@ -24,7 +23,7 @@ struct trait_test_arg
     static constexpr bool max_in_range = MaxInRange;
 };
 
-TEST_CASE_TEMPLATE_DEFINE("value_in_range_of trait", T, value_in_range_of_test)
+TEST_CASE_TEMPLATE_DEFINE("value_in_range_of trait", T, value_in_range_of_test) // NOLINT(readability-math-missing-parentheses)
 {
     using nlohmann::detail::value_in_range_of;
 
@@ -87,7 +86,6 @@ TEST_CASE_TEMPLATE_DEFINE("value_in_range_of trait", T, value_in_range_of_test)
         CHECK_FALSE(value_in_range_of<of_type>(val_max2));
     }
 }
-
 
 TEST_CASE("32bit")
 {

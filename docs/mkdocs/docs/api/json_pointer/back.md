@@ -4,7 +4,7 @@
 const string_t& back() const;
 ```
 
-Return last reference token.
+Return the last reference token.
 
 ## Return value
 
@@ -12,7 +12,7 @@ Last reference token.
 
 ## Exceptions
 
-Throws [out_of_range.405](../../home/exceptions.md#jsonexceptionout_of_range405) if JSON pointer has no parent.
+Throws [out_of_range.405](../../home/exceptions.md#jsonexceptionout_of_range405) if the JSON pointer has no parent.
 
 ## Complexity
 

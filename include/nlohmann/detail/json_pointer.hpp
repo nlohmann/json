@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #pragma once
@@ -154,6 +154,44 @@ class json_pointer
         return res;
     }
 
+    /// @brief remove first reference token
+    /// @sa https://json.nlohmann.me/api/json_pointer/pop_front/
+    void pop_front()
+    {
+        if (JSON_HEDLEY_UNLIKELY(empty()))
+        {
+            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+        }
+
+        reference_tokens.erase(reference_tokens.begin());
+    }
+
+    /// @brief return first reference token
+    /// @sa https://json.nlohmann.me/api/json_pointer/front/
+    const string_t& front() const
+    {
+        if (JSON_HEDLEY_UNLIKELY(empty()))
+        {
+            JSON_THROW(detail::out_of_range::create(405, "JSON pointer has no parent", nullptr));
+        }
+
+        return reference_tokens.front();
+    }
+
+    /// @brief append an unescaped token at the start of the reference pointer
+    /// @sa https://json.nlohmann.me/api/json_pointer/push_front/
+    void push_front(const string_t& token)
+    {
+        reference_tokens.insert(reference_tokens.begin(), token);
+    }
+
+    /// @brief append an unescaped token at the start of the reference pointer
+    /// @sa https://json.nlohmann.me/api/json_pointer/push_front/
+    void push_front(string_t&& token)
+    {
+        reference_tokens.insert(reference_tokens.begin(), std::move(token));
+    }
+
     /// @brief remove last reference token
     /// @sa https://json.nlohmann.me/api/json_pointer/pop_back/
     void pop_back()
@@ -228,7 +266,7 @@ class json_pointer
         }
 
         const char* p = s.c_str();
-        char* p_end = nullptr;
+        char* p_end = nullptr; // NOLINT(misc-const-correctness)
         errno = 0; // strtoull doesn't reset errno
         const unsigned long long res = std::strtoull(p, &p_end, 10); // NOLINT(runtime/int)
         if (p == p_end // invalid input or empty string
@@ -285,7 +323,7 @@ class json_pointer
                 {
                     if (reference_token == "0")
                     {
-                        // start a new array if reference token is 0
+                        // start a new array if the reference token is 0
                         result = &result->operator[](0);
                     }
                     else
@@ -314,7 +352,7 @@ class json_pointer
                 The following code is only reached if there exists a reference
                 token _and_ the current value is primitive. In this case, we have
                 an error situation, because primitive values may only occur as
-                single value; that is, with an empty list of reference tokens.
+                a single value; that is, with an empty list of reference tokens.
                 */
                 case detail::value_t::string:
                 case detail::value_t::boolean:
@@ -358,7 +396,7 @@ class json_pointer
             // convert null values to arrays or objects before continuing
             if (ptr->is_null())
             {
-                // check if reference token is a number
+                // check if the reference token is a number
                 const bool nums =
                     std::all_of(reference_token.begin(), reference_token.end(),
                                 [](const unsigned char x)
@@ -366,7 +404,7 @@ class json_pointer
                     return std::isdigit(x);
                 });
 
-                // change value to array for numbers or "-" or to object otherwise
+                // change value to an array for numbers or "-" or to object otherwise
                 *ptr = (nums || reference_token == "-")
                        ? detail::value_t::array
                        : detail::value_t::object;
@@ -609,7 +647,7 @@ class json_pointer
                     {
                         if (JSON_HEDLEY_UNLIKELY(!('1' <= reference_token[0] && reference_token[0] <= '9')))
                         {
-                            // first char should be between '1' and '9'
+                            // the first char should be between '1' and '9'
                             return false;
                         }
                         for (std::size_t i = 1; i < reference_token.size(); i++)
@@ -673,7 +711,7 @@ class json_pointer
             return result;
         }
 
-        // check if nonempty reference string begins with slash
+        // check if a nonempty reference string begins with slash
         if (JSON_HEDLEY_UNLIKELY(reference_string[0] != '/'))
         {
             JSON_THROW(detail::parse_error::create(107, 1, detail::concat("JSON pointer must be empty or begin with '/' - was: '", reference_string, "'"), nullptr));
@@ -747,10 +785,10 @@ class json_pointer
                 }
                 else
                 {
-                    // iterate array and use index as reference string
+                    // iterate array and use index as a reference string
                     for (std::size_t i = 0; i < value.m_data.m_value.array->size(); ++i)
                     {
-                        flatten(detail::concat(reference_string, '/', std::to_string(i)),
+                        flatten(detail::concat<string_t>(reference_string, '/', std::to_string(i)),
                                 value.m_data.m_value.array->operator[](i), result);
                     }
                 }
@@ -769,7 +807,7 @@ class json_pointer
                     // iterate object and use keys as reference string
                     for (const auto& element : *value.m_data.m_value.object)
                     {
-                        flatten(detail::concat(reference_string, '/', detail::escape(element.first)), element.second, result);
+                        flatten(detail::concat<string_t>(reference_string, '/', detail::escape(element.first)), element.second, result);
                     }
                 }
                 break;
@@ -785,7 +823,7 @@ class json_pointer
             case detail::value_t::discarded:
             default:
             {
-                // add primitive value with its reference string
+                // add a primitive value with its reference string
                 result[reference_string] = value;
                 break;
             }
@@ -821,17 +859,17 @@ class json_pointer
                 JSON_THROW(detail::type_error::create(315, "values in object must be primitive", &element.second));
             }
 
-            // assign value to reference pointed to by JSON pointer; Note that if
-            // the JSON pointer is "" (i.e., points to the whole value), function
-            // get_and_create returns a reference to result itself. An assignment
-            // will then create a primitive value.
+            // Assign the value to the reference pointed to by JSON pointer. Note
+            // that if the JSON pointer is "" (i.e., points to the whole value),
+            // function get_and_create returns a reference to the result itself.
+            // An assignment will then create a primitive value.
             json_pointer(element.first).get_and_create(result) = element.second;
         }
 
         return result;
     }
 
-    // can't use conversion operator because of ambiguity
+    // can't use the conversion operator because of ambiguity
     json_pointer<string_t> convert() const&
     {
         json_pointer<string_t> result;
@@ -926,7 +964,7 @@ class json_pointer
 };
 
 #if !JSON_HAS_THREE_WAY_COMPARISON
-// functions cannot be defined inside class due to ODR violations
+// functions cannot be defined inside the class due to ODR violations
 template<typename RefStringTypeLhs, typename RefStringTypeRhs>
 inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
                        const json_pointer<RefStringTypeRhs>& rhs) noexcept

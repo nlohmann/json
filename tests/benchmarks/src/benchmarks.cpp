@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include <benchmark/benchmark.h>
@@ -81,7 +81,6 @@ BENCHMARK_CAPTURE(ParseString, signed_ints,       TEST_DATA_DIRECTORY "/regressi
 BENCHMARK_CAPTURE(ParseString, unsigned_ints,     TEST_DATA_DIRECTORY "/regression/unsigned_ints.json");
 BENCHMARK_CAPTURE(ParseString, small_signed_ints, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json");
 
-
 //////////////////////////////////////////////////////////////////////////////
 // serialize JSON
 //////////////////////////////////////////////////////////////////////////////
@@ -116,7 +115,6 @@ BENCHMARK_CAPTURE(Dump, unsigned_ints / 4,     TEST_DATA_DIRECTORY "/regression/
 BENCHMARK_CAPTURE(Dump, small_signed_ints / -, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json",      -1);
 BENCHMARK_CAPTURE(Dump, small_signed_ints / 4, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json",      4);
 
-
 //////////////////////////////////////////////////////////////////////////////
 // serialize CBOR
 //////////////////////////////////////////////////////////////////////////////
@@ -141,6 +139,46 @@ BENCHMARK_CAPTURE(ToCbor, floats,            TEST_DATA_DIRECTORY "/regression/fl
 BENCHMARK_CAPTURE(ToCbor, signed_ints,       TEST_DATA_DIRECTORY "/regression/signed_ints.json");
 BENCHMARK_CAPTURE(ToCbor, unsigned_ints,     TEST_DATA_DIRECTORY "/regression/unsigned_ints.json");
 BENCHMARK_CAPTURE(ToCbor, small_signed_ints, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json");
+
+//////////////////////////////////////////////////////////////////////////////
+// Parse Msgpack
+//////////////////////////////////////////////////////////////////////////////
+
+static void FromMsgpack(benchmark::State& state, const char* filename)
+{
+    std::ifstream f(filename);
+    std::string str((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+    auto bytes = json::to_msgpack(json::parse(str));
+    std::ofstream o("test.msgpack");
+    o.write((char*)bytes.data(), bytes.size());
+    o.flush();
+    o.close();
+    for (auto _ : state)
+    {
+        state.PauseTiming();
+        auto* j = new json();
+        auto file = fopen("test.msgpack", "rb");
+        state.ResumeTiming();
+
+        *j = json::from_msgpack(file);
+
+        state.PauseTiming();
+        fclose(file);
+        delete j;
+        state.ResumeTiming();
+    }
+
+    state.SetBytesProcessed(state.iterations() * bytes.size());
+}
+
+BENCHMARK_CAPTURE(FromMsgpack, jeopardy, TEST_DATA_DIRECTORY "/jeopardy/jeopardy.json");
+BENCHMARK_CAPTURE(FromMsgpack, canada, TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(FromMsgpack, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(FromMsgpack, twitter, TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+BENCHMARK_CAPTURE(FromMsgpack, floats, TEST_DATA_DIRECTORY "/regression/floats.json");
+BENCHMARK_CAPTURE(FromMsgpack, signed_ints, TEST_DATA_DIRECTORY "/regression/signed_ints.json");
+BENCHMARK_CAPTURE(FromMsgpack, unsigned_ints, TEST_DATA_DIRECTORY "/regression/unsigned_ints.json");
+BENCHMARK_CAPTURE(FromMsgpack, small_signed_ints, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json");
 
 //////////////////////////////////////////////////////////////////////////////
 // serialize binary CBOR

@@ -1,0 +1,4 @@
+operator[]:                18446744073709551615
+default value (int):       -1
+default value (uint64_t):  18446744073709551615
+explicit return value type: 18446744073709551615

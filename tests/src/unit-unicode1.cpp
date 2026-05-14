@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -102,7 +102,7 @@ TEST_CASE("Unicode (1/5)" * doctest::skip())
             }
         }
 
-#if 0
+#if 0 // NOLINT(readability-avoid-unconditional-preprocessor-if)
         SECTION("incorrect sequences")
         {
             SECTION("high surrogate without low surrogate")
@@ -155,7 +155,7 @@ TEST_CASE("Unicode (1/5)" * doctest::skip())
 
     SECTION("read all unicode characters")
     {
-        // read a file with all unicode characters stored as single-character
+        // read a file with all Unicode characters stored as single-character
         // strings in a JSON array
         std::ifstream f(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json");
         json j;
@@ -442,7 +442,7 @@ TEST_CASE("Markus Kuhn's UTF-8 decoder capability and stress test")
 
         SECTION("4.1  Examples of an overlong ASCII character")
         {
-            // With a safe UTF-8 decoder, all of the following five overlong
+            // With a safe UTF-8 decoder, all the following five overlong
             // representations of the ASCII character slash ("/") should be rejected
             // like a malformed UTF-8 sequence, for instance by substituting it with
             // a replacement character. If you see a slash below, you do not have a

@@ -5491,7 +5491,7 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
     }
 };
 
-// Wraps another input apdater to convert wide character types into individual bytes.
+// Wraps another input adapter to convert wide character types into individual bytes.
 template<typename BaseInputAdapter, typename WideCharType>
 class wide_string_input_adapter
 {

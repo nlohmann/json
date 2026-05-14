@@ -35,7 +35,7 @@ bool contains(const json_pointer& ptr) const;
 
 ## Return value
 
-1. `#!cpp true` if an element with specified `key` exists. If no such element with such key is found or the JSON value
+1. `#!cpp true` if an element with specified `key` exists. If no such element with such a key is found or the JSON value
    is not an object, `#!cpp false` is returned.
 2. See 1.
 3. `#!cpp true` if the JSON pointer can be resolved to a stored value, `#!cpp false` otherwise.

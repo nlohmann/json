@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -123,8 +123,7 @@ TEST_CASE("JSON pointers")
             CHECK(j.contains(json::json_pointer("/a~1b")));
             CHECK(j.contains(json::json_pointer("/m~0n")));
 
-            // unescaped access
-            // access to nonexisting values yield object creation
+            // unescaped access to nonexisting values yield object creation
             CHECK(!j.contains(json::json_pointer("/a/b")));
             CHECK_NOTHROW(j[json::json_pointer("/a/b")] = 42);
             CHECK(j.contains(json::json_pointer("/a/b")));
@@ -204,11 +203,15 @@ TEST_CASE("JSON pointers")
             // escaped access
             CHECK(j[json::json_pointer("/a~1b")] == j["a/b"]);
             CHECK(j[json::json_pointer("/m~0n")] == j["m~n"]);
-
+#if JSON_DIAGNOSTIC_POSITIONS
+            // unescaped access
+            CHECK_THROWS_WITH_AS(j.at(json::json_pointer("/a/b")),
+                                 "[json.exception.out_of_range.403] (bytes 13-297) key 'a' not found", json::out_of_range&);
+#else
             // unescaped access
             CHECK_THROWS_WITH_AS(j.at(json::json_pointer("/a/b")),
                                  "[json.exception.out_of_range.403] key 'a' not found", json::out_of_range&);
-
+#endif
             // unresolved access
             const json j_primitive = 1;
             CHECK_THROWS_WITH_AS(j_primitive["/foo"_json_pointer],
@@ -561,6 +564,14 @@ TEST_CASE("JSON pointers")
         CHECK(!ptr.empty());
         CHECK(j[ptr] == j["answer"]["everything"]);
 
+        ptr.pop_front();
+        CHECK(ptr.front() == "everything");
+        ptr.pop_front();
+        CHECK(ptr.empty());
+        ptr.push_front("everything");
+        ptr.push_front(answer);
+        CHECK(j[ptr] == j["answer"]["everything"]);
+
         // check access via const pointer
         const auto cptr = ptr;
         CHECK(cptr.back() == "everything");
@@ -585,8 +596,17 @@ TEST_CASE("JSON pointers")
         CHECK(ptr.empty());
         CHECK(j[ptr] == j);
 
-        CHECK_THROWS_WITH(ptr.pop_back(),
-                          "[json.exception.out_of_range.405] JSON pointer has no parent");
+        CHECK_THROWS_WITH_AS(ptr.pop_back(),
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
+
+        CHECK_THROWS_WITH_AS(ptr.back(),
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
+
+        CHECK_THROWS_WITH_AS(ptr.pop_front(),
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
+
+        CHECK_THROWS_WITH_AS(ptr.front(),
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
     }
 
     SECTION("operators")
@@ -653,7 +673,7 @@ TEST_CASE("JSON pointers")
     SECTION("equality comparison")
     {
         const char* ptr_cpstring = "/foo/bar";
-        const char ptr_castring[] = "/foo/bar"; // NOLINT(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
+        const char ptr_castring[] = "/foo/bar"; // NOLINT(misc-const-correctness,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
         std::string ptr_string{"/foo/bar"};
         auto ptr1 = json::json_pointer(ptr_string);
         auto ptr2 = json::json_pointer(ptr_string);
@@ -785,4 +805,18 @@ TEST_CASE("JSON pointers")
             CHECK_FALSE(ptr_oj != ptr);
         }
     }
+
+    // build with C++20
+    // JSON_HAS_CPP_20
+#if defined(__cpp_char8_t)
+    SECTION("Using _json_pointer with char8_t literals #4945")
+    {
+        const json j = R"({"a": {"b": {"c": 123}}})"_json;
+        const auto p1 = "/a/b/c"_json_pointer;
+        CHECK(j[p1] == 123);
+
+        const auto p2 = u8"/a/b/c"_json_pointer;
+        CHECK(j[p2] == 123);
+    }
+#endif
 }

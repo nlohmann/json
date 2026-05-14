@@ -1,16 +1,15 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::ordered_map;
-
 
 TEST_CASE("ordered_map")
 {
@@ -37,7 +36,7 @@ TEST_CASE("ordered_map")
     {
         std::map<std::string, std::string> m {{"eins", "one"}, {"zwei", "two"}, {"drei", "three"}};
         ordered_map<std::string, std::string> om(m.begin(), m.end());
-        const auto com = om;
+        const auto com = om; // NOLINT(performance-unnecessary-copy-initialization)
 
         SECTION("with Key&&")
         {
@@ -70,7 +69,7 @@ TEST_CASE("ordered_map")
     {
         std::map<std::string, std::string> m {{"eins", "one"}, {"zwei", "two"}, {"drei", "three"}};
         ordered_map<std::string, std::string> om(m.begin(), m.end());
-        const auto com = om;
+        const auto com = om; // NOLINT(performance-unnecessary-copy-initialization)
 
         SECTION("with Key&&")
         {

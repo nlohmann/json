@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.2
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -34,17 +34,17 @@ struct alt_string_iter
         impl.append(first, last);
     }
 
-    std::string::const_iterator begin() const
+    std::string::const_iterator begin() const noexcept
     {
         return impl.begin();
     }
 
-    std::string::const_iterator end() const
+    std::string::const_iterator end() const noexcept
     {
         return impl.end();
     }
 
-    std::size_t size() const
+    std::size_t size() const noexcept
     {
         return impl.size();
     }
@@ -55,7 +55,7 @@ struct alt_string_iter
         return *this;
     }
 
-    std::string impl{};
+    std::string impl{}; // NOLINT(readability-redundant-member-init)
 };
 
 struct alt_string_data
@@ -91,7 +91,7 @@ struct alt_string_data
         return *this;
     }
 
-    std::string impl{};
+    std::string impl{}; // NOLINT(readability-redundant-member-init)
 };
 
 void check_escaped(const char* original, const char* escaped = "", bool ensure_ascii = false);
@@ -179,9 +179,9 @@ TEST_CASE("convenience functions")
 
         SECTION("std::string")
         {
-            std::string str1 = concat(hello_iter, world, '!');
-            std::string str2 = concat(hello_data, world, '!');
-            std::string str3 = concat("Hello, ", world, '!');
+            const std::string str1 = concat(hello_iter, world, '!');
+            const std::string str2 = concat(hello_data, world, '!');
+            const std::string str3 = concat("Hello, ", world, '!');
 
             CHECK(str1 == expected);
             CHECK(str2 == expected);
@@ -190,14 +190,14 @@ TEST_CASE("convenience functions")
 
         SECTION("alt_string_iter")
         {
-            alt_string_iter str = concat<alt_string_iter>(hello_iter, world, '!');
+            const alt_string_iter str = concat<alt_string_iter>(hello_iter, world, '!');
 
             CHECK(str.impl == expected);
         }
 
         SECTION("alt_string_data")
         {
-            alt_string_data str = concat<alt_string_data>(hello_data, world, '!');
+            const alt_string_data str = concat<alt_string_data>(hello_data, world, '!');
 
             CHECK(str.impl == expected);
         }

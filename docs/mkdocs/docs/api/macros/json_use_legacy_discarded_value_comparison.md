@@ -56,7 +56,7 @@ When the macro is not defined, the library will define it to its default value.
 !!! hint "CMake option"
 
     Legacy comparison can also be controlled with the CMake option
-    [`JSON_LegacyDiscardedValueComparison`](../../integration/cmake.md#json_legacydiscardedvaluecomparison)
+    [`JSON_LegacyDiscardedValueComparison`](../../integration/cmake.md#json_implicitconversions)
     (`OFF` by default) which defines `JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON` accordingly.
 
 ## Examples
@@ -71,6 +71,10 @@ When the macro is not defined, the library will define it to its default value.
 
     ...
     ```
+
+### See also
+
+- [:simple-cmake: JSON_LegacyDiscardedValueComparison](../../integration/cmake.md#json_legacydiscardedvaluecomparison) - CMake option to control the macro
 
 ## Version history
 

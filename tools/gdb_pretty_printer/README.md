@@ -1,6 +1,7 @@
 # GDB Pretty Printer
 
-File [nlohmann-json.py](nlohmann-json.py) contains a pretty printer for GDB for JSON values of this library. It was originally published as [Gist](https://gist.github.com/ssbssa/60da5339c6e6036b2afce17de06050ea#file-nlohmann-json-py) by [Hannes Domani](https://github.com/ssbssa).
+File [nlohmann-json.py](nlohmann-json.py) contains a pretty printer for GDB for JSON values of this library. It was
+originally published as [Gist](https://gist.github.com/ssbssa/60da5339c6e6036b2afce17de06050ea#file-nlohmann-json-py) by [Hannes Domani](https://github.com/ssbssa).
 
 ## How to use
 

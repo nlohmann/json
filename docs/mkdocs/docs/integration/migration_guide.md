@@ -260,5 +260,5 @@ exact version and configuration is relevant, use macro
 
 ## Do not use the `details` namespace
 
-The `details` namespace is not part of the public API of the library and can change in any version without announcement.
-Do not rely on any function or type in the `details` namespace.
+The `details` namespace is not part of the public API of the library and can change in any version without an
+announcement. Do not rely on any function or type in the `details` namespace.

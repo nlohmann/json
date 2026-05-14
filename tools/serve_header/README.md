@@ -17,7 +17,7 @@ The header file is automatically amalgamated on demand.
     (see `tools/serve_header/requirements.txt`)
 
 2. To serve the header over HTTPS (which is required by Compiler Explorer at this time), a certificate is needed.
-   The recommended method for creating a locally-trusted certificate is to use [`mkcert`](https://github.com/FiloSottile/mkcert).
+   The recommended method for creating a locally trusted certificate is to use [`mkcert`](https://github.com/FiloSottile/mkcert).
    - Install the `mkcert` certificate authority into your trust store(s):
      ```
      $ mkcert -install
@@ -65,7 +65,7 @@ An annotated example configuration can be found in `tools/serve_header/serve_hea
 `serve_header.py` was designed with the goal of supporting multiple project roots or working trees at the same time.
 The recommended directory structure is shown below but `serve_header.py` can work with other structures as well, including a nested hierarchy.
 ```
-json/          ⮜ the parent or web server root directoy
+json/          ⮜ the parent or web server root directory
 ├── develop/   ⮜ the main git checkout
 │   └── ...
 ├── feature1/
