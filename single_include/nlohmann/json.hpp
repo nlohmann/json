@@ -19817,8 +19817,10 @@ class serializer
     JSON_HEDLEY_NON_NULL(1)
     static int snprintf_float(char* buf, std::size_t size, int d, long double x)
     {
+        // %Lg (not %lg): 'l' has no effect on g/G; only 'L' applies to
+        // long double. ISO C11 §7.21.6.1 p7; otherwise UB (p9).
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        return (std::snprintf)(buf, size, "%.*lg", d, x);
+        return (std::snprintf)(buf, size, "%.*Lg", d, x);
     }
 
     void dump_float(number_float_t x, std::false_type /*is_ieee_single_or_double*/)

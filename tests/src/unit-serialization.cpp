@@ -11,13 +11,8 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-#include <cstdint>
-#include <limits>
-#include <map>
 #include <sstream>
 #include <iomanip>
-#include <string>
-#include <vector>
 
 TEST_CASE("serialization")
 {
