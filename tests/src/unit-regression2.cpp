@@ -1275,8 +1275,8 @@ TEST_CASE("regression test #5122 - from_json into types holding nlohmann::ordere
 // because GCC does not provide it and would tokenize-error on the argument.
 #if defined(__clang__) && defined(__has_warning)
     #if __has_warning("-Wself-assign-overloaded")
-DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
-DOCTEST_CLANG_SUPPRESS_WARNING("-Wself-assign-overloaded")
+        DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+        DOCTEST_CLANG_SUPPRESS_WARNING("-Wself-assign-overloaded")
     #endif
 #endif
 
@@ -1300,7 +1300,7 @@ TEST_CASE("regression test #5122 - nlohmann::ordered_map copy-assignment is self
 
 #if defined(__clang__) && defined(__has_warning)
     #if __has_warning("-Wself-assign-overloaded")
-DOCTEST_CLANG_SUPPRESS_WARNING_POP
+        DOCTEST_CLANG_SUPPRESS_WARNING_POP
     #endif
 #endif
 
@@ -1323,7 +1323,7 @@ TEST_CASE("regression test #5122 - nlohmann::ordered_map move-assignment transfe
     CHECK(it->second == "2");
 
     // Re-assigning into the moved-from object must leave it in a usable state.
-    src = nlohmann::ordered_map<std::string, std::string>{};
+    src = nlohmann::ordered_map<std::string, std::string> {};
     src.emplace("after-move", "3");
     REQUIRE(src.size() == 1);
     CHECK(src.begin()->first == "after-move");
