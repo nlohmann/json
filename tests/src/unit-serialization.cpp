@@ -11,6 +11,7 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <array>
 #include <sstream>
 #include <iomanip>
 
@@ -309,7 +310,7 @@ TEST_CASE("dump for basic_json with long double number_float_t")
 
     SECTION("round-trip dump/parse")
     {
-        const long double values[] =
+        constexpr std::array<long double, 13> values =
         {
             0.0L, -0.0L, 1.0L, -1.0L,
             0.5L, -0.5L, 1.5L, -2.25L,
