@@ -8,6 +8,15 @@
 
 module;
 
+// GCC workaround for C++ modules support.
+// When using C++20 modules, some compilers (particularly GCC) may have issues
+// with template instantiations in the module preamble. If you encounter
+// "redefinition" errors when including nlohmann/json.hpp, try one of:
+// 1. Include nlohmann/json.hpp in your module preamble BEFORE other #includes
+// 2. Or use: import nlohmann.json;  instead of #include <nlohmann/json.hpp>
+// 3. Or upgrade to a newer GCC version with better modules support.
+// See: https://github.com/nlohmann/json/issues/5103
+
 #include <nlohmann/json.hpp>
 
 export module nlohmann.json;
@@ -41,10 +50,3 @@ namespace detail
 } // namespace detail
 
 NLOHMANN_JSON_NAMESPACE_END
-
-export namespace std
-{
-    using std::hash;
-    using std::less;
-    using std::swap;
-} // namespace std
