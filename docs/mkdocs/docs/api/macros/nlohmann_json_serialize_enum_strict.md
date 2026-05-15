@@ -75,6 +75,22 @@ inline void from_json(const BasicJsonType& j, type& e);
     --8<-- "examples/nlohmann_json_serialize_enum_strict_2.output"
     ```
 
+??? example "Example 3: exceptions on invalid serialization"
+    
+    The example shows how an invalid serialization causes an exception to be thrown. In the example,
+    Color::unknown is not defined in the mapping used to call `NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`
+    so causes an exception when used to serialize. Similarly, "what" does not refer to an enum
+    value so also causes an exception when deserialization is attempted.
+
+    ```cpp hl_lines="14 32 33 43 44 45"
+    --8<-- "examples/nlohmann_json_serialize_enum_strict_err.cpp"
+    ```
+
+    Output:
+    ```json
+    --8<-- "examples/nlohmann_json_serialize_enum_strict_err.output"
+    ```
+
 ## See also
 
 - [Specializing enum conversion](../../features/enum_conversion.md)
