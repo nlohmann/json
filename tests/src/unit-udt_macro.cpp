@@ -460,6 +460,43 @@ class derived_person_only_serialize_private : person_without_default_constructor
     NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE(derived_person_only_serialize_private, person_without_default_constructor_1, hair_color)
 };
 
+// Zero-member types for issue #4041 regression: macros must compile and
+// produce valid (empty) JSON objects when no member arguments are given.
+struct empty_type_intrusive
+{
+    bool operator==(const empty_type_intrusive& /*rhs*/) const { return true; }
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(empty_type_intrusive)
+};
+
+struct empty_type_intrusive_with_default
+{
+    bool operator==(const empty_type_intrusive_with_default& /*rhs*/) const { return true; }
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(empty_type_intrusive_with_default)
+};
+
+struct empty_type_intrusive_only_serialize
+{
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(empty_type_intrusive_only_serialize)
+};
+
+struct empty_type_non_intrusive
+{
+    bool operator==(const empty_type_non_intrusive& /*rhs*/) const { return true; }
+};
+// NOLINTNEXTLINE(misc-use-internal-linkage)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(empty_type_non_intrusive)
+
+struct empty_type_non_intrusive_with_default
+{
+    bool operator==(const empty_type_non_intrusive_with_default& /*rhs*/) const { return true; }
+};
+// NOLINTNEXTLINE(misc-use-internal-linkage)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(empty_type_non_intrusive_with_default)
+
+struct empty_type_non_intrusive_only_serialize {};
+// NOLINTNEXTLINE(misc-use-internal-linkage)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(empty_type_non_intrusive_only_serialize)
+
 } // namespace persons
 
 TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", Pair, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
@@ -705,5 +742,61 @@ TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHM
         CHECK(Json(two_persons).dump() == (is_ordered ?
                                            R"([{"name":"Erik","age":1,"hair_color":"brown"},{"name":"Kyle","age":2,"hair_color":"black"}])" :
                                            R"([{"age":1,"hair_color":"brown","name":"Erik"},{"age":2,"hair_color":"black","name":"Kyle"}])"));
+    }
+}
+
+// Regression test for issue #4041: zero-member NLOHMANN_DEFINE_TYPE_* macros
+// must compile and produce valid (empty) JSON objects.
+TEST_CASE_TEMPLATE("Zero-member NLOHMANN_DEFINE_TYPE_* macros produce empty JSON objects (issue #4041)", Json, // NOLINT
+                   nlohmann::json, nlohmann::ordered_json)
+{
+    SECTION("NLOHMANN_DEFINE_TYPE_INTRUSIVE with zero members")
+    {
+        persons::empty_type_intrusive obj{};
+        Json j = obj;
+        CHECK(j.dump() == "{}");
+        persons::empty_type_intrusive obj2 = j.template get<persons::empty_type_intrusive>();
+        CHECK(obj2 == obj);
+    }
+
+    SECTION("NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT with zero members")
+    {
+        persons::empty_type_intrusive_with_default obj{};
+        Json j = obj;
+        CHECK(j.dump() == "{}");
+        persons::empty_type_intrusive_with_default obj2 = j.template get<persons::empty_type_intrusive_with_default>();
+        CHECK(obj2 == obj);
+    }
+
+    SECTION("NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE with zero members")
+    {
+        persons::empty_type_intrusive_only_serialize obj{};
+        Json j = obj;
+        CHECK(j.dump() == "{}");
+    }
+
+    SECTION("NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE with zero members")
+    {
+        persons::empty_type_non_intrusive obj{};
+        Json j = obj;
+        CHECK(j.dump() == "{}");
+        persons::empty_type_non_intrusive obj2 = j.template get<persons::empty_type_non_intrusive>();
+        CHECK(obj2 == obj);
+    }
+
+    SECTION("NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT with zero members")
+    {
+        persons::empty_type_non_intrusive_with_default obj{};
+        Json j = obj;
+        CHECK(j.dump() == "{}");
+        persons::empty_type_non_intrusive_with_default obj2 = j.template get<persons::empty_type_non_intrusive_with_default>();
+        CHECK(obj2 == obj);
+    }
+
+    SECTION("NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE with zero members")
+    {
+        persons::empty_type_non_intrusive_only_serialize obj{};
+        Json j = obj;
+        CHECK(j.dump() == "{}");
     }
 }
