@@ -20331,7 +20331,6 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return Container::end();
     }
 
-    /*
     template<class KeyType, detail::enable_if_t<
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     const_iterator find(KeyType && key) const
@@ -20345,7 +20344,6 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         }
         return Container::end();
     }
-    */
 
     std::pair<iterator, bool> insert( value_type&& value )
     {
