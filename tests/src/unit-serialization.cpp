@@ -351,8 +351,9 @@ TEST_CASE("dump for basic_json with long double number_float_t")
         // recognize long double infinity on this platform (notably, Valgrind
         // 3.22's x87 80-bit emulation reports +/-inf as a large finite value).
         // TODO: remove this guard once Valgrind's 80-bit long double support
-        // ships (KDE bug https://bugs.kde.org/show_bug.cgi?id=197915, ASSIGNED
-        // since 2009) and the minimum supported Valgrind version contains it.
+        // ships (Valgrind bug https://bugs.kde.org/show_bug.cgi?id=197915,
+        // ASSIGNED since 2009 — the Valgrind project tracks its bugs on
+        // bugs.kde.org) and the minimum supported Valgrind version contains it.
         volatile long double inf_probe = std::numeric_limits<long double>::infinity();
         if (!std::isfinite(inf_probe))
         {
