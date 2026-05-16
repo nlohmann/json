@@ -18,6 +18,16 @@
 #ifndef INCLUDE_NLOHMANN_JSON_HPP_
 #define INCLUDE_NLOHMANN_JSON_HPP_
 
+// Workaround for GCC template redefinition errors in C++ modules
+// When nlohmann/json.hpp is included in a C++20 module preamble after
+// other module imports, GCC may report spurious redefinition errors for
+// STL templates. These pragmas suppress those false positives.
+// See: https://github.com/nlohmann/json/issues/5103
+#if defined(__GNUC__) && !defined(__clang__) && __cplusplus >= 202002L
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wignored-attributes"
+#endif
+
 #include <algorithm> // all_of, find, for_each
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <functional> // hash, less
@@ -5343,5 +5353,10 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 #endif
 
 #include <nlohmann/detail/macro_unscope.hpp>
+
+// End of GCC diagnostic pragmas for C++ modules support
+#if defined(__GNUC__) && !defined(__clang__) && __cplusplus >= 202002L
+    #pragma GCC diagnostic pop
+#endif
 
 #endif  // INCLUDE_NLOHMANN_JSON_HPP_

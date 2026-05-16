@@ -85,16 +85,18 @@ Some important things:
 
 If you just want to serialize/deserialize some structs, the `to_json`/`from_json` functions can be a lot of boilerplate.
 
-There are six macros to make your life easier as long as you (1) want to use a JSON object as serialization and (2) want to use the member variable names as object keys in that object:
+There are several macros to make your life easier as long as you want to use a JSON object as serialization. The macros are following the naming pattern, and you can chose the macro based on the needed features:
 
-- [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(name, member1, member2, ...)`](../api/macros/nlohmann_define_type_non_intrusive.md) is to be defined inside the namespace of the class/struct to create code for. It will throw an exception in `from_json()` due to a missing value in the JSON object.
-- [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(name, member1, member2, ...)`](../api/macros/nlohmann_define_type_non_intrusive.md) is to be defined inside the namespace of the class/struct to create code for. It will not throw an exception in `from_json()` due to a missing value in the JSON object, but fills in values from an object which is default-constructed by the type.
-- [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(name, member1, member2, ...)`](../api/macros/nlohmann_define_type_non_intrusive.md) is to be defined inside the namespace of the class/struct to create code for. It does not define a `from_json()` function which is needed in case the type does not have a default constructor.
-- [`NLOHMANN_DEFINE_TYPE_INTRUSIVE(name, member1, member2, ...)`](../api/macros/nlohmann_define_type_intrusive.md) is to be defined inside the class/struct to create code for. This macro can also access private members. It will throw an exception in `from_json()` due to a missing value in the JSON object.
-- [`NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(name, member1, member2, ...)`](../api/macros/nlohmann_define_type_intrusive.md) is to be defined inside the class/struct to create code for. This macro can also access private members. It will not throw an exception in `from_json()` due to a missing value in the JSON object, but fills in values from an object which is default-constructed by the type.
-- [`NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(name, member1, member2, ...)`](../api/macros/nlohmann_define_type_intrusive.md) is to be defined inside the class/struct to create code for. This macro can also access private members. It does not define a `from_json()` function which is needed in case the type does not have a default constructor.
+- All the macros start with `NLOHMANN_DEFINE`.
+- If you want a macro for the derived object, use the [`DERIVED_TYPE`](../api/macros/nlohmann_define_derived_type.md) variant, otherwise use `TYPE`.
+    - The `DERIVED_TYPE` variant requires an additional parameter of a base type, which should have the `to_json`/`from_json` functions defined. For instance, with a macro of its own.
+- If you need access to the private fields use [`INTRUSIVE`](../api/macros/nlohmann_define_type_intrusive.md) variant, otherwise use [`NON_INTRUSIVE`](../api/macros/nlohmann_define_type_non_intrusive.md).
+    - The `INTRUSIVE` macro should be defined **inside** the target class/struct, `NON_INTRUSIVE` should be defined within the same namespace.
+- If you want to deserialize the incomplete JSONs, use the `WITH_DEFAULTS` variant, which will use the default values for the member variables absent in JSON, the variant without `WITH_DEFAULTS` will raise an exception.
+- If you do not need deserialization at all and only interested in `to_json` function, you can use the `ONLY_SERIALIZE` variant.
+- If you want to use the custom JSON names for member variables, use [`WITH_NAMES`](../api/macros/nlohmann_define_type_with_names.md) variant, otherwise the JSON name of the variable will be the same as its regular name. 
 
-Furthermore, there exist versions to use in the case of derived classes:
+For all the macros, the first parameter is the name of the class/struct. The `DERIVED_TYPE` macros require a second parameter of a base class. All the remaining parameters name the member variables. The `WITH_NAMES` macros require a JSON name before each of the variables.
 
 | Need access to private members                                   | Need only de-serialization                                       | Allow missing values when de-serializing                         | macro                                                                                                        |
 |------------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
@@ -118,8 +120,9 @@ For _derived_ classes and structs, use the following macros
 
 !!! info "Implementation limits"
 
-    - The current macro implementations are limited to at most 64 member variables. If you want to serialize/deserialize
-      types with more than 64 member variables, you need to define the `to_json`/`from_json` functions manually.
+    - The current macro implementations are limited to at most 63 member variables. If you want to serialize/deserialize
+      types with more than 63 member variables, you need to define the `to_json`/`from_json` functions manually.
+    - For the `WITH_NAMES` variants the limit is halved to 31 member variables.
 
 ??? example
 
@@ -131,8 +134,20 @@ For _derived_ classes and structs, use the following macros
     }
     ```
 
-    Here is an example with private members, where `NLOHMANN_DEFINE_TYPE_INTRUSIVE` is needed:
-
+    If you want to inherit the `person` struct and add a field to it, it can be done with:
+    
+    ```cpp
+    namespace ns {
+        struct person_derived : person {
+            std:string email;
+        };
+        
+        NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(person_derived, person, email)
+    }
+    ```
+    
+    Here is another example with private members, where `NLOHMANN_DEFINE_TYPE_INTRUSIVE` is needed:
+    
     ```cpp
     namespace ns {
         class address {
@@ -140,9 +155,27 @@ For _derived_ classes and structs, use the following macros
             std::string street;
             int housenumber;
             int postcode;
-
+      
           public:
             NLOHMANN_DEFINE_TYPE_INTRUSIVE(address, street, housenumber, postcode)
+        };
+    }
+    ```
+    
+    Or in case if you use some naming convention that you do not want to expose to JSON:
+    
+    ```cpp
+    namespace ns {
+        class address {
+          private:
+            std::string m_street;
+            int m_housenumber;
+            int m_postcode;
+    
+          public:
+            NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_NAMES(address, "street", m_street,
+                                                               "housenumber", m_housenumber,
+                                                               "postcode", m_postcode)
         };
     }
     ```
