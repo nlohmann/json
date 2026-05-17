@@ -363,7 +363,7 @@ std::cout << j_string << " == " << serialized_string << std::endl;
 
 [`.dump()`](https://json.nlohmann.me/api/basic_json/dump/) returns the originally stored string value.
 
-Note the library only supports UTF-8. When you store strings with different encodings in the library, calling [`dump()`](https://json.nlohmann.me/api/basic_json/dump/) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
+Note the library only supports UTF-8. When you store strings with different encodings in the library, calling [`dump()`](https://json.nlohmann.me/api/basic_json/dump/) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers. With `ignore`, invalid UTF-8 sequences are skipped during serialization (not copied byte-for-byte to the output).
 
 #### To/from streams (e.g., files, string streams)
 
@@ -1831,7 +1831,7 @@ The library supports **Unicode input** as follows:
 - [Unicode noncharacters](https://www.unicode.org/faq/private_use.html#nonchar1) will not be replaced by the library.
 - Invalid surrogates (e.g., incomplete pairs such as `\uDEAD`) will yield parse errors.
 - The strings stored in the library are UTF-8 encoded. When using the default string type (`std::string`), note that its length/size functions return the number of stored bytes rather than the number of characters or glyphs.
-- When you store strings with different encodings in the library, calling [`dump()`](https://json.nlohmann.me/api/basic_json/dump/) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
+- When you store strings with different encodings in the library, calling [`dump()`](https://json.nlohmann.me/api/basic_json/dump/) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers. With `ignore`, invalid UTF-8 sequences are skipped during serialization (not copied byte-for-byte to the output).
 - To store wide strings (e.g., `std::wstring`), you need to convert them to a UTF-8 encoded `std::string` before, see [an example](https://json.nlohmann.me/home/faq/#wide-string-handling).
 
 ### Comments in JSON

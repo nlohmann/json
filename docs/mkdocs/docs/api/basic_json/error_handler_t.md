@@ -18,7 +18,9 @@ replace
 :   replace invalid UTF-8 sequences with U+FFFD (� REPLACEMENT CHARACTER)
 
 ignore
-:   ignore invalid UTF-8 sequences; all bytes are copied to the output unchanged
+:   skip invalid UTF-8 sequences during serialization (they do not appear in the output). This
+    differs from copying every stored byte unchanged; see [#4552](https://github.com/nlohmann/json/issues/4552).
+    A byte-preserving mode is discussed in [#4555](https://github.com/nlohmann/json/pull/4555).
 
 ## Examples
 
