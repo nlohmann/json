@@ -85,7 +85,7 @@ The library supports **Unicode input** as follows:
 - The library will not replace [Unicode noncharacters](http://www.unicode.org/faq/private_use.html#nonchar1).
 - Invalid surrogates (e.g., incomplete pairs such as `\uDEAD`) will yield parse errors.
 - The strings stored in the library are UTF-8 encoded. When using the default string type (`std::string`), note that its length/size functions return the number of stored bytes rather than the number of characters or glyphs.
-- When you store strings with different encodings in the library, calling [`dump()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a50ec80b02d0f3f51130d4abb5d1cfdc5.html#a50ec80b02d0f3f51130d4abb5d1cfdc5) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
+- When you store strings with different encodings in the library, calling [`dump()`](../api/basic_json/dump.md) may throw an exception unless [`error_handler_t::replace`](../api/basic_json/error_handler_t.md) or [`error_handler_t::ignore`](../api/basic_json/error_handler_t.md) are used. With `ignore`, invalid UTF-8 sequences are **skipped** during serialization rather than copied byte-for-byte to the output (see [#4552](https://github.com/nlohmann/json/issues/4552)).
 
 In most cases, the parser is right to complain, because the input is not UTF-8 encoded. This is especially true for Microsoft Windows, where Latin-1 or ISO 8859-1 is often the standard encoding.
 
