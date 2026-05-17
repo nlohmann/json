@@ -1800,13 +1800,13 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**amalgamate.py - Amalgamate C source and header files**](https://github.com/edlund/amalgamate) to create a single header file
 - [**American fuzzy lop**](https://lcamtuf.coredump.cx/afl/) for fuzz testing
 - [**AppVeyor**](https://www.appveyor.com) for [continuous integration](https://ci.appveyor.com/project/nlohmann/json) on Windows
-- [**Artistic Style**](http://astyle.sourceforge.net) for automatic source code indentation
+- [**Artistic Style**](https://astyle.sourceforge.net) for automatic source code indentation
 - [**Clang**](https://clang.llvm.org) for compilation with code sanitizers
 - [**CMake**](https://cmake.org) for build automation
 - [**Codacy**](https://www.codacy.com) for further [code analysis](https://app.codacy.com/gh/nlohmann/json/dashboard)
 - [**Coveralls**](https://coveralls.io) to measure [code coverage](https://coveralls.io/github/nlohmann/json)
 - [**Coverity Scan**](https://scan.coverity.com) for [static analysis](https://scan.coverity.com/projects/nlohmann-json)
-- [**cppcheck**](http://cppcheck.sourceforge.net) for static analysis
+- [**cppcheck**](https://cppcheck.sourceforge.net) for static analysis
 - [**doctest**](https://github.com/onqtam/doctest) for the unit tests
 - [**GitHub Changelog Generator**](https://github.com/skywinder/github-changelog-generator) to generate the [ChangeLog](https://github.com/nlohmann/json/blob/develop/ChangeLog.md)
 - [**Google Benchmark**](https://github.com/google/benchmark) to implement the benchmarks
