@@ -56,6 +56,11 @@ Other Important points:
 
 - When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this
   default pair carefully.
+- **Unknown string values** that do not match any mapped string also deserialize to that same first pair—they do not
+  throw `json::exception::type_error` like a failed `get<std::string>()` on a JSON number would. If you need
+  deserialization to fail on unrecognized strings, provide a custom `from_json` (see
+  [Arbitrary Type Conversions](arbitrary_types.md)) or follow the discussion in
+  [issue #3992](https://github.com/nlohmann/json/issues/3992).
 - If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the
   map will be returned when converting to or from JSON.
 - To disable the default serialization of enumerators as integers and force a compiler error instead, see [`JSON_DISABLE_ENUM_SERIALIZATION`](../api/macros/json_disable_enum_serialization.md).
