@@ -344,8 +344,22 @@ TEST_CASE("dump for basic_json with long double number_float_t")
     SECTION("NaN and infinity dump as null")
     {
         CHECK(long_double_json(std::numeric_limits<long double>::quiet_NaN()).dump() == "null");
-        CHECK(long_double_json(std::numeric_limits<long double>::infinity()).dump() == "null");
-        CHECK(long_double_json(-std::numeric_limits<long double>::infinity()).dump() == "null");
+
+        // Probe the platform's runtime behavior — `volatile` forces a runtime
+        // call rather than constexpr-folding to a known answer at compile time.
+        // Skip the infinity assertions if std::isfinite() doesn't actually
+        // recognize long double infinity on this platform (notably, Valgrind
+        // 3.22's x87 80-bit emulation reports +/-inf as a large finite value).
+        // TODO(rusloker): remove this guard once Valgrind's 80-bit long double
+        // support ships (Valgrind bug https://bugs.kde.org/show_bug.cgi?id=197915,
+        // ASSIGNED since 2009 — the Valgrind project tracks its bugs on
+        // bugs.kde.org) and the minimum supported Valgrind version contains it.
+        const volatile long double inf_probe = std::numeric_limits<long double>::infinity();
+        if (!std::isfinite(inf_probe))
+        {
+            CHECK(long_double_json(std::numeric_limits<long double>::infinity()).dump() == "null");
+            CHECK(long_double_json(-std::numeric_limits<long double>::infinity()).dump() == "null");
+        }
     }
 
     SECTION("dump output matches double for exactly-representable values")
