@@ -17,8 +17,8 @@ return *tmp;
     
 ## Return value
 
-In case of a structured type (array or object), a reference to the last element is returned. In case of number, string,
-boolean, or binary values, a reference to the value is returned.
+In the case of a structured type (array or object), a reference to the last element is returned. In the case of number,
+string, boolean, or binary values, a reference to the value is returned.
 
 ## Exception safety
 

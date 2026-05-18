@@ -4,7 +4,7 @@ Upstream-Contact: Niels Lohmann <mail@nlohmann.me>
 Source: https://github.com/nlohmann/json
 
 Files: *
-Copyright: 2013-2025 Niels Lohmann <https://nlohmann.me>
+Copyright: 2013-2026 Niels Lohmann <https://nlohmann.me>
 License: MIT
 
 Files: include/nlohmann/thirdparty/hedley.hpp

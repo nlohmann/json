@@ -213,6 +213,21 @@ add_custom_target(ci_test_legacycomparison
 )
 
 ###############################################################################
+# Enable brace-init copy semantics.
+###############################################################################
+
+add_custom_target(ci_test_brace_init_copy_semantics
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_FastTests=ON
+    -DCMAKE_CXX_FLAGS=-DJSON_BRACE_INIT_COPY_SEMANTICS=1
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_brace_init_copy_semantics
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_brace_init_copy_semantics
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_brace_init_copy_semantics && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with brace-init copy semantics enabled"
+)
+
+###############################################################################
 # Disable global UDLs.
 ###############################################################################
 
@@ -657,6 +672,18 @@ add_custom_target(ci_cuda_example
         -DCMAKE_CUDA_HOST_COMPILER=g++-8
         -S${PROJECT_SOURCE_DIR}/tests/cuda_example -B${PROJECT_BINARY_DIR}/build_cuda_example
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_cuda_example
+)
+
+###############################################################################
+# C++ 20 modules
+###############################################################################
+
+add_custom_target(ci_module_cpp20
+    COMMAND ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=Debug -GNinja 
+        -DJSON_CI=ON -DNLOHMANN_JSON_BUILD_MODULES=ON -DJSON_Install=ON
+        -S${PROJECT_SOURCE_DIR}/tests/module_cpp20 -B${PROJECT_BINARY_DIR}/ci_module_cpp20
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/ci_module_cpp20
 )
 
 ###############################################################################

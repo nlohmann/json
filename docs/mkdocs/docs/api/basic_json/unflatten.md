@@ -28,11 +28,11 @@ The function can throw the following exceptions:
 
 ## Complexity
 
-Linear in the size the JSON value.
+Linear in the size of the JSON value.
 
 ## Notes
 
-Empty objects and arrays are flattened by [`flatten()`](flatten.md) to `#!json null` values and can not unflattened to
+Empty objects and arrays are flattened by [`flatten()`](flatten.md) to `#!json null` values and cannot unflattened to
 their original type. Apart from this example, for a JSON value `j`, the following is always true:
 `#!cpp j == j.flatten().unflatten()`.
 

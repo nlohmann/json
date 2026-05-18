@@ -187,7 +187,7 @@ conversions with calls to [`get`](../api/basic_json/get.md), [`get_to`](../api/b
 
       ```cpp
       nlohmann::json j = "Hello, world!";
-      auto s = j.template get<std::string>();
+      auto s = j.get<std::string>();
       ```
 
 === "Future-proof (alternative)"
@@ -260,5 +260,5 @@ exact version and configuration is relevant, use macro
 
 ## Do not use the `details` namespace
 
-The `details` namespace is not part of the public API of the library and can change in any version without announcement.
-Do not rely on any function or type in the `details` namespace.
+The `details` namespace is not part of the public API of the library and can change in any version without an
+announcement. Do not rely on any function or type in the `details` namespace.

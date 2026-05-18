@@ -4,7 +4,7 @@
 class parse_error : public exception;
 ```
 
-This exception is thrown by the library when a parse error occurs. Parse errors can occur during the deserialization of
+The library throws this exception when a parse error occurs. Parse errors can occur during the deserialization of
 JSON text, BSON, CBOR, MessagePack, UBJSON, as well as when using JSON Patch.
 
 Member `byte` holds the byte index of the last read character in the input file (see note below).

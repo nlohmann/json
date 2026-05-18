@@ -18,7 +18,7 @@ Deserializes a given input to a JSON value using the BSON (Binary JSON) serializ
 1. Reads from a compatible input.
 2. Reads from an iterator range.
 
-The exact mapping and its limitations is described on a [dedicated page](../../features/binary_formats/bson.md).
+The exact mapping and its limitations are described on a [dedicated page](../../features/binary_formats/bson.md).
 
 ## Template parameters
 
@@ -40,10 +40,10 @@ The exact mapping and its limitations is described on a [dedicated page](../../f
 :   an input in BSON format convertible to an input adapter
 
 `first` (in)
-:   iterator to start of the input
+:   iterator to the start of the input
 
 `last` (in)
-:   iterator to end of the input
+:   iterator to the end of the input
 
 `strict` (in)
 :   whether to expect the input to be consumed until EOF (`#!cpp true` by default)

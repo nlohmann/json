@@ -17,7 +17,7 @@ The header file is automatically amalgamated on demand.
     (see `tools/serve_header/requirements.txt`)
 
 2. To serve the header over HTTPS (which is required by Compiler Explorer at this time), a certificate is needed.
-   The recommended method for creating a locally-trusted certificate is to use [`mkcert`](https://github.com/FiloSottile/mkcert).
+   The recommended method for creating a locally trusted certificate is to use [`mkcert`](https://github.com/FiloSottile/mkcert).
    - Install the `mkcert` certificate authority into your trust store(s):
      ```
      $ mkcert -install

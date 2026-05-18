@@ -231,6 +231,12 @@ class WorkTrees(FileSystemEventHandler):
             elif event.event_type == 'deleted':
                 # check for deleted working trees
                 self.rescan(path)
+            elif event.event_type == 'moved':
+                # handle moved directories - treat source as deleted and dest as created
+                self.rescan(path)
+                if hasattr(event, 'dest_path'):
+                    dest_path = os.path.abspath(event.dest_path)
+                    self.created_bucket.add_dir(dest_path)
         elif event.event_type == 'closed':
             with self.tree_lock:
                 for tree in self.trees:
@@ -265,7 +271,7 @@ class HeaderRequestHandler(SimpleHTTPRequestHandler): # lgtm[py/missing-call-to-
 
     def send_head(self):
         # check if the translated path matches a working tree
-        # and fullfill the request; otherwise, send 404
+        # and fulfill the request; otherwise, send 404
         path = self.translate_path(self.path)
         self.worktree = self.worktrees.find(path)
         if self.worktree is not None:

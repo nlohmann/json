@@ -40,6 +40,7 @@ header. See also the [macro overview page](../../features/macros.md).
 
 ## Type conversions
 
+- [**JSON_BRACE_INIT_COPY_SEMANTICS**](json_brace_init_copy_semantics.md) - opt in to copy/move semantics for single-element brace initialization
 - [**JSON_DISABLE_ENUM_SERIALIZATION**](json_disable_enum_serialization.md) - switch off default serialization/deserialization functions for enums
 - [**JSON_USE_IMPLICIT_CONVERSIONS**](json_use_implicit_conversions.md) - control implicit conversions
 
@@ -81,3 +82,28 @@ header. See also the [macro overview page](../../features/macros.md).
   a derived class; uses default values
 - [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE**](nlohmann_define_derived_type.md) - serialize a derived
   class
+- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize/deserialize a non-derived class
+  with private members; uses custom names
+- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize/deserialize a
+  non-derived class with private members; uses default values; uses custom names
+- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize a non-derived class
+  with private members; uses custom names
+- [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize/deserialize a non-derived
+  class; uses custom names
+- [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize/deserialize a
+  non-derived class; uses default values; uses custom names
+- [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize a
+  non-derived class; uses custom names
+
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize/deserialize a derived class
+  with private members; uses custom names
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize/deserialize a
+  derived class with private members; uses default values; uses custom names
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize a derived
+  class with private members; uses custom names
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize/deserialize a derived
+  class; uses custom names
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize/deserialize
+  a derived class; uses default values; uses custom names
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize a derived
+  class; uses custom names

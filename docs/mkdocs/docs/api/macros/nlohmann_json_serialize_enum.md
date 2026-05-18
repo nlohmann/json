@@ -4,8 +4,8 @@
 #define NLOHMANN_JSON_SERIALIZE_ENUM(type, conversion...)
 ```
 
-By default, enum values are serialized to JSON as integers. In some cases this could result in undesired behavior. If an
-enum is modified or re-ordered after data has been serialized to JSON, the later de-serialized JSON data may be
+By default, enum values are serialized to JSON as integers. In some cases, this could result in undesired behavior. If
+an enum is modified or re-ordered after data has been serialized to JSON, the later deserialized JSON data may be
 undefined or a different enum value than was originally intended.
 
 The `NLOHMANN_JSON_SERIALIZE_ENUM` allows to define a user-defined serialization for every enumerator.
@@ -37,7 +37,7 @@ inline void from_json(const BasicJsonType& j, type& e);
 
 !!! important "Important notes"
 
-    - When using [`template get<ENUM_TYPE>()`](../basic_json/get.md), undefined JSON values will default to the first specified
+    - When using [`get<ENUM_TYPE>()`](../basic_json/get.md), undefined JSON values will default to the first specified
       conversion. Select this default pair carefully. See example 1 below.
     - If an enum or JSON value is specified in multiple conversions, the first matching conversion from the top of the
       list will be returned when converting to or from JSON. See example 2 below.

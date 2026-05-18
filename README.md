@@ -19,6 +19,7 @@
 [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/nlohmann/json.svg)](https://isitmaintained.com/project/nlohmann/json "Average time to resolve an issue")
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/289/badge)](https://bestpractices.coreinfrastructure.org/projects/289)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nlohmann/json/badge)](https://scorecard.dev/viewer/?uri=github.com/nlohmann/json)
+[![Backup Status](https://app.cloudback.it/badge/nlohmann/json)](https://cloudback.it)
 [![GitHub Sponsors](https://img.shields.io/badge/GitHub-Sponsors-ff69b4)](https://github.com/sponsors/nlohmann)
 [![REUSE status](https://api.reuse.software/badge/github.com/nlohmann/json)](https://api.reuse.software/info/github.com/nlohmann/json)
 [![Discord](https://img.shields.io/discord/1003743314341793913)](https://discord.gg/6mrGXKvX7y)
@@ -30,7 +31,7 @@
 - [Examples](#examples)
   - [Read JSON from a file](#read-json-from-a-file)
   - [Creating `json` objects from JSON literals](#creating-json-objects-from-json-literals)
-  - [JSON as first-class data type](#json-as-first-class-data-type)
+  - [JSON as a first-class data type](#json-as-a-first-class-data-type)
   - [Serialization / Deserialization](#serialization--deserialization)
   - [STL-like access](#stl-like-access)
   - [Conversion from STL containers](#conversion-from-stl-containers)
@@ -57,7 +58,7 @@
 
 There are myriads of [JSON](https://json.org) libraries out there, and each may even have its reason to exist. Our class had these design goals:
 
-- **Intuitive syntax**. In languages such as Python, JSON feels like a first class data type. We used all the operator magic of modern C++ to achieve the same feeling in your code. Check out the [examples below](#examples) and you'll know what I mean.
+- **Intuitive syntax**. In languages such as Python, JSON feels like a first-class data type. We used all the operator magic of modern C++ to achieve the same feeling in your code. Check out the [examples below](#examples) and you'll know what I mean.
 
 - **Trivial integration**. Our whole code consists of a single header file [`json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings. The library is also included in all popular [package managers](https://json.nlohmann.me/integration/package_managers/).
 
@@ -79,6 +80,8 @@ You can sponsor this library at [GitHub Sponsors](https://github.com/sponsors/nl
 
 - [Martti Laine](https://github.com/codeclown)
 - [Paul Harrington](https://github.com/phrrngtn)
+- [Mercedes-Benz Group](https://github.com/mercedes-benz)
+- [Ryan McCaffery](https://github.com/mccaffers)
 
 ### :label: Named Sponsors
 
@@ -107,7 +110,7 @@ Thanks everyone!
 
 :bug: If you found a **bug**, please check the [**FAQ**](https://json.nlohmann.me/home/faq/) if it is a known issue or the result of a design decision. Please also have a look at the [**issue list**](https://github.com/nlohmann/json/issues) before you [**create a new issue**](https://github.com/nlohmann/json/issues/new/choose). Please provide as much information as possible to help us understand and reproduce your issue.
 
-There is also a [**docset**](https://github.com/Kapeli/Dash-User-Contributions/tree/master/docsets/JSON_for_Modern_C%2B%2B) for the documentation browsers [Dash](https://kapeli.com/dash), [Velocity](https://velocity.silverlakesoftware.com), and [Zeal](https://zealdocs.org) that contains the full [documentation](https://json.nlohmann.me) as offline resource.
+There is also a [**docset**](https://github.com/Kapeli/Dash-User-Contributions/tree/master/docsets/JSON_for_Modern_C%2B%2B) for the documentation browsers [Dash](https://kapeli.com/dash), [Velocity](https://velocity.silverlakesoftware.com), and [Zeal](https://zealdocs.org) that contains the full [documentation](https://json.nlohmann.me) as an offline resource.
 
 ## Quick reference
 
@@ -136,7 +139,7 @@ There is also a [**docset**](https://github.com/Kapeli/Dash-User-Contributions/t
 
 Here are some examples to give you an idea how to use the class.
 
-Beside the examples below, you may want to:
+Besides the examples below, you may want to:
 
 → Check the [documentation](https://json.nlohmann.me/)\
 → Browse the [standalone example files](https://github.com/nlohmann/json/tree/develop/docs/mkdocs/docs/examples)\
@@ -157,9 +160,22 @@ std::ifstream f("example.json");
 json data = json::parse(f);
 ```
 
+If using modules (enabled with `NLOHMANN_JSON_BUILD_MODULES`), this example becomes:
+```cpp
+import std;
+import nlohmann.json;
+
+using json = nlohmann::json;
+
+// ...
+
+std::ifstream f("example.json");
+json data = json::parse(f);
+```
+
 ### Creating `json` objects from JSON literals
 
-Assume you want to create hard-code this literal JSON value in a file, as a `json` object:
+Assume you want to hard-code this literal JSON value as a `json` object:
 
 ```json
 {
@@ -195,7 +211,7 @@ json ex3 = {
 };
 ```
 
-### JSON as first-class data type
+### JSON as a first-class data type
 
 Here are some examples to give you an idea how to use the class.
 
@@ -224,13 +240,13 @@ With this library, you could write:
 // create an empty structure (null)
 json j;
 
-// add a number that is stored as double (note the implicit conversion of j to an object)
+// add a number stored as double (note the implicit conversion of j to an object)
 j["pi"] = 3.141;
 
-// add a Boolean that is stored as bool
+// add a Boolean stored as bool
 j["happy"] = true;
 
-// add a string that is stored as std::string
+// add a string stored as std::string
 j["name"] = "Niels";
 
 // add another null object by passing nullptr
@@ -239,7 +255,7 @@ j["nothing"] = nullptr;
 // add an object inside the object
 j["answer"]["everything"] = 42;
 
-// add an array that is stored as std::vector (using an initializer list)
+// add an array stored as std::vector (using an initializer list)
 j["list"] = { 1, 0, 2 };
 
 // add another object (using an initializer list of pairs)
@@ -331,7 +347,7 @@ Note the difference between serialization and assignment:
 json j_string = "this is a string";
 
 // retrieve the string value
-auto cpp_string = j_string.template get<std::string>();
+auto cpp_string = j_string.get<std::string>();
 // retrieve the string value (alternative when a variable already exists)
 std::string cpp_string2;
 j_string.get_to(cpp_string2);
@@ -340,7 +356,7 @@ j_string.get_to(cpp_string2);
 std::string serialized_string = j_string.dump();
 
 // output of original string
-std::cout << cpp_string << " == " << cpp_string2 << " == " << j_string.template get<std::string>() << '\n';
+std::cout << cpp_string << " == " << cpp_string2 << " == " << j_string.get<std::string>() << '\n';
 // output of serialized value
 std::cout << j_string << " == " << serialized_string << std::endl;
 ```
@@ -349,7 +365,7 @@ std::cout << j_string << " == " << serialized_string << std::endl;
 
 Note the library only supports UTF-8. When you store strings with different encodings in the library, calling [`dump()`](https://json.nlohmann.me/api/basic_json/dump/) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
 
-#### To/from streams (e.g. files, string streams)
+#### To/from streams (e.g., files, string streams)
 
 You can also use streams to serialize and deserialize:
 
@@ -382,7 +398,7 @@ Please note that setting the exception bit for `failbit` is inappropriate for th
 
 #### Read from iterator range
 
-You can also parse JSON from an iterator range; that is, from any container accessible by iterators whose `value_type` is an integral type of 1, 2 or 4 bytes, which will be interpreted as UTF-8, UTF-16 and UTF-32 respectively. For instance, a `std::vector<std::uint8_t>`, or a `std::list<std::uint16_t>`:
+You can also parse JSON from an iterator range; that is, from any container accessible by iterators whose `value_type` is an integral type of 1, 2, or 4 bytes, which will be interpreted as UTF-8, UTF-16, and UTF-32 respectively. For instance, a `std::vector<std::uint8_t>`, or a `std::list<std::uint16_t>`:
 
 ```cpp
 std::vector<std::uint8_t> v = {'t', 'r', 'u', 'e'};
@@ -486,7 +502,7 @@ To implement your own SAX handler, proceed as follows:
 2. Create an object of your SAX interface class, e.g. `my_sax`.
 3. Call `bool json::sax_parse(input, &my_sax)`; where the first parameter can be any input like a string or an input stream and the second parameter is a pointer to your SAX interface.
 
-Note the `sax_parse` function only returns a `bool` indicating the result of the last executed SAX event. It does not return a  `json` value - it is up to you to decide what to do with the SAX events. Furthermore, no exceptions are thrown in case of a parse error - it is up to you what to do with the exception object passed to your `parse_error` implementation. Internally, the SAX interface is used for the DOM parser (class `json_sax_dom_parser`) as well as the acceptor (`json_sax_acceptor`), see file [`json_sax.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/input/json_sax.hpp).
+Note the `sax_parse` function only returns a `bool` indicating the result of the last executed SAX event. It does not return a  `json` value - it is up to you to decide what to do with the SAX events. Furthermore, no exceptions are thrown in case of a parse error -- it is up to you what to do with the exception object passed to your `parse_error` implementation. Internally, the SAX interface is used for the DOM parser (class `json_sax_dom_parser`) as well as the acceptor (`json_sax_acceptor`), see file [`json_sax.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/input/json_sax.hpp).
 
 ### STL-like access
 
@@ -513,7 +529,7 @@ for (auto& element : j) {
 }
 
 // getter/setter
-const auto tmp = j[0].template get<std::string>();
+const auto tmp = j[0].get<std::string>();
 j[1] = 42;
 bool foo = j.at(2);
 
@@ -618,7 +634,7 @@ json j_umset(c_umset); // both entries for "one" are used
 // maybe ["one", "two", "one", "four"]
 ```
 
-Likewise, any associative key-value containers (`std::map`, `std::multimap`, `std::unordered_map`, `std::unordered_multimap`) whose keys can construct an `std::string` and whose values can be used to construct JSON values (see examples above) can be used to create a JSON object. Note that in case of multimaps only one key is used in the JSON object and the value depends on the internal order of the STL container.
+Likewise, any associative key-value containers (`std::map`, `std::multimap`, `std::unordered_map`, `std::unordered_multimap`) whose keys can construct an `std::string` and whose values can be used to construct JSON values (see examples above) can be used to create a JSON object. Note that in case of multimaps, only one key is used in the JSON object and the value depends on the internal order of the STL container.
 
 ```cpp
 std::map<std::string, int> c_map { {"one", 1}, {"two", 2}, {"three", 3} };
@@ -640,7 +656,7 @@ json j_ummap(c_ummap); // only one entry for key "three" is used
 
 ### JSON Pointer and JSON Patch
 
-The library supports **JSON Pointer** ([RFC 6901](https://tools.ietf.org/html/rfc6901)) as alternative means to address structured values. On top of this, **JSON Patch** ([RFC 6902](https://tools.ietf.org/html/rfc6902)) allows describing differences between two JSON values - effectively allowing patch and diff operations known from Unix.
+The library supports **JSON Pointer** ([RFC 6901](https://tools.ietf.org/html/rfc6901)) as an alternative means to address structured values. On top of this, **JSON Patch** ([RFC 6902](https://tools.ietf.org/html/rfc6902)) allows describing differences between two JSON values -- effectively allowing patch and diff operations known from Unix.
 
 ```cpp
 // a JSON value
@@ -720,7 +736,7 @@ You can switch off implicit conversions by defining `JSON_USE_IMPLICIT_CONVERSIO
 // strings
 std::string s1 = "Hello, world!";
 json js = s1;
-auto s2 = js.template get<std::string>();
+auto s2 = js.get<std::string>();
 // NOT RECOMMENDED
 std::string s3 = js;
 std::string s4;
@@ -729,7 +745,7 @@ s4 = js;
 // Booleans
 bool b1 = true;
 json jb = b1;
-auto b2 = jb.template get<bool>();
+auto b2 = jb.get<bool>();
 // NOT RECOMMENDED
 bool b3 = jb;
 bool b4;
@@ -738,7 +754,7 @@ b4 = jb;
 // numbers
 int i = 42;
 json jn = i;
-auto f = jn.template get<double>();
+auto f = jn.get<double>();
 // NOT RECOMMENDED
 double f2 = jb;
 double f3;
@@ -781,9 +797,9 @@ j["age"] = p.age;
 
 // convert from JSON: copy each value from the JSON object
 ns::person p {
-    j["name"].template get<std::string>(),
-    j["address"].template get<std::string>(),
-    j["age"].template get<int>()
+    j["name"].get<std::string>(),
+    j["address"].get<std::string>(),
+    j["age"].get<int>()
 };
 ```
 
@@ -800,7 +816,7 @@ std::cout << j << std::endl;
 // {"address":"744 Evergreen Terrace","age":60,"name":"Ned Flanders"}
 
 // conversion: json -> person
-auto p2 = j.template get<ns::person>();
+auto p2 = j.get<ns::person>();
 
 // that's it
 assert(p == p2);
@@ -827,21 +843,21 @@ namespace ns {
 ```
 
 That's all! When calling the `json` constructor with your type, your custom `to_json` method will be automatically called.
-Likewise, when calling `template get<your_type>()` or `get_to(your_type&)`, the `from_json` method will be called.
+Likewise, when calling `get<your_type>()` or `get_to(your_type&)`, the `from_json` method will be called.
 
 Some important things:
 
 - Those methods **MUST** be in your type's namespace (which can be the global namespace), or the library will not be able to locate them (in this example, they are in namespace `ns`, where `person` is defined).
 - Those methods **MUST** be available (e.g., proper headers must be included) everywhere you use these conversions. Look at [issue 1108](https://github.com/nlohmann/json/issues/1108) for errors that may occur otherwise.
-- When using `template get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). (There is a way to bypass this requirement described later.)
+- When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). (There is a way to bypass this requirement described later.)
 - In function `from_json`, use function [`at()`](https://json.nlohmann.me/api/basic_json/at/) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
 - You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
 
 #### Simplify your life with macros
 
-If you just want to serialize/deserialize some structs, the `to_json`/`from_json` functions can be a lot of boilerplate. There are [**several macros**](https://json.nlohmann.me/features/arbitrary_types/#simplify-your-life-with-macros) to make your life easier as long as you (1) want to use a JSON object as serialization and (2) want to use the member variable names as object keys in that object.
+If you just want to serialize/deserialize some structs, the `to_json`/`from_json` functions can be a lot of boilerplate. There are [**several macros**](https://json.nlohmann.me/api/macros/#serializationdeserialization-macros) to make your life easier as long as you want to use a JSON object as serialization.
 
-Which macro to choose depends on whether private member variables need to be accessed, a deserialization is needed, missing values should yield an error or should be replaced by default values, and if derived classes are used. See [this overview to choose the right one for your use case](https://json.nlohmann.me/api/macros/#serializationdeserialization-macros).
+Which macro to choose depends on whether private member variables need to be accessed, a deserialization is needed, missing values should yield an error or should be replaced by default values, and if derived classes are used. See [this overview to choose the right one for your use case](https://json.nlohmann.me/features/arbitrary_types/#simplify-your-life-with-macros).
 
 ##### Example usage of macros
 
@@ -850,6 +866,18 @@ The `to_json`/`from_json` functions for the `person` struct above can be created
 ```cpp
 namespace ns {
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person, name, address, age)
+}
+```
+
+If you want to inherit the `person` struct and add a field to it, it can be done with:
+
+```cpp
+namespace ns {
+    struct person_derived : person {
+        std::string email;
+    };
+    
+    NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(person_derived, person, email)
 }
 ```
 
@@ -869,11 +897,29 @@ namespace ns {
 }
 ```
 
+Or in case if you use some naming convention that you do not want to expose to JSON:
+
+```cpp
+namespace ns {
+    class address {
+      private:
+        std::string m_street;
+        int m_housenumber;
+        int m_postcode;
+
+      public:
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_NAMES(address, "street", m_street,
+                                                           "housenumber", m_housenumber,
+                                                           "postcode", m_postcode)
+    };
+}
+```
+
 #### How do I convert third-party types?
 
 This requires a bit more advanced technique. But first, let's see how this conversion mechanism works:
 
-The library uses **JSON Serializers** to convert types to json.
+The library uses **JSON Serializers** to convert types to JSON.
 The default serializer for `nlohmann::json` is `nlohmann::adl_serializer` (ADL means [Argument-Dependent Lookup](https://en.cppreference.com/w/cpp/language/adl)).
 
 It is implemented like this (simplified):
@@ -913,8 +959,8 @@ namespace nlohmann {
             if (j.is_null()) {
                 opt = boost::none;
             } else {
-                opt = j.template get<T>(); // same as above, but with
-                                           // adl_serializer<T>::from_json
+                opt = j.get<T>(); // same as above, but with
+                                  // adl_serializer<T>::from_json
             }
         }
     };
@@ -923,7 +969,7 @@ namespace nlohmann {
 
 #### How can I use `get()` for non-default constructible/non-copyable types?
 
-There is a way, if your type is [MoveConstructible](https://en.cppreference.com/w/cpp/named_req/MoveConstructible). You will need to specialize the `adl_serializer` as well, but with a special `from_json` overload:
+There is a way if your type is [MoveConstructible](https://en.cppreference.com/w/cpp/named_req/MoveConstructible). You will need to specialize the `adl_serializer` as well, but with a special `from_json` overload:
 
 ```cpp
 struct move_only_type {
@@ -941,7 +987,7 @@ namespace nlohmann {
         // note: the return type is no longer 'void', and the method only takes
         // one argument
         static move_only_type from_json(const json& j) {
-            return {j.template get<int>()};
+            return {j.get<int>()};
         }
 
         // Here's the catch! You must provide a to_json method! Otherwise, you
@@ -1005,14 +1051,14 @@ struct bad_serializer
     static void to_json(const BasicJsonType& j, T& value) {
       // this calls BasicJsonType::json_serializer<T>::from_json(j, value)
       // if BasicJsonType::json_serializer == bad_serializer ... oops!
-      value = j.template get<T>(); // oops!
+      value = j.get<T>(); // oops!
     }
 };
 ```
 
 ### Specializing enum conversion
 
-By default, enum values are serialized to JSON as integers. In some cases this could result in undesired behavior. If an enum is modified or re-ordered after data has been serialized to JSON, the later de-serialized JSON data may be undefined or a different enum value than was originally intended.
+By default, enum values are serialized to JSON as integers. In some cases, this could result in undesired behavior. If an enum is modified or re-ordered after data has been serialized to JSON, the later deserialized JSON data may be undefined or a different enum value than was originally intended.
 
 It is possible to more precisely specify how a given enum is mapped to and from JSON as shown below:
 
@@ -1045,11 +1091,11 @@ assert(j == "stopped");
 
 // json string to enum
 json j3 = "running";
-assert(j3.template get<TaskState>() == TS_RUNNING);
+assert(j3.get<TaskState>() == TS_RUNNING);
 
 // undefined json value to enum (where the first map entry above is the default)
 json jPi = 3.14;
-assert(jPi.template get<TaskState>() == TS_INVALID);
+assert(jPi.get<TaskState>() == TS_INVALID);
 ```
 
 Just as in [Arbitrary Type Conversions](#arbitrary-types-conversions) above,
@@ -1059,7 +1105,7 @@ Just as in [Arbitrary Type Conversions](#arbitrary-types-conversions) above,
 
 Other Important points:
 
-- When using `template get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this default pair carefully.
+- When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this default pair carefully.
 - If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the map will be returned when converting to or from JSON.
 
 ### Binary formats (BSON, CBOR, MessagePack, UBJSON, and BJData)
@@ -1141,7 +1187,7 @@ The library is used in multiple projects, applications, operating systems, etc. 
 
 ## Supported compilers
 
-Though it's 2025 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
+Though it's 2026 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
 - GCC 4.8 - 14.2 (and possibly later)
 - Clang 3.4 - 21.0 (and possibly later)
@@ -1168,7 +1214,7 @@ Please note:
 
     The code compiles successfully with [Android NDK](https://developer.android.com/ndk/index.html?hl=ml), Revision 9 - 11 (and possibly later) and [CrystaX's Android NDK](https://www.crystax.net/en/android/ndk) version 10.
 
-- For GCC running on MinGW or Android SDK, the error `'to_string' is not a member of 'std'` (or similarly, for `strtod` or `strtof`) may occur. Note this is not an issue with the code,  but rather with the compiler itself. On Android, see above to build with a newer environment.  For MinGW, please refer to [this site](https://tehsausage.com/mingw-to-string) and [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug. For Android NDK using `APP_STL := gnustl_static`, please refer to [this discussion](https://github.com/nlohmann/json/issues/219).
+- For GCC running on MinGW or Android SDK, the error `'to_string' is not a member of 'std'` (or similarly, for `strtod` or `strtof`) may occur. Note this is not an issue with the code, but rather with the compiler itself. On Android, see above to build with a newer environment.  For MinGW, please refer to [this site](https://tehsausage.com/mingw-to-string) and [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug. For Android NDK using `APP_STL := gnustl_static`, please refer to [this discussion](https://github.com/nlohmann/json/issues/219).
 
 - Unsupported versions of GCC and Clang are rejected by `#error` directives. This can be switched off by defining `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`. Note that you can expect no support in this case.
 
@@ -1187,7 +1233,7 @@ using json = nlohmann::json;
 
 to the files you want to process JSON and set the necessary switches to enable C++11 (e.g., `-std=c++11` for GCC and Clang).
 
-You can further use file [`include/nlohmann/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json_fwd.hpp) for forward-declarations. The installation of json_fwd.hpp (as part of cmake's install step), can be achieved by setting `-DJSON_MultipleHeaders=ON`.
+You can further use file [`include/nlohmann/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json_fwd.hpp) for forward-declarations. The installation of `json_fwd.hpp` (as part of cmake's install step) can be achieved by setting `-DJSON_MultipleHeaders=ON`.
 
 ### CMake
 
@@ -1199,7 +1245,7 @@ To use this library from a CMake project, you can locate it directly with `find_
 
 ```cmake
 # CMakeLists.txt
-find_package(nlohmann_json 3.11.3 REQUIRED)
+find_package(nlohmann_json 3.12.0 REQUIRED)
 ...
 add_library(foo ...)
 ...
@@ -1243,13 +1289,13 @@ Example:
 ```cmake
 include(FetchContent)
 
-FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
 FetchContent_MakeAvailable(json)
 
 target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
 ```
 
-**Note**: It is recommended to use the URL approach described above which is supported as of version 3.10.0. See
+**Note**: It is recommended to use the URL approach described above, which is supported as of version 3.10.0. See
 <https://json.nlohmann.me/integration/cmake/#fetchcontent> for more information.
 
 #### Supporting Both
@@ -1275,7 +1321,7 @@ target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
 # thirdparty/CMakeLists.txt
 ...
 if(FOO_USE_EXTERNAL_JSON)
-  find_package(nlohmann_json 3.11.3 REQUIRED)
+  find_package(nlohmann_json 3.12.0 REQUIRED)
 else()
   set(JSON_BuildTests OFF CACHE INTERNAL "")
   add_subdirectory(nlohmann_json)
@@ -1320,7 +1366,7 @@ pkg-config nlohmann_json --cflags
 
 The class is licensed under the [MIT License](https://opensource.org/licenses/MIT):
 
-Copyright &copy; 2013-2025 [Niels Lohmann](https://nlohmann.me)
+Copyright &copy; 2013-2026 [Niels Lohmann](https://nlohmann.me)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -1371,13 +1417,13 @@ I deeply appreciate the help of the following people.
 9. [Florian Weber](https://github.com/Florianjw) fixed a bug in and improved the performance of the comparison operators.
 10. [Eric Cornelius](https://github.com/EricMCornelius) pointed out a bug in the handling with NaN and infinity values. He also improved the performance of the string escaping.
 11. [易思龙](https://github.com/likebeta) implemented a conversion from anonymous enums.
-12. [kepkin](https://github.com/kepkin) patiently pushed forward the support for Microsoft Visual studio.
+12. [kepkin](https://github.com/kepkin) patiently pushed forward the support for Microsoft Visual Studio.
 13. [gregmarr](https://github.com/gregmarr) simplified the implementation of reverse iterators and helped with numerous hints and improvements. In particular, he pushed forward the implementation of user-defined types.
 14. [Caio Luppi](https://github.com/caiovlp) fixed a bug in the Unicode handling.
 15. [dariomt](https://github.com/dariomt) fixed some typos in the examples.
 16. [Daniel Frey](https://github.com/d-frey) cleaned up some pointers and implemented exception-safe memory allocation.
 17. [Colin Hirsch](https://github.com/ColinH) took care of a small namespace issue.
-18. [Huu Nguyen](https://github.com/whoshuu) correct a variable name in the documentation.
+18. [Huu Nguyen](https://github.com/whoshuu) corrected a variable name in the documentation.
 19. [Silverweed](https://github.com/silverweed) overloaded `parse()` to accept an rvalue reference.
 20. [dariomt](https://github.com/dariomt) fixed a subtlety in MSVC type support and implemented the `get_ref()` function to get a reference to stored values.
 21. [ZahlGraf](https://github.com/ZahlGraf) added a workaround that allows compilation using Android NDK.
@@ -1412,7 +1458,7 @@ I deeply appreciate the help of the following people.
 50. [Jared Grubb](https://github.com/jaredgrubb) silenced a nasty documentation warning.
 51. [Yixin Zhang](https://github.com/qwename) fixed an integer overflow check.
 52. [Bosswestfalen](https://github.com/Bosswestfalen) merged two iterator classes into a smaller one.
-53. [Daniel599](https://github.com/Daniel599) helped to get Travis execute the tests with Clang's sanitizers.
+53. [Daniel599](https://github.com/Daniel599) helped to get Travis to execute the tests with Clang's sanitizers.
 54. [Jonathan Lee](https://github.com/vjon) fixed an example in the README file.
 55. [gnzlbg](https://github.com/gnzlbg) supported the implementation of user-defined types.
 56. [Alexej Harm](https://github.com/qis) helped to get the user-defined types working with Visual Studio.
@@ -1433,7 +1479,7 @@ I deeply appreciate the help of the following people.
 71. [Vincent Thiery](https://github.com/vthiery) maintains a package for the Conan package manager.
 72. [Steffen](https://github.com/koemeet) fixed a potential issue with MSVC and `std::min`.
 73. [Mike Tzou](https://github.com/Chocobo1) fixed some typos.
-74. [amrcode](https://github.com/amrcode) noted a misleading documentation about comparison of floats.
+74. [amrcode](https://github.com/amrcode) noted misleading documentation about comparison of floats.
 75. [Oleg Endo](https://github.com/olegendo) reduced the memory consumption by replacing `<iostream>` with `<iosfwd>`.
 76. [dan-42](https://github.com/dan-42) cleaned up the CMake files to simplify including/reusing of the library.
 77. [Nikita Ofitserov](https://github.com/himikof) allowed for moving values from initializer lists.
@@ -1460,13 +1506,13 @@ I deeply appreciate the help of the following people.
 98. [Vadim Evard](https://github.com/Pipeliner) fixed a Markdown issue in the README.
 99. [zerodefect](https://github.com/zerodefect) fixed a compiler warning.
 100. [Kert](https://github.com/kaidokert) allowed to template the string type in the serialization and added the possibility to override the exceptional behavior.
-101. [mark-99](https://github.com/mark-99) helped fixing an ICC error.
+101. [mark-99](https://github.com/mark-99) helped fix an ICC error.
 102. [Patrik Huber](https://github.com/patrikhuber) fixed links in the README file.
 103. [johnfb](https://github.com/johnfb) found a bug in the implementation of CBOR's indefinite length strings.
 104. [Paul Fultz II](https://github.com/pfultz2) added a note on the cget package manager.
 105. [Wilson Lin](https://github.com/wla80) made the integration section of the README more concise.
 106. [RalfBielig](https://github.com/ralfbielig) detected and fixed a memory leak in the parser callback.
-107. [agrianius](https://github.com/agrianius) allowed to dump JSON to an alternative string type.
+107. [agrianius](https://github.com/agrianius) allowed dumping JSON to an alternative string type.
 108. [Kevin Tonon](https://github.com/ktonon) overworked the C++11 compiler checks in CMake.
 109. [Axel Huebl](https://github.com/ax3l) simplified a CMake check and added support for the [Spack package manager](https://spack.io).
 110. [Carlos O'Ryan](https://github.com/coryan) fixed a typo.
@@ -1515,12 +1561,12 @@ I deeply appreciate the help of the following people.
 153. [Ivor Wanders](https://github.com/iwanders) helped to reduce the CMake requirement to version 3.1.
 154. [njlr](https://github.com/njlr) updated the Buckaroo instructions.
 155. [Lion](https://github.com/lieff) fixed a compilation issue with GCC 7 on CentOS.
-156. [Isaac Nickaein](https://github.com/nickaein) improved the integer serialization performance and  implemented the `contains()` function.
+156. [Isaac Nickaein](https://github.com/nickaein) improved the integer serialization performance and implemented the `contains()` function.
 157. [past-due](https://github.com/past-due) suppressed an unfixable warning.
 158. [Elvis Oric](https://github.com/elvisoric) improved Meson support.
 159. [Matěj Plch](https://github.com/Afforix) fixed an example in the README.
 160. [Mark Beckwith](https://github.com/wythe) fixed a typo.
-161. [scinart](https://github.com/scinart) fixed bug in the serializer.
+161. [scinart](https://github.com/scinart) fixed a bug in the serializer.
 162. [Patrick Boettcher](https://github.com/pboettch) implemented `push_back()` and `pop_back()` for JSON Pointers.
 163. [Bruno Oliveira](https://github.com/nicoddemus) added support for Conda.
 164. [Michele Caini](https://github.com/skypjack) fixed links in the README.
@@ -1562,7 +1608,7 @@ I deeply appreciate the help of the following people.
 200. [Alexander “weej” Jones](https://github.com/alex-weej) fixed an example in the README.
 201. [Antoine Cœur](https://github.com/Coeur) fixed some typos in the documentation.
 202. [jothepro](https://github.com/jothepro) updated links to the Hunter package.
-203. [Dave Lee](https://github.com/kastiglione) fixed link in the README.
+203. [Dave Lee](https://github.com/kastiglione) fixed a link in the README.
 204. [Joël Lamotte](https://github.com/Klaim) added instruction for using Build2's package manager.
 205. [Paul Jurczak](https://github.com/pauljurczak) fixed an example in the README.
 206. [Sonu Lohani](https://github.com/sonulohani) fixed a warning.
@@ -1605,7 +1651,7 @@ I deeply appreciate the help of the following people.
 243. [raduteo](https://github.com/raduteo) fixed a warning.
 244. [David Pfahler](https://github.com/theShmoo) added the possibility to compile the library without I/O support.
 245. [Morten Fyhn Amundsen](https://github.com/mortenfyhn) fixed a typo.
-246. [jpl-mac](https://github.com/jpl-mac) allowed to treat the library as a system header in CMake.
+246. [jpl-mac](https://github.com/jpl-mac) allowed treating the library as a system header in CMake.
 247. [Jason Dsouza](https://github.com/jasmcaus) fixed the indentation of the CMake file.
 248. [offa](https://github.com/offa) added a link to Conan Center to the documentation.
 249. [TotalCaesar659](https://github.com/TotalCaesar659) updated the links in the documentation to use HTTPS.
@@ -1647,7 +1693,7 @@ I deeply appreciate the help of the following people.
 285. [Wolf Vollprecht](https://github.com/wolfv) added the `patch_inplace` function.
 286. [Jake Zimmerman](https://github.com/jez) highlighted common usage patterns in the README file.
 287. [NN](https://github.com/NN---) added the Visual Studio output directory to `.gitignore`.
-288. [Romain Reignier](https://github.com/romainreignier) improved the performance the vector output adapter.
+288. [Romain Reignier](https://github.com/romainreignier) improved the performance of the vector output adapter.
 289. [Mike](https://github.com/Mike-Leo-Smith) fixed the `std::iterator_traits`.
 290. [Richard Hozák](https://github.com/zxey) added macro `JSON_NO_ENUM` to disable default enum conversions.
 291. [vakokako](https://github.com/vakokako) fixed tests when compiling with C++20.
@@ -1694,9 +1740,9 @@ I deeply appreciate the help of the following people.
 332. [taro](https://github.com/tarolling) fixed a typo in the `CODEOWNERS` file.
 333. [Ikko Eltociear Ashimine](https://github.com/eltociear) fixed a typo.
 334. [Felix Yan](https://github.com/felixonmars) fixed a typo in the README.
-335. [HO-COOH](https://github.com/HO-COOH) fixed a parentheses in the documentation.
+335. [HO-COOH](https://github.com/HO-COOH) fixed a parenthesis in the documentation.
 336. [Ivor Wanders](https://github.com/iwanders) fixed the examples to catch exception by `const&`.
-337. [miny1233](https://github.com/miny1233) fixed a parentheses in the documentation.
+337. [miny1233](https://github.com/miny1233) fixed a parenthesis in the documentation.
 338. [tomalakgeretkal](https://github.com/tomalakgeretkal) fixed a compilation error.
 339. [alferov](https://github.com/ALF-ONE) fixed a compilation error.
 340. [Craig Scott](https://github.com/craigscott-crascit) fixed a deprecation warning in CMake.
@@ -1706,6 +1752,44 @@ I deeply appreciate the help of the following people.
 344. [Aleksei Sapitskii](https://github.com/aleksproger) added support for Apple's Swift Package Manager.
 345. [Benjamin Buch](https://github.com/bebuch) fixed the installation path in CMake.
 346. [Colby Haskell](https://github.com/colbychaskell) clarified the parse error message in case a file cannot be opened.
+347. [Juan Carlos Arevalo Baeza](https://github.com/TheJCAB) fixed the enum conversion.
+348. [alferov](https://github.com/ALF-ONE) fixed a version in the documentation.
+349. [ss](https://github.com/serge-s) fixed the amalgamation call.
+350. [AniketDhemare](https://github.com/AniketDhemare) fixed a version in the documentation.
+351. [Philip Müller](https://github.com/philip-paul-mueller) fixed an example.
+352. [Leila Shcheglova](https://github.com/LeilaShcheglova) fixed a warning in a test.
+353. [Alex Prabhat Bara](https://github.com/alexprabhat99) fixed a function name in the documentation.
+354. [laterlaugh](https://github.com/laterlaugh) fixed some typos.
+355. [Yuanhao Jia](https://github.com/MrJia1997) fixed the GDB pretty printer.
+356. [Fallen_Breath](https://github.com/Fallen-Breath) fixed an example for JSON Pointer.
+357. [Nikhil Idiculla](https://github.com/tsnl) fixed some typos.
+358. [Griffin Myers](https://github.com/gmyers18) updated the Natvis file.
+359. [thetimr](https://github.com/thetimr) fixed a typo in the documentation.
+360. [Balazs Erseki](https://github.com/zerocukor287) fixed a URL in the contribution guidelines.
+361. [Niccolò Iardella](https://github.com/rotolof) added `NLOHMANN_DEFINE_DERIVED_TYPE_*` macros.
+362. [Borislav Stanimirov](https://github.com/iboB) allowed overriding the CMake target name.
+363. [Captain Crutches](https://github.com/captaincrutches) made `iterator_proxy_value` a `std::forward_iterator`.
+364. [Fredrik Sandhei](https://github.com/fsandhei) added type conversion support for `std::optional`.
+365. [jh96](https://github.com/jordan-hoang) added exceptions when `nullptr` is passed to `parse`.
+366. [Stuart Gorman](https://github.com/StuartGorman) fixed number parsing when `EINTR` set in `errno`.
+367. [Dylan Baker](https://github.com/dcbaker) generated a pkg-config file that follows the pkg-config conventions.
+368. [Tianyi Chen](https://github.com/TianyiChen) optimized the binary `get_number` implementation.
+369. [peng-wang-cn](https://github.com/peng-wang-cn) added type conversion support for multidimensional arrays.
+370. [Einars Netlis-Galejs](https://github.com/EinarsNG) added `ONLY_SERIALIZE` for `NLOHMANN_DEFINE_DERIVED_TYPE_*` macros.
+371. [Marcel](https://github.com/mering) removed `alwayslink=True` Bazel flag.
+372. [Harinath Nampally](https://github.com/hnampally) added diagnostic positions to exceptions.
+373. [Nissim Armand Ben Danan](https://github.com/NissimBendanan) fixed `NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT` with an empty JSON instance.
+374. [Michael Valladolid](https://github.com/codenut) added support for BSON uint64 serialization/deserialization.
+375. [Nikhil](https://github.com/nikhilreddydev) updated the documentation.
+376. [Nebojša Cvetković](https://github.com/nebkat) added support for BJDATA optimized binary array type.
+377. [Sushrut Shringarputale](https://github.com/sushshring) added support for diagnostic positions. 
+378. [kimci86](https://github.com/kimci86) templated to `NLOHMANN_DEFINE_TYPE` macros to also support `ordered_json`.
+379. [Richard Topchii](https://github.com/richardtop) added support for VisionOS in the Swift Package Manager.
+380. [Robert Chisholm](https://github.com/Robadob) fixed a typo.
+381. [zjyhjqs](https://github.com/zjyhjqs) added CPack support.
+382. [bitFiedler](https://github.com/bitFiedler) made GDB pretty printer work with Python 3.8.
+383. [Gianfranco Costamagna](https://github.com/LocutusOfBorg) fixed a compiler warning.
+384. [risa2000](https://github.com/risa2000) made `std::filesystem::path` conversion to/from UTF-8 encoded string explicit.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
@@ -1741,7 +1825,7 @@ The library itself consists of a single header file licensed under the MIT licen
 
 The library supports **Unicode input** as follows:
 
-- Only **UTF-8** encoded input is supported which is the default encoding for JSON according to [RFC 8259](https://tools.ietf.org/html/rfc8259.html#section-8.1).
+- Only **UTF-8** encoded input is supported, which is the default encoding for JSON according to [RFC 8259](https://tools.ietf.org/html/rfc8259.html#section-8.1).
 - `std::u16string` and `std::u32string` can be parsed, assuming UTF-16 and UTF-32 encoding, respectively. These encodings are not supported when reading from files or other input containers.
 - Other encodings such as Latin-1 or ISO 8859-1 are **not** supported and will yield parse or serialization errors.
 - [Unicode noncharacters](https://www.unicode.org/faq/private_use.html#nonchar1) will not be replaced by the library.
@@ -1763,7 +1847,17 @@ This library does not support comments by default. It does so for three reasons:
   
 3. It is dangerous for interoperability if some libraries would add comment support while others don't. Please check [The Harmful Consequences of the Robustness Principle](https://tools.ietf.org/html/draft-iab-protocol-maintenance-01) on this.
 
-However, you can pass set parameter `ignore_comments` to true in the `parse` function to ignore `//` or `/* */` comments. Comments will then be treated as whitespace.
+However, you can set set parameter `ignore_comments` to true in the `parse` function to ignore `//` or `/* */` comments. Comments will then be treated as whitespace.
+
+### Trailing commas
+
+The JSON specification does not allow trailing commas in arrays and objects, and hence this library is treating them as parsing errors by default.
+
+Like comments, you can set parameter `ignore_trailing_commas` to true in the `parse` function to ignore trailing commas in arrays and objects. Note that a single comma as the only content of the array or object (`[,]` or `{,}`) is not allowed, and multiple trailing commas (`[1,,]`) are not allowed either.
+
+This library does not add trailing commas when serializing JSON data.
+
+For more information, see [JSON With Commas and Comments (JWCC)](https://nigeltao.github.io/blog/2021/json-with-commas-comments.html).
 
 ### Order of object keys
 
@@ -1803,7 +1897,7 @@ ctest --output-on-failure
 
 Note that during the `ctest` stage, several JSON test files are downloaded from an [external repository](https://github.com/nlohmann/json_test_data). If policies forbid downloading artifacts during testing, you can download the files yourself and pass the directory with the test files via `-DJSON_TestDataDirectory=path` to CMake. Then, no Internet connectivity is required. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
 
-If the test suite is not found, several test suites will fail like this:
+If the testdata is not found, several test suites will fail like this:
 
 ```
 ===============================================================================
@@ -1820,6 +1914,8 @@ json/tests/src/make_test_data_available.hpp:23: FATAL ERROR: REQUIRE( utils::che
 ```
 
 In case you have downloaded the library rather than checked out the code via Git, test `cmake_fetch_content_configure` will fail. Please execute `ctest -LE git_required` to skip these tests. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
+
+Some tests are requiring network to be properly execute. They are labeled as `git_required`. Please execute `ctest -LE git_required` to skip these tests. See [issue #4851](https://github.com/nlohmann/json/issues/4851) for more information.
 
 Some tests change the installed files and hence make the whole process not reproducible. Please execute `ctest -LE not_reproducible` to skip these tests. See [issue #2324](https://github.com/nlohmann/json/issues/2324) for more information. Furthermore, assertions must be switched off to ensure reproducible builds (see [discussion 4494](https://github.com/nlohmann/json/discussions/4494)).
 

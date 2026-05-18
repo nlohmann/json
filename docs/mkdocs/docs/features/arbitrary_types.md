@@ -24,9 +24,9 @@ j["age"] = p.age;
 
 // convert from JSON: copy each value from the JSON object
 ns::person p {
-    j["name"].template get<std::string>(),
-    j["address"].template get<std::string>(),
-    j["age"].template get<int>()
+    j["name"].get<std::string>(),
+    j["address"].get<std::string>(),
+    j["age"].get<int>()
 };
 ```
 
@@ -43,7 +43,7 @@ std::cout << j << std::endl;
 // {"address":"744 Evergreen Terrace","age":60,"name":"Ned Flanders"}
 
 // conversion: json -> person
-auto p2 = j.template get<ns::person>();
+auto p2 = j.get<ns::person>();
 
 // that's it
 assert(p == p2);
@@ -70,13 +70,13 @@ namespace ns {
 ```
 
 That's all! When calling the `json` constructor with your type, your custom `to_json` method will be automatically called.
-Likewise, when calling `template get<your_type>()` or `get_to(your_type&)`, the `from_json` method will be called.
+Likewise, when calling `get<your_type>()` or `get_to(your_type&)`, the `from_json` method will be called.
 
 Some important things:
 
 * Those methods **MUST** be in your type's namespace (which can be the global namespace), or the library will not be able to locate them (in this example, they are in namespace `ns`, where `person` is defined).
 * Those methods **MUST** be available (e.g., proper headers must be included) everywhere you use these conversions. Look at [#1108](https://github.com/nlohmann/json/issues/1108) for errors that may occur otherwise.
-* When using `template get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). (There is a way to bypass this requirement described later.)
+* When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). (There is a way to bypass this requirement described later.)
 * In function `from_json`, use function [`at()`](../api/basic_json/at.md) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
 * You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
 
@@ -85,16 +85,18 @@ Some important things:
 
 If you just want to serialize/deserialize some structs, the `to_json`/`from_json` functions can be a lot of boilerplate.
 
-There are six macros to make your life easier as long as you (1) want to use a JSON object as serialization and (2) want to use the member variable names as object keys in that object:
+There are several macros to make your life easier as long as you want to use a JSON object as serialization. The macros are following the naming pattern, and you can chose the macro based on the needed features:
 
-- [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(name, member1, member2, ...)`](../api/macros/nlohmann_define_type_non_intrusive.md) is to be defined inside the namespace of the class/struct to create code for. It will throw an exception in `from_json()` due to a missing value in the JSON object.
-- [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(name, member1, member2, ...)`](../api/macros/nlohmann_define_type_non_intrusive.md) is to be defined inside the namespace of the class/struct to create code for. It will not throw an exception in `from_json()` due to a missing value in the JSON object, but fills in values from object which is default-constructed by the type.
-- [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(name, member1, member2, ...)`](../api/macros/nlohmann_define_type_non_intrusive.md) is to be defined inside the namespace of the class/struct to create code for. It does not define a `from_json()` function which is needed in case the type does not have a default constructor.
-- [`NLOHMANN_DEFINE_TYPE_INTRUSIVE(name, member1, member2, ...)`](../api/macros/nlohmann_define_type_intrusive.md) is to be defined inside the class/struct to create code for. This macro can also access private members. It will throw an exception in `from_json()` due to a missing value in the JSON object.
-- [`NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(name, member1, member2, ...)`](../api/macros/nlohmann_define_type_intrusive.md) is to be defined inside the class/struct to create code for. This macro can also access private members. It will not throw an exception in `from_json()` due to a missing value in the JSON object, but fills in values from object which is default-constructed by the type.
-- [`NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(name, member1, member2, ...)`](../api/macros/nlohmann_define_type_intrusive.md) is to be defined inside the class/struct to create code for. This macro can also access private members. It does not define a `from_json()` function which is needed in case the type does not have a default constructor.
+- All the macros start with `NLOHMANN_DEFINE`.
+- If you want a macro for the derived object, use the [`DERIVED_TYPE`](../api/macros/nlohmann_define_derived_type.md) variant, otherwise use `TYPE`.
+    - The `DERIVED_TYPE` variant requires an additional parameter of a base type, which should have the `to_json`/`from_json` functions defined. For instance, with a macro of its own.
+- If you need access to the private fields use [`INTRUSIVE`](../api/macros/nlohmann_define_type_intrusive.md) variant, otherwise use [`NON_INTRUSIVE`](../api/macros/nlohmann_define_type_non_intrusive.md).
+    - The `INTRUSIVE` macro should be defined **inside** the target class/struct, `NON_INTRUSIVE` should be defined within the same namespace.
+- If you want to deserialize the incomplete JSONs, use the `WITH_DEFAULTS` variant, which will use the default values for the member variables absent in JSON, the variant without `WITH_DEFAULTS` will raise an exception.
+- If you do not need deserialization at all and only interested in `to_json` function, you can use the `ONLY_SERIALIZE` variant.
+- If you want to use the custom JSON names for member variables, use [`WITH_NAMES`](../api/macros/nlohmann_define_type_with_names.md) variant, otherwise the JSON name of the variable will be the same as its regular name. 
 
-Furthermore, there exist versions to use in case of derived classes:
+For all the macros, the first parameter is the name of the class/struct. The `DERIVED_TYPE` macros require a second parameter of a base class. All the remaining parameters name the member variables. The `WITH_NAMES` macros require a JSON name before each of the variables.
 
 | Need access to private members                                   | Need only de-serialization                                       | Allow missing values when de-serializing                         | macro                                                                                                        |
 |------------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
@@ -118,8 +120,9 @@ For _derived_ classes and structs, use the following macros
 
 !!! info "Implementation limits"
 
-    - The current macro implementations are limited to at most 64 member variables. If you want to serialize/deserialize
-      types with more than 64 member variables, you need to define the `to_json`/`from_json` functions manually.
+    - The current macro implementations are limited to at most 63 member variables. If you want to serialize/deserialize
+      types with more than 63 member variables, you need to define the `to_json`/`from_json` functions manually.
+    - For the `WITH_NAMES` variants the limit is halved to 31 member variables.
 
 ??? example
 
@@ -131,8 +134,20 @@ For _derived_ classes and structs, use the following macros
     }
     ```
 
-    Here is an example with private members, where `NLOHMANN_DEFINE_TYPE_INTRUSIVE` is needed:
-
+    If you want to inherit the `person` struct and add a field to it, it can be done with:
+    
+    ```cpp
+    namespace ns {
+        struct person_derived : person {
+            std:string email;
+        };
+        
+        NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(person_derived, person, email)
+    }
+    ```
+    
+    Here is another example with private members, where `NLOHMANN_DEFINE_TYPE_INTRUSIVE` is needed:
+    
     ```cpp
     namespace ns {
         class address {
@@ -140,18 +155,36 @@ For _derived_ classes and structs, use the following macros
             std::string street;
             int housenumber;
             int postcode;
-
+      
           public:
             NLOHMANN_DEFINE_TYPE_INTRUSIVE(address, street, housenumber, postcode)
+        };
+    }
+    ```
+    
+    Or in case if you use some naming convention that you do not want to expose to JSON:
+    
+    ```cpp
+    namespace ns {
+        class address {
+          private:
+            std::string m_street;
+            int m_housenumber;
+            int m_postcode;
+    
+          public:
+            NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_NAMES(address, "street", m_street,
+                                                               "housenumber", m_housenumber,
+                                                               "postcode", m_postcode)
         };
     }
     ```
 
 ## How do I convert third-party types?
 
-This requires a bit more advanced technique. But first, let's see how this conversion mechanism works:
+This requires a bit more advanced technique. But first, let us see how this conversion mechanism works:
 
-The library uses **JSON Serializers** to convert types to json.
+The library uses **JSON Serializers** to convert types to JSON.
 The default serializer for `nlohmann::json` is `nlohmann::adl_serializer` (ADL means [Argument-Dependent Lookup](https://en.cppreference.com/w/cpp/language/adl)).
 
 It is implemented like this (simplified):
@@ -191,7 +224,7 @@ struct adl_serializer<boost::optional<T>> {
         if (j.is_null()) {
             opt = boost::none;
         } else {
-            opt = j.template get<T>(); // same as above, but with
+            opt = j.get<T>(); // same as above, but with
                               // adl_serializer<T>::from_json
         }
     }
@@ -206,7 +239,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 ## How can I use `get()` for non-default constructible/non-copyable types?
 
-There is a way, if your type is [MoveConstructible](https://en.cppreference.com/w/cpp/named_req/MoveConstructible). You will need to specialize the `adl_serializer` as well, but with a special `from_json` overload:
+There is a way if your type is [MoveConstructible](https://en.cppreference.com/w/cpp/named_req/MoveConstructible). You will need to specialize the `adl_serializer` as well, but with a special `from_json` overload:
 
 ```cpp
 struct move_only_type {
@@ -224,7 +257,7 @@ namespace nlohmann {
         // note: the return type is no longer 'void', and the method only takes
         // one argument
         static move_only_type from_json(const json& j) {
-            return {j.template get<int>()};
+            return {j.get<int>()};
         }
 
         // Here's the catch! You must provide a to_json method! Otherwise, you
@@ -241,7 +274,7 @@ namespace nlohmann {
 
 Yes. You might want to take a look at [`unit-udt.cpp`](https://github.com/nlohmann/json/blob/develop/tests/src/unit-udt.cpp) in the test suite, to see a few examples.
 
-If you write your own serializer, you'll need to do a few things:
+If you write your own serializer, you will need to do a few things:
 
 - use a different `basic_json` alias than `nlohmann::json` (the last template parameter of `basic_json` is the `JSONSerializer`)
 - use your `basic_json` alias (or a template parameter) in all your `to_json`/`from_json` methods
@@ -288,7 +321,7 @@ struct bad_serializer
     static void from_json(const BasicJsonType& j, T& value) {
       // this calls BasicJsonType::json_serializer<T>::from_json(j, value);
       // if BasicJsonType::json_serializer == bad_serializer ... oops!
-      value = j.template template get<T>(); // oops!
+      value = j.template get<T>(); // oops!
     }
 };
 ```

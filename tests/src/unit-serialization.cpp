@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -11,6 +11,7 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <array>
 #include <sstream>
 #include <iomanip>
 
@@ -165,7 +166,7 @@ TEST_CASE("serialization")
     }
 }
 
-TEST_CASE_TEMPLATE("serialization for extreme integer values", T, int32_t, uint32_t, int64_t, uint64_t) // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("serialization for extreme integer values", T, int32_t, uint32_t, int64_t, uint64_t) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
 {
     SECTION("minimum")
     {
@@ -293,5 +294,89 @@ TEST_CASE("dump with binary values")
               "        \"subtype\": 128\n"
               "    }\n"
               "]");
+    }
+}
+
+TEST_CASE("dump for basic_json with long double number_float_t")
+{
+    // Custom basic_json instantiation with long double as NumberFloatType.
+    // On platforms where long double is wider than double (e.g. GCC/Clang on
+    // Linux/macOS x86_64), dump() goes through the snprintf path in
+    // serializer::dump_float(x, std::false_type). That branch must use the
+    // "%.*Lg" format specifier; using "%.*g" with a long double argument is
+    // undefined behavior and corrupts the output.
+    using long_double_json = nlohmann::basic_json<std::map, std::vector, std::string,
+          bool, std::int64_t, std::uint64_t, long double>;
+
+    SECTION("round-trip dump/parse")
+    {
+        constexpr std::array<long double, 13> values =
+        {{
+            0.0L, -0.0L, 1.0L, -1.0L,
+            0.5L, -0.5L, 1.5L, -2.25L,
+            1.23e45L, 1.23e-45L,
+            (std::numeric_limits<long double>::min)(),
+            std::numeric_limits<long double>::lowest(),
+            (std::numeric_limits<long double>::max)()
+        }};
+
+        for (long double v : values)
+        {
+            const long_double_json j = v;
+            const auto s = j.dump();
+            const auto j2 = long_double_json::parse(s);
+            CHECK(j2.template get<long double>() == v);
+        }
+    }
+
+    SECTION("exact dump string for simple values")
+    {
+        CHECK(long_double_json(0.5L).dump()   == "0.5");
+        CHECK(long_double_json(-0.5L).dump()  == "-0.5");
+        CHECK(long_double_json(1.5L).dump()   == "1.5");
+        CHECK(long_double_json(-2.25L).dump() == "-2.25");
+        CHECK(long_double_json(0.0L).dump()   == "0.0");
+        CHECK(long_double_json(1.0L).dump()   == "1.0");
+        CHECK(long_double_json(-1.0L).dump()  == "-1.0");
+        CHECK(long_double_json(100.0L).dump() == "100.0");
+    }
+
+    SECTION("NaN and infinity dump as null")
+    {
+        CHECK(long_double_json(std::numeric_limits<long double>::quiet_NaN()).dump() == "null");
+
+        // Probe the platform's runtime behavior — `volatile` forces a runtime
+        // call rather than constexpr-folding to a known answer at compile time.
+        // Skip the infinity assertions if std::isfinite() doesn't actually
+        // recognize long double infinity on this platform (notably, Valgrind
+        // 3.22's x87 80-bit emulation reports +/-inf as a large finite value).
+        // TODO(rusloker): remove this guard once Valgrind's 80-bit long double
+        // support ships (Valgrind bug https://bugs.kde.org/show_bug.cgi?id=197915,
+        // ASSIGNED since 2009 — the Valgrind project tracks its bugs on
+        // bugs.kde.org) and the minimum supported Valgrind version contains it.
+        const volatile long double inf_probe = std::numeric_limits<long double>::infinity();
+        if (!std::isfinite(inf_probe))
+        {
+            CHECK(long_double_json(std::numeric_limits<long double>::infinity()).dump() == "null");
+            CHECK(long_double_json(-std::numeric_limits<long double>::infinity()).dump() == "null");
+        }
+    }
+
+    SECTION("dump output matches double for exactly-representable values")
+    {
+        auto check_same = [](long double v_ld, double v_d)
+        {
+            const long_double_json j_ld = v_ld;
+            const json j_d = v_d;
+            CHECK(j_ld.dump() == j_d.dump());
+        };
+
+        check_same(0.0L,    0.0);
+        check_same(0.5L,    0.5);
+        check_same(-0.5L,  -0.5);
+        check_same(1.5L,    1.5);
+        check_same(-2.25L, -2.25);
+        check_same(1.0L,    1.0);
+        check_same(100.0L,  100.0);
     }
 }

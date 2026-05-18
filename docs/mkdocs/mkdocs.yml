@@ -9,7 +9,7 @@ repo_url: https://github.com/nlohmann/json
 edit_uri: edit/develop/docs/mkdocs/docs
 
 # Copyright
-copyright: Copyright &copy; 2013-2025 Niels Lohmann
+copyright: Copyright &copy; 2013-2026 Niels Lohmann
 
 # Configuration
 theme:
@@ -67,6 +67,7 @@ nav:
           - features/binary_formats/ubjson.md
       - features/binary_values.md
       - features/comments.md
+      - features/trailing_commas.md
       - Element Access:
           - features/element_access/index.md
           - features/element_access/unchecked_access.md
@@ -76,6 +77,7 @@ nav:
       - features/json_pointer.md
       - features/json_patch.md
       - features/merge_patch.md
+      - features/modules.md
       - 'nlohmann Namespace': features/namespace.md
       - features/object_order.md
       - Parsing:
@@ -231,6 +233,7 @@ nav:
           - '(Constructor)': api/json_pointer/json_pointer.md
           - 'back': api/json_pointer/back.md
           - 'empty': api/json_pointer/empty.md
+          - 'front': api/json_pointer/front.md
           - 'operator string_t': api/json_pointer/operator_string_t.md
           - 'operator==': api/json_pointer/operator_eq.md
           - 'operator!=': api/json_pointer/operator_ne.md
@@ -238,7 +241,9 @@ nav:
           - 'operator/=': api/json_pointer/operator_slasheq.md
           - 'parent_pointer': api/json_pointer/parent_pointer.md
           - 'pop_back': api/json_pointer/pop_back.md
+          - 'pop_front': api/json_pointer/pop_front.md
           - 'push_back': api/json_pointer/push_back.md
+          - 'push_front': api/json_pointer/push_front.md
           - 'string_t': api/json_pointer/string_t.md
           - 'to_string': api/json_pointer/to_string.md
       - json_sax:
@@ -284,6 +289,7 @@ nav:
           - 'NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_derived_type.md
           - 'NLOHMANN_DEFINE_TYPE_INTRUSIVE, NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_type_intrusive.md
           - 'NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_type_non_intrusive.md
+          - 'NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_NAMES, NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES, NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_NAMES, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_NAMES, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES': api/macros/nlohmann_define_type_with_names.md
           - 'NLOHMANN_JSON_NAMESPACE': api/macros/nlohmann_json_namespace.md
           - 'NLOHMANN_JSON_NAMESPACE_BEGIN, NLOHMANN_JSON_NAMESPACE_END': api/macros/nlohmann_json_namespace_begin.md
           - 'NLOHMANN_JSON_NAMESPACE_NO_VERSION': api/macros/nlohmann_json_namespace_no_version.md
@@ -320,6 +326,7 @@ markdown_extensions:
       guess_lang: false
   - toc:
       permalink: true
+  - md_in_html
   - pymdownx.arithmatex
   - pymdownx.betterem:
       smart_enable: all

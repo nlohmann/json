@@ -9,7 +9,7 @@ Possible values are `1` to enable or `0` to disable (default).
 
 When enabled, exception messages contain a [JSON Pointer](../json_pointer/json_pointer.md) to the JSON value that
 triggered the exception. Note that enabling this macro increases the size of every JSON value by one pointer and adds
-some  runtime overhead.
+some runtime overhead.
 
 ## Default definition
 
@@ -91,4 +91,4 @@ When the macro is not defined, the library will define it to its default value.
 ## Version history
 
 - Added in version 3.10.0.
-- As of version 3.11.0 the definition is allowed to vary between translation units.
+- As of version 3.11.0, the definition is allowed to vary between translation units.

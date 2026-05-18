@@ -35,7 +35,7 @@ The term *primitive* stems from [RFC 8259](https://tools.ietf.org/html/rfc8259):
 > JSON can represent four primitive types (strings, numbers, booleans, and null) and two structured types (objects and
 > arrays).
 
-This library extends primitive types to binary types, because binary types are  roughly comparable to strings. Hence,
+This library extends primitive types to binary types, because binary types are roughly comparable to strings. Hence,
 `is_primitive()` returns `#!cpp true` for binary values.
 
 ## Examples
@@ -56,12 +56,12 @@ This library extends primitive types to binary types, because binary types are  
 
 ## See also
 
-- [is_structured()](is_structured.md) returns whether JSON value is structured
-- [is_null()](is_null.md) returns whether JSON value is `null`
-- [is_string()](is_string.md) returns whether JSON value is a string
-- [is_boolean()](is_boolean.md) returns whether JSON value is a boolean
-- [is_number()](is_number.md) returns whether JSON value is a number
-- [is_binary()](is_binary.md) returns whether JSON value is a binary array
+- [is_structured()](is_structured.md) returns whether the JSON value is structured
+- [is_null()](is_null.md) returns whether the JSON value is `null`
+- [is_string()](is_string.md) returns whether the JSON value is a string
+- [is_boolean()](is_boolean.md) returns whether the JSON value is a boolean
+- [is_number()](is_number.md) returns whether the JSON value is a number
+- [is_binary()](is_binary.md) returns whether the JSON value is a binary array
 
 ## Version history
 

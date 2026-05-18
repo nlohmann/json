@@ -2,8 +2,8 @@
 
 ## Introduction
 
-The library supports **JSON Pointer** ([RFC 6901](https://tools.ietf.org/html/rfc6901)) as alternative means to address
-structured values. A JSON Pointer is a string that identifies a specific value within a JSON document.
+The library supports **JSON Pointer** ([RFC 6901](https://tools.ietf.org/html/rfc6901)) as an alternative means to
+address structured values. A JSON Pointer is a string that identifies a specific value within a JSON document.
 
 Consider the following JSON document
 
@@ -42,7 +42,7 @@ Note `/` does not identify the root (i.e., the whole document), but an object en
 JSON Pointers can be created from a string:
 
 ```cpp
-json::json_pointer p = "/nested/one";
+json::json_pointer p("/nested/one");
 ```
 
 Furthermore, a user-defined string literal can be used to achieve the same result:

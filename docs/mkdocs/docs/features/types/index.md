@@ -1,6 +1,6 @@
 # Types
 
-This page gives an overview how JSON values are stored and how this can be configured.
+This page gives an overview of how JSON values are stored and how this can be configured.
 
 ## Overview
 
@@ -137,7 +137,7 @@ The choice of `object_t` influences the behavior of the JSON class. With the def
 
 ### Key order
 
-The order name/value pairs are added to the object is *not* preserved by the library. Therefore, iterating an object may return name/value pairs in a different order than they were originally stored. In fact, keys will be traversed in alphabetical order as `std::map` with `std::less` is used by default. Please note this behavior conforms to [RFC 8259](https://tools.ietf.org/html/rfc8259), because any order implements the specified "unordered" nature of JSON objects.
+The order name/value pairs are added to the object are *not* preserved by the library. Therefore, iterating an object may return name/value pairs in a different order than they were originally stored. In fact, keys will be traversed in alphabetical order as `std::map` with `std::less` is used by default. Please note this behavior conforms to [RFC 8259](https://tools.ietf.org/html/rfc8259), because any order implements the specified "unordered" nature of JSON objects.
 
 ### Limits
 
@@ -202,7 +202,7 @@ Strings are stored in UTF-8 encoding. Therefore, functions like `std::string::si
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) states:
 
-> Software implementations are typically required to test names of object members for equality. Implementations that transform the textual representation into sequences of Unicode code units and then perform the comparison numerically, code unit by code unit, are interoperable in the sense that implementations will agree in all cases on equality or inequality of two strings. For example, implementations that compare strings with escaped characters unconverted may incorrectly find that `"a\\b"` and `"a\u005Cb"` are not equal.
+> Software implementations are typically required to test names of object members for equality. Implementations that transform the textual representation into sequences of Unicode code units and then perform the comparison numerically, code unit by code unit are interoperable in the sense that implementations will agree in all cases on equality or inequality of two strings. For example, implementations that compare strings with escaped characters unconverted may incorrectly find that `"a\\b"` and `"a\u005Cb"` are not equal.
 
 This implementation is interoperable as it does compare strings code unit by code unit.
 
@@ -231,7 +231,7 @@ See the [number handling](number_handling.md) article for a detailed discussion 
 
 > The representation of numbers is similar to that used in most programming languages. A number is represented in base 10 using decimal digits. It contains an integer component that may be prefixed with an optional minus sign, which may be followed by a fraction part and/or an exponent part. Leading zeros are not allowed. (...) Numeric values that cannot be represented in the grammar below (such as Infinity and NaN) are not permitted.
 
-This description includes both integer and floating-point numbers. However, C++ allows more precise storage if it is known whether the number is a signed integer, an unsigned integer or a floating-point number. Therefore, three different types, `number_integer_t`, `number_unsigned_t`, and `number_float_t` are used.
+This description includes both integer and floating-point numbers. However, C++ allows more precise storage if it is known whether the number is a signed integer, an unsigned integer, or a floating-point number. Therefore, three different types, `number_integer_t`, `number_unsigned_t`, and `number_float_t` are used.
 
 ### Default types
 
@@ -241,7 +241,7 @@ With the default values for *NumberFloatType* (`#!cpp double`), the default valu
 
 ### Default behavior
 
-- The restrictions about leading zeros is not enforced in C++. Instead, leading zeros in integer literals lead to an interpretation as octal number. Internally, the value will be stored as decimal number. For instance, the C++ integer literal `#!c 010` will be serialized to `#!c 8`. During deserialization, leading zeros yield an error.
+- The restrictions about leading zeros are not enforced in C++. Instead, leading zeros in integer literals lead to an interpretation as an octal number. Internally, the value will be stored as a decimal number. For instance, the C++ integer literal `#!c 010` will be serialized to `#!c 8`. During deserialization, leading zeros yield an error.
 - Not-a-number (NaN) values will be serialized to `#!json null`.
 
 ### Limits
@@ -250,9 +250,9 @@ With the default values for *NumberFloatType* (`#!cpp double`), the default valu
 
 > An implementation may set limits on the range and precision of numbers.
 
-When the default type is used, the maximal integer number that can be stored is `#!c 9223372036854775807` (`INT64_MAX`) and the minimal integer number that can be stored is `#!c -9223372036854775808` (`INT64_MIN`). Integer numbers that are out of range will yield over/underflow when used in a constructor. During deserialization, too large or small integer numbers will be automatically be stored as `number_unsigned_t` or `number_float_t`.
+When the default type is used, the maximal integer number that can be stored is `#!c 9223372036854775807` (`INT64_MAX`) and the minimal integer number that can be stored is `#!c -9223372036854775808` (`INT64_MIN`). Integer numbers that are out of range will yield over/underflow when used in a constructor. During deserialization, too large or small integer numbers will automatically be stored as `number_unsigned_t` or `number_float_t`.
 
-When the default type is used, the maximal unsigned integer number that can be stored is `#!c 18446744073709551615` (`UINT64_MAX`) and the minimal integer number that can be stored is `#!c 0`. Integer numbers that are out of range will yield over/underflow when used in a constructor. During deserialization, too large or small integer numbers will be automatically be stored as `number_integer_t` or `number_float_t`.
+When the default type is used, the maximal unsigned integer number that can be stored is `#!c 18446744073709551615` (`UINT64_MAX`) and the minimal integer number that can be stored is `#!c 0`. Integer numbers that are out of range will yield over/underflow when used in a constructor. During deserialization, too large or small integer numbers will automatically be stored as `number_integer_t` or `number_float_t`.
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) further states:
 

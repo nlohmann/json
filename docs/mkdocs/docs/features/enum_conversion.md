@@ -1,8 +1,8 @@
 # Specializing enum conversion
 
-By default, enum values are serialized to JSON as integers. In some cases this could result in undesired behavior. If an
-enum is modified or re-ordered after data has been serialized to JSON, the later de-serialized JSON data may be
-undefined or a different enum value than was originally intended.
+By default, enum values are serialized to JSON as integers. In some cases, this could result in undesired behavior. If
+the integer values of any enum values are changed after data using those enum values has been serialized to JSON, then
+deserializing that JSON would result in a different enum value being restored, or the value not being found at all.
 
 It is possible to more precisely specify how a given enum is mapped to and from JSON as shown below:
 
@@ -36,11 +36,11 @@ assert(j == "stopped");
 
 // json string to enum
 json j3 = "running";
-assert(j3.template get<TaskState>() == TS_RUNNING);
+assert(j3.get<TaskState>() == TS_RUNNING);
 
 // undefined json value to enum (where the first map entry above is the default)
 json jPi = 3.14;
-assert(jPi.template get<TaskState>() == TS_INVALID );
+assert(jPi.get<TaskState>() == TS_INVALID );
 ```
 
 ## Notes
@@ -54,7 +54,7 @@ Just as in [Arbitrary Type Conversions](arbitrary_types.md) above,
 
 Other Important points:
 
-- When using `template get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this
+- When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this
   default pair carefully.
 - If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the
   map will be returned when converting to or from JSON.

@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.5...3.14)
 
 project(DummyImport CXX)
 
+if(MSVC)
+    add_compile_options(/EHsc)
+endif()
+
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 add_subdirectory(${nlohmann_json_source}
    ${CMAKE_CURRENT_BINARY_DIR}/nlohmann_json)

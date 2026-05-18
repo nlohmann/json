@@ -1,9 +1,9 @@
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
-// |  |  |__   |  |  | | | |  version 3.11.3
+// |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -68,4 +68,16 @@ TEST_CASE("ordered_json")
     oj1.insert( oj2.cbegin(), oj2.cend() );
     CHECK(oj1.size() == 4);
     CHECK(oj1.dump() == "{\"c\":1,\"b\":2,\"a\":3,\"d\":42}");
+}
+
+TEST_CASE("regression test for issue #3732 - iteration_proxy_value<iter_impl<ordered_json>>")
+{
+    // Naming the proxy type in a function-parameter position forces eager
+    // instantiation of basic_json<ordered_map>; previously this hit an
+    // incomplete-type error in set_parents().
+    auto fn = [](nlohmann::detail::iteration_proxy_value<nlohmann::detail::iter_impl<nlohmann::ordered_json>> const & val)
+    {
+        return val.value();
+    };
+    static_cast<void>(fn);
 }

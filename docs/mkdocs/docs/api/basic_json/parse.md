@@ -6,21 +6,23 @@ template<typename InputType>
 static basic_json parse(InputType&& i,
                         const parser_callback_t cb = nullptr,
                         const bool allow_exceptions = true,
-                        const bool ignore_comments = false);
+                        const bool ignore_comments = false,
+                        const bool ignore_trailing_commas = false);
 
 // (2)
 template<typename IteratorType>
 static basic_json parse(IteratorType first, IteratorType last,
                         const parser_callback_t cb = nullptr,
                         const bool allow_exceptions = true,
-                        const bool ignore_comments = false);
+                        const bool ignore_comments = false,
+                        const bool ignore_trailing_commas = false);
 ```
 
 1. Deserialize from a compatible input.
 2. Deserialize from a pair of character iterators
     
-    The `value_type` of the iterator must be an integral type with size of 1, 2 or 4 bytes, which will be interpreted
-    respectively as UTF-8, UTF-16 and UTF-32.
+    The `value_type` of the iterator must be an integral type with size of 1, 2, or 4 bytes, which will be interpreted
+    respectively as UTF-8, UTF-16, and UTF-32.
 
 ## Template parameters
 
@@ -56,11 +58,15 @@ static basic_json parse(IteratorType first, IteratorType last,
 :   whether comments should be ignored and treated like whitespace (`#!cpp true`) or yield a parse error
     (`#!cpp false`); (optional, `#!cpp false` by default)
 
+`ignore_trailing_commas` (in)
+:   whether trailing commas in arrays or objects should be ignored and treated like whitespace (`#!cpp true`) or yield a parse error
+    (`#!cpp false`); (optional, `#!cpp false` by default)
+
 `first` (in)
-:   iterator to start of character range
+:   iterator to the start of a character range
 
 `last` (in)
-:   iterator to end of character range
+:   iterator to the end of a character range
 
 ## Return value
 
@@ -147,7 +153,7 @@ A UTF-8 byte order mark is silently ignored.
     --8<-- "examples/parse__contiguouscontainer__parser_callback_t.output"
     ```
 
-??? example "Parsing from a non null-terminated string"
+??? example "Parsing from a non-null-terminated string"
 
     The example below demonstrates the `parse()` function reading from a string that is not null-terminated.
 
@@ -189,6 +195,34 @@ A UTF-8 byte order mark is silently ignored.
     --8<-- "examples/parse__allow_exceptions.output"
     ```
 
+??? example "Effect of `ignore_comments` parameter"
+
+    The example below demonstrates the effect of the `ignore_comments` parameter in the `parse()` function.
+
+    ```cpp
+    --8<-- "examples/comments.cpp"
+    ```
+
+    Output:
+
+    ```
+    --8<-- "examples/comments.output"
+    ```
+
+??? example "Effect of `ignore_trailing_commas` parameter"
+
+    The example below demonstrates the effect of the `ignore_trailing_commas` parameter in the `parse()` function.
+
+    ```cpp
+    --8<-- "examples/trailing_commas.cpp"
+    ```
+
+    Output:
+
+    ```
+    --8<-- "examples/trailing_commas.output"
+    ```
+
 ## See also
 
 - [accept](accept.md) - check if the input is valid JSON
@@ -199,7 +233,8 @@ A UTF-8 byte order mark is silently ignored.
 - Added in version 1.0.0.
 - Overload for contiguous containers (1) added in version 2.0.3.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
-- Changed [runtime assertion](../../features/assertions.md) in case of `FILE*` null pointers to exception in version 3.11.4.
+- Changed [runtime assertion](../../features/assertions.md) in case of `FILE*` null pointers to exception in version 3.12.0.
+- Added `ignore_trailing_commas` in version 3.12.1.
 
 !!! warning "Deprecation"
 

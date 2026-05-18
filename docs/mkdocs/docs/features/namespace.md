@@ -10,7 +10,7 @@ types.
 The complete default namespace name is derived as follows:
 
 - The root namespace is always `nlohmann`.
-- The inline namespace starts with `json_abi` and is followed by serveral optional ABI tags according to the value of
+- The inline namespace starts with `json_abi` and is followed by several optional ABI tags according to the value of
   these ABI-affecting macros, in order:
     - [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) defined non-zero appends `_diag`.
     - [`JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](../api/macros/json_use_legacy_discarded_value_comparison.md)
@@ -64,7 +64,7 @@ configurations – to be used in cases where the linker would otherwise output u
 
 To do so, define [`NLOHMANN_JSON_NAMESPACE_NO_VERSION`](../api/macros/nlohmann_json_namespace_no_version.md) to `1`.
 
-This applies to version 3.11.2 and above only, versions 3.11.0 and 3.11.1 can apply the technique described in the next
+This applies to version 3.11.2 and above only; versions 3.11.0 and 3.11.1 can apply the technique described in the next
 section to emulate the effect of the `NLOHMANN_JSON_NAMESPACE_NO_VERSION` macro.
 
 !!! danger "Use at your own risk"
