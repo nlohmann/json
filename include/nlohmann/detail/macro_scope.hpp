@@ -137,10 +137,13 @@
     // ranges header shipping in GCC 11.1.0 (released 2021-04-27) has a syntax error
     #if defined(__GLIBCXX__) && __GLIBCXX__ == 20210427
         #define JSON_HAS_RANGES 0
-        // libstdc++ < 12 has incomplete C++20 ranges (issue #4440)
-    #elif defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE < 12
+        // libstdc++ < 11 has incomplete C++20 ranges (issue #4440)
+    #elif defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE < 11
         #define JSON_HAS_RANGES 0
         // libc++ < 16 has incomplete C++20 ranges (issue #4440)
+    #elif defined(__clang__) && !defined(__apple_build_version__) \
+        && __clang_major__ < 16 && defined(__GLIBCXX__)
+        #define JSON_HAS_RANGES 0
     #elif defined(_LIBCPP_VERSION) && _LIBCPP_VERSION < 160000
         #define JSON_HAS_RANGES 0
     #elif defined(__cpp_lib_ranges)
