@@ -30,6 +30,16 @@
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
+/* helper for strict enum error reporting */
+template<typename BasicJsonType>
+inline void throw_enum_error(const BasicJsonType& j, const char* enum_type)
+{
+    JSON_THROW(::nlohmann::detail::type_error::create(
+                   302,
+                   std::string("invalid value for ") + enum_type + ": " + j.dump(),
+                   &j));
+}
+
 // include after macro_scope.hpp
 #ifdef JSON_HAS_CPP_17
     #include <optional> // optional
