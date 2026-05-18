@@ -1657,6 +1657,84 @@ TEST_CASE("JSON to enum mapping")
     }
 }
 
+enum class strict_cards {kreuz, pik, herz, karo, andere}; // andere not included in mapping
+
+// NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(strict_cards,
+{
+    {strict_cards::kreuz, "kreuz"},
+    {strict_cards::pik, "pik"},
+    {strict_cards::pik, "puk"},  // second entry for cards::pik; will not be used
+    {strict_cards::herz, "herz"},
+    {strict_cards::karo, "karo"}
+})
+
+enum StrictTaskState // NOLINT(cert-int09-c,readability-enum-initial-value,cppcoreguidelines-use-enum-class)
+{
+    STRICT_TS_STOPPED,
+    STRICT_TS_RUNNING,
+    STRICT_TS_COMPLETED,
+    STRICT_TS_OTHER, // STRICT_TS_OTHER not in mapping
+    STRICT_TS_INVALID = -1,
+};
+
+// NOLINTNEXTLINE(misc-const-correctness,misc-use-internal-linkage,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(StrictTaskState,
+{
+    {STRICT_TS_INVALID, nullptr},
+    {STRICT_TS_STOPPED, "stopped"},
+    {STRICT_TS_RUNNING, "running"},
+    {STRICT_TS_COMPLETED, "completed"},
+})
+
+TEST_CASE("Strict JSON to enum mapping")
+{
+    SECTION("enum class")
+    {
+        // enum -> json
+        CHECK(json(strict_cards::kreuz) == "kreuz");
+        CHECK(json(strict_cards::pik) == "pik");
+        CHECK(json(strict_cards::herz) == "herz");
+        CHECK(json(strict_cards::karo) == "karo");
+
+        // json -> enum
+        CHECK(strict_cards::kreuz == json("kreuz"));
+        CHECK(strict_cards::pik == json("pik"));
+        CHECK(strict_cards::herz == json("herz"));
+        CHECK(strict_cards::karo == json("karo"));
+
+        // invalid json -> exception thrown
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json("what?").get<strict_cards>(), "[json.exception.out_of_range.410] enum value out of range for strict_cards: \"what?\"", json::out_of_range&);
+
+        // conversion of unmapped enum -> exception thrown
+        CHECK_THROWS_WITH_AS(json(strict_cards::andere), "[json.exception.out_of_range.410] enum value out of range for strict_cards", json::out_of_range&);
+    }
+
+    SECTION("traditional enum")
+    {
+        // enum -> json
+        CHECK(json(STRICT_TS_STOPPED) == "stopped");
+        CHECK(json(STRICT_TS_RUNNING) == "running");
+        CHECK(json(STRICT_TS_COMPLETED) == "completed");
+        CHECK(json(STRICT_TS_INVALID) == json());
+
+        // json -> enum
+        CHECK(STRICT_TS_STOPPED == json("stopped"));
+        CHECK(STRICT_TS_RUNNING == json("running"));
+        CHECK(STRICT_TS_COMPLETED == json("completed"));
+        CHECK(STRICT_TS_INVALID == json());
+
+        // invalid json -> exception thrown
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json("what?").get<StrictTaskState>(), "[json.exception.out_of_range.410] enum value out of range for StrictTaskState: \"what?\"", json::out_of_range&);
+
+        // conversion of unmapped enum -> exception thrown
+        CHECK_THROWS_WITH_AS(json(STRICT_TS_OTHER), "[json.exception.out_of_range.410] enum value out of range for StrictTaskState", json::out_of_range&);
+    }
+}
+
+
 #ifdef JSON_HAS_CPP_17
 #if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
 TEST_CASE("std::filesystem::path")

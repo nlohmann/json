@@ -55,7 +55,8 @@ Just as in [Arbitrary Type Conversions](arbitrary_types.md) above,
 Other Important points:
 
 - When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this
-  default pair carefully.
+  default pair carefully. If you desire an exception in this circumstance use [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT()`](../api/macros/nlohmann_json_serialize_enum_strict.md)
+  which behaves identically except for throwing an exception on unrecognized values.
 - If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the
   map will be returned when converting to or from JSON.
 - To disable the default serialization of enumerators as integers and force a compiler error instead, see [`JSON_DISABLE_ENUM_SERIALIZATION`](../api/macros/json_disable_enum_serialization.md).

@@ -54,6 +54,7 @@ header. See also the [macro overview page](../../features/macros.md).
 ### Enums
 
 - [**NLOHMANN_JSON_SERIALIZE_ENUM**](nlohmann_json_serialize_enum.md) - serialize/deserialize an enum
+- [**NLOHMANN_JSON_SERIALIZE_ENUM_STRICT**](nlohmann_json_serialize_enum_strict.md) - serialize/deserialize an enum with exceptions
 
 ### Classes and structs
 

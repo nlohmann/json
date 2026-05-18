@@ -1105,7 +1105,7 @@ Just as in [Arbitrary Type Conversions](#arbitrary-types-conversions) above,
 
 Other Important points:
 
-- When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this default pair carefully.
+- When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this default pair carefully. If you desire an exception in this circumstance use `NLOHMANN_JSON_SERIALIZE_ENUM_STRICT()` which behaves identically except for throwing an exception on unrecognized values.
 - If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the map will be returned when converting to or from JSON.
 
 ### Binary formats (BSON, CBOR, MessagePack, UBJSON, and BJData)

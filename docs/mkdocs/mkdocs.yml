@@ -294,6 +294,7 @@ nav:
           - 'NLOHMANN_JSON_NAMESPACE_BEGIN, NLOHMANN_JSON_NAMESPACE_END': api/macros/nlohmann_json_namespace_begin.md
           - 'NLOHMANN_JSON_NAMESPACE_NO_VERSION': api/macros/nlohmann_json_namespace_no_version.md
           - 'NLOHMANN_JSON_SERIALIZE_ENUM': api/macros/nlohmann_json_serialize_enum.md
+          - 'NLOHMANN_JSON_SERIALIZE_ENUM_STRICT': api/macros/nlohmann_json_serialize_enum_strict.md
           - 'NLOHMANN_JSON_VERSION_MAJOR, NLOHMANN_JSON_VERSION_MINOR, NLOHMANN_JSON_VERSION_PATCH': api/macros/nlohmann_json_version_major.md
   - Community:
       - community/index.md
