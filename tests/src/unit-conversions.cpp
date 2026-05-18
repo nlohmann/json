@@ -1761,7 +1761,7 @@ TEST_CASE("std::filesystem::path")
 }
 #endif
 
-#ifndef JSON_USE_IMPLICIT_CONVERSIONS
+#if !JSON_USE_IMPLICIT_CONVERSIONS
 TEST_CASE("std::optional")
 {
     SECTION("null")
