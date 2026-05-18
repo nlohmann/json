@@ -271,7 +271,7 @@ TEST_CASE("ordered_map")
         CHECK(com.find(vier) == com.end());
 
 #ifdef JSON_HAS_CPP_17
-        CHECK(om.find(std::string_view("eins")) == com.begin());
+        CHECK(om.find(std::string_view("eins")) == om.begin());
         CHECK(com.find(std::string_view("eins")) == com.begin());
 #endif
     }
