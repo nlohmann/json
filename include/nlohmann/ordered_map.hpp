@@ -340,6 +340,20 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return Container::end();
     }
 
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
+    const_iterator find(KeyType && key) const // NOLINT(cppcoreguidelines-missing-std-forward)
+    {
+        for (auto it = this->begin(); it != this->end(); ++it)
+        {
+            if (m_compare(it->first, key))
+            {
+                return it;
+            }
+        }
+        return Container::end();
+    }
+
     std::pair<iterator, bool> insert( value_type&& value )
     {
         return emplace(value.first, std::move(value.second));
