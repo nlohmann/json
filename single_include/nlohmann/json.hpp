@@ -3100,6 +3100,28 @@ void templated_json_throw(ExceptionType exception)
 #define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES(Type, BaseType, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) })
 
+/*!
+@brief macro
+@def NLOHMANN_DEFINE_EMPTY_TYPE_INTRUSIVE
+@since version 3.12.0
+*/
+#define NLOHMANN_DEFINE_EMPTY_TYPE_INTRUSIVE(Type)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    friend void to_json(BasicJsonType& nlohmann_json_j, const Type&) { nlohmann_json_j = BasicJsonType::object(); } \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    friend void from_json(const BasicJsonType&, Type&) noexcept { } /* NOLINT(bugprone-macro-parentheses) */
+
+/*!
+@brief macro
+@def NLOHMANN_DEFINE_EMPTY_TYPE_NON_INTRUSIVE
+@since version 3.12.0
+*/
+#define NLOHMANN_DEFINE_EMPTY_TYPE_NON_INTRUSIVE(Type)  \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void to_json(BasicJsonType& nlohmann_json_j, const Type&) { nlohmann_json_j = BasicJsonType::object(); } \
+    template<typename BasicJsonType, nlohmann::detail::enable_if_t<nlohmann::detail::is_basic_json<BasicJsonType>::value, int> = 0> \
+    void from_json(const BasicJsonType&, Type&) noexcept { } /* NOLINT(bugprone-macro-parentheses) */
+
 // inspired from https://stackoverflow.com/a/26745591
 // allows calling any std function as if (e.g., with begin):
 // using std::begin; begin(x);
