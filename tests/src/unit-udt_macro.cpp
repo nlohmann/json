@@ -719,11 +719,12 @@ class empty_non_intrusive
 {
 };
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 NLOHMANN_DEFINE_EMPTY_TYPE_NON_INTRUSIVE(empty_non_intrusive)
 
 } // namespace emptys
 
-TEST_CASE_TEMPLATE("Serialization/deserialization of classes with no member variables", T,
+TEST_CASE_TEMPLATE("Serialization/deserialization of classes with no member variables", T, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    emptys::empty_intrusive,
                    emptys::empty_non_intrusive)
 {
