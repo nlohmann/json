@@ -170,7 +170,10 @@ class binary_reader
     bool parse_bson_internal()
     {
         std::int32_t document_size{};
-        get_number<std::int32_t, true>(input_format_t::bson, document_size);
+        if (JSON_HEDLEY_UNLIKELY((!get_number<std::int32_t, true>(input_format_t::bson, document_size))))
+        {
+            return false;
+        }
 
         if (JSON_HEDLEY_UNLIKELY(document_size < 5))
         {
@@ -181,9 +184,10 @@ class binary_reader
                                             "document size"), nullptr));
         }
 
-        // chars_read now points just past the 4-byte size field;
-        // the document started 4 bytes earlier and must end at start + document_size.
-        const std::size_t expected_end = chars_read + static_cast<std::size_t>(document_size) - 4;
+        // The document begins at the size field and ends document_size bytes later
+        // (including the size field itself and the trailing 0x00 terminator).
+        const std::size_t document_start = chars_read - sizeof(std::int32_t);
+        const std::size_t expected_end = document_start + static_cast<std::size_t>(document_size);
 
         if (JSON_HEDLEY_UNLIKELY(!sax->start_object(detail::unknown_size())))
         {
@@ -434,7 +438,10 @@ class binary_reader
     bool parse_bson_array()
     {
         std::int32_t document_size{};
-        get_number<std::int32_t, true>(input_format_t::bson, document_size);
+        if (JSON_HEDLEY_UNLIKELY((!get_number<std::int32_t, true>(input_format_t::bson, document_size))))
+        {
+            return false;
+        }
 
         if (JSON_HEDLEY_UNLIKELY(document_size < 5))
         {
@@ -445,9 +452,10 @@ class binary_reader
                                             "document size"), nullptr));
         }
 
-        // chars_read now points just past the 4-byte size field;
-        // the document started 4 bytes earlier and must end at start + document_size.
-        const std::size_t expected_end = chars_read + static_cast<std::size_t>(document_size) - 4;
+        // The document begins at the size field and ends document_size bytes later
+        // (including the size field itself and the trailing 0x00 terminator).
+        const std::size_t document_start = chars_read - sizeof(std::int32_t);
+        const std::size_t expected_end = document_start + static_cast<std::size_t>(document_size);
 
         if (JSON_HEDLEY_UNLIKELY(!sax->start_array(detail::unknown_size())))
         {

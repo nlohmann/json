@@ -1302,6 +1302,7 @@ TEST_CASE("Invalid document size handling")
         std::vector<std::uint8_t> const v = {0x04, 0x00, 0x00, 0x00, 0x00};
         json _;
         CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 4: syntax error while parsing BSON document size: BSON document size must be at least 5, is 4", json::parse_error&);
+        CHECK(json::from_bson(v, true, false).is_discarded());
     }
 
     SECTION("declared document size must match consumed bytes (extra trailing element)")
@@ -1316,6 +1317,38 @@ TEST_CASE("Invalid document size handling")
         };
         json _;
         CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 16: syntax error while parsing BSON document: BSON document terminator did not land at declared document size", json::parse_error&);
+        CHECK(json::from_bson(v, true, false).is_discarded());
+    }
+
+    SECTION("declared document size must match consumed bytes (premature terminator)")
+    {
+        // Declares 32-byte document but only contains the size field followed by an immediate terminator.
+        std::vector<std::uint8_t> const v =
+        {
+            0x20, 0x00, 0x00, 0x00,
+            0x00
+        };
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: BSON document terminator did not land at declared document size", json::parse_error&);
+        CHECK(json::from_bson(v, true, false).is_discarded());
+    }
+
+    SECTION("array declared size must match consumed bytes")
+    {
+        // Outer object contains an array "a" that declares 5 bytes (empty) but
+        // actually contains an int32 element before its terminator.
+        std::vector<std::uint8_t> const v =
+        {
+            0x14, 0x00, 0x00, 0x00,                         // object size = 20
+            0x04, 'a', 0x00,                                // key "a", array type
+            0x05, 0x00, 0x00, 0x00,                         // array declared size = 5 (empty)
+            0x10, '0', 0x00, 0x01, 0x00, 0x00, 0x00,        // extra int32 element "0" = 1
+            0x00,                                           // array terminator
+            0x00                                            // object terminator
+        };
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 19: syntax error while parsing BSON document: BSON document terminator did not land at declared document size", json::parse_error&);
+        CHECK(json::from_bson(v, true, false).is_discarded());
     }
 
     SECTION("BSON string must end with 0x00")
@@ -1331,5 +1364,6 @@ TEST_CASE("Invalid document size handling")
         };
         json _;
         CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 13: syntax error while parsing BSON string: BSON string is not null-terminated", json::parse_error&);
+        CHECK(json::from_bson(v, true, false).is_discarded());
     }
 }
