@@ -472,8 +472,8 @@ class binary_reader
             auto last_token = get_token_string();
             return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
                                     exception_message(input_format_t::bson,
-                                            "BSON document terminator did not land at declared document size",
-                                            "document"), nullptr));
+                                            "BSON array terminator did not land at declared array size",
+                                            "array"), nullptr));
         }
 
         return sax->end_array();

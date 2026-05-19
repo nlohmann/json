@@ -1347,7 +1347,7 @@ TEST_CASE("Invalid document size handling")
             0x00                                            // object terminator
         };
         json _;
-        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 19: syntax error while parsing BSON document: BSON document terminator did not land at declared document size", json::parse_error&);
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 19: syntax error while parsing BSON array: BSON array terminator did not land at declared array size", json::parse_error&);
         CHECK(json::from_bson(v, true, false).is_discarded());
     }
 
