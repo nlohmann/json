@@ -12381,7 +12381,21 @@ class binary_reader
                                     exception_message(input_format_t::bson, concat("string length must be at least 1, is ", std::to_string(len)), "string"), nullptr));
         }
 
-        return get_string(input_format_t::bson, len - static_cast<NumberType>(1), result) && get() != char_traits<char_type>::eof();
+        if (JSON_HEDLEY_UNLIKELY(!get_string(input_format_t::bson, len - static_cast<NumberType>(1), result)))
+        {
+            return false;
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(get() != 0x00))
+        {
+            auto last_token = get_token_string();
+            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format_t::bson,
+                                            "BSON string is not null-terminated",
+                                            "string"), nullptr));
+        }
+
+        return true;
     }
 
     /*!
@@ -12498,8 +12512,6 @@ class binary_reader
             }
         }
     }
-
-
 
     //////////
     // CBOR //
