@@ -213,6 +213,21 @@ add_custom_target(ci_test_legacycomparison
 )
 
 ###############################################################################
+# Enable brace-init copy semantics.
+###############################################################################
+
+add_custom_target(ci_test_brace_init_copy_semantics
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_FastTests=ON
+    -DCMAKE_CXX_FLAGS=-DJSON_BRACE_INIT_COPY_SEMANTICS=1
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_brace_init_copy_semantics
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_brace_init_copy_semantics
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_brace_init_copy_semantics && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with brace-init copy semantics enabled"
+)
+
+###############################################################################
 # Disable global UDLs.
 ###############################################################################
 

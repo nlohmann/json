@@ -564,6 +564,14 @@ TEST_CASE("JSON pointers")
         CHECK(!ptr.empty());
         CHECK(j[ptr] == j["answer"]["everything"]);
 
+        ptr.pop_front();
+        CHECK(ptr.front() == "everything");
+        ptr.pop_front();
+        CHECK(ptr.empty());
+        ptr.push_front("everything");
+        ptr.push_front(answer);
+        CHECK(j[ptr] == j["answer"]["everything"]);
+
         // check access via const pointer
         const auto cptr = ptr;
         CHECK(cptr.back() == "everything");
@@ -588,8 +596,17 @@ TEST_CASE("JSON pointers")
         CHECK(ptr.empty());
         CHECK(j[ptr] == j);
 
-        CHECK_THROWS_WITH(ptr.pop_back(),
-                          "[json.exception.out_of_range.405] JSON pointer has no parent");
+        CHECK_THROWS_WITH_AS(ptr.pop_back(),
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
+
+        CHECK_THROWS_WITH_AS(ptr.back(),
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
+
+        CHECK_THROWS_WITH_AS(ptr.pop_front(),
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
+
+        CHECK_THROWS_WITH_AS(ptr.front(),
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
     }
 
     SECTION("operators")

@@ -868,6 +868,16 @@ Key identifiers to be serialized to BSON cannot contain code point U+0000, since
     BSON key cannot contain code point U+0000 (at byte 2)
     ```
 
+### json.exception.out_of_range.410
+
+Undefined json fields cannot be used with [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](../api/macros/nlohmann_json_serialize_enum_strict.md)
+
+!!! failure "Example message"
+
+    ```
+    enum value out of range
+    ```
+
 ## Further exceptions
 
 This exception is thrown in case of errors that cannot be classified with the
@@ -899,14 +909,4 @@ A JSON Patch operation 'test' failed. The unsuccessful operation is also printed
 
     ```
     [json.exception.other_error.501] unsuccessful: {"op":"test","path":"/baz","value":"bar"}
-    ```
-
-### json.exception.other_error.502
-
-This exception is thrown when a null pointer is passed as SAX event listener to the [sax_parse](../api/basic_json/sax_parse.md) function.
-
-!!! failure "Example message"
-
-    ```
-    [json.exception.other_error.502] SAX handler must not be null
     ```

@@ -78,6 +78,7 @@ inline void from_json(const BasicJsonType& j, type& e);
 ## See also
 
 - [Specializing enum conversion](../../features/enum_conversion.md)
+- [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](./nlohmann_json_serialize_enum_strict.md)
 - [`JSON_DISABLE_ENUM_SERIALIZATION`](json_disable_enum_serialization.md)
 
 ## Version history

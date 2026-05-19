@@ -37,6 +37,9 @@ are the base for JSON patches.
 - [**pop_back**](pop_back.md) - remove the last reference token
 - [**back**](back.md) - return last reference token
 - [**push_back**](push_back.md) - append an unescaped token at the end of the pointer
+- [**pop_front**](pop_front.md) - remove the first reference token
+- [**front**](front.md) - return first reference token
+- [**push_front**](push_front.md) - append an unescaped token at the start of the pointer
 - [**empty**](empty.md) - return whether the pointer points to the root document
 
 ## Literals

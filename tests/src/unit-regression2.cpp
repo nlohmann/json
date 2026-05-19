@@ -1203,4 +1203,130 @@ TEST_CASE_TEMPLATE("issue #4798 - nlohmann::json::to_msgpack() encode float NaN 
     CHECK(json::from_cbor(cbor_z_3).get<T>() == -std::numeric_limits<T>::infinity());
 }
 
+TEST_CASE("regression test #5074 - portable workaround for single-element brace init")
+{
+    json const j_obj = {{"key", "value"}};
+
+    json const j = json::array({j_obj});
+    CHECK(j.is_array());
+    CHECK(j.size() == 1);
+    CHECK(j[0] == j_obj);
+}
+
+#if defined(JSON_BRACE_INIT_COPY_SEMANTICS) && (JSON_BRACE_INIT_COPY_SEMANTICS == 1)
+TEST_CASE("regression test #5074 - single-element brace init with JSON_BRACE_INIT_COPY_SEMANTICS")
+{
+    // with JSON_BRACE_INIT_COPY_SEMANTICS: single-element brace init copies/moves
+    json const j_obj = {{"key", "value"}, {"num", 42}};
+    json const j_arr = {1, 2, 3};
+
+    // object: brace init copies instead of wrapping
+    json const j1{j_obj};
+    CHECK(j1.is_object());
+    CHECK(j1 == j_obj);
+
+    // array: brace init copies instead of wrapping
+    json const j2{j_arr};
+    CHECK(j2.is_array());
+    CHECK(j2.size() == 3);
+    CHECK(j2 == j_arr);
+
+    // primitives still work as initializer lists
+    json const j3{true};
+    CHECK(j3.is_boolean());
+
+    json const j4{42};
+    CHECK(j4.is_number_integer());
+}
+#endif
+
+struct Example_5122
+{
+    float b = 2;
+    nlohmann::ordered_map<std::string, std::string> c{}; // NOLINT(readability-redundant-member-init): needed for GCC -Weffc++
+    int a = 1;
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Example_5122, b, c, a)
+};
+
+TEST_CASE("regression test #5122 - from_json into types holding nlohmann::ordered_map")
+{
+    Example_5122 src;
+    src.c.emplace("first", "1");
+    src.c.emplace("second", "2");
+
+    ordered_json const j = src;
+    Example_5122 const dst = j.get<Example_5122>();
+
+    CHECK(dst.b == src.b);
+    CHECK(dst.a == src.a);
+    REQUIRE(dst.c.size() == src.c.size());
+    auto src_it = src.c.begin();
+    auto dst_it = dst.c.begin();
+    for (; src_it != src.c.end(); ++src_it, ++dst_it)
+    {
+        CHECK(dst_it->first == src_it->first);
+        CHECK(dst_it->second == src_it->second);
+    }
+}
+
+// -Wself-assign-overloaded was introduced in Clang 7. Gate the pragma on
+// __has_warning so older Clang versions do not error with "unknown warning
+// group". The __has_warning check has to stay inside the __clang__ branch
+// because GCC does not provide it and would tokenize-error on the argument.
+#if defined(__clang__) && defined(__has_warning)
+    #if __has_warning("-Wself-assign-overloaded")
+        DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+        DOCTEST_CLANG_SUPPRESS_WARNING("-Wself-assign-overloaded")
+    #endif
+#endif
+
+TEST_CASE("regression test #5122 - nlohmann::ordered_map copy-assignment is self-assignment safe")
+{
+    nlohmann::ordered_map<std::string, std::string> m;
+    m.emplace("first", "1");
+    m.emplace("second", "2");
+
+    // Insertion order is preserved by ordered_map, so we can check it directly.
+    m = m;
+
+    REQUIRE(m.size() == 2);
+    auto it = m.begin();
+    CHECK(it->first == "first");
+    CHECK(it->second == "1");
+    ++it;
+    CHECK(it->first == "second");
+    CHECK(it->second == "2");
+}
+
+#if defined(__clang__) && defined(__has_warning)
+    #if __has_warning("-Wself-assign-overloaded")
+        DOCTEST_CLANG_SUPPRESS_WARNING_POP
+    #endif
+#endif
+
+TEST_CASE("regression test #5122 - nlohmann::ordered_map move-assignment transfers contents")
+{
+    nlohmann::ordered_map<std::string, std::string> src;
+    src.emplace("first", "1");
+    src.emplace("second", "2");
+
+    nlohmann::ordered_map<std::string, std::string> dst;
+    dst.emplace("stale", "x");
+    dst = std::move(src);
+
+    REQUIRE(dst.size() == 2);
+    auto it = dst.begin();
+    CHECK(it->first == "first");
+    CHECK(it->second == "1");
+    ++it;
+    CHECK(it->first == "second");
+    CHECK(it->second == "2");
+
+    // Re-assigning into the moved-from object must leave it in a usable state.
+    src = nlohmann::ordered_map<std::string, std::string> {};
+    src.emplace("after-move", "3");
+    REQUIRE(src.size() == 1);
+    CHECK(src.begin()->first == "after-move");
+}
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
