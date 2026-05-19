@@ -1294,3 +1294,42 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
         }
     }
 }
+
+TEST_CASE("Invalid document size handling")
+{
+    SECTION("document size must be at least 5")
+    {
+        std::vector<std::uint8_t> const v = {0x04, 0x00, 0x00, 0x00, 0x00};
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 4: syntax error while parsing BSON document size: BSON document size must be at least 5, is 4", json::parse_error&);
+    }
+
+    SECTION("declared document size must match consumed bytes (extra trailing element)")
+    {
+        // Declares 5-byte empty document but appends an int32 element after the declared end.
+        std::vector<std::uint8_t> const v =
+        {
+            0x05, 0x00, 0x00, 0x00,
+            0x10, 'a', 'd', 'm', 'i', 'n', 0x00,
+            0x01, 0x00, 0x00, 0x00,
+            0x00
+        };
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 16: syntax error while parsing BSON document: BSON document terminator did not land at declared document size", json::parse_error&);
+    }
+
+    SECTION("BSON string must end with 0x00")
+    {
+        // Length-prefixed string whose terminator byte is 'X' (0x58), not 0x00.
+        std::vector<std::uint8_t> const v =
+        {
+            0x0F, 0x00, 0x00, 0x00,
+            0x02, 's', 0x00,
+            0x02, 0x00, 0x00, 0x00,
+            'A', 'X',
+            0x00
+        };
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 13: syntax error while parsing BSON string: BSON string is not null-terminated", json::parse_error&);
+    }
+}
