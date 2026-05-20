@@ -254,6 +254,8 @@ TEST_CASE("object inspection")
                 CHECK(j_array.dump(1024).size() == 25622);
                 // check if right indentation symbol is used
                 CHECK(j_array.dump(1024, '\t')[4096] == '\t');
+                // check resize is large enough
+                CHECK(j_array.dump(10000).size() == 250022);
             }
 
             SECTION("object")
@@ -263,6 +265,8 @@ TEST_CASE("object inspection")
                 CHECK(j_object.dump(1024).size() == 25642);
                 // check if right indentation symbol is used
                 CHECK(j_object.dump(1024, '\t')[4096] == '\t');
+                // check resize is large enough
+                CHECK(j_object.dump(10000).size() == 250042);
             }
 
             SECTION("binary")
@@ -271,6 +275,8 @@ TEST_CASE("object inspection")
                 // check right size after indentation triggering a resize
                 CHECK(j_binary.dump(1024).size() == 2086);
                 CHECK(j_binary.dump(1024, '\t')[1024] == '\t');
+                // check resize is large enough
+                CHECK(j_binary.dump(10000).size() == 20038);
             }
         }
 
