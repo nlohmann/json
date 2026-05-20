@@ -245,6 +245,35 @@ TEST_CASE("object inspection")
             CHECK(binary.dump(1024).size() == 2086);
         }
 
+        SECTION("indentation and resize")
+        {
+            SECTION("array")
+            {
+                const auto j_array = "[[[[[[]]]]]]"_json;
+                // check right size after indentation triggering a resize
+                CHECK(j_array.dump(1024).size() == 25622);
+                // check if right indentation symbol is used
+                CHECK(j_array.dump(1024, '\t')[4096] == '\t');
+            }
+
+            SECTION("object")
+            {
+                const auto j_object = R"({"":{"":{"":{"":{"":{}}}}}})"_json;
+                // check right size after indentation triggering a resize
+                CHECK(j_object.dump(1024).size() == 25642);
+                // check if right indentation symbol is used
+                CHECK(j_object.dump(1024, '\t')[4096] == '\t');
+            }
+
+            SECTION("binary")
+            {
+                const auto j_binary = json::binary({1, 2, 3}, 128);
+                // check right size after indentation triggering a resize
+                CHECK(j_binary.dump(1024).size() == 2086);
+                CHECK(j_binary.dump(1024, '\t')[1024] == '\t');
+            }
+        }
+
         SECTION("dump and floating-point numbers")
         {
             auto s = json(42.23).dump();

@@ -128,7 +128,7 @@ class serializer
                     const auto new_indent = current_indent + indent_step;
                     if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
                     {
-                        indent_string.resize(indent_string.size() * 2, ' ');
+                        indent_string.resize(indent_string.size() * 2, indent_char);
                     }
 
                     // first n-1 elements
@@ -201,7 +201,7 @@ class serializer
                     const auto new_indent = current_indent + indent_step;
                     if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
                     {
-                        indent_string.resize(indent_string.size() * 2, ' ');
+                        indent_string.resize(indent_string.size() * 2, indent_char);
                     }
 
                     // first n-1 elements
@@ -262,7 +262,7 @@ class serializer
                     const auto new_indent = current_indent + indent_step;
                     if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
                     {
-                        indent_string.resize(indent_string.size() * 2, ' ');
+                        indent_string.resize(indent_string.size() * 2, indent_char);
                     }
 
                     o->write_characters(indent_string.c_str(), new_indent);
