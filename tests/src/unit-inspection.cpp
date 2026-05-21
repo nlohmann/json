@@ -249,7 +249,7 @@ TEST_CASE("object inspection")
         {
             SECTION("array")
             {
-                const auto j_array = "[[[[[[]]]]]]"_json;
+                const auto j_array = json::parse("[[[[[[]]]]]]");
                 // check right size after indentation triggering a resize
                 CHECK(j_array.dump(1024).size() == 25622);
                 // check if right indentation symbol is used
@@ -260,7 +260,7 @@ TEST_CASE("object inspection")
 
             SECTION("object")
             {
-                const auto j_object = R"({"":{"":{"":{"":{"":{}}}}}})"_json;
+                const auto j_object = json::parse(R"({"":{"":{"":{"":{"":{}}}}}})");
                 // check right size after indentation triggering a resize
                 CHECK(j_object.dump(1024).size() == 25642);
                 // check if right indentation symbol is used
