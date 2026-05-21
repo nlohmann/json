@@ -24000,6 +24000,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 if (it2 != m_data.m_value.object->end())
                 {
                     it2->second.update(it.value(), true);
+#if JSON_DIAGNOSTICS
+                    it2->second.set_parents();
+#endif
                     continue;
                 }
             }
