@@ -1330,3 +1330,16 @@ TEST_CASE("regression test #5122 - nlohmann::ordered_map move-assignment transfe
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
+
+TEST_CASE("regression test #4813 - update() with merge_objects=true triggers JSON_ASSERT with JSON_DIAGNOSTICS")
+{
+    // https://github.com/nlohmann/json/issues/4813
+    nlohmann::ordered_json j1 = {{"numbers", {{"one", 1}}}};
+    nlohmann::ordered_json const j2 = {{"numbers", {{"two", 2}}}, {"string", "t"}};
+    CHECK_NOTHROW(j1.update(j2, true));
+    CHECK(j1["numbers"]["one"] == 1);
+    CHECK(j1["numbers"]["two"] == 2);
+    CHECK(j1["string"] == "t");
+}
+
+
