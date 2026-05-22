@@ -262,4 +262,16 @@ TEST_CASE("Regression tests for extended diagnostics")
 
         CHECK(k.dump() == "{\"prop1\":\"prop1_value\",\"root\":\"root_str\"}");
     }
+
+    SECTION("Regression test for issue #4813 - update() with merge_objects=true triggers JSON_ASSERT with JSON_DIAGNOSTICS")
+    {
+        // https://github.com/nlohmann/json/issues/4813
+        nlohmann::ordered_json j1 = {{"numbers", {{"one", 1}}}};
+        nlohmann::ordered_json const j2 = {{"numbers", {{"two", 2}}}, {"string", "t"}};
+        CHECK_NOTHROW(j1.update(j2, true));
+        CHECK(j1["numbers"]["one"] == 1);
+        CHECK(j1["numbers"]["two"] == 2);
+        CHECK(j1["string"] == "t");
+    }
 }
+
