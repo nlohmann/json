@@ -7,7 +7,7 @@ Mirror: https://github.com/edlund/amalgamate
 `amalgamate.py` aims to make it easy to use SQLite-style C source and header
 amalgamation in projects.
 
-For more information, please refer to: http://sqlite.org/amalgamation.html
+For more information, please refer to: https://www.sqlite.org/amalgamation.html
 
 ## Here be dragons
 
