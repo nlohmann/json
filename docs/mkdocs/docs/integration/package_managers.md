@@ -44,7 +44,7 @@ When executed, this program should create output similar to
     - :octicons-file-24: File issues at the [Homebrew issue tracker](https://github.com/Homebrew/homebrew-core/issues)
     - :octicons-question-24: [Homebrew website](https://brew.sh)
 
-If you are using [Homebrew](http://brew.sh), you can install the library with
+If you are using [Homebrew](https://brew.sh), you can install the library with
 
 ```sh
 brew install nlohmann-json
@@ -110,7 +110,7 @@ The header can be used directly in your code or via CMake.
     - :octicons-file-24: File issues at the [library issue tracker](https://github.com/nlohmann/json/issues)
     - :octicons-question-24: [Meson website](https://mesonbuild.com/index.html)
 
-If you are using the [Meson Build System](http://mesonbuild.com), add this source tree as a [meson subproject](https://mesonbuild.com/Subprojects.html#using-a-subproject). You may also use the
+If you are using the [Meson Build System](https://mesonbuild.com), add this source tree as a [meson subproject](https://mesonbuild.com/Subprojects.html#using-a-subproject). You may also use the
 `include.zip` published in this project's [Releases](https://github.com/nlohmann/json/releases) to reduce the size of the vendored source tree. Alternatively,
 you can get a wrap file by downloading it from [Meson WrapDB](https://mesonbuild.com/Wrapdb-projects.html), or use
 
@@ -392,7 +392,7 @@ and follow the then displayed descriptions. Please see the vcpkg project for any
     - :octicons-file-24: File issues at the [cget issue tracker](https://github.com/pfultz2/cget-recipes/issues)
     - :octicons-question-24: [cget website](https://cget.readthedocs.io/)
 
-If you are using [cget](http://cget.readthedocs.io/en/latest/), you can install the latest `master` version with
+If you are using [cget](https://cget.readthedocs.io/en/latest/), you can install the latest `master` version with
 
 ```shell
 cget install nlohmann/json
@@ -624,7 +624,7 @@ conda install -c conda-forge nlohmann_json
 
 ## MSYS2
 
-If you are using [MSYS2](http://www.msys2.org/), you can use the [mingw-w64-nlohmann-json](https://packages.msys2.org/base/mingw-w64-nlohmann-json) package, type `pacman -S mingw-w64-i686-nlohmann-json` or `pacman -S mingw-w64-x86_64-nlohmann-json` for installation. Please file issues [here](https://github.com/msys2/MINGW-packages/issues/new?title=%5Bnlohmann-json%5D) if you experience problems with the packages.
+If you are using [MSYS2](https://www.msys2.org/), you can use the [mingw-w64-nlohmann-json](https://packages.msys2.org/base/mingw-w64-nlohmann-json) package, type `pacman -S mingw-w64-i686-nlohmann-json` or `pacman -S mingw-w64-x86_64-nlohmann-json` for installation. Please file issues [here](https://github.com/msys2/MINGW-packages/issues/new?title=%5Bnlohmann-json%5D) if you experience problems with the packages.
 
 [![MSYS2 clang64 package](https://repology.org/badge/version-for-repo/msys2_clang64/nlohmann-json.svg)](https://repology.org/project/nlohmann-json/versions)
 [![MSYS2 clangarm64 package](https://repology.org/badge/version-for-repo/msys2_clangarm64/nlohmann-json.svg)](https://repology.org/project/nlohmann-json/versions)
