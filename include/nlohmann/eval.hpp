@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <new>  // placement new
+
 #include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
@@ -58,14 +60,30 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
-// Meyers' singleton holding a static empty JSON value of a given value_t.
-// Returning by const reference avoids per-call allocation and is thread-safe
-// since C++11.
+// Singleton holding an immortalized empty JSON value of a given value_t.
+//
+// Implementation note: a plain `static const BasicJsonType instance(Kind);`
+// would trigger Clang's -Wexit-time-destructors (which the project treats as
+// an error). Instead we construct the value once into properly-aligned
+// uninitialized storage via placement-new and return a reference to it. The
+// destructor is intentionally never invoked at process exit, which is safe
+// for an empty `array`/`object` constant: it owns no resources beyond the
+// internal allocator state, and skipping its destructor avoids any
+// static-destruction-order concerns.
 template<typename BasicJsonType, value_t Kind>
 const BasicJsonType& empty_json_singleton() noexcept
 {
-    static const BasicJsonType instance(Kind);
-    return instance;
+    // POD-like storage: trivially destructible, so it does not itself
+    // require an exit-time destructor.
+    alignas(BasicJsonType) static unsigned char storage[sizeof(BasicJsonType)];
+
+    // Construct-once on first call. The pointer's type is a raw pointer
+    // (trivially destructible), so this static local also does not require
+    // an exit-time destructor.
+    static const BasicJsonType* const instance =
+        ::new (static_cast<void*>(&storage[0])) BasicJsonType(Kind);
+
+    return *instance;
 }
 
 }  // namespace detail

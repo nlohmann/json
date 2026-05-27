@@ -121,16 +121,36 @@ auto a = eval_value(j, "a", 0);   // ADL finds nlohmann::eval_value
 ## Design notes
 
 - These helpers rely only on the **public** API of `basic_json`
-  (`is_object`, `find`, `end`, `get`, `is_null`, `is_array`, `is_object`)
-  and `json_pointer::get_checked`.
+  (`is_object`, `is_array`, `is_null`, `find`, `end`, `get`,
+  `contains(json_pointer)`, `at(json_pointer)`).
 - They are intentionally provided as **non-member** functions in an
   **opt-in** header (`<nlohmann/eval.hpp>`). They are not pulled in by
-  `<nlohmann/json.hpp>`.
-- The empty fallback array/object returned by reference is a
-  `static const` Meyers' singleton, so it is allocated once and is safe
-  for concurrent reads (thread-safe since C++11).
+  `<nlohmann/json.hpp>` and are not bundled into
+  `single_include/nlohmann/json.hpp`.
+- The empty fallback array/object returned by reference is a process-lifetime
+  singleton constructed once into properly-aligned uninitialized storage via
+  placement-new. Its destructor is intentionally never invoked at process
+  exit, which avoids both Clang's `-Wexit-time-destructors` warning and any
+  static-destruction-order concerns.
 - `ValueType` for `eval_value` is **deduced** from `default_value`, so
   the common case never requires explicit template arguments.
+
+## Limitation under `JSON_NOEXCEPTION`
+
+The helpers' `noexcept` guarantee is best-effort under
+[`JSON_NOEXCEPTION`](macros/json_noexception.md):
+
+- `eval_array` / `eval_object` (both key and JSON Pointer overloads) and
+  the JSON Pointer overload of `eval_value` remain fully noexcept-correct,
+  because they only rely on `is_*` predicates, `find`, `contains`, and
+  `at` paths that are guarded by a successful `contains` check.
+- `eval_value(j, key, default)` calls `it->get<ValueType>()` for type
+  conversion. Under `JSON_NOEXCEPTION`, a conversion failure inside
+  `from_json` calls `std::abort()` instead of throwing, so passing a
+  receiver where `j[key]` is convertibility-incompatible with `ValueType`
+  may abort the process. Use the JSON Pointer overload, or perform an
+  explicit `is_*` check at the call site, when running with exceptions
+  disabled.
 
 ## See also
 

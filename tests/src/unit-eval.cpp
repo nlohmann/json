@@ -9,6 +9,22 @@
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
+
+// The eval_* helpers live in an opt-in header that is intentionally NOT
+// part of the amalgamated single-include `single_include/nlohmann/json.hpp`
+// (in line with the design discussion in #5129). Skip this test file when
+// the test suite is built against the single-header amalgamation.
+//
+// Also skip when JSON_NOEXCEPTION is defined: the helpers' pointer
+// overloads remain correct under that mode, but `eval_value(j, key, T{})`
+// must call `it->template get<T>()` whose internal `JSON_THROW` becomes
+// `std::abort()` -- there is no public, non-throwing conversion that the
+// helpers could fall back to. The helpers are therefore not exercised by
+// the no-exceptions matrix; the same approach is taken by other unit-*
+// files that exercise public APIs which can throw type_error.
+#if defined(JSON_TEST_USING_MULTIPLE_HEADERS) && JSON_TEST_USING_MULTIPLE_HEADERS \
+    && !defined(JSON_NOEXCEPTION)
+
 #include <nlohmann/eval.hpp>
 using nlohmann::json;
 
@@ -440,3 +456,5 @@ TEST_CASE("eval functions end-to-end scenario from discussion 5129")
         CHECK(eval_value(j, "a", 0) == 7);
     }
 }
+
+#endif  // JSON_TEST_USING_MULTIPLE_HEADERS && !JSON_NOEXCEPTION
