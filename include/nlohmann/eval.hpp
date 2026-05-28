@@ -8,7 +8,8 @@
 
 #pragma once
 
-#include <new>  // placement new
+#include <array>  // array, used for aligned storage of the empty singletons
+#include <new>    // placement new
 
 #include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/value_t.hpp>
@@ -70,21 +71,30 @@ namespace detail
 // for an empty `array`/`object` constant: it owns no resources beyond the
 // internal allocator state, and skipping its destructor avoids any
 // static-destruction-order concerns.
+//
+// NOLINTBEGIN(bugprone-exception-escape) -- BasicJsonType's default-allocator
+//   constructor is non-throwing in practice for the array/object value_t we
+//   instantiate this with; the noexcept here is the contract callers rely on.
 template<typename BasicJsonType, value_t Kind>
 const BasicJsonType& empty_json_singleton() noexcept
 {
-    // POD-like storage: trivially destructible, so it does not itself
-    // require an exit-time destructor.
-    alignas(BasicJsonType) static unsigned char storage[sizeof(BasicJsonType)];
+    // Aligned, fixed-size byte storage holding the immortalized
+    // BasicJsonType. Using std::array (rather than a C-style array)
+    // avoids `cppcoreguidelines-avoid-c-arrays` warnings and the matching
+    // flawfinder `buffer/char` heuristic.
+    using storage_t = std::array<unsigned char, sizeof(BasicJsonType)>;
+    alignas(BasicJsonType) static storage_t storage{};
 
     // Construct-once on first call. The pointer's type is a raw pointer
     // (trivially destructible), so this static local also does not require
     // an exit-time destructor.
+    // NOLINTNEXTLINE(cppcoreguidelines-owning-memory) -- intentional process-lifetime singleton
     static const BasicJsonType* const instance =
-        ::new (static_cast<void*>(&storage[0])) BasicJsonType(Kind);
+        ::new (static_cast<void*>(storage.data())) BasicJsonType(Kind);
 
     return *instance;
 }
+// NOLINTEND(bugprone-exception-escape)
 
 }  // namespace detail
 
@@ -111,18 +121,15 @@ ValueType eval_value(const BasicJsonType& j,
         return default_value;
     }
 
-    const auto it = j.find(key);
-    if (it != j.end() && !it->is_null())
+    NLOHMANN_EVAL_TRY
     {
-        NLOHMANN_EVAL_TRY
+        const auto it = j.find(key);
+        if (it != j.end() && !it->is_null())
         {
             return it->template get<ValueType>();
         }
-        NLOHMANN_EVAL_CATCH_ALL
-        {
-            return default_value;
-        }
     }
+    NLOHMANN_EVAL_CATCH_ALL {}
 
     return default_value;
 }
@@ -190,11 +197,15 @@ const BasicJsonType& eval_array(
         return empty;
     }
 
-    const auto it = j.find(key);
-    if (it != j.end() && it->is_array())
+    NLOHMANN_EVAL_TRY
     {
-        return *it;
+        const auto it = j.find(key);
+        if (it != j.end() && it->is_array())
+        {
+            return *it;
+        }
     }
+    NLOHMANN_EVAL_CATCH_ALL {}
 
     return empty;
 }
@@ -262,11 +273,15 @@ const BasicJsonType& eval_object(
         return empty;
     }
 
-    const auto it = j.find(key);
-    if (it != j.end() && it->is_object())
+    NLOHMANN_EVAL_TRY
     {
-        return *it;
+        const auto it = j.find(key);
+        if (it != j.end() && it->is_object())
+        {
+            return *it;
+        }
     }
+    NLOHMANN_EVAL_CATCH_ALL {}
 
     return empty;
 }
