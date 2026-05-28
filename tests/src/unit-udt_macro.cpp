@@ -778,7 +778,40 @@ class derived_person_only_serialize_private_3 : person_without_default_construct
     NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES(derived_person_only_serialize_private_3, person_without_default_constructor_3, "json_hair_color", hair_color)
 };
 
+class empty_type
+{
+  public:
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(empty_type)
+
+    bool operator==(const empty_type& /*unused*/) const
+    {
+        return true;
+    }
+};
+
+class empty_type_non_intrusive
+{};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(empty_type_non_intrusive)
+
 } // namespace persons
+
+TEST_CASE("NLOHMANN_DEFINE_TYPE_* with zero members")
+{
+    SECTION("intrusive")
+    {
+        persons::empty_type v;
+        CHECK(json(v).dump() == "{}");
+        CHECK(json::parse("{}").get<persons::empty_type>() == v);
+    }
+
+    SECTION("non-intrusive")
+    {
+        persons::empty_type_non_intrusive v;
+        CHECK(json(v).dump() == "{}");
+        CHECK(json::parse("{}").get<persons::empty_type_non_intrusive>() == v);
+    }
+}
 
 TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", Pair, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    std::pair<nlohmann::json, persons::person_with_private_data>,
