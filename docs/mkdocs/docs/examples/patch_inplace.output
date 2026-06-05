@@ -1,0 +1,13 @@
+Before
+{
+    "baz": "qux",
+    "foo": "bar"
+}
+
+After
+{
+    "baz": "boo",
+    "hello": [
+        "world"
+    ]
+}

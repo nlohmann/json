@@ -7,122 +7,118 @@ on:
       - master
       - release/*
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   mingw:
-    runs-on: windows-latest
+    runs-on: windows-2022
     strategy:
       matrix:
         architecture: [x64, x86]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Set up MinGW
-        uses: egor-tensin/setup-mingw@v2
+        uses: egor-tensin/setup-mingw@41b837e47d7f85214629d255b9c4bc3fcbe9fd63 # v3.0
         with:
           platform: ${{ matrix.architecture }}
-      - name: cmake
+          version: 12.2.0 # https://github.com/egor-tensin/setup-mingw/issues/14
+      - name: Run CMake
         run: cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
-      - name: build
+      - name: Build
         run: cmake --build build --parallel 10
-      - name: test
+      - name: Test
         run: cd build ; ctest -j 10 -C Debug --output-on-failure
 
-  msvc2017:
-    runs-on: windows-2016
+  msvc:
     strategy:
       matrix:
         build_type: [Debug, Release]
         architecture: [Win32, x64]
+        std_version: [default, latest]
+
+    runs-on: windows-2022
 
     steps:
-    - uses: actions/checkout@v2
-    - name: cmake
-      run: cmake -S . -B build -G "Visual Studio 15 2017" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DCMAKE_CXX_FLAGS="/W4 /WX"
-      if: matrix.build_type == 'Release' && matrix.architecture == 'x64'
-    - name: cmake
-      run: cmake -S . -B build -G "Visual Studio 15 2017" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DCMAKE_CXX_FLAGS="/W4 /WX"
-      if: matrix.build_type == 'Release' && matrix.architecture != 'x64'
-    - name: cmake
-      run: cmake -S . -B build -G "Visual Studio 15 2017" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DJSON_FastTests=ON -DCMAKE_CXX_FLAGS="/W4 /WX"
-      if: matrix.build_type == 'Debug'
-    - name: build
-      run: cmake --build build --config ${{ matrix.build_type }} --parallel 10
-    - name: test
-      run: cd build ; ctest -j 10 -C ${{ matrix.build_type }} --output-on-failure
-
-  msvc2017_latest:
-    runs-on: windows-2016
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: cmake
-      run: cmake -S . -B build -G "Visual Studio 15 2017" -DJSON_BuildTests=On -DCMAKE_CXX_FLAGS="/permissive- /std:c++latest /utf-8 /W4 /WX"
-    - name: build
-      run: cmake --build build --config Release --parallel 10
-    - name: test
-      run: cd build ; ctest -j 10 -C Release --output-on-failure
-
-  msvc2019:
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        build_type: [Debug, Release]
-        architecture: [Win32, x64]
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: cmake
-      run: cmake -S . -B build -G "Visual Studio 16 2019" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DCMAKE_CXX_FLAGS="/W4 /WX"
-      if: matrix.build_type == 'Release'
-    - name: cmake
-      run: cmake -S . -B build -G "Visual Studio 16 2019" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DJSON_FastTests=ON -DCMAKE_CXX_FLAGS="/W4 /WX"
-      if: matrix.build_type == 'Debug'
-    - name: build
-      run: cmake --build build --config ${{ matrix.build_type }} --parallel 10
-    - name: test
-      run: cd build ; ctest -j 10 -C ${{ matrix.build_type }} --output-on-failure
-
-  msvc2019_latest:
-    runs-on: windows-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: cmake
-      run: cmake -S . -B build -G "Visual Studio 16 2019" -DJSON_BuildTests=On -DCMAKE_CXX_FLAGS="/permissive- /std:c++latest /utf-8 /W4 /WX"
-    - name: build
-      run: cmake --build build --config Release --parallel 10
-    - name: test
-      run: cd build ; ctest -j 10 -C Release --output-on-failure
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set extra CXX_FLAGS for latest std_version
+        id: cxxflags
+        run: |
+          if [ "${{ matrix.std_version }}" = "latest" ]; then
+            echo "flags=/permissive- /std:c++latest /utf-8 /W4 /WX" >> $GITHUB_ENV
+          else
+            echo "flags=/W4 /WX" >> $GITHUB_ENV
+          fi
+        shell: bash
+      - name: Run CMake (Release)
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DCMAKE_CXX_FLAGS="$env:flags"
+        if: matrix.build_type == 'Release'
+        shell: pwsh
+      - name: Run CMake (Debug)
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -DJSON_BuildTests=On -DJSON_FastTests=ON -DCMAKE_CXX_FLAGS="$env:flags"
+        if: matrix.build_type == 'Debug'
+        shell: pwsh
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }} --parallel 10
+      - name: Test
+        run: cd build ; ctest -j 10 -C ${{ matrix.build_type }} --output-on-failure
 
   clang:
-    runs-on: windows-latest
+    runs-on: windows-2022
     strategy:
       matrix:
-        version: [11, 12]
+        version: [11.0.1, 12.0.1, 13.0.1, 14.0.6, 15.0.7, 16.0.6, 18.1.8, 19.1.7, 20.1.8]
 
     steps:
-      - uses: actions/checkout@v2
-      - name: install Clang
-        run: curl -fsSL -o LLVM${{ matrix.version }}.exe https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.version }}.0.0/LLVM-${{ matrix.version }}.0.0-win64.exe ; 7z x LLVM${{ matrix.version }}.exe -y -o"C:/Program Files/LLVM"
-      - name: cmake
-        run: cmake -S . -B build -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" -G"MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DJSON_BuildTests=On
-      - name: build
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install Clang
+        run: curl -fsSL -o LLVM${{ matrix.version }}.exe https://github.com/llvm/llvm-project/releases/download/llvmorg-${{ matrix.version }}/LLVM-${{ matrix.version }}-win64.exe ; 7z x LLVM${{ matrix.version }}.exe -y -o"C:/Program Files/LLVM"
+      - name: Set up MinGW
+        uses: egor-tensin/setup-mingw@41b837e47d7f85214629d255b9c4bc3fcbe9fd63 # v3.0
+        with:
+          platform: x64
+          version: 12.2.0 # https://github.com/egor-tensin/setup-mingw/issues/14
+      - name: Run CMake
+        run: cmake -S . -B build ^
+             -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" ^
+             -DCMAKE_CXX_FLAGS="--target=x86_64-w64-mingw32 -stdlib=libstdc++ -pthread" ^
+             -DCMAKE_EXE_LINKER_FLAGS="-lwinpthread" ^
+             -G"MinGW Makefiles" ^
+             -DCMAKE_BUILD_TYPE=Debug ^
+             -DJSON_BuildTests=On
+      - name: Build
         run: cmake --build build --parallel 10
-      - name: test
+      - name: Test
         run: cd build ; ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
 
-  clang-cl-11:
-    runs-on: windows-latest
+  clang-cl-12:
+    runs-on: windows-2022
     strategy:
       matrix:
         architecture: [Win32, x64]
 
     steps:
-      - uses: actions/checkout@v2
-      - name: cmake
-        run: cmake -S . -B build -G "Visual Studio 16 2019" -A ${{ matrix.architecture }} -T ClangCL -DJSON_BuildTests=On
-      - name: build
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Run CMake
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -T ClangCL -DJSON_BuildTests=On
+      - name: Build
         run: cmake --build build --config Debug --parallel 10
-      - name: test
+      - name: Test
         run: cd build ; ctest -j 10 -C Debug --exclude-regex "test-unicode" --output-on-failure
+
+  ci_module_cpp20:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Run CMake (Debug)
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -DJSON_CI=ON -DCMAKE_CXX_FLAGS="/permissive- /std:c++latest /utf-8 /W4 /WX"
+      - name: Build
+        run: cmake --build build --config Debug --target ci_module_cpp20
+        

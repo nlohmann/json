@@ -1,0 +1,4 @@
+false <=> true := less
+17 <=> 17.000000 := equivalent
+17 <=> nan := unordered
+"17" <=> 17 := greater

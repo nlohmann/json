@@ -1,3 +1,12 @@
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2009 Florian Loitsch <https://florian.loitsch.com/>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 #pragma once
 
 #include <array> // array
@@ -9,8 +18,7 @@
 
 #include <nlohmann/detail/macro_scope.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
@@ -122,7 +130,7 @@ struct diyfp // f * 2^e
         // p_lo = p0_lo + (Q << 32)
         //
         // But in this particular case here, the full p_lo is not required.
-        // Effectively we only need to add the highest bit in p_lo to p_hi (and
+        // Effectively, we only need to add the highest bit in p_lo to p_hi (and
         // Q_hi + 1 does not overflow).
 
         Q += std::uint64_t{1} << (64u - 32u - 1u); // round, ties up
@@ -212,7 +220,7 @@ boundaries compute_boundaries(FloatType value)
     // Compute the boundaries m- and m+ of the floating-point value
     // v = f * 2^e.
     //
-    // Determine v- and v+, the floating-point predecessor and successor if v,
+    // Determine v- and v+, the floating-point predecessor and successor of v,
     // respectively.
     //
     //      v- = v - 2^e        if f != 2^(p-1) or e == e_min                (A)
@@ -231,10 +239,10 @@ boundaries compute_boundaries(FloatType value)
     //                       v-     m-     v             m+            v+
 
     const bool lower_boundary_is_closer = F == 0 && E > 1;
-    const diyfp m_plus = diyfp(2 * v.f + 1, v.e - 1);
+    const diyfp m_plus = diyfp((2 * v.f) + 1, v.e - 1);
     const diyfp m_minus = lower_boundary_is_closer
-                          ? diyfp(4 * v.f - 1, v.e - 2)  // (B)
-                          : diyfp(2 * v.f - 1, v.e - 1); // (A)
+                          ? diyfp((4 * v.f) - 1, v.e - 2)  // (B)
+                          : diyfp((2 * v.f) - 1, v.e - 1); // (A)
 
     // Determine the normalized w+ = m+.
     const diyfp w_plus = diyfp::normalize(m_plus);
@@ -367,7 +375,7 @@ inline cached_power get_cached_power_for_binary_exponent(int e)
     // (A smaller distance gamma-alpha would require a larger table.)
 
     // NB:
-    // Actually this function returns c, such that -60 <= e_c + e + 64 <= -34.
+    // Actually, this function returns c, such that -60 <= e_c + e + 64 <= -34.
 
     constexpr int kCachedPowersMinDecExp = -300;
     constexpr int kCachedPowersDecStep = 8;
@@ -464,7 +472,7 @@ inline cached_power get_cached_power_for_binary_exponent(int e)
     JSON_ASSERT(e >= -1500);
     JSON_ASSERT(e <=  1500);
     const int f = kAlpha - e - 1;
-    const int k = (f * 78913) / (1 << 18) + static_cast<int>(f > 0);
+    const int k = ((f * 78913) / (1 << 18)) + static_cast<int>(f > 0);
 
     const int index = (-kCachedPowersMinDecExp + k + (kCachedPowersDecStep - 1)) / kCachedPowersDecStep;
     JSON_ASSERT(index >= 0);
@@ -679,8 +687,8 @@ inline void grisu2_digit_gen(char* buffer, int& length, int& decimal_exponent,
 
             decimal_exponent += n;
 
-            // We may now just stop. But instead look if the buffer could be
-            // decremented to bring V closer to w.
+            // We may now just stop. But instead, it looks as if the buffer
+            // could be decremented to bring V closer to w.
             //
             // pow10 = 10^n is now 1 ulp in the decimal representation V.
             // The rounding procedure works with diyfp's with an implicit
@@ -891,7 +899,7 @@ void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
     //
     // The documentation for 'std::to_chars' (https://en.cppreference.com/w/cpp/utility/to_chars)
     // says "value is converted to a string as if by std::sprintf in the default ("C") locale"
-    // and since sprintf promotes float's to double's, I think this is exactly what 'std::to_chars'
+    // and since sprintf promotes floats to doubles, I think this is exactly what 'std::to_chars'
     // does.
     // On the other hand, the documentation for 'std::to_chars' requires that "parsing the
     // representation using the corresponding std::from_chars function recovers value exactly". That
@@ -901,7 +909,7 @@ void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
     // NB: If the neighbors are computed for single-precision numbers, there is a single float
     //     (7.0385307e-26f) which can't be recovered using strtod. The resulting double precision
     //     value is off by 1 ulp.
-#if 0
+#if 0 // NOLINT(readability-avoid-unconditional-preprocessor-if)
     const boundaries w = compute_boundaries(static_cast<double>(value));
 #else
     const boundaries w = compute_boundaries(value);
@@ -942,15 +950,15 @@ inline char* append_exponent(char* buf, int e)
     }
     else if (k < 100)
     {
-        *buf++ = static_cast<char>('0' + k / 10);
+        *buf++ = static_cast<char>('0' + (k / 10));
         k %= 10;
         *buf++ = static_cast<char>('0' + k);
     }
     else
     {
-        *buf++ = static_cast<char>('0' + k / 100);
+        *buf++ = static_cast<char>('0' + (k / 100));
         k %= 100;
-        *buf++ = static_cast<char>('0' + k / 10);
+        *buf++ = static_cast<char>('0' + (k / 10));
         k %= 10;
         *buf++ = static_cast<char>('0' + k);
     }
@@ -1039,7 +1047,7 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
     return append_exponent(buf, n - 1);
 }
 
-} // namespace dtoa_impl
+}  // namespace dtoa_impl
 
 /*!
 @brief generates a decimal representation of the floating-point number value in [first, last).
@@ -1087,7 +1095,7 @@ char* to_chars(char* first, const char* last, FloatType value)
     // Compute v = buffer * 10^decimal_exponent.
     // The decimal digits are stored in the buffer, which needs to be interpreted
     // as an unsigned decimal integer.
-    // len is the length of the buffer, i.e. the number of decimal digits.
+    // len is the length of the buffer, i.e., the number of decimal digits.
     int len = 0;
     int decimal_exponent = 0;
     dtoa_impl::grisu2(first, len, decimal_exponent, value);
@@ -1106,5 +1114,5 @@ char* to_chars(char* first, const char* last, FloatType value)
     return dtoa_impl::format_buffer(first, len, decimal_exponent, kMinExp, kMaxExp);
 }
 
-} // namespace detail
-} // namespace nlohmann
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END

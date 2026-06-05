@@ -1,0 +1,38 @@
+version: 1
+
+labels:
+- label: "documentation"
+  files:
+    - "README.md"
+
+- label: "documentation"
+  files:
+    - "docs/.*"
+
+- label: "tests"
+  files:
+    - "tests/.*"
+
+- label: "CMake"
+  files:
+    - ".*CMakeLists.txt"
+
+- label: "CMake"
+  files:
+    - "cmake/.*"
+
+- label: "CI"
+  files:
+    - "github/workflows/.*"
+
+- label: "CI"
+  files:
+    - "github/external_ci/.*"
+
+- label: "S"
+  size-below: 10
+- label: "M"
+  size-above: 9
+  size-below: 100
+- label: "L"
+  size-above: 100

@@ -1,3 +1,11 @@
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 #pragma once
 
 #include <array> // array
@@ -6,6 +14,7 @@
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
 #include <memory> // shared_ptr, make_shared, addressof
 #include <numeric> // accumulate
+#include <streambuf> // streambuf
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
 #include <utility> // pair, declval
@@ -15,15 +24,17 @@
     #include <istream>  // istream
 #endif                  // JSON_NO_IO
 
+#include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/iterators/iterator_traits.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/meta/type_traits.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 /// the supported input formats
-enum class input_format_t { json, cbor, msgpack, ubjson, bson };
+enum class input_format_t { json, cbor, msgpack, ubjson, bson, bjdata };
 
 ////////////////////
 // input adapters //
@@ -42,7 +53,9 @@ class file_input_adapter
     JSON_HEDLEY_NON_NULL(2)
     explicit file_input_adapter(std::FILE* f) noexcept
         : m_file(f)
-    {}
+    {
+        JSON_ASSERT(m_file != nullptr);
+    }
 
     // make class move-only
     file_input_adapter(const file_input_adapter&) = delete;
@@ -56,11 +69,17 @@ class file_input_adapter
         return std::fgetc(m_file);
     }
 
+    // returns the number of characters successfully read
+    template<class T>
+    std::size_t get_elements(T* dest, std::size_t count = 1)
+    {
+        return fread(dest, 1, sizeof(T) * count, m_file);
+    }
+
   private:
     /// the file pointer to read from
     std::FILE* m_file;
 };
-
 
 /*!
 Input adapter for a (caching) istream. Ignores a UFT Byte Order Mark at
@@ -90,7 +109,7 @@ class input_stream_adapter
         : is(&i), sb(i.rdbuf())
     {}
 
-    // delete because of pointer members
+    // deleted because of pointer members
     input_stream_adapter(const input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&&) = delete;
@@ -104,12 +123,23 @@ class input_stream_adapter
 
     // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
     // ensure that std::char_traits<char>::eof() and the character 0xFF do not
-    // end up as the same value, eg. 0xFFFFFFFF.
+    // end up as the same value, e.g., 0xFFFFFFFF.
     std::char_traits<char>::int_type get_character()
     {
         auto res = sb->sbumpc();
         // set eof manually, as we don't use the istream interface.
         if (JSON_HEDLEY_UNLIKELY(res == std::char_traits<char>::eof()))
+        {
+            is->clear(is->rdstate() | std::ios::eofbit);
+        }
+        return res;
+    }
+
+    template<class T>
+    std::size_t get_elements(T* dest, std::size_t count = 1)
+    {
+        auto res = static_cast<std::size_t>(sb->sgetn(reinterpret_cast<char*>(dest), static_cast<std::streamsize>(count * sizeof(T))));
+        if (JSON_HEDLEY_UNLIKELY(res < count * sizeof(T)))
         {
             is->clear(is->rdstate() | std::ios::eofbit);
         }
@@ -135,16 +165,36 @@ class iterator_input_adapter
         : current(std::move(first)), end(std::move(last))
     {}
 
-    typename std::char_traits<char_type>::int_type get_character()
+    typename char_traits<char_type>::int_type get_character()
     {
         if (JSON_HEDLEY_LIKELY(current != end))
         {
-            auto result = std::char_traits<char_type>::to_int_type(*current);
+            auto result = char_traits<char_type>::to_int_type(*current);
             std::advance(current, 1);
             return result;
         }
 
-        return std::char_traits<char_type>::eof();
+        return char_traits<char_type>::eof();
+    }
+
+    // for general iterators, we cannot really do something better than falling back to processing the range one-by-one
+    template<class T>
+    std::size_t get_elements(T* dest, std::size_t count = 1)
+    {
+        auto* ptr = reinterpret_cast<char*>(dest);
+        for (std::size_t read_index = 0; read_index < count * sizeof(T); ++read_index)
+        {
+            if (JSON_HEDLEY_LIKELY(current != end))
+            {
+                ptr[read_index] = static_cast<char>(*current);
+                std::advance(current, 1);
+            }
+            else
+            {
+                return read_index;
+            }
+        }
+        return count * sizeof(T);
     }
 
   private:
@@ -159,7 +209,6 @@ class iterator_input_adapter
         return current == end;
     }
 };
-
 
 template<typename BaseInputAdapter, size_t T>
 struct wide_string_input_helper;
@@ -284,7 +333,7 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
     }
 };
 
-// Wraps another input apdater to convert wide character types into individual bytes.
+// Wraps another input adapter to convert wide character types into individual bytes.
 template<typename BaseInputAdapter, typename WideCharType>
 class wide_string_input_adapter
 {
@@ -296,7 +345,7 @@ class wide_string_input_adapter
 
     typename std::char_traits<char>::int_type get_character() noexcept
     {
-        // check if buffer needs to be filled
+        // check if the buffer needs to be filled
         if (utf8_bytes_index == utf8_bytes_filled)
         {
             fill_buffer<sizeof(WideCharType)>();
@@ -309,6 +358,13 @@ class wide_string_input_adapter
         JSON_ASSERT(utf8_bytes_filled > 0);
         JSON_ASSERT(utf8_bytes_index < utf8_bytes_filled);
         return utf8_bytes[utf8_bytes_index++];
+    }
+
+    // parsing binary with wchar doesn't make sense, but since the parsing mode can be runtime, we need something here
+    template<class T>
+    std::size_t get_elements(T* /*dest*/, std::size_t /*count*/ = 1)
+    {
+        JSON_THROW(parse_error::create(112, 1, "wide string type cannot be interpreted as binary data", nullptr));
     }
 
   private:
@@ -329,7 +385,6 @@ class wide_string_input_adapter
     std::size_t utf8_bytes_filled = 0;
 };
 
-
 template<typename IteratorType, typename Enable = void>
 struct iterator_input_adapter_factory
 {
@@ -347,7 +402,7 @@ template<typename T>
 struct is_iterator_of_multibyte
 {
     using value_type = typename std::iterator_traits<T>::value_type;
-    enum
+    enum // NOLINT(cppcoreguidelines-use-enum-class)
     {
         value = sizeof(value_type) > 1
     };
@@ -400,7 +455,7 @@ struct container_input_adapter_factory< ContainerType,
 }
        };
 
-} // namespace container_input_adapter_factory_impl
+}  // namespace container_input_adapter_factory_impl
 
 template<typename ContainerType>
 typename container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::adapter_type input_adapter(const ContainerType& container)
@@ -408,10 +463,17 @@ typename container_input_adapter_factory_impl::container_input_adapter_factory<C
     return container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::create(container);
 }
 
+// specialization for std::string
+using string_input_adapter_type = decltype(input_adapter(std::declval<std::string>()));
+
 #ifndef JSON_NO_IO
 // Special cases with fast paths
 inline file_input_adapter input_adapter(std::FILE* file)
 {
+    if (file == nullptr)
+    {
+        JSON_THROW(parse_error::create(101, 0, "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
+    }
     return file_input_adapter(file);
 }
 
@@ -438,9 +500,13 @@ template < typename CharT,
                int >::type = 0 >
 contiguous_bytes_input_adapter input_adapter(CharT b)
 {
+    if (b == nullptr)
+    {
+        JSON_THROW(parse_error::create(101, 0, "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
+    }
     auto length = std::strlen(reinterpret_cast<const char*>(b));
     const auto* ptr = reinterpret_cast<const char*>(b);
-    return input_adapter(ptr, ptr + length);
+    return input_adapter(ptr, ptr + length); // cppcheck-suppress[nullPointerArithmeticRedundantCheck]
 }
 
 template<typename T, std::size_t N>
@@ -450,7 +516,7 @@ auto input_adapter(T (&array)[N]) -> decltype(input_adapter(array, array + N)) /
 }
 
 // This class only handles inputs of input_buffer_adapter type.
-// It's required so that expressions like {ptr, len} can be implicitely casted
+// It's required so that expressions like {ptr, len} can be implicitly cast
 // to the correct adapter.
 class span_input_adapter
 {
@@ -479,5 +545,6 @@ class span_input_adapter
   private:
     contiguous_bytes_input_adapter ia;
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END

@@ -1,0 +1,46 @@
+name: Publish documentation
+
+# publish the documentation on every merge to develop branch
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - docs/mkdocs/**
+      - docs/examples/**
+  workflow_dispatch:
+
+# we don't want to have concurrent jobs, and we don't want to cancel running jobs to avoid broken publications
+concurrency:
+  group: documentation
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish_documentation:
+    permissions:
+      contents: write
+
+    if: github.repository == 'nlohmann/json'
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install virtual environment
+        run: make install_venv -C docs/mkdocs
+
+      - name: Build documentation
+        run: make build -C docs/mkdocs
+
+      - name: Deploy documentation
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/mkdocs/site

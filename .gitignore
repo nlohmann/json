@@ -1,33 +1,47 @@
-json_unit
-json_benchmarks
-json_benchmarks_simple
-fuzz-testing
-
 *.dSYM
 *.o
 *.gcno
 *.gcda
+.DS_Store
 
-build
-build_coverage
-clang_analyze_build
-
-benchmarks/files/numbers/*.json
-
-.wsjcpp-logs/*
-.wsjcpp/*
-
-.idea
+/.idea
 /cmake-build-*
 
-test/test-*
-/.vs
+# Visual Studio / Visual Studio Code
+/.vs/
+/.vscode/
+/out/
 
-doc/html
-doc/mkdocs/venv/
-doc/mkdocs/docs/images
-doc/mkdocs/docs/examples
-doc/mkdocs/site
-doc/mkdocs/docs/__pycache__/
-/doc/docset/JSON_for_Modern_C++.docset/
-/doc/docset/JSON_for_Modern_C++.tgz
+# clangd cache
+/.cache/
+
+# build directories (vscode-cmake-tools, user-defined, ...)
+/build*/
+
+# fuzzers
+/tests/corpus_*
+/tests/parse_*_fuzzer
+
+# documentation
+/docs/docset/JSON_for_Modern_C++.docset/
+/docs/docset/JSON_for_Modern_C++.tgz
+/docs/docset/docSet.dsidx
+/docs/mkdocs/.cache/
+/docs/mkdocs/docs/__pycache__/
+/docs/mkdocs/site/
+/docs/mkdocs/venv/
+
+# serve_header
+/localhost.pem
+/localhost-key.pem
+/serve_header.yml
+
+# Swift Package Manager build directory
+/.build
+
+venv
+
+nlohmann_json.spdx
+
+# Bazel-related
+MODULE.bazel.lock

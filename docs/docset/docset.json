@@ -1,0 +1,10 @@
+{
+  "name": "JSON for Modern C++",
+  "version": "3.12.0",
+  "archive": "JSON_for_Modern_C++.tgz",
+  "author": {
+    "name": "Niels Lohmann",
+    "link": "https://twitter.com/nlohmann"
+  },
+  "aliases": ["nlohmann/json"]
+}

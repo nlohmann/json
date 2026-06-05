@@ -1,0 +1,80 @@
+# Configuration for Artistic Style
+# see https://astyle.sourceforge.net/astyle.html
+
+#######################
+# Brace Style Options #
+#######################
+
+# use Allman style for braces
+--style=allman
+
+###############
+# Tab Options #
+###############
+
+# indent using 4 spaces
+--indent=spaces=4
+
+#######################
+# Indentation Options #
+#######################
+
+# indent access modifiers one half indent
+--indent-modifiers
+
+# indent switch cases to the switch block
+--indent-switches
+
+# indent preprocessor blocks
+--indent-preproc-block
+
+# indent preprocessor defines
+--indent-preproc-define
+
+# indent C++ comments
+--indent-col1-comments
+
+###################
+# Padding Options #
+###################
+
+# insert space padding around operators
+--pad-oper
+
+# insert space between if/for/while... and the following parentheses
+--pad-header
+
+# attach the pointer to the variable type (left)
+--align-pointer=type
+
+# attach the reference to the variable type (left)
+--align-reference=type
+
+######################
+# Formatting Options #
+######################
+
+# add braces to unbraced one line conditional statements
+--add-braces
+
+# convert tabs to spaces
+--convert-tabs
+
+# closes whitespace between the ending angle brackets of template definitions
+--close-templates
+
+#################
+# Other Options #
+#################
+
+# do not create backup files
+--suffix=none
+
+# preserve the original file date
+--preserve-date
+
+# display only the files that have been formatted
+--formatted
+
+# for the linux (LF) line end style
+--lineend=linux
