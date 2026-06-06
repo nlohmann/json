@@ -1,3 +1,5 @@
+// This example demonstrates how to output the JSON library's meta information in a formatted way.
+
 #include <nlohmann/json.hpp>
 #include <iostream>
 #include <iomanip>
