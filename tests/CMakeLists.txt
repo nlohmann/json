@@ -121,6 +121,10 @@ json_test_set_test_options(test-disabled_exceptions
 # raise timeout of expensive Unicode test
 json_test_set_test_options(test-unicode4 TEST_PROPERTIES TIMEOUT 3000)
 
+# link pthreads to tests that need it
+find_package(Threads REQUIRED)
+json_test_set_test_options(test-regression2 LINK_LIBRARIES Threads::Threads)
+
 #############################################################################
 # add unit tests
 #############################################################################
