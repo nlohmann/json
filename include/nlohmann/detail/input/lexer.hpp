@@ -9,15 +9,15 @@
 #pragma once
 
 #include <array> // array
-#include <clocale> // localeconv
 #include <cstddef> // size_t
 #include <cstdio> // snprintf
-#include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
 #include <initializer_list> // initializer_list
 #include <string> // char_traits, string
+#include <system_error> // errc
 #include <utility> // move
 #include <vector> // vector
 
+#include <nlohmann/detail/conversions/from_chars.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/position_t.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
@@ -152,7 +152,7 @@ class lexer : public lexer_base<BasicJsonType>
     explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false) noexcept
         : ia(std::move(adapter))
         , ignore_comments(ignore_comments_)
-        , decimal_point_char(static_cast<char_int_type>(get_decimal_point()))
+        , decimal_point_char(static_cast<char_int_type>(from_chars_traits<number_float_t>::get_decimal_point()))
     {}
 
     // deleted because of pointer members
@@ -163,19 +163,6 @@ class lexer : public lexer_base<BasicJsonType>
     ~lexer() = default;
 
   private:
-    /////////////////////
-    // locales
-    /////////////////////
-
-    /// return the locale-dependent decimal point
-    JSON_HEDLEY_PURE
-    static char get_decimal_point() noexcept
-    {
-        const auto* loc = localeconv();
-        JSON_ASSERT(loc != nullptr);
-        return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
-    }
-
     /////////////////////
     // scan functions
     /////////////////////
@@ -941,24 +928,6 @@ class lexer : public lexer_base<BasicJsonType>
         }
     }
 
-    JSON_HEDLEY_NON_NULL(2)
-    static void strtof(float& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtof(str, endptr);
-    }
-
-    JSON_HEDLEY_NON_NULL(2)
-    static void strtof(double& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtod(str, endptr);
-    }
-
-    JSON_HEDLEY_NON_NULL(2)
-    static void strtof(long double& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtold(str, endptr);
-    }
-
     /*!
     @brief scan a number literal
 
@@ -1279,19 +1248,18 @@ scan_number_done:
         // we are done scanning a number)
         unget();
 
-        char* endptr = nullptr; // NOLINT(misc-const-correctness,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        errno = 0;
-
         // try to parse integers first and fall back to floats
         if (number_type == token_type::value_unsigned)
         {
-            const auto x = std::strtoull(token_buffer.data(), &endptr, 10);
+            unsigned long long x{}; // NOLINT(runtime/int)
+            const auto res = ::nlohmann::detail::from_chars(token_buffer.data(), token_buffer.data() + token_buffer.size(), x);
 
             // we checked the number format before
-            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
+            JSON_ASSERT(res.ptr == token_buffer.data() + token_buffer.size());
 
-            if (errno != ERANGE)
+            if (res.ec != std::errc::result_out_of_range)
             {
+                JSON_ASSERT(res.ec == std::errc{});
                 value_unsigned = static_cast<number_unsigned_t>(x);
                 if (value_unsigned == x)
                 {
@@ -1301,13 +1269,15 @@ scan_number_done:
         }
         else if (number_type == token_type::value_integer)
         {
-            const auto x = std::strtoll(token_buffer.data(), &endptr, 10);
+            long long x{}; // NOLINT(runtime/int)
+            const auto res = ::nlohmann::detail::from_chars(token_buffer.data(), token_buffer.data() + token_buffer.size(), x);
 
             // we checked the number format before
-            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
+            JSON_ASSERT(res.ptr == token_buffer.data() + token_buffer.size());
 
-            if (errno != ERANGE)
+            if (res.ec != std::errc::result_out_of_range)
             {
+                JSON_ASSERT(res.ec == std::errc{});
                 value_integer = static_cast<number_integer_t>(x);
                 if (value_integer == x)
                 {
@@ -1318,10 +1288,11 @@ scan_number_done:
 
         // this code is reached if we parse a floating-point number or if an
         // integer conversion above failed
-        strtof(value_float, token_buffer.data(), &endptr);
+        const auto res = ::nlohmann::detail::from_chars(token_buffer.data(), token_buffer.data() + token_buffer.size(), value_float);
 
         // we checked the number format before
-        JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
+        JSON_ASSERT(res.ptr == token_buffer.data() + token_buffer.size());
+        JSON_ASSERT(res.ec != std::errc::invalid_argument);
 
         return token_type::value_float;
     }

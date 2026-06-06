@@ -55,6 +55,8 @@ TEST_CASE("lexer class")
 
         SECTION("numbers")
         {
+            // Number parsing implementation uses std::from_chars where available,
+            // so run this test suite with JSON_HAS_CPP_17 as well.
             CHECK((scan_string("0") == json::lexer::token_type::value_unsigned));
             CHECK((scan_string("1") == json::lexer::token_type::value_unsigned));
             CHECK((scan_string("2") == json::lexer::token_type::value_unsigned));
