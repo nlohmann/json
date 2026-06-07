@@ -468,6 +468,22 @@ struct is_compatible_array_type_impl <
         range_value_t<CompatibleArrayType>>::value;
 };
 
+#ifdef JSON_HAS_CPP_20
+template<typename BasicJsonType, typename CompatibleArrayType>
+struct is_compatible_array_type_impl <
+    BasicJsonType, CompatibleArrayType,
+    enable_if_t < std::ranges::range<CompatibleArrayType>
+    && std::ranges::view<CompatibleArrayType>
+    && !std::is_same<std::ranges::range_value_t<CompatibleArrayType>, char>::value
+    && !std::is_same<std::ranges::range_value_t<CompatibleArrayType>, wchar_t>::value >>
+{
+    static constexpr bool value = is_constructible<BasicJsonType,
+                          std::ranges::range_value_t<CompatibleArrayType>>::value;
+};
+
+#endif
+
+
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type
     : is_compatible_array_type_impl<BasicJsonType, CompatibleArrayType> {};

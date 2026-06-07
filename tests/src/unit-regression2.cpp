@@ -28,6 +28,7 @@ using ordered_json = nlohmann::ordered_json;
 
 #include <cstdio>
 #include <list>
+#include <ranges>
 #include <type_traits>
 #include <utility>
 
@@ -1163,6 +1164,19 @@ TEST_CASE("regression tests 2")
     }
 #endif
 
+#if JSON_HAS_RANGES == 1 
+    SECTION("issue #4916 - constructing array from C++20 ranges view does not work")
+    {
+        std::vector<int> nums{1, 2, 37, 42, 21};
+        auto filteredNums = nums | std::views::filter([](int i)
+        {
+            return i > 10;
+        });
+        json const j(filteredNums);
+        CHECK(j.type() == json::value_t::array);
+        CHECK(j == json({37, 42, 21}));
+    }
+#endif
 }
 
 TEST_CASE_TEMPLATE("issue #4798 - nlohmann::json::to_msgpack() encode float NaN as double", T, double, float) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)

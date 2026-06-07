@@ -177,8 +177,11 @@ struct external_constructor<value_t::array>
     }
 
     template < typename BasicJsonType, typename CompatibleArrayType,
-               enable_if_t < !std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value,
-                             int > = 0 >
+               enable_if_t < !std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value
+#ifdef JSON_HAS_CPP_20
+                             && !std::ranges::view<CompatibleArrayType>
+#endif
+                             , int > = 0 >
     static void construct(BasicJsonType& j, const CompatibleArrayType& arr)
     {
         using std::begin;
@@ -218,6 +221,24 @@ struct external_constructor<value_t::array>
         j.set_parents();
         j.assert_invariant();
     }
+
+#ifdef JSON_HAS_CPP_20
+    template<typename BasicJsonType, typename CompatibleArrayType,
+             enable_if_t<std::ranges::view<std::remove_cv_t<CompatibleArrayType>>, int> = 0>
+    static void construct(BasicJsonType& j, const CompatibleArrayType& arr)
+    {
+        auto view = arr;
+        j.m_data.m_value.destroy(j.m_data.m_type);
+        j.m_data.m_type = value_t::array;
+        j.m_data.m_value = value_t::array;
+        for (const auto& x : view)
+        {
+            j.m_data.m_value.array->push_back(x);
+            j.set_parent(j.m_data.m_value.array->back());
+        }
+        j.assert_invariant();
+    }
+#endif
 };
 
 template<>

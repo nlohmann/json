@@ -4230,6 +4230,22 @@ struct is_compatible_array_type_impl <
         range_value_t<CompatibleArrayType>>::value;
 };
 
+#ifdef JSON_HAS_CPP_20
+template<typename BasicJsonType, typename CompatibleArrayType>
+struct is_compatible_array_type_impl <
+    BasicJsonType, CompatibleArrayType,
+    enable_if_t < std::ranges::range<CompatibleArrayType>
+    && std::ranges::view<CompatibleArrayType>
+    && !std::is_same<std::ranges::range_value_t<CompatibleArrayType>, char>::value
+    && !std::is_same<std::ranges::range_value_t<CompatibleArrayType>, wchar_t>::value >>
+{
+    static constexpr bool value = is_constructible<BasicJsonType,
+                          std::ranges::range_value_t<CompatibleArrayType>>::value;
+};
+
+#endif
+
+
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type
     : is_compatible_array_type_impl<BasicJsonType, CompatibleArrayType> {};
@@ -6205,8 +6221,11 @@ struct external_constructor<value_t::array>
     }
 
     template < typename BasicJsonType, typename CompatibleArrayType,
-               enable_if_t < !std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value,
-                             int > = 0 >
+               enable_if_t < !std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value
+#ifdef JSON_HAS_CPP_20
+                             && !std::ranges::view<CompatibleArrayType>
+#endif
+                             , int > = 0 >
     static void construct(BasicJsonType& j, const CompatibleArrayType& arr)
     {
         using std::begin;
@@ -6246,6 +6265,24 @@ struct external_constructor<value_t::array>
         j.set_parents();
         j.assert_invariant();
     }
+
+#ifdef JSON_HAS_CPP_20
+    template<typename BasicJsonType, typename CompatibleArrayType,
+             enable_if_t<std::ranges::view<std::remove_cv_t<CompatibleArrayType>>, int> = 0>
+    static void construct(BasicJsonType& j, const CompatibleArrayType& arr)
+    {
+        auto view = arr;
+        j.m_data.m_value.destroy(j.m_data.m_type);
+        j.m_data.m_type = value_t::array;
+        j.m_data.m_value = value_t::array;
+        for (const auto& x : view)
+        {
+            j.m_data.m_value.array->push_back(x);
+            j.set_parent(j.m_data.m_value.array->back());
+        }
+        j.assert_invariant();
+    }
+#endif
 };
 
 template<>
