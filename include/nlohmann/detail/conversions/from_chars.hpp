@@ -17,9 +17,17 @@
 #else
     #include <cctype> // isspace
     #include <cerrno> // ERANGE
-    #include <clocale> // localeconv
+    #include <clocale> // localeconv, newlocale, freelocale
     #include <cstdlib> // strto*
-    #include <type_traits> // enable_if, is_unsigned
+    #include <memory> // unique_ptr
+    #include <type_traits> // enable_if, is_unsigned, remove_pointer
+    #include <utility> // declval
+
+    #ifdef __has_include
+        #if __has_include(<xlocale.h>)
+            #include <xlocale.h> // strto*_l, isspace_l
+        #endif
+    #endif
 #endif
 #include <limits> // numeric_limits<T>::[has_]infinity, quiet_NaN
 #include <system_error> // errc
@@ -176,23 +184,214 @@ inline from_chars_result from_chars(const char* first, const char* last, T& valu
 
 #else
 
-//////////////////////////////////////////
-// Fallback implementation using strto* //
-//////////////////////////////////////////
+//////////////////////////////////////////////
+// Fallback implementation using strto*[_l] //
+//////////////////////////////////////////////
+
+#if defined(_WIN32)
 
 /*!
-@brief Query the decimal point used by the current C locale
+@brief Get a pointer to a globally shared instance of the "C" locale on Windows
 
-Note that calling this function while switching the global C locale from
-another thread is undefined behavior.
+This function uses _create_locale/_free_locale to allocate a "C" locale instance
+which can be passed to extended locale APIs. This instance is created on first
+use and has static storage duration, such that it can be used for the duration
+of the program.
 */
-JSON_HEDLEY_PURE
-inline char get_locale_decimal_point() noexcept
+inline _locale_t get_c_locale_t() noexcept
 {
-    const auto* loc = localeconv();
-    JSON_ASSERT(loc != nullptr);
-    return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
+    struct LocaleTDeleter
+    {
+        void operator()(_locale_t loc) noexcept
+        {
+            ::_free_locale(loc);
+        }
+    };
+    using LocaleUPtr = std::unique_ptr<std::remove_pointer<_locale_t>::type, LocaleTDeleter>;
+    static const LocaleUPtr c_locale = LocaleUPtr{::_create_locale(LC_ALL_MASK, "C"), LocaleTDeleter{}};
+    return c_locale.get();
 }
+
+/*!
+@brief Extended locale functions on Windows
+
+A trait object which provides wrappers for isspace and the strto* family of
+functions, based on the platform's support for extended locale APIs.
+
+This is the Windows implementation where extended locale support is always
+available through the `_<funcname>_l` variants.
+*/
+template <typename = const char*, typename = float>
+struct extended_locale_traits
+{
+    static constexpr bool is_locale_independent = true;
+    static constexpr char(&get_decimal_point)() = get_locale_independent_decimal_point;
+
+    static int isspace(int c) noexcept
+    {
+        return ::_isspace_l(c, get_c_locale_t());
+    }
+
+    // NOLINTNEXTLINE(runtime/int)
+    static long long strtoll(const char* str, char** endptr) noexcept
+    {
+        return ::_strtoll_l(str, endptr, 10, get_c_locale_t());
+    }
+
+    // NOLINTNEXTLINE(runtime/int)
+    static unsigned long long strtoull(const char* str, char** endptr) noexcept
+    {
+        return ::_strtoull_l(str, endptr, 10, get_c_locale_t());
+    }
+
+    static float strtof(const char* str, char** str_end) noexcept
+    {
+        return ::_strtof_l(str, str_end, get_c_locale_t());
+    }
+
+    static double strtod(const char* str, char** str_end) noexcept
+    {
+        return ::_strtod_l(str, str_end, get_c_locale_t());
+    }
+
+    static long double strtold(const char* str, char** str_end) noexcept
+    {
+        return ::_strtold_l(str, str_end, get_c_locale_t());
+    }
+};
+
+#else
+
+/*!
+@brief Get a pointer to a globally shared instance of the "C" locale on POSIX
+
+This function uses newlocale/freelocale to allocate a "C" locale instance
+which can be passed to extended locale APIs. This instance is created on first
+use and has static storage duration, such that it can be used for the duration
+of the program.
+
+newlocale/freelocale themselves are in POSIX and are available independent of
+the platform's support for extended locale APIs.
+*/
+inline locale_t get_c_locale_t() noexcept
+{
+    struct LocaleTDeleter
+    {
+        void operator()(locale_t loc) noexcept
+        {
+            ::freelocale(loc);
+        }
+    };
+    using LocaleUPtr = std::unique_ptr<std::remove_pointer<locale_t>::type, LocaleTDeleter>;
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wexit-time-destructors"
+#endif
+    static const LocaleUPtr c_locale = LocaleUPtr {::newlocale(LC_ALL_MASK, "C", nullptr), LocaleTDeleter{}};
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
+    return c_locale.get();
+}
+
+/*!
+@brief Extended locale functions on POSIX
+
+A trait object which provides wrappers for isspace and the strto* family of
+functions, based on the platform's support for extended locale APIs.
+
+This is the POSIX implementation where extended locale support might not be
+available. The primary class template definition falls back to the standard
+locale-dependent functions. A partial specialization uses SFINAE to detect the
+availability of `strtof_l` (as a proxy for the whole `<funcname>_l` family) and
+provides access to locale-independent functions.
+*/
+template <typename = const char*, typename = float>
+struct extended_locale_traits
+{
+    static constexpr bool is_locale_independent = false;
+
+    /*!
+    @brief Query the decimal point used by the current C locale
+
+    Note that calling this function while switching the global C locale from
+    another thread is undefined behavior.
+    */
+    JSON_HEDLEY_PURE
+    static char get_decimal_point() noexcept
+    {
+        const auto* loc = localeconv();
+        JSON_ASSERT(loc != nullptr);
+        return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
+    }
+
+    static int isspace(int c) noexcept
+    {
+        return std::isspace(c);
+    }
+
+    // NOLINTNEXTLINE(runtime/int)
+    static long long strtoll(const char* str, char** endptr) noexcept
+    {
+        return std::strtoll(str, endptr, 10);
+    }
+
+    // NOLINTNEXTLINE(runtime/int)
+    static unsigned long long strtoull(const char* str, char** endptr) noexcept
+    {
+        return std::strtoull(str, endptr, 10);
+    }
+
+    static constexpr float(&strtof)(const char*, char**) = std::strtof;
+    static constexpr double(&strtod)(const char*, char**) = std::strtod;
+    static constexpr long double(&strtold)(const char*, char**) = std::strtold;
+};
+
+template <typename T>
+struct extended_locale_traits<T, decltype(strtof_l(
+            std::declval<T>(),
+            std::declval<char**>(),
+            std::declval<locale_t>()))>
+{
+    static constexpr bool is_locale_independent = true;
+    static constexpr char(&get_decimal_point)() = get_locale_independent_decimal_point;
+
+    static int isspace(int c) noexcept
+    {
+        return ::isspace_l(c, get_c_locale_t());
+    }
+
+    // NOLINTNEXTLINE(runtime/int)
+    static long long strtoll(const char* str, char** endptr) noexcept
+    {
+        return ::strtoll_l(str, endptr, 10, get_c_locale_t());
+    }
+
+    // NOLINTNEXTLINE(runtime/int)
+    static unsigned long long strtoull(const char* str, char** endptr) noexcept
+    {
+        return ::strtoull_l(str, endptr, 10, get_c_locale_t());
+    }
+
+    static float strtof(T str, char** str_end)
+    {
+        return ::strtof_l(str, str_end, get_c_locale_t());
+    }
+
+    static double strtod(T str, char** str_end)
+    {
+        return ::strtod_l(str, str_end, get_c_locale_t());
+    }
+
+    static long double strtold(T str, char** str_end)
+    {
+        return ::strtold_l(str, str_end, get_c_locale_t());
+    }
+};
+
+#endif
 
 /*!
 @brief Number parsing implementation details
@@ -204,7 +403,8 @@ Each specialization provides the following static members:
 - is_locale_independent: whether the from_chars in unaffected by the current
                          global C locale
 - get_decimal_point: getter for the character used as decimal point by from_chars
-- strto: dispatches to the C standard library strto* function for type T
+- strto: dispatches to the C standard library strto* function for type T, or to
+         the corresponding extended locale function, if available.
 
 @tparam T numeric type to parse, matching the `value` argument of from_chars
 */
@@ -214,47 +414,68 @@ struct from_chars_traits;
 template <>
 struct from_chars_traits<long long> // NOLINT(runtime/int)
 {
-    static constexpr bool is_locale_independent = false;
-    static constexpr char(*get_decimal_point)() = &get_locale_decimal_point;
-    static long long strto(const char* str, char** endptr) noexcept
+    static constexpr bool is_locale_independent = extended_locale_traits<>::is_locale_independent;
+
+    static char get_decimal_point()
     {
-        return std::strtoll(str, endptr, 10);
+        return extended_locale_traits<>::get_decimal_point();
     }
+
+    // NOLINTNEXTLINE(runtime/int)
+    static constexpr long long(*strto)(const char*, char**) = &extended_locale_traits<>::strtoll;
 };
 
 template <>
 struct from_chars_traits<unsigned long long> // NOLINT(runtime/int)
 {
-    static constexpr bool is_locale_independent = false;
-    static constexpr char(*get_decimal_point)() = &get_locale_decimal_point;
-    static unsigned long long strto(const char* str, char** endptr) noexcept
+    static constexpr bool is_locale_independent = extended_locale_traits<>::is_locale_independent;
+
+    static char get_decimal_point()
     {
-        return std::strtoull(str, endptr, 10);
+        return extended_locale_traits<>::get_decimal_point();
     }
+
+    // NOLINTNEXTLINE(runtime/int)
+    static constexpr unsigned long long(*strto)(const char*, char**) = &extended_locale_traits<>::strtoull;
 };
 
 template <>
 struct from_chars_traits<float>
 {
-    static constexpr bool is_locale_independent = false;
-    static constexpr char(*get_decimal_point)() = &get_locale_decimal_point;
-    static constexpr float(*strto)(const char*, char**) = &std::strtof;
+    static constexpr bool is_locale_independent = extended_locale_traits<>::is_locale_independent;
+
+    static char get_decimal_point()
+    {
+        return extended_locale_traits<>::get_decimal_point();
+    }
+
+    static constexpr float(*strto)(const char*, char**) = &extended_locale_traits<>::strtof;
 };
 
 template <>
 struct from_chars_traits<double>
 {
-    static constexpr bool is_locale_independent = false;
-    static constexpr char(*get_decimal_point)() = &get_locale_decimal_point;
-    static constexpr double(*strto)(const char*, char**) = &std::strtod;
+    static constexpr bool is_locale_independent = extended_locale_traits<>::is_locale_independent;
+
+    static char get_decimal_point()
+    {
+        return extended_locale_traits<>::get_decimal_point();
+    }
+
+    static constexpr double(*strto)(const char*, char**) = &extended_locale_traits<>::strtod;
 };
 
 template <>
 struct from_chars_traits<long double>
 {
-    static constexpr bool is_locale_independent = false;
-    static constexpr char(*get_decimal_point)() = &get_locale_decimal_point;
-    static constexpr long double(*strto)(const char*, char**) = &std::strtold;
+    static constexpr bool is_locale_independent = extended_locale_traits<>::is_locale_independent;
+
+    static char get_decimal_point()
+    {
+        return extended_locale_traits<>::get_decimal_point();
+    }
+
+    static constexpr long double(*strto)(const char*, char**) = &extended_locale_traits<>::strtold;
 };
 
 template <typename T>
@@ -288,8 +509,9 @@ struct from_chars_result
 
 Parses the string [first, last) into the numeric type T.
 
-This implementation uses the C standard library functions strto* to emulate the
-behavior of `std::from_chars` on platforms where it is not (fully) supported.
+This implementation uses the C standard library functions strto*, or their
+extended locale counterparts strto*_l, to emulate the behavior of
+`std::from_chars` on platforms where it is not (fully) supported.
 
 Regarding the under-/overflow behavior, this implementation adopts the behavior
 proposed by [P4168][1] and implemented by libc++ and MS STL of setting `value`
@@ -327,7 +549,7 @@ inline from_chars_result from_chars(const char* first, const char* last, T& valu
     // Unlike strto*, from_chars does not accept leading whitespace or + signs
     if (first == last || *first == '+'
             || (std::is_unsigned<T>::value && *first == '-')
-            || std::isspace(*first) != 0)
+            || extended_locale_traits<>::isspace(*first) != 0)
     {
         return {first, std::errc::invalid_argument};
     }

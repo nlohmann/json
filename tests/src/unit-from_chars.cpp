@@ -39,9 +39,9 @@ constexpr init_val_t init_val{};
 template <typename T>
 void check_result(std::string& str, T& value, std::ptrdiff_t expected_ptr_offset, std::errc expected_ec)
 {
-    // On platforms where `std::from_chars` is not available, our `strtof`-based implementation is
-    // in fact locale-dependent and might use a different decimal separator, so we need to adapt
-    // the test expectations accordingly.
+    // On platforms where neither `std::from_chars`, nor extended locale support (`strtof_l`) are
+    // available, the `strtof`-based implementation is in fact locale-dependent and might use a
+    // different decimal separator, so we need to adapt the test expectations accordingly.
     std::replace(str.begin(), str.end(), '.', nlohmann::detail::from_chars_traits<T>::get_decimal_point());
 
     auto res = nlohmann::detail::from_chars(str.data(), str.data() + str.size(), value);
