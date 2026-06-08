@@ -4230,7 +4230,9 @@ struct is_compatible_array_type_impl <
         range_value_t<CompatibleArrayType>>::value;
 };
 
-#ifdef JSON_HAS_CPP_20
+// std::ranges does not work properly on MinGW due to incomplete C++20 support
+// see https://github.com/nlohmann/json/issues/4916
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type_impl <
     BasicJsonType, CompatibleArrayType,
@@ -4242,7 +4244,6 @@ struct is_compatible_array_type_impl <
     static constexpr bool value = is_constructible<BasicJsonType,
                           std::ranges::range_value_t<CompatibleArrayType>>::value;
 };
-
 #endif
 
 
@@ -6222,7 +6223,7 @@ struct external_constructor<value_t::array>
 
     template < typename BasicJsonType, typename CompatibleArrayType,
                enable_if_t < !std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value
-#ifdef JSON_HAS_CPP_20
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
                              && !std::ranges::view<CompatibleArrayType>
 #endif
                              , int > = 0 >
@@ -6266,7 +6267,9 @@ struct external_constructor<value_t::array>
         j.assert_invariant();
     }
 
-#ifdef JSON_HAS_CPP_20
+    // std::ranges does not work properly on MinGW due to incomplete C++20 support
+    // see https://github.com/nlohmann/json/issues/4916
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
     template<typename BasicJsonType, typename CompatibleArrayType,
              enable_if_t<std::ranges::view<std::remove_cv_t<CompatibleArrayType>>, int> = 0>
     static void construct(BasicJsonType& j, const CompatibleArrayType& arr)

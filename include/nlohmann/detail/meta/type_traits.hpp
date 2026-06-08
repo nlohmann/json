@@ -468,7 +468,9 @@ struct is_compatible_array_type_impl <
         range_value_t<CompatibleArrayType>>::value;
 };
 
-#ifdef JSON_HAS_CPP_20
+// std::ranges does not work properly on MinGW due to incomplete C++20 support
+// see https://github.com/nlohmann/json/issues/4916
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type_impl <
     BasicJsonType, CompatibleArrayType,
@@ -480,7 +482,6 @@ struct is_compatible_array_type_impl <
     static constexpr bool value = is_constructible<BasicJsonType,
                           std::ranges::range_value_t<CompatibleArrayType>>::value;
 };
-
 #endif
 
 
