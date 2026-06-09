@@ -2826,13 +2826,13 @@ TEST_CASE("value conversion")
         SECTION("float")
         {
             auto n = j.get<float>();
-            CHECK(n == float_reference);
+            CHECK(n == std::numeric_limits<float>::infinity());
         }
         
         SECTION("double")
         {
             auto n = j.get<double>();
-            CHECK(n == float_reference);
+            CHECK(n == std::numeric_limits<double>::infinity());
         }
         
         SECTION("short")
@@ -3037,13 +3037,13 @@ TEST_CASE("value conversion")
         SECTION("float")
         {
             auto n = j.get<float>();
-            CHECK(n == float_reference);
+            CHECK(n == -std::numeric_limits<float>::infinity());
         }
         
         SECTION("double")
         {
             auto n = j.get<double>();
-            CHECK(n == float_reference);
+            CHECK(n == -std::numeric_limits<double>::infinity());
         }
         
         SECTION("short")
