@@ -105,11 +105,13 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
         case value_t::number_float:
         {
             auto temp = *j.template get_ptr<const typename BasicJsonType::number_float_t*>();
-            if (!std::isfinite(temp))   // flush NaN and Inf to zero
+            // flush NaN and Inf to zero before converting to a type that cannot represent them
+            bool valueIsFinite = std::isfinite(temp);
+            if (!std::numeric_limits<ArithmeticType>::has_infinity && !valueIsFinite)
                 val = 0;
-            else if (temp < std::numeric_limits<ArithmeticType>::lowest())
+            else if (valueIsFinite && temp < std::numeric_limits<ArithmeticType>::lowest())
                 val = std::numeric_limits<ArithmeticType>::lowest();
-            else if (temp > std::numeric_limits<ArithmeticType>::max())
+            else if (valueIsFinite && temp > std::numeric_limits<ArithmeticType>::max())
                 val = std::numeric_limits<ArithmeticType>::max();
             else
                 val = static_cast<ArithmeticType>(temp);
@@ -458,11 +460,13 @@ inline void from_json(const BasicJsonType& j, ArithmeticType& val)
         case value_t::number_float:
         {
             auto temp = *j.template get_ptr<const typename BasicJsonType::number_float_t*>();
-            if (!std::isfinite(temp))   // flush NaN and Inf to zero
+            // flush NaN and Inf to zero before converting to a type that cannot represent them
+            bool valueIsFinite = std::isfinite(temp);
+            if (!std::numeric_limits<ArithmeticType>::has_infinity && !valueIsFinite)
                 val = 0;
-            else if (temp < std::numeric_limits<ArithmeticType>::lowest())
+            else if (valueIsFinite && temp < std::numeric_limits<ArithmeticType>::lowest())
                 val = std::numeric_limits<ArithmeticType>::lowest();
-            else if (temp > std::numeric_limits<ArithmeticType>::max())
+            else if (valueIsFinite && temp > std::numeric_limits<ArithmeticType>::max())
                 val = std::numeric_limits<ArithmeticType>::max();
             else
                 val = static_cast<ArithmeticType>(temp);
@@ -470,8 +474,7 @@ inline void from_json(const BasicJsonType& j, ArithmeticType& val)
         }
         case value_t::boolean:
         {
-            // comparison forces the value to be 0 or 1, which is in range for all types
-            auto temp = (0 != (*j.template get_ptr<const typename BasicJsonType::boolean_t*>()));
+            auto temp = *j.template get_ptr<const typename BasicJsonType::boolean_t*>();
             val = static_cast<ArithmeticType>(temp);
             break;
         }
