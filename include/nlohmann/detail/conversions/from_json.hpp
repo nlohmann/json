@@ -83,7 +83,7 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
         case value_t::number_unsigned:
         {
             auto temp = *j.template get_ptr<const typename BasicJsonType::number_unsigned_t*>();
-           if (std::numeric_limits<typename BasicJsonType::number_unsigned_t>::max() > std::numeric_limits<ArithmeticType>::max()
+            if (std::numeric_limits<typename BasicJsonType::number_unsigned_t>::max() > std::numeric_limits<ArithmeticType>::max()
                 && temp > std::numeric_limits<ArithmeticType>::max())
                 val = std::numeric_limits<ArithmeticType>::max();
             else
@@ -106,7 +106,7 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
         case value_t::number_float:
         {
             auto temp = *j.template get_ptr<const typename BasicJsonType::number_float_t*>();
-            // flush NaN and Inf to zero before converting to a type that cannot represent them
+            // flush NaN and Inf to zero before converting to a type that cannot represent them - otherwise results are undefined.
             bool valueIsFinite = std::isfinite(temp);
             if (!std::numeric_limits<ArithmeticType>::has_infinity && !valueIsFinite)
                 val = 0;
@@ -466,7 +466,7 @@ inline void from_json(const BasicJsonType& j, ArithmeticType& val)
         case value_t::number_float:
         {
             auto temp = *j.template get_ptr<const typename BasicJsonType::number_float_t*>();
-            // flush NaN and Inf to zero before converting to a type that cannot represent them
+            // flush NaN and Inf to zero before converting to a type that cannot represent them - otherwise results are undefined.
             bool valueIsFinite = std::isfinite(temp);
             if (!std::numeric_limits<ArithmeticType>::has_infinity && !valueIsFinite)
                 val = 0;
