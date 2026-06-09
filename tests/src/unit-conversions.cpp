@@ -2818,11 +2818,636 @@ TEST_CASE("value conversion")
         }
     }
 
+    SECTION("Infinity float")
+    {
+        const json::number_float_t float_reference{ std::numeric_limits<json::number_float_t>::infinity() };
+        json j(float_reference);
+        
+        SECTION("float")
+        {
+            auto n = j.get<float>();
+            CHECK(n == float_reference);
+        }
+        
+        SECTION("double")
+        {
+            auto n = j.get<double>();
+            CHECK(n == float_reference);
+        }
+        
+        SECTION("short")
+        {
+            auto n = j.get<short>();
+            CHECK(n == 0);
+        }
+
+        SECTION("unsigned short")
+        {
+            auto n = j.get<unsigned short>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int")
+        {
+            const int n = j.get<int>();
+            CHECK(n == 0);
+        }
+
+        SECTION("unsigned int")
+        {
+            auto n = j.get<unsigned int>();
+            CHECK(n == 0);
+        }
+
+        SECTION("long")
+        {
+            const long n = j.get<long>();
+            CHECK(n == 0);
+        }
+
+        SECTION("unsigned long")
+        {
+            auto n = j.get<unsigned long>();
+            CHECK(n == 0);
+        }
+
+        SECTION("long long")
+        {
+            auto n = j.get<long long>();
+            CHECK(n == 0);
+        }
+
+        SECTION("unsigned long long")
+        {
+            auto n = j.get<unsigned long long>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int8_t")
+        {
+            auto n = j.get<int8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int16_t")
+        {
+            auto n = j.get<int16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int32_t")
+        {
+            auto n = j.get<int32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int64_t")
+        {
+            auto n = j.get<int64_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int8_fast_t")
+        {
+            auto n = j.get<int_fast8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int16_fast_t")
+        {
+            auto n = j.get<int_fast16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int32_fast_t")
+        {
+            auto n = j.get<int_fast32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int64_fast_t")
+        {
+            auto n = j.get<int_fast64_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int8_least_t")
+        {
+            auto n = j.get<int_least8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int16_least_t")
+        {
+            auto n = j.get<int_least16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int32_least_t")
+        {
+            auto n = j.get<int_least32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int64_least_t")
+        {
+            auto n = j.get<int_least64_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint8_t")
+        {
+            auto n = j.get<uint8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint16_t")
+        {
+            auto n = j.get<uint16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint32_t")
+        {
+            auto n = j.get<uint32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint64_t")
+        {
+            auto n = j.get<uint64_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint8_fast_t")
+        {
+            auto n = j.get<uint_fast8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint16_fast_t")
+        {
+            auto n = j.get<uint_fast16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint32_fast_t")
+        {
+            auto n = j.get<uint_fast32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint64_fast_t")
+        {
+            auto n = j.get<uint_fast64_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint8_least_t")
+        {
+            auto n = j.get<uint_least8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint16_least_t")
+        {
+            auto n = j.get<uint_least16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint32_least_t")
+        {
+            auto n = j.get<uint_least32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint64_least_t")
+        {
+            auto n = j.get<uint_least64_t>();
+            CHECK(n == 0);
+        }
+    }
 
 
-// TODO - Inf float
-// TODO - NaN float
+    SECTION("-Infinity float")
+    {
+        const json::number_float_t float_reference{ -std::numeric_limits<json::number_float_t>::infinity() };
+        json j(float_reference);
+        
+        SECTION("float")
+        {
+            auto n = j.get<float>();
+            CHECK(n == float_reference);
+        }
+        
+        SECTION("double")
+        {
+            auto n = j.get<double>();
+            CHECK(n == float_reference);
+        }
+        
+        SECTION("short")
+        {
+            auto n = j.get<short>();
+            CHECK(n == 0);
+        }
 
+        SECTION("unsigned short")
+        {
+            auto n = j.get<unsigned short>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int")
+        {
+            const int n = j.get<int>();
+            CHECK(n == 0);
+        }
+
+        SECTION("unsigned int")
+        {
+            auto n = j.get<unsigned int>();
+            CHECK(n == 0);
+        }
+
+        SECTION("long")
+        {
+            const long n = j.get<long>();
+            CHECK(n == 0);
+        }
+
+        SECTION("unsigned long")
+        {
+            auto n = j.get<unsigned long>();
+            CHECK(n == 0);
+        }
+
+        SECTION("long long")
+        {
+            auto n = j.get<long long>();
+            CHECK(n == 0);
+        }
+
+        SECTION("unsigned long long")
+        {
+            auto n = j.get<unsigned long long>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int8_t")
+        {
+            auto n = j.get<int8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int16_t")
+        {
+            auto n = j.get<int16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int32_t")
+        {
+            auto n = j.get<int32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int64_t")
+        {
+            auto n = j.get<int64_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int8_fast_t")
+        {
+            auto n = j.get<int_fast8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int16_fast_t")
+        {
+            auto n = j.get<int_fast16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int32_fast_t")
+        {
+            auto n = j.get<int_fast32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int64_fast_t")
+        {
+            auto n = j.get<int_fast64_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int8_least_t")
+        {
+            auto n = j.get<int_least8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int16_least_t")
+        {
+            auto n = j.get<int_least16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int32_least_t")
+        {
+            auto n = j.get<int_least32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int64_least_t")
+        {
+            auto n = j.get<int_least64_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint8_t")
+        {
+            auto n = j.get<uint8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint16_t")
+        {
+            auto n = j.get<uint16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint32_t")
+        {
+            auto n = j.get<uint32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint64_t")
+        {
+            auto n = j.get<uint64_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint8_fast_t")
+        {
+            auto n = j.get<uint_fast8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint16_fast_t")
+        {
+            auto n = j.get<uint_fast16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint32_fast_t")
+        {
+            auto n = j.get<uint_fast32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint64_fast_t")
+        {
+            auto n = j.get<uint_fast64_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint8_least_t")
+        {
+            auto n = j.get<uint_least8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint16_least_t")
+        {
+            auto n = j.get<uint_least16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint32_least_t")
+        {
+            auto n = j.get<uint_least32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint64_least_t")
+        {
+            auto n = j.get<uint_least64_t>();
+            CHECK(n == 0);
+        }
+    }
+    
+    SECTION("NaN float")
+    {
+        const json::number_float_t float_reference{ std::numeric_limits<json::number_float_t>::quiet_NaN() };
+        json j(float_reference);
+        
+        SECTION("float")
+        {
+            auto n = j.get<float>();
+            CHECK( std::isnan(n) );
+        }
+        
+        SECTION("double")
+        {
+            auto n = j.get<double>();
+            CHECK( std::isnan(n) );
+        }
+        
+        SECTION("short")
+        {
+            auto n = j.get<short>();
+            CHECK(n == 0);
+        }
+
+        SECTION("unsigned short")
+        {
+            auto n = j.get<unsigned short>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int")
+        {
+            const int n = j.get<int>();
+            CHECK(n == 0);
+        }
+
+        SECTION("unsigned int")
+        {
+            auto n = j.get<unsigned int>();
+            CHECK(n == 0);
+        }
+
+        SECTION("long")
+        {
+            const long n = j.get<long>();
+            CHECK(n == 0);
+        }
+
+        SECTION("unsigned long")
+        {
+            auto n = j.get<unsigned long>();
+            CHECK(n == 0);
+        }
+
+        SECTION("long long")
+        {
+            auto n = j.get<long long>();
+            CHECK(n == 0);
+        }
+
+        SECTION("unsigned long long")
+        {
+            auto n = j.get<unsigned long long>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int8_t")
+        {
+            auto n = j.get<int8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int16_t")
+        {
+            auto n = j.get<int16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int32_t")
+        {
+            auto n = j.get<int32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int64_t")
+        {
+            auto n = j.get<int64_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int8_fast_t")
+        {
+            auto n = j.get<int_fast8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int16_fast_t")
+        {
+            auto n = j.get<int_fast16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int32_fast_t")
+        {
+            auto n = j.get<int_fast32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int64_fast_t")
+        {
+            auto n = j.get<int_fast64_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int8_least_t")
+        {
+            auto n = j.get<int_least8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int16_least_t")
+        {
+            auto n = j.get<int_least16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int32_least_t")
+        {
+            auto n = j.get<int_least32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("int64_least_t")
+        {
+            auto n = j.get<int_least64_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint8_t")
+        {
+            auto n = j.get<uint8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint16_t")
+        {
+            auto n = j.get<uint16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint32_t")
+        {
+            auto n = j.get<uint32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint64_t")
+        {
+            auto n = j.get<uint64_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint8_fast_t")
+        {
+            auto n = j.get<uint_fast8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint16_fast_t")
+        {
+            auto n = j.get<uint_fast16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint32_fast_t")
+        {
+            auto n = j.get<uint_fast32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint64_fast_t")
+        {
+            auto n = j.get<uint_fast64_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint8_least_t")
+        {
+            auto n = j.get<uint_least8_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint16_least_t")
+        {
+            auto n = j.get<uint_least16_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint32_least_t")
+        {
+            auto n = j.get<uint_least32_t>();
+            CHECK(n == 0);
+        }
+
+        SECTION("uint64_least_t")
+        {
+            auto n = j.get<uint_least64_t>();
+            CHECK(n == 0);
+        }
+    }
 }
 
 enum class cards {kreuz, pik, herz, karo};
