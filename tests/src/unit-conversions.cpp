@@ -31,6 +31,8 @@ using nlohmann::json;
 #include <unordered_map>
 #include <unordered_set>
 #include <valarray>
+#include <cmath>
+#include <limits>
 
 // NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
@@ -1587,6 +1589,507 @@ TEST_CASE("value conversion")
             }
         }
     }
+    
+    SECTION("overflow integer")
+    {
+        const json::number_integer_t jMax = std::numeric_limits<json::number_integer_t>::max();
+        // offset low bits so we don't get pure aliasing of 0xFF or 0x7F patterns
+        const json::number_integer_t int_reference{ std::numeric_limits<json::number_integer_t>::max() -3 };
+        json j(int_reference);
+
+        SECTION("short")
+        {
+            auto n = j.get<short>();
+            if constexpr (std::numeric_limits<short>::max() < jMax)
+                CHECK(n == std::numeric_limits<short>::max());
+        }
+
+        SECTION("unsigned short")
+        {
+            auto n = j.get<unsigned short>();
+            if constexpr (std::numeric_limits<unsigned short>::max() < jMax)
+                CHECK(n == std::numeric_limits<unsigned short>::max());
+        }
+
+        SECTION("int")
+        {
+            const int n = j.get<int>();
+            if constexpr (std::numeric_limits<int>::max() < jMax)
+                CHECK(n == std::numeric_limits<int>::max());
+        }
+
+        SECTION("unsigned int")
+        {
+            auto n = j.get<unsigned int>();
+            if constexpr (std::numeric_limits<unsigned int>::max() < jMax)
+                CHECK(n == std::numeric_limits<unsigned int>::max());
+        }
+
+        SECTION("long")
+        {
+            const long n = j.get<long>();
+            if constexpr (std::numeric_limits<long>::max() < jMax)
+                CHECK(n == std::numeric_limits<long>::max());
+        }
+
+        SECTION("unsigned long")
+        {
+            auto n = j.get<unsigned long>();
+            if constexpr (std::numeric_limits<unsigned long>::max() < jMax)
+                CHECK(n == std::numeric_limits<unsigned long>::max());
+        }
+
+        SECTION("long long")
+        {
+            auto n = j.get<long long>();
+            if constexpr (std::numeric_limits<long long>::max() < jMax)
+                CHECK(n == std::numeric_limits<long long>::max());
+        }
+
+        SECTION("unsigned long long")
+        {
+            auto n = j.get<unsigned long long>();
+            if constexpr (std::numeric_limits<unsigned long long>::max() < jMax)
+                CHECK(n == std::numeric_limits<unsigned long long>::max());
+        }
+
+        SECTION("int8_t")
+        {
+            auto n = j.get<int8_t>();
+            if constexpr (std::numeric_limits<int8_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int8_t>::max());
+        }
+
+        SECTION("int16_t")
+        {
+            auto n = j.get<int16_t>();
+            if constexpr (std::numeric_limits<int16_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int16_t>::max());
+        }
+
+        SECTION("int32_t")
+        {
+            auto n = j.get<int32_t>();
+            if constexpr (std::numeric_limits<int32_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int32_t>::max());
+        }
+
+        SECTION("int64_t")
+        {
+            auto n = j.get<int64_t>();
+            if constexpr (std::numeric_limits<int64_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int64_t>::max());
+        }
+
+        SECTION("int8_fast_t")
+        {
+            auto n = j.get<int_fast8_t>();
+            if constexpr (std::numeric_limits<int_fast8_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int_fast8_t>::max());
+        }
+
+        SECTION("int16_fast_t")
+        {
+            auto n = j.get<int_fast16_t>();
+            if constexpr (std::numeric_limits<int_fast16_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int_fast16_t>::max());
+        }
+
+        SECTION("int32_fast_t")
+        {
+            auto n = j.get<int_fast32_t>();
+            if constexpr (std::numeric_limits<int_fast32_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int_fast32_t>::max());
+        }
+
+        SECTION("int64_fast_t")
+        {
+            auto n = j.get<int_fast64_t>();
+            if constexpr (std::numeric_limits<int_fast64_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int_fast64_t>::max());
+        }
+
+        SECTION("int8_least_t")
+        {
+            auto n = j.get<int_least8_t>();
+            if constexpr (std::numeric_limits<int_least8_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int_least8_t>::max());
+        }
+
+        SECTION("int16_least_t")
+        {
+            auto n = j.get<int_least16_t>();
+            if constexpr (std::numeric_limits<int_least16_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int_least16_t>::max());
+        }
+
+        SECTION("int32_least_t")
+        {
+            auto n = j.get<int_least32_t>();
+            if constexpr (std::numeric_limits<int_least32_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int_least32_t>::max());
+        }
+
+        SECTION("int64_least_t")
+        {
+            auto n = j.get<int_least64_t>();
+            if constexpr (std::numeric_limits<int_least64_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int_least64_t>::max());
+        }
+
+        SECTION("uint8_t")
+        {
+            auto n = j.get<uint8_t>();
+            if constexpr (std::numeric_limits<uint8_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint8_t>::max());
+        }
+
+        SECTION("uint16_t")
+        {
+            auto n = j.get<uint16_t>();
+            if constexpr (std::numeric_limits<uint16_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint16_t>::max());
+        }
+
+        SECTION("uint32_t")
+        {
+            auto n = j.get<uint32_t>();
+            if constexpr (std::numeric_limits<uint32_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint32_t>::max());
+        }
+
+        SECTION("uint64_t")
+        {
+            auto n = j.get<uint64_t>();
+            if constexpr (std::numeric_limits<uint64_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint64_t>::max());
+        }
+
+        SECTION("uint8_fast_t")
+        {
+            auto n = j.get<uint_fast8_t>();
+            if constexpr (std::numeric_limits<uint_fast8_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint_fast8_t>::max());
+        }
+
+        SECTION("uint16_fast_t")
+        {
+            auto n = j.get<uint_fast16_t>();
+            if constexpr (std::numeric_limits<uint_fast16_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint_fast16_t>::max());
+        }
+
+        SECTION("uint32_fast_t")
+        {
+            auto n = j.get<uint_fast32_t>();
+            if constexpr (std::numeric_limits<uint_fast32_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint_fast32_t>::max());
+        }
+
+        SECTION("uint64_fast_t")
+        {
+            auto n = j.get<uint_fast64_t>();
+            if constexpr (std::numeric_limits<uint_fast64_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint_fast64_t>::max());
+        }
+
+        SECTION("uint8_least_t")
+        {
+            auto n = j.get<uint_least8_t>();
+            if constexpr (std::numeric_limits<uint_least8_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint_least8_t>::max());
+        }
+
+        SECTION("uint16_least_t")
+        {
+            auto n = j.get<uint_least16_t>();
+            if constexpr (std::numeric_limits<uint_least16_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint_least16_t>::max());
+        }
+
+        SECTION("uint32_least_t")
+        {
+            auto n = j.get<uint_least32_t>();
+            if constexpr (std::numeric_limits<uint_least32_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint_least32_t>::max());
+        }
+
+        SECTION("uint64_least_t")
+        {
+            auto n = j.get<uint_least64_t>();
+            if constexpr (std::numeric_limits<uint_least64_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint_least64_t>::max());
+        }
+
+        SECTION("float")
+        {
+            auto n = j.get<float>();
+            if constexpr (std::numeric_limits<float>::max() < jMax)
+                CHECK(n == std::numeric_limits<float>::max());
+        }
+
+        SECTION("double")
+        {
+            auto n = j.get<double>();
+            if constexpr (std::numeric_limits<double>::max() < jMax)
+                CHECK(n == std::numeric_limits<double>::max());
+        }
+    }
+    
+    SECTION("overflow unsigned integer")
+    {
+        const json::number_unsigned_t jMax = std::numeric_limits<json::number_unsigned_t>::max();
+        // offset low bits so we don't get pure aliasing of 0xFF or 0x7F patterns
+        const json::number_unsigned_t unsigned_reference{ std::numeric_limits<json::number_unsigned_t>::max() -3 };
+        json j(unsigned_reference);
+
+        SECTION("short")
+        {
+            auto n = j.get<short>();
+            if constexpr (std::numeric_limits<short>::max() < jMax)
+                CHECK(n == std::numeric_limits<short>::max());
+        }
+
+        SECTION("unsigned short")
+        {
+            auto n = j.get<unsigned short>();
+            if constexpr (std::numeric_limits<unsigned short>::max() < jMax)
+                CHECK(n == std::numeric_limits<unsigned short>::max());
+        }
+
+        SECTION("int")
+        {
+            const int n = j.get<int>();
+            if constexpr (std::numeric_limits<int>::max() < jMax)
+                CHECK(n == std::numeric_limits<int>::max());
+        }
+
+        SECTION("unsigned int")
+        {
+            auto n = j.get<unsigned int>();
+            if constexpr (std::numeric_limits<unsigned int>::max() < jMax)
+                CHECK(n == std::numeric_limits<unsigned int>::max());
+        }
+
+        SECTION("long")
+        {
+            const long n = j.get<long>();
+            if constexpr (std::numeric_limits<long>::max() < jMax)
+                CHECK(n == std::numeric_limits<long>::max());
+        }
+
+        SECTION("unsigned long")
+        {
+            auto n = j.get<unsigned long>();
+            if constexpr (std::numeric_limits<unsigned long>::max() < jMax)
+                CHECK(n == std::numeric_limits<unsigned long>::max());
+        }
+
+        SECTION("long long")
+        {
+            auto n = j.get<long long>();
+            if constexpr (std::numeric_limits<long long>::max() < jMax)
+                CHECK(n == std::numeric_limits<long long>::max());
+        }
+
+        SECTION("unsigned long long")
+        {
+            auto n = j.get<unsigned long long>();
+            if constexpr (std::numeric_limits<unsigned long long>::max() < jMax)
+                CHECK(n == std::numeric_limits<unsigned long long>::max());
+        }
+
+        SECTION("int8_t")
+        {
+            auto n = j.get<int8_t>();
+            if constexpr (std::numeric_limits<int8_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int8_t>::max());
+        }
+
+        SECTION("int16_t")
+        {
+            auto n = j.get<int16_t>();
+            if constexpr (std::numeric_limits<int16_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int16_t>::max());
+        }
+
+        SECTION("int32_t")
+        {
+            auto n = j.get<int32_t>();
+            if constexpr (std::numeric_limits<int32_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int32_t>::max());
+        }
+
+        SECTION("int64_t")
+        {
+            auto n = j.get<int64_t>();
+            if constexpr (std::numeric_limits<int64_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int64_t>::max());
+        }
+
+        SECTION("int8_fast_t")
+        {
+            auto n = j.get<int_fast8_t>();
+            if constexpr (std::numeric_limits<int_fast8_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int_fast8_t>::max());
+        }
+
+        SECTION("int16_fast_t")
+        {
+            auto n = j.get<int_fast16_t>();
+            if constexpr (std::numeric_limits<int_fast16_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int_fast16_t>::max());
+        }
+
+        SECTION("int32_fast_t")
+        {
+            auto n = j.get<int_fast32_t>();
+            if constexpr (std::numeric_limits<int_fast32_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int_fast32_t>::max());
+        }
+
+        SECTION("int64_fast_t")
+        {
+            auto n = j.get<int_fast64_t>();
+            if constexpr (std::numeric_limits<int_fast64_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int_fast64_t>::max());
+        }
+
+        SECTION("int8_least_t")
+        {
+            auto n = j.get<int_least8_t>();
+            if constexpr (std::numeric_limits<int_least8_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int_least8_t>::max());
+        }
+
+        SECTION("int16_least_t")
+        {
+            auto n = j.get<int_least16_t>();
+            if constexpr (std::numeric_limits<int_least16_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int_least16_t>::max());
+        }
+
+        SECTION("int32_least_t")
+        {
+            auto n = j.get<int_least32_t>();
+            if constexpr (std::numeric_limits<int_least32_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int_least32_t>::max());
+        }
+
+        SECTION("int64_least_t")
+        {
+            auto n = j.get<int_least64_t>();
+            if constexpr (std::numeric_limits<int_least64_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<int_least64_t>::max());
+        }
+
+        SECTION("uint8_t")
+        {
+            auto n = j.get<uint8_t>();
+            if constexpr (std::numeric_limits<uint8_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint8_t>::max());
+        }
+
+        SECTION("uint16_t")
+        {
+            auto n = j.get<uint16_t>();
+            if constexpr (std::numeric_limits<uint16_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint16_t>::max());
+        }
+
+        SECTION("uint32_t")
+        {
+            auto n = j.get<uint32_t>();
+            if constexpr (std::numeric_limits<uint32_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint32_t>::max());
+        }
+
+        SECTION("uint64_t")
+        {
+            auto n = j.get<uint64_t>();
+            if constexpr (std::numeric_limits<uint64_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint64_t>::max());
+        }
+
+        SECTION("uint8_fast_t")
+        {
+            auto n = j.get<uint_fast8_t>();
+            if constexpr (std::numeric_limits<uint_fast8_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint_fast8_t>::max());
+        }
+
+        SECTION("uint16_fast_t")
+        {
+            auto n = j.get<uint_fast16_t>();
+            if constexpr (std::numeric_limits<uint_fast16_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint_fast16_t>::max());
+        }
+
+        SECTION("uint32_fast_t")
+        {
+            auto n = j.get<uint_fast32_t>();
+            if constexpr (std::numeric_limits<uint_fast32_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint_fast32_t>::max());
+        }
+
+        SECTION("uint64_fast_t")
+        {
+            auto n = j.get<uint_fast64_t>();
+            if constexpr (std::numeric_limits<uint_fast64_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint_fast64_t>::max());
+        }
+
+        SECTION("uint8_least_t")
+        {
+            auto n = j.get<uint_least8_t>();
+            if constexpr (std::numeric_limits<uint_least8_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint_least8_t>::max());
+        }
+
+        SECTION("uint16_least_t")
+        {
+            auto n = j.get<uint_least16_t>();
+            if constexpr (std::numeric_limits<uint_least16_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint_least16_t>::max());
+        }
+
+        SECTION("uint32_least_t")
+        {
+            auto n = j.get<uint_least32_t>();
+            if constexpr (std::numeric_limits<uint_least32_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint_least32_t>::max());
+        }
+
+        SECTION("uint64_least_t")
+        {
+            auto n = j.get<uint_least64_t>();
+            if constexpr (std::numeric_limits<uint_least64_t>::max() < jMax)
+                CHECK(n == std::numeric_limits<uint_least64_t>::max());
+        }
+
+        SECTION("float")
+        {
+            auto n = j.get<float>();
+            if constexpr (std::numeric_limits<float>::max() < jMax)
+                CHECK(n == std::numeric_limits<float>::max());
+        }
+
+        SECTION("double")
+        {
+            auto n = j.get<double>();
+            if constexpr (std::numeric_limits<double>::max() < jMax)
+                CHECK(n == std::numeric_limits<double>::max());
+        }
+    }
+
+// TODO - underflow from signed
+
+
+// TODO - overflow float
+// TODO - underflow float
+// TODO - Inf float
+// TODO - NaN float
+
 }
 
 enum class cards {kreuz, pik, herz, karo};
