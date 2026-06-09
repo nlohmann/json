@@ -1600,238 +1600,238 @@ TEST_CASE("value conversion")
         SECTION("short")
         {
             auto n = j.get<short>();
-            if constexpr (std::numeric_limits<short>::max() < jMax)
+            if (std::numeric_limits<short>::max() < jMax)
                 CHECK(n == std::numeric_limits<short>::max());
         }
 
         SECTION("unsigned short")
         {
             auto n = j.get<unsigned short>();
-            if constexpr (std::numeric_limits<unsigned short>::max() < jMax)
+            if (std::numeric_limits<unsigned short>::max() < jMax)
                 CHECK(n == std::numeric_limits<unsigned short>::max());
         }
 
         SECTION("int")
         {
             const int n = j.get<int>();
-            if constexpr (std::numeric_limits<int>::max() < jMax)
+            if (std::numeric_limits<int>::max() < jMax)
                 CHECK(n == std::numeric_limits<int>::max());
         }
 
         SECTION("unsigned int")
         {
             auto n = j.get<unsigned int>();
-            if constexpr (std::numeric_limits<unsigned int>::max() < jMax)
+            if (std::numeric_limits<unsigned int>::max() < jMax)
                 CHECK(n == std::numeric_limits<unsigned int>::max());
         }
 
         SECTION("long")
         {
             const long n = j.get<long>();
-            if constexpr (std::numeric_limits<long>::max() < jMax)
+            if (std::numeric_limits<long>::max() < jMax)
                 CHECK(n == std::numeric_limits<long>::max());
         }
 
         SECTION("unsigned long")
         {
             auto n = j.get<unsigned long>();
-            if constexpr (std::numeric_limits<unsigned long>::max() < jMax)
+            if (std::numeric_limits<unsigned long>::max() < jMax)
                 CHECK(n == std::numeric_limits<unsigned long>::max());
         }
 
         SECTION("long long")
         {
             auto n = j.get<long long>();
-            if constexpr (std::numeric_limits<long long>::max() < jMax)
+            if (std::numeric_limits<long long>::max() < jMax)
                 CHECK(n == std::numeric_limits<long long>::max());
         }
 
         SECTION("unsigned long long")
         {
             auto n = j.get<unsigned long long>();
-            if constexpr (std::numeric_limits<unsigned long long>::max() < jMax)
+            if (std::numeric_limits<unsigned long long>::max() < jMax)
                 CHECK(n == std::numeric_limits<unsigned long long>::max());
         }
 
         SECTION("int8_t")
         {
             auto n = j.get<int8_t>();
-            if constexpr (std::numeric_limits<int8_t>::max() < jMax)
+            if (std::numeric_limits<int8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int8_t>::max());
         }
 
         SECTION("int16_t")
         {
             auto n = j.get<int16_t>();
-            if constexpr (std::numeric_limits<int16_t>::max() < jMax)
+            if (std::numeric_limits<int16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int16_t>::max());
         }
 
         SECTION("int32_t")
         {
             auto n = j.get<int32_t>();
-            if constexpr (std::numeric_limits<int32_t>::max() < jMax)
+            if (std::numeric_limits<int32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int32_t>::max());
         }
 
         SECTION("int64_t")
         {
             auto n = j.get<int64_t>();
-            if constexpr (std::numeric_limits<int64_t>::max() < jMax)
+            if (std::numeric_limits<int64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int64_t>::max());
         }
 
         SECTION("int8_fast_t")
         {
             auto n = j.get<int_fast8_t>();
-            if constexpr (std::numeric_limits<int_fast8_t>::max() < jMax)
+            if (std::numeric_limits<int_fast8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_fast8_t>::max());
         }
 
         SECTION("int16_fast_t")
         {
             auto n = j.get<int_fast16_t>();
-            if constexpr (std::numeric_limits<int_fast16_t>::max() < jMax)
+            if (std::numeric_limits<int_fast16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_fast16_t>::max());
         }
 
         SECTION("int32_fast_t")
         {
             auto n = j.get<int_fast32_t>();
-            if constexpr (std::numeric_limits<int_fast32_t>::max() < jMax)
+            if (std::numeric_limits<int_fast32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_fast32_t>::max());
         }
 
         SECTION("int64_fast_t")
         {
             auto n = j.get<int_fast64_t>();
-            if constexpr (std::numeric_limits<int_fast64_t>::max() < jMax)
+            if (std::numeric_limits<int_fast64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_fast64_t>::max());
         }
 
         SECTION("int8_least_t")
         {
             auto n = j.get<int_least8_t>();
-            if constexpr (std::numeric_limits<int_least8_t>::max() < jMax)
+            if (std::numeric_limits<int_least8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_least8_t>::max());
         }
 
         SECTION("int16_least_t")
         {
             auto n = j.get<int_least16_t>();
-            if constexpr (std::numeric_limits<int_least16_t>::max() < jMax)
+            if (std::numeric_limits<int_least16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_least16_t>::max());
         }
 
         SECTION("int32_least_t")
         {
             auto n = j.get<int_least32_t>();
-            if constexpr (std::numeric_limits<int_least32_t>::max() < jMax)
+            if (std::numeric_limits<int_least32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_least32_t>::max());
         }
 
         SECTION("int64_least_t")
         {
             auto n = j.get<int_least64_t>();
-            if constexpr (std::numeric_limits<int_least64_t>::max() < jMax)
+            if (std::numeric_limits<int_least64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_least64_t>::max());
         }
 
         SECTION("uint8_t")
         {
             auto n = j.get<uint8_t>();
-            if constexpr (std::numeric_limits<uint8_t>::max() < jMax)
+            if (std::numeric_limits<uint8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint8_t>::max());
         }
 
         SECTION("uint16_t")
         {
             auto n = j.get<uint16_t>();
-            if constexpr (std::numeric_limits<uint16_t>::max() < jMax)
+            if (std::numeric_limits<uint16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint16_t>::max());
         }
 
         SECTION("uint32_t")
         {
             auto n = j.get<uint32_t>();
-            if constexpr (std::numeric_limits<uint32_t>::max() < jMax)
+            if (std::numeric_limits<uint32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint32_t>::max());
         }
 
         SECTION("uint64_t")
         {
             auto n = j.get<uint64_t>();
-            if constexpr (std::numeric_limits<uint64_t>::max() < jMax)
+            if (std::numeric_limits<uint64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint64_t>::max());
         }
 
         SECTION("uint8_fast_t")
         {
             auto n = j.get<uint_fast8_t>();
-            if constexpr (std::numeric_limits<uint_fast8_t>::max() < jMax)
+            if (std::numeric_limits<uint_fast8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_fast8_t>::max());
         }
 
         SECTION("uint16_fast_t")
         {
             auto n = j.get<uint_fast16_t>();
-            if constexpr (std::numeric_limits<uint_fast16_t>::max() < jMax)
+            if (std::numeric_limits<uint_fast16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_fast16_t>::max());
         }
 
         SECTION("uint32_fast_t")
         {
             auto n = j.get<uint_fast32_t>();
-            if constexpr (std::numeric_limits<uint_fast32_t>::max() < jMax)
+            if (std::numeric_limits<uint_fast32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_fast32_t>::max());
         }
 
         SECTION("uint64_fast_t")
         {
             auto n = j.get<uint_fast64_t>();
-            if constexpr (std::numeric_limits<uint_fast64_t>::max() < jMax)
+            if (std::numeric_limits<uint_fast64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_fast64_t>::max());
         }
 
         SECTION("uint8_least_t")
         {
             auto n = j.get<uint_least8_t>();
-            if constexpr (std::numeric_limits<uint_least8_t>::max() < jMax)
+            if (std::numeric_limits<uint_least8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_least8_t>::max());
         }
 
         SECTION("uint16_least_t")
         {
             auto n = j.get<uint_least16_t>();
-            if constexpr (std::numeric_limits<uint_least16_t>::max() < jMax)
+            if (std::numeric_limits<uint_least16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_least16_t>::max());
         }
 
         SECTION("uint32_least_t")
         {
             auto n = j.get<uint_least32_t>();
-            if constexpr (std::numeric_limits<uint_least32_t>::max() < jMax)
+            if (std::numeric_limits<uint_least32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_least32_t>::max());
         }
 
         SECTION("uint64_least_t")
         {
             auto n = j.get<uint_least64_t>();
-            if constexpr (std::numeric_limits<uint_least64_t>::max() < jMax)
+            if (std::numeric_limits<uint_least64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_least64_t>::max());
         }
 
         SECTION("float")
         {
             auto n = j.get<float>();
-            if constexpr (std::numeric_limits<float>::max() < jMax)
+            if (std::numeric_limits<float>::max() < jMax)
                 CHECK(n == std::numeric_limits<float>::max());
         }
 
         SECTION("double")
         {
             auto n = j.get<double>();
-            if constexpr (std::numeric_limits<double>::max() < jMax)
+            if (std::numeric_limits<double>::max() < jMax)
                 CHECK(n == std::numeric_limits<double>::max());
         }
     }
@@ -1846,238 +1846,238 @@ TEST_CASE("value conversion")
         SECTION("short")
         {
             auto n = j.get<short>();
-            if constexpr (std::numeric_limits<short>::max() < jMax)
+            if (std::numeric_limits<short>::max() < jMax)
                 CHECK(n == std::numeric_limits<short>::max());
         }
 
         SECTION("unsigned short")
         {
             auto n = j.get<unsigned short>();
-            if constexpr (std::numeric_limits<unsigned short>::max() < jMax)
+            if (std::numeric_limits<unsigned short>::max() < jMax)
                 CHECK(n == std::numeric_limits<unsigned short>::max());
         }
 
         SECTION("int")
         {
             const int n = j.get<int>();
-            if constexpr (std::numeric_limits<int>::max() < jMax)
+            if (std::numeric_limits<int>::max() < jMax)
                 CHECK(n == std::numeric_limits<int>::max());
         }
 
         SECTION("unsigned int")
         {
             auto n = j.get<unsigned int>();
-            if constexpr (std::numeric_limits<unsigned int>::max() < jMax)
+            if (std::numeric_limits<unsigned int>::max() < jMax)
                 CHECK(n == std::numeric_limits<unsigned int>::max());
         }
 
         SECTION("long")
         {
             const long n = j.get<long>();
-            if constexpr (std::numeric_limits<long>::max() < jMax)
+            if (std::numeric_limits<long>::max() < jMax)
                 CHECK(n == std::numeric_limits<long>::max());
         }
 
         SECTION("unsigned long")
         {
             auto n = j.get<unsigned long>();
-            if constexpr (std::numeric_limits<unsigned long>::max() < jMax)
+            if (std::numeric_limits<unsigned long>::max() < jMax)
                 CHECK(n == std::numeric_limits<unsigned long>::max());
         }
 
         SECTION("long long")
         {
             auto n = j.get<long long>();
-            if constexpr (std::numeric_limits<long long>::max() < jMax)
+            if (std::numeric_limits<long long>::max() < jMax)
                 CHECK(n == std::numeric_limits<long long>::max());
         }
 
         SECTION("unsigned long long")
         {
             auto n = j.get<unsigned long long>();
-            if constexpr (std::numeric_limits<unsigned long long>::max() < jMax)
+            if (std::numeric_limits<unsigned long long>::max() < jMax)
                 CHECK(n == std::numeric_limits<unsigned long long>::max());
         }
 
         SECTION("int8_t")
         {
             auto n = j.get<int8_t>();
-            if constexpr (std::numeric_limits<int8_t>::max() < jMax)
+            if (std::numeric_limits<int8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int8_t>::max());
         }
 
         SECTION("int16_t")
         {
             auto n = j.get<int16_t>();
-            if constexpr (std::numeric_limits<int16_t>::max() < jMax)
+            if (std::numeric_limits<int16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int16_t>::max());
         }
 
         SECTION("int32_t")
         {
             auto n = j.get<int32_t>();
-            if constexpr (std::numeric_limits<int32_t>::max() < jMax)
+            if (std::numeric_limits<int32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int32_t>::max());
         }
 
         SECTION("int64_t")
         {
             auto n = j.get<int64_t>();
-            if constexpr (std::numeric_limits<int64_t>::max() < jMax)
+            if (std::numeric_limits<int64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int64_t>::max());
         }
 
         SECTION("int8_fast_t")
         {
             auto n = j.get<int_fast8_t>();
-            if constexpr (std::numeric_limits<int_fast8_t>::max() < jMax)
+            if (std::numeric_limits<int_fast8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_fast8_t>::max());
         }
 
         SECTION("int16_fast_t")
         {
             auto n = j.get<int_fast16_t>();
-            if constexpr (std::numeric_limits<int_fast16_t>::max() < jMax)
+            if (std::numeric_limits<int_fast16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_fast16_t>::max());
         }
 
         SECTION("int32_fast_t")
         {
             auto n = j.get<int_fast32_t>();
-            if constexpr (std::numeric_limits<int_fast32_t>::max() < jMax)
+            if (std::numeric_limits<int_fast32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_fast32_t>::max());
         }
 
         SECTION("int64_fast_t")
         {
             auto n = j.get<int_fast64_t>();
-            if constexpr (std::numeric_limits<int_fast64_t>::max() < jMax)
+            if (std::numeric_limits<int_fast64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_fast64_t>::max());
         }
 
         SECTION("int8_least_t")
         {
             auto n = j.get<int_least8_t>();
-            if constexpr (std::numeric_limits<int_least8_t>::max() < jMax)
+            if (std::numeric_limits<int_least8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_least8_t>::max());
         }
 
         SECTION("int16_least_t")
         {
             auto n = j.get<int_least16_t>();
-            if constexpr (std::numeric_limits<int_least16_t>::max() < jMax)
+            if (std::numeric_limits<int_least16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_least16_t>::max());
         }
 
         SECTION("int32_least_t")
         {
             auto n = j.get<int_least32_t>();
-            if constexpr (std::numeric_limits<int_least32_t>::max() < jMax)
+            if (std::numeric_limits<int_least32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_least32_t>::max());
         }
 
         SECTION("int64_least_t")
         {
             auto n = j.get<int_least64_t>();
-            if constexpr (std::numeric_limits<int_least64_t>::max() < jMax)
+            if (std::numeric_limits<int_least64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_least64_t>::max());
         }
 
         SECTION("uint8_t")
         {
             auto n = j.get<uint8_t>();
-            if constexpr (std::numeric_limits<uint8_t>::max() < jMax)
+            if (std::numeric_limits<uint8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint8_t>::max());
         }
 
         SECTION("uint16_t")
         {
             auto n = j.get<uint16_t>();
-            if constexpr (std::numeric_limits<uint16_t>::max() < jMax)
+            if (std::numeric_limits<uint16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint16_t>::max());
         }
 
         SECTION("uint32_t")
         {
             auto n = j.get<uint32_t>();
-            if constexpr (std::numeric_limits<uint32_t>::max() < jMax)
+            if (std::numeric_limits<uint32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint32_t>::max());
         }
 
         SECTION("uint64_t")
         {
             auto n = j.get<uint64_t>();
-            if constexpr (std::numeric_limits<uint64_t>::max() < jMax)
+            if (std::numeric_limits<uint64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint64_t>::max());
         }
 
         SECTION("uint8_fast_t")
         {
             auto n = j.get<uint_fast8_t>();
-            if constexpr (std::numeric_limits<uint_fast8_t>::max() < jMax)
+            if (std::numeric_limits<uint_fast8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_fast8_t>::max());
         }
 
         SECTION("uint16_fast_t")
         {
             auto n = j.get<uint_fast16_t>();
-            if constexpr (std::numeric_limits<uint_fast16_t>::max() < jMax)
+            if (std::numeric_limits<uint_fast16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_fast16_t>::max());
         }
 
         SECTION("uint32_fast_t")
         {
             auto n = j.get<uint_fast32_t>();
-            if constexpr (std::numeric_limits<uint_fast32_t>::max() < jMax)
+            if (std::numeric_limits<uint_fast32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_fast32_t>::max());
         }
 
         SECTION("uint64_fast_t")
         {
             auto n = j.get<uint_fast64_t>();
-            if constexpr (std::numeric_limits<uint_fast64_t>::max() < jMax)
+            if (std::numeric_limits<uint_fast64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_fast64_t>::max());
         }
 
         SECTION("uint8_least_t")
         {
             auto n = j.get<uint_least8_t>();
-            if constexpr (std::numeric_limits<uint_least8_t>::max() < jMax)
+            if (std::numeric_limits<uint_least8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_least8_t>::max());
         }
 
         SECTION("uint16_least_t")
         {
             auto n = j.get<uint_least16_t>();
-            if constexpr (std::numeric_limits<uint_least16_t>::max() < jMax)
+            if (std::numeric_limits<uint_least16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_least16_t>::max());
         }
 
         SECTION("uint32_least_t")
         {
             auto n = j.get<uint_least32_t>();
-            if constexpr (std::numeric_limits<uint_least32_t>::max() < jMax)
+            if (std::numeric_limits<uint_least32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_least32_t>::max());
         }
 
         SECTION("uint64_least_t")
         {
             auto n = j.get<uint_least64_t>();
-            if constexpr (std::numeric_limits<uint_least64_t>::max() < jMax)
+            if (std::numeric_limits<uint_least64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_least64_t>::max());
         }
 
         SECTION("float")
         {
             auto n = j.get<float>();
-            if constexpr (std::numeric_limits<float>::max() < jMax)
+            if (std::numeric_limits<float>::max() < jMax)
                 CHECK(n == std::numeric_limits<float>::max());
         }
 
         SECTION("double")
         {
             auto n = j.get<double>();
-            if constexpr (std::numeric_limits<double>::max() < jMax)
+            if (std::numeric_limits<double>::max() < jMax)
                 CHECK(n == std::numeric_limits<double>::max());
         }
     }
@@ -2092,238 +2092,238 @@ TEST_CASE("value conversion")
         SECTION("short")
         {
             auto n = j.get<short>();
-            if constexpr (std::numeric_limits<short>::lowest() > jMin)
+            if (std::numeric_limits<short>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<short>::lowest());
         }
 
         SECTION("unsigned short")
         {
             auto n = j.get<unsigned short>();
-            if constexpr (std::numeric_limits<unsigned short>::lowest() > jMin)
+            if (std::numeric_limits<unsigned short>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<unsigned short>::lowest());
         }
 
         SECTION("int")
         {
             const int n = j.get<int>();
-            if constexpr (std::numeric_limits<int>::lowest() > jMin)
+            if (std::numeric_limits<int>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int>::lowest());
         }
 
         SECTION("unsigned int")
         {
             auto n = j.get<unsigned int>();
-            if constexpr (std::numeric_limits<unsigned int>::lowest() > jMin)
+            if (std::numeric_limits<unsigned int>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<unsigned int>::lowest());
         }
 
         SECTION("long")
         {
             const long n = j.get<long>();
-            if constexpr (std::numeric_limits<long>::lowest() > jMin)
+            if (std::numeric_limits<long>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<long>::lowest());
         }
 
         SECTION("unsigned long")
         {
             auto n = j.get<unsigned long>();
-            if constexpr (std::numeric_limits<unsigned long>::lowest() > jMin)
+            if (std::numeric_limits<unsigned long>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<unsigned long>::lowest());
         }
 
         SECTION("long long")
         {
             auto n = j.get<long long>();
-            if constexpr (std::numeric_limits<long long>::lowest() > jMin)
+            if (std::numeric_limits<long long>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<long long>::lowest());
         }
 
         SECTION("unsigned long long")
         {
             auto n = j.get<unsigned long long>();
-            if constexpr (std::numeric_limits<unsigned long long>::lowest() > jMin)
+            if (std::numeric_limits<unsigned long long>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<unsigned long long>::lowest());
         }
 
         SECTION("int8_t")
         {
             auto n = j.get<int8_t>();
-            if constexpr (std::numeric_limits<int8_t>::lowest() > jMin)
+            if (std::numeric_limits<int8_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int8_t>::lowest());
         }
 
         SECTION("int16_t")
         {
             auto n = j.get<int16_t>();
-            if constexpr (std::numeric_limits<int16_t>::lowest() > jMin)
+            if (std::numeric_limits<int16_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int16_t>::lowest());
         }
 
         SECTION("int32_t")
         {
             auto n = j.get<int32_t>();
-            if constexpr (std::numeric_limits<int32_t>::lowest() > jMin)
+            if (std::numeric_limits<int32_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int32_t>::lowest());
         }
 
         SECTION("int64_t")
         {
             auto n = j.get<int64_t>();
-            if constexpr (std::numeric_limits<int64_t>::lowest() > jMin)
+            if (std::numeric_limits<int64_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int64_t>::lowest());
         }
 
         SECTION("int8_fast_t")
         {
             auto n = j.get<int_fast8_t>();
-            if constexpr (std::numeric_limits<int_fast8_t>::lowest() > jMin)
+            if (std::numeric_limits<int_fast8_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int_fast8_t>::lowest());
         }
 
         SECTION("int16_fast_t")
         {
             auto n = j.get<int_fast16_t>();
-            if constexpr (std::numeric_limits<int_fast16_t>::lowest() > jMin)
+            if (std::numeric_limits<int_fast16_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int_fast16_t>::lowest());
         }
 
         SECTION("int32_fast_t")
         {
             auto n = j.get<int_fast32_t>();
-            if constexpr (std::numeric_limits<int_fast32_t>::lowest() > jMin)
+            if (std::numeric_limits<int_fast32_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int_fast32_t>::lowest());
         }
 
         SECTION("int64_fast_t")
         {
             auto n = j.get<int_fast64_t>();
-            if constexpr (std::numeric_limits<int_fast64_t>::lowest() > jMin)
+            if (std::numeric_limits<int_fast64_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int_fast64_t>::lowest());
         }
 
         SECTION("int8_least_t")
         {
             auto n = j.get<int_least8_t>();
-            if constexpr (std::numeric_limits<int_least8_t>::lowest() > jMin)
+            if (std::numeric_limits<int_least8_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int_least8_t>::lowest());
         }
 
         SECTION("int16_least_t")
         {
             auto n = j.get<int_least16_t>();
-            if constexpr (std::numeric_limits<int_least16_t>::lowest() > jMin)
+            if (std::numeric_limits<int_least16_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int_least16_t>::lowest());
         }
 
         SECTION("int32_least_t")
         {
             auto n = j.get<int_least32_t>();
-            if constexpr (std::numeric_limits<int_least32_t>::lowest() > jMin)
+            if (std::numeric_limits<int_least32_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int_least32_t>::lowest());
         }
 
         SECTION("int64_least_t")
         {
             auto n = j.get<int_least64_t>();
-            if constexpr (std::numeric_limits<int_least64_t>::lowest() > jMin)
+            if (std::numeric_limits<int_least64_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int_least64_t>::lowest());
         }
 
         SECTION("uint8_t")
         {
             auto n = j.get<uint8_t>();
-            if constexpr (std::numeric_limits<uint8_t>::lowest() > jMin)
+            if (std::numeric_limits<uint8_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint8_t>::lowest());
         }
 
         SECTION("uint16_t")
         {
             auto n = j.get<uint16_t>();
-            if constexpr (std::numeric_limits<uint16_t>::lowest() > jMin)
+            if (std::numeric_limits<uint16_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint16_t>::lowest());
         }
 
         SECTION("uint32_t")
         {
             auto n = j.get<uint32_t>();
-            if constexpr (std::numeric_limits<uint32_t>::lowest() > jMin)
+            if (std::numeric_limits<uint32_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint32_t>::lowest());
         }
 
         SECTION("uint64_t")
         {
             auto n = j.get<uint64_t>();
-            if constexpr (std::numeric_limits<uint64_t>::lowest() > jMin)
+            if (std::numeric_limits<uint64_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint64_t>::lowest());
         }
 
         SECTION("uint8_fast_t")
         {
             auto n = j.get<uint_fast8_t>();
-            if constexpr (std::numeric_limits<uint_fast8_t>::lowest() > jMin)
+            if (std::numeric_limits<uint_fast8_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint_fast8_t>::lowest());
         }
 
         SECTION("uint16_fast_t")
         {
             auto n = j.get<uint_fast16_t>();
-            if constexpr (std::numeric_limits<uint_fast16_t>::lowest() > jMin)
+            if (std::numeric_limits<uint_fast16_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint_fast16_t>::lowest());
         }
 
         SECTION("uint32_fast_t")
         {
             auto n = j.get<uint_fast32_t>();
-            if constexpr (std::numeric_limits<uint_fast32_t>::lowest() > jMin)
+            if (std::numeric_limits<uint_fast32_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint_fast32_t>::lowest());
         }
 
         SECTION("uint64_fast_t")
         {
             auto n = j.get<uint_fast64_t>();
-            if constexpr (std::numeric_limits<uint_fast64_t>::lowest() > jMin)
+            if (std::numeric_limits<uint_fast64_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint_fast64_t>::lowest());
         }
 
         SECTION("uint8_least_t")
         {
             auto n = j.get<uint_least8_t>();
-            if constexpr (std::numeric_limits<uint_least8_t>::lowest() > jMin)
+            if (std::numeric_limits<uint_least8_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint_least8_t>::lowest());
         }
 
         SECTION("uint16_least_t")
         {
             auto n = j.get<uint_least16_t>();
-            if constexpr (std::numeric_limits<uint_least16_t>::lowest() > jMin)
+            if (std::numeric_limits<uint_least16_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint_least16_t>::lowest());
         }
 
         SECTION("uint32_least_t")
         {
             auto n = j.get<uint_least32_t>();
-            if constexpr (std::numeric_limits<uint_least32_t>::lowest() > jMin)
+            if (std::numeric_limits<uint_least32_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint_least32_t>::lowest());
         }
 
         SECTION("uint64_least_t")
         {
             auto n = j.get<uint_least64_t>();
-            if constexpr (std::numeric_limits<uint_least64_t>::lowest() > jMin)
+            if (std::numeric_limits<uint_least64_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint_least64_t>::lowest());
         }
 
         SECTION("float")
         {
             auto n = j.get<float>();
-            if constexpr (std::numeric_limits<float>::lowest() > jMin)
+            if (std::numeric_limits<float>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<float>::lowest());
         }
 
         SECTION("double")
         {
             auto n = j.get<double>();
-            if constexpr (std::numeric_limits<double>::lowest() > jMin)
+            if (std::numeric_limits<double>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<double>::lowest());
         }
     }
@@ -2337,238 +2337,238 @@ TEST_CASE("value conversion")
         SECTION("short")
         {
             auto n = j.get<short>();
-            if constexpr (std::numeric_limits<short>::max() < jMax)
+            if (std::numeric_limits<short>::max() < jMax)
                 CHECK(n == std::numeric_limits<short>::max());
         }
 
         SECTION("unsigned short")
         {
             auto n = j.get<unsigned short>();
-            if constexpr (std::numeric_limits<unsigned short>::max() < jMax)
+            if (std::numeric_limits<unsigned short>::max() < jMax)
                 CHECK(n == std::numeric_limits<unsigned short>::max());
         }
 
         SECTION("int")
         {
             const int n = j.get<int>();
-            if constexpr (std::numeric_limits<int>::max() < jMax)
+            if (std::numeric_limits<int>::max() < jMax)
                 CHECK(n == std::numeric_limits<int>::max());
         }
 
         SECTION("unsigned int")
         {
             auto n = j.get<unsigned int>();
-            if constexpr (std::numeric_limits<unsigned int>::max() < jMax)
+            if (std::numeric_limits<unsigned int>::max() < jMax)
                 CHECK(n == std::numeric_limits<unsigned int>::max());
         }
 
         SECTION("long")
         {
             const long n = j.get<long>();
-            if constexpr (std::numeric_limits<long>::max() < jMax)
+            if (std::numeric_limits<long>::max() < jMax)
                 CHECK(n == std::numeric_limits<long>::max());
         }
 
         SECTION("unsigned long")
         {
             auto n = j.get<unsigned long>();
-            if constexpr (std::numeric_limits<unsigned long>::max() < jMax)
+            if (std::numeric_limits<unsigned long>::max() < jMax)
                 CHECK(n == std::numeric_limits<unsigned long>::max());
         }
 
         SECTION("long long")
         {
             auto n = j.get<long long>();
-            if constexpr (std::numeric_limits<long long>::max() < jMax)
+            if (std::numeric_limits<long long>::max() < jMax)
                 CHECK(n == std::numeric_limits<long long>::max());
         }
 
         SECTION("unsigned long long")
         {
             auto n = j.get<unsigned long long>();
-            if constexpr (std::numeric_limits<unsigned long long>::max() < jMax)
+            if (std::numeric_limits<unsigned long long>::max() < jMax)
                 CHECK(n == std::numeric_limits<unsigned long long>::max());
         }
 
         SECTION("int8_t")
         {
             auto n = j.get<int8_t>();
-            if constexpr (std::numeric_limits<int8_t>::max() < jMax)
+            if (std::numeric_limits<int8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int8_t>::max());
         }
 
         SECTION("int16_t")
         {
             auto n = j.get<int16_t>();
-            if constexpr (std::numeric_limits<int16_t>::max() < jMax)
+            if (std::numeric_limits<int16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int16_t>::max());
         }
 
         SECTION("int32_t")
         {
             auto n = j.get<int32_t>();
-            if constexpr (std::numeric_limits<int32_t>::max() < jMax)
+            if (std::numeric_limits<int32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int32_t>::max());
         }
 
         SECTION("int64_t")
         {
             auto n = j.get<int64_t>();
-            if constexpr (std::numeric_limits<int64_t>::max() < jMax)
+            if (std::numeric_limits<int64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int64_t>::max());
         }
 
         SECTION("int8_fast_t")
         {
             auto n = j.get<int_fast8_t>();
-            if constexpr (std::numeric_limits<int_fast8_t>::max() < jMax)
+            if (std::numeric_limits<int_fast8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_fast8_t>::max());
         }
 
         SECTION("int16_fast_t")
         {
             auto n = j.get<int_fast16_t>();
-            if constexpr (std::numeric_limits<int_fast16_t>::max() < jMax)
+            if (std::numeric_limits<int_fast16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_fast16_t>::max());
         }
 
         SECTION("int32_fast_t")
         {
             auto n = j.get<int_fast32_t>();
-            if constexpr (std::numeric_limits<int_fast32_t>::max() < jMax)
+            if (std::numeric_limits<int_fast32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_fast32_t>::max());
         }
 
         SECTION("int64_fast_t")
         {
             auto n = j.get<int_fast64_t>();
-            if constexpr (std::numeric_limits<int_fast64_t>::max() < jMax)
+            if (std::numeric_limits<int_fast64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_fast64_t>::max());
         }
 
         SECTION("int8_least_t")
         {
             auto n = j.get<int_least8_t>();
-            if constexpr (std::numeric_limits<int_least8_t>::max() < jMax)
+            if (std::numeric_limits<int_least8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_least8_t>::max());
         }
 
         SECTION("int16_least_t")
         {
             auto n = j.get<int_least16_t>();
-            if constexpr (std::numeric_limits<int_least16_t>::max() < jMax)
+            if (std::numeric_limits<int_least16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_least16_t>::max());
         }
 
         SECTION("int32_least_t")
         {
             auto n = j.get<int_least32_t>();
-            if constexpr (std::numeric_limits<int_least32_t>::max() < jMax)
+            if (std::numeric_limits<int_least32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_least32_t>::max());
         }
 
         SECTION("int64_least_t")
         {
             auto n = j.get<int_least64_t>();
-            if constexpr (std::numeric_limits<int_least64_t>::max() < jMax)
+            if (std::numeric_limits<int_least64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<int_least64_t>::max());
         }
 
         SECTION("uint8_t")
         {
             auto n = j.get<uint8_t>();
-            if constexpr (std::numeric_limits<uint8_t>::max() < jMax)
+            if (std::numeric_limits<uint8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint8_t>::max());
         }
 
         SECTION("uint16_t")
         {
             auto n = j.get<uint16_t>();
-            if constexpr (std::numeric_limits<uint16_t>::max() < jMax)
+            if (std::numeric_limits<uint16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint16_t>::max());
         }
 
         SECTION("uint32_t")
         {
             auto n = j.get<uint32_t>();
-            if constexpr (std::numeric_limits<uint32_t>::max() < jMax)
+            if (std::numeric_limits<uint32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint32_t>::max());
         }
 
         SECTION("uint64_t")
         {
             auto n = j.get<uint64_t>();
-            if constexpr (std::numeric_limits<uint64_t>::max() < jMax)
+            if (std::numeric_limits<uint64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint64_t>::max());
         }
 
         SECTION("uint8_fast_t")
         {
             auto n = j.get<uint_fast8_t>();
-            if constexpr (std::numeric_limits<uint_fast8_t>::max() < jMax)
+            if (std::numeric_limits<uint_fast8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_fast8_t>::max());
         }
 
         SECTION("uint16_fast_t")
         {
             auto n = j.get<uint_fast16_t>();
-            if constexpr (std::numeric_limits<uint_fast16_t>::max() < jMax)
+            if (std::numeric_limits<uint_fast16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_fast16_t>::max());
         }
 
         SECTION("uint32_fast_t")
         {
             auto n = j.get<uint_fast32_t>();
-            if constexpr (std::numeric_limits<uint_fast32_t>::max() < jMax)
+            if (std::numeric_limits<uint_fast32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_fast32_t>::max());
         }
 
         SECTION("uint64_fast_t")
         {
             auto n = j.get<uint_fast64_t>();
-            if constexpr (std::numeric_limits<uint_fast64_t>::max() < jMax)
+            if (std::numeric_limits<uint_fast64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_fast64_t>::max());
         }
 
         SECTION("uint8_least_t")
         {
             auto n = j.get<uint_least8_t>();
-            if constexpr (std::numeric_limits<uint_least8_t>::max() < jMax)
+            if (std::numeric_limits<uint_least8_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_least8_t>::max());
         }
 
         SECTION("uint16_least_t")
         {
             auto n = j.get<uint_least16_t>();
-            if constexpr (std::numeric_limits<uint_least16_t>::max() < jMax)
+            if (std::numeric_limits<uint_least16_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_least16_t>::max());
         }
 
         SECTION("uint32_least_t")
         {
             auto n = j.get<uint_least32_t>();
-            if constexpr (std::numeric_limits<uint_least32_t>::max() < jMax)
+            if (std::numeric_limits<uint_least32_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_least32_t>::max());
         }
 
         SECTION("uint64_least_t")
         {
             auto n = j.get<uint_least64_t>();
-            if constexpr (std::numeric_limits<uint_least64_t>::max() < jMax)
+            if (std::numeric_limits<uint_least64_t>::max() < jMax)
                 CHECK(n == std::numeric_limits<uint_least64_t>::max());
         }
 
         SECTION("float")
         {
             auto n = j.get<float>();
-            if constexpr (std::numeric_limits<float>::max() < jMax)
+            if (std::numeric_limits<float>::max() < jMax)
                 CHECK(n == std::numeric_limits<float>::max());
         }
 
         SECTION("double")
         {
             auto n = j.get<double>();
-            if constexpr (std::numeric_limits<double>::max() < jMax)
+            if (std::numeric_limits<double>::max() < jMax)
                 CHECK(n == std::numeric_limits<double>::max());
         }
     }
@@ -2582,238 +2582,238 @@ TEST_CASE("value conversion")
         SECTION("short")
         {
             auto n = j.get<short>();
-            if constexpr (std::numeric_limits<short>::lowest() > jMin)
+            if (std::numeric_limits<short>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<short>::lowest());
         }
 
         SECTION("unsigned short")
         {
             auto n = j.get<unsigned short>();
-            if constexpr (std::numeric_limits<unsigned short>::lowest() > jMin)
+            if (std::numeric_limits<unsigned short>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<unsigned short>::lowest());
         }
 
         SECTION("int")
         {
             const int n = j.get<int>();
-            if constexpr (std::numeric_limits<int>::lowest() > jMin)
+            if (std::numeric_limits<int>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int>::lowest());
         }
 
         SECTION("unsigned int")
         {
             auto n = j.get<unsigned int>();
-            if constexpr (std::numeric_limits<unsigned int>::lowest() > jMin)
+            if (std::numeric_limits<unsigned int>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<unsigned int>::lowest());
         }
 
         SECTION("long")
         {
             const long n = j.get<long>();
-            if constexpr (std::numeric_limits<long>::lowest() > jMin)
+            if (std::numeric_limits<long>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<long>::lowest());
         }
 
         SECTION("unsigned long")
         {
             auto n = j.get<unsigned long>();
-            if constexpr (std::numeric_limits<unsigned long>::lowest() > jMin)
+            if (std::numeric_limits<unsigned long>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<unsigned long>::lowest());
         }
 
         SECTION("long long")
         {
             auto n = j.get<long long>();
-            if constexpr (std::numeric_limits<long long>::lowest() > jMin)
+            if (std::numeric_limits<long long>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<long long>::lowest());
         }
 
         SECTION("unsigned long long")
         {
             auto n = j.get<unsigned long long>();
-            if constexpr (std::numeric_limits<unsigned long long>::lowest() > jMin)
+            if (std::numeric_limits<unsigned long long>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<unsigned long long>::lowest());
         }
 
         SECTION("int8_t")
         {
             auto n = j.get<int8_t>();
-            if constexpr (std::numeric_limits<int8_t>::lowest() > jMin)
+            if (std::numeric_limits<int8_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int8_t>::lowest());
         }
 
         SECTION("int16_t")
         {
             auto n = j.get<int16_t>();
-            if constexpr (std::numeric_limits<int16_t>::lowest() > jMin)
+            if (std::numeric_limits<int16_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int16_t>::lowest());
         }
 
         SECTION("int32_t")
         {
             auto n = j.get<int32_t>();
-            if constexpr (std::numeric_limits<int32_t>::lowest() > jMin)
+            if (std::numeric_limits<int32_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int32_t>::lowest());
         }
 
         SECTION("int64_t")
         {
             auto n = j.get<int64_t>();
-            if constexpr (std::numeric_limits<int64_t>::lowest() > jMin)
+            if (std::numeric_limits<int64_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int64_t>::lowest());
         }
 
         SECTION("int8_fast_t")
         {
             auto n = j.get<int_fast8_t>();
-            if constexpr (std::numeric_limits<int_fast8_t>::lowest() > jMin)
+            if (std::numeric_limits<int_fast8_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int_fast8_t>::lowest());
         }
 
         SECTION("int16_fast_t")
         {
             auto n = j.get<int_fast16_t>();
-            if constexpr (std::numeric_limits<int_fast16_t>::lowest() > jMin)
+            if (std::numeric_limits<int_fast16_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int_fast16_t>::lowest());
         }
 
         SECTION("int32_fast_t")
         {
             auto n = j.get<int_fast32_t>();
-            if constexpr (std::numeric_limits<int_fast32_t>::lowest() > jMin)
+            if (std::numeric_limits<int_fast32_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int_fast32_t>::lowest());
         }
 
         SECTION("int64_fast_t")
         {
             auto n = j.get<int_fast64_t>();
-            if constexpr (std::numeric_limits<int_fast64_t>::lowest() > jMin)
+            if (std::numeric_limits<int_fast64_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int_fast64_t>::lowest());
         }
 
         SECTION("int8_least_t")
         {
             auto n = j.get<int_least8_t>();
-            if constexpr (std::numeric_limits<int_least8_t>::lowest() > jMin)
+            if (std::numeric_limits<int_least8_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int_least8_t>::lowest());
         }
 
         SECTION("int16_least_t")
         {
             auto n = j.get<int_least16_t>();
-            if constexpr (std::numeric_limits<int_least16_t>::lowest() > jMin)
+            if (std::numeric_limits<int_least16_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int_least16_t>::lowest());
         }
 
         SECTION("int32_least_t")
         {
             auto n = j.get<int_least32_t>();
-            if constexpr (std::numeric_limits<int_least32_t>::lowest() > jMin)
+            if (std::numeric_limits<int_least32_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int_least32_t>::lowest());
         }
 
         SECTION("int64_least_t")
         {
             auto n = j.get<int_least64_t>();
-            if constexpr (std::numeric_limits<int_least64_t>::lowest() > jMin)
+            if (std::numeric_limits<int_least64_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<int_least64_t>::lowest());
         }
 
         SECTION("uint8_t")
         {
             auto n = j.get<uint8_t>();
-            if constexpr (std::numeric_limits<uint8_t>::lowest() > jMin)
+            if (std::numeric_limits<uint8_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint8_t>::lowest());
         }
 
         SECTION("uint16_t")
         {
             auto n = j.get<uint16_t>();
-            if constexpr (std::numeric_limits<uint16_t>::lowest() > jMin)
+            if (std::numeric_limits<uint16_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint16_t>::lowest());
         }
 
         SECTION("uint32_t")
         {
             auto n = j.get<uint32_t>();
-            if constexpr (std::numeric_limits<uint32_t>::lowest() > jMin)
+            if (std::numeric_limits<uint32_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint32_t>::lowest());
         }
 
         SECTION("uint64_t")
         {
             auto n = j.get<uint64_t>();
-            if constexpr (std::numeric_limits<uint64_t>::lowest() > jMin)
+            if (std::numeric_limits<uint64_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint64_t>::lowest());
         }
 
         SECTION("uint8_fast_t")
         {
             auto n = j.get<uint_fast8_t>();
-            if constexpr (std::numeric_limits<uint_fast8_t>::lowest() > jMin)
+            if (std::numeric_limits<uint_fast8_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint_fast8_t>::lowest());
         }
 
         SECTION("uint16_fast_t")
         {
             auto n = j.get<uint_fast16_t>();
-            if constexpr (std::numeric_limits<uint_fast16_t>::lowest() > jMin)
+            if (std::numeric_limits<uint_fast16_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint_fast16_t>::lowest());
         }
 
         SECTION("uint32_fast_t")
         {
             auto n = j.get<uint_fast32_t>();
-            if constexpr (std::numeric_limits<uint_fast32_t>::lowest() > jMin)
+            if (std::numeric_limits<uint_fast32_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint_fast32_t>::lowest());
         }
 
         SECTION("uint64_fast_t")
         {
             auto n = j.get<uint_fast64_t>();
-            if constexpr (std::numeric_limits<uint_fast64_t>::lowest() > jMin)
+            if (std::numeric_limits<uint_fast64_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint_fast64_t>::lowest());
         }
 
         SECTION("uint8_least_t")
         {
             auto n = j.get<uint_least8_t>();
-            if constexpr (std::numeric_limits<uint_least8_t>::lowest() > jMin)
+            if (std::numeric_limits<uint_least8_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint_least8_t>::lowest());
         }
 
         SECTION("uint16_least_t")
         {
             auto n = j.get<uint_least16_t>();
-            if constexpr (std::numeric_limits<uint_least16_t>::lowest() > jMin)
+            if (std::numeric_limits<uint_least16_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint_least16_t>::lowest());
         }
 
         SECTION("uint32_least_t")
         {
             auto n = j.get<uint_least32_t>();
-            if constexpr (std::numeric_limits<uint_least32_t>::lowest() > jMin)
+            if (std::numeric_limits<uint_least32_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint_least32_t>::lowest());
         }
 
         SECTION("uint64_least_t")
         {
             auto n = j.get<uint_least64_t>();
-            if constexpr (std::numeric_limits<uint_least64_t>::lowest() > jMin)
+            if (std::numeric_limits<uint_least64_t>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<uint_least64_t>::lowest());
         }
 
         SECTION("float")
         {
             auto n = j.get<float>();
-            if constexpr (std::numeric_limits<float>::lowest() > jMin)
+            if (std::numeric_limits<float>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<float>::lowest());
         }
 
         SECTION("double")
         {
             auto n = j.get<double>();
-            if constexpr (std::numeric_limits<double>::lowest() > jMin)
+            if (std::numeric_limits<double>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<double>::lowest());
         }
     }
