@@ -1834,6 +1834,13 @@ TEST_CASE("value conversion")
             if (std::numeric_limits<double>::max() < jMax)
                 CHECK(n == std::numeric_limits<double>::max());
         }
+
+        SECTION("long double")
+        {
+            auto n = j.get<long double>();
+            if (std::numeric_limits<long double>::max() < jMax)
+                CHECK(n == std::numeric_limits<long double>::max());
+        }
     }
     
     SECTION("overflow unsigned integer")
@@ -2080,6 +2087,13 @@ TEST_CASE("value conversion")
             if (std::numeric_limits<double>::max() < jMax)
                 CHECK(n == std::numeric_limits<double>::max());
         }
+
+        SECTION("long double")
+        {
+            auto n = j.get<long double>();
+            if (std::numeric_limits<long double>::max() < jMax)
+                CHECK(n == std::numeric_limits<long double>::max());
+        }
     }
 
     SECTION("underflow integer")
@@ -2323,6 +2337,13 @@ TEST_CASE("value conversion")
         SECTION("double")
         {
             auto n = j.get<double>();
+            if (std::numeric_limits<double>::lowest() > jMin)
+                CHECK(n == std::numeric_limits<double>::lowest());
+        }
+
+        SECTION("long double")
+        {
+            auto n = j.get<long double>();
             if (std::numeric_limits<double>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<double>::lowest());
         }
@@ -2571,6 +2592,13 @@ TEST_CASE("value conversion")
             if (std::numeric_limits<double>::max() < jMax)
                 CHECK(n == std::numeric_limits<double>::max());
         }
+
+        SECTION("long double")
+        {
+            auto n = j.get<long double>();
+            if (std::numeric_limits<long double>::max() < jMax)
+                CHECK(n == std::numeric_limits<long double>::max());
+        }
     }
 
     SECTION("underflow float")
@@ -2816,6 +2844,13 @@ TEST_CASE("value conversion")
             if (std::numeric_limits<double>::lowest() > jMin)
                 CHECK(n == std::numeric_limits<double>::lowest());
         }
+
+        SECTION("long double")
+        {
+            auto n = j.get<long double>();
+            if (std::numeric_limits<long double>::lowest() > jMin)
+                CHECK(n == std::numeric_limits<long double>::lowest());
+        }
     }
 
     SECTION("Infinity float")
@@ -2833,6 +2868,12 @@ TEST_CASE("value conversion")
         {
             auto n = j.get<double>();
             CHECK(n == std::numeric_limits<double>::infinity());
+        }
+        
+        SECTION("long double")
+        {
+            auto n = j.get<long double>();
+            CHECK(n == std::numeric_limits<long double>::infinity());
         }
         
         SECTION("short")
@@ -3046,6 +3087,12 @@ TEST_CASE("value conversion")
             CHECK(n == -std::numeric_limits<double>::infinity());
         }
         
+        SECTION("long double")
+        {
+            auto n = j.get<long double>();
+            CHECK(n == -std::numeric_limits<long double>::infinity());
+        }
+        
         SECTION("short")
         {
             auto n = j.get<short>();
@@ -3253,6 +3300,12 @@ TEST_CASE("value conversion")
         SECTION("double")
         {
             auto n = j.get<double>();
+            CHECK( std::isnan(n) );
+        }
+        
+        SECTION("long double")
+        {
+            auto n = j.get<long double>();
             CHECK( std::isnan(n) );
         }
         
