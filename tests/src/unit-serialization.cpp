@@ -311,14 +311,16 @@ TEST_CASE("dump for basic_json with long double number_float_t")
     SECTION("round-trip dump/parse")
     {
         constexpr std::array<long double, 13> values =
-        {{
-            0.0L, -0.0L, 1.0L, -1.0L,
-            0.5L, -0.5L, 1.5L, -2.25L,
-            1.23e45L, 1.23e-45L,
-            (std::numeric_limits<long double>::min)(),
-            std::numeric_limits<long double>::lowest(),
-            (std::numeric_limits<long double>::max)()
-        }};
+        {
+            {
+                0.0L, -0.0L, 1.0L, -1.0L,
+                0.5L, -0.5L, 1.5L, -2.25L,
+                1.23e45L, 1.23e-45L,
+                (std::numeric_limits<long double>::min)(),
+                std::numeric_limits<long double>::lowest(),
+                (std::numeric_limits<long double>::max)()
+            }
+        };
 
         for (long double v : values)
         {

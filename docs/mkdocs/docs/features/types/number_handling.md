@@ -243,6 +243,19 @@ integers, and between integers and floating-point values to integers. This behav
     Note the last line with throw a [`json.exception.type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302)
     exception if `jd` is not a numerical type, for instance a string.
 
+    Numeric conversions are performed according to the corresponding C++ conversion rules. The library does not perform
+    range checks when converting between numeric types.
+    
+    In particular, conversions from floating-point values to integer types, or conversions to integer types with a
+    smaller range than the stored value, may produce implementation-defined or undefined behavior if the source value
+    cannot be represented by the target type.
+    
+    Applications requiring checked conversions should inspect the stored number type with
+    [`is_number_float()`](../../api/basic_json/is_number_float.md),
+    [`is_number_integer()`](../../api/basic_json/is_number_integer.md),
+    [`is_number_unsigned()`](../../api/basic_json/is_number_unsigned.md), or
+    [`type()`](../../api/basic_json/type.md), and perform explicit range checks before converting to a narrower type.
+
 The rationale is twofold:
 
 1. JSON does not define a number type or precision (see above).

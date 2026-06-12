@@ -270,6 +270,7 @@ nav:
       - macros:
           - 'Overview': api/macros/index.md
           - 'JSON_ASSERT': api/macros/json_assert.md
+          - 'JSON_BRACE_INIT_COPY_SEMANTICS': api/macros/json_brace_init_copy_semantics.md
           - 'JSON_CATCH_USER, JSON_THROW_USER, JSON_TRY_USER': api/macros/json_throw_user.md
           - 'JSON_DIAGNOSTICS': api/macros/json_diagnostics.md
           - 'JSON_DIAGNOSTIC_POSITIONS': api/macros/json_diagnostic_positions.md

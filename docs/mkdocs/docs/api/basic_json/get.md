@@ -90,9 +90,24 @@ Depends on what `json_serializer<ValueType>` `from_json()` method throws
 
 ## Notes
 
-!!! danger "Undefined behavior"
+!!! danger "Undefined behavior for pointers"
 
     Writing data to the pointee (overload 3) of the result yields an undefined state.
+
+!!! danger "Undefined behavior for numeric conversions"
+
+    Conversions between numeric types are performed by the corresponding
+    `from_json()` implementation using the target C++ type. When converting
+    between numeric types, the library does not check whether the source
+    value is representable by the target type.
+    
+    If the source value is outside the range of the target type, the behavior
+    is the same as the corresponding C++ conversion. In particular, converting
+    a floating-point value to an integer type that cannot represent the value
+    results in undefined behavior.
+
+    See [Number conversion](../../features/types/number_handling.md#number-conversion)
+    for more information.
 
 ## Examples
 
