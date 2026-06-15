@@ -450,6 +450,10 @@ inline void to_json(BasicJsonType& j, const std::basic_string<char8_t, Tr, Alloc
 }
 #endif
 
+// Workaround for MSVC 19.51 (and possibly later): in large cpp files, the compiler may fail to resolve with generic has_to_json (issue #4996)
+template<typename BasicJsonType>
+struct has_to_json<BasicJsonType, std_fs::path, void> : std::true_type {};
+
 template<typename BasicJsonType>
 inline void to_json(BasicJsonType& j, const std_fs::path& p)
 {
