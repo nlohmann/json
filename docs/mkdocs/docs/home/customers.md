@@ -76,6 +76,7 @@ the result of an internet search. If you know further customers of the library, 
 - [**ImHex**](https://github.com/WerWolv/ImHex), a hex editor designed for reverse engineering, providing advanced features for data analysis and manipulation
 - [**Intel GPA Framework**](https://intel.github.io/gpasdk-doc/src/licenses.html), a suite of cross-platform tools for capturing, analyzing, and optimizing graphics applications across different APIs
 - [**Intopix**](https://www.intopix.com/software-licensing), a provider of advanced image processing and compression solutions used in software development and AV workflows
+- [**Java SE**](https://www.oracle.com/a/tech/docs/jdk8-lium.pdf), the core Java platform that provides the libraries and runtime needed to build and run general-purpose Java applications
 - [**MKVToolNix**](https://mkvtoolnix.download/doc/README.md), a set of tools for creating, editing, and inspecting MKV (Matroska) multimedia container files
 - [**Meta Yoga**](https://github.com/facebook/yoga), a layout engine that facilitates flexible and efficient user interface design across multiple platforms
 - [**NVIDIA Nsight Compute**](https://docs.nvidia.com/nsight-compute/2022.2/pdf/CopyrightAndLicenses.pdf), a performance analysis tool for CUDA applications that provides detailed insights into GPU performance metrics
