@@ -1,0 +1,399 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <title>Artistic Style - Release Notes</title>
+    <meta http-equiv="Content-Language" content="en-us" />
+    <meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
+    <link href="favicon.ico" rel="shortcut icon" type="image/x-icon" />
+    <link href="styles.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+    <h1>Artistic Style Release Notes</h1>
+
+    <h3>Artistic Style 3.4.13 (March 2024)</h3>
+    <ul>
+        <li>fix comment indent after string macro with R suffix (https://gitlab.com/saalen/astyle/-/issues/39)</li>
+        <li>do not break single line block after enum in mozilla mode (https://gitlab.com/saalen/astyle/-/issues/38)</li>
+        <li>adjust cmake policy for new versions only (https://gitlab.com/saalen/astyle/-/issues/40)</li>
+        <li>update man page path</li>
+        <li>add support for scikit-build-core</li>
+    </ul>
+
+    <h3>Artistic Style 3.4.12 (February 2024)</h3>
+    <ul>
+        <li>added "--pad-brackets-in" and "--pad-brackets-out" options (https://gitlab.com/saalen/astyle/-/issues/33)</li>
+        <li>fixed indentation of initializer lists (https://gitlab.com/saalen/astyle/-/issues/28)</li>
+        <li>fixed crash with "--add-braces=nested" applied to if-else blocks (https://gitlab.com/saalen/astyle/-/issues/36)</li>
+    </ul>
+
+    <h3>Artistic Style 3.4.11 (January 2024)</h3>
+
+    <ul>
+        <li>added new option "--add-braces=nested" to add braces in nested single line statements (https://gitlab.com/saalen/astyle/-/issues/27)</li>
+        <li>fix indent after double template brackets (https://gitlab.com/saalen/astyle/-/issues/28)</li>
+        <li>fix indent after dot (https://gitlab.com/saalen/astyle/-/issues/28)</li>
+        <li>"--squeeze-lines=1" is no longer default with Linux builds (#559)</li>
+        <li>add experimental GHC mode (https://gitlab.com/saalen/astyle/-/issues/31)</li>
+        <li>fix indent after raw string (https://gitlab.com/saalen/astyle/-/issues/32)</li>
+    </ul>
+
+    <h3>Artistic Style 3.4.10 (October 2023)</h3>
+
+    <ul>
+        <li>fixed missing indent in function parameter list (https://gitlab.com/saalen/astyle/-/issues/16)</li>
+    </ul>
+
+    <h3>Artistic Style 3.4.9 (October 2023)</h3>
+
+    <ul>
+        <li>applied one wording for <span style="white-space: nowrap;">Objective-C</span> in the docs</li>
+        <li>fixed more CS regressions (https://gitlab.com/saalen/astyle/-/issues/16)</li>
+        <li>fixed inserting space with combined "--pad-oper" and "--align-pointer" options (#557)</li>
+    </ul>
+
+    <h3>Artistic Style 3.4.8 (September 2023)</h3>
+
+    <ul>
+        <li>fixed lambda broken brace after auto keyword (#554)</li>
+        <li>fixed line break after comment in asm block (#226)</li>
+        <li>fixed padding of multiply operator (#126)</li>
+        <li>fixed indentation of method calls (#434)</li>
+        <li>fixed empty line after closing while block (https://gitlab.com/saalen/astyle/-/issues/18)</li>
+        <li>added outer padding for empty parens pairs (https://gitlab.com/saalen/astyle/-/issues/19) </li>
+        <li>fixed more CS regressions (https://gitlab.com/saalen/astyle/-/issues/16)</li>
+    </ul>
+
+    <h3>Artistic Style 3.4.6 (August 2023)</h3>
+
+    <ul>
+        <li>added VS2022 project files (https://gitlab.com/saalen/astyle/-/merge_requests/3)</li>
+        <li>fixed CS regressions (https://gitlab.com/saalen/astyle/-/issues/16)</li>
+        <li>added CS coalesce assignment operator (https://gitlab.com/saalen/astyle/-/issues/17)</li>
+    </ul>
+
+    <h3>Artistic Style 3.4.1 (August 2023)</h3>
+
+    <ul>
+        <li>fixed padding of &amp; following a comma (#552)</li>
+        <li>fixed indent of function declarations following access modifiers (#504)</li>
+        <li>fixed indent of C# allocation blocks (#464)</li>
+        <li>fixed indentation of comments after CS interpolation quotes (https://gitlab.com/saalen/astyle/-/issues/16)</li>
+    </ul>
+
+    <h3>Artistic Style 3.4 (June 2023)</h3>
+
+    <ul>
+        <li>fixed formatting of CS interpolation literals (https://gitlab.com/saalen/astyle/-/issues/8).</li>
+        <li>fixed false lambda recognition (https://gitlab.com/saalen/astyle/-/issues/11)</li>
+        <li>fixed indentation of member declarations (https://gitlab.com/saalen/astyle/-/issues/10)</li>
+        <li>fixed indentation of struct assignments (https://gitlab.com/saalen/astyle/-/issues/12)</li>
+        <li>added new option "--indent-lambda" to enable new lambda recognition (https://gitlab.com/saalen/astyle/-/issues/7)</li>
+        <li>added link to astyle Python distribution projects (https://gitlab.com/saalen/astyle/-/issues/6)</li>
+    </ul>
+
+    <h3>Artistic Style 3.3 (May 2023)</h3>
+
+    <ul>
+        <li>added new option "--squeeze-ws" to remove superfluous whitespace (experimental)</li>
+        <li>added new option "--squeeze-lines" to remove superfluous empty lines (experimental, #19, #22, #43, #72, #84, #93, #105, #517)</li>
+        <li>added new options "--pad-brackets" and  "--unpad-brackets" to add or remove whitespace around square brackets (experimental)</li>
+        <li>fixed indent of lambda bodies in fct calls (#121)</li>
+        <li>fixed indent of struct names including &quot;struct&quot; (#526)</li>
+        <li>fixed indent of C++11 initializer lists (#516)</li>
+        <li>fixed padding of pointers separated by comma (#537)</li>
+        <li>refactored namespace std usage</li>
+    </ul>
+
+    <h3>Artistic Style 3.2.1 (March 2023)</h3>
+
+    <ul>
+    <li>fixed struct recognition related to SF #534 (https://gitlab.com/saalen/astyle/-/issues/1)</li>
+    </ul>
+
+    <h3>Artistic Style 3.2 (March 2023)</h3>
+
+    <ul>
+        <li>Add new option "style=webkit" for the WebKit brace style.</li>
+        <li>Improve recognition of pointer variable types.</li>
+        <li>Change CMake files to the &quot;modern&quot; format.</li>
+        <li>Fix formatting of raw string literals with the opening &#39;(&#39; at the end of line (#519).</li>
+        <li>Fix indentation of comments in a preprocessor define indented with tabs (#506).</li>
+        <li>Fix vector limit segfault with g++-8, recursive, and -D_GLIBCXX_ASSERTIONS (#503).</li>
+        <li>Refactoring:
+            <ul>
+                <li>Extract new method for options in ASOptions class to avoid compiler limits.</li>
+                <li>Change vector push_back to emplace_back except for vector&lt;bool&gt;.</li>
+                <li>Changes from clang-tidy to modernize code.</li>
+            </ul>
+        </li>
+        <li>added man page</li>
+        <li>removed deprecated options</li>
+        <li>added shell completion scripts</li>
+        <li>added &quot;--mode=js&quot; option</li>
+        <li>added INVALID_TYPE constant</li>
+        <li>removed upper limit of &quot;max-continuation-indent&quot;</li>
+        <li>fixed raw string parsing (#535)</li>
+        <li>fixed recognition of rvalue operator as reference (#543)</li>
+        <li>fixed reverting effect of AttachReturnType option (#527)</li>
+        <li>fixed padding of dereference operator (#544)</li>
+        <li>added C++ spaceship operator (#538)</li>
+        <li>fixed case indent after enum return value (#550)</li>
+        <li>fixed space deletion when aligning ref value name (#546)</li>
+        <li>fixed reverting effect of maxCodeLength and AttachReturnType options (#545)</li>
+        <li>fixed break of continued preprocessor strings with colon (#533)</li>
+        <li>fixed struct bitfield indentation (#534)</li>
+        <li>replace PATH_MAX by realpath (#549)</li>
+        <li>fixed negative integer literal breaks initializer list (#485)</li>
+        <li>fixed documentation of --delete-empty-lines short option (#508)</li>
+        <li>fixed project file search (#541)</li>
+        <li>fixed indent of ObjectiveC statements (#525)</li>
+        <li>fixed parsing of C# interpolation strings (#483)</li>
+        <li>fixed break-blocks format after struct (#518)</li>
+        <li>fixed project file search with wildcard input paths (https://gitlab.com/saalen/astyle/-/issues/1)</li>
+        <li>https://sourceforge.net/p/astyle/tickets/130/ better description for stat errors</li>
+        <li>https://sourceforge.net/p/astyle/tickets/129/ applied IT localization patch</li>
+        <li>improved DE localization</li>
+    </ul>
+
+    <h3>Artistic Style 3.1 (January 2018)</h3>
+
+    <ul>
+        <li>Add new options "project", "project=####", and "project=none" (#11).</li>
+        <li>Add new options, &quot;break-return-type&quot; and &quot;break-return-type-decl&quot; (#358, 286, 205, 16).
+        </li>
+        <li>Add new options, &quot;attach-return-type&quot; and &quot;attach-return-type-decl&quot; (#358, 286, 205, 16).
+        </li>
+        <li>Add new option "style=ratliff", as an alternate name for banner style.</li>
+        <li>Add new environment variable ARTISTIC_STYLE_PROJECT_OPTIONS (#11).</li>
+        <li>Add multiple extensions to the command line file paths option.</li>
+        <li>Improve recognition of unary + and - when using pad-oper.</li>
+        <li>Change the Windows default options file location from USERPROFILE to APPDATA.</li>
+        <li>Change options file input to accept UTF-16, or UTF-8 with a BOM (or signature).</li>
+        <li>Change &quot;unsigned short&quot; data type to c++11 &quot;char16_t&quot;.</li>
+        <li>Change translations for new project options file.</li>
+        <li>Fix utf8LengthFromUtf16() calculation being less than the actual length.</li>
+        <li>Fix multiply followed by a dereference for &quot;align-pointer=type&quot;.</li>
+        <li>Fix recognition of a uniform class initializer in a base class initialization (#441).</li>
+        <li>Fix indentation of "volatile" keyword not used in a method definition (#450).</li>
+        <li>Fix indentation of "final" keyword not used in a method definition (#450).</li>
+        <li>Fix indentation of compound literals in an argument list (#456).</li>
+        <li>Fix indentation of trailing return type method following a constructor (#463).</li>
+        <li>Fix space padding of closing brace before a dot (#468).</li>
+        <li>Fix <span style="white-space: nowrap;">Objective-C</span> to allow for &quot;Extern C&quot; statements in the source files (#443, 444, 446).</li>
+        <li>Fix <span style="white-space: nowrap;">Objective-C</span> to allow for method definitions without a specified return type (#447).</li>
+        <li>Fix <span style="white-space: nowrap;">Objective-C</span> to allow for method definitions with multiple param types.</li>
+        <li>Fix <span style="white-space: nowrap;">Objective-C</span> to replace tabbed padding with a space.</li>
+        <li>Fix <span style="white-space: nowrap;">Objective-C</span> formatting of line-end comments with &quot;unpad-return-type&quot;.</li>
+        <li>Fix <span style="white-space: nowrap;">Objective-C</span> &quot;align-method-colon&quot; to ignore ternary (?) operators.</li>
+        <li>Fix C# base class constructor indentation (#459).</li>
+        <li>Fix C# indentation of method declaration containing a colon (#465)</li>
+        <li>Fix C/C++ to allow &quot;interface&quot; as a non-keyword (#445).</li>
+        <li>Fix Java to allow &quot;default&quot; as a non-switch keyword.</li>
+        <li>Fix line ends initialization if no line end has been read.</li>
+        <li>Fix Java build from including ASLocalizer in the shared library.</li>
+        <li>Fix to check for AStyleWx line tags after C style comments.</li>
+        <li>Fix boundary conditions and other errors discovered by fuzzing.</li>
+        <li>Refactoring:
+            <ul>
+                <li>Extract method isNumericVariable() in ASFormatter class.</li>
+                <li>Extract method isTopLevel() in ASBeautifier class.</li>
+                <li>Extract method fileExists() in Console class.</li>
+                <li>Rename ASEncoding variable from &quot;utf8_16&quot; to &quot;encode&quot;.</li>
+                <li>Rename ASBeautifier vector from squareBracketDepthStack to parenDepthStack.</li>
+                <li>Combine style options in ASOptions class to avoid compiler limits.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h3>Artistic Style 3.0.1 (May 2017)</h3>
+
+    <ul>
+        <li>Fix crash caused by certain class initializer formats (#435).</li>
+        <li>Fix &quot;final&quot; identifier not being recognized as a pre-command header (#433).</li>
+        <li>Fix recognition of certain rvalue reference variables.</li>
+    </ul>
+
+    <h3>Artistic Style 3.0 (April 2017)</h3>
+
+    <ul>
+        <li>Add new option "indent-after-parens" (#396, 152, 108, 79).</li>
+        <li>Add new option "attach-closing-while" (#177).</li>
+        <li>Add &quot;style=run-in&quot; as an alternative for &quot;style=horstmann&quot;.</li>
+        <li>Add &quot;break-closing-braces&quot; to &quot;style=stroustrup&quot; (#267).</li>
+        <li>Add formatting for C++11 trailing return type methods.</li>
+        <li>Add new class ASPeekStream using RAII to allow early method returns.</li>
+        <li>Change affected variable names to new AStyle terminology.</li>
+        <li>Change some vector push_back() statements to emplace_back().</li>
+        <li>Fix memory leak when using &quot;indent-preproc-define&quot;.</li>
+        <li>Fix sometimes splitting an r-value reference when &quot;pad-oper&quot; is used.</li>
+        <li>Fix in-statement-indent brace check not always checking a brace (#421).</li>
+        <li>Fix formatting of C# get/set and add/remove when braces are attached (#430).</li>
+        <li>Fix formatting of C# generic constraints (#430).</li>
+        <li>Fix padding of C# null conditional operator.</li>
+        <li>Fix attach-inlines to not attach a brace followed by a run-in comment.</li>
+        <li>Fix not always breaking lines after &quot;add-braces&quot; (#341).</li>
+        <li>Fix unpadding the &quot;in&quot; in a foreach statement (#386).</li>
+        <li>Fix boundary conditions discovered by american fuzzy lop fuzzer (#370).</li>
+        <li>Refactoring:
+            <ul>
+                <li>Replace NULL with C++11 nullptr.</li>
+                <li>Rename Utf8_16 class to ASEncoding.</li>
+                <li>Move ASConsole constructor and destructor from inline to non-inline.</li>
+                <li>Move console error stream (cerr) from global to ASConsole class.</li>
+                <li>Move ASConsole pointer in ASOptions from global to a class member.</li>
+                <li>Move findHeader and findOperator methods from ASBeautifier to ASBase.</li>
+                <li>Minor changes from PVS-Studio analyzer.</li>
+                <li>Minor changes from clang-tidy.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h3>Artistic Style 2.06 (December 2016)</h3>
+
+    <ul>
+        <li>Add new bracket style option "style=mozilla".</li>
+        <li>Add new option "break-one-line-headers" (#33, 64, 367).</li>
+        <li>Add new option &quot;indent-continuation&quot;.</li>
+        <li>Add new option &quot;pad-comma&quot; (#100).</li>
+        <li>Add removing spaces before a comma (#100).</li>
+        <li>Add new <span style="white-space: nowrap;">Objective-C</span> options "pad-return-type" (-xq) and "unpad-return-type" (-xr).</li>
+        <li>Add new <span style="white-space: nowrap;">Objective-C</span> options "pad-param-type" (-xS) and "unpad-param-type" (-xs).</li>
+        <li>Add formatting of C++14 single-quote digit separators (#337).</li>
+        <li>Add indentation for CORBA IDL module statement (#414).</li>
+        <li>Add translations for Bulgarian, Estonian, Greek, Hungarian, Norwegian, and Romanian.</li>
+        <li>Remove lineend option from formatCinToCout function.</li>
+        <li>Improve align-method-colon and apply to <span style="white-space: nowrap;">Objective-C</span> method calls.</li>
+        <li>Improve recognition of header guards in preprocessor statements.</li>
+        <li>Improve recognition of C++11 uniform initializer brackets (#381, 411, 415).</li>
+        <li>Improve the processing of quoted strings and verbatim strings.</li>
+        <li>Change align-method-colon short first line to align on the longest line instead of the first line.</li>
+        <li>Change to not break empty one line brackets to support new &quot;break-one-line-headers&quot;.</li>
+        <li>Change add-brackets to not add to one line blocks to support new &quot;break-one-line-headers&quot;.</li>
+        <li>Change add-brackets to not add to one line statements in support new &quot;break-one-line-headers&quot;.</li>
+        <li>Fix not recognizing an escaped space character within a quote (#403).</li>
+        <li>Fix not recognizing &quot;else&quot; brackets as COMMAND_TYPE (#400).</li>
+        <li>Fix attaching &quot;if&quot; statements to a #else preprocessor directive (#356).</li>
+        <li>Fix not clearing global variables for a new file (#364).</li>
+        <li>Fix not recognizing an rvalue reference in a template (#404).</li>
+        <li>Fix breaking a line when processing the first line of a file (#400).</li>
+        <li>Fix breaking a line in an exponential (#392).</li>
+        <li>Fix indentation of an &quot;enum&quot; without following brackets (#401, 384).</li>
+        <li>Fix indentation of arguments using preceding commas (#355).</li>
+        <li>Fix indentation of Pico style one line blocks.</li>
+        <li>Fix not padding header for &quot;new&quot; or &quot;delete&quot; followed by parens.</li>
+        <li>Fix template variable not being cleared at end of a statement (#380).</li>
+        <li>Fix &quot;close-templates&quot; to only close ending angle brackets (#375).</li>
+        <li>Fix pad-oper to not pad a + or - following an open bracket (#378).</li>
+        <li>Fix C# to recognize &quot;using&quot; as a header.</li>
+        <li>Fix C# to always recognize &quot;forever&quot; as a header.</li>
+        <li>Fix Pico style not always computing the indentation for one line blocks.</li>
+        <li>Fix indentation of <span style="white-space: nowrap;">Objective-C</span> @interface statement (#333).</li>
+        <li>Fix assert error when <span style="white-space: nowrap;">Objective-C</span> &quot;@&quot; is followed by whitespace.</li>
+        <li>Fix end of line comments for &quot;pad-method-prefix&quot; and &quot;unpad-method-prefix&quot;.</li>
+        <li>Fix end of line comments for &quot;pad-method-colon&quot;.</li>
+        <li>Refactoring:
+            <ul>
+                <li>Consolidate scattered ASFormatter conditional statements into a padParenObjC method.</li>
+                <li>Remove BracketMode STROUSTRUP_MODE and change it to LINUX_MODE.</li>
+                <li>Remove ASBase methods from being inlined as class definitions.</li>
+                <li>Replace C char arrays in astyle_main.cpp with C++ strings.</li>
+                <li>Return language translation as a mutable variable.</li>
+                <li>Portability changes for additional compiler support (#352).</li>
+                <li>Minor changes based on results of the Clang-Tidy. </li>
+            </ul>
+        </li>
+    </ul>
+
+    <h3>Artistic Style 2.05.1 (December 2014)</h3>
+
+    <ul>
+        <li>Fix incorrectly reporting files containing disabled formatting as being formatted.</li>
+        <li>Fix incorrect handling of quoted arguments in the options file (#321).</li>
+        <li>Fix error in identifying an enum return type as an enumeration (#322, 323).</li>
+        <li>Fix error in identifying an enum argument as an enumeration (#327).</li>
+        <li>Fix recognition of Qt keywords when used as variables in C++ (#329).</li>
+        <li>Fix recognition of a pointer in a C++ cast (#316).</li>
+        <li>Fix removing trailing whitespace after a changed pointer or reference cast.</li>
+    </ul>
+
+    <h3>Artistic Style 2.05 (November 2014)</h3>
+
+    <ul>
+        <li>Add new bracket style option "style=vtk" (#155).</li>
+        <li>Add new option &quot;indent-preproc-block&quot; to indent blocks of preprocessor directives (#21, #114, #229,
+            #242, #294).</li>
+        <li>Add new option, "dry-run", to run AStyle without updating the files (#184, #285).</li>
+        <li>Add new options, "html" (-!") and "html=###", to display the HTML help documentation in the default browser.
+        </li>
+        <li>Add tags &quot;*INDENT-OFF*&quot; and &quot;*INDENT_ON*&quot; to disable formatting of source code blocks
+            (#2, #47, #55, #78, #110, #176).</li>
+        <li>Add tag *NOPAD* to disable selected formatting on a single line.</li>
+        <li>Add &#39;__attribute__ ((visibility (&quot;default&quot;)))&#39; to Linux exported functions.</li>
+        <li>Remove option &quot;style=ansi&quot; and make it depreciated (#146).</li>
+        <li>Remove fix for broken &#39;case&#39; statements from release 2.02.1, Nov 21, 2011.</li>
+        <li>Improve Korean translation (#256).</li>
+        <li>Change shared libraries to include the version number as part of the file name (#264)</li>
+        <li>Change "help" display to stdout to allow piping and redirection (#63).</li>
+        <li>Change "version" display to stdout. </li>
+        <li>Change headers to include foreach, forever, Q_FOREACH, and Q_FOREVER (#98, #154).</li>
+        <li>Change compiler definition ASTYLE_NO_VCX (no Visual Studio exports) to ASTYLE_NO_EXPORTS.</li>
+        <li>Change shared library error handler argument from &quot;char*&quot; to &quot;const char*&quot;.</li>
+        <li>Fix not recognizing noexcept, interrupt, and autoreleasepool as pre-command headers (#225, #259).</li>
+        <li>Fix formatting of C++11 uniform initializer brackets (#253, #257, #260, #284).</li>
+        <li>Fix to not automatically space pad C++11 uniform initializer brackets (#275).</li>
+        <li>Fix formatting of enums with leading commas (#159, #179, #270).</li>
+        <li>Fix formatting of logical &amp;&amp; operator in class initializers (#290).</li>
+        <li>Fix flagging a &#39;const&#39; variable as a &#39;const&#39; method (#275).</li>
+        <li>Fix piping and redirection adding an extra character to the output (#245, #252, #305). </li>
+        <li>Fix "indent-modifiers" to attach class access modifiers to Horstmann style brackets. </li>
+        <li>Fix ASFormatter to correctly recognize the end of a C++ raw string literal (#261).</li>
+        <li>Fix to recognize C++11 &quot;enum class&quot; as an enum (#303).</li>
+        <li>Fix indent of C++11 &quot;noexecpt&quot; statements within a class (#260, #304).</li>
+        <li>Fix not resetting templateDepth when a template was not found (#295).</li>
+        <li>Fix formatting of multiplication in a block paren (#144).</li>
+        <li>Fix whitespace padding when formatting an rvalue references (#297).</li>
+        <li>Fix to recognize an rvalue reference without a name (#265).</li>
+        <li>Fix to not identify an operator overload method as a calculation (#296).</li>
+        <li>Fix concatenating multiplication with a pointer dereference (#291).</li>
+        <li>Fix recognition of a pointer dereference following a question mark (#213).</li>
+        <li>Fix extra space after a trailing reference type (#300).</li>
+        <li>Fix _asm blocks not being identified as a block opener and the variable not cleared on exit (#163).</li>
+        <li>Fix indentation of line comments before a &quot;class&quot; opening bracket.</li>
+        <li>Fix indentation of line comments before a &quot;namespace&quot; opening bracket.</li>
+        <li>Fix isBracketType() method to correctly process a NULL_TYPE.</li>
+        <li>Fix unpad-paren to recognize additional variables (#43, #132, #143). </li>
+        <li>Fix indentation of C# &quot;let&quot; statements.</li>
+        <li>Fix a few omissions with &quot;fill-empty-lines&quot;.</li>
+        <li>Fix file read to read 64K blocks of data.</li>
+        <li>Refactor to clarify the code, and improve design and decomposition:
+            <ul>
+                <li>Extract class Utf8_16 from ASConsole. </li>
+                <li>Replace Linux dependency on iconv with a Utf8_16 class for ASLibrary.</li>
+                <li>Move global "using" statements to the astyle namespace in astyle.h and ASLocalizer.h. </li>
+                <li>Move shared library declarations from astyle.h to astyle_main.h.</li>
+                <li>Move indentable macros from ASEnhancer to ASResource and create static pairs.</li>
+                <li>Simplify ASBeautifier procedure to identify the colon (:) type.</li>
+                <li>Major refactoring in ASBeautifier to create separate variables for an enum, a class statement and a class initializer.<br />
+                    This was needed to fix the processing of C++11 uniform initializers in a class initializer.
+                </li>
+                <li>Minor changes to ASFormatter and ASBeautifier based on results of the Clang analyzer. </li>
+                <li>Change several methods in astyle_main to &quot;const&quot;.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <p>
+        <strong>Previous releases are available in the <a href="http://astyle.sourceforge.net/notesArchives.html">Release Notes Archives</a>.</strong>
+    </p>
+
+    <p style="margin-left: -0.4in; text-align: center;">
+        <a href="http://sourceforge.net/projects/astyle">
+            <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=2319&type=16" alt="" /></a></p>
+
+</body>
+
+</html>

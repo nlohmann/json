@@ -1,0 +1,57 @@
+﻿
+/* h1 is a title
+ * h2 is a subtitle
+ * h3 is a hanging text title
+ * h4 is a non-hanging text title
+ * h5 is a non-hanging text title in all caps and black font
+ * p.noindent is non-hanging text (text without a title)
+ * p.contents entries are for the table of contents
+ * a.contents are table of contents links (not underlined)
+ * a.links are links (underlined)
+ * img does not have a border
+ * pre is a predefined format for formatting code
+ */
+
+/* margin: [top] [right] [bottom] [left] */
+
+body { background-color: white; margin: 5em 15em 5em 2em; font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; }
+
+h1 { color: mediumblue; font-style: italic; margin-top: 3em;  }
+h2 { color: mediumblue; font-size: larger; margin-top: 2em;  }
+h3 { color: mediumblue; margin-top: 2em;  }
+h4 { color: mediumblue; margin-top: 2em; }
+h5 { text-transform: uppercase }
+
+p { line-height: 1.2em;}
+
+a.contents:link, a.contents:visited { color: mediumblue; text-decoration: none; }
+a.contents:hover  { color: red; text-decoration: none; }
+a:link, a:visited { color: mediumblue; text-decoration: underline; }
+a:hover { color: red; text-decoration: underline; }
+
+img { border: none; }
+
+pre { color: mediumblue; font-family: 'Courier New', Courier, monospace; background-color: #fffdda; padding: 1em;}
+
+/*- the following styles are for the 'top' button
+    the corresponding javascript is in the html document from
+    https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_scroll_to_top
+*/
+#topBtn {
+    display: none;          /* Hidden by default */
+    position: fixed;        /* Fixed/sticky position */
+    bottom: 55px;           /* Place the button from the bottom */
+    right: 10px;            /* Place the button from the right */
+    z-index: 99;            /* Make sure it does not overlap */
+    border: none;           /* Remove borders */
+    outline: none;          /* Remove outline */
+    background-color: #ccc; /* Set a background color */
+    color: #0000C0;         /* Text color */
+    cursor: pointer;        /* Add a mouse pointer on hover */
+    padding: 10px;          /* Some padding */
+    border-radius: 10px;    /* Rounded corners */
+}
+
+#topBtn:hover {
+    background-color: #aaa; /* Set a darker background on hover */
+}

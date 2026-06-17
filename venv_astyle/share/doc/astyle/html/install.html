@@ -1,0 +1,612 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <title>Artistic Style - Install Information</title>
+    <meta http-equiv="Content-Language" content="en-us" />
+    <meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
+    <link href="favicon.ico" rel="shortcut icon" type="image/x-icon" />
+    <link href="styles.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+    <h1>Artistic Style Install Information</h1>
+
+    <p>
+        &nbsp;</p>
+
+    <h3 id="Contents">Contents</h3>
+
+    <p class="contents1">
+        <a class="contents" href="#_Artistic_Style_Versions">Artistic Style Versions</a></p>
+    <p class="contents1">
+        <a class="contents" href="#_Linux_Version">Linux Version</a></p>
+    <p class="contents2">
+        <a class="contents" href="#_CMake_Linux">CMake Linux</a></p>
+    <p class="contents2">
+        <a class="contents" href="#_GCC_Makefile">GCC Makefile</a></p>
+    <p class="contents2">
+        <a class="contents" href="#_Clang_Makefile">Clang Makefile</a></p>
+    <p class="contents2">
+        <a class="contents" href="#_Intel_Makefile">Intel Makefile</a></p>
+    <p class="contents2">
+        <a class="contents" href="#_CodeBlocks_Linux">CodeBlocks Linux</a></p>
+    <p class="contents1">
+        <a class="contents" href="#_MacOS_Version">MacOS Version</a></p>
+    <p class="contents2">
+        <a class="contents" href="#_CMake_MacOS">CMake MacOS</a></p>
+    <p class="contents2">
+        <a class="contents" href="#_MacOS_Makefile">MacOS Makefile</a></p>
+    <p class="contents2">
+        <a class="contents" href="#_Xcode">Xcode</a></p>
+    <p class="contents1">
+        <a class="contents" href="#_Windows_Version">Windows Version</a></p>
+    <p class="contents2">
+        <a class="contents" href="#_Precompiled_Executable">Precompiled Executable</a></p>
+    <p class="contents2">
+        <a class="contents" href="#_CMake_Windows">CMake Windows</a></p>
+    <p class="contents2">
+        <a class="contents" href="#_CodeBlocks_Windows">CodeBlocks Windows</a></p>
+    <p class="contents2">
+        <a class="contents" href="#_Visual_Studio">Visual Studio</a></p>
+    <p class="contents1">
+        <a class="contents" href="#_Other_Makefile_Targets">Other Makefile Targets</a></p>
+    <p class="contents1">
+        <a class="contents" href="#_Other_Development_Environments">Other Development Environments</a></p>
+    <p class="contents1">
+        <a class="contents" href="#_Compiler_Options">Compiler Options</a></p>
+
+    <p class="contents2">
+        <a class="contents" href="#_PIP">Python PIP</a></p>
+
+    <h3 id="_Artistic_Style_Versions">Artistic Style Versions</h3>
+
+    <p>
+        astyle_x.x_linux.tar.gz is the <strong>Linux </strong>version of Artistic Style. It contains the source code,
+        documentation, and makefiles. The Linux Version compile instructions below give information for compiling the
+        source code.</p>
+    <p>
+        astyle_x.x_macos.tar.gz is the <strong>Mac OS </strong>version of Artistic Style. It contains the source code,
+        documentation, Xcode project files, and a makefile. The Mac OS Version compile instructions below give information
+        for compiling the source code.</p>
+    <p>
+        astyle_x.x_windows.zip is the <strong>Windows </strong>version of Artistic Style. It contains the source code,
+        documentation, and an executable. The Windows Version compile instructions below give
+        information for compiling the source code.
+    </p>
+    <p>
+        astyle_x.x_windows_x64.zip is the <strong>Windows 64 bit</strong>version of Artistic Style. It contains the source code,
+        documentation, and an executable. The Windows Version compile instructions below give
+        information for compiling the source code.
+    </p>
+
+    <p>
+        Only one platform is supported in each distribution package. If you use Artistic Style on more than one platform
+        you will need to download packages for each platform. The main difference in platforms is the build directories
+        and the line endings. Most compilers and development packages will accept any type of line ending. The source
+        code and documentation are the same for all distributions.</p>
+
+    <h3 id="_Linux_Version">Linux Version </h3>
+
+    <h4 id="_CMake_Linux">CMake Linux</h4>
+
+    <p>
+        Artistic Style has CMake support for GCC, Clang, and Intel compilers. Other compilers will probably work if
+        the necessary options are set. Refer to the section on <a href="#_Compiler_Options">Compiler Options</a> for
+        more information.</p>
+    <p>
+        Since the different builds use the same source files an &quot;out of source&quot; build should be used. The
+        default build is a release version. A debug version must be specifically requested. The following options are
+        available for building the various configurations.</p>
+    <ul>
+        <li>The default builds the Artistic Style command line executable (astyle). </li>
+        <li>BUILD_SHARED_LIBS=ON builds the Artistic Style program as a shared object (libastyle.so). </li>
+        <li>BUILD_JAVA_LIBS=ON builds the Artistic Style program as a shared object (libastylej.so) that can be called
+            from a Java program. The Java Development Kit (JDK) must be installed for the project to compile.  CMake will
+            look for the JDK in the Java default folder or in a system path. If the files cannot be found, use the variable
+            JAVA_HOME=&lt;Java Directory&gt; with the path into the top level Java folder.</li>
+        <li>BUILD_STATIC_LIBS=ON builds the Artistic Style program as a Static Library (libastyle.a) that can be
+            statically linked to a user program.</li>
+    </ul>
+
+    <h5>EXAMPLES</h5>
+
+    <p>
+        The following examples are assumed to be run from the astyle directory that contains
+        CMakeLists.txt. They show out of source builds that generate makefiles.</p>
+    <p>
+        To build the console release version:</p>
+    <pre>mkdir  as-gcc-exe
+cd  as-gcc-exe
+cmake  ../
+make
+</pre>
+    <p>
+        To build the shared debug version:</p>
+    <pre>mkdir  --parents  as-gcc-so
+cd  as-gcc-so
+cmake  -DBUILD_SHARED_LIBS=ON  -DCMAKE_BUILD_TYPE=Debug  ../
+make
+</pre>
+    <p>
+        To build the Java release version using the Clang compiler and the JAVA_HOME variable:</p>
+    <pre>mkdir  as-clang-java
+cd  as-clang-java
+CXX=clang++  cmake  -DBUILD_JAVA_LIBS=ON  -DJAVA_HOME=&quot;C:/Programs/Java&quot;  ../
+make
+</pre>
+
+    <h5>INSTALL</h5>
+
+    <p>
+        The makefile install option installs the astyle executable and documentation files. The option installs from
+        the generated makefile, not CMake. You must have the appropriate permissions to use install. </p>
+    <p>
+        To install astyle:</p>
+    <pre>make install</pre>
+    <p>
+        The default install directory is /usr/local/bin for the executable and /usr/local/share/doc/astyle for the
+        documentation. To change the default install directory from /usr/local the CMake must be run with the option
+        CMAKE_INSTALL_PREFIX. </p>
+    <p>
+        To run CMake and change the install directory:</p>
+    <pre>cmake  -DCMAKE_INSTALL_PREFIX=/usr  ../
+make install</pre>
+
+    <h5>UNINSTALL</h5>
+
+    <p>
+        There is no uninstall. The easiest way to uninstall is to use the install_manifest.txt file, for example
+        &quot;<strong>xargs rm &lt; install_manifest.txt</strong>&quot;.</p>
+
+    <h4 id="_GCC_Makefile">GCC Makefile</h4>
+
+    <p>
+        To compile using the GCC compiler you must have GCC (3.1 or better) installed.</p>
+    <p>
+        The build has no autoconf dependency. To build the Artistic Style configurations, use the makefile located in
+        the astyle/build/gcc directory. The executables will be in the astyle/build/gcc/bin directory. To build the
+        command line configuration, enter the following:</p>
+    <pre>cd astyle/build/gcc<br />make
+</pre>
+    <p>
+        To build the other astyle configurations, you can enter the file name or a symbolic name. Entering "make astyle"
+        or "make release" will build the command line configuration. Following are the symbolic names and file names (in
+        parens) of the various configurations:</p>
+    <ul>
+        <li><strong>release</strong> or <strong>astyle</strong> builds the Artistic Style command line program. This is the
+            default option. </li>
+        <li><strong>shared</strong> or <strong>libastyle.so</strong> builds the Artistic Style program as a shared
+            library. </li>
+        <li><strong>static</strong> or <strong>libastyle.a</strong> builds the Artistic Style program as a static
+            library. </li>
+        <li><strong>debug</strong> or <strong>astyled</strong> builds the Artistic Style command line program with debugging
+            information </li>
+        <li><strong>shareddebug</strong> or <strong>libastyled.so</strong> builds the Artistic Style program as a shared library
+            with debugging information. </li>
+        <li><strong>staticdebug</strong> or <strong>libastyled.a</strong> builds the Artistic Style program as a static library
+            with debugging information. </li>
+        <li><strong>all</strong> builds all the above configurations.
+            <p>
+                The following Java shared library builds are separate from the above. They include a Java Native Interface (JNI)
+                and require that the Java Development Kit (JDK) be installed. The environment variable JAVA_HOME should be defined.
+                It defines the install directory for the JDK.  If the compile cannot find the file jni.h, either set the JAVA_HOME
+                variable or change the value in the makefile.</p>
+        </li>
+        <li><strong>java </strong>builds the Artistic Style program as a shared library which includes the JNI (libastylej.so).
+        </li>
+        <li><strong>javadebug </strong>builds the Artistic Style program as a shared library which includes the JNI and debugging
+            information
+            (libastylejd.so).</li>
+        <li><strong>javaall </strong>builds all the above java configurations.</li>
+    </ul>
+    <p>
+        More than one configuration can be built at the same time. For example, to build all the release configurations
+        enter:</p>
+    <pre>cd astyle/build/gcc<br />make release shared static</pre>
+    <p>
+        The <a href="#_Other_Makefile_Targets">Other Makefile Targets</a> section contains additional target
+        options.</p>
+
+    <h4 id="_Clang_Makefile">Clang Makefile</h4>
+
+    <p>
+        Clang has a static analyzer that finds potential bugs in C/C++ and <span style="white-space: nowrap;">Objective-C</span> programs. It can be run as a standalone
+        tool from the command-line and runs in tandem with a build. There is a script file, analyze.sh, that will run
+        the analysis on Artistic Style.</p>
+    <p>
+        The build has no autoconf dependency. To build the Artistic Style configurations use the makefile located in the
+        astyle/build/clang directory. The executables will be in the astyle/build/clang/bin directory. To build the command
+        line configuration, enter the following:</p>
+    <pre>cd astyle/build/clang<br />make
+</pre>
+    <p>
+        To build the other astyle configurations, you can enter the file name or a symbolic name. The configurations for
+        Clang are the same as for the <a href="#_GCC_Makefile">GCC Makefile</a>. More than one configuration can be
+        built at the same time. For example, to build all the release configurations enter:</p>
+    <pre>cd astyle/build/clang<br />make release shared static
+</pre>
+    <p>
+        The <a href="#_Other_Makefile_Targets">Other Makefile Targets</a> section contains additional target
+        options.</p>
+
+    <h4 id="_Intel_Makefile">Intel Makefile</h4>
+
+    <p>
+        These procedures and the makefile are for recent versions of the compiler. They may not work for earlier versions.
+        Instructions for your compiler are in the compiler documentation file "get_started_lc.htm".</p>
+    <p>
+        To compile with Intel there are environment variables that must be set by running the compiler environment
+        script compilervars.sh (or compilervars.csh) with an argument that specifies the target architecture. This
+        should be done before running the make. If it is not done, &quot;make&quot; will display an error message
+        stating that the compiler environment variables are not set.</p>
+    <p>
+        The build has no autoconf dependency. To build the Artistic Style configurations use the makefile located in the
+        astyle/build/intel directory. The output executables will be in the astyle/build/intel/bin directory. To build
+        the command line configuration, enter the following:</p>
+    <pre>cd astyle/build/intel<br />make</pre>
+    <p>
+        To build the other astyle configurations, you can enter the file name or a symbolic name. The configuration names
+        for Intel are the same as for the <a href="#_GCC_Makefile">GCC Makefile</a>. More than one configuration can be
+        built at the same time. For example, to build the entire debug configurations enter:</p>
+    <pre>cd astyle/build/intel<br />make debug shareddebug staticdebug</pre>
+    <p>
+        The <a href="#_Other_Makefile_Targets">Other Makefile Targets</a> section contains additional target
+        options.</p>
+
+    <h4 id="_CodeBlocks_Linux">CodeBlocks Linux</h4>
+
+    <p>
+        There are build folders for the following compilers. All compiler folders are in the &quot;build&quot; directory.
+    </p>
+    <ul>
+        <li><strong>cb-clang</strong> contains the workspace and project files for the Linux Clang Compiler.</li>
+        <li><strong>cb-gcc</strong> contains the workspace and project files for the Linux GCC Compiler.</li>
+        <li><strong>cb-intel</strong> contains the workspace and project files for the Linux Intel Compiler.</li>
+    </ul>
+    <p>
+        There are workspace and project files for each folder. All projects have at least Debug and Release
+        configurations. All output will be in the &quot;bin&quot; directory. </p>
+    <p>
+        The workspace contains the following projects.</p>
+    <ul>
+        <li><strong>AStyle </strong>builds the Artistic Style command line program (astyle). </li>
+        <li><strong>AStyle So </strong>builds the Artistic Style program as a shared object (libastyle.so). </li>
+        <li><strong>AStyle Java </strong>builds the Artistic Style program as a shared object (libastylej.so) that can
+            be called from a Java program. The Java Development Kit (JDK) is required for the project to compile. The
+            Project Properties must have an include path to the JDK include directories.</li>
+        <li><strong>AStyle A </strong>builds the Artistic Style program as a Static Library (libastyle.a). This can be
+            statically linked to a user program.</li>
+    </ul>
+
+    <p>
+        For other Linux development environments, follow the instructions in <a href="#_Other_Development_Environments">Other
+            Development Environments</a>.</p>
+
+    <h3 id="_MacOS_Version">MacOS Version</h3>
+
+    <h4 id="_CMake_MacOS">CMake MacOS</h4>
+
+    <p>
+        Artistic Style has CMake support for MacOS. It is used the same as <a href="#_CMake_Linux">CMake Linux</a>
+        except the supported compilers are only GCC and Clang. The macOS default installs will be to /usr/local instead
+        of /usr.</p>
+
+    <h4 id="_MacOS_Makefile">MacOS Makefile</h4>
+
+    <p>
+        The Artistic Style makefile compile uses the Mac OS &quot;Command Line Tools&quot;. If you have Xcode 4.3 or newer
+        the command line tools, such as &quot;make&quot;, are NOT installed by default. They must be downloaded and installed
+        separately. Once everything is successfully installed, you should see &quot;make&quot; and other command line
+        developer tools in /usr/bin.</p>
+    <p>
+        The build has no autoconf dependency. To build the Artistic Style configurations use the makefile located in the
+        astyle/build/mac directory. The executables will be in the astyle/build/mac/bin directory. To build the command
+        line configuration, enter the following:</p>
+    <pre>cd astyle/build/mac<br />make
+</pre>
+    <p>
+        To build the other astyle configurations, you can enter the file name or a symbolic name. The configurations for
+        Mac are the same as for the <a href="#_GCC_Makefile">GCC Makefile</a>. More than one configuration can be
+        built at the same time. For example, to build all the release configurations enter:</p>
+    <pre>cd astyle/build/mac<br />make release shared static
+</pre>
+    <p>
+        The <a href="#_Other_Makefile_Targets">Other Makefile Targets</a> section contains additional target options.
+        The macOS default installs will be to /usr/local instead of /usr.</p>
+
+    <h4 id="_Xcode">Xcode</h4>
+
+    <p>
+        Artistic Style workspace and project files for the Xcode development environment are available in the &quot;build/xcode&quot;
+        directory. A workspace can be used to build a single project or all the projects. The project files have Debug
+        and Release configurations. The following projects are available.</p>
+    <ul>
+        <li><strong>AStyle</strong> builds the Artistic Style command line program (astyle). </li>
+        <li><strong>AStyleA</strong> builds the Artistic Style program as a Static Library (libastyle.a). This can be statically
+            linked with an executable.</li>
+        <li><strong>AStyleDylib</strong> builds the Artistic Style program as a Dynamic Library (libastyle.dylib). It can
+            be used with C/C++, <span style="white-space: nowrap;">Objective-C</span>, C#, and Python programs.</li>
+        <li><strong>AStyleJava</strong> builds the Artistic Style program as a Dynamic Library (libastylej.dylib) that can
+            be called from a Java program. The Java Development (JDK) is required for the project to compile. The Project
+            Properties must have an include path to the JDK include directory. The output dylib can also be called from a
+            C++ or C# program.</li>
+    </ul>
+
+    <h5>INSTALL</h5>
+
+    <p>
+        Only the astyle executable is installed. The library project installs are sent to UninstalledProjects in
+        the Build directory. The following instructions are for the astyle executable and documentation files. The default
+        install directory is /usr/local/bin for the executable and /usr/local/share/doc/astyle for the documentation.
+        You must have the appropriate permissions to use install. If sudo is not used for the install, an error will occur
+        during the
+        build.</p>
+    <p>
+        To install the astyle executable in the default directory:</p>
+    <pre>cd astyle/build/xcode
+sudo xcodebuild install -project AStyle.xcodeproj
+</pre>
+    <p>
+        A script is used to install the documentation
+        from the same directory.</p>
+    <pre>sudo bash install.sh
+</pre>
+
+    <h5>UNINSTALL</h5>
+
+    <p>
+        Uninstalls the executable and documentation. You must have the appropriate permissions to use uninstall.</p>
+    <p>
+        A script is used to uninstall astyle and the documentation:</p>
+    <pre>sudo bash uninstall.sh
+</pre>
+    <p>
+        NOTE: The uninstall option will NOT remove the .astylerc files from the users' home directories. The files must
+        be removed individually for each user.</p>
+
+    <h3 id="_Windows_Version">Windows Version</h3>
+
+    <h4 id="_Precompiled_Executable">Precompiled Executable</h4>
+
+    <p>
+        In addition to the source files, the Windows distribution package contains an Artistic Style Win32 executable
+        (AStyle.exe). If you prefer to compile the executable yourself, use the following instructions.</p>
+
+    <h4 id="_CMake_Windows">CMake Windows</h4>
+
+    <p>
+        Artistic Style has CMake support for Borland, and MinGW compilers. Other compilers will probably work if
+        the necessary options are set. Refer to the section on <a href="#_Compiler_Options">Compiler Options</a> for
+        more information.</p>
+    <p>
+        The console executable will run for both of the supported compilers. The DLL builds may not. CMake does not
+        fully support all Windows compilers. To build the DLLs it would be best to generate an IDE project file and
+        compile the DLLs with the IDE. The &quot;build&quot; folder contains project files for CodeBlocks and Visual Studio.
+    </p>
+    <p>
+        Since the different builds use the same source files an &quot;out of source&quot; build should be used. The
+        default build for MinGW is a release version. A debug version must be specifically requested. For
+        Borland, a release build may need to be specifically requested, depending on the CMake release used. Borland
+        has been tested with the bcc32c free compiler. It may or may not work with other Borland compilers. The following
+        options are available for building the various configurations.</p>
+    <ul>
+        <li>The default builds the Artistic Style command line executable (AStyle.exe). </li>
+        <li>BUILD_SHARED_LIBS=ON builds the Artistic Style program as a DLL (AStylexx.dll, where xx is the astyle release
+            number). </li>
+        <li>BUILD_JAVA_LIBS=ON builds the Artistic Style program as a DLL (AStylexxj.dll, where xx is the astyle release
+            number) that can be called from a Java program. The Java Development Kit (JDK) must be installed for the project
+            to compile. CMake will look for the JDK in the Java default folder or in a system path. If the files cannot be
+            found, use the variable JAVA_HOME=&lt;Java Directory&gt; with the path into the top level Java folder.</li>
+        <li>BUILD_STATIC_LIBS=ON builds the Artistic Style program as a Static Library (AStyleLib.lib) that can be
+            statically linked to a user program.</li>
+    </ul>
+
+    <h5>EXAMPLES</h5>
+
+    <p>
+        The following examples are assumed to be run from the astyle directory that contains
+        CMakeLists.txt. They show out of source builds that generate makefiles. </p>
+    <p>
+        A path to the compiler executable
+        may need to be declared before compiling. And the Borland free compiler will need the compiler name.
+        To set the variables before compiling (replace the path names with the paths on your computer):</p>
+    <pre>set PATH=C:\Program Files\CMake\bin;%PATH%
+set PATH=C:\Program Files (x86)\Embarcadero\BCC101\bin;%PATH%
+set CXX=bcc32c
+</pre>
+    <p>
+        To build the Borland console release version (the release build may need to be specified):</p>
+    <pre>md  as-bcc32c-exe
+cd  as-bcc32c-exe
+cmake  -G "Borland Makefiles"  -DCMAKE_BUILD_TYPE=Release  ../
+make
+</pre>
+    <p>
+        To build the MinGW Java release version using the JAVA_HOME variable:</p>
+    <pre>md  as-mingw-exe
+cd  as-mingw-exe
+cmake  -G "MinGW Makefiles"  -DBUILD_JAVA_LIBS=ON  -DJAVA_HOME="C:/Programs/Java"  ../
+mingw32-make</pre>
+
+    <p>As stated previously, the DLL builds may not work with the CMake generated makefiles.</p>
+
+    <h5>INSTALL</h5>
+
+    <p>
+        The makefile install option installs the astyle executable and documentation files. The default is &quot;C:\Program
+        Files\AStyle&quot; for the executable and &quot;C:\Program Files\AStyle\doc&quot; for the documentation.
+        You may need to run as an administrator to install. </p>
+
+    <h5>UNINSTALL</h5>
+
+    <p>
+        There is no uninstall. The uninstall must be done manually. Just remove the
+        AStyle folder indicated in the
+        Install. </p>
+
+    <h4 id="_CodeBlocks_Windows">CodeBlocks Windows</h4>
+
+    <p>
+        There are build folders for the following compilers. All compiler folders are in the &quot;build&quot; directory.
+    </p>
+    <ul>
+        <li><strong>cb-bcc32c</strong> contains the workspace and project files for the Embarcadero BCC32C Compiler.</li>
+        <li><strong>cb-mingw</strong> contains the workspace and project files for the MinGw or TDM_GCC Compilers.</li>
+    </ul>
+
+    <p>
+        There are workspace and project files for each folder. All projects have at least Debug and Release configurations.
+        All output
+        will be in the &quot;bin&quot; directory.</p>
+    <p>
+        The workspace contains the following projects.</p>
+    <ul>
+        <li><strong>AStyle </strong>builds the Artistic Style command line program (AStyle.exe). </li>
+        <li><strong>AStyle Dll </strong>builds the Artistic Style program as a shared object (AStyle.dll). </li>
+        <li><strong>AStyle Java </strong>builds the Artistic Style program as a shared object AStylej.dll) that can
+            be called from a Java program. The Java Development Kit (JDK) is required for the project to compile. The
+            Project Properties must have an include path to the JDK include directories.</li>
+        <li><strong>AStyle Lib </strong>builds the Artistic Style program as a Static Library (astyle.lib). This can be
+            statically linked to a calling program.</li>
+    </ul>
+    <p>
+        For other Windows development environments, follow the instructions in <a href="#_Other_Development_Environments">
+            Other Development Environments</a>.</p>
+
+    <h4 id="_Visual_Studio">Visual Studio</h4>
+
+    <p>
+        There are solution and project files for several versions of Microsoft Visual Studio. Open an Artistic Style solution
+        file in the appropriate &quot;build&quot; directory. All projects have Debug, Release and Static configurations.
+        Debug file output will be in the &quot;debug&quot; directory. Release file output will be in the &quot;bin&quot;
+        directory. Static file output will be in the "binstatic" directory. The following solution files are
+        available.</p>
+    <ul>
+        <li><strong>All AStyle </strong>builds the release and the debug configurations for all the following.
+        </li>
+        <li><strong>AStyle </strong>builds the Artistic Style command line program (AStyle.exe). This project has an extra
+            &quot;Static&quot;" option. It is the same as the &quot;Release&quot; build except that it is linked with a static
+            runtime library. This is needed if the executable is to be run on a system without Visual Studio installed. The
+            builds for this configuration are placed in a separate &quot;binstatic&quot; directory. </li>
+        <li><strong>AStyle Dll </strong>builds the Artistic Style program as a Dynamic Link Library (AStyle.dll). This will
+            also build an export library and a static library for linking the dll. </li>
+        <li><strong>AStyle Java </strong>builds the Artistic Style program as a Dynamic Link Library (AStylej.dll) that can
+            be called from a Java program. The Java Development (JDK) is required for the project to compile. The Project
+            Properties must have an include path to the JDK include and include/win32 directories. This is set in &quot;Project
+            &gt; Properties &gt; C/C++ &gt; General &gt; Additional&nbsp;Include&nbsp;Directories&quot;. The default setting
+            is for the JDK to be installed in the default directory, but it may not be the most current release. The output
+            DLL can also be called from a C++ or C# program.</li>
+        <li><strong>AStyle Lib </strong>builds the Artistic Style program as a Static Library (libAStyle.lib). This can be
+            statically linked to a calling program.</li>
+    </ul>
+    <p>
+        For other Windows development environments, follow the instructions in <a href="#_Other_Development_Environments">
+            Other Development Environments</a>.</p>
+
+    <h3 id="_Other_Makefile_Targets">Other Makefile Targets</h3>
+
+    <p>
+        The following makefile targets are available for GCC, Clang, Intel, and Mac.</p>
+
+    <h5>CLEAN</h5>
+
+    <p>
+        Removes the object and executable files for all configurations.</p>
+    <p>
+        To remove the files for all configurations:</p>
+    <pre>make clean
+</pre>
+
+    <h5>CLEANOBJ</h5>
+
+    <p>
+        Removes the object files for all configurations. The executables will not be removed.</p>
+    <p>
+        To remove only the object files for all configurations:</p>
+    <pre>make cleanobj
+</pre>
+
+    <h5>INSTALL</h5>
+
+    <p>
+        Installs the astyle executable and documentation files. The default is /usr/bin for the executable and /usr/share/doc/astyle
+        for the documentation. You must have the appropriate permissions to use install.</p>
+    <p>
+        To install the astyle to the default directories:</p>
+    <pre>sudo make install
+</pre>
+    <p>
+        To install astyle to a different bin directory set a value for the macro $(prefix). For example, to install the
+        executable to a user's home directory (/home/<i>user</i>/bin):</p>
+    <pre>sudo make prefix=$HOME install
+</pre>
+
+    <h5>UNINSTALL</h5>
+
+    <p>
+        Uninstalls the executable and documentation. You must have the appropriate permissions to use uninstall.</p>
+    <p>
+        To uninstall astyle from the default directories:</p>
+    <pre>sudo make uninstall
+</pre>
+    <p>
+        To uninstall the files from a different directory set a value for the macro $(prefix). For example, to uninstall
+        the files from a user's home directory (/home/<i>user</i>):</p>
+    <pre> sudo make prefix=$HOME uninstall
+</pre>
+    <p>
+        NOTE: The uninstall option will NOT remove the .astylerc files from the users' home directories. The files must
+        be removed individually for each user.</p>
+
+    <h3 id="_Other_Development_Environments">Other Development Environments</h3>
+
+    <p>
+        To use other development environments project files usually must be built. CMake can be used if the development
+        environment is supported. Otherwise, use the development environment to create files.</p>
+    <ul>
+        <li>Create a project using the development environment.</li>
+        <li>Add to the project all the .cpp and .h files in the "src" directory.</li>
+        <li>The Compiler Options section discusses the compiler options to use.</li>
+        <li>Compile.</li>
+    </ul>
+
+    <h3 id="_Compiler_Options">Compiler Options</h3>
+
+    <p>
+        No macro definitions are required to compile the executable. To compile as a static or shared (dynamic) library
+        define the macro ASTYLE_LIB. To compile a Java shared (dynamic) library define the macro ASTYLE_JNI. The
+        option ASTYLE_NO_EXPORTS is sometimes needed for static libraries to prevent compiler error and warning
+        messages. Use the appropriate compiler and linker options to compile the static or shared library. Add debug
+        options to compile the debug versions.</p>
+    <p>
+        Artistic Style is a small program and it is best to optimize for speed. The debug configurations are not usually
+        optimized. To optimize for speed in the release configurations, use the macro NDEBUG to remove asserts. If
+        necessary, use an option to activate the C++11 standards (-std=c++11 or -std=c++0x on most compilers). Use an
+        option that allows inline function expansion. Runtime Type Information (RTTI) is NOT needed and exceptions are
+        NOT used. Use whole program optimization if your compiler supports it. There may be other options you can use
+        depending on the compiler. </p>
+
+     <h3 id="_PIP">Python PIP</h3>
+
+     <p>
+        There are two projects which enable astyle installation using PIP: <a href="https://github.com/Freed-Wu/astyle-wheel/">astyle-wheel</a> and <a href="https://github.com/igrr/astyle_py">astyle_py (using WASM)</a>.<br>
+        These are useful to be included in git pre-commit hooks.
+     </p>
+
+
+    <p style="margin-left: -0.4in; text-align: center;">
+        <a href="http://sourceforge.net/projects/astyle">
+            <img src="http://sflogo.sourceforge.net/sflogo.php?group_id=2319&type=16" alt="" />
+        </a></p>
+
+    <p>
+        &nbsp;</p>
+    <p>
+        &nbsp;</p>
+
+</body>
+
+</html>
