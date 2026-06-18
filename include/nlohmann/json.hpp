@@ -3712,7 +3712,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {                                                                                                    \
         return lhs.m_data.m_value.number_float op static_cast<number_float_t>(rhs.m_data.m_value.number_unsigned);     \
     }                                                                                                    \
-    else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_integer)                \
+    else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_integer) /* NOLINT(readability/braces) */ \
     {                                                                                                    \
         if (rhs.m_data.m_value.number_integer < 0)                                                       \
         {                                                                                                \
@@ -3720,7 +3720,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }                                                                                                \
         return lhs.m_data.m_value.number_unsigned op static_cast<number_unsigned_t>(rhs.m_data.m_value.number_integer); \
     }                                                                                                    \
-    else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_unsigned)                \
+    else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_unsigned) /* NOLINT(readability/braces) */ \
     {                                                                                                    \
         if (lhs.m_data.m_value.number_integer < 0)                                                       \
         {                                                                                                \

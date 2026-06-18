@@ -5685,11 +5685,6 @@ inline void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Has
 }
 
 #if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
-
-// Workaround for MSVC 19.51 (and possibly later): in large in large cpp files, the compiler may fail to resolve with generic has_from_json (issue #4996)
-template<typename BasicJsonType>
-struct has_from_json<BasicJsonType, std_fs::path, void> : std::true_type {};
-
 template<typename BasicJsonType>
 inline void from_json(const BasicJsonType& j, std_fs::path& p)
 {
@@ -6469,10 +6464,6 @@ inline void to_json(BasicJsonType& j, const std::basic_string<char8_t, Tr, Alloc
     j = std::basic_string<char, std::char_traits<char>, OtherAllocator>(s.begin(), s.end(), s.get_allocator());
 }
 #endif
-
-// Workaround for MSVC 19.51 (and possibly later): in large cpp files, the compiler may fail to resolve with generic has_to_json (issue #4996)
-template<typename BasicJsonType>
-struct has_to_json<BasicJsonType, std_fs::path, void> : std::true_type {};
 
 template<typename BasicJsonType>
 inline void to_json(BasicJsonType& j, const std_fs::path& p)
