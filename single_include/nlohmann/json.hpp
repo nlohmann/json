@@ -5685,6 +5685,11 @@ inline void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Has
 }
 
 #if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
+
+// Workaround for MSVC 19.51 (and possibly later): in large in large cpp files, the compiler may fail to resolve with generic has_from_json (issue #4996)
+template<typename BasicJsonType>
+struct has_from_json<BasicJsonType, std_fs::path, void> : std::true_type {};
+
 template<typename BasicJsonType>
 inline void from_json(const BasicJsonType& j, std_fs::path& p)
 {
@@ -6464,6 +6469,10 @@ inline void to_json(BasicJsonType& j, const std::basic_string<char8_t, Tr, Alloc
     j = std::basic_string<char, std::char_traits<char>, OtherAllocator>(s.begin(), s.end(), s.get_allocator());
 }
 #endif
+
+// Workaround for MSVC 19.51 (and possibly later): in large cpp files, the compiler may fail to resolve with generic has_to_json (issue #4996)
+template<typename BasicJsonType>
+struct has_to_json<BasicJsonType, std_fs::path, void> : std::true_type {};
 
 template<typename BasicJsonType>
 inline void to_json(BasicJsonType& j, const std_fs::path& p)
@@ -24439,7 +24448,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {                                                                                                    \
         return lhs.m_data.m_value.number_float op static_cast<number_float_t>(rhs.m_data.m_value.number_unsigned);     \
     }                                                                                                    \
-    else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_integer)                \
+    else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_integer) /* NOLINT(readability/braces) */ \
     {                                                                                                    \
         if (rhs.m_data.m_value.number_integer < 0)                                                       \
         {                                                                                                \
@@ -24447,7 +24456,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }                                                                                                \
         return lhs.m_data.m_value.number_unsigned op static_cast<number_unsigned_t>(rhs.m_data.m_value.number_integer); \
     }                                                                                                    \
-    else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_unsigned)                \
+    else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_unsigned) /* NOLINT(readability/braces) */ \
     {                                                                                                    \
         if (lhs.m_data.m_value.number_integer < 0)                                                       \
         {                                                                                                \
