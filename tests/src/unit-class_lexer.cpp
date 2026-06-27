@@ -65,13 +65,20 @@ TEST_CASE("lexer class")
             CHECK((scan_string("7") == json::lexer::token_type::value_unsigned));
             CHECK((scan_string("8") == json::lexer::token_type::value_unsigned));
             CHECK((scan_string("9") == json::lexer::token_type::value_unsigned));
+            CHECK((scan_string("18446744073709551615") == json::lexer::token_type::value_unsigned));
 
             CHECK((scan_string("-0") == json::lexer::token_type::value_integer));
             CHECK((scan_string("-1") == json::lexer::token_type::value_integer));
+            CHECK((scan_string("-9223372036854775808") == json::lexer::token_type::value_integer));
 
             CHECK((scan_string("1.1") == json::lexer::token_type::value_float));
             CHECK((scan_string("-1.1") == json::lexer::token_type::value_float));
             CHECK((scan_string("1E10") == json::lexer::token_type::value_float));
+
+            // out-of-range integers/floats are treated as value_float tokens
+            CHECK((scan_string("18446744073709551616") == json::lexer::token_type::value_float));
+            CHECK((scan_string("-9223372036854775809") == json::lexer::token_type::value_float));
+            CHECK((scan_string("1E400") == json::lexer::token_type::value_float));
         }
 
         SECTION("whitespace")
