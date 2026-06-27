@@ -63,12 +63,12 @@ target_compile_definitions(test_main PUBLIC
     JSON_TEST_USING_MULTIPLE_HEADERS=$<BOOL:${JSON_MultipleHeaders}>)
 target_compile_features(test_main PRIVATE cxx_std_11)
 target_compile_options(test_main PUBLIC
-    $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
+    $<$<CXX_COMPILER_ID:MSVC>:/EHsc>
     # MSVC: Force to always compile with W4
     #       Disable warning C4566: character represented by universal-character-name '\uFF01'
     #                              cannot be represented in the current code page (1252)
     #       Disable warning C4996: 'nlohmann::basic_json<...>::operator <<': was declared deprecated
-    $<$<CXX_COMPILER_ID:MSVC>:/W4 /wd4566 /wd4996>
+    $<$<CXX_COMPILER_ID:MSVC>:/W4;/wd4566;/wd4996;$<$<CONFIG:Release>:/wd4702>>
     # https://github.com/nlohmann/json/issues/1114
     $<$<CXX_COMPILER_ID:MSVC>:/bigobj> $<$<BOOL:${MINGW}>:-Wa,-mbig-obj>
 
