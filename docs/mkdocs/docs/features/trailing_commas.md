@@ -26,7 +26,7 @@ For more information, see [JSON With Commas and Comments (JWCC)](https://nigelta
     }
     ```
     
-    When calling `parse` without additional argument, a parse error exception is thrown. If `ignore_trailing_commas` is set to `#! true`, the trailing commas are ignored during parsing:
+    When calling `parse` without additional argument, a parse error exception is thrown. If `ignore_trailing_commas` is set to `#!cpp true`, the trailing commas are ignored during parsing:
 
     ```cpp
     --8<-- "examples/trailing_commas.cpp"

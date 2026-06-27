@@ -24,6 +24,11 @@ The parser callback distinguishes the following events:
 
 ![Example when certain parse events are triggered](../../images/callback_events.png)
 
+## See also
+
+- [parser_callback_t](parser_callback_t.md) callback function type for the parser
+- [parse](parse.md) deserialize from a compatible input
+
 ## Version history
 
 - Added in version 1.0.0.

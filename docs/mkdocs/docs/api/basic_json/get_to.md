@@ -34,6 +34,10 @@ the input parameter, allowing chaining calls
 
 Depends on what `json_serializer<ValueType>` `from_json()` method throws
 
+## Complexity
+
+Depends on the `json_serializer<ValueType>::from_json()` implementation.
+
 ## Examples
 
 ??? example
@@ -52,6 +56,12 @@ Depends on what `json_serializer<ValueType>` `from_json()` method throws
     ```json
     --8<-- "examples/get_to.output"
     ```
+
+## See also
+
+- [get](get.md) get a value (explicit conversion)
+- [get_ref](get_ref.md) get a reference to the stored value
+- [get_ptr](get_ptr.md) get a pointer to the stored value
 
 ## Version history
 

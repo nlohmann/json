@@ -9,6 +9,14 @@ This macro controls which code is executed for [runtime assertions](assertions.m
 
 See [full documentation of `JSON_ASSERT(x)`](../api/macros/json_assert.md).
 
+## `JSON_BRACE_INIT_COPY_SEMANTICS`
+
+When defined to `1`, single-element brace initialization of a `basic_json` value (e.g., `#!cpp json j{value};`) is
+treated as a copy/move of the element rather than wrapping it in a single-element array. The default value is `0`, which
+preserves the existing behavior.
+
+See [full documentation of `JSON_BRACE_INIT_COPY_SEMANTICS`](../api/macros/json_brace_init_copy_semantics.md).
+
 ## `JSON_CATCH_USER(exception)`
 
 This macro overrides [`#!cpp catch`](https://en.cppreference.com/w/cpp/language/try_catch) calls inside the library.
@@ -44,7 +52,7 @@ The diagnostics positions can also be controlled with the CMake option
 
 See [full documentation of `JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md)
 
-## `JSON_HAS_CPP_11`, `JSON_HAS_CPP_14`, `JSON_HAS_CPP_17`, `JSON_HAS_CPP_20`
+## `JSON_HAS_CPP_11`, `JSON_HAS_CPP_14`, `JSON_HAS_CPP_17`, `JSON_HAS_CPP_20`, `JSON_HAS_CPP_23`, `JSON_HAS_CPP_26`
 
 The library targets C++11, but also supports some features introduced in later C++ versions (e.g., `std::string_view`
 support for C++17). For these new features, the library implements some preprocessor checks to determine the C++
@@ -52,7 +60,7 @@ standard. By defining any of these symbols, the internal check is overridden and
 unconditionally assumed. This can be helpful for compilers that only implement parts of the standard and would be
 detected incorrectly.
 
-See [full documentation of `JSON_HAS_CPP_11`, `JSON_HAS_CPP_14`, `JSON_HAS_CPP_17`, and `JSON_HAS_CPP_20`](../api/macros/json_has_cpp_11.md).
+See [full documentation of `JSON_HAS_CPP_11`, `JSON_HAS_CPP_14`, `JSON_HAS_CPP_17`, `JSON_HAS_CPP_20`, `JSON_HAS_CPP_23`, and `JSON_HAS_CPP_26`](../api/macros/json_has_cpp_11.md).
 
 ## `JSON_HAS_FILESYSTEM`, `JSON_HAS_EXPERIMENTAL_FILESYSTEM`
 
@@ -115,10 +123,38 @@ When defined to `0`, implicit conversions are switched off. By default, implicit
 
 See [full documentation of `JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md).
 
+## `JSON_USE_GLOBAL_UDLS`
+
+When defined to `1` (default), the user-defined string literals `operator""_json` and `operator""_json_pointer` are
+placed into the global namespace instead of `nlohmann::literals::json_literals`.
+
+See [full documentation of `JSON_USE_GLOBAL_UDLS`](../api/macros/json_use_global_udls.md).
+
+## `JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`
+
+When defined to `1`, the library restores the legacy behavior in which a discarded value compared equal to itself. This
+behavior is deprecated and switched off (`0`) by default.
+
+See [full documentation of `JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](../api/macros/json_use_legacy_discarded_value_comparison.md).
+
 ## `NLOHMANN_DEFINE_TYPE_*(...)`, `NLOHMANN_DEFINE_DERIVED_TYPE_*(...)`
 
 The library defines 12 macros to simplify the serialization/deserialization of types. See the page on
 [arbitrary type conversion](arbitrary_types.md#simplify-your-life-with-macros) for a detailed discussion.
+
+## `NLOHMANN_JSON_NAMESPACE`, `NLOHMANN_JSON_NAMESPACE_BEGIN`, `NLOHMANN_JSON_NAMESPACE_END`, `NLOHMANN_JSON_NAMESPACE_NO_VERSION`
+
+These macros relate to the versioned, inline `nlohmann` namespace:
+
+- `NLOHMANN_JSON_NAMESPACE` evaluates to the full name of the `nlohmann` namespace (including the inline ABI namespace).
+- `NLOHMANN_JSON_NAMESPACE_BEGIN` / `NLOHMANN_JSON_NAMESPACE_END` open and close the namespace (for example, to add
+  specializations).
+- `NLOHMANN_JSON_NAMESPACE_NO_VERSION`, when defined to `1`, omits the version component from the inline namespace.
+
+See the [`nlohmann` Namespace](namespace.md) page, and the full documentation of
+[`NLOHMANN_JSON_NAMESPACE`](../api/macros/nlohmann_json_namespace.md),
+[`NLOHMANN_JSON_NAMESPACE_BEGIN` / `NLOHMANN_JSON_NAMESPACE_END`](../api/macros/nlohmann_json_namespace_begin.md), and
+[`NLOHMANN_JSON_NAMESPACE_NO_VERSION`](../api/macros/nlohmann_json_namespace_no_version.md).
 
 ## `NLOHMANN_JSON_SERIALIZE_ENUM(type, ...)`
 
@@ -126,6 +162,9 @@ This macro simplifies the serialization/deserialization of enum types. See
 [Specializing enum conversion](enum_conversion.md) for more information.
 
 See [full documentation of `NLOHMANN_JSON_SERIALIZE_ENUM`](../api/macros/nlohmann_json_serialize_enum.md).
+
+A strict variant [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](../api/macros/nlohmann_json_serialize_enum_strict.md) throws an
+exception on undefined input instead of falling back to the first mapping.
 
 ## `NLOHMANN_JSON_VERSION_MAJOR`, `NLOHMANN_JSON_VERSION_MINOR`, `NLOHMANN_JSON_VERSION_PATCH`
 

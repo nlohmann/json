@@ -75,4 +75,4 @@ For further information please refer to the corresponding macros without `WITH_N
 
 ## Version history
 
-1. Added in version 3.11.x.
+1. Added in version 3.12.x.

@@ -25,6 +25,10 @@ The function can throw the following exceptions:
 
 - Throws [`type_error.314`](../../home/exceptions.md#jsonexceptiontype_error314) if value is not an object
 - Throws [`type_error.315`](../../home/exceptions.md#jsonexceptiontype_error315) if object values are not primitive
+- Throws [`type_error.313`](../../home/exceptions.md#jsonexceptiontype_error313) if a key (JSON pointer) leads to a
+  conflicting nesting; example: `"invalid value to unflatten"`
+- Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) if an array index in a key is not a
+  number; example: `"array index 'one' is not a number"`
 
 ## Complexity
 

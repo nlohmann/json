@@ -26,7 +26,7 @@ and `ensure_ascii` parameters.
 
 `error_handler` (in)
 :   how to react on decoding errors; there are three possible values (see [`error_handler_t`](error_handler_t.md):
-    `strict` (throws and exception in case a decoding error occurs; default), `replace` (replace invalid UTF-8 sequences
+    `strict` (throws an exception in case a decoding error occurs; default), `replace` (replace invalid UTF-8 sequences
     with U+FFFD), and `ignore` (ignore invalid UTF-8 sequences during serialization; all bytes are copied to the output
     unchanged)).
     
@@ -70,6 +70,11 @@ Binary values are serialized as an object containing two keys:
     ```json
     --8<-- "examples/dump.output"
     ```
+
+## See also
+
+- [to_string](to_string.md) returns a string representation of a JSON value
+- [operator<<](../operator_ltlt.md) serialize to stream
 
 ## Version history
 

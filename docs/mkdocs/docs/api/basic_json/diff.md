@@ -56,6 +56,9 @@ Currently, only `remove`, `add`, and `replace` operations are generated.
 ## See also
 
 - [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902)
+- [patch](patch.md) applies a JSON Patch
+- [patch_inplace](patch_inplace.md) applies a JSON Patch in place
+- [merge_patch](merge_patch.md) applies a JSON Merge Patch
 
 ## Version history
 

@@ -84,6 +84,11 @@ When iterating over an array, `key()` will return the index of the element as st
     --8<-- "examples/items.output"
     ```
 
+## See also
+
+- [begin](begin.md) returns an iterator to the first element
+- [end](end.md) returns an iterator to one past the last element
+
 ## Version history
 
 - Added `iterator_wrapper` in version 3.0.0.

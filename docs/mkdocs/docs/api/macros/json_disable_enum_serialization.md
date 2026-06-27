@@ -122,14 +122,13 @@ The default value is `0`.
 
     void to_json(json& j, const Choice& ch)
     {
-        auto value = j.get<std::string>();
-        if (value == "first")
+        if (ch == Choice::first)
         {
-            ch = Choice::first;
+            j = "first";
         }
-        else if (value == "second")
+        else if (ch == Choice::second)
         {
-            ch = Choice::second;
+            j = "second";
         }
     }
     

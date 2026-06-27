@@ -48,11 +48,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 1. The function does not throw exceptions.
 2. The function does not throw exceptions.
-3. The function can throw the following exceptions:
-    - Throws [`parse_error.106`](../../home/exceptions.md#jsonexceptionparse_error106) if an array index begins with
-      `0`.
-    - Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) if an array index was not a
-      number.
+3. The function does not throw exceptions.
 
 ## Complexity
 
@@ -110,6 +106,11 @@ Logarithmic in the size of the JSON object.
     ```json
     --8<-- "examples/contains__json_pointer.output"
     ```
+
+## See also
+
+- [find](find.md) find a value in an object
+- [count](count.md) returns the number of occurrences of a key
 
 ## Version history
 

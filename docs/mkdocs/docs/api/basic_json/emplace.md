@@ -29,6 +29,10 @@ iterators (including the `end()` iterator) and all references to the elements ar
 a pair consisting of an iterator to the inserted element, or the already-existing element if no insertion happened, and
 a `#!cpp bool` denoting whether the insertion took place.
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+
 ## Exceptions
 
 Throws [`type_error.311`](../../home/exceptions.md#jsonexceptiontype_error311) when called on a type other than JSON
@@ -55,6 +59,11 @@ Logarithmic in the size of the container, O(log(`size()`)).
     ```json
     --8<-- "examples/emplace.output"
     ```
+
+## See also
+
+- [emplace_back](emplace_back.md) add a value to an array
+- [insert](insert.md) add values to an array/object
 
 ## Version history
 
