@@ -12,7 +12,7 @@ else()
     # create a header with the path to the downloaded test data
     file(WRITE ${CMAKE_BINARY_DIR}/include/test_data.hpp "#define TEST_DATA_DIRECTORY \"${CMAKE_BINARY_DIR}/test_files\"\n")
 
-    # download test data from GitHub release
+    # download test data from the GitHub tag source archive
     ExternalProject_Add(download_test_data_project
         URL "${JSON_TEST_DATA_URL}/archive/refs/tags/v${JSON_TEST_DATA_VERSION}.zip"
         SOURCE_DIR "${CMAKE_BINARY_DIR}/test_files"
@@ -32,13 +32,17 @@ endif()
 
 # determine the operating system (for debug and support purposes)
 find_program(UNAME_COMMAND uname)
-find_program(VER_COMMAND ver)
 find_program(LSB_RELEASE_COMMAND lsb_release)
 find_program(SW_VERS_COMMAND sw_vers)
 set(OS_VERSION_STRINGS "${CMAKE_SYSTEM}")
-if (VER_COMMAND)
-    execute_process(COMMAND ${VER_COMMAND} OUTPUT_VARIABLE VER_COMMAND_RESULT OUTPUT_STRIP_TRAILING_WHITESPACE)
-    set(OS_VERSION_STRINGS "${OS_VERSION_STRINGS}; ${VER_COMMAND_RESULT}")
+if (CMAKE_HOST_WIN32)
+    # "ver" is a cmd.exe builtin rather than a standalone executable, so it
+    # cannot be located with find_program and must be invoked through cmd
+    execute_process(COMMAND cmd /c ver OUTPUT_VARIABLE VER_COMMAND_RESULT ERROR_QUIET)
+    string(STRIP "${VER_COMMAND_RESULT}" VER_COMMAND_RESULT)
+    if (VER_COMMAND_RESULT)
+        set(OS_VERSION_STRINGS "${OS_VERSION_STRINGS}; ${VER_COMMAND_RESULT}")
+    endif()
 endif()
 if (SW_VERS_COMMAND)
     execute_process(COMMAND ${SW_VERS_COMMAND} OUTPUT_VARIABLE SW_VERS_COMMAND_RESULT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)

@@ -13,7 +13,7 @@ sentimentBotReplyComment: >
 
 # *Required* Comment to reply with
 requestInfoReplyComment: >
-  We would appreciate it if you could provide us with more info about this issue or pull request! Please check the [issue template](https://github.com/nlohmann/json/blob/develop/.github/ISSUE_TEMPLATE.md) and the [pull request template](https://github.com/nlohmann/json/blob/develop/.github/PULL_REQUEST_TEMPLATE.md).
+  We would appreciate it if you could provide us with more info about this issue or pull request! Please check the [issue template](https://github.com/nlohmann/json/issues/new/choose) and the [pull request template](https://github.com/nlohmann/json/blob/develop/.github/PULL_REQUEST_TEMPLATE.md).
 
 # *OPTIONAL* Label to be added to Issues and Pull Requests with insufficient information given
 requestInfoLabelToAdd: "state: needs more info"

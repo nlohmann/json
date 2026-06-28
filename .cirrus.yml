@@ -3,15 +3,15 @@ arm_container:
 
 check_task:
   check_script:
-  - wget https://github.com/Kitware/CMake/releases/download/v3.20.2/cmake-3.20.2.tar.gz
-  - tar xfz cmake-3.20.2.tar.gz
-  - cd cmake-3.20.2
-  - ./configure
-  - make cmake ctest -j4
-  - cd ..
+  # the gcc image ships an outdated CMake, so fetch a recent prebuilt binary
+  # instead of compiling CMake from source
+  - wget -q https://github.com/Kitware/CMake/releases/download/v4.3.4/cmake-4.3.4-linux-aarch64.tar.gz
+  - tar xfz cmake-4.3.4-linux-aarch64.tar.gz
+  - export PATH="$(pwd)/cmake-4.3.4-linux-aarch64/bin:$PATH"
+  - cmake --version
   - mkdir build
   - cd build
-  - ../cmake-3.20.2/bin/cmake .. -DJSON_FastTests=ON
+  - cmake .. -DJSON_FastTests=ON
   - make -j4
   - cd tests
-  - ../../cmake-3.20.2/bin/ctest -j4
+  - ctest -j4

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13...3.14)
+cmake_minimum_required(VERSION 3.13...4.0)
 
 option(JSON_Valgrind    "Execute test suite with Valgrind." OFF)
 option(JSON_FastTests   "Skip expensive/slow tests." OFF)
@@ -148,9 +148,9 @@ message(STATUS "${msg}")
 # *DO* use json_test_set_test_options() above this line
 
 json_test_should_build_32bit_test(json_32bit_test json_32bit_test_only "${JSON_32bitTest}")
-file(GLOB files src/unit-*.cpp)
+file(GLOB files CONFIGURE_DEPENDS src/unit-*.cpp)
 if(json_32bit_test_only)
-    set(files src/unit-32bit.cpp)    
+    set(files src/unit-32bit.cpp)
 elseif(NOT json_32bit_test)
     list(FILTER files EXCLUDE REGEX src/unit-32bit.cpp)
 endif()

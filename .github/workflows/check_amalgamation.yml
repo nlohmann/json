@@ -43,12 +43,14 @@ jobs:
         with:
           path: main
           ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
 
       - name: Checkout tools
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           path: tools
           ref: develop
+          persist-credentials: false
 
       - name: Install astyle
         run: |

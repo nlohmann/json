@@ -9,6 +9,30 @@ This file describes the source for supporting files; that is, files that are not
 
 ## Continuous Integration
 
+### `.github/workflows`
+
+The [GitHub Actions](https://docs.github.com/en/actions) workflows that build, test, and analyze the library. Each file in this folder defines one workflow:
+
+- `ubuntu.yml`, `macos.yml`, `windows.yml` — build and run the test suite on Linux, macOS, and Windows.
+- `check_amalgamation.yml` — verify that the single-header amalgamation in `single_include` is up to date on pull requests.
+- `comment_check_amalgamation.yml` — comment on a pull request when the amalgamation check failed.
+- `cifuzz.yml` — run short fuzzing sessions via [OSS-Fuzz CIFuzz](https://google.github.io/oss-fuzz/getting-started/continuous-integration/) on pull requests.
+- `codeql-analysis.yml` — run [CodeQL](https://codeql.github.com) code scanning.
+- `flawfinder.yml` — run the [Flawfinder](https://dwheeler.com/flawfinder/) static analysis.
+- `semgrep.yml` — run [Semgrep](https://semgrep.dev) static analysis.
+- `scorecards.yml` — run the [OpenSSF Scorecard](https://securityscorecards.dev) supply-chain security checks.
+- `dependency-review.yml` — scan dependency changes in pull requests for known vulnerabilities.
+- `labeler.yml` — the "Pull Request Labeler" workflow (see `.github/labeler.yml`).
+- `stale.yml` — comment on and close stale issues and pull requests.
+- `publish_documentation.yml` — build and publish the documentation on every merge to the `develop` branch.
+
+Further documentation:
+
+- [Workflow syntax for GitHub Actions](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions)
+
+> [!IMPORTANT]
+> The folder `.github/workflows` is predetermined by GitHub.
+
 ### `.cirrus.yml`
 
 Configuration file for the pipeline at [Cirrus CI](https://cirrus-ci.com/github/nlohmann/json).
@@ -123,7 +147,7 @@ Further documentation:
 > [!IMPORTANT]
 > The folder `.github/ISSUE_TEMPLATE` is predetermined by GitHub.
 
-### `.github/ISSUE_TEMPLATE/config.yaml`
+### `.github/ISSUE_TEMPLATE/config.yml`
 
 Issue template chooser configuration. The file is used to configure the dialog when a new issue is created.
 
@@ -132,7 +156,7 @@ Further documentation:
 - [Configuring issue templates for your repository](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository)
 
 > [!IMPORTANT]
-> The filename `.github/ISSUE_TEMPLATE/config.yaml` is predetermined by GitHub.
+> The filename `.github/ISSUE_TEMPLATE/config.yml` is predetermined by GitHub.
 
 ### `.github/labeler.yml`
 
@@ -165,7 +189,7 @@ Further documentation:
 - [Adding a security policy to your repository](https://docs.github.com/en/code-security/getting-started/adding-a-security-policy-to-your-repository)
 
 > [!IMPORTANT]
-> The filename `.github/SECURITY.yml` is predetermined by GitHub.
+> The filename `.github/SECURITY.md` is predetermined by GitHub.
 
 > [!NOTE]
 > The file is part of the documentation and is included in `docs/mkdocs/docs/community/security_policy.md`.
@@ -234,6 +258,16 @@ make BUILD.bazel
 
 ### `meson.build`
 
+The build definition for the [Meson](https://mesonbuild.com) build system.
+
 ### `Package.swift`
 
-### `WORKSPACE.bazel`
+The package manifest for the [Swift Package Manager](https://www.swift.org/package-manager/).
+
+### `MODULE.bazel`
+
+The module definition for [Bazel](https://bazel.build)'s [Bzlmod](https://bazel.build/external/module) dependency system. It complements `BUILD.bazel` and replaces the previously used `WORKSPACE.bazel`.
+
+Further documentation:
+
+- [Bazel modules](https://bazel.build/external/module)

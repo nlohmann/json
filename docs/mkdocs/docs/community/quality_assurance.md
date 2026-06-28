@@ -17,9 +17,9 @@ violations will result in a failed build.
       
         | Compiler                                     | Architecture | Operating System                  | CI        |
         |----------------------------------------------|--------------|-----------------------------------|-----------|
-        | AppleClang 15.0.0.15000040; Xcode 15.0.1     | x86_64       | macOS 13.7.2 (Ventura)            | GitHub    |
-        | AppleClang 15.0.0.15000100; Xcode 15.1       | x86_64       | macOS 13.7.2 (Ventura)            | GitHub    |
-        | AppleClang 15.0.0.15000100; Xcode 15.2       | x86_64       | macOS 13.7.2 (Ventura)            | GitHub    |
+        | AppleClang 15.0.0.15000040; Xcode 15.0.1     | arm64        | macOS 14.7.2 (Sonoma)             | GitHub    |
+        | AppleClang 15.0.0.15000100; Xcode 15.1       | arm64        | macOS 14.7.2 (Sonoma)             | GitHub    |
+        | AppleClang 15.0.0.15000100; Xcode 15.2       | arm64        | macOS 14.7.2 (Sonoma)             | GitHub    |
         | AppleClang 15.0.0.15000309; Xcode 15.3       | arm64        | macOS 14.7.2 (Sonoma)             | GitHub    |
         | AppleClang 15.0.0.15000309; Xcode 15.4       | arm64        | macOS 14.7.2 (Sonoma)             | GitHub    |
         | AppleClang 16.0.0.16000026; Xcode 16         | arm64        | macOS 15.2 (Sequoia)              | GitHub    |
@@ -28,6 +28,7 @@ violations will result in a failed build.
         | AppleClang 17.0.0.17000013; Xcode 16.3       | arm64        | macOS 15.5 (Sequoia)              | GitHub    |
         | AppleClang 17.0.0.17000013; Xcode 16.4       | arm64        | macOS 15.5 (Sequoia)              | GitHub    |
         | AppleClang 17.0.0.17000319; Xcode 26.0.1     | arm64        | macOS 15.5 (Sequoia)              | GitHub    |
+        | Clang 3.4.2                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | Clang 3.5.2                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | Clang 3.6.2                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | Clang 3.7.1                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
@@ -60,7 +61,8 @@ violations will result in a failed build.
         | Clang 19.1.7 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
         | Clang 20.1.1                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | Clang 20.1.8 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
-        | Clang 21.0.0                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
+        | Clang 21.1.8                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
+        | CUDA 11.0.221 (nvcc)                         | x86_64       | Ubuntu 20.04 LTS                  | GitHub    |
         | Emscripten 4.0.6                             | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 4.8.5                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 4.9.3                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
@@ -79,8 +81,9 @@ violations will result in a failed build.
         | GNU 12.4.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 13.3.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 14.2.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-        | GNU 14.2.0                                   | arm64        | Linux 6.1.100                     | Cirrus CI |
         | GNU 15.1.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
+        | GNU 16.1.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
+        | GNU 16.1.0                                   | arm64        | Linux 6.1.100                     | Cirrus CI |
         | icpc (ICC) 2021.5.0 20211109                 | x86_64       | Ubuntu 20.04.3 LTS                | GitHub    |
         | MSVC 19.0.24241.7                            | x86          | Windows 8.1                       | AppVeyor  |
         | MSVC 19.16.27035.0                           | x86          | Windows-10 (Build 14393)          | AppVeyor  |

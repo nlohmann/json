@@ -13,6 +13,9 @@ jobs:
       with:
         egress-policy: audit
 
+    # The OSS-Fuzz CIFuzz actions are referenced via @master as recommended by
+    # the OSS-Fuzz documentation; the project does not publish tags or releases
+    # to pin to. See https://google.github.io/oss-fuzz/getting-started/continuous-integration/
     - name: Build Fuzzers
       id: build
       uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master
