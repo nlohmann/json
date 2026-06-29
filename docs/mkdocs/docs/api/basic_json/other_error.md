@@ -66,6 +66,7 @@ classDiagram
 
 ## See also
 
+- [`exception`](exception.md) for the base class of all exceptions thrown by the library
 - [List of other errors](../../home/exceptions.md#further-exceptions)
 - [`parse_error`](parse_error.md) for exceptions indicating a parse error
 - [`invalid_iterator`](invalid_iterator.md) for exceptions indicating errors with iterators

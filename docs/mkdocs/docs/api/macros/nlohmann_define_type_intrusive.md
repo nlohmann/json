@@ -21,7 +21,7 @@ parameter is the name of the class/struct, and all remaining parameters name the
 
 Summary:
 
-| Need access to private members                                   | Need only de-serialization                                       | Allow missing values when de-serializing                         | macro                                                 |
+| Need access to private members                                   | Need only serialization                                          | Allow missing values when de-serializing                         | macro                                                 |
 |------------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------------------------|-------------------------------------------------------|
 | <div style="color: green;">:octicons-check-circle-fill-24:</div> | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | **NLOHMANN_DEFINE_TYPE_INTRUSIVE**                    |
 | <div style="color: green;">:octicons-check-circle-fill-24:</div> | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: green;">:octicons-check-circle-fill-24:</div> | **NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT**       |

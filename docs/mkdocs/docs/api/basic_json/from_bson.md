@@ -62,8 +62,12 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 ## Exceptions
 
-Throws [`parse_error.114`](../../home/exceptions.md#jsonexceptionparse_error114) if an unsupported BSON record type is
-encountered.
+- Throws [`parse_error.110`](../../home/exceptions.md#jsonexceptionparse_error110) if the given input ends prematurely or
+  the end of the input was not reached when `strict` was set to true
+- Throws [`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112) if a parse error occurs (e.g., an
+  invalid string or byte array length)
+- Throws [`parse_error.114`](../../home/exceptions.md#jsonexceptionparse_error114) if an unsupported BSON record type is
+  encountered
 
 ## Complexity
 
@@ -92,6 +96,7 @@ Linear in the size of the input.
 - [from_cbor](from_cbor.md) for the related CBOR format
 - [from_msgpack](from_msgpack.md) for the related MessagePack format
 - [from_ubjson](from_ubjson.md) for the related UBJSON format
+- [from_bjdata](from_bjdata.md) for the related BJData format
 
 ## Version history
 

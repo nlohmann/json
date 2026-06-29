@@ -43,10 +43,11 @@ The SAX event lister must follow the interface of [`json_sax`](../json_sax/index
       iterators.
 
 `IteratorType`
-:   Description
+:   a compatible iterator type for overload (2); a pair of character iterators whose `value_type` is an integral type
+    with a size of 1, 2, or 4 bytes (interpreted respectively as UTF-8, UTF-16, and UTF-32)
 
 `SAX`
-:   Description
+:   a class fulfilling the SAX event listener interface; see [`json_sax`](../json_sax/index.md)
 
 ## Parameters
 
@@ -89,9 +90,6 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 - Throws [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) in case of an unexpected token, or
   empty input like a null `FILE*` or `char*` pointer.
-- Throws [`parse_error.102`](../../home/exceptions.md#jsonexceptionparse_error102) if `to_unicode` fails or surrogate
-  error.
-- Throws [`parse_error.103`](../../home/exceptions.md#jsonexceptionparse_error103) if `to_unicode` fails.
 
 ## Complexity
 
@@ -119,11 +117,16 @@ A UTF-8 byte order mark is silently ignored.
     --8<-- "examples/sax_parse.output"
     ```
 
+## See also
+
+- [parse](parse.md) - deserialize from a compatible input
+- [accept](accept.md) - check if the input is valid JSON
+
 ## Version history
 
 - Added in version 3.2.0.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
-- Added `ignore_trailing_commas` in version 3.12.1.
+- Added `ignore_trailing_commas` in version 3.12.x.
 
 !!! warning "Deprecation"
 

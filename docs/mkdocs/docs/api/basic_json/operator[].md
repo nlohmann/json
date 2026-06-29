@@ -83,6 +83,8 @@ Strong exception safety: if an exception occurs, the original value stays intact
       in the passed JSON pointer `ptr` for the const version.
     - Throws [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) if the JSON pointer `ptr` can
       not be resolved.
+    - Throws [`out_of_range.410`](../../home/exceptions.md#jsonexceptionout_of_range410) if an array index in the passed
+      JSON pointer `ptr` exceeds the range of `size_type` (e.g., on 32-bit platforms).
 
 ## Complexity
 
@@ -95,7 +97,10 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 !!! danger "Undefined behavior and runtime assertions"
 
-    1. If the element with key `idx` does not exist, the behavior is undefined.
+    The following cases apply to the **const** overloads; the non-const overloads instead insert the missing element
+    (see the notes below).
+
+    1. If the element at index `idx` does not exist, the behavior is undefined.
     2. If the element with key `key` does not exist, the behavior is undefined and is **guarded by a
        [runtime assertion](../../features/assertions.md)**!
 

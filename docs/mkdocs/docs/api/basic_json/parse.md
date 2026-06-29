@@ -81,9 +81,6 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 - Throws [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) in case of an unexpected token, or
   empty input like a null `FILE*` or `char*` pointer.
-- Throws [`parse_error.102`](../../home/exceptions.md#jsonexceptionparse_error102) if `to_unicode` fails or surrogate
-  error.
-- Throws [`parse_error.103`](../../home/exceptions.md#jsonexceptionparse_error103) if `to_unicode` fails.
 
 ## Complexity
 
@@ -94,6 +91,9 @@ super-linear complexity.
 ## Notes
 
 A UTF-8 byte order mark is silently ignored.
+
+Invalid Unicode escapes and unpaired surrogates in the input are reported as
+[`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) with a detailed message.
 
 ## Examples
 
@@ -183,7 +183,7 @@ A UTF-8 byte order mark is silently ignored.
 
 ??? example "Effect of `allow_exceptions` parameter"
 
-    The example below demonstrates the effect of the `allow_exceptions` parameter in the ´parse()` function.
+    The example below demonstrates the effect of the `allow_exceptions` parameter in the `parse()` function.
 
     ```cpp
     --8<-- "examples/parse__allow_exceptions.cpp"
@@ -226,6 +226,7 @@ A UTF-8 byte order mark is silently ignored.
 ## See also
 
 - [accept](accept.md) - check if the input is valid JSON
+- [sax_parse](sax_parse.md) - parse input using the SAX interface
 - [operator>>](../operator_gtgt.md) - deserialize from stream
 
 ## Version history
@@ -234,7 +235,7 @@ A UTF-8 byte order mark is silently ignored.
 - Overload for contiguous containers (1) added in version 2.0.3.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
 - Changed [runtime assertion](../../features/assertions.md) in case of `FILE*` null pointers to exception in version 3.12.0.
-- Added `ignore_trailing_commas` in version 3.12.1.
+- Added `ignore_trailing_commas` in version 3.12.x.
 
 !!! warning "Deprecation"
 

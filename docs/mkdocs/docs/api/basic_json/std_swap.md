@@ -16,6 +16,14 @@ Exchanges the values of two JSON objects.
 `j2` (in, out)
 :   value to be replaced by `j1`
 
+## Exception safety
+
+No-throw guarantee: this function never throws exceptions.
+
+## Complexity
+
+Constant.
+
 ## Possible implementation
 
 ```cpp

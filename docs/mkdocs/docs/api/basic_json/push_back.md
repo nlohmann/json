@@ -46,9 +46,12 @@ invalidates all iterators and all references.
 
 ## Exceptions
 
-All functions can throw the following exception:
-  - Throws [`type_error.308`](../../home/exceptions.md#jsonexceptiontype_error308) when called on a type other than
-    JSON array or null; example: `"cannot use push_back() with number"`
+1. Throws [`type_error.308`](../../home/exceptions.md#jsonexceptiontype_error308) when called on a type other than
+   JSON array or null; example: `"cannot use push_back() with number"`
+2. Throws [`type_error.308`](../../home/exceptions.md#jsonexceptiontype_error308) when called on a type other than
+   JSON object or null; example: `"cannot use push_back() with number"`
+3. Throws [`type_error.308`](../../home/exceptions.md#jsonexceptiontype_error308) when called on a type other than
+   JSON array or null; example: `"cannot use push_back() with number"`
 
 ## Complexity
 

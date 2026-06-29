@@ -27,7 +27,7 @@ For more information, see [JSON With Commas and Comments (JWCC)](https://nigelta
     }
     ```
     
-    When calling `parse` without additional argument, a parse error exception is thrown. If `ignore_comments` is set to `#! true`, the comments are ignored during parsing:
+    When calling `parse` without additional argument, a parse error exception is thrown. If `ignore_comments` is set to `#!cpp true`, the comments are ignored during parsing:
 
     ```cpp
     --8<-- "examples/comments.cpp"

@@ -9,7 +9,7 @@ The type used to store JSON strings.
 [RFC 8259](https://tools.ietf.org/html/rfc8259) describes JSON strings as follows:
 > A string is a sequence of zero or more Unicode characters.
 
-To store objects in C++, a type is defined by the template parameter described below. Unicode values are split by the
+To store strings in C++, a type is defined by the template parameter described below. Unicode values are split by the
 JSON class into byte-sized characters during deserialization.
 
 ## Template parameters

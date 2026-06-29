@@ -13,7 +13,7 @@
 ![Nuget](../images/package_managers/nuget.svg){: style="height:1em"}&nbsp;[**NuGet**](#nuget) `nlohmann.json` &emsp;
 ![Conda](../images/package_managers/conda.svg){: style="height:1em"}&nbsp;[**Conda**](#conda) `nlohmann_json` &emsp;
 ![MacPorts](../images/package_managers/macports.svg){: style="height:1em"}&nbsp;[**MacPorts**](#macports) `nlohmann-json`<br>
-![cpm.cmake](../images/package_managers/CPM.png){: style="height:1em"}&nbsp;[**CPM.cmake**](#cpmcmake) `gh:nlohmann/json`
+![cpm.cmake](../images/package_managers/CPM.png){: style="height:1em"}&nbsp;[**CPM.cmake**](#cpmcmake) `gh:nlohmann/json` &emsp;
 ![xmake](../images/package_managers/xmake.svg){: style="height:1em"}&nbsp;[**xmake**](#xmake) `nlohmann_json`
 </p>
 
@@ -105,7 +105,7 @@ The header can be used directly in your code or via CMake.
 
     - :octicons-tag-24: Available versions: current version and select older versions (see
       [WrapDB](https://mesonbuild.com/Wrapdb-projects.html))
-    - :octicons-rocket-24: The package is update automatically from file
+    - :octicons-rocket-24: The package is updated automatically from file
       [`meson.build`](https://github.com/nlohmann/json/blob/develop/meson.build).
     - :octicons-file-24: File issues at the [library issue tracker](https://github.com/nlohmann/json/issues)
     - :octicons-question-24: [Meson website](https://mesonbuild.com/index.html)
@@ -197,7 +197,7 @@ repository can be referenced within a `MODULE.bazel` by rules such as `archive_o
     - [![ConanCenter package](https://repology.org/badge/version-for-repo/conancenter/nlohmann-json.svg)](https://repology.org/project/nlohmann-json/versions)
     - :octicons-tag-24: Available versions: current version and older versions (see
       [Conan Center](https://conan.io/center/recipes/nlohmann_json))
-    - :octicons-rocket-24: The package is update automatically via
+    - :octicons-rocket-24: The package is updated automatically via
       [this recipe](https://github.com/conan-io/conan-center-index/tree/master/recipes/nlohmann_json).
     - :octicons-file-24: File issues at the [Conan Center issue tracker](https://github.com/conan-io/conan-center-index/issues)
     - :octicons-question-24: [Conan website](https://conan.io)
@@ -603,7 +603,7 @@ conda install -c conda-forge nlohmann_json
         --8<-- "integration/conda/example.cpp"
         ```
 
-    2. Create and activate an anvironment "json`:
+    2. Create and activate an environment `json`:
 
         ```shell
         conda create -n json
@@ -667,7 +667,7 @@ to install the [nlohmann-json](https://ports.macports.org/port/nlohmann-json/) p
         sudo port install nlohmann-json
         ```
 
-    3. Compile the code and pass the Homebrew prefix to the include path such that the library can be found:
+    3. Compile the code and pass the MacPorts prefix to the include path such that the library can be found:
 
         ```sh
         c++ example.cpp -I/opt/local/include -std=c++11 -o example
@@ -709,17 +709,17 @@ to install the [nlohmann-json](https://ports.macports.org/port/nlohmann-json/) p
       - [package's sources (for advanced users)](https://github.com/build2-packaging/nlohmann-json/)
 
     - :octicons-tag-24: Available versions: current version and older versions since `3.7.3` (see [cppget.org](https://cppget.org/nlohmann-json))
-    - :octicons-rocket-24: The package is maintained and published by the `build2` community in [this repository][(https://github.com/build2-packaging/nlohmann-json/](https://github.com/build2-packaging/nlohmann-json/)).
+    - :octicons-rocket-24: The package is maintained and published by the `build2` community in [this repository](https://github.com/build2-packaging/nlohmann-json/).
     - :octicons-file-24: File issues at the [package source repository](https://github.com/build2-packaging/nlohmann-json/issues/)
-    - :octicons-question-24: [`build2` website](https://build2)
+    - :octicons-question-24: [`build2` website](https://build2.org)
 
 Note: [`build2`](https://build2.org) should not be considered as a standalone package-manager. It is a build-system + package manager + project manager, a set of tools that work hand-in-hand. `build2`-based projects do not rely on existing `CMake` scripts and the build scripts defining the project's targets are specific to `build2`.
 
-To use this package in an exising [`build2`](https://build2.org) project, the general steps are:
+To use this package in an existing [`build2`](https://build2.org) project, the general steps are:
 
   1. <details><summary>Make the package available to download from a package repository that provides it.</summary>
 
-      Your project's `repositories.manifest` specifies where the package manager will try to acquire packages by default. Make sure one of the repositories specified in this file provides `nlhomann-json` package.
+      Your project's `repositories.manifest` specifies where the package manager will try to acquire packages by default. Make sure one of the repositories specified in this file provides `nlohmann-json` package.
       The recommended open-source repository is [`cppget.org`](https://cppget.org/).
 
       If the project has been created using [`bdep new`](https://build2.org/bdep/doc/bdep-new.xhtml), `cppget.org` is already specified in `repositories.manifest` but commented, just uncomment these lines:
@@ -740,13 +740,13 @@ To use this package in an exising [`build2`](https://build2.org) project, the ge
        </details>
 
 
-  2. <details><summary>Add this library as dependency of your target that uses it.</summary>
+  3. <details><summary>Add this library as dependency of your target that uses it.</summary>
 
       In the `buildfile` defining the target that will use this library:
       
-        - import the target `lib{json}` from the `nlhomann-json` package, for example:
+        - import the target `lib{json}` from the `nlohmann-json` package, for example:
             ```
-            import nljson = nlhomann-json%lib{json}
+            import nljson = nlohmann-json%lib{json}
             ```
            
         - then add the library's target as requirement for your target using it, for example:
@@ -756,7 +756,7 @@ To use this package in an exising [`build2`](https://build2.org) project, the ge
            
       </details>
 
-  3. <details><summary>Use the library in your project's code and build it.</summary>
+  4. <details><summary>Use the library in your project's code and build it.</summary>
 
       At this point, assuming your project is initialized in a build-configuration, any `b` or `bdep update` command that will update/build the project will also acquire the missing dependency automatically, then build it and link it with your target.
 
@@ -818,7 +818,7 @@ To use this package in an exising [`build2`](https://build2.org) project, the ge
         # build only,
         b
 
-        # or build and test the executable's output, will only work if the `tescript` is correct
+        # or build and test the executable's output, will only work if the `testscript` is correct
         b test
 
         ```

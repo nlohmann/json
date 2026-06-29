@@ -9,7 +9,7 @@ unsigned) and floating-point values.
     
 ## Return value
 
-`#!cpp true` if type is number (regardless whether integer, unsigned integer, or floating-type), `#!cpp false` otherwise.
+`#!cpp true` if type is number (regardless whether integer, unsigned integer, or floating-point), `#!cpp false` otherwise.
 
 ## Exception safety
 

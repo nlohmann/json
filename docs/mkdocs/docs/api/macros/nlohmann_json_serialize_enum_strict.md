@@ -38,7 +38,10 @@ inline void from_json(const BasicJsonType& j, type& e);
 
 !!! important "Important notes"
 
-    - When using [`get<ENUM_TYPE>()`](../basic_json/get.md), undefined JSON values will throw an exception.
+    - Undefined input throws [`out_of_range.410`](../../home/exceptions.md#jsonexceptionout_of_range410) in both
+      directions: when serializing an enum value not listed in the conversions, and when deserializing (e.g., via
+      [`get<ENUM_TYPE>()`](../basic_json/get.md)) a JSON value that matches no conversion; example:
+      `"enum value out of range for <type>"`.
     - If an enum or JSON value is specified in multiple conversions, the first matching conversion from the top of the
       list will be returned when converting to or from JSON. See example 2 below.
 
@@ -99,4 +102,4 @@ inline void from_json(const BasicJsonType& j, type& e);
 
 ## Version history
 
-Added in version 3.12.0.
+Added in version 3.12.x.

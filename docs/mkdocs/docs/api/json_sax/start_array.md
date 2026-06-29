@@ -9,7 +9,7 @@ The beginning of an array was read.
 ## Parameters
 
 `elements` (in)
-:   number of object elements or `#!cpp -1` if unknown
+:   number of array elements, or `#!cpp std::numeric_limits<std::size_t>::max()` if unknown
 
 ## Return value
 

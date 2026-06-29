@@ -1,7 +1,7 @@
 # <small>nlohmann::basic_json::</small>patch_inplace
 
 ```cpp
-void patch_inplace(const basic_json& json_patch) const;
+void patch_inplace(const basic_json& json_patch);
 ```
 
 [JSON Patch](http://jsonpatch.com) defines a JSON document structure for expressing a sequence of operations to apply to
@@ -28,7 +28,7 @@ No guarantees, value may be corrupted by an unsuccessful patch operation.
   could not be resolved successfully in the current JSON value; example: `"key baz not found"`.
 - Throws [`out_of_range.405`](../../home/exceptions.md#jsonexceptionout_of_range405) if JSON pointer has no parent
   ("add", "remove", "move")
-- Throws [`out_of_range.501`](../../home/exceptions.md#jsonexceptionother_error501) if "test" operation was
+- Throws [`other_error.501`](../../home/exceptions.md#jsonexceptionother_error501) if "test" operation was
   unsuccessful.
 
 ## Complexity
@@ -62,7 +62,7 @@ function throws an exception.
 
 - [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902)
 - [RFC 6901 (JSON Pointer)](https://tools.ietf.org/html/rfc6901)
-- [patch](patch.md) applies a JSON Merge Patch
+- [patch](patch.md) applies a JSON Patch
 - [merge_patch](merge_patch.md) applies a JSON Merge Patch
 
 ## Version history

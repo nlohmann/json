@@ -21,7 +21,7 @@ The default value is detected based on the preprocessor macros `#!cpp __cpp_lib_
 
 ## Notes
 
-- Note that older compilers or older versions of libstd++ also require the library `stdc++fs` to be linked to for
+- Note that older compilers or older versions of libstdc++ also require the library `stdc++fs` to be linked to for
   filesystem support.
 - Both macros are undefined outside the library.
 

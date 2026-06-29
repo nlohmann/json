@@ -1,10 +1,12 @@
-# JSON_HAS_CPP_11, JSON_HAS_CPP_14, JSON_HAS_CPP_17, JSON_HAS_CPP_20
+# JSON_HAS_CPP_11, JSON_HAS_CPP_14, JSON_HAS_CPP_17, JSON_HAS_CPP_20, JSON_HAS_CPP_23, JSON_HAS_CPP_26
 
 ```cpp
 #define JSON_HAS_CPP_11
 #define JSON_HAS_CPP_14
 #define JSON_HAS_CPP_17
 #define JSON_HAS_CPP_20
+#define JSON_HAS_CPP_23
+#define JSON_HAS_CPP_26
 ```
 
 The library targets C++11, but also supports some features introduced in later C++ versions (e.g., `std::string_view`
@@ -20,7 +22,9 @@ The default value is detected based on preprocessor macros such as `#!cpp __cplu
 
 ## Notes
 
-- `#!cpp JSON_HAS_CPP_11` is always defined.
+- When the C++ standard is detected automatically, `#!cpp JSON_HAS_CPP_11` is always defined. When you override the
+  detection by defining one of these macros manually, the automatic detection is skipped entirely, so you should define
+  all applicable macros (including `#!cpp JSON_HAS_CPP_11`) yourself.
 - All macros are undefined outside the library.
 
 ## Examples
@@ -39,3 +43,5 @@ The default value is detected based on preprocessor macros such as `#!cpp __cplu
 ## Version history
 
 - Added in version 3.10.5.
+- Added `JSON_HAS_CPP_23` in version 3.12.0.
+- Added `JSON_HAS_CPP_26` in version 3.12.x.

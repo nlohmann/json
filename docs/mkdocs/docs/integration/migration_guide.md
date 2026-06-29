@@ -198,10 +198,6 @@ conversions with calls to [`get`](../api/basic_json/get.md), [`get_to`](../api/b
       j.get_to(s);
       ```
 
-You can prepare existing code by already defining
-[`JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md) to `0` and replace any implicit
-conversions with calls to [`get`](../api/basic_json/get.md).
-
 ## Import namespace `literals` for UDLs
 
 The user-defined string literals [`operator""_json`](../api/operator_literal_json.md) and

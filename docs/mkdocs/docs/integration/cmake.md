@@ -167,7 +167,7 @@ Enable the (incorrect) legacy comparison behavior of discarded JSON values by de
 
 ### `JSON_MultipleHeaders`
 
-Use the non-amalgamated version of the library. This option is `OFF` by default.
+Use the non-amalgamated version of the library. This option is `ON` by default.
 
 ### `JSON_SystemInclude`
 
@@ -176,3 +176,8 @@ Treat the library headers like system headers (i.e., adding `SYSTEM` to the [`ta
 ### `JSON_Valgrind`
 
 Execute the test suite with [Valgrind](https://valgrind.org). This option is `OFF` by default. Depends on `JSON_BuildTests`.
+
+### `NLOHMANN_JSON_BUILD_MODULES`
+
+Build the experimental [C++ module](../features/modules.md) `nlohmann.json` (requires CMake 3.28 or later and C++20).
+This option is `OFF` by default.

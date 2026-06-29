@@ -32,7 +32,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
   could not be resolved successfully in the current JSON value; example: `"key baz not found"`.
 - Throws [`out_of_range.405`](../../home/exceptions.md#jsonexceptionout_of_range405) if JSON pointer has no parent
   ("add", "remove", "move")
-- Throws [`out_of_range.501`](../../home/exceptions.md#jsonexceptionother_error501) if "test" operation was
+- Throws [`other_error.501`](../../home/exceptions.md#jsonexceptionother_error501) if "test" operation was
   unsuccessful.
 
 ## Complexity

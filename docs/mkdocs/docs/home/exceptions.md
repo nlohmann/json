@@ -870,12 +870,15 @@ Key identifiers to be serialized to BSON cannot contain code point U+0000, since
 
 ### json.exception.out_of_range.410
 
-Undefined json fields cannot be used with [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](../api/macros/nlohmann_json_serialize_enum_strict.md)
+This exception is thrown when an undefined value is used with
+[`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](../api/macros/nlohmann_json_serialize_enum_strict.md), or when an array index in
+a JSON pointer exceeds the range of `size_type` (e.g., on 32-bit platforms).
 
 !!! failure "Example message"
 
     ```
     enum value out of range
+    array index 18446744073709551616 exceeds size_type
     ```
 
 ## Further exceptions

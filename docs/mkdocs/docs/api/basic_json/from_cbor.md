@@ -96,6 +96,14 @@ Linear in the size of the input.
     --8<-- "examples/from_cbor.output"
     ```
 
+## See also
+
+- [to_cbor](to_cbor.md) create a CBOR serialization of a JSON value
+- [from_msgpack](from_msgpack.md) create a JSON value from an input in MessagePack format
+- [from_bson](from_bson.md) create a JSON value from an input in BSON format
+- [from_ubjson](from_ubjson.md) create a JSON value from an input in UBJSON format
+- [from_bjdata](from_bjdata.md) create a JSON value from an input in BJData format
+
 ## Version history
 
 - Added in version 2.0.9.

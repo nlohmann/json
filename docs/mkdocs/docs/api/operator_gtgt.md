@@ -21,8 +21,6 @@ the stream `i`
 ## Exceptions
 
 - Throws [`parse_error.101`](../home/exceptions.md#jsonexceptionparse_error101) in case of an unexpected token.
-- Throws [`parse_error.102`](../home/exceptions.md#jsonexceptionparse_error102) if `to_unicode` fails or surrogate error.
-- Throws [`parse_error.103`](../home/exceptions.md#jsonexceptionparse_error103) if `to_unicode` fails.
 
 ## Complexity
 
@@ -31,6 +29,9 @@ Linear in the length of the input. The parser is a predictive LL(1) parser.
 ## Notes
 
 A UTF-8 byte order mark is silently ignored.
+
+Invalid Unicode escapes and unpaired surrogates in the input are reported as
+[`parse_error.101`](../home/exceptions.md#jsonexceptionparse_error101) with a detailed message.
 
 !!! warning "Deprecation"
 
@@ -61,4 +62,4 @@ A UTF-8 byte order mark is silently ignored.
 
 ## Version history
 
-- Added in version 1.0.0. Deprecated in version 3.0.0.
+- Added in version 1.0.0.
