@@ -13,9 +13,6 @@
 #include <tuple> // tuple
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
-#if defined(__cpp_lib_optional) && __cpp_lib_optional >= 201606L
-    #include <optional> // optional
-#endif
 #if defined(__cpp_lib_byte) && __cpp_lib_byte >= 201603L
     #include <cstddef> // byte
 #endif
@@ -79,15 +76,6 @@ struct is_json_ref : std::false_type {};
 
 template<typename T>
 struct is_json_ref<json_ref<T>> : std::true_type {};
-
-// trait to detect std::optional<T> specializations
-template<typename>
-struct is_std_optional : std::false_type {};
-
-#if defined(__cpp_lib_optional) && __cpp_lib_optional >= 201606L
-template<typename T>
-struct is_std_optional<std::optional<T>> : std::true_type {};
-#endif
 
 //////////////////////////
 // aliases for detected //
