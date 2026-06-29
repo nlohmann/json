@@ -257,9 +257,7 @@ jobs:
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
-        run: |
-          . /opt/intel/oneapi/setvars.sh
-          cmake --build build --target ci_icpx
+        run: cmake --build build --target ci_icpx
 
   ci_nvhpc:
     runs-on: ubuntu-latest
