@@ -1938,6 +1938,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #if defined(JSON_HAS_CPP_17) && JSON_HAS_STATIC_RTTI
                                                 detail::negation<std::is_same<ValueType, std::any>>,
 #endif
+#if defined(JSON_HAS_CPP_17)
+                                                // std::optional<T> can construct itself from basic_json; excluding it
+                                                // here avoids an ambiguity with that constructor (e.g., under C++26)
+                                                detail::negation<detail::is_std_optional<ValueType>>,
+#endif
                                                 detail::is_detected_lazy<detail::get_template_function, const basic_json_t&, ValueType>
                                                 >::value, int >::type = 0 >
                                         JSON_EXPLICIT operator ValueType() const

@@ -3570,6 +3570,9 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <tuple> // tuple
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
+#if defined(__cpp_lib_optional) && __cpp_lib_optional >= 201606L
+    #include <optional> // optional
+#endif
 #if defined(__cpp_lib_byte) && __cpp_lib_byte >= 201603L
     #include <cstddef> // byte
 #endif
@@ -3816,6 +3819,15 @@ struct is_json_ref : std::false_type {};
 
 template<typename T>
 struct is_json_ref<json_ref<T>> : std::true_type {};
+
+// trait to detect std::optional<T> specializations
+template<typename>
+struct is_std_optional : std::false_type {};
+
+#if defined(__cpp_lib_optional) && __cpp_lib_optional >= 201606L
+template<typename T>
+struct is_std_optional<std::optional<T>> : std::true_type {};
+#endif
 
 //////////////////////////
 // aliases for detected //
@@ -22446,6 +22458,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #endif
 #if defined(JSON_HAS_CPP_17) && JSON_HAS_STATIC_RTTI
                                                 detail::negation<std::is_same<ValueType, std::any>>,
+#endif
+#if defined(JSON_HAS_CPP_17)
+                                                // std::optional<T> can construct itself from basic_json; excluding it
+                                                // here avoids an ambiguity with that constructor (e.g., under C++26)
+                                                detail::negation<detail::is_std_optional<ValueType>>,
 #endif
                                                 detail::is_detected_lazy<detail::get_template_function, const basic_json_t&, ValueType>
                                                 >::value, int >::type = 0 >
