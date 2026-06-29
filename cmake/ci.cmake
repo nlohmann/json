@@ -701,6 +701,32 @@ add_custom_target(ci_icpc
     COMMENT "Compile and test with ICPC"
 )
 
+add_custom_target(ci_icpx
+    COMMAND ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DCMAKE_C_COMPILER=icx -DCMAKE_CXX_COMPILER=icpx
+        -DJSON_BuildTests=ON -DJSON_FastTests=ON
+        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_icpx
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_icpx
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_icpx && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" --output-on-failure
+    COMMENT "Compile and test with ICPX (Intel oneAPI DPC++/C++)"
+)
+
+###############################################################################
+# NVIDIA HPC SDK C++ Compiler
+###############################################################################
+
+add_custom_target(ci_nvhpc
+    COMMAND ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DCMAKE_C_COMPILER=nvc -DCMAKE_CXX_COMPILER=nvc++
+        -DJSON_BuildTests=ON -DJSON_FastTests=ON
+        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_nvhpc
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_nvhpc
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_nvhpc && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" --output-on-failure
+    COMMENT "Compile and test with NVIDIA HPC SDK (nvc++)"
+)
+
 ###############################################################################
 # REUSE
 ###############################################################################
