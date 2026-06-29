@@ -13,10 +13,15 @@ import nlohmann.json;
 
 using namespace nlohmann::literals;
 
-// Exercise each name exported by the nlohmann.json module so that a missing or
-// broken export is caught at compile time. This target is only built (not run)
-// by the ci_module_cpp20 CI job, so the checks are primarily compile-time; the
-// return value additionally validates them if the binary is executed.
+// This test exercises the surface exported by the nlohmann.json module so that
+// a missing or broken export is caught at compile time.
+//
+// NOTE: It is only built with Clang. GCC's C++20 modules implementation (as of
+// GCC 16.1) cannot compile non-trivial use of the imported module: any standard
+// library facility reached through the module triggers redefinition or missing
+// include errors in libstdc++ (and using `import` together with textual
+// `#include`s of standard headers fails as well). The ci_module_cpp20 job is
+// therefore restricted to Clang until GCC's modules support matures.
 int main()
 {
     // basic_json / json: parsing and value access

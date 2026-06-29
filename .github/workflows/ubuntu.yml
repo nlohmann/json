@@ -247,7 +247,10 @@ jobs:
   ci_module_cpp20:
     strategy:
       matrix:
-        container: ['gcc:latest', 'silkeh/clang:latest']
+        # Only Clang for now: GCC's C++20 modules support (as of GCC 16.1) cannot
+        # compile non-trivial use of the imported module (redefinition / missing
+        # include errors in libstdc++).
+        container: ['silkeh/clang:latest']
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
     steps:
