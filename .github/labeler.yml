@@ -23,11 +23,11 @@ labels:
 
 - label: "CI"
   files:
-    - "github/workflows/.*"
+    - ".github/workflows/.*"
 
 - label: "CI"
   files:
-    - "github/external_ci/.*"
+    - ".github/external_ci/.*"
 
 - label: "S"
   size-below: 10
