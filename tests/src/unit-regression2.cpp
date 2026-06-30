@@ -74,6 +74,13 @@ using ordered_json = nlohmann::ordered_json;
 /////////////////////////////////////////////////////////////////////
 template class nlohmann::basic_json<>;
 
+/////////////////////////////////////////////////////////////////////
+// for #4440
+/////////////////////////////////////////////////////////////////////
+#if JSON_HAS_RANGES == 1
+    #include <ranges>
+#endif
+
 // NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
 DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
@@ -1142,6 +1149,20 @@ TEST_CASE("regression tests 2")
         CHECK(!result.has_value());
     }
 #endif
+
+#if JSON_HAS_RANGES == 1
+    SECTION("issue #4440 - assert when using std::views::filter and GCC 10")
+    {
+        auto noOpFilter = std::views::filter([](auto&&) noexcept
+        {
+            return true;
+        });
+        json j = {1, 2, 3};
+        auto filtered = j | noOpFilter;
+        CHECK(*filtered.begin() == 1);
+    }
+#endif
+
 }
 
 TEST_CASE_TEMPLATE("issue #4798 - nlohmann::json::to_msgpack() encode float NaN as double", T, double, float) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
