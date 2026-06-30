@@ -86,11 +86,13 @@ jobs:
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
       - name: Set extra CXX_FLAGS for latest std_version
+        # /wd5285 silences C5285 emitted by the bundled third-party doctest.h, which
+        # specializes std::tuple (newly diagnosed by the VS2026 v145 toolset)
         run: |
           if [ "${{ matrix.std_version }}" = "latest" ]; then
-            echo "flags=/permissive- /std:c++latest /utf-8 /W4 /WX" >> $GITHUB_ENV
+            echo "flags=/permissive- /std:c++latest /utf-8 /W4 /WX /wd5285" >> $GITHUB_ENV
           else
-            echo "flags=/W4 /WX" >> $GITHUB_ENV
+            echo "flags=/W4 /WX /wd5285" >> $GITHUB_ENV
           fi
         shell: bash
       - name: Run CMake (Release)

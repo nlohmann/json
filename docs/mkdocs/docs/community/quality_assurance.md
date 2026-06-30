@@ -87,8 +87,11 @@ violations will result in a failed build.
         | MSVC 19.0.24241.7                            | x86          | Windows 8.1                       | AppVeyor  |
         | MSVC 19.16.27035.0                           | x86          | Windows-10 (Build 14393)          | AppVeyor  |
         | MSVC 19.29.30157.0                           | x86          | Windows-10 (Build 17763)          | AppVeyor  |
+        | MSVC 19.44.35207.0                           | arm64        | Windows 11 (Build 26200)          | GitHub    |
         | MSVC 19.44.35214.0                           | x86          | Windows Server 2022 (Build 20348) | GitHub    |
         | MSVC 19.44.35214.0                           | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
+        | MSVC 19.51.36231.0                           | x86          | Windows Server 2025 (Build 26100) | GitHub    |
+        | MSVC 19.51.36231.0                           | x86_64       | Windows Server 2025 (Build 26100) | GitHub    |
 
 - [x] The library is compiled with all C++ language revisions (C++11, C++14, C++17, C++20, C++23, and C++26) to detect
   and fix language deprecations early.
