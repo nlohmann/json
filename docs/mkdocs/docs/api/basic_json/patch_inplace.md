@@ -28,6 +28,8 @@ No guarantees, value may be corrupted by an unsuccessful patch operation.
   could not be resolved successfully in the current JSON value; example: `"key baz not found"`.
 - Throws [`out_of_range.405`](../../home/exceptions.md#jsonexceptionout_of_range405) if JSON pointer has no parent
   ("add", "remove", "move")
+- Throws [`out_of_range.411`](../../home/exceptions.md#jsonexceptionout_of_range411) if an "add" operation's target
+  location has a parent that is neither an object nor an array.
 - Throws [`other_error.501`](../../home/exceptions.md#jsonexceptionother_error501) if "test" operation was
   unsuccessful.
 
@@ -68,3 +70,5 @@ function throws an exception.
 ## Version history
 
 - Added in version 3.11.0.
+- Added [`out_of_range.411`](../../home/exceptions.md#jsonexceptionout_of_range411) and stopped relying on an internal assertion when an "add" operation's
+  target location has a non-object/non-array parent in version 3.12.x.

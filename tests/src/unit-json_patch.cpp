@@ -1334,3 +1334,57 @@ TEST_CASE("JSON patch")
         }
     }
 }
+
+TEST_CASE("JSON patch - add to a primitive parent (regression #4292)")
+{
+    // Regression test for https://github.com/nlohmann/json/issues/4292
+    //
+    // An "add" operation whose parent location resolves to a primitive
+    // (non-container) value must be rejected with a catchable exception.
+    // Previously this hit JSON_ASSERT(false) in operation_add, which aborts
+    // the process in debug builds and silently dropped the operation (leaving
+    // a wrong result) when assertions were compiled out (NDEBUG). It now
+    // throws out_of_range.411.
+    //
+    // The documents below are constructed programmatically (not parsed) so
+    // they carry no byte positions; the JSON_DIAGNOSTICS path prefix is
+    // handled by the guards. The exact message with positions is covered in
+    // unit-diagnostic-positions.cpp.
+
+    SECTION("string parent")
+    {
+        json const doc = {{"foo", {{"bar", "a string"}}}};
+        json const patch = {{{"op", "add"}, {"path", "/foo/bar/baz"}, {"value", 1}}};
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.411] (/foo/bar) cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array", json::out_of_range&);
+#else
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.411] cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array", json::out_of_range&);
+#endif
+    }
+
+    SECTION("number parent")
+    {
+        json const doc = {{"foo", 1}};
+        json const patch = {{{"op", "add"}, {"path", "/foo/bar"}, {"value", 2}}};
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.411] (/foo) cannot add value: the JSON Patch 'add' target's parent is of type number, but must be an object or array", json::out_of_range&);
+#else
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.411] cannot add value: the JSON Patch 'add' target's parent is of type number, but must be an object or array", json::out_of_range&);
+#endif
+    }
+
+    SECTION("original two-step sequence from the issue")
+    {
+        // The user's two-step patch from #4292: first turn /xyz/1 into a
+        // string, then try to add a member inside that string.
+        json const doc = R"( { "xyz": [ { "lmn": "214", "nnp": "001" } ] } )"_json;
+        json const patch = R"(
+            [
+                { "op": "add", "path": "/xyz/1",     "value": "" },
+                { "op": "add", "path": "/xyz/1/lmn", "value": "214" }
+            ]
+        )"_json;
+
+        CHECK_THROWS_AS(doc.patch(patch), json::out_of_range&);
+    }
+}
