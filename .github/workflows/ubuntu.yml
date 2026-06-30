@@ -247,18 +247,28 @@ jobs:
   ci_module_cpp20:
     strategy:
       matrix:
-        # Only Clang for now: GCC's C++20 modules support (as of GCC 16.1) cannot
-        # compile non-trivial use of the imported module (redefinition / missing
-        # include errors in libstdc++).
-        container: ['silkeh/clang:latest']
+        container: ['gcc:latest', 'silkeh/clang:latest']
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-      - name: Get latest CMake and ninja
+      # The module test uses `import std;`, which needs CMake's experimental
+      # import-std support. Its opt-in token is CMake-version-specific, so pin
+      # CMake to the version whose token is set in tests/module_cpp20/CMakeLists.txt.
+      - name: Get pinned CMake and ninja
         uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        with:
+          cmakeVersion: 4.3.4
+      # Clang: the std library module is provided by libc++ (the image's libstdc++
+      # ships none), and the image's libc++ module manifest has a broken relative
+      # path — repoint it at the real module sources.
+      - name: Use libc++ and fix its module manifest path (Clang)
+        if: matrix.container == 'silkeh/clang:latest'
+        run: |
+          echo "CXXFLAGS=-stdlib=libc++" >> "$GITHUB_ENV"
+          mkdir -p /usr/lib/share && ln -sf /usr/lib/llvm-*/share/libc++ /usr/lib/share/libc++
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build

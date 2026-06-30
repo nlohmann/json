@@ -6,22 +6,19 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
+import std;
 import nlohmann.json;
-
-#include <sstream>
-#include <string>
 
 using namespace nlohmann::literals;
 
-// This test exercises the surface exported by the nlohmann.json module so that
-// a missing or broken export is caught at compile time.
+// Exercise the surface exported by the nlohmann.json module so that a missing
+// or broken export is caught at compile time.
 //
-// NOTE: It is only built with Clang. GCC's C++20 modules implementation (as of
-// GCC 16.1) cannot compile non-trivial use of the imported module: any standard
-// library facility reached through the module triggers redefinition or missing
-// include errors in libstdc++ (and using `import` together with textual
-// `#include`s of standard headers fails as well). The ci_module_cpp20 job is
-// therefore restricted to Clang until GCC's modules support matures.
+// Standard-library facilities are pulled in via `import std;` rather than
+// textual `#include`s: mixing `import` with textual standard headers does not
+// compile under GCC's C++20 modules implementation, whereas `import std;` works
+// across GCC, Clang, and MSVC. This requires C++23 and CMake's (experimental)
+// import-std support; see CMakeLists.txt.
 int main()
 {
     // basic_json / json: parsing and value access
