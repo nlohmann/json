@@ -24800,7 +24800,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     };
 
-    data m_data = {};
+    data m_data = {}; // NOLINT(readability-redundant-member-init)
 
 #if JSON_DIAGNOSTICS
     /// a pointer to a parent value (for debugging purposes)
