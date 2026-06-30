@@ -19300,11 +19300,7 @@ class serializer
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
-                    if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
-                    {
-                        indent_string.resize((std::max)(indent_string.size() * 2, static_cast<std::size_t>(new_indent)), indent_char);
-                        JSON_ASSERT(indent_string.size() >= new_indent);
-                    }
+                    reserve_indent(new_indent);
 
                     // first n-1 elements
                     auto i = val.m_data.m_value.object->cbegin();
@@ -19374,11 +19370,7 @@ class serializer
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
-                    if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
-                    {
-                        indent_string.resize((std::max)(indent_string.size() * 2, static_cast<std::size_t>(new_indent)), indent_char);
-                        JSON_ASSERT(indent_string.size() >= new_indent);
-                    }
+                    reserve_indent(new_indent);
 
                     // first n-1 elements
                     for (auto i = val.m_data.m_value.array->cbegin();
@@ -19436,11 +19428,7 @@ class serializer
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
-                    if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
-                    {
-                        indent_string.resize((std::max)(indent_string.size() * 2, static_cast<std::size_t>(new_indent)), indent_char);
-                        JSON_ASSERT(indent_string.size() >= new_indent);
-                    }
+                    reserve_indent(new_indent);
 
                     o->write_characters(indent_string.c_str(), new_indent);
 
@@ -19548,6 +19536,25 @@ class serializer
             default:            // LCOV_EXCL_LINE
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
+    }
+
+    /*!
+    @brief grow the indentation string so it can hold at least @a new_indent characters
+
+    The indentation string is grown by doubling its size, but at least to
+    @a new_indent characters, so that it can be used as a source for writing
+    @a new_indent indentation characters. The newly added characters use the
+    configured @ref indent_char.
+
+    @param[in] new_indent  the required number of indentation characters
+    */
+    void reserve_indent(const std::size_t new_indent)
+    {
+        if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
+        {
+            indent_string.resize((std::max)(indent_string.size() * 2, new_indent), indent_char);
+        }
+        JSON_ASSERT(indent_string.size() >= new_indent);
     }
 
   JSON_PRIVATE_UNLESS_TESTED:
