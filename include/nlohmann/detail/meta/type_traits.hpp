@@ -470,7 +470,7 @@ struct is_compatible_array_type_impl <
 
 // std::ranges does not work properly on MinGW due to incomplete C++20 support
 // see https://github.com/nlohmann/json/issues/4916
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGES && !defined(__MINGW32__) && (!defined(_GLIBCXX_RELEASE) || _GLIBCXX_RELEASE >= 12)
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type_impl <
     BasicJsonType, CompatibleArrayType,
