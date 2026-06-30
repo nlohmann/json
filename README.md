@@ -429,6 +429,8 @@ struct MyIterator {
     using reference = const char&;
     using iterator_category = std::input_iterator_tag;
 
+    explicit MyIterator(MyContainer* tgt = nullptr) : target(tgt) {}
+
     MyIterator& operator++() {
         target->advance();
         return *this;
@@ -450,12 +452,12 @@ MyIterator begin(MyContainer& tgt) {
 }
 
 MyIterator end(const MyContainer&) {
-    return {};
+    return MyIterator{};
 }
 
 void foo() {
     MyContainer c;
-    json j = json::parse(c);
+    json j = json::parse(begin(c), end(c));
 }
 ```
 
