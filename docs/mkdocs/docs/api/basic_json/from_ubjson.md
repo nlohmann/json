@@ -65,8 +65,10 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [parse_error.110](../../home/exceptions.md#jsonexceptionparse_error110) if the given input ends prematurely or
   the end of the file was not reached when `strict` was set to true
 - Throws [parse_error.112](../../home/exceptions.md#jsonexceptionparse_error112) if a parse error occurs
-- Throws [parse_error.113](../../home/exceptions.md#jsonexceptionparse_error113) if a string could not be parsed 
+- Throws [parse_error.113](../../home/exceptions.md#jsonexceptionparse_error113) if a string could not be parsed
   successfully
+- Throws [out_of_range.408](../../home/exceptions.md#jsonexceptionout_of_range408) if the size of an optimized container
+  or n-dimensional array cannot be represented by `std::size_t`
 
 ## Complexity
 
@@ -87,6 +89,14 @@ Linear in the size of the input.
     ```json
     --8<-- "examples/from_ubjson.output"
     ```
+
+## See also
+
+- [to_ubjson](to_ubjson.md) create a UBJSON serialization of a JSON value
+- [from_cbor](from_cbor.md) create a JSON value from an input in CBOR format
+- [from_msgpack](from_msgpack.md) create a JSON value from an input in MessagePack format
+- [from_bson](from_bson.md) create a JSON value from an input in BSON format
+- [from_bjdata](from_bjdata.md) create a JSON value from an input in BJData format
 
 ## Version history
 

@@ -2,10 +2,20 @@
 
 ```cpp
 // (1)
-void swap(reference other) noexcept;
+void swap(reference other) noexcept (
+    std::is_nothrow_move_constructible<value_t>::value &&
+    std::is_nothrow_move_assignable<value_t>::value &&
+    std::is_nothrow_move_constructible<json_value>::value &&
+    std::is_nothrow_move_assignable<json_value>::value
+);
 
 // (2)
-void swap(reference left, reference right) noexcept;
+friend void swap(reference left, reference right) noexcept (
+    std::is_nothrow_move_constructible<value_t>::value &&
+    std::is_nothrow_move_assignable<value_t>::value &&
+    std::is_nothrow_move_constructible<json_value>::value &&
+    std::is_nothrow_move_assignable<json_value>::value
+);
 
 // (3)
 void swap(array_t& other);
@@ -56,15 +66,15 @@ void swap(typename binary_t::container_type& other);
 1. No-throw guarantee: this function never throws exceptions.
 2. No-throw guarantee: this function never throws exceptions.
 3. Throws [`type_error.310`](../../home/exceptions.md#jsonexceptiontype_error310) if called on JSON values other than
-   arrays; example: `"cannot use swap() with boolean"`
+   arrays; example: `"cannot use swap(array_t&) with boolean"`
 4. Throws [`type_error.310`](../../home/exceptions.md#jsonexceptiontype_error310) if called on JSON values other than
-   objects; example: `"cannot use swap() with boolean"`
+   objects; example: `"cannot use swap(object_t&) with boolean"`
 5. Throws [`type_error.310`](../../home/exceptions.md#jsonexceptiontype_error310) if called on JSON values other than
-   strings; example: `"cannot use swap() with boolean"`
+   strings; example: `"cannot use swap(string_t&) with boolean"`
 6. Throws [`type_error.310`](../../home/exceptions.md#jsonexceptiontype_error310) if called on JSON values other than
-   binaries; example: `"cannot use swap() with boolean"`
+   binaries; example: `"cannot use swap(binary_t&) with boolean"`
 7. Throws [`type_error.310`](../../home/exceptions.md#jsonexceptiontype_error310) if called on JSON values other than
-   binaries; example: `"cannot use swap() with boolean"`
+   binaries; example: `"cannot use swap(binary_t::container_type&) with boolean"`
 
 ## Complexity
 
@@ -128,7 +138,7 @@ Constant.
     --8<-- "examples/swap__string_t.output"
     ```
 
-??? example "Example: Swap string (6)"
+??? example "Example: Swap binary (6)"
 
     The example below shows how binary values can be swapped with `swap()`.
     
@@ -145,6 +155,8 @@ Constant.
 ## See also
 
 - [std::swap<basic_json\>](std_swap.md)
+- [operator=](operator=.md) copy assignment
+- [basic_json](basic_json.md) create a JSON value
 
 ## Version history
 

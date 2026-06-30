@@ -32,7 +32,6 @@ With the default values for `NumberIntegerType` (`std::int64_t`), the default va
 - The restrictions about leading zeros are not enforced in C++. Instead, leading zeros in integer literals lead to an
   interpretation as an octal number. Internally, the value will be stored as a decimal number. For instance, the C++
   integer literal `010` will be serialized to `8`. During deserialization, leading zeros yield an error.
-- Not-a-number (NaN) values will be serialized to `null`.
 
 #### Limits
 

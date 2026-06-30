@@ -89,6 +89,14 @@ Linear in the size of the input.
     --8<-- "examples/from_msgpack.output"
     ```
 
+## See also
+
+- [to_msgpack](to_msgpack.md) create a MessagePack serialization of a JSON value
+- [from_cbor](from_cbor.md) create a JSON value from an input in CBOR format
+- [from_bson](from_bson.md) create a JSON value from an input in BSON format
+- [from_ubjson](from_ubjson.md) create a JSON value from an input in UBJSON format
+- [from_bjdata](from_bjdata.md) create a JSON value from an input in BJData format
+
 ## Version history
 
 - Added in version 2.0.9.
@@ -101,7 +109,7 @@ Linear in the size of the input.
     - Overload (2) replaces calls to `from_msgpack` with a pointer and a length as first two parameters, which has been
       deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like
       `#!cpp from_msgpack(ptr, len, ...);` with `#!cpp from_msgpack(ptr, ptr+len, ...);`.
-    - Overload (2) replaces calls to `from_cbor` with a pair of iterators as their first parameter, which has been
+    - Overload (2) replaces calls to `from_msgpack` with a pair of iterators as their first parameter, which has been
       deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like
       `#!cpp from_msgpack({ptr, ptr+len}, ...);` with `#!cpp from_msgpack(ptr, ptr+len, ...);`.
 

@@ -68,6 +68,11 @@ the latter case, it is either skipped completely or replaced by an empty discard
     --8<-- "examples/parse__string__parser_callback_t.output"
     ```
 
+## See also
+
+- [parse](parse.md) deserialize from a compatible input
+- [parse_event_t](parse_event_t.md) enumeration of parser events
+
 ## Version history
 
 - Added in version 1.0.0.

@@ -72,6 +72,14 @@ Linear in the size of the JSON value `j`.
     --8<-- "examples/to_bjdata.output"
     ```
 
+## See also
+
+- [from_bjdata](from_bjdata.md) create a JSON value from an input in BJData format
+- [to_cbor](to_cbor.md) create a CBOR serialization of a JSON value
+- [to_msgpack](to_msgpack.md) create a MessagePack serialization of a JSON value
+- [to_bson](to_bson.md) create a BSON serialization of a JSON value
+- [to_ubjson](to_ubjson.md) create a UBJSON serialization of a JSON value
+
 ## Version history
 
 - Added in version 3.11.0.

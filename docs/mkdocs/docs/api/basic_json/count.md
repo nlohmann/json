@@ -72,6 +72,11 @@ This method always returns `0` when executed on a JSON type that is not an objec
     --8<-- "examples/count__keytype.c++17.output"
     ```
 
+## See also
+
+- [find](find.md) find a value in an object
+- [contains](contains.md) checks whether a key exists
+
 ## Version history
 
 1. Added in version 3.11.0.

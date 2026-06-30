@@ -82,6 +82,8 @@ Strong exception safety: if an exception occurs, the original value stays intact
       key of an object which cannot be found. See the example below.
     - Throws [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) if the JSON pointer `ptr` can
       not be resolved. See the example below.
+    - Throws [`out_of_range.410`](../../home/exceptions.md#jsonexceptionout_of_range410) if an array index in the passed
+      JSON pointer `ptr` exceeds the range of `size_type` (e.g., on 32-bit platforms).
 
 ## Complexity
 

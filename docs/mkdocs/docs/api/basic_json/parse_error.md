@@ -75,6 +75,7 @@ or the end of file. This also holds true when reading a byte vector for binary f
 
 ## See also
 
+- [`exception`](exception.md) for the base class of all exceptions thrown by the library
 - [List of parse errors](../../home/exceptions.md#parse-errors)
 - [`invalid_iterator`](invalid_iterator.md) for exceptions indicating errors with iterators
 - [`type_error`](type_error.md) for exceptions indicating executing a member function with a wrong type

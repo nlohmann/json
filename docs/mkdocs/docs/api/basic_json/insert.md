@@ -96,8 +96,8 @@ Strong exception safety: if an exception occurs, the original value stays intact
 5. The function can throw the following exceptions:
     - Throws [`type_error.309`](../../home/exceptions.md#jsonexceptiontype_error309) if called on JSON values other than
       objects; example: `"cannot use insert() with string"`
-    - Throws [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) if called on an
-      iterator which does not belong to the current JSON value; example: `"iterator does not fit current value"`
+    - Throws [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) if `first` or `last`
+      do not point to an object; example: `"iterators first and last must point to objects"`
     - Throws [`invalid_iterator.210`](../../home/exceptions.md#jsonexceptioninvalid_iterator210) if `first` and `last`
       do not belong to the same JSON value; example: `"iterators do not fit"`
 
@@ -180,6 +180,13 @@ Strong exception safety: if an exception occurs, the original value stays intact
     ```json
     --8<-- "examples/insert__range_object.output"
     ```
+
+## See also
+
+- [emplace](emplace.md) add a value to an object
+- [emplace_back](emplace_back.md) add a value to an array
+- [push_back](push_back.md) add a value to an array/object
+- [update](update.md) merges objects
 
 ## Version history
 

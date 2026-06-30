@@ -34,6 +34,13 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 
 Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
 
+## Exceptions
+
+- Throws [`type_error.317`](../../home/exceptions.md#jsonexceptiontype_error317) if the top-level type of the JSON value
+  is not an object; example: `"to serialize to BSON, top-level type must be object, but is string"`
+- Throws [`out_of_range.409`](../../home/exceptions.md#jsonexceptionout_of_range409) if a key in the JSON object contains
+  a null byte (code point U+0000); example: `"BSON key cannot contain code point U+0000 (at byte 2)"`
+
 ## Complexity
 
 Linear in the size of the JSON value `j`.
@@ -53,6 +60,14 @@ Linear in the size of the JSON value `j`.
     ```json
     --8<-- "examples/to_bson.output"
     ```
+
+## See also
+
+- [from_bson](from_bson.md) create a JSON value from an input in BSON format
+- [to_cbor](to_cbor.md) create a CBOR serialization of a JSON value
+- [to_msgpack](to_msgpack.md) create a MessagePack serialization of a JSON value
+- [to_ubjson](to_ubjson.md) create a UBJSON serialization of a JSON value
+- [to_bjdata](to_bjdata.md) create a BJData serialization of a JSON value
 
 ## Version history
 

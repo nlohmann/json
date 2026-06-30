@@ -95,7 +95,7 @@ changes to any JSON value.
     - Throws [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) if `default_value` does not match
       the type of the value at `ptr`
     - Throws [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) if the JSON value is not an object;
-      in that case, using `value()` with a key makes no sense.
+      in that case, using `value()` with a JSON pointer makes no sense.
 
 ## Complexity
 

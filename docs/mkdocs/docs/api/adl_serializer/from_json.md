@@ -30,7 +30,8 @@ class (either explicitly or via the conversion operators).
 
 ## Return value
 
-Copy of the JSON value, converted to `ValueType`
+1. (none) -- the converted value is written to the output parameter `val`.
+2. the JSON value `j` converted to `TargetType`
 
 ## Examples
 

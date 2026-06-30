@@ -101,7 +101,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 4. See 3.
 5. The function can throw the following exceptions:
     - Throws [`type_error.307`](../../home/exceptions.md#jsonexceptiontype_error307) when called on a type other than
-      JSON object; example: `"cannot use erase() with null"`
+      JSON array; example: `"cannot use erase() with null"`
     - Throws [`out_of_range.401`](../../home/exceptions.md#jsonexceptionout_of_range401) when `idx >= size()`; example:
       `"array index 17 is out of range"`
 
@@ -201,6 +201,11 @@ Strong exception safety: if an exception occurs, the original value stays intact
     ```json
     --8<-- "examples/erase__size_type.output"
     ```
+
+## See also
+
+- [clear](clear.md) clears the contents
+- [insert](insert.md) add values to an array/object
 
 ## Version history
 
