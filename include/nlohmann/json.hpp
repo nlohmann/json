@@ -5408,11 +5408,11 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
             ++it;
         }
 
-        // ['#'] - "alternate form", used here to request pretty-printing
-        bool pretty = false;
+        // ['#'] - "alternate form", used here to request pretty-printing with a
+        // default indent of 4 (overridden by an explicit width below, if given)
         if (it != end && *it == '#')
         {
-            pretty = true;
+            indent = 4;
             ++it;
         }
 
@@ -5427,10 +5427,6 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
                 indent = (indent * 10) + (*it - '0');
                 ++it;
             }
-        }
-        else if (pretty)
-        {
-            indent = 4;
         }
 
         // sign, the '0' flag, precision, locale-specific formatting ('L'), dynamic

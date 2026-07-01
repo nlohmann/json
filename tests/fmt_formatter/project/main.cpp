@@ -35,11 +35,11 @@ struct fmt::formatter<nlohmann::json>
             ++it;
         }
 
-        // ['#'] - "alternate form", used here to request pretty-printing
-        bool pretty = false;
+        // ['#'] - "alternate form", used here to request pretty-printing with a
+        // default indent of 4 (overridden by an explicit width below, if given)
         if (it != end && *it == '#')
         {
-            pretty = true;
+            indent = 4;
             ++it;
         }
 
@@ -53,10 +53,6 @@ struct fmt::formatter<nlohmann::json>
                 indent = (indent * 10) + (*it - '0');
                 ++it;
             }
-        }
-        else if (pretty)
-        {
-            indent = 4;
         }
 
         if (it != end && *it != '}')
