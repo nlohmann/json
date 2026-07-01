@@ -100,16 +100,6 @@ changes to any JSON value.
       JSON pointer `ptr` begins with '0'.
     - Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) if an array index in the passed
       JSON pointer `ptr` is not a number.
-    - Throws [`out_of_range.401`](../../home/exceptions.md#jsonexceptionout_of_range401) if an array index in the passed
-      JSON pointer `ptr` is out of range.
-    - Throws [`out_of_range.402`](../../home/exceptions.md#jsonexceptionout_of_range402) if the array index '-' is used
-      in the passed JSON pointer `ptr`.
-    - Throws [`out_of_range.403`](../../home/exceptions.md#jsonexceptionout_of_range403) if the JSON pointer describes a
-      key of an object which cannot be found.
-    - Throws [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) if the JSON pointer `ptr` can
-      not be resolved.
-    - Throws [`out_of_range.410`](../../home/exceptions.md#jsonexceptionout_of_range410) if an array index in the passed
-      JSON pointer `ptr` exceeds the maximum array size.
 
 ## Complexity
 

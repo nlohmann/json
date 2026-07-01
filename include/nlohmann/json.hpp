@@ -2398,14 +2398,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         {
             // If the pointer resolves to a value, return it. Otherwise, return
             // 'default_value'.
-            JSON_TRY
+            const auto* res = ptr.get_checked_or_null(this);
+            if (JSON_HEDLEY_LIKELY(res != nullptr))
             {
-                return ptr.get_checked(this).template get<ValueType>();
+                return res->template get<ValueType>();
             }
-            JSON_INTERNAL_CATCH (out_of_range&)
-            {
-                return default_value;
-            }
+
+            return default_value;
         }
 
         JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
@@ -2424,14 +2423,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         {
             // If the pointer resolves to a value, return it. Otherwise, return
             // 'default_value'.
-            JSON_TRY
+            const auto* res = ptr.get_checked_or_null(this);
+            if (JSON_HEDLEY_LIKELY(res != nullptr))
             {
-                return ptr.get_checked(this).template get<ReturnType>();
+                return res->template get<ReturnType>();
             }
-            JSON_INTERNAL_CATCH (out_of_range&)
-            {
-                return std::forward<ValueType>(default_value);
-            }
+
+            return std::forward<ValueType>(default_value);
         }
 
         JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
