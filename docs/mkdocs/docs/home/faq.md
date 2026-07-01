@@ -181,13 +181,14 @@ See [this section](../features/types/number_handling.md#number-serialization) on
 `std::format` works out of the box since version 3.12.x, as long as the standard library provides
 `<format>` (see [`JSON_HAS_STD_FORMAT`](../api/macros/json_has_std_format.md)); see
 [`std::formatter<basic_json>`](../api/basic_json/std_formatter.md) for details, including the `#!cpp "{:#}"`
-pretty-print spec.
+pretty-print spec, indent widths (`#!cpp "{:2}"`), and custom indent characters (`#!cpp "{:.>#}"`).
 
 For `fmt`, the library ships [`format_as`](../api/basic_json/format_as.md), a small customization point
 `fmt` looks for via argument-dependent lookup. It only has an effect on fmt 10.0.0 through 11.0.2 — from
 fmt 11.1.0 onwards, `fmt` no longer picks up a `format_as` overload that returns a `std::string`. On such
-versions (or any version, if you also want `#!cpp "{:#}"` pretty-print support), define your own
-`fmt::formatter` specialization; see [`format_as`](../api/basic_json/format_as.md) for a two-line recipe.
+versions (or any version, if you also want the same `#!cpp "{:#}"`/width/fill-and-align spec support that
+`std::formatter<basic_json>` has), define your own `fmt::formatter` specialization; see
+[`format_as`](../api/basic_json/format_as.md) for a recipe that mirrors it.
 
 If you get ambiguous-overload errors when passing a JSON value to `fmt::format`/`fmt::print` without any
 `fmt::formatter<json>` specialization in scope, that's `fmt` picking up `basic_json`'s implicit

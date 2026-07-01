@@ -49,20 +49,23 @@ std::string format_as(const BasicJsonType& j)
     `fmt` only picks up a `format_as` overload that returns a `std::string` in fmt **10.0.0 through
     11.0.2**. Starting with fmt **11.1.0**, `fmt` restricts automatic `format_as` pickup to overloads that
     return an arithmetic type, so this function has no effect there (it is simply unused, not a compile
-    error). If you use fmt \>= 11.1.0 (or want the same `#!cpp "{:#}"` pretty-print support that
-    [`std::formatter<basic_json>`](std_formatter.md) has), define your own `fmt::formatter` specialization,
-    for example:
+    error).
+
+    If you use fmt \>= 11.1.0, or want the same pretty-print spec support that
+    [`std::formatter<basic_json>`](std_formatter.md) has (`#!cpp "{:#}"`, a width to set the indent such
+    as `#!cpp "{:2}"`/`#!cpp "{:#2}"`, and fill-and-align to pick the indent character such as
+    `#!cpp "{:.>#}"`), define your own `fmt::formatter` specialization mirroring the same logic:
 
     ```cpp
-    template <>
-    struct fmt::formatter<nlohmann::json> : fmt::formatter<std::string>
-    {
-        auto format(const nlohmann::json& j, format_context& ctx) const
-        {
-            return fmt::formatter<std::string>::format(j.dump(), ctx);
-        }
-    };
+    --8<-- "../../../tests/fmt_formatter/project/main.cpp:formatter_recipe"
     ```
+
+    This recipe isn't shipped by the library itself, since doing so would make `fmt` a build dependency
+    (see the FAQ entry on
+    [using JSON values with `std::format` or `fmt`](../../home/faq.md#using-json-values-with-stdformat-or-fmt)
+    for more background) — but it *is* compiled and exercised against a real, current `fmt` release as
+    part of the library's own test suite (`tests/fmt_formatter`, via CMake `FetchContent`), so it's kept in
+    sync with `std::formatter<basic_json>` and verified to actually work, not just illustrative.
 
 ## Examples
 
