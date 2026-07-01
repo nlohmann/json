@@ -881,6 +881,20 @@ a JSON pointer exceeds the range of `size_type` (e.g., on 32-bit platforms).
     array index 18446744073709551616 exceeds size_type
     ```
 
+### json.exception.out_of_range.411
+
+A JSON Patch `add` operation cannot be applied because the target location's parent is neither an object nor an array. Per [RFC 6902](https://datatracker.ietf.org/doc/html/rfc6902), an `add` target must reference a member of an existing object or an element of an existing array; a primitive value (string, number, boolean, etc.) cannot receive a new member or element.
+
+!!! failure "Example message"
+
+    ```
+    cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array
+    ```
+
+!!! note
+
+    This exception was added in version 3.12.x. Before that, this situation hit an internal assertion (aborting the program in debug builds) or was silently ignored when assertions were disabled.
+
 ## Further exceptions
 
 This exception is thrown in case of errors that cannot be classified with the

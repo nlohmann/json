@@ -37,4 +37,14 @@ TEST_CASE("Better diagnostics with positions")
         CHECK_THROWS_WITH_AS(j.get<int>(),
                              "[json.exception.type_error.302] type must be number, but is string", json::type_error);
     }
+
+    SECTION("JSON patch add to primitive parent (#4292)")
+    {
+        // the JSON Patch "add" target /foo/bar/baz has a string parent
+        // (/foo/bar); the position of that parent is reported in the message
+        const json doc = json::parse(R"({"foo":{"bar":"a string"}})");
+        const json patch = json::parse(R"([{"op":"add","path":"/foo/bar/baz","value":1}])");
+        CHECK_THROWS_WITH_AS(doc.patch(patch),
+                             "[json.exception.out_of_range.411] (/foo/bar) (bytes 14-24) cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array", json::out_of_range);
+    }
 }
