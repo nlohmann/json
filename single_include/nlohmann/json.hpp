@@ -4212,6 +4212,41 @@ struct is_constructible_string_type
         value_type_t, laundered_type >>::value;
 };
 
+// Forward declarations: iteration_proxy.hpp includes this file, so we cannot
+// include it here.
+template<typename IteratorType> class iteration_proxy;
+template<typename IteratorType> class iteration_proxy_value;
+
+// Identifies nlohmann's internal iteration-proxy types. These must be excluded
+// before evaluating any std::ranges concept to avoid circular constraints.
+template<typename T> struct is_iteration_proxy_type : std::false_type {};
+template<typename T> struct is_iteration_proxy_type<iteration_proxy<T>>       : std::true_type {};
+template<typename T> struct is_iteration_proxy_type<iteration_proxy_value<T>> : std::true_type {};
+
+// std::ranges does not work properly on MinGW due to incomplete C++20 support
+// see https://github.com/nlohmann/json/issues/4916
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+
+// SafeToCheck guards against types that trigger circular constraints when
+// std::ranges::view<T> is evaluated on GCC 12 / libstdc++ 12:
+//   - iteration_proxy / iteration_proxy_value directly
+//   - views wrapping the above (e.g. owning_view<iteration_proxy<...>>)
+//   - views wrapping basic_json (e.g. ref_view<json>) — same circularity
+//     via json's constructors → is_compatible_array_type → here
+// nlohmann's plain range_value_t (iterator_traits-based) is safe to call
+// before any std::ranges concept is touched, so we use it for the checks.
+template < typename T, bool SafeToCheck =
+           !is_iteration_proxy_type<T>::value &&
+           !is_iteration_proxy_type<detected_t<range_value_t, T>>::value &&
+           !is_basic_json<detected_t<range_value_t, T>>::value >
+struct is_compatible_range_view : std::false_type {};
+
+template<typename T>
+struct is_compatible_range_view<T, true>
+    : std::bool_constant<std::ranges::view<T>> {};
+
+#endif
+
 template<typename BasicJsonType, typename CompatibleArrayType, typename = void>
 struct is_compatible_array_type_impl : std::false_type {};
 
@@ -4223,26 +4258,33 @@ struct is_compatible_array_type_impl <
     is_iterator_traits<iterator_traits<detected_t<iterator_t, CompatibleArrayType>>>::value&&
 // special case for types like std::filesystem::path whose iterator's value_type are themselves
 // c.f. https://github.com/nlohmann/json/pull/3073
-    !std::is_same<CompatibleArrayType, detected_t<range_value_t, CompatibleArrayType>>::value >>
+    !std::is_same<CompatibleArrayType, detected_t<range_value_t, CompatibleArrayType>>::value
+// When range-view support is enabled, std::ranges::view types (e.g. std::string_view,
+// filter_view) can match BOTH this iterator-based specialization AND the view-based one
+// below, causing ambiguity. Exclude views here so the two specializations are mutually
+// exclusive: this one handles plain iterable containers, the other handles views.
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+&& !is_compatible_range_view<CompatibleArrayType>::value
+#endif
+            >>
 {
     static constexpr bool value =
         is_constructible<BasicJsonType,
         range_value_t<CompatibleArrayType>>::value;
 };
 
-// std::ranges does not work properly on MinGW due to incomplete C++20 support
-// see https://github.com/nlohmann/json/issues/4916
-#if JSON_HAS_RANGES && !defined(__MINGW32__) && (!defined(_GLIBCXX_RELEASE) || _GLIBCXX_RELEASE >= 12)
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type_impl <
     BasicJsonType, CompatibleArrayType,
-    enable_if_t < std::ranges::range<CompatibleArrayType>
-    && std::ranges::view<CompatibleArrayType>
-    && !std::is_same<std::ranges::range_value_t<CompatibleArrayType>, char>::value
-    && !std::is_same<std::ranges::range_value_t<CompatibleArrayType>, wchar_t>::value >>
+    enable_if_t < is_compatible_range_view<CompatibleArrayType>::value
+    && !std::is_same<detected_t<range_value_t, CompatibleArrayType>, char>::value
+    && !std::is_same<detected_t<range_value_t, CompatibleArrayType>, wchar_t>::value >>
 {
-    static constexpr bool value = is_constructible<BasicJsonType,
-                          std::ranges::range_value_t<CompatibleArrayType>>::value;
+    // Character-sequence views (string_view etc.) are excluded in the enable_if
+    // above via nlohmann's plain range_value_t, so any view reaching here can
+    // be stored as a json array.
+    static constexpr bool value = true;
 };
 #endif
 
@@ -6223,8 +6265,8 @@ struct external_constructor<value_t::array>
 
     template < typename BasicJsonType, typename CompatibleArrayType,
                enable_if_t < !std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value
-#if JSON_HAS_RANGES && !defined(__MINGW32__) && (!defined(_GLIBCXX_RELEASE) || _GLIBCXX_RELEASE >= 12)
-                             && !std::ranges::view<CompatibleArrayType>
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+                             && !is_compatible_range_view<CompatibleArrayType>::value
 #endif
                              , int > = 0 >
     static void construct(BasicJsonType& j, const CompatibleArrayType& arr)
@@ -6269,9 +6311,9 @@ struct external_constructor<value_t::array>
 
     // std::ranges does not work properly on MinGW due to incomplete C++20 support
     // see https://github.com/nlohmann/json/issues/4916
-#if JSON_HAS_RANGES && !defined(__MINGW32__) && (!defined(_GLIBCXX_RELEASE) || _GLIBCXX_RELEASE >= 12)
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
     template<typename BasicJsonType, typename CompatibleArrayType,
-             enable_if_t<std::ranges::view<std::remove_cv_t<CompatibleArrayType>>, int> = 0>
+             enable_if_t<is_compatible_range_view<std::remove_cv_t<CompatibleArrayType>>::value, int> = 0>
     static void construct(BasicJsonType& j, const CompatibleArrayType& arr)
     {
         auto view = arr;

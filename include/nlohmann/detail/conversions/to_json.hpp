@@ -178,8 +178,8 @@ struct external_constructor<value_t::array>
 
     template < typename BasicJsonType, typename CompatibleArrayType,
                enable_if_t < !std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value
-#if JSON_HAS_RANGES && !defined(__MINGW32__) && (!defined(_GLIBCXX_RELEASE) || _GLIBCXX_RELEASE >= 12)
-                             && !std::ranges::view<CompatibleArrayType>
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+                             && !is_compatible_range_view<CompatibleArrayType>::value
 #endif
                              , int > = 0 >
     static void construct(BasicJsonType& j, const CompatibleArrayType& arr)
@@ -224,9 +224,9 @@ struct external_constructor<value_t::array>
 
     // std::ranges does not work properly on MinGW due to incomplete C++20 support
     // see https://github.com/nlohmann/json/issues/4916
-#if JSON_HAS_RANGES && !defined(__MINGW32__) && (!defined(_GLIBCXX_RELEASE) || _GLIBCXX_RELEASE >= 12)
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
     template<typename BasicJsonType, typename CompatibleArrayType,
-             enable_if_t<std::ranges::view<std::remove_cv_t<CompatibleArrayType>>, int> = 0>
+             enable_if_t<is_compatible_range_view<std::remove_cv_t<CompatibleArrayType>>::value, int> = 0>
     static void construct(BasicJsonType& j, const CompatibleArrayType& arr)
     {
         auto view = arr;

@@ -1163,7 +1163,7 @@ TEST_CASE("regression tests 2")
     }
 #endif
 
-#if JSON_HAS_RANGES == 1
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
     SECTION("issue #4916 - constructing array from C++20 ranges view does not work")
     {
         std::vector<int> nums{1, 2, 37, 42, 21};
