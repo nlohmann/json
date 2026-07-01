@@ -79,6 +79,10 @@
     #include <string_view>
 #endif
 
+#if JSON_HAS_STD_FORMAT
+    #include <format> // format_parse_context, format_context, formatter, format_error
+#endif
+
 /*!
 @brief namespace for Niels Lohmann
 @see https://github.com/nlohmann
@@ -5260,6 +5264,14 @@ std::string to_string(const NLOHMANN_BASIC_JSON_TPL& j)
     return j.dump();
 }
 
+/// @brief user-defined format_as function for JSON values (fmt <= 11.0.x support)
+/// @sa https://json.nlohmann.me/api/basic_json/format_as/
+NLOHMANN_BASIC_JSON_TPL_DECLARATION
+std::string format_as(const NLOHMANN_BASIC_JSON_TPL& j)
+{
+    return j.dump();
+}
+
 inline namespace literals
 {
 inline namespace json_literals
@@ -5360,6 +5372,40 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 {
     j1.swap(j2);
 }
+
+#endif
+
+#if JSON_HAS_STD_FORMAT
+
+/// @brief std::formatter specialization for JSON values
+/// @sa https://json.nlohmann.me/api/basic_json/std_formatter/
+NLOHMANN_BASIC_JSON_TPL_DECLARATION
+struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-cpp)
+{
+    bool pretty = false;
+
+    constexpr auto parse(format_parse_context& ctx) -> format_parse_context::iterator
+    {
+        auto it = ctx.begin();
+        if (it != ctx.end() && *it == '#')
+        {
+            pretty = true;
+            ++it;
+        }
+        if (it != ctx.end() && *it != '}')
+        {
+            JSON_THROW(format_error("invalid format args for nlohmann::json"));
+        }
+        return it;
+    }
+
+    template<typename FormatContext>
+    auto format(const nlohmann::NLOHMANN_BASIC_JSON_TPL& j, FormatContext& ctx) const -> decltype(ctx.out())
+    {
+        const auto dumped = pretty ? j.dump(4) : j.dump();
+        return std::copy(dumped.begin(), dumped.end(), ctx.out());
+    }
+};
 
 #endif
 
