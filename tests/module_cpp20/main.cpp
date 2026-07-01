@@ -55,5 +55,5 @@ int main()
     // use every result so the references cannot be optimized away
     return (a == 1 && last == 3 && b == 2 && lit.size() == 3
             && m.size() == 1 && !dumped.empty() && !os.str().empty())
-        ? 0 : 1;
+           ? 0 : 1;
 }

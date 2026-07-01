@@ -94,8 +94,22 @@ changes to any JSON value.
 3. The function can throw the following exceptions:
     - Throws [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) if `default_value` does not match
       the type of the value at `ptr`
-    - Throws [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) if the JSON value is not an object;
-      in that case, using `value()` with a JSON pointer makes no sense.
+    - Throws [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) if the JSON value is not an array
+      or object; in that case, using `value()` with a JSON pointer makes no sense.
+    - Throws [`parse_error.106`](../../home/exceptions.md#jsonexceptionparse_error106) if an array index in the passed
+      JSON pointer `ptr` begins with '0'.
+    - Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) if an array index in the passed
+      JSON pointer `ptr` is not a number.
+    - Throws [`out_of_range.401`](../../home/exceptions.md#jsonexceptionout_of_range401) if an array index in the passed
+      JSON pointer `ptr` is out of range.
+    - Throws [`out_of_range.402`](../../home/exceptions.md#jsonexceptionout_of_range402) if the array index '-' is used
+      in the passed JSON pointer `ptr`.
+    - Throws [`out_of_range.403`](../../home/exceptions.md#jsonexceptionout_of_range403) if the JSON pointer describes a
+      key of an object which cannot be found.
+    - Throws [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) if the JSON pointer `ptr` can
+      not be resolved.
+    - Throws [`out_of_range.410`](../../home/exceptions.md#jsonexceptionout_of_range410) if an array index in the passed
+      JSON pointer `ptr` exceeds the maximum array size.
 
 ## Complexity
 
@@ -180,4 +194,4 @@ changes to any JSON value.
 
 1. Added in version 1.0.0. Changed parameter `default_value` type from `const ValueType&` to `ValueType&&` in version 3.11.0.
 2. Added in version 3.11.0. Made `ValueType` the first template parameter in version 3.11.2.
-3. Added in version 2.0.2.
+3. Added in version 2.0.2. Extended to work with arrays in version 3.12.x.

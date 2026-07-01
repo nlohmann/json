@@ -33,7 +33,8 @@ you want to access and a default value in case there is no value stored with tha
 
 !!! failure "Exceptions"
 
-    - `value` can only be used with objects. For other types, a [`basic_json::type_error`](../../home/exceptions.md#jsonexceptiontype_error306) is thrown.
+    - With string keys, `value` can only be used with objects. For other types, a [`basic_json::type_error`](../../home/exceptions.md#jsonexceptiontype_error306) is thrown.
+    - With JSON Pointers, `value` can be used with both objects and arrays. For other types (null, boolean, number, string), a [`basic_json::type_error`](../../home/exceptions.md#jsonexceptiontype_error306) is thrown.
 
 !!! warning "Return type"
 
