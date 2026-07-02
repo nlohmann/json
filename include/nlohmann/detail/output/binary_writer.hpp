@@ -881,7 +881,7 @@ class binary_writer
                     for (size_t i = 0; i < j.m_data.m_value.binary->size(); ++i)
                     {
                         oa->write_character(to_char_type(bjdata_draft3 ? 'B' : 'U'));
-                        oa->write_character(j.m_data.m_value.binary->data()[i]);
+                        oa->write_character(to_char_type(j.m_data.m_value.binary->data()[i]));
                     }
                 }
 
@@ -1634,7 +1634,9 @@ class binary_writer
         };
 
         string_t key = "_ArrayType_";
-        auto it = bjdtype.find(static_cast<string_t>(value.at(key)));
+        // use get<string_t>() instead of static_cast<string_t> to avoid an
+        // ambiguous conversion under explicit instantiation on C++17 (see #4825)
+        auto it = bjdtype.find(value.at(key).template get<string_t>());
         if (it == bjdtype.end())
         {
             return true;
