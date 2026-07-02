@@ -1,4 +1,7 @@
-if (${CMAKE_VERSION} VERSION_GREATER "3.14.0")
+# fmt's CMakeLists.txt unconditionally sets the VERSION/SOVERSION/DEBUG_POSTFIX
+# properties on its (always-configured) INTERFACE_LIBRARY "fmt-header-only" target;
+# CMake rejected those properties on INTERFACE_LIBRARY targets before CMake 3.19
+if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.19.0")
   add_test(NAME fmt_formatter_configure
     COMMAND ${CMAKE_COMMAND}
     -G "${CMAKE_GENERATOR}"
