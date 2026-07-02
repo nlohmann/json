@@ -15401,8 +15401,14 @@ class json_pointer
                                 ") is out of range"), ptr));
                     }
 
-                    // note: at performs range check
-                    ptr = &ptr->at(array_index<BasicJsonType>(reference_token));
+                    const auto idx = array_index<BasicJsonType>(reference_token);
+                    // Bounds check before access to avoid exception with JSON_NOEXCEPTION
+                    if (JSON_HEDLEY_UNLIKELY(idx >= ptr->m_data.m_value.array->size()))
+                    {
+                        JSON_THROW(detail::out_of_range::create(401, detail::concat(
+                                "array index ", std::to_string(idx), " is out of range"), ptr));
+                    }
+                    ptr = &ptr->operator[](idx);
                     break;
                 }
 
@@ -15508,8 +15514,14 @@ class json_pointer
                                 ") is out of range"), ptr));
                     }
 
-                    // note: at performs range check
-                    ptr = &ptr->at(array_index<BasicJsonType>(reference_token));
+                    const auto idx = array_index<BasicJsonType>(reference_token);
+                    // Bounds check before access to avoid exception with JSON_NOEXCEPTION
+                    if (JSON_HEDLEY_UNLIKELY(idx >= ptr->m_data.m_value.array->size()))
+                    {
+                        JSON_THROW(detail::out_of_range::create(401, detail::concat(
+                                "array index ", std::to_string(idx), " is out of range"), ptr));
+                    }
+                    ptr = &ptr->operator[](idx);
                     break;
                 }
 
@@ -15527,6 +15539,82 @@ class json_pointer
         }
 
         return *ptr;
+    }
+
+    /*!
+    @brief return a pointer to the pointed to value, or `nullptr` if the
+           pointer cannot be resolved because a key is missing, an array
+           index is out of range, or the array index is "-"
+
+    @note unlike get_checked(), this never throws for those cases, so it
+          can be used to implement a non-throwing fallback (e.g. value())
+          that also works when exceptions are disabled
+
+    @throw parse_error.106   if an array index begins with '0'
+    @throw parse_error.109   if an array index was not a number
+    */
+    template<typename BasicJsonType>
+    const BasicJsonType* get_checked_or_null(const BasicJsonType* ptr) const
+    {
+        for (const auto& reference_token : reference_tokens)
+        {
+            switch (ptr->type())
+            {
+                case detail::value_t::object:
+                {
+                    const auto it = ptr->find(reference_token);
+                    if (JSON_HEDLEY_UNLIKELY(it == ptr->end()))
+                    {
+                        return nullptr;
+                    }
+                    ptr = &*it;
+                    break;
+                }
+
+                case detail::value_t::array:
+                {
+                    if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
+                    {
+                        // "-" always fails the range check
+                        return nullptr;
+                    }
+
+                    // may throw parse_error.106/109 for a malformed index; an
+                    // index that is syntactically valid but cannot be
+                    // represented (out_of_range.404/410) is treated like an
+                    // out-of-range index below
+                    typename BasicJsonType::size_type idx{};
+                    JSON_TRY
+                    {
+                        idx = array_index<BasicJsonType>(reference_token);
+                    }
+                    JSON_INTERNAL_CATCH (detail::out_of_range&)
+                    {
+                        return nullptr;
+                    }
+
+                    if (JSON_HEDLEY_UNLIKELY(idx >= ptr->m_data.m_value.array->size()))
+                    {
+                        return nullptr;
+                    }
+                    ptr = &ptr->operator[](idx);
+                    break;
+                }
+
+                case detail::value_t::null:
+                case detail::value_t::string:
+                case detail::value_t::boolean:
+                case detail::value_t::number_integer:
+                case detail::value_t::number_unsigned:
+                case detail::value_t::number_float:
+                case detail::value_t::binary:
+                case detail::value_t::discarded:
+                default:
+                    return nullptr;
+            }
+        }
+
+        return ptr;
     }
 
     /*!
@@ -22911,19 +22999,18 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
     ValueType value(const json_pointer& ptr, const ValueType& default_value) const
     {
-        // value only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
+        // value only works for arrays and objects
+        if (JSON_HEDLEY_LIKELY(is_structured()))
         {
             // If the pointer resolves to a value, return it. Otherwise, return
             // 'default_value'.
-            JSON_TRY
+            const auto* res = ptr.get_checked_or_null(this);
+            if (JSON_HEDLEY_LIKELY(res != nullptr))
             {
-                return ptr.get_checked(this).template get<ValueType>();
+                return res->template get<ValueType>();
             }
-            JSON_INTERNAL_CATCH (out_of_range&)
-            {
-                return default_value;
-            }
+
+            return default_value;
         }
 
         JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
@@ -22937,19 +23024,18 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
     ReturnType value(const json_pointer& ptr, ValueType && default_value) const
     {
-        // value only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
+        // value only works for arrays and objects
+        if (JSON_HEDLEY_LIKELY(is_structured()))
         {
             // If the pointer resolves to a value, return it. Otherwise, return
             // 'default_value'.
-            JSON_TRY
+            const auto* res = ptr.get_checked_or_null(this);
+            if (JSON_HEDLEY_LIKELY(res != nullptr))
             {
-                return ptr.get_checked(this).template get<ReturnType>();
+                return res->template get<ReturnType>();
             }
-            JSON_INTERNAL_CATCH (out_of_range&)
-            {
-                return std::forward<ValueType>(default_value);
-            }
+
+            return std::forward<ValueType>(default_value);
         }
 
         JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
