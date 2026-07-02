@@ -24,6 +24,7 @@ jobs:
           egress-policy: audit
 
       - name: 'Download artifact'
+        id: download
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
@@ -43,6 +44,9 @@ jobs:
             });
             var fs = require('fs');
             fs.writeFileSync('${{github.workspace}}/pr.zip', Buffer.from(download.data));
+
+            var hasPatch = artifacts.data.artifacts.some((artifact) => artifact.name == "amalgamation-patch");
+            core.setOutput('has_patch', String(hasPatch));
       - run: unzip pr.zip
 
       - name: 'Comment on PR'
@@ -70,12 +74,20 @@ jobs:
                 break
               }
             }
+            const hasPatch = '${{ steps.download.outputs.has_patch }}' === 'true';
+            const runUrl = '${{ github.event.workflow_run.html_url }}';
+
             await github.rest.issues.createComment({
               issue_number: issue_number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '## 🔴 Amalgamation check failed! 🔴\nThe source code has not been amalgamated.'
-                    + (first ? ' @' + author + ' Please read and follow the [Contribution Guidelines]'
+              body: '## 🔴 Amalgamation check failed! 🔴\nThe source code has not been amalgamated and/or formatted correctly.'
+                    + (hasPatch ? '\n\n📎 A ready-to-apply patch is attached to the [failed workflow run](' + runUrl + ') as the `amalgamation-patch` artifact.'
+                                  + ' Download it, then apply it locally from the repository root with:'
+                                  + '\n\n```shell\ngit apply amalgamation.patch\n```\n\n'
+                                  + 'This does not require installing astyle yourself.'
+                                : '')
+                    + (first ? '\n\n@' + author + ' Please read and follow the [Contribution Guidelines]'
                                + '(https://github.com/nlohmann/json/blob/develop/.github/CONTRIBUTING.md#files-to-change).'
                              : '')
               })

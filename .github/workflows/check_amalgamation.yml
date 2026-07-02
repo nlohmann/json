@@ -57,22 +57,42 @@ jobs:
           python3 -mvenv venv
           venv/bin/pip3 install -r $MAIN_DIR/tools/astyle/requirements.txt
 
-      - name: Check amalgamation
+      - name: Regenerate amalgamation and formatting
         run: |
           cd $MAIN_DIR
 
-          rm -fr $INCLUDE_DIR/json.hpp~ $INCLUDE_DIR/json_fwd.hpp~
-          cp $INCLUDE_DIR/json.hpp $INCLUDE_DIR/json.hpp~
-          cp $INCLUDE_DIR/json_fwd.hpp $INCLUDE_DIR/json_fwd.hpp~
-
           python3 $TOOL_DIR/amalgamate.py -c $TOOL_DIR/config_json.json -s .
           python3 $TOOL_DIR/amalgamate.py -c $TOOL_DIR/config_json_fwd.json -s .
-          echo "Format (1)"
-          ${{ github.workspace }}/venv/bin/astyle --project=tools/astyle/.astylerc --suffix=none --quiet $INCLUDE_DIR/json.hpp $INCLUDE_DIR/json_fwd.hpp
 
-          diff $INCLUDE_DIR/json.hpp~ $INCLUDE_DIR/json.hpp
-          diff $INCLUDE_DIR/json_fwd.hpp~ $INCLUDE_DIR/json_fwd.hpp
+          ${{ github.workspace }}/venv/bin/astyle --project=tools/astyle/.astylerc --suffix=none --quiet \
+            $INCLUDE_DIR/json.hpp $INCLUDE_DIR/json_fwd.hpp
 
-          ${{ github.workspace }}/venv/bin/astyle --project=tools/astyle/.astylerc --suffix=orig $(find docs/examples include tests -type f \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' \) -not -path 'tests/thirdparty/*' -not -path 'tests/abi/include/nlohmann/*' | sort)
-          echo Check
-          find $MAIN_DIR -name '*.orig' -exec false {} \+
+          ${{ github.workspace }}/venv/bin/astyle --project=tools/astyle/.astylerc --suffix=none --quiet \
+            $(find docs/examples include tests -type f \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' \) -not -path 'tests/thirdparty/*' -not -path 'tests/abi/include/nlohmann/*' | sort)
+
+      - name: Build patch and check for differences
+        id: diff
+        run: |
+          cd $MAIN_DIR
+          mkdir -p ${{ github.workspace }}/patch
+          git diff --patch --no-color > ${{ github.workspace }}/patch/amalgamation.patch
+          if [ -s ${{ github.workspace }}/patch/amalgamation.patch ]; then
+            echo "The source code has not been amalgamated/formatted correctly. Diff:"
+            cat ${{ github.workspace }}/patch/amalgamation.patch
+            echo "has_diff=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_diff=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Uploaded so contributors can fix their PR with `git apply amalgamation.patch`
+      # instead of installing the pinned astyle version locally.
+      - name: Upload patch
+        if: steps.diff.outputs.has_diff == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: amalgamation-patch
+          path: patch/amalgamation.patch
+
+      - name: Fail if not amalgamated/formatted
+        if: steps.diff.outputs.has_diff == 'true'
+        run: exit 1
