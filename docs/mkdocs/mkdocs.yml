@@ -133,6 +133,7 @@ nav:
           - 'exception': api/basic_json/exception.md
           - 'find': api/basic_json/find.md
           - 'flatten': api/basic_json/flatten.md
+          - 'format_as': api/basic_json/format_as.md
           - 'from_bjdata': api/basic_json/from_bjdata.md
           - 'from_bson': api/basic_json/from_bson.md
           - 'from_cbor': api/basic_json/from_cbor.md
@@ -145,6 +146,7 @@ nav:
           - 'get_ptr': api/basic_json/get_ptr.md
           - 'get_ref': api/basic_json/get_ref.md
           - 'get_to': api/basic_json/get_to.md
+          - 'std::formatter&lt;basic_json&gt;': api/basic_json/std_formatter.md
           - 'std::hash&lt;basic_json&gt;': api/basic_json/std_hash.md
           - 'input_format_t': api/basic_json/input_format_t.md
           - 'insert': api/basic_json/insert.md
@@ -279,6 +281,7 @@ nav:
           - 'JSON_HAS_EXPERIMENTAL_FILESYSTEM, JSON_HAS_FILESYSTEM': api/macros/json_has_filesystem.md
           - 'JSON_HAS_RANGES': api/macros/json_has_ranges.md
           - 'JSON_HAS_STATIC_RTTI': api/macros/json_has_static_rtti.md
+          - 'JSON_HAS_STD_FORMAT': api/macros/json_has_std_format.md
           - 'JSON_HAS_THREE_WAY_COMPARISON': api/macros/json_has_three_way_comparison.md
           - 'JSON_NOEXCEPTION': api/macros/json_noexception.md
           - 'JSON_NO_IO': api/macros/json_no_io.md

@@ -195,3 +195,18 @@ add_subdirectory(cmake_add_subdirectory)
 add_subdirectory(cmake_fetch_content)
 add_subdirectory(cmake_fetch_content2)
 add_subdirectory(cmake_target_include_directories)
+
+# fmt (fetched by tests/fmt_formatter) requires a genuinely modern, C++17-capable
+# toolchain; skip it on legacy/niche toolchains where fmt itself is known not to build
+set(JSON_FMT_FORMATTER_TEST_SUPPORTED ${compiler_supports_cpp_17})
+# fmt 12's 128-bit integer emulation does not build with 32-bit MinGW
+if (MINGW AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+    set(JSON_FMT_FORMATTER_TEST_SUPPORTED FALSE)
+endif()
+# the MSVC STL rejects Clang versions older than 19 as a host compiler
+if (WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.0)
+    set(JSON_FMT_FORMATTER_TEST_SUPPORTED FALSE)
+endif()
+if (JSON_FMT_FORMATTER_TEST_SUPPORTED)
+    add_subdirectory(fmt_formatter)
+endif()
