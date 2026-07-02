@@ -173,6 +173,10 @@
          <lastmod>2026-07-02</lastmod>
     </url>
     <url>
+         <loc>https://json.nlohmann.me/api/basic_json/format_as/</loc>
+         <lastmod>2026-07-02</lastmod>
+    </url>
+    <url>
          <loc>https://json.nlohmann.me/api/basic_json/from_bjdata/</loc>
          <lastmod>2026-07-02</lastmod>
     </url>
@@ -437,6 +441,10 @@
          <lastmod>2026-07-02</lastmod>
     </url>
     <url>
+         <loc>https://json.nlohmann.me/api/basic_json/std_formatter/</loc>
+         <lastmod>2026-07-02</lastmod>
+    </url>
+    <url>
          <loc>https://json.nlohmann.me/api/basic_json/std_hash/</loc>
          <lastmod>2026-07-02</lastmod>
     </url>
@@ -694,6 +702,10 @@
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/macros/json_has_static_rtti/</loc>
+         <lastmod>2026-07-02</lastmod>
+    </url>
+    <url>
+         <loc>https://json.nlohmann.me/api/macros/json_has_std_format/</loc>
          <lastmod>2026-07-02</lastmod>
     </url>
     <url>
