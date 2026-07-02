@@ -701,6 +701,48 @@ add_custom_target(ci_icpc
     COMMENT "Compile and test with ICPC"
 )
 
+add_custom_target(ci_icpx
+    COMMAND ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DCMAKE_C_COMPILER=icx -DCMAKE_CXX_COMPILER=icpx
+        -DJSON_BuildTests=ON -DJSON_FastTests=ON
+        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_icpx
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_icpx
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_icpx && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" --output-on-failure
+    COMMENT "Compile and test with ICPX (Intel oneAPI DPC++/C++)"
+)
+
+###############################################################################
+# NVIDIA HPC SDK C++ Compiler
+###############################################################################
+
+# nvc++ defaults to a relaxed, non-IEEE floating-point model that flushes denormals
+# to zero and does not honor NaN ordering; -Kieee restores strict IEEE 754 behavior
+# (needed for the dtoa/grisu and NaN-comparison code paths).
+#
+# The following tests are excluded as they trigger known nvc++ 25.5 defects (not
+# library bugs); see https://github.com/nlohmann/json for tracking. Only the
+# affected language-standard variants are excluded so coverage is otherwise kept:
+#   - test-comparison_cpp20, test-comparison_legacy_cpp20
+#         miscompiles cross-type/<=> comparison (e.g. `-17 <= null`)
+#   - test-constructor1_cpp11
+#         std::initializer_list lifetime bug -> SIGSEGV
+#   - test-deserialization_cpp20
+#         mangles the UTF-8 u8"" string literal in the char8_t (C++20) section
+add_custom_target(ci_nvhpc
+    COMMAND ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DCMAKE_C_COMPILER=nvc -DCMAKE_CXX_COMPILER=nvc++
+        -DCMAKE_CXX_FLAGS=-Kieee
+        -DJSON_BuildTests=ON -DJSON_FastTests=ON
+        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_nvhpc
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_nvhpc
+    # the pipes are escaped so the surrounding shell passes them to ctest verbatim
+    # instead of treating them as shell pipe operators
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_nvhpc && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode\\|test-comparison_cpp20\\|test-comparison_legacy_cpp20\\|test-constructor1_cpp11\\|test-deserialization_cpp20" --output-on-failure
+    COMMENT "Compile and test with NVIDIA HPC SDK (nvc++)"
+)
+
 ###############################################################################
 # REUSE
 ###############################################################################

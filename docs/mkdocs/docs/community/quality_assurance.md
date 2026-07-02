@@ -85,11 +85,16 @@ violations will result in a failed build.
         | GNU 16.1.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 16.1.0                                   | arm64        | Linux 6.1.100                     | Cirrus CI |
         | icpc (ICC) 2021.5.0 20211109                 | x86_64       | Ubuntu 20.04.3 LTS                | GitHub    |
+        | icpx (Intel oneAPI DPC++/C++) 2025.3.2       | x86_64       | Ubuntu 24.04 LTS                  | GitHub    |
+        | nvc++ (NVIDIA HPC SDK) 25.5-0                | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
         | MSVC 19.0.24241.7                            | x86          | Windows 8.1                       | AppVeyor  |
         | MSVC 19.16.27035.0                           | x86          | Windows-10 (Build 14393)          | AppVeyor  |
         | MSVC 19.29.30157.0                           | x86          | Windows-10 (Build 17763)          | AppVeyor  |
+        | MSVC 19.44.35207.0                           | arm64        | Windows 11 (Build 26200)          | GitHub    |
         | MSVC 19.44.35214.0                           | x86          | Windows Server 2022 (Build 20348) | GitHub    |
         | MSVC 19.44.35214.0                           | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
+        | MSVC 19.51.36231.0                           | x86          | Windows Server 2025 (Build 26100) | GitHub    |
+        | MSVC 19.51.36231.0                           | x86_64       | Windows Server 2025 (Build 26100) | GitHub    |
 
 - [x] The library is compiled with all C++ language revisions (C++11, C++14, C++17, C++20, C++23, and C++26) to detect
   and fix language deprecations early.

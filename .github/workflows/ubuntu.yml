@@ -288,6 +288,30 @@ jobs:
           . /opt/intel/oneapi/setvars.sh
           cmake --build build --target ci_icpc
 
+  ci_icpx:
+    runs-on: ubuntu-latest
+    container: intel/oneapi-hpckit:latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ci_icpx
+
+  ci_nvhpc:
+    runs-on: ubuntu-latest
+    container: nvcr.io/nvidia/nvhpc:25.5-devel-cuda12.9-ubuntu22.04
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ci_nvhpc
+
   ci_emscripten:
     runs-on: ubuntu-latest
     steps:
