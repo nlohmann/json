@@ -41,12 +41,21 @@ jobs:
         with:
           persist-credentials: false
 
-      # Scan code using project's configuration on https://semgrep.dev/manage
-      - uses: returntocorp/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d
-        with:
-          publishToken: ${{ secrets.SEMGREP_APP_TOKEN }}
-          publishDeployment: ${{ secrets.SEMGREP_DEPLOYMENT_ID }}
-          generateSarif: "1"
+      # Scan code using the project's configuration on https://semgrep.dev/manage.
+      # The former returntocorp/semgrep-action is deprecated (the org was renamed
+      # to semgrep/*); the maintained approach is to install the CLI and run
+      # `semgrep ci` directly. The deployment is inferred from SEMGREP_APP_TOKEN,
+      # so no separate deployment id is required.
+      - name: Install Semgrep
+        run: python3 -m pip install --user semgrep
+
+      # continue-on-error lets the SARIF upload run even when Semgrep reports
+      # blocking findings.
+      - name: Run Semgrep
+        run: semgrep ci --sarif --output=semgrep.sarif
+        continue-on-error: true
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
       # Upload SARIF file generated in previous step
       - name: Upload SARIF file
