@@ -41,18 +41,20 @@ jobs:
         with:
           persist-credentials: false
 
-      # Scan code using the project's configuration on https://semgrep.dev/manage.
       # The former returntocorp/semgrep-action is deprecated (the org was renamed
-      # to semgrep/*); the maintained approach is to install the CLI and run
-      # `semgrep ci` directly. The deployment is inferred from SEMGREP_APP_TOKEN,
-      # so no separate deployment id is required.
+      # to semgrep/*); the maintained approach is to install the CLI and invoke
+      # it directly. We use `semgrep scan` (not `semgrep ci`, which requires a
+      # login token): with no SEMGREP_APP_TOKEN configured this is exactly what
+      # the old action fell back to, running community rules with no token.
+      # SEMGREP_APP_TOKEN is still passed through so registry auth works if a
+      # token is ever added.
       - name: Install Semgrep
         run: python3 -m pip install --user semgrep
 
-      # continue-on-error lets the SARIF upload run even when Semgrep reports
-      # blocking findings.
+      # `semgrep scan --sarif` always exits 0 even with findings; continue-on-error
+      # is a safety net so the SARIF upload still runs if the scan itself errors.
       - name: Run Semgrep
-        run: semgrep ci --sarif --output=semgrep.sarif
+        run: semgrep scan --config auto --sarif --output=semgrep.sarif
         continue-on-error: true
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
