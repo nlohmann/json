@@ -115,6 +115,7 @@ invalidates all iterators and all references.
 
 - [emplace_back](emplace_back.md) add a value to an array
 - [operator+=](operator+=.md) add a value to an array/object
+- [Modifying values](../../features/modifying_values.md) - the article on modifying values
 
 ## Version history
 

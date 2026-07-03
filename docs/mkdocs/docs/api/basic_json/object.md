@@ -57,6 +57,7 @@ the initializer list constructor `basic_json(initializer_list_t, bool, value_t)`
 
 - [`basic_json(initializer_list_t)`](basic_json.md) - create a JSON value from an initializer list
 - [`array`](array.md) - create a JSON array value from an initializer list
+- [Creating JSON values](../../features/creating_values.md) - the article on creating JSON values
 
 ## Version history
 

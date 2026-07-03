@@ -91,7 +91,7 @@ This is the same behavior as the code `#!c double x = 3.141592653589793238462643
 
 !!! success "Interoperability"
 
-    - The library interoperable with respect to the specification, because its supported range $[-2^{63}, 2^{64}-1]$ is
+    - The library is interoperable with respect to the specification, because its supported range $[-2^{63}, 2^{64}-1]$ is
       larger than the described range $[-2^{53}+1, 2^{53}-1]$.
     - All integers outside the range $[-2^{63}, 2^{64}-1]$, as well as floating-point numbers are stored as `double`.
       This also concurs with the specification above.
@@ -153,7 +153,7 @@ NaN (not-a-number) cannot be expressed with the number syntax described above an
 
 That is, there is no way to *parse* a NaN value. However, assignments can store NaN values in a JSON value.
 
-This library serializes NaN values  as `#!js null`. This corresponds to the behavior of JavaScript's
+This library serializes NaN values as `#!js null`. This corresponds to the behavior of JavaScript's
 [`JSON.stringify`](https://www.w3schools.com/js/js_json_stringify.asp) function.
 
 !!! example
@@ -182,7 +182,7 @@ This library serializes NaN values  as `#!js null`. This corresponds to the beha
 
 ### Number comparison
 
-Floating-point inside JSON values numbers are compared with `#!c json::number_float_t::operator==` which is
+Floating-point numbers inside JSON values are compared with `#!c json::number_float_t::operator==` which is
 `#!c double::operator==` by default.
 
 !!! example "Alternative comparison functions"
@@ -203,8 +203,8 @@ Floating-point inside JSON values numbers are compared with `#!c json::number_fl
     ```cpp
     bool my_equal(const_reference lhs, const_reference rhs)
     {
-        const auto lhs_type lhs.type();
-        const auto rhs_type rhs.type();
+        const auto lhs_type = lhs.type();
+        const auto rhs_type = rhs.type();
         if (lhs_type == rhs_type)
         {
             switch(lhs_type)
@@ -230,7 +230,7 @@ Floating-point inside JSON values numbers are compared with `#!c json::number_fl
 ### Number conversion
 
 Just like the C++ language itself, the `get` family of functions allows conversions between unsigned and signed
-integers, and between integers and floating-point values to integers. This behavior may be surprising.
+integers, and between integers and floating-point values. This behavior may be surprising.
 
 !!! warning "Unconditional number conversions"
 

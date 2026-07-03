@@ -57,6 +57,7 @@ nav:
       - home/customers.md
       - home/sponsors.md
   - Features:
+      - features/index.md
       - features/arbitrary_types.md
       - Binary Formats:
           - features/binary_formats/index.md
@@ -67,16 +68,18 @@ nav:
           - features/binary_formats/ubjson.md
       - features/binary_values.md
       - features/comments.md
-      - features/trailing_commas.md
+      - features/conversions.md
+      - features/creating_values.md
       - Element Access:
           - features/element_access/index.md
           - features/element_access/unchecked_access.md
           - features/element_access/checked_access.md
           - features/element_access/default_value.md
       - features/iterators.md
-      - features/json_pointer.md
-      - features/json_patch.md
       - features/merge_patch.md
+      - features/json_patch.md
+      - features/json_pointer.md
+      - features/modifying_values.md
       - features/modules.md
       - 'nlohmann Namespace': features/namespace.md
       - features/object_order.md
@@ -87,8 +90,10 @@ nav:
           - features/parsing/parser_callbacks.md
           - features/parsing/sax_interface.md
       - features/assertions.md
+      - features/serialization.md
       - features/enum_conversion.md
       - features/macros.md
+      - features/trailing_commas.md
       - Types:
           - features/types/index.md
           - features/types/number_handling.md

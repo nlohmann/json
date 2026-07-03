@@ -85,7 +85,7 @@ Some important things:
 
 If you just want to serialize/deserialize some structs, the `to_json`/`from_json` functions can be a lot of boilerplate.
 
-There are several macros to make your life easier as long as you want to use a JSON object as serialization. The macros are following the naming pattern, and you can chose the macro based on the needed features:
+There are several macros to make your life easier as long as you want to use a JSON object as serialization. The macros are following the naming pattern, and you can choose the macro based on the needed features:
 
 - All the macros start with `NLOHMANN_DEFINE`.
 - If you want a macro for the derived object, use the [`DERIVED_TYPE`](../api/macros/nlohmann_define_derived_type.md) variant, otherwise use `TYPE`.
@@ -139,7 +139,7 @@ For _derived_ classes and structs, use the following macros
     ```cpp
     namespace ns {
         struct person_derived : person {
-            std:string email;
+            std::string email;
         };
         
         NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(person_derived, person, email)

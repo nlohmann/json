@@ -75,6 +75,7 @@ Binary values are serialized as an object containing two keys:
 
 - [to_string](to_string.md) returns a string representation of a JSON value
 - [operator<<](../operator_ltlt.md) serialize to stream
+- [Serialization](../../features/serialization.md) - the serialization article
 
 ## Version history
 

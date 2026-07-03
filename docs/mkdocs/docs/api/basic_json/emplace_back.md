@@ -58,6 +58,7 @@ Amortized constant.
 
 - [operator+=](operator+=.md) add a value to an array/object
 - [push_back](push_back.md) add a value to an array/object
+- [Modifying values](../../features/modifying_values.md) - the article on modifying values
 
 ## Version history
 
