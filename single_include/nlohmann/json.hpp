@@ -6811,7 +6811,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <array> // array
 #include <cmath> // ldexp
 #include <cstddef> // size_t
-#include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
+#include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t, uintmax_t
 #include <cstdio> // snprintf
 #include <cstring> // memcpy
 #include <iterator> // back_inserter
@@ -7009,9 +7009,44 @@ class iterator_input_adapter
         return char_traits<char_type>::eof();
     }
 
-    // for general iterators, we cannot really do something better than falling back to processing the range one-by-one
+    // Copy up to count * sizeof(T) bytes into dest, returning the number of
+    // bytes actually read. For contiguous iterators (e.g. pointers) this is a
+    // single std::memcpy; for general iterators we fall back to processing the
+    // range one-by-one.
     template<class T>
     std::size_t get_elements(T* dest, std::size_t count = 1)
+    {
+        return get_elements_impl(dest, count, std::integral_constant<bool, iterator_is_contiguous> {});
+    }
+
+  private:
+    // whether IteratorType refers to a contiguous range and therefore supports
+    // a std::memcpy fast path (pointers always do; in C++20 we can also detect
+    // library iterators such as those of std::vector and std::string)
+#if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
+    static constexpr bool iterator_is_contiguous = std::is_pointer<IteratorType>::value || std::contiguous_iterator<IteratorType>;
+#else
+    static constexpr bool iterator_is_contiguous = std::is_pointer<IteratorType>::value;
+#endif
+
+    // contiguous fast path: bulk copy the remaining range with std::memcpy
+    template<class T>
+    std::size_t get_elements_impl(T* dest, std::size_t count, std::true_type /*contiguous*/)
+    {
+        const std::size_t wanted = count * sizeof(T);
+        const std::size_t available = static_cast<std::size_t>(std::distance(current, end)) * sizeof(char_type);
+        const std::size_t copied = (std::min)(wanted, available);
+        if (JSON_HEDLEY_LIKELY(copied != 0))
+        {
+            std::memcpy(dest, &(*current), copied);
+            std::advance(current, static_cast<typename std::iterator_traits<IteratorType>::difference_type>(copied / sizeof(char_type)));
+        }
+        return copied;
+    }
+
+    // general fallback: copy the range one element at a time
+    template<class T>
+    std::size_t get_elements_impl(T* dest, std::size_t count, std::false_type /*contiguous*/)
     {
         auto* ptr = reinterpret_cast<char*>(dest);
         for (std::size_t read_index = 0; read_index < count * sizeof(T); ++read_index)
@@ -7029,7 +7064,6 @@ class iterator_input_adapter
         return count * sizeof(T);
     }
 
-  private:
     IteratorType current;
     IteratorType end;
 
@@ -13073,18 +13107,7 @@ class binary_reader
                     const NumberType len,
                     string_t& result)
     {
-        bool success = true;
-        for (NumberType i = 0; i < len; i++)
-        {
-            get();
-            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(format, "string")))
-            {
-                success = false;
-                break;
-            }
-            result.push_back(static_cast<typename string_t::value_type>(current));
-        }
-        return success;
+        return get_bytes(format, len, "string", result);
     }
 
     /*!
@@ -13106,18 +13129,60 @@ class binary_reader
                     const NumberType len,
                     binary_t& result)
     {
-        bool success = true;
-        for (NumberType i = 0; i < len; i++)
+        return get_bytes(format, len, "binary", result);
+    }
+
+    /*!
+    @brief read @a len bytes from the input into a string or byte container
+
+    @tparam NumberType    the type of the length
+    @tparam ContainerType the destination container (string_t or binary_t)
+    @param[in] format   the current format (for diagnostics)
+    @param[in] len      number of bytes to read
+    @param[in] context  further context information (for diagnostics)
+    @param[out] result  container the bytes are appended to
+
+    @return whether reading completed
+
+    @note We cannot reserve @a len bytes for the result up front, because
+          @a len may be far larger than the actual input. Instead we read in
+          bounded chunks, so the peak allocation is capped regardless of the
+          claimed length while the per-byte loop is replaced by block copies
+          (a std::memcpy for contiguous inputs). @ref unexpect_eof() still
+          detects a premature end of input.
+    */
+    template<typename NumberType, typename ContainerType>
+    bool get_bytes(const input_format_t format,
+                   NumberType len,
+                   const char* context,
+                   ContainerType& result)
+    {
+        // upper bound on the number of bytes read (and allocated) per chunk
+        constexpr std::size_t chunk_size = 4096;
+
+        while (len > 0)
         {
-            get();
-            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(format, "binary")))
+            // number of bytes to read this iteration: min(chunk_size, len),
+            // computed without truncating chunk_size to a narrow NumberType
+            const std::size_t wanted = (static_cast<std::uintmax_t>(len) < static_cast<std::uintmax_t>(chunk_size))
+                                       ? static_cast<std::size_t>(len)
+                                       : chunk_size;
+            const std::size_t old_size = result.size();
+            result.resize(old_size + wanted);
+            const std::size_t read = ia.get_elements(&result[old_size], wanted);
+            chars_read += read;
+            if (JSON_HEDLEY_UNLIKELY(read < wanted))
             {
-                success = false;
-                break;
+                // premature end of input: shrink to what was actually read and
+                // report the failure at the first missing byte
+                result.resize(old_size + read);
+                ++chars_read;
+                current = char_traits<char_type>::eof();
+                return unexpect_eof(format, context);
             }
-            result.push_back(static_cast<typename binary_t::value_type>(current));
+            len -= static_cast<NumberType>(wanted);
         }
-        return success;
+        return true;
     }
 
     /*!

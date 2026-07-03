@@ -2778,3 +2778,43 @@ TEST_CASE("Tagged values")
         CHECK(!jb["binary"].get_binary().has_subtype());
     }
 }
+
+TEST_CASE("CBOR large strings and binaries (chunked reader)")
+{
+    // The binary reader reads strings and byte arrays in bounded chunks; make
+    // sure roundtripping is correct for lengths around and beyond the internal
+    // chunk size (4096 bytes), for both vector (iterator) and pointer inputs.
+    for (const std::size_t len :
+    {
+        std::size_t{0}, std::size_t{1}, std::size_t{4095}, std::size_t{4096},
+        std::size_t{4097}, std::size_t{8192}, std::size_t{100000}
+    })
+    {
+        CAPTURE(len);
+
+        // text string
+        const json j_string = std::string(len, 'x');
+        const std::vector<std::uint8_t> v_string = json::to_cbor(j_string);
+        CHECK(json::from_cbor(v_string) == j_string);
+        // pointer input exercises the std::memcpy fast path
+        CHECK(json::from_cbor(reinterpret_cast<const char*>(v_string.data()),
+                              reinterpret_cast<const char*>(v_string.data()) + v_string.size()) == j_string);
+
+        // byte string
+        const json j_binary = json::binary(std::vector<std::uint8_t>(len, 0xCD));
+        const std::vector<std::uint8_t> v_binary = json::to_cbor(j_binary);
+        CHECK(json::from_cbor(v_binary) == j_binary);
+        CHECK(json::from_cbor(reinterpret_cast<const char*>(v_binary.data()),
+                              reinterpret_cast<const char*>(v_binary.data()) + v_binary.size()) == j_binary);
+
+        // a truncated payload must still be reported as an error, never crash
+        // or loop, regardless of the (large) announced length
+        if (len > 16)
+        {
+            std::vector<std::uint8_t> truncated = v_string;
+            truncated.resize(truncated.size() - 8);
+            json _;
+            CHECK_THROWS_AS(_ = json::from_cbor(truncated), json::parse_error);
+        }
+    }
+}
