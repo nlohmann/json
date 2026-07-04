@@ -19981,7 +19981,7 @@ class serializer
     std::size_t write_u_escape(std::size_t pos, std::uint16_t codeunit) noexcept
     {
         JSON_ASSERT(string_buffer.size() - pos >= 6);
-        static constexpr const char nibble_to_hex[] = "0123456789abcdef";
+        constexpr const char* nibble_to_hex = "0123456789abcdef";
         string_buffer[pos + 0] = '\\';
         string_buffer[pos + 1] = 'u';
         string_buffer[pos + 2] = nibble_to_hex[(codeunit >> 12u) & 0x0Fu];
