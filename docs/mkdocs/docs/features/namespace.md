@@ -59,7 +59,7 @@ may complain about undefined references.
 
 Different versions are not necessarily ABI-incompatible, but the project does not actively track changes in the ABI and
 recommends that all parts of a codebase exchanging library types be built with the same version. Users can, **at their
-own risk**, disable the version component of the linline namespace, allowing different versions – but not
+own risk**, disable the version component of the inline namespace, allowing different versions – but not
 configurations – to be used in cases where the linker would otherwise output undefined reference errors.
 
 To do so, define [`NLOHMANN_JSON_NAMESPACE_NO_VERSION`](../api/macros/nlohmann_json_namespace_no_version.md) to `1`.
@@ -71,6 +71,7 @@ section to emulate the effect of the `NLOHMANN_JSON_NAMESPACE_NO_VERSION` macro.
 
     Disabling the namespace version component and mixing ABI-incompatible versions will result in crashes or incorrect
     behavior. You have been warned!
+
 ## Disabling the inline namespace completely
 
 When interoperability with code using a pre-3.11.0 version of the library is required, users can, **at their own risk**

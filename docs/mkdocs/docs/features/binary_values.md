@@ -41,7 +41,7 @@ binary.has_subtype();                   // returns false
 binary_with_subtype.has_subtype();      // returns true
 
 binary_with_subtype.clear_subtype();
-binary_with_subtype.has_subtype();      // returns true
+binary_with_subtype.has_subtype();      // returns false
 
 binary_with_subtype.set_subtype(42);
 binary.set_subtype(23);
@@ -146,7 +146,7 @@ as an array of uint8 values. The library implements this translation.
     auto v = json::to_bjdata(j);      
     ```
             
-    `v` is a `std::vector<std::uint8t>` with the following 20 elements:
+    `v` is a `std::vector<std::uint8_t>` with the following 20 elements:
 
     ```c
     0x7B                                             // '{'
@@ -158,10 +158,10 @@ as an array of uint8 values. The library implements this translation.
     0x7D                                             // '}'
     ```
 
-    The following code uses the type and size optimization for UBJSON:
+    The following code uses the type and size optimization for BJData:
 
     ```cpp
-    // convert to UBJSON using the size and type optimization
+    // convert to BJData using the size and type optimization
     auto v = json::to_bjdata(j, true, true);
     ```
 
@@ -178,7 +178,7 @@ as an array of uint8 values. The library implements this translation.
             0xCA 0xFE 0xBA 0xBE         // content
     ```
 
-    Note that subtype (42) is **not** serialized and that UBJSON has **no binary type**, and deserializing `v` would
+    Note that subtype (42) is **not** serialized and that BJData has **no binary type**, and deserializing `v` would
     yield the following value:
 
     ```json
@@ -205,7 +205,7 @@ unsigned 8-bit integer. If no subtype is given, the generic binary subtype 0x00 
     auto v = json::to_bson(j);      
     ```
             
-    `v` is a `std::vector<std::uint8t>` with the following 22 elements:
+    `v` is a `std::vector<std::uint8_t>` with the following 22 elements:
     
     ```c
     0x16 0x00 0x00 0x00                         // number of bytes in the document
@@ -247,7 +247,7 @@ byte array.
     auto v = json::to_cbor(j);      
     ```
             
-    `v` is a `std::vector<std::uint8t>` with the following 15 elements:
+    `v` is a `std::vector<std::uint8_t>` with the following 15 elements:
     
     ```c
     0xA1                                   // map(1)
@@ -291,7 +291,7 @@ If no subtype is given, the bin family (bin8, bin16, bin32) is used.
     auto v = json::to_msgpack(j);      
     ```
             
-    `v` is a `std::vector<std::uint8t>` with the following 14 elements:
+    `v` is a `std::vector<std::uint8_t>` with the following 14 elements:
     
     ```c
     0x81                                   // fixmap1
@@ -331,7 +331,7 @@ as an array of uint8 values. The library implements this translation.
     auto v = json::to_ubjson(j);      
     ```
             
-    `v` is a `std::vector<std::uint8t>` with the following 20 elements:
+    `v` is a `std::vector<std::uint8_t>` with the following 20 elements:
     
     ```c
     0x7B                                             // '{'

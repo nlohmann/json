@@ -155,6 +155,7 @@ overload (3).
 - [get_ptr](get_ptr.md) get a pointer to the stored value
 - [get_ref](get_ref.md) get a reference to the stored value
 - [operator ValueType](operator_ValueType.md) get a value via implicit conversion
+- [Converting values](../../features/conversions.md) - the type conversions article
 
 ## Version history
 

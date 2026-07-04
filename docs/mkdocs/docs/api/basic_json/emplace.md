@@ -64,6 +64,7 @@ Logarithmic in the size of the container, O(log(`size()`)).
 
 - [emplace_back](emplace_back.md) add a value to an array
 - [insert](insert.md) add values to an array/object
+- [Modifying values](../../features/modifying_values.md) - the article on modifying values
 
 ## Version history
 

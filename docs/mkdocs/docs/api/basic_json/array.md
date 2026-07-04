@@ -54,6 +54,7 @@ This function is only needed to express two edge cases that cannot be realized w
 
 - [`basic_json(initializer_list_t)`](basic_json.md) - create a JSON value from an initializer list
 - [`object`](object.md) - create a JSON object value from an initializer list
+- [Creating JSON values](../../features/creating_values.md) - the article on creating JSON values
 
 ## Version history
 

@@ -50,6 +50,7 @@ provides `<format>`, controlled by the [`JSON_HAS_STD_FORMAT`](../macros/json_ha
 - [dump](dump.md) - serialization
 - [operator<<(std::ostream&)](../operator_ltlt.md) - serialize to stream
 - [format_as](format_as.md) - customization point used by `fmt::format` (fmtlib)
+- [Serialization](../../features/serialization.md) - the serialization article
 
 ## Version history
 
