@@ -206,6 +206,11 @@ class iterator_input_adapter
         const std::size_t copied = (std::min)(wanted, available);
         if (JSON_HEDLEY_LIKELY(copied != 0))
         {
+            // the copy must stay within both buffers: the caller-provided
+            // destination holds `wanted` bytes and the remaining input range
+            // holds `available` bytes, and `copied` is the minimum of the two
+            JSON_ASSERT(copied <= wanted);    // does not overrun the destination
+            JSON_ASSERT(copied <= available); // does not read past the input end
             // &*current yields the raw address for both raw pointers and
             // non-pointer contiguous iterators (e.g. std::vector's iterator)
             std::memcpy(dest, &*current, copied);
