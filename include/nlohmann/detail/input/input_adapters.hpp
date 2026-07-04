@@ -161,8 +161,18 @@ class iterator_input_adapter
   public:
     using char_type = typename std::iterator_traits<IteratorType>::value_type;
 
+    // Whether the lexer may reconstruct already-consumed input on demand (for
+    // diagnostics) instead of copying every scanned character eagerly. This is
+    // only sound for multi-pass, randomly-addressable byte input: the iterator
+    // must be random-access (so the consumed prefix can be revisited in O(1))
+    // and each element must map 1:1 to an input byte (wide inputs are wrapped
+    // in wide_string_input_adapter, which does not expose this).
+    static constexpr bool supports_seek =
+        std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value
+        && sizeof(char_type) == 1;
+
     iterator_input_adapter(IteratorType first, IteratorType last)
-        : current(std::move(first)), end(std::move(last))
+        : begin(first), current(std::move(first)), end(std::move(last))
     {}
 
     typename char_traits<char_type>::int_type get_character()
@@ -175,6 +185,22 @@ class iterator_input_adapter
         }
 
         return char_traits<char_type>::eof();
+    }
+
+    // number of characters consumed from the input so far
+    std::size_t get_consumed_count() const
+    {
+        return static_cast<std::size_t>(std::distance(begin, current));
+    }
+
+    // append the already-consumed characters in the half-open range
+    // [first_index, last_index) to @a out; only valid when supports_seek
+    template<typename ContainerType>
+    void copy_consumed_range(std::size_t first_index, std::size_t last_index, ContainerType& out) const
+    {
+        const auto from = std::next(begin, static_cast<typename std::iterator_traits<IteratorType>::difference_type>(first_index));
+        const auto to = std::next(begin, static_cast<typename std::iterator_traits<IteratorType>::difference_type>(last_index));
+        out.insert(out.end(), from, to);
     }
 
     // for general iterators, we cannot really do something better than falling back to processing the range one-by-one
@@ -198,6 +224,7 @@ class iterator_input_adapter
     }
 
   private:
+    IteratorType begin;
     IteratorType current;
     IteratorType end;
 
