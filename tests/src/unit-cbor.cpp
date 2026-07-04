@@ -2785,10 +2785,10 @@ TEST_CASE("CBOR large strings and binaries (chunked reader)")
     // sure roundtripping is correct for lengths around and beyond the internal
     // chunk size (4096 bytes), for both vector (iterator) and pointer inputs.
     for (const std::size_t len :
-    {
-        std::size_t{0}, std::size_t{1}, std::size_t{4095}, std::size_t{4096},
-        std::size_t{4097}, std::size_t{8192}, std::size_t{100000}
-    })
+            {
+                std::size_t{0}, std::size_t{1}, std::size_t{4095}, std::size_t{4096},
+                std::size_t{4097}, std::size_t{8192}, std::size_t{100000}
+            })
     {
         CAPTURE(len);
 

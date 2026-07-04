@@ -191,11 +191,11 @@ class iterator_input_adapter
     // whether IteratorType refers to a contiguous range and therefore supports
     // a std::memcpy fast path (pointers always do; in C++20 we can also detect
     // library iterators such as those of std::vector and std::string)
+    static constexpr bool iterator_is_contiguous =
 #if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
-    static constexpr bool iterator_is_contiguous = std::is_pointer<IteratorType>::value || std::contiguous_iterator<IteratorType>;
-#else
-    static constexpr bool iterator_is_contiguous = std::is_pointer<IteratorType>::value;
+        std::contiguous_iterator<IteratorType> ||
 #endif
+        std::is_pointer<IteratorType>::value;
 
     // contiguous fast path: bulk copy the remaining range with std::memcpy
     template<class T>
@@ -206,7 +206,9 @@ class iterator_input_adapter
         const std::size_t copied = (std::min)(wanted, available);
         if (JSON_HEDLEY_LIKELY(copied != 0))
         {
-            std::memcpy(dest, &(*current), copied);
+            // &*current yields the raw address for both raw pointers and
+            // non-pointer contiguous iterators (e.g. std::vector's iterator)
+            std::memcpy(dest, &*current, copied);
             std::advance(current, static_cast<typename std::iterator_traits<IteratorType>::difference_type>(copied / sizeof(char_type)));
         }
         return copied;

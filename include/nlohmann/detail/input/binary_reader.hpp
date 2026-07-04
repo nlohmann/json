@@ -2975,13 +2975,16 @@ class binary_reader
             if (JSON_HEDLEY_UNLIKELY(read < wanted))
             {
                 // premature end of input: shrink to what was actually read and
-                // report the failure at the first missing byte
+                // report the failure at the first missing byte (same position
+                // accounting as get_to() for partial number reads)
                 result.resize(old_size + read);
                 ++chars_read;
                 current = char_traits<char_type>::eof();
                 return unexpect_eof(format, context);
             }
-            len -= static_cast<NumberType>(wanted);
+            // a full chunk was read; get_elements() never returns more than requested
+            JSON_ASSERT(read == wanted);
+            len = static_cast<NumberType>(len - static_cast<NumberType>(wanted));
         }
         return true;
     }
