@@ -15,6 +15,8 @@
 
 #include "doctest_compatibility.h"
 
+#include <cstdint>
+
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -254,6 +256,23 @@ TEST_CASE("lexicographical comparison operators")
             {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_}, // 20
             {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_}, // 21
         };
+
+        SECTION("signed/unsigned mixed comparison above INT64_MAX")
+        {
+            const json above_int64_max = static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()) + 1ULL;
+            const json max_uint64 = (std::numeric_limits<std::uint64_t>::max)();
+            const json negative_one = -1;
+
+            CHECK_FALSE(above_int64_max == negative_one);
+            CHECK_FALSE(negative_one == above_int64_max);
+            CHECK(negative_one < above_int64_max);
+            CHECK_FALSE(above_int64_max < negative_one);
+
+            CHECK_FALSE(max_uint64 == negative_one);
+            CHECK_FALSE(negative_one == max_uint64);
+            CHECK(negative_one < max_uint64);
+            CHECK_FALSE(max_uint64 < negative_one);
+        }
 
         SECTION("compares unordered")
         {
