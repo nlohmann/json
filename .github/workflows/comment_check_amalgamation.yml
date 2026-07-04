@@ -47,7 +47,10 @@ jobs:
 
             var hasPatch = artifacts.data.artifacts.some((artifact) => artifact.name == "amalgamation-patch");
             core.setOutput('has_patch', String(hasPatch));
-      - run: unzip pr.zip
+      # Extract the untrusted PR artifact into a dedicated empty directory and
+      # read only the two expected files by fixed path afterwards. This avoids a
+      # malicious archive overwriting workspace files or escaping via ../ paths.
+      - run: unzip -o pr.zip -d ./pr_artifact
 
       - name: 'Comment on PR'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
@@ -55,8 +58,19 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             var fs = require('fs');
-            const author = fs.readFileSync('./author')
-            const issue_number = Number(fs.readFileSync('./number'));
+            // Both values come from a fork-triggered workflow and are therefore
+            // attacker-controlled. Validate them strictly before use to prevent
+            // Markdown/mention injection and bogus REST API filters.
+            const author = fs.readFileSync('./pr_artifact/author', 'utf8').trim();
+            if (!/^[A-Za-z0-9-]{1,39}$/.test(author)) {
+              core.setFailed(`Refusing to proceed: untrusted author value '${author}' is not a valid GitHub username.`);
+              return;
+            }
+            const issue_number = Number(fs.readFileSync('./pr_artifact/number', 'utf8').trim());
+            if (!Number.isInteger(issue_number) || issue_number <= 0) {
+              core.setFailed('Refusing to proceed: untrusted PR number is not a positive integer.');
+              return;
+            }
             const opts = github.rest.issues.listForRepo.endpoint.merge({
               owner: context.repo.owner,
               repo: context.repo.repo,
