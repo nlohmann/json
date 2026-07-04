@@ -24388,10 +24388,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     // note parentheses around operands are necessary; see
     // https://github.com/nlohmann/json/issues/1530
-    // Mixed signed/unsigned integer comparisons check for negative signed
-    // values before casting. This avoids wraparound when converting a negative
-    // integer to an unsigned type and preserves the rule that any negative
-    // integer is smaller than any unsigned integer.
+    // Mixed signed/unsigned integer comparisons check whether the signed value
+    // is negative before casting. If it is, the comparison is performed with
+    // the fixed values -1 and 1, which preserves the ordering relationship
+    // because any negative signed value is smaller than any unsigned value.
+    // Otherwise, the non-negative signed value is cast to unsigned before the
+    // comparison to avoid wraparound.
 #define JSON_IMPLEMENT_OPERATOR(op, null_result, unordered_result, default_result)                       \
     const auto lhs_type = lhs.type();                                                                    \
     const auto rhs_type = rhs.type();                                                                    \
@@ -24448,21 +24450,17 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {                                                                                                    \
         return lhs.m_data.m_value.number_float op static_cast<number_float_t>(rhs.m_data.m_value.number_unsigned);     \
     }                                                                                                    \
-    else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_integer) /* NOLINT(readability/braces) */ \
+    else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_integer)                \
     {                                                                                                    \
-        if (rhs.m_data.m_value.number_integer < 0)                                                       \
-        {                                                                                                \
-            return number_integer_t(1) op number_integer_t(0);                                           \
-        }                                                                                                \
-        return lhs.m_data.m_value.number_unsigned op static_cast<number_unsigned_t>(rhs.m_data.m_value.number_integer); \
+        return (rhs.m_data.m_value.number_integer < 0)                                                   \
+               ? (number_integer_t(1) op number_integer_t(-1))                                           \
+               : (lhs.m_data.m_value.number_unsigned op static_cast<number_unsigned_t>(rhs.m_data.m_value.number_integer)); \
     }                                                                                                    \
-    else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_unsigned) /* NOLINT(readability/braces) */ \
+    else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_unsigned)                \
     {                                                                                                    \
-        if (lhs.m_data.m_value.number_integer < 0)                                                       \
-        {                                                                                                \
-            return number_integer_t(0) op number_integer_t(1);                                           \
-        }                                                                                                \
-        return static_cast<number_unsigned_t>(lhs.m_data.m_value.number_integer) op rhs.m_data.m_value.number_unsigned; \
+        return (lhs.m_data.m_value.number_integer < 0)                                                   \
+               ? (number_integer_t(-1) op number_integer_t(1))                                           \
+               : (static_cast<number_unsigned_t>(lhs.m_data.m_value.number_integer) op rhs.m_data.m_value.number_unsigned); \
     }                                                                                             \
     else if(compares_unordered(lhs, rhs))\
     {\
