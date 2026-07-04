@@ -13171,20 +13171,20 @@ class binary_reader
                                        : chunk_size;
             const std::size_t old_size = result.size();
             result.resize(old_size + wanted);
-            const std::size_t read = ia.get_elements(&result[old_size], wanted);
-            chars_read += read;
-            if (JSON_HEDLEY_UNLIKELY(read < wanted))
+            const std::size_t bytes_read = ia.get_elements(&result[old_size], wanted);
+            chars_read += bytes_read;
+            if (JSON_HEDLEY_UNLIKELY(bytes_read < wanted))
             {
                 // premature end of input: shrink to what was actually read and
                 // report the failure at the first missing byte (same position
                 // accounting as get_to() for partial number reads)
-                result.resize(old_size + read);
+                result.resize(old_size + bytes_read);
                 ++chars_read;
                 current = char_traits<char_type>::eof();
                 return unexpect_eof(format, context);
             }
             // a full chunk was read; get_elements() never returns more than requested
-            JSON_ASSERT(read == wanted);
+            JSON_ASSERT(bytes_read == wanted);
             len = static_cast<NumberType>(len - static_cast<NumberType>(wanted));
         }
         return true;
