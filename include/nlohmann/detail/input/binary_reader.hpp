@@ -2970,9 +2970,9 @@ class binary_reader
                                        : chunk_size;
             const std::size_t old_size = result.size();
             result.resize(old_size + wanted);
-            // the destination now has room for `wanted` bytes at offset
-            // old_size, which is what get_elements() is allowed to write
-            JSON_ASSERT(result.size() >= old_size + wanted);
+            // resize() is required to make size() exactly old_size + wanted;
+            // that is the room get_elements() is allowed to write into
+            JSON_ASSERT(result.size() == old_size + wanted);
             const std::size_t bytes_read = ia.get_elements(&result[old_size], wanted);
             chars_read += bytes_read;
             if (JSON_HEDLEY_UNLIKELY(bytes_read < wanted))
