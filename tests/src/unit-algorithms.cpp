@@ -229,7 +229,10 @@ TEST_CASE("algorithms")
         {
             json j = {13, 29, 3, {{"one", 1}, {"two", 2}}, true, false, {1, 2, 3}, "foo", "baz", nullptr};
             std::partial_sort(j.begin(), j.begin() + 4, j.end());
-            CHECK(j == json({nullptr, false, true, 3, {{"one", 1}, {"two", 2}}, 29, {1, 2, 3}, "foo", "baz", 13}));
+            // only the first four elements are expected to be sorted, the rest are
+            // unspecified by the standard
+            const json expected({nullptr, false, true, 3});
+            CHECK(std::equal(j.begin(), j.begin() + 4, begin(expected)));
         }
     }
 
