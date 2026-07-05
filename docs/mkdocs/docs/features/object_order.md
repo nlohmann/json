@@ -37,7 +37,7 @@ The default type `nlohmann::json` uses a `std::map` to store JSON objects, and t
 
 ## Alternative behavior: preserve insertion order
 
-If you do want to preserve the **insertion order**, you can try the type [`nlohmann::ordered_json`](https://github.com/nlohmann/json/issues/2179).
+If you do want to preserve the **insertion order**, you can use the type [`nlohmann::ordered_json`](../api/ordered_json.md).
 
 ??? example
 
@@ -103,7 +103,7 @@ Assume file `input.json` contains the JSON object above:
     ```json
     {
       "one": 1,
-      "three": 3
-      "two": 2,
+      "three": 3,
+      "two": 2
     }
     ```

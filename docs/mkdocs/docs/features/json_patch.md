@@ -28,7 +28,7 @@ The library can also calculate a JSON patch (i.e., a **diff**) given two JSON va
 
     For two JSON values *source* and *target*, the following code yields always true:
 
-    ```cüü
+    ```cpp
     source.patch(diff(source, target)) == target;
     ```
 

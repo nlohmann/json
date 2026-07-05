@@ -6993,8 +6993,18 @@ class iterator_input_adapter
   public:
     using char_type = typename std::iterator_traits<IteratorType>::value_type;
 
+    // Whether the lexer may reconstruct already-consumed input on demand (for
+    // diagnostics) instead of copying every scanned character eagerly. This is
+    // only sound for multi-pass, randomly-addressable byte input: the iterator
+    // must be random-access (so the consumed prefix can be revisited in O(1))
+    // and each element must map 1:1 to an input byte (wide inputs are wrapped
+    // in wide_string_input_adapter, which does not expose this).
+    static constexpr bool supports_seek =
+        std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value
+        && sizeof(char_type) == 1;
+
     iterator_input_adapter(IteratorType first, IteratorType last)
-        : current(std::move(first)), end(std::move(last))
+        : begin(first), current(std::move(first)), end(std::move(last))
     {}
 
     typename char_traits<char_type>::int_type get_character()
@@ -7007,6 +7017,22 @@ class iterator_input_adapter
         }
 
         return char_traits<char_type>::eof();
+    }
+
+    // number of characters consumed from the input so far
+    std::size_t get_consumed_count() const
+    {
+        return static_cast<std::size_t>(std::distance(begin, current));
+    }
+
+    // append the already-consumed characters in the half-open range
+    // [first_index, last_index) to @a out; only valid when supports_seek
+    template<typename ContainerType>
+    void copy_consumed_range(std::size_t first_index, std::size_t last_index, ContainerType& out) const
+    {
+        const auto from = std::next(begin, static_cast<typename std::iterator_traits<IteratorType>::difference_type>(first_index));
+        const auto to = std::next(begin, static_cast<typename std::iterator_traits<IteratorType>::difference_type>(last_index));
+        out.insert(out.end(), from, to);
     }
 
     // Copy up to count * sizeof(T) bytes into dest, returning the number of
@@ -7071,6 +7097,7 @@ class iterator_input_adapter
         return count * sizeof(T);
     }
 
+    IteratorType begin;
     IteratorType current;
     IteratorType end;
 
@@ -7551,6 +7578,28 @@ class lexer_base
         }
     }
 };
+
+// Detect whether an input adapter can reconstruct already-consumed input on
+// demand (see iterator_input_adapter::supports_seek). Adapters that do not
+// expose the flag - e.g. file, stream, wide-string, and user-defined adapters -
+// are treated as non-seekable streaming input, for which the lexer keeps
+// copying every scanned character eagerly. The value is read via tag dispatch
+// on is_detected so the flag is only referenced for adapters that provide it.
+template<typename InputAdapterType>
+using detect_supports_seek = decltype(InputAdapterType::supports_seek);
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_seek(std::true_type /*detected*/)
+{
+    return InputAdapterType::supports_seek;
+}
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_seek(std::false_type /*detected*/)
+{
+    return false;
+}
+
 /*!
 @brief lexical analysis
 
@@ -7565,6 +7614,12 @@ class lexer : public lexer_base<BasicJsonType>
     using string_t = typename BasicJsonType::string_t;
     using char_type = typename InputAdapterType::char_type;
     using char_int_type = typename char_traits<char_type>::int_type;
+
+    /// whether the last read token can be reconstructed from the input adapter
+    /// on demand (in error paths) instead of being copied on every scanned
+    /// character; see input_adapter_supports_seek
+    static constexpr bool lazy_token_string =
+        input_adapter_supports_seek<InputAdapterType>(is_detected<detect_supports_seek, InputAdapterType> {});
 
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
@@ -8775,8 +8830,24 @@ scan_number_done:
     void reset() noexcept
     {
         token_buffer.clear();
-        token_string.clear();
         decimal_point_position = std::string::npos;
+
+        note_token_start(std::integral_constant<bool, lazy_token_string> {});
+    }
+
+    /// seekable adapter: remember where the current token starts so it can be
+    /// reconstructed from the input on error; current has already been
+    /// consumed, hence the -1
+    void note_token_start(std::true_type /*lazy*/) noexcept
+    {
+        token_string_start = ia.get_consumed_count() - 1;
+    }
+
+    /// streaming adapter: start copying the token eagerly, beginning with the
+    /// already-read first character
+    void note_token_start(std::false_type /*lazy*/) noexcept
+    {
+        token_string.clear();
         token_string.push_back(char_traits<char_type>::to_char_type(current));
     }
 
@@ -8805,10 +8876,9 @@ scan_number_done:
             current = ia.get_character();
         }
 
-        if (JSON_HEDLEY_LIKELY(current != char_traits<char_type>::eof()))
-        {
-            token_string.push_back(char_traits<char_type>::to_char_type(current));
-        }
+        // seekable adapters reconstruct the token lazily on error (see
+        // get_token_string), so the eager per-character copy is skipped
+        capture_char(std::integral_constant<bool, lazy_token_string> {});
 
         if (current == '\n')
         {
@@ -8817,6 +8887,18 @@ scan_number_done:
         }
 
         return current;
+    }
+
+    /// seekable adapter: nothing to capture, the token is rebuilt on error
+    void capture_char(std::true_type /*lazy*/) const noexcept {}
+
+    /// streaming adapter: copy the scanned character into token_string
+    void capture_char(std::false_type /*lazy*/)
+    {
+        if (JSON_HEDLEY_LIKELY(current != char_traits<char_type>::eof()))
+        {
+            token_string.push_back(char_traits<char_type>::to_char_type(current));
+        }
     }
 
     /*!
@@ -8846,6 +8928,15 @@ scan_number_done:
             --position.chars_read_current_line;
         }
 
+        uncapture_char(std::integral_constant<bool, lazy_token_string> {});
+    }
+
+    /// seekable adapter: nothing was captured, so nothing to undo
+    void uncapture_char(std::true_type /*lazy*/) const noexcept {}
+
+    /// streaming adapter: drop the character copied by the matching get()
+    void uncapture_char(std::false_type /*lazy*/)
+    {
         if (JSON_HEDLEY_LIKELY(current != char_traits<char_type>::eof()))
         {
             JSON_ASSERT(!token_string.empty());
@@ -8903,14 +8994,38 @@ scan_number_done:
         return position;
     }
 
+    /// seekable adapter: rebuild the last read token from the input on demand
+    const std::vector<char_type>& collect_token_chars(std::vector<char_type>& out, std::true_type /*lazy*/) const
+    {
+        // a pending unget of a real (non-EOF) character means that character
+        // was consumed from the input but is not part of the token; EOF is
+        // never consumed, so it must not be subtracted (mirrors unget())
+        const bool pending_real_unget = next_unget && current != char_traits<char_type>::eof();
+        const std::size_t stop = ia.get_consumed_count() - (pending_real_unget ? 1u : 0u);
+        if (JSON_HEDLEY_LIKELY(stop >= token_string_start))
+        {
+            ia.copy_consumed_range(token_string_start, stop, out);
+        }
+        return out;
+    }
+
+    /// streaming adapter: the token was copied eagerly while scanning
+    const std::vector<char_type>& collect_token_chars(std::vector<char_type>& /*out*/, std::false_type /*lazy*/) const
+    {
+        return token_string;
+    }
+
     /// return the last read token (for errors only).  Will never contain EOF
     /// (an arbitrary value that is not a valid char value, often -1), because
     /// 255 may legitimately occur.  May contain NUL, which should be escaped.
     std::string get_token_string() const
     {
+        std::vector<char_type> reconstructed;
+        const std::vector<char_type>& chars = collect_token_chars(reconstructed, std::integral_constant<bool, lazy_token_string> {});
+
         // escape control characters
         std::string result;
-        for (const auto c : token_string)
+        for (const auto c : chars)
         {
             if (static_cast<unsigned char>(c) <= '\x1F')
             {
@@ -9071,8 +9186,13 @@ scan_number_done:
     /// the start position of the current token
     position_t position {};
 
-    /// raw input token string (for error messages)
+    /// raw input token string for error messages; only populated for streaming
+    /// adapters (seekable adapters reconstruct it lazily via token_string_start)
     std::vector<char_type> token_string {};
+
+    /// start offset of the current token within the input, used to reconstruct
+    /// the last read token on error for seekable adapters (see collect_token_chars)
+    std::size_t token_string_start = 0;
 
     /// buffer for variable-length tokens (numbers, strings)
     string_t token_buffer {};

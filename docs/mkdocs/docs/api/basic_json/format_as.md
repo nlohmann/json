@@ -88,6 +88,7 @@ std::string format_as(const BasicJsonType& j)
 
 - [dump](dump.md)
 - [std::formatter<basic_json>](std_formatter.md) - the `std::format` (C++20) equivalent
+- [Serialization](../../features/serialization.md) - the serialization article
 
 ## Version history
 

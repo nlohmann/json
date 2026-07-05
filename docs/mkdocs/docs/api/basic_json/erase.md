@@ -206,6 +206,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 - [clear](clear.md) clears the contents
 - [insert](insert.md) add values to an array/object
+- [Modifying values](../../features/modifying_values.md) - the article on modifying values
 
 ## Version history
 

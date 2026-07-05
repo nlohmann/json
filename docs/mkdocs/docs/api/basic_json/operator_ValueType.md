@@ -78,6 +78,7 @@ Linear in the size of the JSON value.
 ## See also
 
 - [get](get.md) get a value (explicit conversion)
+- [Converting values](../../features/conversions.md) - the type conversions article
 
 ## Version history
 

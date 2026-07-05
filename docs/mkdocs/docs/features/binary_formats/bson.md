@@ -52,28 +52,29 @@ The library uses the following mapping from JSON values types to BSON types:
 
 The library maps BSON record types to JSON value types as follows:
 
-| BSON type             | BSON marker byte | JSON value type |
-|-----------------------|------------------|-----------------|
-| double                | 0x01             | number_float    |
-| string                | 0x02             | string          |
-| document              | 0x03             | object          |
-| array                 | 0x04             | array           |
-| binary                | 0x05             | binary          |
-| undefined             | 0x06             | *unsupported*   |
-| ObjectId              | 0x07             | *unsupported*   |
-| boolean               | 0x08             | boolean         |
-| UTC Date-Time         | 0x09             | *unsupported*   |
-| null                  | 0x0A             | null            |
-| Regular Expr.         | 0x0B             | *unsupported*   |
-| DB Pointer            | 0x0C             | *unsupported*   |
-| JavaScript Code       | 0x0D             | *unsupported*   |
-| Symbol                | 0x0E             | *unsupported*   |
-| JavaScript Code       | 0x0F             | *unsupported*   |
-| int32                 | 0x10             | number_integer  |
-| uint64(Timestamp)     | 0x11             | number_unsigned |
-| 128-bit decimal float | 0x13             | *unsupported*   |
-| Max Key               | 0x7F             | *unsupported*   |
-| Min Key               | 0xFF             | *unsupported*   |
+| BSON type                | BSON marker byte | JSON value type |
+|--------------------------|------------------|-----------------|
+| double                   | 0x01             | number_float    |
+| string                   | 0x02             | string          |
+| document                 | 0x03             | object          |
+| array                    | 0x04             | array           |
+| binary                   | 0x05             | binary          |
+| undefined                | 0x06             | *unsupported*   |
+| ObjectId                 | 0x07             | *unsupported*   |
+| boolean                  | 0x08             | boolean         |
+| UTC Date-Time            | 0x09             | *unsupported*   |
+| null                     | 0x0A             | null            |
+| Regular Expr.            | 0x0B             | *unsupported*   |
+| DB Pointer               | 0x0C             | *unsupported*   |
+| JavaScript Code          | 0x0D             | *unsupported*   |
+| Symbol                   | 0x0E             | *unsupported*   |
+| JavaScript Code w/ scope | 0x0F             | *unsupported*   |
+| int32                    | 0x10             | number_integer  |
+| uint64(Timestamp)        | 0x11             | number_unsigned |
+| int64                    | 0x12             | number_integer  |
+| 128-bit decimal float    | 0x13             | *unsupported*   |
+| Max Key                  | 0x7F             | *unsupported*   |
+| Min Key                  | 0xFF             | *unsupported*   |
 
 !!! warning "Incomplete mapping"
 

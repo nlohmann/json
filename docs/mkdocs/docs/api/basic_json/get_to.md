@@ -62,6 +62,7 @@ Depends on the `json_serializer<ValueType>::from_json()` implementation.
 - [get](get.md) get a value (explicit conversion)
 - [get_ref](get_ref.md) get a reference to the stored value
 - [get_ptr](get_ptr.md) get a pointer to the stored value
+- [Converting values](../../features/conversions.md) - the type conversions article
 
 ## Version history
 

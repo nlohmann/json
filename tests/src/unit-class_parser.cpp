@@ -16,6 +16,12 @@ using nlohmann::json;
 #endif
 
 #include <valarray>
+#include <algorithm>
+#include <list>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace
 {
@@ -1725,3 +1731,110 @@ TEST_CASE("parser class")
         CHECK_THROWS_WITH_AS(_ = json::parse("/*", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid comment; missing closing '*/'; last read: '/*<U+0000>'", json::parse_error);
     }
 }
+
+// this test relies on parse errors being thrown, so it is skipped when
+// exceptions are disabled (json::parse aborts instead of throwing there)
+#if !defined(JSON_NOEXCEPTION)
+namespace
+{
+// Return the exception message from parsing @a input, or a "<no error ...>"
+// sentinel if the parse unexpectedly succeeds. json::parse is nodiscard, so the
+// result is consumed (via size()) to keep -Wunused-result / -Werror happy.
+template<typename InputType>
+std::string parse_error_message(InputType&& input)
+{
+    try
+    {
+        const json j = json::parse(std::forward<InputType>(input));
+        return "<no error, size " + std::to_string(j.size()) + ">";
+    }
+    catch (const json::exception& e)
+    {
+        return e.what();
+    }
+}
+
+template<typename IteratorType>
+std::string parse_error_message_range(IteratorType first, IteratorType last)
+{
+    try
+    {
+        const json j = json::parse(first, last);
+        return "<no error, size " + std::to_string(j.size()) + ">";
+    }
+    catch (const json::exception& e)
+    {
+        return e.what();
+    }
+}
+} // namespace
+
+TEST_CASE("last-read diagnostics are identical across input adapters")
+{
+    // The lexer reconstructs the "last read" token lazily for seekable adapters
+    // (contiguous byte input) and copies it eagerly for streaming adapters.
+    // Both strategies must yield byte-for-byte identical error messages.
+
+    // a selection of malformed inputs that exercise different token kinds,
+    // whitespace/structural accumulation, number overflow, and control-char
+    // escaping in the reconstructed "last read" token
+    const std::vector<std::string> inputs =
+    {
+        "[1,2,x]",
+        "  \n  @",
+        "{\"a\": }",
+        "1.18973e+4932",
+        "\"\t\"",
+        "tru",
+        "[1 2]",
+        "\xEF\xBB\xBF   nul",
+    };
+
+    for (const auto& s : inputs)
+    {
+        CAPTURE(s);
+
+        // reference: contiguous std::string -> seekable (lazy) path
+        const std::string reference = parse_error_message(s);
+        // every input is malformed, so parsing must fail (error messages start
+        // with '['; the success sentinel returned above starts with '<')
+        CHECK(reference.front() == '[');
+
+        // const char* -> also seekable
+        CHECK(parse_error_message(s.c_str()) == reference);
+
+        // std::vector<char> iterators -> seekable (random-access)
+        {
+            const std::vector<char> v(s.begin(), s.end());
+            CHECK(parse_error_message_range(v.begin(), v.end()) == reference);
+        }
+
+        // std::list iterators -> non-seekable (bidirectional) eager path
+        {
+            const std::list<char> l(s.begin(), s.end());
+            CHECK(parse_error_message_range(l.begin(), l.end()) == reference);
+        }
+
+        // std::istringstream -> non-seekable streaming eager path
+        {
+            std::istringstream ss(s);
+            CHECK(parse_error_message(ss) == reference);
+        }
+
+        // wide strings -> wide_string_input_adapter eager path; only comparable
+        // for ASCII input, as non-ASCII bytes are transcoded to different UTF-8
+        const bool is_ascii = std::all_of(s.begin(), s.end(), [](char c)
+        {
+            return static_cast<unsigned char>(c) < 0x80;
+        });
+        if (is_ascii)
+        {
+            const std::u16string w16(s.begin(), s.end());
+            CHECK(parse_error_message(w16) == reference);
+
+            const std::u32string w32(s.begin(), s.end());
+            CHECK(parse_error_message(w32) == reference);
+        }
+    }
+}
+#endif // !defined(JSON_NOEXCEPTION)

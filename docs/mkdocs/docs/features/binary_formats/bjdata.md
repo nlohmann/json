@@ -123,7 +123,7 @@ The library uses the following mapping from JSON values types to BJData types ac
     The current version of this library does not yet support automatic detection of and conversion from a nested JSON
     array input to a BJData ND-array.
 
-    [JDataAAFmt]: https://github.com/NeuroJSON/jdata/blob/master/JData_specification.md#annotated-storage-of-n-d-arrays)
+    [JDataAAFmt]: https://github.com/NeuroJSON/jdata/blob/master/JData_specification.md#annotated-storage-of-n-d-arrays
 
 !!! info "Restrictions in optimized data types for arrays and objects"
 
@@ -146,7 +146,7 @@ The library uses the following mapping from JSON values types to BJData types ac
     suggested by the BJData documentation. In particular, this means that the serialization and the deserialization of
     JSON containing binary values into BJData and back will result in a different JSON object.
 
-    [BJDataBinArr]: https://github.com/NeuroJSON/bjdata/blob/master/Binary_JData_Specification.md#optimized-binary-array)
+    [BJDataBinArr]: https://github.com/NeuroJSON/bjdata/blob/master/Binary_JData_Specification.md#optimized-binary-array
 
 ??? example
 
