@@ -1367,7 +1367,7 @@ namespace issue_4320_eigen
 // but for which this (fake) third-party namespace provides its own to_json.
 struct vector3
 {
-    double v[3]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+    double v[3]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-use-default-member-init,modernize-use-default-member-init)
     vector3(double x, double y, double z) : v{x, y, z} {} // NOLINT(hicpp-member-init,cppcoreguidelines-pro-type-member-init)
     double x() const
     {
@@ -1399,7 +1399,7 @@ struct vector3
     }
 };
 
-inline void to_json(json& j, const vector3& v)
+inline void to_json(json& j, const vector3& v) // NOLINT(misc-use-internal-linkage)
 {
     j = {{"x", v.x()}, {"y", v.y()}, {"z", v.z()}};
 }
@@ -1422,12 +1422,12 @@ struct payload
     double x, y, z;
 };
 
-inline vector3_wrapper to_eigen(const payload& p)
+inline vector3_wrapper to_eigen(const payload& p) // NOLINT(misc-use-internal-linkage)
 {
-    return vector3_wrapper(p.x, p.y, p.z);
+    return {p.x, p.y, p.z};
 }
 
-inline void to_json(json& j, const payload& p)
+inline void to_json(json& j, const payload& p) // NOLINT(misc-use-internal-linkage)
 {
     // Unqualified call, passing a *derived* vector3_wrapper: relies on ADL
     // finding issue_4320_eigen::to_json(json&, const vector3&) through the
