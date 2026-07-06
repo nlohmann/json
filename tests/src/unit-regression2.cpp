@@ -27,7 +27,9 @@ using ordered_json = nlohmann::ordered_json;
 #endif
 
 #include <cstdio>
+#include <cstdlib>
 #include <list>
+#include <new>
 #include <type_traits>
 #include <utility>
 
@@ -90,6 +92,49 @@ DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
 /////////////////////////////////////////////////////////////////////
 
 using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+
+#if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
+namespace
+{
+bool fail_next_global_allocation = false;
+
+void* checked_malloc(std::size_t size)
+{
+    if (fail_next_global_allocation)
+    {
+        fail_next_global_allocation = false;
+        throw std::bad_alloc();
+    }
+
+    if (void* const result = std::malloc(size))
+    {
+        return result;
+    }
+
+    throw std::bad_alloc();
+}
+} // namespace
+
+void* operator new (std::size_t size)
+{
+    return checked_malloc(size);
+}
+
+void* operator new[](std::size_t size)
+{
+    return checked_malloc(size);
+}
+
+void operator delete (void* ptr) noexcept
+{
+    std::free(ptr);
+}
+
+void operator delete[](void* ptr) noexcept
+{
+    std::free(ptr);
+}
+#endif
 
 /////////////////////////////////////////////////////////////////////
 // for #1647
@@ -1453,5 +1498,20 @@ TEST_CASE("issue #4320 - custom base class must not leak nlohmann::detail into A
     to_json(j, p);
     CHECK(j == json({{"x", 1.0}, {"y", 2.0}, {"z", 3.0}}));
 }
+
+#if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
+TEST_CASE("regression test #5135 - destructor tolerates stack allocation failure")
+{
+    {
+        json j = json::array({json::array({1, 2}), json::object({{"key", json::array({3})}})});
+        fail_next_global_allocation = true;
+    }
+
+    const bool allocation_failure_was_injected = !fail_next_global_allocation;
+    fail_next_global_allocation = false;
+
+    CHECK(allocation_failure_was_injected);
+}
+#endif
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
