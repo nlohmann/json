@@ -1358,4 +1358,100 @@ TEST_CASE("regression test #5122 - nlohmann::ordered_map move-assignment transfe
     CHECK(src.begin()->first == "after-move");
 }
 
+// Stand-in for a third-party library (e.g., Eigen as of 3.4, which added
+// STL-compatible begin()/end() to its vector types), living in its own
+// namespace with its own to_json overload for its vector type.
+namespace issue_4320_eigen
+{
+// "array-compatible" from the library's point of view (it has begin()/end()),
+// but for which this (fake) third-party namespace provides its own to_json.
+struct vector3
+{
+    double v[3]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-use-default-member-init,modernize-use-default-member-init)
+    vector3(double x, double y, double z) : v{x, y, z} {} // NOLINT(hicpp-member-init,cppcoreguidelines-pro-type-member-init)
+    double x() const
+    {
+        return v[0];
+    }
+    double y() const
+    {
+        return v[1];
+    }
+    double z() const
+    {
+        return v[2];
+    }
+    double* begin()
+    {
+        return v;
+    }
+    double* end()
+    {
+        return v + 3;
+    }
+    const double* begin() const
+    {
+        return v;
+    }
+    const double* end() const
+    {
+        return v + 3;
+    }
+};
+
+inline void to_json(json& j, const vector3& v) // NOLINT(misc-use-internal-linkage)
+{
+    j = {{"x", v.x()}, {"y", v.y()}, {"z", v.z()}};
+}
+} // namespace issue_4320_eigen
+
+// The user's own namespace, using the (fake) Eigen type as an implementation
+// detail behind a payload type that has nothing to do with vectors/arrays.
+namespace issue_4320
+{
+// Publicly derives from issue_4320_eigen::vector3 but does *not* define its
+// own to_json - it is only ever used as a temporary to reach the base
+// class's to_json via ADL.
+struct vector3_wrapper : issue_4320_eigen::vector3
+{
+    using issue_4320_eigen::vector3::vector3;
+};
+
+struct payload
+{
+    double x, y, z;
+};
+
+inline vector3_wrapper to_eigen(const payload& p) // NOLINT(misc-use-internal-linkage)
+{
+    return {p.x, p.y, p.z};
+}
+
+inline void to_json(json& j, const payload& p) // NOLINT(misc-use-internal-linkage)
+{
+    // Unqualified call, passing a *derived* vector3_wrapper: relies on ADL
+    // finding issue_4320_eigen::to_json(json&, const vector3&) through the
+    // vector3 base class, via a derived-to-base conversion. Must NOT resolve
+    // to the library's own generic array-compatible to_json (an exact-match
+    // template for vector3_wrapper, since it also has begin()/end()), which
+    // would serialize this as [x, y, z] instead of {"x":x, "y":y, "z":z}.
+    to_json(j, to_eigen(p));
+}
+} // namespace issue_4320
+
+TEST_CASE("issue #4320 - custom base class must not leak nlohmann::detail into ADL")
+{
+    // Before the fix, basic_json unconditionally derived from a type living in
+    // nlohmann::detail (json_default_base), which made nlohmann::detail an
+    // associated namespace of every basic_json for ADL purposes. That leaked
+    // the library's internal generic-array to_json overload into unqualified
+    // to_json() calls made from user code, silently bypassing user-defined
+    // to_json overloads reached via a derived-to-base conversion.
+    const issue_4320::payload p{1.0, 2.0, 3.0};
+
+    json j;
+    to_json(j, p);
+    CHECK(j == json({{"x", 1.0}, {"y", 2.0}, {"z", 3.0}}));
+}
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
