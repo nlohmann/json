@@ -19752,12 +19752,12 @@ class serializer
                             {
                                 if (codepoint <= 0xFFFF)
                                 {
-                                    bytes = write_u_escape(bytes, static_cast<std::uint16_t>(codepoint));
+                                    write_u_escape(bytes, static_cast<std::uint16_t>(codepoint));
                                 }
                                 else
                                 {
-                                    bytes = write_u_escape(bytes, static_cast<std::uint16_t>(0xD7C0u + (codepoint >> 10u)));
-                                    bytes = write_u_escape(bytes, static_cast<std::uint16_t>(0xDC00u + (codepoint & 0x3FFu)));
+                                    write_u_escape(bytes, static_cast<std::uint16_t>(0xD7C0u + (codepoint >> 10u)));
+                                    write_u_escape(bytes, static_cast<std::uint16_t>(0xDC00u + (codepoint & 0x3FFu)));
                                 }
                             }
                             else
@@ -19971,14 +19971,13 @@ class serializer
      * string escaping hot path. It writes exactly six characters ('\\', 'u' and
      * four hex digits) at position @a pos of @a string_buffer via a nibble
      * lookup table, avoiding the format-string parsing and locale machinery of
-     * `snprintf`.
+     * `snprintf`. Advances @a pos by the number of bytes written (6).
      *
      * @param[in] pos       position in @a string_buffer to write at; there must
      *                      be at least 6 bytes of headroom
      * @param[in] codeunit  16-bit value to encode
-     * @return position just after the written escape sequence (@a pos + 6)
      */
-    std::size_t write_u_escape(std::size_t pos, std::uint16_t codeunit) noexcept
+    void write_u_escape(std::size_t& pos, std::uint16_t codeunit) noexcept
     {
         JSON_ASSERT(string_buffer.size() - pos >= 6);
         constexpr const char* nibble_to_hex = "0123456789abcdef";
@@ -19988,7 +19987,7 @@ class serializer
         string_buffer[pos + 3] = nibble_to_hex[(codeunit >> 8u) & 0x0Fu];
         string_buffer[pos + 4] = nibble_to_hex[(codeunit >> 4u) & 0x0Fu];
         string_buffer[pos + 5] = nibble_to_hex[codeunit & 0x0Fu];
-        return pos + 6;
+        pos += 6;
     }
 
     // templates to avoid warnings about useless casts
