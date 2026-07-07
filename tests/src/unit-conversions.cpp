@@ -1618,6 +1618,25 @@ NLOHMANN_JSON_SERIALIZE_ENUM(TaskState,
     {TS_COMPLETED, "completed"},
 })
 
+enum class FlightMode
+{
+    UNKNOWN,
+    CRUISE,
+    LANDING
+};
+
+NLOHMANN_JSON_SERIALIZE_ENUM(FlightMode,
+{
+    {FlightMode::UNKNOWN, nullptr},
+    {FlightMode::CRUISE, "cruise"},
+    {FlightMode::LANDING, "landing"}
+})
+
+TEST_CASE("enum serialization handles unknown values")
+{
+    CHECK(FlightMode::UNKNOWN == json("invalid_mode"));
+}
+
 TEST_CASE("JSON to enum mapping")
 {
     SECTION("enum class")
