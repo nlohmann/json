@@ -5,7 +5,7 @@
 //
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-FileCopyrightText: 2018 The Abseil Authors
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT AND Apache-2.0
 
 #pragma once
 
