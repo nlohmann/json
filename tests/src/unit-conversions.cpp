@@ -1778,7 +1778,7 @@ TEST_CASE("std::optional")
         // constructible from T, and T is constructible from basic_json via the
         // operator); there is no SFINAE path that distinguishes "call from inside
         // std::optional's constructor" from "direct call". Use get<std::optional<T>>()
-        // or get_to() instead for correct null handling. See json#4864 and #XXXX.
+        // or get_to() instead for correct null handling. See #4864 and #5246.
         CHECK_THROWS_AS(std::optional<std::string>(j_null), json::type_error);
         CHECK_THROWS_AS(std::optional<int>(j_null), json::type_error);
     }
