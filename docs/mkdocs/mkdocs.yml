@@ -367,6 +367,9 @@ markdown_extensions:
       auto_append:
         - ../includes/glossary.md
 
+hooks:
+  - hooks/copy_markdown_source.py
+
 plugins:
   - search:
       separator: '[\s\-\.]'
@@ -389,6 +392,33 @@ plugins:
         - https://nlohmann.github.io/json/*
         - mailto:*
   - privacy
+  - llmstxt:
+      markdown_description: >
+        JSON for Modern C++ is a C++11 header-only library implementing a JSON
+        value type with an STL-like API, JSON Pointer/Patch, CBOR/MessagePack/
+        BSON/UBJSON/BJData binary format support, and a SAX-style parser interface.
+      sections:
+        Home:
+          - index.md
+          - home/*.md
+        Features:
+          - features/*.md
+          - features/binary_formats/*.md
+          - features/element_access/*.md
+          - features/parsing/*.md
+          - features/types/*.md
+        Integration:
+          - integration/*.md
+        API Documentation:
+          - api/*.md
+          - api/basic_json/*.md
+          - api/adl_serializer/*.md
+          - api/byte_container_with_subtype/*.md
+          - api/json_pointer/*.md
+          - api/json_sax/*.md
+          - api/macros/*.md
+        Community:
+          - community/*.md
 
 extra_css:
   - css/custom.css
