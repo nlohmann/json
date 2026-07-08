@@ -1771,6 +1771,16 @@ TEST_CASE("std::optional")
 
         CHECK(json(opt_null) == j_null);
         CHECK(j_null.get<std::optional<std::string>>() == std::nullopt);
+
+        // Constructing std::optional<T> directly from JSON null throws because
+        // std::optional's own converting constructor is chosen over basic_json's
+        // operator T(). This is a language-level limitation (std::optional<T> is
+        // constructible from T, and T is constructible from basic_json via the
+        // operator); there is no SFINAE path that distinguishes "call from inside
+        // std::optional's constructor" from "direct call". Use get<std::optional<T>>()
+        // or get_to() instead for correct null handling. See json#4864 and #XXXX.
+        CHECK_THROWS_AS(std::optional<std::string>(j_null), json::type_error);
+        CHECK_THROWS_AS(std::optional<int>(j_null), json::type_error);
     }
 
     SECTION("string")
