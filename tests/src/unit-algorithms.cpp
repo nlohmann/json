@@ -232,6 +232,9 @@ TEST_CASE("algorithms")
             // only the first four elements are expected to be sorted, the rest are
             // unspecified by the standard
             const json expected({nullptr, false, true, 3});
+            // std::equal below only bounds-checks the first range; assert the
+            // second range is at least as long to rule out an over-read (CWE-126)
+            CHECK(std::distance(begin(expected), end(expected)) >= 4);
             CHECK(std::equal(j.begin(), j.begin() + 4, begin(expected)));
         }
     }
