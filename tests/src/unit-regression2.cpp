@@ -1176,6 +1176,19 @@ TEST_CASE("regression tests 2")
         CHECK(j == json({37, 42, 21}));
     }
 #endif
+
+    // owning_view is not available in libstdc++ < 12
+#if JSON_HAS_RANGES && !defined(__MINGW32__) && !(defined(__GLIBCXX__) && _GLIBCXX_RELEASE < 12)
+    SECTION("issue #4916 - constructing array from prvalue C++20 ranges view (owning_view)")
+    {
+        json const j(std::vector<int> {1, 2, 37, 42, 21} | std::views::filter([](int i)
+        {
+            return i > 10;
+        }));
+        CHECK(j.type() == json::value_t::array);
+        CHECK(j == json({37, 42, 21}));
+    }
+#endif
 }
 
 TEST_CASE_TEMPLATE("issue #4798 - nlohmann::json::to_msgpack() encode float NaN as double", T, double, float) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)

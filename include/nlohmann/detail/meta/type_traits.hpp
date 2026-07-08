@@ -519,10 +519,11 @@ struct is_compatible_array_type_impl <
     && !std::is_same<detected_t<range_value_t, CompatibleArrayType>, char>::value
     && !std::is_same<detected_t<range_value_t, CompatibleArrayType>, wchar_t>::value >>
 {
-    // Character-sequence views (string_view etc.) are excluded in the enable_if
-    // above via nlohmann's plain range_value_t, so any view reaching here can
-    // be stored as a json array.
-    static constexpr bool value = true;
+    // CompatibleArrayType is a std::ranges::view here, so std::ranges::range_value_t
+    // is safe and correctly handles C++20 iterators that may lack classic iterator_traits.
+    static constexpr bool value =
+        is_constructible<BasicJsonType,
+        std::ranges::range_value_t<CompatibleArrayType>>::value;
 };
 #endif
 
