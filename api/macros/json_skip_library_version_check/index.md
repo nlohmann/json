@@ -1,0 +1,46 @@
+# JSON_SKIP_LIBRARY_VERSION_CHECK
+
+```
+#define JSON_SKIP_LIBRARY_VERSION_CHECK
+```
+
+When defined, the library will not create a compiler warning when a different version of the library was already included.
+
+## Default definition
+
+By default, the macro is not defined.
+
+```
+#undef JSON_SKIP_LIBRARY_VERSION_CHECK
+```
+
+## Notes
+
+ABI compatibility
+
+Mixing different library versions in the same code can be a problem as the different versions may not be ABI compatible.
+
+## Examples
+
+Example
+
+The code below switches off the warning about including a different version of the library.
+
+```
+#define JSON_SKIP_LIBRARY_VERSION_CHECK 1
+#include <nlohmann/json.hpp>
+
+...
+```
+
+Example
+
+The following warning will be shown in case a different version of the library was already included:
+
+```
+Already included a different version of the library!
+```
+
+## Version history
+
+Added in version 3.11.0.
