@@ -1761,7 +1761,6 @@ TEST_CASE("std::filesystem::path")
 }
 #endif
 
-#if !JSON_USE_IMPLICIT_CONVERSIONS
 TEST_CASE("std::optional")
 {
     SECTION("null")
@@ -1830,7 +1829,6 @@ TEST_CASE("std::optional")
         CHECK(std::map<std::string, std::optional<int>>(j_object) == opt_object);
     }
 }
-#endif
 #endif
 
 #ifdef JSON_HAS_CPP_17
