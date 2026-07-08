@@ -1,6 +1,10 @@
-"""Copy each documentation page's Markdown source into the built site as a
-`<path>.md` sibling of its HTML output (e.g. features/comments/ -> features/comments.md),
-so agents/tools can fetch raw Markdown directly instead of parsing rendered HTML."""
+"""
+Copy each documentation page's Markdown source into the built site.
+
+This creates a `<path>.md` sibling of each HTML output (for example,
+`features/comments/` becomes `features/comments.md`) so agents and tools can
+fetch the raw Markdown directly instead of parsing rendered HTML.
+"""
 
 import os
 import shutil
