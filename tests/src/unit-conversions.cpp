@@ -1779,8 +1779,10 @@ TEST_CASE("std::optional")
         // operator); there is no SFINAE path that distinguishes "call from inside
         // std::optional's constructor" from "direct call". Use get<std::optional<T>>()
         // or get_to() instead for correct null handling. See #4864 and #5246.
-        CHECK_THROWS_AS(std::optional<std::string>(j_null), json::type_error);
-        CHECK_THROWS_AS(std::optional<int>(j_null), json::type_error);
+        CHECK_THROWS_AS_WITH(std::optional<std::string>(j_null), json::type_error,
+                             "type must be string, but is null");
+        CHECK_THROWS_AS_WITH(std::optional<int>(j_null), json::type_error,
+                             "type must be number, but is null");
     }
 
     SECTION("string")
