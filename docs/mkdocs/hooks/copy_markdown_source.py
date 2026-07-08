@@ -1,5 +1,4 @@
-"""
-Copy each documentation page's Markdown source into the built site.
+"""Copy each documentation page's Markdown source into the built site.
 
 This creates a `<path>.md` sibling of each HTML output (for example,
 `features/comments/` becomes `features/comments.md`) so agents and tools can
