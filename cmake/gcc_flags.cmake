@@ -4,7 +4,6 @@
 # -Wno-aggregate-return  The library uses aggregate returns.
 # -Wno-long-long         The library uses the long long type to interface with system functions.
 # -Wno-namespaces        The library uses namespaces.
-# -Wno-nrvo              Doctest triggers this warning.
 # -Wno-padded            We do not care about padding warnings.
 # -Wno-system-headers    We do not care about warnings in system headers.
 # -Wno-templates         The library uses templates.
@@ -232,7 +231,6 @@ set(GCC_CXXFLAGS
     -Wnonnull
     -Wnonnull-compare
     -Wnormalized=nfkc
-    -Wno-nrvo
     -Wnull-dereference
     -Wodr
     -Wold-style-cast
