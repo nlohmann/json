@@ -54,6 +54,47 @@ TEST_CASE("Custom container non-member begin/end")
 
 }
 
+struct MyContainerNonConstADL
+{
+    char* data;
+    std::size_t size;
+};
+
+char* begin(MyContainerNonConstADL& c)
+{
+    return c.data;
+}
+
+char* end(MyContainerNonConstADL& c)
+{
+    return c.data + c.size; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+}
+
+TEST_CASE("Custom container non-member non-const begin/end")
+{
+    // Container with lvalue-only non-const ADL begin/end (bug reproduction)
+    char raw_data[] = "[1,2,3,4]";
+    MyContainerNonConstADL data{raw_data, sizeof(raw_data) - 1};
+    const json as_json = json::parse(data);
+    CHECK(as_json.at(0) == 1);
+    CHECK(as_json.at(1) == 2);
+    CHECK(as_json.at(2) == 3);
+    CHECK(as_json.at(3) == 4);
+
+    // Same container with accept()
+    CHECK(json::accept(data));
+}
+
+TEST_CASE("Custom container non-member begin/end, rvalue")
+{
+    // Regression check: rvalue container parsing should still work
+    const json as_json = json::parse(MyContainer{"[1,2,3,4]"});
+    CHECK(as_json.at(0) == 1);
+    CHECK(as_json.at(1) == 2);
+    CHECK(as_json.at(2) == 3);
+    CHECK(as_json.at(3) == 4);
+}
+
 TEST_CASE("Custom container member begin/end")
 {
     struct MyContainer2
