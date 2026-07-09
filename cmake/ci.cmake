@@ -720,6 +720,11 @@ add_custom_target(ci_icpx
 # to zero and does not honor NaN ordering; -Kieee restores strict IEEE 754 behavior
 # (needed for the dtoa/grisu and NaN-comparison code paths).
 #
+# -tp=px pins the target processor to the generic x86-64 baseline (SSE2-only) to avoid
+# a nvc++ 25.5 / LLVM issue: when nvc++ auto-detects -tp from the runner's CPU (e.g. -tp znver4),
+# certain attribute combinations trigger an llc instruction-selection crash on std::ldexp<unsigned>.
+# Pinning to px removes this variability and is robust to future llc/nvc++ updates.
+#
 # The following tests are excluded as they trigger known nvc++ 25.5 defects (not
 # library bugs); see https://github.com/nlohmann/json for tracking. Only the
 # affected language-standard variants are excluded so coverage is otherwise kept:
@@ -733,7 +738,7 @@ add_custom_target(ci_nvhpc
     COMMAND ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
         -DCMAKE_C_COMPILER=nvc -DCMAKE_CXX_COMPILER=nvc++
-        -DCMAKE_CXX_FLAGS=-Kieee
+        -DCMAKE_CXX_FLAGS="-Kieee;-tp=px"
         -DJSON_BuildTests=ON -DJSON_FastTests=ON
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_nvhpc
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_nvhpc
