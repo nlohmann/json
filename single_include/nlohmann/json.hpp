@@ -7354,18 +7354,19 @@ struct container_input_adapter_factory< ContainerType,
        {
            using adapter_type = decltype(input_adapter(begin(std::declval<ContainerType>()), end(std::declval<ContainerType>())));
 
-           static adapter_type create(const ContainerType& container)
+           static adapter_type create(ContainerType&& container)
 {
-    return input_adapter(begin(container), end(container));
+    return input_adapter(begin(std::forward<ContainerType>(container)), end(std::forward<ContainerType>(container)));
 }
        };
 
 }  // namespace container_input_adapter_factory_impl
 
 template<typename ContainerType>
-typename container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::adapter_type input_adapter(const ContainerType& container)
+auto input_adapter(ContainerType&& container)
+-> typename container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::adapter_type
 {
-    return container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::create(container);
+    return container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::create(std::forward<ContainerType>(container));
 }
 
 // specialization for std::string
