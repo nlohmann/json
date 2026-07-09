@@ -322,14 +322,12 @@ TEST_CASE("alternative string type")
 
     SECTION("JSON pointer")
     {
-        // conversion from json to alt_json fails to compile (see #3425);
-        // attempted fix(*) produces: [[['b','a','r'],['b','a','z']]] (with each char being an integer)
-        // (*) disable implicit conversion for json_refs of any basic_json type
-        // alt_json j = R"(
-        // {
-        //     "foo": ["bar", "baz"]
-        // }
-        // )"_json;
+        // Direct conversion from a json literal to alt_json is not supported due to issue #3425:
+        // alt_json's string_t (alt_string) is not directly constructible from std::string, so the
+        // cross-basic_json conversion falls back to the array-conversion path, incorrectly representing
+        // objects as arrays of [key, value] pairs and strings as arrays of character codes.
+        // See https://github.com/nlohmann/json/issues/3425 for details.
+        // Workaround: use alt_json::parse() instead of implicit conversion.
         auto j = alt_json::parse(R"({"foo": ["bar", "baz"]})");
 
         CHECK(j.at(alt_json::json_pointer("/foo/0")) == j["foo"][0]);

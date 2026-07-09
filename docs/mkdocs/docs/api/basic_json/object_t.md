@@ -93,6 +93,15 @@ alphabetical order as `std::map` with `std::less` is used by default. Please not
 [RFC 8259](https://tools.ietf.org/html/rfc8259), because any order implements the specified "unordered" nature of JSON
 objects.
 
+#### Cross-`basic_json` conversion requirements
+
+When converting an object from one `basic_json` specialization to another via the
+[converting constructor](basic_json.md#overload-4), the target `object_t`'s `key_type` must be
+directly constructible from the source `basic_json`'s `string_t` type (or more generally, from the
+source object's key type). If this requirement is not met, the conversion does not fail; instead,
+the object is silently converted as an array of key-value pairs, which is incorrect. See
+[issue #3425](https://github.com/nlohmann/json/issues/3425) for details and an example.
+
 ## Examples
 
 ??? example
