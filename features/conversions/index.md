@@ -122,6 +122,22 @@ Conversions do not range-check numbers
 
 Just like C++ itself, the `get` family performs numeric conversions without range checks — retrieving a floating-point value as an integer truncates it, and narrowing conversions may overflow. See [number conversion](https://json.nlohmann.me/features/types/number_handling/#number-conversion) for details and how to guard against it.
 
+std::optional direct construction from JSON null throws
+
+Constructing or assigning `std::optional<T>` directly from a JSON value does not correctly produce `std::nullopt` for a JSON `null`:
+
+```
+json j_null;
+std::optional<std::string> opt = j_null;  // ❌ throws type_error 302
+```
+
+This is due to C++ language rules: `std::optional<T>` has its own converting constructor that is chosen over `basic_json::operator T()` when both are viable. Use `get<std::optional<T>>()` or `get_to()` instead:
+
+```
+auto opt = j_null.get<std::optional<std::string>>();  // ✅ std::nullopt
+j_null.get_to(opt);                                     // ✅ std::nullopt
+```
+
 ## Putting values in
 
 The reverse direction works the same way: assigning or constructing a `json` from a C++ value converts it to JSON.
