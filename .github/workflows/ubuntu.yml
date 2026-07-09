@@ -234,11 +234,22 @@ jobs:
 
   ci_cuda_example:
     runs-on: ubuntu-latest
-    container: ghcr.io/nlohmann/json-ci:v2.4.0
+    strategy:
+      fail-fast: false
+      matrix:
+        # 11.8.0: newest pre-C++20 CUDA release, exercises the C++17 fallback
+        # path (tests/cuda_example/CMakeLists.txt picks the standard per nvcc
+        # version); 12.1.1: permanent regression guard for #3907 (nvcc 12.0/12.1
+        # choke on enable_borrowed_range at C++20, fixed in 12.2); 12.6.3: recent
+        # CUDA/C++20 coverage.
+        cuda: ['11.8.0', '12.1.1', '12.6.3']
+    container: nvidia/cuda:${{ matrix.cuda }}-devel-ubuntu22.04
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
