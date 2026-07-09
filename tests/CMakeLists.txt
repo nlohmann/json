@@ -68,7 +68,11 @@ target_compile_options(test_main PUBLIC
     #       Disable warning C4566: character represented by universal-character-name '\uFF01'
     #                              cannot be represented in the current code page (1252)
     #       Disable warning C4996: 'nlohmann::basic_json<...>::operator <<': was declared deprecated
-    $<$<CXX_COMPILER_ID:MSVC>:/W4;/wd4566;/wd4996;$<$<CONFIG:Release>:/wd4702>>
+    #       Disable warning C4702: unreachable code; wide_string_input_adapter::get_elements()
+    #                              is annotated JSON_HEDLEY_NO_RETURN (it always throws), which
+    #                              makes MSVC flag the code following its call in binary_reader.hpp
+    #                              as unreachable for that instantiation, in both Debug and Release
+    $<$<CXX_COMPILER_ID:MSVC>:/W4;/wd4566;/wd4996;/wd4702>
     # https://github.com/nlohmann/json/issues/1114
     $<$<CXX_COMPILER_ID:MSVC>:/bigobj> $<$<BOOL:${MINGW}>:-Wa,-mbig-obj>
 
