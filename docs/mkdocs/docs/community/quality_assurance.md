@@ -70,10 +70,10 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
         | CUDA 12.1.1 (nvcc)                           | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
         | CUDA 12.6.3 (nvcc)                           | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
         | Emscripten 4.0.6                             | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-        | GNU 4.8.5                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-        | GNU 4.9.3                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-        | GNU 5.5.0                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-        | GNU 6.4.0                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
+        | GNU 4.8.5                                    | x86_64       | Ubuntu 20.04 LTS                  | GitHub    |
+        | GNU 4.9.3                                    | x86_64       | Ubuntu 20.04 LTS                  | GitHub    |
+        | GNU 5.5.0                                    | x86_64       | Ubuntu 20.04 LTS                  | GitHub    |
+        | GNU 6.4.0                                    | x86_64       | Ubuntu 20.04 LTS                  | GitHub    |
         | GNU 7.5.0                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 8.5.0                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 9.3.0                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
@@ -90,7 +90,7 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
         | GNU 15.1.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 16.1.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 16.1.0                                   | arm64        | Linux 6.1.100                     | Cirrus CI |
-        | icpc (ICC) 2021.5.0 20211109                 | x86_64       | Ubuntu 20.04.3 LTS                | GitHub    |
+        | icpc (ICC) 2021.10.0 20230609                | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
         | icpx (Intel oneAPI DPC++/C++) 2025.3.2       | x86_64       | Ubuntu 24.04 LTS                  | GitHub    |
         | nvc++ (NVIDIA HPC SDK) 25.5-0                | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
         | MSVC 19.0.24241.7                            | x86          | Windows 8.1                       | AppVeyor  |
