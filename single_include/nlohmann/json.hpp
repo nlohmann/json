@@ -24622,17 +24622,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return *this == basic_json(rhs);
     }
 
-    /// @brief comparison: not equal
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
-    bool operator!=(const_reference rhs) const noexcept
-    {
-        if (compares_unordered(rhs, true))
-        {
-            return false;
-        }
-        return !operator==(rhs);
-    }
-
     /// @brief comparison: 3-way
     /// @sa https://json.nlohmann.me/api/basic_json/operator_spaceship/
     std::partial_ordering operator<=>(const_reference rhs) const noexcept // *NOPAD*
@@ -24738,10 +24727,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
     friend bool operator!=(const_reference lhs, const_reference rhs) noexcept
     {
-        if (compares_unordered(lhs, rhs, true))
-        {
-            return false;
-        }
         return !(lhs == rhs);
     }
 

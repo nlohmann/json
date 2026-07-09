@@ -19,10 +19,8 @@ class basic_json {
 };
 ```
 
-1. Compares two JSON values for inequality according to the following rules:
-    - The comparison always yields `#!cpp false` if (1) either operand is discarded, or (2) either operand is `NaN` and
-      the other operand is either `NaN` or any other number.
-    - Otherwise, returns the result of `#!cpp !(lhs == rhs)` (until C++20) or `#!cpp !(*this == rhs)` (since C++20).
+1. Compares two JSON values for inequality. Returns `#!cpp !(lhs == rhs)` (until C++20) or `#!cpp !(*this == rhs)` (since C++20).
+    - This means the comparison is simply the logical negation of `operator==`, including for special values like `NaN` and `discarded`.
 
 2. Compares a JSON value and a scalar or a scalar and a JSON value for inequality by converting the scalar to a JSON
    value and comparing both JSON values according to 1.
@@ -54,13 +52,12 @@ Linear.
 
 ## Notes
 
-!!! note "Comparing `NaN`"
+!!! note "Comparing `NaN` and `discarded`"
 
-    `NaN` values are unordered within the domain of numbers.
-    The following comparisons all yield `#!cpp false`:
-      1. Comparing a `NaN` with itself.
-      2. Comparing a `NaN` with another `NaN`.
-      3. Comparing a `NaN` and any other number.
+    Since `operator!=` is defined as `!(a == b)`, the behavior for special values follows that of `operator==`:
+    
+    - For `NaN` values: `NaN == NaN` yields `#!cpp false`, so `NaN != NaN` yields `#!cpp true`.
+    - For `discarded` values: `discarded == x` yields `#!cpp false` for any `x`, so `discarded != x` yields `#!cpp true`.
 
 ## Examples
 
@@ -94,5 +91,5 @@ Linear.
 
 ## Version history
 
-1. Added in version 1.0.0. Added C++20 member functions in version 3.11.0.
-2. Added in version 1.0.0. Added C++20 member functions in version 3.11.0.
+1. Added in version 1.0.0. Added C++20 member functions in version 3.11.0. Changed in version 3.12.x to remove special-casing for `NaN` and `discarded` values; `operator!=` now consistently means `!(a == b)`.
+2. Added in version 1.0.0. Added C++20 member functions in version 3.11.0. Changed in version 3.12.x to remove special-casing for `NaN` and `discarded` values; `operator!=` now consistently means `!(a == b)`.
