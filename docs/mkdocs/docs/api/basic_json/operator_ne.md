@@ -91,5 +91,7 @@ Linear.
 
 ## Version history
 
-1. Added in version 1.0.0. Added C++20 member functions in version 3.11.0. Changed in version 3.12.x to remove special-casing for `NaN` and `discarded` values; `operator!=` now consistently means `!(a == b)`.
-2. Added in version 1.0.0. Added C++20 member functions in version 3.11.0. Changed in version 3.12.x to remove special-casing for `NaN` and `discarded` values; `operator!=` now consistently means `!(a == b)`.
+1. Added in version 1.0.0. Added C++20 member functions in version 3.11.0. Changed in version 3.12.x to remove 
+   special-casing for `NaN` and `discarded` values; `operator!=` now consistently means `!(a == b)`.
+2. Added in version 1.0.0. Added C++20 member functions in version 3.11.0. Changed in version 3.12.x to remove
+   special-casing for `NaN` and `discarded` values; `operator!=` now consistently means `!(a == b)`.
