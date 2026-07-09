@@ -81,3 +81,34 @@ was called:
     ```json
     --8<-- "examples/parse__string__parser_callback_t.output"
     ```
+
+## Recipe: rejecting duplicate object keys
+
+The JSON specification leaves the handling of objects with repeated keys up to the implementation. As described in
+[`object_t`](../../api/basic_json/object_t.md#behavior), it is unspecified which value for a repeated key ends up in
+the resulting `#!c json` value -- once parsing has produced that value, the duplicate is already gone, because object
+storage maps each key to a single value. If duplicate keys should instead be treated as an error, a parser callback
+can detect them while the object is still being read, before that ambiguity ever applies.
+
+??? example
+
+    ```cpp
+    --8<-- "examples/reject_duplicate_keys.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/reject_duplicate_keys.output"
+    ```
+
+This approach has two limitations:
+
+- The depth-indexed bookkeeping must account for the fact that `object_start` reports the depth of the *parent* of
+  the object, while the `key` events inside that object are reported one depth deeper (see the event table above);
+  it is easy to get this off by one for nested objects.
+- The thrown exception cannot carry a `parse_error`-style byte offset, because position tracking only exists inside
+  the parser and lexer, not at the callback layer.
+
+For strict validation with precise error positions, implementing a [SAX interface](sax_interface.md) instead gives
+access to the parser's position information directly.
