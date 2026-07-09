@@ -21,6 +21,12 @@ a string representation of the type ([`value_t`](value_t.md)):
 | array                                              | `"array"`     |
 | binary                                             | `"binary"`    |
 | discarded                                          | `"discarded"` |
+| invalid (corrupted value)                          | `"invalid"`   |
+
+!!! note "The \"invalid\" type"
+
+    The `"invalid"` return value indicates a corrupted JSON value — this can occur if an enum value falls outside the
+    range of valid `value_t` values. This is useful for diagnosing data corruption or internal errors.
 
 ## Exception safety
 
@@ -52,3 +58,4 @@ Constant.
 - Part of the public API version since 2.1.0.
 - Changed return value to `const char*` and added `noexcept` in version 3.0.0.
 - Added support for binary type in version 3.8.0.
+- Added `"invalid"` return value for corrupted JSON values in version 3.13.0.
