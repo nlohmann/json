@@ -19,10 +19,9 @@ class basic_json {
 };
 ```
 
-1. Compares two JSON values for inequality according to the following rules:
+1. Compares two JSON values for inequality. Returns `!(lhs == rhs)` (until C++20) or `!(*this == rhs)` (since C++20).
 
-   - The comparison always yields `false` if (1) either operand is discarded, or (2) either operand is `NaN` and the other operand is either `NaN` or any other number.
-   - Otherwise, returns the result of `!(lhs == rhs)` (until C++20) or `!(*this == rhs)` (since C++20).
+   - This means the comparison is simply the logical negation of `operator==`, including for special values like `NaN` and `discarded`.
 
 1. Compares a JSON value and a scalar or a scalar and a JSON value for inequality by converting the scalar to a JSON value and comparing both JSON values according to 1.
 
@@ -50,13 +49,12 @@ Linear.
 
 ## Notes
 
-Comparing `NaN`
+Comparing `NaN` and `discarded`
 
-`NaN` values are unordered within the domain of numbers. The following comparisons all yield `false`:
+Since `operator!=` is defined as `!(a == b)`, the behavior for special values follows that of `operator==`:
 
-1. Comparing a `NaN` with itself.
-1. Comparing a `NaN` with another `NaN`.
-1. Comparing a `NaN` and any other number.
+- For `NaN` values: `NaN == NaN` yields `false`, so `NaN != NaN` yields `true`.
+- For `discarded` values: `discarded == x` yields `false` for any `x`, so `discarded != x` yields `true`.
 
 ## Examples
 
@@ -141,5 +139,5 @@ null != nullptr false
 
 ## Version history
 
-1. Added in version 1.0.0. Added C++20 member functions in version 3.11.0.
-1. Added in version 1.0.0. Added C++20 member functions in version 3.11.0.
+1. Added in version 1.0.0. Added C++20 member functions in version 3.11.0. Changed in version 3.13.0 to remove special-casing for `NaN` and `discarded` values; `operator!=` now consistently means `!(a == b)`.
+1. Added in version 1.0.0. Added C++20 member functions in version 3.11.0. Changed in version 3.13.0 to remove special-casing for `NaN` and `discarded` values; `operator!=` now consistently means `!(a == b)`.

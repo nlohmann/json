@@ -54,7 +54,7 @@ See [`default_object_comparator_t`](https://json.nlohmann.me/api/basic_json/defa
 The choice of `object_t` influences the behavior of the JSON class. With the default type, objects have the following behavior:
 
 - When all names are unique, objects will be interoperable in the sense that all software implementations receiving that object will agree on the name-value mappings.
-- When the names within an object are not unique, it is unspecified which one of the values for a given key will be chosen. For instance, `{"key": 2, "key": 1}` could be equal to either `{"key": 1}` or `{"key": 2}`.
+- When the names within an object are not unique, it is unspecified which one of the values for a given key will be chosen. For instance, `{"key": 2, "key": 1}` could be equal to either `{"key": 1}` or `{"key": 2}`. To reject duplicate keys instead of silently resolving them one way or another, see [this parsing recipe](https://json.nlohmann.me/features/parsing/parser_callbacks/#recipe-rejecting-duplicate-object-keys).
 - Internally, name/value pairs are stored in lexicographical order of the names. Objects will also be serialized (see [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md)) in this order. For instance, `{"b": 1, "a": 2}` and `{"a": 2, "b": 1}` will be stored and serialized as `{"a": 2, "b": 1}`.
 - When comparing objects, the order of the name/value pairs is irrelevant. This makes objects interoperable in the sense that they will not be affected by these differences. For instance, `{"b": 1, "a": 2}` and `{"a": 2, "b": 1}` will be treated as equal.
 
