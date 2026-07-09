@@ -4,7 +4,7 @@
   "archive": "JSON_for_Modern_C++.tgz",
   "author": {
     "name": "Niels Lohmann",
-    "link": "https://twitter.com/nlohmann"
+    "link": "https://nlohmann.me"
   },
   "aliases": ["nlohmann/json"]
 }
