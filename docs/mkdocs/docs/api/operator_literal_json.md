@@ -64,4 +64,4 @@ Linear.
 
 - Added in version 1.0.0.
 - Moved to namespace `nlohmann::literals::json_literals` in 3.11.0.
-- Added `char8_t*` overload in 3.12.x.
+- Added `char8_t*` overload in 3.13.0.

@@ -235,7 +235,7 @@ Invalid Unicode escapes and unpaired surrogates in the input are reported as
 - Overload for contiguous containers (1) added in version 2.0.3.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
 - Changed [runtime assertion](../../features/assertions.md) in case of `FILE*` null pointers to exception in version 3.12.0.
-- Added `ignore_trailing_commas` in version 3.12.x.
+- Added `ignore_trailing_commas` in version 3.13.0.
 
 !!! warning "Deprecation"
 

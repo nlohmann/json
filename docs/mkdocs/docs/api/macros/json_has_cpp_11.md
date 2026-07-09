@@ -44,4 +44,4 @@ The default value is detected based on preprocessor macros such as `#!cpp __cplu
 
 - Added in version 3.10.5.
 - Added `JSON_HAS_CPP_23` in version 3.12.0.
-- Added `JSON_HAS_CPP_26` in version 3.12.x.
+- Added `JSON_HAS_CPP_26` in version 3.13.0.

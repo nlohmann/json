@@ -10,6 +10,8 @@ violations will result in a failed build.
 
     Any compiler with complete C++11 support can compile the library without warnings.
 
+Note: C++20 modules support may hit compiler-specific issues not covered by the general compiler matrix below. See [Modules](../features/modules.md#known-issues) for known issues and workarounds.
+
 - [x] The library is compiled with 50+ different C++ compilers with different operating systems and platforms,
   including the oldest versions known to compile the library.
 

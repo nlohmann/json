@@ -32,4 +32,4 @@ Linear in the number of reference tokens in the `json_pointer`.
 
 ## Version history
 
-- Added in version 3.12.x.
+- Added in version 3.13.0.

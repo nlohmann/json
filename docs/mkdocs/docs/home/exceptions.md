@@ -326,6 +326,9 @@ An unexpected byte was read in a [binary format](../features/binary_formats/inde
     ```
     [json.exception.parse_error.112] parse error at byte 15: syntax error while parsing BSON binary: byte array length cannot be negative, is -1
     ```
+    ```
+    [json.exception.parse_error.112] parse error at byte 9: syntax error while parsing CBOR value: negative integer overflow
+    ```
 
 ### json.exception.parse_error.113
 
@@ -893,7 +896,7 @@ A JSON Patch `add` operation cannot be applied because the target location's par
 
 !!! note
 
-    This exception was added in version 3.12.x. Before that, this situation hit an internal assertion (aborting the program in debug builds) or was silently ignored when assertions were disabled.
+    This exception was added in version 3.13.0. Before that, this situation hit an internal assertion (aborting the program in debug builds) or was silently ignored when assertions were disabled.
 
 ## Further exceptions
 
