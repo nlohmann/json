@@ -6320,7 +6320,7 @@ struct external_constructor<value_t::array>
         j.m_data.m_value.destroy(j.m_data.m_type);
         j.m_data.m_type = value_t::array;
         j.m_data.m_value = value_t::array;
-        for (auto& x : arr)
+        for (auto& x : std::forward<CompatibleArrayType>(arr))
         {
             j.m_data.m_value.array->push_back(x);
             j.set_parent(j.m_data.m_value.array->back());
