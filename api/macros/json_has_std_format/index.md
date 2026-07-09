@@ -33,4 +33,4 @@ The code below forces the library to disable support for `std::format`, even if 
 
 ## Version history
 
-- Added in version 3.12.x.
+- Added in version 3.13.0.

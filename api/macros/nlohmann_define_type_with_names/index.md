@@ -157,4 +157,4 @@ int main()
 
 ## Version history
 
-1. Added in version 3.12.x.
+1. Added in version 3.13.0.

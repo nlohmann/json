@@ -94,6 +94,10 @@ If the source value is outside the range of the target type, the behavior is the
 
 See [Number conversion](https://json.nlohmann.me/features/types/number_handling/#number-conversion) for more information.
 
+`std::optional` conversions
+
+Prior to version 3.13.0, `get<std::optional<T>>()` (and other conversions to `std::optional<T>`) failed to compile in every configuration, due to an internal implementation bug that made the `from_json` overload for `std::optional` unreachable regardless of the [`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md) setting. This has been fixed.
+
 ## Examples
 
 Example

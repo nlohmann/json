@@ -38,6 +38,8 @@ This section describes how this library implements the above number specificatio
 
 In the default [`json`](https://json.nlohmann.me/api/json/index.md) type, numbers are stored as `std::uint64_t`, `std::int64_t`, and `double`, respectively. Thereby, `std::uint64_t` and `std::int64_t` are used only if they can store the number without loss of precision. If this is impossible (e.g., if the number is too large), the number is stored as `double`.
 
+Positive integers are stored as `std::uint64_t`, while negative integers are stored as `std::int64_t`. This distinction is determined at parse time: if the JSON number has a leading minus sign, it uses signed integer storage; otherwise, it uses unsigned integer storage.
+
 Notes
 
 - Numbers with a decimal digit or scientific notation are always stored as `double`.

@@ -173,7 +173,7 @@ Question
 - Can I use `std::format("{}", j)` on a JSON value?
 - Can I use `fmt::format("{}", j)` or `fmt::print("{}", j)` (the [{fmt}](https://github.com/fmtlib/fmt) library) on a JSON value?
 
-`std::format` works out of the box since version 3.12.x, as long as the standard library provides `<format>` (see [`JSON_HAS_STD_FORMAT`](https://json.nlohmann.me/api/macros/json_has_std_format/index.md)); see [`std::formatter<basic_json>`](https://json.nlohmann.me/api/basic_json/std_formatter/index.md) for details, including the `"{:#}"` pretty-print spec, indent widths (`"{:2}"`), and custom indent characters (`"{:.>#}"`).
+`std::format` works out of the box since version 3.13.0, as long as the standard library provides `<format>` (see [`JSON_HAS_STD_FORMAT`](https://json.nlohmann.me/api/macros/json_has_std_format/index.md)); see [`std::formatter<basic_json>`](https://json.nlohmann.me/api/basic_json/std_formatter/index.md) for details, including the `"{:#}"` pretty-print spec, indent widths (`"{:2}"`), and custom indent characters (`"{:.>#}"`).
 
 For `fmt`, the library ships [`format_as`](https://json.nlohmann.me/api/basic_json/format_as/index.md), a small customization point `fmt` looks for via argument-dependent lookup. It only has an effect on fmt 10.0.0 through 11.0.2 — from fmt 11.1.0 onwards, `fmt` no longer picks up a `format_as` overload that returns a `std::string`. On such versions (or any version, if you also want the same `"{:#}"`/width/fill-and-align spec support that `std::formatter<basic_json>` has), define your own `fmt::formatter` specialization; see [`format_as`](https://json.nlohmann.me/api/basic_json/format_as/index.md) for a recipe that mirrors it.
 

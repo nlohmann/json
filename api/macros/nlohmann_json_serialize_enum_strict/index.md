@@ -227,4 +227,4 @@ deserialization failed: [json.exception.out_of_range.410] enum value out of rang
 
 ## Version history
 
-Added in version 3.12.x.
+Added in version 3.13.0.

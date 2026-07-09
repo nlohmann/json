@@ -476,5 +476,5 @@ Output:
 
 1. Added in version 1.0.0.
 1. Added in version 1.0.0. Added overloads for `T* key` in version 1.1.0. Removed overloads for `T* key` (replaced by 3) in version 3.11.0.
-1. Added in version 3.11.0.
+1. Added in version 3.11.0. Fixed in version 3.13.0 to consistently accept `std::string_view`-convertible keys, as already supported by [`at`](https://json.nlohmann.me/api/basic_json/at/index.md), [`value`](https://json.nlohmann.me/api/basic_json/value/index.md), [`find`](https://json.nlohmann.me/api/basic_json/find/index.md), and other lookup functions.
 1. Added in version 2.0.0.

@@ -43,3 +43,19 @@ Only the following symbols are exported from `nlohmann.json`:
 - `nlohmann::to_string`
 - `nlohmann::literals::json_literals::operator""_json`
 - `nlohmann::literals::json_literals::operator""_json_pointer`
+
+Additionally, the following `nlohmann::detail` symbols are exported, solely to work around an MSVC compilation issue ([#3970](https://github.com/nlohmann/json/issues/3970)). They are implementation details, not part of the public API, and should not be used directly:
+
+- `nlohmann::detail::json_sax_dom_callback_parser`
+- `nlohmann::detail::unknown_size`
+
+## Known issues
+
+C++20 modules support is exercised in CI against current GCC and Clang on Ubuntu, and the default MSVC toolset on Windows Server 2022 — there is no documented minimum compiler version, unlike feature-test-macro-gated features such as [`JSON_HAS_RANGES`](https://json.nlohmann.me/api/macros/json_has_ranges/index.md).
+
+Known compiler issues
+
+- **GCC** may emit "redefinition" errors when `#include <nlohmann/json.hpp>` appears in a module preamble together with other imports. This is an upstream GCC bug, not yet resolved as of GCC 16. Workarounds: include `nlohmann/json.hpp` before other `#include`s, use `import nlohmann.json;` instead, or upgrade GCC. ([issue #5103](https://github.com/nlohmann/json/issues/5103))
+- **MSVC** could fail with `C2039: 'json_sax_dom_callback_parser' is not a member of ... detail`; fixed by exporting the required internal symbols from `json.cppm` (see [Exported symbols](#exported-symbols) above). ([issue #3970](https://github.com/nlohmann/json/issues/3970))
+
+If you hit a different module-related build failure, search [existing issues](https://github.com/nlohmann/json/issues?q=is%3Aissue+modules) before filing a new one.

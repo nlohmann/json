@@ -104,4 +104,4 @@ Output:
 ## Version history
 
 - Added in version 2.0.0.
-- Added [`out_of_range.411`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range411) and stopped relying on an internal assertion when an "add" operation's target location has a non-object/non-array parent in version 3.12.x.
+- Added [`out_of_range.411`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range411) and stopped relying on an internal assertion when an "add" operation's target location has a non-object/non-array parent in version 3.13.0.

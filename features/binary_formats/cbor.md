@@ -66,7 +66,15 @@ see "binary" cells in the table above.
 
 !!! info "NaN/infinity handling"
 
-    If NaN or Infinity are stored inside a JSON number, they are serialized properly. This behavior differs from the normal JSON serialization which serializes NaN or Infinity to `null`.
+    `NaN`, `Infinity`, and `-Infinity` are serialized as a CBOR half-precision float (type 0xF9, 3 bytes total):
+    `NaN` as `0xF9 0x7E 0x00`, `Infinity` as `0xF9 0x7C 0x00`, and `-Infinity` as `0xF9 0xFC 0x00`. This behavior
+    differs from the normal JSON serialization which serializes NaN or Infinity to `null`.
+
+!!! note
+
+    Prior to version 3.13.0, NaN and Infinity were instead serialized as a CBOR double-precision float (type 0xFB,
+    9 bytes total), because the check used to select a smaller encoding compared magnitudes with NaN, which is
+    always `false` and caused the intended half-precision path to be skipped.
 
 !!! info "Unused CBOR types"
 
@@ -159,6 +167,13 @@ The library maps CBOR types to JSON value types as follows:
      - expected conversions (0xD5..0xD7)
      - simple values (0xE0..0xF3, 0xF8)
      - undefined (0xF7)
+
+!!! warning "Negative integer overflow"
+
+    CBOR negative integers (major type 1) are decoded as `-1 - n`. If the encoded magnitude `n` is too large for the
+    result to fit into `number_integer_t` (`std::int64_t` by default), parsing fails with a
+    [`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112) exception rather than overflowing
+    silently.
 
 !!! warning "Object keys"
 
