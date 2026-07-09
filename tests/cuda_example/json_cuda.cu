@@ -24,8 +24,10 @@ int main()
     nlohmann::json a = {1, 2, 3};
     nlohmann::json b = {1, 2, 3};
     static_cast<void>(a == b);
+#if JSON_HAS_THREE_WAY_COMPARISON
     static_cast<void>(a <=> b); // *NOPAD*
     static_cast<void>(a <=> 1); // *NOPAD*
+#endif
     for (const auto& element : a)
     {
         static_cast<void>(element);
