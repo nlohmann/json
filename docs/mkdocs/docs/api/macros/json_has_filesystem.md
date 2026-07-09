@@ -19,18 +19,19 @@ The default value is detected based on the preprocessor macros `#!cpp __cpp_lib_
 `#!cpp __cpp_lib_experimental_filesystem`, `#!cpp __has_include(<filesystem>)`, or
 `#!cpp __has_include(<experimental/filesystem>)`.
 
-## Known compiler/stdlib exclusions
+!!! info "Known compiler/stdlib exclusions"
 
-Even when the feature-test macro indicates filesystem support is available, the library disables it on the following broken toolchains:
-
-- **MinGW + GCC 8** — disabled entirely (broken `std::filesystem` implementation; [MinGW-w64 bug 737](https://sourceforge.net/p/mingw-w64/bugs/737/))
-- **GCC (non-Clang) < 8** — disabled (no filesystem support)
-- **Clang < 7** — disabled (no filesystem support)
-- **MSVC < 19.14** — disabled (no filesystem support)
-- **iOS < 13** — disabled (no filesystem support)
-- **macOS < Catalina (10.15)** — disabled (no filesystem support)
-
-If `JSON_HAS_FILESYSTEM` or `JSON_HAS_EXPERIMENTAL_FILESYSTEM` is `0` despite `__cpp_lib_filesystem` being defined, one of the exclusions above likely applies to your toolchain.
+    Even when the feature-test macro indicates filesystem support is available, the library disables it on the following broken toolchains:
+    
+    - **MinGW + GCC 8** — disabled entirely (broken `std::filesystem` implementation; [MinGW-w64 bug 737](https://sourceforge.net/p/mingw-w64/bugs/737/))
+    - **GCC (non-Clang) < 8** — disabled (no filesystem support)
+    - **Clang < 7** — disabled (no filesystem support)
+    - **MSVC < 19.14** — disabled (no filesystem support)
+    - **iOS < 13** — disabled (no filesystem support)
+    - **macOS < Catalina (10.15)** — disabled (no filesystem support)
+    
+    If `JSON_HAS_FILESYSTEM` or `JSON_HAS_EXPERIMENTAL_FILESYSTEM` is `0` despite `__cpp_lib_filesystem` being defined, one
+    of the exclusions above likely applies to your toolchain.
 
 ## Notes
 
