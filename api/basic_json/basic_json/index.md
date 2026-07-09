@@ -67,7 +67,7 @@ basic_json(basic_json&& other) noexcept;
 
 1. This is a constructor for existing `basic_json` types. It does not hijack copy/move constructors, since the parameter has different template arguments than the current ones.
 
-   The constructor tries to convert the internal `m_value` of the parameter.
+   The constructor tries to convert the internal `m_value` of the parameter. Each member value (object, array, string, etc.) is serialized via the corresponding `to_json()` overload. For objects and strings, the conversion requires that the *target* `basic_json` type's `object_t::key_type` (or `string_t`) be directly constructible from the *source* type's corresponding member type via `is_constructible`. If this requirement is not met, the conversion does not fail to compile; instead, it silently falls back to the array-conversion path, which represents objects as arrays of `[key, value]` pairs and strings as arrays of character codes. This is a known limitation tracked in [issue #3425](https://github.com/nlohmann/json/issues/3425).
 
 1. Creates a JSON value of type array or object from the passed initializer list `init`. In case `type_deduction` is `true` (default), the type of the JSON value to be created is deducted from the initializer list `init` according to the following rules:
 
@@ -118,6 +118,11 @@ basic_json(basic_json&& other) noexcept;
 ```
 - `BasicJsonType` is a `basic_json` type.
 - `BasicJsonType` has different template arguments than `basic_json_t`.
+
+**Note:** For cross-`basic_json` conversions to produce correct results, the target `basic_json`'s
+`object_t::key_type` and `string_t` must be directly constructible from the source `basic_json`'s
+corresponding types. See the description of overload (4) above for details on what happens when
+this requirement is not met.
 ```
 
 `U`: : `uncvref_t<CompatibleType>`
