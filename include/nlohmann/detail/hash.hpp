@@ -11,6 +11,8 @@
 #include <cstdint> // uint8_t
 #include <cstddef> // size_t
 #include <functional> // hash
+#include <limits> // numeric_limits
+#include <cmath> // isfinite
 
 #include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/value_t.hpp>
@@ -26,12 +28,63 @@ inline std::size_t combine(std::size_t seed, std::size_t h) noexcept
     return seed;
 }
 
+// Check if a number_integer_t value is exactly representable as number_float_t
+// Returns true if static_cast<number_integer_t>(static_cast<number_float_t>(val)) == val
+template<typename BasicJsonType>
+inline bool is_exactly_representable_as_float(typename BasicJsonType::number_integer_t val) noexcept
+{
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+
+    // If the float type's mantissa covers the integer type's entire range, all values round-trip
+    constexpr int float_digits = std::numeric_limits<number_float_t>::digits;
+    constexpr int int_digits = std::numeric_limits<number_integer_t>::digits;
+
+    if (float_digits >= int_digits)
+    {
+        return true;
+    }
+
+    // For values outside float's exact range, they don't round-trip
+    // The safe way to check: compute the max magnitude that round-trips
+    // Using unsigned arithmetic to avoid UB with negating INT_MIN
+
+    // Max magnitude representable exactly: 2^(digits-1) - 1 for signed, 2^digits - 1 for unsigned range
+    // But we're checking a signed value, so use 2^digits as the threshold
+    constexpr auto max_exact = static_cast<number_integer_t>(1) << (float_digits - 1);
+
+    // Check absolute value against this threshold
+    if (val >= 0)
+    {
+        if (val >= max_exact) return false;
+    }
+    else
+    {
+        // For negative values, check via unsigned wrapping arithmetic
+        // -val in unsigned domain; if it wraps, the value is too negative
+        auto unsigned_abs = static_cast<typename BasicJsonType::number_unsigned_t>(-val);
+        if (unsigned_abs >= static_cast<typename BasicJsonType::number_unsigned_t>(max_exact))
+        {
+            return false;
+        }
+    }
+
+    // For values within the exact range, verify the round-trip
+    const auto f = static_cast<number_float_t>(val);
+    return std::isfinite(f) && static_cast<number_integer_t>(f) == val;
+}
+
 /*!
 @brief hash a JSON value
 
 The hash function tries to rely on std::hash where possible. Furthermore, the
 type of the JSON value is taken into account to have different hash values for
-null, 0, 0U, and false, etc.
+most types. However, numeric types (number_integer, number_unsigned, number_float)
+are hashed to satisfy the std::hash contract: if two json values compare equal,
+they must have equal hash values. This means json(42), json(42u), and json(42.0)
+all hash to the same value (since they compare equal). For large integer values
+outside the exact representable range of the float type, integer values are hashed
+in their own domain to avoid precision loss.
 
 @tparam BasicJsonType basic_json specialization
 @param j JSON value to hash
@@ -90,20 +143,47 @@ std::size_t hash(const BasicJsonType& j)
 
         case BasicJsonType::value_t::number_integer:
         {
-            const auto h = std::hash<number_integer_t> {}(j.template get<number_integer_t>());
-            return combine(type, h);
+            const auto v = j.template get<number_integer_t>();
+            // Use a shared numeric type tag so all numeric types that are equal hash the same
+            const auto numeric_type = static_cast<std::size_t>(BasicJsonType::value_t::number_float);
+
+            if (is_exactly_representable_as_float<BasicJsonType>(v))
+            {
+                const auto h = std::hash<number_float_t> {}(static_cast<number_float_t>(v));
+                return combine(numeric_type, h);
+            }
+            else
+            {
+                const auto h = std::hash<number_integer_t> {}(v);
+                return combine(numeric_type, h);
+            }
         }
 
         case BasicJsonType::value_t::number_unsigned:
         {
-            const auto h = std::hash<number_unsigned_t> {}(j.template get<number_unsigned_t>());
-            return combine(type, h);
+            const auto v = j.template get<number_unsigned_t>();
+            // Normalize to signed (matching operator== behavior for U-vs-I comparison)
+            const auto v_as_signed = static_cast<number_integer_t>(v);
+            // Use a shared numeric type tag so all numeric types that are equal hash the same
+            const auto numeric_type = static_cast<std::size_t>(BasicJsonType::value_t::number_float);
+
+            if (is_exactly_representable_as_float<BasicJsonType>(v_as_signed))
+            {
+                const auto h = std::hash<number_float_t> {}(static_cast<number_float_t>(v_as_signed));
+                return combine(numeric_type, h);
+            }
+            else
+            {
+                const auto h = std::hash<number_integer_t> {}(v_as_signed);
+                return combine(numeric_type, h);
+            }
         }
 
         case BasicJsonType::value_t::number_float:
         {
             const auto h = std::hash<number_float_t> {}(j.template get<number_float_t>());
-            return combine(type, h);
+            const auto numeric_type = static_cast<std::size_t>(BasicJsonType::value_t::number_float);
+            return combine(numeric_type, h);
         }
 
         case BasicJsonType::value_t::binary:

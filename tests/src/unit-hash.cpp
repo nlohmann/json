@@ -35,10 +35,10 @@ TEST_CASE("hash<nlohmann::json>")
 
     // number
     hashes.insert(std::hash<json> {}(json(0)));
-    hashes.insert(std::hash<json> {}(json(static_cast<unsigned>(0))));
+    hashes.insert(std::hash<json> {}(json(static_cast<unsigned>(0)))); // now same hash as json(0)
+    hashes.insert(std::hash<json> {}(json(0.0)));                       // now same hash as json(0)
 
     hashes.insert(std::hash<json> {}(json(-1)));
-    hashes.insert(std::hash<json> {}(json(0.0)));
     hashes.insert(std::hash<json> {}(json(42.23)));
 
     // array
@@ -60,7 +60,16 @@ TEST_CASE("hash<nlohmann::json>")
     // discarded
     hashes.insert(std::hash<json> {}(json(json::value_t::discarded)));
 
-    CHECK(hashes.size() == 21);
+    // Note: json(0), json(0U), and json(0.0) now hash to the same value
+    // (to satisfy the std::hash contract: equal values must hash equally)
+    // So we expect 19 distinct hashes instead of 21
+    CHECK(hashes.size() == 19);
+
+    // Verify the std::hash contract: equal values must hash equally
+    CHECK(std::hash<json>{}(json(0)) == std::hash<json>{}(json(static_cast<unsigned>(0))));
+    CHECK(std::hash<json>{}(json(0)) == std::hash<json>{}(json(0.0)));
+    CHECK(std::hash<json>{}(json(42)) == std::hash<json>{}(json(42u)));
+    CHECK(std::hash<json>{}(json(42)) == std::hash<json>{}(json(42.0)));
 }
 
 TEST_CASE("hash<nlohmann::ordered_json>")
@@ -84,10 +93,10 @@ TEST_CASE("hash<nlohmann::ordered_json>")
 
     // number
     hashes.insert(std::hash<ordered_json> {}(ordered_json(0)));
-    hashes.insert(std::hash<ordered_json> {}(ordered_json(static_cast<unsigned>(0))));
+    hashes.insert(std::hash<ordered_json> {}(ordered_json(static_cast<unsigned>(0)))); // now same hash as ordered_json(0)
+    hashes.insert(std::hash<ordered_json> {}(ordered_json(0.0)));                       // now same hash as ordered_json(0)
 
     hashes.insert(std::hash<ordered_json> {}(ordered_json(-1)));
-    hashes.insert(std::hash<ordered_json> {}(ordered_json(0.0)));
     hashes.insert(std::hash<ordered_json> {}(ordered_json(42.23)));
 
     // array
@@ -109,5 +118,12 @@ TEST_CASE("hash<nlohmann::ordered_json>")
     // discarded
     hashes.insert(std::hash<ordered_json> {}(ordered_json(ordered_json::value_t::discarded)));
 
-    CHECK(hashes.size() == 21);
+    // Note: ordered_json(0), ordered_json(0U), and ordered_json(0.0) now hash to the same value
+    CHECK(hashes.size() == 19);
+
+    // Verify the std::hash contract for ordered_json as well
+    CHECK(std::hash<ordered_json>{}(ordered_json(0)) == std::hash<ordered_json>{}(ordered_json(static_cast<unsigned>(0))));
+    CHECK(std::hash<ordered_json>{}(ordered_json(0)) == std::hash<ordered_json>{}(ordered_json(0.0)));
+    CHECK(std::hash<ordered_json>{}(ordered_json(42)) == std::hash<ordered_json>{}(ordered_json(42u)));
+    CHECK(std::hash<ordered_json>{}(ordered_json(42)) == std::hash<ordered_json>{}(ordered_json(42.0)));
 }
