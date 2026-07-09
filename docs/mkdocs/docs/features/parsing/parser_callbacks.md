@@ -81,3 +81,68 @@ was called:
     ```json
     --8<-- "examples/parse__string__parser_callback_t.output"
     ```
+
+## Recipe: rejecting duplicate object keys
+
+The JSON specification leaves the handling of objects with repeated keys up to the implementation. This library keeps
+only the last value for a repeated key; earlier values for the same key are silently overwritten while parsing. If
+duplicate keys should instead be treated as an error, a parser callback can detect them while the object is still
+being read -- once parsing has produced a `#!c json` value, the duplicate is already gone, because object storage
+maps each key to a single value.
+
+```cpp
+#include <nlohmann/json.hpp>
+#include <stdexcept>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
+using json = nlohmann::json;
+
+json parse_strict(const std::string& input)
+{
+    // one key set per nesting depth, reused across sibling objects
+    std::vector<std::unordered_set<std::string>> keys;
+
+    auto reject_duplicate_keys = [&](int depth, json::parse_event_t event, json& parsed)
+    {
+        if (event == json::parse_event_t::object_start)
+        {
+            // keys of this object are reported at depth+1 (see event table above)
+            const auto child_depth = static_cast<std::size_t>(depth) + 1;
+            if (keys.size() <= child_depth)
+            {
+                keys.resize(child_depth + 1);
+            }
+            keys[child_depth].clear();
+            return true;
+        }
+
+        if (event == json::parse_event_t::key)
+        {
+            auto& seen = keys[static_cast<std::size_t>(depth)];
+            const auto& key = parsed.get_ref<const std::string&>();
+            if (!seen.insert(key).second)
+            {
+                throw std::runtime_error("duplicate JSON object key: " + key);
+            }
+            return true;
+        }
+
+        return true;
+    };
+
+    return json::parse(input, reject_duplicate_keys);
+}
+```
+
+This approach has two limitations:
+
+- The depth-indexed bookkeeping must account for the fact that `object_start` reports the depth of the *parent* of
+  the object, while the `key` events inside that object are reported one depth deeper (see the event table above);
+  it is easy to get this off by one for nested objects.
+- The thrown exception cannot carry a `parse_error`-style byte offset, because position tracking only exists inside
+  the parser and lexer, not at the callback layer.
+
+For strict validation with precise error positions, implementing a [SAX interface](sax_interface.md) instead gives
+access to the parser's position information directly.
