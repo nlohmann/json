@@ -10,6 +10,8 @@ violations will result in a failed build.
 
     Any compiler with complete C++11 support can compile the library without warnings.
 
+Note: C++20 modules support may hit compiler-specific issues not covered by the general compiler matrix below. See [Modules](../features/modules.md#known-issues) for known issues and workarounds.
+
 Note: Some modern features (like C++20 ranges or filesystem support) may be disabled on specific broken or incomplete toolchains even when standard feature-test macros indicate support. See [`JSON_HAS_RANGES`](../api/macros/json_has_ranges.md) and [`JSON_HAS_FILESYSTEM`](../api/macros/json_has_filesystem.md) for details on known exclusions.
 
 - [x] The library is compiled with 50+ different C++ compilers with different operating systems and platforms,

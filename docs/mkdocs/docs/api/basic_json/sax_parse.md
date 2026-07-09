@@ -126,7 +126,7 @@ A UTF-8 byte order mark is silently ignored.
 
 - Added in version 3.2.0.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
-- Added `ignore_trailing_commas` in version 3.12.x.
+- Added `ignore_trailing_commas` in version 3.13.0.
 
 !!! warning "Deprecation"
 

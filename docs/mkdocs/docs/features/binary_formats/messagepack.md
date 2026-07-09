@@ -67,8 +67,15 @@ specification:
 
 !!! info "NaN/infinity handling"
 
-    If NaN or Infinity are stored inside a JSON number, they are serialized properly in contrast to the
-    [dump](../../api/basic_json/dump.md) function which serializes NaN or Infinity to `null`.
+    `NaN`, `Infinity`, and `-Infinity` are serialized as a MessagePack float 32 (type 0xCA, 5 bytes total),
+    regardless of magnitude, in contrast to the [dump](../../api/basic_json/dump.md) function which serializes NaN
+    or Infinity to `null`.
+
+!!! note
+
+    Prior to version 3.13.0, NaN and Infinity were instead serialized as a MessagePack float 64 (type 0xCB, 9 bytes
+    total), because the check used to select the smaller float 32 encoding compared magnitudes with NaN, which is
+    always `false` and caused the float 32 path to be skipped.
 
 ??? example
 

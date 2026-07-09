@@ -63,6 +63,10 @@ In the default [`json`](../../api/json.md) type, numbers are stored as `#!c std:
 number without loss of precision. If this is impossible (e.g., if the number is too large), the number is stored as
 `#!c double`.
 
+Positive integers are stored as `#!c std::uint64_t`, while negative integers are stored as `#!c std::int64_t`. This
+distinction is determined at parse time: if the JSON number has a leading minus sign, it uses signed integer storage;
+otherwise, it uses unsigned integer storage.
+
 !!! info "Notes"
 
     - Numbers with a decimal digit or scientific notation are always stored as `#!c double`.

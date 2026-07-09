@@ -54,4 +54,4 @@ provides `<format>`, controlled by the [`JSON_HAS_STD_FORMAT`](../macros/json_ha
 
 ## Version history
 
-- Added in version 3.12.x.
+- Added in version 3.13.0.
