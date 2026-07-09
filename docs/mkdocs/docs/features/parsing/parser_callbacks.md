@@ -90,51 +90,17 @@ the resulting `#!c json` value -- once parsing has produced that value, the dupl
 storage maps each key to a single value. If duplicate keys should instead be treated as an error, a parser callback
 can detect them while the object is still being read, before that ambiguity ever applies.
 
-```cpp
-#include <nlohmann/json.hpp>
-#include <stdexcept>
-#include <string>
-#include <unordered_set>
-#include <vector>
+??? example
 
-using json = nlohmann::json;
+    ```cpp
+    --8<-- "examples/reject_duplicate_keys.cpp"
+    ```
 
-json parse_strict(const std::string& input)
-{
-    // one key set per nesting depth, reused across sibling objects
-    std::vector<std::unordered_set<std::string>> keys;
+    Output:
 
-    auto reject_duplicate_keys = [&](int depth, json::parse_event_t event, json& parsed)
-    {
-        if (event == json::parse_event_t::object_start)
-        {
-            // keys of this object are reported at depth+1 (see event table above)
-            const auto child_depth = static_cast<std::size_t>(depth) + 1;
-            if (keys.size() <= child_depth)
-            {
-                keys.resize(child_depth + 1);
-            }
-            keys[child_depth].clear();
-            return true;
-        }
-
-        if (event == json::parse_event_t::key)
-        {
-            auto& seen = keys[static_cast<std::size_t>(depth)];
-            const auto& key = parsed.get_ref<const std::string&>();
-            if (!seen.insert(key).second)
-            {
-                throw std::runtime_error("duplicate JSON object key: " + key);
-            }
-            return true;
-        }
-
-        return true;
-    };
-
-    return json::parse(input, reject_duplicate_keys);
-}
-```
+    ```json
+    --8<-- "examples/reject_duplicate_keys.output"
+    ```
 
 This approach has two limitations:
 
