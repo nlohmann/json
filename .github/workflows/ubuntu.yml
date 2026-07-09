@@ -237,10 +237,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # matrix to empirically pin down which nvcc/CUDA versions reproduce #3907
-        # (a c++20 parse error in iteration_proxy.hpp's enable_borrowed_range) before
-        # attempting a source-level fix; 11.8 predates CUDA's C++20 support entirely.
-        cuda: ['11.8.0', '12.0.1', '12.1.1', '12.2.2', '12.3.2', '12.4.1', '12.5.1', '12.6.3']
+        # 11.8.0: newest pre-C++20 CUDA release, exercises the C++17 fallback
+        # path (tests/cuda_example/CMakeLists.txt picks the standard per nvcc
+        # version); 12.1.1: permanent regression guard for #3907 (nvcc 12.0/12.1
+        # choke on enable_borrowed_range at C++20, fixed in 12.2); 12.6.3: recent
+        # CUDA/C++20 coverage.
+        cuda: ['11.8.0', '12.1.1', '12.6.3']
     container: nvidia/cuda:${{ matrix.cuda }}-devel-ubuntu22.04
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0

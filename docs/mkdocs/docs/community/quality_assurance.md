@@ -62,7 +62,9 @@ violations will result in a failed build.
         | Clang 20.1.1                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | Clang 20.1.8 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
         | Clang 21.1.8                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-        | CUDA 11.0.221 (nvcc)                         | x86_64       | Ubuntu 20.04 LTS                  | GitHub    |
+        | CUDA 11.8.0 (nvcc)                           | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
+        | CUDA 12.1.1 (nvcc)                           | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
+        | CUDA 12.6.3 (nvcc)                           | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
         | Emscripten 4.0.6                             | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 4.8.5                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 4.9.3                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
