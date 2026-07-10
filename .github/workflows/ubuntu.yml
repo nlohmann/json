@@ -162,7 +162,7 @@ jobs:
         run: |
           export DEBIAN_FRONTEND=noninteractive
           apt-get update
-          apt-get install -y --no-install-recommends software-properties-common ca-certificates gnupg make
+          apt-get install -y --no-install-recommends software-properties-common ca-certificates gnupg make git
           add-apt-repository -y ppa:ubuntu-toolchain-r/test
           apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ bionic main"
           apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ bionic universe"
