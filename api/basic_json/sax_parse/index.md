@@ -39,8 +39,8 @@ The SAX event lister must follow the interface of [`json_sax`](https://json.nloh
 - a `FILE` pointer
 - a C-style array of characters
 - a pointer to a null-terminated string of single byte characters
-- an object `obj` for which `begin(obj)` and `end(obj)` produces a valid pair of
-  iterators.
+- a container `obj` for which `begin(obj)` and `end(obj)` produce a valid pair of iterators
+  (as found via ADL or member functions, with semantics compatible to `std::begin` and `std::end`)
 ```
 
 `IteratorType` : a compatible iterator type for overload (2); a pair of character iterators whose `value_type` is an integral type with a size of 1, 2, or 4 bytes (interpreted respectively as UTF-8, UTF-16, and UTF-32)
@@ -277,6 +277,7 @@ result: false
 - Added in version 3.2.0.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
 - Added `ignore_trailing_commas` in version 3.13.0.
+- Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
 
 Deprecation
 

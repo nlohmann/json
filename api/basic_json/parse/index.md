@@ -34,7 +34,8 @@ static basic_json parse(IteratorType first, IteratorType last,
 - a C-style array of characters
 - a pointer to a null-terminated string of single byte characters (throws if null)
 - a `std::string`
-- an object `obj` for which `begin(obj)` and `end(obj)` produces a valid pair of iterators.
+- a container `obj` for which `begin(obj)` and `end(obj)` produce a valid pair of iterators
+  (as found via ADL or member functions, with semantics compatible to `std::begin` and `std::end`)
 ```
 
 `IteratorType` : a compatible iterator type, for instance.
@@ -616,6 +617,7 @@ Output:
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
 - Changed [runtime assertion](https://json.nlohmann.me/features/assertions/index.md) in case of `FILE*` null pointers to exception in version 3.12.0.
 - Added `ignore_trailing_commas` in version 3.13.0.
+- Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
 
 Deprecation
 
