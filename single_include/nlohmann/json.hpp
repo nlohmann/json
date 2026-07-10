@@ -3592,6 +3592,9 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <tuple> // tuple
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
+#ifdef JSON_HAS_CPP_17
+    #include <optional> // optional
+#endif
 #if defined(__cpp_lib_byte) && __cpp_lib_byte >= 201603L
     #include <cstddef> // byte
 #endif
@@ -4223,6 +4226,8 @@ template<typename T> struct is_iteration_proxy_type : std::false_type {};
 template<typename T> struct is_iteration_proxy_type<iteration_proxy<T>>       : std::true_type {};
 template<typename T> struct is_iteration_proxy_type<iteration_proxy_value<T>> : std::true_type {};
 
+// In C++26, std::optional satisfies std::ranges::view; exclude it so the
+// range-view overload does not hijack the optional serializer.
 #ifdef JSON_HAS_CPP_17
 template<typename T> struct is_range_view_optional_type : std::false_type {};
 template<typename T> struct is_range_view_optional_type<std::optional<T>> : std::true_type {};
@@ -4240,7 +4245,6 @@ template<typename T> struct is_range_view_optional_type : std::false_type {};
 //   - views wrapping the above (e.g. owning_view<iteration_proxy<...>>)
 //   - views wrapping basic_json (e.g. ref_view<json>) — same circularity
 //     via json's constructors → is_compatible_array_type → here
-//   - std::optional (which satisfies std::ranges::view in C++26)
 // nlohmann's plain range_value_t (iterator_traits-based) is safe to call
 // before any std::ranges concept is touched, so we use it for the checks.
 template < typename T, bool SafeToCheck =
