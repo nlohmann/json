@@ -40,10 +40,17 @@ inline bool is_exactly_representable_as_float(typename BasicJsonType::number_int
     constexpr int float_digits = std::numeric_limits<number_float_t>::digits;
     constexpr int int_digits = std::numeric_limits<number_integer_t>::digits;
 
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning(push )
+#pragma warning(disable : 4127) // ignore warning to replace if with if constexpr
+#endif
     if (float_digits >= int_digits)
     {
         return true;
     }
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning( pop )
+#endif
 
     // For values outside float's exact range, they don't round-trip
     // The safe way to check: compute the max magnitude that round-trips
