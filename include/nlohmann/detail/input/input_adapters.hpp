@@ -526,8 +526,7 @@ struct container_input_adapter_factory< ContainerType,
 }  // namespace container_input_adapter_factory_impl
 
 template<typename ContainerType>
-auto input_adapter(ContainerType&& container)
--> typename container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::adapter_type
+typename container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::adapter_type input_adapter(ContainerType&& container)
 {
     return container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::create(std::forward<ContainerType>(container));
 }
