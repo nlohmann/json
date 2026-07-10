@@ -13,6 +13,7 @@
 #include <tuple> // tuple
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
+#include <vector> // vector
 #if defined(__cpp_lib_byte) && __cpp_lib_byte >= 201603L
     #include <cstddef> // byte
 #endif
