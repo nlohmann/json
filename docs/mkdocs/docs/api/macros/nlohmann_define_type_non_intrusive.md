@@ -63,6 +63,9 @@ See the examples below for the concrete generated code.
 
     - The current implementation is limited to at most 63 member variables. If you want to serialize/deserialize types
       with more than 63 member variables, you need to define the `to_json`/`from_json` functions manually.
+    - These macros always produce object-style (named-key) JSON, one key per member. There is no macro variant
+      that serializes a struct's members positionally into a JSON array; for that, write `to_json`/`from_json` by
+      hand, building/reading a `json::array()` of the members in order.
 
 ## Examples
 

@@ -930,6 +930,15 @@ If you are using [CocoaPods](https://cocoapods.org), you can use the library by 
 to your podfile (see [an example](https://bitbucket.org/benman/nlohmann_json-cocoapod/src/master/)). Please file issues
 [here](https://bitbucket.org/benman/nlohmann_json-cocoapod/issues?status=new&status=open).
 
+## ESP-IDF and PlatformIO
+
+There is no official package published to the [ESP-IDF Component Registry](https://components.espressif.com) or the
+[PlatformIO Registry](https://registry.platformio.org). A community-maintained fork,
+[Johboh/nlohmann-json](https://github.com/Johboh/nlohmann-json), publishes this library to both registries on each
+new release and can be used as an unofficial component/package for ESP-IDF and PlatformIO projects. As the library
+is header-only, it can otherwise be used directly by adding its `include/` directory to your component's/project's
+include paths, like any other integration method described on this page.
+
 ![](https://img.shields.io/cocoapods/v/nlohmann_json)
 
 !!! warning

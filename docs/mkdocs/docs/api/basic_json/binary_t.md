@@ -37,6 +37,14 @@ represent a byte array in modern C++.
 `BinaryType`
 :   container type to store arrays
 
+    Although not formally expressed as a C++ concept, `BinaryType` must be default-constructible,
+    copy/move-constructible, and support `push_back()`, `.data()`, and `.size()`, because
+    [`byte_container_with_subtype`](../byte_container_with_subtype/index.md) derives directly from it. Its
+    `value_type` must additionally be exactly one byte wide (e.g., `std::uint8_t`/`char`/`std::byte`): the binary
+    serializers (CBOR, MessagePack, BSON, UBJSON) read and write the container's raw bytes via
+    `reinterpret_cast`, which is only correct for byte-sized elements -- a container like
+    `#!cpp std::vector<std::intptr_t>` will not work as `BinaryType`.
+
 ## Notes
 
 #### Default type
