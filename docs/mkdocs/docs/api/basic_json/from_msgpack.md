@@ -11,12 +11,19 @@ template<typename IteratorType>
 static basic_json from_msgpack(IteratorType first, IteratorType last,
                                const bool strict = true,
                                const bool allow_exceptions = true);
+
+// (3)
+template<typename IteratorType, typename SentinelType>
+static basic_json from_msgpack(IteratorType first, SentinelType last,
+                               const bool strict = true,
+                               const bool allow_exceptions = true);
 ```
 
 Deserializes a given input to a JSON value using the MessagePack serialization format.
 
 1. Reads from a compatible input.
 2. Reads from an iterator range.
+3. Reads from an iterator and a sentinel (different types, C++20 ranges support).
 
 The exact mapping and its limitations are described on a [dedicated page](../../features/binary_formats/messagepack.md).
 
@@ -35,6 +42,9 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 `IteratorType`
 :   a compatible iterator type
 
+`SentinelType`
+:   a sentinel type compatible with `IteratorType` (different from `IteratorType` and comparable via `operator!=`), for instance a custom sentinel type for C++20 ranges
+
 ## Parameters
 
 `i` (in)
@@ -44,7 +54,7 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 :   iterator to the start of the input
 
 `last` (in)
-:   iterator to the end of the input
+:   iterator to the end of the input, or a sentinel value that compares equal to the end iterator with `operator!=`
 
 `strict` (in)
 :   whether to expect the input to be consumed until EOF (`#!cpp true` by default)
@@ -105,6 +115,7 @@ Linear in the size of the input.
 - Changed to consume input adapters, removed `start_index` parameter, and added `strict` parameter in version 3.0.0.
 - Added `allow_exceptions` parameter in version 3.2.0.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
+- Added overload (3) for heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
 
 !!! warning "Deprecation"
 

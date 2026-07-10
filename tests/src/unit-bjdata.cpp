@@ -3699,6 +3699,15 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
     }
 }
 
+TEST_CASE("Parse BJData directly from a file using iterator and sentinel")
+{
+    std::string const filename = TEST_DATA_DIRECTORY "/json_testsuite/sample.json.bjdata";
+    std::ifstream file(filename, std::ios::binary);
+    std::istreambuf_iterator<char> first(file);
+    const json parsed = json::from_bjdata(first, utils::istreambuf_sentinel{});
+    CHECK((parsed.is_object() || parsed.is_array()));
+}
+
 #if !defined(JSON_NOEXCEPTION)
 TEST_CASE("all BJData first bytes")
 {

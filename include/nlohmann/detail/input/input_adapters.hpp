@@ -155,7 +155,9 @@ class input_stream_adapter
 
 // General-purpose iterator-based adapter. It might not be as fast as
 // theoretically possible for some containers, but it is extremely versatile.
-template<typename IteratorType>
+// SentinelType defaults to IteratorType for backward compatibility, but may
+// be a different type (e.g., a C++20 sentinel or counted_iterator).
+template<typename IteratorType, typename SentinelType = IteratorType>
 class iterator_input_adapter
 {
   public:
@@ -169,9 +171,10 @@ class iterator_input_adapter
     // in wide_string_input_adapter, which does not expose this).
     static constexpr bool supports_seek =
         std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value
+        && std::is_same<IteratorType, SentinelType>::value
         && sizeof(char_type) == 1;
 
-    iterator_input_adapter(IteratorType first, IteratorType last)
+    iterator_input_adapter(IteratorType first, SentinelType last)
         : begin(first), current(std::move(first)), end(std::move(last))
     {}
 
@@ -216,12 +219,14 @@ class iterator_input_adapter
   private:
     // whether IteratorType refers to a contiguous range and therefore supports
     // a std::memcpy fast path (pointers always do; in C++20 we can also detect
-    // library iterators such as those of std::vector and std::string)
+    // library iterators such as those of std::vector and std::string).
+    // The fast path also requires SentinelType == IteratorType so std::distance works.
     static constexpr bool iterator_is_contiguous =
+        std::is_same<IteratorType, SentinelType>::value && (
 #if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
-        std::contiguous_iterator<IteratorType> ||
+            std::contiguous_iterator<IteratorType> ||
 #endif
-        std::is_pointer<IteratorType>::value;
+            std::is_pointer<IteratorType>::value);
 
     // contiguous fast path: bulk copy the remaining range with std::memcpy
     template<class T>
@@ -267,7 +272,7 @@ class iterator_input_adapter
 
     IteratorType begin;
     IteratorType current;
-    IteratorType end;
+    SentinelType end;
 
     template<typename BaseInputAdapter, size_t T>
     friend struct wide_string_input_helper;
@@ -453,18 +458,42 @@ class wide_string_input_adapter
     std::size_t utf8_bytes_filled = 0;
 };
 
-template<typename IteratorType, typename Enable = void>
+template<typename IteratorType, typename SentinelType = IteratorType, typename Enable = void>
 struct iterator_input_adapter_factory
 {
     using iterator_type = IteratorType;
+    using sentinel_type = SentinelType;
     using char_type = typename std::iterator_traits<iterator_type>::value_type;
-    using adapter_type = iterator_input_adapter<iterator_type>;
+    using adapter_type = iterator_input_adapter<iterator_type, sentinel_type>;
 
-    static adapter_type create(IteratorType first, IteratorType last)
+    static adapter_type create(IteratorType first, SentinelType last)
     {
         return adapter_type(std::move(first), std::move(last));
     }
 };
+
+// Detection: whether IteratorType and SentinelType can be compared with !=
+template<typename IteratorType, typename SentinelType, typename = void>
+struct can_compare_ne_impl : std::false_type {};
+
+template<typename IteratorType, typename SentinelType>
+struct can_compare_ne_impl < IteratorType, SentinelType,
+       void_t < decltype(std::declval<IteratorType>() != std::declval<SentinelType>()) >>
+           : std::true_type {};
+
+// Workaround for reversed operator order
+template<typename IteratorType, typename SentinelType, typename = void>
+struct can_compare_ne_reversed : std::false_type {};
+
+template<typename IteratorType, typename SentinelType>
+struct can_compare_ne_reversed < IteratorType, SentinelType,
+       void_t < decltype(std::declval<SentinelType>() != std::declval<IteratorType>()) >>
+           : std::true_type {};
+
+template<typename IteratorType, typename SentinelType>
+struct can_compare_ne : std::integral_constant < bool,
+    can_compare_ne_impl<IteratorType, SentinelType>::value ||
+    can_compare_ne_reversed<IteratorType, SentinelType>::value > {};
 
 template<typename T>
 struct is_iterator_of_multibyte
@@ -476,25 +505,38 @@ struct is_iterator_of_multibyte
     };
 };
 
-template<typename IteratorType>
-struct iterator_input_adapter_factory<IteratorType, enable_if_t<is_iterator_of_multibyte<IteratorType>::value>>
+template<typename IteratorType, typename SentinelType>
+struct iterator_input_adapter_factory<IteratorType, SentinelType, enable_if_t<is_iterator_of_multibyte<IteratorType>::value>>
 {
     using iterator_type = IteratorType;
+    using sentinel_type = SentinelType;
     using char_type = typename std::iterator_traits<iterator_type>::value_type;
-    using base_adapter_type = iterator_input_adapter<iterator_type>;
+    using base_adapter_type = iterator_input_adapter<iterator_type, sentinel_type>;
     using adapter_type = wide_string_input_adapter<base_adapter_type, char_type>;
 
-    static adapter_type create(IteratorType first, IteratorType last)
+    static adapter_type create(IteratorType first, SentinelType last)
     {
         return adapter_type(base_adapter_type(std::move(first), std::move(last)));
     }
 };
 
-// General purpose iterator-based input
+// General purpose iterator-based input (same-type iterators)
 template<typename IteratorType>
-typename iterator_input_adapter_factory<IteratorType>::adapter_type input_adapter(IteratorType first, IteratorType last)
+typename iterator_input_adapter_factory<IteratorType, IteratorType>::adapter_type input_adapter(IteratorType first, IteratorType last)
 {
-    using factory_type = iterator_input_adapter_factory<IteratorType>;
+    using factory_type = iterator_input_adapter_factory<IteratorType, IteratorType>;
+    return factory_type::create(first, last);
+}
+
+// General purpose iterator-based input (iterator+sentinel pair with different types)
+// Only enable for types that can be compared with !=
+template < typename IteratorType, typename SentinelType,
+           typename = typename std::enable_if <
+               !std::is_same<IteratorType, SentinelType>::value &&
+               can_compare_ne<IteratorType, SentinelType>::value >::type >
+typename iterator_input_adapter_factory<IteratorType, SentinelType>::adapter_type input_adapter(IteratorType first, SentinelType last)
+{
+    using factory_type = iterator_input_adapter_factory<IteratorType, SentinelType>;
     return factory_type::create(first, last);
 }
 

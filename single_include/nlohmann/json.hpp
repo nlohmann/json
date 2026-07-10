@@ -6992,7 +6992,9 @@ class input_stream_adapter
 
 // General-purpose iterator-based adapter. It might not be as fast as
 // theoretically possible for some containers, but it is extremely versatile.
-template<typename IteratorType>
+// SentinelType defaults to IteratorType for backward compatibility, but may
+// be a different type (e.g., a C++20 sentinel or counted_iterator).
+template<typename IteratorType, typename SentinelType = IteratorType>
 class iterator_input_adapter
 {
   public:
@@ -7006,9 +7008,10 @@ class iterator_input_adapter
     // in wide_string_input_adapter, which does not expose this).
     static constexpr bool supports_seek =
         std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value
+        && std::is_same<IteratorType, SentinelType>::value
         && sizeof(char_type) == 1;
 
-    iterator_input_adapter(IteratorType first, IteratorType last)
+    iterator_input_adapter(IteratorType first, SentinelType last)
         : begin(first), current(std::move(first)), end(std::move(last))
     {}
 
@@ -7053,12 +7056,14 @@ class iterator_input_adapter
   private:
     // whether IteratorType refers to a contiguous range and therefore supports
     // a std::memcpy fast path (pointers always do; in C++20 we can also detect
-    // library iterators such as those of std::vector and std::string)
+    // library iterators such as those of std::vector and std::string).
+    // The fast path also requires SentinelType == IteratorType so std::distance works.
     static constexpr bool iterator_is_contiguous =
+        std::is_same<IteratorType, SentinelType>::value && (
 #if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
-        std::contiguous_iterator<IteratorType> ||
+            std::contiguous_iterator<IteratorType> ||
 #endif
-        std::is_pointer<IteratorType>::value;
+            std::is_pointer<IteratorType>::value);
 
     // contiguous fast path: bulk copy the remaining range with std::memcpy
     template<class T>
@@ -7104,7 +7109,7 @@ class iterator_input_adapter
 
     IteratorType begin;
     IteratorType current;
-    IteratorType end;
+    SentinelType end;
 
     template<typename BaseInputAdapter, size_t T>
     friend struct wide_string_input_helper;
@@ -7290,18 +7295,42 @@ class wide_string_input_adapter
     std::size_t utf8_bytes_filled = 0;
 };
 
-template<typename IteratorType, typename Enable = void>
+template<typename IteratorType, typename SentinelType = IteratorType, typename Enable = void>
 struct iterator_input_adapter_factory
 {
     using iterator_type = IteratorType;
+    using sentinel_type = SentinelType;
     using char_type = typename std::iterator_traits<iterator_type>::value_type;
-    using adapter_type = iterator_input_adapter<iterator_type>;
+    using adapter_type = iterator_input_adapter<iterator_type, sentinel_type>;
 
-    static adapter_type create(IteratorType first, IteratorType last)
+    static adapter_type create(IteratorType first, SentinelType last)
     {
         return adapter_type(std::move(first), std::move(last));
     }
 };
+
+// Detection: whether IteratorType and SentinelType can be compared with !=
+template<typename IteratorType, typename SentinelType, typename = void>
+struct can_compare_ne_impl : std::false_type {};
+
+template<typename IteratorType, typename SentinelType>
+struct can_compare_ne_impl < IteratorType, SentinelType,
+       void_t < decltype(std::declval<IteratorType>() != std::declval<SentinelType>()) >>
+           : std::true_type {};
+
+// Workaround for reversed operator order
+template<typename IteratorType, typename SentinelType, typename = void>
+struct can_compare_ne_reversed : std::false_type {};
+
+template<typename IteratorType, typename SentinelType>
+struct can_compare_ne_reversed < IteratorType, SentinelType,
+       void_t < decltype(std::declval<SentinelType>() != std::declval<IteratorType>()) >>
+           : std::true_type {};
+
+template<typename IteratorType, typename SentinelType>
+struct can_compare_ne : std::integral_constant < bool,
+    can_compare_ne_impl<IteratorType, SentinelType>::value ||
+    can_compare_ne_reversed<IteratorType, SentinelType>::value > {};
 
 template<typename T>
 struct is_iterator_of_multibyte
@@ -7313,25 +7342,38 @@ struct is_iterator_of_multibyte
     };
 };
 
-template<typename IteratorType>
-struct iterator_input_adapter_factory<IteratorType, enable_if_t<is_iterator_of_multibyte<IteratorType>::value>>
+template<typename IteratorType, typename SentinelType>
+struct iterator_input_adapter_factory<IteratorType, SentinelType, enable_if_t<is_iterator_of_multibyte<IteratorType>::value>>
 {
     using iterator_type = IteratorType;
+    using sentinel_type = SentinelType;
     using char_type = typename std::iterator_traits<iterator_type>::value_type;
-    using base_adapter_type = iterator_input_adapter<iterator_type>;
+    using base_adapter_type = iterator_input_adapter<iterator_type, sentinel_type>;
     using adapter_type = wide_string_input_adapter<base_adapter_type, char_type>;
 
-    static adapter_type create(IteratorType first, IteratorType last)
+    static adapter_type create(IteratorType first, SentinelType last)
     {
         return adapter_type(base_adapter_type(std::move(first), std::move(last)));
     }
 };
 
-// General purpose iterator-based input
+// General purpose iterator-based input (same-type iterators)
 template<typename IteratorType>
-typename iterator_input_adapter_factory<IteratorType>::adapter_type input_adapter(IteratorType first, IteratorType last)
+typename iterator_input_adapter_factory<IteratorType, IteratorType>::adapter_type input_adapter(IteratorType first, IteratorType last)
 {
-    using factory_type = iterator_input_adapter_factory<IteratorType>;
+    using factory_type = iterator_input_adapter_factory<IteratorType, IteratorType>;
+    return factory_type::create(first, last);
+}
+
+// General purpose iterator-based input (iterator+sentinel pair with different types)
+// Only enable for types that can be compared with !=
+template < typename IteratorType, typename SentinelType,
+           typename = typename std::enable_if <
+               !std::is_same<IteratorType, SentinelType>::value &&
+               can_compare_ne<IteratorType, SentinelType>::value >::type >
+typename iterator_input_adapter_factory<IteratorType, SentinelType>::adapter_type input_adapter(IteratorType first, SentinelType last)
+{
+    using factory_type = iterator_input_adapter_factory<IteratorType, SentinelType>;
     return factory_type::create(first, last);
 }
 
@@ -24950,6 +24992,24 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
+    /// @brief deserialize from an iterator+sentinel pair (C++20 ranges support)
+    /// @sa https://json.nlohmann.me/api/basic_json/parse/
+    template<typename IteratorType, typename SentinelType>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json parse(IteratorType first,
+                            SentinelType last,
+                            parser_callback_t cb = nullptr,
+                            const bool allow_exceptions = true,
+                            const bool ignore_comments = false,
+                            const bool ignore_trailing_commas = false,
+                            typename std::enable_if < !std::is_same<IteratorType, SentinelType>::value &&
+                                detail::can_compare_ne<IteratorType, SentinelType>::value >::type* = nullptr)
+    {
+        basic_json result;
+        parser(detail::input_adapter(std::move(first), std::move(last)), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas).parse(true, result); // cppcheck-suppress[accessMoved]
+        return result;
+    }
+
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, parse(ptr, ptr + len))
     static basic_json parse(detail::span_input_adapter&& i,
@@ -24979,6 +25039,18 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static bool accept(IteratorType first, IteratorType last,
                        const bool ignore_comments = false,
                        const bool ignore_trailing_commas = false)
+    {
+        return parser(detail::input_adapter(std::move(first), std::move(last)), nullptr, false, ignore_comments, ignore_trailing_commas).accept(true);
+    }
+
+    /// @brief check if the input is valid JSON (sentinel version)
+    /// @sa https://json.nlohmann.me/api/basic_json/accept/
+    template<typename IteratorType, typename SentinelType>
+    static bool accept(IteratorType first, SentinelType last,
+                       const bool ignore_comments = false,
+                       const bool ignore_trailing_commas = false,
+                       typename std::enable_if < !std::is_same<IteratorType, SentinelType>::value &&
+                           detail::can_compare_ne<IteratorType, SentinelType>::value >::type* = nullptr)
     {
         return parser(detail::input_adapter(std::move(first), std::move(last)), nullptr, false, ignore_comments, ignore_trailing_commas).accept(true);
     }
@@ -25017,6 +25089,24 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                           const bool strict = true,
                           const bool ignore_comments = false,
                           const bool ignore_trailing_commas = false)
+    {
+        auto ia = detail::input_adapter(std::move(first), std::move(last));
+        return format == input_format_t::json
+               ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
+               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(format, sax, strict);
+    }
+
+    /// @brief generate SAX events (sentinel version)
+    /// @sa https://json.nlohmann.me/api/basic_json/sax_parse/
+    template<class IteratorType, class SentinelType, class SAX>
+    JSON_HEDLEY_NON_NULL(3)
+    static bool sax_parse(IteratorType first, SentinelType last, SAX* sax,
+                          input_format_t format = input_format_t::json,
+                          const bool strict = true,
+                          const bool ignore_comments = false,
+                          const bool ignore_trailing_commas = false,
+                          typename std::enable_if < !std::is_same<IteratorType, SentinelType>::value &&
+                              detail::can_compare_ne<IteratorType, SentinelType>::value >::type* = nullptr)
     {
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         return format == input_format_t::json
@@ -25328,6 +25418,24 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res ? result : basic_json(value_t::discarded);
     }
 
+    /// @brief create a JSON value from an input in CBOR format (sentinel version)
+    /// @sa https://json.nlohmann.me/api/basic_json/from_cbor/
+    template<typename IteratorType, typename SentinelType>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_cbor(IteratorType first, SentinelType last,
+                                const bool strict = true,
+                                const bool allow_exceptions = true,
+                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error,
+                                typename std::enable_if < !std::is_same<IteratorType, SentinelType>::value &&
+                                    detail::can_compare_ne<IteratorType, SentinelType>::value >::type* = nullptr)
+    {
+        basic_json result;
+        auto ia = detail::input_adapter(std::move(first), std::move(last));
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler); // cppcheck-suppress[accessMoved]
+        return res ? result : basic_json(value_t::discarded);
+    }
+
     template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_cbor(ptr, ptr + len))
@@ -25376,6 +25484,23 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static basic_json from_msgpack(IteratorType first, IteratorType last,
                                    const bool strict = true,
                                    const bool allow_exceptions = true)
+    {
+        basic_json result;
+        auto ia = detail::input_adapter(std::move(first), std::move(last));
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict); // cppcheck-suppress[accessMoved]
+        return res ? result : basic_json(value_t::discarded);
+    }
+
+    /// @brief create a JSON value from an input in MessagePack format (sentinel version)
+    /// @sa https://json.nlohmann.me/api/basic_json/from_msgpack/
+    template<typename IteratorType, typename SentinelType>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_msgpack(IteratorType first, SentinelType last,
+                                   const bool strict = true,
+                                   const bool allow_exceptions = true,
+                                   typename std::enable_if < !std::is_same<IteratorType, SentinelType>::value &&
+                                       detail::can_compare_ne<IteratorType, SentinelType>::value >::type* = nullptr)
     {
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));
@@ -25438,6 +25563,23 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res ? result : basic_json(value_t::discarded);
     }
 
+    /// @brief create a JSON value from an input in UBJSON format (sentinel version)
+    /// @sa https://json.nlohmann.me/api/basic_json/from_ubjson/
+    template<typename IteratorType, typename SentinelType>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_ubjson(IteratorType first, SentinelType last,
+                                  const bool strict = true,
+                                  const bool allow_exceptions = true,
+                                  typename std::enable_if < !std::is_same<IteratorType, SentinelType>::value &&
+                                      detail::can_compare_ne<IteratorType, SentinelType>::value >::type* = nullptr)
+    {
+        basic_json result;
+        auto ia = detail::input_adapter(std::move(first), std::move(last));
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict); // cppcheck-suppress[accessMoved]
+        return res ? result : basic_json(value_t::discarded);
+    }
+
     template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_ubjson(ptr, ptr + len))
@@ -25492,6 +25634,23 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res ? result : basic_json(value_t::discarded);
     }
 
+    /// @brief create a JSON value from an input in BJData format (sentinel version)
+    /// @sa https://json.nlohmann.me/api/basic_json/from_bjdata/
+    template<typename IteratorType, typename SentinelType>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_bjdata(IteratorType first, SentinelType last,
+                                  const bool strict = true,
+                                  const bool allow_exceptions = true,
+                                  typename std::enable_if < !std::is_same<IteratorType, SentinelType>::value &&
+                                      detail::can_compare_ne<IteratorType, SentinelType>::value >::type* = nullptr)
+    {
+        basic_json result;
+        auto ia = detail::input_adapter(std::move(first), std::move(last));
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(input_format_t::bjdata, &sdp, strict); // cppcheck-suppress[accessMoved]
+        return res ? result : basic_json(value_t::discarded);
+    }
+
     /// @brief create a JSON value from an input in BSON format
     /// @sa https://json.nlohmann.me/api/basic_json/from_bson/
     template<typename InputType>
@@ -25514,6 +25673,23 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static basic_json from_bson(IteratorType first, IteratorType last,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
+    {
+        basic_json result;
+        auto ia = detail::input_adapter(std::move(first), std::move(last));
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict); // cppcheck-suppress[accessMoved]
+        return res ? result : basic_json(value_t::discarded);
+    }
+
+    /// @brief create a JSON value from an input in BSON format (sentinel version)
+    /// @sa https://json.nlohmann.me/api/basic_json/from_bson/
+    template<typename IteratorType, typename SentinelType>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_bson(IteratorType first, SentinelType last,
+                                const bool strict = true,
+                                const bool allow_exceptions = true,
+                                typename std::enable_if < !std::is_same<IteratorType, SentinelType>::value &&
+                                    detail::can_compare_ne<IteratorType, SentinelType>::value >::type* = nullptr)
     {
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));

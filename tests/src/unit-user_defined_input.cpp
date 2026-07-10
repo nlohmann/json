@@ -168,4 +168,40 @@ TEST_CASE("Custom iterator")
     CHECK(as_json.at(3) == 4);
 }
 
+// Custom sentinel type for testing heterogeneous iterator+sentinel support
+struct CustomSentinel
+{
+    const char* end_ptr;
+
+    // Support both directions for != comparison
+    friend bool operator!=(const char* it, const CustomSentinel& sentinel)
+    {
+        return it != sentinel.end_ptr;
+    }
+
+    friend bool operator!=(const CustomSentinel& sentinel, const char* it)
+    {
+        return it != sentinel.end_ptr;
+    }
+};
+
+TEST_CASE("Parse with heterogeneous iterator and sentinel types")
+{
+    std::string json_str = R"({"key":"value"})";
+    const char* end_ptr = json_str.data() + json_str.size();
+
+    // Parse using pointer and sentinel (different types)
+    json j = json::parse(json_str.data(), CustomSentinel{end_ptr});
+    CHECK(j["key"] == "value");
+
+    // Accept using pointer and sentinel
+    CHECK(json::accept(json_str.data(), CustomSentinel{end_ptr}));
+
+    // Test that the same-type case still works
+    std::string raw_data = R"([1,2,3])";
+    std::list<char> data(raw_data.begin(), raw_data.end());
+    json j2 = json::parse(data.begin(), data.end());
+    CHECK(j2.at(0) == 1);
+}
+
 } // namespace

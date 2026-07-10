@@ -30,4 +30,20 @@ inline std::vector<std::uint8_t> read_binary_file(const std::string& filename)
     return byte_vector;
 }
 
+// sentinel for istreambuf_iterator; compares != true until EOF is reached
+// lets tests read a file directly via the new iterator+sentinel overloads
+// instead of buffering the whole file into a vector first
+struct istreambuf_sentinel
+{
+    friend bool operator!=(const std::istreambuf_iterator<char>& it, const istreambuf_sentinel&) noexcept
+    {
+        return it != std::istreambuf_iterator<char>();
+    }
+
+    friend bool operator!=(const istreambuf_sentinel&, const std::istreambuf_iterator<char>& it) noexcept
+    {
+        return it != std::istreambuf_iterator<char>();
+    }
+};
+
 } // namespace utils

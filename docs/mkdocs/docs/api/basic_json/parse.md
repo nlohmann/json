@@ -16,13 +16,25 @@ static basic_json parse(IteratorType first, IteratorType last,
                         const bool allow_exceptions = true,
                         const bool ignore_comments = false,
                         const bool ignore_trailing_commas = false);
+
+// (3)
+template<typename IteratorType, typename SentinelType>
+static basic_json parse(IteratorType first, SentinelType last,
+                        const parser_callback_t cb = nullptr,
+                        const bool allow_exceptions = true,
+                        const bool ignore_comments = false,
+                        const bool ignore_trailing_commas = false);
 ```
 
 1. Deserialize from a compatible input.
-2. Deserialize from a pair of character iterators
+2. Deserialize from a pair of character iterators (same type)
     
     The `value_type` of the iterator must be an integral type with size of 1, 2, or 4 bytes, which will be interpreted
     respectively as UTF-8, UTF-16, and UTF-32.
+3. Deserialize from an iterator and a sentinel (different types, C++20 ranges support)
+    
+    The `value_type` of the iterator must be an integral type with size of 1, 2, or 4 bytes, which will be interpreted
+    respectively as UTF-8, UTF-16, and UTF-32. The sentinel type must be comparable to the iterator type with `operator!=`.
 
 ## Template parameters
 
@@ -42,6 +54,12 @@ static basic_json parse(IteratorType first, IteratorType last,
 
     - a pair of `std::string::iterator` or `std::vector<std::uint8_t>::iterator`
     - a pair of pointers such as `ptr` and `ptr + len`
+
+`SentinelType`
+:   a sentinel type compatible with `IteratorType` (different from `IteratorType` and comparable via `operator!=`), for instance.
+
+    - a custom sentinel type for C++20 ranges
+    - `std::counted_iterator` with a different sentinel type
 
 ## Parameters
 
@@ -67,7 +85,7 @@ static basic_json parse(IteratorType first, IteratorType last,
 :   iterator to the start of a character range
 
 `last` (in)
-:   iterator to the end of a character range
+:   iterator to the end of a character range, or a sentinel value that compares equal to the end iterator with `operator!=`
 
 ## Return value
 
@@ -238,6 +256,7 @@ Invalid Unicode escapes and unpaired surrogates in the input are reported as
 - Changed [runtime assertion](../../features/assertions.md) in case of `FILE*` null pointers to exception in version 3.12.0.
 - Added `ignore_trailing_commas` in version 3.13.0.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
+- Added overload (3) for heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
 
 !!! warning "Deprecation"
 
