@@ -180,6 +180,49 @@ For _derived_ classes and structs, use the following macros
     }
     ```
 
+!!! warning "Overriding conversions for natively-supported types"
+
+    The library already provides built-in `to_json`/`from_json` conversions for STL containers such as
+    `std::vector`, `std::array`, and `std::map`. Defining your own free-function `to_json`/`from_json` overload
+    for one of these container types directly (instead of for your own type) can conflict with the built-in
+    overload during overload resolution, producing compiler errors ("no matching overloaded function",
+    "call is ambiguous") that vary by compiler and library version. If you need different conversion behavior
+    for a container type the library already handles, wrap it in your own type (or use `adl_serializer`
+    specialization, as shown [above](#how-do-i-convert-third-party-types) for `boost::optional`) instead of
+    trying to re-specialize `to_json`/`from_json` for the container type itself.
+
+!!! warning "Raw C-style arrays"
+
+    Members declared as raw C-style arrays (e.g., `char buf[1024]`) do not round-trip safely through
+    `NLOHMANN_DEFINE_TYPE_*` macros or the default (de)serializers: `to_json` serializes any `char` array as a
+    JSON *string* (matching the `std::string`-constructible overload), but the `from_json` overload for
+    fixed-size arrays expects a JSON *array* and iterates it element-wise, which fails with a `type_error` when
+    given a string. Use `std::string`, `std::array<char, N>`, or a manually written `to_json`/`from_json` pair
+    for such members instead.
+
+!!! note "Macros and `nlohmann::ordered_json`"
+
+    The `NLOHMANN_DEFINE_TYPE_*`/`NLOHMANN_DEFINE_DERIVED_TYPE_*` macros are generic over any `basic_json`
+    specialization, including `nlohmann::ordered_json`. Simply use `ordered_json` as the target type and members
+    are serialized in declaration order -- no separate macro or extra code is needed.
+
+    ```cpp
+    namespace ns {
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person, name, address, age)
+    }
+
+    ns::person p{"Ned Flanders", "744 Evergreen Terrace", 60};
+    nlohmann::ordered_json j = p; // keys appear in declaration order: name, address, age
+    ```
+
+!!! note "No macro for non-default-constructible types"
+
+    There is currently no `NLOHMANN_DEFINE_TYPE_*`-style macro for types that are not
+    [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). This is not an
+    intentional omission of documentation -- no such macro exists yet; see
+    [How can I use `get()` for non-default constructible/non-copyable types?](#how-can-i-use-get-for-non-default-constructiblenon-copyable-types)
+    for the manual pattern to use instead.
+
 ## How do I convert third-party types?
 
 This requires a bit more advanced technique. But first, let us see how this conversion mechanism works:
@@ -269,6 +312,49 @@ namespace nlohmann {
     };
 }
 ```
+
+## Why can't I convert to/from `std::any`?
+
+`std::any` is intentionally excluded from `get<T>()`/generic conversion support, so `get<std::any>()` and
+containers like `std::map<std::string, std::any>` fail to compile by design -- there is no way to know, from a
+`json` value alone, which concrete type to store inside the `std::any`. To work with heterogeneous JSON values,
+dispatch on the value's type manually and construct the `std::any` (or extract from it) yourself:
+
+```cpp
+std::any value_to_any(const json& j) {
+    if (j.is_boolean())      { return j.get<bool>(); }
+    if (j.is_number_integer()) { return j.get<int>(); }
+    if (j.is_number_float()) { return j.get<double>(); }
+    if (j.is_string())       { return j.get<std::string>(); }
+    // ... handle other types (arrays, objects) as needed for your use case
+    return {};
+}
+
+json any_to_json(const std::any& a) {
+    if (a.type() == typeid(bool))        { return std::any_cast<bool>(a); }
+    if (a.type() == typeid(int))         { return std::any_cast<int>(a); }
+    if (a.type() == typeid(double))      { return std::any_cast<double>(a); }
+    if (a.type() == typeid(std::string)) { return std::any_cast<std::string>(a); }
+    return nullptr;
+}
+```
+
+## Why does serializing a `std::map`/`std::unordered_map` with non-string keys produce an array?
+
+A `std::map`/`std::unordered_map` whose key type is not string-like (e.g., `std::map<int, std::string>`) is
+serialized as a JSON *array* of 2-element `[key, value]` arrays, not as a JSON object -- JSON object keys must be
+strings, so the library cannot represent an integer-keyed map as an object.
+
+```cpp
+std::map<int, std::string> m{{1, "one"}, {2, "two"}};
+json j = m;
+// j is [[1,"one"],[2,"two"]], not {"1":"one","2":"two"}
+```
+
+## Why does `std::wstring` convert or dump incorrectly?
+
+The library assumes UTF-8 encoding internally, so `std::wstring` is not supported out of the box -- see the FAQ
+entry on [wide string handling](../home/faq.md#wide-string-handling) for why, and for a UTF-8 conversion recipe.
 
 ## Can I write my own serializer? (Advanced use)
 

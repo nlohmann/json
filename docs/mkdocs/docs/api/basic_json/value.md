@@ -50,6 +50,10 @@ ValueType value(const json_pointer& ptr,
     - Unlike [`operator[]`](operator[].md), this function does not implicitly add an element to the position defined by
      `key`/`ptr` key. This function is furthermore also applicable to const objects.
 
+!!! note
+
+    This is equivalent to Python's `dict.get(key, default)`.
+
 ## Template parameters
 
 `KeyType`

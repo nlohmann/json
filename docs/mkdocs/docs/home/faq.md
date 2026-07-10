@@ -129,6 +129,29 @@ As described [above](#parse-errors-reading-non-ascii-characters), the library as
     }
     ```
 
+## Usage
+
+### Thread safety
+
+!!! question
+
+    Is `basic_json` thread-safe?
+
+No. `basic_json` provides no built-in synchronization, the same as `std::map` or `std::vector`. Concurrent reads of
+the same value from multiple threads are safe, as are concurrent (non-overlapping) accesses to independent `json`
+objects. However, any concurrent write to a `json` object -- or a concurrent read while another thread writes to the
+same object -- is a data race and requires external synchronization (e.g., a `std::mutex`) by the caller.
+
+### Schema validation
+
+!!! question
+
+    Does this library support JSON Schema validation?
+
+Not directly, but the companion project [json-schema-validator](https://github.com/pboettch/json-schema-validator)
+builds JSON Schema (draft 4, 6, 7, and 2019-09) validation on top of this library and is a common recommendation
+for this use case.
+
 ## Exceptions
 
 ### Parsing without exceptions
