@@ -4223,6 +4223,13 @@ template<typename T> struct is_iteration_proxy_type : std::false_type {};
 template<typename T> struct is_iteration_proxy_type<iteration_proxy<T>>       : std::true_type {};
 template<typename T> struct is_iteration_proxy_type<iteration_proxy_value<T>> : std::true_type {};
 
+#ifdef JSON_HAS_CPP_17
+template<typename T> struct is_range_view_optional_type : std::false_type {};
+template<typename T> struct is_range_view_optional_type<std::optional<T>> : std::true_type {};
+#else
+template<typename T> struct is_range_view_optional_type : std::false_type {};
+#endif
+
 // std::ranges does not work properly on MinGW due to incomplete C++20 support
 // see https://github.com/nlohmann/json/issues/4916
 #if JSON_HAS_RANGES && !defined(__MINGW32__)
@@ -4233,12 +4240,14 @@ template<typename T> struct is_iteration_proxy_type<iteration_proxy_value<T>> : 
 //   - views wrapping the above (e.g. owning_view<iteration_proxy<...>>)
 //   - views wrapping basic_json (e.g. ref_view<json>) — same circularity
 //     via json's constructors → is_compatible_array_type → here
+//   - std::optional (which satisfies std::ranges::view in C++26)
 // nlohmann's plain range_value_t (iterator_traits-based) is safe to call
 // before any std::ranges concept is touched, so we use it for the checks.
 template < typename T, bool SafeToCheck =
            !is_iteration_proxy_type<T>::value &&
            !is_iteration_proxy_type<detected_t<range_value_t, T>>::value &&
-           !is_basic_json<detected_t<range_value_t, T>>::value >
+           !is_basic_json<detected_t<range_value_t, T>>::value &&
+           !is_range_view_optional_type<T>::value >
 struct is_compatible_range_view : std::false_type {};
 
 template<typename T>
