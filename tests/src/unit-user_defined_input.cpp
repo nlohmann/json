@@ -73,8 +73,8 @@ char* end(MyContainerNonConstADL& c)
 TEST_CASE("Custom container non-member non-const begin/end")
 {
     // Container with lvalue-only non-const ADL begin/end (bug reproduction)
-    char raw_data[] = "[1,2,3,4]";
-    MyContainerNonConstADL data{raw_data, sizeof(raw_data) - 1};
+    std::string raw_data = "[1,2,3,4]";
+    MyContainerNonConstADL data{&raw_data[0], raw_data.size()}; // NOLINT(readability-container-data-pointer)
     const json as_json = json::parse(data);
     CHECK(as_json.at(0) == 1);
     CHECK(as_json.at(1) == 2);
