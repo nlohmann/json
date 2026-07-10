@@ -33,11 +33,21 @@ jobs:
 
   ci_infer:
     runs-on: ubuntu-latest
-    container: ghcr.io/nlohmann/json-ci:v2.4.0
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Install Infer
+        run: |
+          wget -q -O - "https://github.com/facebook/infer/releases/download/v1.3.0/infer-linux-x86_64-v1.3.0.tar.xz" | sudo tar -C /opt -xJ
+          sudo ln -s /opt/infer-linux-x86_64-v1.3.0/bin/infer /usr/local/bin/infer
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -143,11 +153,30 @@ jobs:
     strategy:
       matrix:
         compiler: ['4.8', '4.9', '5', '6']
-    container: ghcr.io/nlohmann/json-ci:v2.4.0
+    # official gcc:4.8/4.9/5/6 images fail to check out code (too old for
+    # actions/checkout); install the old compilers on top of official ubuntu:20.04
+    # instead, mirroring what the (now retired) custom json-ci image did.
+    container: ubuntu:20.04
     steps:
+      - name: Install g++-${{ matrix.compiler }}
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y --no-install-recommends software-properties-common ca-certificates gnupg make git
+          add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ bionic main"
+          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ bionic universe"
+          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial main"
+          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial universe"
+          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial-updates main"
+          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial-updates universe"
+          apt-get update
+          apt-get install -y --no-install-recommends g++-${{ matrix.compiler }}
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
       - name: Run CMake
         run: CXX=g++-${{ matrix.compiler }} cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -287,17 +316,22 @@ jobs:
 
   ci_icpc:
     runs-on: ubuntu-latest
-    container: ghcr.io/nlohmann/json-ci:v2.2.0
+    # Intel discontinued the classic icc/icpc compiler in oneAPI 2024.0; this is
+    # Intel's own last officially published image that still includes it.
+    container: intel/oneapi-hpckit:2023.2.1-devel-ubuntu22.04
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
-        run: |
-          . /opt/intel/oneapi/setvars.sh
-          cmake --build build --target ci_icpc
+        # No need to source setvars.sh here: unlike the old custom image, this
+        # official image already has the oneAPI environment (icc/icpc on PATH)
+        # baked in, and re-sourcing it fails with "already been run" (exit 3).
+        run: cmake --build build --target ci_icpc
 
   ci_icpx:
     runs-on: ubuntu-latest

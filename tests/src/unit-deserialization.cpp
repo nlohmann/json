@@ -227,6 +227,11 @@ bool check_utf8()
     // Runtime check of the active ANSI code page
     // 65001 == UTF-8
     return GetACP() == 65001;
+#elif defined(__ICC) || defined(__INTEL_COMPILER)
+    // classic Intel ICC does not encode narrow string literals containing
+    // non-ASCII source characters as UTF-8, so comparing a decoded u8 literal
+    // against a narrow string literal containing the same characters fails
+    return false;
 #else
     return true;
 #endif
