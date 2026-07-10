@@ -6856,8 +6856,7 @@ std::size_t hash(const BasicJsonType& j)
         case BasicJsonType::value_t::number_float:
         {
             const auto h = std::hash<number_float_t> {}(j.template get<number_float_t>());
-            const auto numeric_type = static_cast<std::size_t>(BasicJsonType::value_t::number_float);
-            return combine(numeric_type, h);
+            return combine(type, h);
         }
 
         case BasicJsonType::value_t::binary:
