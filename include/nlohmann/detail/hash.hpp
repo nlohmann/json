@@ -56,7 +56,10 @@ inline bool is_exactly_representable_as_float(typename BasicJsonType::number_int
     // Check absolute value against this threshold
     if (val >= 0)
     {
-        if (val >= max_exact) return false;
+        if (val >= max_exact)
+        {
+            return false;
+        }
     }
     else
     {
@@ -152,11 +155,9 @@ std::size_t hash(const BasicJsonType& j)
                 const auto h = std::hash<number_float_t> {}(static_cast<number_float_t>(v));
                 return combine(numeric_type, h);
             }
-            else
-            {
-                const auto h = std::hash<number_integer_t> {}(v);
-                return combine(numeric_type, h);
-            }
+
+            const auto h = std::hash<number_integer_t> {}(v);
+            return combine(numeric_type, h);
         }
 
         case BasicJsonType::value_t::number_unsigned:
@@ -172,11 +173,9 @@ std::size_t hash(const BasicJsonType& j)
                 const auto h = std::hash<number_float_t> {}(static_cast<number_float_t>(v_as_signed));
                 return combine(numeric_type, h);
             }
-            else
-            {
-                const auto h = std::hash<number_integer_t> {}(v_as_signed);
-                return combine(numeric_type, h);
-            }
+
+            const auto h = std::hash<number_integer_t> {}(v_as_signed);
+            return combine(numeric_type, h);
         }
 
         case BasicJsonType::value_t::number_float:

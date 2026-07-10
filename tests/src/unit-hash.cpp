@@ -66,10 +66,10 @@ TEST_CASE("hash<nlohmann::json>")
     CHECK(hashes.size() == 19);
 
     // Verify the std::hash contract: equal values must hash equally
-    CHECK(std::hash<json>{}(json(0)) == std::hash<json>{}(json(static_cast<unsigned>(0))));
-    CHECK(std::hash<json>{}(json(0)) == std::hash<json>{}(json(0.0)));
-    CHECK(std::hash<json>{}(json(42)) == std::hash<json>{}(json(42u)));
-    CHECK(std::hash<json>{}(json(42)) == std::hash<json>{}(json(42.0)));
+    CHECK(std::hash<json> {}(json(0)) == std::hash<json> {}(json(static_cast<unsigned>(0))));
+    CHECK(std::hash<json> {}(json(0)) == std::hash<json> {}(json(0.0)));
+    CHECK(std::hash<json> {}(json(42)) == std::hash<json> {}(json(42u)));
+    CHECK(std::hash<json> {}(json(42)) == std::hash<json> {}(json(42.0)));
 }
 
 TEST_CASE("hash<nlohmann::ordered_json>")
@@ -122,8 +122,8 @@ TEST_CASE("hash<nlohmann::ordered_json>")
     CHECK(hashes.size() == 19);
 
     // Verify the std::hash contract for ordered_json as well
-    CHECK(std::hash<ordered_json>{}(ordered_json(0)) == std::hash<ordered_json>{}(ordered_json(static_cast<unsigned>(0))));
-    CHECK(std::hash<ordered_json>{}(ordered_json(0)) == std::hash<ordered_json>{}(ordered_json(0.0)));
-    CHECK(std::hash<ordered_json>{}(ordered_json(42)) == std::hash<ordered_json>{}(ordered_json(42u)));
-    CHECK(std::hash<ordered_json>{}(ordered_json(42)) == std::hash<ordered_json>{}(ordered_json(42.0)));
+    CHECK(std::hash<ordered_json> {}(ordered_json(0)) == std::hash<ordered_json> {}(ordered_json(static_cast<unsigned>(0))));
+    CHECK(std::hash<ordered_json> {}(ordered_json(0)) == std::hash<ordered_json> {}(ordered_json(0.0)));
+    CHECK(std::hash<ordered_json> {}(ordered_json(42)) == std::hash<ordered_json> {}(ordered_json(42u)));
+    CHECK(std::hash<ordered_json> {}(ordered_json(42)) == std::hash<ordered_json> {}(ordered_json(42.0)));
 }
