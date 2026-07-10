@@ -164,8 +164,12 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends software-properties-common ca-certificates gnupg make
           add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ bionic main"
+          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ bionic universe"
           apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial main"
           apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial universe"
+          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial-updates main"
+          apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial-updates universe"
           apt-get update
           apt-get install -y --no-install-recommends g++-${{ matrix.compiler }}
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
