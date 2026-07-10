@@ -1194,7 +1194,7 @@ TEST_CASE("regression tests 2")
     SECTION("issue #4916 - constructing array from C++20 transform view (prvalue elements)")
     {
         std::vector<int> nums{1, 2, 3};
-        auto t = nums | std::views::transform([](int i)
+        auto t = nums | std::views::transform([](int i) noexcept
         {
             return i * 2;
         });
