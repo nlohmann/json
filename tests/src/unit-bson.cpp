@@ -1216,7 +1216,7 @@ TEST_CASE("Parse BSON directly from a file using iterator and sentinel")
     const json expected = json::parse(f_json);
 
     std::ifstream file(filename + ".bson", std::ios::binary);
-    std::istreambuf_iterator<char> first(file);
+    const std::istreambuf_iterator<char> first(file);
     const json parsed = json::from_bson(first, utils::istreambuf_sentinel{});
     CHECK(parsed == expected);
 }
