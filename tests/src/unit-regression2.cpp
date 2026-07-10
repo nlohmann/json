@@ -798,7 +798,9 @@ TEST_CASE("regression tests 2")
 
 #ifdef JSON_HAS_CPP_20
 #ifndef _LIBCPP_VERSION // see https://github.com/nlohmann/json/issues/4490
-#if __has_include(<span>)
+// classic Intel ICC reports <span> as includable but cannot actually compile
+// std::span/std::as_bytes usage below
+#if __has_include(<span>) && !defined(__ICC) && !defined(__INTEL_COMPILER)
     SECTION("issue #2546 - parsing containers of std::byte")
     {
         const char DATA[] = R"("Hello, world!")"; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
