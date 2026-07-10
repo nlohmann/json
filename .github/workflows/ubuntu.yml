@@ -328,9 +328,10 @@ jobs:
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
-        run: |
-          . /opt/intel/oneapi/setvars.sh
-          cmake --build build --target ci_icpc
+        # No need to source setvars.sh here: unlike the old custom image, this
+        # official image already has the oneAPI environment (icc/icpc on PATH)
+        # baked in, and re-sourcing it fails with "already been run" (exit 3).
+        run: cmake --build build --target ci_icpc
 
   ci_icpx:
     runs-on: ubuntu-latest
