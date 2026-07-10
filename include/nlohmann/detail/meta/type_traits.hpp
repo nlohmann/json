@@ -13,14 +13,14 @@
 #include <tuple> // tuple
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
-#ifdef JSON_HAS_CPP_17
-    #include <optional> // optional
-#endif
 #if defined(__cpp_lib_byte) && __cpp_lib_byte >= 201603L
     #include <cstddef> // byte
 #endif
 #include <nlohmann/detail/iterators/iterator_traits.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
+#ifdef JSON_HAS_CPP_17
+    #include <optional> // optional
+#endif
 #include <nlohmann/detail/meta/call_std/begin.hpp>
 #include <nlohmann/detail/meta/call_std/end.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
