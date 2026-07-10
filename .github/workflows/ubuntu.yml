@@ -41,8 +41,8 @@ jobs:
 
       - name: Install Infer
         run: |
-          wget -q -O - "https://github.com/facebook/infer/releases/download/v1.1.0/infer-linux64-v1.1.0.tar.xz" | sudo tar -C /opt -xJ
-          sudo ln -s /opt/infer-linux64-v1.1.0/bin/infer /usr/local/bin/infer
+          wget -q -O - "https://github.com/facebook/infer/releases/download/v1.3.0/infer-linux-x86_64-v1.3.0.tar.xz" | sudo tar -C /opt -xJ
+          sudo ln -s /opt/infer-linux-x86_64-v1.3.0/bin/infer /usr/local/bin/infer
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
@@ -162,7 +162,7 @@ jobs:
         run: |
           export DEBIAN_FRONTEND=noninteractive
           apt-get update
-          apt-get install -y --no-install-recommends software-properties-common ca-certificates gnupg
+          apt-get install -y --no-install-recommends software-properties-common ca-certificates gnupg make
           add-apt-repository -y ppa:ubuntu-toolchain-r/test
           apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial main"
           apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial universe"
@@ -319,6 +319,8 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
