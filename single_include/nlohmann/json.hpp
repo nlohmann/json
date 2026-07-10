@@ -189,6 +189,7 @@
 #include <unordered_map> // unordered_map
 #include <utility> // pair, declval
 #include <valarray> // valarray
+#include <vector> // vector
 
 // #include <nlohmann/detail/exceptions.hpp>
 //     __ _____ _____ _____
@@ -4321,6 +4322,14 @@ template<typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
     : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
 
+template<typename BasicJsonType, typename CompatibleArrayType>
+struct is_compatible_binary_type
+{
+    static constexpr bool value =
+        std::is_same<typename BasicJsonType::binary_t::container_type, CompatibleArrayType>::value &&
+        !std::is_same<typename BasicJsonType::binary_t::container_type, std::vector<std::uint8_t>>::value;
+};
+
 template<typename BasicJsonType, typename CompatibleReferenceType>
 struct is_compatible_reference_type_impl
 {
@@ -5464,6 +5473,7 @@ template < typename BasicJsonType, typename ConstructibleArrayType,
                !is_constructible_object_type<BasicJsonType, ConstructibleArrayType>::value&&
                !is_constructible_string_type<BasicJsonType, ConstructibleArrayType>::value&&
                !std::is_same<ConstructibleArrayType, typename BasicJsonType::binary_t>::value&&
+               !is_compatible_binary_type<BasicJsonType, ConstructibleArrayType>::value&&
                !is_basic_json<ConstructibleArrayType>::value,
                int > = 0 >
 auto from_json(const BasicJsonType& j, ConstructibleArrayType& arr)
@@ -5507,6 +5517,25 @@ inline void from_json(const BasicJsonType& j, typename BasicJsonType::binary_t& 
     }
 
     bin = *j.template get_ptr<const typename BasicJsonType::binary_t*>();
+}
+
+template < typename BasicJsonType, typename CompatibleArrayType,
+           enable_if_t < is_compatible_binary_type<BasicJsonType, CompatibleArrayType>::value,
+                         int > = 0 >
+inline void from_json(const BasicJsonType& j, CompatibleArrayType& bin)
+{
+    if (j.is_binary())
+    {
+        bin = static_cast<CompatibleArrayType>(*j.template get_ptr<const typename BasicJsonType::binary_t*>());
+    }
+    else if (j.is_array())
+    {
+        from_json_array_impl(j, bin, priority_tag<3> {});
+    }
+    else
+    {
+        JSON_THROW(type_error::create(302, concat("type must be binary or array, but is ", j.type_name()), &j));
+    }
 }
 
 template<typename BasicJsonType, typename ConstructibleObjectType,
@@ -6383,6 +6412,7 @@ template < typename BasicJsonType, typename CompatibleArrayType,
                          !is_compatible_object_type<BasicJsonType, CompatibleArrayType>::value&&
                          !is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value&&
                          !std::is_same<typename BasicJsonType::binary_t, CompatibleArrayType>::value&&
+                         !is_compatible_binary_type<BasicJsonType, CompatibleArrayType>::value&&
                          !is_basic_json<CompatibleArrayType>::value,
                          int > = 0 >
 inline void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
@@ -6394,6 +6424,14 @@ template<typename BasicJsonType>
 inline void to_json(BasicJsonType& j, const typename BasicJsonType::binary_t& bin)
 {
     external_constructor<value_t::binary>::construct(j, bin);
+}
+
+template < typename BasicJsonType, typename CompatibleArrayType,
+           enable_if_t < is_compatible_binary_type<BasicJsonType, CompatibleArrayType>::value,
+                         int > = 0 >
+inline void to_json(BasicJsonType& j, const CompatibleArrayType& bin)
+{
+    external_constructor<value_t::binary>::construct(j, typename BasicJsonType::binary_t(bin));
 }
 
 template<typename BasicJsonType, typename T,
