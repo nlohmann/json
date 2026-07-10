@@ -32,7 +32,8 @@ The exact mapping and its limitations are described on a [dedicated page](../../
     - a `FILE` pointer
     - a C-style array of characters
     - a pointer to a null-terminated string of single byte characters
-    - an object `obj` for which `begin(obj)` and `end(obj)` produces a valid pair of iterators.
+    - a container `obj` for which `begin(obj)` and `end(obj)` produce a valid pair of iterators
+      (as found via ADL or member functions, with semantics compatible to `std::begin` and `std::end`)
 
 `IteratorType`
 :   a compatible iterator type
@@ -111,6 +112,7 @@ Linear in the size of the input.
 - Changed to consume input adapters, removed `start_index` parameter, and added `strict` parameter in version 3.0.0.
 - Added `allow_exceptions` parameter in version 3.2.0.
 - Added `tag_handler` parameter in version 3.9.0.
+- Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
 
 !!! warning "Deprecation"
 
