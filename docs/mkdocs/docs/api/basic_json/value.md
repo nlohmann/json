@@ -17,6 +17,8 @@ ValueType value(const json_pointer& ptr,
                 const ValueType& default_value) const;
 ```
 
+This is equivalent to Python's `dict.get(key, default)`.
+
 1. Returns either a copy of an object's element at the specified key `key` or a given default value if no element with
    key `key` exists.
    
@@ -49,10 +51,6 @@ ValueType value(const json_pointer& ptr,
     - Unlike [`at`](at.md), this function does not throw if the given `key`/`ptr` was not found.
     - Unlike [`operator[]`](operator[].md), this function does not implicitly add an element to the position defined by
      `key`/`ptr` key. This function is furthermore also applicable to const objects.
-
-!!! note
-
-    This is equivalent to Python's `dict.get(key, default)`.
 
 ## Template parameters
 
