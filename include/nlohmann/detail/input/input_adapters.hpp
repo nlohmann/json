@@ -491,9 +491,20 @@ struct can_compare_ne_reversed < IteratorType, SentinelType,
            : std::true_type {};
 
 template<typename IteratorType, typename SentinelType>
-struct can_compare_ne : std::integral_constant < bool,
+struct can_compare_ne_either_order : std::integral_constant < bool,
     can_compare_ne_impl<IteratorType, SentinelType>::value ||
     can_compare_ne_reversed<IteratorType, SentinelType>::value > {};
+
+// std::nullptr_t is excluded explicitly: a literal `nullptr` passed as a
+// trailing default argument (e.g. parse(s, nullptr, ...)) must never be
+// mistaken for a sentinel, and some compilers (e.g. GCC 4.8) unreliably
+// SFINAE the `operator!=` detection above for std::nullptr_t against
+// container/string types, which would otherwise make such calls ambiguous
+// with the compatible-input overload.
+template<typename IteratorType, typename SentinelType>
+struct can_compare_ne : std::integral_constant < bool,
+    !std::is_same<SentinelType, std::nullptr_t>::value &&
+    can_compare_ne_either_order<IteratorType, SentinelType>::value > {};
 
 template<typename T>
 struct is_iterator_of_multibyte
@@ -520,19 +531,12 @@ struct iterator_input_adapter_factory<IteratorType, SentinelType, enable_if_t<is
     }
 };
 
-// General purpose iterator-based input (same-type iterators)
-template<typename IteratorType>
-typename iterator_input_adapter_factory<IteratorType, IteratorType>::adapter_type input_adapter(IteratorType first, IteratorType last)
-{
-    using factory_type = iterator_input_adapter_factory<IteratorType, IteratorType>;
-    return factory_type::create(first, last);
-}
-
-// General purpose iterator-based input (iterator+sentinel pair with different types)
-// Only enable for types that can be compared with !=
-template < typename IteratorType, typename SentinelType,
+// General purpose iterator-based input (iterator+sentinel pair; SentinelType
+// defaults to IteratorType for the common same-type case, but may differ for
+// C++20 ranges-style iterator+sentinel pairs). Only enable for types that can
+// be compared with !=.
+template < typename IteratorType, typename SentinelType = IteratorType,
            typename = typename std::enable_if <
-               !std::is_same<IteratorType, SentinelType>::value &&
                can_compare_ne<IteratorType, SentinelType>::value >::type >
 typename iterator_input_adapter_factory<IteratorType, SentinelType>::adapter_type input_adapter(IteratorType first, SentinelType last)
 {

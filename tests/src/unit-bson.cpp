@@ -1210,21 +1210,15 @@ TEST_CASE("BSON numerical data")
 
 TEST_CASE("Parse BSON directly from a file using iterator and sentinel")
 {
-    const json j = {{"key", "value"}, {"number", 42}};
-    std::vector<std::uint8_t> bson_bytes;
-    json::to_bson(j, bson_bytes);
+    std::string const filename = TEST_DATA_DIRECTORY "/json.org/1.json";
 
-    {
-        std::ofstream file("test_bson_sentinel.bson", std::ios::binary);
-        file.write(reinterpret_cast<const char*>(bson_bytes.data()), static_cast<std::streamsize>(bson_bytes.size()));
-    }
+    std::ifstream f_json(filename);
+    const json expected = json::parse(f_json);
 
-    std::ifstream file("test_bson_sentinel.bson", std::ios::binary);
+    std::ifstream file(filename + ".bson", std::ios::binary);
     std::istreambuf_iterator<char> first(file);
     const json parsed = json::from_bson(first, utils::istreambuf_sentinel{});
-    CHECK(parsed == j);
-
-    static_cast<void>(std::remove("test_bson_sentinel.bson"));
+    CHECK(parsed == expected);
 }
 
 TEST_CASE("BSON roundtrips" * doctest::skip())
