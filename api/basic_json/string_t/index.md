@@ -16,6 +16,13 @@ To store strings in C++, a type is defined by the template parameter described b
 
 `StringType` : the container to store strings (e.g., `std::string`). Note this container is used for keys/names in objects, see [object_t](https://json.nlohmann.me/api/basic_json/object_t/index.md).
 
+```
+`StringType` must have a `char`-compatible `value_type`: the library relies on UTF-8/`char`-based storage and
+processing internally, so `std::wstring`, `std::u16string`, and `std::u32string` are **not** valid choices for
+`StringType`. To work with wide-character data, convert it to/from UTF-8 at the boundary instead -- see the
+FAQ's [wide string handling](https://json.nlohmann.me/home/faq/#wide-string-handling) section for a conversion recipe.
+```
+
 ## Notes
 
 #### Default type

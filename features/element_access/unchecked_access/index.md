@@ -92,6 +92,18 @@ Exceptions
 
 `operator[]` can only be used with objects (with a string argument) or with arrays (with a numeric argument). For other types, a [`basic_json::type_error`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error305) is thrown.
 
+## Performance: reserving array capacity
+
+There is no public `reserve(count)` member on `basic_json` for pre-allocating array capacity. If you are building a large array incrementally (e.g., via repeated `push_back()`) and know its final size ahead of time, you can reserve capacity via `get_ref()` to access the underlying `array_t` directly:
+
+```
+json j = json::array();
+j.get_ref<json::array_t&>().reserve(1000);
+for (int i = 0; i < 1000; ++i) {
+    j.push_back(i);
+}
+```
+
 ## Summary
 
 | scenario                          | non-const value                                                                                                                        | const value                                                                                                      |

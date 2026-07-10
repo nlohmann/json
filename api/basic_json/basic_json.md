@@ -115,7 +115,22 @@ basic_json(basic_json&& other) noexcept;
    
     Function [`array()`](array.md) and [`object()`](object.md) force array and object creation from initializer lists,
     respectively.
-        
+
+    !!! warning "Brace initialization yields arrays"
+
+        Because this constructor takes an `initializer_list_t`, brace-initializing a `json`/`ordered_json` from
+        another `json` value wraps it in a single-element array rather than copying it:
+
+        ```cpp
+        json j1 = "hello";
+        json j2{j1};   // [!] j2 is ["hello"], NOT a copy of j1
+        json j3(j1);   // j3 is "hello" -- parentheses copy as expected
+        ```
+
+        See the FAQ entry on [brace initialization](../../home/faq.md#brace-initialization-yields-arrays) for the
+        full explanation, an opt-in macro to change this behavior, and how to explicitly create a single-element
+        array (`json::array({value})`) if that is what you want.
+
 6. Constructs a JSON array value by creating `cnt` copies of a passed value. In case `cnt` is `0`, an empty array is
    created.
 

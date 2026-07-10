@@ -11,7 +11,7 @@ This library does not support comments *by default*. It does so for three reason
 
 3. It is dangerous for interoperability if some libraries add comment support while others do not. Please check [The Harmful Consequences of the Robustness Principle](https://tools.ietf.org/html/draft-iab-protocol-maintenance-01) on this.
 
-However, you can set parameter `ignore_comments` to `#!cpp true` in the [`parse`](../api/basic_json/parse.md) function to ignore `//` or `/* */` comments. Comments will then be treated as whitespace.
+However, you can set parameter `ignore_comments` to `#!cpp true` in the [`parse`](../api/basic_json/parse.md) function to ignore `//` or `/* */` comments. Comments will then be treated as whitespace. Combined with `ignore_trailing_commas` (also a `parse` parameter), this covers what is commonly referred to as **JSONC** (JSON with Comments, as used e.g. by Visual Studio Code's `.jsonc` files) -- comments and trailing commas, nothing more. This is a different, smaller extension than [JSON5](https://json5.org), which additionally allows unquoted keys, single-quoted strings, and other syntax changes that this library does not support.
 
 For more information, see [JSON With Commas and Comments (JWCC)](https://nigeltao.github.io/blog/2021/json-with-commas-comments.html).
 

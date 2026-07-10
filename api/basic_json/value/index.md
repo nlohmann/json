@@ -17,6 +17,8 @@ ValueType value(const json_pointer& ptr,
                 const ValueType& default_value) const;
 ```
 
+This is equivalent to Python's `dict.get(key, default)`.
+
 1. Returns either a copy of an object's element at the specified key `key` or a given default value if no element with key `key` exists.
 
    The function is basically equivalent to executing

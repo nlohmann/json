@@ -58,6 +58,14 @@ table describes the values of the parameters `depth`, `event`, and `parsed`.
     | `array_end`    | 1     | `#!json [52.519444,13.406667]` |
     | `object_end`   | 0     | `#!json {"location":[52.519444,13.406667],"name":"Berlin"}` |
 
+!!! note "No built-in nesting depth limit"
+
+    The library has no built-in limit on recursion/nesting depth while parsing. A parser callback can only
+    *discard* content it has already parsed (by returning `#!c false`); it cannot make parsing fail once a
+    nesting limit is exceeded partway through reading a deeply nested value. If you need to reject over-deep
+    untrusted input outright, track `depth` in a callback and `throw` from it once your limit is exceeded (a
+    thrown exception propagates out of `parse()` as usual).
+
 ## Return value
 
 Discarding a value (i.e., returning `#!c false`) has different effects depending on the context in which the function
@@ -112,3 +120,51 @@ This approach has two limitations:
 
 For strict validation with precise error positions, implementing a [SAX interface](sax_interface.md) instead gives
 access to the parser's position information directly.
+
+## Recipe: streaming a large homogeneous array
+
+A common use case is a huge top-level array of many similarly-shaped objects, too large to hold entirely in
+memory as a `#!c json` value. A parser callback can hand off each completed element to a user function and then
+discard it, so memory usage stays bounded by a single element (plus the not-yet-parsed tail of the input) rather
+than the whole document. Since the top-level array's `array_start`/`array_end` are reported at `depth == 0` (its
+parent is the document root), the object elements it contains are reported at `depth == 1`:
+
+??? example
+
+    ```cpp
+    std::ifstream input("large_array.json");
+
+    auto callback = [](int depth, json::parse_event_t event, json& parsed) -> bool {
+        if (depth == 1 && event == json::parse_event_t::object_end) {
+            handle_element(parsed); // process the element, e.g. write it elsewhere
+            return false;           // discard it -- frees its memory before the next one is parsed
+        }
+        return true; // keep everything else, including the (by then empty) top-level array
+    };
+
+    json::parse(input, callback);
+    ```
+
+If the array's elements are scalars or nested arrays instead of objects, check for `parse_event_t::value` or
+`parse_event_t::array_end` at `depth == 1` instead. The same approach works for a top-level *object* of many
+homogeneous values by checking `object_end`/`value` events at `depth == 1` there too.
+
+## Recipe: max nesting depth via a callback
+
+Since there is no built-in nesting-depth limit (see the note above), a callback can enforce one manually by
+tracking the maximum `depth` seen and throwing once it is exceeded:
+
+??? example
+
+    ```cpp
+    constexpr int max_depth = 32;
+
+    auto callback = [](int depth, json::parse_event_t /*event*/, json& /*parsed*/) -> bool {
+        if (depth > max_depth) {
+            throw std::runtime_error("maximum nesting depth exceeded");
+        }
+        return true;
+    };
+
+    json::parse(input, callback);
+    ```

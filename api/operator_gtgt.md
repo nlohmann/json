@@ -33,6 +33,18 @@ A UTF-8 byte order mark is silently ignored.
 Invalid Unicode escapes and unpaired surrogates in the input are reported as
 [`parse_error.101`](../home/exceptions.md#jsonexceptionparse_error101) with a detailed message.
 
+`operator>>` parses exactly one JSON value and leaves the stream positioned right after it, so it can be called
+repeatedly to read a sequence of concatenated JSON values from the same stream:
+
+```cpp
+json j1, j2;
+input >> j1;  // parses the first value, stream now positioned right after it
+input >> j2;  // parses the next value
+```
+
+Note this does **not** work for [JSON Lines](../features/parsing/json_lines.md) (newline-delimited JSON) input --
+see that page for why and for the recommended alternative.
+
 !!! warning "Deprecation"
 
     This function replaces function `#!cpp std::istream& operator<<(basic_json& j, std::istream& i)` which has

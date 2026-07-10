@@ -88,6 +88,18 @@ basic_json(basic_json&& other) noexcept;
 
    Function [`array()`](https://json.nlohmann.me/api/basic_json/array/index.md) and [`object()`](https://json.nlohmann.me/api/basic_json/object/index.md) force array and object creation from initializer lists, respectively.
 
+   Brace initialization yields arrays
+
+   Because this constructor takes an `initializer_list_t`, brace-initializing a `json`/`ordered_json` from another `json` value wraps it in a single-element array rather than copying it:
+
+   ```
+   json j1 = "hello";
+   json j2{j1};   // [!] j2 is ["hello"], NOT a copy of j1
+   json j3(j1);   // j3 is "hello" -- parentheses copy as expected
+   ```
+
+   See the FAQ entry on [brace initialization](https://json.nlohmann.me/home/faq/#brace-initialization-yields-arrays) for the full explanation, an opt-in macro to change this behavior, and how to explicitly create a single-element array (`json::array({value})`) if that is what you want.
+
 1. Constructs a JSON array value by creating `cnt` copies of a passed value. In case `cnt` is `0`, an empty array is created.
 
 1. Constructs the JSON value with the contents of the range `[first, last)`. The semantics depend on the different types a JSON value can have:

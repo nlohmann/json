@@ -4,7 +4,8 @@
 
 In many situations, such as configuration files, missing values are not exceptional, but may be treated as if a default
 value was present. For this case, use [`value(key, default_value)`](../../api/basic_json/value.md) which takes the key
-you want to access and a default value in case there is no value stored with that key.
+you want to access and a default value in case there is no value stored with that key. This is equivalent to Python's
+`dict.get(key, default)`.
 
 ## Example
 

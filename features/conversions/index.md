@@ -138,6 +138,37 @@ auto opt = j_null.get<std::optional<std::string>>();  // ✅ std::nullopt
 j_null.get_to(opt);                                     // ✅ std::nullopt
 ```
 
+`static_cast` and `get<std::optional<T>>()` are not guaranteed equivalent
+
+`operator ValueType()` (used by `static_cast` and implicit conversions) intentionally excludes `std::optional<T>` from delegating to `get<T>()`, to avoid a constructor ambiguity with `std::optional<T>`'s own converting constructor from `basic_json`. As a result, `static_cast<std::optional<T>>(json_value)` goes through `std::optional<T>`'s own converting constructor rather than through `get<std::optional<T>>()`, which can behave differently -- for example, with a custom `adl_serializer<std::optional<T>>` specialization. Prefer `get<std::optional<T>>()`/`get_to()` over `static_cast` for optional types.
+
+Converting to a fixed-size `std::array` does not check length
+
+Converting a JSON array to `std::array<T, N>` does not check that the JSON array's size matches `N`: if the JSON array is longer, the extra elements are silently dropped; if it is shorter, the remaining `std::array` elements are left default-constructed. No exception is thrown in either case.
+
+```
+json j = {1, 2, 3, 4, 5};
+auto a = j.get<std::array<int, 3>>();  // {1, 2, 3} -- elements 4 and 5 silently dropped
+```
+
+## Omitting a field when serializing `std::optional`
+
+By default, `to_json` for `std::optional<T>` writes either the value or `null` -- there is no built-in way to make a field disappear from the serialized object entirely when the `std::optional` is `std::nullopt`. Because a specialization of `adl_serializer<std::optional<T>>` only controls how the *value* is converted (it cannot prevent the containing object's `to_json` from inserting the key in the first place), omission has to be implemented in the *containing* type's `to_json`:
+
+```
+struct person {
+    std::string name;
+    std::optional<int> age;
+};
+
+void to_json(json& j, const person& p) {
+    j = json{{"name", p.name}};
+    if (p.age) {
+        j["age"] = *p.age;  // key is only inserted when the optional has a value
+    }
+}
+```
+
 ## Putting values in
 
 The reverse direction works the same way: assigning or constructing a `json` from a C++ value converts it to JSON.

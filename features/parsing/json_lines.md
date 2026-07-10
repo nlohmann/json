@@ -47,3 +47,6 @@ JSON Lines input with more than one value is treated as invalid JSON by the [`pa
     ```
     
     with a JSON Lines input does not work, because the parser will try to parse one value after the last one.
+
+    This is different from parsing a stream of *concatenated* (non-newline-delimited) JSON values, for which
+    `operator>>` does work -- see its [notes](../../api/operator_gtgt.md#notes) for details.

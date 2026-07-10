@@ -44,6 +44,14 @@ for (auto& [key, val] : j_object.items())
 }
 ```
 
+If you need to name the type of the dereferenced element explicitly (e.g., to write a standalone function that takes it as a parameter, or to use `items()` with `std::for_each`), use `decltype`:
+
+```
+using element_type = decltype(*j_object.items().begin());
+```
+
+The per-element type (`iteration_proxy_value`) lives in the library's internal `detail` namespace and is intentionally unspecified as a stable, named type -- `decltype` is the supported way to obtain it, but its exact name/definition may change between versions.
+
 ## Return value
 
 iteration proxy object wrapping the current value with an interface to use in range-based for loops

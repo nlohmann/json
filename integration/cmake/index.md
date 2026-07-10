@@ -175,3 +175,14 @@ Execute the test suite with [Valgrind](https://valgrind.org). This option is `OF
 ### `NLOHMANN_JSON_BUILD_MODULES`
 
 Build the experimental [C++ module](https://json.nlohmann.me/features/modules/index.md) `nlohmann.json` (requires CMake 3.28 or later and C++20). This option is `OFF` by default.
+
+A consuming project must link the dedicated `nlohmann_json_modules` CMake target (not just `nlohmann_json::nlohmann_json`) for `import nlohmann.json;` to resolve:
+
+```
+set(NLOHMANN_JSON_BUILD_MODULES ON)
+add_subdirectory(path/to/json)
+
+add_executable(myproject main.cpp)
+target_link_libraries(myproject PRIVATE nlohmann_json_modules)
+target_compile_definitions(myproject PRIVATE NLOHMANN_JSON_BUILD_MODULES)
+```

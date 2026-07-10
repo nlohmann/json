@@ -28,6 +28,16 @@ The default representation of this binary format is a `std::vector<std::uint8_t>
 
 `BinaryType` : container type to store arrays
 
+```
+Although not formally expressed as a C++ concept, `BinaryType` must be default-constructible,
+copy/move-constructible, and support `push_back()`, `.data()`, and `.size()`, because
+[`byte_container_with_subtype`](https://json.nlohmann.me/api/byte_container_with_subtype/index.md) derives directly from it. Its
+`value_type` must additionally be exactly one byte wide (e.g., `std::uint8_t`/`char`/`std::byte`): the binary
+serializers (CBOR, MessagePack, BSON, UBJSON) read and write the container's raw bytes via
+`reinterpret_cast`, which is only correct for byte-sized elements -- a container like
+`std::vector<std::intptr_t>` will not work as `BinaryType`.
+```
+
 ## Notes
 
 #### Default type

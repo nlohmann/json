@@ -150,6 +150,16 @@ In this class, the object's limit of nesting is not explicitly constrained. Howe
 
 Objects are stored as pointers in a `basic_json` type. That is, for any access to object values, a pointer of type `object_t*` must be dereferenced.
 
+### Converting maps with non-string keys
+
+A `std::map`/`std::unordered_map` whose key type is not string-like (e.g., `std::map<int, std::string>`) is converted to a JSON *array* of 2-element `[key, value]` arrays rather than a JSON object, because JSON object keys must be strings:
+
+```
+std::map<int, std::string> m{{1, "one"}, {2, "two"}};
+json j = m;
+// j is [[1,"one"],[2,"two"]], not {"1":"one","2":"two"}
+```
+
 ## Arrays
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) describes JSON arrays as follows:

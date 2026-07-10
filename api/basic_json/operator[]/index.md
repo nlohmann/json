@@ -99,6 +99,10 @@ The following cases apply to the **const** overloads; the non-const overloads in
    - If the JSON pointer points to an array index that does not exist, it is created and filled with a `null` value before a reference to it is returned. All indices between the current maximum and the given index are also filled with `null`.
    - The special value `-` is treated as a synonym for the index past the end.
 
+   Creating intermediate levels that don't exist yet
+
+   When the JSON pointer traverses intermediate levels that don't exist at all yet (not just a missing leaf), each missing level is created as an array or an object depending on whether the corresponding pointer token parses as a non-negative integer: a numeric token creates an array, a non-numeric token creates an object. For example, on an initially `null` value, `/foo/0/0/0` creates nested arrays, while `/foo/one/one/one` creates nested objects. This is not specified by the JSON Pointer RFC; it is this library's own, intentional disambiguation rule. See also [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md).
+
 ## Examples
 
 Example: (1) access specified array element
