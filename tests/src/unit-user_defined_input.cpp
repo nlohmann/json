@@ -173,13 +173,10 @@ struct CustomSentinel
 {
     const char* end_ptr;
 
-    // Support both directions for != comparison
+    // only the iterator-first direction (it != sentinel) is ever evaluated by
+    // the library's parse loop; a reversed-order overload would go unused and
+    // trip -Wunneeded-internal-declaration under -Weverything
     friend bool operator!=(const char* it, const CustomSentinel& sentinel)
-    {
-        return it != sentinel.end_ptr;
-    }
-
-    friend bool operator!=(const CustomSentinel& sentinel, const char* it)
     {
         return it != sentinel.end_ptr;
     }
