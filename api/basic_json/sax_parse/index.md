@@ -11,8 +11,8 @@ static bool sax_parse(InputType&& i,
                       const bool ignore_trailing_commas = false);
 
 // (2)
-template<class IteratorType, class SAX>
-static bool sax_parse(IteratorType first, IteratorType last,
+template<class IteratorType, class SAX, class SentinelType = IteratorType>
+static bool sax_parse(IteratorType first, SentinelType last,
                       SAX* sax,
                       input_format_t format = input_format_t::json,
                       const bool strict = true,
@@ -24,9 +24,9 @@ Read from input and generate SAX events
 
 1. Read from a compatible input.
 
-1. Read from a pair of character iterators
+1. Read from a pair of character iterators, or an iterator and a sentinel of a different type (C++20 ranges support)
 
-   The value_type of the iterator must be an integral type with a size of 1, 2, or 4 bytes, which will be interpreted respectively as UTF-8, UTF-16, and UTF-32.
+   The value_type of the iterator must be an integral type with a size of 1, 2, or 4 bytes, which will be interpreted respectively as UTF-8, UTF-16, and UTF-32. If `SentinelType` differs from `IteratorType`, it must be comparable to the iterator type with `operator!=`.
 
 The SAX event lister must follow the interface of [`json_sax`](https://json.nlohmann.me/api/json_sax/index.md).
 
@@ -44,6 +44,8 @@ The SAX event lister must follow the interface of [`json_sax`](https://json.nloh
 ```
 
 `IteratorType` : a compatible iterator type for overload (2); a pair of character iterators whose `value_type` is an integral type with a size of 1, 2, or 4 bytes (interpreted respectively as UTF-8, UTF-16, and UTF-32)
+
+`SentinelType` : defaults to `IteratorType`; may be a different type comparable to `IteratorType` via `operator!=`, for overload (2)
 
 `SAX` : a class fulfilling the SAX event listener interface; see [`json_sax`](https://json.nlohmann.me/api/json_sax/index.md)
 
@@ -63,7 +65,7 @@ The SAX event lister must follow the interface of [`json_sax`](https://json.nloh
 
 `first` (in) : iterator to the start of a character range
 
-`last` (in) : iterator to the end of a character range
+`last` (in) : iterator to the end of a character range, or a sentinel value that compares equal to the end iterator with `operator!=`
 
 ## Return value
 
@@ -278,6 +280,7 @@ result: false
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
 - Added `ignore_trailing_commas` in version 3.13.0.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
+- Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
 
 Deprecation
 

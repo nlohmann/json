@@ -9,8 +9,8 @@ static basic_json from_cbor(InputType&& i,
                             const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error);
 
 // (2)
-template<typename IteratorType>
-static basic_json from_cbor(IteratorType first, IteratorType last,
+template<typename IteratorType, typename SentinelType = IteratorType>
+static basic_json from_cbor(IteratorType first, SentinelType last,
                             const bool strict = true,
                             const bool allow_exceptions = true,
                             const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error);
@@ -19,7 +19,7 @@ static basic_json from_cbor(IteratorType first, IteratorType last,
 Deserializes a given input to a JSON value using the CBOR (Concise Binary Object Representation) serialization format.
 
 1. Reads from a compatible input.
-1. Reads from an iterator range.
+1. Reads from an iterator range, or an iterator and a sentinel of a different type (C++20 ranges support).
 
 The exact mapping and its limitations are described on a [dedicated page](https://json.nlohmann.me/features/binary_formats/cbor/index.md).
 
@@ -38,13 +38,15 @@ The exact mapping and its limitations are described on a [dedicated page](https:
 
 `IteratorType` : a compatible iterator type
 
+`SentinelType` : defaults to `IteratorType`; may be a different type comparable to `IteratorType` via `operator!=`, for instance a custom sentinel type for C++20 ranges
+
 ## Parameters
 
 `i` (in) : an input in CBOR format convertible to an input adapter
 
 `first` (in) : iterator to the start of the input
 
-`last` (in) : iterator to the end of the input
+`last` (in) : iterator to the end of the input, or a sentinel value that compares equal to the end iterator with `operator!=`
 
 `strict` (in) : whether to expect the input to be consumed until EOF (`true` by default)
 
@@ -124,6 +126,7 @@ Output:
 - Added `allow_exceptions` parameter in version 3.2.0.
 - Added `tag_handler` parameter in version 3.9.0.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
+- Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
 
 Deprecation
 
