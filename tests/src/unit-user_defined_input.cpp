@@ -220,12 +220,12 @@ TEST_CASE("Parse with std::counted_iterator and std::default_sentinel_t")
     const std::string json_str = R"({"key":"value","array":[1,2,3]})";
     const auto len = static_cast<std::iter_difference_t<iterator_type>>(json_str.size());
 
-    std::counted_iterator<iterator_type> first(json_str.begin(), len);
+    const std::counted_iterator<iterator_type> first(json_str.begin(), len);
     const json j = json::parse(first, std::default_sentinel);
     CHECK(j["key"] == "value");
     CHECK(j["array"].size() == 3);
 
-    std::counted_iterator<iterator_type> first2(json_str.begin(), len);
+    const std::counted_iterator<iterator_type> first2(json_str.begin(), len);
     CHECK(json::accept(first2, std::default_sentinel));
 }
 #endif
