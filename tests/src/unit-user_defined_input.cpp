@@ -216,15 +216,16 @@ TEST_CASE("Parse with heterogeneous iterator and sentinel types")
 // JSON_HAS_CPP_20 (do not remove; see note at top of file)
 TEST_CASE("Parse with std::counted_iterator and std::default_sentinel_t")
 {
+    using iterator_type = std::string::const_iterator;
     const std::string json_str = R"({"key":"value","array":[1,2,3]})";
-    const auto len = static_cast<std::iter_difference_t<std::string::const_iterator>>(json_str.size());
+    const auto len = static_cast<std::iter_difference_t<iterator_type>>(json_str.size());
 
-    std::counted_iterator first(json_str.begin(), len);
+    std::counted_iterator<iterator_type> first(json_str.begin(), len);
     const json j = json::parse(first, std::default_sentinel);
     CHECK(j["key"] == "value");
     CHECK(j["array"].size() == 3);
 
-    std::counted_iterator first2(json_str.begin(), len);
+    std::counted_iterator<iterator_type> first2(json_str.begin(), len);
     CHECK(json::accept(first2, std::default_sentinel));
 }
 #endif
