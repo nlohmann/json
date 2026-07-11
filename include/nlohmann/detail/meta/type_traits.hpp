@@ -13,6 +13,7 @@
 #include <tuple> // tuple
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
+#include <vector> // vector
 #if defined(__cpp_lib_byte) && __cpp_lib_byte >= 201603L
     #include <cstddef> // byte
 #endif
@@ -631,6 +632,14 @@ struct is_compatible_type_impl <
 template<typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
     : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
+
+template<typename BasicJsonType, typename CompatibleArrayType>
+struct is_compatible_binary_type
+{
+    static constexpr bool value =
+        std::is_same<typename BasicJsonType::binary_t::container_type, CompatibleArrayType>::value &&
+        !std::is_same<typename BasicJsonType::binary_t::container_type, std::vector<std::uint8_t>>::value;
+};
 
 template<typename BasicJsonType, typename CompatibleReferenceType>
 struct is_compatible_reference_type_impl

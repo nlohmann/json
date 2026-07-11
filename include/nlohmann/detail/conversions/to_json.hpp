@@ -377,6 +377,7 @@ template < typename BasicJsonType, typename CompatibleArrayType,
                          !is_compatible_object_type<BasicJsonType, CompatibleArrayType>::value&&
                          !is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value&&
                          !std::is_same<typename BasicJsonType::binary_t, CompatibleArrayType>::value&&
+                         !is_compatible_binary_type<BasicJsonType, CompatibleArrayType>::value&&
                          !is_basic_json<CompatibleArrayType>::value
 #if JSON_HAS_RANGES && !defined(__MINGW32__)
     && !is_compatible_range_view<CompatibleArrayType>::value
@@ -404,6 +405,14 @@ template<typename BasicJsonType>
 inline void to_json(BasicJsonType& j, const typename BasicJsonType::binary_t& bin)
 {
     external_constructor<value_t::binary>::construct(j, bin);
+}
+
+template < typename BasicJsonType, typename CompatibleArrayType,
+           enable_if_t < is_compatible_binary_type<BasicJsonType, CompatibleArrayType>::value,
+                         int > = 0 >
+inline void to_json(BasicJsonType& j, const CompatibleArrayType& bin)
+{
+    external_constructor<value_t::binary>::construct(j, typename BasicJsonType::binary_t(bin));
 }
 
 template<typename BasicJsonType, typename T,
