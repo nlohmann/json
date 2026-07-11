@@ -635,9 +635,10 @@ void templated_json_throw(ExceptionType exception)
 
 #define NLOHMANN_JSON_DEFINE_TYPE_INTRUSIVE_1(Type)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type&) { nlohmann_json_j = BasicJsonType::object(); }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void from_json(const BasicJsonType&, Type&) { })
+    /* NOLINTNEXTLINE(bugprone-macro-parentheses) Type is used as a declarator type, not in an expression */ \
+    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void from_json(const BasicJsonType&, Type&) noexcept { })
 
-#define NLOHMANN_DEFINE_TYPE_INTRUSIVE(...) NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_TYPE_INTRUSIVE_, NLOHMANN_JSON_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__)
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_TYPE_INTRUSIVE_, NLOHMANN_JSON_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__))
 
 #define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_NAMES(Type, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) }) \
@@ -655,9 +656,10 @@ void templated_json_throw(ExceptionType exception)
 
 #define NLOHMANN_JSON_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT_1(Type)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type&) { nlohmann_json_j = BasicJsonType::object(); }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void from_json(const BasicJsonType&, Type&) { })
+    /* NOLINTNEXTLINE(bugprone-macro-parentheses) Type is used as a declarator type, not in an expression */ \
+    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void from_json(const BasicJsonType&, Type&) noexcept { })
 
-#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(...) NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT_, NLOHMANN_JSON_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__)
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT_, NLOHMANN_JSON_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__))
 
 #define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES(Type, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) }) \
@@ -675,7 +677,7 @@ void templated_json_throw(ExceptionType exception)
 #define NLOHMANN_JSON_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE_1(Type)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type&) { nlohmann_json_j = BasicJsonType::object(); })
 
-#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(...) NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE_, NLOHMANN_JSON_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__)
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE_, NLOHMANN_JSON_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__))
 
 #define NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES(Type, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) })
@@ -692,9 +694,10 @@ void templated_json_throw(ExceptionType exception)
 
 #define NLOHMANN_JSON_DEFINE_TYPE_NON_INTRUSIVE_1(Type)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type&) { nlohmann_json_j = BasicJsonType::object(); }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void from_json(const BasicJsonType&, Type&) { })
+    /* NOLINTNEXTLINE(bugprone-macro-parentheses) Type is used as a declarator type, not in an expression */ \
+    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void from_json(const BasicJsonType&, Type&) noexcept { })
 
-#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(...) NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_TYPE_NON_INTRUSIVE_, NLOHMANN_JSON_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__)
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_TYPE_NON_INTRUSIVE_, NLOHMANN_JSON_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__))
 
 #define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES(Type, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) }) \
@@ -712,9 +715,10 @@ void templated_json_throw(ExceptionType exception)
 
 #define NLOHMANN_JSON_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_1(Type)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type&) { nlohmann_json_j = BasicJsonType::object(); }) \
-    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void from_json(const BasicJsonType&, Type&) { })
+    /* NOLINTNEXTLINE(bugprone-macro-parentheses) Type is used as a declarator type, not in an expression */ \
+    NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void from_json(const BasicJsonType&, Type&) noexcept { })
 
-#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(...) NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_, NLOHMANN_JSON_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__)
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_, NLOHMANN_JSON_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__))
 
 #define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES(Type, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) }) \
@@ -732,7 +736,7 @@ void templated_json_throw(ExceptionType exception)
 #define NLOHMANN_JSON_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_1(Type)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type&) { nlohmann_json_j = BasicJsonType::object(); })
 
-#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(...) NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_, NLOHMANN_JSON_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__)
+#define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_, NLOHMANN_JSON_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__))
 
 #define NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES(Type, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) })
@@ -749,9 +753,10 @@ void templated_json_throw(ExceptionType exception)
 
 #define NLOHMANN_JSON_DEFINE_DERIVED_TYPE_INTRUSIVE_2(Type, BaseType)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); }) \
+    /* NOLINTNEXTLINE(bugprone-macro-parentheses) Type/BaseType are used as declarator types, not in expressions */ \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); })
 
-#define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(...) NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_DERIVED_TYPE_INTRUSIVE_, NLOHMANN_JSON_DERIVED_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__)
+#define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_DERIVED_TYPE_INTRUSIVE_, NLOHMANN_JSON_DERIVED_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__))
 
 #define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_NAMES(Type, BaseType, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) }) \
@@ -769,9 +774,10 @@ void templated_json_throw(ExceptionType exception)
 
 #define NLOHMANN_JSON_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT_2(Type, BaseType)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType&>(nlohmann_json_t)); }) \
+    /* NOLINTNEXTLINE(bugprone-macro-parentheses) Type/BaseType are used as declarator types, not in expressions */ \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); })
 
-#define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT(...) NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT_, NLOHMANN_JSON_DERIVED_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__)
+#define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT_, NLOHMANN_JSON_DERIVED_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__))
 
 #define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES(Type, BaseType, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType&>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) }) \
@@ -789,7 +795,7 @@ void templated_json_throw(ExceptionType exception)
 #define NLOHMANN_JSON_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE_2(Type, BaseType)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); })
 
-#define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE(...) NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE_, NLOHMANN_JSON_DERIVED_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__)
+#define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE_, NLOHMANN_JSON_DERIVED_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__))
 
 #define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES(Type, BaseType, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(friend void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) })
@@ -807,9 +813,10 @@ void templated_json_throw(ExceptionType exception)
 
 #define NLOHMANN_JSON_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_2(Type, BaseType)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); }) \
+    /* NOLINTNEXTLINE(bugprone-macro-parentheses) Type/BaseType are used as declarator types, not in expressions */ \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); })
 
-#define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(...) NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_, NLOHMANN_JSON_DERIVED_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__)
+#define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_, NLOHMANN_JSON_DERIVED_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__))
 
 #define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_NAMES(Type, BaseType, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) }) \
@@ -827,9 +834,10 @@ void templated_json_throw(ExceptionType exception)
 
 #define NLOHMANN_JSON_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT_2(Type, BaseType)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); }) \
+    /* NOLINTNEXTLINE(bugprone-macro-parentheses) Type/BaseType are used as declarator types, not in expressions */ \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void from_json(const BasicJsonType& nlohmann_json_j, Type& nlohmann_json_t) { nlohmann::from_json(nlohmann_json_j, static_cast<BaseType&>(nlohmann_json_t)); })
 
-#define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT(...) NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT_, NLOHMANN_JSON_DERIVED_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__)
+#define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT_, NLOHMANN_JSON_DERIVED_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__))
 
 #define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES(Type, BaseType, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) }) \
@@ -847,7 +855,7 @@ void templated_json_throw(ExceptionType exception)
 #define NLOHMANN_JSON_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_2(Type, BaseType)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); })
 
-#define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(...) NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_, NLOHMANN_JSON_DERIVED_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__)
+#define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_CAT(NLOHMANN_JSON_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_, NLOHMANN_JSON_DERIVED_TYPE_TAG(__VA_ARGS__))(__VA_ARGS__))
 
 #define NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES(Type, BaseType, ...)  \
     NLOHMANN_JSON_BASIC_TYPE_TEMPLATE(void to_json(BasicJsonType& nlohmann_json_j, const Type& nlohmann_json_t) { nlohmann::to_json(nlohmann_json_j, static_cast<const BaseType &>(nlohmann_json_t)); NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_DOUBLE_PASTE(NLOHMANN_JSON_TO_WITH_NAME, __VA_ARGS__)) })
