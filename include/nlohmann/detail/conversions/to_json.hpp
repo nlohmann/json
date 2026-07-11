@@ -177,8 +177,11 @@ struct external_constructor<value_t::array>
     }
 
     template < typename BasicJsonType, typename CompatibleArrayType,
-               enable_if_t < !std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value,
-                             int > = 0 >
+               enable_if_t < !std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+                             && !is_compatible_range_view<CompatibleArrayType>::value
+#endif
+                             , int > = 0 >
     static void construct(BasicJsonType& j, const CompatibleArrayType& arr)
     {
         using std::begin;
@@ -218,6 +221,25 @@ struct external_constructor<value_t::array>
         j.set_parents();
         j.assert_invariant();
     }
+
+    // std::ranges does not work properly on MinGW due to incomplete C++20 support
+    // see https://github.com/nlohmann/json/issues/4916
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+    template<typename BasicJsonType, typename CompatibleArrayType,
+             enable_if_t<is_compatible_range_view<std::remove_cvref_t<CompatibleArrayType>>::value, int> = 0>
+    static void construct(BasicJsonType& j, CompatibleArrayType && arr)
+    {
+        j.m_data.m_value.destroy(j.m_data.m_type);
+        j.m_data.m_type = value_t::array;
+        j.m_data.m_value = value_t::array;
+        for (auto&& x : std::forward<CompatibleArrayType>(arr))
+        {
+            j.m_data.m_value.array->push_back(x);
+            j.set_parent(j.m_data.m_value.array->back());
+        }
+        j.assert_invariant();
+    }
+#endif
 };
 
 template<>
@@ -355,17 +377,42 @@ template < typename BasicJsonType, typename CompatibleArrayType,
                          !is_compatible_object_type<BasicJsonType, CompatibleArrayType>::value&&
                          !is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value&&
                          !std::is_same<typename BasicJsonType::binary_t, CompatibleArrayType>::value&&
-                         !is_basic_json<CompatibleArrayType>::value,
+                         !is_compatible_binary_type<BasicJsonType, CompatibleArrayType>::value&&
+                         !is_basic_json<CompatibleArrayType>::value
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+    && !is_compatible_range_view<CompatibleArrayType>::value
+#endif
+                         ,
                          int > = 0 >
 inline void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 {
     external_constructor<value_t::array>::construct(j, arr);
 }
 
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+template < typename BasicJsonType, typename T,
+           enable_if_t < is_compatible_range_view<std::remove_cvref_t<T>>::value
+                         && !is_compatible_string_type<BasicJsonType, std::remove_cvref_t<T>>::value
+                         && !is_compatible_object_type<BasicJsonType, std::remove_cvref_t<T>>::value
+                         && !is_basic_json<std::remove_cvref_t<T>>::value, int > = 0 >
+inline void to_json(BasicJsonType& j, T && arr)
+{
+    external_constructor<value_t::array>::construct(j, std::forward<T>(arr));
+}
+#endif
+
 template<typename BasicJsonType>
 inline void to_json(BasicJsonType& j, const typename BasicJsonType::binary_t& bin)
 {
     external_constructor<value_t::binary>::construct(j, bin);
+}
+
+template < typename BasicJsonType, typename CompatibleArrayType,
+           enable_if_t < is_compatible_binary_type<BasicJsonType, CompatibleArrayType>::value,
+                         int > = 0 >
+inline void to_json(BasicJsonType& j, const CompatibleArrayType& bin)
+{
+    external_constructor<value_t::binary>::construct(j, typename BasicJsonType::binary_t(bin));
 }
 
 template<typename BasicJsonType, typename T,

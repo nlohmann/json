@@ -1136,6 +1136,40 @@ TEST_CASE("regression tests 2")
         CHECK((decoded == json_4804::array()));
     }
 
+    SECTION("discussion #4209 - custom BinaryType direct assignment and round-tripping")
+    {
+        // Test that assigning a custom BinaryType directly creates a binary value, not an array
+        const std::vector<std::byte> original{std::byte{1}, std::byte{2}, std::byte{3}};
+        const json_4804 j = original;
+        CHECK(j.is_binary());
+        CHECK(!j.is_array());
+
+        // Test round-tripping: extracting the binary value back as the custom container type
+        const auto extracted = j.get<std::vector<std::byte>>();
+        CHECK(extracted == original);
+
+        // Test that the default json alias behavior is unchanged: std::vector<uint8_t> -> array
+        const json default_json = std::vector<std::uint8_t> {1, 2, 3};
+        CHECK(default_json.is_array());
+        CHECK(!default_json.is_binary());
+    }
+
+    SECTION("discussion #4209 - custom BinaryType extraction from parsed array")
+    {
+        // Test that extracting a custom BinaryType from a parsed JSON array still works
+        // (not just from a binary-typed node)
+        const auto j = json_4804::parse("[1,2,3]");
+        CHECK(j.is_array());
+        CHECK(!j.is_binary());
+
+        // Extracting as custom BinaryType should work from arrays
+        const auto extracted = j.get<std::vector<std::byte>>();
+        CHECK(extracted.size() == 3);
+        CHECK(extracted[0] == std::byte{1});
+        CHECK(extracted[1] == std::byte{2});
+        CHECK(extracted[2] == std::byte{3});
+    }
+
     SECTION("issue #5046 - implicit conversion of return json to std::optional no longer implicit")
     {
         const json jval{};
@@ -1165,6 +1199,46 @@ TEST_CASE("regression tests 2")
     }
 #endif
 
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+    SECTION("issue #4916 - constructing array from C++20 ranges view does not work")
+    {
+        std::vector<int> nums{1, 2, 37, 42, 21};
+        auto filteredNums = nums | std::views::filter([](int i)
+        {
+            return i > 10;
+        });
+        json const j(filteredNums);
+        CHECK(j.type() == json::value_t::array);
+        CHECK(j == json({37, 42, 21}));
+    }
+#endif
+
+    // owning_view is not available in libstdc++ < 12
+#if JSON_HAS_RANGES && !defined(__MINGW32__) && !(defined(__GLIBCXX__) && _GLIBCXX_RELEASE < 12)
+    SECTION("issue #4916 - constructing array from prvalue C++20 ranges view (owning_view)")
+    {
+        json const j(std::vector<int> {1, 2, 37, 42, 21} | std::views::filter([](int i)
+        {
+            return i > 10;
+        }));
+        CHECK(j.type() == json::value_t::array);
+        CHECK(j == json({37, 42, 21}));
+    }
+#endif
+
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+    SECTION("issue #4916 - constructing array from C++20 transform view (prvalue elements)")
+    {
+        std::vector<int> nums{1, 2, 3};
+        auto t = nums | std::views::transform([](int i) noexcept
+        {
+            return i * 2;
+        });
+        json const j(t);
+        CHECK(j.type() == json::value_t::array);
+        CHECK(j == json({2, 4, 6}));
+    }
+#endif
 }
 
 TEST_CASE_TEMPLATE("issue #4798 - nlohmann::json::to_msgpack() encode float NaN as double", T, double, float) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)

@@ -8,8 +8,8 @@ static bool accept(InputType&& i,
                    const bool ignore_trailing_commas = false);
 
 // (2)
-template<typename IteratorType>
-static bool accept(IteratorType first, IteratorType last,
+template<typename IteratorType, typename SentinelType = IteratorType>
+static bool accept(IteratorType first, SentinelType last,
                    const bool ignore_comments = false,
                    const bool ignore_trailing_commas = false);
 ```
@@ -17,10 +17,11 @@ static bool accept(IteratorType first, IteratorType last,
 Checks whether the input is valid JSON.
 
 1. Reads from a compatible input.
-2. Reads from a pair of character iterators
+2. Reads from a pair of character iterators, or an iterator and a sentinel of a different type (C++20 ranges support)
     
     The value_type of the iterator must be an integral type with a size of 1, 2, or 4 bytes, which will be interpreted
-    respectively as UTF-8, UTF-16, and UTF-32.
+    respectively as UTF-8, UTF-16, and UTF-32. If `SentinelType` differs from `IteratorType`, it must be comparable to
+    the iterator type with `operator!=`.
     
 Unlike the [`parse()`](parse.md) function, this function neither throws an exception in case of invalid JSON input
 (i.e., a parse error) nor creates diagnostic information.
@@ -44,6 +45,12 @@ Unlike the [`parse()`](parse.md) function, this function neither throws an excep
     - a pair of `std::string::iterator` or `std::vector<std::uint8_t>::iterator`
     - a pair of pointers such as `ptr` and `ptr + len`
 
+`SentinelType`
+:   defaults to `IteratorType`; may be a different type comparable to `IteratorType` via `operator!=`, for instance.
+
+    - a custom sentinel type for C++20 ranges
+    - `std::counted_iterator` with a different sentinel type
+
 ## Parameters
 
 `i` (in)
@@ -61,7 +68,7 @@ Unlike the [`parse()`](parse.md) function, this function neither throws an excep
 :   iterator to the start of the character range
 
 `last` (in)
-:   iterator to the end of the character range
+:   iterator to the end of the character range, or a sentinel value that compares equal to the end iterator with `operator!=`
 
 ## Return value
 
@@ -112,6 +119,7 @@ A UTF-8 byte order mark is silently ignored.
 - Changed [runtime assertion](../../features/assertions.md) in case of `FILE*` null pointers to exception in version 3.12.0.
 - Added `ignore_trailing_commas` in version 3.13.0.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
+- Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
 
 !!! warning "Deprecation"
 

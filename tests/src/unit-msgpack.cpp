@@ -1641,6 +1641,15 @@ TEST_CASE("single MessagePack roundtrip")
     }
 }
 
+TEST_CASE("Parse MessagePack directly from a file using iterator and sentinel")
+{
+    std::string const filename = TEST_DATA_DIRECTORY "/json_testsuite/sample.json.msgpack";
+    std::ifstream file(filename, std::ios::binary);
+    const std::istreambuf_iterator<char> first(file);
+    const json parsed = json::from_msgpack(first, utils::istreambuf_sentinel{});
+    CHECK((parsed.is_object() || parsed.is_array()));
+}
+
 TEST_CASE("MessagePack roundtrips" * doctest::skip())
 {
     SECTION("input from msgpack-python")

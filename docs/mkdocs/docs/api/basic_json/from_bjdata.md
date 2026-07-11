@@ -7,8 +7,8 @@ static basic_json from_bjdata(InputType&& i,
                               const bool strict = true,
                               const bool allow_exceptions = true);
 // (2)
-template<typename IteratorType>
-static basic_json from_bjdata(IteratorType first, IteratorType last,
+template<typename IteratorType, typename SentinelType = IteratorType>
+static basic_json from_bjdata(IteratorType first, SentinelType last,
                               const bool strict = true,
                               const bool allow_exceptions = true);
 ```
@@ -16,7 +16,7 @@ static basic_json from_bjdata(IteratorType first, IteratorType last,
 Deserializes a given input to a JSON value using the BJData (Binary JData) serialization format.
 
 1. Reads from a compatible input.
-2. Reads from an iterator range.
+2. Reads from an iterator range, or an iterator and a sentinel of a different type (C++20 ranges support).
 
 The exact mapping and its limitations are described on a [dedicated page](../../features/binary_formats/bjdata.md).
 
@@ -35,6 +35,10 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 `IteratorType`
 :   a compatible iterator type
 
+`SentinelType`
+:   defaults to `IteratorType`; may be a different type comparable to `IteratorType` via `operator!=`, for instance a
+    custom sentinel type for C++20 ranges
+
 ## Parameters
 
 `i` (in)
@@ -44,7 +48,7 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 :   iterator to the start of the input
 
 `last` (in)
-:   iterator to the end of the input
+:   iterator to the end of the input, or a sentinel value that compares equal to the end iterator with `operator!=`
 
 `strict` (in)
 :   whether to expect the input to be consumed until EOF (`#!cpp true` by default)
@@ -103,3 +107,4 @@ Linear in the size of the input.
 
 - Added in version 3.11.0.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
+- Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.

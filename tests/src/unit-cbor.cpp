@@ -1921,6 +1921,15 @@ TEST_CASE("single CBOR roundtrip")
     }
 }
 
+TEST_CASE("Parse CBOR directly from a file using iterator and sentinel")
+{
+    std::string const filename = TEST_DATA_DIRECTORY "/json_testsuite/sample.json.cbor";
+    std::ifstream file(filename, std::ios::binary);
+    const std::istreambuf_iterator<char> first(file);
+    const json parsed = json::from_cbor(first, utils::istreambuf_sentinel{});
+    CHECK((parsed.is_object() || parsed.is_array()));
+}
+
 #if !defined(JSON_NOEXCEPTION)
 TEST_CASE("CBOR regressions")
 {

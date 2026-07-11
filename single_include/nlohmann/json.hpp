@@ -189,6 +189,7 @@
 #include <unordered_map> // unordered_map
 #include <utility> // pair, declval
 #include <valarray> // valarray
+#include <vector> // vector
 
 // #include <nlohmann/detail/exceptions.hpp>
 //     __ _____ _____ _____
@@ -3592,6 +3593,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <tuple> // tuple
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
+#include <vector> // vector
 #if defined(__cpp_lib_byte) && __cpp_lib_byte >= 201603L
     #include <cstddef> // byte
 #endif
@@ -3663,6 +3665,9 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
+#ifdef JSON_HAS_CPP_17
+    #include <optional> // optional
+#endif
 // #include <nlohmann/detail/meta/call_std/begin.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -4212,6 +4217,51 @@ struct is_constructible_string_type
         value_type_t, laundered_type >>::value;
 };
 
+// Forward declarations: iteration_proxy.hpp includes this file, so we cannot
+// include it here.
+template<typename IteratorType> class iteration_proxy;
+template<typename IteratorType> class iteration_proxy_value;
+
+// Identifies nlohmann's internal iteration-proxy types. These must be excluded
+// before evaluating any std::ranges concept to avoid circular constraints.
+template<typename T> struct is_iteration_proxy_type : std::false_type {};
+template<typename T> struct is_iteration_proxy_type<iteration_proxy<T>>       : std::true_type {};
+template<typename T> struct is_iteration_proxy_type<iteration_proxy_value<T>> : std::true_type {};
+
+// In C++26, std::optional satisfies std::ranges::view; exclude it so the
+// range-view overload does not hijack the optional serializer.
+#ifdef JSON_HAS_CPP_17
+template<typename T> struct is_range_view_optional_type : std::false_type {};
+template<typename T> struct is_range_view_optional_type<std::optional<T>> : std::true_type {};
+#else
+template<typename T> struct is_range_view_optional_type : std::false_type {};
+#endif
+
+// std::ranges does not work properly on MinGW due to incomplete C++20 support
+// see https://github.com/nlohmann/json/issues/4916
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+
+// SafeToCheck guards against types that trigger circular constraints when
+// std::ranges::view<T> is evaluated on GCC 12 / libstdc++ 12:
+//   - iteration_proxy / iteration_proxy_value directly
+//   - views wrapping the above (e.g. owning_view<iteration_proxy<...>>)
+//   - views wrapping basic_json (e.g. ref_view<json>) — same circularity
+//     via json's constructors → is_compatible_array_type → here
+// nlohmann's plain range_value_t (iterator_traits-based) is safe to call
+// before any std::ranges concept is touched, so we use it for the checks.
+template < typename T, bool SafeToCheck =
+           !is_iteration_proxy_type<T>::value &&
+           !is_iteration_proxy_type<detected_t<range_value_t, T>>::value &&
+           !is_basic_json<detected_t<range_value_t, T>>::value &&
+           !is_range_view_optional_type<T>::value >
+struct is_compatible_range_view : std::false_type {};
+
+template<typename T>
+struct is_compatible_range_view<T, true>
+    : std::bool_constant<std::ranges::view<T>> {};
+
+#endif
+
 template<typename BasicJsonType, typename CompatibleArrayType, typename = void>
 struct is_compatible_array_type_impl : std::false_type {};
 
@@ -4223,12 +4273,37 @@ struct is_compatible_array_type_impl <
     is_iterator_traits<iterator_traits<detected_t<iterator_t, CompatibleArrayType>>>::value&&
 // special case for types like std::filesystem::path whose iterator's value_type are themselves
 // c.f. https://github.com/nlohmann/json/pull/3073
-    !std::is_same<CompatibleArrayType, detected_t<range_value_t, CompatibleArrayType>>::value >>
+    !std::is_same<CompatibleArrayType, detected_t<range_value_t, CompatibleArrayType>>::value
+// When range-view support is enabled, std::ranges::view types (e.g. std::string_view,
+// filter_view) can match BOTH this iterator-based specialization AND the view-based one
+// below, causing ambiguity. Exclude views here so the two specializations are mutually
+// exclusive: this one handles plain iterable containers, the other handles views.
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+&& !is_compatible_range_view<CompatibleArrayType>::value
+#endif
+            >>
 {
     static constexpr bool value =
         is_constructible<BasicJsonType,
         range_value_t<CompatibleArrayType>>::value;
 };
+
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+template<typename BasicJsonType, typename CompatibleArrayType>
+struct is_compatible_array_type_impl <
+    BasicJsonType, CompatibleArrayType,
+    enable_if_t < is_compatible_range_view<CompatibleArrayType>::value
+    && !std::is_same<detected_t<range_value_t, CompatibleArrayType>, char>::value
+    && !std::is_same<detected_t<range_value_t, CompatibleArrayType>, wchar_t>::value >>
+{
+    // CompatibleArrayType is a std::ranges::view here, so std::ranges::range_value_t
+    // is safe and correctly handles C++20 iterators that may lack classic iterator_traits.
+    static constexpr bool value =
+        is_constructible<BasicJsonType,
+        std::ranges::range_value_t<CompatibleArrayType>>::value;
+};
+#endif
+
 
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type
@@ -4320,6 +4395,14 @@ struct is_compatible_type_impl <
 template<typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
     : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
+
+template<typename BasicJsonType, typename CompatibleArrayType>
+struct is_compatible_binary_type
+{
+    static constexpr bool value =
+        std::is_same<typename BasicJsonType::binary_t::container_type, CompatibleArrayType>::value &&
+        !std::is_same<typename BasicJsonType::binary_t::container_type, std::vector<std::uint8_t>>::value;
+};
 
 template<typename BasicJsonType, typename CompatibleReferenceType>
 struct is_compatible_reference_type_impl
@@ -5464,6 +5547,7 @@ template < typename BasicJsonType, typename ConstructibleArrayType,
                !is_constructible_object_type<BasicJsonType, ConstructibleArrayType>::value&&
                !is_constructible_string_type<BasicJsonType, ConstructibleArrayType>::value&&
                !std::is_same<ConstructibleArrayType, typename BasicJsonType::binary_t>::value&&
+               !is_compatible_binary_type<BasicJsonType, ConstructibleArrayType>::value&&
                !is_basic_json<ConstructibleArrayType>::value,
                int > = 0 >
 auto from_json(const BasicJsonType& j, ConstructibleArrayType& arr)
@@ -5507,6 +5591,25 @@ inline void from_json(const BasicJsonType& j, typename BasicJsonType::binary_t& 
     }
 
     bin = *j.template get_ptr<const typename BasicJsonType::binary_t*>();
+}
+
+template < typename BasicJsonType, typename CompatibleArrayType,
+           enable_if_t < is_compatible_binary_type<BasicJsonType, CompatibleArrayType>::value,
+                         int > = 0 >
+inline void from_json(const BasicJsonType& j, CompatibleArrayType& bin)
+{
+    if (j.is_binary())
+    {
+        bin = static_cast<CompatibleArrayType>(*j.template get_ptr<const typename BasicJsonType::binary_t*>());
+    }
+    else if (j.is_array())
+    {
+        from_json_array_impl(j, bin, priority_tag<3> {});
+    }
+    else
+    {
+        JSON_THROW(type_error::create(302, concat("type must be binary or array, but is ", j.type_name()), &j));
+    }
 }
 
 template<typename BasicJsonType, typename ConstructibleObjectType,
@@ -6205,8 +6308,11 @@ struct external_constructor<value_t::array>
     }
 
     template < typename BasicJsonType, typename CompatibleArrayType,
-               enable_if_t < !std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value,
-                             int > = 0 >
+               enable_if_t < !std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+                             && !is_compatible_range_view<CompatibleArrayType>::value
+#endif
+                             , int > = 0 >
     static void construct(BasicJsonType& j, const CompatibleArrayType& arr)
     {
         using std::begin;
@@ -6246,6 +6352,25 @@ struct external_constructor<value_t::array>
         j.set_parents();
         j.assert_invariant();
     }
+
+    // std::ranges does not work properly on MinGW due to incomplete C++20 support
+    // see https://github.com/nlohmann/json/issues/4916
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+    template<typename BasicJsonType, typename CompatibleArrayType,
+             enable_if_t<is_compatible_range_view<std::remove_cvref_t<CompatibleArrayType>>::value, int> = 0>
+    static void construct(BasicJsonType& j, CompatibleArrayType && arr)
+    {
+        j.m_data.m_value.destroy(j.m_data.m_type);
+        j.m_data.m_type = value_t::array;
+        j.m_data.m_value = value_t::array;
+        for (auto&& x : std::forward<CompatibleArrayType>(arr))
+        {
+            j.m_data.m_value.array->push_back(x);
+            j.set_parent(j.m_data.m_value.array->back());
+        }
+        j.assert_invariant();
+    }
+#endif
 };
 
 template<>
@@ -6383,17 +6508,42 @@ template < typename BasicJsonType, typename CompatibleArrayType,
                          !is_compatible_object_type<BasicJsonType, CompatibleArrayType>::value&&
                          !is_compatible_string_type<BasicJsonType, CompatibleArrayType>::value&&
                          !std::is_same<typename BasicJsonType::binary_t, CompatibleArrayType>::value&&
-                         !is_basic_json<CompatibleArrayType>::value,
+                         !is_compatible_binary_type<BasicJsonType, CompatibleArrayType>::value&&
+                         !is_basic_json<CompatibleArrayType>::value
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+    && !is_compatible_range_view<CompatibleArrayType>::value
+#endif
+                         ,
                          int > = 0 >
 inline void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
 {
     external_constructor<value_t::array>::construct(j, arr);
 }
 
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+template < typename BasicJsonType, typename T,
+           enable_if_t < is_compatible_range_view<std::remove_cvref_t<T>>::value
+                         && !is_compatible_string_type<BasicJsonType, std::remove_cvref_t<T>>::value
+                         && !is_compatible_object_type<BasicJsonType, std::remove_cvref_t<T>>::value
+                         && !is_basic_json<std::remove_cvref_t<T>>::value, int > = 0 >
+inline void to_json(BasicJsonType& j, T && arr)
+{
+    external_constructor<value_t::array>::construct(j, std::forward<T>(arr));
+}
+#endif
+
 template<typename BasicJsonType>
 inline void to_json(BasicJsonType& j, const typename BasicJsonType::binary_t& bin)
 {
     external_constructor<value_t::binary>::construct(j, bin);
+}
+
+template < typename BasicJsonType, typename CompatibleArrayType,
+           enable_if_t < is_compatible_binary_type<BasicJsonType, CompatibleArrayType>::value,
+                         int > = 0 >
+inline void to_json(BasicJsonType& j, const CompatibleArrayType& bin)
+{
+    external_constructor<value_t::binary>::construct(j, typename BasicJsonType::binary_t(bin));
 }
 
 template<typename BasicJsonType, typename T,
@@ -6996,7 +7146,9 @@ class input_stream_adapter
 
 // General-purpose iterator-based adapter. It might not be as fast as
 // theoretically possible for some containers, but it is extremely versatile.
-template<typename IteratorType>
+// SentinelType defaults to IteratorType for backward compatibility, but may
+// be a different type (e.g., a C++20 sentinel or counted_iterator).
+template<typename IteratorType, typename SentinelType = IteratorType>
 class iterator_input_adapter
 {
   public:
@@ -7010,9 +7162,10 @@ class iterator_input_adapter
     // in wide_string_input_adapter, which does not expose this).
     static constexpr bool supports_seek =
         std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value
+        && std::is_same<IteratorType, SentinelType>::value
         && sizeof(char_type) == 1;
 
-    iterator_input_adapter(IteratorType first, IteratorType last)
+    iterator_input_adapter(IteratorType first, SentinelType last)
         : begin(first), current(std::move(first)), end(std::move(last))
     {}
 
@@ -7057,12 +7210,14 @@ class iterator_input_adapter
   private:
     // whether IteratorType refers to a contiguous range and therefore supports
     // a std::memcpy fast path (pointers always do; in C++20 we can also detect
-    // library iterators such as those of std::vector and std::string)
+    // library iterators such as those of std::vector and std::string).
+    // The fast path also requires SentinelType == IteratorType so std::distance works.
     static constexpr bool iterator_is_contiguous =
+        std::is_same<IteratorType, SentinelType>::value && (
 #if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
-        std::contiguous_iterator<IteratorType> ||
+            std::contiguous_iterator<IteratorType> ||
 #endif
-        std::is_pointer<IteratorType>::value;
+            std::is_pointer<IteratorType>::value);
 
     // contiguous fast path: bulk copy the remaining range with std::memcpy
     template<class T>
@@ -7108,7 +7263,7 @@ class iterator_input_adapter
 
     IteratorType begin;
     IteratorType current;
-    IteratorType end;
+    SentinelType end;
 
     template<typename BaseInputAdapter, size_t T>
     friend struct wide_string_input_helper;
@@ -7294,18 +7449,53 @@ class wide_string_input_adapter
     std::size_t utf8_bytes_filled = 0;
 };
 
-template<typename IteratorType, typename Enable = void>
+template<typename IteratorType, typename SentinelType = IteratorType, typename Enable = void>
 struct iterator_input_adapter_factory
 {
     using iterator_type = IteratorType;
+    using sentinel_type = SentinelType;
     using char_type = typename std::iterator_traits<iterator_type>::value_type;
-    using adapter_type = iterator_input_adapter<iterator_type>;
+    using adapter_type = iterator_input_adapter<iterator_type, sentinel_type>;
 
-    static adapter_type create(IteratorType first, IteratorType last)
+    static adapter_type create(IteratorType first, SentinelType last)
     {
         return adapter_type(std::move(first), std::move(last));
     }
 };
+
+// Detection: whether IteratorType and SentinelType can be compared with !=
+template<typename IteratorType, typename SentinelType, typename = void>
+struct can_compare_ne_impl : std::false_type {};
+
+template<typename IteratorType, typename SentinelType>
+struct can_compare_ne_impl < IteratorType, SentinelType,
+       void_t < decltype(std::declval<IteratorType>() != std::declval<SentinelType>()) >>
+           : std::true_type {};
+
+// Workaround for reversed operator order
+template<typename IteratorType, typename SentinelType, typename = void>
+struct can_compare_ne_reversed : std::false_type {};
+
+template<typename IteratorType, typename SentinelType>
+struct can_compare_ne_reversed < IteratorType, SentinelType,
+       void_t < decltype(std::declval<SentinelType>() != std::declval<IteratorType>()) >>
+           : std::true_type {};
+
+template<typename IteratorType, typename SentinelType>
+struct can_compare_ne_either_order : std::integral_constant < bool,
+    can_compare_ne_impl<IteratorType, SentinelType>::value ||
+    can_compare_ne_reversed<IteratorType, SentinelType>::value > {};
+
+// std::nullptr_t is excluded explicitly: a literal `nullptr` passed as a
+// trailing default argument (e.g. parse(s, nullptr, ...)) must never be
+// mistaken for a sentinel, and some compilers (e.g. GCC 4.8) unreliably
+// SFINAE the `operator!=` detection above for std::nullptr_t against
+// container/string types, which would otherwise make such calls ambiguous
+// with the compatible-input overload.
+template<typename IteratorType, typename SentinelType>
+struct can_compare_ne : std::integral_constant < bool,
+    !std::is_same<SentinelType, std::nullptr_t>::value &&
+    can_compare_ne_either_order<IteratorType, SentinelType>::value > {};
 
 template<typename T>
 struct is_iterator_of_multibyte
@@ -7317,25 +7507,31 @@ struct is_iterator_of_multibyte
     };
 };
 
-template<typename IteratorType>
-struct iterator_input_adapter_factory<IteratorType, enable_if_t<is_iterator_of_multibyte<IteratorType>::value>>
+template<typename IteratorType, typename SentinelType>
+struct iterator_input_adapter_factory<IteratorType, SentinelType, enable_if_t<is_iterator_of_multibyte<IteratorType>::value>>
 {
     using iterator_type = IteratorType;
+    using sentinel_type = SentinelType;
     using char_type = typename std::iterator_traits<iterator_type>::value_type;
-    using base_adapter_type = iterator_input_adapter<iterator_type>;
+    using base_adapter_type = iterator_input_adapter<iterator_type, sentinel_type>;
     using adapter_type = wide_string_input_adapter<base_adapter_type, char_type>;
 
-    static adapter_type create(IteratorType first, IteratorType last)
+    static adapter_type create(IteratorType first, SentinelType last)
     {
         return adapter_type(base_adapter_type(std::move(first), std::move(last)));
     }
 };
 
-// General purpose iterator-based input
-template<typename IteratorType>
-typename iterator_input_adapter_factory<IteratorType>::adapter_type input_adapter(IteratorType first, IteratorType last)
+// General purpose iterator-based input (iterator+sentinel pair; SentinelType
+// defaults to IteratorType for the common same-type case, but may differ for
+// C++20 ranges-style iterator+sentinel pairs). Only enable for types that can
+// be compared with !=.
+template < typename IteratorType, typename SentinelType = IteratorType,
+           typename = typename std::enable_if <
+               can_compare_ne<IteratorType, SentinelType>::value >::type >
+typename iterator_input_adapter_factory<IteratorType, SentinelType>::adapter_type input_adapter(IteratorType first, SentinelType last)
 {
-    using factory_type = iterator_input_adapter_factory<IteratorType>;
+    using factory_type = iterator_input_adapter_factory<IteratorType, SentinelType>;
     return factory_type::create(first, last);
 }
 
@@ -25024,12 +25220,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
-    /// @brief deserialize from a pair of character iterators
+    /// @brief deserialize from a pair of character iterators (or an iterator+sentinel pair, C++20 ranges support)
     /// @sa https://json.nlohmann.me/api/basic_json/parse/
-    template<typename IteratorType>
+    template<typename IteratorType, typename SentinelType = IteratorType,
+             detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json parse(IteratorType first,
-                            IteratorType last,
+                            SentinelType last,
                             parser_callback_t cb = nullptr,
                             const bool allow_exceptions = true,
                             const bool ignore_comments = false,
@@ -25064,10 +25261,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return parser(detail::input_adapter(std::forward<InputType>(i)), nullptr, false, ignore_comments, ignore_trailing_commas).accept(true);
     }
 
-    /// @brief check if the input is valid JSON
+    /// @brief check if the input is valid JSON (iterator pair, or iterator+sentinel pair for C++20 ranges support)
     /// @sa https://json.nlohmann.me/api/basic_json/accept/
-    template<typename IteratorType>
-    static bool accept(IteratorType first, IteratorType last,
+    template<typename IteratorType, typename SentinelType = IteratorType,
+             detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0>
+    static bool accept(IteratorType first, SentinelType last,
                        const bool ignore_comments = false,
                        const bool ignore_trailing_commas = false)
     {
@@ -25100,11 +25298,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(format, sax, strict);
     }
 
-    /// @brief generate SAX events
+    /// @brief generate SAX events (iterator pair, or iterator+sentinel pair for C++20 ranges support)
     /// @sa https://json.nlohmann.me/api/basic_json/sax_parse/
-    template<class IteratorType, class SAX>
+    template<class IteratorType, class SAX, class SentinelType = IteratorType,
+             detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0>
     JSON_HEDLEY_NON_NULL(3)
-    static bool sax_parse(IteratorType first, IteratorType last, SAX* sax,
+    static bool sax_parse(IteratorType first, SentinelType last, SAX* sax,
                           input_format_t format = input_format_t::json,
                           const bool strict = true,
                           const bool ignore_comments = false,
@@ -25404,11 +25603,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res ? result : basic_json(value_t::discarded);
     }
 
-    /// @brief create a JSON value from an input in CBOR format
+    /// @brief create a JSON value from an input in CBOR format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
     /// @sa https://json.nlohmann.me/api/basic_json/from_cbor/
-    template<typename IteratorType>
+    template<typename IteratorType, typename SentinelType = IteratorType,
+             detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json from_cbor(IteratorType first, IteratorType last,
+    static basic_json from_cbor(IteratorType first, SentinelType last,
                                 const bool strict = true,
                                 const bool allow_exceptions = true,
                                 const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
@@ -25463,11 +25663,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res ? result : basic_json(value_t::discarded);
     }
 
-    /// @brief create a JSON value from an input in MessagePack format
+    /// @brief create a JSON value from an input in MessagePack format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
     /// @sa https://json.nlohmann.me/api/basic_json/from_msgpack/
-    template<typename IteratorType>
+    template<typename IteratorType, typename SentinelType = IteratorType,
+             detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json from_msgpack(IteratorType first, IteratorType last,
+    static basic_json from_msgpack(IteratorType first, SentinelType last,
                                    const bool strict = true,
                                    const bool allow_exceptions = true)
     {
@@ -25519,11 +25720,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res ? result : basic_json(value_t::discarded);
     }
 
-    /// @brief create a JSON value from an input in UBJSON format
+    /// @brief create a JSON value from an input in UBJSON format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
     /// @sa https://json.nlohmann.me/api/basic_json/from_ubjson/
-    template<typename IteratorType>
+    template<typename IteratorType, typename SentinelType = IteratorType,
+             detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json from_ubjson(IteratorType first, IteratorType last,
+    static basic_json from_ubjson(IteratorType first, SentinelType last,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)
     {
@@ -25575,11 +25777,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res ? result : basic_json(value_t::discarded);
     }
 
-    /// @brief create a JSON value from an input in BJData format
+    /// @brief create a JSON value from an input in BJData format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
     /// @sa https://json.nlohmann.me/api/basic_json/from_bjdata/
-    template<typename IteratorType>
+    template<typename IteratorType, typename SentinelType = IteratorType,
+             detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json from_bjdata(IteratorType first, IteratorType last,
+    static basic_json from_bjdata(IteratorType first, SentinelType last,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)
     {
@@ -25605,11 +25808,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return res ? result : basic_json(value_t::discarded);
     }
 
-    /// @brief create a JSON value from an input in BSON format
+    /// @brief create a JSON value from an input in BSON format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
     /// @sa https://json.nlohmann.me/api/basic_json/from_bson/
-    template<typename IteratorType>
+    template<typename IteratorType, typename SentinelType = IteratorType,
+             detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json from_bson(IteratorType first, IteratorType last,
+    static basic_json from_bson(IteratorType first, SentinelType last,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
     {

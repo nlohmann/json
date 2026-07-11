@@ -1208,6 +1208,19 @@ TEST_CASE("BSON numerical data")
     }
 }
 
+TEST_CASE("Parse BSON directly from a file using iterator and sentinel")
+{
+    std::string const filename = TEST_DATA_DIRECTORY "/json.org/1.json";
+
+    std::ifstream f_json(filename);
+    const json expected = json::parse(f_json);
+
+    std::ifstream file(filename + ".bson", std::ios::binary);
+    const std::istreambuf_iterator<char> first(file);
+    const json parsed = json::from_bson(first, utils::istreambuf_sentinel{});
+    CHECK(parsed == expected);
+}
+
 TEST_CASE("BSON roundtrips" * doctest::skip())
 {
     SECTION("reference files")
