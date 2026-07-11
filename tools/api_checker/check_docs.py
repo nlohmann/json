@@ -13,7 +13,6 @@ import os
 import re
 import subprocess
 import sys
-from pathlib import Path
 from urllib.parse import unquote
 
 warnings = 0
@@ -122,7 +121,7 @@ def check_docs(snapshot_path: str):
     print(120 * "-")
 
     # Check public API entries
-    for identity_key, entry in sorted(api.items()):
+    for _identity_key, entry in sorted(api.items()):
         location = entry.get('location', 'unknown')
         name = entry.get('name', '?')
         tier = entry.get('tier', '?')

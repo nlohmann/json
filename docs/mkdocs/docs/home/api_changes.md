@@ -306,7 +306,7 @@ currently backfilled into `tools/api_checker/history/`).
       s = "")
     ```
 
-### `nlohmann::json_pointer::operator basic_string`
+### `nlohmann::json_pointer::operator std::string`
 
 *Removed from the public API.*
 
@@ -315,7 +315,7 @@ currently backfilled into `tools/api_checker/history/`).
     operator std::string() const
     ```
 
-### [`nlohmann::json_pointer::operator nlohmann::json_pointer::string_t_helper<type-parameter-0-0>::type`](../api/json_pointer/operator_string.md)
+### [`nlohmann::json_pointer::operator string_t`](../api/json_pointer/operator_string.md)
 
 *New addition to the public API.*
 

@@ -1,5 +1,5 @@
 {
-  "format_version": 2,
+  "format_version": 3,
   "meta": {
     "extracted_from": "include/nlohmann/json.hpp"
   },
@@ -1472,7 +1472,7 @@
       "tier": "type"
     },
     {
-      "identity_name": "operator nlohmann::detail::value_t",
+      "identity_name": "operator value_t",
       "kind": "CONVERSION_FUNCTION",
       "name": "operator nlohmann::detail::value_t",
       "pretty_signature": "nlohmann::basic_json::operator nlohmann::detail::value_t",
@@ -1481,7 +1481,7 @@
       "tier": "callable"
     },
     {
-      "identity_name": "operator type-parameter-1-0",
+      "identity_name": "operator ValueType",
       "kind": "FUNCTION_TEMPLATE",
       "name": "operator type-parameter-1-0",
       "pretty_signature": "nlohmann::basic_json::operator type-parameter-1-0",
@@ -2381,7 +2381,7 @@
       "tier": "callable"
     },
     {
-      "identity_name": "operator nlohmann::json_pointer::string_t_helper<type-parameter-0-0>::type",
+      "identity_name": "operator string_t",
       "kind": "CONVERSION_FUNCTION",
       "name": "operator nlohmann::json_pointer::string_t_helper<type-parameter-0-0>::type",
       "pretty_signature": "nlohmann::json_pointer::operator nlohmann::json_pointer::string_t_helper<type-parameter-0-0>::type",

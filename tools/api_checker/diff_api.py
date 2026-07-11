@@ -214,7 +214,7 @@ def print_diff(diff: dict, old_desc: str, new_desc: str) -> bool:
 
     breaking = bool(diff['removed'] or diff['changed'])
     if breaking:
-        print(f"\nWARNING: Potential BREAKING CHANGES detected:")
+        print("\nWARNING: Potential BREAKING CHANGES detected:")
         print(f"  - {len(diff['removed'])} removed entries")
         print(f"  - {len(diff['changed'])} changed overloads")
     if diff['added']:
@@ -264,13 +264,20 @@ def main():
 
     old_fmt = old_surface.get('format_version')
     new_fmt = new_surface.get('format_version')
-    if old_fmt != new_fmt and not args.allow_format_mismatch:
-        print(f"Error: format_version mismatch ({old_desc}: {old_fmt!r} vs {new_desc}: {new_fmt!r}).")
+    # Check both surfaces against SURFACE_FORMAT_VERSION (what *this build* of diff_api.py
+    # understands), not just against each other: two surfaces on the same format_version could
+    # still both be on a version this build predates and doesn't correctly interpret.
+    mismatched = old_fmt != SURFACE_FORMAT_VERSION or new_fmt != SURFACE_FORMAT_VERSION
+    if mismatched and not args.allow_format_mismatch:
+        print(f"Error: format_version mismatch. This build of diff_api.py understands "
+              f"format_version {SURFACE_FORMAT_VERSION!r}, but {old_desc} is {old_fmt!r} and "
+              f"{new_desc} is {new_fmt!r}.")
         print("The identity/signature algorithm may differ between these two surfaces, making a diff unsound.")
         print("Re-run with --allow-format-mismatch to proceed anyway.")
         sys.exit(1)
-    elif old_fmt != new_fmt:
-        print(f"WARNING: proceeding with mismatched format_version ({old_fmt!r} vs {new_fmt!r}) as requested.")
+    elif mismatched:
+        print(f"WARNING: proceeding with mismatched format_version (this build understands "
+              f"{SURFACE_FORMAT_VERSION!r}; {old_desc}={old_fmt!r}, {new_desc}={new_fmt!r}) as requested.")
 
     old_api = build_identity_dict(old_surface['public_api'])
     new_api = build_identity_dict(new_surface['public_api'])

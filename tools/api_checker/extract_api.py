@@ -25,7 +25,6 @@ import os
 import re
 import subprocess
 import sys
-from pathlib import Path
 
 try:
     from clang import cindex
@@ -44,7 +43,7 @@ ABI_TAG_PATTERN = re.compile(r'::json(?:_abi)?[a-z_]*_v\d+_\d+_\d+(?=::|$)')
 # libclang's USR) silently corrupted every historical comparison whenever the *unrelated*
 # enclosing class template gained a new template parameter, and nothing caught it because there
 # was no version to check.
-SURFACE_FORMAT_VERSION = 2
+SURFACE_FORMAT_VERSION = 3
 
 
 def strip_abi_tag(text: str) -> str:
@@ -148,18 +147,35 @@ def get_signature_text(cursor) -> str:
 
 def get_identity_name(cursor, scope: str) -> str:
     """The name component of a cursor's identity -- usually cursor.spelling, but not for
-    CONSTRUCTOR/DESTRUCTOR cursors, or FUNCTION_TEMPLATE cursors that are themselves templated
+    CONSTRUCTOR/DESTRUCTOR cursors, FUNCTION_TEMPLATE cursors that are themselves templated
     constructors (e.g. `template<typename CompatibleType> basic_json(CompatibleType&& val)`,
-    which libclang represents as FUNCTION_TEMPLATE, not CONSTRUCTOR).
+    which libclang represents as FUNCTION_TEMPLATE, not CONSTRUCTOR), or CONVERSION_FUNCTION
+    cursors.
 
-    libclang's cursor.spelling for those renders the *enclosing class's full template argument
-    list* (e.g. "basic_json<ObjectType, ..., CustomBaseClass>"), not just "basic_json". Using it
-    as-is for identity would reintroduce class-arity sensitivity (see identity_key()'s docstring
-    for why that's a problem) just for constructors specifically. Detected by checking whether
-    cursor.spelling equals or starts with "<ClassName><" -- the class's own bare name, the last
-    segment of scope. A canonical placeholder ("(constructor)"/"(destructor)") is substituted for
-    identity purposes; callers still use cursor.spelling as-is for human-readable display fields
-    (name/pretty_signature), where the full templated name is informative rather than noisy.
+    libclang's cursor.spelling for a constructor-like cursor renders the *enclosing class's full
+    template argument list* (e.g. "basic_json<ObjectType, ..., CustomBaseClass>"), not just
+    "basic_json". Using it as-is for identity would reintroduce class-arity sensitivity (see
+    identity_key()'s docstring for why that's a problem) just for constructors specifically.
+    Detected by checking whether cursor.spelling equals or starts with "<ClassName><" -- the
+    class's own bare name, the last segment of scope. A canonical placeholder
+    ("(constructor)"/"(destructor)") is substituted for identity purposes; callers still use
+    cursor.spelling as-is for human-readable display fields (name/pretty_signature), where the
+    full templated name is informative rather than noisy.
+
+    For CONVERSION_FUNCTION cursors, cursor.spelling renders libclang's internally-resolved
+    return type rather than what's literally written -- confirmed empirically for
+    `json_pointer::operator string_t()` (return type declared via `using string_t = typename
+    string_t_helper<RefStringType>::type`), which spelled as
+    "operator nlohmann::json_pointer::string_t_helper<type-parameter-0-0>::type" locally but
+    "operator typename string_t_helper<type-parameter-0-0>::type" in CI, purely a difference in
+    how each libclang build canonicalizes the same dependent type -- both machines pinned the
+    identical libclang==18.1.1 wheel, and the discrepancy persisted even under a full C++20
+    parse with real <ranges> support, ruling out JSON_HAS_RANGES as the cause. Extracted from
+    raw source text instead (the same "read what's actually written" fix get_signature_text()
+    already applies to signatures generally), via a regex over the cursor's own source extent:
+    immune to libclang's dependent-type resolution differences, and incidentally more readable
+    than "operator type-parameter-1-0" (basic_json's own conversion operator's spelling, which
+    was already an unrelated but analogous artifact worth avoiding here too).
     """
     class_bare_name = scope.rsplit('::', 1)[-1]
     is_constructor_like = (
@@ -171,6 +187,14 @@ def get_identity_name(cursor, scope: str) -> str:
         return '(constructor)'
     if cursor.kind == cindex.CursorKind.DESTRUCTOR:
         return '(destructor)'
+    if cursor.kind == cindex.CursorKind.CONVERSION_FUNCTION or cursor.spelling.startswith('operator '):
+        # The `cursor.spelling.startswith('operator ')` half of this condition also catches
+        # templated conversion operators, which libclang represents as FUNCTION_TEMPLATE rather
+        # than CONVERSION_FUNCTION -- e.g. basic_json's `operator ValueType()`, whose
+        # cursor.spelling is the equally libclang-internal "operator type-parameter-1-0".
+        match = re.search(r'\boperator\s+(.+?)\s*\(\s*\)', get_signature_text(cursor))
+        if match:
+            return f'operator {match.group(1)}'
     return cursor.spelling
 
 
@@ -576,6 +600,20 @@ def main():
         '-std=c++17',
         '-x', 'c++',
         '-fparse-all-comments',
+        # JSON_HAS_RANGES auto-detects via the standard library's __cpp_lib_ranges feature-test
+        # macro, which -- unlike compiler-level feature macros such as
+        # __cpp_impl_three_way_comparison -- isn't reliably gated to C++20 mode by every stdlib:
+        # confirmed empirically that it's undefined under -std=c++17 with macOS's libc++, but
+        # defined under the same flag with the Ubuntu stdlib used in CI, producing a different
+        # extracted signature for parse()/accept()/from_*() depending only on which machine ran
+        # the extraction. Pinning to 1 was tried first and rejected: under a real -std=c++17
+        # build, <ranges>'s std::ranges namespace isn't necessarily populated even when the
+        # feature-test macro leaks through, and JSON_HAS_RANGES=1 code paths reference
+        # std::ranges directly, which fails to parse ("no member named 'ranges' in namespace
+        # 'std'") on macOS's libc++ despite the successful C++20 compile above. 0 is the value
+        # that's guaranteed to parse on every stdlib under -std=c++17, so it's the deterministic,
+        # safe choice, even though it means the SentinelType-taking overloads aren't captured.
+        '-DJSON_HAS_RANGES=0',
     ] + sys_includes + [f'-isystem{path}' for path in args.extra_isystem]
 
     # Parse

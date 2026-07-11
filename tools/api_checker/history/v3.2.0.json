@@ -1,9 +1,9 @@
 {
-  "format_version": 2,
+  "format_version": 3,
   "meta": {
     "commit": "359f98d14065bf4e53eeb274f5987fd08f16e5bf",
     "extracted_from": "include/nlohmann/json.hpp",
-    "generated_at": "2026-07-11T12:46:01.995691+00:00",
+    "generated_at": "2026-07-11T16:52:36.744101+00:00",
     "generator": "tools/api_checker/extract_api.py",
     "ref": "v3.2.0"
   },
@@ -1107,7 +1107,7 @@
       "tier": "type"
     },
     {
-      "identity_name": "operator nlohmann::detail::value_t",
+      "identity_name": "operator value_t",
       "kind": "CONVERSION_FUNCTION",
       "name": "operator nlohmann::detail::value_t",
       "pretty_signature": "nlohmann::basic_json::operator nlohmann::detail::value_t",
@@ -1116,7 +1116,7 @@
       "tier": "callable"
     },
     {
-      "identity_name": "operator type-parameter-1-0",
+      "identity_name": "operator ValueType",
       "kind": "FUNCTION_TEMPLATE",
       "name": "operator type-parameter-1-0",
       "pretty_signature": "nlohmann::basic_json::operator type-parameter-1-0",
@@ -1710,7 +1710,7 @@
       "tier": "callable"
     },
     {
-      "identity_name": "operator basic_string",
+      "identity_name": "operator std::string",
       "kind": "CONVERSION_FUNCTION",
       "name": "operator basic_string",
       "pretty_signature": "nlohmann::json_pointer::operator basic_string",

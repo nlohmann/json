@@ -36,6 +36,29 @@ Backfilled: every `v3.*` tag from `v3.1.0` through the latest release at backfil
   All 27 files were regenerated under `format_version: 2`; only `v3.11.0.json` and `v3.11.1.json`
   actually changed content (every other tag's scopes never contained the old-style tag).
 
+- **`format_version: 3`**. Found via a CI run on a different machine than the one that generated
+  `format_version: 2`, which is exactly the failure class this versioning exists to catch:
+  1. `JSON_HAS_RANGES` auto-detects via the standard library's `__cpp_lib_ranges` feature-test
+     macro. That macro isn't reliably gated to C++20 mode by every stdlib -- undefined under
+     `-std=c++17` with macOS's libc++, but defined under the identical flag with the Ubuntu
+     stdlib used in CI -- so `parse()`/`accept()`/`from_bjdata()`/etc. extracted a different
+     signature (with or without a `SentinelType` parameter) purely depending on which machine
+     ran the extraction. Now pinned to `-DJSON_HAS_RANGES=0` in `extract_api.py`'s parse
+     arguments: the deterministic choice, since forcing `1` was tried first and found to
+     actually fail to parse on a stdlib without full `<ranges>` support even when the macro
+     claims otherwise.
+  2. `get_identity_name()` used `cursor.spelling` verbatim for `CONVERSION_FUNCTION` cursors,
+     which libclang renders as its own internally-canonicalized form of the return type rather
+     than what's literally written. Confirmed for `json_pointer::operator string_t()`: spelled
+     `"operator nlohmann::json_pointer::string_t_helper<type-parameter-0-0>::type"` on one
+     machine and `"operator typename string_t_helper<type-parameter-0-0>::type"` on another,
+     with both machines pinned to the identical `libclang==18.1.1` wheel and the JSON_HAS_RANGES
+     fix above ruled out as the cause. Now derived from the cursor's own raw source text instead
+     (regex over `get_signature_text()`'s output), immune to libclang's dependent-type
+     resolution differences and incidentally more readable
+     (`"operator string_t"`/`"operator ValueType"` instead of the libclang-internal forms).
+  All 27 files were regenerated under `format_version: 3`.
+
 ## Known gaps
 
 - **`v3.0.0`, `v3.0.1`**: not backfilled. These predate the `include/nlohmann/` directory
