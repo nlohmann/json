@@ -17,7 +17,7 @@ The main structure is class [nlohmann::basic_json](../api/basic_json/index.md).
 
 - describe template parameters of `basic_json`
 - [`json`](../api/json.md)
-- [`ordered_json`](../api/ordered_json.md) via [`ordered_map`](../api/ordered_map.md)
+- [`ordered_json`](../api/ordered_json.md) via [`ordered_map`](../api/ordered_map/index.md)
 
 ## Value storage
 

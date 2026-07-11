@@ -420,7 +420,9 @@ basic_json(basic_json&& other) noexcept;
 1. Since version 1.0.0.
 2. Since version 1.0.0.
 3. Since version 2.1.0.
-4. Since version 3.2.0.
+4. Since version 3.2.0. Also initializes the position reported by
+   [`start_pos()`](start_pos.md)/[`end_pos()`](end_pos.md) from `val` when
+   [`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) is enabled, since version 3.12.0.
 5. Since version 1.0.0.
 6. Since version 1.0.0.
 7. Since version 1.0.0.

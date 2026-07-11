@@ -1,0 +1,2622 @@
+{
+  "format_version": 2,
+  "meta": {
+    "commit": "c800c002b37744fc1aa39738d1e046d05a955f07",
+    "extracted_from": "include/nlohmann/json.hpp",
+    "generated_at": "2026-07-11T12:46:26.069308+00:00",
+    "generator": "tools/api_checker/extract_api.py",
+    "ref": "v3.10.4"
+  },
+  "public_api": [
+    {
+      "identity_name": "operator!=",
+      "kind": "FUNCTION_DECL",
+      "name": "operator!=",
+      "pretty_signature": "nlohmann::operator!=",
+      "scope": "nlohmann",
+      "signature": "friend bool operator!=(const_reference lhs, const_reference rhs) noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator!=",
+      "kind": "FUNCTION_DECL",
+      "name": "operator!=",
+      "pretty_signature": "nlohmann::operator!=",
+      "scope": "nlohmann",
+      "signature": "friend bool operator!=(json_pointer const& lhs, json_pointer const& rhs) noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator/",
+      "kind": "FUNCTION_DECL",
+      "name": "operator/",
+      "pretty_signature": "nlohmann::operator/",
+      "scope": "nlohmann",
+      "signature": "friend json_pointer operator/(const json_pointer& lhs, const json_pointer& rhs)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator/",
+      "kind": "FUNCTION_DECL",
+      "name": "operator/",
+      "pretty_signature": "nlohmann::operator/",
+      "scope": "nlohmann",
+      "signature": "friend json_pointer operator/(const json_pointer& ptr, std::size_t array_idx)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator/",
+      "kind": "FUNCTION_DECL",
+      "name": "operator/",
+      "pretty_signature": "nlohmann::operator/",
+      "scope": "nlohmann",
+      "signature": "friend json_pointer operator/(const json_pointer& ptr, std::string token)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator<",
+      "kind": "FUNCTION_DECL",
+      "name": "operator<",
+      "pretty_signature": "nlohmann::operator<",
+      "scope": "nlohmann",
+      "signature": "friend bool operator<(const_reference lhs, const_reference rhs) noexcept { const auto lhs_type = lhs.type(); const auto rhs_type = rhs.type(); if (lhs_type == rhs_type) { switch (lhs_type) { case value_t::array: return (*lhs.m_value.array) < (*rhs.m_value.array); case value_t::object: return (*lhs.m_value.object) < (*rhs.m_value.object); case value_t::null: return false; case value_t::string: return (*lhs.m_value.string) < (*rhs.m_value.string); case value_t::boolean: return (lhs.m_value.boolean) < (rhs.m_value.boolean); case value_t::number_integer: return (lhs.m_value.number_integer) < (rhs.m_value.number_integer); case value_t::number_unsigned: return (lhs.m_value.number_unsigned) < (rhs.m_value.number_unsigned); case value_t::number_float: return (lhs.m_value.number_float) < (rhs.m_value.number_float); case value_t::binary: return (*lhs.m_value.binary) < (*rhs.m_value.binary); case value_t::discarded: default: return false; } } else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_float) { return static_cast<number_float_t>(lhs.m_value.number_integer) < rhs.m_value.number_float; } else if (lhs_type == value_t::number_float && rhs_type == value_t::number_integer) { return lhs.m_value.number_float < static_cast<number_float_t>(rhs.m_value.number_integer); } else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_float) { return static_cast<number_float_t>(lhs.m_value.number_unsigned) < rhs.m_value.number_float; } else if (lhs_type == value_t::number_float && rhs_type == value_t::number_unsigned) { return lhs.m_value.number_float < static_cast<number_float_t>(rhs.m_value.number_unsigned); } else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_unsigned) { return lhs.m_value.number_integer < static_cast<number_integer_t>(rhs.m_value.number_unsigned); } else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_integer) { return static_cast<number_integer_t>(lhs.m_value.number_unsigned) < rhs.m_value.number_integer; } return operator<(lhs_type, rhs_type); }",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator<<",
+      "kind": "FUNCTION_DECL",
+      "name": "operator<<",
+      "pretty_signature": "nlohmann::operator<<",
+      "scope": "nlohmann",
+      "signature": "JSON_HEDLEY_DEPRECATED_FOR(3.0.0, operator>>(std::istream&, basic_json&)) friend std::istream& operator<<(basic_json& j, std::istream& i) { return operator>>(i, j);",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator<<",
+      "kind": "FUNCTION_DECL",
+      "name": "operator<<",
+      "pretty_signature": "nlohmann::operator<<",
+      "scope": "nlohmann",
+      "signature": "friend std::ostream& operator<<(std::ostream& o, const basic_json& j) { const bool pretty_print = o.width() > 0; const auto indentation = pretty_print ? o.width() : 0; o.width(0); serializer s(detail::output_adapter<char>(o), o.fill()); s.dump(j, pretty_print, false, static_cast<unsigned int>(indentation)); return o; }",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator<=",
+      "kind": "FUNCTION_DECL",
+      "name": "operator<=",
+      "pretty_signature": "nlohmann::operator<=",
+      "scope": "nlohmann",
+      "signature": "friend bool operator<=(const_reference lhs, const_reference rhs) noexcept { return !(rhs < lhs); }",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator==",
+      "kind": "FUNCTION_DECL",
+      "name": "operator==",
+      "pretty_signature": "nlohmann::operator==",
+      "scope": "nlohmann",
+      "signature": "friend bool operator==(const_reference lhs, const_reference rhs) noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator==",
+      "kind": "FUNCTION_DECL",
+      "name": "operator==",
+      "pretty_signature": "nlohmann::operator==",
+      "scope": "nlohmann",
+      "signature": "friend bool operator==(json_pointer const& lhs, json_pointer const& rhs) noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator>",
+      "kind": "FUNCTION_DECL",
+      "name": "operator>",
+      "pretty_signature": "nlohmann::operator>",
+      "scope": "nlohmann",
+      "signature": "friend bool operator>(const_reference lhs, const_reference rhs) noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator>=",
+      "kind": "FUNCTION_DECL",
+      "name": "operator>=",
+      "pretty_signature": "nlohmann::operator>=",
+      "scope": "nlohmann",
+      "signature": "friend bool operator>=(const_reference lhs, const_reference rhs) noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator>>",
+      "kind": "FUNCTION_DECL",
+      "name": "operator>>",
+      "pretty_signature": "nlohmann::operator>>",
+      "scope": "nlohmann",
+      "signature": "JSON_HEDLEY_DEPRECATED_FOR(3.0.0, operator<<(std::ostream&, const basic_json&)) friend std::ostream& operator>>(const basic_json& j, std::ostream& o)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator>>",
+      "kind": "FUNCTION_DECL",
+      "name": "operator>>",
+      "pretty_signature": "nlohmann::operator>>",
+      "scope": "nlohmann",
+      "signature": "friend std::istream& operator>>(std::istream& i, basic_json& j)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "swap",
+      "kind": "FUNCTION_DECL",
+      "name": "swap",
+      "pretty_signature": "nlohmann::swap",
+      "scope": "nlohmann",
+      "signature": "friend void swap(reference left, reference right) noexcept ( std::is_nothrow_move_constructible<value_t>::value&& std::is_nothrow_move_assignable<value_t>::value&& std::is_nothrow_move_constructible<json_value>::value&& std::is_nothrow_move_assignable<json_value>::value )",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_json",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_json",
+      "pretty_signature": "nlohmann::adl_serializer::from_json",
+      "scope": "nlohmann::adl_serializer",
+      "signature": "template<typename BasicJsonType, typename TargetType = ValueType> static auto from_json(BasicJsonType && j) noexcept( noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::identity_tag<TargetType> {}))) -> decltype(::nlohmann::from_json(std::forward<BasicJsonType>(j), detail::identity_tag<TargetType> {}))",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_json",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_json",
+      "pretty_signature": "nlohmann::adl_serializer::from_json",
+      "scope": "nlohmann::adl_serializer",
+      "signature": "template<typename BasicJsonType, typename TargetType = ValueType> static auto from_json(BasicJsonType && j, TargetType& val) noexcept( noexcept(::nlohmann::from_json(std::forward<BasicJsonType>(j), val))) -> decltype(::nlohmann::from_json(std::forward<BasicJsonType>(j), val), void())",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "to_json",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "to_json",
+      "pretty_signature": "nlohmann::adl_serializer::to_json",
+      "scope": "nlohmann::adl_serializer",
+      "signature": "template<typename BasicJsonType, typename TargetType = ValueType> static auto to_json(BasicJsonType& j, TargetType && val) noexcept( noexcept(::nlohmann::to_json(j, std::forward<TargetType>(val)))) -> decltype(::nlohmann::to_json(j, std::forward<TargetType>(val)), void())",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "accept",
+      "kind": "CXX_METHOD",
+      "name": "accept",
+      "pretty_signature": "nlohmann::basic_json::accept",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, accept(ptr, ptr + len)) static bool accept(detail::span_input_adapter&& i, const bool ignore_comments = false)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "accept",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "accept",
+      "pretty_signature": "nlohmann::basic_json::accept",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename InputType> static bool accept(InputType&& i, const bool ignore_comments = false)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "accept",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "accept",
+      "pretty_signature": "nlohmann::basic_json::accept",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename IteratorType> static bool accept(IteratorType first, IteratorType last, const bool ignore_comments = false)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "allocator_type",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "allocator_type",
+      "pretty_signature": "nlohmann::basic_json::allocator_type",
+      "scope": "nlohmann::basic_json",
+      "signature": "using allocator_type = AllocatorType<basic_json>",
+      "tier": "type_exempt"
+    },
+    {
+      "identity_name": "array",
+      "kind": "CXX_METHOD",
+      "name": "array",
+      "pretty_signature": "nlohmann::basic_json::array",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json array(initializer_list_t init = {})",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "array_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "array_t",
+      "pretty_signature": "nlohmann::basic_json::array_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using array_t = ArrayType<basic_json, AllocatorType<basic_json>>",
+      "tier": "type"
+    },
+    {
+      "identity_name": "at",
+      "kind": "CXX_METHOD",
+      "name": "at",
+      "pretty_signature": "nlohmann::basic_json::at",
+      "scope": "nlohmann::basic_json",
+      "signature": "const_reference at(const json_pointer& ptr) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "at",
+      "kind": "CXX_METHOD",
+      "name": "at",
+      "pretty_signature": "nlohmann::basic_json::at",
+      "scope": "nlohmann::basic_json",
+      "signature": "const_reference at(const typename object_t::key_type& key) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "at",
+      "kind": "CXX_METHOD",
+      "name": "at",
+      "pretty_signature": "nlohmann::basic_json::at",
+      "scope": "nlohmann::basic_json",
+      "signature": "const_reference at(size_type idx) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "at",
+      "kind": "CXX_METHOD",
+      "name": "at",
+      "pretty_signature": "nlohmann::basic_json::at",
+      "scope": "nlohmann::basic_json",
+      "signature": "reference at(const json_pointer& ptr)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "at",
+      "kind": "CXX_METHOD",
+      "name": "at",
+      "pretty_signature": "nlohmann::basic_json::at",
+      "scope": "nlohmann::basic_json",
+      "signature": "reference at(const typename object_t::key_type& key)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "at",
+      "kind": "CXX_METHOD",
+      "name": "at",
+      "pretty_signature": "nlohmann::basic_json::at",
+      "scope": "nlohmann::basic_json",
+      "signature": "reference at(size_type idx)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "back",
+      "kind": "CXX_METHOD",
+      "name": "back",
+      "pretty_signature": "nlohmann::basic_json::back",
+      "scope": "nlohmann::basic_json",
+      "signature": "const_reference back() const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "back",
+      "kind": "CXX_METHOD",
+      "name": "back",
+      "pretty_signature": "nlohmann::basic_json::back",
+      "scope": "nlohmann::basic_json",
+      "signature": "reference back()",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "pretty_signature": "nlohmann::basic_json::basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "scope": "nlohmann::basic_json",
+      "signature": "basic_json(basic_json&& other) noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "pretty_signature": "nlohmann::basic_json::basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "scope": "nlohmann::basic_json",
+      "signature": "basic_json(const basic_json& other)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "pretty_signature": "nlohmann::basic_json::basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "scope": "nlohmann::basic_json",
+      "signature": "basic_json(const value_t v)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "pretty_signature": "nlohmann::basic_json::basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "scope": "nlohmann::basic_json",
+      "signature": "basic_json(initializer_list_t init, bool type_deduction = true, value_t manual_type = value_t::array)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "pretty_signature": "nlohmann::basic_json::basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "scope": "nlohmann::basic_json",
+      "signature": "basic_json(size_type cnt, const basic_json& val)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "pretty_signature": "nlohmann::basic_json::basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "scope": "nlohmann::basic_json",
+      "signature": "basic_json(std::nullptr_t = nullptr) noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "pretty_signature": "nlohmann::basic_json::basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "scope": "nlohmann::basic_json",
+      "signature": "template < class InputIT, typename std::enable_if < std::is_same<InputIT, typename basic_json_t::iterator>::value || std::is_same<InputIT, typename basic_json_t::const_iterator>::value, int >::type = 0 > basic_json(InputIT first, InputIT last)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "pretty_signature": "nlohmann::basic_json::basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "scope": "nlohmann::basic_json",
+      "signature": "template < typename BasicJsonType, detail::enable_if_t < detail::is_basic_json<BasicJsonType>::value&& !std::is_same<basic_json, BasicJsonType>::value, int > = 0 > basic_json(const BasicJsonType& val)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "pretty_signature": "nlohmann::basic_json::basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "scope": "nlohmann::basic_json",
+      "signature": "template < typename CompatibleType, typename U = detail::uncvref_t<CompatibleType>, detail::enable_if_t < !detail::is_basic_json<U>::value && detail::is_compatible_type<basic_json_t, U>::value, int > = 0 > basic_json(CompatibleType && val) noexcept(noexcept( JSONSerializer<U>::to_json(std::declval<basic_json_t&>(), std::forward<CompatibleType>(val))))",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "pretty_signature": "nlohmann::basic_json::basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename JsonRef, detail::enable_if_t<detail::conjunction<detail::is_json_ref<JsonRef>, std::is_same<typename JsonRef::value_type, basic_json>>::value, int> = 0 > basic_json(const JsonRef& ref)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "begin",
+      "kind": "CXX_METHOD",
+      "name": "begin",
+      "pretty_signature": "nlohmann::basic_json::begin",
+      "scope": "nlohmann::basic_json",
+      "signature": "const_iterator begin() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "begin",
+      "kind": "CXX_METHOD",
+      "name": "begin",
+      "pretty_signature": "nlohmann::basic_json::begin",
+      "scope": "nlohmann::basic_json",
+      "signature": "iterator begin() noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "binary",
+      "kind": "CXX_METHOD",
+      "name": "binary",
+      "pretty_signature": "nlohmann::basic_json::binary",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json binary(const typename binary_t::container_type& init)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "binary",
+      "kind": "CXX_METHOD",
+      "name": "binary",
+      "pretty_signature": "nlohmann::basic_json::binary",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json binary(const typename binary_t::container_type& init, typename binary_t::subtype_type subtype)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "binary",
+      "kind": "CXX_METHOD",
+      "name": "binary",
+      "pretty_signature": "nlohmann::basic_json::binary",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json binary(typename binary_t::container_type&& init)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "binary",
+      "kind": "CXX_METHOD",
+      "name": "binary",
+      "pretty_signature": "nlohmann::basic_json::binary",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json binary(typename binary_t::container_type&& init, typename binary_t::subtype_type subtype)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "binary_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "binary_t",
+      "pretty_signature": "nlohmann::basic_json::binary_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using binary_t = nlohmann::byte_container_with_subtype<BinaryType>",
+      "tier": "type"
+    },
+    {
+      "identity_name": "boolean_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "boolean_t",
+      "pretty_signature": "nlohmann::basic_json::boolean_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using boolean_t = BooleanType",
+      "tier": "type"
+    },
+    {
+      "identity_name": "cbegin",
+      "kind": "CXX_METHOD",
+      "name": "cbegin",
+      "pretty_signature": "nlohmann::basic_json::cbegin",
+      "scope": "nlohmann::basic_json",
+      "signature": "const_iterator cbegin() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "cbor_tag_handler_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "cbor_tag_handler_t",
+      "pretty_signature": "nlohmann::basic_json::cbor_tag_handler_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using cbor_tag_handler_t = detail::cbor_tag_handler_t",
+      "tier": "type"
+    },
+    {
+      "identity_name": "cend",
+      "kind": "CXX_METHOD",
+      "name": "cend",
+      "pretty_signature": "nlohmann::basic_json::cend",
+      "scope": "nlohmann::basic_json",
+      "signature": "const_iterator cend() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "clear",
+      "kind": "CXX_METHOD",
+      "name": "clear",
+      "pretty_signature": "nlohmann::basic_json::clear",
+      "scope": "nlohmann::basic_json",
+      "signature": "void clear() noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "const_iterator",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "const_iterator",
+      "pretty_signature": "nlohmann::basic_json::const_iterator",
+      "scope": "nlohmann::basic_json",
+      "signature": "using const_iterator = iter_impl<const basic_json>",
+      "tier": "type_exempt"
+    },
+    {
+      "identity_name": "const_pointer",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "const_pointer",
+      "pretty_signature": "nlohmann::basic_json::const_pointer",
+      "scope": "nlohmann::basic_json",
+      "signature": "using const_pointer = typename std::allocator_traits<allocator_type>::const_pointer",
+      "tier": "type_exempt"
+    },
+    {
+      "identity_name": "const_reference",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "const_reference",
+      "pretty_signature": "nlohmann::basic_json::const_reference",
+      "scope": "nlohmann::basic_json",
+      "signature": "using const_reference = const value_type&",
+      "tier": "type_exempt"
+    },
+    {
+      "identity_name": "const_reverse_iterator",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "const_reverse_iterator",
+      "pretty_signature": "nlohmann::basic_json::const_reverse_iterator",
+      "scope": "nlohmann::basic_json",
+      "signature": "using const_reverse_iterator = json_reverse_iterator<typename basic_json::const_iterator>",
+      "tier": "type_exempt"
+    },
+    {
+      "identity_name": "contains",
+      "kind": "CXX_METHOD",
+      "name": "contains",
+      "pretty_signature": "nlohmann::basic_json::contains",
+      "scope": "nlohmann::basic_json",
+      "signature": "bool contains(const json_pointer& ptr) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "contains",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "contains",
+      "pretty_signature": "nlohmann::basic_json::contains",
+      "scope": "nlohmann::basic_json",
+      "signature": "template < typename KeyT, typename std::enable_if < !std::is_same<typename std::decay<KeyT>::type, json_pointer>::value, int >::type = 0 > bool contains(KeyT && key) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "count",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "count",
+      "pretty_signature": "nlohmann::basic_json::count",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename KeyT> size_type count(KeyT&& key) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "crbegin",
+      "kind": "CXX_METHOD",
+      "name": "crbegin",
+      "pretty_signature": "nlohmann::basic_json::crbegin",
+      "scope": "nlohmann::basic_json",
+      "signature": "const_reverse_iterator crbegin() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "crend",
+      "kind": "CXX_METHOD",
+      "name": "crend",
+      "pretty_signature": "nlohmann::basic_json::crend",
+      "scope": "nlohmann::basic_json",
+      "signature": "const_reverse_iterator crend() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "diff",
+      "kind": "CXX_METHOD",
+      "name": "diff",
+      "pretty_signature": "nlohmann::basic_json::diff",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json diff(const basic_json& source, const basic_json& target, const std::string& path = \"\")",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "difference_type",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "difference_type",
+      "pretty_signature": "nlohmann::basic_json::difference_type",
+      "scope": "nlohmann::basic_json",
+      "signature": "using difference_type = std::ptrdiff_t",
+      "tier": "type_exempt"
+    },
+    {
+      "identity_name": "dump",
+      "kind": "CXX_METHOD",
+      "name": "dump",
+      "pretty_signature": "nlohmann::basic_json::dump",
+      "scope": "nlohmann::basic_json",
+      "signature": "string_t dump(const int indent = -1, const char indent_char = ' ', const bool ensure_ascii = false, const error_handler_t error_handler = error_handler_t::strict) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "emplace",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "emplace",
+      "pretty_signature": "nlohmann::basic_json::emplace",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<class... Args> std::pair<iterator, bool> emplace(Args&& ... args)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "emplace_back",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "emplace_back",
+      "pretty_signature": "nlohmann::basic_json::emplace_back",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<class... Args> reference emplace_back(Args&& ... args)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "empty",
+      "kind": "CXX_METHOD",
+      "name": "empty",
+      "pretty_signature": "nlohmann::basic_json::empty",
+      "scope": "nlohmann::basic_json",
+      "signature": "bool empty() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "end",
+      "kind": "CXX_METHOD",
+      "name": "end",
+      "pretty_signature": "nlohmann::basic_json::end",
+      "scope": "nlohmann::basic_json",
+      "signature": "const_iterator end() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "end",
+      "kind": "CXX_METHOD",
+      "name": "end",
+      "pretty_signature": "nlohmann::basic_json::end",
+      "scope": "nlohmann::basic_json",
+      "signature": "iterator end() noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "erase",
+      "kind": "CXX_METHOD",
+      "name": "erase",
+      "pretty_signature": "nlohmann::basic_json::erase",
+      "scope": "nlohmann::basic_json",
+      "signature": "size_type erase(const typename object_t::key_type& key)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "erase",
+      "kind": "CXX_METHOD",
+      "name": "erase",
+      "pretty_signature": "nlohmann::basic_json::erase",
+      "scope": "nlohmann::basic_json",
+      "signature": "void erase(const size_type idx)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "erase",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "erase",
+      "pretty_signature": "nlohmann::basic_json::erase",
+      "scope": "nlohmann::basic_json",
+      "signature": "template < class IteratorType, typename std::enable_if < std::is_same<IteratorType, typename basic_json_t::iterator>::value || std::is_same<IteratorType, typename basic_json_t::const_iterator>::value, int >::type = 0 > IteratorType erase(IteratorType first, IteratorType last)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "erase",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "erase",
+      "pretty_signature": "nlohmann::basic_json::erase",
+      "scope": "nlohmann::basic_json",
+      "signature": "template < class IteratorType, typename std::enable_if < std::is_same<IteratorType, typename basic_json_t::iterator>::value || std::is_same<IteratorType, typename basic_json_t::const_iterator>::value, int >::type = 0 > IteratorType erase(IteratorType pos)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "error_handler_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "error_handler_t",
+      "pretty_signature": "nlohmann::basic_json::error_handler_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using error_handler_t = detail::error_handler_t",
+      "tier": "type"
+    },
+    {
+      "identity_name": "exception",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "exception",
+      "pretty_signature": "nlohmann::basic_json::exception",
+      "scope": "nlohmann::basic_json",
+      "signature": "using exception = detail::exception",
+      "tier": "type"
+    },
+    {
+      "identity_name": "find",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "find",
+      "pretty_signature": "nlohmann::basic_json::find",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename KeyT> const_iterator find(KeyT&& key) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "find",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "find",
+      "pretty_signature": "nlohmann::basic_json::find",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename KeyT> iterator find(KeyT&& key)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "flatten",
+      "kind": "CXX_METHOD",
+      "name": "flatten",
+      "pretty_signature": "nlohmann::basic_json::flatten",
+      "scope": "nlohmann::basic_json",
+      "signature": "basic_json flatten() const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_bson",
+      "kind": "CXX_METHOD",
+      "name": "from_bson",
+      "pretty_signature": "nlohmann::basic_json::from_bson",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_bson(ptr, ptr + len)) static basic_json from_bson(detail::span_input_adapter&& i, const bool strict = true, const bool allow_exceptions = true)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_bson",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_bson",
+      "pretty_signature": "nlohmann::basic_json::from_bson",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename InputType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_bson(InputType&& i, const bool strict = true, const bool allow_exceptions = true)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_bson",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_bson",
+      "pretty_signature": "nlohmann::basic_json::from_bson",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename IteratorType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_bson(IteratorType first, IteratorType last, const bool strict = true, const bool allow_exceptions = true)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_bson",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_bson",
+      "pretty_signature": "nlohmann::basic_json::from_bson",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename T> JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_bson(ptr, ptr + len)) static basic_json from_bson(const T* ptr, std::size_t len, const bool strict = true, const bool allow_exceptions = true)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_cbor",
+      "kind": "CXX_METHOD",
+      "name": "from_cbor",
+      "pretty_signature": "nlohmann::basic_json::from_cbor",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_cbor(ptr, ptr + len)) static basic_json from_cbor(detail::span_input_adapter&& i, const bool strict = true, const bool allow_exceptions = true, const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_cbor",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_cbor",
+      "pretty_signature": "nlohmann::basic_json::from_cbor",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename InputType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_cbor(InputType&& i, const bool strict = true, const bool allow_exceptions = true, const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_cbor",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_cbor",
+      "pretty_signature": "nlohmann::basic_json::from_cbor",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename IteratorType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_cbor(IteratorType first, IteratorType last, const bool strict = true, const bool allow_exceptions = true, const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_cbor",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_cbor",
+      "pretty_signature": "nlohmann::basic_json::from_cbor",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename T> JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_cbor(ptr, ptr + len)) static basic_json from_cbor(const T* ptr, std::size_t len, const bool strict = true, const bool allow_exceptions = true, const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_msgpack",
+      "kind": "CXX_METHOD",
+      "name": "from_msgpack",
+      "pretty_signature": "nlohmann::basic_json::from_msgpack",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_msgpack(ptr, ptr + len)) static basic_json from_msgpack(detail::span_input_adapter&& i, const bool strict = true, const bool allow_exceptions = true)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_msgpack",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_msgpack",
+      "pretty_signature": "nlohmann::basic_json::from_msgpack",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename InputType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_msgpack(InputType&& i, const bool strict = true, const bool allow_exceptions = true)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_msgpack",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_msgpack",
+      "pretty_signature": "nlohmann::basic_json::from_msgpack",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename IteratorType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_msgpack(IteratorType first, IteratorType last, const bool strict = true, const bool allow_exceptions = true)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_msgpack",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_msgpack",
+      "pretty_signature": "nlohmann::basic_json::from_msgpack",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename T> JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_msgpack(ptr, ptr + len)) static basic_json from_msgpack(const T* ptr, std::size_t len, const bool strict = true, const bool allow_exceptions = true)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_ubjson",
+      "kind": "CXX_METHOD",
+      "name": "from_ubjson",
+      "pretty_signature": "nlohmann::basic_json::from_ubjson",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_ubjson(ptr, ptr + len)) static basic_json from_ubjson(detail::span_input_adapter&& i, const bool strict = true, const bool allow_exceptions = true)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_ubjson",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_ubjson",
+      "pretty_signature": "nlohmann::basic_json::from_ubjson",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename InputType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_ubjson(InputType&& i, const bool strict = true, const bool allow_exceptions = true)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_ubjson",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_ubjson",
+      "pretty_signature": "nlohmann::basic_json::from_ubjson",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename IteratorType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_ubjson(IteratorType first, IteratorType last, const bool strict = true, const bool allow_exceptions = true)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_ubjson",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_ubjson",
+      "pretty_signature": "nlohmann::basic_json::from_ubjson",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename T> JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_ubjson(ptr, ptr + len)) static basic_json from_ubjson(const T* ptr, std::size_t len, const bool strict = true, const bool allow_exceptions = true)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "front",
+      "kind": "CXX_METHOD",
+      "name": "front",
+      "pretty_signature": "nlohmann::basic_json::front",
+      "scope": "nlohmann::basic_json",
+      "signature": "const_reference front() const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "front",
+      "kind": "CXX_METHOD",
+      "name": "front",
+      "pretty_signature": "nlohmann::basic_json::front",
+      "scope": "nlohmann::basic_json",
+      "signature": "reference front()",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "get",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "get",
+      "pretty_signature": "nlohmann::basic_json::get",
+      "scope": "nlohmann::basic_json",
+      "signature": "template < typename ValueTypeCV, typename ValueType = detail::uncvref_t<ValueTypeCV>> #if defined(JSON_HAS_CPP_14) constexpr #endif auto get() const noexcept( noexcept(std::declval<const basic_json_t&>().template get_impl<ValueType>(detail::priority_tag<4> {}))) -> decltype(std::declval<const basic_json_t&>().template get_impl<ValueType>(detail::priority_tag<4> {}))",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "get",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "get",
+      "pretty_signature": "nlohmann::basic_json::get",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename PointerType, typename std::enable_if< std::is_pointer<PointerType>::value, int>::type = 0> auto get() noexcept -> decltype(std::declval<basic_json_t&>().template get_ptr<PointerType>())",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "get_allocator",
+      "kind": "CXX_METHOD",
+      "name": "get_allocator",
+      "pretty_signature": "nlohmann::basic_json::get_allocator",
+      "scope": "nlohmann::basic_json",
+      "signature": "static allocator_type get_allocator()",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "get_binary",
+      "kind": "CXX_METHOD",
+      "name": "get_binary",
+      "pretty_signature": "nlohmann::basic_json::get_binary",
+      "scope": "nlohmann::basic_json",
+      "signature": "binary_t& get_binary()",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "get_binary",
+      "kind": "CXX_METHOD",
+      "name": "get_binary",
+      "pretty_signature": "nlohmann::basic_json::get_binary",
+      "scope": "nlohmann::basic_json",
+      "signature": "const binary_t& get_binary() const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "get_ptr",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "get_ptr",
+      "pretty_signature": "nlohmann::basic_json::get_ptr",
+      "scope": "nlohmann::basic_json",
+      "signature": "template < typename PointerType, typename std::enable_if < std::is_pointer<PointerType>::value&& std::is_const<typename std::remove_pointer<PointerType>::type>::value, int >::type = 0 > constexpr auto get_ptr() const noexcept -> decltype(std::declval<const basic_json_t&>().get_impl_ptr(std::declval<PointerType>()))",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "get_ptr",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "get_ptr",
+      "pretty_signature": "nlohmann::basic_json::get_ptr",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename PointerType, typename std::enable_if< std::is_pointer<PointerType>::value, int>::type = 0> auto get_ptr() noexcept -> decltype(std::declval<basic_json_t&>().get_impl_ptr(std::declval<PointerType>()))",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "get_ref",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "get_ref",
+      "pretty_signature": "nlohmann::basic_json::get_ref",
+      "scope": "nlohmann::basic_json",
+      "signature": "template < typename ReferenceType, typename std::enable_if < std::is_reference<ReferenceType>::value&& std::is_const<typename std::remove_reference<ReferenceType>::type>::value, int >::type = 0 > ReferenceType get_ref() const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "get_ref",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "get_ref",
+      "pretty_signature": "nlohmann::basic_json::get_ref",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename ReferenceType, typename std::enable_if< std::is_reference<ReferenceType>::value, int>::type = 0> ReferenceType get_ref()",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "get_to",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "get_to",
+      "pretty_signature": "nlohmann::basic_json::get_to",
+      "scope": "nlohmann::basic_json",
+      "signature": "template < typename T, std::size_t N, typename Array = T (&)[N], detail::enable_if_t < detail::has_from_json<basic_json_t, Array>::value, int > = 0 > Array get_to(T (&v)[N]) const noexcept(noexcept(JSONSerializer<Array>::from_json( std::declval<const basic_json_t&>(), v)))",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "get_to",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "get_to",
+      "pretty_signature": "nlohmann::basic_json::get_to",
+      "scope": "nlohmann::basic_json",
+      "signature": "template < typename ValueType, detail::enable_if_t < !detail::is_basic_json<ValueType>::value&& detail::has_from_json<basic_json_t, ValueType>::value, int > = 0 > ValueType & get_to(ValueType& v) const noexcept(noexcept( JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), v)))",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "get_to",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "get_to",
+      "pretty_signature": "nlohmann::basic_json::get_to",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename ValueType, detail::enable_if_t < detail::is_basic_json<ValueType>::value, int> = 0> ValueType & get_to(ValueType& v) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "initializer_list_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "initializer_list_t",
+      "pretty_signature": "nlohmann::basic_json::initializer_list_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using initializer_list_t = std::initializer_list<detail::json_ref<basic_json>>",
+      "tier": "type"
+    },
+    {
+      "identity_name": "input_format_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "input_format_t",
+      "pretty_signature": "nlohmann::basic_json::input_format_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using input_format_t = detail::input_format_t",
+      "tier": "type"
+    },
+    {
+      "identity_name": "insert",
+      "kind": "CXX_METHOD",
+      "name": "insert",
+      "pretty_signature": "nlohmann::basic_json::insert",
+      "scope": "nlohmann::basic_json",
+      "signature": "iterator insert(const_iterator pos, basic_json&& val)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "insert",
+      "kind": "CXX_METHOD",
+      "name": "insert",
+      "pretty_signature": "nlohmann::basic_json::insert",
+      "scope": "nlohmann::basic_json",
+      "signature": "iterator insert(const_iterator pos, const basic_json& val)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "insert",
+      "kind": "CXX_METHOD",
+      "name": "insert",
+      "pretty_signature": "nlohmann::basic_json::insert",
+      "scope": "nlohmann::basic_json",
+      "signature": "iterator insert(const_iterator pos, const_iterator first, const_iterator last)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "insert",
+      "kind": "CXX_METHOD",
+      "name": "insert",
+      "pretty_signature": "nlohmann::basic_json::insert",
+      "scope": "nlohmann::basic_json",
+      "signature": "iterator insert(const_iterator pos, initializer_list_t ilist)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "insert",
+      "kind": "CXX_METHOD",
+      "name": "insert",
+      "pretty_signature": "nlohmann::basic_json::insert",
+      "scope": "nlohmann::basic_json",
+      "signature": "iterator insert(const_iterator pos, size_type cnt, const basic_json& val)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "insert",
+      "kind": "CXX_METHOD",
+      "name": "insert",
+      "pretty_signature": "nlohmann::basic_json::insert",
+      "scope": "nlohmann::basic_json",
+      "signature": "void insert(const_iterator first, const_iterator last)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "insert_iterator",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "insert_iterator",
+      "pretty_signature": "nlohmann::basic_json::insert_iterator",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename... Args> iterator insert_iterator(const_iterator pos, Args&& ... args)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "invalid_iterator",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "invalid_iterator",
+      "pretty_signature": "nlohmann::basic_json::invalid_iterator",
+      "scope": "nlohmann::basic_json",
+      "signature": "using invalid_iterator = detail::invalid_iterator",
+      "tier": "type"
+    },
+    {
+      "identity_name": "is_array",
+      "kind": "CXX_METHOD",
+      "name": "is_array",
+      "pretty_signature": "nlohmann::basic_json::is_array",
+      "scope": "nlohmann::basic_json",
+      "signature": "constexpr bool is_array() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "is_binary",
+      "kind": "CXX_METHOD",
+      "name": "is_binary",
+      "pretty_signature": "nlohmann::basic_json::is_binary",
+      "scope": "nlohmann::basic_json",
+      "signature": "constexpr bool is_binary() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "is_boolean",
+      "kind": "CXX_METHOD",
+      "name": "is_boolean",
+      "pretty_signature": "nlohmann::basic_json::is_boolean",
+      "scope": "nlohmann::basic_json",
+      "signature": "constexpr bool is_boolean() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "is_discarded",
+      "kind": "CXX_METHOD",
+      "name": "is_discarded",
+      "pretty_signature": "nlohmann::basic_json::is_discarded",
+      "scope": "nlohmann::basic_json",
+      "signature": "constexpr bool is_discarded() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "is_null",
+      "kind": "CXX_METHOD",
+      "name": "is_null",
+      "pretty_signature": "nlohmann::basic_json::is_null",
+      "scope": "nlohmann::basic_json",
+      "signature": "constexpr bool is_null() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "is_number",
+      "kind": "CXX_METHOD",
+      "name": "is_number",
+      "pretty_signature": "nlohmann::basic_json::is_number",
+      "scope": "nlohmann::basic_json",
+      "signature": "constexpr bool is_number() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "is_number_float",
+      "kind": "CXX_METHOD",
+      "name": "is_number_float",
+      "pretty_signature": "nlohmann::basic_json::is_number_float",
+      "scope": "nlohmann::basic_json",
+      "signature": "constexpr bool is_number_float() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "is_number_integer",
+      "kind": "CXX_METHOD",
+      "name": "is_number_integer",
+      "pretty_signature": "nlohmann::basic_json::is_number_integer",
+      "scope": "nlohmann::basic_json",
+      "signature": "constexpr bool is_number_integer() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "is_number_unsigned",
+      "kind": "CXX_METHOD",
+      "name": "is_number_unsigned",
+      "pretty_signature": "nlohmann::basic_json::is_number_unsigned",
+      "scope": "nlohmann::basic_json",
+      "signature": "constexpr bool is_number_unsigned() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "is_object",
+      "kind": "CXX_METHOD",
+      "name": "is_object",
+      "pretty_signature": "nlohmann::basic_json::is_object",
+      "scope": "nlohmann::basic_json",
+      "signature": "constexpr bool is_object() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "is_primitive",
+      "kind": "CXX_METHOD",
+      "name": "is_primitive",
+      "pretty_signature": "nlohmann::basic_json::is_primitive",
+      "scope": "nlohmann::basic_json",
+      "signature": "constexpr bool is_primitive() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "is_string",
+      "kind": "CXX_METHOD",
+      "name": "is_string",
+      "pretty_signature": "nlohmann::basic_json::is_string",
+      "scope": "nlohmann::basic_json",
+      "signature": "constexpr bool is_string() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "is_structured",
+      "kind": "CXX_METHOD",
+      "name": "is_structured",
+      "pretty_signature": "nlohmann::basic_json::is_structured",
+      "scope": "nlohmann::basic_json",
+      "signature": "constexpr bool is_structured() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "items",
+      "kind": "CXX_METHOD",
+      "name": "items",
+      "pretty_signature": "nlohmann::basic_json::items",
+      "scope": "nlohmann::basic_json",
+      "signature": "iteration_proxy<const_iterator> items() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "items",
+      "kind": "CXX_METHOD",
+      "name": "items",
+      "pretty_signature": "nlohmann::basic_json::items",
+      "scope": "nlohmann::basic_json",
+      "signature": "iteration_proxy<iterator> items() noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "iterator",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "iterator",
+      "pretty_signature": "nlohmann::basic_json::iterator",
+      "scope": "nlohmann::basic_json",
+      "signature": "using iterator = iter_impl<basic_json>",
+      "tier": "type_exempt"
+    },
+    {
+      "identity_name": "iterator_wrapper",
+      "kind": "CXX_METHOD",
+      "name": "iterator_wrapper",
+      "pretty_signature": "nlohmann::basic_json::iterator_wrapper",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_DEPRECATED_FOR(3.1.0, items()) static iteration_proxy<const_iterator> iterator_wrapper(const_reference ref) noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "iterator_wrapper",
+      "kind": "CXX_METHOD",
+      "name": "iterator_wrapper",
+      "pretty_signature": "nlohmann::basic_json::iterator_wrapper",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_DEPRECATED_FOR(3.1.0, items()) static iteration_proxy<iterator> iterator_wrapper(reference ref) noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "json_pointer",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "json_pointer",
+      "pretty_signature": "nlohmann::basic_json::json_pointer",
+      "scope": "nlohmann::basic_json",
+      "signature": "using json_pointer = ::nlohmann::json_pointer<basic_json>",
+      "tier": "type"
+    },
+    {
+      "identity_name": "json_sax_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "json_sax_t",
+      "pretty_signature": "nlohmann::basic_json::json_sax_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using json_sax_t = json_sax<basic_json>",
+      "tier": "type"
+    },
+    {
+      "identity_name": "max_size",
+      "kind": "CXX_METHOD",
+      "name": "max_size",
+      "pretty_signature": "nlohmann::basic_json::max_size",
+      "scope": "nlohmann::basic_json",
+      "signature": "size_type max_size() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "merge_patch",
+      "kind": "CXX_METHOD",
+      "name": "merge_patch",
+      "pretty_signature": "nlohmann::basic_json::merge_patch",
+      "scope": "nlohmann::basic_json",
+      "signature": "void merge_patch(const basic_json& apply_patch)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "meta",
+      "kind": "CXX_METHOD",
+      "name": "meta",
+      "pretty_signature": "nlohmann::basic_json::meta",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json meta()",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "number_float_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "number_float_t",
+      "pretty_signature": "nlohmann::basic_json::number_float_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using number_float_t = NumberFloatType",
+      "tier": "type"
+    },
+    {
+      "identity_name": "number_integer_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "number_integer_t",
+      "pretty_signature": "nlohmann::basic_json::number_integer_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using number_integer_t = NumberIntegerType",
+      "tier": "type"
+    },
+    {
+      "identity_name": "number_unsigned_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "number_unsigned_t",
+      "pretty_signature": "nlohmann::basic_json::number_unsigned_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using number_unsigned_t = NumberUnsignedType",
+      "tier": "type"
+    },
+    {
+      "identity_name": "object",
+      "kind": "CXX_METHOD",
+      "name": "object",
+      "pretty_signature": "nlohmann::basic_json::object",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json object(initializer_list_t init = {})",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "object_comparator_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "object_comparator_t",
+      "pretty_signature": "nlohmann::basic_json::object_comparator_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using object_comparator_t = std::less<>",
+      "tier": "type"
+    },
+    {
+      "identity_name": "object_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "object_t",
+      "pretty_signature": "nlohmann::basic_json::object_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using object_t = ObjectType<StringType, basic_json, object_comparator_t, AllocatorType<std::pair<const StringType, basic_json>>>",
+      "tier": "type"
+    },
+    {
+      "identity_name": "operator nlohmann::detail::value_t",
+      "kind": "CONVERSION_FUNCTION",
+      "name": "operator nlohmann::detail::value_t",
+      "pretty_signature": "nlohmann::basic_json::operator nlohmann::detail::value_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "constexpr operator value_t() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator type-parameter-1-0",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "operator type-parameter-1-0",
+      "pretty_signature": "nlohmann::basic_json::operator type-parameter-1-0",
+      "scope": "nlohmann::basic_json",
+      "signature": "template < typename ValueType, typename std::enable_if < detail::conjunction < detail::negation<std::is_pointer<ValueType>>, detail::negation<std::is_same<ValueType, detail::json_ref<basic_json>>>, detail::negation<std::is_same<ValueType, typename string_t::value_type>>, detail::negation<detail::is_basic_json<ValueType>>, detail::negation<std::is_same<ValueType, std::initializer_list<typename string_t::value_type>>>, #if defined(JSON_HAS_CPP_17) && (defined(__GNUC__) || (defined(_MSC_VER) && _MSC_VER >= 1910 && _MSC_VER <= 1914)) detail::negation<std::is_same<ValueType, std::string_view>>, #endif detail::is_detected_lazy<detail::get_template_function, const basic_json_t&, ValueType> >::value, int >::type = 0 > JSON_EXPLICIT operator ValueType() const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator+=",
+      "kind": "CXX_METHOD",
+      "name": "operator+=",
+      "pretty_signature": "nlohmann::basic_json::operator+=",
+      "scope": "nlohmann::basic_json",
+      "signature": "reference operator+=(basic_json&& val)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator+=",
+      "kind": "CXX_METHOD",
+      "name": "operator+=",
+      "pretty_signature": "nlohmann::basic_json::operator+=",
+      "scope": "nlohmann::basic_json",
+      "signature": "reference operator+=(const basic_json& val)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator+=",
+      "kind": "CXX_METHOD",
+      "name": "operator+=",
+      "pretty_signature": "nlohmann::basic_json::operator+=",
+      "scope": "nlohmann::basic_json",
+      "signature": "reference operator+=(const typename object_t::value_type& val)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator+=",
+      "kind": "CXX_METHOD",
+      "name": "operator+=",
+      "pretty_signature": "nlohmann::basic_json::operator+=",
+      "scope": "nlohmann::basic_json",
+      "signature": "reference operator+=(initializer_list_t init)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator=",
+      "kind": "CXX_METHOD",
+      "name": "operator=",
+      "pretty_signature": "nlohmann::basic_json::operator=",
+      "scope": "nlohmann::basic_json",
+      "signature": "basic_json& operator=(basic_json other) noexcept ( std::is_nothrow_move_constructible<value_t>::value&& std::is_nothrow_move_assignable<value_t>::value&& std::is_nothrow_move_constructible<json_value>::value&& std::is_nothrow_move_assignable<json_value>::value )",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator[]",
+      "kind": "CXX_METHOD",
+      "name": "operator[]",
+      "pretty_signature": "nlohmann::basic_json::operator[]",
+      "scope": "nlohmann::basic_json",
+      "signature": "const_reference operator[](const json_pointer& ptr) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator[]",
+      "kind": "CXX_METHOD",
+      "name": "operator[]",
+      "pretty_signature": "nlohmann::basic_json::operator[]",
+      "scope": "nlohmann::basic_json",
+      "signature": "const_reference operator[](const typename object_t::key_type& key) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator[]",
+      "kind": "CXX_METHOD",
+      "name": "operator[]",
+      "pretty_signature": "nlohmann::basic_json::operator[]",
+      "scope": "nlohmann::basic_json",
+      "signature": "const_reference operator[](size_type idx) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator[]",
+      "kind": "CXX_METHOD",
+      "name": "operator[]",
+      "pretty_signature": "nlohmann::basic_json::operator[]",
+      "scope": "nlohmann::basic_json",
+      "signature": "reference operator[](const json_pointer& ptr)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator[]",
+      "kind": "CXX_METHOD",
+      "name": "operator[]",
+      "pretty_signature": "nlohmann::basic_json::operator[]",
+      "scope": "nlohmann::basic_json",
+      "signature": "reference operator[](const typename object_t::key_type& key)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator[]",
+      "kind": "CXX_METHOD",
+      "name": "operator[]",
+      "pretty_signature": "nlohmann::basic_json::operator[]",
+      "scope": "nlohmann::basic_json",
+      "signature": "reference operator[](size_type idx)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator[]",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "operator[]",
+      "pretty_signature": "nlohmann::basic_json::operator[]",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename T> JSON_HEDLEY_NON_NULL(2) const_reference operator[](T* key) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator[]",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "operator[]",
+      "pretty_signature": "nlohmann::basic_json::operator[]",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename T> JSON_HEDLEY_NON_NULL(2) reference operator[](T* key)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "other_error",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "other_error",
+      "pretty_signature": "nlohmann::basic_json::other_error",
+      "scope": "nlohmann::basic_json",
+      "signature": "using other_error = detail::other_error",
+      "tier": "type"
+    },
+    {
+      "identity_name": "out_of_range",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "out_of_range",
+      "pretty_signature": "nlohmann::basic_json::out_of_range",
+      "scope": "nlohmann::basic_json",
+      "signature": "using out_of_range = detail::out_of_range",
+      "tier": "type"
+    },
+    {
+      "identity_name": "parse",
+      "kind": "CXX_METHOD",
+      "name": "parse",
+      "pretty_signature": "nlohmann::basic_json::parse",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.8.0, parse(ptr, ptr + len)) static basic_json parse(detail::span_input_adapter&& i, const parser_callback_t cb = nullptr, const bool allow_exceptions = true, const bool ignore_comments = false)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "parse",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "parse",
+      "pretty_signature": "nlohmann::basic_json::parse",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename InputType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json parse(InputType&& i, const parser_callback_t cb = nullptr, const bool allow_exceptions = true, const bool ignore_comments = false)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "parse",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "parse",
+      "pretty_signature": "nlohmann::basic_json::parse",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename IteratorType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json parse(IteratorType first, IteratorType last, const parser_callback_t cb = nullptr, const bool allow_exceptions = true, const bool ignore_comments = false)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "parse_error",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "parse_error",
+      "pretty_signature": "nlohmann::basic_json::parse_error",
+      "scope": "nlohmann::basic_json",
+      "signature": "using parse_error = detail::parse_error",
+      "tier": "type"
+    },
+    {
+      "identity_name": "parse_event_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "parse_event_t",
+      "pretty_signature": "nlohmann::basic_json::parse_event_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using parse_event_t = detail::parse_event_t",
+      "tier": "type"
+    },
+    {
+      "identity_name": "parser_callback_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "parser_callback_t",
+      "pretty_signature": "nlohmann::basic_json::parser_callback_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using parser_callback_t = detail::parser_callback_t<basic_json>",
+      "tier": "type"
+    },
+    {
+      "identity_name": "patch",
+      "kind": "CXX_METHOD",
+      "name": "patch",
+      "pretty_signature": "nlohmann::basic_json::patch",
+      "scope": "nlohmann::basic_json",
+      "signature": "basic_json patch(const basic_json& json_patch) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "pointer",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "pointer",
+      "pretty_signature": "nlohmann::basic_json::pointer",
+      "scope": "nlohmann::basic_json",
+      "signature": "using pointer = typename std::allocator_traits<allocator_type>::pointer",
+      "tier": "type_exempt"
+    },
+    {
+      "identity_name": "push_back",
+      "kind": "CXX_METHOD",
+      "name": "push_back",
+      "pretty_signature": "nlohmann::basic_json::push_back",
+      "scope": "nlohmann::basic_json",
+      "signature": "void push_back(basic_json&& val)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "push_back",
+      "kind": "CXX_METHOD",
+      "name": "push_back",
+      "pretty_signature": "nlohmann::basic_json::push_back",
+      "scope": "nlohmann::basic_json",
+      "signature": "void push_back(const basic_json& val)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "push_back",
+      "kind": "CXX_METHOD",
+      "name": "push_back",
+      "pretty_signature": "nlohmann::basic_json::push_back",
+      "scope": "nlohmann::basic_json",
+      "signature": "void push_back(const typename object_t::value_type& val)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "push_back",
+      "kind": "CXX_METHOD",
+      "name": "push_back",
+      "pretty_signature": "nlohmann::basic_json::push_back",
+      "scope": "nlohmann::basic_json",
+      "signature": "void push_back(initializer_list_t init)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "rbegin",
+      "kind": "CXX_METHOD",
+      "name": "rbegin",
+      "pretty_signature": "nlohmann::basic_json::rbegin",
+      "scope": "nlohmann::basic_json",
+      "signature": "const_reverse_iterator rbegin() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "rbegin",
+      "kind": "CXX_METHOD",
+      "name": "rbegin",
+      "pretty_signature": "nlohmann::basic_json::rbegin",
+      "scope": "nlohmann::basic_json",
+      "signature": "reverse_iterator rbegin() noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "reference",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "reference",
+      "pretty_signature": "nlohmann::basic_json::reference",
+      "scope": "nlohmann::basic_json",
+      "signature": "using reference = value_type&",
+      "tier": "type_exempt"
+    },
+    {
+      "identity_name": "rend",
+      "kind": "CXX_METHOD",
+      "name": "rend",
+      "pretty_signature": "nlohmann::basic_json::rend",
+      "scope": "nlohmann::basic_json",
+      "signature": "const_reverse_iterator rend() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "rend",
+      "kind": "CXX_METHOD",
+      "name": "rend",
+      "pretty_signature": "nlohmann::basic_json::rend",
+      "scope": "nlohmann::basic_json",
+      "signature": "reverse_iterator rend() noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "reverse_iterator",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "reverse_iterator",
+      "pretty_signature": "nlohmann::basic_json::reverse_iterator",
+      "scope": "nlohmann::basic_json",
+      "signature": "using reverse_iterator = json_reverse_iterator<typename basic_json::iterator>",
+      "tier": "type_exempt"
+    },
+    {
+      "identity_name": "sax_parse",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "sax_parse",
+      "pretty_signature": "nlohmann::basic_json::sax_parse",
+      "scope": "nlohmann::basic_json",
+      "signature": "template <typename InputType, typename SAX> JSON_HEDLEY_NON_NULL(2) static bool sax_parse(InputType&& i, SAX* sax, input_format_t format = input_format_t::json, const bool strict = true, const bool ignore_comments = false)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "sax_parse",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "sax_parse",
+      "pretty_signature": "nlohmann::basic_json::sax_parse",
+      "scope": "nlohmann::basic_json",
+      "signature": "template <typename SAX> JSON_HEDLEY_DEPRECATED_FOR(3.8.0, sax_parse(ptr, ptr + len, ...)) JSON_HEDLEY_NON_NULL(2) static bool sax_parse(detail::span_input_adapter&& i, SAX* sax, input_format_t format = input_format_t::json, const bool strict = true, const bool ignore_comments = false)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "sax_parse",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "sax_parse",
+      "pretty_signature": "nlohmann::basic_json::sax_parse",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<class IteratorType, class SAX> JSON_HEDLEY_NON_NULL(3) static bool sax_parse(IteratorType first, IteratorType last, SAX* sax, input_format_t format = input_format_t::json, const bool strict = true, const bool ignore_comments = false)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "size",
+      "kind": "CXX_METHOD",
+      "name": "size",
+      "pretty_signature": "nlohmann::basic_json::size",
+      "scope": "nlohmann::basic_json",
+      "signature": "size_type size() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "size_type",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "size_type",
+      "pretty_signature": "nlohmann::basic_json::size_type",
+      "scope": "nlohmann::basic_json",
+      "signature": "using size_type = std::size_t",
+      "tier": "type_exempt"
+    },
+    {
+      "identity_name": "string_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "string_t",
+      "pretty_signature": "nlohmann::basic_json::string_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using string_t = StringType",
+      "tier": "type"
+    },
+    {
+      "identity_name": "swap",
+      "kind": "CXX_METHOD",
+      "name": "swap",
+      "pretty_signature": "nlohmann::basic_json::swap",
+      "scope": "nlohmann::basic_json",
+      "signature": "void swap(array_t& other)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "swap",
+      "kind": "CXX_METHOD",
+      "name": "swap",
+      "pretty_signature": "nlohmann::basic_json::swap",
+      "scope": "nlohmann::basic_json",
+      "signature": "void swap(binary_t& other)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "swap",
+      "kind": "CXX_METHOD",
+      "name": "swap",
+      "pretty_signature": "nlohmann::basic_json::swap",
+      "scope": "nlohmann::basic_json",
+      "signature": "void swap(object_t& other)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "swap",
+      "kind": "CXX_METHOD",
+      "name": "swap",
+      "pretty_signature": "nlohmann::basic_json::swap",
+      "scope": "nlohmann::basic_json",
+      "signature": "void swap(reference other) noexcept ( std::is_nothrow_move_constructible<value_t>::value&& std::is_nothrow_move_assignable<value_t>::value&& std::is_nothrow_move_constructible<json_value>::value&& std::is_nothrow_move_assignable<json_value>::value )",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "swap",
+      "kind": "CXX_METHOD",
+      "name": "swap",
+      "pretty_signature": "nlohmann::basic_json::swap",
+      "scope": "nlohmann::basic_json",
+      "signature": "void swap(string_t& other)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "swap",
+      "kind": "CXX_METHOD",
+      "name": "swap",
+      "pretty_signature": "nlohmann::basic_json::swap",
+      "scope": "nlohmann::basic_json",
+      "signature": "void swap(typename binary_t::container_type& other)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "to_bson",
+      "kind": "CXX_METHOD",
+      "name": "to_bson",
+      "pretty_signature": "nlohmann::basic_json::to_bson",
+      "scope": "nlohmann::basic_json",
+      "signature": "static std::vector<std::uint8_t> to_bson(const basic_json& j)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "to_bson",
+      "kind": "CXX_METHOD",
+      "name": "to_bson",
+      "pretty_signature": "nlohmann::basic_json::to_bson",
+      "scope": "nlohmann::basic_json",
+      "signature": "static void to_bson(const basic_json& j, detail::output_adapter<char> o)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "to_bson",
+      "kind": "CXX_METHOD",
+      "name": "to_bson",
+      "pretty_signature": "nlohmann::basic_json::to_bson",
+      "scope": "nlohmann::basic_json",
+      "signature": "static void to_bson(const basic_json& j, detail::output_adapter<std::uint8_t> o)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "to_cbor",
+      "kind": "CXX_METHOD",
+      "name": "to_cbor",
+      "pretty_signature": "nlohmann::basic_json::to_cbor",
+      "scope": "nlohmann::basic_json",
+      "signature": "static std::vector<std::uint8_t> to_cbor(const basic_json& j)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "to_cbor",
+      "kind": "CXX_METHOD",
+      "name": "to_cbor",
+      "pretty_signature": "nlohmann::basic_json::to_cbor",
+      "scope": "nlohmann::basic_json",
+      "signature": "static void to_cbor(const basic_json& j, detail::output_adapter<char> o)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "to_cbor",
+      "kind": "CXX_METHOD",
+      "name": "to_cbor",
+      "pretty_signature": "nlohmann::basic_json::to_cbor",
+      "scope": "nlohmann::basic_json",
+      "signature": "static void to_cbor(const basic_json& j, detail::output_adapter<std::uint8_t> o)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "to_msgpack",
+      "kind": "CXX_METHOD",
+      "name": "to_msgpack",
+      "pretty_signature": "nlohmann::basic_json::to_msgpack",
+      "scope": "nlohmann::basic_json",
+      "signature": "static std::vector<std::uint8_t> to_msgpack(const basic_json& j)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "to_msgpack",
+      "kind": "CXX_METHOD",
+      "name": "to_msgpack",
+      "pretty_signature": "nlohmann::basic_json::to_msgpack",
+      "scope": "nlohmann::basic_json",
+      "signature": "static void to_msgpack(const basic_json& j, detail::output_adapter<char> o)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "to_msgpack",
+      "kind": "CXX_METHOD",
+      "name": "to_msgpack",
+      "pretty_signature": "nlohmann::basic_json::to_msgpack",
+      "scope": "nlohmann::basic_json",
+      "signature": "static void to_msgpack(const basic_json& j, detail::output_adapter<std::uint8_t> o)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "to_ubjson",
+      "kind": "CXX_METHOD",
+      "name": "to_ubjson",
+      "pretty_signature": "nlohmann::basic_json::to_ubjson",
+      "scope": "nlohmann::basic_json",
+      "signature": "static std::vector<std::uint8_t> to_ubjson(const basic_json& j, const bool use_size = false, const bool use_type = false)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "to_ubjson",
+      "kind": "CXX_METHOD",
+      "name": "to_ubjson",
+      "pretty_signature": "nlohmann::basic_json::to_ubjson",
+      "scope": "nlohmann::basic_json",
+      "signature": "static void to_ubjson(const basic_json& j, detail::output_adapter<char> o, const bool use_size = false, const bool use_type = false)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "to_ubjson",
+      "kind": "CXX_METHOD",
+      "name": "to_ubjson",
+      "pretty_signature": "nlohmann::basic_json::to_ubjson",
+      "scope": "nlohmann::basic_json",
+      "signature": "static void to_ubjson(const basic_json& j, detail::output_adapter<std::uint8_t> o, const bool use_size = false, const bool use_type = false)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "type",
+      "kind": "CXX_METHOD",
+      "name": "type",
+      "pretty_signature": "nlohmann::basic_json::type",
+      "scope": "nlohmann::basic_json",
+      "signature": "constexpr value_t type() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "type_error",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "type_error",
+      "pretty_signature": "nlohmann::basic_json::type_error",
+      "scope": "nlohmann::basic_json",
+      "signature": "using type_error = detail::type_error",
+      "tier": "type"
+    },
+    {
+      "identity_name": "type_name",
+      "kind": "CXX_METHOD",
+      "name": "type_name",
+      "pretty_signature": "nlohmann::basic_json::type_name",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_RETURNS_NON_NULL const char* type_name() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "unflatten",
+      "kind": "CXX_METHOD",
+      "name": "unflatten",
+      "pretty_signature": "nlohmann::basic_json::unflatten",
+      "scope": "nlohmann::basic_json",
+      "signature": "basic_json unflatten() const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "update",
+      "kind": "CXX_METHOD",
+      "name": "update",
+      "pretty_signature": "nlohmann::basic_json::update",
+      "scope": "nlohmann::basic_json",
+      "signature": "void update(const_iterator first, const_iterator last)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "update",
+      "kind": "CXX_METHOD",
+      "name": "update",
+      "pretty_signature": "nlohmann::basic_json::update",
+      "scope": "nlohmann::basic_json",
+      "signature": "void update(const_reference j)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "value",
+      "kind": "CXX_METHOD",
+      "name": "value",
+      "pretty_signature": "nlohmann::basic_json::value",
+      "scope": "nlohmann::basic_json",
+      "signature": "JSON_HEDLEY_NON_NULL(3) string_t value(const json_pointer& ptr, const char* default_value) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "value",
+      "kind": "CXX_METHOD",
+      "name": "value",
+      "pretty_signature": "nlohmann::basic_json::value",
+      "scope": "nlohmann::basic_json",
+      "signature": "string_t value(const typename object_t::key_type& key, const char* default_value) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "value",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "value",
+      "pretty_signature": "nlohmann::basic_json::value",
+      "scope": "nlohmann::basic_json",
+      "signature": "template < class ValueType, typename std::enable_if < detail::is_getable<basic_json_t, ValueType>::value && !std::is_same<value_t, ValueType>::value, int >::type = 0 > ValueType value(const typename object_t::key_type& key, const ValueType& default_value) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "value",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "value",
+      "pretty_signature": "nlohmann::basic_json::value",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<class ValueType, typename std::enable_if< detail::is_getable<basic_json_t, ValueType>::value, int>::type = 0> ValueType value(const json_pointer& ptr, const ValueType& default_value) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "value_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "value_t",
+      "pretty_signature": "nlohmann::basic_json::value_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using value_t = detail::value_t",
+      "tier": "type"
+    },
+    {
+      "identity_name": "value_type",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "value_type",
+      "pretty_signature": "nlohmann::basic_json::value_type",
+      "scope": "nlohmann::basic_json",
+      "signature": "using value_type = basic_json",
+      "tier": "type_exempt"
+    },
+    {
+      "identity_name": "(destructor)",
+      "kind": "DESTRUCTOR",
+      "name": "~basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "pretty_signature": "nlohmann::basic_json::~basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType>",
+      "scope": "nlohmann::basic_json",
+      "signature": "~basic_json() noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "byte_container_with_subtype<BinaryType>",
+      "pretty_signature": "nlohmann::byte_container_with_subtype::byte_container_with_subtype<BinaryType>",
+      "scope": "nlohmann::byte_container_with_subtype",
+      "signature": "byte_container_with_subtype() noexcept(noexcept(container_type()))",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "byte_container_with_subtype<BinaryType>",
+      "pretty_signature": "nlohmann::byte_container_with_subtype::byte_container_with_subtype<BinaryType>",
+      "scope": "nlohmann::byte_container_with_subtype",
+      "signature": "byte_container_with_subtype(const container_type& b) noexcept(noexcept(container_type(b)))",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "byte_container_with_subtype<BinaryType>",
+      "pretty_signature": "nlohmann::byte_container_with_subtype::byte_container_with_subtype<BinaryType>",
+      "scope": "nlohmann::byte_container_with_subtype",
+      "signature": "byte_container_with_subtype(const container_type& b, subtype_type subtype_) noexcept(noexcept(container_type(b)))",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "byte_container_with_subtype<BinaryType>",
+      "pretty_signature": "nlohmann::byte_container_with_subtype::byte_container_with_subtype<BinaryType>",
+      "scope": "nlohmann::byte_container_with_subtype",
+      "signature": "byte_container_with_subtype(container_type&& b) noexcept(noexcept(container_type(std::move(b))))",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "byte_container_with_subtype<BinaryType>",
+      "pretty_signature": "nlohmann::byte_container_with_subtype::byte_container_with_subtype<BinaryType>",
+      "scope": "nlohmann::byte_container_with_subtype",
+      "signature": "byte_container_with_subtype(container_type&& b, subtype_type subtype_) noexcept(noexcept(container_type(std::move(b))))",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "clear_subtype",
+      "kind": "CXX_METHOD",
+      "name": "clear_subtype",
+      "pretty_signature": "nlohmann::byte_container_with_subtype::clear_subtype",
+      "scope": "nlohmann::byte_container_with_subtype",
+      "signature": "void clear_subtype() noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "container_type",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "container_type",
+      "pretty_signature": "nlohmann::byte_container_with_subtype::container_type",
+      "scope": "nlohmann::byte_container_with_subtype",
+      "signature": "using container_type = BinaryType",
+      "tier": "type"
+    },
+    {
+      "identity_name": "has_subtype",
+      "kind": "CXX_METHOD",
+      "name": "has_subtype",
+      "pretty_signature": "nlohmann::byte_container_with_subtype::has_subtype",
+      "scope": "nlohmann::byte_container_with_subtype",
+      "signature": "constexpr bool has_subtype() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator!=",
+      "kind": "CXX_METHOD",
+      "name": "operator!=",
+      "pretty_signature": "nlohmann::byte_container_with_subtype::operator!=",
+      "scope": "nlohmann::byte_container_with_subtype",
+      "signature": "bool operator!=(const byte_container_with_subtype& rhs) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator==",
+      "kind": "CXX_METHOD",
+      "name": "operator==",
+      "pretty_signature": "nlohmann::byte_container_with_subtype::operator==",
+      "scope": "nlohmann::byte_container_with_subtype",
+      "signature": "bool operator==(const byte_container_with_subtype& rhs) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "set_subtype",
+      "kind": "CXX_METHOD",
+      "name": "set_subtype",
+      "pretty_signature": "nlohmann::byte_container_with_subtype::set_subtype",
+      "scope": "nlohmann::byte_container_with_subtype",
+      "signature": "void set_subtype(subtype_type subtype_) noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "subtype",
+      "kind": "CXX_METHOD",
+      "name": "subtype",
+      "pretty_signature": "nlohmann::byte_container_with_subtype::subtype",
+      "scope": "nlohmann::byte_container_with_subtype",
+      "signature": "constexpr subtype_type subtype() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "subtype_type",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "subtype_type",
+      "pretty_signature": "nlohmann::byte_container_with_subtype::subtype_type",
+      "scope": "nlohmann::byte_container_with_subtype",
+      "signature": "using subtype_type = std::uint64_t",
+      "tier": "type"
+    },
+    {
+      "identity_name": "back",
+      "kind": "CXX_METHOD",
+      "name": "back",
+      "pretty_signature": "nlohmann::json_pointer::back",
+      "scope": "nlohmann::json_pointer",
+      "signature": "const std::string& back() const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "empty",
+      "kind": "CXX_METHOD",
+      "name": "empty",
+      "pretty_signature": "nlohmann::json_pointer::empty",
+      "scope": "nlohmann::json_pointer",
+      "signature": "bool empty() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "json_pointer<BasicJsonType>",
+      "pretty_signature": "nlohmann::json_pointer::json_pointer<BasicJsonType>",
+      "scope": "nlohmann::json_pointer",
+      "signature": "explicit json_pointer(const std::string& s = \"\")",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator basic_string",
+      "kind": "CONVERSION_FUNCTION",
+      "name": "operator basic_string",
+      "pretty_signature": "nlohmann::json_pointer::operator basic_string",
+      "scope": "nlohmann::json_pointer",
+      "signature": "operator std::string() const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator/=",
+      "kind": "CXX_METHOD",
+      "name": "operator/=",
+      "pretty_signature": "nlohmann::json_pointer::operator/=",
+      "scope": "nlohmann::json_pointer",
+      "signature": "json_pointer& operator/=(const json_pointer& ptr)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator/=",
+      "kind": "CXX_METHOD",
+      "name": "operator/=",
+      "pretty_signature": "nlohmann::json_pointer::operator/=",
+      "scope": "nlohmann::json_pointer",
+      "signature": "json_pointer& operator/=(std::size_t array_idx)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator/=",
+      "kind": "CXX_METHOD",
+      "name": "operator/=",
+      "pretty_signature": "nlohmann::json_pointer::operator/=",
+      "scope": "nlohmann::json_pointer",
+      "signature": "json_pointer& operator/=(std::string token)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "parent_pointer",
+      "kind": "CXX_METHOD",
+      "name": "parent_pointer",
+      "pretty_signature": "nlohmann::json_pointer::parent_pointer",
+      "scope": "nlohmann::json_pointer",
+      "signature": "json_pointer parent_pointer() const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "pop_back",
+      "kind": "CXX_METHOD",
+      "name": "pop_back",
+      "pretty_signature": "nlohmann::json_pointer::pop_back",
+      "scope": "nlohmann::json_pointer",
+      "signature": "void pop_back()",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "push_back",
+      "kind": "CXX_METHOD",
+      "name": "push_back",
+      "pretty_signature": "nlohmann::json_pointer::push_back",
+      "scope": "nlohmann::json_pointer",
+      "signature": "void push_back(const std::string& token)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "push_back",
+      "kind": "CXX_METHOD",
+      "name": "push_back",
+      "pretty_signature": "nlohmann::json_pointer::push_back",
+      "scope": "nlohmann::json_pointer",
+      "signature": "void push_back(std::string&& token)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "to_string",
+      "kind": "CXX_METHOD",
+      "name": "to_string",
+      "pretty_signature": "nlohmann::json_pointer::to_string",
+      "scope": "nlohmann::json_pointer",
+      "signature": "std::string to_string() const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "binary",
+      "kind": "CXX_METHOD",
+      "name": "binary",
+      "pretty_signature": "nlohmann::json_sax::binary",
+      "scope": "nlohmann::json_sax",
+      "signature": "virtual bool binary(binary_t& val) = 0",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "binary_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "binary_t",
+      "pretty_signature": "nlohmann::json_sax::binary_t",
+      "scope": "nlohmann::json_sax",
+      "signature": "using binary_t = typename BasicJsonType::binary_t",
+      "tier": "type"
+    },
+    {
+      "identity_name": "boolean",
+      "kind": "CXX_METHOD",
+      "name": "boolean",
+      "pretty_signature": "nlohmann::json_sax::boolean",
+      "scope": "nlohmann::json_sax",
+      "signature": "virtual bool boolean(bool val) = 0",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "end_array",
+      "kind": "CXX_METHOD",
+      "name": "end_array",
+      "pretty_signature": "nlohmann::json_sax::end_array",
+      "scope": "nlohmann::json_sax",
+      "signature": "virtual bool end_array() = 0",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "end_object",
+      "kind": "CXX_METHOD",
+      "name": "end_object",
+      "pretty_signature": "nlohmann::json_sax::end_object",
+      "scope": "nlohmann::json_sax",
+      "signature": "virtual bool end_object() = 0",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "json_sax<BasicJsonType>",
+      "pretty_signature": "nlohmann::json_sax::json_sax<BasicJsonType>",
+      "scope": "nlohmann::json_sax",
+      "signature": "json_sax() = default",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "json_sax<BasicJsonType>",
+      "pretty_signature": "nlohmann::json_sax::json_sax<BasicJsonType>",
+      "scope": "nlohmann::json_sax",
+      "signature": "json_sax(const json_sax&) = default",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "json_sax<BasicJsonType>",
+      "pretty_signature": "nlohmann::json_sax::json_sax<BasicJsonType>",
+      "scope": "nlohmann::json_sax",
+      "signature": "json_sax(json_sax&&) noexcept = default",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "key",
+      "kind": "CXX_METHOD",
+      "name": "key",
+      "pretty_signature": "nlohmann::json_sax::key",
+      "scope": "nlohmann::json_sax",
+      "signature": "virtual bool key(string_t& val) = 0",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "null",
+      "kind": "CXX_METHOD",
+      "name": "null",
+      "pretty_signature": "nlohmann::json_sax::null",
+      "scope": "nlohmann::json_sax",
+      "signature": "virtual bool null() = 0",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "number_float",
+      "kind": "CXX_METHOD",
+      "name": "number_float",
+      "pretty_signature": "nlohmann::json_sax::number_float",
+      "scope": "nlohmann::json_sax",
+      "signature": "virtual bool number_float(number_float_t val, const string_t& s) = 0",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "number_float_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "number_float_t",
+      "pretty_signature": "nlohmann::json_sax::number_float_t",
+      "scope": "nlohmann::json_sax",
+      "signature": "using number_float_t = typename BasicJsonType::number_float_t",
+      "tier": "type"
+    },
+    {
+      "identity_name": "number_integer",
+      "kind": "CXX_METHOD",
+      "name": "number_integer",
+      "pretty_signature": "nlohmann::json_sax::number_integer",
+      "scope": "nlohmann::json_sax",
+      "signature": "virtual bool number_integer(number_integer_t val) = 0",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "number_integer_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "number_integer_t",
+      "pretty_signature": "nlohmann::json_sax::number_integer_t",
+      "scope": "nlohmann::json_sax",
+      "signature": "using number_integer_t = typename BasicJsonType::number_integer_t",
+      "tier": "type"
+    },
+    {
+      "identity_name": "number_unsigned",
+      "kind": "CXX_METHOD",
+      "name": "number_unsigned",
+      "pretty_signature": "nlohmann::json_sax::number_unsigned",
+      "scope": "nlohmann::json_sax",
+      "signature": "virtual bool number_unsigned(number_unsigned_t val) = 0",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "number_unsigned_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "number_unsigned_t",
+      "pretty_signature": "nlohmann::json_sax::number_unsigned_t",
+      "scope": "nlohmann::json_sax",
+      "signature": "using number_unsigned_t = typename BasicJsonType::number_unsigned_t",
+      "tier": "type"
+    },
+    {
+      "identity_name": "operator=",
+      "kind": "CXX_METHOD",
+      "name": "operator=",
+      "pretty_signature": "nlohmann::json_sax::operator=",
+      "scope": "nlohmann::json_sax",
+      "signature": "json_sax& operator=(const json_sax&) = default",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator=",
+      "kind": "CXX_METHOD",
+      "name": "operator=",
+      "pretty_signature": "nlohmann::json_sax::operator=",
+      "scope": "nlohmann::json_sax",
+      "signature": "json_sax& operator=(json_sax&&) noexcept = default",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "parse_error",
+      "kind": "CXX_METHOD",
+      "name": "parse_error",
+      "pretty_signature": "nlohmann::json_sax::parse_error",
+      "scope": "nlohmann::json_sax",
+      "signature": "virtual bool parse_error(std::size_t position, const std::string& last_token, const detail::exception& ex) = 0",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "start_array",
+      "kind": "CXX_METHOD",
+      "name": "start_array",
+      "pretty_signature": "nlohmann::json_sax::start_array",
+      "scope": "nlohmann::json_sax",
+      "signature": "virtual bool start_array(std::size_t elements) = 0",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "start_object",
+      "kind": "CXX_METHOD",
+      "name": "start_object",
+      "pretty_signature": "nlohmann::json_sax::start_object",
+      "scope": "nlohmann::json_sax",
+      "signature": "virtual bool start_object(std::size_t elements) = 0",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "string",
+      "kind": "CXX_METHOD",
+      "name": "string",
+      "pretty_signature": "nlohmann::json_sax::string",
+      "scope": "nlohmann::json_sax",
+      "signature": "virtual bool string(string_t& val) = 0",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "string_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "string_t",
+      "pretty_signature": "nlohmann::json_sax::string_t",
+      "scope": "nlohmann::json_sax",
+      "signature": "using string_t = typename BasicJsonType::string_t",
+      "tier": "type"
+    },
+    {
+      "identity_name": "(destructor)",
+      "kind": "DESTRUCTOR",
+      "name": "~json_sax<BasicJsonType>",
+      "pretty_signature": "nlohmann::json_sax::~json_sax<BasicJsonType>",
+      "scope": "nlohmann::json_sax",
+      "signature": "virtual ~json_sax() = default",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "Container",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "Container",
+      "pretty_signature": "nlohmann::ordered_map::Container",
+      "scope": "nlohmann::ordered_map",
+      "signature": "using Container = std::vector<std::pair<const Key, T>, Allocator>",
+      "tier": "type"
+    },
+    {
+      "identity_name": "at",
+      "kind": "CXX_METHOD",
+      "name": "at",
+      "pretty_signature": "nlohmann::ordered_map::at",
+      "scope": "nlohmann::ordered_map",
+      "signature": "T& at(const Key& key)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "at",
+      "kind": "CXX_METHOD",
+      "name": "at",
+      "pretty_signature": "nlohmann::ordered_map::at",
+      "scope": "nlohmann::ordered_map",
+      "signature": "const T& at(const Key& key) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "count",
+      "kind": "CXX_METHOD",
+      "name": "count",
+      "pretty_signature": "nlohmann::ordered_map::count",
+      "scope": "nlohmann::ordered_map",
+      "signature": "size_type count(const Key& key) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "emplace",
+      "kind": "CXX_METHOD",
+      "name": "emplace",
+      "pretty_signature": "nlohmann::ordered_map::emplace",
+      "scope": "nlohmann::ordered_map",
+      "signature": "std::pair<iterator, bool> emplace(const key_type& key, T&& t)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "erase",
+      "kind": "CXX_METHOD",
+      "name": "erase",
+      "pretty_signature": "nlohmann::ordered_map::erase",
+      "scope": "nlohmann::ordered_map",
+      "signature": "iterator erase(iterator pos)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "erase",
+      "kind": "CXX_METHOD",
+      "name": "erase",
+      "pretty_signature": "nlohmann::ordered_map::erase",
+      "scope": "nlohmann::ordered_map",
+      "signature": "size_type erase(const Key& key)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "find",
+      "kind": "CXX_METHOD",
+      "name": "find",
+      "pretty_signature": "nlohmann::ordered_map::find",
+      "scope": "nlohmann::ordered_map",
+      "signature": "const_iterator find(const Key& key) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "find",
+      "kind": "CXX_METHOD",
+      "name": "find",
+      "pretty_signature": "nlohmann::ordered_map::find",
+      "scope": "nlohmann::ordered_map",
+      "signature": "iterator find(const Key& key)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "insert",
+      "kind": "CXX_METHOD",
+      "name": "insert",
+      "pretty_signature": "nlohmann::ordered_map::insert",
+      "scope": "nlohmann::ordered_map",
+      "signature": "std::pair<iterator, bool> insert( const value_type& value )",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "insert",
+      "kind": "CXX_METHOD",
+      "name": "insert",
+      "pretty_signature": "nlohmann::ordered_map::insert",
+      "scope": "nlohmann::ordered_map",
+      "signature": "std::pair<iterator, bool> insert( value_type&& value )",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "insert",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "insert",
+      "pretty_signature": "nlohmann::ordered_map::insert",
+      "scope": "nlohmann::ordered_map",
+      "signature": "template<typename InputIt, typename = require_input_iter<InputIt>> void insert(InputIt first, InputIt last)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "key_type",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "key_type",
+      "pretty_signature": "nlohmann::ordered_map::key_type",
+      "scope": "nlohmann::ordered_map",
+      "signature": "using key_type = Key",
+      "tier": "type_exempt"
+    },
+    {
+      "identity_name": "mapped_type",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "mapped_type",
+      "pretty_signature": "nlohmann::ordered_map::mapped_type",
+      "scope": "nlohmann::ordered_map",
+      "signature": "using mapped_type = T",
+      "tier": "type_exempt"
+    },
+    {
+      "identity_name": "operator[]",
+      "kind": "CXX_METHOD",
+      "name": "operator[]",
+      "pretty_signature": "nlohmann::ordered_map::operator[]",
+      "scope": "nlohmann::ordered_map",
+      "signature": "T& operator[](const Key& key)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "operator[]",
+      "kind": "CXX_METHOD",
+      "name": "operator[]",
+      "pretty_signature": "nlohmann::ordered_map::operator[]",
+      "scope": "nlohmann::ordered_map",
+      "signature": "const T& operator[](const Key& key) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "ordered_map<Key, T, IgnoredLess, Allocator>",
+      "pretty_signature": "nlohmann::ordered_map::ordered_map<Key, T, IgnoredLess, Allocator>",
+      "scope": "nlohmann::ordered_map",
+      "signature": "ordered_map(const Allocator& alloc = Allocator())",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "ordered_map<Key, T, IgnoredLess, Allocator>",
+      "pretty_signature": "nlohmann::ordered_map::ordered_map<Key, T, IgnoredLess, Allocator>",
+      "scope": "nlohmann::ordered_map",
+      "signature": "ordered_map(std::initializer_list<T> init, const Allocator& alloc = Allocator() )",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "ordered_map<Key, T, IgnoredLess, Allocator>",
+      "pretty_signature": "nlohmann::ordered_map::ordered_map<Key, T, IgnoredLess, Allocator>",
+      "scope": "nlohmann::ordered_map",
+      "signature": "template <class It> ordered_map(It first, It last, const Allocator& alloc = Allocator())",
+      "tier": "callable"
+    }
+  ]
+}

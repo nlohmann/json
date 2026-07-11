@@ -31,15 +31,21 @@ input.
 template<typename BasicJsonType>
 struct json_sax
 {
+    /// @sa https://json.nlohmann.me/api/json_sax/number_integer_t/
     using number_integer_t = typename BasicJsonType::number_integer_t;
+    /// @sa https://json.nlohmann.me/api/json_sax/number_unsigned_t/
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    /// @sa https://json.nlohmann.me/api/json_sax/number_float_t/
     using number_float_t = typename BasicJsonType::number_float_t;
+    /// @sa https://json.nlohmann.me/api/json_sax/string_t/
     using string_t = typename BasicJsonType::string_t;
+    /// @sa https://json.nlohmann.me/api/json_sax/binary_t/
     using binary_t = typename BasicJsonType::binary_t;
 
     /*!
     @brief a null value was read
     @return whether parsing should proceed
+    @sa https://json.nlohmann.me/api/json_sax/null/
     */
     virtual bool null() = 0;
 
@@ -47,6 +53,7 @@ struct json_sax
     @brief a boolean value was read
     @param[in] val  boolean value
     @return whether parsing should proceed
+    @sa https://json.nlohmann.me/api/json_sax/boolean/
     */
     virtual bool boolean(bool val) = 0;
 
@@ -54,6 +61,7 @@ struct json_sax
     @brief an integer number was read
     @param[in] val  integer value
     @return whether parsing should proceed
+    @sa https://json.nlohmann.me/api/json_sax/number_integer/
     */
     virtual bool number_integer(number_integer_t val) = 0;
 
@@ -61,6 +69,7 @@ struct json_sax
     @brief an unsigned integer number was read
     @param[in] val  unsigned integer value
     @return whether parsing should proceed
+    @sa https://json.nlohmann.me/api/json_sax/number_unsigned/
     */
     virtual bool number_unsigned(number_unsigned_t val) = 0;
 
@@ -69,6 +78,7 @@ struct json_sax
     @param[in] val  floating-point value
     @param[in] s    raw token value
     @return whether parsing should proceed
+    @sa https://json.nlohmann.me/api/json_sax/number_float/
     */
     virtual bool number_float(number_float_t val, const string_t& s) = 0;
 
@@ -77,6 +87,7 @@ struct json_sax
     @param[in] val  string value
     @return whether parsing should proceed
     @note It is safe to move the passed string value.
+    @sa https://json.nlohmann.me/api/json_sax/string/
     */
     virtual bool string(string_t& val) = 0;
 
@@ -85,6 +96,7 @@ struct json_sax
     @param[in] val  binary value
     @return whether parsing should proceed
     @note It is safe to move the passed binary value.
+    @sa https://json.nlohmann.me/api/json_sax/binary/
     */
     virtual bool binary(binary_t& val) = 0;
 
@@ -93,6 +105,7 @@ struct json_sax
     @param[in] elements  number of object elements or -1 if unknown
     @return whether parsing should proceed
     @note binary formats may report the number of elements
+    @sa https://json.nlohmann.me/api/json_sax/start_object/
     */
     virtual bool start_object(std::size_t elements) = 0;
 
@@ -101,12 +114,14 @@ struct json_sax
     @param[in] val  object key
     @return whether parsing should proceed
     @note It is safe to move the passed string.
+    @sa https://json.nlohmann.me/api/json_sax/key/
     */
     virtual bool key(string_t& val) = 0;
 
     /*!
     @brief the end of an object was read
     @return whether parsing should proceed
+    @sa https://json.nlohmann.me/api/json_sax/end_object/
     */
     virtual bool end_object() = 0;
 
@@ -115,12 +130,14 @@ struct json_sax
     @param[in] elements  number of array elements or -1 if unknown
     @return whether parsing should proceed
     @note binary formats may report the number of elements
+    @sa https://json.nlohmann.me/api/json_sax/start_array/
     */
     virtual bool start_array(std::size_t elements) = 0;
 
     /*!
     @brief the end of an array was read
     @return whether parsing should proceed
+    @sa https://json.nlohmann.me/api/json_sax/end_array/
     */
     virtual bool end_array() = 0;
 
@@ -130,16 +147,23 @@ struct json_sax
     @param[in] last_token  the last read token
     @param[in] ex          an exception object describing the error
     @return whether parsing should proceed (must return false)
+    @sa https://json.nlohmann.me/api/json_sax/parse_error/
     */
     virtual bool parse_error(std::size_t position,
                              const std::string& last_token,
                              const detail::exception& ex) = 0;
 
+    /// @sa https://json.nlohmann.me/api/json_sax/json_sax/
     json_sax() = default;
+    /// @sa https://json.nlohmann.me/api/json_sax/json_sax/
     json_sax(const json_sax&) = default;
+    /// @sa https://json.nlohmann.me/api/json_sax/json_sax/
     json_sax(json_sax&&) noexcept = default;
+    /// @sa https://json.nlohmann.me/api/json_sax/operator=/
     json_sax& operator=(const json_sax&) = default;
+    /// @sa https://json.nlohmann.me/api/json_sax/operator=/
     json_sax& operator=(json_sax&&) noexcept = default;
+    /// @sa https://json.nlohmann.me/api/json_sax/~json_sax/
     virtual ~json_sax() = default;
 };
 
