@@ -2393,6 +2393,15 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
     }
 }
 
+TEST_CASE("Parse UBJSON directly from a file using iterator and sentinel")
+{
+    std::string const filename = TEST_DATA_DIRECTORY "/json_testsuite/sample.json.ubjson";
+    std::ifstream file(filename, std::ios::binary);
+    const std::istreambuf_iterator<char> first(file);
+    const json parsed = json::from_ubjson(first, utils::istreambuf_sentinel{});
+    CHECK((parsed.is_object() || parsed.is_array()));
+}
+
 #if !defined(JSON_NOEXCEPTION)
 TEST_CASE("all UBJSON first bytes")
 {
