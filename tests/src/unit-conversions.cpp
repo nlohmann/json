@@ -1784,10 +1784,14 @@ TEST_CASE("std::optional")
                              "[json.exception.type_error.302] type must be number, but is null", json::type_error&);
 
         // Assignment goes through the same overload resolution as direct
-        // construction, so it throws for the same reason.
+        // construction, so it throws for the same reason. This relies on
+        // basic_json's implicit conversion operator, so it only applies
+        // when JSON_USE_IMPLICIT_CONVERSIONS is enabled (the default).
+#if JSON_USE_IMPLICIT_CONVERSIONS
         std::optional<std::string> opt_assign;
         CHECK_THROWS_WITH_AS(opt_assign = j_null,
                              "[json.exception.type_error.302] type must be string, but is null", json::type_error&);
+#endif
 
         // get_to() is the correct way to obtain std::nullopt from a JSON null.
         std::optional<std::string> opt_get_to = "placeholder";
