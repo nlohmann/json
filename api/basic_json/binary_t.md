@@ -51,6 +51,38 @@ represent a byte array in modern C++.
 
 The default values for `BinaryType` is `#!cpp std::vector<std::uint8_t>`.
 
+#### Custom BinaryType behavior
+
+When a custom `BinaryType` is configured (other than the default `#!cpp std::vector<std::uint8_t>`), you can assign
+values of that type directly to a `basic_json` instance, and they will automatically be recognized as binary values
+rather than arrays:
+
+```cpp
+using custom_json = nlohmann::basic_json<
+    nlohmann::ordered_map,  // ObjectType
+    std::vector,            // ArrayType
+    std::string,            // StringType
+    bool,                   // BooleanType
+    std::int64_t,           // NumberIntegerType
+    std::uint64_t,          // NumberUnsignedType
+    double,                 // NumberFloatType
+    std::allocator,         // AllocatorType
+    nlohmann::adl_serializer,
+    std::vector<std::byte>  // Custom BinaryType
+>;
+
+std::vector<std::byte> data{std::byte{1}, std::byte{2}, std::byte{3}};
+custom_json j = data;  // Creates a binary value, not an array
+assert(j.is_binary());
+
+// Round-tripping works seamlessly
+auto extracted = j.get<std::vector<std::byte>>();
+assert(extracted == data);
+```
+
+This automatic type detection is a convenience feature that only applies to custom (non-default) `BinaryType` configurations.
+The default `nlohmann::json` continues to treat `#!cpp std::vector<std::uint8_t>` as arrays for backward compatibility.
+
 #### Storage
 
 Binary Arrays are stored as pointers in a `basic_json` type. That is, for any access to array values, a pointer of the
