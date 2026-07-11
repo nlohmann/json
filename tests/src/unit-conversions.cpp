@@ -1782,6 +1782,17 @@ TEST_CASE("std::optional")
                              "[json.exception.type_error.302] type must be string, but is null", json::type_error&);
         CHECK_THROWS_WITH_AS(std::optional<int>(j_null),
                              "[json.exception.type_error.302] type must be number, but is null", json::type_error&);
+
+        // Assignment goes through the same overload resolution as direct
+        // construction, so it throws for the same reason.
+        std::optional<std::string> opt_assign;
+        CHECK_THROWS_WITH_AS(opt_assign = j_null,
+                             "[json.exception.type_error.302] type must be string, but is null", json::type_error&);
+
+        // get_to() is the correct way to obtain std::nullopt from a JSON null.
+        std::optional<std::string> opt_get_to = "placeholder";
+        j_null.get_to(opt_get_to);
+        CHECK(opt_get_to == std::nullopt);
     }
 
     SECTION("string")
