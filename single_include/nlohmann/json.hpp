@@ -7057,20 +7057,29 @@ class iterator_input_adapter
     // whether IteratorType refers to a contiguous range and therefore supports
     // a std::memcpy fast path (pointers always do; in C++20 we can also detect
     // library iterators such as those of std::vector and std::string).
-    // The fast path also requires SentinelType == IteratorType so std::distance works.
+    // Computing the available element count needs either same-type iterators
+    // (plain std::distance) or, in C++20, a sized sentinel (std::ranges::distance),
+    // e.g. std::counted_iterator paired with std::default_sentinel_t.
     static constexpr bool iterator_is_contiguous =
-        std::is_same<IteratorType, SentinelType>::value && (
 #if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
-            std::contiguous_iterator<IteratorType> ||
+        (std::is_same<IteratorType, SentinelType>::value || std::sized_sentinel_for<SentinelType, IteratorType>)
+        && (std::contiguous_iterator<IteratorType> || std::is_pointer<IteratorType>::value);
+#else
+        std::is_same<IteratorType, SentinelType>::value && std::is_pointer<IteratorType>::value;
 #endif
-            std::is_pointer<IteratorType>::value);
 
     // contiguous fast path: bulk copy the remaining range with std::memcpy
     template<class T>
     std::size_t get_elements_impl(T* dest, std::size_t count, std::true_type /*contiguous*/)
     {
         const std::size_t wanted = count * sizeof(T);
+#if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
+        // std::ranges::distance also supports sized sentinels of a different
+        // type (e.g. std::counted_iterator + std::default_sentinel_t)
+        const std::size_t available = static_cast<std::size_t>(std::ranges::distance(current, end)) * sizeof(char_type);
+#else
         const std::size_t available = static_cast<std::size_t>(std::distance(current, end)) * sizeof(char_type);
+#endif
         const std::size_t copied = (std::min)(wanted, available);
         if (JSON_HEDLEY_LIKELY(copied != 0))
         {
