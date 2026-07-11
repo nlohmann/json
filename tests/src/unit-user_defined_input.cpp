@@ -184,7 +184,7 @@ struct CustomSentinel
 
 TEST_CASE("Parse with heterogeneous iterator and sentinel types")
 {
-    std::string json_str = R"({"key":"value"})";
+    const std::string json_str = R"({"key":"value"})";
     const char* end_ptr = json_str.data() + json_str.size();
 
     // Parse using pointer and sentinel (different types)
