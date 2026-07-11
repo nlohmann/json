@@ -22,6 +22,7 @@
 #include <utility> // move, forward, declval, pair
 #include <valarray> // valarray
 #include <vector> // vector
+#include <map> // map
 
 #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
@@ -243,8 +244,34 @@ struct external_constructor<value_t::object>
         j.assert_invariant();
     }
 
+    template < typename BasicJsonType, typename Key, typename Value,
+               enable_if_t < is_compatible_object_type<BasicJsonType, std::map<Key, Value>>::value&&
+                             !is_basic_json<std::map<Key, Value>>::value&&
+                             std::is_enum<Key>::value, int > = 0 >
+    static void construct(BasicJsonType& j, const std::map<Key, Value>& obj)
+    {
+        using std::begin;
+        using std::end;
+        std::map<std::string, Value> temp;
+        for (auto& i : obj)
+        {
+            Key first = i.first;
+            Value second = i.second;
+            temp.insert({ enum_to_string(j, first), second });
+        }
+
+        j.m_data.m_value.destroy(j.m_data.m_type);
+        j.m_data.m_type = value_t::object;
+        j.m_data.m_value.object = j.template create<typename BasicJsonType::object_t>(begin(temp), end(temp));
+        j.set_parents();
+        j.assert_invariant();
+    }
+
     template < typename BasicJsonType, typename CompatibleObjectType,
-               enable_if_t < !std::is_same<CompatibleObjectType, typename BasicJsonType::object_t>::value, int > = 0 >
+               enable_if_t < !std::is_same<CompatibleObjectType, typename BasicJsonType::object_t>::value&&
+                             is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value&&
+                             !is_basic_json<CompatibleObjectType>::value&&
+                             !std::is_enum<typename  CompatibleObjectType::key_type>::value, int > = 0 >
     static void construct(BasicJsonType& j, const CompatibleObjectType& obj)
     {
         using std::begin;
@@ -382,8 +409,19 @@ inline void to_json(BasicJsonType& j, typename BasicJsonType::array_t&& arr)
 }
 
 template < typename BasicJsonType, typename CompatibleObjectType,
-           enable_if_t < is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value&& !is_basic_json<CompatibleObjectType>::value, int > = 0 >
+           enable_if_t < is_compatible_object_type<BasicJsonType, CompatibleObjectType>::value&&
+                         !is_basic_json<CompatibleObjectType>::value&&
+                         !std::is_enum<typename  CompatibleObjectType::key_type>::value, int > = 0 >
 inline void to_json(BasicJsonType& j, const CompatibleObjectType& obj)
+{
+    external_constructor<value_t::object>::construct(j, obj);
+}
+
+template < typename BasicJsonType, typename Key, typename Value,
+           enable_if_t < is_compatible_object_type<BasicJsonType, std::map<Key, Value>>::value&&
+                         !is_basic_json<std::map<Key, Value>>::value&&
+                         std::is_enum<Key>::value, int > = 0 >
+inline void to_json(BasicJsonType& j, const std::map<Key, Value>& obj)
 {
     external_constructor<value_t::object>::construct(j, obj);
 }

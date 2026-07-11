@@ -273,7 +273,47 @@
             return ej_pair.second == j;                                                         \
         });                                                                                     \
         e = ((it != std::end(m)) ? it : std::begin(m))->first;                                  \
+    }                                                                                           \
+    /* Function to check for serialized ENUM type */                                            \
+    template<typename BasicJsonType>                                                            \
+    inline constexpr bool serialized(BasicJsonType& j, ENUM_TYPE e)                             \
+    {                                                                                           \
+        return true;                                                                            \
+    }                                                                                           \
+    template<typename BasicJsonType>                                                            \
+    inline std::string enum_to_string(BasicJsonType j, ENUM_TYPE e)                             \
+    {                                                                                           \
+        /* NOLINTNEXTLINE(modernize-type-traits) we use C++11 */                                \
+        static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");          \
+        /* NOLINTNEXTLINE(modernize-avoid-c-arrays) we don't want to depend on <array> */       \
+        static const std::pair<ENUM_TYPE,  BasicJsonType> m[] = __VA_ARGS__;                    \
+        auto it = std::find_if(std::begin(m), std::end(m),                                      \
+                               [e](const std::pair<ENUM_TYPE,  BasicJsonType>& ej_pair) -> bool \
+        {                                                                                       \
+            return ej_pair.first == e;                                                          \
+        });                                                                                     \
+        return ((it != std::end(m)) ? it : std::begin(m))->second;                              \
+    }                                                                                           \
+    template<typename BasicJsonType>                                                            \
+    inline ENUM_TYPE string_to_enum(BasicJsonType j, ENUM_TYPE e)                               \
+    {                                                                                           \
+        /* NOLINTNEXTLINE(modernize-type-traits) we use C++11 */                                \
+        static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");          \
+        /* NOLINTNEXTLINE(modernize-avoid-c-arrays) we don't want to depend on <array> */       \
+        static const std::pair<ENUM_TYPE,  BasicJsonType> m[] = __VA_ARGS__;                    \
+        auto it = std::find_if(std::begin(m), std::end(m),                                      \
+                               [j](const std::pair<ENUM_TYPE,  BasicJsonType>& ej_pair) -> bool \
+        {                                                                                       \
+            return ej_pair.second == j;                                                         \
+        });                                                                                     \
+        return ((it != std::end(m)) ? it : std::begin(m))->first;                               \
     }
+// Function to check for non-serialized ENUM type
+template<typename BasicJsonType, typename EnumType>
+inline constexpr bool serialized(BasicJsonType& j, EnumType e)
+{
+    return false;
+}
 
 
 

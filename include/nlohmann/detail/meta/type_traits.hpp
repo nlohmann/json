@@ -383,8 +383,10 @@ struct is_compatible_object_type_impl <
 
     // macOS's is_constructible does not play well with nonesuch...
     static constexpr bool value =
-        is_constructible<typename object_t::key_type,
-        typename CompatibleObjectType::key_type>::value &&
+        (is_constructible<typename object_t::key_type,
+         typename CompatibleObjectType::key_type>::value ||
+         (std::is_enum<typename CompatibleObjectType::key_type>::value &&
+          serialized("", typename CompatibleObjectType::key_type()))) &&
         is_constructible<typename object_t::mapped_type,
         typename CompatibleObjectType::mapped_type>::value;
 };
