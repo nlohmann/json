@@ -35,7 +35,12 @@ The exact mapping and its limitations are described on a [dedicated page](https:
 
 `IteratorType` : a compatible iterator type
 
-`SentinelType` : defaults to `IteratorType`; may be a different type comparable to `IteratorType` via `operator!=`, for instance a custom sentinel type for C++20 ranges
+`SentinelType` : defaults to `IteratorType`; may be a different type comparable to `IteratorType` via `operator!=`, for instance.
+
+```
+- a custom sentinel type for C++20 ranges
+- `std::default_sentinel_t`, when `IteratorType` is `std::counted_iterator`
+```
 
 ## Parameters
 

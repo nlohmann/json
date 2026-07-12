@@ -49,7 +49,7 @@ Unlike the [`parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) f
 
 ```
 - a custom sentinel type for C++20 ranges
-- `std::counted_iterator` with a different sentinel type
+- `std::default_sentinel_t`, when `IteratorType` is `std::counted_iterator`
 ```
 
 ## Parameters

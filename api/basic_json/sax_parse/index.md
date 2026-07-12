@@ -45,7 +45,12 @@ The SAX event lister must follow the interface of [`json_sax`](https://json.nloh
 
 `IteratorType` : a compatible iterator type for overload (2); a pair of character iterators whose `value_type` is an integral type with a size of 1, 2, or 4 bytes (interpreted respectively as UTF-8, UTF-16, and UTF-32)
 
-`SentinelType` : defaults to `IteratorType`; may be a different type comparable to `IteratorType` via `operator!=`, for overload (2)
+`SentinelType` : defaults to `IteratorType`; may be a different type comparable to `IteratorType` via `operator!=`, for overload (2), for instance.
+
+```
+- a custom sentinel type for C++20 ranges
+- `std::default_sentinel_t`, when `IteratorType` is `std::counted_iterator`
+```
 
 `SAX` : a class fulfilling the SAX event listener interface; see [`json_sax`](https://json.nlohmann.me/api/json_sax/index.md)
 
