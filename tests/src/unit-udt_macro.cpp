@@ -1340,7 +1340,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of zero-member types via NLOHM
 
     SECTION("NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE with zero members")
     {
-        persons::empty_intrusive_only_serialize obj{};
+        const persons::empty_intrusive_only_serialize obj{};
         Json j = obj;
         CHECK(j.dump() == "{}");
     }
@@ -1363,7 +1363,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of zero-member types via NLOHM
 
     SECTION("NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE with zero members")
     {
-        persons::empty_non_intrusive_only_serialize obj{};
+        const persons::empty_non_intrusive_only_serialize obj{};
         Json j = obj;
         CHECK(j.dump() == "{}");
     }
@@ -1386,7 +1386,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of zero-member types via NLOHM
 
     SECTION("NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE with zero own members")
     {
-        persons::empty_derived_intrusive_only_serialize obj{"Erik", 1, nullptr};
+        const persons::empty_derived_intrusive_only_serialize obj{"Erik", 1, nullptr};
         Json j = obj;
         CHECK(j.dump() == derived_dump);
     }
@@ -1409,7 +1409,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of zero-member types via NLOHM
 
     SECTION("NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE with zero own members")
     {
-        persons::empty_derived_non_intrusive_only_serialize obj{"Erik", 1, nullptr};
+        const persons::empty_derived_non_intrusive_only_serialize obj{"Erik", 1, nullptr};
         Json j = obj;
         CHECK(j.dump() == derived_dump);
     }
