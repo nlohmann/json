@@ -6,12 +6,23 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
+// cmake/test.cmake selects the C++ standard versions with which to build a
+// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
+// When using macros that are only defined for particular versions of the standard
+// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
+// version macro in a comment close by, like this:
+// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
 #include <list>
+
+#if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
+    #include <iterator>
+#endif
 
 namespace
 {
@@ -200,5 +211,23 @@ TEST_CASE("Parse with heterogeneous iterator and sentinel types")
     json j2 = json::parse(data.begin(), data.end());
     CHECK(j2.at(0) == 1);
 }
+
+#if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
+// JSON_HAS_CPP_20 (do not remove; see note at top of file)
+TEST_CASE("Parse with std::counted_iterator and std::default_sentinel_t")
+{
+    using iterator_type = std::string::const_iterator;
+    const std::string json_str = R"({"key":"value","array":[1,2,3]})";
+    const auto len = static_cast<std::iter_difference_t<iterator_type>>(json_str.size());
+
+    const std::counted_iterator<iterator_type> first(json_str.begin(), len);
+    const json j = json::parse(first, std::default_sentinel);
+    CHECK(j["key"] == "value");
+    CHECK(j["array"].size() == 3);
+
+    const std::counted_iterator<iterator_type> first2(json_str.begin(), len);
+    CHECK(json::accept(first2, std::default_sentinel));
+}
+#endif
 
 } // namespace
