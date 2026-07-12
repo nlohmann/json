@@ -30,7 +30,7 @@ Where possible, it is still recommended that all code define this the same way f
 
 CMake option
 
-Diagnostic messages can also be controlled with the CMake option [`JSON_Diagnostics`](https://json.nlohmann.me/integration/cmake/#json_diagnostics) (`OFF` by default) which defines `JSON_DIAGNOSTICS` accordingly.
+Diagnostic messages can also be controlled with the CMake option [`JSON_Diagnostics`](https://json.nlohmann.me/integration/cmake/#json_diagnostics) (`OFF` by default) which defines `JSON_DIAGNOSTICS` accordingly. Note this only applies when building the library from source — see the pre-installed-package caveat on that page.
 
 ## Examples
 
