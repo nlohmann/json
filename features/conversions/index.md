@@ -107,6 +107,25 @@ json j = {{"one", 1}, {"two", 2}};
 auto m = j.get<std::map<std::string, int>>();  // {{"one", 1}, {"two", 2}}
 ```
 
+`std::pair` and `std::tuple` are also supported, converting positionally to and from a JSON array:
+
+```
+json j = {1.0, "hello", 42};
+auto t = j.get<std::tuple<double, std::string, int>>();  // {1.0, "hello", 42}
+```
+
+Extracting references into a tuple
+
+A tuple type may also hold references (e.g. `std::tuple<double&, std::string&>`) to avoid copying: `get` then returns a tuple of references pointing directly at the elements stored inside the `basic_json` array, rather than a tuple of copies:
+
+```
+json j = {1.0, "hello"};
+auto refs = j.get<std::tuple<double&, std::string&>>();
+std::get<1>(refs) = "world";  // modifies j[1] in place
+```
+
+A referenced type must be one the library actually stores (or an arithmetic type it can convert to/from); otherwise this is a compile error.
+
 ## Implicit conversions
 
 By default, a JSON value implicitly converts to a compatible C++ type, so the explicit `get` call can often be omitted:
@@ -177,6 +196,18 @@ The reverse direction works the same way: assigning or constructing a `json` fro
 std::vector<int> numbers = {1, 2, 3};
 json j = numbers;   // [1,2,3]
 ```
+
+Constructing from a C++20 range view
+
+A `json` array can also be constructed directly from a C++20 range view (`std::ranges::view`), such as the result of `std::views::filter` or `std::views::transform` -- no intermediate container is needed:
+
+```
+std::vector<int> nums{1, 2, 37, 42, 21};
+auto filtered = nums | std::views::filter([](int i) { return i > 10; });
+json j(filtered);   // [37,42,21]
+```
+
+This requires [`JSON_HAS_RANGES`](https://json.nlohmann.me/api/macros/json_has_ranges/index.md) to be enabled and is unavailable on MinGW due to incomplete C++20 ranges support there.
 
 ## Your own types
 
