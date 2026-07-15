@@ -11192,13 +11192,15 @@ class binary_reader
             case 0x9A: // array (four-byte uint32_t for n follow)
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_array(conditional_static_cast<std::size_t>(len), tag_handler);
+                std::size_t size{};
+                return get_number(input_format_t::cbor, len) && get_cbor_container_size(len, size, "array") && get_cbor_array(size, tag_handler);
             }
 
             case 0x9B: // array (eight-byte uint64_t for n follow)
             {
                 std::uint64_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_array(conditional_static_cast<std::size_t>(len), tag_handler);
+                std::size_t size{};
+                return get_number(input_format_t::cbor, len) && get_cbor_container_size(len, size, "array") && get_cbor_array(size, tag_handler);
             }
 
             case 0x9F: // array (indefinite length)
@@ -11246,13 +11248,15 @@ class binary_reader
             case 0xBA: // map (four-byte uint32_t for n follow)
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_object(conditional_static_cast<std::size_t>(len), tag_handler);
+                std::size_t size{};
+                return get_number(input_format_t::cbor, len) && get_cbor_container_size(len, size, "map") && get_cbor_object(size, tag_handler);
             }
 
             case 0xBB: // map (eight-byte uint64_t for n follow)
             {
                 std::uint64_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_object(conditional_static_cast<std::size_t>(len), tag_handler);
+                std::size_t size{};
+                return get_number(input_format_t::cbor, len) && get_cbor_container_size(len, size, "map") && get_cbor_object(size, tag_handler);
             }
 
             case 0xBF: // map (indefinite length)
@@ -11641,6 +11645,30 @@ class binary_reader
                                         exception_message(input_format_t::cbor, concat("expected length specification (0x40-0x5B) or indefinite binary array type (0x5F); last byte: 0x", last_token), "binary"), nullptr));
             }
         }
+    }
+
+    /*!
+    @brief narrow a definite CBOR array/map length to std::size_t
+
+    detail::unknown_size() is reserved to mark an indefinite-length container,
+    so a definite length that equals it would be read as indefinite instead of
+    as the (impossible) size it claims. Reject that value here; it also exceeds
+    any container's max_size(), so no representable input is affected.
+
+    @param[in]  len      the declared length
+    @param[out] result   the length narrowed to std::size_t
+    @param[in]  context  "array" or "map", for the error message
+    @return whether the length is usable
+    */
+    bool get_cbor_container_size(const std::uint64_t len, std::size_t& result, const char* context)
+    {
+        result = conditional_static_cast<std::size_t>(len);
+        if (JSON_HEDLEY_UNLIKELY(result == detail::unknown_size()))
+        {
+            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
+                                    exception_message(input_format_t::cbor, concat("excessive ", context, " size"), "value"), nullptr));
+        }
+        return true;
     }
 
     /*!
