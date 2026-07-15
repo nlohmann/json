@@ -19833,9 +19833,9 @@ class serializer
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
-                    while (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
+                    if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
                     {
-                        indent_string.resize(indent_string.size() * 2, ' ');
+                        indent_string.resize((std::max)(indent_string.size() * 2, static_cast<typename string_t::size_type>(new_indent)), ' ');
                     }
 
                     // first n-1 elements
@@ -19906,9 +19906,9 @@ class serializer
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
-                    while (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
+                    if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
                     {
-                        indent_string.resize(indent_string.size() * 2, ' ');
+                        indent_string.resize((std::max)(indent_string.size() * 2, static_cast<typename string_t::size_type>(new_indent)), ' ');
                     }
 
                     // first n-1 elements
@@ -19967,9 +19967,9 @@ class serializer
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
-                    while (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
+                    if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
                     {
-                        indent_string.resize(indent_string.size() * 2, ' ');
+                        indent_string.resize((std::max)(indent_string.size() * 2, static_cast<typename string_t::size_type>(new_indent)), ' ');
                     }
 
                     o->write_characters(indent_string.c_str(), new_indent);
