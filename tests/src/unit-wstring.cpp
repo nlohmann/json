@@ -53,6 +53,13 @@ TEST_CASE("wide strings")
             std::wstring const w = L"\"\xDBFF";
             json _;
             CHECK_THROWS_AS(_ = json::parse(w), json::parse_error&);
+
+            // a lone low surrogate cannot start a pair
+            CHECK_THROWS_AS(_ = json::parse(std::wstring{L'"', static_cast<wchar_t>(0xDC00), L'"'}), json::parse_error&);
+            // a high surrogate followed by a non-low-surrogate unit is invalid
+            CHECK_THROWS_AS(_ = json::parse(std::wstring{L'"', static_cast<wchar_t>(0xD800), L'a', L'"'}), json::parse_error&);
+            // a lone low surrogate must not swallow the following unit
+            CHECK_THROWS_AS(_ = json::parse(std::wstring{L'"', static_cast<wchar_t>(0xDC00), L'a', L'"'}), json::parse_error&);
         }
     }
 
@@ -68,11 +75,20 @@ TEST_CASE("wide strings")
 
     SECTION("invalid std::u16string")
     {
-        if (wstring_is_utf16())
+        if (u16string_is_utf16())
         {
             std::u16string const w = u"\"\xDBFF";
             json _;
             CHECK_THROWS_AS(_ = json::parse(w), json::parse_error&);
+
+            // a lone low surrogate cannot start a pair
+            CHECK_THROWS_AS(_ = json::parse(std::u16string{u'"', 0xDC00, u'"'}), json::parse_error&);
+            // a high surrogate followed by a non-low-surrogate unit is invalid
+            CHECK_THROWS_AS(_ = json::parse(std::u16string{u'"', 0xD800, u'a', u'"'}), json::parse_error&);
+            // a lone low surrogate must not swallow the following unit
+            CHECK_THROWS_AS(_ = json::parse(std::u16string{u'"', 0xDC00, u'a', u'"'}), json::parse_error&);
+            // a valid surrogate pair is still decoded (U+1F600)
+            CHECK(json::parse(std::u16string{u'"', 0xD83D, 0xDE00, u'"'}).get<std::string>() == "\xF0\x9F\x98\x80");
         }
     }
 
