@@ -58,7 +58,9 @@ TEST_CASE("wide strings")
             CHECK_THROWS_AS(_ = json::parse(std::wstring{L'"', static_cast<wchar_t>(0xDC00), L'"'}), json::parse_error&);
             // a high surrogate followed by a non-low-surrogate unit is invalid
             CHECK_THROWS_AS(_ = json::parse(std::wstring{L'"', static_cast<wchar_t>(0xD800), L'a', L'"'}), json::parse_error&);
-            // a lone low surrogate must not swallow the following unit
+            // a lone low surrogate must not swallow the following unit; the
+            // exact-message check lives in the u16string section below, since
+            // the message here depends on sizeof(wchar_t)
             CHECK_THROWS_AS(_ = json::parse(std::wstring{L'"', static_cast<wchar_t>(0xDC00), L'a', L'"'}), json::parse_error&);
         }
     }
@@ -85,8 +87,10 @@ TEST_CASE("wide strings")
             CHECK_THROWS_AS(_ = json::parse(std::u16string{u'"', 0xDC00, u'"'}), json::parse_error&);
             // a high surrogate followed by a non-low-surrogate unit is invalid
             CHECK_THROWS_AS(_ = json::parse(std::u16string{u'"', 0xD800, u'a', u'"'}), json::parse_error&);
-            // a lone low surrogate must not swallow the following unit
-            CHECK_THROWS_AS(_ = json::parse(std::u16string{u'"', 0xDC00, u'a', u'"'}), json::parse_error&);
+            // a lone low surrogate must not swallow the following unit: pairing
+            // it with any second unit would produce valid UTF-8, so the error
+            // has to report an ill-formed byte at the surrogate's own position
+            CHECK_THROWS_WITH_AS(_ = json::parse(std::u16string{u'"', 0xDC00, u'a', u'"'}), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '\"<U+0000>'", json::parse_error&);
             // a valid surrogate pair is still decoded (U+1F600)
             CHECK(json::parse(std::u16string{u'"', 0xD83D, 0xDE00, u'"'}).get<std::string>() == "\xF0\x9F\x98\x80");
         }

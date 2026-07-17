@@ -403,7 +403,7 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
                 // UTF-8 decoder rejects it, matching how \uXXXX surrogate escapes
                 // are handled in the lexer.
                 bool valid_pair = false;
-                if (wc <= 0xDBFF && !input.empty())
+                if (wc <= 0xDBFF && JSON_HEDLEY_UNLIKELY(!input.empty()))
                 {
                     const auto wc2 = static_cast<unsigned int>(input.get_character());
                     if (0xDC00 <= wc2 && wc2 <= 0xDFFF)
