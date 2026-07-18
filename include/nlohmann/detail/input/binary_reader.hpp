@@ -1114,10 +1114,11 @@ class binary_reader
     /*!
     @brief narrow a definite CBOR array/map length to std::size_t
 
-    detail::unknown_size() is reserved to mark an indefinite-length container,
-    so a definite length that equals it would be read as indefinite instead of
-    as the (impossible) size it claims. Reject that value here; it also exceeds
-    any container's max_size(), so no representable input is affected.
+    A definite length is rejected if it does not fit in std::size_t or if it
+    equals detail::unknown_size(), which is reserved to mark an indefinite-
+    length container and would otherwise make the length read as indefinite.
+    Both cases exceed any container's max_size(), so no representable input
+    is affected.
 
     @param[in]  len      the declared length
     @param[out] result   the length narrowed to std::size_t
@@ -1126,12 +1127,12 @@ class binary_reader
     */
     bool get_cbor_container_size(const std::uint64_t len, std::size_t& result, const char* context)
     {
-        result = conditional_static_cast<std::size_t>(len);
-        if (JSON_HEDLEY_UNLIKELY(result == detail::unknown_size()))
+        if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::size_t>(len) || len == detail::unknown_size()))
         {
             return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
-                                    exception_message(input_format_t::cbor, concat("excessive ", context, " size"), "value"), nullptr));
+                                    exception_message(input_format_t::cbor, concat("excessive ", context, " size"), "size"), nullptr));
         }
+        result = conditional_static_cast<std::size_t>(len);
         return true;
     }
 

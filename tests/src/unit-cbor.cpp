@@ -2011,14 +2011,14 @@ TEST_CASE("CBOR definite length equal to the indefinite-length sentinel")
     {
         // 0x9B: array with eight-byte length; length = 0xFFFFFFFFFFFFFFFF
         const std::vector<uint8_t> input = {0x9B, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x02, 0xFF};
-        CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.out_of_range.408] syntax error while parsing CBOR value: excessive array size", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive array size", json::out_of_range&);
     }
 
     SECTION("map")
     {
         // 0xBB: map with eight-byte length; length = 0xFFFFFFFFFFFFFFFF
         const std::vector<uint8_t> input = {0xBB, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x61, 0x61, 0x01, 0xFF};
-        CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.out_of_range.408] syntax error while parsing CBOR value: excessive map size", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive map size", json::out_of_range&);
     }
 
     SECTION("indefinite-length containers are unaffected")
