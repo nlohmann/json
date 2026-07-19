@@ -278,6 +278,36 @@ TEST_CASE("object inspection")
                 // check resize is large enough
                 CHECK(j_binary.dump(10000).size() == 20038);
             }
+
+            SECTION("full-width run integrity")
+            {
+                // the size/single-index checks above can't catch a corrupted byte
+                // in the middle of an indentation run, so also verify each level's
+                // indentation is an intact, uninterrupted run of the indent character
+                const std::string::size_type width = 1100;
+
+                SECTION("object")
+                {
+                    const json j_object = {{"outer", {{"inner", 1}}}};
+                    const std::string s = j_object.dump(static_cast<int>(width));
+                    CHECK(s.find('\n' + std::string(width, ' ') + "\"outer\"") != std::string::npos);
+                    CHECK(s.find('\n' + std::string(2 * width, ' ') + "\"inner\"") != std::string::npos);
+                }
+
+                SECTION("array")
+                {
+                    const json j_array = json::array({json::array({1})});
+                    const std::string s = j_array.dump(static_cast<int>(width));
+                    CHECK(s.find('\n' + std::string(2 * width, ' ') + '1') != std::string::npos);
+                }
+
+                SECTION("binary")
+                {
+                    const json j_binary = json::binary({1, 2, 3});
+                    const std::string s = j_binary.dump(static_cast<int>(width));
+                    CHECK(s.find('\n' + std::string(width, ' ') + "\"bytes\"") != std::string::npos);
+                }
+            }
         }
 
         SECTION("dump and floating-point numbers")
