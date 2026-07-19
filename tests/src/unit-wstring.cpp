@@ -60,11 +60,11 @@ TEST_CASE("wide strings")
             // 32-bit wchar_t first encodes it as an ill-formed three-byte
             // sequence (rejected one byte later, at column 3)
             const char* const error_low_surrogate = sizeof(wchar_t) == 2
-                    ? "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '\"<U+0000>'"
-                    : "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '\"\xED\xB0'";
+                                                    ? "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '\"<U+0000>'"
+                                                    : "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '\"\xED\xB0'";
             const char* const error_high_surrogate = sizeof(wchar_t) == 2
-                    ? "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '\"<U+0000>'"
-                    : "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '\"\xED\xA0'";
+                ? "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '\"<U+0000>'"
+                : "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '\"\xED\xA0'";
 
             // a lone low surrogate cannot start a pair
             CHECK_THROWS_WITH_AS(_ = json::parse(std::wstring{L'"', static_cast<wchar_t>(0xDC00), L'"'}), error_low_surrogate, json::parse_error&);
