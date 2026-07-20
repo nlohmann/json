@@ -14,6 +14,7 @@
 #include <cstdint> // uint64_t
 #include <cstdio> // snprintf
 #include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
+#include <cstring> // memcpy
 #include <initializer_list> // initializer_list
 #include <limits> // numeric_limits
 #include <string> // char_traits, string
@@ -127,6 +128,25 @@ constexpr bool input_adapter_supports_seek(std::false_type /*detected*/)
     return false;
 }
 
+// Detect whether an input adapter exposes a contiguous byte block that the
+// lexer can scan directly (see iterator_input_adapter::supports_bulk_scan).
+// Adapters without the flag - file, stream, wide-string, user-defined - fall
+// back to the character-at-a-time string scanner.
+template<typename InputAdapterType>
+using detect_supports_bulk_scan = decltype(InputAdapterType::supports_bulk_scan);
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_bulk_scan(std::true_type /*detected*/)
+{
+    return InputAdapterType::supports_bulk_scan;
+}
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_bulk_scan(std::false_type /*detected*/)
+{
+    return false;
+}
+
 /*!
 @brief lexical analysis
 
@@ -147,6 +167,14 @@ class lexer : public lexer_base<BasicJsonType>
     /// character; see input_adapter_supports_seek
     static constexpr bool lazy_token_string =
         input_adapter_supports_seek<InputAdapterType>(is_detected<detect_supports_seek, InputAdapterType> {});
+
+    /// whether string scanning may bulk-consume runs of ordinary characters
+    /// directly from a contiguous input buffer (SWAR fast path). This requires
+    /// the token to be reconstructible lazily (lazy_token_string), so bypassing
+    /// the per-character capture in get() cannot lose error diagnostics.
+    static constexpr bool bulk_scan =
+        lazy_token_string
+        && input_adapter_supports_bulk_scan<InputAdapterType>(is_detected<detect_supports_bulk_scan, InputAdapterType> {});
 
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
@@ -267,6 +295,92 @@ class lexer : public lexer_base<BasicJsonType>
         return true;
     }
 
+    // classify a single byte as needing individual string handling: the
+    // closing quote, an escape, a control character, or a non-ASCII (UTF-8)
+    // lead/continuation byte. Ordinary bytes (0x20..0x7F except '"' and '\\')
+    // are copied verbatim, which the bulk scanner does 8 bytes at a time.
+    static bool is_string_special(unsigned char c) noexcept
+    {
+        return c == '\"' || c == '\\' || c < 0x20u || c >= 0x80u;
+    }
+
+    // SWAR helper: return a word whose high bit is set in every byte of @a v
+    // that is_string_special(); zero if the 8 bytes are all ordinary.
+    static std::uint64_t swar_string_special(std::uint64_t v) noexcept
+    {
+        constexpr std::uint64_t ones = 0x0101010101010101ull;
+        constexpr std::uint64_t high = 0x8080808080808080ull;
+        const std::uint64_t q = v ^ 0x2222222222222222ull; // '"'  (0x22)
+        const std::uint64_t b = v ^ 0x5C5C5C5C5C5C5C5Cull; // '\\' (0x5C)
+        const std::uint64_t has_quote     = (q - ones) & ~q & high;
+        const std::uint64_t has_backslash = (b - ones) & ~b & high;
+        const std::uint64_t has_control   = (v - 0x2020202020202020ull) & ~v & high; // < 0x20
+        const std::uint64_t has_non_ascii = v & high;                                // >= 0x80
+        return has_quote | has_backslash | has_control | has_non_ascii;
+    }
+
+    // return the index of the first is_string_special() byte in [data, data+n),
+    // or n if every byte is ordinary; scans 8 bytes at a time
+    static std::size_t find_string_special(const unsigned char* data, std::size_t n) noexcept
+    {
+        std::size_t i = 0;
+        for (; i + 8 <= n; i += 8)
+        {
+            std::uint64_t word = 0;
+            std::memcpy(&word, data + i, sizeof(word));
+            if (swar_string_special(word) != 0)
+            {
+                // a special byte is in this word; locate it (endian-agnostic)
+                for (std::size_t j = 0; j < 8; ++j)
+                {
+                    if (is_string_special(data[i + j]))
+                    {
+                        return i + j;
+                    }
+                }
+            }
+        }
+        for (; i < n; ++i)
+        {
+            if (is_string_special(data[i]))
+            {
+                return i;
+            }
+        }
+        return n;
+    }
+
+    /// contiguous input: bulk-append the run of ordinary characters starting at
+    /// the current read position, leaving the first special byte for get()
+    void scan_string_bulk(std::true_type /*bulk*/)
+    {
+        // a pending unget must be consumed through the normal path first
+        if (next_unget)
+        {
+            return;
+        }
+        const std::size_t remaining = ia.bulk_remaining();
+        if (remaining == 0)
+        {
+            return;
+        }
+        const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+        const std::size_t run = find_string_special(data, remaining);
+        if (run == 0)
+        {
+            return;
+        }
+        token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), run);
+        ia.bulk_skip(run);
+        // the run contains no newline (all bytes < 0x20 are treated as special),
+        // so only the flat character counters advance
+        position.chars_read_total += run;
+        position.chars_read_current_line += run;
+    }
+
+    /// streaming input: no bulk fast path
+    void scan_string_bulk(std::false_type /*bulk*/) const noexcept {}
+
     /*!
     @brief scan a string literal
 
@@ -292,6 +406,10 @@ class lexer : public lexer_base<BasicJsonType>
 
         while (true)
         {
+            // bulk-consume ordinary characters from contiguous input, then
+            // handle the next special byte through the switch below
+            scan_string_bulk(std::integral_constant<bool, bulk_scan> {});
+
             // get the next character
             switch (get())
             {

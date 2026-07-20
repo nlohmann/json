@@ -231,6 +231,33 @@ class iterator_input_adapter
         std::is_same<IteratorType, SentinelType>::value && std::is_pointer<IteratorType>::value;
 #endif
 
+  public:
+    // Whether the remaining input is a single contiguous block of 1-byte
+    // elements that the lexer can inspect directly (used for the SWAR string
+    // fast path). Restricted to same-type iterator/sentinel pairs so that plain
+    // std::distance/std::advance are well-defined in all standards.
+    static constexpr bool supports_bulk_scan =
+        iterator_is_contiguous && std::is_same<IteratorType, SentinelType>::value && sizeof(char_type) == 1;
+
+    // Pointer to the next unread element; only valid when bulk_remaining() > 0.
+    const char_type* bulk_data() const
+    {
+        return &*current;
+    }
+
+    // Number of unread elements available as one contiguous block.
+    std::size_t bulk_remaining() const
+    {
+        return static_cast<std::size_t>(std::distance(current, end));
+    }
+
+    // Consume @a n elements previously inspected via bulk_data().
+    void bulk_skip(std::size_t n)
+    {
+        std::advance(current, static_cast<typename std::iterator_traits<IteratorType>::difference_type>(n));
+    }
+
+  private:
     // contiguous fast path: bulk copy the remaining range with std::memcpy
     template<class T>
     std::size_t get_elements_impl(T* dest, std::size_t count, std::true_type /*contiguous*/)
