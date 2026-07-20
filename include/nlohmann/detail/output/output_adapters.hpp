@@ -118,6 +118,68 @@ class output_string_adapter : public output_adapter_protocol<CharType>
     StringType& str;
 };
 
+/// @brief non-virtual output sink writing into a std::vector
+///
+/// Unlike output_vector_adapter, this sink is not part of the virtual
+/// output_adapter_protocol hierarchy: it is passed to binary_writer by value as
+/// a template parameter, so write_character()/write_characters() are ordinary
+/// (inlinable) calls with no vtable lookup and no shared_ptr. It is used for the
+/// common `to_cbor`/`to_msgpack`/... into a std::vector.
+template<typename CharType, typename AllocatorType = std::allocator<CharType>>
+class output_vector_sink
+{
+  public:
+    explicit output_vector_sink(std::vector<CharType, AllocatorType>& vec) noexcept
+        : v(vec)
+    {}
+
+    void write_character(CharType c)
+    {
+        v.push_back(c);
+    }
+
+    JSON_HEDLEY_NON_NULL(2)
+    void write_characters(const CharType* s, std::size_t length)
+    {
+        v.insert(v.end(), s, s + length);
+    }
+
+  private:
+    std::vector<CharType, AllocatorType>& v;
+};
+
+/// @brief output sink forwarding to a type-erased output adapter
+///
+/// Wraps the polymorphic output_adapter_t so the same binary_writer template can
+/// also target arbitrary adapters (output streams, strings, user-provided
+/// adapters) via the `output_adapter`-based overloads. Each write still goes
+/// through one virtual call, exactly as before; only the concrete sinks above
+/// avoid it.
+template<typename CharType>
+class output_adapter_sink
+{
+  public:
+    explicit output_adapter_sink(output_adapter_t<CharType> adapter)
+        : oa(std::move(adapter))
+    {
+        JSON_ASSERT(oa);
+    }
+
+    void write_character(CharType c)
+    {
+        oa->write_character(c);
+    }
+
+    JSON_HEDLEY_NON_NULL(2)
+    void write_characters(const CharType* s, std::size_t length)
+    {
+        oa->write_characters(s, length);
+    }
+
+  private:
+    output_adapter_t<CharType> oa = nullptr;
+};
+
 template<typename CharType, typename StringType = std::basic_string<CharType>>
 class output_adapter
 {
