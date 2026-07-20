@@ -597,6 +597,24 @@ typename iterator_input_adapter_factory<IteratorType, SentinelType>::adapter_typ
     return factory_type::create(first, last);
 }
 
+// Detect a container that stores its elements contiguously as single bytes
+// (std::string, std::vector<char/unsigned char>, std::array<char, N>,
+// std::string_view, ...). Such inputs are wrapped in a pointer-based adapter so
+// they benefit from the contiguous fast paths (bulk string scanning, memcpy for
+// binary formats) in every C++ standard - not only in C++20, where the standard
+// library iterators model std::contiguous_iterator and are detected directly.
+template<typename ContainerType, typename = void>
+struct is_contiguous_byte_container : std::false_type {};
+
+template<typename ContainerType>
+struct is_contiguous_byte_container < ContainerType, void_t <
+decltype(std::declval<const ContainerType&>().data()),
+decltype(std::declval<const ContainerType&>().size()) >>
+            : std::integral_constant < bool,
+        std::is_pointer<decltype(std::declval<const ContainerType&>().data())>::value&&
+        std::is_integral<typename std::remove_pointer<decltype(std::declval<const ContainerType&>().data())>::type>::value&&
+        sizeof(typename std::remove_pointer<decltype(std::declval<const ContainerType&>().data())>::type) == 1 > {};
+
 // Convenience shorthand from container to iterator
 // Enables ADL on begin(container) and end(container)
 // Encloses the using declarations in namespace for not to leak them to outside scope
@@ -624,10 +642,30 @@ struct container_input_adapter_factory< ContainerType,
 
 }  // namespace container_input_adapter_factory_impl
 
-template<typename ContainerType>
-typename container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::adapter_type input_adapter(ContainerType&& container)
+// General container path (iterator-based). Contiguous single-byte containers
+// are excluded here and routed through the pointer-based overload below.
+template < typename ContainerType,
+           enable_if_t < !is_contiguous_byte_container<ContainerType>::value, int > = 0 >
+typename container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::adapter_type input_adapter(ContainerType && container)
 {
     return container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::create(std::forward<ContainerType>(container));
+}
+
+// Contiguous single-byte containers (std::string, std::vector<char>, ...) are
+// wrapped in a pointer-based adapter so the contiguous fast paths apply in every
+// standard. The pointer keeps the container's own element type (const char* for
+// std::string, const std::uint8_t* for std::vector<std::uint8_t>, ...), so the
+// resulting char_type - and therefore the parsing behavior - is byte-for-byte
+// identical to the iterator-based path; only the raw pointer additionally
+// enables the bulk fast paths. The container outlives the adapter for the whole
+// parse (temporaries live until the end of the full expression), exactly as the
+// iterators it replaces did.
+template < typename ContainerType,
+           enable_if_t < is_contiguous_byte_container<ContainerType>::value, int > = 0 >
+auto input_adapter(ContainerType && container)
+-> decltype(input_adapter(container.data(), container.data() + container.size()))
+{
+    return input_adapter(container.data(), container.data() + container.size());
 }
 
 // specialization for std::string
