@@ -16,9 +16,15 @@
 
 #include <nlohmann/detail/macro_scope.hpp>
 
-#if defined(JSON_HAS_CPP_17)
-    #include <charconv> // from_chars (only used when __cpp_lib_to_chars is defined)
-    #include <system_error> // errc
+// std::from_chars lives in <charconv>, but being in C++17 mode does not
+// guarantee the header exists: GCC 7 sets __cplusplus to C++17 yet ships no
+// <charconv> (added in GCC 8; floating-point support in GCC 11). Guard the
+// include with __has_include so such toolchains fall back to the scalar path.
+#if defined(JSON_HAS_CPP_17) && defined(__has_include)
+    #if __has_include(<charconv>)
+        #include <charconv> // from_chars (only used when __cpp_lib_to_chars is defined)
+        #include <system_error> // errc
+    #endif
 #endif
 
 // This file contains the value-conversion helpers used by the lexer to turn an
