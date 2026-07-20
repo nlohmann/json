@@ -662,7 +662,7 @@ typename container_input_adapter_factory_impl::container_input_adapter_factory<C
 // iterators it replaces did.
 template < typename ContainerType,
            enable_if_t < is_contiguous_byte_container<ContainerType>::value, int > = 0 >
-auto input_adapter(ContainerType && container)
+auto input_adapter(const ContainerType& container)
 -> decltype(input_adapter(container.data(), container.data() + container.size()))
 {
     return input_adapter(container.data(), container.data() + container.size());

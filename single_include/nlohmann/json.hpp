@@ -7730,7 +7730,7 @@ typename container_input_adapter_factory_impl::container_input_adapter_factory<C
 // iterators it replaces did.
 template < typename ContainerType,
            enable_if_t < is_contiguous_byte_container<ContainerType>::value, int > = 0 >
-auto input_adapter(ContainerType && container)
+auto input_adapter(const ContainerType& container)
 -> decltype(input_adapter(container.data(), container.data() + container.size()))
 {
     return input_adapter(container.data(), container.data() + container.size());
@@ -7922,7 +7922,7 @@ bool parse_integer_unsigned(const char* first, const char* last, NumberUnsignedT
         {
             return false;
         }
-        x = x * 10u + digit;
+        x = (x * 10u) + digit;
     }
     value = static_cast<NumberUnsignedType>(x);
     // reject values that do not round-trip into a narrower NumberUnsignedType
@@ -7952,7 +7952,7 @@ bool parse_integer_signed(const char* first, const char* last, NumberIntegerType
         {
             return false;
         }
-        magnitude = magnitude * 10u + digit;
+        magnitude = (magnitude * 10u) + digit;
     }
     const std::int64_t x = (magnitude == limit)
                            ? (std::numeric_limits<std::int64_t>::min)()
@@ -8014,7 +8014,7 @@ bool parse_float_fast(const char* first, const char* last, DecimalPointType deci
             {
                 return false; // significand may not fit into uint64_t
             }
-            significand = significand * 10u + static_cast<std::uint64_t>(c - '0');
+            significand = (significand * 10u) + static_cast<std::uint64_t>(c - '0');
             ++num_digits;
             fractional_digits += static_cast<int>(seen_dot);
         }
@@ -8057,7 +8057,7 @@ bool parse_float_fast(const char* first, const char* last, DecimalPointType deci
             {
                 return false;
             }
-            exponent = exponent * 10 + (*p - '0');
+            exponent = (exponent * 10) + (*p - '0');
             any_exp_digit = true;
             if (JSON_HEDLEY_UNLIKELY(exponent > 9999))
             {
