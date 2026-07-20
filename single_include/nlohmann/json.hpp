@@ -7876,6 +7876,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 #include <array> // array
+#include <cfloat> // FLT_EVAL_METHOD
 #include <cstddef> // size_t
 #include <cstdint> // int64_t, uint64_t
 #include <limits> // numeric_limits
@@ -7988,6 +7989,19 @@ below).
 template<typename DecimalPointType>
 bool parse_float_fast(const char* first, const char* last, DecimalPointType decimal_point, double& out) noexcept
 {
+#if defined(FLT_EVAL_METHOD) && FLT_EVAL_METHOD != 0
+    // Clinger's fast path is only exact when double operations are evaluated in
+    // true double precision. On platforms that keep intermediates in extended
+    // precision (e.g. the x87 FPU on 32-bit x86, where FLT_EVAL_METHOD == 2) the
+    // single significand * 10^scale step is double-rounded and can be 1 ULP off,
+    // so decline and let the caller fall back to the correctly-rounded
+    // std::from_chars / std::strtod path.
+    static_cast<void>(first);
+    static_cast<void>(last);
+    static_cast<void>(decimal_point);
+    static_cast<void>(out);
+    return false;
+#else
     static const std::array<double, 23> powers_of_ten =
     {
         {
@@ -8104,6 +8118,7 @@ bool parse_float_fast(const char* first, const char* last, DecimalPointType deci
     }
     out = negative ? -result : result;
     return true;
+#endif
 }
 
 /// fast float path is only exact for `double`; decline for float/long double
