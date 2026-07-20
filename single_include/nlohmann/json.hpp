@@ -8327,6 +8327,58 @@ inline std::size_t find_string_special(const unsigned char* data, std::size_t n)
     return n;
 }
 
+// classify a byte as one the serializer must NOT copy verbatim when
+// ensure_ascii is requested: the closing quote, an escape, a control character
+// (< 0x20), DEL (0x7F), or any non-ASCII byte (>= 0x80). Everything else -
+// printable ASCII except '"' and '\\' - is emitted unchanged. Note this differs
+// from is_string_special() only in that 0x7F is also a stop (it is escaped as
+// \u007f under ensure_ascii).
+inline bool is_ascii_copyable(unsigned char c) noexcept
+{
+    return c >= 0x20u && c < 0x7Fu && c != '\"' && c != '\\';
+}
+
+// return the index of the first byte in [data, data+n) that is NOT
+// is_ascii_copyable(), or n if every byte can be copied verbatim; scans 8 bytes
+// at a time. Used by the serializer's ensure_ascii fast path.
+inline std::size_t find_ascii_copyable_run(const unsigned char* data, std::size_t n) noexcept
+{
+    constexpr std::uint64_t ones = 0x0101010101010101ull;
+    constexpr std::uint64_t high = 0x8080808080808080ull;
+    std::size_t i = 0;
+    for (; i + 8 <= n; i += 8)
+    {
+        std::uint64_t v = 0;
+        std::memcpy(&v, data + i, sizeof(v));
+        const std::uint64_t q = v ^ 0x2222222222222222ull; // '"'  (0x22)
+        const std::uint64_t b = v ^ 0x5C5C5C5C5C5C5C5Cull; // '\\' (0x5C)
+        const std::uint64_t d = v ^ 0x7F7F7F7F7F7F7F7Full; // DEL  (0x7F)
+        const std::uint64_t stop = ((q - ones) & ~q & high)   // == '"'
+                                   | ((b - ones) & ~b & high)  // == '\\'
+                                   | ((d - ones) & ~d & high)  // == 0x7F
+                                   | ((v - 0x2020202020202020ull) & ~v & high) // < 0x20
+                                   | (v & high);               // >= 0x80
+        if (stop != 0)
+        {
+            for (std::size_t j = 0; j < 8; ++j)
+            {
+                if (!is_ascii_copyable(data[i + j]))
+                {
+                    return i + j;
+                }
+            }
+        }
+    }
+    for (; i < n; ++i)
+    {
+        if (!is_ascii_copyable(data[i]))
+        {
+            return i;
+        }
+    }
+    return n;
+}
+
 // Validate one UTF-8 sequence at the front of [data, data+avail). Returns its
 // length (2..4) only when the bytes form a *well-formed* sequence using exactly
 // the same ranges as scan_string()'s per-byte switch, so the bulk path accepts
@@ -20190,6 +20242,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstddef> // size_t, ptrdiff_t
 #include <cstdint> // uint8_t
 #include <cstdio> // snprintf
+#include <cstring> // memcpy
 #include <limits> // numeric_limits
 #include <string> // string, char_traits
 #include <type_traits> // is_same
@@ -21412,19 +21465,38 @@ class serializer
               const unsigned int indent_step,
               const unsigned int current_indent = 0)
     {
+        dump_internal(val, pretty_print, ensure_ascii, indent_step, current_indent);
+        flush();
+    }
+
+  JSON_PRIVATE_UNLESS_TESTED:
+    /*!
+    @brief recursive worker for @ref dump
+
+    Identical in behavior to the historical @ref dump, but writes into the
+    serializer's internal @ref write_buffer instead of issuing a virtual call
+    per token. The public @ref dump wraps this and flushes the buffer once the
+    top-level value has been serialized.
+    */
+    void dump_internal(const BasicJsonType& val,
+                       const bool pretty_print,
+                       const bool ensure_ascii,
+                       const unsigned int indent_step,
+                       const unsigned int current_indent = 0)
+    {
         switch (val.m_data.m_type)
         {
             case value_t::object:
             {
                 if (val.m_data.m_value.object->empty())
                 {
-                    o->write_characters("{}", 2);
+                    put_chars("{}", 2);
                     return;
                 }
 
                 if (pretty_print)
                 {
-                    o->write_characters("{\n", 2);
+                    put_chars("{\n", 2);
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
@@ -21437,51 +21509,51 @@ class serializer
                     auto i = val.m_data.m_value.object->cbegin();
                     for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
                     {
-                        o->write_characters(indent_string.c_str(), new_indent);
-                        o->write_character('\"');
+                        put_chars(indent_string.c_str(), new_indent);
+                        put_char('\"');
                         dump_escaped(i->first, ensure_ascii);
-                        o->write_characters("\": ", 3);
-                        dump(i->second, true, ensure_ascii, indent_step, new_indent);
-                        o->write_characters(",\n", 2);
+                        put_chars("\": ", 3);
+                        dump_internal(i->second, true, ensure_ascii, indent_step, new_indent);
+                        put_chars(",\n", 2);
                     }
 
                     // last element
                     JSON_ASSERT(i != val.m_data.m_value.object->cend());
                     JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
-                    o->write_characters(indent_string.c_str(), new_indent);
-                    o->write_character('\"');
+                    put_chars(indent_string.c_str(), new_indent);
+                    put_char('\"');
                     dump_escaped(i->first, ensure_ascii);
-                    o->write_characters("\": ", 3);
-                    dump(i->second, true, ensure_ascii, indent_step, new_indent);
+                    put_chars("\": ", 3);
+                    dump_internal(i->second, true, ensure_ascii, indent_step, new_indent);
 
-                    o->write_character('\n');
-                    o->write_characters(indent_string.c_str(), current_indent);
-                    o->write_character('}');
+                    put_char('\n');
+                    put_chars(indent_string.c_str(), current_indent);
+                    put_char('}');
                 }
                 else
                 {
-                    o->write_character('{');
+                    put_char('{');
 
                     // first n-1 elements
                     auto i = val.m_data.m_value.object->cbegin();
                     for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
                     {
-                        o->write_character('\"');
+                        put_char('\"');
                         dump_escaped(i->first, ensure_ascii);
-                        o->write_characters("\":", 2);
-                        dump(i->second, false, ensure_ascii, indent_step, current_indent);
-                        o->write_character(',');
+                        put_chars("\":", 2);
+                        dump_internal(i->second, false, ensure_ascii, indent_step, current_indent);
+                        put_char(',');
                     }
 
                     // last element
                     JSON_ASSERT(i != val.m_data.m_value.object->cend());
                     JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
-                    o->write_character('\"');
+                    put_char('\"');
                     dump_escaped(i->first, ensure_ascii);
-                    o->write_characters("\":", 2);
-                    dump(i->second, false, ensure_ascii, indent_step, current_indent);
+                    put_chars("\":", 2);
+                    dump_internal(i->second, false, ensure_ascii, indent_step, current_indent);
 
-                    o->write_character('}');
+                    put_char('}');
                 }
 
                 return;
@@ -21491,13 +21563,13 @@ class serializer
             {
                 if (val.m_data.m_value.array->empty())
                 {
-                    o->write_characters("[]", 2);
+                    put_chars("[]", 2);
                     return;
                 }
 
                 if (pretty_print)
                 {
-                    o->write_characters("[\n", 2);
+                    put_chars("[\n", 2);
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
@@ -21510,37 +21582,37 @@ class serializer
                     for (auto i = val.m_data.m_value.array->cbegin();
                             i != val.m_data.m_value.array->cend() - 1; ++i)
                     {
-                        o->write_characters(indent_string.c_str(), new_indent);
-                        dump(*i, true, ensure_ascii, indent_step, new_indent);
-                        o->write_characters(",\n", 2);
+                        put_chars(indent_string.c_str(), new_indent);
+                        dump_internal(*i, true, ensure_ascii, indent_step, new_indent);
+                        put_chars(",\n", 2);
                     }
 
                     // last element
                     JSON_ASSERT(!val.m_data.m_value.array->empty());
-                    o->write_characters(indent_string.c_str(), new_indent);
-                    dump(val.m_data.m_value.array->back(), true, ensure_ascii, indent_step, new_indent);
+                    put_chars(indent_string.c_str(), new_indent);
+                    dump_internal(val.m_data.m_value.array->back(), true, ensure_ascii, indent_step, new_indent);
 
-                    o->write_character('\n');
-                    o->write_characters(indent_string.c_str(), current_indent);
-                    o->write_character(']');
+                    put_char('\n');
+                    put_chars(indent_string.c_str(), current_indent);
+                    put_char(']');
                 }
                 else
                 {
-                    o->write_character('[');
+                    put_char('[');
 
                     // first n-1 elements
                     for (auto i = val.m_data.m_value.array->cbegin();
                             i != val.m_data.m_value.array->cend() - 1; ++i)
                     {
-                        dump(*i, false, ensure_ascii, indent_step, current_indent);
-                        o->write_character(',');
+                        dump_internal(*i, false, ensure_ascii, indent_step, current_indent);
+                        put_char(',');
                     }
 
                     // last element
                     JSON_ASSERT(!val.m_data.m_value.array->empty());
-                    dump(val.m_data.m_value.array->back(), false, ensure_ascii, indent_step, current_indent);
+                    dump_internal(val.m_data.m_value.array->back(), false, ensure_ascii, indent_step, current_indent);
 
-                    o->write_character(']');
+                    put_char(']');
                 }
 
                 return;
@@ -21548,9 +21620,9 @@ class serializer
 
             case value_t::string:
             {
-                o->write_character('\"');
+                put_char('\"');
                 dump_escaped(*val.m_data.m_value.string, ensure_ascii);
-                o->write_character('\"');
+                put_char('\"');
                 return;
             }
 
@@ -21558,7 +21630,7 @@ class serializer
             {
                 if (pretty_print)
                 {
-                    o->write_characters("{\n", 2);
+                    put_chars("{\n", 2);
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
@@ -21567,9 +21639,9 @@ class serializer
                         indent_string.resize(indent_string.size() * 2, ' ');
                     }
 
-                    o->write_characters(indent_string.c_str(), new_indent);
+                    put_chars(indent_string.c_str(), new_indent);
 
-                    o->write_characters("\"bytes\": [", 10);
+                    put_chars("\"bytes\": [", 10);
 
                     if (!val.m_data.m_value.binary->empty())
                     {
@@ -21577,30 +21649,30 @@ class serializer
                                 i != val.m_data.m_value.binary->cend() - 1; ++i)
                         {
                             dump_integer(*i);
-                            o->write_characters(", ", 2);
+                            put_chars(", ", 2);
                         }
                         dump_integer(val.m_data.m_value.binary->back());
                     }
 
-                    o->write_characters("],\n", 3);
-                    o->write_characters(indent_string.c_str(), new_indent);
+                    put_chars("],\n", 3);
+                    put_chars(indent_string.c_str(), new_indent);
 
-                    o->write_characters("\"subtype\": ", 11);
+                    put_chars("\"subtype\": ", 11);
                     if (val.m_data.m_value.binary->has_subtype())
                     {
                         dump_integer(val.m_data.m_value.binary->subtype());
                     }
                     else
                     {
-                        o->write_characters("null", 4);
+                        put_chars("null", 4);
                     }
-                    o->write_character('\n');
-                    o->write_characters(indent_string.c_str(), current_indent);
-                    o->write_character('}');
+                    put_char('\n');
+                    put_chars(indent_string.c_str(), current_indent);
+                    put_char('}');
                 }
                 else
                 {
-                    o->write_characters("{\"bytes\":[", 10);
+                    put_chars("{\"bytes\":[", 10);
 
                     if (!val.m_data.m_value.binary->empty())
                     {
@@ -21608,20 +21680,20 @@ class serializer
                                 i != val.m_data.m_value.binary->cend() - 1; ++i)
                         {
                             dump_integer(*i);
-                            o->write_character(',');
+                            put_char(',');
                         }
                         dump_integer(val.m_data.m_value.binary->back());
                     }
 
-                    o->write_characters("],\"subtype\":", 12);
+                    put_chars("],\"subtype\":", 12);
                     if (val.m_data.m_value.binary->has_subtype())
                     {
                         dump_integer(val.m_data.m_value.binary->subtype());
-                        o->write_character('}');
+                        put_char('}');
                     }
                     else
                     {
-                        o->write_characters("null}", 5);
+                        put_chars("null}", 5);
                     }
                 }
                 return;
@@ -21631,11 +21703,11 @@ class serializer
             {
                 if (val.m_data.m_value.boolean)
                 {
-                    o->write_characters("true", 4);
+                    put_chars("true", 4);
                 }
                 else
                 {
-                    o->write_characters("false", 5);
+                    put_chars("false", 5);
                 }
                 return;
             }
@@ -21660,13 +21732,13 @@ class serializer
 
             case value_t::discarded:
             {
-                o->write_characters("<discarded>", 11);
+                put_chars("<discarded>", 11);
                 return;
             }
 
             case value_t::null:
             {
-                o->write_characters("null", 4);
+                put_chars("null", 4);
                 return;
             }
 
@@ -21702,28 +21774,35 @@ class serializer
 
         for (std::size_t i = 0; i < s.size(); ++i)
         {
-            // Fast path: when not escaping non-ASCII characters and sitting on a
-            // character boundary (state == UTF8_ACCEPT), bulk-copy the longest
-            // run of bytes that need no escaping. string_bulk_run() (shared with
-            // the lexer's contiguous scanner) stops exactly at the first byte
-            // that dump_escaped would handle individually - a quote, a backslash,
-            // a control character (< 0x20), or an ill-formed/truncated UTF-8
-            // sequence - so that byte is left to the byte-at-a-time path below,
-            // keeping error handling and diagnostics unchanged.
-            if (!ensure_ascii && state == UTF8_ACCEPT)
+            // Fast path: at a character boundary (state == UTF8_ACCEPT),
+            // bulk-copy the longest run of bytes that need no escaping using a
+            // SWAR scanner shared with the lexer's contiguous path. The scanner
+            // stops exactly at the first byte dump_escaped would handle
+            // individually, so that byte is left to the byte-at-a-time path
+            // below, keeping escaping output and error diagnostics unchanged.
+            //
+            // - ensure_ascii == false: string_bulk_run() copies ordinary bytes
+            //   and complete well-formed UTF-8, stopping at a quote, backslash,
+            //   control character (< 0x20), or ill-formed/truncated sequence.
+            // - ensure_ascii == true: only printable ASCII may be copied
+            //   verbatim; find_ascii_copyable_run() additionally stops at 0x7F
+            //   and every non-ASCII byte (>= 0x80), which must be \u-escaped.
+            if (state == UTF8_ACCEPT)
             {
                 const auto* const data = reinterpret_cast<const unsigned char*>(s.data());
-                const std::size_t run = string_bulk_run(data + i, s.size() - i);
+                const std::size_t run = ensure_ascii
+                                        ? find_ascii_copyable_run(data + i, s.size() - i)
+                                        : string_bulk_run(data + i, s.size() - i);
                 if (run != 0)
                 {
                     // emit any bytes still pending in string_buffer first to
                     // preserve output order, then write the run directly
                     if (bytes != 0)
                     {
-                        o->write_characters(string_buffer.data(), bytes);
+                        put_chars(string_buffer.data(), bytes);
                         bytes = 0;
                     }
-                    o->write_characters(s.data() + i, run);
+                    put_chars(s.data() + i, run);
                     bytes_after_last_accept = 0;
                     undumped_chars = 0;
                     i += run;
@@ -21822,7 +21901,7 @@ class serializer
                     // written ("\uxxxx\uxxxx\0") for one code point
                     if (string_buffer.size() - bytes < 13)
                     {
-                        o->write_characters(string_buffer.data(), bytes);
+                        put_chars(string_buffer.data(), bytes);
                         bytes = 0;
                     }
 
@@ -21881,7 +21960,7 @@ class serializer
                                 // written ("\uxxxx\uxxxx\0") for one code point
                                 if (string_buffer.size() - bytes < 13)
                                 {
-                                    o->write_characters(string_buffer.data(), bytes);
+                                    put_chars(string_buffer.data(), bytes);
                                     bytes = 0;
                                 }
 
@@ -21920,7 +21999,7 @@ class serializer
             // write buffer
             if (bytes > 0)
             {
-                o->write_characters(string_buffer.data(), bytes);
+                put_chars(string_buffer.data(), bytes);
             }
         }
         else
@@ -21936,22 +22015,22 @@ class serializer
                 case error_handler_t::ignore:
                 {
                     // write all accepted bytes
-                    o->write_characters(string_buffer.data(), bytes_after_last_accept);
+                    put_chars(string_buffer.data(), bytes_after_last_accept);
                     break;
                 }
 
                 case error_handler_t::replace:
                 {
                     // write all accepted bytes
-                    o->write_characters(string_buffer.data(), bytes_after_last_accept);
+                    put_chars(string_buffer.data(), bytes_after_last_accept);
                     // add a replacement character
                     if (ensure_ascii)
                     {
-                        o->write_characters("\\ufffd", 6);
+                        put_chars("\\ufffd", 6);
                     }
                     else
                     {
-                        o->write_characters("\xEF\xBF\xBD", 3);
+                        put_chars("\xEF\xBF\xBD", 3);
                     }
                     break;
                 }
@@ -21963,6 +22042,60 @@ class serializer
     }
 
   private:
+    /*!
+    @brief append a single character to the write buffer
+
+    Structural characters ('{', '"', ',', ...) previously went straight to the
+    output adapter, one virtual call each. Buffering them and flushing in bulk
+    turns those many indirect calls into a single memcpy plus an occasional
+    flush, which dominates the cost of serializing object/array-heavy values.
+    */
+    void put_char(char c)
+    {
+        if (JSON_HEDLEY_UNLIKELY(write_buffer_pos == write_buffer.size()))
+        {
+            flush();
+        }
+        write_buffer[write_buffer_pos++] = c;
+    }
+
+    /*!
+    @brief append @a length characters to the write buffer
+
+    Runs that do not fit the buffer are written straight through the output
+    adapter (after flushing what is pending), so large string/number payloads
+    are not copied an extra time.
+    */
+    JSON_HEDLEY_NON_NULL(2)
+    void put_chars(const char* s, std::size_t length)
+    {
+        if (JSON_HEDLEY_UNLIKELY(length >= write_buffer.size()))
+        {
+            flush();
+            o->write_characters(s, length);
+            return;
+        }
+        if (JSON_HEDLEY_UNLIKELY(write_buffer_pos + length > write_buffer.size()))
+        {
+            flush();
+        }
+        std::memcpy(write_buffer.data() + write_buffer_pos, s, length);
+        write_buffer_pos += length;
+    }
+
+    /*!
+    @brief flush the write buffer to the output adapter
+
+    Writing zero characters is a well-defined no-op for every output adapter, so
+    the buffered length is passed through unconditionally (no empty-guard branch
+    to leave uncovered).
+    */
+    void flush()
+    {
+        o->write_characters(write_buffer.data(), write_buffer_pos);
+        write_buffer_pos = 0;
+    }
+
     /*!
     @brief count digits
 
@@ -22086,7 +22219,7 @@ class serializer
         // special case for "0"
         if (x == 0)
         {
-            o->write_character('0');
+            put_char('0');
             return;
         }
 
@@ -22139,7 +22272,7 @@ class serializer
             *(--buffer_ptr) = static_cast<char>('0' + abs_value);
         }
 
-        o->write_characters(number_buffer.data(), n_chars);
+        put_chars(number_buffer.data(), n_chars);
     }
 
     /*!
@@ -22155,7 +22288,7 @@ class serializer
         // NaN / inf
         if (!std::isfinite(x))
         {
-            o->write_characters("null", 4);
+            put_chars("null", 4);
             return;
         }
 
@@ -22176,7 +22309,7 @@ class serializer
         auto* begin = number_buffer.data();
         auto* end = ::nlohmann::detail::to_chars(begin, begin + number_buffer.size(), x);
 
-        o->write_characters(begin, static_cast<size_t>(end - begin));
+        put_chars(begin, static_cast<size_t>(end - begin));
     }
 
     JSON_HEDLEY_NON_NULL(1)
@@ -22227,7 +22360,7 @@ class serializer
             }
         }
 
-        o->write_characters(number_buffer.data(), static_cast<std::size_t>(len));
+        put_chars(number_buffer.data(), static_cast<std::size_t>(len));
 
         // determine if we need to append ".0"
         const bool value_is_int_like =
@@ -22239,7 +22372,7 @@ class serializer
 
         if (value_is_int_like)
         {
-            o->write_characters(".0", 2);
+            put_chars(".0", 2);
         }
     }
 
@@ -22349,6 +22482,12 @@ class serializer
 
     /// error_handler how to react on decoding errors
     const error_handler_t error_handler;
+
+    /// buffer collecting output before it is flushed to the output adapter, so
+    /// that the many small structural writes become few bulk writes
+    std::array<char, 1024> write_buffer{{}};
+    /// number of valid bytes currently held in @ref write_buffer
+    std::size_t write_buffer_pos = 0;
 };
 
 }  // namespace detail
