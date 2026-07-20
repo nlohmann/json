@@ -2721,6 +2721,19 @@ TEST_CASE("BJData")
                 CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing BJData string: expected length type specification (U, i, u, I, m, l, M, L); last byte: 0x31", json::parse_error&);
             }
 
+            SECTION("negative length")
+            {
+                json _;
+
+                std::vector<uint8_t> const vi = {'S', 'i', 0xFF};
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vi), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData string: string length must not be negative", json::parse_error&);
+                CHECK(json::from_bjdata(vi, true, false).is_discarded());
+
+                std::vector<uint8_t> const vl = {'S', 'l', 0xFF, 0xFF, 0xFF, 0xFF};
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vl), "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing BJData string: string length must not be negative", json::parse_error&);
+                CHECK(json::from_bjdata(vl, true, false).is_discarded());
+            }
+
             SECTION("parse bjdata markers in ubjson")
             {
                 // create a single-character string for all number types

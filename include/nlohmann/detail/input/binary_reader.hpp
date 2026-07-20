@@ -1847,6 +1847,29 @@ class binary_reader
     }
 
     /*!
+    @brief reject a negative UBJSON/BJData string length
+
+    String and key lengths are written with signed integer markers (i, I, l,
+    L). A negative value is malformed; without this check get_string() would
+    silently treat it as an empty string and leave the following bytes to be
+    misread as the next value. This mirrors the non-negative check the
+    optimized-container count path already performs in get_ubjson_size_value.
+
+    @param[in] len  the string length read from the input
+    @return whether the length is valid (non-negative)
+    */
+    template<typename NumberType>
+    bool check_ubjson_string_length(const NumberType len)
+    {
+        if (JSON_HEDLEY_UNLIKELY(len < 0))
+        {
+            return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                    exception_message(input_format, "string length must not be negative", "string"), nullptr));
+        }
+        return true;
+    }
+
+    /*!
     @brief reads a UBJSON string
 
     This function is either called after reading the 'S' byte explicitly
@@ -1883,25 +1906,25 @@ class binary_reader
             case 'i':
             {
                 std::int8_t len{};
-                return get_number(input_format, len) && get_string(input_format, len, result);
+                return get_number(input_format, len) && check_ubjson_string_length(len) && get_string(input_format, len, result);
             }
 
             case 'I':
             {
                 std::int16_t len{};
-                return get_number(input_format, len) && get_string(input_format, len, result);
+                return get_number(input_format, len) && check_ubjson_string_length(len) && get_string(input_format, len, result);
             }
 
             case 'l':
             {
                 std::int32_t len{};
-                return get_number(input_format, len) && get_string(input_format, len, result);
+                return get_number(input_format, len) && check_ubjson_string_length(len) && get_string(input_format, len, result);
             }
 
             case 'L':
             {
                 std::int64_t len{};
-                return get_number(input_format, len) && get_string(input_format, len, result);
+                return get_number(input_format, len) && check_ubjson_string_length(len) && get_string(input_format, len, result);
             }
 
             case 'u':
