@@ -249,7 +249,11 @@ TEST_CASE("lexer number fast path")
             "-9223372036854775808",            // INT64_MIN -> integer
             "-9223372036854775809",            // INT64_MIN - 1 -> float
             "123456789012345678901234567890",  // huge -> float
-            "0.30000000000000004", "2.2250738585072014e-308", "1e308"
+            "0.30000000000000004", "2.2250738585072014e-308", "1e308",
+            // high-precision / wide-exponent values that exercise the
+            // std::from_chars (Eisel-Lemire) path beyond the Clinger subset
+            "1.7976931348623157e308", "1.2345678901234567e-250",
+            "9007199254740993", "5e-324", "1e-320"
         };
 
         for (const auto& n : numbers)

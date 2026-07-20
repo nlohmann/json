@@ -15,6 +15,11 @@
 
 #include <nlohmann/detail/macro_scope.hpp>
 
+#if defined(JSON_HAS_CPP_17)
+    #include <charconv> // from_chars (only used when __cpp_lib_to_chars is defined)
+    #include <system_error> // errc
+#endif
+
 // This file contains the value-conversion helpers used by the lexer to turn an
 // already-validated number token into a value, without the locale/errno
 // overhead of std::strtoull/std::strtod. They are free functions so the lexer
@@ -238,6 +243,35 @@ template<typename DecimalPointType, typename FloatType>
 bool parse_float_fast(const char* /*first*/, const char* /*last*/, DecimalPointType /*decimal_point*/, FloatType& /*out*/) noexcept
 {
     return false;
+}
+
+/*!
+@brief parse a float with std::from_chars (Eisel-Lemire) when available
+
+std::from_chars is locale-independent, correctly rounded, and - via the
+Eisel-Lemire algorithm in modern standard libraries - much faster than strtod
+over the whole value range (not just the Clinger subset). It is used only when
+__cpp_lib_to_chars indicates full floating-point support and only when it
+consumes the entire token ([first, last)); a partial parse means the buffer
+uses a non-'.' locale decimal point, in which case the caller falls back to the
+locale-aware path. An under-/overflow (result_out_of_range) also declines, so
+the caller's strtod fallback supplies the well-defined ±inf/0 result the parser
+expects (side-stepping the P4168 divergence between implementations).
+
+@return true if the value was parsed exactly and fully; false to fall back
+*/
+template<typename FloatType>
+bool parse_float_from_chars(const char* first, const char* last, FloatType& out) noexcept
+{
+#if defined(__cpp_lib_to_chars)
+    const auto result = std::from_chars(first, last, out);
+    return result.ec == std::errc() && result.ptr == last;
+#else
+    static_cast<void>(first);
+    static_cast<void>(last);
+    static_cast<void>(out);
+    return false;
+#endif
 }
 
 }  // namespace detail

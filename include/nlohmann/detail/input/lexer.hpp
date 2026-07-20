@@ -1382,8 +1382,14 @@ scan_number_done:
         }
 
         // this code is reached if we parse a floating-point number or if an
-        // integer conversion above overflowed. Try the exact fast path (double
-        // only) before falling back to the locale-independent strtof/strtod.
+        // integer conversion above overflowed. Prefer std::from_chars
+        // (Eisel-Lemire, locale-independent, correctly rounded) when available;
+        // otherwise the exact Clinger fast path (double only); otherwise the
+        // locale-aware strtof/strtod.
+        if (parse_float_from_chars(num_begin, num_end, value_float))
+        {
+            return token_type::value_float;
+        }
         if (parse_float_fast(num_begin, num_end, decimal_point_char, value_float))
         {
             return token_type::value_float;
