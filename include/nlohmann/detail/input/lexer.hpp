@@ -21,6 +21,15 @@
 #include <utility> // move
 #include <vector> // vector
 
+#if defined(JSON_USE_SIMDUTF)
+    // Optional SIMD backend for bulk UTF-8 validation. This is an opt-in
+    // external dependency: nlohmann/json itself stays header-only and the C++11
+    // scalar validator below is always available; defining JSON_USE_SIMDUTF
+    // additionally requires the simdutf headers on the include path and linking
+    // the simdutf library. See scan_string_bulk().
+    #include <simdutf.h>
+#endif
+
 #include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/position_t.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
@@ -414,6 +423,90 @@ class lexer : public lexer_base<BasicJsonType>
         return 0; // invalid, incomplete, or must be diagnosed by the byte path
     }
 
+    // Scalar (C++11) computation of the bulk run length: the number of leading
+    // bytes in [data, data+n) that are ordinary ASCII or complete well-formed
+    // UTF-8 sequences, stopping before the first byte that needs individual
+    // handling (the closing quote, an escape, a control character, or an
+    // ill-formed/truncated sequence). ASCII is skipped 8 bytes at a time.
+    static std::size_t scalar_string_bulk_run(const unsigned char* data, std::size_t n) noexcept
+    {
+        std::size_t pos = 0;
+        while (pos < n)
+        {
+            pos += find_string_special(data + pos, n - pos);
+            if (pos >= n || data[pos] < 0x80u)
+            {
+                break; // end of buffer, or a quote/escape/control byte
+            }
+            const std::size_t seq = validate_one_utf8(data + pos, n - pos);
+            if (seq == 0)
+            {
+                break; // ill-formed or truncated: let the byte path diagnose it
+            }
+            pos += seq;
+        }
+        return pos;
+    }
+
+#if defined(JSON_USE_SIMDUTF)
+    // Index of the first quote/escape/control byte in [data, data+n) (non-ASCII
+    // bytes are *not* stops here - the whole run is handed to simdutf), or n.
+    static std::size_t find_string_delimiter(const unsigned char* data, std::size_t n) noexcept
+    {
+        constexpr std::uint64_t ones = 0x0101010101010101ull;
+        constexpr std::uint64_t high = 0x8080808080808080ull;
+        std::size_t i = 0;
+        for (; i + 8 <= n; i += 8)
+        {
+            std::uint64_t v = 0;
+            std::memcpy(&v, data + i, sizeof(v));
+            const std::uint64_t q = v ^ 0x2222222222222222ull;
+            const std::uint64_t b = v ^ 0x5C5C5C5C5C5C5C5Cull;
+            const std::uint64_t hit = ((q - ones) & ~q & high)
+                                      | ((b - ones) & ~b & high)
+                                      | ((v - 0x2020202020202020ull) & ~v & high);
+            if (hit != 0)
+            {
+                for (std::size_t j = 0; j < 8; ++j)
+                {
+                    const unsigned char c = data[i + j];
+                    if (c == '\"' || c == '\\' || c < 0x20u)
+                    {
+                        return i + j;
+                    }
+                }
+            }
+        }
+        for (; i < n; ++i)
+        {
+            const unsigned char c = data[i];
+            if (c == '\"' || c == '\\' || c < 0x20u)
+            {
+                return i;
+            }
+        }
+        return n;
+    }
+#endif
+
+    // Backend-dispatched bulk run length. With JSON_USE_SIMDUTF the run up to the
+    // next delimiter is validated in one shot by simdutf; on the rare failure the
+    // scalar helper recomputes the exact valid prefix so the byte path still
+    // produces the precise diagnostic. Without it, the pure scalar path is used.
+    static std::size_t string_bulk_run(const unsigned char* data, std::size_t n) noexcept
+    {
+#if defined(JSON_USE_SIMDUTF)
+        const std::size_t run = find_string_delimiter(data, n);
+        if (run != 0 && simdutf::validate_utf8(reinterpret_cast<const char*>(data), run))
+        {
+            return run;
+        }
+        return scalar_string_bulk_run(data, n);
+#else
+        return scalar_string_bulk_run(data, n);
+#endif
+    }
+
     /// contiguous input: bulk-append the run of ordinary characters and complete
     /// well-formed UTF-8 sequences starting at the current read position, leaving
     /// the first byte that needs individual handling (the closing quote, an
@@ -432,31 +525,7 @@ class lexer : public lexer_base<BasicJsonType>
         }
         const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
 
-        std::size_t pos = 0;
-        while (pos < remaining)
-        {
-            // bulk-skip ordinary ASCII, stopping at the next special byte
-            pos += find_string_special(data + pos, remaining - pos);
-            if (pos >= remaining)
-            {
-                break;
-            }
-            const unsigned char c = data[pos];
-            if (c < 0x80u)
-            {
-                // closing quote, escape, or control character: let get() handle it
-                break;
-            }
-            // a non-ASCII lead byte: fold a well-formed sequence into the run,
-            // otherwise stop and let the byte path produce the exact diagnostic
-            const std::size_t seq = validate_one_utf8(data + pos, remaining - pos);
-            if (seq == 0)
-            {
-                break;
-            }
-            pos += seq;
-        }
-
+        const std::size_t pos = string_bulk_run(data, remaining);
         if (pos == 0)
         {
             return;
