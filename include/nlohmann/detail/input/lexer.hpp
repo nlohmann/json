@@ -350,8 +350,74 @@ class lexer : public lexer_base<BasicJsonType>
         return n;
     }
 
-    /// contiguous input: bulk-append the run of ordinary characters starting at
-    /// the current read position, leaving the first special byte for get()
+    // Validate one UTF-8 sequence at the front of [data, data+avail). Returns
+    // its length (2..4) only when the bytes form a *well-formed* sequence using
+    // exactly the same ranges as scan_string()'s per-byte switch, so the bulk
+    // path accepts precisely what the byte path accepts. Returns 0 for anything
+    // that is invalid, incomplete, or that the byte path must diagnose (the
+    // caller then defers to that path, keeping error messages unchanged). Lead
+    // bytes < 0x80 are handled by the caller and never passed here.
+    static std::size_t validate_one_utf8(const unsigned char* data, std::size_t avail) noexcept
+    {
+        const unsigned char c0 = data[0];
+        // helper: a continuation byte within [lo, hi]
+        // (kept inline to stay noexcept and C++11-friendly)
+        if (c0 >= 0xC2 && c0 <= 0xDF)  // U+0080..U+07FF
+        {
+            if (avail >= 2 && data[1] >= 0x80 && data[1] <= 0xBF)
+            {
+                return 2;
+            }
+        }
+        else if (c0 == 0xE0)  // U+0800..U+0FFF
+        {
+            if (avail >= 3 && data[1] >= 0xA0 && data[1] <= 0xBF && data[2] >= 0x80 && data[2] <= 0xBF)
+            {
+                return 3;
+            }
+        }
+        else if ((c0 >= 0xE1 && c0 <= 0xEC) || c0 == 0xEE || c0 == 0xEF)  // U+1000..U+CFFF, U+E000..U+FFFF
+        {
+            if (avail >= 3 && data[1] >= 0x80 && data[1] <= 0xBF && data[2] >= 0x80 && data[2] <= 0xBF)
+            {
+                return 3;
+            }
+        }
+        else if (c0 == 0xED)  // U+D000..U+D7FF (excludes surrogates)
+        {
+            if (avail >= 3 && data[1] >= 0x80 && data[1] <= 0x9F && data[2] >= 0x80 && data[2] <= 0xBF)
+            {
+                return 3;
+            }
+        }
+        else if (c0 == 0xF0)  // U+10000..U+3FFFF
+        {
+            if (avail >= 4 && data[1] >= 0x90 && data[1] <= 0xBF && data[2] >= 0x80 && data[2] <= 0xBF && data[3] >= 0x80 && data[3] <= 0xBF)
+            {
+                return 4;
+            }
+        }
+        else if (c0 >= 0xF1 && c0 <= 0xF3)  // U+40000..U+FFFFF
+        {
+            if (avail >= 4 && data[1] >= 0x80 && data[1] <= 0xBF && data[2] >= 0x80 && data[2] <= 0xBF && data[3] >= 0x80 && data[3] <= 0xBF)
+            {
+                return 4;
+            }
+        }
+        else if (c0 == 0xF4)  // U+100000..U+10FFFF
+        {
+            if (avail >= 4 && data[1] >= 0x80 && data[1] <= 0x8F && data[2] >= 0x80 && data[2] <= 0xBF && data[3] >= 0x80 && data[3] <= 0xBF)
+            {
+                return 4;
+            }
+        }
+        return 0; // invalid, incomplete, or must be diagnosed by the byte path
+    }
+
+    /// contiguous input: bulk-append the run of ordinary characters and complete
+    /// well-formed UTF-8 sequences starting at the current read position, leaving
+    /// the first byte that needs individual handling (the closing quote, an
+    /// escape, a control character, or an ill-formed UTF-8 byte) for get()
     void scan_string_bulk(std::true_type /*bulk*/)
     {
         // a pending unget must be consumed through the normal path first
@@ -365,17 +431,42 @@ class lexer : public lexer_base<BasicJsonType>
             return;
         }
         const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
-        const std::size_t run = find_string_special(data, remaining);
-        if (run == 0)
+
+        std::size_t pos = 0;
+        while (pos < remaining)
+        {
+            // bulk-skip ordinary ASCII, stopping at the next special byte
+            pos += find_string_special(data + pos, remaining - pos);
+            if (pos >= remaining)
+            {
+                break;
+            }
+            const unsigned char c = data[pos];
+            if (c < 0x80u)
+            {
+                // closing quote, escape, or control character: let get() handle it
+                break;
+            }
+            // a non-ASCII lead byte: fold a well-formed sequence into the run,
+            // otherwise stop and let the byte path produce the exact diagnostic
+            const std::size_t seq = validate_one_utf8(data + pos, remaining - pos);
+            if (seq == 0)
+            {
+                break;
+            }
+            pos += seq;
+        }
+
+        if (pos == 0)
         {
             return;
         }
-        token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), run);
-        ia.bulk_skip(run);
+        token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), pos);
+        ia.bulk_skip(pos);
         // the run contains no newline (all bytes < 0x20 are treated as special),
         // so only the flat character counters advance
-        position.chars_read_total += run;
-        position.chars_read_current_line += run;
+        position.chars_read_total += pos;
+        position.chars_read_current_line += pos;
     }
 
     /// streaming input: no bulk fast path
