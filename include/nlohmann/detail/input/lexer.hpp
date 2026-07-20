@@ -11,9 +11,11 @@
 #include <array> // array
 #include <clocale> // localeconv
 #include <cstddef> // size_t
+#include <cstdint> // uint64_t
 #include <cstdio> // snprintf
 #include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
 #include <initializer_list> // initializer_list
+#include <limits> // numeric_limits
 #include <string> // char_traits, string
 #include <utility> // move
 #include <vector> // vector
@@ -960,6 +962,216 @@ class lexer : public lexer_base<BasicJsonType>
     }
 
     /*!
+    @brief fast integer parser for an already-validated digit sequence
+
+    The scan_number() state machine has already checked that [first, last) is a
+    valid JSON integer, so this only needs to accumulate the digits and detect
+    overflow. This avoids the locale/errno machinery of std::strtoull, which
+    dominates integer-heavy inputs.
+
+    @param[in]  first   pointer to the first character (a digit)
+    @param[in]  last    pointer past the last character
+    @param[out] value   the parsed value on success
+    @return true if the value fit into number_unsigned_t; false on overflow, in
+            which case the caller falls back to floating-point parsing (matching
+            the previous std::strtoull behavior)
+    */
+    static bool parse_integer_unsigned(const char* first, const char* last, number_unsigned_t& value) noexcept
+    {
+        // accumulate in the widest unsigned type used by the previous strtoull
+        // path so the overflow behavior is unchanged for custom number types
+        std::uint64_t x = 0;
+        constexpr std::uint64_t cutoff = (std::numeric_limits<std::uint64_t>::max)() / 10u;
+        constexpr std::uint64_t cutlim = (std::numeric_limits<std::uint64_t>::max)() % 10u;
+        for (const char* p = first; p != last; ++p)
+        {
+            const auto digit = static_cast<std::uint64_t>(static_cast<unsigned char>(*p) - static_cast<unsigned char>('0'));
+            if (JSON_HEDLEY_UNLIKELY(x > cutoff || (x == cutoff && digit > cutlim)))
+            {
+                return false;
+            }
+            x = x * 10u + digit;
+        }
+        value = static_cast<number_unsigned_t>(x);
+        // reject values that do not round-trip into a narrower number_unsigned_t
+        return static_cast<std::uint64_t>(value) == x;
+    }
+
+    /*!
+    @brief fast integer parser for an already-validated negative integer
+
+    @param[in]  first   pointer to the leading '-'
+    @param[in]  last    pointer past the last character
+    @param[out] value   the parsed (negative) value on success
+    @return true on success; false on overflow (caller falls back to float)
+    */
+    static bool parse_integer_signed(const char* first, const char* last, number_integer_t& value) noexcept
+    {
+        // the state machine only reaches the signed path via a leading '-'
+        JSON_ASSERT(first != last && *first == '-');
+        std::uint64_t magnitude = 0;
+        // |INT64_MIN| == INT64_MAX + 1; this is the largest admissible magnitude
+        constexpr std::uint64_t limit = static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()) + 1u;
+        for (const char* p = first + 1; p != last; ++p)
+        {
+            const auto digit = static_cast<std::uint64_t>(static_cast<unsigned char>(*p) - static_cast<unsigned char>('0'));
+            if (JSON_HEDLEY_UNLIKELY(magnitude > (limit - digit) / 10u))
+            {
+                return false;
+            }
+            magnitude = magnitude * 10u + digit;
+        }
+        const std::int64_t x = (magnitude == limit)
+                               ? (std::numeric_limits<std::int64_t>::min)()
+                               : -static_cast<std::int64_t>(magnitude);
+        value = static_cast<number_integer_t>(x);
+        // reject values that do not round-trip into a narrower number_integer_t
+        return static_cast<std::int64_t>(value) == x;
+    }
+
+    /*!
+    @brief exact fast path for parsing a `double` (Clinger's algorithm)
+
+    For the common case - at most 19 significant digits, a decimal exponent in
+    [-22, 22], and a significand below 2^53 - the value equals significand *
+    10^exp computed in IEEE-754 double arithmetic, which is exact under
+    round-to-nearest because both operands are exactly representable. This is the
+    same fast path used by fast_float/simdjson; the general cases are left to
+    std::strtod. The parser only activates for number_float_t == double; float
+    and long double keep the std::strtof/std::strtold paths (see the templated
+    overload below).
+
+    @param[in]  first   pointer to the first character of the number
+    @param[in]  last    pointer past the last character
+    @param[out] out     the parsed value on success
+    @return true if the value was parsed exactly; false to fall back to strtod
+    */
+    bool parse_float_fast(const char* first, const char* last, double& out) const noexcept
+    {
+        static const double powers_of_ten[] =
+        {
+            1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11,
+            1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20, 1e21, 1e22
+        };
+
+        const char* p = first;
+        bool negative = false;
+        if (p != last && (*p == '-' || *p == '+'))
+        {
+            negative = (*p == '-');
+            ++p;
+        }
+
+        std::uint64_t significand = 0;
+        int num_digits = 0;
+        int fractional_digits = 0;
+        bool seen_dot = false;
+        bool any_digit = false;
+        for (; p != last; ++p)
+        {
+            const char c = *p;
+            if (c >= '0' && c <= '9')
+            {
+                any_digit = true;
+                if (JSON_HEDLEY_UNLIKELY(num_digits >= 19))
+                {
+                    return false; // significand may not fit into uint64_t
+                }
+                significand = significand * 10u + static_cast<std::uint64_t>(c - '0');
+                ++num_digits;
+                fractional_digits += static_cast<int>(seen_dot);
+            }
+            else if (static_cast<char_int_type>(c) == decimal_point_char)
+            {
+                if (JSON_HEDLEY_UNLIKELY(seen_dot))
+                {
+                    return false;
+                }
+                seen_dot = true;
+            }
+            else if (c == 'e' || c == 'E')
+            {
+                ++p;
+                break;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        if (JSON_HEDLEY_UNLIKELY(!any_digit))
+        {
+            return false;
+        }
+
+        int exponent = 0;
+        if (p != last) // an exponent part remains
+        {
+            bool exp_negative = false;
+            if (p != last && (*p == '-' || *p == '+'))
+            {
+                exp_negative = (*p == '-');
+                ++p;
+            }
+            bool any_exp_digit = false;
+            for (; p != last; ++p)
+            {
+                if (JSON_HEDLEY_UNLIKELY(*p < '0' || *p > '9'))
+                {
+                    return false;
+                }
+                exponent = exponent * 10 + (*p - '0');
+                any_exp_digit = true;
+                if (JSON_HEDLEY_UNLIKELY(exponent > 9999))
+                {
+                    return false;
+                }
+            }
+            if (JSON_HEDLEY_UNLIKELY(!any_exp_digit))
+            {
+                return false;
+            }
+            if (exp_negative)
+            {
+                exponent = -exponent;
+            }
+        }
+
+        const int scale = exponent - fractional_digits;
+        if (JSON_HEDLEY_UNLIKELY(significand >= (static_cast<std::uint64_t>(1) << 53)))
+        {
+            return false; // significand not exactly representable as double
+        }
+
+        double result = static_cast<double>(significand);
+        if (scale >= 0)
+        {
+            if (JSON_HEDLEY_UNLIKELY(scale > 22))
+            {
+                return false;
+            }
+            result *= powers_of_ten[scale];
+        }
+        else
+        {
+            if (JSON_HEDLEY_UNLIKELY(-scale > 22))
+            {
+                return false;
+            }
+            result /= powers_of_ten[-scale];
+        }
+        out = negative ? -result : result;
+        return true;
+    }
+
+    /// fast float path is only exact for `double`; decline for float/long double
+    template<typename FloatType>
+    bool parse_float_fast(const char* /*first*/, const char* /*last*/, FloatType& /*out*/) const noexcept
+    {
+        return false;
+    }
+
+    /*!
     @brief scan a number literal
 
     This function scans a string according to Sect. 6 of RFC 8259.
@@ -1279,45 +1491,36 @@ scan_number_done:
         // we are done scanning a number)
         unget();
 
-        char* endptr = nullptr; // NOLINT(misc-const-correctness,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        errno = 0;
+        const char* const num_begin = token_buffer.data();
+        const char* const num_end = num_begin + token_buffer.size();
 
-        // try to parse integers first and fall back to floats
+        // try to parse integers first and fall back to floats; the digit
+        // sequence has already been validated by the state machine above, so
+        // a dedicated parser can avoid the locale/errno overhead of strtoull
         if (number_type == token_type::value_unsigned)
         {
-            const auto x = std::strtoull(token_buffer.data(), &endptr, 10);
-
-            // we checked the number format before
-            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
-
-            if (errno != ERANGE)
+            if (parse_integer_unsigned(num_begin, num_end, value_unsigned))
             {
-                value_unsigned = static_cast<number_unsigned_t>(x);
-                if (value_unsigned == x)
-                {
-                    return token_type::value_unsigned;
-                }
+                return token_type::value_unsigned;
             }
         }
         else if (number_type == token_type::value_integer)
         {
-            const auto x = std::strtoll(token_buffer.data(), &endptr, 10);
-
-            // we checked the number format before
-            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
-
-            if (errno != ERANGE)
+            if (parse_integer_signed(num_begin, num_end, value_integer))
             {
-                value_integer = static_cast<number_integer_t>(x);
-                if (value_integer == x)
-                {
-                    return token_type::value_integer;
-                }
+                return token_type::value_integer;
             }
         }
 
         // this code is reached if we parse a floating-point number or if an
-        // integer conversion above failed
+        // integer conversion above overflowed. Try the exact fast path (double
+        // only) before falling back to the locale-independent strtof/strtod.
+        if (parse_float_fast(num_begin, num_end, value_float))
+        {
+            return token_type::value_float;
+        }
+
+        char* endptr = nullptr; // NOLINT(misc-const-correctness,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
         strtof(value_float, token_buffer.data(), &endptr);
 
         // we checked the number format before
