@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <array> // array
+#include <cstddef> // size_t
 #include <cstdint> // int64_t, uint64_t
 #include <limits> // numeric_limits
 
@@ -113,10 +115,12 @@ below).
 template<typename DecimalPointType>
 bool parse_float_fast(const char* first, const char* last, DecimalPointType decimal_point, double& out) noexcept
 {
-    static const double powers_of_ten[] =
+    static const std::array<double, 23> powers_of_ten =
     {
-        1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11,
-        1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20, 1e21, 1e22
+        {
+            1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11,
+            1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20, 1e21, 1e22
+        }
     };
 
     const char* p = first;
@@ -208,14 +212,14 @@ bool parse_float_fast(const char* first, const char* last, DecimalPointType deci
         return false; // significand not exactly representable as double
     }
 
-    double result = static_cast<double>(significand);
+    auto result = static_cast<double>(significand);
     if (scale >= 0)
     {
         if (JSON_HEDLEY_UNLIKELY(scale > 22))
         {
             return false;
         }
-        result *= powers_of_ten[scale];
+        result *= powers_of_ten[static_cast<std::size_t>(scale)];
     }
     else
     {
@@ -223,7 +227,7 @@ bool parse_float_fast(const char* first, const char* last, DecimalPointType deci
         {
             return false;
         }
-        result /= powers_of_ten[-scale];
+        result /= powers_of_ten[static_cast<std::size_t>(-scale)];
     }
     out = negative ? -result : result;
     return true;
