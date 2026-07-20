@@ -382,3 +382,87 @@ TEST_CASE("dump for basic_json with long double number_float_t")
         check_same(100.0L,  100.0);
     }
 }
+
+TEST_CASE("serialization of strings (bulk fast path)")
+{
+    // These cases exercise the SWAR bulk-copy fast path in dump_escaped and the
+    // internal write buffer: long runs, escapes interrupting runs, 0x7F/DEL,
+    // multibyte UTF-8 under both ensure_ascii settings, and payloads larger than
+    // the write buffer.
+
+    SECTION("long unescaped ASCII exceeds the write buffer")
+    {
+        const std::string big(3000, 'a');
+        const json j = big;
+        CHECK(j.dump() == '"' + big + '"');
+        CHECK(j.dump(-1, ' ', true) == '"' + big + '"');
+        // round-trips
+        CHECK(json::parse(j.dump()) == j);
+    }
+
+    SECTION("runs interrupted by escapes")
+    {
+        const json j = std::string(500, 'x') + "\n\"\\" + std::string(500, 'y');
+        const std::string out = j.dump();
+        CHECK(out == '"' + std::string(500, 'x') + "\\n\\\"\\\\" + std::string(500, 'y') + '"');
+        CHECK(json::parse(out) == j);
+    }
+
+    SECTION("DEL (0x7F) depends on ensure_ascii")
+    {
+        const json j = std::string("a\x7f" "b");
+        CHECK(j.dump(-1, ' ', false) == "\"a\x7f" "b\"");   // copied verbatim
+        CHECK(j.dump(-1, ' ', true) == "\"a\\u007fb\"");    // escaped
+    }
+
+    SECTION("multibyte UTF-8 under both ensure_ascii settings")
+    {
+        const json j = std::string("A\xc3\xa9\xe4\xbd\xa0\xf0\x9f\x98\x80Z"); // A é 你 😀 Z
+        // not escaping non-ASCII: bytes are copied through the bulk validator
+        CHECK(j.dump(-1, ' ', false) == "\"A\xc3\xa9\xe4\xbd\xa0\xf0\x9f\x98\x80Z\"");
+        // ensure_ascii: escaped (with a surrogate pair for the emoji)
+        CHECK(j.dump(-1, ' ', true) == "\"A\\u00e9\\u4f60\\ud83d\\ude00Z\"");
+        CHECK(json::parse(j.dump(-1, ' ', true)) == j);
+    }
+
+    SECTION("many small structural writes exceed the write buffer")
+    {
+        json arr = json::array();
+        for (int i = 0; i < 2000; ++i)
+        {
+            arr.push_back(i);
+        }
+        const std::string out = arr.dump();
+        CHECK(out.front() == '[');
+        CHECK(out.back() == ']');
+        CHECK(json::parse(out) == arr);
+
+        json obj = json::object();
+        for (int i = 0; i < 500; ++i)
+        {
+            obj["key" + std::to_string(i)] = i;
+        }
+        CHECK(json::parse(obj.dump()) == obj);
+        CHECK(json::parse(obj.dump(2)) == obj);
+
+        // deep nesting emits >1024 consecutive single-character writes, forcing
+        // the write buffer to flush mid-run
+        json nested = json::array();
+        for (int i = 0; i < 1100; ++i)
+        {
+            nested = json::array({nested});
+        }
+        const std::string out2 = nested.dump();
+        CHECK(out2.substr(0, 1100) == std::string(1100, '['));
+        CHECK(json::parse(out2) == nested);
+    }
+
+    SECTION("invalid UTF-8 handling is unaffected by the fast path")
+    {
+        const json j = std::string("valid\xff" "more");
+        CHECK_THROWS_WITH_AS(j.dump(), "[json.exception.type_error.316] invalid UTF-8 byte at index 5: 0xFF", json::type_error&);
+        CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"valid\xef\xbf\xbd" "more\"");
+        CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == "\"valid\\ufffdmore\"");
+        CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == "\"validmore\"");
+    }
+}
