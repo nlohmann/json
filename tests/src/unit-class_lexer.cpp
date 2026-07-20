@@ -12,6 +12,10 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <sstream> // stringstream
+#include <string> // string
+#include <vector> // vector
+
 namespace
 {
 // shortcut to scan a string literal
@@ -222,5 +226,73 @@ TEST_CASE("lexer class")
 
         CHECK((scan_string("//\n//\n", true) == json::lexer::token_type::end_of_input));
         CHECK((scan_string("/**//**//**/", true) == json::lexer::token_type::end_of_input));
+    }
+}
+
+TEST_CASE("lexer number fast path")
+{
+    // The contiguous fast path (used for pointer/string input) must agree with
+    // the streaming byte path (used for std::istream) on token type, numeric
+    // value, and round-trip text for every well-formed number, and reject the
+    // same malformed numbers with the same message.
+    SECTION("contiguous vs streaming parity")
+    {
+        const std::vector<std::string> numbers =
+        {
+            "0", "-0", "1", "-1", "42", "-42", "10", "100", "1234567890",
+            "0.0", "-0.0", "3.14", "-3.14", "0.5", "-0.001", "123.456789",
+            "1e0", "1E0", "1e10", "1e-10", "1e+10", "1.5e3", "-2.5E-4",
+            "9223372036854775807",             // INT64_MAX -> unsigned
+            "9223372036854775808",             // INT64_MAX + 1 -> unsigned
+            "18446744073709551615",            // UINT64_MAX -> unsigned
+            "18446744073709551616",            // UINT64_MAX + 1 -> float
+            "-9223372036854775808",            // INT64_MIN -> integer
+            "-9223372036854775809",            // INT64_MIN - 1 -> float
+            "123456789012345678901234567890",  // huge -> float
+            "0.30000000000000004", "2.2250738585072014e-308", "1e308"
+        };
+
+        for (const auto& n : numbers)
+        {
+            const std::string doc = "[" + n + "]";
+
+            // contiguous fast path
+            const json a = json::parse(doc);
+            // streaming byte path
+            std::stringstream ss(doc);
+            const json b = json::parse(ss);
+
+            CAPTURE(n);
+            CHECK(a == b);
+            CHECK(a.dump() == b.dump());
+            CHECK(a[0].type() == b[0].type());
+        }
+    }
+
+    SECTION("token type classification")
+    {
+        CHECK((scan_string("0") == json::lexer::token_type::value_unsigned));
+        CHECK((scan_string("-1") == json::lexer::token_type::value_integer));
+        CHECK((scan_string("1.5") == json::lexer::token_type::value_float));
+        CHECK((scan_string("1e5") == json::lexer::token_type::value_float));
+        CHECK((scan_string("18446744073709551615") == json::lexer::token_type::value_unsigned));
+        CHECK((scan_string("18446744073709551616") == json::lexer::token_type::value_float));
+        CHECK((scan_string("-9223372036854775808") == json::lexer::token_type::value_integer));
+        CHECK((scan_string("-9223372036854775809") == json::lexer::token_type::value_float));
+    }
+
+    SECTION("malformed numbers are rejected identically")
+    {
+        for (const char* bad :
+                {"-", "1.", "1e", "1e+", "1.2e", "01", "-01", "1..2", "1.2.3"
+                })
+        {
+            CAPTURE(bad);
+            // the contiguous fast path must decline and let the byte path report
+            const std::string doc = std::string("[") + bad + "]";
+            CHECK_FALSE(json::accept(doc));
+            std::stringstream ss(doc);
+            CHECK_FALSE(json::accept(ss));
+        }
     }
 }
