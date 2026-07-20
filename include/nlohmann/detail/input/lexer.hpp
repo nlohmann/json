@@ -1490,9 +1490,11 @@ scan_number_done:
         const std::size_t len = i;
 
         // materialize the token exactly as scan_number() would, substituting the
-        // locale decimal point so convert_number()'s strtof fallback stays valid
+        // locale decimal point so convert_number()'s strtof fallback stays valid.
+        // reset() already cleared token_buffer, so append() fills it (assign() is
+        // avoided because custom string_t types need not provide it)
         reset();
-        token_buffer.assign(data, len);
+        token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), len);
         if (dot_index != std::string::npos)
         {
             token_buffer[dot_index] = static_cast<typename string_t::value_type>(decimal_point_char);
