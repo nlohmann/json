@@ -21090,6 +21090,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/exceptions.hpp>
 
+// #include <nlohmann/detail/input/string_scan.hpp>
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
@@ -21472,6 +21474,38 @@ class serializer
 
         for (std::size_t i = 0; i < s.size(); ++i)
         {
+            // Fast path: when not escaping non-ASCII characters and sitting on a
+            // character boundary (state == UTF8_ACCEPT), bulk-copy the longest
+            // run of bytes that need no escaping. string_bulk_run() (shared with
+            // the lexer's contiguous scanner) stops exactly at the first byte
+            // that dump_escaped would handle individually - a quote, a backslash,
+            // a control character (< 0x20), or an ill-formed/truncated UTF-8
+            // sequence - so that byte is left to the byte-at-a-time path below,
+            // keeping error handling and diagnostics unchanged.
+            if (!ensure_ascii && state == UTF8_ACCEPT)
+            {
+                const auto* const data = reinterpret_cast<const unsigned char*>(s.data());
+                const std::size_t run = string_bulk_run(data + i, s.size() - i);
+                if (run != 0)
+                {
+                    // emit any bytes still pending in string_buffer first to
+                    // preserve output order, then write the run directly
+                    if (bytes != 0)
+                    {
+                        o->write_characters(string_buffer.data(), bytes);
+                        bytes = 0;
+                    }
+                    o->write_characters(s.data() + i, run);
+                    bytes_after_last_accept = 0;
+                    undumped_chars = 0;
+                    i += run;
+                    if (i >= s.size())
+                    {
+                        break;
+                    }
+                }
+            }
+
             const auto byte = static_cast<std::uint8_t>(s[i]);
 
             switch (decode(state, codepoint, byte))
