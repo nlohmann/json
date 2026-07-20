@@ -730,12 +730,17 @@ class serializer
         write_buffer_pos += length;
     }
 
+  JSON_PRIVATE_UNLESS_TESTED:
     /*!
     @brief flush the write buffer to the output adapter
 
     Writing zero characters is a well-defined no-op for every output adapter, so
     the buffered length is passed through unconditionally (no empty-guard branch
     to leave uncovered).
+
+    @note dump_escaped() and dump_integer()/dump_float() write into the internal
+    write buffer; callers that invoke them directly (rather than through the
+    public dump()) must call flush() before inspecting the output.
     */
     void flush()
     {
@@ -743,6 +748,7 @@ class serializer
         write_buffer_pos = 0;
     }
 
+  private:
     /*!
     @brief count digits
 
