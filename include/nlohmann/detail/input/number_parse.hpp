@@ -263,7 +263,10 @@ expects (side-stepping the P4168 divergence between implementations).
 template<typename FloatType>
 bool parse_float_from_chars(const char* first, const char* last, FloatType& out) noexcept
 {
-#if defined(__cpp_lib_to_chars)
+    // JSON_HAS_CPP_17 must gate the use as well as the <charconv> include above:
+    // some standard libraries (e.g. libstdc++ 15) define __cpp_lib_to_chars even
+    // in C++14 mode, where <charconv> is not included.
+#if defined(JSON_HAS_CPP_17) && defined(__cpp_lib_to_chars)
     const auto result = std::from_chars(first, last, out);
     return result.ec == std::errc() && result.ptr == last;
 #else
