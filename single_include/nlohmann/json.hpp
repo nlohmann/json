@@ -10713,11 +10713,38 @@ class binary_reader
     //////////
 
     /*!
+    @brief Validate a BSON document's declared size against the bytes read.
+
+    A BSON document starts with an int32 that counts its own total length in
+    bytes, including that prefix and the trailing 0x00. The reader is driven
+    by the terminator rather than the declared length, so without this check a
+    nested document could declare a length that disagrees with where its
+    terminator actually falls and quietly hand the bytes in between to the
+    enclosing document. A well-formed document is at least 5 bytes (the prefix
+    plus the terminator); the equality also rejects those impossible sizes,
+    since at least 5 bytes are always consumed.
+
+    @param[in] document_start  value of chars_read before the size prefix
+    @param[in] document_size   the declared document size
+    @return whether the declared size matches the number of bytes read
+    */
+    bool check_bson_document_size(const std::size_t document_start, const std::int32_t document_size)
+    {
+        if (JSON_HEDLEY_UNLIKELY(document_size < 0 || static_cast<std::size_t>(document_size) != chars_read - document_start))
+        {
+            return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
+                                    exception_message(input_format_t::bson, concat("document size ", std::to_string(document_size), " does not match the number of bytes read (", std::to_string(chars_read - document_start), ")"), "document"), nullptr));
+        }
+        return true;
+    }
+
+    /*!
     @brief Reads in a BSON-object and passes it to the SAX-parser.
     @return whether a valid BSON-value was passed to the SAX parser
     */
     bool parse_bson_internal()
     {
+        const std::size_t document_start = chars_read;
         std::int32_t document_size{};
         get_number<std::int32_t, true>(input_format_t::bson, document_size);
 
@@ -10727,6 +10754,11 @@ class binary_reader
         }
 
         if (JSON_HEDLEY_UNLIKELY(!parse_bson_element_list(/*is_array*/false)))
+        {
+            return false;
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(!check_bson_document_size(document_start, document_size)))
         {
             return false;
         }
@@ -10946,6 +10978,7 @@ class binary_reader
     */
     bool parse_bson_array()
     {
+        const std::size_t document_start = chars_read;
         std::int32_t document_size{};
         get_number<std::int32_t, true>(input_format_t::bson, document_size);
 
@@ -10955,6 +10988,11 @@ class binary_reader
         }
 
         if (JSON_HEDLEY_UNLIKELY(!parse_bson_element_list(/*is_array*/true)))
+        {
+            return false;
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(!check_bson_document_size(document_start, document_size)))
         {
             return false;
         }
