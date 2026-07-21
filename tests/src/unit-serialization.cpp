@@ -445,16 +445,20 @@ TEST_CASE("serialization of strings (bulk fast path)")
         CHECK(json::parse(obj.dump()) == obj);
         CHECK(json::parse(obj.dump(2)) == obj);
 
-        // deep nesting emits >1024 consecutive single-character writes, forcing
-        // the write buffer to flush mid-run
-        json nested = json::array();
-        for (int i = 0; i < 1100; ++i)
+        // an array of many empty strings emits a long run of single-character
+        // writes ('"', '"', ',') at shallow nesting depth, so the write buffer
+        // fills and flushes mid-run without the deep recursion that would
+        // overflow the stack on some debug builds
+        json many_empty = json::array();
+        for (int i = 0; i < 500; ++i)
         {
-            nested = json::array({nested});
+            many_empty.push_back("");
         }
-        const std::string out2 = nested.dump();
-        CHECK(out2.substr(0, 1100) == std::string(1100, '['));
-        CHECK(json::parse(out2) == nested);
+        const std::string out2 = many_empty.dump();
+        CHECK(out2.size() > 1024); // spans multiple write-buffer flushes
+        CHECK(out2.front() == '[');
+        CHECK(out2.back() == ']');
+        CHECK(json::parse(out2) == many_empty);
     }
 
     SECTION("invalid UTF-8 handling is unaffected by the fast path")
