@@ -13,6 +13,7 @@
 #include <iterator> // back_inserter
 #include <memory> // shared_ptr, make_shared
 #include <string> // basic_string
+#include <utility> // move
 #include <vector> // vector
 
 #ifndef JSON_NO_IO
@@ -138,7 +139,10 @@ class output_vector_sink
         v.push_back(c);
     }
 
-    JSON_HEDLEY_NON_NULL(2)
+    // no JSON_HEDLEY_NON_NULL here: binary_writer legitimately passes a null
+    // pointer with length 0 for empty strings/binary values. Appending an empty
+    // range is a no-op; the type-erased path tolerates this via the (unattributed)
+    // virtual base, and the concrete sink must do the same.
     void write_characters(const CharType* s, std::size_t length)
     {
         v.insert(v.end(), s, s + length);
@@ -170,7 +174,8 @@ class output_adapter_sink
         oa->write_character(c);
     }
 
-    JSON_HEDLEY_NON_NULL(2)
+    // no JSON_HEDLEY_NON_NULL: forwards (null, 0) for empty payloads, exactly as
+    // the type-erased path already did before this sink existed
     void write_characters(const CharType* s, std::size_t length)
     {
         oa->write_characters(s, length);
