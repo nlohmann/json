@@ -854,6 +854,43 @@ TEST_CASE("Unsupported BSON input")
     CHECK(!json::sax_parse(bson, &scp, json::input_format_t::bson));
 }
 
+TEST_CASE("BSON regressions")
+{
+    SECTION("stack overflow via deeply nested input (issue #5104)")
+    {
+        // A chain of 1100 embedded BSON documents (record type 0x03), each
+        // wrapping the previous one under key "a". The recursive-descent
+        // parser must reject this with a clean parse_error once the nesting
+        // exceeds the depth limit, rather than exhausting the native call
+        // stack.
+        std::vector<std::uint8_t> inner = {5, 0, 0, 0, 0}; // innermost empty document
+        for (int i = 0; i < 1100; ++i)
+        {
+            std::vector<std::uint8_t> elem = {0x03, 'a', 0x00}; // embedded-document element, key "a"
+            elem.insert(elem.end(), inner.begin(), inner.end());
+
+            const auto doc_size = static_cast<std::int32_t>(4 + elem.size() + 1);
+            std::vector<std::uint8_t> doc =
+            {
+                static_cast<std::uint8_t>(doc_size & 0xFF),
+                static_cast<std::uint8_t>((doc_size >> 8) & 0xFF),
+                static_cast<std::uint8_t>((doc_size >> 16) & 0xFF),
+                static_cast<std::uint8_t>((doc_size >> 24) & 0xFF),
+            };
+            doc.insert(doc.end(), elem.begin(), elem.end());
+            doc.push_back(0x00); // terminator
+
+            inner = doc;
+        }
+
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(inner),
+                             "[json.exception.parse_error.116] parse error at byte 7168: syntax error while parsing BSON value: maximum depth of nested objects/arrays exceeded",
+                             json::parse_error&);
+        CHECK(json::from_bson(inner, true, false).is_discarded());
+    }
+}
+
 TEST_CASE("BSON numerical data")
 {
     SECTION("number")

@@ -159,6 +159,39 @@ class binary_reader
     }
 
   private:
+    /*!
+    @brief RAII helper that tracks the nesting depth of containers while
+           parsing a binary input format.
+
+    The binary format parsers (CBOR, MessagePack, UBJSON/BJData, BSON) parse
+    nested arrays/objects using recursive descent, so unbounded input nesting
+    directly translates into unbounded native call-stack recursion. This
+    guard increments the reader's depth counter for the lifetime of a single
+    recursive parse step so callers can reject inputs that nest deeper than
+    @ref max_depth before the recursion has a chance to exhaust the stack.
+    */
+    class depth_guard
+    {
+      public:
+        explicit depth_guard(binary_reader& reader) noexcept : reader_(reader)
+        {
+            ++reader_.depth;
+        }
+
+        ~depth_guard()
+        {
+            --reader_.depth;
+        }
+
+        depth_guard(const depth_guard&) = delete;
+        depth_guard& operator=(const depth_guard&) = delete;
+        depth_guard(depth_guard&&) = delete;
+        depth_guard& operator=(depth_guard&&) = delete;
+
+      private:
+        binary_reader& reader_;
+    };
+
     //////////
     // BSON //
     //////////
@@ -169,6 +202,14 @@ class binary_reader
     */
     bool parse_bson_internal()
     {
+        const depth_guard dg(*this);
+        if (JSON_HEDLEY_UNLIKELY(depth > max_depth))
+        {
+            return sax->parse_error(chars_read, get_token_string(),
+                                    parse_error::create(116, chars_read,
+                                            exception_message(input_format_t::bson, "maximum depth of nested objects/arrays exceeded", "value"), nullptr));
+        }
+
         std::int32_t document_size{};
         get_number<std::int32_t, true>(input_format_t::bson, document_size);
 
@@ -447,6 +488,14 @@ class binary_reader
     bool parse_cbor_internal(const bool get_char,
                              const cbor_tag_handler_t tag_handler)
     {
+        const depth_guard dg(*this);
+        if (JSON_HEDLEY_UNLIKELY(depth > max_depth))
+        {
+            return sax->parse_error(chars_read, get_token_string(),
+                                    parse_error::create(116, chars_read,
+                                            exception_message(input_format_t::cbor, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
+        }
+
         switch (get_char ? get() : current)
         {
             // EOF
@@ -1209,6 +1258,14 @@ class binary_reader
     */
     bool parse_msgpack_internal()
     {
+        const depth_guard dg(*this);
+        if (JSON_HEDLEY_UNLIKELY(depth > max_depth))
+        {
+            return sax->parse_error(chars_read, get_token_string(),
+                                    parse_error::create(116, chars_read,
+                                            exception_message(input_format_t::msgpack, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
+        }
+
         switch (get())
         {
             // EOF
@@ -2343,6 +2400,14 @@ class binary_reader
     */
     bool get_ubjson_value(const char_int_type prefix)
     {
+        const depth_guard dg(*this);
+        if (JSON_HEDLEY_UNLIKELY(depth > max_depth))
+        {
+            return sax->parse_error(chars_read, get_token_string(),
+                                    parse_error::create(116, chars_read,
+                                            exception_message(input_format, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
+        }
+
         switch (prefix)
         {
             case char_traits<char_type>::eof():  // EOF
@@ -3086,6 +3151,11 @@ class binary_reader
   private:
     static JSON_INLINE_VARIABLE constexpr std::size_t npos = detail::unknown_size();
 
+    /// maximum allowed nesting depth of arrays/objects for the binary input
+    /// formats; guards the recursive-descent parsers against stack overflow
+    /// on maliciously/accidentally deeply nested input
+    static JSON_INLINE_VARIABLE constexpr std::size_t max_depth = 1024;
+
     /// input adapter
     InputAdapterType ia;
 
@@ -3094,6 +3164,9 @@ class binary_reader
 
     /// the number of characters read
     std::size_t chars_read = 0;
+
+    /// current container nesting depth, see @ref max_depth and @ref depth_guard
+    std::size_t depth = 0;
 
     /// whether we can assume little endianness
     const bool is_little_endian = little_endianness();

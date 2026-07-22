@@ -1570,6 +1570,20 @@ TEST_CASE("MessagePack")
                 CHECK(json::from_msgpack(vec, true, false).is_discarded());
             }
         }
+
+        SECTION("stack overflow via deeply nested input (issue #5104)")
+        {
+            // 2000 nested fixarrays of length 1 (0x91 each); the recursive-descent
+            // parser must reject this with a clean parse_error once the nesting
+            // exceeds the depth limit, rather than exhausting the native call stack.
+            std::vector<uint8_t> vec(2000, 0x91);
+            vec.push_back(0x00);
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(vec),
+                                 "[json.exception.parse_error.116] parse error at byte 1024: syntax error while parsing MessagePack value: maximum depth of nested arrays/objects exceeded",
+                                 json::parse_error&);
+            CHECK(json::from_msgpack(vec, true, false).is_discarded());
+        }
     }
 
     SECTION("SAX aborts")
