@@ -885,7 +885,7 @@ TEST_CASE("BSON regressions")
 
         json _;
         CHECK_THROWS_WITH_AS(_ = json::from_bson(inner),
-                             "[json.exception.parse_error.116] parse error at byte 7168: syntax error while parsing BSON value: maximum depth of nested objects/arrays exceeded",
+                             "[json.exception.parse_error.116] parse error at byte 896: syntax error while parsing BSON value: maximum depth of nested objects/arrays exceeded",
                              json::parse_error&);
         CHECK(json::from_bson(inner, true, false).is_discarded());
     }

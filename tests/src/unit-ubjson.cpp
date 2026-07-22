@@ -1653,7 +1653,7 @@ TEST_CASE("UBJSON")
             std::vector<uint8_t> const v(payload.begin(), payload.end());
             json _;
             CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v),
-                                 "[json.exception.parse_error.116] parse error at byte 1025: syntax error while parsing UBJSON value: maximum depth of nested arrays/objects exceeded",
+                                 "[json.exception.parse_error.116] parse error at byte 129: syntax error while parsing UBJSON value: maximum depth of nested arrays/objects exceeded",
                                  json::parse_error&);
             CHECK(json::from_ubjson(v, true, false).is_discarded());
         }

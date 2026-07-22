@@ -2006,7 +2006,7 @@ TEST_CASE("CBOR regressions")
         vec.push_back(0x00);
         json _; // NOLINT(readability-identifier-naming)
         CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec),
-                             "[json.exception.parse_error.116] parse error at byte 1024: syntax error while parsing CBOR value: maximum depth of nested arrays/objects exceeded",
+                             "[json.exception.parse_error.116] parse error at byte 128: syntax error while parsing CBOR value: maximum depth of nested arrays/objects exceeded",
                              json::parse_error&);
         CHECK(json::from_cbor(vec, true, false).is_discarded());
     }

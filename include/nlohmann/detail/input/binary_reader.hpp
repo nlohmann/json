@@ -3153,8 +3153,14 @@ class binary_reader
 
     /// maximum allowed nesting depth of arrays/objects for the binary input
     /// formats; guards the recursive-descent parsers against stack overflow
-    /// on maliciously/accidentally deeply nested input
-    static JSON_INLINE_VARIABLE constexpr std::size_t max_depth = 1024;
+    /// on maliciously/accidentally deeply nested input.
+    ///
+    /// Kept well below the theoretical limit of a 1 MiB default thread stack:
+    /// each nesting level costs multiple real call frames (the recursive
+    /// entry point plus helpers it calls into), and unoptimized/Debug builds
+    /// (notably MSVC Debug, which crashed CI at max_depth=1024 - see #5104)
+    /// use substantially more stack per frame than an optimized build.
+    static JSON_INLINE_VARIABLE constexpr std::size_t max_depth = 128;
 
     /// input adapter
     InputAdapterType ia;
