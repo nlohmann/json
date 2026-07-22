@@ -378,7 +378,7 @@ this parse error instead.
 !!! failure "Example message"
 
     ```
-    [json.exception.parse_error.116] parse error at byte 128: syntax error while parsing CBOR value: maximum depth of nested arrays/objects exceeded
+    [json.exception.parse_error.116] parse error at byte 600: syntax error while parsing CBOR value: maximum depth of nested arrays/objects exceeded
     ```
 
 ## Iterator errors
