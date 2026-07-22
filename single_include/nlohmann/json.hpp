@@ -18642,6 +18642,35 @@ enum class bjdata_version_t
 ///////////////////
 
 /*!
+@brief conservative capacity hint for binary serialization into a std::vector
+
+Returns an approximate number of bytes to reserve up front so that serializing
+an array/object of many elements does not repeatedly reallocate the output
+buffer. Only the top-level element count is consulted (O(1), no walk of the
+DOM), and the result is clamped to a fixed ceiling: a large or untrusted DOM can
+therefore never trigger an oversized allocation here, and the multiplication
+cannot overflow. The buffer still grows geometrically beyond the hint, so a hint
+that is too small only costs a few later reallocations. A single scalar, string,
+or binary value is written in one shot and needs no hint.
+*/
+template<typename BasicJsonType>
+std::size_t binary_reserve_hint(const BasicJsonType& j)
+{
+    constexpr std::size_t max_hint = static_cast<std::size_t>(1) << 20; // 1 MiB
+    if (j.is_array() || j.is_object())
+    {
+        const std::size_t elements = j.size();
+        // guard the multiplication against overflow and cap the reservation
+        if (elements > max_hint / 4)
+        {
+            return max_hint;
+        }
+        return (elements * 4) + 2;
+    }
+    return 0;
+}
+
+/*!
 @brief serialization to CBOR and MessagePack values
 */
 template<typename BasicJsonType, typename CharType, typename OutputSinkType = output_adapter_sink<CharType>>
@@ -28259,6 +28288,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static std::vector<std::uint8_t> to_cbor(const basic_json& j)
     {
         std::vector<std::uint8_t> result;
+        result.reserve(detail::binary_reserve_hint(j));
         detail::binary_writer<basic_json, std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
             detail::output_vector_sink<std::uint8_t>(result)).write_cbor(j);
         return result;
@@ -28283,6 +28313,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static std::vector<std::uint8_t> to_msgpack(const basic_json& j)
     {
         std::vector<std::uint8_t> result;
+        result.reserve(detail::binary_reserve_hint(j));
         detail::binary_writer<basic_json, std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
             detail::output_vector_sink<std::uint8_t>(result)).write_msgpack(j);
         return result;
@@ -28309,6 +28340,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             const bool use_type = false)
     {
         std::vector<std::uint8_t> result;
+        result.reserve(detail::binary_reserve_hint(j));
         detail::binary_writer<basic_json, std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
             detail::output_vector_sink<std::uint8_t>(result)).write_ubjson(j, use_size, use_type);
         return result;
@@ -28338,6 +28370,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             const bjdata_version_t version = bjdata_version_t::draft2)
     {
         std::vector<std::uint8_t> result;
+        result.reserve(detail::binary_reserve_hint(j));
         detail::binary_writer<basic_json, std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
             detail::output_vector_sink<std::uint8_t>(result)).write_ubjson(j, use_size, use_type, true, true, version);
         return result;
@@ -28366,6 +28399,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static std::vector<std::uint8_t> to_bson(const basic_json& j)
     {
         std::vector<std::uint8_t> result;
+        result.reserve(detail::binary_reserve_hint(j));
         detail::binary_writer<basic_json, std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
             detail::output_vector_sink<std::uint8_t>(result)).write_bson(j);
         return result;
