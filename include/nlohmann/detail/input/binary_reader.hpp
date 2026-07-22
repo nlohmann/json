@@ -1870,6 +1870,24 @@ class binary_reader
     }
 
     /*!
+    @brief create the error message for a missing/invalid length-type marker
+
+    Used both when reading a UBJSON/BJData string and when reading an optimized
+    container size. The accepted markers depend on the input format, and the
+    size variant appends " after '#'" via @a infix.
+
+    @param[in] last_token  the offending byte as returned by get_token_string()
+    @param[in] infix       extra context inserted after the marker list
+    @return the formatted error message
+    */
+    std::string unexpected_length_type_message(const std::string& last_token, const char* infix) const
+    {
+        return concat("expected length type specification (",
+                      input_format == input_format_t::bjdata ? "U, i, u, I, m, l, M, L" : "U, i, I, l, L",
+                      ")", infix, "; last byte: 0x", last_token);
+    }
+
+    /*!
     @brief reads a UBJSON string
 
     This function is either called after reading the 'S' byte explicitly
@@ -1961,17 +1979,8 @@ class binary_reader
                 break;
         }
         auto last_token = get_token_string();
-        std::string message;
-
-        if (input_format != input_format_t::bjdata)
-        {
-            message = "expected length type specification (U, i, I, l, L); last byte: 0x" + last_token;
-        }
-        else
-        {
-            message = "expected length type specification (U, i, u, I, m, l, M, L); last byte: 0x" + last_token;
-        }
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "string"), nullptr));
+        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                exception_message(input_format, unexpected_length_type_message(last_token, ""), "string"), nullptr));
     }
 
     /*!
@@ -2250,17 +2259,8 @@ class binary_reader
                 break;
         }
         auto last_token = get_token_string();
-        std::string message;
-
-        if (input_format != input_format_t::bjdata)
-        {
-            message = "expected length type specification (U, i, I, l, L) after '#'; last byte: 0x" + last_token;
-        }
-        else
-        {
-            message = "expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x" + last_token;
-        }
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "size"), nullptr));
+        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                exception_message(input_format, unexpected_length_type_message(last_token, " after '#'"), "size"), nullptr));
     }
 
     /*!
