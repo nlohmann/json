@@ -16830,6 +16830,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <iterator> // back_inserter
 #include <memory> // shared_ptr, make_shared
 #include <string> // basic_string
+#include <utility> // move
 #include <vector> // vector
 
 #ifndef JSON_NO_IO
@@ -16956,7 +16957,10 @@ class output_vector_sink
         v.push_back(c);
     }
 
-    JSON_HEDLEY_NON_NULL(2)
+    // no JSON_HEDLEY_NON_NULL here: binary_writer legitimately passes a null
+    // pointer with length 0 for empty strings/binary values. Appending an empty
+    // range is a no-op; the type-erased path tolerates this via the (unattributed)
+    // virtual base, and the concrete sink must do the same.
     void write_characters(const CharType* s, std::size_t length)
     {
         v.insert(v.end(), s, s + length);
@@ -16988,7 +16992,8 @@ class output_adapter_sink
         oa->write_character(c);
     }
 
-    JSON_HEDLEY_NON_NULL(2)
+    // no JSON_HEDLEY_NON_NULL: forwards (null, 0) for empty payloads, exactly as
+    // the type-erased path already did before this sink existed
     void write_characters(const CharType* s, std::size_t length)
     {
         oa->write_characters(s, length);
@@ -18861,6 +18866,13 @@ class binary_writer
 #ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+        // When number_float_t is float, static_cast<float>(n) is the identity and
+        // both branches below are intentionally identical (the "compact" float
+        // representation is the value itself). Only GCC diagnoses this, and only
+        // when the sink calls are inlined; clang has no such warning.
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wduplicated-branches"
 #endif
         if (!std::isfinite(n) || ((static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
                                    static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
@@ -21615,8 +21627,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     template<typename InputType>
     using binary_reader = ::nlohmann::detail::binary_reader<basic_json, InputType>;
-    template<typename CharType, typename OutputSinkType = ::nlohmann::detail::output_adapter_sink<CharType>>
-    using binary_writer = ::nlohmann::detail::binary_writer<basic_json, CharType, OutputSinkType>;
+    template<typename CharType> using binary_writer = ::nlohmann::detail::binary_writer<basic_json, CharType>;
 
   JSON_PRIVATE_UNLESS_TESTED:
     using serializer = ::nlohmann::detail::serializer<basic_json>;
@@ -25770,7 +25781,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static std::vector<std::uint8_t> to_cbor(const basic_json& j)
     {
         std::vector<std::uint8_t> result;
-        binary_writer<std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
+        detail::binary_writer<basic_json, std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
             detail::output_vector_sink<std::uint8_t>(result)).write_cbor(j);
         return result;
     }
@@ -25794,7 +25805,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static std::vector<std::uint8_t> to_msgpack(const basic_json& j)
     {
         std::vector<std::uint8_t> result;
-        binary_writer<std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
+        detail::binary_writer<basic_json, std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
             detail::output_vector_sink<std::uint8_t>(result)).write_msgpack(j);
         return result;
     }
@@ -25820,7 +25831,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             const bool use_type = false)
     {
         std::vector<std::uint8_t> result;
-        binary_writer<std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
+        detail::binary_writer<basic_json, std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
             detail::output_vector_sink<std::uint8_t>(result)).write_ubjson(j, use_size, use_type);
         return result;
     }
@@ -25849,7 +25860,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             const bjdata_version_t version = bjdata_version_t::draft2)
     {
         std::vector<std::uint8_t> result;
-        binary_writer<std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
+        detail::binary_writer<basic_json, std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
             detail::output_vector_sink<std::uint8_t>(result)).write_ubjson(j, use_size, use_type, true, true, version);
         return result;
     }
@@ -25877,7 +25888,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static std::vector<std::uint8_t> to_bson(const basic_json& j)
     {
         std::vector<std::uint8_t> result;
-        binary_writer<std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
+        detail::binary_writer<basic_json, std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
             detail::output_vector_sink<std::uint8_t>(result)).write_bson(j);
         return result;
     }
