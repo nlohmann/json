@@ -18844,6 +18844,71 @@ class binary_writer
           On the other hand, BSON and BJData use little endian and should reorder
           on big endian systems.
     */
+    // single-instruction byte swaps (compilers lower these to bswap/rev/movbe);
+    // used to emit big-endian numbers without a per-byte std::reverse loop
+    static std::uint16_t byte_swap(std::uint16_t x) noexcept
+    {
+#if defined(__GNUC__) || defined(__clang__)
+        return __builtin_bswap16(x);
+#else
+        return static_cast<std::uint16_t>((x >> 8) | (x << 8));
+#endif
+    }
+
+    static std::uint32_t byte_swap(std::uint32_t x) noexcept
+    {
+#if defined(__GNUC__) || defined(__clang__)
+        return __builtin_bswap32(x);
+#else
+        return ((x & 0x000000FFu) << 24) | ((x & 0x0000FF00u) << 8)
+               | ((x & 0x00FF0000u) >> 8) | ((x & 0xFF000000u) >> 24);
+#endif
+    }
+
+    static std::uint64_t byte_swap(std::uint64_t x) noexcept
+    {
+#if defined(__GNUC__) || defined(__clang__)
+        return __builtin_bswap64(x);
+#else
+        x = ((x & 0x00000000FFFFFFFFull) << 32) | ((x & 0xFFFFFFFF00000000ull) >> 32);
+        x = ((x & 0x0000FFFF0000FFFFull) << 16) | ((x & 0xFFFF0000FFFF0000ull) >> 16);
+        x = ((x & 0x00FF00FF00FF00FFull) << 8) | ((x & 0xFF00FF00FF00FF00ull) >> 8);
+        return x;
+#endif
+    }
+
+    // reverse the bytes of a fixed-size buffer; a single byte_swap() for the
+    // common 2/4/8-byte number payloads, std::reverse for any other size
+    static void reverse_bytes(std::array<CharType, 2>& a) noexcept
+    {
+        std::uint16_t v{};
+        std::memcpy(&v, a.data(), sizeof(v));
+        v = byte_swap(v);
+        std::memcpy(a.data(), &v, sizeof(v));
+    }
+
+    static void reverse_bytes(std::array<CharType, 4>& a) noexcept
+    {
+        std::uint32_t v{};
+        std::memcpy(&v, a.data(), sizeof(v));
+        v = byte_swap(v);
+        std::memcpy(a.data(), &v, sizeof(v));
+    }
+
+    static void reverse_bytes(std::array<CharType, 8>& a) noexcept
+    {
+        std::uint64_t v{};
+        std::memcpy(&v, a.data(), sizeof(v));
+        v = byte_swap(v);
+        std::memcpy(a.data(), &v, sizeof(v));
+    }
+
+    template<std::size_t N>
+    static void reverse_bytes(std::array<CharType, N>& a) noexcept
+    {
+        std::reverse(a.begin(), a.end());
+    }
+
     template<typename NumberType>
     void write_number(const NumberType n, const bool OutputIsLittleEndian = false)
     {
@@ -18855,7 +18920,7 @@ class binary_writer
         if (is_little_endian != OutputIsLittleEndian)
         {
             // reverse byte order prior to conversion if necessary
-            std::reverse(vec.begin(), vec.end());
+            reverse_bytes(vec);
         }
 
         oa.write_characters(vec.data(), sizeof(NumberType));
