@@ -932,9 +932,9 @@ to your podfile (see [an example](https://bitbucket.org/benman/nlohmann_json-coc
 
 ## npm
 
-This project does not publish an official [npm](https://www.npmjs.com) package. Any npm package named `nlohmann-json`
-(or similar) is not maintained or endorsed by this project. Use one of the package managers listed above, or integrate
-the single header directly.
+This project does not publish an official [npm](https://www.npmjs.com) package. The npm package
+[`nlohmann-json`](https://www.npmjs.com/package/nlohmann-json) (or similarly named packages) is not maintained or
+endorsed by this project. Use one of the package managers listed above, or integrate the single header directly.
 
 ## ESP-IDF and PlatformIO
 

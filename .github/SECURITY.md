@@ -17,8 +17,9 @@ For vulnerabilities in third-party dependencies or modules, please report them d
 
 ## Unofficial packages
 
-This project does not publish an official npm package. Any npm package named `nlohmann-json` (or similar) is not
-maintained or endorsed by this project. See the
+This project does not publish an official npm package. The npm package
+[`nlohmann-json`](https://www.npmjs.com/package/nlohmann-json) (or similarly named packages) is not maintained or
+endorsed by this project. See the
 [package managers documentation](https://json.nlohmann.me/integration/package_managers/#npm) for supported
 integration options.
 
