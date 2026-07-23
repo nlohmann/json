@@ -10708,42 +10708,28 @@ class binary_reader
     }
 
   private:
-    /*!
-    @brief RAII helper that tracks the nesting depth of containers while
-           parsing a binary input format.
-
-    The binary format parsers (CBOR, MessagePack, UBJSON/BJData, BSON) parse
-    nested arrays/objects using recursive descent, so unbounded input nesting
-    directly translates into unbounded native call-stack recursion. This
-    guard increments the reader's depth counter for the lifetime of a single
-    recursive parse step so callers can reject inputs that nest deeper than
-    @ref max_depth before the recursion has a chance to exhaust the stack.
-    */
-    class depth_guard
-    {
-      public:
-        explicit depth_guard(binary_reader& reader) noexcept : reader_(reader)
-        {
-            ++reader_.depth;
-        }
-
-        ~depth_guard()
-        {
-            --reader_.depth;
-        }
-
-        depth_guard(const depth_guard&) = delete;
-        depth_guard& operator=(const depth_guard&) = delete;
-        depth_guard(depth_guard&&) = delete;
-        depth_guard& operator=(depth_guard&&) = delete;
-
-      private:
-        binary_reader& reader_;
-    };
-
     //////////
     // BSON //
     //////////
+
+    /*!
+    @brief a single pending "resume this document/array" entry used by the
+           iterative container traversal in @ref parse_bson_internal; see
+           @ref cbor_container_frame for the general idea.
+
+    BSON documents and arrays share one on-the-wire layout (a size-prefixed,
+    0x00-terminated list of typed elements); @ref is_object only controls
+    whether each element's key is relayed to the SAX consumer via
+    @c sax->key() (an object) or not (an array, whose "0", "1", ... keys the
+    SAX array interface has no use for). Every BSON container is
+    terminator-based (there is no known-element-count form), so unlike CBOR/
+    MessagePack/UBJSON this frame needs no length/indefinite bookkeeping at
+    all.
+    */
+    struct bson_container_frame
+    {
+        bool is_object; ///< false: array, true: object/document
+    };
 
     /*!
     @brief Reads in a BSON-object and passes it to the SAX-parser.
@@ -10751,28 +10737,180 @@ class binary_reader
     */
     bool parse_bson_internal()
     {
-        const depth_guard dg(*this);
-        if (JSON_HEDLEY_UNLIKELY(depth > max_depth))
+        std::vector<bson_container_frame> stack;
+
+        // reads the 4-byte document-size prefix (its value is unused beyond
+        // consuming those bytes, matching the pre-existing behavior) and
+        // emits the corresponding SAX start_object()/start_array() event
+        auto begin_document = [&](const bool is_object) -> bool
         {
-            return sax->parse_error(chars_read, get_token_string(),
-                                    parse_error::create(116, chars_read,
-                                            exception_message(input_format_t::bson, "maximum depth of nested objects/arrays exceeded", "value"), nullptr));
-        }
+            std::int32_t document_size{};
+            get_number<std::int32_t, true>(input_format_t::bson, document_size);
+            return is_object ? sax->start_object(detail::unknown_size()) : sax->start_array(detail::unknown_size());
+        };
 
-        std::int32_t document_size{};
-        get_number<std::int32_t, true>(input_format_t::bson, document_size);
-
-        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(detail::unknown_size())))
-        {
-            return false;
-        }
-
-        if (JSON_HEDLEY_UNLIKELY(!parse_bson_element_list(/*is_array*/false)))
+        if (JSON_HEDLEY_UNLIKELY(!begin_document(true)))
         {
             return false;
         }
+        stack.push_back(bson_container_frame{true});
 
-        return sax->end_object();
+        while (true)
+        {
+            bson_container_frame& top = stack.back();
+
+            const auto element_type = get();
+            if (element_type == 0)
+            {
+                // 0x00 terminates the current document/array
+                if (JSON_HEDLEY_UNLIKELY(!(top.is_object ? sax->end_object() : sax->end_array())))
+                {
+                    return false;
+                }
+                stack.pop_back();
+                if (stack.empty())
+                {
+                    return true;
+                }
+                continue;
+            }
+
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bson, "element list")))
+            {
+                return false;
+            }
+
+            const std::size_t element_type_parse_position = chars_read;
+            string_t key;
+            if (JSON_HEDLEY_UNLIKELY(!get_bson_cstr(key)))
+            {
+                return false;
+            }
+            if (top.is_object && JSON_HEDLEY_UNLIKELY(!sax->key(key)))
+            {
+                return false;
+            }
+
+            switch (element_type)
+            {
+                case 0x01: // double
+                {
+                    double number{};
+                    if (JSON_HEDLEY_UNLIKELY(!(get_number<double, true>(input_format_t::bson, number) && sax->number_float(static_cast<number_float_t>(number), ""))))
+                    {
+                        return false;
+                    }
+                    continue;
+                }
+
+                case 0x02: // string
+                {
+                    std::int32_t len{};
+                    string_t value;
+                    if (JSON_HEDLEY_UNLIKELY(!(get_number<std::int32_t, true>(input_format_t::bson, len) && get_bson_string(len, value) && sax->string(value))))
+                    {
+                        return false;
+                    }
+                    continue;
+                }
+
+                case 0x03: // object
+                {
+                    if (JSON_HEDLEY_UNLIKELY(!begin_document(true)))
+                    {
+                        return false;
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
+                    {
+                        return sax->parse_error(chars_read, get_token_string(),
+                                                parse_error::create(116, chars_read,
+                                                        exception_message(input_format_t::bson, "maximum depth of nested objects/arrays exceeded", "value"), nullptr));
+                    }
+                    stack.push_back(bson_container_frame{true});
+                    continue;
+                }
+
+                case 0x04: // array
+                {
+                    if (JSON_HEDLEY_UNLIKELY(!begin_document(false)))
+                    {
+                        return false;
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
+                    {
+                        return sax->parse_error(chars_read, get_token_string(),
+                                                parse_error::create(116, chars_read,
+                                                        exception_message(input_format_t::bson, "maximum depth of nested objects/arrays exceeded", "value"), nullptr));
+                    }
+                    stack.push_back(bson_container_frame{false});
+                    continue;
+                }
+
+                case 0x05: // binary
+                {
+                    std::int32_t len{};
+                    binary_t value;
+                    if (JSON_HEDLEY_UNLIKELY(!(get_number<std::int32_t, true>(input_format_t::bson, len) && get_bson_binary(len, value) && sax->binary(value))))
+                    {
+                        return false;
+                    }
+                    continue;
+                }
+
+                case 0x08: // boolean
+                    if (JSON_HEDLEY_UNLIKELY(!sax->boolean(get() != 0)))
+                    {
+                        return false;
+                    }
+                    continue;
+
+                case 0x0A: // null
+                    if (JSON_HEDLEY_UNLIKELY(!sax->null()))
+                    {
+                        return false;
+                    }
+                    continue;
+
+                case 0x10: // int32
+                {
+                    std::int32_t value{};
+                    if (JSON_HEDLEY_UNLIKELY(!(get_number<std::int32_t, true>(input_format_t::bson, value) && sax->number_integer(value))))
+                    {
+                        return false;
+                    }
+                    continue;
+                }
+
+                case 0x12: // int64
+                {
+                    std::int64_t value{};
+                    if (JSON_HEDLEY_UNLIKELY(!(get_number<std::int64_t, true>(input_format_t::bson, value) && sax->number_integer(value))))
+                    {
+                        return false;
+                    }
+                    continue;
+                }
+
+                case 0x11: // uint64
+                {
+                    std::uint64_t value{};
+                    if (JSON_HEDLEY_UNLIKELY(!(get_number<std::uint64_t, true>(input_format_t::bson, value) && sax->number_unsigned(value))))
+                    {
+                        return false;
+                    }
+                    continue;
+                }
+
+                default: // anything else is not supported (yet)
+                {
+                    std::array<char, 3> cr{{}};
+                    static_cast<void>((std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(element_type))); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    const std::string cr_str{cr.data()};
+                    return sax->parse_error(element_type_parse_position, cr_str,
+                                            parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr));
+                }
+            }
+        }
     }
 
     /*!
@@ -10851,158 +10989,6 @@ class binary_reader
         return get_binary(input_format_t::bson, len, result);
     }
 
-    /*!
-    @brief Read a BSON document element of the given @a element_type.
-    @param[in] element_type The BSON element type, c.f. http://bsonspec.org/spec.html
-    @param[in] element_type_parse_position The position in the input stream,
-               where the `element_type` was read.
-    @warning Not all BSON element types are supported yet. An unsupported
-             @a element_type will give rise to a parse_error.114:
-             Unsupported BSON record type 0x...
-    @return whether a valid BSON-object/array was passed to the SAX parser
-    */
-    bool parse_bson_element_internal(const char_int_type element_type,
-                                     const std::size_t element_type_parse_position)
-    {
-        switch (element_type)
-        {
-            case 0x01: // double
-            {
-                double number{};
-                return get_number<double, true>(input_format_t::bson, number) && sax->number_float(static_cast<number_float_t>(number), "");
-            }
-
-            case 0x02: // string
-            {
-                std::int32_t len{};
-                string_t value;
-                return get_number<std::int32_t, true>(input_format_t::bson, len) && get_bson_string(len, value) && sax->string(value);
-            }
-
-            case 0x03: // object
-            {
-                return parse_bson_internal();
-            }
-
-            case 0x04: // array
-            {
-                return parse_bson_array();
-            }
-
-            case 0x05: // binary
-            {
-                std::int32_t len{};
-                binary_t value;
-                return get_number<std::int32_t, true>(input_format_t::bson, len) && get_bson_binary(len, value) && sax->binary(value);
-            }
-
-            case 0x08: // boolean
-            {
-                return sax->boolean(get() != 0);
-            }
-
-            case 0x0A: // null
-            {
-                return sax->null();
-            }
-
-            case 0x10: // int32
-            {
-                std::int32_t value{};
-                return get_number<std::int32_t, true>(input_format_t::bson, value) && sax->number_integer(value);
-            }
-
-            case 0x12: // int64
-            {
-                std::int64_t value{};
-                return get_number<std::int64_t, true>(input_format_t::bson, value) && sax->number_integer(value);
-            }
-
-            case 0x11: // uint64
-            {
-                std::uint64_t value{};
-                return get_number<std::uint64_t, true>(input_format_t::bson, value) && sax->number_unsigned(value);
-            }
-
-            default: // anything else is not supported (yet)
-            {
-                std::array<char, 3> cr{{}};
-                static_cast<void>((std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(element_type))); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-                const std::string cr_str{cr.data()};
-                return sax->parse_error(element_type_parse_position, cr_str,
-                                        parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr));
-            }
-        }
-    }
-
-    /*!
-    @brief Read a BSON element list (as specified in the BSON-spec)
-
-    The same binary layout is used for objects and arrays, hence it must be
-    indicated with the argument @a is_array which one is expected
-    (true --> array, false --> object).
-
-    @param[in] is_array Determines if the element list being read is to be
-                        treated as an object (@a is_array == false), or as an
-                        array (@a is_array == true).
-    @return whether a valid BSON-object/array was passed to the SAX parser
-    */
-    bool parse_bson_element_list(const bool is_array)
-    {
-        string_t key;
-
-        while (auto element_type = get())
-        {
-            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bson, "element list")))
-            {
-                return false;
-            }
-
-            const std::size_t element_type_parse_position = chars_read;
-            if (JSON_HEDLEY_UNLIKELY(!get_bson_cstr(key)))
-            {
-                return false;
-            }
-
-            if (!is_array && !sax->key(key))
-            {
-                return false;
-            }
-
-            if (JSON_HEDLEY_UNLIKELY(!parse_bson_element_internal(element_type, element_type_parse_position)))
-            {
-                return false;
-            }
-
-            // get_bson_cstr only appends
-            key.clear();
-        }
-
-        return true;
-    }
-
-    /*!
-    @brief Reads an array from the BSON input and passes it to the SAX-parser.
-    @return whether a valid BSON-array was passed to the SAX parser
-    */
-    bool parse_bson_array()
-    {
-        std::int32_t document_size{};
-        get_number<std::int32_t, true>(input_format_t::bson, document_size);
-
-        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(detail::unknown_size())))
-        {
-            return false;
-        }
-
-        if (JSON_HEDLEY_UNLIKELY(!parse_bson_element_list(/*is_array*/true)))
-        {
-            return false;
-        }
-
-        return sax->end_array();
-    }
-
     //////////
     // CBOR //
     //////////
@@ -11034,479 +11020,658 @@ class binary_reader
         return sax->number_integer(static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(number));
     }
 
+    /*!
+    @brief a single pending "resume this array/object" entry used by the
+           iterative container traversal in @ref parse_cbor_internal
+
+    Nested CBOR containers are parsed by pushing one of these onto a
+    heap-allocated std::vector instead of recursing on the native call stack
+    for every nesting level (see #5104): parsing a scalar never recurses,
+    and parsing a container just pushes a frame here and loops back around
+    to parse its first child; when a container finishes, its frame is
+    popped and parsing resumes where the parent left off. Native call-stack
+    depth used while parsing is therefore O(1) regardless of how deeply the
+    input nests.
+    */
+    struct cbor_container_frame
+    {
+        bool is_object;          ///< false: array, true: object/map
+        bool indefinite;         ///< true: length is unknown; read until a 0xFF break marker
+        std::size_t remaining;   ///< remaining element count; meaningful only if !indefinite
+        bool awaiting_key;       ///< object only: true if the next thing to read is a key, not a value
+    };
+
     bool parse_cbor_internal(const bool get_char,
                              const cbor_tag_handler_t tag_handler)
     {
-        const depth_guard dg(*this);
-        if (JSON_HEDLEY_UNLIKELY(depth > max_depth))
+        std::vector<cbor_container_frame> stack;
+
+        // whether the next value-read below should fetch a fresh byte via
+        // get() (true) or reuse the byte already sitting in `current` (false)
+        bool fetch_char = get_char;
+
+        // called whenever a value (scalar, or a container that was just
+        // completed/immediately-empty) was produced at the position the
+        // current top-of-stack frame is waiting on; returns true if that
+        // means the whole parse is finished (the stack is empty, i.e. this
+        // was the outermost value), false if parsing should continue.
+        auto produce = [&]() -> bool
         {
-            return sax->parse_error(chars_read, get_token_string(),
-                                    parse_error::create(116, chars_read,
-                                            exception_message(input_format_t::cbor, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
-        }
+            if (stack.empty())
+            {
+                return true;
+            }
+            cbor_container_frame& top = stack.back();
+            if (top.is_object)
+            {
+                top.awaiting_key = true;
+            }
+            if (!top.indefinite)
+            {
+                --top.remaining;
+            }
+            return false;
+        };
 
-        switch (get_char ? get() : current)
+        // begin parsing a nested array/object of the given length
+        // (detail::unknown_size() for indefinite length); returns 0 on SAX
+        // failure or exceeding max_depth (caller should `return false`), 1
+        // if a frame was pushed (caller should `continue` the outer loop to
+        // parse the container's first element), 2 if the container was
+        // immediately completed because it is empty (caller should treat
+        // this like any other produced value via `produce()`).
+        auto enter_container = [&](const bool is_object, const std::size_t len) -> int
         {
-            // EOF
-            case char_traits<char_type>::eof():
-                return unexpect_eof(input_format_t::cbor, "value");
-
-            // Integer 0x00..0x17 (0..23)
-            case 0x00:
-            case 0x01:
-            case 0x02:
-            case 0x03:
-            case 0x04:
-            case 0x05:
-            case 0x06:
-            case 0x07:
-            case 0x08:
-            case 0x09:
-            case 0x0A:
-            case 0x0B:
-            case 0x0C:
-            case 0x0D:
-            case 0x0E:
-            case 0x0F:
-            case 0x10:
-            case 0x11:
-            case 0x12:
-            case 0x13:
-            case 0x14:
-            case 0x15:
-            case 0x16:
-            case 0x17:
-                return sax->number_unsigned(static_cast<number_unsigned_t>(current));
-
-            case 0x18: // Unsigned integer (one-byte uint8_t follows)
+            const bool started = is_object ? sax->start_object(len) : sax->start_array(len);
+            if (JSON_HEDLEY_UNLIKELY(!started))
             {
-                std::uint8_t number{};
-                return get_number(input_format_t::cbor, number) && sax->number_unsigned(number);
+                return 0;
             }
-
-            case 0x19: // Unsigned integer (two-byte uint16_t follows)
+            if (len == 0)
             {
-                std::uint16_t number{};
-                return get_number(input_format_t::cbor, number) && sax->number_unsigned(number);
+                return (is_object ? sax->end_object() : sax->end_array()) ? 2 : 0;
             }
-
-            case 0x1A: // Unsigned integer (four-byte uint32_t follows)
+            if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
             {
-                std::uint32_t number{};
-                return get_number(input_format_t::cbor, number) && sax->number_unsigned(number);
+                sax->parse_error(chars_read, get_token_string(),
+                                 parse_error::create(116, chars_read,
+                                                     exception_message(input_format_t::cbor, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
+                return 0;
             }
+            stack.push_back(cbor_container_frame{is_object, len == detail::unknown_size(), len, is_object});
+            return 1;
+        };
 
-            case 0x1B: // Unsigned integer (eight-byte uint64_t follows)
+#define JSON_CBOR_VALUE(expr) \
+    if (JSON_HEDLEY_UNLIKELY(!(expr))) { return false; } \
+    if (produce()) { return true; } \
+    continue
+
+#define JSON_CBOR_ENTER(is_obj, length) \
+    switch (enter_container(is_obj, length)) \
+    { \
+        case 0: return false; \
+        case 2: if (produce()) { return true; } continue; \
+        default: continue; \
+    }
+
+        while (true)
+        {
+            if (!stack.empty())
             {
-                std::uint64_t number{};
-                return get_number(input_format_t::cbor, number) && sax->number_unsigned(number);
-            }
+                cbor_container_frame& top = stack.back();
 
-            // Negative integer -1-0x00..-1-0x17 (-1..-24)
-            case 0x20:
-            case 0x21:
-            case 0x22:
-            case 0x23:
-            case 0x24:
-            case 0x25:
-            case 0x26:
-            case 0x27:
-            case 0x28:
-            case 0x29:
-            case 0x2A:
-            case 0x2B:
-            case 0x2C:
-            case 0x2D:
-            case 0x2E:
-            case 0x2F:
-            case 0x30:
-            case 0x31:
-            case 0x32:
-            case 0x33:
-            case 0x34:
-            case 0x35:
-            case 0x36:
-            case 0x37:
-                return sax->number_integer(static_cast<std::int8_t>(0x20 - 1 - current));
-
-            case 0x38: // Negative integer (one-byte uint8_t follows)
-                return get_cbor_negative_integer<std::uint8_t>();
-
-            case 0x39: // Negative integer -1-n (two-byte uint16_t follows)
-                return get_cbor_negative_integer<std::uint16_t>();
-
-            case 0x3A: // Negative integer -1-n (four-byte uint32_t follows)
-                return get_cbor_negative_integer<std::uint32_t>();
-
-            case 0x3B: // Negative integer -1-n (eight-byte uint64_t follows)
-                return get_cbor_negative_integer<std::uint64_t>();
-
-            // Binary data (0x00..0x17 bytes follow)
-            case 0x40:
-            case 0x41:
-            case 0x42:
-            case 0x43:
-            case 0x44:
-            case 0x45:
-            case 0x46:
-            case 0x47:
-            case 0x48:
-            case 0x49:
-            case 0x4A:
-            case 0x4B:
-            case 0x4C:
-            case 0x4D:
-            case 0x4E:
-            case 0x4F:
-            case 0x50:
-            case 0x51:
-            case 0x52:
-            case 0x53:
-            case 0x54:
-            case 0x55:
-            case 0x56:
-            case 0x57:
-            case 0x58: // Binary data (one-byte uint8_t for n follows)
-            case 0x59: // Binary data (two-byte uint16_t for n follow)
-            case 0x5A: // Binary data (four-byte uint32_t for n follow)
-            case 0x5B: // Binary data (eight-byte uint64_t for n follow)
-            case 0x5F: // Binary data (indefinite length)
-            {
-                binary_t b;
-                return get_cbor_binary(b) && sax->binary(b);
-            }
-
-            // UTF-8 string (0x00..0x17 bytes follow)
-            case 0x60:
-            case 0x61:
-            case 0x62:
-            case 0x63:
-            case 0x64:
-            case 0x65:
-            case 0x66:
-            case 0x67:
-            case 0x68:
-            case 0x69:
-            case 0x6A:
-            case 0x6B:
-            case 0x6C:
-            case 0x6D:
-            case 0x6E:
-            case 0x6F:
-            case 0x70:
-            case 0x71:
-            case 0x72:
-            case 0x73:
-            case 0x74:
-            case 0x75:
-            case 0x76:
-            case 0x77:
-            case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
-            case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
-            case 0x7A: // UTF-8 string (four-byte uint32_t for n follow)
-            case 0x7B: // UTF-8 string (eight-byte uint64_t for n follow)
-            case 0x7F: // UTF-8 string (indefinite length)
-            {
-                string_t s;
-                return get_cbor_string(s) && sax->string(s);
-            }
-
-            // array (0x00..0x17 data items follow)
-            case 0x80:
-            case 0x81:
-            case 0x82:
-            case 0x83:
-            case 0x84:
-            case 0x85:
-            case 0x86:
-            case 0x87:
-            case 0x88:
-            case 0x89:
-            case 0x8A:
-            case 0x8B:
-            case 0x8C:
-            case 0x8D:
-            case 0x8E:
-            case 0x8F:
-            case 0x90:
-            case 0x91:
-            case 0x92:
-            case 0x93:
-            case 0x94:
-            case 0x95:
-            case 0x96:
-            case 0x97:
-                return get_cbor_array(
-                           conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu), tag_handler);
-
-            case 0x98: // array (one-byte uint8_t for n follows)
-            {
-                std::uint8_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_array(static_cast<std::size_t>(len), tag_handler);
-            }
-
-            case 0x99: // array (two-byte uint16_t for n follow)
-            {
-                std::uint16_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_array(static_cast<std::size_t>(len), tag_handler);
-            }
-
-            case 0x9A: // array (four-byte uint32_t for n follow)
-            {
-                std::uint32_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_array(conditional_static_cast<std::size_t>(len), tag_handler);
-            }
-
-            case 0x9B: // array (eight-byte uint64_t for n follow)
-            {
-                std::uint64_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_array(conditional_static_cast<std::size_t>(len), tag_handler);
-            }
-
-            case 0x9F: // array (indefinite length)
-                return get_cbor_array(detail::unknown_size(), tag_handler);
-
-            // map (0x00..0x17 pairs of data items follow)
-            case 0xA0:
-            case 0xA1:
-            case 0xA2:
-            case 0xA3:
-            case 0xA4:
-            case 0xA5:
-            case 0xA6:
-            case 0xA7:
-            case 0xA8:
-            case 0xA9:
-            case 0xAA:
-            case 0xAB:
-            case 0xAC:
-            case 0xAD:
-            case 0xAE:
-            case 0xAF:
-            case 0xB0:
-            case 0xB1:
-            case 0xB2:
-            case 0xB3:
-            case 0xB4:
-            case 0xB5:
-            case 0xB6:
-            case 0xB7:
-                return get_cbor_object(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu), tag_handler);
-
-            case 0xB8: // map (one-byte uint8_t for n follows)
-            {
-                std::uint8_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_object(static_cast<std::size_t>(len), tag_handler);
-            }
-
-            case 0xB9: // map (two-byte uint16_t for n follow)
-            {
-                std::uint16_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_object(static_cast<std::size_t>(len), tag_handler);
-            }
-
-            case 0xBA: // map (four-byte uint32_t for n follow)
-            {
-                std::uint32_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_object(conditional_static_cast<std::size_t>(len), tag_handler);
-            }
-
-            case 0xBB: // map (eight-byte uint64_t for n follow)
-            {
-                std::uint64_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_object(conditional_static_cast<std::size_t>(len), tag_handler);
-            }
-
-            case 0xBF: // map (indefinite length)
-                return get_cbor_object(detail::unknown_size(), tag_handler);
-
-            case 0xC6: // tagged item
-            case 0xC7:
-            case 0xC8:
-            case 0xC9:
-            case 0xCA:
-            case 0xCB:
-            case 0xCC:
-            case 0xCD:
-            case 0xCE:
-            case 0xCF:
-            case 0xD0:
-            case 0xD1:
-            case 0xD2:
-            case 0xD3:
-            case 0xD4:
-            case 0xD8: // tagged item (1 byte follows)
-            case 0xD9: // tagged item (2 bytes follow)
-            case 0xDA: // tagged item (4 bytes follow)
-            case 0xDB: // tagged item (8 bytes follow)
-            {
-                switch (tag_handler)
+                if (top.is_object && top.awaiting_key)
                 {
-                    case cbor_tag_handler_t::error:
+                    const bool finished = top.indefinite ? (get() == 0xFF) : (top.remaining == 0);
+                    if (finished)
                     {
-                        auto last_token = get_token_string();
-                        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                                exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr));
+                        if (JSON_HEDLEY_UNLIKELY(!sax->end_object()))
+                        {
+                            return false;
+                        }
+                        stack.pop_back();
+                        if (produce())
+                        {
+                            return true;
+                        }
+                        continue;
                     }
 
-                    case cbor_tag_handler_t::ignore:
+                    if (!top.indefinite)
                     {
-                        // ignore binary subtype
-                        switch (current)
-                        {
-                            case 0xD8:
-                            {
-                                std::uint8_t subtype_to_ignore{};
-                                get_number(input_format_t::cbor, subtype_to_ignore);
-                                break;
-                            }
-                            case 0xD9:
-                            {
-                                std::uint16_t subtype_to_ignore{};
-                                get_number(input_format_t::cbor, subtype_to_ignore);
-                                break;
-                            }
-                            case 0xDA:
-                            {
-                                std::uint32_t subtype_to_ignore{};
-                                get_number(input_format_t::cbor, subtype_to_ignore);
-                                break;
-                            }
-                            case 0xDB:
-                            {
-                                std::uint64_t subtype_to_ignore{};
-                                get_number(input_format_t::cbor, subtype_to_ignore);
-                                break;
-                            }
-                            default:
-                                break;
-                        }
-                        return parse_cbor_internal(true, tag_handler);
-                    }
-
-                    case cbor_tag_handler_t::store:
-                    {
-                        binary_t b;
-                        // use binary subtype and store in a binary container
-                        switch (current)
-                        {
-                            case 0xD8:
-                            {
-                                std::uint8_t subtype{};
-                                get_number(input_format_t::cbor, subtype);
-                                b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
-                                break;
-                            }
-                            case 0xD9:
-                            {
-                                std::uint16_t subtype{};
-                                get_number(input_format_t::cbor, subtype);
-                                b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
-                                break;
-                            }
-                            case 0xDA:
-                            {
-                                std::uint32_t subtype{};
-                                get_number(input_format_t::cbor, subtype);
-                                b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
-                                break;
-                            }
-                            case 0xDB:
-                            {
-                                std::uint64_t subtype{};
-                                get_number(input_format_t::cbor, subtype);
-                                b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
-                                break;
-                            }
-                            default:
-                                return parse_cbor_internal(true, tag_handler);
-                        }
                         get();
-                        return get_cbor_binary(b) && sax->binary(b);
                     }
-
-                    default:                 // LCOV_EXCL_LINE
-                        JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
-                        return false;        // LCOV_EXCL_LINE
-                }
-            }
-
-            case 0xF4: // false
-                return sax->boolean(false);
-
-            case 0xF5: // true
-                return sax->boolean(true);
-
-            case 0xF6: // null
-                return sax->null();
-
-            case 0xF9: // Half-Precision Float (two-byte IEEE 754)
-            {
-                const auto byte1_raw = get();
-                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::cbor, "number")))
-                {
-                    return false;
-                }
-                const auto byte2_raw = get();
-                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::cbor, "number")))
-                {
-                    return false;
-                }
-
-                const auto byte1 = static_cast<unsigned char>(byte1_raw);
-                const auto byte2 = static_cast<unsigned char>(byte2_raw);
-
-                // Code from RFC 7049, Appendix D, Figure 3:
-                // As half-precision floating-point numbers were only added
-                // to IEEE 754 in 2008, today's programming platforms often
-                // still only have limited support for them. It is very
-                // easy to include at least decoding support for them even
-                // without such support. An example of a small decoder for
-                // half-precision floating-point numbers in the C language
-                // is shown in Fig. 3.
-                const auto half = static_cast<unsigned int>((byte1 << 8u) + byte2);
-                const double val = [&half]
-                {
-                    const int exp = (half >> 10u) & 0x1Fu;
-                    const unsigned int mant = half & 0x3FFu;
-                    JSON_ASSERT(0 <= exp&& exp <= 32);
-                    JSON_ASSERT(mant <= 1024);
-                    switch (exp)
+                    string_t key;
+                    if (JSON_HEDLEY_UNLIKELY(!get_cbor_string(key) || !sax->key(key)))
                     {
-                        case 0:
-                            return std::ldexp(mant, -24);
-                        case 31:
-                            return (mant == 0)
-                            ? std::numeric_limits<double>::infinity()
-                            : std::numeric_limits<double>::quiet_NaN();
-                        default:
-                            return std::ldexp(mant + 1024, exp - 25);
+                        return false;
                     }
-                }();
-                return sax->number_float((half & 0x8000u) != 0
-                                         ? static_cast<number_float_t>(-val)
-                                         : static_cast<number_float_t>(val), "");
+                    top.awaiting_key = false;
+                    fetch_char = true;
+                }
+                else if (!top.is_object)
+                {
+                    const bool finished = top.indefinite ? (get() == 0xFF) : (top.remaining == 0);
+                    if (finished)
+                    {
+                        if (JSON_HEDLEY_UNLIKELY(!sax->end_array()))
+                        {
+                            return false;
+                        }
+                        stack.pop_back();
+                        if (produce())
+                        {
+                            return true;
+                        }
+                        continue;
+                    }
+                    fetch_char = !top.indefinite;
+                }
+                // else: object frame with a key already read; fetch_char is
+                // already set to true from when the key was read above.
             }
 
-            case 0xFA: // Single-Precision Float (four-byte IEEE 754)
+read_value:
+            switch (fetch_char ? get() : current)
             {
-                float number{};
-                return get_number(input_format_t::cbor, number) && sax->number_float(static_cast<number_float_t>(number), "");
-            }
+                // EOF
+                case char_traits<char_type>::eof():
+                    return unexpect_eof(input_format_t::cbor, "value");
 
-            case 0xFB: // Double-Precision Float (eight-byte IEEE 754)
-            {
-                double number{};
-                return get_number(input_format_t::cbor, number) && sax->number_float(static_cast<number_float_t>(number), "");
-            }
+                // Integer 0x00..0x17 (0..23)
+                case 0x00:
+                case 0x01:
+                case 0x02:
+                case 0x03:
+                case 0x04:
+                case 0x05:
+                case 0x06:
+                case 0x07:
+                case 0x08:
+                case 0x09:
+                case 0x0A:
+                case 0x0B:
+                case 0x0C:
+                case 0x0D:
+                case 0x0E:
+                case 0x0F:
+                case 0x10:
+                case 0x11:
+                case 0x12:
+                case 0x13:
+                case 0x14:
+                case 0x15:
+                case 0x16:
+                case 0x17:
+                    JSON_CBOR_VALUE(sax->number_unsigned(static_cast<number_unsigned_t>(current)));
 
-            default: // anything else (0xFF is handled inside the other types)
-            {
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr));
+                case 0x18: // Unsigned integer (one-byte uint8_t follows)
+                {
+                    std::uint8_t number{};
+                    JSON_CBOR_VALUE(get_number(input_format_t::cbor, number) && sax->number_unsigned(number));
+                }
+
+                case 0x19: // Unsigned integer (two-byte uint16_t follows)
+                {
+                    std::uint16_t number{};
+                    JSON_CBOR_VALUE(get_number(input_format_t::cbor, number) && sax->number_unsigned(number));
+                }
+
+                case 0x1A: // Unsigned integer (four-byte uint32_t follows)
+                {
+                    std::uint32_t number{};
+                    JSON_CBOR_VALUE(get_number(input_format_t::cbor, number) && sax->number_unsigned(number));
+                }
+
+                case 0x1B: // Unsigned integer (eight-byte uint64_t follows)
+                {
+                    std::uint64_t number{};
+                    JSON_CBOR_VALUE(get_number(input_format_t::cbor, number) && sax->number_unsigned(number));
+                }
+
+                // Negative integer -1-0x00..-1-0x17 (-1..-24)
+                case 0x20:
+                case 0x21:
+                case 0x22:
+                case 0x23:
+                case 0x24:
+                case 0x25:
+                case 0x26:
+                case 0x27:
+                case 0x28:
+                case 0x29:
+                case 0x2A:
+                case 0x2B:
+                case 0x2C:
+                case 0x2D:
+                case 0x2E:
+                case 0x2F:
+                case 0x30:
+                case 0x31:
+                case 0x32:
+                case 0x33:
+                case 0x34:
+                case 0x35:
+                case 0x36:
+                case 0x37:
+                    JSON_CBOR_VALUE(sax->number_integer(static_cast<std::int8_t>(0x20 - 1 - current)));
+
+                case 0x38: // Negative integer (one-byte uint8_t follows)
+                    JSON_CBOR_VALUE(get_cbor_negative_integer<std::uint8_t>());
+
+                case 0x39: // Negative integer -1-n (two-byte uint16_t follows)
+                    JSON_CBOR_VALUE(get_cbor_negative_integer<std::uint16_t>());
+
+                case 0x3A: // Negative integer -1-n (four-byte uint32_t follows)
+                    JSON_CBOR_VALUE(get_cbor_negative_integer<std::uint32_t>());
+
+                case 0x3B: // Negative integer -1-n (eight-byte uint64_t follows)
+                    JSON_CBOR_VALUE(get_cbor_negative_integer<std::uint64_t>());
+
+                // Binary data (0x00..0x17 bytes follow)
+                case 0x40:
+                case 0x41:
+                case 0x42:
+                case 0x43:
+                case 0x44:
+                case 0x45:
+                case 0x46:
+                case 0x47:
+                case 0x48:
+                case 0x49:
+                case 0x4A:
+                case 0x4B:
+                case 0x4C:
+                case 0x4D:
+                case 0x4E:
+                case 0x4F:
+                case 0x50:
+                case 0x51:
+                case 0x52:
+                case 0x53:
+                case 0x54:
+                case 0x55:
+                case 0x56:
+                case 0x57:
+                case 0x58: // Binary data (one-byte uint8_t for n follows)
+                case 0x59: // Binary data (two-byte uint16_t for n follow)
+                case 0x5A: // Binary data (four-byte uint32_t for n follow)
+                case 0x5B: // Binary data (eight-byte uint64_t for n follow)
+                case 0x5F: // Binary data (indefinite length)
+                {
+                    binary_t b;
+                    JSON_CBOR_VALUE(get_cbor_binary(b) && sax->binary(b));
+                }
+
+                // UTF-8 string (0x00..0x17 bytes follow)
+                case 0x60:
+                case 0x61:
+                case 0x62:
+                case 0x63:
+                case 0x64:
+                case 0x65:
+                case 0x66:
+                case 0x67:
+                case 0x68:
+                case 0x69:
+                case 0x6A:
+                case 0x6B:
+                case 0x6C:
+                case 0x6D:
+                case 0x6E:
+                case 0x6F:
+                case 0x70:
+                case 0x71:
+                case 0x72:
+                case 0x73:
+                case 0x74:
+                case 0x75:
+                case 0x76:
+                case 0x77:
+                case 0x78: // UTF-8 string (one-byte uint8_t for n follows)
+                case 0x79: // UTF-8 string (two-byte uint16_t for n follow)
+                case 0x7A: // UTF-8 string (four-byte uint32_t for n follow)
+                case 0x7B: // UTF-8 string (eight-byte uint64_t for n follow)
+                case 0x7F: // UTF-8 string (indefinite length)
+                {
+                    string_t s;
+                    JSON_CBOR_VALUE(get_cbor_string(s) && sax->string(s));
+                }
+
+                // array (0x00..0x17 data items follow)
+                case 0x80:
+                case 0x81:
+                case 0x82:
+                case 0x83:
+                case 0x84:
+                case 0x85:
+                case 0x86:
+                case 0x87:
+                case 0x88:
+                case 0x89:
+                case 0x8A:
+                case 0x8B:
+                case 0x8C:
+                case 0x8D:
+                case 0x8E:
+                case 0x8F:
+                case 0x90:
+                case 0x91:
+                case 0x92:
+                case 0x93:
+                case 0x94:
+                case 0x95:
+                case 0x96:
+                case 0x97:
+                    JSON_CBOR_ENTER(false, conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu));
+
+                case 0x98: // array (one-byte uint8_t for n follows)
+                {
+                    std::uint8_t len{};
+                    if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::cbor, len)))
+                    {
+                        return false;
+                    }
+                    JSON_CBOR_ENTER(false, static_cast<std::size_t>(len));
+                }
+
+                case 0x99: // array (two-byte uint16_t for n follow)
+                {
+                    std::uint16_t len{};
+                    if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::cbor, len)))
+                    {
+                        return false;
+                    }
+                    JSON_CBOR_ENTER(false, static_cast<std::size_t>(len));
+                }
+
+                case 0x9A: // array (four-byte uint32_t for n follow)
+                {
+                    std::uint32_t len{};
+                    if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::cbor, len)))
+                    {
+                        return false;
+                    }
+                    JSON_CBOR_ENTER(false, conditional_static_cast<std::size_t>(len));
+                }
+
+                case 0x9B: // array (eight-byte uint64_t for n follow)
+                {
+                    std::uint64_t len{};
+                    if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::cbor, len)))
+                    {
+                        return false;
+                    }
+                    JSON_CBOR_ENTER(false, conditional_static_cast<std::size_t>(len));
+                }
+
+                case 0x9F: // array (indefinite length)
+                    JSON_CBOR_ENTER(false, detail::unknown_size());
+
+                // map (0x00..0x17 pairs of data items follow)
+                case 0xA0:
+                case 0xA1:
+                case 0xA2:
+                case 0xA3:
+                case 0xA4:
+                case 0xA5:
+                case 0xA6:
+                case 0xA7:
+                case 0xA8:
+                case 0xA9:
+                case 0xAA:
+                case 0xAB:
+                case 0xAC:
+                case 0xAD:
+                case 0xAE:
+                case 0xAF:
+                case 0xB0:
+                case 0xB1:
+                case 0xB2:
+                case 0xB3:
+                case 0xB4:
+                case 0xB5:
+                case 0xB6:
+                case 0xB7:
+                    JSON_CBOR_ENTER(true, conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu));
+
+                case 0xB8: // map (one-byte uint8_t for n follows)
+                {
+                    std::uint8_t len{};
+                    if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::cbor, len)))
+                    {
+                        return false;
+                    }
+                    JSON_CBOR_ENTER(true, static_cast<std::size_t>(len));
+                }
+
+                case 0xB9: // map (two-byte uint16_t for n follow)
+                {
+                    std::uint16_t len{};
+                    if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::cbor, len)))
+                    {
+                        return false;
+                    }
+                    JSON_CBOR_ENTER(true, static_cast<std::size_t>(len));
+                }
+
+                case 0xBA: // map (four-byte uint32_t for n follow)
+                {
+                    std::uint32_t len{};
+                    if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::cbor, len)))
+                    {
+                        return false;
+                    }
+                    JSON_CBOR_ENTER(true, conditional_static_cast<std::size_t>(len));
+                }
+
+                case 0xBB: // map (eight-byte uint64_t for n follow)
+                {
+                    std::uint64_t len{};
+                    if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::cbor, len)))
+                    {
+                        return false;
+                    }
+                    JSON_CBOR_ENTER(true, conditional_static_cast<std::size_t>(len));
+                }
+
+                case 0xBF: // map (indefinite length)
+                    JSON_CBOR_ENTER(true, detail::unknown_size());
+
+                case 0xC6: // tagged item
+                case 0xC7:
+                case 0xC8:
+                case 0xC9:
+                case 0xCA:
+                case 0xCB:
+                case 0xCC:
+                case 0xCD:
+                case 0xCE:
+                case 0xCF:
+                case 0xD0:
+                case 0xD1:
+                case 0xD2:
+                case 0xD3:
+                case 0xD4:
+                case 0xD8: // tagged item (1 byte follows)
+                case 0xD9: // tagged item (2 bytes follow)
+                case 0xDA: // tagged item (4 bytes follow)
+                case 0xDB: // tagged item (8 bytes follow)
+                {
+                    switch (tag_handler)
+                    {
+                        case cbor_tag_handler_t::error:
+                        {
+                            auto last_token = get_token_string();
+                            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                                    exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr));
+                        }
+
+                        case cbor_tag_handler_t::ignore:
+                        {
+                            // ignore binary subtype
+                            switch (current)
+                            {
+                                case 0xD8:
+                                {
+                                    std::uint8_t subtype_to_ignore{};
+                                    get_number(input_format_t::cbor, subtype_to_ignore);
+                                    break;
+                                }
+                                case 0xD9:
+                                {
+                                    std::uint16_t subtype_to_ignore{};
+                                    get_number(input_format_t::cbor, subtype_to_ignore);
+                                    break;
+                                }
+                                case 0xDA:
+                                {
+                                    std::uint32_t subtype_to_ignore{};
+                                    get_number(input_format_t::cbor, subtype_to_ignore);
+                                    break;
+                                }
+                                case 0xDB:
+                                {
+                                    std::uint64_t subtype_to_ignore{};
+                                    get_number(input_format_t::cbor, subtype_to_ignore);
+                                    break;
+                                }
+                                default:
+                                    break;
+                            }
+                            fetch_char = true;
+                            goto read_value;
+                        }
+
+                        case cbor_tag_handler_t::store:
+                        {
+                            binary_t b;
+                            // use binary subtype and store in a binary container
+                            switch (current)
+                            {
+                                case 0xD8:
+                                {
+                                    std::uint8_t subtype{};
+                                    get_number(input_format_t::cbor, subtype);
+                                    b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
+                                    break;
+                                }
+                                case 0xD9:
+                                {
+                                    std::uint16_t subtype{};
+                                    get_number(input_format_t::cbor, subtype);
+                                    b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
+                                    break;
+                                }
+                                case 0xDA:
+                                {
+                                    std::uint32_t subtype{};
+                                    get_number(input_format_t::cbor, subtype);
+                                    b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
+                                    break;
+                                }
+                                case 0xDB:
+                                {
+                                    std::uint64_t subtype{};
+                                    get_number(input_format_t::cbor, subtype);
+                                    b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
+                                    break;
+                                }
+                                default:
+                                    fetch_char = true;
+                                    goto read_value;
+                            }
+                            get();
+                            JSON_CBOR_VALUE(get_cbor_binary(b) && sax->binary(b));
+                        }
+
+                        default:                 // LCOV_EXCL_LINE
+                            JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
+                            return false;        // LCOV_EXCL_LINE
+                    }
+                }
+
+                case 0xF4: // false
+                    JSON_CBOR_VALUE(sax->boolean(false));
+
+                case 0xF5: // true
+                    JSON_CBOR_VALUE(sax->boolean(true));
+
+                case 0xF6: // null
+                    JSON_CBOR_VALUE(sax->null());
+
+                case 0xF9: // Half-Precision Float (two-byte IEEE 754)
+                {
+                    const auto byte1_raw = get();
+                    if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::cbor, "number")))
+                    {
+                        return false;
+                    }
+                    const auto byte2_raw = get();
+                    if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::cbor, "number")))
+                    {
+                        return false;
+                    }
+
+                    const auto byte1 = static_cast<unsigned char>(byte1_raw);
+                    const auto byte2 = static_cast<unsigned char>(byte2_raw);
+
+                    // Code from RFC 7049, Appendix D, Figure 3:
+                    // As half-precision floating-point numbers were only added
+                    // to IEEE 754 in 2008, today's programming platforms often
+                    // still only have limited support for them. It is very
+                    // easy to include at least decoding support for them even
+                    // without such support. An example of a small decoder for
+                    // half-precision floating-point numbers in the C language
+                    // is shown in Fig. 3.
+                    const auto half = static_cast<unsigned int>((byte1 << 8u) + byte2);
+                    const double val = [&half]
+                    {
+                        const int exp = (half >> 10u) & 0x1Fu;
+                        const unsigned int mant = half & 0x3FFu;
+                        JSON_ASSERT(0 <= exp&& exp <= 32);
+                        JSON_ASSERT(mant <= 1024);
+                        switch (exp)
+                        {
+                            case 0:
+                                return std::ldexp(mant, -24);
+                            case 31:
+                                return (mant == 0)
+                                ? std::numeric_limits<double>::infinity()
+                                : std::numeric_limits<double>::quiet_NaN();
+                            default:
+                                return std::ldexp(mant + 1024, exp - 25);
+                        }
+                    }();
+                    JSON_CBOR_VALUE(sax->number_float((half & 0x8000u) != 0
+                                                      ? static_cast<number_float_t>(-val)
+                                                      : static_cast<number_float_t>(val), ""));
+                }
+
+                case 0xFA: // Single-Precision Float (four-byte IEEE 754)
+                {
+                    float number{};
+                    JSON_CBOR_VALUE(get_number(input_format_t::cbor, number) && sax->number_float(static_cast<number_float_t>(number), ""));
+                }
+
+                case 0xFB: // Double-Precision Float (eight-byte IEEE 754)
+                {
+                    double number{};
+                    JSON_CBOR_VALUE(get_number(input_format_t::cbor, number) && sax->number_float(static_cast<number_float_t>(number), ""));
+                }
+
+                default: // anything else (0xFF is handled inside the other types)
+                {
+                    auto last_token = get_token_string();
+                    return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                            exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr));
+                }
             }
         }
+
+#undef JSON_CBOR_VALUE
+#undef JSON_CBOR_ENTER
     }
 
     /*!
@@ -11705,483 +11870,517 @@ class binary_reader
         }
     }
 
-    /*!
-    @param[in] len  the length of the array or detail::unknown_size() for an
-                    array of indefinite size
-    @param[in] tag_handler how CBOR tags should be treated
-    @return whether array creation completed
-    */
-    bool get_cbor_array(const std::size_t len,
-                        const cbor_tag_handler_t tag_handler)
-    {
-        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(len)))
-        {
-            return false;
-        }
-
-        if (len != detail::unknown_size())
-        {
-            for (std::size_t i = 0; i < len; ++i)
-            {
-                if (JSON_HEDLEY_UNLIKELY(!parse_cbor_internal(true, tag_handler)))
-                {
-                    return false;
-                }
-            }
-        }
-        else
-        {
-            while (get() != 0xFF)
-            {
-                if (JSON_HEDLEY_UNLIKELY(!parse_cbor_internal(false, tag_handler)))
-                {
-                    return false;
-                }
-            }
-        }
-
-        return sax->end_array();
-    }
-
-    /*!
-    @param[in] len  the length of the object or detail::unknown_size() for an
-                    object of indefinite size
-    @param[in] tag_handler how CBOR tags should be treated
-    @return whether object creation completed
-    */
-    bool get_cbor_object(const std::size_t len,
-                         const cbor_tag_handler_t tag_handler)
-    {
-        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(len)))
-        {
-            return false;
-        }
-
-        if (len != 0)
-        {
-            string_t key;
-            if (len != detail::unknown_size())
-            {
-                for (std::size_t i = 0; i < len; ++i)
-                {
-                    get();
-                    if (JSON_HEDLEY_UNLIKELY(!get_cbor_string(key) || !sax->key(key)))
-                    {
-                        return false;
-                    }
-
-                    if (JSON_HEDLEY_UNLIKELY(!parse_cbor_internal(true, tag_handler)))
-                    {
-                        return false;
-                    }
-                    key.clear();
-                }
-            }
-            else
-            {
-                while (get() != 0xFF)
-                {
-                    if (JSON_HEDLEY_UNLIKELY(!get_cbor_string(key) || !sax->key(key)))
-                    {
-                        return false;
-                    }
-
-                    if (JSON_HEDLEY_UNLIKELY(!parse_cbor_internal(true, tag_handler)))
-                    {
-                        return false;
-                    }
-                    key.clear();
-                }
-            }
-        }
-
-        return sax->end_object();
-    }
-
     /////////////
     // MsgPack //
     /////////////
+
+    /*!
+    @brief a single pending "resume this array/object" entry used by the
+           iterative container traversal in @ref parse_msgpack_internal;
+           see @ref cbor_container_frame for the general idea. MessagePack
+           has no indefinite-length containers, so unlike CBOR this frame
+           does not need an "indefinite" flag.
+    */
+    struct msgpack_container_frame
+    {
+        bool is_object;         ///< false: array, true: map
+        std::size_t remaining;  ///< remaining element count
+        bool awaiting_key;      ///< map only: true if the next thing to read is a key, not a value
+    };
 
     /*!
     @return whether a valid MessagePack value was passed to the SAX parser
     */
     bool parse_msgpack_internal()
     {
-        const depth_guard dg(*this);
-        if (JSON_HEDLEY_UNLIKELY(depth > max_depth))
+        std::vector<msgpack_container_frame> stack;
+
+        auto produce = [&]() -> bool
         {
-            return sax->parse_error(chars_read, get_token_string(),
-                                    parse_error::create(116, chars_read,
-                                            exception_message(input_format_t::msgpack, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
+            if (stack.empty())
+            {
+                return true;
+            }
+            msgpack_container_frame& top = stack.back();
+            if (top.is_object)
+            {
+                top.awaiting_key = true;
+            }
+            --top.remaining;
+            return false;
+        };
+
+        auto enter_container = [&](const bool is_object, const std::size_t len) -> int
+        {
+            const bool started = is_object ? sax->start_object(len) : sax->start_array(len);
+            if (JSON_HEDLEY_UNLIKELY(!started))
+            {
+                return 0;
+            }
+            if (len == 0)
+            {
+                return (is_object ? sax->end_object() : sax->end_array()) ? 2 : 0;
+            }
+            if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
+            {
+                sax->parse_error(chars_read, get_token_string(),
+                                 parse_error::create(116, chars_read,
+                                                     exception_message(input_format_t::msgpack, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
+                return 0;
+            }
+            stack.push_back(msgpack_container_frame{is_object, len, is_object});
+            return 1;
+        };
+
+#define JSON_MSGPACK_VALUE(expr) \
+    if (JSON_HEDLEY_UNLIKELY(!(expr))) { return false; } \
+    if (produce()) { return true; } \
+    continue
+
+#define JSON_MSGPACK_ENTER(is_obj, length) \
+    switch (enter_container(is_obj, length)) \
+    { \
+        case 0: return false; \
+        case 2: if (produce()) { return true; } continue; \
+        default: continue; \
+    }
+
+        while (true)
+        {
+            if (!stack.empty())
+            {
+                msgpack_container_frame& top = stack.back();
+
+                if (top.is_object && top.awaiting_key)
+                {
+                    if (top.remaining == 0)
+                    {
+                        if (JSON_HEDLEY_UNLIKELY(!sax->end_object()))
+                        {
+                            return false;
+                        }
+                        stack.pop_back();
+                        if (produce())
+                        {
+                            return true;
+                        }
+                        continue;
+                    }
+                    get();
+                    string_t key;
+                    if (JSON_HEDLEY_UNLIKELY(!get_msgpack_string(key) || !sax->key(key)))
+                    {
+                        return false;
+                    }
+                    top.awaiting_key = false;
+                }
+                else if (!top.is_object)
+                {
+                    if (top.remaining == 0)
+                    {
+                        if (JSON_HEDLEY_UNLIKELY(!sax->end_array()))
+                        {
+                            return false;
+                        }
+                        stack.pop_back();
+                        if (produce())
+                        {
+                            return true;
+                        }
+                        continue;
+                    }
+                }
+                // else: map frame with a key already read; fall through to
+                // read that key's value.
+            }
+
+            switch (get())
+            {
+                // EOF
+                case char_traits<char_type>::eof():
+                    return unexpect_eof(input_format_t::msgpack, "value");
+
+                // positive fixint
+                case 0x00:
+                case 0x01:
+                case 0x02:
+                case 0x03:
+                case 0x04:
+                case 0x05:
+                case 0x06:
+                case 0x07:
+                case 0x08:
+                case 0x09:
+                case 0x0A:
+                case 0x0B:
+                case 0x0C:
+                case 0x0D:
+                case 0x0E:
+                case 0x0F:
+                case 0x10:
+                case 0x11:
+                case 0x12:
+                case 0x13:
+                case 0x14:
+                case 0x15:
+                case 0x16:
+                case 0x17:
+                case 0x18:
+                case 0x19:
+                case 0x1A:
+                case 0x1B:
+                case 0x1C:
+                case 0x1D:
+                case 0x1E:
+                case 0x1F:
+                case 0x20:
+                case 0x21:
+                case 0x22:
+                case 0x23:
+                case 0x24:
+                case 0x25:
+                case 0x26:
+                case 0x27:
+                case 0x28:
+                case 0x29:
+                case 0x2A:
+                case 0x2B:
+                case 0x2C:
+                case 0x2D:
+                case 0x2E:
+                case 0x2F:
+                case 0x30:
+                case 0x31:
+                case 0x32:
+                case 0x33:
+                case 0x34:
+                case 0x35:
+                case 0x36:
+                case 0x37:
+                case 0x38:
+                case 0x39:
+                case 0x3A:
+                case 0x3B:
+                case 0x3C:
+                case 0x3D:
+                case 0x3E:
+                case 0x3F:
+                case 0x40:
+                case 0x41:
+                case 0x42:
+                case 0x43:
+                case 0x44:
+                case 0x45:
+                case 0x46:
+                case 0x47:
+                case 0x48:
+                case 0x49:
+                case 0x4A:
+                case 0x4B:
+                case 0x4C:
+                case 0x4D:
+                case 0x4E:
+                case 0x4F:
+                case 0x50:
+                case 0x51:
+                case 0x52:
+                case 0x53:
+                case 0x54:
+                case 0x55:
+                case 0x56:
+                case 0x57:
+                case 0x58:
+                case 0x59:
+                case 0x5A:
+                case 0x5B:
+                case 0x5C:
+                case 0x5D:
+                case 0x5E:
+                case 0x5F:
+                case 0x60:
+                case 0x61:
+                case 0x62:
+                case 0x63:
+                case 0x64:
+                case 0x65:
+                case 0x66:
+                case 0x67:
+                case 0x68:
+                case 0x69:
+                case 0x6A:
+                case 0x6B:
+                case 0x6C:
+                case 0x6D:
+                case 0x6E:
+                case 0x6F:
+                case 0x70:
+                case 0x71:
+                case 0x72:
+                case 0x73:
+                case 0x74:
+                case 0x75:
+                case 0x76:
+                case 0x77:
+                case 0x78:
+                case 0x79:
+                case 0x7A:
+                case 0x7B:
+                case 0x7C:
+                case 0x7D:
+                case 0x7E:
+                case 0x7F:
+                    JSON_MSGPACK_VALUE(sax->number_unsigned(static_cast<number_unsigned_t>(current)));
+
+                // fixmap
+                case 0x80:
+                case 0x81:
+                case 0x82:
+                case 0x83:
+                case 0x84:
+                case 0x85:
+                case 0x86:
+                case 0x87:
+                case 0x88:
+                case 0x89:
+                case 0x8A:
+                case 0x8B:
+                case 0x8C:
+                case 0x8D:
+                case 0x8E:
+                case 0x8F:
+                    JSON_MSGPACK_ENTER(true, conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
+
+                // fixarray
+                case 0x90:
+                case 0x91:
+                case 0x92:
+                case 0x93:
+                case 0x94:
+                case 0x95:
+                case 0x96:
+                case 0x97:
+                case 0x98:
+                case 0x99:
+                case 0x9A:
+                case 0x9B:
+                case 0x9C:
+                case 0x9D:
+                case 0x9E:
+                case 0x9F:
+                    JSON_MSGPACK_ENTER(false, conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
+
+                // fixstr
+                case 0xA0:
+                case 0xA1:
+                case 0xA2:
+                case 0xA3:
+                case 0xA4:
+                case 0xA5:
+                case 0xA6:
+                case 0xA7:
+                case 0xA8:
+                case 0xA9:
+                case 0xAA:
+                case 0xAB:
+                case 0xAC:
+                case 0xAD:
+                case 0xAE:
+                case 0xAF:
+                case 0xB0:
+                case 0xB1:
+                case 0xB2:
+                case 0xB3:
+                case 0xB4:
+                case 0xB5:
+                case 0xB6:
+                case 0xB7:
+                case 0xB8:
+                case 0xB9:
+                case 0xBA:
+                case 0xBB:
+                case 0xBC:
+                case 0xBD:
+                case 0xBE:
+                case 0xBF:
+                case 0xD9: // str 8
+                case 0xDA: // str 16
+                case 0xDB: // str 32
+                {
+                    string_t s;
+                    JSON_MSGPACK_VALUE(get_msgpack_string(s) && sax->string(s));
+                }
+
+                case 0xC0: // nil
+                    JSON_MSGPACK_VALUE(sax->null());
+
+                case 0xC2: // false
+                    JSON_MSGPACK_VALUE(sax->boolean(false));
+
+                case 0xC3: // true
+                    JSON_MSGPACK_VALUE(sax->boolean(true));
+
+                case 0xC4: // bin 8
+                case 0xC5: // bin 16
+                case 0xC6: // bin 32
+                case 0xC7: // ext 8
+                case 0xC8: // ext 16
+                case 0xC9: // ext 32
+                case 0xD4: // fixext 1
+                case 0xD5: // fixext 2
+                case 0xD6: // fixext 4
+                case 0xD7: // fixext 8
+                case 0xD8: // fixext 16
+                {
+                    binary_t b;
+                    JSON_MSGPACK_VALUE(get_msgpack_binary(b) && sax->binary(b));
+                }
+
+                case 0xCA: // float 32
+                {
+                    float number{};
+                    JSON_MSGPACK_VALUE(get_number(input_format_t::msgpack, number) && sax->number_float(static_cast<number_float_t>(number), ""));
+                }
+
+                case 0xCB: // float 64
+                {
+                    double number{};
+                    JSON_MSGPACK_VALUE(get_number(input_format_t::msgpack, number) && sax->number_float(static_cast<number_float_t>(number), ""));
+                }
+
+                case 0xCC: // uint 8
+                {
+                    std::uint8_t number{};
+                    JSON_MSGPACK_VALUE(get_number(input_format_t::msgpack, number) && sax->number_unsigned(number));
+                }
+
+                case 0xCD: // uint 16
+                {
+                    std::uint16_t number{};
+                    JSON_MSGPACK_VALUE(get_number(input_format_t::msgpack, number) && sax->number_unsigned(number));
+                }
+
+                case 0xCE: // uint 32
+                {
+                    std::uint32_t number{};
+                    JSON_MSGPACK_VALUE(get_number(input_format_t::msgpack, number) && sax->number_unsigned(number));
+                }
+
+                case 0xCF: // uint 64
+                {
+                    std::uint64_t number{};
+                    JSON_MSGPACK_VALUE(get_number(input_format_t::msgpack, number) && sax->number_unsigned(number));
+                }
+
+                case 0xD0: // int 8
+                {
+                    std::int8_t number{};
+                    JSON_MSGPACK_VALUE(get_number(input_format_t::msgpack, number) && sax->number_integer(number));
+                }
+
+                case 0xD1: // int 16
+                {
+                    std::int16_t number{};
+                    JSON_MSGPACK_VALUE(get_number(input_format_t::msgpack, number) && sax->number_integer(number));
+                }
+
+                case 0xD2: // int 32
+                {
+                    std::int32_t number{};
+                    JSON_MSGPACK_VALUE(get_number(input_format_t::msgpack, number) && sax->number_integer(number));
+                }
+
+                case 0xD3: // int 64
+                {
+                    std::int64_t number{};
+                    JSON_MSGPACK_VALUE(get_number(input_format_t::msgpack, number) && sax->number_integer(number));
+                }
+
+                case 0xDC: // array 16
+                {
+                    std::uint16_t len{};
+                    if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::msgpack, len)))
+                    {
+                        return false;
+                    }
+                    JSON_MSGPACK_ENTER(false, static_cast<std::size_t>(len));
+                }
+
+                case 0xDD: // array 32
+                {
+                    std::uint32_t len{};
+                    if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::msgpack, len)))
+                    {
+                        return false;
+                    }
+                    JSON_MSGPACK_ENTER(false, conditional_static_cast<std::size_t>(len));
+                }
+
+                case 0xDE: // map 16
+                {
+                    std::uint16_t len{};
+                    if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::msgpack, len)))
+                    {
+                        return false;
+                    }
+                    JSON_MSGPACK_ENTER(true, static_cast<std::size_t>(len));
+                }
+
+                case 0xDF: // map 32
+                {
+                    std::uint32_t len{};
+                    if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::msgpack, len)))
+                    {
+                        return false;
+                    }
+                    JSON_MSGPACK_ENTER(true, conditional_static_cast<std::size_t>(len));
+                }
+
+                // negative fixint
+                case 0xE0:
+                case 0xE1:
+                case 0xE2:
+                case 0xE3:
+                case 0xE4:
+                case 0xE5:
+                case 0xE6:
+                case 0xE7:
+                case 0xE8:
+                case 0xE9:
+                case 0xEA:
+                case 0xEB:
+                case 0xEC:
+                case 0xED:
+                case 0xEE:
+                case 0xEF:
+                case 0xF0:
+                case 0xF1:
+                case 0xF2:
+                case 0xF3:
+                case 0xF4:
+                case 0xF5:
+                case 0xF6:
+                case 0xF7:
+                case 0xF8:
+                case 0xF9:
+                case 0xFA:
+                case 0xFB:
+                case 0xFC:
+                case 0xFD:
+                case 0xFE:
+                case 0xFF:
+                    JSON_MSGPACK_VALUE(sax->number_integer(static_cast<std::int8_t>(current)));
+
+                default: // anything else
+                {
+                    auto last_token = get_token_string();
+                    return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                            exception_message(input_format_t::msgpack, concat("invalid byte: 0x", last_token), "value"), nullptr));
+                }
+            }
         }
 
-        switch (get())
-        {
-            // EOF
-            case char_traits<char_type>::eof():
-                return unexpect_eof(input_format_t::msgpack, "value");
-
-            // positive fixint
-            case 0x00:
-            case 0x01:
-            case 0x02:
-            case 0x03:
-            case 0x04:
-            case 0x05:
-            case 0x06:
-            case 0x07:
-            case 0x08:
-            case 0x09:
-            case 0x0A:
-            case 0x0B:
-            case 0x0C:
-            case 0x0D:
-            case 0x0E:
-            case 0x0F:
-            case 0x10:
-            case 0x11:
-            case 0x12:
-            case 0x13:
-            case 0x14:
-            case 0x15:
-            case 0x16:
-            case 0x17:
-            case 0x18:
-            case 0x19:
-            case 0x1A:
-            case 0x1B:
-            case 0x1C:
-            case 0x1D:
-            case 0x1E:
-            case 0x1F:
-            case 0x20:
-            case 0x21:
-            case 0x22:
-            case 0x23:
-            case 0x24:
-            case 0x25:
-            case 0x26:
-            case 0x27:
-            case 0x28:
-            case 0x29:
-            case 0x2A:
-            case 0x2B:
-            case 0x2C:
-            case 0x2D:
-            case 0x2E:
-            case 0x2F:
-            case 0x30:
-            case 0x31:
-            case 0x32:
-            case 0x33:
-            case 0x34:
-            case 0x35:
-            case 0x36:
-            case 0x37:
-            case 0x38:
-            case 0x39:
-            case 0x3A:
-            case 0x3B:
-            case 0x3C:
-            case 0x3D:
-            case 0x3E:
-            case 0x3F:
-            case 0x40:
-            case 0x41:
-            case 0x42:
-            case 0x43:
-            case 0x44:
-            case 0x45:
-            case 0x46:
-            case 0x47:
-            case 0x48:
-            case 0x49:
-            case 0x4A:
-            case 0x4B:
-            case 0x4C:
-            case 0x4D:
-            case 0x4E:
-            case 0x4F:
-            case 0x50:
-            case 0x51:
-            case 0x52:
-            case 0x53:
-            case 0x54:
-            case 0x55:
-            case 0x56:
-            case 0x57:
-            case 0x58:
-            case 0x59:
-            case 0x5A:
-            case 0x5B:
-            case 0x5C:
-            case 0x5D:
-            case 0x5E:
-            case 0x5F:
-            case 0x60:
-            case 0x61:
-            case 0x62:
-            case 0x63:
-            case 0x64:
-            case 0x65:
-            case 0x66:
-            case 0x67:
-            case 0x68:
-            case 0x69:
-            case 0x6A:
-            case 0x6B:
-            case 0x6C:
-            case 0x6D:
-            case 0x6E:
-            case 0x6F:
-            case 0x70:
-            case 0x71:
-            case 0x72:
-            case 0x73:
-            case 0x74:
-            case 0x75:
-            case 0x76:
-            case 0x77:
-            case 0x78:
-            case 0x79:
-            case 0x7A:
-            case 0x7B:
-            case 0x7C:
-            case 0x7D:
-            case 0x7E:
-            case 0x7F:
-                return sax->number_unsigned(static_cast<number_unsigned_t>(current));
-
-            // fixmap
-            case 0x80:
-            case 0x81:
-            case 0x82:
-            case 0x83:
-            case 0x84:
-            case 0x85:
-            case 0x86:
-            case 0x87:
-            case 0x88:
-            case 0x89:
-            case 0x8A:
-            case 0x8B:
-            case 0x8C:
-            case 0x8D:
-            case 0x8E:
-            case 0x8F:
-                return get_msgpack_object(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
-
-            // fixarray
-            case 0x90:
-            case 0x91:
-            case 0x92:
-            case 0x93:
-            case 0x94:
-            case 0x95:
-            case 0x96:
-            case 0x97:
-            case 0x98:
-            case 0x99:
-            case 0x9A:
-            case 0x9B:
-            case 0x9C:
-            case 0x9D:
-            case 0x9E:
-            case 0x9F:
-                return get_msgpack_array(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
-
-            // fixstr
-            case 0xA0:
-            case 0xA1:
-            case 0xA2:
-            case 0xA3:
-            case 0xA4:
-            case 0xA5:
-            case 0xA6:
-            case 0xA7:
-            case 0xA8:
-            case 0xA9:
-            case 0xAA:
-            case 0xAB:
-            case 0xAC:
-            case 0xAD:
-            case 0xAE:
-            case 0xAF:
-            case 0xB0:
-            case 0xB1:
-            case 0xB2:
-            case 0xB3:
-            case 0xB4:
-            case 0xB5:
-            case 0xB6:
-            case 0xB7:
-            case 0xB8:
-            case 0xB9:
-            case 0xBA:
-            case 0xBB:
-            case 0xBC:
-            case 0xBD:
-            case 0xBE:
-            case 0xBF:
-            case 0xD9: // str 8
-            case 0xDA: // str 16
-            case 0xDB: // str 32
-            {
-                string_t s;
-                return get_msgpack_string(s) && sax->string(s);
-            }
-
-            case 0xC0: // nil
-                return sax->null();
-
-            case 0xC2: // false
-                return sax->boolean(false);
-
-            case 0xC3: // true
-                return sax->boolean(true);
-
-            case 0xC4: // bin 8
-            case 0xC5: // bin 16
-            case 0xC6: // bin 32
-            case 0xC7: // ext 8
-            case 0xC8: // ext 16
-            case 0xC9: // ext 32
-            case 0xD4: // fixext 1
-            case 0xD5: // fixext 2
-            case 0xD6: // fixext 4
-            case 0xD7: // fixext 8
-            case 0xD8: // fixext 16
-            {
-                binary_t b;
-                return get_msgpack_binary(b) && sax->binary(b);
-            }
-
-            case 0xCA: // float 32
-            {
-                float number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_float(static_cast<number_float_t>(number), "");
-            }
-
-            case 0xCB: // float 64
-            {
-                double number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_float(static_cast<number_float_t>(number), "");
-            }
-
-            case 0xCC: // uint 8
-            {
-                std::uint8_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
-            }
-
-            case 0xCD: // uint 16
-            {
-                std::uint16_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
-            }
-
-            case 0xCE: // uint 32
-            {
-                std::uint32_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
-            }
-
-            case 0xCF: // uint 64
-            {
-                std::uint64_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
-            }
-
-            case 0xD0: // int 8
-            {
-                std::int8_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
-            }
-
-            case 0xD1: // int 16
-            {
-                std::int16_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
-            }
-
-            case 0xD2: // int 32
-            {
-                std::int32_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
-            }
-
-            case 0xD3: // int 64
-            {
-                std::int64_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
-            }
-
-            case 0xDC: // array 16
-            {
-                std::uint16_t len{};
-                return get_number(input_format_t::msgpack, len) && get_msgpack_array(static_cast<std::size_t>(len));
-            }
-
-            case 0xDD: // array 32
-            {
-                std::uint32_t len{};
-                return get_number(input_format_t::msgpack, len) && get_msgpack_array(conditional_static_cast<std::size_t>(len));
-            }
-
-            case 0xDE: // map 16
-            {
-                std::uint16_t len{};
-                return get_number(input_format_t::msgpack, len) && get_msgpack_object(static_cast<std::size_t>(len));
-            }
-
-            case 0xDF: // map 32
-            {
-                std::uint32_t len{};
-                return get_number(input_format_t::msgpack, len) && get_msgpack_object(conditional_static_cast<std::size_t>(len));
-            }
-
-            // negative fixint
-            case 0xE0:
-            case 0xE1:
-            case 0xE2:
-            case 0xE3:
-            case 0xE4:
-            case 0xE5:
-            case 0xE6:
-            case 0xE7:
-            case 0xE8:
-            case 0xE9:
-            case 0xEA:
-            case 0xEB:
-            case 0xEC:
-            case 0xED:
-            case 0xEE:
-            case 0xEF:
-            case 0xF0:
-            case 0xF1:
-            case 0xF2:
-            case 0xF3:
-            case 0xF4:
-            case 0xF5:
-            case 0xF6:
-            case 0xF7:
-            case 0xF8:
-            case 0xF9:
-            case 0xFA:
-            case 0xFB:
-            case 0xFC:
-            case 0xFD:
-            case 0xFE:
-            case 0xFF:
-                return sax->number_integer(static_cast<std::int8_t>(current));
-
-            default: // anything else
-            {
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(input_format_t::msgpack, concat("invalid byte: 0x", last_token), "value"), nullptr));
-            }
-        }
+#undef JSON_MSGPACK_VALUE
+#undef JSON_MSGPACK_ENTER
     }
 
     /*!
@@ -12384,61 +12583,33 @@ class binary_reader
         }
     }
 
-    /*!
-    @param[in] len  the length of the array
-    @return whether array creation completed
-    */
-    bool get_msgpack_array(const std::size_t len)
-    {
-        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(len)))
-        {
-            return false;
-        }
-
-        for (std::size_t i = 0; i < len; ++i)
-        {
-            if (JSON_HEDLEY_UNLIKELY(!parse_msgpack_internal()))
-            {
-                return false;
-            }
-        }
-
-        return sax->end_array();
-    }
-
-    /*!
-    @param[in] len  the length of the object
-    @return whether object creation completed
-    */
-    bool get_msgpack_object(const std::size_t len)
-    {
-        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(len)))
-        {
-            return false;
-        }
-
-        string_t key;
-        for (std::size_t i = 0; i < len; ++i)
-        {
-            get();
-            if (JSON_HEDLEY_UNLIKELY(!get_msgpack_string(key) || !sax->key(key)))
-            {
-                return false;
-            }
-
-            if (JSON_HEDLEY_UNLIKELY(!parse_msgpack_internal()))
-            {
-                return false;
-            }
-            key.clear();
-        }
-
-        return sax->end_object();
-    }
-
     ////////////
     // UBJSON //
     ////////////
+
+    /*!
+    @brief a single pending "resume this array/object" entry used by the
+           iterative container traversal in @ref parse_ubjson_internal; see
+           @ref cbor_container_frame for the general idea.
+
+    UBJSON/BJData needs two extra bits of state beyond CBOR/MessagePack:
+    @ref fixed_type captures the optimized `$type#count` container's
+    homogeneous element type (0 means "heterogeneous": read a fresh type
+    marker per element, like an ordinary UBJSON array/object); @ref
+    extra_close_object is set for the synthetic JData-annotated-array object
+    ("_ArrayType_"/"_ArraySize_"/"_ArrayData_") BJData wraps an ND-array in,
+    where finishing the `_ArrayData_` array must also close that wrapping
+    object.
+    */
+    struct ubjson_container_frame
+    {
+        bool is_object;             ///< false: array, true: object
+        bool indefinite;            ///< true: no known count; read until a ']'/'}' terminator
+        std::size_t remaining;      ///< remaining element count; meaningful only if !indefinite
+        bool awaiting_key;          ///< object only: true if the next thing to read is a key, not a value
+        char_int_type fixed_type;   ///< 0: heterogeneous; else every element has this known type marker
+        bool extra_close_object;    ///< true: end_array() for this frame must be followed by an end_object()
+    };
 
     /*!
     @param[in] get_char  whether a new character should be retrieved from the
@@ -12446,25 +12617,491 @@ class binary_reader
                          character should be considered instead
 
     @return whether a valid UBJSON value was passed to the SAX parser
-
-    @note Unlike CBOR/MessagePack, UBJSON needs get_ubjson_value() (which
-    carries the @ref depth_guard) to be reachable both from here *and*
-    directly with an already-known type marker (the optimized `$type#count`
-    container path), so the dispatch cannot simply be folded into this
-    function the way parse_cbor_internal()/parse_msgpack_internal() do. That
-    leaves this thin wrapper as a genuine extra stack frame on every ordinary
-    array/object element, on top of get_ubjson_value() and
-    get_ubjson_array()/get_ubjson_object() - one more frame per nesting level
-    than CBOR/MessagePack/BSON need for the same @ref max_depth. Force-inlining
-    it (rather than trusting Debug/-O0 builds to do so) keeps UBJSON's
-    recursion cost per level in line with the other formats' and was
-    necessary to stop deeply nested UBJSON input from overflowing the stack
-    well before max_depth is reached in MSVC Debug builds (#5104).
     */
-    JSON_HEDLEY_ALWAYS_INLINE
     bool parse_ubjson_internal(const bool get_char = true)
     {
-        return get_ubjson_value(get_char ? get_ignore_noop() : current);
+        std::vector<ubjson_container_frame> stack;
+        bool fetch_char = get_char;
+
+        auto produce = [&]() -> bool
+        {
+            if (stack.empty())
+            {
+                return true;
+            }
+            ubjson_container_frame& top = stack.back();
+            if (top.is_object)
+            {
+                top.awaiting_key = true;
+            }
+            if (!top.indefinite)
+            {
+                --top.remaining;
+            }
+            else
+            {
+                // indefinite-length containers are terminated by inspecting
+                // `current`, so advance past the just-produced element/pair
+                // to whatever byte should be inspected next (mirrors the
+                // `get_ignore_noop()` at the end of each iteration of the
+                // original recursive implementation's while-loops)
+                get_ignore_noop();
+            }
+            return false;
+        };
+
+        // returns 0 = failure (caller returns false), 1 = a frame was
+        // pushed (caller continues the outer loop to parse the first
+        // element), 2 = a value was produced immediately - either because
+        // the container turned out to be empty, or (BJData only) because
+        // the "optimized binary array" special case produced a single
+        // binary value directly, without ever being a SAX array at all
+        // (caller should invoke produce() same as for any other value)
+        auto enter_array = [&]() -> int
+        {
+            std::pair<std::size_t, char_int_type> size_and_type;
+            if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type)))
+            {
+                return 0;
+            }
+
+            // ND-array: encode as an object in JData annotated array format
+            // (https://github.com/NeuroJSON/jdata). The wrapping object was
+            // already start_object()'d (with the "_ArraySize_" key/array
+            // already emitted) inside get_ubjson_size_type(), so only
+            // "_ArrayType_" and "_ArrayData_" remain to be added here.
+            if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
+            {
+                size_and_type.second &= ~(static_cast<char_int_type>(1) << 8);
+                auto it = std::lower_bound(bjd_types_map.begin(), bjd_types_map.end(), size_and_type.second, [](const bjd_type & p, char_int_type t)
+                {
+                    return p.first < t;
+                });
+                string_t key = "_ArrayType_";
+                if (JSON_HEDLEY_UNLIKELY(it == bjd_types_map.end() || it->first != size_and_type.second))
+                {
+                    auto last_token = get_token_string();
+                    sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                     exception_message(input_format, "invalid byte: 0x" + last_token, "type"), nullptr));
+                    return 0;
+                }
+
+                string_t type = it->second; // sax->string() takes a reference
+                if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->string(type)))
+                {
+                    return 0;
+                }
+
+                if (size_and_type.second == 'C' || size_and_type.second == 'B')
+                {
+                    size_and_type.second = 'U';
+                }
+
+                key = "_ArrayData_";
+                if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->start_array(size_and_type.first)))
+                {
+                    return 0;
+                }
+
+                if (size_and_type.first == 0)
+                {
+                    return (sax->end_array() && sax->end_object()) ? 2 : 0;
+                }
+                if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
+                {
+                    sax->parse_error(chars_read, get_token_string(), parse_error::create(116, chars_read,
+                                     exception_message(input_format, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
+                    return 0;
+                }
+                stack.push_back(ubjson_container_frame{false, false, size_and_type.first, false, size_and_type.second, true});
+                return 1;
+            }
+
+            // BJData type marker 'B': decode as binary (not a SAX array at all)
+            if (input_format == input_format_t::bjdata && size_and_type.first != npos && size_and_type.second == 'B')
+            {
+                binary_t result;
+                return (get_binary(input_format, size_and_type.first, result) && sax->binary(result)) ? 2 : 0;
+            }
+
+            if (size_and_type.first != npos)
+            {
+                if (JSON_HEDLEY_UNLIKELY(!sax->start_array(size_and_type.first)))
+                {
+                    return 0;
+                }
+
+                // a homogeneous type of 'N' (no-op) means no elements are
+                // actually read, no matter what count was declared
+                if (size_and_type.second == 'N' || size_and_type.first == 0)
+                {
+                    return sax->end_array() ? 2 : 0;
+                }
+                if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
+                {
+                    sax->parse_error(chars_read, get_token_string(), parse_error::create(116, chars_read,
+                                     exception_message(input_format, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
+                    return 0;
+                }
+                stack.push_back(ubjson_container_frame{false, false, size_and_type.first, false, size_and_type.second, false});
+                return 1;
+            }
+
+            // indefinite length
+            if (JSON_HEDLEY_UNLIKELY(!sax->start_array(detail::unknown_size())))
+            {
+                return 0;
+            }
+            if (current == ']')
+            {
+                return sax->end_array() ? 2 : 0;
+            }
+            if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
+            {
+                sax->parse_error(chars_read, get_token_string(), parse_error::create(116, chars_read,
+                                 exception_message(input_format, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
+                return 0;
+            }
+            stack.push_back(ubjson_container_frame{false, true, 0, false, 0, false});
+            return 1;
+        };
+
+        auto enter_object = [&]() -> int
+        {
+            std::pair<std::size_t, char_int_type> size_and_type;
+            if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type)))
+            {
+                return 0;
+            }
+
+            // do not accept ND-array size in objects in BJData
+            if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
+            {
+                auto last_token = get_token_string();
+                sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                 exception_message(input_format, "BJData object does not support ND-array size in optimized format", "object"), nullptr));
+                return 0;
+            }
+
+            if (size_and_type.first != npos)
+            {
+                if (JSON_HEDLEY_UNLIKELY(!sax->start_object(size_and_type.first)))
+                {
+                    return 0;
+                }
+                if (size_and_type.first == 0)
+                {
+                    return sax->end_object() ? 2 : 0;
+                }
+                if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
+                {
+                    sax->parse_error(chars_read, get_token_string(), parse_error::create(116, chars_read,
+                                     exception_message(input_format, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
+                    return 0;
+                }
+                stack.push_back(ubjson_container_frame{true, false, size_and_type.first, true, size_and_type.second, false});
+                return 1;
+            }
+
+            if (JSON_HEDLEY_UNLIKELY(!sax->start_object(detail::unknown_size())))
+            {
+                return 0;
+            }
+            if (current == '}')
+            {
+                return sax->end_object() ? 2 : 0;
+            }
+            if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
+            {
+                sax->parse_error(chars_read, get_token_string(), parse_error::create(116, chars_read,
+                                 exception_message(input_format, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
+                return 0;
+            }
+            stack.push_back(ubjson_container_frame{true, true, 0, true, 0, false});
+            return 1;
+        };
+
+#define JSON_UBJSON_VALUE(expr) \
+    if (JSON_HEDLEY_UNLIKELY(!(expr))) { return false; } \
+    if (produce()) { return true; } \
+    continue
+
+#define JSON_UBJSON_ENTER(fn) \
+    switch (fn()) \
+    { \
+        case 0: return false; \
+        case 2: if (produce()) { return true; } continue; \
+        default: continue; \
+    }
+
+        while (true)
+        {
+            if (!stack.empty())
+            {
+                ubjson_container_frame& top = stack.back();
+
+                if (top.is_object && top.awaiting_key)
+                {
+                    const bool finished = top.indefinite ? (current == '}') : (top.remaining == 0);
+                    if (finished)
+                    {
+                        if (JSON_HEDLEY_UNLIKELY(!sax->end_object()))
+                        {
+                            return false;
+                        }
+                        stack.pop_back();
+                        if (produce())
+                        {
+                            return true;
+                        }
+                        continue;
+                    }
+
+                    string_t key;
+                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key, !top.indefinite) || !sax->key(key)))
+                    {
+                        return false;
+                    }
+                    top.awaiting_key = false;
+                }
+                else if (!top.is_object)
+                {
+                    const bool finished = top.indefinite ? (current == ']') : (top.remaining == 0);
+                    if (finished)
+                    {
+                        if (JSON_HEDLEY_UNLIKELY(!sax->end_array()))
+                        {
+                            return false;
+                        }
+                        const bool extra_close = top.extra_close_object;
+                        stack.pop_back();
+                        if (extra_close && JSON_HEDLEY_UNLIKELY(!sax->end_object()))
+                        {
+                            return false;
+                        }
+                        if (produce())
+                        {
+                            return true;
+                        }
+                        continue;
+                    }
+                }
+                // else: object frame with a key already read; fall through
+                // to read that key's value below.
+            }
+
+            char_int_type prefix;
+            if (!stack.empty())
+            {
+                ubjson_container_frame& top = stack.back();
+                if (top.fixed_type != 0)
+                {
+                    prefix = top.fixed_type;
+                }
+                else if (!top.is_object && top.indefinite)
+                {
+                    prefix = current;
+                }
+                else
+                {
+                    prefix = get_ignore_noop();
+                }
+            }
+            else
+            {
+                prefix = fetch_char ? get_ignore_noop() : current;
+            }
+
+            switch (prefix)
+            {
+                case char_traits<char_type>::eof():  // EOF
+                    return unexpect_eof(input_format, "value");
+
+                case 'T':  // true
+                    JSON_UBJSON_VALUE(sax->boolean(true));
+                case 'F':  // false
+                    JSON_UBJSON_VALUE(sax->boolean(false));
+
+                case 'Z':  // null
+                    JSON_UBJSON_VALUE(sax->null());
+
+                case 'B':  // byte
+                {
+                    if (input_format != input_format_t::bjdata)
+                    {
+                        break;
+                    }
+                    std::uint8_t number{};
+                    JSON_UBJSON_VALUE(get_number(input_format, number) && sax->number_unsigned(number));
+                }
+
+                case 'U':
+                {
+                    std::uint8_t number{};
+                    JSON_UBJSON_VALUE(get_number(input_format, number) && sax->number_unsigned(number));
+                }
+
+                case 'i':
+                {
+                    std::int8_t number{};
+                    JSON_UBJSON_VALUE(get_number(input_format, number) && sax->number_integer(number));
+                }
+
+                case 'I':
+                {
+                    std::int16_t number{};
+                    JSON_UBJSON_VALUE(get_number(input_format, number) && sax->number_integer(number));
+                }
+
+                case 'l':
+                {
+                    std::int32_t number{};
+                    JSON_UBJSON_VALUE(get_number(input_format, number) && sax->number_integer(number));
+                }
+
+                case 'L':
+                {
+                    std::int64_t number{};
+                    JSON_UBJSON_VALUE(get_number(input_format, number) && sax->number_integer(number));
+                }
+
+                case 'u':
+                {
+                    if (input_format != input_format_t::bjdata)
+                    {
+                        break;
+                    }
+                    std::uint16_t number{};
+                    JSON_UBJSON_VALUE(get_number(input_format, number) && sax->number_unsigned(number));
+                }
+
+                case 'm':
+                {
+                    if (input_format != input_format_t::bjdata)
+                    {
+                        break;
+                    }
+                    std::uint32_t number{};
+                    JSON_UBJSON_VALUE(get_number(input_format, number) && sax->number_unsigned(number));
+                }
+
+                case 'M':
+                {
+                    if (input_format != input_format_t::bjdata)
+                    {
+                        break;
+                    }
+                    std::uint64_t number{};
+                    JSON_UBJSON_VALUE(get_number(input_format, number) && sax->number_unsigned(number));
+                }
+
+                case 'h':
+                {
+                    if (input_format != input_format_t::bjdata)
+                    {
+                        break;
+                    }
+                    const auto byte1_raw = get();
+                    if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "number")))
+                    {
+                        return false;
+                    }
+                    const auto byte2_raw = get();
+                    if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "number")))
+                    {
+                        return false;
+                    }
+
+                    const auto byte1 = static_cast<unsigned char>(byte1_raw);
+                    const auto byte2 = static_cast<unsigned char>(byte2_raw);
+
+                    // Code from RFC 7049, Appendix D, Figure 3:
+                    // As half-precision floating-point numbers were only added
+                    // to IEEE 754 in 2008, today's programming platforms often
+                    // still only have limited support for them. It is very
+                    // easy to include at least decoding support for them even
+                    // without such support. An example of a small decoder for
+                    // half-precision floating-point numbers in the C language
+                    // is shown in Fig. 3.
+                    const auto half = static_cast<unsigned int>((byte2 << 8u) + byte1);
+                    const double val = [&half]
+                    {
+                        const int exp = (half >> 10u) & 0x1Fu;
+                        const unsigned int mant = half & 0x3FFu;
+                        JSON_ASSERT(0 <= exp&& exp <= 32);
+                        JSON_ASSERT(mant <= 1024);
+                        switch (exp)
+                        {
+                            case 0:
+                                return std::ldexp(mant, -24);
+                            case 31:
+                                return (mant == 0)
+                                ? std::numeric_limits<double>::infinity()
+                                : std::numeric_limits<double>::quiet_NaN();
+                            default:
+                                return std::ldexp(mant + 1024, exp - 25);
+                        }
+                    }();
+                    JSON_UBJSON_VALUE(sax->number_float((half & 0x8000u) != 0
+                                                        ? static_cast<number_float_t>(-val)
+                                                        : static_cast<number_float_t>(val), ""));
+                }
+
+                case 'd':
+                {
+                    float number{};
+                    JSON_UBJSON_VALUE(get_number(input_format, number) && sax->number_float(static_cast<number_float_t>(number), ""));
+                }
+
+                case 'D':
+                {
+                    double number{};
+                    JSON_UBJSON_VALUE(get_number(input_format, number) && sax->number_float(static_cast<number_float_t>(number), ""));
+                }
+
+                case 'H':
+                {
+                    JSON_UBJSON_VALUE(get_ubjson_high_precision_number());
+                }
+
+                case 'C':  // char
+                {
+                    get();
+                    if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "char")))
+                    {
+                        return false;
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(current > 127))
+                    {
+                        auto last_token = get_token_string();
+                        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                                exception_message(input_format, concat("byte after 'C' must be in range 0x00..0x7F; last byte: 0x", last_token), "char"), nullptr));
+                    }
+                    string_t s(1, static_cast<typename string_t::value_type>(current));
+                    JSON_UBJSON_VALUE(sax->string(s));
+                }
+
+                case 'S':  // string
+                {
+                    string_t s;
+                    JSON_UBJSON_VALUE(get_ubjson_string(s) && sax->string(s));
+                }
+
+                case '[':  // array
+                    JSON_UBJSON_ENTER(enter_array);
+
+                case '{':  // object
+                    JSON_UBJSON_ENTER(enter_object);
+
+                default: // anything else
+                    break;
+            }
+            auto last_token = get_token_string();
+            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format, "invalid byte: 0x" + last_token, "value"), nullptr));
+        }
+
+#undef JSON_UBJSON_VALUE
+#undef JSON_UBJSON_ENTER
     }
 
     /*!
@@ -12958,406 +13595,6 @@ class binary_reader
         return true;
     }
 
-    /*!
-    @param prefix  the previously read or set type prefix
-    @return whether value creation completed
-    */
-    bool get_ubjson_value(const char_int_type prefix)
-    {
-        const depth_guard dg(*this);
-        if (JSON_HEDLEY_UNLIKELY(depth > max_depth))
-        {
-            return sax->parse_error(chars_read, get_token_string(),
-                                    parse_error::create(116, chars_read,
-                                            exception_message(input_format, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
-        }
-
-        switch (prefix)
-        {
-            case char_traits<char_type>::eof():  // EOF
-                return unexpect_eof(input_format, "value");
-
-            case 'T':  // true
-                return sax->boolean(true);
-            case 'F':  // false
-                return sax->boolean(false);
-
-            case 'Z':  // null
-                return sax->null();
-
-            case 'B':  // byte
-            {
-                if (input_format != input_format_t::bjdata)
-                {
-                    break;
-                }
-                std::uint8_t number{};
-                return get_number(input_format, number) && sax->number_unsigned(number);
-            }
-
-            case 'U':
-            {
-                std::uint8_t number{};
-                return get_number(input_format, number) && sax->number_unsigned(number);
-            }
-
-            case 'i':
-            {
-                std::int8_t number{};
-                return get_number(input_format, number) && sax->number_integer(number);
-            }
-
-            case 'I':
-            {
-                std::int16_t number{};
-                return get_number(input_format, number) && sax->number_integer(number);
-            }
-
-            case 'l':
-            {
-                std::int32_t number{};
-                return get_number(input_format, number) && sax->number_integer(number);
-            }
-
-            case 'L':
-            {
-                std::int64_t number{};
-                return get_number(input_format, number) && sax->number_integer(number);
-            }
-
-            case 'u':
-            {
-                if (input_format != input_format_t::bjdata)
-                {
-                    break;
-                }
-                std::uint16_t number{};
-                return get_number(input_format, number) && sax->number_unsigned(number);
-            }
-
-            case 'm':
-            {
-                if (input_format != input_format_t::bjdata)
-                {
-                    break;
-                }
-                std::uint32_t number{};
-                return get_number(input_format, number) && sax->number_unsigned(number);
-            }
-
-            case 'M':
-            {
-                if (input_format != input_format_t::bjdata)
-                {
-                    break;
-                }
-                std::uint64_t number{};
-                return get_number(input_format, number) && sax->number_unsigned(number);
-            }
-
-            case 'h':
-            {
-                if (input_format != input_format_t::bjdata)
-                {
-                    break;
-                }
-                const auto byte1_raw = get();
-                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "number")))
-                {
-                    return false;
-                }
-                const auto byte2_raw = get();
-                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "number")))
-                {
-                    return false;
-                }
-
-                const auto byte1 = static_cast<unsigned char>(byte1_raw);
-                const auto byte2 = static_cast<unsigned char>(byte2_raw);
-
-                // Code from RFC 7049, Appendix D, Figure 3:
-                // As half-precision floating-point numbers were only added
-                // to IEEE 754 in 2008, today's programming platforms often
-                // still only have limited support for them. It is very
-                // easy to include at least decoding support for them even
-                // without such support. An example of a small decoder for
-                // half-precision floating-point numbers in the C language
-                // is shown in Fig. 3.
-                const auto half = static_cast<unsigned int>((byte2 << 8u) + byte1);
-                const double val = [&half]
-                {
-                    const int exp = (half >> 10u) & 0x1Fu;
-                    const unsigned int mant = half & 0x3FFu;
-                    JSON_ASSERT(0 <= exp&& exp <= 32);
-                    JSON_ASSERT(mant <= 1024);
-                    switch (exp)
-                    {
-                        case 0:
-                            return std::ldexp(mant, -24);
-                        case 31:
-                            return (mant == 0)
-                            ? std::numeric_limits<double>::infinity()
-                            : std::numeric_limits<double>::quiet_NaN();
-                        default:
-                            return std::ldexp(mant + 1024, exp - 25);
-                    }
-                }();
-                return sax->number_float((half & 0x8000u) != 0
-                                         ? static_cast<number_float_t>(-val)
-                                         : static_cast<number_float_t>(val), "");
-            }
-
-            case 'd':
-            {
-                float number{};
-                return get_number(input_format, number) && sax->number_float(static_cast<number_float_t>(number), "");
-            }
-
-            case 'D':
-            {
-                double number{};
-                return get_number(input_format, number) && sax->number_float(static_cast<number_float_t>(number), "");
-            }
-
-            case 'H':
-            {
-                return get_ubjson_high_precision_number();
-            }
-
-            case 'C':  // char
-            {
-                get();
-                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "char")))
-                {
-                    return false;
-                }
-                if (JSON_HEDLEY_UNLIKELY(current > 127))
-                {
-                    auto last_token = get_token_string();
-                    return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                            exception_message(input_format, concat("byte after 'C' must be in range 0x00..0x7F; last byte: 0x", last_token), "char"), nullptr));
-                }
-                string_t s(1, static_cast<typename string_t::value_type>(current));
-                return sax->string(s);
-            }
-
-            case 'S':  // string
-            {
-                string_t s;
-                return get_ubjson_string(s) && sax->string(s);
-            }
-
-            case '[':  // array
-                return get_ubjson_array();
-
-            case '{':  // object
-                return get_ubjson_object();
-
-            default: // anything else
-                break;
-        }
-        auto last_token = get_token_string();
-        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format, "invalid byte: 0x" + last_token, "value"), nullptr));
-    }
-
-    /*!
-    @return whether array creation completed
-    */
-    bool get_ubjson_array()
-    {
-        std::pair<std::size_t, char_int_type> size_and_type;
-        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type)))
-        {
-            return false;
-        }
-
-        // if bit-8 of size_and_type.second is set to 1, encode bjdata ndarray as an object in JData annotated array format (https://github.com/NeuroJSON/jdata):
-        // {"_ArrayType_" : "typeid", "_ArraySize_" : [n1, n2, ...], "_ArrayData_" : [v1, v2, ...]}
-
-        if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
-        {
-            size_and_type.second &= ~(static_cast<char_int_type>(1) << 8);  // use bit 8 to indicate ndarray, here we remove the bit to restore the type marker
-            auto it = std::lower_bound(bjd_types_map.begin(), bjd_types_map.end(), size_and_type.second, [](const bjd_type & p, char_int_type t)
-            {
-                return p.first < t;
-            });
-            string_t key = "_ArrayType_";
-            if (JSON_HEDLEY_UNLIKELY(it == bjd_types_map.end() || it->first != size_and_type.second))
-            {
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(input_format, "invalid byte: 0x" + last_token, "type"), nullptr));
-            }
-
-            string_t type = it->second; // sax->string() takes a reference
-            if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->string(type)))
-            {
-                return false;
-            }
-
-            if (size_and_type.second == 'C' || size_and_type.second == 'B')
-            {
-                size_and_type.second = 'U';
-            }
-
-            key = "_ArrayData_";
-            if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->start_array(size_and_type.first) ))
-            {
-                return false;
-            }
-
-            for (std::size_t i = 0; i < size_and_type.first; ++i)
-            {
-                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_value(size_and_type.second)))
-                {
-                    return false;
-                }
-            }
-
-            return (sax->end_array() && sax->end_object());
-        }
-
-        // If BJData type marker is 'B' decode as binary
-        if (input_format == input_format_t::bjdata && size_and_type.first != npos && size_and_type.second == 'B')
-        {
-            binary_t result;
-            return get_binary(input_format, size_and_type.first, result) && sax->binary(result);
-        }
-
-        if (size_and_type.first != npos)
-        {
-            if (JSON_HEDLEY_UNLIKELY(!sax->start_array(size_and_type.first)))
-            {
-                return false;
-            }
-
-            if (size_and_type.second != 0)
-            {
-                if (size_and_type.second != 'N')
-                {
-                    for (std::size_t i = 0; i < size_and_type.first; ++i)
-                    {
-                        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_value(size_and_type.second)))
-                        {
-                            return false;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                for (std::size_t i = 0; i < size_and_type.first; ++i)
-                {
-                    if (JSON_HEDLEY_UNLIKELY(!parse_ubjson_internal()))
-                    {
-                        return false;
-                    }
-                }
-            }
-        }
-        else
-        {
-            if (JSON_HEDLEY_UNLIKELY(!sax->start_array(detail::unknown_size())))
-            {
-                return false;
-            }
-
-            while (current != ']')
-            {
-                if (JSON_HEDLEY_UNLIKELY(!parse_ubjson_internal(false)))
-                {
-                    return false;
-                }
-                get_ignore_noop();
-            }
-        }
-
-        return sax->end_array();
-    }
-
-    /*!
-    @return whether object creation completed
-    */
-    bool get_ubjson_object()
-    {
-        std::pair<std::size_t, char_int_type> size_and_type;
-        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type)))
-        {
-            return false;
-        }
-
-        // do not accept ND-array size in objects in BJData
-        if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
-        {
-            auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                    exception_message(input_format, "BJData object does not support ND-array size in optimized format", "object"), nullptr));
-        }
-
-        string_t key;
-        if (size_and_type.first != npos)
-        {
-            if (JSON_HEDLEY_UNLIKELY(!sax->start_object(size_and_type.first)))
-            {
-                return false;
-            }
-
-            if (size_and_type.second != 0)
-            {
-                for (std::size_t i = 0; i < size_and_type.first; ++i)
-                {
-                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key) || !sax->key(key)))
-                    {
-                        return false;
-                    }
-                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_value(size_and_type.second)))
-                    {
-                        return false;
-                    }
-                    key.clear();
-                }
-            }
-            else
-            {
-                for (std::size_t i = 0; i < size_and_type.first; ++i)
-                {
-                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key) || !sax->key(key)))
-                    {
-                        return false;
-                    }
-                    if (JSON_HEDLEY_UNLIKELY(!parse_ubjson_internal()))
-                    {
-                        return false;
-                    }
-                    key.clear();
-                }
-            }
-        }
-        else
-        {
-            if (JSON_HEDLEY_UNLIKELY(!sax->start_object(detail::unknown_size())))
-            {
-                return false;
-            }
-
-            while (current != '}')
-            {
-                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key, false) || !sax->key(key)))
-                {
-                    return false;
-                }
-                if (JSON_HEDLEY_UNLIKELY(!parse_ubjson_internal()))
-                {
-                    return false;
-                }
-                get_ignore_noop();
-                key.clear();
-            }
-        }
-
-        return sax->end_object();
-    }
-
     // Note, no reader for UBJSON binary types is implemented because they do
     // not exist
 
@@ -13716,19 +13953,19 @@ class binary_reader
     static JSON_INLINE_VARIABLE constexpr std::size_t npos = detail::unknown_size();
 
     /// maximum allowed nesting depth of arrays/objects for the binary input
-    /// formats; guards the recursive-descent parsers against stack overflow
-    /// on maliciously/accidentally deeply nested input.
+    /// formats.
     ///
-    /// This has to satisfy two constraints in tension: high enough that it
-    /// doesn't reject legitimate input (the library's own roundtrip test
-    /// fixture, tests/data/json_testsuite/sample.json, nests 458 levels
-    /// deep), but low enough that reaching it doesn't itself exhaust the
-    /// native call stack - each nesting level costs multiple real call
-    /// frames, and unoptimized/Debug builds (notably MSVC Debug, which
-    /// crashed CI at max_depth=1024 - see #5104) use substantially more
-    /// stack per frame than an optimized build. 600 leaves comfortable
-    /// margin on both sides of that range.
-    static JSON_INLINE_VARIABLE constexpr std::size_t max_depth = 600;
+    /// The container-parsing loops in this file are iterative (see e.g.
+    /// @ref cbor_container_frame): nesting depth is tracked as the size of a
+    /// heap-allocated std::vector, not native call-stack recursion, so this
+    /// limit is no longer a stack-safety mechanism - arbitrarily deep input
+    /// can no longer overflow the stack regardless of this value. It is kept
+    /// purely as a sanity/DoS cap on absurd inputs (e.g. a malicious payload
+    /// nesting billions of levels deep to exhaust memory/time), so it can
+    /// afford to be generous; it is far above the library's own deepest
+    /// legitimate test fixture (tests/data/json_testsuite/sample.json, 458
+    /// levels).
+    static JSON_INLINE_VARIABLE constexpr std::size_t max_depth = 100000;
 
     /// input adapter
     InputAdapterType ia;
@@ -13738,9 +13975,6 @@ class binary_reader
 
     /// the number of characters read
     std::size_t chars_read = 0;
-
-    /// current container nesting depth, see @ref max_depth and @ref depth_guard
-    std::size_t depth = 0;
 
     /// whether we can assume little endianness
     const bool is_little_endian = little_endianness();

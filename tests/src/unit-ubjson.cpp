@@ -1641,19 +1641,22 @@ TEST_CASE("UBJSON")
 
         SECTION("stack overflow via deeply nested input (issue #5104)")
         {
-            // 2000 nested UBJSON arrays; the recursive-descent parser must reject
-            // this with a clean parse_error once the nesting exceeds the depth
-            // limit, rather than exhausting the native call stack.
-            std::string payload(2000, '[');
+            // 100010 nested UBJSON arrays - comfortably past max_depth (100000)
+            // and far beyond any depth a recursive-descent parser could ever
+            // have survived; the (now iterative, heap-stack based) parser must
+            // reject this with a clean parse_error once the nesting exceeds the
+            // depth limit, rather than exhausting the native call stack.
+            const int nesting = 100010;
+            std::string payload(static_cast<std::size_t>(nesting), '[');
             payload += "Z";
-            for (int i = 0; i < 2000; ++i)
+            for (int i = 0; i < nesting; ++i)
             {
                 payload += ']';
             }
             std::vector<uint8_t> const v(payload.begin(), payload.end());
             json _;
             CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v),
-                                 "[json.exception.parse_error.116] parse error at byte 601: syntax error while parsing UBJSON value: maximum depth of nested arrays/objects exceeded",
+                                 "[json.exception.parse_error.116] parse error at byte 100002: syntax error while parsing UBJSON value: maximum depth of nested arrays/objects exceeded",
                                  json::parse_error&);
             CHECK(json::from_ubjson(v, true, false).is_discarded());
         }
