@@ -131,6 +131,16 @@ As described [above](#parse-errors-reading-non-ascii-characters), the library as
 
 ## Usage
 
+### Official npm package
+
+!!! question
+
+    Is there an official npm package for this library?
+
+No. This project does not publish an official npm package. Any npm package named `nlohmann-json` (or similar) is not
+maintained or endorsed by this project. See [Package Managers](../integration/package_managers.md#npm) for supported
+integration options.
+
 ### Thread safety
 
 !!! question
