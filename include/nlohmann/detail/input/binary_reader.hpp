@@ -540,7 +540,8 @@ class binary_reader
             }
             if (len == 0)
             {
-                return (is_object ? sax->end_object() : sax->end_array()) ? 2 : 0;
+                const bool ended = is_object ? sax->end_object() : sax->end_array();
+                return ended ? 2 : 0;
             }
             if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
             {
@@ -1370,7 +1371,8 @@ read_value:
             }
             if (len == 0)
             {
-                return (is_object ? sax->end_object() : sax->end_array()) ? 2 : 0;
+                const bool ended = is_object ? sax->end_object() : sax->end_array();
+                return ended ? 2 : 0;
             }
             if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
             {
@@ -2072,7 +2074,7 @@ read_value:
     bool parse_ubjson_internal(const bool get_char = true)
     {
         std::vector<ubjson_container_frame> stack;
-        bool fetch_char = get_char;
+        const bool fetch_char = get_char;
 
         auto produce = [&]() -> bool
         {
