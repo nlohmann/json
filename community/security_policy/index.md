@@ -10,6 +10,10 @@ We will send a response indicating the next steps in handling your report. After
 
 For vulnerabilities in third-party dependencies or modules, please report them directly to the respective maintainers.
 
+## Unofficial packages
+
+This project does not publish an official npm package. The npm package [`nlohmann-json`](https://www.npmjs.com/package/nlohmann-json) (or similarly named packages) is not maintained or endorsed by this project. See the [package managers documentation](https://json.nlohmann.me/integration/package_managers/#npm) for supported integration options.
+
 ## Additional Resources
 
 - Explore security-related topics and contribute to tools and projects through [GitHub Security Lab](https://securitylab.github.com/).
