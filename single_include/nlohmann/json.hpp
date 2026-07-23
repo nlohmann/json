@@ -12446,7 +12446,22 @@ class binary_reader
                          character should be considered instead
 
     @return whether a valid UBJSON value was passed to the SAX parser
+
+    @note Unlike CBOR/MessagePack, UBJSON needs get_ubjson_value() (which
+    carries the @ref depth_guard) to be reachable both from here *and*
+    directly with an already-known type marker (the optimized `$type#count`
+    container path), so the dispatch cannot simply be folded into this
+    function the way parse_cbor_internal()/parse_msgpack_internal() do. That
+    leaves this thin wrapper as a genuine extra stack frame on every ordinary
+    array/object element, on top of get_ubjson_value() and
+    get_ubjson_array()/get_ubjson_object() - one more frame per nesting level
+    than CBOR/MessagePack/BSON need for the same @ref max_depth. Force-inlining
+    it (rather than trusting Debug/-O0 builds to do so) keeps UBJSON's
+    recursion cost per level in line with the other formats' and was
+    necessary to stop deeply nested UBJSON input from overflowing the stack
+    well before max_depth is reached in MSVC Debug builds (#5104).
     */
+    JSON_HEDLEY_ALWAYS_INLINE
     bool parse_ubjson_internal(const bool get_char = true)
     {
         return get_ubjson_value(get_char ? get_ignore_noop() : current);
