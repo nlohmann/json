@@ -208,7 +208,7 @@ class binary_reader
 
         while (true)
         {
-            bson_container_frame& top = stack.back();
+            const bson_container_frame& top = stack.back();
 
             const auto element_type = get();
             if (element_type == 0)
@@ -2346,7 +2346,7 @@ read_value:
             char_int_type prefix;
             if (!stack.empty())
             {
-                ubjson_container_frame& top = stack.back();
+                const ubjson_container_frame& top = stack.back();
                 if (top.fixed_type != 0)
                 {
                     prefix = top.fixed_type;

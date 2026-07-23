@@ -876,7 +876,7 @@ TEST_CASE("BSON regressions")
         const int n = 100010;
         const std::size_t header_size = 7; // 4 (size) + 3 (0x03, 'a', 0x00)
         const std::size_t inner_size = 5;
-        const std::size_t total = static_cast<std::size_t>(n) * header_size + inner_size + static_cast<std::size_t>(n);
+        const std::size_t total = (static_cast<std::size_t>(n) * header_size) + inner_size + static_cast<std::size_t>(n);
         std::vector<std::uint8_t> inner(total, 0x00);
 
         std::vector<std::int32_t> size_at(static_cast<std::size_t>(n) + 1);
@@ -924,7 +924,7 @@ TEST_CASE("BSON regressions")
         const int n = 100010;
         const std::size_t header_size = 7; // 4 (size) + 3 (0x04, '0', 0x00)
         const std::size_t inner_size = 5;
-        const std::size_t total = static_cast<std::size_t>(n) * header_size + inner_size + static_cast<std::size_t>(n);
+        const std::size_t total = (static_cast<std::size_t>(n) * header_size) + inner_size + static_cast<std::size_t>(n);
         std::vector<std::uint8_t> inner(total, 0x00);
 
         std::vector<std::int32_t> size_at(static_cast<std::size_t>(n) + 1);
