@@ -170,7 +170,24 @@ class binary_reader
     bool parse_bson_internal()
     {
         std::int32_t document_size{};
-        get_number<std::int32_t, true>(input_format_t::bson, document_size);
+        if (JSON_HEDLEY_UNLIKELY((!get_number<std::int32_t, true>(input_format_t::bson, document_size))))
+        {
+            return false;
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(document_size < 5))
+        {
+            auto last_token = get_token_string();
+            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format_t::bson,
+                                            concat("BSON document size must be at least 5, is ", std::to_string(document_size)),
+                                            "document size"), nullptr));
+        }
+
+        // The document begins at the size field and ends document_size bytes later
+        // (including the size field itself and the trailing 0x00 terminator).
+        const std::size_t document_start = chars_read - sizeof(std::int32_t);
+        const std::size_t expected_end = document_start + static_cast<std::size_t>(document_size);
 
         if (JSON_HEDLEY_UNLIKELY(!sax->start_object(detail::unknown_size())))
         {
@@ -180,6 +197,15 @@ class binary_reader
         if (JSON_HEDLEY_UNLIKELY(!parse_bson_element_list(/*is_array*/false)))
         {
             return false;
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(chars_read != expected_end))
+        {
+            auto last_token = get_token_string();
+            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format_t::bson,
+                                            "BSON document terminator did not land at declared document size",
+                                            "document"), nullptr));
         }
 
         return sax->end_object();
@@ -231,7 +257,21 @@ class binary_reader
                                     exception_message(input_format_t::bson, concat("string length must be at least 1, is ", std::to_string(len)), "string"), nullptr));
         }
 
-        return get_string(input_format_t::bson, len - static_cast<NumberType>(1), result) && get() != char_traits<char_type>::eof();
+        if (JSON_HEDLEY_UNLIKELY(!get_string(input_format_t::bson, len - static_cast<NumberType>(1), result)))
+        {
+            return false;
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(get() != 0x00))
+        {
+            auto last_token = get_token_string();
+            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format_t::bson,
+                                            "BSON string is not null-terminated",
+                                            "string"), nullptr));
+        }
+
+        return true;
     }
 
     /*!
@@ -398,7 +438,24 @@ class binary_reader
     bool parse_bson_array()
     {
         std::int32_t document_size{};
-        get_number<std::int32_t, true>(input_format_t::bson, document_size);
+        if (JSON_HEDLEY_UNLIKELY((!get_number<std::int32_t, true>(input_format_t::bson, document_size))))
+        {
+            return false;
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(document_size < 5))
+        {
+            auto last_token = get_token_string();
+            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format_t::bson,
+                                            concat("BSON document size must be at least 5, is ", std::to_string(document_size)),
+                                            "document size"), nullptr));
+        }
+
+        // The document begins at the size field and ends document_size bytes later
+        // (including the size field itself and the trailing 0x00 terminator).
+        const std::size_t document_start = chars_read - sizeof(std::int32_t);
+        const std::size_t expected_end = document_start + static_cast<std::size_t>(document_size);
 
         if (JSON_HEDLEY_UNLIKELY(!sax->start_array(detail::unknown_size())))
         {
@@ -408,6 +465,15 @@ class binary_reader
         if (JSON_HEDLEY_UNLIKELY(!parse_bson_element_list(/*is_array*/true)))
         {
             return false;
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(chars_read != expected_end))
+        {
+            auto last_token = get_token_string();
+            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format_t::bson,
+                                            "BSON array terminator did not land at declared array size",
+                                            "array"), nullptr));
         }
 
         return sax->end_array();
