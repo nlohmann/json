@@ -930,6 +930,12 @@ If you are using [CocoaPods](https://cocoapods.org), you can use the library by 
 to your podfile (see [an example](https://bitbucket.org/benman/nlohmann_json-cocoapod/src/master/)). Please file issues
 [here](https://bitbucket.org/benman/nlohmann_json-cocoapod/issues?status=new&status=open).
 
+## npm
+
+This project does not publish an official [npm](https://www.npmjs.com) package. The npm package
+[`nlohmann-json`](https://www.npmjs.com/package/nlohmann-json) (or similarly named packages) is not maintained or
+endorsed by this project. Use one of the package managers listed above, or integrate the single header directly.
+
 ## ESP-IDF and PlatformIO
 
 There is no official package published to the [ESP-IDF Component Registry](https://components.espressif.com) or the
