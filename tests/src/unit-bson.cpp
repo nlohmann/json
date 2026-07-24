@@ -961,6 +961,62 @@ TEST_CASE("BSON regressions")
     }
 }
 
+TEST_CASE("BSON document size mismatch")
+{
+    json _;
+
+    SECTION("top-level document declaring more bytes than it contains")
+    {
+        // empty object, but the length prefix claims 6 bytes instead of 5
+        std::vector<std::uint8_t> const input = {0x06, 0x00, 0x00, 0x00, 0x00};
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: document size 6 does not match the number of bytes read (5)", json::parse_error&);
+        CHECK(json::from_bson(input, true, false).is_discarded());
+    }
+
+    SECTION("top-level document with a negative size")
+    {
+        std::vector<std::uint8_t> const input = {0xFF, 0xFF, 0xFF, 0xFF, 0x00};
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: document size -1 does not match the number of bytes read (5)", json::parse_error&);
+        CHECK(json::from_bson(input, true, false).is_discarded());
+    }
+
+    SECTION("embedded document whose size disagrees with its terminator")
+    {
+        // the embedded document "d" declares 0x7FFFFFFF bytes but its 0x00
+        // terminator falls right after {"a":null}; the length prefix would
+        // otherwise let the following "h" element be read as a member of the
+        // enclosing document instead of "d"
+        std::vector<std::uint8_t> const input =
+        {
+            0x00, 0x00, 0x00, 0x00, // outer size
+            0x03, 'd', 0x00,        // entry: embedded document "d"
+            0xFF, 0xFF, 0xFF, 0x7F, //   embedded size 0x7FFFFFFF
+            0x0A, 'a', 0x00,        //   entry: null "a"
+            0x00,                   //   embedded end marker
+            0x08, 'h', 0x00, 0x01,  // entry: bool "h" = true
+            0x00                    // outer end marker
+        };
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 15: syntax error while parsing BSON document: document size 2147483647 does not match the number of bytes read (8)", json::parse_error&);
+        CHECK(json::from_bson(input, true, false).is_discarded());
+    }
+
+    SECTION("embedded array whose size disagrees with its terminator")
+    {
+        // array [42] is 12 bytes, but the length prefix claims 13
+        std::vector<std::uint8_t> const input =
+        {
+            0x00, 0x00, 0x00, 0x00, // outer size
+            0x04, 'a', 0x00,        // entry: array "a"
+            0x0D, 0x00, 0x00, 0x00, //   array size 13 (real is 12)
+            0x10, '0', 0x00, 0x2A, 0x00, 0x00, 0x00, //   entry: int32 "0" = 42
+            0x00,                   //   array end marker
+            0x00                    // outer end marker
+        };
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 19: syntax error while parsing BSON document: document size 13 does not match the number of bytes read (12)", json::parse_error&);
+        CHECK(json::from_bson(input, true, false).is_discarded());
+    }
+}
+
 TEST_CASE("BSON numerical data")
 {
     SECTION("number")

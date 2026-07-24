@@ -10724,12 +10724,42 @@ class binary_reader
     SAX array interface has no use for). Every BSON container is
     terminator-based (there is no known-element-count form), so unlike CBOR/
     MessagePack/UBJSON this frame needs no length/indefinite bookkeeping at
-    all.
+    all. @ref document_start / @ref document_size are recorded so @ref
+    check_bson_document_size can validate this frame's declared size once its
+    terminator is reached.
     */
     struct bson_container_frame
     {
         bool is_object; ///< false: array, true: object/document
+        std::size_t document_start; ///< chars_read before this document/array's size prefix
+        std::int32_t document_size; ///< this document/array's declared size
     };
+
+    /*!
+    @brief Validate a BSON document's declared size against the bytes read.
+
+    A BSON document starts with an int32 that counts its own total length in
+    bytes, including that prefix and the trailing 0x00. The reader is driven
+    by the terminator rather than the declared length, so without this check a
+    nested document could declare a length that disagrees with where its
+    terminator actually falls and quietly hand the bytes in between to the
+    enclosing document. A well-formed document is at least 5 bytes (the prefix
+    plus the terminator); the equality also rejects those impossible sizes,
+    since at least 5 bytes are always consumed.
+
+    @param[in] document_start  value of chars_read before the size prefix
+    @param[in] document_size   the declared document size
+    @return whether the declared size matches the number of bytes read
+    */
+    bool check_bson_document_size(const std::size_t document_start, const std::int32_t document_size)
+    {
+        if (JSON_HEDLEY_UNLIKELY(document_size < 0 || static_cast<std::size_t>(document_size) != chars_read - document_start))
+        {
+            return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
+                                    exception_message(input_format_t::bson, concat("document size ", std::to_string(document_size), " does not match the number of bytes read (", std::to_string(chars_read - document_start), ")"), "document"), nullptr));
+        }
+        return true;
+    }
 
     /*!
     @brief Reads in a BSON-object and passes it to the SAX-parser.
@@ -10739,21 +10769,24 @@ class binary_reader
     {
         std::vector<bson_container_frame> stack;
 
-        // reads the 4-byte document-size prefix (its value is unused beyond
-        // consuming those bytes, matching the pre-existing behavior) and
-        // emits the corresponding SAX start_object()/start_array() event
-        auto begin_document = [&](const bool is_object) -> bool
+        // reads the 4-byte document-size prefix, records where it started
+        // (both are needed by @ref check_bson_document_size once this
+        // document/array's terminator is reached), and emits the
+        // corresponding SAX start_object()/start_array() event
+        auto begin_document = [&](const bool is_object, std::size_t& document_start, std::int32_t& document_size) -> bool
         {
-            std::int32_t document_size{};
+            document_start = chars_read;
             get_number<std::int32_t, true>(input_format_t::bson, document_size);
             return is_object ? sax->start_object(detail::unknown_size()) : sax->start_array(detail::unknown_size());
         };
 
-        if (JSON_HEDLEY_UNLIKELY(!begin_document(true)))
+        std::size_t document_start{};
+        std::int32_t document_size{};
+        if (JSON_HEDLEY_UNLIKELY(!begin_document(true, document_start, document_size)))
         {
             return false;
         }
-        stack.push_back(bson_container_frame{true});
+        stack.push_back(bson_container_frame{true, document_start, document_size});
 
         while (true)
         {
@@ -10763,6 +10796,10 @@ class binary_reader
             if (element_type == 0)
             {
                 // 0x00 terminates the current document/array
+                if (JSON_HEDLEY_UNLIKELY(!check_bson_document_size(top.document_start, top.document_size)))
+                {
+                    return false;
+                }
                 if (JSON_HEDLEY_UNLIKELY(!(top.is_object ? sax->end_object() : sax->end_array())))
                 {
                     return false;
@@ -10816,7 +10853,9 @@ class binary_reader
 
                 case 0x03: // object
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!begin_document(true)))
+                    std::size_t nested_document_start{};
+                    std::int32_t nested_document_size{};
+                    if (JSON_HEDLEY_UNLIKELY(!begin_document(true, nested_document_start, nested_document_size)))
                     {
                         return false;
                     }
@@ -10826,13 +10865,15 @@ class binary_reader
                                                 parse_error::create(116, chars_read,
                                                         exception_message(input_format_t::bson, "maximum depth of nested objects/arrays exceeded", "value"), nullptr));
                     }
-                    stack.push_back(bson_container_frame{true});
+                    stack.push_back(bson_container_frame{true, nested_document_start, nested_document_size});
                     continue;
                 }
 
                 case 0x04: // array
                 {
-                    if (JSON_HEDLEY_UNLIKELY(!begin_document(false)))
+                    std::size_t nested_document_start{};
+                    std::int32_t nested_document_size{};
+                    if (JSON_HEDLEY_UNLIKELY(!begin_document(false, nested_document_start, nested_document_size)))
                     {
                         return false;
                     }
@@ -10842,7 +10883,7 @@ class binary_reader
                                                 parse_error::create(116, chars_read,
                                                         exception_message(input_format_t::bson, "maximum depth of nested objects/arrays exceeded", "value"), nullptr));
                     }
-                    stack.push_back(bson_container_frame{false});
+                    stack.push_back(bson_container_frame{false, nested_document_start, nested_document_size});
                     continue;
                 }
 
