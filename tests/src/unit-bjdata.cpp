@@ -2587,6 +2587,34 @@ TEST_CASE("BJData")
                 CHECK(json::to_bjdata(json::from_bjdata(v_B), true, true) == v_B);
             }
 
+            SECTION("ndarray with data not matching _ArrayType_ is written as an object")
+            {
+                // A JData-annotated object is only serialized as an ndarray when
+                // its _ArrayData_ elements are actually stored as the number kind
+                // named by _ArrayType_. Otherwise the writer would read the wrong
+                // union member (e.g. a std::string's heap pointer as a uint64) and
+                // emit it, so such an object falls back to a plain object encoding
+                // that still round-trips.
+
+                // string data declared as a uint64 array
+                json const j_str = json({{"_ArrayType_", "uint64"}, {"_ArraySize_", {1}}, {"_ArrayData_", {"pointer"}}});
+                const auto out_str = json::to_bjdata(j_str);
+                CHECK(out_str.at(0) == '{');
+                CHECK(json::from_bjdata(out_str) == j_str);
+
+                // integer data declared as a double array
+                json const j_float = json({{"_ArrayType_", "double"}, {"_ArraySize_", {2}}, {"_ArrayData_", {1, 2}}});
+                const auto out_float = json::to_bjdata(j_float);
+                CHECK(out_float.at(0) == '{');
+                CHECK(json::from_bjdata(out_float) == j_float);
+
+                // a non-integer shape entry is likewise not treated as an ndarray
+                json const j_size = json({{"_ArrayType_", "uint8"}, {"_ArraySize_", {"x"}}, {"_ArrayData_", {1}}});
+                const auto out_size = json::to_bjdata(j_size);
+                CHECK(out_size.at(0) == '{');
+                CHECK(json::from_bjdata(out_size) == j_size);
+            }
+
             SECTION("optimized ndarray (type and vector-size as 1D array)")
             {
                 // create vector with two elements of the same type

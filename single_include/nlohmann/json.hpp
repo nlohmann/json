@@ -18432,6 +18432,12 @@ class binary_writer
         std::size_t len = (value.at(key).empty() ? 0 : 1);
         for (const auto& el : value.at(key))
         {
+            // the shape is read through the integer union member below; a
+            // non-integer entry would pun unrelated bytes as the dimension
+            if (!el.is_number_integer())
+            {
+                return true;
+            }
             len *= static_cast<std::size_t>(el.m_data.m_value.number_unsigned);
         }
 
@@ -18439,6 +18445,20 @@ class binary_writer
         if (value.at(key).size() != len)
         {
             return true;
+        }
+
+        // each element is read below through the one union member selected by
+        // dtype, so its stored type has to match (integer markers read the
+        // integer slot, 'd'/'D' the float slot). An element of any other type
+        // would reinterpret unrelated bytes, e.g. a string's heap pointer, as
+        // that number, so fall back to writing the value as a plain object.
+        const bool ndarray_is_float = (dtype == 'd' || dtype == 'D');
+        for (const auto& el : value.at(key))
+        {
+            if (ndarray_is_float ? !el.is_number_float() : !el.is_number_integer())
+            {
+                return true;
+            }
         }
 
         oa->write_character('[');
