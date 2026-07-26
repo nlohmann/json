@@ -31,6 +31,12 @@ Strong guarantee: if an exception is thrown, there are no changes to any JSON va
 
 Throws [`type_error.316`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) if a string stored inside the JSON value is not UTF-8 encoded and `error_handler` is set to `strict`
 
+Serializing untrusted input
+
+When serializing values that may contain invalid or untrusted UTF-8 (e.g., bytes taken directly from network input), `dump()` throws [`type_error.316`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) in the default `strict` mode. To serialize such data without throwing, pass [`error_handler_t::replace`](https://json.nlohmann.me/api/basic_json/error_handler_t/index.md) (substitutes U+FFFD) or [`error_handler_t::ignore`](https://json.nlohmann.me/api/basic_json/error_handler_t/index.md). Callers that serialize untrusted input on a crash-sensitive path should either choose a non-strict error handler or wrap `dump()` in a `try`/`catch`.
+
+See the [FAQ](https://json.nlohmann.me/home/faq/#serializing-untrusted-or-invalid-utf-8) for details.
+
 ## Complexity
 
 Linear.
