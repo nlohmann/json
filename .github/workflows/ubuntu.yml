@@ -163,7 +163,15 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           apt-get update
           apt-get install -y --no-install-recommends software-properties-common ca-certificates gnupg make git
-          add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          # add-apt-repository resolves the PPA through the Launchpad API,
+          # which intermittently times out or fails the team lookup (the plain
+          # "deb ..." sources below never hit Launchpad and never flake).
+          # Retry with backoff so a transient Launchpad blip does not fail CI.
+          for attempt in 1 2 3 4 5; do
+            add-apt-repository -y ppa:ubuntu-toolchain-r/test && break
+            echo "::warning::add-apt-repository ppa:ubuntu-toolchain-r/test failed (attempt ${attempt}/5); retrying"
+            sleep $((attempt * 10))
+          done
           apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ bionic main"
           apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ bionic universe"
           apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial main"
