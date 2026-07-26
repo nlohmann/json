@@ -43,6 +43,17 @@ Strong guarantee: if an exception is thrown, there are no changes to any JSON va
 Throws [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) if a string stored inside the JSON value
 is not UTF-8 encoded and `error_handler` is set to `strict`
 
+!!! warning "Serializing untrusted input"
+
+    When serializing values that may contain invalid or untrusted UTF-8 (e.g., bytes taken directly from network
+    input), `dump()` throws [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) in the default
+    `strict` mode. To serialize such data without throwing, pass
+    [`error_handler_t::replace`](error_handler_t.md) (substitutes U+FFFD) or
+    [`error_handler_t::ignore`](error_handler_t.md). Callers that serialize untrusted input on a crash-sensitive path
+    should either choose a non-strict error handler or wrap `dump()` in a `#!cpp try`/`#!cpp catch`.
+
+    See the [FAQ](../../home/faq.md#serializing-untrusted-or-invalid-utf-8) for details.
+
 ## Complexity
 
 Linear.
