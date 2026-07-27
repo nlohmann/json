@@ -25,7 +25,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3 # v4.4.0
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -47,7 +47,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3 # v4.4.0
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -70,7 +70,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3 # v4.4.0
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -89,7 +89,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3 # v4.4.0
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -108,7 +108,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3 # v4.4.0
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -184,7 +184,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3 # v4.4.0
       - name: Run CMake
         run: CXX=g++-${{ matrix.compiler }} cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -202,7 +202,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3 # v4.4.0
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -219,7 +219,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3 # v4.4.0
       - name: Set env FORCE_STDCPPFS_FLAG for clang 7 / 8 / 9 / 10
         run: echo "JSON_FORCED_GLOBAL_COMPILE_OPTIONS=-DJSON_HAS_FILESYSTEM=0;-DJSON_HAS_EXPERIMENTAL_FILESYSTEM=0" >> "$GITHUB_ENV"
         if: ${{ matrix.compiler == '7' || matrix.compiler == '8' || matrix.compiler == '9' || matrix.compiler == '10' }}
@@ -239,7 +239,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3 # v4.4.0
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -259,7 +259,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3 # v4.4.0
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build with libc++
@@ -286,7 +286,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3 # v4.4.0
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -306,7 +306,7 @@ jobs:
       # import-std support. Its opt-in token is CMake-version-specific, so pin
       # CMake to the version whose token is set in tests/module_cpp20/CMakeLists.txt.
       - name: Get pinned CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3 # v4.4.0
         with:
           cmakeVersion: 4.3.4
       # Clang: the std library module is provided by libc++ (the image's libstdc++
@@ -332,7 +332,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3 # v4.4.0
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -347,7 +347,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3 # v4.4.0
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -359,7 +359,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3 # v4.4.0
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -379,7 +379,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@e6906078ebd1ccb8ce51ab4626ac46a1b5a517e3 # v4.4.0
       - name: Run CMake
         run: cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -GNinja
       - name: Build
