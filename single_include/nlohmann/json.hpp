@@ -11589,10 +11589,11 @@ class binary_reader
     Additionally, CBOR's strings with indefinite lengths are supported.
 
     @param[out] result  created string
+    @param[in] allow_indefinite  whether an indefinite-length string is allowed
 
     @return whether string creation completed
     */
-    bool get_cbor_string(string_t& result)
+    bool get_cbor_string(string_t& result, const bool allow_indefinite = true)
     {
         if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::cbor, "string")))
         {
@@ -11656,10 +11657,16 @@ class binary_reader
 
             case 0x7F: // UTF-8 string (indefinite length)
             {
+                if (JSON_HEDLEY_UNLIKELY(!allow_indefinite))
+                {
+                    auto last_token = get_token_string();
+                    return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                            exception_message(input_format_t::cbor, concat("indefinite-length string is not allowed inside indefinite-length string; last byte: 0x", last_token), "string"), nullptr));
+                }
                 while (get() != 0xFF)
                 {
                     string_t chunk;
-                    if (!get_cbor_string(chunk))
+                    if (!get_cbor_string(chunk, false))
                     {
                         return false;
                     }
@@ -11685,10 +11692,11 @@ class binary_reader
     Additionally, CBOR's byte arrays with indefinite lengths are supported.
 
     @param[out] result  created byte array
+    @param[in] allow_indefinite  whether an indefinite-length byte array is allowed
 
     @return whether byte array creation completed
     */
-    bool get_cbor_binary(binary_t& result)
+    bool get_cbor_binary(binary_t& result, const bool allow_indefinite = true)
     {
         if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::cbor, "binary")))
         {
@@ -11756,10 +11764,16 @@ class binary_reader
 
             case 0x5F: // Binary data (indefinite length)
             {
+                if (JSON_HEDLEY_UNLIKELY(!allow_indefinite))
+                {
+                    auto last_token = get_token_string();
+                    return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                            exception_message(input_format_t::cbor, concat("indefinite-length binary array is not allowed inside indefinite-length binary array; last byte: 0x", last_token), "binary"), nullptr));
+                }
                 while (get() != 0xFF)
                 {
                     binary_t chunk;
-                    if (!get_cbor_binary(chunk))
+                    if (!get_cbor_binary(chunk, false))
                     {
                         return false;
                     }
