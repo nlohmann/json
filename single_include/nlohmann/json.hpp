@@ -17765,6 +17765,21 @@ class binary_writer
     }
 
     /*!
+    @brief Checks that @a size fits into the 32-bit length field used by BSON
+    @return The size as a signed 32-bit integer
+    @throw out_of_range.412 if @a size exceeds the range of std::int32_t
+    */
+    static std::int32_t to_bson_length(const std::size_t size)
+    {
+        if (JSON_HEDLEY_UNLIKELY(size > static_cast<std::size_t>((std::numeric_limits<std::int32_t>::max)())))
+        {
+            JSON_THROW(out_of_range::create(412, concat("BSON length ", std::to_string(size), " exceeds maximum of ", std::to_string((std::numeric_limits<std::int32_t>::max)())), nullptr));
+        }
+
+        return static_cast<std::int32_t>(size);
+    }
+
+    /*!
     @brief Writes the given @a element_type and @a name to the output adapter
     */
     void write_bson_entry_header(const string_t& name,
@@ -17812,7 +17827,7 @@ class binary_writer
     {
         write_bson_entry_header(name, 0x02);
 
-        write_number<std::int32_t>(static_cast<std::int32_t>(value.size() + 1ul), true);
+        write_number<std::int32_t>(to_bson_length(value.size() + 1ul), true);
         oa->write_characters(
             reinterpret_cast<const CharType*>(value.c_str()),
             value.size() + 1);
@@ -17927,7 +17942,7 @@ class binary_writer
                           const typename BasicJsonType::array_t& value)
     {
         write_bson_entry_header(name, 0x04); // array
-        write_number<std::int32_t>(static_cast<std::int32_t>(calc_bson_array_size(value)), true);
+        write_number<std::int32_t>(to_bson_length(calc_bson_array_size(value)), true);
 
         std::size_t array_index = 0ul;
 
@@ -17947,7 +17962,7 @@ class binary_writer
     {
         write_bson_entry_header(name, 0x05);
 
-        write_number<std::int32_t>(static_cast<std::int32_t>(value.size()), true);
+        write_number<std::int32_t>(to_bson_length(value.size()), true);
         write_number(value.has_subtype() ? static_cast<std::uint8_t>(value.subtype()) : static_cast<std::uint8_t>(0x00));
 
         oa->write_characters(reinterpret_cast<const CharType*>(value.data()), value.size());
@@ -18069,7 +18084,7 @@ class binary_writer
     */
     void write_bson_object(const typename BasicJsonType::object_t& value)
     {
-        write_number<std::int32_t>(static_cast<std::int32_t>(calc_bson_object_size(value)), true);
+        write_number<std::int32_t>(to_bson_length(calc_bson_object_size(value)), true);
 
         for (const auto& el : value)
         {
