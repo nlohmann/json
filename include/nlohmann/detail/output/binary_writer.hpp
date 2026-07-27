@@ -985,7 +985,7 @@ class binary_writer
     void write_bson_entry_header(const string_t& name,
                                  const std::uint8_t element_type)
     {
-        oa->write_character(to_char_type(element_type)); // boolean
+        oa->write_character(to_char_type(element_type));
         oa->write_characters(
             reinterpret_cast<const CharType*>(name.c_str()),
             name.size() + 1u);
@@ -1070,7 +1070,7 @@ class binary_writer
     }
 
     /*!
-    @return The size of the BSON-encoded unsigned integer in @a j
+    @return The size of the BSON-encoded unsigned integer @a value
     */
     static constexpr std::size_t calc_bson_unsigned_size(const std::uint64_t value) noexcept
     {
@@ -1083,22 +1083,22 @@ class binary_writer
     @brief Writes a BSON element with key @a name and unsigned @a value
     */
     void write_bson_unsigned(const string_t& name,
-                             const BasicJsonType& j)
+                             const std::uint64_t value)
     {
-        if (j.m_data.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()))
+        if (value <= static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()))
         {
             write_bson_entry_header(name, 0x10 /* int32 */);
-            write_number<std::int32_t>(static_cast<std::int32_t>(j.m_data.m_value.number_unsigned), true);
+            write_number<std::int32_t>(static_cast<std::int32_t>(value), true);
         }
-        else if (j.m_data.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()))
+        else if (value <= static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()))
         {
             write_bson_entry_header(name, 0x12 /* int64 */);
-            write_number<std::int64_t>(static_cast<std::int64_t>(j.m_data.m_value.number_unsigned), true);
+            write_number<std::int64_t>(static_cast<std::int64_t>(value), true);
         }
         else
         {
             write_bson_entry_header(name, 0x11 /* uint64 */);
-            write_number<std::uint64_t>(static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned), true);
+            write_number<std::uint64_t>(value, true);
         }
     }
 
@@ -1244,7 +1244,7 @@ class binary_writer
                 return write_bson_integer(name, j.m_data.m_value.number_integer);
 
             case value_t::number_unsigned:
-                return write_bson_unsigned(name, j);
+                return write_bson_unsigned(name, j.m_data.m_value.number_unsigned);
 
             case value_t::string:
                 return write_bson_string(name, *j.m_data.m_value.string);
