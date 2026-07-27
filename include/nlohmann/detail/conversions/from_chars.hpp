@@ -191,6 +191,58 @@ inline from_chars_result from_chars(const char* first, const char* last, T& valu
 #if defined(_WIN32)
 
 /*!
+@brief Extended locale functions on Windows
+
+A trait object which provides wrappers for isspace and the strto* family of
+functions, based on the platform's support for extended locale APIs.
+
+This is the Windows implementation. The primary class template definition
+falls back to the standard locale-dependent functions, which is used on
+MinGW, whose C runtime only provides an incomplete subset of the
+`_<funcname>_l` family (e.g., missing `_strtof_l`/`_strtold_l` depending on
+the toolchain version). A specialization for genuine MSVC (including
+clang-cl, which mimics the MSVC ABI and CRT) is used instead, as the full
+`_<funcname>_l` family has reliably been available there since at least
+Visual Studio 2005.
+*/
+template <typename = const char*, typename = float>
+struct extended_locale_traits
+{
+    static constexpr bool is_locale_independent = false;
+
+    JSON_HEDLEY_PURE
+    static char get_decimal_point() noexcept
+    {
+        const auto* loc = localeconv();
+        JSON_ASSERT(loc != nullptr);
+        return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
+    }
+
+    static int isspace(int c) noexcept
+    {
+        return std::isspace(c);
+    }
+
+    // NOLINTNEXTLINE(runtime/int)
+    static long long strtoll(const char* str, char** endptr) noexcept
+    {
+        return std::strtoll(str, endptr, 10);
+    }
+
+    // NOLINTNEXTLINE(runtime/int)
+    static unsigned long long strtoull(const char* str, char** endptr) noexcept
+    {
+        return std::strtoull(str, endptr, 10);
+    }
+
+    static constexpr float(&strtof)(const char*, char**) = std::strtof;
+    static constexpr double(&strtod)(const char*, char**) = std::strtod;
+    static constexpr long double(&strtold)(const char*, char**) = std::strtold;
+};
+
+#if defined(_MSC_VER)
+
+/*!
 @brief Get a pointer to a globally shared instance of the "C" locale on Windows
 
 This function uses _create_locale/_free_locale to allocate a "C" locale instance
@@ -208,57 +260,50 @@ inline _locale_t get_c_locale_t() noexcept
         }
     };
     using LocaleUPtr = std::unique_ptr<std::remove_pointer<_locale_t>::type, LocaleTDeleter>;
-    static const LocaleUPtr c_locale = LocaleUPtr{::_create_locale(LC_ALL_MASK, "C"), LocaleTDeleter{}};
+    static const LocaleUPtr c_locale = LocaleUPtr{::_create_locale(LC_ALL, "C"), LocaleTDeleter{}};
     return c_locale.get();
 }
 
-/*!
-@brief Extended locale functions on Windows
-
-A trait object which provides wrappers for isspace and the strto* family of
-functions, based on the platform's support for extended locale APIs.
-
-This is the Windows implementation where extended locale support is always
-available through the `_<funcname>_l` variants.
-*/
-template <typename = const char*, typename = float>
-struct extended_locale_traits
+template <typename T>
+struct extended_locale_traits<T, float>
 {
     static constexpr bool is_locale_independent = true;
     static constexpr char(&get_decimal_point)() = get_locale_independent_decimal_point;
 
     static int isspace(int c) noexcept
     {
-        return ::_isspace_l(c, get_c_locale_t());
+        return _isspace_l(c, get_c_locale_t());
     }
 
     // NOLINTNEXTLINE(runtime/int)
     static long long strtoll(const char* str, char** endptr) noexcept
     {
-        return ::_strtoll_l(str, endptr, 10, get_c_locale_t());
+        return _strtoll_l(str, endptr, 10, get_c_locale_t());
     }
 
     // NOLINTNEXTLINE(runtime/int)
     static unsigned long long strtoull(const char* str, char** endptr) noexcept
     {
-        return ::_strtoull_l(str, endptr, 10, get_c_locale_t());
+        return _strtoull_l(str, endptr, 10, get_c_locale_t());
     }
 
-    static float strtof(const char* str, char** str_end) noexcept
+    static float strtof(T str, char** str_end)
     {
-        return ::_strtof_l(str, str_end, get_c_locale_t());
+        return _strtof_l(str, str_end, get_c_locale_t());
     }
 
-    static double strtod(const char* str, char** str_end) noexcept
+    static double strtod(T str, char** str_end)
     {
-        return ::_strtod_l(str, str_end, get_c_locale_t());
+        return _strtod_l(str, str_end, get_c_locale_t());
     }
 
-    static long double strtold(const char* str, char** str_end) noexcept
+    static long double strtold(T str, char** str_end)
     {
-        return ::_strtold_l(str, str_end, get_c_locale_t());
+        return _strtold_l(str, str_end, get_c_locale_t());
     }
 };
+
+#endif
 
 #else
 
@@ -360,7 +405,7 @@ struct extended_locale_traits<T, decltype(strtof_l(
 
     static int isspace(int c) noexcept
     {
-        return ::isspace_l(c, get_c_locale_t());
+        return isspace_l(c, get_c_locale_t());
     }
 
     // NOLINTNEXTLINE(runtime/int)

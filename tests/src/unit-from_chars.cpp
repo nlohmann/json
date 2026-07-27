@@ -79,7 +79,7 @@ check(std::string str, T expected_value, std::ptrdiff_t expected_ptr_offset, std
 
 template <typename T>
 typename std::enable_if<std::is_integral<T>::value, void>::type
-check(std::string str, init_val_t, std::ptrdiff_t expected_ptr_offset, std::errc expected_ec)
+check(std::string str, init_val_t /*unused*/, std::ptrdiff_t expected_ptr_offset, std::errc expected_ec)
 {
     T const init_value = 42;
     T value = init_value;
@@ -89,7 +89,7 @@ check(std::string str, init_val_t, std::ptrdiff_t expected_ptr_offset, std::errc
 
 template <typename T>
 typename std::enable_if<std::is_floating_point<T>::value, void>::type
-check(std::string str, init_val_t, std::ptrdiff_t expected_ptr_offset, std::errc expected_ec)
+check(std::string str, init_val_t /*unused*/, std::ptrdiff_t expected_ptr_offset, std::errc expected_ec)
 {
     {
         T const init_value = 42;
