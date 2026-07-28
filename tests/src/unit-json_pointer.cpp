@@ -378,11 +378,15 @@ TEST_CASE("JSON pointers")
             CHECK(j["/2"_json_pointer] == j[2]);
 
             // assign to nonexisting index
+            CHECK_THROWS_WITH_AS(j["/3"_json_pointer],
+                                 "[json.exception.out_of_range.401] array index 3 is out of range", json::out_of_range&);
             CHECK_THROWS_WITH_AS(j.at("/3"_json_pointer),
                                  "[json.exception.out_of_range.401] array index 3 is out of range", json::out_of_range&);
             CHECK(!j.contains("/3"_json_pointer));
 
             // assign to nonexisting index (with gap)
+            CHECK_THROWS_WITH_AS(j["/5"_json_pointer],
+                                 "[json.exception.out_of_range.401] array index 5 is out of range", json::out_of_range&);
             CHECK_THROWS_WITH_AS(j.at("/5"_json_pointer),
                                  "[json.exception.out_of_range.401] array index 5 is out of range", json::out_of_range&);
             CHECK(!j.contains("/5"_json_pointer));

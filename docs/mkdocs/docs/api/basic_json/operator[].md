@@ -79,6 +79,8 @@ Strong exception safety: if an exception occurs, the original value stays intact
       JSON pointer `ptr` begins with '0'.
     - Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) if an array index in the passed
       JSON pointer `ptr` is not a number.
+    - Throws [`out_of_range.401`](../../home/exceptions.md#jsonexceptionout_of_range401) if an array index in the
+      passed JSON pointer `ptr` is out of range for the const version.
     - Throws [`out_of_range.402`](../../home/exceptions.md#jsonexceptionout_of_range402) if the array index '-' is used
       in the passed JSON pointer `ptr` for the const version.
     - Throws [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) if the JSON pointer `ptr` can
