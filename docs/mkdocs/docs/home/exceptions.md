@@ -366,6 +366,27 @@ A UBJSON high-precision number could not be parsed.
     [json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A
     ```
 
+### json.exception.parse_error.116
+
+A binary input format (CBOR, MessagePack, UBJSON/BJData, or BSON) contained
+arrays/objects nested deeper than the library's internal depth limit (4096).
+The binary format parsers track container nesting on an explicit,
+heap-allocated stack rather than the native call stack, so *parsing* alone
+can no longer cause a stack overflow regardless of this limit. The limit
+itself stays conservative rather than being raised as high as that guarantee
+would allow, because operations on the resulting value - the copy
+constructor, `dump()`, `to_cbor()`/`to_msgpack()`/`to_ubjson()`/`to_bson()`,
+and `operator==` - are still recursive, and a successfully parsed value
+nested deeper than the low thousands can overflow the native stack in
+*those* regardless of how it was produced. Inputs nested beyond the limit
+are rejected with this parse error instead.
+
+!!! failure "Example message"
+
+    ```
+    [json.exception.parse_error.116] parse error at byte 4097: syntax error while parsing CBOR value: maximum depth of nested arrays/objects exceeded
+    ```
+
 ## Iterator errors
 
 This exception is thrown if iterators passed to a library function do not match

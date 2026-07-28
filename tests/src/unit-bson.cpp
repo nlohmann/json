@@ -885,6 +885,90 @@ TEST_CASE("Unsupported BSON input")
     CHECK(!json::sax_parse(bson, &scp, json::input_format_t::bson));
 }
 
+TEST_CASE("BSON regressions")
+{
+    // Shared by both sections below: builds a chain of n embedded BSON
+    // containers of the given record_type (0x03 object / 0x04 array), each
+    // wrapping the previous one under a 1-byte key - differing from the
+    // other section only in those two parameters.
+    //
+    // Built directly in O(N) rather than by repeatedly wrapping and copying
+    // the previous document (which would be O(N^2) and much too slow at
+    // this depth). Layout, front to back:
+    //   [header_N]...[header_1][innermost 5-byte empty doc][term_1]...[term_N]
+    // where header_i is a 4-byte little-endian size_i followed by
+    // {record_type, key_char, 0x00}, and size_i = size_{i-1} + 8, size_0 = 5.
+    // Terminators are all 0x00, already the buffer's default value.
+    auto make_deeply_nested_bson = [](int n, std::uint8_t record_type, char key_char) -> std::vector<std::uint8_t>
+    {
+        const std::size_t header_size = 7; // 4 (size) + 3 (record_type, key_char, 0x00)
+        const std::size_t inner_size = 5;
+        const std::size_t total = (static_cast<std::size_t>(n) * header_size) + inner_size + static_cast<std::size_t>(n);
+        std::vector<std::uint8_t> inner(total, 0x00);
+
+        std::vector<std::int32_t> size_at(static_cast<std::size_t>(n) + 1);
+        size_at[0] = static_cast<std::int32_t>(inner_size);
+        for (int i = 1; i <= n; ++i)
+        {
+            size_at[static_cast<std::size_t>(i)] = size_at[static_cast<std::size_t>(i) - 1] + 8;
+        }
+
+        std::size_t pos = 0;
+        for (int i = n; i >= 1; --i)
+        {
+            const auto sz = static_cast<std::uint32_t>(size_at[static_cast<std::size_t>(i)]);
+            inner[pos + 0] = static_cast<std::uint8_t>(sz & 0xFF);
+            inner[pos + 1] = static_cast<std::uint8_t>((sz >> 8) & 0xFF);
+            inner[pos + 2] = static_cast<std::uint8_t>((sz >> 16) & 0xFF);
+            inner[pos + 3] = static_cast<std::uint8_t>((sz >> 24) & 0xFF);
+            inner[pos + 4] = record_type;
+            inner[pos + 5] = static_cast<std::uint8_t>(key_char);
+            inner[pos + 6] = 0x00;
+            pos += header_size;
+        }
+        // innermost empty document: size=5 (little-endian) + terminator 0x00
+        inner[pos + 0] = 5;
+        inner[pos + 1] = 0;
+        inner[pos + 2] = 0;
+        inner[pos + 3] = 0;
+        inner[pos + 4] = 0x00;
+        // trailing n terminator bytes are already 0x00 from initialization
+        return inner;
+    };
+
+    // n chosen comfortably past max_depth (4096, see binary_reader.hpp) with
+    // real margin, while staying far smaller than a stress test needs to be
+    // - unlike a recursive-descent parser, the iterative parser's memory use
+    // is the only thing scaling with n, so there's no need to pick a value
+    // "far beyond any depth a recursive parser could survive".
+    const int n = 4200;
+
+    SECTION("stack overflow via deeply nested input (issue #5104)")
+    {
+        const auto inner = make_deeply_nested_bson(n, 0x03, 'a');
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(inner),
+                             "[json.exception.parse_error.116] parse error at byte 28676: syntax error while parsing BSON value: maximum depth of nested arrays/objects exceeded",
+                             json::parse_error&);
+        CHECK(json::from_bson(inner, true, false).is_discarded());
+    }
+
+    SECTION("array nesting depth is also capped (issue #5104)")
+    {
+        // The original depth guard only protected nested *objects* (record
+        // type 0x03); nested *arrays* (record type 0x04) went through a
+        // separate code path with no depth check of their own at all. The
+        // iterative rewrite unifies object/array container handling into one
+        // loop, so this gap is now closed too - verify it here explicitly.
+        const auto inner = make_deeply_nested_bson(n, 0x04, '0');
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(inner),
+                             "[json.exception.parse_error.116] parse error at byte 28676: syntax error while parsing BSON value: maximum depth of nested arrays/objects exceeded",
+                             json::parse_error&);
+        CHECK(json::from_bson(inner, true, false).is_discarded());
+    }
+}
+
 TEST_CASE("BSON document size mismatch")
 {
     json _;

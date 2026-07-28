@@ -1638,6 +1638,28 @@ TEST_CASE("UBJSON")
                 CHECK_THROWS_AS(_ = json::sax_parse(v_ubjson, &scp, json::input_format_t::ubjson), json::out_of_range&);
             }
         }
+
+        SECTION("stack overflow via deeply nested input (issue #5104)")
+        {
+            // 4200 nested UBJSON arrays - comfortably past max_depth (4096,
+            // see binary_reader.hpp); the (now iterative, heap-stack based)
+            // parser must reject this with a clean parse_error once the
+            // nesting exceeds the depth limit, rather than exhausting the
+            // native call stack.
+            const int nesting = 4200;
+            std::string payload(static_cast<std::size_t>(nesting), '[');
+            payload += "Z";
+            for (int i = 0; i < nesting; ++i)
+            {
+                payload += ']';
+            }
+            std::vector<uint8_t> const v(payload.begin(), payload.end());
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v),
+                                 "[json.exception.parse_error.116] parse error at byte 4098: syntax error while parsing UBJSON value: maximum depth of nested arrays/objects exceeded",
+                                 json::parse_error&);
+            CHECK(json::from_ubjson(v, true, false).is_discarded());
+        }
     }
 
     SECTION("SAX aborts")

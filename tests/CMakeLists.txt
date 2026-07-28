@@ -104,6 +104,23 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     json_test_set_test_options("test-cbor;test-msgpack;test-ubjson;test-bjdata;test-binary_formats" LINK_OPTIONS /STACK:4000000)
 endif()
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND MINGW)
+    # test-regression2 is already the largest test TU and exercises CBOR/BSON/
+    # MessagePack/UBJSON parsing; GNU ld's COFF backend can exhaust addressable
+    # range for IMAGE_REL_AMD64_REL32 relocations against .rdata once template
+    # instantiation grows far enough ("relocation truncated to fit"). lld lays
+    # out COFF sections differently and doesn't hit this ceiling for the same input.
+    #
+    # Guarded rather than unconditional: this was originally added as an
+    # untested hypothesis for a CI linker error, and hard-requiring lld with
+    # no fallback would break the build for anyone building the tests with
+    # Clang+MinGW who doesn't happen to have it installed.
+    find_program(JSON_TEST_LLD_PROGRAM lld)
+    if (JSON_TEST_LLD_PROGRAM)
+        json_test_set_test_options(test-regression2 LINK_OPTIONS -fuse-ld=lld)
+    endif()
+endif()
+
 # disable exceptions for test-disabled_exceptions
 json_test_set_test_options(test-disabled_exceptions
     COMPILE_DEFINITIONS
