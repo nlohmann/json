@@ -27,6 +27,11 @@ class key
         return m_value;
     }
 
+    const char* c_str() const noexcept
+    {
+        return m_value.c_str();
+    }
+
     friend bool operator<(const key& lhs, const key& rhs)
     {
         return lhs.m_value < rhs.m_value;
@@ -41,7 +46,7 @@ class object
     : public std::map <
       key,
       Value,
-      std::less<key>,
+      std::less<key>, // NOLINT(modernize-use-transparent-functors)
       typename std::allocator_traits<Allocator>::template rebind_alloc <
           std::pair<const key, Value >>>
 {
@@ -51,7 +56,7 @@ class object
         std::pair<const key, Value >>;
 
     using base_type =
-        std::map<key, Value, std::less<key>, allocator_type>;
+        std::map<key, Value, std::less<key>, allocator_type>; // NOLINT(modernize-use-transparent-functors)
 
   public:
     using base_type::base_type;
