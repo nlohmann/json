@@ -2837,13 +2837,14 @@ TEST_CASE("CBOR supports custom object key types")
     custom_json::object_t object;
     object.emplace(custom_key{"short"}, 1);
     object.emplace(
-        custom_key{"a key longer than twenty-three characters"},
-        2);
+              custom_key{"a key longer than twenty-three characters"},
+              2);
 
     const custom_json value(std::move(object));
     const auto encoded = custom_json::to_cbor(value);
 
-    CHECK(nlohmann::json::from_cbor(encoded) == nlohmann::json{
+    CHECK(nlohmann::json::from_cbor(encoded) == nlohmann::json
+    {
         {"short", 1},
         {"a key longer than twenty-three characters", 2}
     });

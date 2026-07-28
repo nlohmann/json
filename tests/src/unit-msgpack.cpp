@@ -1978,13 +1978,14 @@ TEST_CASE("MessagePack supports custom object key types")
     custom_json::object_t object;
     object.emplace(custom_key{"short"}, 1);
     object.emplace(
-        custom_key{"a key longer than thirty-one characters"},
-        2);
+              custom_key{"a key longer than thirty-one characters"},
+              2);
 
     const custom_json value(std::move(object));
     const auto encoded = custom_json::to_msgpack(value);
 
-    CHECK(nlohmann::json::from_msgpack(encoded) == nlohmann::json{
+    CHECK(nlohmann::json::from_msgpack(encoded) == nlohmann::json
+    {
         {"short", 1},
         {"a key longer than thirty-one characters", 2}
     });
