@@ -35,6 +35,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 - Throws [`type_error.317`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error317) if the top-level type of the JSON value is not an object; example: `"to serialize to BSON, top-level type must be object, but is string"`
 - Throws [`out_of_range.409`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range409) if a key in the JSON object contains a null byte (code point U+0000); example: `"BSON key cannot contain code point U+0000 (at byte 2)"`
+- Throws [`out_of_range.412`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range412) if the length of a document, array, string, or binary value exceeds the range of the 32-bit BSON length field; example: `"BSON length 2147483661 exceeds maximum of 2147483647"`
 
 ## Complexity
 
