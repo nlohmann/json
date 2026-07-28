@@ -21,6 +21,7 @@ using nlohmann::json;
 #include <set>
 #include "make_test_data_available.hpp"
 #include "test_utils.hpp"
+#include "custom_object_key_type.hpp"
 
 namespace
 {
@@ -1968,3 +1969,23 @@ TEST_CASE("MessagePack with std::byte")
     }
 }
 #endif
+
+TEST_CASE("MessagePack supports custom object key types")
+{
+    using custom_json = custom_object_key_test::json;
+    using custom_key = custom_object_key_test::key;
+
+    custom_json::object_t object;
+    object.emplace(custom_key{"short"}, 1);
+    object.emplace(
+        custom_key{"a key longer than thirty-one characters"},
+        2);
+
+    const custom_json value(std::move(object));
+    const auto encoded = custom_json::to_msgpack(value);
+
+    CHECK(nlohmann::json::from_msgpack(encoded) == nlohmann::json{
+        {"short", 1},
+        {"a key longer than thirty-one characters", 2}
+    });
+}
