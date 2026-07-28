@@ -10769,38 +10769,41 @@ class binary_reader
     {
         std::vector<bson_container_frame> stack;
 
-        // reads the 4-byte document-size prefix, records where it started
-        // (both are needed by @ref check_bson_document_size once this
-        // document/array's terminator is reached), and emits the
-        // corresponding SAX start_object()/start_array() event
-        auto begin_document = [&](const bool is_object, std::size_t& document_start, std::int32_t& document_size) -> bool
+        // reads the 4-byte document-size prefix and records where it
+        // started (both are needed by @ref check_bson_document_size once
+        // this document/array's terminator is reached); deliberately does
+        // not touch the SAX consumer, so callers can run the max_depth
+        // check before the corresponding start_object()/start_array()
+        // event fires
+        auto read_document_header = [&](std::size_t& document_start, std::int32_t& document_size)
         {
             document_start = chars_read;
             get_number<std::int32_t, true>(input_format_t::bson, document_size);
-            return is_object ? sax->start_object(detail::unknown_size()) : sax->start_array(detail::unknown_size());
         };
 
         std::size_t document_start{};
         std::int32_t document_size{};
-        if (JSON_HEDLEY_UNLIKELY(!begin_document(true, document_start, document_size)))
+        read_document_header(document_start, document_size);
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(detail::unknown_size())))
         {
             return false;
         }
         stack.push_back(bson_container_frame{true, document_start, document_size});
 
+        string_t key;
         while (true)
         {
-            const bson_container_frame& top = stack.back();
+            const std::size_t top_index = stack.size() - 1;
 
             const auto element_type = get();
             if (element_type == 0)
             {
                 // 0x00 terminates the current document/array
-                if (JSON_HEDLEY_UNLIKELY(!check_bson_document_size(top.document_start, top.document_size)))
+                if (JSON_HEDLEY_UNLIKELY(!check_bson_document_size(stack[top_index].document_start, stack[top_index].document_size)))
                 {
                     return false;
                 }
-                if (JSON_HEDLEY_UNLIKELY(!(top.is_object ? sax->end_object() : sax->end_array())))
+                if (JSON_HEDLEY_UNLIKELY(!(stack[top_index].is_object ? sax->end_object() : sax->end_array())))
                 {
                     return false;
                 }
@@ -10818,12 +10821,12 @@ class binary_reader
             }
 
             const std::size_t element_type_parse_position = chars_read;
-            string_t key;
+            key.clear();
             if (JSON_HEDLEY_UNLIKELY(!get_bson_cstr(key)))
             {
                 return false;
             }
-            if (top.is_object && JSON_HEDLEY_UNLIKELY(!sax->key(key)))
+            if (stack[top_index].is_object && JSON_HEDLEY_UNLIKELY(!sax->key(key)))
             {
                 return false;
             }
@@ -10855,15 +10858,14 @@ class binary_reader
                 {
                     std::size_t nested_document_start{};
                     std::int32_t nested_document_size{};
-                    if (JSON_HEDLEY_UNLIKELY(!begin_document(true, nested_document_start, nested_document_size)))
-                    {
-                        return false;
-                    }
+                    read_document_header(nested_document_start, nested_document_size);
                     if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
                     {
-                        return sax->parse_error(chars_read, get_token_string(),
-                                                parse_error::create(116, chars_read,
-                                                        exception_message(input_format_t::bson, "maximum depth of nested objects/arrays exceeded", "value"), nullptr));
+                        return reached_max_depth(input_format_t::bson);
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(!sax->start_object(detail::unknown_size())))
+                    {
+                        return false;
                     }
                     stack.push_back(bson_container_frame{true, nested_document_start, nested_document_size});
                     continue;
@@ -10873,15 +10875,14 @@ class binary_reader
                 {
                     std::size_t nested_document_start{};
                     std::int32_t nested_document_size{};
-                    if (JSON_HEDLEY_UNLIKELY(!begin_document(false, nested_document_start, nested_document_size)))
-                    {
-                        return false;
-                    }
+                    read_document_header(nested_document_start, nested_document_size);
                     if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
                     {
-                        return sax->parse_error(chars_read, get_token_string(),
-                                                parse_error::create(116, chars_read,
-                                                        exception_message(input_format_t::bson, "maximum depth of nested objects/arrays exceeded", "value"), nullptr));
+                        return reached_max_depth(input_format_t::bson);
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(!sax->start_array(detail::unknown_size())))
+                    {
+                        return false;
                     }
                     stack.push_back(bson_container_frame{false, nested_document_start, nested_document_size});
                     continue;
@@ -11123,6 +11124,15 @@ class binary_reader
         // this like any other produced value via `produce()`).
         auto enter_container = [&](const bool is_object, const std::size_t len) -> int
         {
+            // len == 0 (definite-length, empty) never pushes a frame, so it
+            // never counts against max_depth; every other case - definite
+            // non-zero or indefinite - always does, so the check can run
+            // before the SAX start event fires
+            if (len != 0 && JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
+            {
+                reached_max_depth(input_format_t::cbor);
+                return 0;
+            }
             const bool started = is_object ? sax->start_object(len) : sax->start_array(len);
             if (JSON_HEDLEY_UNLIKELY(!started))
             {
@@ -11132,13 +11142,6 @@ class binary_reader
             {
                 const bool ended = is_object ? sax->end_object() : sax->end_array();
                 return ended ? 2 : 0;
-            }
-            if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
-            {
-                sax->parse_error(chars_read, get_token_string(),
-                                 parse_error::create(116, chars_read,
-                                                     exception_message(input_format_t::cbor, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
-                return 0;
             }
             stack.push_back(cbor_container_frame{is_object, len == detail::unknown_size(), len, is_object});
             return 1;
@@ -11157,6 +11160,7 @@ class binary_reader
         default: continue; \
     }
 
+        string_t key;
         while (true)
         {
             if (!stack.empty())
@@ -11184,7 +11188,7 @@ class binary_reader
                     {
                         get();
                     }
-                    string_t key;
+                    key.clear();
                     if (JSON_HEDLEY_UNLIKELY(!get_cbor_string(key) || !sax->key(key)))
                     {
                         return false;
@@ -11210,8 +11214,11 @@ class binary_reader
                     }
                     fetch_char = !top.indefinite;
                 }
-                // else: object frame with a key already read; fetch_char is
-                // already set to true from when the key was read above.
+                // else: top is an object frame with !awaiting_key, i.e. a
+                // key was just read above in this same iteration (no branch
+                // above sets awaiting_key back to false except that one);
+                // fetch_char is already true from that path, so just fall
+                // through to read the value.
             }
 
 read_value:
@@ -11954,6 +11961,14 @@ read_value:
 
         auto enter_container = [&](const bool is_object, const std::size_t len) -> int
         {
+            // MessagePack containers are always definite-length, so len == 0
+            // is the only case that never pushes a frame / never counts
+            // against max_depth
+            if (len != 0 && JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
+            {
+                reached_max_depth(input_format_t::msgpack);
+                return 0;
+            }
             const bool started = is_object ? sax->start_object(len) : sax->start_array(len);
             if (JSON_HEDLEY_UNLIKELY(!started))
             {
@@ -11963,13 +11978,6 @@ read_value:
             {
                 const bool ended = is_object ? sax->end_object() : sax->end_array();
                 return ended ? 2 : 0;
-            }
-            if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
-            {
-                sax->parse_error(chars_read, get_token_string(),
-                                 parse_error::create(116, chars_read,
-                                                     exception_message(input_format_t::msgpack, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
-                return 0;
             }
             stack.push_back(msgpack_container_frame{is_object, len, is_object});
             return 1;
@@ -11988,6 +11996,7 @@ read_value:
         default: continue; \
     }
 
+        string_t key;
         while (true)
         {
             if (!stack.empty())
@@ -12010,7 +12019,7 @@ read_value:
                         continue;
                     }
                     get();
-                    string_t key;
+                    key.clear();
                     if (JSON_HEDLEY_UNLIKELY(!get_msgpack_string(key) || !sax->key(key)))
                     {
                         return false;
@@ -12033,8 +12042,9 @@ read_value:
                         continue;
                     }
                 }
-                // else: map frame with a key already read; fall through to
-                // read that key's value.
+                // else: top is a map frame with !awaiting_key, i.e. a key
+                // was just read above in this same iteration; fall through
+                // to read that key's value.
             }
 
             switch (get())
@@ -12740,6 +12750,12 @@ read_value:
                     size_and_type.second = 'U';
                 }
 
+                if (size_and_type.first != 0 && JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
+                {
+                    reached_max_depth(input_format);
+                    return 0;
+                }
+
                 key = "_ArrayData_";
                 if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->start_array(size_and_type.first)))
                 {
@@ -12749,12 +12765,6 @@ read_value:
                 if (size_and_type.first == 0)
                 {
                     return (sax->end_array() && sax->end_object()) ? 2 : 0;
-                }
-                if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
-                {
-                    sax->parse_error(chars_read, get_token_string(), parse_error::create(116, chars_read,
-                                     exception_message(input_format, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
-                    return 0;
                 }
                 stack.push_back(ubjson_container_frame{false, false, size_and_type.first, false, size_and_type.second, true});
                 return 1;
@@ -12769,28 +12779,32 @@ read_value:
 
             if (size_and_type.first != npos)
             {
+                // a homogeneous type of 'N' (no-op) means no elements are
+                // actually read, no matter what count was declared
+                const bool empty = size_and_type.second == 'N' || size_and_type.first == 0;
+                if (!empty && JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
+                {
+                    reached_max_depth(input_format);
+                    return 0;
+                }
                 if (JSON_HEDLEY_UNLIKELY(!sax->start_array(size_and_type.first)))
                 {
                     return 0;
                 }
-
-                // a homogeneous type of 'N' (no-op) means no elements are
-                // actually read, no matter what count was declared
-                if (size_and_type.second == 'N' || size_and_type.first == 0)
+                if (empty)
                 {
                     return sax->end_array() ? 2 : 0;
-                }
-                if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
-                {
-                    sax->parse_error(chars_read, get_token_string(), parse_error::create(116, chars_read,
-                                     exception_message(input_format, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
-                    return 0;
                 }
                 stack.push_back(ubjson_container_frame{false, false, size_and_type.first, false, size_and_type.second, false});
                 return 1;
             }
 
             // indefinite length
+            if (current != ']' && JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
+            {
+                reached_max_depth(input_format);
+                return 0;
+            }
             if (JSON_HEDLEY_UNLIKELY(!sax->start_array(detail::unknown_size())))
             {
                 return 0;
@@ -12798,12 +12812,6 @@ read_value:
             if (current == ']')
             {
                 return sax->end_array() ? 2 : 0;
-            }
-            if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
-            {
-                sax->parse_error(chars_read, get_token_string(), parse_error::create(116, chars_read,
-                                 exception_message(input_format, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
-                return 0;
             }
             stack.push_back(ubjson_container_frame{false, true, 0, false, 0, false});
             return 1;
@@ -12828,6 +12836,11 @@ read_value:
 
             if (size_and_type.first != npos)
             {
+                if (size_and_type.first != 0 && JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
+                {
+                    reached_max_depth(input_format);
+                    return 0;
+                }
                 if (JSON_HEDLEY_UNLIKELY(!sax->start_object(size_and_type.first)))
                 {
                     return 0;
@@ -12836,16 +12849,15 @@ read_value:
                 {
                     return sax->end_object() ? 2 : 0;
                 }
-                if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
-                {
-                    sax->parse_error(chars_read, get_token_string(), parse_error::create(116, chars_read,
-                                     exception_message(input_format, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
-                    return 0;
-                }
                 stack.push_back(ubjson_container_frame{true, false, size_and_type.first, true, size_and_type.second, false});
                 return 1;
             }
 
+            if (current != '}' && JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
+            {
+                reached_max_depth(input_format);
+                return 0;
+            }
             if (JSON_HEDLEY_UNLIKELY(!sax->start_object(detail::unknown_size())))
             {
                 return 0;
@@ -12853,12 +12865,6 @@ read_value:
             if (current == '}')
             {
                 return sax->end_object() ? 2 : 0;
-            }
-            if (JSON_HEDLEY_UNLIKELY(stack.size() >= max_depth))
-            {
-                sax->parse_error(chars_read, get_token_string(), parse_error::create(116, chars_read,
-                                 exception_message(input_format, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
-                return 0;
             }
             stack.push_back(ubjson_container_frame{true, true, 0, true, 0, false});
             return 1;
@@ -12877,6 +12883,7 @@ read_value:
         default: continue; \
     }
 
+        string_t key;
         while (true)
         {
             if (!stack.empty())
@@ -12900,7 +12907,7 @@ read_value:
                         continue;
                     }
 
-                    string_t key;
+                    key.clear();
                     if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key, !top.indefinite) || !sax->key(key)))
                     {
                         return false;
@@ -12929,8 +12936,9 @@ read_value:
                         continue;
                     }
                 }
-                // else: object frame with a key already read; fall through
-                // to read that key's value below.
+                // else: top is an object frame with !awaiting_key, i.e. a
+                // key was just read above in this same iteration; fall
+                // through to read that key's value below.
             }
 
             char_int_type prefix;
@@ -13992,6 +14000,25 @@ read_value:
         return concat(error_msg, ' ', context, ": ", detail);
     }
 
+    /*!
+    @brief report a max_depth parse_error(116) for the given format
+
+    Shared by every container entry point in CBOR/MessagePack/UBJSON/BSON so
+    there is exactly one place that can forget to guard a new one (see the
+    BSON 0x04/array gap this PR closes, which happened precisely because the
+    check was duplicated instead of shared).
+
+    @param[in] format  the current format
+    @return whether parsing should continue (always false: this always
+            reports an error)
+    */
+    bool reached_max_depth(const input_format_t format)
+    {
+        return sax->parse_error(chars_read, get_token_string(),
+                                parse_error::create(116, chars_read,
+                                        exception_message(format, "maximum depth of nested arrays/objects exceeded", "value"), nullptr));
+    }
+
   private:
     static JSON_INLINE_VARIABLE constexpr std::size_t npos = detail::unknown_size();
 
@@ -14000,15 +14027,19 @@ read_value:
     ///
     /// The container-parsing loops in this file are iterative (see e.g.
     /// @ref cbor_container_frame): nesting depth is tracked as the size of a
-    /// heap-allocated std::vector, not native call-stack recursion, so this
-    /// limit is no longer a stack-safety mechanism - arbitrarily deep input
-    /// can no longer overflow the stack regardless of this value. It is kept
-    /// purely as a sanity/DoS cap on absurd inputs (e.g. a malicious payload
-    /// nesting billions of levels deep to exhaust memory/time), so it can
-    /// afford to be generous; it is far above the library's own deepest
-    /// legitimate test fixture (tests/data/json_testsuite/sample.json, 458
-    /// levels).
-    static JSON_INLINE_VARIABLE constexpr std::size_t max_depth = 100000;
+    /// heap-allocated std::vector, not native call-stack recursion, so
+    /// *parsing* can no longer overflow the stack regardless of this value.
+    /// However, operations on the resulting value - @ref
+    /// basic_json(const basic_json&) "the copy constructor", @ref dump(),
+    /// to_cbor()/to_msgpack()/to_ubjson()/to_bson(), and @ref operator== in
+    /// particular - are still recursive, and a value nested deeper than the
+    /// low thousands can overflow the native stack in *those* regardless of
+    /// how it was produced. This limit therefore stays low enough that a
+    /// successfully parsed value remains safe to copy/dump/compare even on a
+    /// constrained (1 MiB) stack, with generous headroom over the library's
+    /// own deepest legitimate test fixture
+    /// (tests/data/json_testsuite/sample.json, 458 levels).
+    static JSON_INLINE_VARIABLE constexpr std::size_t max_depth = 4096;
 
     /// input adapter
     InputAdapterType ia;
