@@ -3712,6 +3712,38 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
     }
 }
 
+TEST_CASE("BJData regressions")
+{
+    SECTION("stack overflow via deeply nested input (issue #5104)")
+    {
+        // BJData shares UBJSON's container-parsing code path (see the
+        // equivalent test in unit-ubjson.cpp), but also reaches enter_array
+        // through paths UBJSON doesn't have at all (the ND-array
+        // "_ArrayData_" frame, the optimized $type#count container) - a
+        // dedicated depth test here is cheap insurance against a regression
+        // that's specific to the bjdata format tag.
+        //
+        // 4200 nested arrays - comfortably past max_depth (4096, see
+        // binary_reader.hpp); the (now iterative, heap-stack based) parser
+        // must reject this with a clean parse_error once the nesting
+        // exceeds the depth limit, rather than exhausting the native call
+        // stack.
+        const int nesting = 4200;
+        std::string payload(static_cast<std::size_t>(nesting), '[');
+        payload += "Z";
+        for (int i = 0; i < nesting; ++i)
+        {
+            payload += ']';
+        }
+        std::vector<uint8_t> const v(payload.begin(), payload.end());
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v),
+                             "[json.exception.parse_error.116] parse error at byte 4098: syntax error while parsing BJData value: maximum depth of nested arrays/objects exceeded",
+                             json::parse_error&);
+        CHECK(json::from_bjdata(v, true, false).is_discarded());
+    }
+}
+
 TEST_CASE("Parse BJData directly from a file using iterator and sentinel")
 {
     std::string const filename = TEST_DATA_DIRECTORY "/json_testsuite/sample.json.bjdata";
