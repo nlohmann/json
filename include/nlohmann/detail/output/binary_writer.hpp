@@ -986,7 +986,7 @@ class binary_writer
     */
     static std::int32_t to_bson_length(const std::size_t size)
     {
-        if (JSON_HEDLEY_UNLIKELY(size > static_cast<std::size_t>((std::numeric_limits<std::int32_t>::max)())))
+        if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(size)))
         {
             JSON_THROW(out_of_range::create(412, concat("BSON length ", std::to_string(size), " exceeds maximum of ", std::to_string((std::numeric_limits<std::int32_t>::max)())), nullptr));
         }

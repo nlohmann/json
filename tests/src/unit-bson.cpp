@@ -28,9 +28,10 @@ class huge_binary_t : public std::vector<std::uint8_t>
   public:
     using std::vector<std::uint8_t>::vector;
 
-    size_type size() const noexcept
+    size_type size() const noexcept // NOLINT(readability-convert-member-functions-to-static)
     {
-        return static_cast<size_type>(2147483648ULL); // 2^31 > INT32_MAX
+        // one byte more than the BSON length field can represent
+        return static_cast<size_type>((std::numeric_limits<std::int32_t>::max)()) + 1;
     }
 };
 
