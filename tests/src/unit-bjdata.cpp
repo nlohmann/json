@@ -2613,6 +2613,41 @@ TEST_CASE("BJData")
                 const auto out_size = json::to_bjdata(j_size);
                 CHECK(out_size.at(0) == '{');
                 CHECK(json::from_bjdata(out_size) == j_size);
+
+                // a negative shape entry is not a usable dimension either
+                json const j_neg = json::parse(R"({"_ArrayType_":"uint8","_ArraySize_":[-1],"_ArrayData_":[1]})");
+                const auto out_neg = json::to_bjdata(j_neg);
+                CHECK(out_neg.at(0) == '{');
+                CHECK(json::from_bjdata(out_neg) == j_neg);
+            }
+
+            SECTION("ndarray parsed from text is written as a typed array")
+            {
+                // json::parse stores a non-negative integer as number_unsigned while
+                // the C++ API stores an int literal as number_integer, so _ArrayType_
+                // names the wire type rather than the storage. Both storages have to
+                // produce the same typed array for every type.
+                for (const char* type :
+                        {"uint8", "int8", "uint16", "int16", "uint32", "int32", "uint64", "int64", "char", "byte"
+                        })
+                {
+                    CAPTURE(type);
+                    const std::string text = std::string(R"({"_ArrayType_":")") + type +
+                                             R"(","_ArraySize_":[2,3],"_ArrayData_":[1,2,3,4,5,6]})";
+                    const auto from_text = json::to_bjdata(json::parse(text));
+                    CHECK(from_text.at(0) == '[');
+                    CHECK(from_text == json::to_bjdata(json({{"_ArrayType_", type}, {"_ArraySize_", {2, 3}}, {"_ArrayData_", {1, 2, 3, 4, 5, 6}}})));
+                }
+
+                // negative values under a signed type behave the same way
+                const auto from_neg = json::to_bjdata(json::parse(R"({"_ArrayType_":"int32","_ArraySize_":[2],"_ArrayData_":[-5,7]})"));
+                CHECK(from_neg.at(0) == '[');
+                CHECK(from_neg == json::to_bjdata(json({{"_ArrayType_", "int32"}, {"_ArraySize_", {2}}, {"_ArrayData_", {-5, 7}}})));
+
+                // and so do the floating point types
+                const auto from_float = json::to_bjdata(json::parse(R"({"_ArrayType_":"double","_ArraySize_":[2],"_ArrayData_":[1.5,2.5]})"));
+                CHECK(from_float.at(0) == '[');
+                CHECK(from_float == json::to_bjdata(json({{"_ArrayType_", "double"}, {"_ArraySize_", {2}}, {"_ArrayData_", {1.5, 2.5}}})));
             }
 
             SECTION("optimized ndarray (type and vector-size as 1D array)")
