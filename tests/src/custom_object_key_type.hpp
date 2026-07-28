@@ -38,17 +38,17 @@ class key
 
 template<typename Key, typename Value, typename Compare, typename Allocator>
 class object
-    : public std::map<
-          key,
-          Value,
-          std::less<key>,
-          typename std::allocator_traits<Allocator>::template rebind_alloc<
-              std::pair<const key, Value>>>
+    : public std::map <
+      key,
+      Value,
+      std::less<key>,
+      typename std::allocator_traits<Allocator>::template rebind_alloc <
+          std::pair<const key, Value >>>
 {
   private:
     using allocator_type =
-        typename std::allocator_traits<Allocator>::template rebind_alloc<
-            std::pair<const key, Value>>;
+    typename std::allocator_traits<Allocator>::template rebind_alloc <
+        std::pair<const key, Value >>;
 
     using base_type =
         std::map<key, Value, std::less<key>, allocator_type>;
