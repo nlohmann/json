@@ -28,6 +28,18 @@ Inputs consisting of multiple values separated by newlines are handled by the [J
 By default, the library rejects comments and trailing commas. Both can be enabled with parameters of the `parse`
 function — see [comments](../comments.md) and [trailing commas](../trailing_commas.md).
 
+## Strictness and trailing data
+
+[`parse`](../../api/basic_json/parse.md) reads a single JSON value and requires the whole input to be consumed: any
+non-whitespace data after the value is reported as a parse error. Use it when you want to guarantee that an input is
+exactly one complete JSON document.
+
+[`operator>>`](../../api/operator_gtgt.md) follows relaxed `#!cpp std::istream` semantics instead: it parses one JSON
+value and leaves the stream positioned right after it, without requiring the rest of the stream to be consumed. This is
+what makes it possible to read several concatenated values from the same stream, but it also means that "a valid
+document followed by trailing bytes" is accepted rather than rejected. If you are validating conformance, or need to
+reject any input that is not exactly one JSON document, prefer `parse`.
+
 ## SAX vs. DOM parsing
 
 The library offers two parsing models:
