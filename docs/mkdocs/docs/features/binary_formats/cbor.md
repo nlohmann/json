@@ -181,7 +181,7 @@ The library maps CBOR types to JSON value types as follows:
 
 !!! warning "Tagged items"
 
-    Tagged items will throw a parse error by default. They can be ignored by passing `cbor_tag_handler_t::ignore` to function `from_cbor`. They can be stored by passing `cbor_tag_handler_t::store` to function `from_cbor`.
+    Tagged items (`0xC0`..`0xDB`) will throw a parse error by default. They can be ignored by passing `cbor_tag_handler_t::ignore` to function `from_cbor`. They can be stored by passing `cbor_tag_handler_t::store` to function `from_cbor`.
 
 ??? example
 
