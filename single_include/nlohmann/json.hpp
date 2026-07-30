@@ -11445,7 +11445,7 @@ class binary_reader
                 const auto byte1 = static_cast<unsigned char>(byte1_raw);
                 const auto byte2 = static_cast<unsigned char>(byte2_raw);
 
-                // Code from RFC 7049, Appendix D, Figure 3:
+                // Code from RFC 8949, Appendix D, Figure 3:
                 // As half-precision floating-point numbers were only added
                 // to IEEE 754 in 2008, today's programming platforms often
                 // still only have limited support for them. It is very
@@ -11458,8 +11458,8 @@ class binary_reader
                 {
                     const int exp = (half >> 10u) & 0x1Fu;
                     const unsigned int mant = half & 0x3FFu;
-                    JSON_ASSERT(0 <= exp&& exp <= 32);
-                    JSON_ASSERT(mant <= 1024);
+                    JSON_ASSERT(exp <= 31);
+                    JSON_ASSERT(mant <= 1023);
                     switch (exp)
                     {
                         case 0:
@@ -13033,7 +13033,7 @@ class binary_reader
                 const auto byte1 = static_cast<unsigned char>(byte1_raw);
                 const auto byte2 = static_cast<unsigned char>(byte2_raw);
 
-                // Code from RFC 7049, Appendix D, Figure 3:
+                // Code from RFC 8949, Appendix D, Figure 3:
                 // As half-precision floating-point numbers were only added
                 // to IEEE 754 in 2008, today's programming platforms often
                 // still only have limited support for them. It is very
@@ -13046,8 +13046,8 @@ class binary_reader
                 {
                     const int exp = (half >> 10u) & 0x1Fu;
                     const unsigned int mant = half & 0x3FFu;
-                    JSON_ASSERT(0 <= exp&& exp <= 32);
-                    JSON_ASSERT(mant <= 1024);
+                    JSON_ASSERT(exp <= 31);
+                    JSON_ASSERT(mant <= 1023);
                     switch (exp)
                     {
                         case 0:
