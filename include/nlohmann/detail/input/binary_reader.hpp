@@ -807,25 +807,37 @@ class binary_reader
                             case 0xD8:
                             {
                                 std::uint8_t subtype_to_ignore{};
-                                get_number(input_format_t::cbor, subtype_to_ignore);
+                                if (!get_number(input_format_t::cbor, subtype_to_ignore))
+                                {
+                                    return false;
+                                }
                                 break;
                             }
                             case 0xD9:
                             {
                                 std::uint16_t subtype_to_ignore{};
-                                get_number(input_format_t::cbor, subtype_to_ignore);
+                                if (!get_number(input_format_t::cbor, subtype_to_ignore))
+                                {
+                                    return false;
+                                }
                                 break;
                             }
                             case 0xDA:
                             {
                                 std::uint32_t subtype_to_ignore{};
-                                get_number(input_format_t::cbor, subtype_to_ignore);
+                                if (!get_number(input_format_t::cbor, subtype_to_ignore))
+                                {
+                                    return false;
+                                }
                                 break;
                             }
                             case 0xDB:
                             {
                                 std::uint64_t subtype_to_ignore{};
-                                get_number(input_format_t::cbor, subtype_to_ignore);
+                                if (!get_number(input_format_t::cbor, subtype_to_ignore))
+                                {
+                                    return false;
+                                }
                                 break;
                             }
                             default:
@@ -843,28 +855,40 @@ class binary_reader
                             case 0xD8:
                             {
                                 std::uint8_t subtype{};
-                                get_number(input_format_t::cbor, subtype);
+                                if (!get_number(input_format_t::cbor, subtype))
+                                {
+                                    return false;
+                                }
                                 b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
                                 break;
                             }
                             case 0xD9:
                             {
                                 std::uint16_t subtype{};
-                                get_number(input_format_t::cbor, subtype);
+                                if (!get_number(input_format_t::cbor, subtype))
+                                {
+                                    return false;
+                                }
                                 b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
                                 break;
                             }
                             case 0xDA:
                             {
                                 std::uint32_t subtype{};
-                                get_number(input_format_t::cbor, subtype);
+                                if (!get_number(input_format_t::cbor, subtype))
+                                {
+                                    return false;
+                                }
                                 b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
                                 break;
                             }
                             case 0xDB:
                             {
                                 std::uint64_t subtype{};
-                                get_number(input_format_t::cbor, subtype);
+                                if (!get_number(input_format_t::cbor, subtype))
+                                {
+                                    return false;
+                                }
                                 b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
                                 break;
                             }
