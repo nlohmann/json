@@ -825,6 +825,41 @@ TEST_CASE("Incomplete BSON Input")
         CHECK(!json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
     }
 
+    SECTION("Incomplete BSON Input 5")
+    {
+        std::vector<std::uint8_t> const incomplete_bson =
+        {
+            0x09, 0x00, 0x00, 0x00, // size (little endian)
+            0x08,                   // entry: boolean
+            'b', '\x00'             // key, unexpected EOF before the value
+        };
+
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(incomplete_bson), "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing BSON number: unexpected end of input", json::parse_error&);
+        CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
+
+        SaxCountdown scp(0);
+        CHECK(!json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+    }
+
+    SECTION("Incomplete BSON Input 6")
+    {
+        std::vector<std::uint8_t> const incomplete_bson =
+        {
+            0x0F, 0x00, 0x00, 0x00, // size (little endian)
+            0x05,                   // entry: binary
+            'b', '\x00',            // key
+            0x00, 0x00, 0x00, 0x00  // length, unexpected EOF before the subtype
+        };
+
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(incomplete_bson), "[json.exception.parse_error.110] parse error at byte 12: syntax error while parsing BSON number: unexpected end of input", json::parse_error&);
+        CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
+
+        SaxCountdown scp(0);
+        CHECK(!json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+    }
+
     SECTION("Improve coverage")
     {
         SECTION("key")
