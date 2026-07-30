@@ -2309,7 +2309,7 @@ TEST_CASE("all CBOR first bytes")
 }
 #endif
 
-TEST_CASE("examples from RFC 7049 Appendix A")
+TEST_CASE("examples from RFC 8949 Appendix A")
 {
     SECTION("numbers")
     {
