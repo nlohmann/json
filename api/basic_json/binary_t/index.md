@@ -8,9 +8,9 @@ This type is a type designed to carry binary data that appears in various serial
 
 Additionally, as an implementation detail, the subtype of the binary data is carried around as a `std::uint64_t`, which is compatible with both of the binary data formats that use binary subtyping, (though the specific numbering is incompatible with each other, and it is up to the user to translate between them). The subtype is added to `BinaryType` via the helper type [byte_container_with_subtype](https://json.nlohmann.me/api/byte_container_with_subtype/index.md).
 
-[CBOR's RFC 7049](https://tools.ietf.org/html/rfc7049) describes this type as:
+[CBOR's RFC 8949](https://www.rfc-editor.org/rfc/rfc8949.html#section-3.1) describes this type as:
 
-> Major type 2: a byte string. The string's length in bytes is represented following the rules for positive integers (major type 0).
+> Major type 2: A byte string. The number of bytes in the string is equal to the argument.
 
 [MessagePack's documentation on the bin type family](https://github.com/msgpack/msgpack/blob/master/spec.md#bin-format-family) describes this type as:
 
