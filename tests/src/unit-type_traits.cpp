@@ -53,4 +53,33 @@ TEST_CASE("type traits")
             // NOLINTEND(hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-avoid-c-arrays)
         }
     }
+
+    SECTION("char_traits")
+    {
+        SECTION("to_int_type does not sign-extend")
+        {
+            using unsigned_traits = nlohmann::detail::char_traits<unsigned char>;
+            using signed_traits = nlohmann::detail::char_traits<signed char>;
+
+            CHECK(unsigned_traits::to_int_type(static_cast<unsigned char>(0x7F)) == 0x7F);
+            CHECK(unsigned_traits::to_int_type(static_cast<unsigned char>(0x80)) == 0x80);
+            CHECK(unsigned_traits::to_int_type(static_cast<unsigned char>(0xFF)) == 0xFF);
+
+            CHECK(signed_traits::to_int_type(static_cast<signed char>(0x7F)) == 0x7F);
+            CHECK(signed_traits::to_int_type(static_cast<signed char>(0x80)) == 0x80);
+            CHECK(signed_traits::to_int_type(static_cast<signed char>(0xFF)) == 0xFF);
+        }
+
+        SECTION("no byte value collides with eof")
+        {
+            using unsigned_traits = nlohmann::detail::char_traits<unsigned char>;
+            using signed_traits = nlohmann::detail::char_traits<signed char>;
+
+            for (int i = 0; i < 256; ++i)
+            {
+                CHECK(unsigned_traits::to_int_type(static_cast<unsigned char>(i)) != unsigned_traits::eof());
+                CHECK(signed_traits::to_int_type(static_cast<signed char>(i)) != signed_traits::eof());
+            }
+        }
+    }
 }
