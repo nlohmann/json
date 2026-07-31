@@ -31,6 +31,14 @@ Incomplete mapping
 
 The mapping is **incomplete**, since only JSON-objects (and things contained therein) can be serialized to BSON. Also, keys may not contain U+0000, since they are serialized a zero-terminated c-strings.
 
+BSON type 0x11 interoperability
+
+The BSON specification defines type `0x11` as a Timestamp. This library uses marker `0x11` when serializing `number_unsigned` values in the range `9223372036854775808..18446744073709551615`. Other BSON implementations may therefore interpret these values as Timestamps instead of unsigned integers.
+
+Binary values without a subtype
+
+BSON requires every binary value to have a subtype. If a binary value has no subtype, this library serializes it with the generic subtype `0x00`. After deserialization, `has_subtype()` returns `true` and `subtype()` returns `0`. As a result, serializing and deserializing a JSON object containing such a value produces a different JSON object, even though the binary data is unchanged.
+
 Example
 
 ```
@@ -98,7 +106,7 @@ The mapping is **incomplete**. The unsupported mappings are indicated in the tab
 
 Handling of BSON type 0x11
 
-BSON type 0x11 is used to represent uint64 numbers. This library treats these values purely as uint64 numbers and does not parse them into date-related formats.
+This library deserializes BSON type `0x11` (Timestamp) as a `number_unsigned` value. The 64-bit value is preserved, but the Timestamp type information is not.
 
 Example
 
