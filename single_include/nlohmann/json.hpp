@@ -10097,8 +10097,9 @@ class json_sax_dom_callback_parser
     bool end_array()
     {
         bool keep = true;
+        const bool stored = ref_stack.back() != nullptr;
 
-        if (ref_stack.back())
+        if (stored)
         {
             keep = callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::array_end, *ref_stack.back());
             if (keep)
@@ -10132,9 +10133,26 @@ class json_sax_dom_callback_parser
         keep_stack.pop_back();
 
         // remove discarded value
-        if (!keep && !ref_stack.empty() && ref_stack.back()->is_array())
+        if (!ref_stack.empty() && ref_stack.back())
         {
-            ref_stack.back()->m_data.m_value.array->pop_back();
+            if (!keep && ref_stack.back()->is_array())
+            {
+                ref_stack.back()->m_data.m_value.array->pop_back();
+            }
+            else if ((!keep || !stored) && ref_stack.back()->is_object())
+            {
+                // the array is either still stored under its key or was never
+                // stored, leaving the placeholder key() wrote; both show up as
+                // a discarded member of the parent object
+                for (auto it = ref_stack.back()->begin(); it != ref_stack.back()->end(); ++it)
+                {
+                    if (it->is_discarded())
+                    {
+                        ref_stack.back()->erase(it);
+                        break;
+                    }
+                }
+            }
         }
 
         return true;
