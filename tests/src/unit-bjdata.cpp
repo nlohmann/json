@@ -2587,6 +2587,69 @@ TEST_CASE("BJData")
                 CHECK(json::to_bjdata(json::from_bjdata(v_B), true, true) == v_B);
             }
 
+            SECTION("ndarray with data not matching _ArrayType_ is written as an object")
+            {
+                // A JData-annotated object is only serialized as an ndarray when
+                // its _ArrayData_ elements are actually stored as the number kind
+                // named by _ArrayType_. Otherwise the writer would read the wrong
+                // union member (e.g. a std::string's heap pointer as a uint64) and
+                // emit it, so such an object falls back to a plain object encoding
+                // that still round-trips.
+
+                // string data declared as a uint64 array
+                json const j_str = json({{"_ArrayType_", "uint64"}, {"_ArraySize_", {1}}, {"_ArrayData_", {"pointer"}}});
+                const auto out_str = json::to_bjdata(j_str);
+                CHECK(out_str.at(0) == '{');
+                CHECK(json::from_bjdata(out_str) == j_str);
+
+                // integer data declared as a double array
+                json const j_float = json({{"_ArrayType_", "double"}, {"_ArraySize_", {2}}, {"_ArrayData_", {1, 2}}});
+                const auto out_float = json::to_bjdata(j_float);
+                CHECK(out_float.at(0) == '{');
+                CHECK(json::from_bjdata(out_float) == j_float);
+
+                // a non-integer shape entry is likewise not treated as an ndarray
+                json const j_size = json({{"_ArrayType_", "uint8"}, {"_ArraySize_", {"x"}}, {"_ArrayData_", {1}}});
+                const auto out_size = json::to_bjdata(j_size);
+                CHECK(out_size.at(0) == '{');
+                CHECK(json::from_bjdata(out_size) == j_size);
+
+                // a negative shape entry is not a usable dimension either
+                json const j_neg = json::parse(R"({"_ArrayType_":"uint8","_ArraySize_":[-1],"_ArrayData_":[1]})");
+                const auto out_neg = json::to_bjdata(j_neg);
+                CHECK(out_neg.at(0) == '{');
+                CHECK(json::from_bjdata(out_neg) == j_neg);
+            }
+
+            SECTION("ndarray parsed from text is written as a typed array")
+            {
+                // json::parse stores a non-negative integer as number_unsigned while
+                // the C++ API stores an int literal as number_integer, so _ArrayType_
+                // names the wire type rather than the storage. Both storages have to
+                // produce the same typed array for every type.
+                for (const char* type :
+                        {"uint8", "int8", "uint16", "int16", "uint32", "int32", "uint64", "int64", "char", "byte"
+                        })
+                {
+                    CAPTURE(type);
+                    const std::string text = std::string(R"({"_ArrayType_":")") + type +
+                                             R"(","_ArraySize_":[2,3],"_ArrayData_":[1,2,3,4,5,6]})";
+                    const auto from_text = json::to_bjdata(json::parse(text));
+                    CHECK(from_text.at(0) == '[');
+                    CHECK(from_text == json::to_bjdata(json({{"_ArrayType_", type}, {"_ArraySize_", {2, 3}}, {"_ArrayData_", {1, 2, 3, 4, 5, 6}}})));
+                }
+
+                // negative values under a signed type behave the same way
+                const auto from_neg = json::to_bjdata(json::parse(R"({"_ArrayType_":"int32","_ArraySize_":[2],"_ArrayData_":[-5,7]})"));
+                CHECK(from_neg.at(0) == '[');
+                CHECK(from_neg == json::to_bjdata(json({{"_ArrayType_", "int32"}, {"_ArraySize_", {2}}, {"_ArrayData_", {-5, 7}}})));
+
+                // and so do the floating point types
+                const auto from_float = json::to_bjdata(json::parse(R"({"_ArrayType_":"double","_ArraySize_":[2],"_ArrayData_":[1.5,2.5]})"));
+                CHECK(from_float.at(0) == '[');
+                CHECK(from_float == json::to_bjdata(json({{"_ArrayType_", "double"}, {"_ArraySize_", {2}}, {"_ArrayData_", {1.5, 2.5}}})));
+            }
+
             SECTION("optimized ndarray (type and vector-size as 1D array)")
             {
                 // create vector with two elements of the same type
