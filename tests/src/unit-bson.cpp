@@ -529,6 +529,41 @@ TEST_CASE("BSON")
             CHECK(json::from_bson(result, true, false) == j);
         }
 
+        SECTION("non-empty object with binary member without subtype")
+        {
+            const size_t N = 10;
+            const auto s = std::vector<std::uint8_t>(N, 'x');
+            json const j =
+            {
+                { "entry", json::binary(s) }
+            };
+
+            CHECK(!j.at("entry").get_binary().has_subtype());
+
+            std::vector<std::uint8_t> const expected =
+            {
+                0x1B, 0x00, 0x00, 0x00, // size (little endian)
+                0x05, // entry: binary
+                'e', 'n', 't', 'r', 'y', '\x00',
+
+                0x0A, 0x00, 0x00, 0x00, // size of binary (little endian)
+                0x00, // Generic binary subtype
+                0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78,
+
+                0x00 // end marker
+            };
+
+            const auto result = json::to_bson(j);
+            CHECK(result == expected);
+
+            // roundtrip adds the generic binary subtype
+            const auto roundtrip = json::from_bson(result);
+            CHECK(roundtrip != j);
+            CHECK(roundtrip.at("entry").get_binary().has_subtype());
+            CHECK(roundtrip.at("entry").get_binary().subtype() == 0);
+            CHECK(json::from_bson(result, true, false) == roundtrip);
+        }
+
         SECTION("non-empty object with binary member with subtype")
         {
             // an MD5 hash
