@@ -13374,7 +13374,17 @@ class binary_reader
             case token_type::value_unsigned:
                 return sax->number_unsigned(number_lexer.get_number_unsigned());
             case token_type::value_float:
-                return sax->number_float(number_lexer.get_number_float(), std::move(number_string));
+            {
+                const auto parsed_float = number_lexer.get_number_float();
+                if (JSON_HEDLEY_UNLIKELY(!std::isfinite(parsed_float)))
+                {
+                    return sax->parse_error(
+                               chars_read,
+                               number_string,
+                               out_of_range::create(406, concat("number overflow parsing '", number_string, '\''), nullptr));
+                }
+                return sax->number_float(parsed_float, std::move(number_string));
+            }
             case token_type::uninitialized:
             case token_type::literal_true:
             case token_type::literal_false:
