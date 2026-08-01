@@ -66,8 +66,9 @@ TEST_CASE("type traits")
             CHECK(unsigned_traits::to_int_type(static_cast<unsigned char>(0xFF)) == 0xFF);
 
             CHECK(signed_traits::to_int_type(static_cast<signed char>(0x7F)) == 0x7F);
-            CHECK(signed_traits::to_int_type(static_cast<signed char>(0x80)) == 0x80);
-            CHECK(signed_traits::to_int_type(static_cast<signed char>(0xFF)) == 0xFF);
+            // 0x80 and 0xFF do not fit in signed char (MSVC C4309), so spell them as negative values
+            CHECK(signed_traits::to_int_type(static_cast<signed char>(0x80 - 0x100)) == 0x80);
+            CHECK(signed_traits::to_int_type(static_cast<signed char>(0xFF - 0x100)) == 0xFF);
         }
 
         SECTION("no byte value collides with eof")

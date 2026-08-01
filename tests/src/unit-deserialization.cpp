@@ -438,13 +438,14 @@ TEST_CASE("deserialization")
                 CHECK(l.events.size() == 1);
                 CHECK(l.events == std::vector<std::string>({"boolean(true)"}));
 
-                // bytes outside ASCII are negative here and must not be sign-extended
-                std::vector<signed char> const umlaut = {'"', static_cast<signed char>(0xC3), static_cast<signed char>(0xA9), '"'};
+                // bytes outside ASCII are negative here and must not be sign-extended;
+                // 0xC3 and 0xA9 do not fit in signed char (MSVC C4309), so spell them as negative values
+                std::vector<signed char> const umlaut = {'"', static_cast<signed char>(0xC3 - 0x100), static_cast<signed char>(0xA9 - 0x100), '"'};
                 CHECK(json::parse(umlaut) == json("\xC3\xA9"));
                 CHECK(json::accept(umlaut));
 
-                // 0xFF must not be reported as end of input
-                std::vector<signed char> const trailing = {'t', 'r', 'u', 'e', static_cast<signed char>(0xFF)};
+                // 0xFF (spelled as -1 to stay in range) must not be reported as end of input
+                std::vector<signed char> const trailing = {'t', 'r', 'u', 'e', static_cast<signed char>(0xFF - 0x100)};
                 json _;
                 CHECK_THROWS_WITH_AS(_ = json::parse(trailing), "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid literal; last read: 'true\xFF'; expected end of input", json::parse_error&);
                 CHECK(!json::accept(trailing));
