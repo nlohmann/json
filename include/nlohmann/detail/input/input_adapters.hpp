@@ -135,6 +135,18 @@ class input_stream_adapter
         return res;
     }
 
+    // Whether the adapter can return the last read character to the input so
+    // that subsequent reads from the underlying stream see it again.
+    static constexpr bool supports_unget = true;
+
+    // Move the get pointer back over the character last returned by
+    // get_character(). Returns whether the character was actually restored;
+    // sungetc() may fail if the streambuf has no putback position available.
+    bool unget_character()
+    {
+        return sb->sungetc() != std::char_traits<char>::eof();
+    }
+
     template<class T>
     std::size_t get_elements(T* dest, std::size_t count = 1)
     {

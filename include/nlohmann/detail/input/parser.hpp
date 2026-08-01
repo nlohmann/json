@@ -99,8 +99,14 @@ class parser
             json_sax_dom_callback_parser<BasicJsonType, InputAdapterType> sdp(result, callback, allow_exceptions, &m_lexer);
             sax_parse_internal(&sdp);
 
+            if (!strict)
+            {
+                // the caller keeps using the input: position it right after
+                // the value by giving back the character that terminated it
+                m_lexer.restore_pending_unget();
+            }
             // in strict mode, input must be completely read
-            if (strict && (get_token() != token_type::end_of_input))
+            else if (get_token() != token_type::end_of_input)
             {
                 sdp.parse_error(m_lexer.get_position(),
                                 m_lexer.get_token_string(),
@@ -127,8 +133,13 @@ class parser
             json_sax_dom_parser<BasicJsonType, InputAdapterType> sdp(result, allow_exceptions, &m_lexer);
             sax_parse_internal(&sdp);
 
+            if (!strict)
+            {
+                // see above
+                m_lexer.restore_pending_unget();
+            }
             // in strict mode, input must be completely read
-            if (strict && (get_token() != token_type::end_of_input))
+            else if (get_token() != token_type::end_of_input)
             {
                 sdp.parse_error(m_lexer.get_position(),
                                 m_lexer.get_token_string(),
@@ -165,8 +176,14 @@ class parser
         (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
         const bool result = sax_parse_internal(sax);
 
+        if (result && !strict)
+        {
+            // the caller keeps using the input: position it right after the
+            // value by giving back the character that terminated it
+            m_lexer.restore_pending_unget();
+        }
         // strict mode: next byte must be EOF
-        if (result && strict && (get_token() != token_type::end_of_input))
+        else if (result && strict && (get_token() != token_type::end_of_input))
         {
             return sax->parse_error(m_lexer.get_position(),
                                     m_lexer.get_token_string(),

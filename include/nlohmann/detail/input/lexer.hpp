@@ -125,6 +125,24 @@ constexpr bool input_adapter_supports_seek(std::false_type /*detected*/)
     return false;
 }
 
+// Detect whether an input adapter can return the character last read to the
+// input (see input_stream_adapter::supports_unget), detected like
+// supports_seek above.
+template<typename InputAdapterType>
+using detect_supports_unget = decltype(InputAdapterType::supports_unget);
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_unget(std::true_type /*detected*/)
+{
+    return InputAdapterType::supports_unget;
+}
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_unget(std::false_type /*detected*/)
+{
+    return false;
+}
+
 /*!
 @brief lexical analysis
 
@@ -145,6 +163,11 @@ class lexer : public lexer_base<BasicJsonType>
     /// character; see input_adapter_supports_seek
     static constexpr bool lazy_token_string =
         input_adapter_supports_seek<InputAdapterType>(is_detected<detect_supports_seek, InputAdapterType> {});
+
+    /// whether a pending simulated unget can be turned into a real unget on
+    /// the input adapter; see input_adapter_supports_unget
+    static constexpr bool can_unget_input =
+        input_adapter_supports_unget<InputAdapterType>(is_detected<detect_supports_unget, InputAdapterType> {});
 
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
@@ -1456,6 +1479,25 @@ scan_number_done:
         uncapture_char(std::integral_constant<bool, lazy_token_string> {});
     }
 
+    /// adapter without unget support: nothing to do (see restore_pending_unget)
+    bool restore_pending_unget_impl(std::false_type /*can_unget*/) const noexcept
+    {
+        return false;
+    }
+
+    /// adapter with unget support: give back the character consumed but unread
+    bool restore_pending_unget_impl(std::true_type /*can_unget*/)
+    {
+        if (!next_unget || current == char_traits<char_type>::eof())
+        {
+            // nothing was consumed beyond the last token
+            return true;
+        }
+
+        next_unget = false;
+        return ia.unget_character();
+    }
+
     /// seekable adapter: nothing was captured, so nothing to undo
     void uncapture_char(std::true_type /*lazy*/) const noexcept {}
 
@@ -1517,6 +1559,28 @@ scan_number_done:
     constexpr position_t get_position() const noexcept
     {
         return position;
+    }
+
+    /*!
+    @brief turn a pending simulated unget into a real one on the input
+
+    unget() only rewinds the lexer's own bookkeeping, so the character that
+    terminated the last token (e.g. the character after a number) stays
+    consumed from the input. Callers that hand the input back to the user
+    afterwards - operator>> and non-strict sax_parse - call this once when
+    scanning is done, so that the input is positioned right after the value.
+
+    A pending unget of EOF must not be restored: EOF was never consumed. The
+    lexer must not read again after this call; next_unget is cleared so that
+    the restored character is not also replayed from @a current.
+
+    @return whether the input is positioned right after the last token; false
+            if the adapter cannot unget or the unget failed, in which case the
+            input is left as is (the pre-existing behaviour)
+    */
+    bool restore_pending_unget()
+    {
+        return restore_pending_unget_impl(std::integral_constant<bool, can_unget_input> {});
     }
 
     /// seekable adapter: rebuild the last read token from the input on demand
