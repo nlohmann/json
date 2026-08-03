@@ -224,26 +224,27 @@ class proxy_iterator
     iterator* m_it = nullptr;
 };
 
-// A streambuf whose get area is a single character and that refuses every
-// putback. Used to check that restoring the character that terminated a
-// number degrades gracefully when the streambuf cannot put it back.
+// A streambuf that keeps no get area at all and therefore refuses every
+// putback: with an empty get area, sungetc() always ends up in pbackfail().
+// Used to check that restoring the character that terminated a number
+// degrades gracefully when the streambuf cannot put it back.
 class no_putback_streambuf : public std::streambuf
 {
   public:
     explicit no_putback_streambuf(std::string s) : m_data(std::move(s)) {}
 
   protected:
+    // peek at the next character without consuming it
     int_type underflow() override
     {
         if (m_pos >= m_data.size())
         {
             return traits_type::eof();
         }
-        m_char = m_data[m_pos];
-        setg(&m_char, &m_char, &m_char + 1);
-        return traits_type::to_int_type(m_char);
+        return traits_type::to_int_type(m_data[m_pos]);
     }
 
+    // consume the next character
     int_type uflow() override
     {
         if (m_pos >= m_data.size())
@@ -253,7 +254,7 @@ class no_putback_streambuf : public std::streambuf
         return traits_type::to_int_type(m_data[m_pos++]);
     }
 
-    int_type pbackfail(int_type /*c*/ = traits_type::eof()) override
+    int_type pbackfail(int_type /*c*/) override
     {
         return traits_type::eof();
     }
@@ -261,7 +262,6 @@ class no_putback_streambuf : public std::streambuf
   private:
     std::string m_data;
     std::size_t m_pos = 0;
-    char m_char = 0;
 };
 
 // read the characters that are left in a stream
@@ -1239,7 +1239,7 @@ TEST_CASE("deserialization")
                 std::istringstream ss(test.first);
                 json j;
                 ss >> j;
-                CHECK(j == json(json::parse(test.first.substr(0, test.first.size() - test.second.size()))));
+                CHECK(j == json::parse(test.first.substr(0, test.first.size() - test.second.size())));
                 CHECK(remaining(ss) == test.second);
             }
         }
@@ -1309,8 +1309,9 @@ TEST_CASE("deserialization")
         SECTION("strict parsing still rejects trailing data")
         {
             std::istringstream ss("1true");
-            CHECK_THROWS_WITH_AS(json::parse(ss),
-                                 "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - unexpected true literal; expected end of input", json::parse_error);
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::parse(ss),
+                                 "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - unexpected true literal; expected end of input", json::parse_error&);
 
             std::istringstream ss2("1true");
             CHECK_FALSE(json::accept(ss2));
