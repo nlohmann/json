@@ -3994,7 +3994,9 @@ struct char_traits<signed char> : std::char_traits<char>
     // Redefine to_int_type function
     static int_type to_int_type(char_type c) noexcept
     {
-        return static_cast<int_type>(c);
+        // cast via unsigned char: sign-extending a negative char_type would make
+        // byte 0xFF indistinguishable from eof()
+        return static_cast<int_type>(static_cast<unsigned char>(c));
     }
 
     static char_type to_char_type(int_type i) noexcept
