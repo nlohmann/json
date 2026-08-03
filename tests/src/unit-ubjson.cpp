@@ -1713,6 +1713,44 @@ TEST_CASE("UBJSON")
             CHECK(json::to_ubjson(json::from_ubjson(s_L)) == s_i);
         }
 
+        SECTION("no-op markers")
+        {
+            // A no-op ('N') is valid wherever a value may start; it is consumed
+            // by get_ignore_noop() before the value is read. It is not valid
+            // where a string length type specification is expected.
+
+            SECTION("accepted where a value may start")
+            {
+                // at top level, also repeated
+                CHECK(json::from_ubjson(std::vector<uint8_t>({'N', 'i', 1})) == json(1));
+                CHECK(json::from_ubjson(std::vector<uint8_t>({'N', 'N', 'N', 'i', 1})) == json(1));
+
+                // inside an array of unknown size, before and after an element
+                CHECK(json::from_ubjson(std::vector<uint8_t>({'[', 'N', 'i', 1, ']'})) == json({1}));
+                CHECK(json::from_ubjson(std::vector<uint8_t>({'[', 'i', 1, 'N', ']'})) == json({1}));
+
+                // inside an object of unknown size: before a key, between key
+                // and value, and before the closing '}'
+                CHECK(json::from_ubjson(std::vector<uint8_t>({'{', 'N', 'U', 1, 'a', 'i', 1, '}'})) == json({{"a", 1}}));
+                CHECK(json::from_ubjson(std::vector<uint8_t>({'{', 'U', 1, 'a', 'N', 'i', 1, '}'})) == json({{"a", 1}}));
+                CHECK(json::from_ubjson(std::vector<uint8_t>({'{', 'U', 1, 'a', 'i', 1, 'N', '}'})) == json({{"a", 1}}));
+            }
+
+            SECTION("rejected where a length type specification is expected")
+            {
+                json _;
+
+                // after the 'S' marker of a string value
+                std::vector<uint8_t> const v_S = {'S', 'N', 'U', 1, 'a'};
+                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v_S), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON string: expected length type specification (U, i, I, l, L); last byte: 0x4E", json::parse_error&);
+
+                // as the key length of an object with a known size, where
+                // no-ops are not permitted in the first place
+                std::vector<uint8_t> const v_key = {'{', '#', 'i', 1, 'N', 'U', 1, 'a', 'i', 1};
+                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v_key), "[json.exception.parse_error.113] parse error at byte 5: syntax error while parsing UBJSON string: expected length type specification (U, i, I, l, L); last byte: 0x4E", json::parse_error&);
+            }
+        }
+
         SECTION("number")
         {
             SECTION("float")
