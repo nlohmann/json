@@ -898,6 +898,22 @@ A JSON Patch `add` operation cannot be applied because the target location's par
 
     This exception was added in version 3.13.0. Before that, this situation hit an internal assertion (aborting the program in debug builds) or was silently ignored when assertions were disabled.
 
+### json.exception.out_of_range.412
+
+BSON stores the length of documents, arrays, strings, and binary values in a signed 32-bit integer. This exception is thrown when a value is too large to be described by such a length field.
+
+!!! failure "Example message"
+
+    ```
+    BSON length 2147483661 exceeds maximum of 2147483647
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0. Before that, the length was silently truncated, and
+    [`to_bson`](../api/basic_json/to_bson.md) produced documents with negative length prefixes that
+    [`from_bson`](../api/basic_json/from_bson.md) rejected.
+
 ## Further exceptions
 
 This exception is thrown in case of errors that cannot be classified with the

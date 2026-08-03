@@ -980,6 +980,21 @@ class binary_writer
     }
 
     /*!
+    @brief Checks that @a size fits into the 32-bit length field used by BSON
+    @return The size as a signed 32-bit integer
+    @throw out_of_range.412 if @a size exceeds the range of std::int32_t
+    */
+    static std::int32_t to_bson_length(const std::size_t size)
+    {
+        if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(size)))
+        {
+            JSON_THROW(out_of_range::create(412, concat("BSON length ", std::to_string(size), " exceeds maximum of ", std::to_string((std::numeric_limits<std::int32_t>::max)())), nullptr));
+        }
+
+        return static_cast<std::int32_t>(size);
+    }
+
+    /*!
     @brief Writes the given @a element_type and @a name to the output adapter
     */
     void write_bson_entry_header(const string_t& name,
@@ -1027,7 +1042,7 @@ class binary_writer
     {
         write_bson_entry_header(name, 0x02);
 
-        write_number<std::int32_t>(static_cast<std::int32_t>(value.size() + 1ul), true);
+        write_number<std::int32_t>(to_bson_length(value.size() + 1ul), true);
         oa->write_characters(
             reinterpret_cast<const CharType*>(value.c_str()),
             value.size() + 1);
@@ -1142,7 +1157,7 @@ class binary_writer
                           const typename BasicJsonType::array_t& value)
     {
         write_bson_entry_header(name, 0x04); // array
-        write_number<std::int32_t>(static_cast<std::int32_t>(calc_bson_array_size(value)), true);
+        write_number<std::int32_t>(to_bson_length(calc_bson_array_size(value)), true);
 
         std::size_t array_index = 0ul;
 
@@ -1162,7 +1177,7 @@ class binary_writer
     {
         write_bson_entry_header(name, 0x05);
 
-        write_number<std::int32_t>(static_cast<std::int32_t>(value.size()), true);
+        write_number<std::int32_t>(to_bson_length(value.size()), true);
         write_number(value.has_subtype() ? static_cast<std::uint8_t>(value.subtype()) : static_cast<std::uint8_t>(0x00));
 
         oa->write_characters(reinterpret_cast<const CharType*>(value.data()), value.size());
@@ -1284,7 +1299,7 @@ class binary_writer
     */
     void write_bson_object(const typename BasicJsonType::object_t& value)
     {
-        write_number<std::int32_t>(static_cast<std::int32_t>(calc_bson_object_size(value)), true);
+        write_number<std::int32_t>(to_bson_length(calc_bson_object_size(value)), true);
 
         for (const auto& el : value)
         {
@@ -1647,13 +1662,39 @@ class binary_writer
         std::size_t len = (value.at(key).empty() ? 0 : 1);
         for (const auto& el : value.at(key))
         {
-            len *= static_cast<std::size_t>(el.m_data.m_value.number_unsigned);
+            // a dimension is read as an unsigned value below, so anything that
+            // is not a non-negative integer is rejected: a non-integer entry
+            // would pun unrelated bytes as the dimension, and a negative one
+            // would wrap into a nonsensical length
+            if (!el.is_number_integer() || (!el.is_number_unsigned() && el.template get<std::int64_t>() < 0))
+            {
+                return true;
+            }
+            len *= static_cast<std::size_t>(el.template get<std::uint64_t>());
         }
 
         key = "_ArrayData_";
         if (value.at(key).size() != len)
         {
             return true;
+        }
+
+        // every element is written below as the number kind dtype names, so it
+        // has to actually be a number of that category: an element of any other
+        // type would reinterpret unrelated bytes, e.g. a string's heap pointer,
+        // as that number. Such an object falls back to a plain object encoding.
+        // dtype names the wire type, not the storage type: whether an integer
+        // is held as number_integer or number_unsigned depends on how the value
+        // was built (parsing stores non-negative integers as unsigned, the C++
+        // API stores int literals as signed), so both are accepted here and the
+        // writes below go through get<>, which reads the member that is active.
+        const bool ndarray_is_float = (dtype == 'd' || dtype == 'D');
+        for (const auto& el : value.at(key))
+        {
+            if (ndarray_is_float ? !el.is_number_float() : !el.is_number_integer())
+            {
+                return true;
+            }
         }
 
         oa->write_character('[');
@@ -1669,70 +1710,70 @@ class binary_writer
         {
             for (const auto& el : value.at(key))
             {
-                write_number(static_cast<std::uint8_t>(el.m_data.m_value.number_unsigned), true);
+                write_number(static_cast<std::uint8_t>(el.template get<std::uint64_t>()), true);
             }
         }
         else if (dtype == 'i')
         {
             for (const auto& el : value.at(key))
             {
-                write_number(static_cast<std::int8_t>(el.m_data.m_value.number_integer), true);
+                write_number(static_cast<std::int8_t>(el.template get<std::int64_t>()), true);
             }
         }
         else if (dtype == 'u')
         {
             for (const auto& el : value.at(key))
             {
-                write_number(static_cast<std::uint16_t>(el.m_data.m_value.number_unsigned), true);
+                write_number(static_cast<std::uint16_t>(el.template get<std::uint64_t>()), true);
             }
         }
         else if (dtype == 'I')
         {
             for (const auto& el : value.at(key))
             {
-                write_number(static_cast<std::int16_t>(el.m_data.m_value.number_integer), true);
+                write_number(static_cast<std::int16_t>(el.template get<std::int64_t>()), true);
             }
         }
         else if (dtype == 'm')
         {
             for (const auto& el : value.at(key))
             {
-                write_number(static_cast<std::uint32_t>(el.m_data.m_value.number_unsigned), true);
+                write_number(static_cast<std::uint32_t>(el.template get<std::uint64_t>()), true);
             }
         }
         else if (dtype == 'l')
         {
             for (const auto& el : value.at(key))
             {
-                write_number(static_cast<std::int32_t>(el.m_data.m_value.number_integer), true);
+                write_number(static_cast<std::int32_t>(el.template get<std::int64_t>()), true);
             }
         }
         else if (dtype == 'M')
         {
             for (const auto& el : value.at(key))
             {
-                write_number(static_cast<std::uint64_t>(el.m_data.m_value.number_unsigned), true);
+                write_number(el.template get<std::uint64_t>(), true);
             }
         }
         else if (dtype == 'L')
         {
             for (const auto& el : value.at(key))
             {
-                write_number(static_cast<std::int64_t>(el.m_data.m_value.number_integer), true);
+                write_number(el.template get<std::int64_t>(), true);
             }
         }
         else if (dtype == 'd')
         {
             for (const auto& el : value.at(key))
             {
-                write_number(static_cast<float>(el.m_data.m_value.number_float), true);
+                write_number(static_cast<float>(el.template get<double>()), true);
             }
         }
         else if (dtype == 'D')
         {
             for (const auto& el : value.at(key))
             {
-                write_number(static_cast<double>(el.m_data.m_value.number_float), true);
+                write_number(el.template get<double>(), true);
             }
         }
         return false;

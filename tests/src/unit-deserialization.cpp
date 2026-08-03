@@ -427,6 +427,30 @@ TEST_CASE("deserialization")
                 CHECK(l.events == std::vector<std::string>({"boolean(true)"}));
             }
 
+            SECTION("from std::vector<signed char>")
+            {
+                std::vector<signed char> const v = {'t', 'r', 'u', 'e'};
+                CHECK(json::parse(v) == json(true));
+                CHECK(json::accept(v));
+
+                SaxEventLogger l;
+                CHECK(json::sax_parse(v, &l));
+                CHECK(l.events.size() == 1);
+                CHECK(l.events == std::vector<std::string>({"boolean(true)"}));
+
+                // bytes outside ASCII are negative here and must not be sign-extended;
+                // 0xC3 and 0xA9 do not fit in signed char (MSVC C4309), so spell them as negative values
+                std::vector<signed char> const umlaut = {'"', static_cast<signed char>(0xC3 - 0x100), static_cast<signed char>(0xA9 - 0x100), '"'};
+                CHECK(json::parse(umlaut) == json("\xC3\xA9"));
+                CHECK(json::accept(umlaut));
+
+                // 0xFF (spelled as -1 to stay in range) must not be reported as end of input
+                std::vector<signed char> const trailing = {'t', 'r', 'u', 'e', static_cast<signed char>(0xFF - 0x100)};
+                json _;
+                CHECK_THROWS_WITH_AS(_ = json::parse(trailing), "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid literal; last read: 'true\xFF'; expected end of input", json::parse_error&);
+                CHECK(!json::accept(trailing));
+            }
+
             SECTION("from std::array")
             {
                 std::array<uint8_t, 5> const v { {'t', 'r', 'u', 'e'} };

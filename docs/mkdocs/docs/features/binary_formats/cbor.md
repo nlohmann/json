@@ -7,12 +7,12 @@ extremely small code sizes, fairly small message size, and extensibility without
 
     - [CBOR Website](http://cbor.io) - the main source on CBOR
     - [CBOR Playground](http://cbor.me) - an interactive webpage to translate between JSON and CBOR
-    - [RFC 7049](https://tools.ietf.org/html/rfc7049) - the CBOR specification
+    - [RFC 8949](https://www.rfc-editor.org/rfc/rfc8949.html) - the CBOR specification
 
 ## Serialization
 
 The library uses the following mapping from JSON values types to CBOR types according to the CBOR specification
-([RFC 7049](https://www.rfc-editor.org/rfc/rfc7049.html)):
+([RFC 8949](https://www.rfc-editor.org/rfc/rfc8949.html)):
 
 | JSON value type | value/range                                | CBOR type                         | first byte |
 |-----------------|--------------------------------------------|-----------------------------------|------------|

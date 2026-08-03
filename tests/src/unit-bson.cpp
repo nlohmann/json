@@ -11,11 +11,34 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <cstdint>
 #include <fstream>
 #include <limits>
 #include <sstream>
+#include <vector>
 #include "make_test_data_available.hpp"
 #include "test_utils.hpp"
+
+namespace
+{
+// a binary container that reports a size beyond INT32_MAX without allocating
+// that much memory, so the BSON length overflow can be tested cheaply
+class huge_binary_t : public std::vector<std::uint8_t>
+{
+  public:
+    using std::vector<std::uint8_t>::vector;
+
+    size_type size() const noexcept // NOLINT(readability-convert-member-functions-to-static)
+    {
+        // one byte more than the BSON length field can represent
+        return static_cast<size_type>((std::numeric_limits<std::int32_t>::max)()) + 1;
+    }
+};
+
+using huge_binary_json = nlohmann::basic_json <
+                         std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
+                         double, std::allocator, nlohmann::adl_serializer, huge_binary_t, void >;
+} // namespace
 
 TEST_CASE("BSON")
 {
@@ -78,6 +101,14 @@ TEST_CASE("BSON")
 #else
         CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.out_of_range.409] BSON key cannot contain code point U+0000 (at byte 2)", json::out_of_range&);
 #endif
+    }
+
+    SECTION("lengths exceeding INT32_MAX cannot be serialized to BSON")
+    {
+        huge_binary_json j;
+        j["b"] = huge_binary_json::binary(huge_binary_t{});
+
+        CHECK_THROWS_WITH_AS(huge_binary_json::to_bson(j), "[json.exception.out_of_range.412] BSON length 2147483661 exceeds maximum of 2147483647", huge_binary_json::out_of_range&);
     }
 
     SECTION("string length must be at least 1")
@@ -498,6 +529,41 @@ TEST_CASE("BSON")
             CHECK(json::from_bson(result, true, false) == j);
         }
 
+        SECTION("non-empty object with binary member without subtype")
+        {
+            const size_t N = 10;
+            const auto s = std::vector<std::uint8_t>(N, 'x');
+            json const j =
+            {
+                { "entry", json::binary(s) }
+            };
+
+            CHECK(!j.at("entry").get_binary().has_subtype());
+
+            std::vector<std::uint8_t> const expected =
+            {
+                0x1B, 0x00, 0x00, 0x00, // size (little endian)
+                0x05, // entry: binary
+                'e', 'n', 't', 'r', 'y', '\x00',
+
+                0x0A, 0x00, 0x00, 0x00, // size of binary (little endian)
+                0x00, // Generic binary subtype
+                0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78,
+
+                0x00 // end marker
+            };
+
+            const auto result = json::to_bson(j);
+            CHECK(result == expected);
+
+            // roundtrip adds the generic binary subtype
+            const auto roundtrip = json::from_bson(result);
+            CHECK(roundtrip != j);
+            CHECK(roundtrip.at("entry").get_binary().has_subtype());
+            CHECK(roundtrip.at("entry").get_binary().subtype() == 0);
+            CHECK(json::from_bson(result, true, false) == roundtrip);
+        }
+
         SECTION("non-empty object with binary member with subtype")
         {
             // an MD5 hash
@@ -788,6 +854,41 @@ TEST_CASE("Incomplete BSON Input")
 
         json _;
         CHECK_THROWS_WITH_AS(_ = json::from_bson(incomplete_bson), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BSON number: unexpected end of input", json::parse_error&);
+        CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
+
+        SaxCountdown scp(0);
+        CHECK(!json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+    }
+
+    SECTION("Incomplete BSON Input 5")
+    {
+        std::vector<std::uint8_t> const incomplete_bson =
+        {
+            0x09, 0x00, 0x00, 0x00, // size (little endian)
+            0x08,                   // entry: boolean
+            'b', '\x00'             // key, unexpected EOF before the value
+        };
+
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(incomplete_bson), "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing BSON number: unexpected end of input", json::parse_error&);
+        CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
+
+        SaxCountdown scp(0);
+        CHECK(!json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+    }
+
+    SECTION("Incomplete BSON Input 6")
+    {
+        std::vector<std::uint8_t> const incomplete_bson =
+        {
+            0x0F, 0x00, 0x00, 0x00, // size (little endian)
+            0x05,                   // entry: binary
+            'b', '\x00',            // key
+            0x00, 0x00, 0x00, 0x00  // length, unexpected EOF before the subtype
+        };
+
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(incomplete_bson), "[json.exception.parse_error.110] parse error at byte 12: syntax error while parsing BSON number: unexpected end of input", json::parse_error&);
         CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
 
         SaxCountdown scp(0);

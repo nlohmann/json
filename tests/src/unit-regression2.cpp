@@ -1530,4 +1530,29 @@ TEST_CASE("issue #4320 - custom base class must not leak nlohmann::detail into A
     CHECK(j == json({{"x", 1.0}, {"y", 2.0}, {"z", 3.0}}));
 }
 
+TEST_CASE("issue #5338 - truncated CBOR tagged binary subtype is rejected")
+{
+    const std::vector<std::vector<std::uint8_t>> truncated_tags =
+    {
+        {0xD8},
+        {0xD9, 0x00},
+        {0xDA, 0x00, 0x00, 0x00},
+        {0xDB, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+    };
+
+    for (const auto& data : truncated_tags)
+    {
+        CAPTURE(data);
+        for (const auto tag_handler :
+                {
+                    json::cbor_tag_handler_t::ignore, json::cbor_tag_handler_t::store
+                })
+        {
+            CAPTURE(tag_handler);
+            const auto result = json::from_cbor(data, true, false, tag_handler);
+            CHECK(result.is_discarded());
+        }
+    }
+}
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP

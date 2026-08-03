@@ -1999,6 +1999,42 @@ TEST_CASE("CBOR regressions")
 }
 #endif
 
+TEST_CASE("CBOR definite length equal to the indefinite-length sentinel")
+{
+    // A definite-length array or map whose declared element count equals the
+    // reserved unknown_size() sentinel (SIZE_MAX) must be rejected. Otherwise
+    // it is read as an indefinite-length container and the following bytes are
+    // silently accepted instead of the (impossible) count being reported.
+    json _;
+
+    SECTION("array")
+    {
+        // 0x9B: array with eight-byte length; length = 0xFFFFFFFFFFFFFFFF
+        const std::vector<uint8_t> input = {0x9B, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x02, 0xFF};
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive array size", json::out_of_range&);
+    }
+
+    SECTION("map")
+    {
+        // 0xBB: map with eight-byte length; length = 0xFFFFFFFFFFFFFFFF
+        const std::vector<uint8_t> input = {0xBB, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x61, 0x61, 0x01, 0xFF};
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive map size", json::out_of_range&);
+    }
+
+    SECTION("indefinite-length containers are unaffected")
+    {
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x9F, 0x01, 0x02, 0xFF})) == json({1, 2}));
+        CHECK(json::from_cbor(std::vector<uint8_t>({0xBF, 0x61, 0x61, 0x01, 0xFF})) == json({{"a", 1}}));
+    }
+
+    SECTION("ordinary four-byte length containers are unaffected")
+    {
+        // 0x9A/0xBA carry a four-byte length; a normal count still parses
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x9A, 0x00, 0x00, 0x00, 0x02, 0x01, 0x02})) == json({1, 2}));
+        CHECK(json::from_cbor(std::vector<uint8_t>({0xBA, 0x00, 0x00, 0x00, 0x01, 0x61, 0x61, 0x01})) == json({{"a", 1}}));
+    }
+}
+
 TEST_CASE("CBOR roundtrips" * doctest::skip())
 {
     SECTION("input from flynn")
@@ -2309,7 +2345,7 @@ TEST_CASE("all CBOR first bytes")
 }
 #endif
 
-TEST_CASE("examples from RFC 7049 Appendix A")
+TEST_CASE("examples from RFC 8949 Appendix A")
 {
     SECTION("numbers")
     {
