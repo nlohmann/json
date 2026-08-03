@@ -25,6 +25,14 @@ The input must be encoded in UTF-8; other encodings are not supported. A single 
 
 By default, the library rejects comments and trailing commas. Both can be enabled with parameters of the `parse` function — see [comments](https://json.nlohmann.me/features/comments/index.md) and [trailing commas](https://json.nlohmann.me/features/trailing_commas/index.md).
 
+## Strictness and trailing data
+
+[`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) reads a single JSON value and requires the whole input to be consumed: any non-whitespace data after the value is reported as a parse error. Use it when you want to guarantee that an input is exactly one complete JSON document.
+
+[`operator>>`](https://json.nlohmann.me/api/operator_gtgt/index.md) follows relaxed `std::istream` semantics instead: it parses one JSON value and leaves the stream positioned right after it, without requiring the rest of the stream to be consumed. This is what makes it possible to read several concatenated values from the same stream, but it also means that "a valid document followed by trailing bytes" is accepted rather than rejected. If you are validating conformance, or need to reject any input that is not exactly one JSON document, prefer `parse`.
+
+When using `operator>>` to read several concatenated values this way, a value that is a number must be followed by whitespace, because `operator>>` consumes the character that terminates a number — see the [`operator>>` notes](https://json.nlohmann.me/api/operator_gtgt/#notes) for details and examples.
+
 ## SAX vs. DOM parsing
 
 The library offers two parsing models:
