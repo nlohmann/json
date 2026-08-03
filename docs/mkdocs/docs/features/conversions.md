@@ -116,16 +116,33 @@ which forces the explicit `get` form and can catch unintended conversions at com
     with a custom `adl_serializer<std::optional<T>>` specialization. Prefer `get<std::optional<T>>()`/`get_to()`
     over `static_cast` for optional types.
 
-!!! warning "Converting to a fixed-size `std::array` does not check length"
+!!! warning "Converting to a fixed-size destination does not check the array size"
 
-    Converting a JSON array to `#!cpp std::array<T, N>` does not check that the JSON array's size matches `N`:
-    if the JSON array is longer, the extra elements are silently dropped; if it is shorter, the remaining
-    `std::array` elements are left default-constructed. No exception is thrown in either case.
+    Some destination types have a size that is fixed by their C++ type rather than by the JSON value:
+    `#!cpp std::pair<A, B>`, `#!cpp std::tuple<Ts...>`, `#!cpp std::array<T, N>`, C arrays `#!cpp T[N]`, and
+    `#!cpp std::map`/`#!cpp std::unordered_map` with a non-string key type (which is read from an array of
+    two-element arrays). All of them read exactly as many elements as they need via
+    [`at`](../api/basic_json/at.md) and **never compare the JSON array's size to that number**. The two
+    mismatch directions therefore behave differently:
+
+    - The JSON array has **too many** elements: the surplus is **silently discarded**, and no exception is
+      thrown.
+    - The JSON array has **too few** elements: `at` throws
+      [`out_of_range.401`](../home/exceptions.md#jsonexceptionout_of_range401) for the first missing index --
+      an out-of-range error, not a [`type_error`](../home/exceptions.md#type-errors), even though the cause
+      is a shape mismatch.
 
     ```cpp
     json j = {1, 2, 3, 4, 5};
-    auto a = j.get<std::array<int, 3>>();  // {1, 2, 3} -- elements 4 and 5 silently dropped
+
+    auto a = j.get<std::array<int, 3>>();       // {1, 2, 3} -- elements 4 and 5 silently dropped
+    auto p = j.get<std::pair<int, int>>();      // (1, 2)    -- elements 3, 4, and 5 silently dropped
+
+    json k = {1};
+    auto q = k.get<std::pair<int, int>>();      // ❌ throws out_of_range.401
     ```
+
+    If a size mismatch is an error in your application, check the size yourself before converting.
 
 ## Omitting a field when serializing `std::optional`
 
