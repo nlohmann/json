@@ -42,6 +42,11 @@ input >> j1;  // parses the first value, stream now positioned right after it
 input >> j2;  // parses the next value
 ```
 
+A number is terminated only by the character that follows it, and `operator>>` consumes that character, so consecutive
+numbers must be whitespace-separated: `1 2` reads as two values, but in `1true` the terminating `t` is consumed together
+with the `1`, leaving `rue` in the stream so the next extraction fails. Structural and literal values are self-delimiting
+and are not affected.
+
 Note this does **not** work for [JSON Lines](../features/parsing/json_lines.md) (newline-delimited JSON) input --
 see that page for why and for the recommended alternative.
 

@@ -40,6 +40,12 @@ what makes it possible to read several concatenated values from the same stream,
 document followed by trailing bytes" is accepted rather than rejected. If you are validating conformance, or need to
 reject any input that is not exactly one JSON document, prefer `parse`.
 
+One caveat when relying on this for concatenated values: a number is terminated only by the character that follows it,
+and `operator>>` consumes that character, so consecutive numbers must be whitespace-separated. `1 2` reads as two
+values, but in `1true` the terminating `t` is consumed together with the `1`, leaving `rue` in the stream, so the next
+extraction fails. Structural and literal values (objects, arrays, strings, `true`/`false`/`null`) are self-delimiting
+and are not affected.
+
 ## SAX vs. DOM parsing
 
 The library offers two parsing models:
