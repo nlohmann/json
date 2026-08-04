@@ -66,6 +66,7 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
         | Clang 20.1.1                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | Clang 20.1.8 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
         | Clang 21.1.8                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
+        | Clang 22.1.8                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | CUDA 11.8.0 (nvcc)                           | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
         | CUDA 12.1.1 (nvcc)                           | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
         | CUDA 12.6.3 (nvcc)                           | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
