@@ -124,7 +124,7 @@ auto refs = j.get<std::tuple<double&, std::string&>>();
 std::get<1>(refs) = "world";  // modifies j[1] in place
 ```
 
-A referenced type must be one the library actually stores (or an arithmetic type it can convert to/from); otherwise this is a compile error.
+A referenced element must name the type the library actually *stores* — one of [`boolean_t`](https://json.nlohmann.me/api/basic_json/boolean_t/index.md), [`number_integer_t`](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md), [`number_unsigned_t`](https://json.nlohmann.me/api/basic_json/number_unsigned_t/index.md), [`number_float_t`](https://json.nlohmann.me/api/basic_json/number_float_t/index.md), [`string_t`](https://json.nlohmann.me/api/basic_json/string_t/index.md), [`binary_t`](https://json.nlohmann.me/api/basic_json/binary_t/index.md), [`array_t`](https://json.nlohmann.me/api/basic_json/array_t/index.md), or [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/index.md). There is nothing else to refer to, so a reference to any other type is a compile error even when a conversion would exist: `std::tuple<int&>` is rejected, because the library stores a `number_integer_t` (`std::int64_t` by default) and not an `int`. This restriction applies only to reference elements — a plain `std::tuple<int>` converts by value as usual.
 
 ## Implicit conversions
 
@@ -161,14 +161,24 @@ j_null.get_to(opt);                                     // ✅ std::nullopt
 
 `operator ValueType()` (used by `static_cast` and implicit conversions) intentionally excludes `std::optional<T>` from delegating to `get<T>()`, to avoid a constructor ambiguity with `std::optional<T>`'s own converting constructor from `basic_json`. As a result, `static_cast<std::optional<T>>(json_value)` goes through `std::optional<T>`'s own converting constructor rather than through `get<std::optional<T>>()`, which can behave differently -- for example, with a custom `adl_serializer<std::optional<T>>` specialization. Prefer `get<std::optional<T>>()`/`get_to()` over `static_cast` for optional types.
 
-Converting to a fixed-size `std::array` does not check length
+Converting to a fixed-size destination does not check the array size
 
-Converting a JSON array to `std::array<T, N>` does not check that the JSON array's size matches `N`: if the JSON array is longer, the extra elements are silently dropped; if it is shorter, the remaining `std::array` elements are left default-constructed. No exception is thrown in either case.
+Some destination types have a size that is fixed by their C++ type rather than by the JSON value: `std::pair<A, B>`, `std::tuple<Ts...>`, `std::array<T, N>`, C arrays `T[N]`, and `std::map`/`std::unordered_map` with a non-string key type (which is read from an array of two-element arrays). All of them read exactly as many elements as they need via [`at`](https://json.nlohmann.me/api/basic_json/at/index.md) and **never compare the JSON array's size to that number**. The two mismatch directions therefore behave differently:
+
+- The JSON array has **too many** elements: the surplus is **silently discarded**, and no exception is thrown.
+- The JSON array has **too few** elements: `at` throws [`out_of_range.401`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range401) for the first missing index -- an out-of-range error, not a [`type_error`](https://json.nlohmann.me/home/exceptions/#type-errors), even though the cause is a shape mismatch.
 
 ```
 json j = {1, 2, 3, 4, 5};
-auto a = j.get<std::array<int, 3>>();  // {1, 2, 3} -- elements 4 and 5 silently dropped
+
+auto a = j.get<std::array<int, 3>>();       // {1, 2, 3} -- elements 4 and 5 silently dropped
+auto p = j.get<std::pair<int, int>>();      // (1, 2)    -- elements 3, 4, and 5 silently dropped
+
+json k = {1};
+auto q = k.get<std::pair<int, int>>();      // ❌ throws out_of_range.401
 ```
+
+If a size mismatch is an error in your application, check the size yourself before converting.
 
 ## Omitting a field when serializing `std::optional`
 

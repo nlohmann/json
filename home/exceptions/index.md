@@ -349,9 +349,9 @@ Example messages
 
 ### json.exception.parse_error.110
 
-When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
+When parsing a [binary format](https://json.nlohmann.me/features/binary_formats/index.md), the byte vector ends before the complete value has been read.
 
-Example message
+Example messages
 
 ```
 [json.exception.parse_error.110] parse error at byte 5: syntax error while parsing CBOR string: unexpected end of input
@@ -359,6 +359,10 @@ Example message
 
 ```
 [json.exception.parse_error.110] parse error at byte 2: syntax error while parsing UBJSON value: expected end of input; last byte: 0x5A
+```
+
+```
+[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing BSON number: unexpected end of input
 ```
 
 ### json.exception.parse_error.112
@@ -395,9 +399,13 @@ Example messages
 [json.exception.parse_error.112] parse error at byte 9: syntax error while parsing CBOR value: negative integer overflow
 ```
 
+```
+[json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: document size 6 does not match the number of bytes read (5)
+```
+
 ### json.exception.parse_error.113
 
-While parsing a map key, a value that is not a string has been read.
+A string could not be read from a [binary format](https://json.nlohmann.me/features/binary_formats/index.md): either a value that is not a string was read where one was required (for instance as a map key), or the string's length specification is invalid.
 
 Example messages
 
@@ -411,6 +419,10 @@ Example messages
 
 ```
 [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON char: byte after 'C' must be in range 0x00..0x7F; last byte: 0x82
+```
+
+```
+[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData string: string length must not be negative
 ```
 
 ### json.exception.parse_error.114
@@ -988,12 +1000,20 @@ Exception cannot occur any more
 
 ### json.exception.out_of_range.408
 
-The size (following `#`) of an UBJSON array or object exceeds the maximal capacity.
+The size of an array or object in a [binary format](https://json.nlohmann.me/features/binary_formats/index.md) exceeds the maximal capacity: the size following `#` for [UBJSON](https://json.nlohmann.me/features/binary_formats/ubjson/index.md)/[BJData](https://json.nlohmann.me/features/binary_formats/bjdata/index.md), or the encoded length for [CBOR](https://json.nlohmann.me/features/binary_formats/cbor/index.md).
 
-Example message
+Example messages
 
 ```
 excessive array size: 8658170730974374167
+```
+
+```
+[json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive array size
+```
+
+```
+[json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive map size
 ```
 
 ### json.exception.out_of_range.409

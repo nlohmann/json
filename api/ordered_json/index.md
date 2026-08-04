@@ -10,6 +10,10 @@ This type preserves the insertion order of object keys.
 
 The type is based on [`ordered_map`](https://json.nlohmann.me/api/ordered_map/index.md) which in turn uses a `std::vector` to store object elements. Therefore, adding object elements can yield a reallocation in which case all iterators (including the [`end()`](https://json.nlohmann.me/api/basic_json/end/index.md) iterator) and all references to the elements are invalidated. Also, any iterator or reference after the insertion point will point to the same index, which is now a different value.
 
+## Complexity
+
+[`ordered_map`](https://json.nlohmann.me/api/ordered_map/index.md) has no lookup index: every key-based object operation is a linear scan, so building or parsing an object of `n` keys costs O(n²) rather than O(n log n). See [`ordered_map` complexity](https://json.nlohmann.me/api/ordered_map/#complexity) for the per-operation table and for measured numbers.
+
 ## Examples
 
 Example
