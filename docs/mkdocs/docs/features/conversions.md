@@ -66,8 +66,14 @@ auto t = j.get<std::tuple<double, std::string, int>>();  // {1.0, "hello", 42}
     std::get<1>(refs) = "world";  // modifies j[1] in place
     ```
 
-    A referenced type must be one the library actually stores (or an arithmetic type it can convert to/from);
-    otherwise this is a compile error.
+    A referenced element must name the type the library actually *stores* — one of [`boolean_t`](../api/basic_json/boolean_t.md),
+    [`number_integer_t`](../api/basic_json/number_integer_t.md), [`number_unsigned_t`](../api/basic_json/number_unsigned_t.md),
+    [`number_float_t`](../api/basic_json/number_float_t.md), [`string_t`](../api/basic_json/string_t.md),
+    [`binary_t`](../api/basic_json/binary_t.md), [`array_t`](../api/basic_json/array_t.md), or
+    [`object_t`](../api/basic_json/object_t.md). There is nothing else to refer to, so a reference to any other type is a
+    compile error even when a conversion would exist: `#!cpp std::tuple<int&>` is rejected, because the library stores a
+    `#!cpp number_integer_t` (`#!cpp std::int64_t` by default) and not an `#!cpp int`. This restriction applies only to
+    reference elements — a plain `#!cpp std::tuple<int>` converts by value as usual.
 
 ## Implicit conversions
 
