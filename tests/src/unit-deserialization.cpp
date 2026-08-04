@@ -224,10 +224,10 @@ class proxy_iterator
     iterator* m_it = nullptr;
 };
 
-// A streambuf that keeps no get area at all and therefore refuses every
-// putback: with an empty get area, sungetc() always ends up in pbackfail().
-// Used to check that restoring the character that terminated a number
-// degrades gracefully when the streambuf cannot put it back.
+// A streambuf that keeps no get area at all and refuses every putback: with an
+// empty get area, sungetc() always ends up in pbackfail(). Used to check that
+// the character terminating a number is left in the input without relying on
+// the streambuf being able to put a consumed character back.
 class no_putback_streambuf : public std::streambuf
 {
   public:
@@ -1341,16 +1341,16 @@ TEST_CASE("deserialization")
             CHECK_FALSE(json::accept(ss2));
         }
 
-        SECTION("a streambuf that cannot put back degrades gracefully")
+        SECTION("a streambuf that cannot put back is not needed")
         {
-            // the character is lost, as it was before the fix, but nothing
-            // else may break
+            // the terminating character is never consumed, so no putback
+            // position is required
             no_putback_streambuf buf("1true");
             std::istream is(&buf);
             json j;
             is >> j;
             CHECK(j == json(1));
-            CHECK(remaining(is) == "rue");
+            CHECK(remaining(is) == "true");
         }
     }
 

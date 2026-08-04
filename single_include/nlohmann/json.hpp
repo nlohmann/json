@@ -7104,6 +7104,9 @@ class input_stream_adapter
         // maintain ifstream flags, except eof
         if (is != nullptr)
         {
+            // consume the character last returned by get_character() unless it
+            // was given back with release_lookahead()
+            commit_lookahead();
             is->clear(is->rdstate() & std::ios::eofbit);
         }
     }
@@ -7118,41 +7121,60 @@ class input_stream_adapter
     input_stream_adapter& operator=(input_stream_adapter&&) = delete;
 
     input_stream_adapter(input_stream_adapter&& rhs) noexcept
-        : is(rhs.is), sb(rhs.sb)
+        : is(rhs.is), sb(rhs.sb), lookahead(rhs.lookahead)
     {
         rhs.is = nullptr;
         rhs.sb = nullptr;
+        rhs.lookahead = false;
     }
+
+    // Whether the character last returned by get_character() can be given back
+    // to the input with release_lookahead().
+    static constexpr bool supports_lookahead = true;
 
     // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
     // ensure that std::char_traits<char>::eof() and the character 0xFF do not
     // end up as the same value, e.g., 0xFFFFFFFF.
+    //
+    // The character is peeked rather than consumed: it is only stepped over
+    // once the next character is requested, or when the adapter is destroyed.
+    // Until then, release_lookahead() can leave it in the input.
     std::char_traits<char>::int_type get_character()
     {
-        auto res = sb->sbumpc();
+        if (lookahead)
+        {
+            // step over the character returned by the previous call
+            sb->sbumpc();
+        }
+
+        auto res = sb->sgetc();
         // set eof manually, as we don't use the istream interface.
         if (JSON_HEDLEY_UNLIKELY(res == std::char_traits<char>::eof()))
         {
+            // there is nothing to step over next time
+            lookahead = false;
             is->clear(is->rdstate() | std::ios::eofbit);
+        }
+        else
+        {
+            lookahead = true;
         }
         return res;
     }
 
-    // Whether the adapter can return the last read character to the input so
-    // that subsequent reads from the underlying stream see it again.
-    static constexpr bool supports_unget = true;
-
-    // Move the get pointer back over the character last returned by
-    // get_character(). Returns whether the character was actually restored;
-    // sungetc() may fail if the streambuf has no putback position available.
-    bool unget_character()
+    // Leave the character last returned by get_character() in the input, so
+    // that the next read from the stream - by this adapter or by the caller
+    // once parsing is done - sees it again. Unlike putting a consumed
+    // character back, this cannot fail.
+    void release_lookahead() noexcept
     {
-        return sb->sungetc() != std::char_traits<char>::eof();
+        lookahead = false;
     }
 
     template<class T>
     std::size_t get_elements(T* dest, std::size_t count = 1)
     {
+        commit_lookahead();
         auto res = static_cast<std::size_t>(sb->sgetn(reinterpret_cast<char*>(dest), static_cast<std::streamsize>(count * sizeof(T))));
         if (JSON_HEDLEY_UNLIKELY(res < count * sizeof(T)))
         {
@@ -7162,9 +7184,23 @@ class input_stream_adapter
     }
 
   private:
+    // Step over the character last returned by get_character(). The character
+    // has already been peeked successfully, so for every streambuf with a get
+    // area this is a pointer increment that cannot fail.
+    void commit_lookahead()
+    {
+        if (lookahead)
+        {
+            lookahead = false;
+            sb->sbumpc();
+        }
+    }
+
     /// the associated input stream
     std::istream* is = nullptr;
     std::streambuf* sb = nullptr;
+    /// whether get_character() peeked a character that is not consumed yet
+    bool lookahead = false;
 };
 #endif  // JSON_NO_IO
 
@@ -7851,20 +7887,20 @@ constexpr bool input_adapter_supports_seek(std::false_type /*detected*/)
     return false;
 }
 
-// Detect whether an input adapter can return the character last read to the
-// input (see input_stream_adapter::supports_unget), detected like
-// supports_seek above.
+// Detect whether an input adapter reads with one character of lookahead that
+// can be left in the input (see input_stream_adapter::supports_lookahead),
+// detected like supports_seek above.
 template<typename InputAdapterType>
-using detect_supports_unget = decltype(InputAdapterType::supports_unget);
+using detect_supports_lookahead = decltype(InputAdapterType::supports_lookahead);
 
 template<typename InputAdapterType>
-constexpr bool input_adapter_supports_unget(std::true_type /*detected*/)
+constexpr bool input_adapter_supports_lookahead(std::true_type /*detected*/)
 {
-    return InputAdapterType::supports_unget;
+    return InputAdapterType::supports_lookahead;
 }
 
 template<typename InputAdapterType>
-constexpr bool input_adapter_supports_unget(std::false_type /*detected*/)
+constexpr bool input_adapter_supports_lookahead(std::false_type /*detected*/)
 {
     return false;
 }
@@ -7890,10 +7926,11 @@ class lexer : public lexer_base<BasicJsonType>
     static constexpr bool lazy_token_string =
         input_adapter_supports_seek<InputAdapterType>(is_detected<detect_supports_seek, InputAdapterType> {});
 
-    /// whether a pending simulated unget can be turned into a real unget on
-    /// the input adapter; see input_adapter_supports_unget
-    static constexpr bool can_unget_input =
-        input_adapter_supports_unget<InputAdapterType>(is_detected<detect_supports_unget, InputAdapterType> {});
+    /// whether a simulated unget can be passed on to the input adapter, which
+    /// then leaves the character in the input; see
+    /// input_adapter_supports_lookahead
+    static constexpr bool can_release_lookahead =
+        input_adapter_supports_lookahead<InputAdapterType>(is_detected<detect_supports_lookahead, InputAdapterType> {});
 
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
@@ -9205,23 +9242,19 @@ scan_number_done:
         uncapture_char(std::integral_constant<bool, lazy_token_string> {});
     }
 
-    /// adapter without unget support: nothing to do (see restore_pending_unget)
-    bool restore_pending_unget_impl(std::false_type /*can_unget*/) const noexcept
-    {
-        return false;
-    }
+    /// adapter without lookahead: nothing to do (see release_lookahead)
+    void release_lookahead_impl(std::false_type /*can_release*/) const noexcept {}
 
-    /// adapter with unget support: give back the character consumed but unread
-    bool restore_pending_unget_impl(std::true_type /*can_unget*/)
+    /// adapter with lookahead: leave the character in the input instead
+    void release_lookahead_impl(std::true_type /*can_release*/)
     {
-        if (!next_unget || current == char_traits<char_type>::eof())
+        if (next_unget)
         {
-            // nothing was consumed beyond the last token
-            return true;
+            // the character is read from the input again rather than replayed
+            // from current, so the adapter must not step over it
+            next_unget = false;
+            ia.release_lookahead();
         }
-
-        next_unget = false;
-        return ia.unget_character();
     }
 
     /// seekable adapter: nothing was captured, so nothing to undo
@@ -9288,25 +9321,26 @@ scan_number_done:
     }
 
     /*!
-    @brief turn a pending simulated unget into a real one on the input
+    @brief pass a pending simulated unget on to the input
 
     unget() only rewinds the lexer's own bookkeeping, so the character that
-    terminated the last token (e.g. the character after a number) stays
-    consumed from the input. Callers that hand the input back to the user
-    afterwards - operator>> and non-strict sax_parse - call this once when
-    scanning is done, so that the input is positioned right after the value.
+    terminated the last token (e.g. the character after a number) would still
+    be stepped over when the input adapter is done. Callers that hand the
+    input back to the user afterwards - operator>> and non-strict sax_parse -
+    call this once when scanning is done, so that the input is positioned
+    right after the value.
 
-    A pending unget of EOF must not be restored: EOF was never consumed. The
-    lexer must not read again after this call; next_unget is cleared so that
-    the restored character is not also replayed from @a current.
+    Adapters without lookahead (see input_adapter_supports_lookahead) are not
+    handed back to the user, so this is a no-op for them.
 
-    @return whether the input is positioned right after the last token; false
-            if the adapter cannot unget or the unget failed, in which case the
-            input is left as is (the pre-existing behaviour)
+    Scanning may continue after this call: @a next_unget is cleared, and the
+    character is read from the input again instead of being replayed from
+    @a current. A pending unget of EOF needs no special case, because reaching
+    EOF leaves no lookahead to release.
     */
-    bool restore_pending_unget()
+    void release_lookahead()
     {
-        return restore_pending_unget_impl(std::integral_constant<bool, can_unget_input> {});
+        release_lookahead_impl(std::integral_constant<bool, can_release_lookahead> {});
     }
 
     /// seekable adapter: rebuild the last read token from the input on demand
@@ -14044,8 +14078,8 @@ class parser
             if (!strict)
             {
                 // the caller keeps using the input: position it right after
-                // the value by giving back the character that terminated it
-                m_lexer.restore_pending_unget();
+                // the value by leaving the character that terminated it
+                m_lexer.release_lookahead();
             }
             // in strict mode, input must be completely read
             else if (get_token() != token_type::end_of_input)
@@ -14078,7 +14112,7 @@ class parser
             if (!strict)
             {
                 // see above
-                m_lexer.restore_pending_unget();
+                m_lexer.release_lookahead();
             }
             // in strict mode, input must be completely read
             else if (get_token() != token_type::end_of_input)
@@ -14121,8 +14155,8 @@ class parser
         if (result && !strict)
         {
             // the caller keeps using the input: position it right after the
-            // value by giving back the character that terminated it
-            m_lexer.restore_pending_unget();
+            // value by leaving the character that terminated it
+            m_lexer.release_lookahead();
         }
         // strict mode: next byte must be EOF
         else if (result && strict && (get_token() != token_type::end_of_input))

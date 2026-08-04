@@ -51,11 +51,8 @@ input >> j3;  // j3 == [2]
     number was immediately followed by another value: reading `1true` yielded `1` and left the stream at `rue`.
     Values had to be separated by whitespace to work around this.
 
-    The terminating character is now returned to the stream, so no separator is required. Code that relied on the
-    extra byte being swallowed will observe it again.
-
-    If the stream's `#!cpp std::streambuf` cannot put the character back (its `pbackfail` fails, which does not happen
-    for `#!cpp std::stringbuf` or `#!cpp std::filebuf`), the character is lost as before.
+    The terminating character is now only looked at and left in the stream, so no separator is required. Code that
+    relied on the extra byte being swallowed will observe it again.
 
 Note that reading concatenated values does **not** work for [JSON Lines](../features/parsing/json_lines.md)
 (newline-delimited JSON) input -- see that page for why and for the recommended alternative.

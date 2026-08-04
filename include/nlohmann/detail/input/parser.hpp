@@ -102,8 +102,8 @@ class parser
             if (!strict)
             {
                 // the caller keeps using the input: position it right after
-                // the value by giving back the character that terminated it
-                m_lexer.restore_pending_unget();
+                // the value by leaving the character that terminated it
+                m_lexer.release_lookahead();
             }
             // in strict mode, input must be completely read
             else if (get_token() != token_type::end_of_input)
@@ -136,7 +136,7 @@ class parser
             if (!strict)
             {
                 // see above
-                m_lexer.restore_pending_unget();
+                m_lexer.release_lookahead();
             }
             // in strict mode, input must be completely read
             else if (get_token() != token_type::end_of_input)
@@ -179,8 +179,8 @@ class parser
         if (result && !strict)
         {
             // the caller keeps using the input: position it right after the
-            // value by giving back the character that terminated it
-            m_lexer.restore_pending_unget();
+            // value by leaving the character that terminated it
+            m_lexer.release_lookahead();
         }
         // strict mode: next byte must be EOF
         else if (result && strict && (get_token() != token_type::end_of_input))
