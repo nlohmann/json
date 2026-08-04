@@ -22,7 +22,9 @@ template<typename BinaryType>
 class byte_container_with_subtype : public BinaryType
 {
   public:
+    /// @sa https://json.nlohmann.me/api/byte_container_with_subtype/container_type/
     using container_type = BinaryType;
+    /// @sa https://json.nlohmann.me/api/byte_container_with_subtype/subtype_type/
     using subtype_type = std::uint64_t;
 
     /// @sa https://json.nlohmann.me/api/byte_container_with_subtype/byte_container_with_subtype/
@@ -54,12 +56,14 @@ class byte_container_with_subtype : public BinaryType
         , m_has_subtype(true)
     {}
 
+    /// @sa https://json.nlohmann.me/api/byte_container_with_subtype/operator_eq/
     bool operator==(const byte_container_with_subtype& rhs) const
     {
         return std::tie(static_cast<const BinaryType&>(*this), m_subtype, m_has_subtype) ==
                std::tie(static_cast<const BinaryType&>(rhs), rhs.m_subtype, rhs.m_has_subtype);
     }
 
+    /// @sa https://json.nlohmann.me/api/byte_container_with_subtype/operator_ne/
     bool operator!=(const byte_container_with_subtype& rhs) const
     {
         return !(rhs == *this);

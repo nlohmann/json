@@ -6,7 +6,7 @@ template<class Key, class T, class IgnoredLess = std::less<Key>,
 struct ordered_map : std::vector<std::pair<const Key, T>, Allocator>;
 ```
 
-A minimal map-like container that preserves insertion order for use within [`nlohmann::ordered_json`](ordered_json.md)
+A minimal map-like container that preserves insertion order for use within [`nlohmann::ordered_json`](../ordered_json.md)
 (`nlohmann::basic_json<ordered_map>`).
 
 ## Template parameters
@@ -32,12 +32,12 @@ case all iterators (including the `end()` iterator) and all references to the el
 
 - **key_type** - key type (`Key`)
 - **mapped_type** - mapped type (`T`)
-- **Container** - base container type (`#!cpp std::vector<std::pair<const Key, T>, Allocator>`)
+- [**Container**](Container.md) - base container type (`#!cpp std::vector<std::pair<const Key, T>, Allocator>`)
 - **iterator**
 - **const_iterator**
 - **size_type**
 - **value_type**
-- **key_compare** - key comparison function
+- [**key_compare**](key_compare.md) - key comparison function
 ```cpp
 std::equal_to<Key>  // until C++14
 
@@ -46,15 +46,16 @@ std::equal_to<>     // since C++14
 
 ## Member functions
 
-- (constructor)
-- (destructor)
-- **emplace**
-- **operator\[\]**
-- **at**
-- **erase**
-- **count**
-- **find**
-- **insert**
+- [(constructor)](ordered_map.md)
+- [(destructor)](~ordered_map.md)
+- [**operator=**](operator=.md)
+- [**emplace**](emplace.md)
+- [**operator\[\]**](operator[].md)
+- [**at**](at.md)
+- [**erase**](erase.md)
+- [**count**](count.md)
+- [**find**](find.md)
+- [**insert**](insert.md)
 
 ## Examples
 
@@ -74,9 +75,9 @@ std::equal_to<>     // since C++14
 
 ## See also
 
-- [ordered_json](ordered_json.md)
+- [ordered_json](../ordered_json.md)
 
 ## Version history
 
-- Added in version 3.9.0 to implement [`nlohmann::ordered_json`](ordered_json.md).
+- Added in version 3.9.0 to implement [`nlohmann::ordered_json`](../ordered_json.md).
 - Added **key_compare** member in version 3.11.0.

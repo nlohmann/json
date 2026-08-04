@@ -51,3 +51,5 @@ Linear.
 ## Version history
 
 - Added in version 1.0.0.
+- The `noexcept` specification was extended to also depend on
+  [`json_base_class_t`](json_base_class_t.md)'s move-assignment in version 3.11.3.
