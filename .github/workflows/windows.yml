@@ -153,10 +153,16 @@ jobs:
         with:
           platform: x64
           version: 12.2.0 # https://github.com/egor-tensin/setup-mingw/issues/14
+      # CMAKE_CXX_FLAGS_DEBUG is overridden to drop the default -g: linking
+      # test-regression2_cpp20 intermittently fails with "relocation truncated
+      # to fit: IMAGE_REL_AMD64_SECREL against `.debug_line'" because the
+      # MinGW linker cannot relocate the debug sections this test produces.
+      # The tests are only built and run here, so the debug info is not used.
       - name: Run CMake
         run: cmake -S . -B build ^
              -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" ^
              -DCMAKE_CXX_FLAGS="--target=x86_64-w64-mingw32 -stdlib=libstdc++ -pthread" ^
+             -DCMAKE_CXX_FLAGS_DEBUG="-g0" ^
              -DCMAKE_EXE_LINKER_FLAGS="-lwinpthread" ^
              -G"MinGW Makefiles" ^
              -DCMAKE_BUILD_TYPE=Debug ^
