@@ -1801,13 +1801,13 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**amalgamate.py - Amalgamate C source and header files**](https://github.com/edlund/amalgamate) to create a single header file
 - [**American fuzzy lop**](https://lcamtuf.coredump.cx/afl/) for fuzz testing
 - [**AppVeyor**](https://www.appveyor.com) for [continuous integration](https://ci.appveyor.com/project/nlohmann/json) on Windows
-- [**Artistic Style**](http://astyle.sourceforge.net) for automatic source code indentation
+- [**Artistic Style**](https://astyle.sourceforge.net) for automatic source code indentation
 - [**Clang**](https://clang.llvm.org) for compilation with code sanitizers
 - [**CMake**](https://cmake.org) for build automation
 - [**Codacy**](https://www.codacy.com) for further [code analysis](https://app.codacy.com/gh/nlohmann/json/dashboard)
 - [**Coveralls**](https://coveralls.io) to measure [code coverage](https://coveralls.io/github/nlohmann/json)
 - [**Coverity Scan**](https://scan.coverity.com) for [static analysis](https://scan.coverity.com/projects/nlohmann-json)
-- [**cppcheck**](http://cppcheck.sourceforge.net) for static analysis
+- [**cppcheck**](https://cppcheck.sourceforge.io) for static analysis
 - [**doctest**](https://github.com/onqtam/doctest) for the unit tests
 - [**GitHub Changelog Generator**](https://github.com/skywinder/github-changelog-generator) to generate the [ChangeLog](https://github.com/nlohmann/json/blob/develop/ChangeLog.md)
 - [**Google Benchmark**](https://github.com/google/benchmark) to implement the benchmarks
@@ -1821,6 +1821,15 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**Valgrind**](https://valgrind.org) to check for correct memory management
 
 ## Notes
+
+### Standards compliance
+
+The library targets strict conformance with [RFC 8259](https://tools.ietf.org/html/rfc8259.html). Both the original [JSONTestSuite](https://github.com/nst/JSONTestSuite) and its updated revision are exercised in CI; their test data is downloaded from [`nlohmann/json_test_data`](https://github.com/nlohmann/json_test_data) at configure time rather than committed to this repository (see [`tests/src/unit-testsuites.cpp`](https://github.com/nlohmann/json/blob/develop/tests/src/unit-testsuites.cpp)):
+
+- The updated revision runs all mandatory `y_` (must-accept) and `n_` (must-reject) cases through the strict [`parse()`](https://json.nlohmann.me/api/basic_json/parse/) entry point; the original suite runs its `n_` cases through `parse()` and its `y_` cases through [`operator>>`](https://json.nlohmann.me/api/operator_gtgt/).
+- The `i_` (implementation-defined) cases are, by RFC 8259, free to be accepted *or* rejected, so "passing all `i_` cases" is not a meaningful conformance metric. The library makes deliberate, documented choices there: nesting depth is not artificially limited, a leading UTF-8 byte order mark is silently ignored, [Unicode noncharacters](https://www.unicode.org/faq/private_use.html#nonchar1) are forwarded unchanged, invalid UTF-8 and lone/unpaired UTF-16 surrogates are rejected (stricter than required), and a number that cannot be stored without becoming `NaN`/`INF` raises [`out_of_range.406`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range406).
+
+One behavioral nuance is worth calling out, because a superficial test often misreads it as non-compliance: [`parse()`](https://json.nlohmann.me/api/basic_json/parse/) is strict and rejects trailing data after a value, whereas [`operator>>`](https://json.nlohmann.me/api/operator_gtgt/) follows relaxed iostream semantics — it parses a single value and leaves the stream positioned right after it. Feeding "a valid document followed by trailing bytes" through `operator>>` reports success; the same input through `parse()` is rejected. This is a documented two-API design, not a conformance gap. See [**parsing**](https://json.nlohmann.me/features/parsing/) for details.
 
 ### Character encoding
 

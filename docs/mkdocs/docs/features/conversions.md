@@ -66,8 +66,14 @@ auto t = j.get<std::tuple<double, std::string, int>>();  // {1.0, "hello", 42}
     std::get<1>(refs) = "world";  // modifies j[1] in place
     ```
 
-    A referenced type must be one the library actually stores (or an arithmetic type it can convert to/from);
-    otherwise this is a compile error.
+    A referenced element must name the type the library actually *stores* — one of [`boolean_t`](../api/basic_json/boolean_t.md),
+    [`number_integer_t`](../api/basic_json/number_integer_t.md), [`number_unsigned_t`](../api/basic_json/number_unsigned_t.md),
+    [`number_float_t`](../api/basic_json/number_float_t.md), [`string_t`](../api/basic_json/string_t.md),
+    [`binary_t`](../api/basic_json/binary_t.md), [`array_t`](../api/basic_json/array_t.md), or
+    [`object_t`](../api/basic_json/object_t.md). There is nothing else to refer to, so a reference to any other type is a
+    compile error even when a conversion would exist: `#!cpp std::tuple<int&>` is rejected, because the library stores a
+    `#!cpp number_integer_t` (`#!cpp std::int64_t` by default) and not an `#!cpp int`. This restriction applies only to
+    reference elements — a plain `#!cpp std::tuple<int>` converts by value as usual.
 
 ## Implicit conversions
 
@@ -116,16 +122,33 @@ which forces the explicit `get` form and can catch unintended conversions at com
     with a custom `adl_serializer<std::optional<T>>` specialization. Prefer `get<std::optional<T>>()`/`get_to()`
     over `static_cast` for optional types.
 
-!!! warning "Converting to a fixed-size `std::array` does not check length"
+!!! warning "Converting to a fixed-size destination does not check the array size"
 
-    Converting a JSON array to `#!cpp std::array<T, N>` does not check that the JSON array's size matches `N`:
-    if the JSON array is longer, the extra elements are silently dropped; if it is shorter, the remaining
-    `std::array` elements are left default-constructed. No exception is thrown in either case.
+    Some destination types have a size that is fixed by their C++ type rather than by the JSON value:
+    `#!cpp std::pair<A, B>`, `#!cpp std::tuple<Ts...>`, `#!cpp std::array<T, N>`, C arrays `#!cpp T[N]`, and
+    `#!cpp std::map`/`#!cpp std::unordered_map` with a non-string key type (which is read from an array of
+    two-element arrays). All of them read exactly as many elements as they need via
+    [`at`](../api/basic_json/at.md) and **never compare the JSON array's size to that number**. The two
+    mismatch directions therefore behave differently:
+
+    - The JSON array has **too many** elements: the surplus is **silently discarded**, and no exception is
+      thrown.
+    - The JSON array has **too few** elements: `at` throws
+      [`out_of_range.401`](../home/exceptions.md#jsonexceptionout_of_range401) for the first missing index --
+      an out-of-range error, not a [`type_error`](../home/exceptions.md#type-errors), even though the cause
+      is a shape mismatch.
 
     ```cpp
     json j = {1, 2, 3, 4, 5};
-    auto a = j.get<std::array<int, 3>>();  // {1, 2, 3} -- elements 4 and 5 silently dropped
+
+    auto a = j.get<std::array<int, 3>>();       // {1, 2, 3} -- elements 4 and 5 silently dropped
+    auto p = j.get<std::pair<int, int>>();      // (1, 2)    -- elements 3, 4, and 5 silently dropped
+
+    json k = {1};
+    auto q = k.get<std::pair<int, int>>();      // ❌ throws out_of_range.401
     ```
+
+    If a size mismatch is an error in your application, check the size yourself before converting.
 
 ## Omitting a field when serializing `std::optional`
 

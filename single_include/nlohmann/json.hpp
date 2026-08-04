@@ -3994,7 +3994,9 @@ struct char_traits<signed char> : std::char_traits<char>
     // Redefine to_int_type function
     static int_type to_int_type(char_type c) noexcept
     {
-        return static_cast<int_type>(c);
+        // cast via unsigned char: sign-extending a negative char_type would make
+        // byte 0xFF indistinguishable from eof()
+        return static_cast<int_type>(static_cast<unsigned char>(c));
     }
 
     static char_type to_char_type(int_type i) noexcept
@@ -4462,20 +4464,34 @@ struct is_json_pointer_of<A, ::nlohmann::json_pointer<A>> : std::true_type {};
 template <typename A>
 struct is_json_pointer_of<A, ::nlohmann::json_pointer<A>&> : std::true_type {};
 
-// checks if A and B are comparable using Compare functor
+// checks if A and B are comparable using Compare functor, assuming that
+// neither A nor B is a json_pointer type (that case is handled by
+// is_comparable below, which never instantiates this helper otherwise)
 template<typename Compare, typename A, typename B, typename = void>
-struct is_comparable : std::false_type {};
+struct is_comparable_no_json_pointer : std::false_type {};
 
-// We exclude json_pointer here, because the checks using Compare(A, B) will
-// use json_pointer::operator string_t() which triggers a deprecation warning
-// for GCC. See https://github.com/nlohmann/json/issues/4621. The call to
-// is_json_pointer_of can be removed once the deprecated function has been
-// removed.
 template<typename Compare, typename A, typename B>
-struct is_comparable < Compare, A, B, enable_if_t < !is_json_pointer_of<A, B>::value
-&& std::is_constructible <decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>()))>::value
+struct is_comparable_no_json_pointer < Compare, A, B, enable_if_t <
+std::is_constructible <decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>()))>::value
 && std::is_constructible <decltype(std::declval<Compare>()(std::declval<B>(), std::declval<A>()))>::value
 >> : std::true_type {};
+
+// checks if A and B are comparable using Compare functor
+// We dispatch on is_json_pointer_of as a plain bool (rather than folding it
+// into a single enable_if_t condition together with the checks below) so
+// that the Compare(A, B) checks are only ever written - and thus only ever
+// instantiated - when A/B are not a json_pointer/string pair. Those checks
+// use json_pointer::operator string_t() (GCC, see #4621) resp. the
+// deprecated json_pointer/string operator== (Clang, see #5288), and merely
+// naming them as later operands of a plain && chain is not sufficient to
+// avoid their instantiation on all compilers, even when the first operand
+// is false. The dispatch on is_json_pointer_of can be removed once the
+// deprecated json_pointer comparison operators have been removed.
+template<typename Compare, typename A, typename B, bool = is_json_pointer_of<A, B>::value>
+struct is_comparable : std::false_type {};
+
+template<typename Compare, typename A, typename B>
+struct is_comparable<Compare, A, B, false> : is_comparable_no_json_pointer<Compare, A, B> {};
 
 template<typename T>
 using detect_is_transparent = typename T::is_transparent;
@@ -10125,14 +10141,7 @@ class json_sax_dom_callback_parser
         if (!ref_stack.empty() && ref_stack.back() && ref_stack.back()->is_structured())
         {
             // remove discarded value
-            for (auto it = ref_stack.back()->begin(); it != ref_stack.back()->end(); ++it)
-            {
-                if (it->is_discarded())
-                {
-                    ref_stack.back()->erase(it);
-                    break;
-                }
-            }
+            remove_discarded_value(*ref_stack.back());
         }
 
         return true;
@@ -10173,8 +10182,9 @@ class json_sax_dom_callback_parser
     bool end_array()
     {
         bool keep = true;
+        const bool stored = ref_stack.back() != nullptr;
 
-        if (ref_stack.back())
+        if (stored)
         {
             keep = callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::array_end, *ref_stack.back());
             if (keep)
@@ -10208,9 +10218,19 @@ class json_sax_dom_callback_parser
         keep_stack.pop_back();
 
         // remove discarded value
-        if (!keep && !ref_stack.empty() && ref_stack.back()->is_array())
+        if (!ref_stack.empty() && ref_stack.back())
         {
-            ref_stack.back()->m_data.m_value.array->pop_back();
+            if (!keep && ref_stack.back()->is_array())
+            {
+                ref_stack.back()->m_data.m_value.array->pop_back();
+            }
+            else if ((!keep || !stored) && ref_stack.back()->is_object())
+            {
+                // the array is either still stored under its key or was never
+                // stored, leaving the placeholder key() wrote; both show up as
+                // a discarded member of the parent object
+                remove_discarded_value(*ref_stack.back());
+            }
         }
 
         return true;
@@ -10300,6 +10320,19 @@ class json_sax_dom_callback_parser
     }
 #endif
 
+    /// remove the discarded value the callback rejected from its parent
+    static void remove_discarded_value(BasicJsonType& parent)
+    {
+        for (auto it = parent.begin(); it != parent.end(); ++it)
+        {
+            if (it->is_discarded())
+            {
+                parent.erase(it);
+                break;
+            }
+        }
+    }
+
     /*!
     @param[in] v  value to add to the JSON value we build during parsing
     @param[in] skip_callback  whether we should skip calling the callback
@@ -10340,6 +10373,18 @@ class json_sax_dom_callback_parser
         // do not handle this value if we just learnt it shall be discarded
         if (!keep)
         {
+            // if the value was to become an object member, key() already
+            // stored a placeholder for it that has to be removed again
+            if (!ref_stack.empty() && ref_stack.back() && ref_stack.back()->is_object())
+            {
+                JSON_ASSERT(!key_keep_stack.empty());
+                const bool placeholder_stored = key_keep_stack.back();
+                key_keep_stack.pop_back();
+                if (placeholder_stored)
+                {
+                    remove_discarded_value(*ref_stack.back());
+                }
+            }
             return {false, nullptr};
         }
 

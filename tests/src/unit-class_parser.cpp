@@ -1440,6 +1440,13 @@ TEST_CASE("parser class")
             ]
         )";
 
+        const auto* structured_object = R"(
+            {
+                "foo": [1, 2],
+                "bar": 3
+            }
+        )";
+
         SECTION("filter nothing")
         {
             const json j_object = json::parse(s_object, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
@@ -1513,6 +1520,48 @@ TEST_CASE("parser class")
             // removed all objects in array.
             CHECK (j_filtered2.size() == 1);
             CHECK (j_filtered2 == json({1}));
+        }
+
+        SECTION("filter array in object")
+        {
+            // the array is discarded once it is already stored under its key
+            const json j_filtered1 = json::parse(structured_object, [](int /*unused*/, json::parse_event_t e, const json& /*parsed*/) noexcept
+            {
+                return e != json::parse_event_t::array_end;
+            });
+
+            CHECK (j_filtered1 == json({{"bar", 3}}));
+
+            // the array is discarded before it is stored, leaving the
+            // placeholder the key event wrote
+            const json j_filtered2 = json::parse(structured_object, [](int /*unused*/, json::parse_event_t e, const json& /*parsed*/) noexcept
+            {
+                return e != json::parse_event_t::array_start;
+            });
+
+            CHECK (j_filtered2 == json({{"bar", 3}}));
+        }
+
+        SECTION("filter value in object")
+        {
+            // the value is discarded after its key was kept, leaving the
+            // placeholder the key event wrote
+            const json j_filtered1 = json::parse(structured_object, [](int /*unused*/, json::parse_event_t e, const json & parsed) noexcept
+            {
+                return !(e == json::parse_event_t::value && parsed == json(3));
+            });
+
+            CHECK (j_filtered1 == json({{"foo", {1, 2}}}));
+
+            // the same value is discarded together with its key, so no
+            // placeholder was stored for it
+            const json j_filtered2 = json::parse(structured_object, [](int /*unused*/, json::parse_event_t e, const json & parsed) noexcept
+            {
+                return !((e == json::parse_event_t::key && parsed == json("bar")) ||
+                         (e == json::parse_event_t::value && parsed == json(3)));
+            });
+
+            CHECK (j_filtered2 == json({{"foo", {1, 2}}}));
         }
 
         SECTION("filter specific events")
