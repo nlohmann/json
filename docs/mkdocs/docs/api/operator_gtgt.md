@@ -87,5 +87,5 @@ Note that reading concatenated values does **not** work for [JSON Lines](../feat
 ## Version history
 
 - Added in version 1.0.0.
-- Changed in version 4.0.0 to return the character that terminates a number to the stream, so that the stream is
+- Changed in version 4.0.0 to leave the character that terminates a number in the stream, so that the stream is
   positioned right after the parsed value for every value type.
