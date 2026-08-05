@@ -11059,15 +11059,6 @@ class binary_reader
     // CBOR //
     //////////
 
-    /*!
-    @param[in] get_char  whether a new character should be retrieved from the
-                         input (true) or whether the last read character should
-                         be considered instead (false)
-    @param[in] tag_handler how CBOR tags should be treated
-
-    @return whether a valid CBOR value was passed to the SAX parser
-    */
-
     template<typename NumberType>
     bool get_cbor_negative_integer()
     {
@@ -11086,6 +11077,14 @@ class binary_reader
         return sax->number_integer(static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(number));
     }
 
+    /*!
+    @param[in] get_char  whether a new character should be retrieved from the
+                         input (true) or whether the last read character should
+                         be considered instead (false)
+    @param[in] tag_handler how CBOR tags should be treated
+
+    @return whether a valid CBOR value was passed to the SAX parser
+    */
     bool parse_cbor_internal(const bool get_char,
                              const cbor_tag_handler_t tag_handler)
     {
