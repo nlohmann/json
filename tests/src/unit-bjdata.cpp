@@ -2730,6 +2730,27 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(json::to_bjdata(j_type), true, true) == j_type);
                 CHECK(json::from_bjdata(json::to_bjdata(j_size), true, true) == j_size);
             }
+
+            SECTION("ndarray whose dimensions overflow stays as object")
+            {
+                // the product of the dimensions wraps around std::size_t to 0
+                // and so matches the size of the empty _ArrayData_; writing this
+                // as an ndarray would announce an element count no reader can
+                // honor, so it has to stay a plain object
+                json j_overflow = json({{"_ArrayData_", json::array()}, {"_ArraySize_", {9223372036854775808ull, 2}}, {"_ArrayType_", "uint8"}});
+                CHECK(json::from_bjdata(json::to_bjdata(j_overflow), true, true) == j_overflow);
+
+                // a single dimension that does not fit into std::size_t is
+                // rejected for the same reason (only observable where
+                // std::size_t is narrower than 64 bit)
+                json j_huge = json({{"_ArrayData_", json::array()}, {"_ArraySize_", {18446744073709551615ull}}, {"_ArrayType_", "uint8"}});
+                CHECK(json::from_bjdata(json::to_bjdata(j_huge), true, true) == j_huge);
+
+                // a well-formed ndarray is still encoded as one
+                json j_ok = json({{"_ArrayData_", {1, 2, 3, 4, 5, 6}}, {"_ArraySize_", {2, 3}}, {"_ArrayType_", "uint8"}});
+                CHECK(json::to_bjdata(j_ok) == std::vector<uint8_t>({'[', '$', 'U', '#', '[', 'i', 2, 'i', 3, ']', 1, 2, 3, 4, 5, 6}));
+                CHECK(json::from_bjdata(json::to_bjdata(j_ok), true, true) == j_ok);
+            }
         }
     }
 
