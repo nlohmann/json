@@ -92,7 +92,14 @@ To maintain type and size information, ND-arrays are converted to JSON objects f
 }
 ```
 
-Likewise, when a JSON object in the above form is serialized using [`to_bjdata`](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md), it is automatically converted into a compact BJData ND-array. The only exception is, that when the 1-dimensional vector stored in `"_ArraySize_"` contains a single integer or two integers with one being 1, a regular 1-D optimized array is generated.
+Likewise, when a JSON object in the above form is serialized using [`to_bjdata`](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md), it is automatically converted into a compact BJData ND-array. When the 1-dimensional vector stored in `"_ArraySize_"` contains a single integer or two integers with one being 1, a regular 1-D optimized array is generated instead.
+
+An object is only converted if the annotation actually describes a packed array; otherwise it is serialized as a regular JSON object. This requires all of the following:
+
+- `"_ArrayType_"` is one of `uint8`, `int8`, `uint16`, `int16`, `uint32`, `int32`, `uint64`, `int64`, `single`, `double`, `char`, or `byte`,
+- every entry of `"_ArraySize_"` is a non-negative integer, and their product is representable as a `std::size_t`,
+- `"_ArrayData_"` holds exactly that many elements, and
+- every element of `"_ArrayData_"` is a number of the kind named by `"_ArrayType_"` (a floating-point number for `single` and `double`, an integer otherwise).
 
 The current version of this library does not yet support automatic detection of and conversion from a nested JSON array input to a BJData ND-array.
 
