@@ -345,8 +345,12 @@ struct wide_string_input_helper<BaseInputAdapter, 4>
             }
             else
             {
-                // unknown character
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(wc);
+                // A code point above U+10FFFF has no UTF-8 encoding. Passing the
+                // unit through would narrow it to int, where 0xFFFFFFFF becomes
+                // char_traits<char>::eof() and would end the input silently, so
+                // emit a byte that is never valid UTF-8 and let the decoder
+                // reject it.
+                utf8_bytes[0] = 0xFF;
                 utf8_bytes_filled = 1;
             }
         }
