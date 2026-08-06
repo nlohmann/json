@@ -17622,7 +17622,7 @@ class binary_writer
                 // step 1.5: if this is an ext type, write the subtype
                 if (use_ext)
                 {
-                    write_number(static_cast<std::int8_t>(j.m_data.m_value.binary->subtype()));
+                    write_number(static_cast<std::int8_t>(to_binary_subtype(j.m_data.m_value.binary->subtype(), "MessagePack")));
                 }
 
                 // step 2: write the byte string
@@ -18112,7 +18112,7 @@ class binary_writer
         write_bson_entry_header(name, 0x05);
 
         write_number<std::int32_t>(to_bson_length(value.size()), true);
-        write_number(value.has_subtype() ? static_cast<std::uint8_t>(value.subtype()) : static_cast<std::uint8_t>(0x00));
+        write_number(value.has_subtype() ? to_binary_subtype(value.subtype(), "BSON") : static_cast<std::uint8_t>(0x00));
 
         oa->write_characters(reinterpret_cast<const CharType*>(value.data()), value.size());
     }
@@ -18732,6 +18732,25 @@ class binary_writer
     ///////////////////////
     // Utility functions //
     ///////////////////////
+
+    /*!
+    @brief Checks that @a subtype fits into the 8-bit subtype field shared by
+           MessagePack ext types and BSON binary values
+    @param[in] subtype  the binary subtype to write
+    @param[in] format   the format name to use in the exception message
+    @return The subtype as an unsigned 8-bit integer
+    @throw out_of_range.413 if @a subtype exceeds the range of std::uint8_t
+    */
+    static std::uint8_t to_binary_subtype(const typename BasicJsonType::binary_t::subtype_type subtype,
+                                          const char* format)
+    {
+        if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::uint8_t>(subtype)))
+        {
+            JSON_THROW(out_of_range::create(413, concat(format, " binary subtype ", std::to_string(subtype), " exceeds maximum of ", std::to_string((std::numeric_limits<std::uint8_t>::max)())), nullptr));
+        }
+
+        return static_cast<std::uint8_t>(subtype);
+    }
 
     /*
     @brief write a number to output input

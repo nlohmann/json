@@ -111,6 +111,19 @@ TEST_CASE("BSON")
         CHECK_THROWS_WITH_AS(huge_binary_json::to_bson(j), "[json.exception.out_of_range.412] BSON length 2147483661 exceeds maximum of 2147483647", huge_binary_json::out_of_range&);
     }
 
+    SECTION("binary subtypes exceeding 0xFF cannot be serialized to BSON")
+    {
+        // the largest subtype the BSON subtype byte can hold still round-trips
+        json j;
+        j["b"] = json::binary(std::vector<std::uint8_t> {0xCA, 0xFE, 0xBA, 0xBE}, 0xFF);
+        CHECK(json::from_bson(json::to_bson(j)) == j);
+
+        // a subtype beyond that would be truncated onto a different (reserved) subtype
+        json k;
+        k["b"] = json::binary(std::vector<std::uint8_t> {0xCA, 0xFE, 0xBA, 0xBE}, 258);
+        CHECK_THROWS_WITH_AS(json::to_bson(k), "[json.exception.out_of_range.413] BSON binary subtype 258 exceeds maximum of 255", json::out_of_range&);
+    }
+
     SECTION("string length must be at least 1")
     {
         // from https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=11175

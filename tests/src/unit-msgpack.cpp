@@ -1424,6 +1424,17 @@ TEST_CASE("MessagePack")
         }
     }
 
+    SECTION("binary subtypes exceeding 0xFF cannot be serialized to MessagePack")
+    {
+        // the largest subtype the ext type field can hold still round-trips
+        json const j = json::binary(std::vector<uint8_t> {0xCA, 0xFE, 0xBA, 0xBE}, 0xFF);
+        CHECK(json::from_msgpack(json::to_msgpack(j)) == j);
+
+        // a subtype beyond that would be truncated onto a different (reserved) ext type
+        json const k = json::binary(std::vector<uint8_t> {0xCA, 0xFE, 0xBA, 0xBE}, 511);
+        CHECK_THROWS_WITH_AS(json::to_msgpack(k), "[json.exception.out_of_range.413] MessagePack binary subtype 511 exceeds maximum of 255", json::out_of_range&);
+    }
+
     SECTION("from float32")
     {
         auto given = std::vector<uint8_t>({0xca, 0x41, 0xc8, 0x00, 0x01});

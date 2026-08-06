@@ -34,6 +34,12 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 
 Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
 
+## Exceptions
+
+- Throws [`out_of_range.413`](../../home/exceptions.md#jsonexceptionout_of_range413) if the subtype of a binary value
+  exceeds the range of the 8-bit MessagePack ext type; example:
+  `"MessagePack binary subtype 511 exceeds maximum of 255"`
+
 ## Complexity
 
 Linear in the size of the JSON value `j`.
