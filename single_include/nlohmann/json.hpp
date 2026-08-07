@@ -20115,7 +20115,7 @@ class serializer
                     const auto new_indent = current_indent + indent_step;
                     if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
                     {
-                        indent_string.resize(indent_string.size() * 2, ' ');
+                        indent_string.resize((std::max)(indent_string.size() * 2, static_cast<typename string_t::size_type>(new_indent)), ' ');
                     }
 
                     // first n-1 elements
@@ -20188,7 +20188,7 @@ class serializer
                     const auto new_indent = current_indent + indent_step;
                     if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
                     {
-                        indent_string.resize(indent_string.size() * 2, ' ');
+                        indent_string.resize((std::max)(indent_string.size() * 2, static_cast<typename string_t::size_type>(new_indent)), ' ');
                     }
 
                     // first n-1 elements
@@ -20249,7 +20249,7 @@ class serializer
                     const auto new_indent = current_indent + indent_step;
                     if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
                     {
-                        indent_string.resize(indent_string.size() * 2, ' ');
+                        indent_string.resize((std::max)(indent_string.size() * 2, static_cast<typename string_t::size_type>(new_indent)), ' ');
                     }
 
                     o->write_characters(indent_string.c_str(), new_indent);

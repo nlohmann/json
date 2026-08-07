@@ -150,6 +150,36 @@ TEST_CASE("serialization")
         }
     }
 
+    SECTION("dump with large indentation")
+    {
+        // the indentation buffer starts at 512 characters and grows on demand;
+        // a width that needs more room than a single doubling provides must keep
+        // growing the buffer rather than emit past its end
+        const unsigned int width = 1100;
+
+        SECTION("object")
+        {
+            const json j = {{"outer", {{"inner", 1}}}};
+            const std::string s = j.dump(static_cast<int>(width));
+            CHECK(s.find('\n' + std::string(width, ' ') + "\"outer\"") != std::string::npos);
+            CHECK(s.find('\n' + std::string(2 * width, ' ') + "\"inner\"") != std::string::npos);
+        }
+
+        SECTION("array")
+        {
+            const json j = json::array({json::array({1})});
+            const std::string s = j.dump(static_cast<int>(width));
+            CHECK(s.find('\n' + std::string(2 * width, ' ') + '1') != std::string::npos);
+        }
+
+        SECTION("binary")
+        {
+            const json j = json::binary({1, 2, 3});
+            const std::string s = j.dump(static_cast<int>(width));
+            CHECK(s.find('\n' + std::string(width, ' ') + "\"bytes\"") != std::string::npos);
+        }
+    }
+
     SECTION("to_string")
     {
         auto test = [&](std::string const & input, std::string const & expected)
