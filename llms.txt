@@ -266,6 +266,7 @@ JSON for Modern C++ is a C++11 header-only library implementing a JSON value typ
 - [Community](https://json.nlohmann.me/community/index.md)
 - [Code of Conduct](https://json.nlohmann.me/community/code_of_conduct/index.md)
 - [Contribution Guidelines](https://json.nlohmann.me/community/contribution_guidelines/index.md)
+- [Ecosystem](https://json.nlohmann.me/community/ecosystem/index.md)
 - [Governance](https://json.nlohmann.me/community/governance/index.md)
 - [Quality assurance](https://json.nlohmann.me/community/quality_assurance/index.md)
 - [Security Policy](https://json.nlohmann.me/community/security_policy/index.md)

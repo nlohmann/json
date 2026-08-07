@@ -1,5 +1,6 @@
 # Community
 
+- [Ecosystem](https://json.nlohmann.me/community/ecosystem/index.md) - third-party projects built on top of this library
 - [Code of Conduct](https://json.nlohmann.me/community/code_of_conduct/index.md) - the rules and norms of this project
 - [Contribution Guidelines](https://json.nlohmann.me/community/contribution_guidelines/index.md) - guidelines how to contribute to this project
 - [Governance](https://json.nlohmann.me/community/governance/index.md) - the governance model of this project
