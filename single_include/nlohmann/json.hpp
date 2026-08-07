@@ -16089,6 +16089,7 @@ class json_pointer
 
     @throw parse_error.106   if an array index begins with '0'
     @throw parse_error.109   if an array index was not a number
+    @throw out_of_range.401  if an array index is out of range
     @throw out_of_range.402  if the array index '-' is used
     @throw out_of_range.404  if the JSON pointer can not be resolved
     */
@@ -16114,8 +16115,14 @@ class json_pointer
                         JSON_THROW(detail::out_of_range::create(402, detail::concat("array index '-' (", std::to_string(ptr->m_data.m_value.array->size()), ") is out of range"), ptr));
                     }
 
-                    // use unchecked array access
-                    ptr = &ptr->operator[](array_index<BasicJsonType>(reference_token));
+                    const auto idx = array_index<BasicJsonType>(reference_token);
+                    // the const array operator[] is unchecked, so bounds check here
+                    if (JSON_HEDLEY_UNLIKELY(idx >= ptr->m_data.m_value.array->size()))
+                    {
+                        JSON_THROW(detail::out_of_range::create(401, detail::concat(
+                                "array index ", std::to_string(idx), " is out of range"), ptr));
+                    }
+                    ptr = &ptr->operator[](idx);
                     break;
                 }
 
