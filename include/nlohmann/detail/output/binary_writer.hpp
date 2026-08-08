@@ -619,8 +619,12 @@ class binary_writer
             case value_t::binary:
             {
                 // step 0: determine if the binary type has a set subtype to
-                // determine whether to use the ext or fixext types
+                // determine whether to use the ext or fixext types, and check
+                // that the subtype fits before any output is written
                 const bool use_ext = j.m_data.m_value.binary->has_subtype();
+                const std::uint8_t subtype = use_ext
+                                             ? to_binary_subtype(j.m_data.m_value.binary->subtype(), "MessagePack")
+                                             : static_cast<std::uint8_t>(0x00);
 
                 // step 1: write control byte and the byte string length
                 const auto N = j.m_data.m_value.binary->size();
@@ -688,7 +692,7 @@ class binary_writer
                 // step 1.5: if this is an ext type, write the subtype
                 if (use_ext)
                 {
-                    write_number(static_cast<std::int8_t>(to_binary_subtype(j.m_data.m_value.binary->subtype(), "MessagePack")));
+                    write_number(static_cast<std::int8_t>(subtype));
                 }
 
                 // step 2: write the byte string

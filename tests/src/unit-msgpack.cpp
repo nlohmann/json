@@ -1426,7 +1426,9 @@ TEST_CASE("MessagePack")
 
     SECTION("binary subtypes exceeding 0xFF cannot be serialized to MessagePack")
     {
-        // the largest subtype the ext type field can hold still round-trips
+        // subtype 0xFF still encodes and round-trips within this library; note
+        // that MessagePack reads the ext type as signed, so subtypes above 0x7F
+        // land in its reserved range (0xFF becomes -1, the timestamp extension)
         json const j = json::binary(std::vector<uint8_t> {0xCA, 0xFE, 0xBA, 0xBE}, 0xFF);
         CHECK(json::from_msgpack(json::to_msgpack(j)) == j);
 

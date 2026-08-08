@@ -37,8 +37,10 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 ## Exceptions
 
 - Throws [`out_of_range.413`](../../home/exceptions.md#jsonexceptionout_of_range413) if the subtype of a binary value
-  exceeds the range of the 8-bit MessagePack ext type; example:
-  `"MessagePack binary subtype 511 exceeds maximum of 255"`
+  does not fit into the single-byte MessagePack ext type field; example:
+  `"MessagePack binary subtype 511 exceeds maximum of 255"`. Note that MessagePack reads the ext type as a signed
+  integer, so subtypes 128..255 map onto its reserved negative ext types; they round-trip through this library, but a
+  conforming MessagePack reader interprets them as predefined extensions (255 is the timestamp extension).
 
 ## Complexity
 
