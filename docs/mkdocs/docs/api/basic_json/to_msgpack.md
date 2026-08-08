@@ -34,6 +34,14 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 
 Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
 
+## Exceptions
+
+- Throws [`out_of_range.413`](../../home/exceptions.md#jsonexceptionout_of_range413) if the subtype of a binary value
+  does not fit into the single-byte MessagePack ext type field; example:
+  `"MessagePack binary subtype 511 exceeds maximum of 255"`. Note that MessagePack reads the ext type as a signed
+  integer, so subtypes 128..255 map onto its reserved negative ext types; they round-trip through this library, but a
+  conforming MessagePack reader interprets them as predefined extensions (255 is the timestamp extension).
+
 ## Complexity
 
 Linear in the size of the JSON value `j`.
