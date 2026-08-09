@@ -843,12 +843,17 @@ The JSON Patch operations 'remove' and 'add' cannot be applied to the root eleme
 
 ### json.exception.out_of_range.406
 
-A parsed number could not be stored as without changing it to NaN or INF.
+A parsed number could not be stored as without changing it to NaN or INF. This exception is also thrown when a
+floating-point value is retrieved as an integer type (for example via `get<int>()`) but lies outside that type's
+range, since the conversion would otherwise be undefined behavior.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     number overflow parsing '10E1000'
+    ```
+    ```
+    number overflow: floating-point value is out of range of the requested integer type
     ```
 
 ### json.exception.out_of_range.407

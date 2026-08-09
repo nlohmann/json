@@ -10,8 +10,10 @@
 
 #include <algorithm> // transform
 #include <array> // array
+#include <cmath> // isfinite, ldexp
 #include <forward_list> // forward_list
 #include <iterator> // inserter, front_inserter, end
+#include <limits> // numeric_limits
 #include <map> // map
 #include <string> // string
 #include <tuple> // tuple, make_tuple
@@ -70,6 +72,42 @@ void from_json(const BasicJsonType& j, std::optional<T>& opt)
 }
 #endif // JSON_HAS_CPP_17
 
+// Casting a floating-point value that lies outside the destination integer's
+// range to that integer type is undefined behavior (see [conv.fpint]), so a
+// value read from an untrusted document can trigger it through get<int>() and
+// friends. These helpers convert a JSON number_float value to ArithmeticType,
+// rejecting out-of-range values instead of performing the offending cast. The
+// bounds are exact powers of two representable in the source type, so every
+// value the target integer can hold is still accepted and only genuinely
+// out-of-range values are rejected. When the destination is itself a
+// floating-point type the plain cast is well-defined and used unchanged.
+template < typename ArithmeticType, typename BasicJsonType,
+           enable_if_t < std::is_integral<ArithmeticType>::value, int > = 0 >
+ArithmeticType number_float_to(const BasicJsonType& j)
+{
+    using number_float_t = typename BasicJsonType::number_float_t;
+    const number_float_t val = *j.template get_ptr<const number_float_t*>();
+
+    const number_float_t limit = std::ldexp(static_cast<number_float_t>(1), std::numeric_limits<ArithmeticType>::digits);
+    const bool in_range = std::is_signed<ArithmeticType>::value
+                          ? (val >= -limit && val < limit)
+                          : (val >= static_cast<number_float_t>(0) && val < limit);
+
+    if (JSON_HEDLEY_UNLIKELY(!std::isfinite(val) || !in_range))
+    {
+        JSON_THROW(out_of_range::create(406, "number overflow: floating-point value is out of range of the requested integer type", &j));
+    }
+
+    return static_cast<ArithmeticType>(val);
+}
+
+template < typename ArithmeticType, typename BasicJsonType,
+           enable_if_t < !std::is_integral<ArithmeticType>::value, int > = 0 >
+ArithmeticType number_float_to(const BasicJsonType& j)
+{
+    return static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_float_t*>());
+}
+
 // overloads for basic_json template parameters
 template < typename BasicJsonType, typename ArithmeticType,
            enable_if_t < std::is_arithmetic<ArithmeticType>::value&&
@@ -91,7 +129,7 @@ void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
         }
         case value_t::number_float:
         {
-            val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_float_t*>());
+            val = number_float_to<ArithmeticType>(j);
             break;
         }
 
@@ -444,7 +482,7 @@ inline void from_json(const BasicJsonType& j, ArithmeticType& val)
         }
         case value_t::number_float:
         {
-            val = static_cast<ArithmeticType>(*j.template get_ptr<const typename BasicJsonType::number_float_t*>());
+            val = number_float_to<ArithmeticType>(j);
             break;
         }
         case value_t::boolean:
