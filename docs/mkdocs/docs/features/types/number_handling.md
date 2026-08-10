@@ -248,13 +248,16 @@ integers, and between integers and floating-point values. This behavior may be s
     exception if `jd` is not a numerical type, for instance a string.
 
     Numeric conversions are performed according to the corresponding C++ conversion rules. The library does not perform
-    range checks when converting between numeric types.
+    range checks when converting between integer types, so conversions to an integer type with a smaller range than the
+    stored value may produce implementation-defined results.
     
-    In particular, conversions from floating-point values to integer types, or conversions to integer types with a
-    smaller range than the stored value, may produce implementation-defined or undefined behavior if the source value
-    cannot be represented by the target type.
+    Conversions from a stored floating-point value to an integer type are the exception: because the underlying C++
+    conversion would be undefined behavior when the value cannot be represented by the target type, the library checks
+    the range first and throws a
+    [`json.exception.out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406) exception if the value
+    does not fit. In-range values are truncated toward zero as usual.
     
-    Applications requiring checked conversions should inspect the stored number type with
+    Applications requiring checked conversions between integer types should inspect the stored number type with
     [`is_number_float()`](../../api/basic_json/is_number_float.md),
     [`is_number_integer()`](../../api/basic_json/is_number_integer.md),
     [`is_number_unsigned()`](../../api/basic_json/is_number_unsigned.md), or

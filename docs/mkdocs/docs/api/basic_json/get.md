@@ -99,17 +99,20 @@ overload (3).
 
     Writing data to the pointee (overload 3) of the result yields an undefined state.
 
-!!! danger "Undefined behavior for numeric conversions"
+!!! danger "Range checks for numeric conversions"
 
     Conversions between numeric types are performed by the corresponding
     `from_json()` implementation using the target C++ type. When converting
-    between numeric types, the library does not check whether the source
-    value is representable by the target type.
-    
-    If the source value is outside the range of the target type, the behavior
-    is the same as the corresponding C++ conversion. In particular, converting
-    a floating-point value to an integer type that cannot represent the value
-    results in undefined behavior.
+    between integer types, the library does not check whether the source
+    value is representable by the target type; if it is not, the behavior is
+    the same as the corresponding C++ conversion.
+
+    Converting a stored floating-point value to an integer type is the one
+    checked case: if the value is not finite or lies outside the target
+    type's range, a
+    [`json.exception.out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406)
+    exception is thrown, because the underlying C++ conversion would be
+    undefined behavior. In-range values are truncated toward zero as before.
 
     See [Number conversion](../../features/types/number_handling.md#number-conversion)
     for more information.
