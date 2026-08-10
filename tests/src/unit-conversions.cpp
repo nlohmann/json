@@ -938,6 +938,37 @@ TEST_CASE("value conversion")
             CHECK_NOTHROW(
                 json(json::value_t::number_float).get<json::number_unsigned_t>());
         }
+
+        SECTION("floating-point value out of the target integer range")
+        {
+            // casting an out-of-range floating-point value to an integer type is
+            // undefined behavior, so a number produced by parsing must be
+            // rejected rather than converted
+            const json j_big = 1e40;
+            const json j_small = -1e40;
+
+            CHECK_THROWS_WITH_AS(j_big.get<json::number_integer_t>(),
+                                 "[json.exception.out_of_range.406] number overflow: floating-point value is out of range of the requested integer type", json::out_of_range&);
+            CHECK_THROWS_WITH_AS(j_big.get<json::number_unsigned_t>(),
+                                 "[json.exception.out_of_range.406] number overflow: floating-point value is out of range of the requested integer type", json::out_of_range&);
+            CHECK_THROWS_AS(j_big.get<int32_t>(), json::out_of_range&);
+            CHECK_THROWS_AS(j_big.get<int>(), json::out_of_range&);
+            CHECK_THROWS_AS(j_small.get<int>(), json::out_of_range&);
+            CHECK_THROWS_AS(j_small.get<int64_t>(), json::out_of_range&);
+
+            // an integer literal beyond uint64 is parsed as a float and reaches
+            // the same conversion path
+            CHECK_THROWS_AS(json::parse("99999999999999999999999999").get<int32_t>(), json::out_of_range&);
+
+            // in-range floating-point values still convert (truncated toward zero)
+            CHECK(json(3.7).get<int>() == 3);
+            CHECK(json(-3.7).get<int>() == -3);
+            CHECK(json(2147483647.0).get<int32_t>() == 2147483647);
+
+            // floating-point destinations are unaffected
+            CHECK(j_big.get<double>() > 1e39);
+            CHECK_NOTHROW(j_big.get<float>());
+        }
     }
 
 #if JSON_USE_IMPLICIT_CONVERSIONS
