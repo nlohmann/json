@@ -15,6 +15,8 @@
 
 #include "doctest_compatibility.h"
 
+#include <cstdint>
+
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -254,6 +256,75 @@ TEST_CASE("lexicographical comparison operators")
             {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_}, // 20
             {f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_, f_}, // 21
         };
+
+        SECTION("signed/unsigned mixed comparison above INT64_MAX")
+        {
+            const json above_int64_max = static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()) + 1ULL;
+            const json max_uint64 = (std::numeric_limits<std::uint64_t>::max)();
+            const json negative_one = -1;
+            const json one = 1;
+            const json max_int64 = (std::numeric_limits<std::int64_t>::max)();
+
+            CHECK_FALSE(above_int64_max == negative_one);
+            CHECK(above_int64_max != negative_one);
+            CHECK(negative_one < above_int64_max);
+            CHECK(negative_one <= above_int64_max);
+            CHECK_FALSE(negative_one > above_int64_max);
+            CHECK_FALSE(negative_one >= above_int64_max);
+            CHECK_FALSE(above_int64_max < negative_one);
+            CHECK_FALSE(above_int64_max <= negative_one);
+            CHECK(above_int64_max > negative_one);
+            CHECK(above_int64_max >= negative_one);
+            CHECK(negative_one != above_int64_max);
+            CHECK_FALSE(negative_one == above_int64_max);
+
+            CHECK_FALSE(max_uint64 == negative_one);
+            CHECK(max_uint64 != negative_one);
+            CHECK(negative_one < max_uint64);
+            CHECK(negative_one <= max_uint64);
+            CHECK_FALSE(negative_one > max_uint64);
+            CHECK_FALSE(negative_one >= max_uint64);
+            CHECK_FALSE(max_uint64 < negative_one);
+            CHECK_FALSE(max_uint64 <= negative_one);
+            CHECK(max_uint64 > negative_one);
+            CHECK(max_uint64 >= negative_one);
+            CHECK(negative_one != max_uint64);
+            CHECK_FALSE(negative_one == max_uint64);
+
+            CHECK_FALSE(one == above_int64_max);
+            CHECK(one != above_int64_max);
+            CHECK(one < above_int64_max);
+            CHECK(one <= above_int64_max);
+            CHECK_FALSE(one > above_int64_max);
+            CHECK_FALSE(one >= above_int64_max);
+            CHECK_FALSE(above_int64_max < one);
+            CHECK_FALSE(above_int64_max <= one);
+            CHECK(above_int64_max > one);
+            CHECK(above_int64_max >= one);
+
+            CHECK_FALSE(max_int64 == above_int64_max);
+            CHECK(max_int64 != above_int64_max);
+            CHECK(max_int64 < above_int64_max);
+            CHECK(max_int64 <= above_int64_max);
+            CHECK_FALSE(max_int64 > above_int64_max);
+            CHECK_FALSE(max_int64 >= above_int64_max);
+            CHECK_FALSE(above_int64_max < max_int64);
+            CHECK_FALSE(above_int64_max <= max_int64);
+            CHECK(above_int64_max > max_int64);
+            CHECK(above_int64_max >= max_int64);
+
+#if JSON_HAS_THREE_WAY_COMPARISON
+            // JSON_HAS_CPP_20 (do not remove; see note at top of file)
+            CHECK((negative_one <=> above_int64_max) == std::partial_ordering::less); // *NOPAD*
+            CHECK((above_int64_max <=> negative_one) == std::partial_ordering::greater); // *NOPAD*
+            CHECK((negative_one <=> max_uint64) == std::partial_ordering::less); // *NOPAD*
+            CHECK((max_uint64 <=> negative_one) == std::partial_ordering::greater); // *NOPAD*
+            CHECK((one <=> above_int64_max) == std::partial_ordering::less); // *NOPAD*
+            CHECK((above_int64_max <=> one) == std::partial_ordering::greater); // *NOPAD*
+            CHECK((max_int64 <=> above_int64_max) == std::partial_ordering::less); // *NOPAD*
+            CHECK((above_int64_max <=> max_int64) == std::partial_ordering::greater); // *NOPAD*
+#endif
+        }
 
         SECTION("compares unordered")
         {
