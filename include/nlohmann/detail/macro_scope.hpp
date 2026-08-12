@@ -58,9 +58,11 @@
     #define JSON_HAS_CPP_11
 #endif
 
-#ifdef __has_include
-    #if __has_include(<version>)
-        #include <version>
+#ifdef JSON_HAS_CPP_20
+    #ifdef __has_include
+        #if __has_include(<version>)
+            #include <version>
+        #endif
     #endif
 #endif
 
