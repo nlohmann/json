@@ -899,7 +899,11 @@ class binary_reader
                                 return parse_cbor_internal(true, tag_handler);
                         }
                         get();
-                        return get_cbor_binary(b) && sax->binary(b);
+                        if ((current >= 0x40 && current <= 0x5B) || current == 0x5F)
+                        {
+                            return get_cbor_binary(b) && sax->binary(b);
+                        }
+                        return parse_cbor_internal(false, cbor_tag_handler_t::ignore);
                     }
 
                     default:                 // LCOV_EXCL_LINE
