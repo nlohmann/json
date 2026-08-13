@@ -410,7 +410,9 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                break;
+            {
+                throw_on_discarded(j);
+            }
         }
     }
 
@@ -578,6 +580,10 @@ class binary_writer
                     oa->write_character(to_char_type(0xDB));
                     write_number(static_cast<std::uint32_t>(N));
                 }
+                else
+                {
+                    assert_msgpack_size(N, &j);
+                }
 
                 // step 2: write the string
                 oa->write_characters(
@@ -606,6 +612,10 @@ class binary_writer
                     // array 32
                     oa->write_character(to_char_type(0xDD));
                     write_number(static_cast<std::uint32_t>(N));
+                }
+                else
+                {
+                    assert_msgpack_size(N, &j);
                 }
 
                 // step 2: write each element
@@ -684,6 +694,10 @@ class binary_writer
                     oa->write_character(to_char_type(output_type));
                     write_number(static_cast<std::uint32_t>(N));
                 }
+                else
+                {
+                    assert_msgpack_size(N, &j);
+                }
 
                 // step 1.5: if this is an ext type, write the subtype
                 if (use_ext)
@@ -720,6 +734,10 @@ class binary_writer
                     oa->write_character(to_char_type(0xDF));
                     write_number(static_cast<std::uint32_t>(N));
                 }
+                else
+                {
+                    assert_msgpack_size(N, &j);
+                }
 
                 // step 2: write each element
                 for (const auto& el : *j.m_data.m_value.object)
@@ -732,7 +750,9 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                break;
+            {
+                throw_on_discarded(j);
+            }
         }
     }
 
@@ -954,11 +974,18 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                break;
+            {
+                throw_on_discarded(j);
+            }
         }
     }
 
   private:
+    static void throw_on_discarded(const BasicJsonType& j)
+    {
+        JSON_THROW(type_error::create(318, concat("cannot serialize ", j.type_name(), " values to binary format"), &j));
+    }
+
     //////////
     // BSON //
     //////////
@@ -992,6 +1019,17 @@ class binary_writer
         }
 
         return static_cast<std::int32_t>(size);
+    }
+
+    /*!
+    @throw out_of_range.412 if @a size exceeds the MessagePack uint32 length limit
+    */
+    void assert_msgpack_size(const std::size_t size, const BasicJsonType* const context = nullptr) const
+    {
+        if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::uint32_t>(size)))
+        {
+            JSON_THROW(out_of_range::create(412, concat("MessagePack size ", std::to_string(size), " exceeds maximum of ", std::to_string((std::numeric_limits<std::uint32_t>::max)())), context));
+        }
     }
 
     /*!
@@ -1223,8 +1261,7 @@ class binary_writer
             // LCOV_EXCL_START
             case value_t::discarded:
             default:
-                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
-                return 0ul;
+                throw_on_discarded(j);
                 // LCOV_EXCL_STOP
         }
     }
@@ -1270,8 +1307,7 @@ class binary_writer
             // LCOV_EXCL_START
             case value_t::discarded:
             default:
-                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
-                return;
+                throw_on_discarded(j);
                 // LCOV_EXCL_STOP
         }
     }
