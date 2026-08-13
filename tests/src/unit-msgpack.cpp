@@ -106,10 +106,20 @@ TEST_CASE("MessagePack")
     {
         SECTION("discarded")
         {
-            // discarded values are not serialized
             json const j = json::value_t::discarded;
-            const auto result = json::to_msgpack(j);
-            CHECK(result.empty());
+            CHECK_THROWS_WITH_AS(json::to_msgpack(j), "[json.exception.type_error.318] cannot serialize discarded values to binary format", json::type_error&);
+        }
+
+        SECTION("discarded in array")
+        {
+            json const j = {json::value_t::discarded, json::value_t::discarded, 1};
+            CHECK_THROWS_WITH_AS(json::to_msgpack(j), "[json.exception.type_error.318] cannot serialize discarded values to binary format", json::type_error&);
+        }
+
+        SECTION("discarded in object")
+        {
+            json const j = {{"foo", 1}, {"bar", json::value_t::discarded}};
+            CHECK_THROWS_WITH_AS(json::to_msgpack(j), "[json.exception.type_error.318] cannot serialize discarded values to binary format", json::type_error&);
         }
 
         SECTION("null")
@@ -1966,5 +1976,31 @@ TEST_CASE("MessagePack with std::byte")
             CHECK(direct_result == original);
         }
     }
+}
+
+namespace
+{
+template<typename T, typename A = std::allocator<T>>
+struct huge_array : std::vector<T, A>
+{
+    using std::vector<T, A>::vector;
+    std::size_t size() const noexcept { return std::size_t{1} << 33; }
+};
+
+using huge_json = nlohmann::basic_json<
+    std::map, huge_array, std::string, bool, std::int64_t, std::uint64_t,
+    double, std::allocator, nlohmann::adl_serializer, std::vector<std::uint8_t>, void>;
+} // namespace
+
+TEST_CASE("issue #5320 - to_msgpack rejects sizes above uint32 limit")
+{
+    huge_json j = huge_json::array();
+    j.push_back(1);
+    j.push_back(2);
+    j.push_back(3);
+
+    CHECK_THROWS_WITH_AS(_ = huge_json::to_msgpack(j),
+        "[json.exception.out_of_range.412] MessagePack size 8589934592 exceeds maximum of 4294967295",
+        json::out_of_range&);
 }
 #endif
