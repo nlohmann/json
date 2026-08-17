@@ -3843,6 +3843,25 @@ TEST_CASE("all BJData first bytes")
 }
 #endif
 
+TEST_CASE("BJData use_type requires use_size")
+{
+    const json j = {{"a", 1}, {"b", 2}};
+
+    SECTION("to_bjdata throws other_error.502")
+    {
+        CHECK_THROWS_WITH_AS(json::to_bjdata(j, false, true),
+                             "[json.exception.other_error.502] use_type requires use_size = true",
+                             json::other_error&);
+    }
+
+    SECTION("valid combinations still work")
+    {
+        CHECK_NOTHROW(json::to_bjdata(j, false, false));
+        CHECK_NOTHROW(json::to_bjdata(j, true, false));
+        CHECK_NOTHROW(json::to_bjdata(j, true, true));
+    }
+}
+
 TEST_CASE("BJData roundtrips" * doctest::skip())
 {
     SECTION("input from self-generated BJData files")

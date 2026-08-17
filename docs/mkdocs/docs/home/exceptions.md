@@ -965,3 +965,19 @@ A JSON Patch operation 'test' failed. The unsuccessful operation is also printed
     ```
     [json.exception.other_error.501] unsuccessful: {"op":"test","path":"/baz","value":"bar"}
     ```
+
+### json.exception.other_error.502
+
+[`to_ubjson`](../api/basic_json/to_ubjson.md) and [`to_bjdata`](../api/basic_json/to_bjdata.md) were called with
+`use_type = true` but `use_size = false`. UBJSON requires a size marker (`#`) after a type marker (`$`).
+
+!!! failure "Example message"
+
+    ```
+    [json.exception.other_error.502] use_type requires use_size = true
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0. Before that, debug builds aborted on an assertion and release builds
+    wrote a `$` marker without `#`, which [`from_ubjson`](../api/basic_json/from_ubjson.md) then rejected.

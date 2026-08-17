@@ -2503,6 +2503,25 @@ TEST_CASE("all UBJSON first bytes")
 }
 #endif
 
+TEST_CASE("UBJSON use_type requires use_size")
+{
+    const json j = {1, 2, 3};
+
+    SECTION("to_ubjson throws other_error.502")
+    {
+        CHECK_THROWS_WITH_AS(json::to_ubjson(j, false, true),
+                             "[json.exception.other_error.502] use_type requires use_size = true",
+                             json::other_error&);
+    }
+
+    SECTION("valid combinations still work")
+    {
+        CHECK_NOTHROW(json::to_ubjson(j, false, false));
+        CHECK_NOTHROW(json::to_ubjson(j, true, false));
+        CHECK_NOTHROW(json::to_ubjson(j, true, true));
+    }
+}
+
 TEST_CASE("UBJSON roundtrips" * doctest::skip())
 {
     SECTION("input from self-generated UBJSON files")
