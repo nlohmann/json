@@ -1,0 +1,18 @@
+# Hand-written equivalent of the target export file that the CMake build
+# generates via install(EXPORT ...). Used by the Meson build, which cannot
+# reuse CMake's exporter.
+
+# Compute the installation prefix relative to this file.
+get_filename_component(_IMPORT_PREFIX "${CMAKE_CURRENT_LIST_FILE}" PATH)
+@NLOHMANN_JSON_IMPORT_PREFIX_STEPS@
+if(_IMPORT_PREFIX STREQUAL "/")
+    set(_IMPORT_PREFIX "")
+endif()
+
+add_library(@NLOHMANN_JSON_EXPORTED_TARGET_NAME@ INTERFACE IMPORTED)
+set_target_properties(@NLOHMANN_JSON_EXPORTED_TARGET_NAME@ PROPERTIES
+    INTERFACE_COMPILE_FEATURES "cxx_std_11"
+    INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/@NLOHMANN_JSON_INCLUDE_INSTALL_DIR@"
+)
+
+set(_IMPORT_PREFIX)
