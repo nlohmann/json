@@ -2565,11 +2565,13 @@ TEST_CASE("Tagged values")
     const json j = "s";
     auto v = json::to_cbor(j);
 
-    SECTION("0xC6..0xD4")
+    SECTION("0xC0..0xD7")
     {
         for (const auto b : std::vector<std::uint8_t>
     {
-        0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4
+        0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5,
+        0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4,
+        0xD5, 0xD6, 0xD7
     })
         {
             CAPTURE(b);
@@ -2590,6 +2592,48 @@ TEST_CASE("Tagged values")
             auto j_tagged_stored = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::store);
             CHECK(j_tagged_stored == j);
         }
+    }
+
+    SECTION("0xC0..0xD7 with a binary payload")
+    {
+        // the tag value is embedded in the head byte, so there is no subtype byte to
+        // read: store mode must unwrap the tag and leave the binary subtype unset,
+        // unlike 0xD8..0xDB where the following byte(s) become the subtype
+        const json j_binary = json::binary({0xCA, 0xFE});
+        const auto v_binary = json::to_cbor(j_binary);
+
+        for (const auto b : std::vector<std::uint8_t>
+    {
+        0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5,
+        0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4,
+        0xD5, 0xD6, 0xD7
+    })
+        {
+            CAPTURE(b);
+
+            auto v_tagged = v_binary;
+            v_tagged.insert(v_tagged.begin(), b);
+
+            json _;
+            CHECK_THROWS_AS(_ = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::error), json::parse_error);
+
+            auto j_tagged = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::ignore);
+            CHECK(j_tagged == j_binary);
+            CHECK_FALSE(j_tagged.get_binary().has_subtype());
+
+            auto j_tagged_stored = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::store);
+            CHECK(j_tagged_stored == j_binary);
+            CHECK_FALSE(j_tagged_stored.get_binary().has_subtype());
+        }
+
+        // contrast: 0xD8 reads the next byte as the subtype
+        auto v_subtyped = v_binary;
+        v_subtyped.insert(v_subtyped.begin(), 0x42);
+        v_subtyped.insert(v_subtyped.begin(), 0xD8);
+
+        auto j_subtyped = json::from_cbor(v_subtyped, true, true, json::cbor_tag_handler_t::store);
+        CHECK(j_subtyped.get_binary().has_subtype());
+        CHECK(j_subtyped.get_binary().subtype() == 0x42);
     }
 
     SECTION("0xD8 - 1 byte follows")
