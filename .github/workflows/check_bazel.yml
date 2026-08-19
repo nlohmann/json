@@ -1,0 +1,31 @@
+name: "Check BUILD.bazel updated"
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout pull request
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Reset scripts to use the develop branch
+        run: |
+          git fetch origin develop
+          git checkout origin/develop -- cmake/scripts
+
+      - name: Check whether BUILD.bazel has been updated
+        run: |
+          cmake -DCHECK=ON -P cmake/scripts/gen_bazel_build_file.cmake

@@ -32,6 +32,7 @@ all:
 	@echo "amalgamate - amalgamate files single_include/nlohmann/json{,_fwd}.hpp from the include/nlohmann sources"
 	@echo "ChangeLog.md - generate ChangeLog file"
 	@echo "check-amalgamation - check whether sources have been amalgamated"
+	@echo "check-bazel - check whether BUILD.bazel has been updated"
 	@echo "clean - remove built files"
 	@echo "doctest - compile example files and check their output"
 	@echo "fuzz_testing - prepare fuzz testing of the JSON parser"
@@ -171,7 +172,10 @@ check-amalgamation:
 	@mv $(AMALGAMATED_FILE)~ $(AMALGAMATED_FILE)
 	@mv $(AMALGAMATED_FWD_FILE)~ $(AMALGAMATED_FWD_FILE)
 
-BUILD.bazel: $(SRCS)
+check-bazel:
+	cmake -DCHECK=ON -P cmake/scripts/gen_bazel_build_file.cmake
+
+update_bazel:
 	cmake -P cmake/scripts/gen_bazel_build_file.cmake
 
 ##########################################################################
@@ -204,7 +208,7 @@ json.tar.xz:
 
 # We use `-X` to make the resulting ZIP file reproducible, see
 # <https://content.pivotal.io/blog/barriers-to-deterministic-reproducible-zip-files>.
-include.zip: BUILD.bazel
+include.zip:
 	zip -9 --recurse-paths -X include.zip $(SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) BUILD.bazel MODULE.bazel meson.build LICENSE.MIT
 
 # Create the files for a release and add signatures and hashes.

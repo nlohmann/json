@@ -17,6 +17,7 @@ license(
 
 cc_library(
     name = "json",
+    # BEGIN GENERATED HDRS LIST
     hdrs = [
         "include/nlohmann/adl_serializer.hpp",
         "include/nlohmann/byte_container_with_subtype.hpp",
@@ -49,6 +50,7 @@ cc_library(
         "include/nlohmann/detail/meta/detected.hpp",
         "include/nlohmann/detail/meta/identity_tag.hpp",
         "include/nlohmann/detail/meta/is_sax.hpp",
+        "include/nlohmann/detail/meta/logic.hpp",
         "include/nlohmann/detail/meta/std_fs.hpp",
         "include/nlohmann/detail/meta/type_traits.hpp",
         "include/nlohmann/detail/meta/void_t.hpp",
@@ -65,9 +67,9 @@ cc_library(
         "include/nlohmann/thirdparty/hedley/hedley.hpp",
         "include/nlohmann/thirdparty/hedley/hedley_undef.hpp",
     ],
+    # END GENERATED HDRS LIST
     includes = ["include"],
     visibility = ["//visibility:public"],
-    alwayslink = True,
 )
 
 cc_library(
