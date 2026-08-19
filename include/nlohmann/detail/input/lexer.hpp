@@ -1358,26 +1358,48 @@ scan_number_done:
     back to floating point on overflow. This is shared so both scanners produce
     identical results.
     */
-    token_type convert_number(token_type number_type)
-    {
-        const char* const num_begin = token_buffer.data();
-        const char* const num_end = num_begin + token_buffer.size();
+    /*!
+    @brief convert an already-validated integer token to its value
 
-        // try to parse integers first and fall back to floats; the digit
-        // sequence has already been validated, so a dedicated parser can avoid
-        // the locale/errno overhead of strtoull
+    The digit sequence in [first, last) has been validated by the caller, so a
+    dedicated parser can avoid the locale/errno overhead of std::strtoull.
+
+    @return the token type on success; token_type::uninitialized if @a
+            number_type is not an integer type or the value does not fit, in
+            which case the caller falls back to the floating-point conversion
+            (matching the previous std::strtoull/std::strtoll behavior)
+    */
+    token_type convert_integer(token_type number_type, const char* first, const char* last)
+    {
         if (number_type == token_type::value_unsigned)
         {
-            if (parse_integer_unsigned(num_begin, num_end, value_unsigned))
+            if (parse_integer_unsigned(first, last, value_unsigned))
             {
                 return token_type::value_unsigned;
             }
         }
         else if (number_type == token_type::value_integer)
         {
-            if (parse_integer_signed(num_begin, num_end, value_integer))
+            if (parse_integer_signed(first, last, value_integer))
             {
                 return token_type::value_integer;
+            }
+        }
+
+        return token_type::uninitialized;
+    }
+
+    token_type convert_number(token_type number_type)
+    {
+        const char* const num_begin = token_buffer.data();
+        const char* const num_end = num_begin + token_buffer.size();
+
+        if (number_type != token_type::value_float)
+        {
+            const token_type integer_result = convert_integer(number_type, num_begin, num_end);
+            if (integer_result != token_type::uninitialized)
+            {
+                return integer_result;
             }
         }
 
@@ -1495,11 +1517,35 @@ scan_number_done:
         }
         const std::size_t len = i;
 
+        // reset() records where this token starts (for diagnostics), so it has
+        // to run before the input position advances below
+        reset();
+
+        // An integer token needs no token_buffer: the SAX callbacks for
+        // number_integer/number_unsigned take only the value, and the overflow
+        // diagnostic rebuilds the text from the input. Convert straight from the
+        // input buffer and leave token_buffer empty. (JSON_DIAGNOSTIC_POSITIONS
+        // derives a number's start position from get_string().size(), so there
+        // the token still has to be materialized.)
+#if !JSON_DIAGNOSTIC_POSITIONS
+        if (number_type != token_type::value_float)
+        {
+            const token_type integer_result = convert_integer(number_type, data, data + len);
+            if (JSON_HEDLEY_LIKELY(integer_result != token_type::uninitialized))
+            {
+                ia.bulk_skip(len - 1);
+                position.chars_read_total += (len - 1);
+                position.chars_read_current_line += (len - 1);
+                return integer_result;
+            }
+            // the value overflowed: fall through and let the float tail handle it
+        }
+#endif
+
         // materialize the token exactly as scan_number() would, substituting the
         // locale decimal point so convert_number()'s strtof fallback stays valid.
         // reset() already cleared token_buffer, so append() fills it (assign() is
         // avoided because custom string_t types need not provide it)
-        reset();
         token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), len);
         if (dot_index != std::string::npos)
         {
@@ -1507,7 +1553,6 @@ scan_number_done:
             decimal_point_position = dot_index;
         }
 
-        // consume the remaining bytes of the number (current was already read)
         ia.bulk_skip(len - 1);
         position.chars_read_total += (len - 1);
         position.chars_read_current_line += (len - 1);
