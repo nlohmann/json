@@ -174,13 +174,10 @@ Incomplete mapping
 
 The mapping is **incomplete** in the sense that not all CBOR types can be converted to a JSON value. The following CBOR types are not supported and will yield parse errors:
 
-- date/time (0xC0..0xC1)
-- bignum (0xC2..0xC3)
-- decimal fraction (0xC4)
-- bigfloat (0xC5)
-- expected conversions (0xD5..0xD7)
 - simple values (0xE0..0xF3, 0xF8)
 - undefined (0xF7)
+
+Tagged items (0xC0..0xDB) are not interpreted either; see the note on tagged items below.
 
 Negative integer overflow
 
@@ -192,7 +189,7 @@ CBOR allows map keys of any type, whereas JSON only allows strings as keys in ob
 
 Tagged items
 
-Tagged items will throw a parse error by default. They can be ignored by passing `cbor_tag_handler_t::ignore` to function `from_cbor`. They can be stored by passing `cbor_tag_handler_t::store` to function `from_cbor`.
+Tagged items (0xC0..0xDB) will throw a parse error by default. They can be ignored by passing `cbor_tag_handler_t::ignore` to function `from_cbor`, in which case the tag is skipped and the enclosed data item is parsed on its own. They can be stored by passing `cbor_tag_handler_t::store` to function `from_cbor`. Note that no tag is ever interpreted: for instance, a text string tagged with tag 0 (date/time) stays a string.
 
 Example
 
