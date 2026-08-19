@@ -254,6 +254,41 @@ TEST_CASE("std::counted_iterator reaches the contiguous fast paths")
     // parsing through the pointer adapter must give exactly the same result
     CHECK(j == json::parse(json_str));
 
+    // Diagnostics that quote the offending token are reconstructed from the
+    // already-consumed input (supports_seek), a path a sized sentinel only
+    // reaches now; check a few that include the "last read" text.
+    for (const char* doc :
+            {"1\nx", "truX", "[tru]", "\"abc", "[\"\\ud834\"]", "[\"a\x01""b\"]",
+             "[\"\xc3\x28\"]", "[1e]", "[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaX"
+            })
+    {
+        CAPTURE(doc);
+        const std::string text = doc;
+        const std::counted_iterator<const char*> it(text.data(), static_cast<std::iter_difference_t<const char*>>(text.size()));
+        std::string counted_message;
+        std::string string_message;
+        try
+        {
+            const json j = json::parse(it, std::default_sentinel);
+            static_cast<void>(j);
+        }
+        catch (const json::parse_error& e)
+        {
+            counted_message = e.what();
+        }
+        try
+        {
+            const json j = json::parse(text);
+            static_cast<void>(j);
+        }
+        catch (const json::parse_error& e)
+        {
+            string_message = e.what();
+        }
+        CHECK_FALSE(counted_message.empty());
+        CHECK(counted_message == string_message);
+    }
+
     // and errors must still be reported identically
     const std::string bad = "[01\n]";
     const std::counted_iterator<const char*> bad_first(bad.data(), static_cast<std::iter_difference_t<const char*>>(bad.size()));
@@ -279,6 +314,66 @@ TEST_CASE("std::counted_iterator reaches the contiguous fast paths")
     }
     CHECK_FALSE(counted_what.empty());
     CHECK(counted_what == string_what);
+}
+
+TEST_CASE("std::counted_iterator bulk scanning stops at the counted end")
+{
+    // The count, not the size of the underlying buffer, is the end of the
+    // input: the bulk scanners must never look at the bytes behind it, even
+    // though they are readable. Each case is compared against parsing the
+    // equivalent prefix as a std::string.
+    const auto via_counted = [](const std::string & buf, std::size_t n)
+    {
+        const std::counted_iterator<const char*> first(buf.data(), static_cast<std::iter_difference_t<const char*>>(n));
+        try
+        {
+            const json j = json::parse(first, std::default_sentinel);
+            return "OK|" + j.dump();
+        }
+        catch (const json::parse_error& e)
+        {
+            return std::string(e.what());
+        }
+    };
+    const auto via_prefix = [](const std::string & buf, std::size_t n)
+    {
+        try
+        {
+            const json j = json::parse(buf.substr(0, n));
+            return "OK|" + j.dump();
+        }
+        catch (const json::parse_error& e)
+        {
+            return std::string(e.what());
+        }
+    };
+
+    struct testcase
+    {
+        const char* buffer;
+        std::size_t count;
+    };
+    const testcase cases[] =
+    {
+        {"[\"abc\"]____TRAILING____", 7},                    // exact fit, tail hidden
+        {"[\"abcdefghijklmnop\"]____", 8},                   // cut inside a string
+        {"[\"abc\"]____", 6},                                // cut just before the closing quote
+        {"[12345]xxxxx", 4},                                 // cut inside a number
+        {"[123]999999", 5},                                  // number ends exactly at the count
+        {"[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]", 12},        // closing quote only behind the count
+        {"[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"]", 19},      // cut inside an 8-byte SWAR stride
+        {"[\"\xe4\xb8\xad\xe6\x96\x87\"]", 5},               // cut inside a UTF-8 sequence
+        {"[\"\xe4\xb8\xad\xe6\x96\x87\"]____", 10},          // complete UTF-8, tail hidden
+        {"[1.25e3]TRAILINGDIGITS999", 7},                    // number token reaches the count
+    };
+
+    for (const auto& tc : cases)
+    {
+        CAPTURE(tc.buffer);
+        CAPTURE(tc.count);
+        const std::string buffer = tc.buffer;
+        CHECK(via_counted(buffer, tc.count) == via_prefix(buffer, tc.count));
+    }
 }
 #endif
 
