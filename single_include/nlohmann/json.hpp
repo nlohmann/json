@@ -21233,8 +21233,8 @@ class serializer
     void dump(const BasicJsonType& val,
               const bool pretty_print,
               const bool ensure_ascii,
-              const unsigned int indent_step,
-              const unsigned int current_indent = 0)
+              const std::size_t indent_step,
+              const std::size_t current_indent = 0)
     {
         dump_internal(val, pretty_print, ensure_ascii, indent_step, current_indent);
         flush();
@@ -21252,8 +21252,8 @@ class serializer
     void dump_internal(const BasicJsonType& val,
                        const bool pretty_print,
                        const bool ensure_ascii,
-                       const unsigned int indent_step,
-                       const unsigned int current_indent = 0)
+                       const std::size_t indent_step,
+                       const std::size_t current_indent = 0)
     {
         switch (val.m_data.m_type)
         {
@@ -21510,11 +21510,13 @@ class serializer
     @brief the indentation level to use for the children of the current value
 
     A very large @a indent_step can wrap the unsigned accumulation on deep
-    nesting, which would silently truncate the indentation.
+    nesting, which would silently truncate the indentation. Far harder to reach
+    now that the accumulator is a std::size_t, but still reachable where that is
+    32 bits wide.
     */
-    static unsigned int next_indent(const unsigned int current_indent, const unsigned int indent_step)
+    static std::size_t next_indent(const std::size_t current_indent, const std::size_t indent_step)
     {
-        const unsigned int new_indent = current_indent + indent_step;
+        const std::size_t new_indent = current_indent + indent_step;
         JSON_ASSERT(new_indent >= current_indent);
         return new_indent;
     }
@@ -21574,7 +21576,7 @@ class serializer
                         put_buffer(string_buffer, bytes);
                         bytes = 0;
                     }
-                    put_chars(s.data() + i, run);
+                    put_string(s, i, i + run);
                     bytes_after_last_accept = 0;
                     undumped_chars = 0;
                     i += run;
@@ -21832,13 +21834,6 @@ class serializer
     }
 
     /*!
-    @brief append @a length characters to the write buffer
-
-    Runs that do not fit the buffer are written straight through the output
-    adapter (after flushing what is pending), so large string/number payloads
-    are not copied an extra time.
-    */
-    /*!
     @brief append @a indent indentation characters to the write buffer
 
     Writes the indentation straight into the buffer instead of copying it out of
@@ -21850,7 +21845,7 @@ class serializer
     flushing does not disturb what the buffer holds, so re-filling it between
     flushes would be redundant work.
     */
-    void put_indent(unsigned int indent)
+    void put_indent(std::size_t indent)
     {
         // closing braces at the outermost level ask for no indentation at all
         if (indent == 0)
@@ -21863,10 +21858,10 @@ class serializer
         // fill whatever room is left in the buffer; this is the whole job
         // whenever the indentation is narrower than the buffer, which is the
         // case for every sane indent_step
-        const std::size_t head = (std::min)(static_cast<std::size_t>(indent), capacity - write_buffer_pos);
+        const std::size_t head = (std::min)(indent, capacity - write_buffer_pos);
         std::memset(write_buffer.data() + write_buffer_pos, indent_char, head);
         write_buffer_pos += head;
-        indent -= static_cast<unsigned int>(head);
+        indent -= head;
 
         if (JSON_HEDLEY_LIKELY(indent == 0))
         {
@@ -21883,7 +21878,7 @@ class serializer
         {
             write_buffer_pos = capacity;
             flush();
-            indent -= static_cast<unsigned int>(capacity);
+            indent -= capacity;
         }
 
         // the buffer still holds indentation characters throughout, so the tail
@@ -21903,14 +21898,30 @@ class serializer
     void put_literal(const char (&s)[N])
     {
         static_assert(N >= 2, "put_literal expects a non-empty string literal");
-        static_assert(N - 1 < write_buffer_size, "string literal must fit into the write buffer");
+        // the array bound counts the terminating NUL, which is not written
+        constexpr std::size_t length = N - 1;
+        static_assert(length < write_buffer_size, "string literal must fit into the write buffer");
 
-        if (JSON_HEDLEY_UNLIKELY(write_buffer_pos + (N - 1) > write_buffer.size()))
+        if (JSON_HEDLEY_UNLIKELY(write_buffer_pos + length > write_buffer.size()))
         {
             flush();
         }
-        std::memcpy(write_buffer.data() + write_buffer_pos, s, N - 1);
-        write_buffer_pos += N - 1;
+        std::memcpy(write_buffer.data() + write_buffer_pos, s, length);
+        write_buffer_pos += length;
+    }
+
+    /*!
+    @brief append the characters of @a str in [@a start, @a end)
+
+    Keeps the pointer arithmetic and the bounds checking inside the function
+    rather than at the call site, which is all @ref put_chars could offer.
+    */
+    template<typename StringType>
+    void put_string(const StringType& str, std::size_t start, std::size_t end)
+    {
+        JSON_ASSERT(start <= end);
+        JSON_ASSERT(end <= str.size());
+        put_chars(str.data() + start, end - start);
     }
 
     /*!
@@ -21926,6 +21937,16 @@ class serializer
         put_chars(buffer.data(), length);
     }
 
+    /*!
+    @brief append @a length characters to the write buffer
+
+    Runs that do not fit the buffer are written straight through the output
+    adapter (after flushing what is pending), so large string/number payloads
+    are not copied an extra time.
+
+    The callers all reach this through @ref put_literal, @ref put_buffer or
+    @ref put_string, which each derive the length from something that knows it.
+    */
     JSON_HEDLEY_NON_NULL(2)
     void put_chars(const char* s, std::size_t length)
     {
@@ -22175,7 +22196,7 @@ class serializer
         auto* begin = number_buffer.data();
         auto* end = ::nlohmann::detail::to_chars(begin, begin + number_buffer.size(), x);
 
-        put_chars(begin, static_cast<size_t>(end - begin));
+        put_buffer(number_buffer, static_cast<std::size_t>(end - begin));
     }
 
     JSON_HEDLEY_NON_NULL(1)
@@ -24032,7 +24053,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         if (indent >= 0)
         {
-            s.dump(*this, true, ensure_ascii, static_cast<unsigned int>(indent));
+            s.dump(*this, true, ensure_ascii, static_cast<std::size_t>(indent));
         }
         else
         {
