@@ -18,6 +18,13 @@ scalar path.
 When `JSON_USE_SIMDUTF` is defined you must make the `simdutf.h` header available on the include path and link the
 simdutf library. When it is not defined, no simdutf header is included and there is no dependency.
 
+!!! warning "Define consistently"
+
+    The macro selects between two definitions of the same inline validation function. It must therefore be defined
+    identically for **every** translation unit that includes the library; mixing translation units that define it with
+    ones that do not is an ODR violation. Prefer setting it as a compile definition on the target rather than with
+    `#!cpp #define` in individual source files.
+
 ## Default definition
 
 By default, `#!cpp JSON_USE_SIMDUTF` is not defined and the portable C++11 scalar validator is used.
