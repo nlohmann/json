@@ -896,6 +896,36 @@ class empty_derived_non_intrusive_only_serialize : public person_with_private_da
 // NOLINTNEXTLINE(misc-use-internal-linkage)
 NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(empty_derived_non_intrusive_only_serialize, person_with_private_data)
 
+// Types at the documented maximum member count (63) for issue #4041's
+// argument-count dispatch. The derived-type macros carry a two-token
+// Type,BaseType prefix, so they reach two slots further into
+// NLOHMANN_JSON_GET_MACRO than the non-derived ones and are the first to break
+// if the tag dispatch runs out of positional slots.
+class max_members
+{
+  public:
+    int m1{}, m2{}, m3{}, m4{}, m5{}, m6{}, m7{}, m8{}, m9{}, m10{}, m11{}, m12{}, m13{}, m14{}, m15{}, m16{}, m17{}, m18{}, m19{}, m20{}, m21{}, m22{}, m23{}, m24{}, m25{}, m26{}, m27{}, m28{}, m29{}, m30{}, m31{}, m32{}, m33{}, m34{}, m35{}, m36{}, m37{}, m38{}, m39{}, m40{}, m41{}, m42{}, m43{}, m44{}, m45{}, m46{}, m47{}, m48{}, m49{}, m50{}, m51{}, m52{}, m53{}, m54{}, m55{}, m56{}, m57{}, m58{}, m59{}, m60{}, m61{}, m62{}, m63{};
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(max_members, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, m27, m28, m29, m30, m31, m32, m33, m34, m35, m36, m37, m38, m39, m40, m41, m42, m43, m44, m45, m46, m47, m48, m49, m50, m51, m52, m53, m54, m55, m56, m57, m58, m59, m60, m61, m62, m63)
+};
+
+class max_members_base
+{
+  public:
+    int base_value = 0;
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(max_members_base, base_value)
+};
+
+class max_members_derived : public max_members_base
+{
+  public:
+    int m1{}, m2{}, m3{}, m4{}, m5{}, m6{}, m7{}, m8{}, m9{}, m10{}, m11{}, m12{}, m13{}, m14{}, m15{}, m16{}, m17{}, m18{}, m19{}, m20{}, m21{}, m22{}, m23{}, m24{}, m25{}, m26{}, m27{}, m28{}, m29{}, m30{}, m31{}, m32{}, m33{}, m34{}, m35{}, m36{}, m37{}, m38{}, m39{}, m40{}, m41{}, m42{}, m43{}, m44{}, m45{}, m46{}, m47{}, m48{}, m49{}, m50{}, m51{}, m52{}, m53{}, m54{}, m55{}, m56{}, m57{}, m58{}, m59{}, m60{}, m61{}, m62{}, m63{};
+
+    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(max_members_derived, max_members_base, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, m27, m28, m29, m30, m31, m32, m33, m34, m35, m36, m37, m38, m39, m40, m41, m42, m43, m44, m45, m46, m47, m48, m49, m50, m51, m52, m53, m54, m55, m56, m57, m58, m59, m60, m61, m62, m63)
+};
+
+
 } // namespace persons
 
 TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", Pair, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
@@ -1412,5 +1442,38 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of zero-member types via NLOHM
         const persons::empty_derived_non_intrusive_only_serialize obj{"Erik", 1, nullptr};
         Json j = obj;
         CHECK(j.dump() == derived_dump);
+    }
+}
+
+// Regression test for the argument-count dispatch added for issue #4041: the
+// documented maximum of 63 members must keep working, including for the
+// derived-type macros whose Type,BaseType prefix consumes two dispatch slots.
+TEST_CASE_TEMPLATE("Serialization/deserialization of maximum-member-count types via NLOHMANN_DEFINE_TYPE_*", Json, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
+                   nlohmann::json, nlohmann::ordered_json)
+{
+    SECTION("NLOHMANN_DEFINE_TYPE_INTRUSIVE with 63 members")
+    {
+        persons::max_members obj{};
+        obj.m1 = 1;
+        obj.m63 = 63;
+        Json j = obj;
+        CHECK(j.size() == 63);
+        const auto obj2 = j.template get<persons::max_members>();
+        CHECK(obj2.m1 == 1);
+        CHECK(obj2.m63 == 63);
+    }
+
+    SECTION("NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE with 63 own members")
+    {
+        persons::max_members_derived obj{};
+        obj.base_value = 7;
+        obj.m1 = 1;
+        obj.m63 = 63;
+        Json j = obj;
+        CHECK(j.size() == 64);
+        const auto obj2 = j.template get<persons::max_members_derived>();
+        CHECK(obj2.base_value == 7);
+        CHECK(obj2.m1 == 1);
+        CHECK(obj2.m63 == 63);
     }
 }
