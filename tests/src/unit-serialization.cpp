@@ -485,6 +485,12 @@ TEST_CASE("indentation is written straight into the write buffer")
         // 2000 > the 1024-byte write buffer, and > the 512 the indentation
         // string used to start at
         CHECK(j.dump(2000) == "{\n" + std::string(2000, ' ') + "\"a\": 1\n}");
+        // several whole buffer-fulls, so the buffer is refilled once and then
+        // flushed repeatedly
+        CHECK(j.dump(5000) == "{\n" + std::string(5000, ' ') + "\"a\": 1\n}");
+        CHECK(j.dump(5000, '\t') == "{\n" + std::string(5000, '\t') + "\"a\": 1\n}");
+        // an exact multiple of the buffer size
+        CHECK(j.dump(4096) == "{\n" + std::string(4096, ' ') + "\"a\": 1\n}");
     }
 
     SECTION("a non-space indentation character is used throughout")

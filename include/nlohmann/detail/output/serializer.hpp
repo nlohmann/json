@@ -718,24 +718,52 @@ class serializer
 
     Writes the indentation straight into the buffer instead of copying it out of
     a pre-grown indentation string, so no auxiliary string has to be sized,
-    resized, or kept in sync with the deepest nesting level reached. An
-    indentation wider than the buffer simply fills and flushes it repeatedly.
+    resized, or kept in sync with the deepest nesting level reached.
+
+    An indentation wider than the buffer is emitted by filling the buffer with
+    the indentation character once and flushing that same content repeatedly:
+    flushing does not disturb what the buffer holds, so re-filling it between
+    flushes would be redundant work.
     */
     void put_indent(unsigned int indent)
     {
-        while (indent > 0)
+        // closing braces at the outermost level ask for no indentation at all
+        if (indent == 0)
         {
-            if (JSON_HEDLEY_UNLIKELY(write_buffer_pos == write_buffer.size()))
-            {
-                flush();
-            }
-
-            const std::size_t chunk = (std::min)(static_cast<std::size_t>(indent),
-                                                 write_buffer.size() - write_buffer_pos);
-            std::memset(write_buffer.data() + write_buffer_pos, indent_char, chunk);
-            write_buffer_pos += chunk;
-            indent -= static_cast<unsigned int>(chunk);
+            return;
         }
+
+        const std::size_t capacity = write_buffer.size();
+
+        // fill whatever room is left in the buffer; this is the whole job
+        // whenever the indentation is narrower than the buffer, which is the
+        // case for every sane indent_step
+        const std::size_t head = (std::min)(static_cast<std::size_t>(indent), capacity - write_buffer_pos);
+        std::memset(write_buffer.data() + write_buffer_pos, indent_char, head);
+        write_buffer_pos += head;
+        indent -= static_cast<unsigned int>(head);
+
+        if (JSON_HEDLEY_LIKELY(indent == 0))
+        {
+            return;
+        }
+
+        // the buffer is full and the remainder spans whole buffer-fulls: flush
+        // what is pending, then fill the buffer with the indentation character
+        // exactly once and hand the same bytes to the adapter as often as needed
+        flush();
+        std::memset(write_buffer.data(), indent_char, capacity);
+
+        while (indent >= capacity)
+        {
+            write_buffer_pos = capacity;
+            flush();
+            indent -= static_cast<unsigned int>(capacity);
+        }
+
+        // the buffer still holds indentation characters throughout, so the tail
+        // only has to be claimed, not written again
+        write_buffer_pos = indent;
     }
 
     /*!
