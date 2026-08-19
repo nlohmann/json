@@ -470,3 +470,51 @@ TEST_CASE("serialization of strings (bulk fast path)")
         CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == "\"validmore\"");
     }
 }
+
+TEST_CASE("indentation is written straight into the write buffer")
+{
+    // put_indent() memsets the indentation into the write buffer instead of
+    // copying it out of a pre-grown indentation string. These cases cover an
+    // indentation wider than the buffer, a non-space indentation character, and
+    // nesting deep enough that the accumulated indentation spans several
+    // buffer-fulls - the situations the old grow-a-string approach got wrong.
+
+    SECTION("indent_step wider than the write buffer")
+    {
+        const json j = {{"a", 1}};
+        // 2000 > the 1024-byte write buffer, and > the 512 the indentation
+        // string used to start at
+        CHECK(j.dump(2000) == "{\n" + std::string(2000, ' ') + "\"a\": 1\n}");
+    }
+
+    SECTION("a non-space indentation character is used throughout")
+    {
+        const json j = {{"a", 1}};
+        // 600 is past the point where the indentation used to be grown, which
+        // is where a hard-coded space would have shown up
+        CHECK(j.dump(600, '\t') == "{\n" + std::string(600, '\t') + "\"a\": 1\n}");
+        CHECK(j.dump(3, '.') == "{\n...\"a\": 1\n}");
+    }
+
+    SECTION("accumulated indentation spans several buffer-fulls")
+    {
+        // five levels deep at 400 per level: the innermost value is indented by
+        // 2000 characters, reached in steps that each straddle the buffer end
+        json j = json::array({1});
+        for (int i = 0; i < 4; ++i)
+        {
+            j = json::array({j});
+        }
+
+        const std::string out = j.dump(400);
+        CHECK(out.find(std::string("\n") + std::string(2000, ' ') + "1\n") != std::string::npos);
+        CHECK(json::parse(out) == j);
+    }
+
+    SECTION("indentation is unchanged for ordinary widths")
+    {
+        const json j = {{"a", {1, 2}}, {"b", nullptr}};
+        CHECK(j.dump(2) == "{\n  \"a\": [\n    1,\n    2\n  ],\n  \"b\": null\n}");
+        CHECK(j.dump(0) == "{\n\"a\": [\n1,\n2\n],\n\"b\": null\n}");
+    }
+}
