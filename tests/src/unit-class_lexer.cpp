@@ -299,4 +299,60 @@ TEST_CASE("lexer number fast path")
             CHECK_FALSE(json::accept(ss));
         }
     }
+
+    SECTION("error positions match the streaming path")
+    {
+        // Rejecting identically is not enough: the fast path must also report the
+        // error at the same position as the byte path. A number directly followed
+        // by a newline is the interesting case, because the byte path reaches the
+        // newline (which resets the column) and then ungets it.
+        // returns the parse_error message, or "" if the document parsed
+        const auto contiguous_error = [](const std::string & doc)
+        {
+            try
+            {
+                const json j = json::parse(doc);
+                static_cast<void>(j);
+            }
+            catch (const json::parse_error& e)
+            {
+                return std::string(e.what());
+            }
+            return std::string();
+        };
+        const auto streaming_error = [](const std::string & doc)
+        {
+            try
+            {
+                std::stringstream ss(doc);
+                const json j = json::parse(ss);
+                static_cast<void>(j);
+            }
+            catch (const json::parse_error& e)
+            {
+                return std::string(e.what());
+            }
+            return std::string();
+        };
+
+        for (const char* bad :
+                {"[01\n]", "[00\n]", "[-01\n]", "{1\n}", "[1\n2]", "[1.2.3\n]",
+                 "[1 \n2]", "[\n1\n2]", "1\n2", "[01\r\n]", "[1e\n]", "[-\n]"
+                })
+        {
+            CAPTURE(bad);
+            const std::string doc = bad;
+            const std::string contiguous_what = contiguous_error(doc);
+
+            CHECK_FALSE(contiguous_what.empty());
+            CHECK(contiguous_what == streaming_error(doc));
+        }
+
+        // the column must be the one the offending token actually starts at,
+        // not the 0 that an unget() across the newline used to leave behind
+        CHECK_THROWS_WITH_AS(json::parse("[01\n]"),
+                             "[json.exception.parse_error.101] parse error at line 1, column 3: "
+                             "syntax error while parsing array - unexpected number literal; expected ']'",
+                             json::parse_error&);
+    }
 }

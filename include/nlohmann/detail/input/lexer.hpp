@@ -1615,6 +1615,9 @@ scan_number_done:
         if (current == '\n')
         {
             ++position.lines_read;
+            // remember the column the newline was read at: chars_read_current_line
+            // is about to be cleared, and a matching unget() cannot reconstruct it
+            chars_read_before_newline = position.chars_read_current_line;
             position.chars_read_current_line = 0;
         }
 
@@ -1648,12 +1651,20 @@ scan_number_done:
         --position.chars_read_total;
 
         // in case we "unget" a newline, we have to also decrement the lines_read
+        // and restore the column that get() cleared when it saw the newline;
+        // chars_read_current_line == 0 can only mean the last get() read one
         if (position.chars_read_current_line == 0)
         {
             if (position.lines_read > 0)
             {
                 --position.lines_read;
             }
+
+            // chars_read_before_newline counts the newline itself, which is the
+            // character being ungotten, hence the -1
+            position.chars_read_current_line = (chars_read_before_newline > 0)
+                                               ? chars_read_before_newline - 1
+                                               : 0;
         }
         else
         {
@@ -1926,6 +1937,10 @@ scan_number_done:
 
     /// the start position of the current token
     position_t position {};
+
+    /// the value chars_read_current_line had when the last newline was read, so
+    /// that unget() can restore the column instead of leaving it at 0
+    std::size_t chars_read_before_newline = 0;
 
     /// raw input token string for error messages; only populated for streaming
     /// adapters (seekable adapters reconstruct it lazily via token_string_start)
