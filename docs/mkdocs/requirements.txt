@@ -1,4 +1,4 @@
-wheel==0.47.0
+wheel==0.48.0
 
 mkdocs==1.6.1                                       # documentation framework
 mkdocs-git-revision-date-localized-plugin==1.5.3    # plugin "git-revision-date-localized"
