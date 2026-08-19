@@ -14115,19 +14115,22 @@ class parser
             json_sax_dom_callback_parser<BasicJsonType, InputAdapterType> sdp(result, callback, allow_exceptions, &m_lexer);
             sax_parse_internal(&sdp);
 
-            if (!strict)
+            if (strict)
+            {
+                // in strict mode, input must be completely read
+                if (get_token() != token_type::end_of_input)
+                {
+                    sdp.parse_error(m_lexer.get_position(),
+                                    m_lexer.get_token_string(),
+                                    parse_error::create(101, m_lexer.get_position(),
+                                                        exception_message(token_type::end_of_input, "value"), nullptr));
+                }
+            }
+            else
             {
                 // the caller keeps using the input: position it right after
                 // the value by leaving the character that terminated it
                 m_lexer.release_lookahead();
-            }
-            // in strict mode, input must be completely read
-            else if (get_token() != token_type::end_of_input)
-            {
-                sdp.parse_error(m_lexer.get_position(),
-                                m_lexer.get_token_string(),
-                                parse_error::create(101, m_lexer.get_position(),
-                                                    exception_message(token_type::end_of_input, "value"), nullptr));
             }
 
             // in case of an error, return a discarded value
@@ -14149,17 +14152,20 @@ class parser
             json_sax_dom_parser<BasicJsonType, InputAdapterType> sdp(result, allow_exceptions, &m_lexer);
             sax_parse_internal(&sdp);
 
-            if (!strict)
+            if (strict)
+            {
+                // in strict mode, input must be completely read
+                if (get_token() != token_type::end_of_input)
+                {
+                    sdp.parse_error(m_lexer.get_position(),
+                                    m_lexer.get_token_string(),
+                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
+                }
+            }
+            else
             {
                 // see above
                 m_lexer.release_lookahead();
-            }
-            // in strict mode, input must be completely read
-            else if (get_token() != token_type::end_of_input)
-            {
-                sdp.parse_error(m_lexer.get_position(),
-                                m_lexer.get_token_string(),
-                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
             }
 
             // in case of an error, return a discarded value
@@ -14192,18 +14198,24 @@ class parser
         (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
         const bool result = sax_parse_internal(sax);
 
-        if (result && !strict)
+        if (result)
         {
-            // the caller keeps using the input: position it right after the
-            // value by leaving the character that terminated it
-            m_lexer.release_lookahead();
-        }
-        // strict mode: next byte must be EOF
-        else if (result && strict && (get_token() != token_type::end_of_input))
-        {
-            return sax->parse_error(m_lexer.get_position(),
-                                    m_lexer.get_token_string(),
-                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
+            if (strict)
+            {
+                // strict mode: next byte must be EOF
+                if (get_token() != token_type::end_of_input)
+                {
+                    return sax->parse_error(m_lexer.get_position(),
+                                            m_lexer.get_token_string(),
+                                            parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
+                }
+            }
+            else
+            {
+                // the caller keeps using the input: position it right after
+                // the value by leaving the character that terminated it
+                m_lexer.release_lookahead();
+            }
         }
 
         return result;
