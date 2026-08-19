@@ -187,6 +187,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template<typename InputType>
     using binary_reader = ::nlohmann::detail::binary_reader<basic_json, InputType>;
     template<typename CharType> using binary_writer = ::nlohmann::detail::binary_writer<basic_json, CharType>;
+    // binary_writer over a concrete (non-virtual) sink appending into a std::vector,
+    // used by the vector-returning to_* overloads
+    template<typename CharType> using vector_binary_writer =
+        ::nlohmann::detail::binary_writer<basic_json, CharType, ::nlohmann::detail::output_vector_sink<CharType>>;
+    template<typename CharType> static vector_binary_writer<CharType> vector_writer(std::vector<CharType>& v)
+    {
+        return vector_binary_writer<CharType>(::nlohmann::detail::output_vector_sink<CharType>(v));
+    }
 
   JSON_PRIVATE_UNLESS_TESTED:
     using serializer = ::nlohmann::detail::serializer<basic_json>;
@@ -4341,8 +4349,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        detail::binary_writer<basic_json, std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
-            detail::output_vector_sink<std::uint8_t>(result)).write_cbor(j);
+        vector_writer(result).write_cbor(j);
         return result;
     }
 
@@ -4366,8 +4373,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        detail::binary_writer<basic_json, std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
-            detail::output_vector_sink<std::uint8_t>(result)).write_msgpack(j);
+        vector_writer(result).write_msgpack(j);
         return result;
     }
 
@@ -4393,8 +4399,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        detail::binary_writer<basic_json, std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
-            detail::output_vector_sink<std::uint8_t>(result)).write_ubjson(j, use_size, use_type);
+        vector_writer(result).write_ubjson(j, use_size, use_type);
         return result;
     }
 
@@ -4423,8 +4428,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        detail::binary_writer<basic_json, std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
-            detail::output_vector_sink<std::uint8_t>(result)).write_ubjson(j, use_size, use_type, true, true, version);
+        vector_writer(result).write_ubjson(j, use_size, use_type, true, true, version);
         return result;
     }
 
@@ -4452,8 +4456,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        detail::binary_writer<basic_json, std::uint8_t, detail::output_vector_sink<std::uint8_t>>(
-            detail::output_vector_sink<std::uint8_t>(result)).write_bson(j);
+        vector_writer(result).write_bson(j);
         return result;
     }
 
