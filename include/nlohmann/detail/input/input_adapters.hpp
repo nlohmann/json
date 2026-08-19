@@ -160,6 +160,18 @@ class input_stream_adapter
 template<typename IteratorType, typename SentinelType = IteratorType>
 class iterator_input_adapter
 {
+    // Whether the number of elements between two positions can be computed in
+    // O(1): either the iterator and the sentinel have the same type (plain
+    // std::distance) or, in C++20, the sentinel is a sized sentinel for the
+    // iterator (std::ranges::distance), e.g. std::default_sentinel_t paired
+    // with std::counted_iterator.
+    static constexpr bool sentinel_is_sized =
+#if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
+        std::is_same<IteratorType, SentinelType>::value || std::sized_sentinel_for<SentinelType, IteratorType>;
+#else
+        std::is_same<IteratorType, SentinelType>::value;
+#endif
+
   public:
     using char_type = typename std::iterator_traits<IteratorType>::value_type;
 
@@ -171,7 +183,7 @@ class iterator_input_adapter
     // in wide_string_input_adapter, which does not expose this).
     static constexpr bool supports_seek =
         std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value
-        && std::is_same<IteratorType, SentinelType>::value
+        && sentinel_is_sized
         && sizeof(char_type) == 1;
 
     iterator_input_adapter(IteratorType first, SentinelType last)
@@ -219,25 +231,34 @@ class iterator_input_adapter
   private:
     // whether IteratorType refers to a contiguous range and therefore supports
     // a std::memcpy fast path (pointers always do; in C++20 we can also detect
-    // library iterators such as those of std::vector and std::string).
-    // Computing the available element count needs either same-type iterators
-    // (plain std::distance) or, in C++20, a sized sentinel (std::ranges::distance),
-    // e.g. std::counted_iterator paired with std::default_sentinel_t.
-    static constexpr bool iterator_is_contiguous =
+    // library iterators such as those of std::vector and std::string). The
+    // available element count must also be computable in O(1), hence
+    // sentinel_is_sized.
+    static constexpr bool iterator_is_contiguous = sentinel_is_sized &&
 #if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
-        (std::is_same<IteratorType, SentinelType>::value || std::sized_sentinel_for<SentinelType, IteratorType>)
-        && (std::contiguous_iterator<IteratorType> || std::is_pointer<IteratorType>::value);
+        (std::contiguous_iterator<IteratorType> || std::is_pointer<IteratorType>::value);
 #else
-        std::is_same<IteratorType, SentinelType>::value && std::is_pointer<IteratorType>::value;
+        std::is_pointer<IteratorType>::value;
 #endif
+
+    // number of unread elements in [current, end)
+    std::size_t remaining_count() const
+    {
+#if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
+        // std::ranges::distance also supports sized sentinels of a different
+        // type (e.g. std::counted_iterator + std::default_sentinel_t)
+        return static_cast<std::size_t>(std::ranges::distance(current, end));
+#else
+        return static_cast<std::size_t>(std::distance(current, end));
+#endif
+    }
 
   public:
     // Whether the remaining input is a single contiguous block of 1-byte
     // elements that the lexer can inspect directly (used for the SWAR string
-    // fast path). Restricted to same-type iterator/sentinel pairs so that plain
-    // std::distance/std::advance are well-defined in all standards.
+    // fast path).
     static constexpr bool supports_bulk_scan =
-        iterator_is_contiguous && std::is_same<IteratorType, SentinelType>::value && sizeof(char_type) == 1;
+        iterator_is_contiguous && sizeof(char_type) == 1;
 
     // Pointer to the next unread element; only valid when bulk_remaining() > 0.
     const char_type* bulk_data() const
@@ -248,7 +269,7 @@ class iterator_input_adapter
     // Number of unread elements available as one contiguous block.
     std::size_t bulk_remaining() const
     {
-        return static_cast<std::size_t>(std::distance(current, end));
+        return remaining_count();
     }
 
     // Consume @a n elements previously inspected via bulk_data().
@@ -263,13 +284,7 @@ class iterator_input_adapter
     std::size_t get_elements_impl(T* dest, std::size_t count, std::true_type /*contiguous*/)
     {
         const std::size_t wanted = count * sizeof(T);
-#if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
-        // std::ranges::distance also supports sized sentinels of a different
-        // type (e.g. std::counted_iterator + std::default_sentinel_t)
-        const std::size_t available = static_cast<std::size_t>(std::ranges::distance(current, end)) * sizeof(char_type);
-#else
-        const std::size_t available = static_cast<std::size_t>(std::distance(current, end)) * sizeof(char_type);
-#endif
+        const std::size_t available = remaining_count() * sizeof(char_type);
         const std::size_t copied = (std::min)(wanted, available);
         if (JSON_HEDLEY_LIKELY(copied != 0))
         {

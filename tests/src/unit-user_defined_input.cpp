@@ -228,6 +228,58 @@ TEST_CASE("Parse with std::counted_iterator and std::default_sentinel_t")
     const std::counted_iterator<iterator_type> first2(json_str.begin(), len);
     CHECK(json::accept(first2, std::default_sentinel));
 }
+
+TEST_CASE("std::counted_iterator reaches the contiguous fast paths")
+{
+    // A sized sentinel makes the remaining element count computable in O(1), so
+    // std::counted_iterator over a contiguous iterator must reach the same bulk
+    // string/number scanners as a plain pointer - not just the byte-at-a-time
+    // fallback (see #5268 for the equivalent memcpy fast path).
+    using adapter_type = nlohmann::detail::iterator_input_adapter<std::counted_iterator<const char*>, std::default_sentinel_t>;
+    CHECK(adapter_type::supports_bulk_scan);
+    CHECK(adapter_type::supports_seek);
+
+    // exercise every fast path: long ASCII run, multibyte UTF-8, escapes, and
+    // integer/floating-point numbers
+    const std::string json_str =
+        R"({"ascii":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",)"
+        "\"utf8\":\"\xe4\xb8\xad\xe6\x96\x87\xf0\x9f\x98\x80\xc3\xa9\","
+        R"("escaped":"aéb\n\\","ints":[0,-1,18446744073709551615,-9223372036854775808],)"
+        R"("floats":[1.5,-2.25e3,0.30000000000000004]})";
+    const auto len = static_cast<std::iter_difference_t<const char*>>(json_str.size());
+
+    const std::counted_iterator<const char*> first(json_str.data(), len);
+    const json j = json::parse(first, std::default_sentinel);
+
+    // parsing through the pointer adapter must give exactly the same result
+    CHECK(j == json::parse(json_str));
+
+    // and errors must still be reported identically
+    const std::string bad = "[01\n]";
+    const std::counted_iterator<const char*> bad_first(bad.data(), static_cast<std::iter_difference_t<const char*>>(bad.size()));
+    std::string counted_what;
+    std::string string_what;
+    try
+    {
+        const json j = json::parse(bad_first, std::default_sentinel);
+        static_cast<void>(j);
+    }
+    catch (const json::parse_error& e)
+    {
+        counted_what = e.what();
+    }
+    try
+    {
+        const json j = json::parse(bad);
+        static_cast<void>(j);
+    }
+    catch (const json::parse_error& e)
+    {
+        string_what = e.what();
+    }
+    CHECK_FALSE(counted_what.empty());
+    CHECK(counted_what == string_what);
+}
 #endif
 
 } // namespace
