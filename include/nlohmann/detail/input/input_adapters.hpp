@@ -155,8 +155,9 @@ class input_stream_adapter
 
 // General-purpose iterator-based adapter. It might not be as fast as
 // theoretically possible for some containers, but it is extremely versatile.
-// SentinelType defaults to IteratorType for backward compatibility, but may
-// be a different type (e.g., a C++20 sentinel or counted_iterator).
+// SentinelType defaults to IteratorType for backward compatibility, but may be
+// a different type, e.g. a C++20 sentinel such as std::default_sentinel_t when
+// IteratorType is a std::counted_iterator.
 template<typename IteratorType, typename SentinelType = IteratorType>
 class iterator_input_adapter
 {
