@@ -11395,7 +11395,13 @@ class binary_reader
             case 0xBF: // map (indefinite length)
                 return get_cbor_object(detail::unknown_size(), tag_handler);
 
-            case 0xC6: // tagged item
+            case 0xC0: // tagged item
+            case 0xC1:
+            case 0xC2:
+            case 0xC3:
+            case 0xC4:
+            case 0xC5:
+            case 0xC6:
             case 0xC7:
             case 0xC8:
             case 0xC9:
@@ -11410,6 +11416,9 @@ class binary_reader
             case 0xD2:
             case 0xD3:
             case 0xD4:
+            case 0xD5:
+            case 0xD6:
+            case 0xD7:
             case 0xD8: // tagged item (1 byte follows)
             case 0xD9: // tagged item (2 bytes follow)
             case 0xDA: // tagged item (4 bytes follow)

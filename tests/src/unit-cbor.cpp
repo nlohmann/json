@@ -2565,11 +2565,16 @@ TEST_CASE("Tagged values")
     const json j = "s";
     auto v = json::to_cbor(j);
 
-    SECTION("0xC6..0xD4")
+    const json j_bin_payload = json::binary(std::vector<std::uint8_t> {0x01, 0x02, 0x03});
+    auto v_bin_payload = json::to_cbor(j_bin_payload);
+
+    SECTION("0xC0..0xD7")
     {
         for (const auto b : std::vector<std::uint8_t>
     {
-        0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4
+        0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5,
+        0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4,
+        0xD5, 0xD6, 0xD7
     })
         {
             CAPTURE(b);
@@ -2589,6 +2594,12 @@ TEST_CASE("Tagged values")
 
             auto j_tagged_stored = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::store);
             CHECK(j_tagged_stored == j);
+
+            auto v_binary_tagged = v_bin_payload;
+            v_binary_tagged.insert(v_binary_tagged.begin(), b);
+            auto j_binary_tagged_stored = json::from_cbor(v_binary_tagged, true, true, json::cbor_tag_handler_t::store);
+            CHECK(j_binary_tagged_stored == j_bin_payload);
+            CHECK(!j_binary_tagged_stored.get_binary().has_subtype());
         }
     }
 
