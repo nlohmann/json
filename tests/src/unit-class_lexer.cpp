@@ -416,3 +416,169 @@ TEST_CASE("lexer number fast path")
               "syntax error while parsing array - unexpected number literal; expected ']'");
     }
 }
+
+TEST_CASE("lexer string fast path")
+{
+    // Build a byte string from explicit values: a hex escape in a string
+    // literal swallows every following hex digit, which makes sequences like
+    // "\xC3\xA9b" mean something other than they look like.
+    const auto bytes = [](std::initializer_list<int> values)
+    {
+        std::string result;
+        for (const int value : values)
+        {
+            result.push_back(static_cast<char>(value));
+        }
+        return result;
+    };
+
+    // the full outcome of parsing @a doc: the parsed value, or the exact error
+    // message, so a mismatch in either is caught
+    const auto outcome = [](const std::string & doc, bool streaming)
+    {
+        try
+        {
+            if (streaming)
+            {
+                std::stringstream ss(doc);
+                const json j = json::parse(ss);
+                return j.dump();
+            }
+            const json j = json::parse(doc);
+            return j.dump();
+        }
+        // not just parse_error: if a bulk scanner ever let ill-formed UTF-8
+        // through, dump() would throw type_error.316, and that has to surface
+        // as a reported mismatch rather than as an uncaught exception
+        catch (const json::exception& e)
+        {
+            return std::string(e.what());
+        }
+    };
+
+    SECTION("exhaustive contiguous vs streaming parity")
+    {
+        // ordinary ASCII, both specials, a control byte, characters that make
+        // the preceding backslash a valid escape, a UTF-8 lead byte of each
+        // length, a continuation byte, and a byte that is never valid
+        const std::vector<std::string> alphabet =
+        {
+            "a", "\"", "\\", "n", "u", "0", bytes({0x01}),
+            bytes({0xC3}), bytes({0xA9}), bytes({0xE4}), bytes({0xF0}),
+            bytes({0x80}), bytes({0xFF})
+        };
+
+        std::vector<std::string> mismatches;
+        std::vector<std::string> tokens{""};
+        for (std::size_t length = 1; length <= 3; ++length)
+        {
+            std::vector<std::string> next;
+            next.reserve(tokens.size() * alphabet.size());
+            for (const auto& prefix : tokens)
+            {
+                for (const auto& symbol : alphabet)
+                {
+                    next.push_back(prefix + symbol);
+                }
+            }
+            tokens = next;
+
+            for (const auto& token : tokens)
+            {
+                // once at the start of the string, once past the first 8-byte
+                // SWAR word so the bulk scanner has a run behind it
+                for (const std::size_t offset : {static_cast<std::size_t>(0), static_cast<std::size_t>(9)})
+                {
+                    const std::string doc = "[\"" + std::string(offset, 'a') + token + "\"]";
+                    if (outcome(doc, false) != outcome(doc, true))
+                    {
+                        mismatches.push_back(doc);
+                    }
+                }
+            }
+        }
+
+        // 13 + 169 + 2197 tokens, each at two offsets
+        CHECK(tokens.size() == 2197);
+        CAPTURE(mismatches);
+        CHECK(mismatches.empty());
+    }
+
+    SECTION("special bytes at every offset of the SWAR stride")
+    {
+        // The bulk scanner consumes 8 bytes at a time and then a tail; place
+        // every kind of byte that ends a run at each offset across two words,
+        // so multibyte sequences also straddle the word boundary.
+        const std::vector<std::string> specials =
+        {
+            "\"", "\\", bytes({0x01}), bytes({0x1F}), bytes({0x7F}),
+            bytes({0xC3, 0xA9}), bytes({0xE4, 0xB8, 0xAD}), bytes({0xF0, 0x9F, 0x98, 0x80}),
+            bytes({0xFF}), bytes({0xC3}), bytes({0xE4, 0xB8})
+        };
+
+        std::vector<std::string> mismatches;
+        for (std::size_t offset = 0; offset <= 17; ++offset)
+        {
+            for (const auto& special : specials)
+            {
+                const std::string doc = "[\"" + std::string(offset, 'a') + special + "\"]";
+                if (outcome(doc, false) != outcome(doc, true))
+                {
+                    mismatches.push_back(doc);
+                }
+            }
+        }
+        CAPTURE(mismatches);
+        CHECK(mismatches.empty());
+    }
+
+    SECTION("UTF-8 ranges are accepted and rejected as documented")
+    {
+        // The bulk validator must accept exactly what the byte-at-a-time
+        // scanner accepts, so pin the boundaries of every range it recognizes.
+        struct utf8_case
+        {
+            std::string sequence;
+            bool valid;
+            const char* description;
+        };
+        const std::vector<utf8_case> cases =
+        {
+            {bytes({0xC2, 0x80}), true, "U+0080, shortest two-byte"},
+            {bytes({0xDF, 0xBF}), true, "U+07FF, longest two-byte"},
+            {bytes({0xC1, 0xBF}), false, "overlong two-byte"},
+            {bytes({0xC2, 0x7F}), false, "two-byte with bad continuation"},
+            {bytes({0xE0, 0xA0, 0x80}), true, "U+0800, shortest three-byte"},
+            {bytes({0xE0, 0x9F, 0xBF}), false, "overlong three-byte"},
+            {bytes({0xED, 0x9F, 0xBF}), true, "U+D7FF, just below the surrogates"},
+            {bytes({0xED, 0xA0, 0x80}), false, "surrogate U+D800"},
+            {bytes({0xED, 0xBF, 0xBF}), false, "surrogate U+DFFF"},
+            {bytes({0xEE, 0x80, 0x80}), true, "U+E000, just above the surrogates"},
+            {bytes({0xEF, 0xBF, 0xBF}), true, "U+FFFF"},
+            {bytes({0xF0, 0x90, 0x80, 0x80}), true, "U+10000, shortest four-byte"},
+            {bytes({0xF0, 0x8F, 0xBF, 0xBF}), false, "overlong four-byte"},
+            {bytes({0xF4, 0x8F, 0xBF, 0xBF}), true, "U+10FFFF, highest code point"},
+            {bytes({0xF4, 0x90, 0x80, 0x80}), false, "above U+10FFFF"},
+            {bytes({0xF5, 0x80, 0x80, 0x80}), false, "lead byte out of range"},
+            {bytes({0x80}), false, "bare continuation byte"},
+            {bytes({0xFF}), false, "byte that never appears in UTF-8"},
+            {bytes({0xC3}), false, "truncated two-byte"},
+            {bytes({0xE4, 0xB8}), false, "truncated three-byte"},
+            {bytes({0xF0, 0x9F, 0x98}), false, "truncated four-byte"}
+        };
+
+        for (const auto& test_case : cases)
+        {
+            CAPTURE(test_case.description);
+            // at the start of the string and past the first SWAR word, so the
+            // sequence is seen by the bulk scanner and by its tail
+            for (const std::size_t offset : {static_cast<std::size_t>(0), static_cast<std::size_t>(9)})
+            {
+                CAPTURE(offset);
+                const std::string doc = "[\"" + std::string(offset, 'a') + test_case.sequence + "\"]";
+                CHECK(json::accept(doc) == test_case.valid);
+                CHECK(outcome(doc, false) == outcome(doc, true));
+            }
+        }
+    }
+}
