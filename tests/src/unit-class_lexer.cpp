@@ -300,6 +300,67 @@ TEST_CASE("lexer number fast path")
         }
     }
 
+    SECTION("exhaustive grammar parity with the streaming path")
+    {
+        // The JSON number grammar is encoded twice: once as the scan_number()
+        // state machine and once as the contiguous fast path. Enumerate every
+        // short string over the number alphabet and require the two encodings to
+        // agree exactly - on acceptance, on the reported error, and on the parsed
+        // value - so they cannot drift apart.
+        const std::string alphabet = "01.eE+-";
+
+        // full outcome of parsing @a doc, so a mismatch in type, value, or error
+        // message is caught, not just a mismatch in acceptance
+        const auto outcome = [](const std::string & doc, bool streaming)
+        {
+            try
+            {
+                if (streaming)
+                {
+                    std::stringstream ss(doc);
+                    const json j = json::parse(ss);
+                    return std::string(j[0].type_name()) + '|' + j.dump();
+                }
+                const json j = json::parse(doc);
+                return std::string(j[0].type_name()) + '|' + j.dump();
+            }
+            catch (const json::parse_error& e)
+            {
+                return std::string(e.what());
+            }
+        };
+
+        std::vector<std::string> mismatches;
+        std::vector<std::string> tokens{""};
+        for (std::size_t length = 1; length <= 4; ++length)
+        {
+            std::vector<std::string> next;
+            next.reserve(tokens.size() * alphabet.size());
+            for (const auto& prefix : tokens)
+            {
+                for (const char c : alphabet)
+                {
+                    next.push_back(prefix + c);
+                }
+            }
+            tokens = next;
+
+            for (const auto& token : tokens)
+            {
+                const std::string doc = "[" + token + "]";
+                if (outcome(doc, false) != outcome(doc, true))
+                {
+                    mismatches.push_back(doc);
+                }
+            }
+        }
+
+        // 7 + 49 + 343 + 2401 tokens
+        CHECK(tokens.size() == 2401);
+        CAPTURE(mismatches);
+        CHECK(mismatches.empty());
+    }
+
     SECTION("error positions match the streaming path")
     {
         // Rejecting identically is not enough: the fast path must also report the
