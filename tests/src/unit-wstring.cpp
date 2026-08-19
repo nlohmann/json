@@ -125,6 +125,16 @@ TEST_CASE("wide strings")
             std::u32string const w = U"\"\x110000";
             json _;
             CHECK_THROWS_AS(_ = json::parse(w), json::parse_error&);
+
+            // a code unit above U+10FFFF must not be narrowed onto the EOF
+            // sentinel: 0xFFFFFFFF would otherwise end the document silently and
+            // let everything following it pass the strict end-of-input check
+            std::u32string const trailing{U'[', U'1', U']', static_cast<char32_t>(0xFFFFFFFF), U'x'};
+            CHECK_THROWS_WITH_AS(_ = json::parse(trailing), "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: '1]\xFF'; expected end of input", json::parse_error&);
+            CHECK(!json::accept(trailing));
+
+            // the same unit inside a string is reported as an ill-formed byte
+            CHECK_THROWS_WITH_AS(_ = json::parse(std::u32string{U'"', static_cast<char32_t>(0xFFFFFFFF), U'"'}), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '\"\xFF'", json::parse_error&);
         }
     }
 }

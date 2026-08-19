@@ -1,5 +1,6 @@
 # Community
 
+- [Ecosystem](ecosystem.md) - third-party projects built on top of this library
 - [Code of Conduct](code_of_conduct.md) - the rules and norms of this project
 - [Contribution Guidelines](contribution_guidelines.md) - guidelines how to contribute to this project
 - [Governance](governance.md) - the governance model of this project

@@ -42,6 +42,7 @@
   - [Specializing enum conversion](#specializing-enum-conversion)
   - [Binary formats (BSON, CBOR, MessagePack, UBJSON, and BJData)](#binary-formats-bson-cbor-messagepack-ubjson-and-bjdata)
 - [Customers](#customers)
+- [Ecosystem](#ecosystem)
 - [Supported compilers](#supported-compilers)
 - [Integration](#integration)
   - [CMake](#cmake)
@@ -1185,6 +1186,11 @@ auto cbor = json::to_msgpack(j); // 0xD5 (fixext2), 0x10, 0xCA, 0xFE
 The library is used in multiple projects, applications, operating systems, etc. The list below is not exhaustive, but the result of an internet search. If you know further customers of the library, please let me know, see [contact](#contact).
 
 [![logos of customers using the library](docs/mkdocs/docs/images/customers.png)](https://json.nlohmann.me/home/customers/)
+
+## Ecosystem
+
+Beyond projects that use the library, there are third-party projects that build on top of it - schema validators,
+language bindings, format converters, and the like. See the curated [Ecosystem](https://json.nlohmann.me/community/ecosystem/) page.
 
 ## Supported compilers
 

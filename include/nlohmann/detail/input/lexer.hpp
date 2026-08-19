@@ -1381,6 +1381,11 @@ scan_number_done:
         token_buffer.clear();
         decimal_point_position = std::string::npos;
 
+#if JSON_DIAGNOSTIC_POSITIONS
+        // the first character of the token has already been read, hence the -1
+        token_start_position = position.chars_read_total - 1;
+#endif
+
         note_token_start(std::integral_constant<bool, lazy_token_string> {});
     }
 
@@ -1581,6 +1586,15 @@ scan_number_done:
         release_lookahead_impl(std::integral_constant<bool, can_release_lookahead> {});
     }
 
+#if JSON_DIAGNOSTIC_POSITIONS
+    /// return the offset of the first character of the last read token; unlike
+    /// the token's parsed value, this accounts for escape sequences
+    constexpr std::size_t get_token_start_position() const noexcept
+    {
+        return token_start_position;
+    }
+#endif
+
     /// seekable adapter: rebuild the last read token from the input on demand
     const std::vector<char_type>& collect_token_chars(std::vector<char_type>& out, std::true_type /*lazy*/) const
     {
@@ -1780,6 +1794,12 @@ scan_number_done:
     /// start offset of the current token within the input, used to reconstruct
     /// the last read token on error for seekable adapters (see collect_token_chars)
     std::size_t token_string_start = 0;
+
+#if JSON_DIAGNOSTIC_POSITIONS
+    /// start offset of the current token within the input, used to report
+    /// diagnostic positions (see reset())
+    std::size_t token_start_position = 0;
+#endif
 
     /// buffer for variable-length tokens (numbers, strings)
     string_t token_buffer {};

@@ -465,15 +465,6 @@ class binary_reader
     // CBOR //
     //////////
 
-    /*!
-    @param[in] get_char  whether a new character should be retrieved from the
-                         input (true) or whether the last read character should
-                         be considered instead (false)
-    @param[in] tag_handler how CBOR tags should be treated
-
-    @return whether a valid CBOR value was passed to the SAX parser
-    */
-
     template<typename NumberType>
     bool get_cbor_negative_integer()
     {
@@ -492,6 +483,14 @@ class binary_reader
         return sax->number_integer(static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(number));
     }
 
+    /*!
+    @param[in] get_char  whether a new character should be retrieved from the
+                         input (true) or whether the last read character should
+                         be considered instead (false)
+    @param[in] tag_handler how CBOR tags should be treated
+
+    @return whether a valid CBOR value was passed to the SAX parser
+    */
     bool parse_cbor_internal(const bool get_char,
                              const cbor_tag_handler_t tag_handler)
     {
@@ -774,7 +773,13 @@ class binary_reader
             case 0xBF: // map (indefinite length)
                 return get_cbor_object(detail::unknown_size(), tag_handler);
 
-            case 0xC6: // tagged item
+            case 0xC0: // tagged item
+            case 0xC1:
+            case 0xC2:
+            case 0xC3:
+            case 0xC4:
+            case 0xC5:
+            case 0xC6:
             case 0xC7:
             case 0xC8:
             case 0xC9:
@@ -789,6 +794,9 @@ class binary_reader
             case 0xD2:
             case 0xD3:
             case 0xD4:
+            case 0xD5:
+            case 0xD6:
+            case 0xD7:
             case 0xD8: // tagged item (1 byte follows)
             case 0xD9: // tagged item (2 bytes follow)
             case 0xDA: // tagged item (4 bytes follow)
@@ -1988,7 +1996,11 @@ class binary_reader
     {
         if (get_char)
         {
-            get();  // TODO(niels): may we ignore N here?
+            // no get_ignore_noop() here: the byte read next must be a string
+            // length type specification, and a no-op ('N') is not valid in
+            // that position. No-ops at positions where a value may appear are
+            // already consumed by the callers via get_ignore_noop().
+            get();
         }
 
         if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "value")))

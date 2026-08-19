@@ -1670,7 +1670,23 @@ class binary_writer
             {
                 return true;
             }
-            len *= static_cast<std::size_t>(el.template get<std::uint64_t>());
+
+            // a dimension that does not fit into std::size_t, or a product that
+            // overflows it, would wrap around and could match the size of
+            // _ArrayData_ by accident; the resulting header announces an
+            // element count that no reader can honor (the binary reader rejects
+            // it with out_of_range.408), so encode as a plain object instead
+            const auto dim = el.template get<std::uint64_t>();
+            if (!value_in_range_of<std::size_t>(dim))
+            {
+                return true;
+            }
+            const auto dim_size = static_cast<std::size_t>(dim);
+            if (dim_size != 0 && len > (std::numeric_limits<std::size_t>::max)() / dim_size)
+            {
+                return true;
+            }
+            len *= dim_size;
         }
 
         key = "_ArrayData_";

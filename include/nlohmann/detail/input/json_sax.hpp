@@ -370,8 +370,10 @@ class json_sax_dom_parser
 
                 case value_t::string:
                 {
-                    // include the length of the quotes, which is 2
-                    v.start_position = v.end_position - v.m_data.m_value.string->size() - 2;
+                    // escape sequences make the token longer than the value it
+                    // parses to, so the start position cannot be derived from
+                    // the value; use the offset the lexer recorded instead
+                    v.start_position = m_lexer_ref->get_token_start_position();
                     break;
                 }
 
@@ -769,8 +771,10 @@ class json_sax_dom_callback_parser
 
                 case value_t::string:
                 {
-                    // include the length of the quotes, which is 2
-                    v.start_position = v.end_position - v.m_data.m_value.string->size() - 2;
+                    // escape sequences make the token longer than the value it
+                    // parses to, so the start position cannot be derived from
+                    // the value; use the offset the lexer recorded instead
+                    v.start_position = m_lexer_ref->get_token_start_position();
                     break;
                 }
 
