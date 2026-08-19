@@ -350,9 +350,8 @@ TEST_CASE("lexer number fast path")
 
         // the column must be the one the offending token actually starts at,
         // not the 0 that an unget() across the newline used to leave behind
-        CHECK_THROWS_WITH_AS(json::parse("[01\n]"),
-                             "[json.exception.parse_error.101] parse error at line 1, column 3: "
-                             "syntax error while parsing array - unexpected number literal; expected ']'",
-                             json::parse_error&);
+        CHECK(contiguous_error("[01\n]") ==
+              "[json.exception.parse_error.101] parse error at line 1, column 3: "
+              "syntax error while parsing array - unexpected number literal; expected ']'");
     }
 }
