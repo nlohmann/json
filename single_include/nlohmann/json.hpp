@@ -22568,15 +22568,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         compare_depth_guard& operator=(compare_depth_guard&&) = delete;
     };
 
-    /// @brief whether a comparison must stop descending and finish iteratively
-    static bool compare_descent_exhausted() noexcept
+    /*!
+    @brief whether a comparison must stop descending and finish iteratively
+
+    @a may_descend says whether the operator descends at all; it is constant at
+    every call site, and is passed rather than tested by the caller so that the
+    test does not become a constant condition there, which MSVC reports (C4127).
+    */
+    static bool compare_descent_exhausted(bool may_descend) noexcept
     {
 #ifdef JSON_NO_THREAD_LOCAL
         // without a counter of its own per thread, the descent cannot be
         // bounded without racing another one, so none is made
+        static_cast<void>(may_descend);
         return true;
 #else
-        return compare_depth() >= compare_depth_limit();
+        return !may_descend || compare_depth() >= compare_depth_limit();
 #endif
     }
 
@@ -25621,7 +25628,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         {                                                                                                \
             case value_t::array:                                                                         \
             {                                                                                            \
-                if (JSON_HEDLEY_UNLIKELY(!(may_descend) || compare_descent_exhausted()))                 \
+                if (JSON_HEDLEY_UNLIKELY(compare_descent_exhausted(may_descend)))                        \
                 {                                                                                        \
                     return (deep_result);                                                                \
                 }                                                                                        \
@@ -25631,7 +25638,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             \
             case value_t::object:                                                                        \
             {                                                                                            \
-                if (JSON_HEDLEY_UNLIKELY(!(may_descend) || compare_descent_exhausted()))                 \
+                if (JSON_HEDLEY_UNLIKELY(compare_descent_exhausted(may_descend)))                        \
                 {                                                                                        \
                     return (deep_result);                                                                \
                 }                                                                                        \
