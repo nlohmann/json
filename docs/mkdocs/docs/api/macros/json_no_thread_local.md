@@ -26,6 +26,9 @@ By default, `#!cpp JSON_NO_THREAD_LOCAL` is not defined.
 #undef JSON_NO_THREAD_LOCAL
 ```
 
+The library defines it by itself for Clang targeting MinGW, which does not survive the `#!cpp thread_local` storage:
+copying a value segfaults there, with both old and current Clang versions, while GCC targeting MinGW is unaffected.
+
 ## Examples
 
 ??? example
