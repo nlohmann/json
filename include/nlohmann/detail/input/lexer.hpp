@@ -1350,15 +1350,6 @@ scan_number_done:
     }
 
     /*!
-    @brief convert the number text in token_buffer to its value and token type
-
-    The digit sequence in token_buffer has already been validated (by the
-    scan_number() state machine or by the contiguous fast path) and holds the
-    locale decimal point in place of '.'. Integers are parsed first and fall
-    back to floating point on overflow. This is shared so both scanners produce
-    identical results.
-    */
-    /*!
     @brief convert an already-validated integer token to its value
 
     The digit sequence in [first, last) has been validated by the caller, so a
@@ -1389,6 +1380,15 @@ scan_number_done:
         return token_type::uninitialized;
     }
 
+    /*!
+    @brief convert the number text in token_buffer to its value and token type
+
+    The digit sequence in token_buffer has already been validated (by the
+    scan_number() state machine or by the contiguous fast path) and holds the
+    locale decimal point in place of '.'. Integers are parsed first and fall
+    back to floating point on overflow. This is shared so both scanners produce
+    identical results.
+    */
     token_type convert_number(token_type number_type)
     {
         const char* const num_begin = token_buffer.data();
