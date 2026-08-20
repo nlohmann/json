@@ -157,6 +157,54 @@ TEST_CASE("tests on deeply nested JSONs")
             CHECK(deep_depth == depth);
         }
 
+        SECTION("comparing")
+        {
+            // Comparing used to descend once per level, and an ordered
+            // comparison used to compare every pair of elements twice, once in
+            // each direction, which took exponentially long in the nesting
+            // depth. Both are gone: these finish in milliseconds, where the
+            // second used to take longer than anyone would wait even for a
+            // value nested only a few dozen levels deep.
+            const std::string text = std::string(depth, '[') + '0' + std::string(depth, ']');
+            const json j = json::parse(text);
+            const json same = json::parse(text);
+            const json larger = json::parse(std::string(depth, '[') + '1' + std::string(depth, ']'));
+
+            CHECK(j == same);
+            CHECK_FALSE(j == larger);
+            CHECK(j != larger);
+
+            CHECK(j < larger);
+            CHECK_FALSE(larger < j);
+            CHECK(larger > j);
+            CHECK(j <= same);
+            CHECK(j >= same);
+
+            // a value that ends earlier is the smaller one
+            const json shorter = json::parse(std::string(depth - 1, '[') + '0' + std::string(depth - 1, ']'));
+            CHECK_FALSE(j == shorter);
+        }
+
+        SECTION("comparing objects")
+        {
+            std::string text;
+            text.reserve(6 * depth + 1);
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                text += "{\"a\":";
+            }
+            text += '1';
+            text.append(depth, '}');
+
+            const json j = json::parse(text);
+            const json same = json::parse(text);
+
+            CHECK(j == same);
+            CHECK_FALSE(j != same);
+            CHECK(j <= same);
+            CHECK(j >= same);
+        }
+
         SECTION("the copy is independent of the original")
         {
             const json j = json::parse(std::string(depth, '[') + '0' + std::string(depth, ']'));
