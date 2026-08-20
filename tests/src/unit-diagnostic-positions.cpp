@@ -112,15 +112,26 @@ TEST_CASE("Better diagnostics with positions")
             }
         };
 
-        const bool shapes[] = {false, true};
-        for (const bool objects : shapes)
+        const auto check_arrays = [&check_copy](std::size_t depth)
         {
-            check_copy(1, objects);
-            check_copy(127, objects);
-            check_copy(128, objects);
-            check_copy(129, objects);
-            check_copy(300, objects);
-        }
+            check_copy(depth, false);
+        };
+        const auto check_objects = [&check_copy](std::size_t depth)
+        {
+            check_copy(depth, true);
+        };
+
+        check_arrays(1);
+        check_arrays(127);
+        check_arrays(128);
+        check_arrays(129);
+        check_arrays(300);
+
+        check_objects(1);
+        check_objects(127);
+        check_objects(128);
+        check_objects(129);
+        check_objects(300);
     }
 
     SECTION("JSON patch add to primitive parent (#4292)")
