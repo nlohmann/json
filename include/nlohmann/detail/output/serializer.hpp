@@ -1384,21 +1384,21 @@ class serializer
         }
 
         const auto byte = static_cast<unsigned>(value);
-        char* out = write_buffer.data() + write_buffer_pos;
+        std::size_t pos = write_buffer_pos;
 
         if (byte >= 100)
         {
-            *out++ = static_cast<char>('0' + (byte / 100));
-            *out++ = static_cast<char>('0' + ((byte / 10) % 10));
+            write_buffer[pos++] = static_cast<char>('0' + (byte / 100));
+            write_buffer[pos++] = static_cast<char>('0' + ((byte / 10) % 10));
         }
         else if (byte >= 10)
         {
-            *out++ = static_cast<char>('0' + (byte / 10));
+            write_buffer[pos++] = static_cast<char>('0' + (byte / 10));
         }
 
-        *out++ = static_cast<char>('0' + (byte % 10));
+        write_buffer[pos++] = static_cast<char>('0' + (byte % 10));
 
-        write_buffer_pos = static_cast<std::size_t>(out - write_buffer.data());
+        write_buffer_pos = pos;
     }
 
     /*!
