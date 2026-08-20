@@ -300,6 +300,8 @@ TEST_CASE("lexer number fast path")
         }
     }
 
+#if !defined(JSON_NOEXCEPTION)
+    // these sections parse invalid input, which aborts when exceptions are off
     SECTION("exhaustive grammar parity with the streaming path")
     {
         // The JSON number grammar is encoded twice: once as the scan_number()
@@ -415,6 +417,7 @@ TEST_CASE("lexer number fast path")
               "[json.exception.parse_error.101] parse error at line 1, column 3: "
               "syntax error while parsing array - unexpected number literal; expected ']'");
     }
+#endif
 }
 
 TEST_CASE("lexer string fast path")
@@ -432,8 +435,10 @@ TEST_CASE("lexer string fast path")
         return result;
     };
 
+#if !defined(JSON_NOEXCEPTION)
     // the full outcome of parsing @a doc: the parsed value, or the exact error
-    // message, so a mismatch in either is caught
+    // message, so a mismatch in either is caught. Only usable with exceptions
+    // on: parsing invalid input aborts when they are off.
     const auto outcome = [](const std::string & doc, bool streaming)
     {
         try
@@ -455,11 +460,13 @@ TEST_CASE("lexer string fast path")
             return std::string(e.what());
         }
     };
+#endif
 
     // once at the start of the string, once past the first 8-byte SWAR word, so
     // the bulk scanner sees each case with and without a run behind it
     const std::vector<std::size_t> offsets{0, 9};
 
+#if !defined(JSON_NOEXCEPTION)
     SECTION("exhaustive contiguous vs streaming parity")
     {
         // ordinary ASCII, both specials, a control byte, characters that make
@@ -533,7 +540,9 @@ TEST_CASE("lexer string fast path")
         CAPTURE(mismatches);
         CHECK(mismatches.empty());
     }
+#endif
 
+    // json::accept() never throws, so the ranges stay covered without exceptions
     SECTION("UTF-8 ranges are accepted and rejected as documented")
     {
         // The bulk validator must accept exactly what the byte-at-a-time
@@ -577,7 +586,9 @@ TEST_CASE("lexer string fast path")
                 CAPTURE(offset);
                 const std::string doc = "[\"" + std::string(offset, 'a') + test_case.sequence + "\"]";
                 CHECK(json::accept(doc) == test_case.valid);
+#if !defined(JSON_NOEXCEPTION)
                 CHECK(outcome(doc, false) == outcome(doc, true));
+#endif
             }
         }
     }

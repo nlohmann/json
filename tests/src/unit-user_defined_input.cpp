@@ -254,9 +254,11 @@ TEST_CASE("std::counted_iterator reaches the contiguous fast paths")
     // parsing through the pointer adapter must give exactly the same result
     CHECK(j == json::parse(json_str));
 
+#if !defined(JSON_NOEXCEPTION)
     // Diagnostics that quote the offending token are reconstructed from the
     // already-consumed input (supports_seek), a path a sized sentinel only
-    // reaches now; check a few that include the "last read" text.
+    // reaches now; check a few that include the "last read" text. Parsing
+    // invalid input aborts when exceptions are off, hence the guard.
     for (const char* doc :
             {"1\nx", "truX", "[tru]", "\"abc", "[\"\\ud834\"]", "[\"a\x01""b\"]",
              "[\"\xc3\x28\"]", "[1e]", "[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaX"
@@ -269,8 +271,8 @@ TEST_CASE("std::counted_iterator reaches the contiguous fast paths")
         std::string string_message;
         try
         {
-            const json j = json::parse(it, std::default_sentinel);
-            static_cast<void>(j);
+            const json counted_result = json::parse(it, std::default_sentinel);
+            static_cast<void>(counted_result);
         }
         catch (const json::parse_error& e)
         {
@@ -278,8 +280,8 @@ TEST_CASE("std::counted_iterator reaches the contiguous fast paths")
         }
         try
         {
-            const json j = json::parse(text);
-            static_cast<void>(j);
+            const json string_result = json::parse(text);
+            static_cast<void>(string_result);
         }
         catch (const json::parse_error& e)
         {
@@ -296,8 +298,8 @@ TEST_CASE("std::counted_iterator reaches the contiguous fast paths")
     std::string string_what;
     try
     {
-        const json j = json::parse(bad_first, std::default_sentinel);
-        static_cast<void>(j);
+        const json counted_result = json::parse(bad_first, std::default_sentinel);
+        static_cast<void>(counted_result);
     }
     catch (const json::parse_error& e)
     {
@@ -305,8 +307,8 @@ TEST_CASE("std::counted_iterator reaches the contiguous fast paths")
     }
     try
     {
-        const json j = json::parse(bad);
-        static_cast<void>(j);
+        const json string_result = json::parse(bad);
+        static_cast<void>(string_result);
     }
     catch (const json::parse_error& e)
     {
@@ -314,8 +316,12 @@ TEST_CASE("std::counted_iterator reaches the contiguous fast paths")
     }
     CHECK_FALSE(counted_what.empty());
     CHECK(counted_what == string_what);
+#endif
 }
 
+#if !defined(JSON_NOEXCEPTION)
+// several cases below are truncated on purpose, and parsing invalid input
+// aborts when exceptions are off
 TEST_CASE("std::counted_iterator bulk scanning stops at the counted end")
 {
     // The count, not the size of the underlying buffer, is the end of the
@@ -375,6 +381,7 @@ TEST_CASE("std::counted_iterator bulk scanning stops at the counted end")
         CHECK(via_counted(buffer, tc.count) == via_prefix(buffer, tc.count));
     }
 }
+#endif
 #endif
 
 } // namespace
