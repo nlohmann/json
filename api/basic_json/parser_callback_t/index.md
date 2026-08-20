@@ -150,13 +150,13 @@ int main()
     auto text = R"({"IDs": [116, 943], "Width": 800})";
 
     // discard the array when the parser reads its opening bracket
-    json j_array_start = json::parse(text, [](int /*depth*/, json::parse_event_t event, json & /*parsed*/)
+    json j_array_start = json::parse(text, [](int /*depth*/, json::parse_event_t event, json& /*parsed*/)
     {
         return event != json::parse_event_t::array_start;
     });
 
     // discard the same array when the parser reads its closing bracket
-    json j_array_end = json::parse(text, [](int /*depth*/, json::parse_event_t event, json & /*parsed*/)
+    json j_array_end = json::parse(text, [](int /*depth*/, json::parse_event_t event, json& /*parsed*/)
     {
         return event != json::parse_event_t::array_end;
     });
@@ -174,7 +174,7 @@ int main()
     });
 
     // discard the top-level object
-    json j_root = json::parse(text, [](int /*depth*/, json::parse_event_t event, json & /*parsed*/)
+    json j_root = json::parse(text, [](int /*depth*/, json::parse_event_t event, json& /*parsed*/)
     {
         return event != json::parse_event_t::object_end;
     });
