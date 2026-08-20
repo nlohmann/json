@@ -166,8 +166,15 @@ class iterator_input_adapter
     // std::distance) or, in C++20, the sentinel is a sized sentinel for the
     // iterator (std::ranges::distance), e.g. std::default_sentinel_t paired
     // with std::counted_iterator.
+    //
+    // JSON_HAS_RANGES gates the C++20 branch: on standard libraries with an
+    // incomplete <ranges> (libstdc++ < 11, see #4440) evaluating
+    // std::contiguous_iterator on a std::counted_iterator is a hard error
+    // instead of yielding false, and these traits are instantiated for every
+    // adapter. Such toolchains fall back to the pointer-only test and simply
+    // use the byte-at-a-time scanner.
     static constexpr bool sentinel_is_sized =
-#if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
+#if JSON_HAS_RANGES && defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
         std::is_same<IteratorType, SentinelType>::value || std::sized_sentinel_for<SentinelType, IteratorType>;
 #else
         std::is_same<IteratorType, SentinelType>::value;
@@ -236,7 +243,7 @@ class iterator_input_adapter
     // available element count must also be computable in O(1), hence
     // sentinel_is_sized.
     static constexpr bool iterator_is_contiguous = sentinel_is_sized &&
-#if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
+#if JSON_HAS_RANGES && defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
         (std::contiguous_iterator<IteratorType> || std::is_pointer<IteratorType>::value);
 #else
         std::is_pointer<IteratorType>::value;
@@ -245,7 +252,7 @@ class iterator_input_adapter
     // number of unread elements in [current, end)
     std::size_t remaining_count() const
     {
-#if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
+#if JSON_HAS_RANGES && defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
         // std::ranges::distance also supports sized sentinels of a different
         // type (e.g. std::counted_iterator + std::default_sentinel_t)
         return static_cast<std::size_t>(std::ranges::distance(current, end));

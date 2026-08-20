@@ -235,9 +235,14 @@ TEST_CASE("std::counted_iterator reaches the contiguous fast paths")
     // std::counted_iterator over a contiguous iterator must reach the same bulk
     // string/number scanners as a plain pointer - not just the byte-at-a-time
     // fallback (see #5268 for the equivalent memcpy fast path).
+#if JSON_HAS_RANGES
+    // JSON_HAS_RANGES is 0 on standard libraries with an incomplete <ranges>
+    // (libstdc++ < 11, libc++ < 16), where the adapter deliberately falls back
+    // to the byte-at-a-time scanner; everything below still has to work there.
     using adapter_type = nlohmann::detail::iterator_input_adapter<std::counted_iterator<const char*>, std::default_sentinel_t>;
     CHECK(adapter_type::supports_bulk_scan);
     CHECK(adapter_type::supports_seek);
+#endif
 
     // exercise every fast path: long ASCII run, multibyte UTF-8, escapes, and
     // integer/floating-point numbers
