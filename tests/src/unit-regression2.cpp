@@ -1240,3 +1240,5 @@ TEST_CASE("regression tests 2")
     }
 #endif
 }
+
+DOCTEST_CLANG_SUPPRESS_WARNING_POP

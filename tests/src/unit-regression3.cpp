@@ -32,6 +32,10 @@ using ordered_json = nlohmann::ordered_json;
 #include <string>
 #include <vector>
 
+// NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair
+DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
+
 TEST_CASE_TEMPLATE("issue #4798 - nlohmann::json::to_msgpack() encode float NaN as double", T, double, float) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
 {
     // With issue #4798, we encode NaN, infinity, and -infinity as float instead
