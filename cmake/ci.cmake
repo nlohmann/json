@@ -294,7 +294,7 @@ file(GLOB_RECURSE INDENT_FILES
         ${PROJECT_SOURCE_DIR}/tests/src/*.cpp
         ${PROJECT_SOURCE_DIR}/tests/src/*.hpp
         ${PROJECT_SOURCE_DIR}/tests/benchmarks/src/benchmarks.cpp
-    ${PROJECT_SOURCE_DIR}/docs/examples/*.cpp
+    ${PROJECT_SOURCE_DIR}/docs/mkdocs/docs/examples/*.cpp
 )
 
 set(include_dir ${PROJECT_SOURCE_DIR}/single_include/nlohmann)
