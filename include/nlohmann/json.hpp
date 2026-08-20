@@ -28,14 +28,14 @@
     #pragma GCC diagnostic ignored "-Wignored-attributes"
 #endif
 
-#include <algorithm> // all_of, find, for_each
+#include <algorithm> // all_of, find, for_each, none_of
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
 #include <functional> // hash, less
 #include <initializer_list> // initializer_list
 #ifndef JSON_NO_IO
     #include <iosfwd> // istream, ostream
 #endif  // JSON_NO_IO
-#include <iterator> // random_access_iterator_tag
+#include <iterator> // make_move_iterator, random_access_iterator_tag
 #include <memory> // unique_ptr
 #include <string> // string, stoi, to_string
 #include <utility> // declval, forward, move, pair, swap
@@ -821,6 +821,307 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return j;
     }
 
+#ifndef JSON_NO_THREAD_LOCAL
+    /// the number of levels the copy constructor descends into before it
+    /// finishes the value below without the call stack
+    static constexpr std::size_t copy_depth_limit()
+    {
+        return 128;
+    }
+
+    /// @brief how many levels the copy going on in this thread has descended into
+    static std::size_t& copy_depth() noexcept
+    {
+        static thread_local std::size_t depth = 0; // NOLINT(misc-use-internal-linkage)
+        return depth;
+    }
+#endif
+
+#ifndef JSON_NO_THREAD_LOCAL
+    /// @brief counts one level of @ref copy_structured for as long as it runs
+    class copy_depth_guard
+    {
+      public:
+        explicit copy_depth_guard(std::size_t& depth) noexcept
+            : m_depth(depth)
+        {
+            ++m_depth;
+        }
+
+        ~copy_depth_guard() noexcept
+        {
+            --m_depth;
+        }
+
+        copy_depth_guard(const copy_depth_guard&) = delete;
+        copy_depth_guard& operator=(const copy_depth_guard&) = delete;
+        copy_depth_guard(copy_depth_guard&&) = delete;
+        copy_depth_guard& operator=(copy_depth_guard&&) = delete;
+
+      private:
+        std::size_t& m_depth;
+    };
+#endif
+
+    /// an entry of the iterative deep copy's worklist: a structured value and
+    /// the value that is to become its copy
+    using copy_worklist_t = std::vector<std::pair<const basic_json*, basic_json*>>;
+
+    /// scratch space to build the key skeleton of an object copy in one go
+    using copy_scratch_t = std::vector<std::pair<typename object_t::key_type, basic_json>>;
+
+    /// @brief copy everything of @a src into @a dst but its type and value
+    static void copy_metadata(const basic_json& src, basic_json& dst)
+    {
+        // a custom base class is only required to be copy-constructible and
+        // move-assignable, so the copy has to go through a temporary
+        static_cast<json_base_class_t&>(dst) = json_base_class_t(static_cast<const json_base_class_t&>(src));
+
+#if JSON_DIAGNOSTIC_POSITIONS
+        dst.start_position = src.start_position;
+        dst.end_position = src.end_position;
+#else
+        static_cast<void>(src);
+        static_cast<void>(dst);
+#endif
+    }
+
+    /*!
+    @brief copy everything of @a src into the null value @a dst but the children
+
+    Objects and arrays are not copied here; they are appended to @a worklist to
+    be created later by @ref copy_iteratively. Until that happens, @a dst remains
+    a null value, so that a partially built copy can be destroyed at any point
+    without ever violating the class invariants.
+    */
+    static void copy_shallow(const basic_json& src, basic_json& dst, copy_worklist_t& worklist)
+    {
+        copy_metadata(src, dst);
+
+        switch (src.m_data.m_type)
+        {
+            case value_t::object:
+            case value_t::array:
+            {
+                // defer: dst stays a null value until its container exists
+                worklist.emplace_back(&src, &dst);
+                return;
+            }
+
+            case value_t::string:
+            {
+                dst.m_data.m_value = *src.m_data.m_value.string;
+                break;
+            }
+
+            case value_t::binary:
+            {
+                dst.m_data.m_value = *src.m_data.m_value.binary;
+                break;
+            }
+
+            case value_t::boolean:
+            {
+                dst.m_data.m_value = src.m_data.m_value.boolean;
+                break;
+            }
+
+            case value_t::number_integer:
+            {
+                dst.m_data.m_value = src.m_data.m_value.number_integer;
+                break;
+            }
+
+            case value_t::number_unsigned:
+            {
+                dst.m_data.m_value = src.m_data.m_value.number_unsigned;
+                break;
+            }
+
+            case value_t::number_float:
+            {
+                dst.m_data.m_value = src.m_data.m_value.number_float;
+                break;
+            }
+
+            case value_t::null:
+            case value_t::discarded:
+            default:
+                break;
+        }
+
+        // only now that the value exists may the type be set: had the creation
+        // of the value thrown, dst would have been left as a valid null value
+        dst.m_data.m_type = src.m_data.m_type;
+    }
+
+    /// @brief create the copy of the array @a src in @a dst
+    /// @note structured elements are appended to @a worklist instead
+    static void copy_array_level(const basic_json& src, basic_json& dst, copy_worklist_t& worklist)
+    {
+        const array_t& src_array = *src.m_data.m_value.array;
+
+        // create all elements up front: growing the array afterwards could
+        // invalidate the pointers that are handed to the worklist
+        dst.m_data.m_value.array = create<array_t>(src_array.size(), basic_json());
+
+        auto dst_it = dst.m_data.m_value.array->begin();
+        for (auto src_it = src_array.cbegin(); src_it != src_array.cend(); ++src_it, ++dst_it)
+        {
+            copy_shallow(*src_it, *dst_it, worklist);
+        }
+    }
+
+    /// @brief create the copy of the object @a src in @a dst
+    /// @note structured values are appended to @a worklist instead
+    static void copy_object_level(const basic_json& src, basic_json& dst,
+                                  copy_worklist_t& worklist, copy_scratch_t& scratch)
+    {
+        const object_t& src_object = *src.m_data.m_value.object;
+
+        // build the complete key skeleton and hand it to the object's range
+        // constructor: adding the keys one by one would be quadratic for object
+        // types that are backed by a vector, such as nlohmann::ordered_map
+        scratch.clear();
+        scratch.reserve(src_object.size());
+        for (const auto& element : src_object)
+        {
+            scratch.emplace_back(element.first, basic_json());
+        }
+
+        dst.m_data.m_value.object = create<object_t>(std::make_move_iterator(scratch.begin()),
+                                    std::make_move_iterator(scratch.end()));
+        scratch.clear();
+
+        // pair every value of the copy with its counterpart in the original;
+        // both are enumerated in the same order for every object type with a
+        // deterministic order, so the lookup is only needed for exotic ones
+        auto src_it = src_object.cbegin();
+        for (auto& element : *dst.m_data.m_value.object)
+        {
+            if (JSON_HEDLEY_LIKELY(src_it != src_object.cend() && src_it->first == element.first))
+            {
+                copy_shallow(src_it->second, element.second, worklist);
+                ++src_it;
+            }
+            else
+            {
+                const auto found = src_object.find(element.first);
+                JSON_ASSERT(found != src_object.cend());
+                copy_shallow(found->second, element.second, worklist);
+            }
+        }
+    }
+
+    /*!
+    @brief deep-copy the object or array @a src into this value without recursing
+
+    The values whose copy has not been created yet are kept on an explicit
+    worklist rather than on the call stack. This is only reached for values
+    nested deeper than @ref copy_depth_limit levels, which is why it copies
+    every container by hand instead of letting the container do it: the fast
+    ways of doing so would descend into the elements and defeat the purpose.
+    */
+    void copy_iteratively(const basic_json& src)
+    {
+        copy_worklist_t worklist;
+        copy_scratch_t scratch;
+
+        const basic_json* src_value = &src;
+        basic_json* dst_value = this;
+
+        for (;;)
+        {
+            if (src_value->m_data.m_type == value_t::array)
+            {
+                copy_array_level(*src_value, *dst_value, worklist);
+            }
+            else
+            {
+                copy_object_level(*src_value, *dst_value, worklist, scratch);
+            }
+
+            // the container is complete and will not be modified again
+            dst_value->set_parents();
+
+            if (worklist.empty())
+            {
+                break;
+            }
+
+            src_value = worklist.back().first;
+            dst_value = worklist.back().second;
+            worklist.pop_back();
+
+            // the value stops being a null value exactly here
+            dst_value->m_data.m_type = src_value->m_data.m_type;
+        }
+    }
+
+#ifndef JSON_NO_THREAD_LOCAL
+    /*!
+    @brief copy one level of the object or array @a src into this value
+
+    The container copies its own elements, which is the fastest way to fill it.
+    Every element that is structured itself comes back to @ref copy_structured.
+    */
+    void copy_level(const basic_json& src)
+    {
+        if (m_data.m_type == value_t::object)
+        {
+            m_data.m_value = *src.m_data.m_value.object;
+        }
+        else
+        {
+            m_data.m_value = *src.m_data.m_value.array;
+        }
+
+        set_parents();
+    }
+#endif
+
+    /*!
+    @brief deep-copy the object or array @a src into this value
+
+    Copying a container copies its elements, so a value nested deeply enough
+    used to exhaust the call stack. The descent is bounded here: the first
+    @ref copy_depth_limit levels are copied by the containers themselves, just
+    as they always were, and anything below that is copied without the call
+    stack by @ref copy_iteratively. Copying a value can therefore no longer
+    exhaust the stack, however deeply it is nested, just like destroying one
+    cannot since #1436.
+
+    Nothing has to be scanned or built by hand to reach that: a value that is
+    not nested deeper than the limit - all but a vanishing minority - is copied
+    exactly as it was before, and this whole detour costs it one counter.
+
+    @sa https://github.com/nlohmann/json/issues/5387
+    */
+    void copy_structured(const basic_json& src)
+    {
+#ifdef JSON_NO_THREAD_LOCAL
+        // without a counter of its own per thread, the descent cannot be
+        // bounded without racing another one, so none is made
+        copy_iteratively(src);
+#else
+        std::size_t& depth = copy_depth();
+
+        if (JSON_HEDLEY_UNLIKELY(depth >= copy_depth_limit()))
+        {
+            // Finish this value without descending any further. It is completed
+            // before this returns, so a copy made by a custom base class - or by
+            // anything else that runs while a copy is going on - is unaffected
+            // by the copy it is nested in.
+            copy_iteratively(src);
+            return;
+        }
+
+        const copy_depth_guard guard(depth);
+        copy_level(src);
+#endif
+    }
+
+
   public:
     //////////////////////////
     // JSON parser callback //
@@ -1203,14 +1504,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         switch (m_data.m_type)
         {
             case value_t::object:
-            {
-                m_data.m_value = *other.m_data.m_value.object;
-                break;
-            }
-
             case value_t::array:
             {
-                m_data.m_value = *other.m_data.m_value.array;
+                // copying the container directly would call this constructor
+                // again for every element, once per nesting level
+                copy_structured(other);
                 break;
             }
 

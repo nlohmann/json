@@ -22,6 +22,7 @@ header. See also the [macro overview page](../../features/macros.md).
 - [**JSON_HAS_STD_FORMAT**](json_has_std_format.md) - control `std::format`/`std::formatter` support
 - [**JSON_HAS_THREE_WAY_COMPARISON**](json_has_three_way_comparison.md) - control 3-way comparison support
 - [**JSON_NO_IO**](json_no_io.md) - switch off functions relying on certain C++ I/O headers
+- [**JSON_NO_THREAD_LOCAL**](json_no_thread_local.md) - switch off the use of `thread_local` storage
 - [**JSON_SKIP_UNSUPPORTED_COMPILER_CHECK**](json_skip_unsupported_compiler_check.md) - do not warn about unsupported compilers
 - [**JSON_USE_GLOBAL_UDLS**](json_use_global_udls.md) - place user-defined string literals (UDLs) into the global namespace
 
