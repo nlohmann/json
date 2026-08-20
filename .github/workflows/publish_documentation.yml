@@ -7,7 +7,6 @@ on:
       - develop
     paths:
       - docs/mkdocs/**
-      - docs/examples/**
   workflow_dispatch:
 
 # we don't want to have concurrent jobs, and we don't want to cancel running jobs to avoid broken publications
