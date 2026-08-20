@@ -524,3 +524,90 @@ TEST_CASE("indentation is written straight into the write buffer")
         CHECK(j.dump(0) == "{\n\"a\": [\n1,\n2\n],\n\"b\": null\n}");
     }
 }
+
+TEST_CASE("serialization of deeply nested values")
+{
+    // dump() descends into a bounded number of levels and writes out whatever
+    // is nested deeper than that without the call stack; see
+    // https://github.com/nlohmann/json/issues/5387
+
+    SECTION("nested deeper than the call stack could follow")
+    {
+        // parsing is iterative, so building these costs little
+        const std::size_t depth = 100000;
+
+        const std::string array_text = std::string(depth, '[') + '0' + std::string(depth, ']');
+        CHECK(json::parse(array_text).dump() == array_text);
+
+        std::string object_text;
+        object_text.reserve(6 * depth + 1);
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            object_text += "{\"a\":";
+        }
+        object_text += '1';
+        object_text.append(depth, '}');
+        CHECK(json::parse(object_text).dump() == object_text);
+    }
+
+    SECTION("depths around the bound of the descent")
+    {
+        // Cover every depth around the bound, so that the two ways of writing a
+        // value are known to meet cleanly - wherever the bound is set.
+        for (std::size_t d = 1; d <= 300; ++d)
+        {
+            CAPTURE(d);
+
+            const std::string array_text = std::string(d, '[') + '7' + std::string(d, ']');
+            CHECK(json::parse(array_text).dump() == array_text);
+
+            std::string object_text;
+            for (std::size_t i = 0; i < d; ++i)
+            {
+                object_text += "{\"k\":";
+            }
+            object_text += '7';
+            object_text.append(d, '}');
+            CHECK(json::parse(object_text).dump() == object_text);
+        }
+    }
+
+    SECTION("pretty-printing across the bound")
+    {
+        for (std::size_t d = 120; d <= 140; ++d)
+        {
+            CAPTURE(d);
+
+            const json j = json::parse(std::string(d, '[') + '7' + std::string(d, ']'));
+
+            std::string expected;
+            for (std::size_t i = 0; i < d; ++i)
+            {
+                expected += std::string(2 * i, ' ') + "[\n";
+            }
+            expected += std::string(2 * d, ' ') + '7';
+            for (std::size_t i = d; i > 0; --i)
+            {
+                expected += '\n' + std::string(2 * (i - 1), ' ') + ']';
+            }
+
+            CHECK(j.dump(2) == expected);
+        }
+    }
+
+    SECTION("an empty container below the bound")
+    {
+        // an empty container is written out in full and never descended into,
+        // so it must not gain a newline when it is reached iteratively
+        for (std::size_t d = 125; d <= 135; ++d)
+        {
+            CAPTURE(d);
+
+            const std::string compact = std::string(d, '[') + "[]" + std::string(d, ']');
+            CHECK(json::parse(compact).dump() == compact);
+
+            const std::string with_object = std::string(d, '[') + "{}" + std::string(d, ']');
+            CHECK(json::parse(with_object).dump() == with_object);
+        }
+    }
+}
