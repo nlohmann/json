@@ -770,7 +770,7 @@ class serializer
     write-through path for oversized runs.
     */
     template<std::size_t N>
-    void put_literal(const char (&s)[N])
+    void put_literal(const char (&s)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     {
         static_assert(N >= 2, "put_literal expects a non-empty string literal");
         // the array bound counts the terminating NUL, which is not written
