@@ -313,7 +313,7 @@ TEST_CASE("lexer number fast path")
 
         // full outcome of parsing @a doc, so a mismatch in type, value, or error
         // message is caught, not just a mismatch in acceptance
-        const auto outcome = [](const std::string & doc, bool streaming)
+        const auto outcome = [](const std::string & doc, bool streaming) -> std::string
         {
             try
             {
@@ -328,7 +328,7 @@ TEST_CASE("lexer number fast path")
             }
             catch (const json::parse_error& e)
             {
-                return std::string(e.what());
+                return {e.what()};
             }
         };
 
@@ -370,7 +370,7 @@ TEST_CASE("lexer number fast path")
         // by a newline is the interesting case, because the byte path reaches the
         // newline (which resets the column) and then ungets it.
         // returns the parse_error message, or "" if the document parsed
-        const auto contiguous_error = [](const std::string & doc)
+        const auto contiguous_error = [](const std::string & doc) -> std::string
         {
             try
             {
@@ -379,11 +379,11 @@ TEST_CASE("lexer number fast path")
             }
             catch (const json::parse_error& e)
             {
-                return std::string(e.what());
+                return {e.what()};
             }
-            return std::string();
+            return {};
         };
-        const auto streaming_error = [](const std::string & doc)
+        const auto streaming_error = [](const std::string & doc) -> std::string
         {
             try
             {
@@ -393,9 +393,9 @@ TEST_CASE("lexer number fast path")
             }
             catch (const json::parse_error& e)
             {
-                return std::string(e.what());
+                return {e.what()};
             }
-            return std::string();
+            return {};
         };
 
         for (const char* bad :
@@ -439,7 +439,7 @@ TEST_CASE("lexer string fast path")
     // the full outcome of parsing @a doc: the parsed value, or the exact error
     // message, so a mismatch in either is caught. Only usable with exceptions
     // on: parsing invalid input aborts when they are off.
-    const auto outcome = [](const std::string & doc, bool streaming)
+    const auto outcome = [](const std::string & doc, bool streaming) -> std::string
     {
         try
         {
@@ -457,7 +457,7 @@ TEST_CASE("lexer string fast path")
         // as a reported mismatch rather than as an uncaught exception
         catch (const json::exception& e)
         {
-            return std::string(e.what());
+            return {e.what()};
         }
     };
 #endif
@@ -547,7 +547,9 @@ TEST_CASE("lexer string fast path")
     {
         // The bulk validator must accept exactly what the byte-at-a-time
         // scanner accepts, so pin the boundaries of every range it recognizes.
-        struct utf8_case
+        // aggregate, only ever brace-initialized below; default member
+        // initializers would stop it being an aggregate in C++11
+        struct utf8_case // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
         {
             std::string sequence;
             bool valid;

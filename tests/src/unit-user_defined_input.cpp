@@ -19,6 +19,8 @@
 using nlohmann::json;
 
 #include <list>
+#include <string> // string
+#include <vector> // vector
 
 #if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
     #include <iterator>
@@ -333,7 +335,7 @@ TEST_CASE("std::counted_iterator bulk scanning stops at the counted end")
     // input: the bulk scanners must never look at the bytes behind it, even
     // though they are readable. Each case is compared against parsing the
     // equivalent prefix as a std::string.
-    const auto via_counted = [](const std::string & buf, std::size_t n)
+    const auto via_counted = [](const std::string & buf, std::size_t n) -> std::string
     {
         const std::counted_iterator<const char*> first(buf.data(), static_cast<std::iter_difference_t<const char*>>(n));
         try
@@ -343,10 +345,10 @@ TEST_CASE("std::counted_iterator bulk scanning stops at the counted end")
         }
         catch (const json::parse_error& e)
         {
-            return std::string(e.what());
+            return {e.what()};
         }
     };
-    const auto via_prefix = [](const std::string & buf, std::size_t n)
+    const auto via_prefix = [](const std::string & buf, std::size_t n) -> std::string
     {
         try
         {
@@ -355,16 +357,16 @@ TEST_CASE("std::counted_iterator bulk scanning stops at the counted end")
         }
         catch (const json::parse_error& e)
         {
-            return std::string(e.what());
+            return {e.what()};
         }
     };
 
-    struct testcase
+    struct testcase // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
     {
         const char* buffer;
         std::size_t count;
     };
-    const testcase cases[] =
+    const std::vector<testcase> cases =
     {
         {"[\"abc\"]____TRAILING____", 7},                    // exact fit, tail hidden
         {"[\"abcdefghijklmnop\"]____", 8},                   // cut inside a string
