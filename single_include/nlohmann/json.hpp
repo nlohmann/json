@@ -21430,10 +21430,10 @@ class serializer
                         for (auto i = val.m_data.m_value.binary->cbegin();
                                 i != val.m_data.m_value.binary->cend() - 1; ++i)
                         {
-                            dump_integer(*i);
+                            dump_byte(*i);
                             put_literal(", ");
                         }
-                        dump_integer(val.m_data.m_value.binary->back());
+                        dump_byte(val.m_data.m_value.binary->back());
                     }
 
                     put_literal("],\n");
@@ -21461,10 +21461,10 @@ class serializer
                         for (auto i = val.m_data.m_value.binary->cbegin();
                                 i != val.m_data.m_value.binary->cend() - 1; ++i)
                         {
-                            dump_integer(*i);
+                            dump_byte(*i);
                             put_char(',');
                         }
-                        dump_integer(val.m_data.m_value.binary->back());
+                        dump_byte(val.m_data.m_value.binary->back());
                     }
 
                     put_literal("],\"subtype\":");
@@ -21781,10 +21781,10 @@ class serializer
                         for (auto i = val.m_data.m_value.binary->cbegin();
                                 i != val.m_data.m_value.binary->cend() - 1; ++i)
                         {
-                            dump_integer(*i);
+                            dump_byte(*i);
                             put_literal(", ");
                         }
-                        dump_integer(val.m_data.m_value.binary->back());
+                        dump_byte(val.m_data.m_value.binary->back());
                     }
 
                     put_literal("],\n");
@@ -21812,10 +21812,10 @@ class serializer
                         for (auto i = val.m_data.m_value.binary->cbegin();
                                 i != val.m_data.m_value.binary->cend() - 1; ++i)
                         {
-                            dump_integer(*i);
+                            dump_byte(*i);
                             put_char(',');
                         }
-                        dump_integer(val.m_data.m_value.binary->back());
+                        dump_byte(val.m_data.m_value.binary->back());
                     }
 
                     put_literal("],\"subtype\":");
@@ -21911,7 +21911,37 @@ class serializer
 
     @complexity Linear in the length of string @a s.
     */
+    /*!
+    @brief dump escaped string
+
+    Escape a string by replacing certain special characters by a sequence of an
+    escape character (backslash) and another character and other control
+    characters by a sequence of "\u" followed by a four-digit hex
+    representation. The escaped string is written to output stream @a o.
+
+    @param[in] s  the string to escape
+    @param[in] ensure_ascii  whether to escape non-ASCII characters with
+                             \uXXXX sequences
+
+    @complexity Linear in the length of string @a s.
+    */
     void dump_escaped(const string_t& s, const bool ensure_ascii)
+    {
+        // dispatch once here rather than test the flag inside the loop: it does
+        // not change while a string is written, and folding it lets each of the
+        // two scanners be inlined into a loop of its own
+        if (ensure_ascii)
+        {
+            dump_escaped_impl<true>(s);
+        }
+        else
+        {
+            dump_escaped_impl<false>(s);
+        }
+    }
+
+    template<bool EnsureAscii>
+    void dump_escaped_impl(const string_t& s)
     {
         std::uint32_t codepoint{};
         std::uint8_t state = UTF8_ACCEPT;
@@ -21930,16 +21960,16 @@ class serializer
             // individually, so that byte is left to the byte-at-a-time path
             // below, keeping escaping output and error diagnostics unchanged.
             //
-            // - ensure_ascii == false: string_bulk_run() copies ordinary bytes
+            // - EnsureAscii == false: string_bulk_run() copies ordinary bytes
             //   and complete well-formed UTF-8, stopping at a quote, backslash,
             //   control character (< 0x20), or ill-formed/truncated sequence.
-            // - ensure_ascii == true: only printable ASCII may be copied
+            // - EnsureAscii == true: only printable ASCII may be copied
             //   verbatim; find_ascii_copyable_run() additionally stops at 0x7F
             //   and every non-ASCII byte (>= 0x80), which must be \u-escaped.
             if (state == UTF8_ACCEPT)
             {
                 const auto* const data = reinterpret_cast<const unsigned char*>(s.data());
-                const std::size_t run = ensure_ascii
+                const std::size_t run = EnsureAscii
                                         ? find_ascii_copyable_run(data + i, s.size() - i)
                                         : string_bulk_run(data + i, s.size() - i);
                 if (run != 0)
@@ -22022,8 +22052,8 @@ class serializer
                         default:
                         {
                             // escape control characters (0x00..0x1F) or, if
-                            // ensure_ascii parameter is used, non-ASCII characters
-                            if ((codepoint <= 0x1F) || (ensure_ascii && (codepoint >= 0x7F)))
+                            // EnsureAscii parameter is used, non-ASCII characters
+                            if ((codepoint <= 0x1F) || (EnsureAscii && (codepoint >= 0x7F)))
                             {
                                 if (codepoint <= 0xFFFF)
                                 {
@@ -22088,7 +22118,7 @@ class serializer
                             if (error_handler == error_handler_t::replace)
                             {
                                 // add a replacement character
-                                if (ensure_ascii)
+                                if (EnsureAscii)
                                 {
                                     string_buffer[bytes++] = '\\';
                                     string_buffer[bytes++] = 'u';
@@ -22131,7 +22161,7 @@ class serializer
 
                 default:  // decode found yet incomplete multibyte code point
                 {
-                    if (!ensure_ascii)
+                    if (!EnsureAscii)
                     {
                         // code point will not be escaped - copy byte to buffer
                         string_buffer[bytes++] = s[i];
@@ -22173,7 +22203,7 @@ class serializer
                     // write all accepted bytes
                     put_buffer(string_buffer, bytes_after_last_accept);
                     // add a replacement character
-                    if (ensure_ascii)
+                    if (EnsureAscii)
                     {
                         put_literal("\\ufffd");
                     }
@@ -22443,6 +22473,57 @@ class serializer
     bool is_negative_number(NumberType /*unused*/)
     {
         return false;
+    }
+
+    /*!
+    @brief write the decimal representation of the byte @a value
+
+    A binary value's bytes are always in [0, 255], so writing one needs neither
+    the digit counting nor the 64-bit arithmetic that @ref dump_integer does for
+    an arbitrary number, and the three digits it takes at most are written
+    straight into the write buffer.
+
+    Any byte type that is not a plain unsigned byte is left to @ref dump_integer,
+    whose representation of it may differ.
+    */
+    template<typename ByteType>
+    void dump_byte(const ByteType value)
+    {
+        dump_byte(value, std::integral_constant < bool,
+                  std::is_unsigned<ByteType>::value && sizeof(ByteType) == 1
+                  && !std::is_same<ByteType, bool>::value > {});
+    }
+
+    template<typename ByteType>
+    void dump_byte(const ByteType value, std::false_type /*is_plain_byte*/)
+    {
+        dump_integer(value);
+    }
+
+    template<typename ByteType>
+    void dump_byte(const ByteType value, std::true_type /*is_plain_byte*/)
+    {
+        if (JSON_HEDLEY_UNLIKELY(write_buffer_pos + 3 > write_buffer.size()))
+        {
+            flush();
+        }
+
+        const auto byte = static_cast<unsigned>(value);
+        char* out = write_buffer.data() + write_buffer_pos;
+
+        if (byte >= 100)
+        {
+            *out++ = static_cast<char>('0' + (byte / 100));
+            *out++ = static_cast<char>('0' + ((byte / 10) % 10));
+        }
+        else if (byte >= 10)
+        {
+            *out++ = static_cast<char>('0' + (byte / 10));
+        }
+
+        *out++ = static_cast<char>('0' + (byte % 10));
+
+        write_buffer_pos = static_cast<std::size_t>(out - write_buffer.data());
     }
 
     /*!
