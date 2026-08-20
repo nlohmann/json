@@ -7,16 +7,16 @@
 When defined, the library does not use `#!cpp thread_local` storage. This is relevant for the few environments whose
 toolchain does not support it.
 
-The copy constructor copies the first levels of a value by copying the containers, which copy their elements, and
-completes whatever is nested deeper than that without the call stack, so that copying a value cannot exhaust the stack
-however deeply it is nested. It counts the levels it has descended into in a `#!cpp thread_local` variable, as a counter
-shared between threads would be raced.
+Copying a value and comparing two values both descend into the first levels by letting the containers copy or compare
+themselves, and finish whatever is nested deeper than that without the call stack, so that neither can exhaust the stack
+however deeply the values are nested. Each counts the levels it has descended into in a `#!cpp thread_local` variable, as
+a counter shared between threads would be raced.
 
-Without that counter, no descent can be bounded safely, so objects and arrays are copied without the call stack right
-away. Copying keeps working exactly as it does otherwise - the same values come out, and deeply nested values are copied
-just as safely - but copying is slower, because the containers no longer copy themselves. Copying the benchmark
-documents takes 9% (`canada.json`) to 34% (`twitter.json`) longer; values built mostly from objects are affected the
-most.
+Without those counters, no descent can be bounded safely, so objects and arrays are copied and compared without the call
+stack right away. Both keep working exactly as they do otherwise - the same values come out, the same comparisons hold,
+and deeply nested values are handled just as safely - but both are slower, because the containers no longer copy or
+compare themselves. Copying the benchmark documents takes 9% (`canada.json`) to 34% (`twitter.json`) longer, and
+comparing two equal ones 10% (`citm_catalog.json`) to 90% (`canada.json`) longer.
 
 ## Default definition
 

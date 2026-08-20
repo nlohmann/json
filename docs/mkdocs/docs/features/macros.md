@@ -93,8 +93,9 @@ See [full documentation of `JSON_NO_IO`](../api/macros/json_no_io.md).
 
 ## `JSON_NO_THREAD_LOCAL`
 
-When defined, the library does not use `#!cpp thread_local` storage. Copying a value then always avoids the call stack
-rather than descending into a bounded number of levels first, which is slower but yields the same values.
+When defined, the library does not use `#!cpp thread_local` storage. Copying a value and comparing two values then
+always avoid the call stack rather than descending into a bounded number of levels first, which is slower but yields the
+same values and the same comparisons.
 
 See [full documentation of `JSON_NO_THREAD_LOCAL`](../api/macros/json_no_thread_local.md).
 
