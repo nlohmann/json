@@ -456,6 +456,10 @@ TEST_CASE("lexer string fast path")
         }
     };
 
+    // once at the start of the string, once past the first 8-byte SWAR word, so
+    // the bulk scanner sees each case with and without a run behind it
+    const std::vector<std::size_t> offsets{0, 9};
+
     SECTION("exhaustive contiguous vs streaming parity")
     {
         // ordinary ASCII, both specials, a control byte, characters that make
@@ -485,9 +489,7 @@ TEST_CASE("lexer string fast path")
 
             for (const auto& token : tokens)
             {
-                // once at the start of the string, once past the first 8-byte
-                // SWAR word so the bulk scanner has a run behind it
-                for (const std::size_t offset : {static_cast<std::size_t>(0), static_cast<std::size_t>(9)})
+                for (const std::size_t offset : offsets)
                 {
                     const std::string doc = "[\"" + std::string(offset, 'a') + token + "\"]";
                     if (outcome(doc, false) != outcome(doc, true))
@@ -570,9 +572,7 @@ TEST_CASE("lexer string fast path")
         for (const auto& test_case : cases)
         {
             CAPTURE(test_case.description);
-            // at the start of the string and past the first SWAR word, so the
-            // sequence is seen by the bulk scanner and by its tail
-            for (const std::size_t offset : {static_cast<std::size_t>(0), static_cast<std::size_t>(9)})
+            for (const std::size_t offset : offsets)
             {
                 CAPTURE(offset);
                 const std::string doc = "[\"" + std::string(offset, 'a') + test_case.sequence + "\"]";
