@@ -266,13 +266,28 @@ TEST_CASE("std::counted_iterator reaches the contiguous fast paths")
     // already-consumed input (supports_seek), a path a sized sentinel only
     // reaches now; check a few that include the "last read" text. Parsing
     // invalid input aborts when exceptions are off, hence the guard.
-    for (const char* doc :
-            {"1\nx", "truX", "[tru]", "\"abc", "[\"\\ud834\"]", "[\"a\x01""b\"]",
-             "[\"\xc3\x28\"]", "[1e]", "[\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaX"
-            })
+    // Raw strings and explicit bytes: an escaped literal and two literals
+    // written next to each other both read as mistakes to static analysis.
+    const auto byte = [](int value)
     {
-        CAPTURE(doc);
-        const std::string text = doc;
+        return std::string(1, static_cast<char>(value));
+    };
+    const std::vector<std::string> diagnostic_docs =
+    {
+        "1\nx",
+        "truX",
+        "[tru]",
+        R"("abc)",
+        R"(["\ud834"])",
+        R"(["a)" + byte(0x01) + R"(b"])",
+        R"([")" + byte(0xC3) + byte(0x28) + R"("])",
+        "[1e]",
+        R"(["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaX)"
+    };
+
+    for (const auto& text : diagnostic_docs)
+    {
+        CAPTURE(text);
         const std::counted_iterator<const char*> it(text.data(), static_cast<std::iter_difference_t<const char*>>(text.size()));
         std::string counted_message;
         std::string string_message;
