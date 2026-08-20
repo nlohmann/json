@@ -243,6 +243,25 @@ add_custom_target(ci_test_noglobaludls
 )
 
 ###############################################################################
+# Disable thread-local storage.
+###############################################################################
+
+# Without thread-local storage, the copy constructor cannot bound its descent
+# and copies every object and array without the call stack. That path is
+# otherwise only reached by values nested deeper than the bound, so this target
+# is what runs the whole test suite through it.
+add_custom_target(ci_test_no_thread_local
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON
+    -DCMAKE_CXX_FLAGS=-DJSON_NO_THREAD_LOCAL
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_no_thread_local
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_no_thread_local
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_no_thread_local && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test without thread-local storage"
+)
+
+###############################################################################
 # Coverage.
 ###############################################################################
 

@@ -14,7 +14,9 @@ shared between threads would be raced.
 
 Without that counter, no descent can be bounded safely, so objects and arrays are copied without the call stack right
 away. Copying keeps working exactly as it does otherwise - the same values come out, and deeply nested values are copied
-just as safely - but copying is measurably slower, as the containers no longer copy themselves.
+just as safely - but copying is slower, because the containers no longer copy themselves. Copying the benchmark
+documents takes 9% (`canada.json`) to 34% (`twitter.json`) longer; values built mostly from objects are affected the
+most.
 
 ## Default definition
 

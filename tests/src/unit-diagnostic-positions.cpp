@@ -68,6 +68,61 @@ TEST_CASE("Better diagnostics with positions")
         CHECK(j.end_pos() == root.size());
     }
 
+    SECTION("copying keeps the positions of nested values (#5387)")
+    {
+        // Values nested deeper than the copy constructor's descent bound are
+        // copied without the call stack, on a path that has to carry the
+        // positions over itself; shallower ones copy their containers, which
+        // bring the positions along. Both sides of the bound are checked here.
+        const auto check_copy = [](std::size_t depth, bool objects)
+        {
+            CAPTURE(depth)
+            CAPTURE(objects)
+
+            const std::string open = objects ? R"({"a":)" : "[";
+            const std::string close = objects ? "}" : "]";
+
+            std::string text;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                text += open;
+            }
+            text += "12";
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                text += close;
+            }
+
+            const json original = json::parse(text);
+            const json copy(original); // NOLINT(performance-unnecessary-copy-initialization)
+
+            const json* o = &original;
+            const json* c = &copy;
+            for (std::size_t level = 0; level <= depth; ++level)
+            {
+                CAPTURE(level)
+                REQUIRE(c->start_pos() == o->start_pos());
+                REQUIRE(c->end_pos() == o->end_pos());
+
+                if (level < depth)
+                {
+                    o = objects ? &o->at("a") : &o->at(0);
+                    c = objects ? &c->at("a") : &c->at(0);
+                }
+            }
+        };
+
+        const bool shapes[] = {false, true};
+        for (const bool objects : shapes)
+        {
+            check_copy(1, objects);
+            check_copy(127, objects);
+            check_copy(128, objects);
+            check_copy(129, objects);
+            check_copy(300, objects);
+        }
+    }
+
     SECTION("JSON patch add to primitive parent (#4292)")
     {
         // the JSON Patch "add" target /foo/bar/baz has a string parent
