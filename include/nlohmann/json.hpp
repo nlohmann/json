@@ -821,47 +821,63 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return j;
     }
 
-#ifndef JSON_NO_THREAD_LOCAL
-    /// the number of levels the copy constructor descends into before it
-    /// finishes the value below without the call stack
-    static constexpr std::size_t copy_depth_limit()
+    /// the number of levels an operation descends into before it finishes the
+    /// value below it without the call stack
+    static constexpr std::size_t nesting_depth_limit()
     {
         return 128;
     }
 
-    /// @brief how many levels the copy going on in this thread has descended into
-    static std::size_t& copy_depth() noexcept
+#ifndef JSON_NO_THREAD_LOCAL
+    /*!
+    @brief how many levels the operation going on in this thread has descended into
+
+    Copying a value and comparing two values share this count. The library never
+    nests one inside the other - copying a value does not compare one, and
+    comparing two values does not copy them - and where user code nests them
+    anyway, sharing the count only ends a descent sooner than it had to, which
+    costs a little speed and is never wrong.
+
+    A byte is enough: the count never exceeds the limit by more than the single
+    level that notices the limit has been reached.
+    */
+    static std::size_t& nesting_depth() noexcept
     {
         static thread_local std::size_t depth = 0; // NOLINT(misc-use-internal-linkage)
         return depth;
     }
 #endif
 
-#ifndef JSON_NO_THREAD_LOCAL
-    /// @brief counts one level of @ref copy_structured for as long as it runs
-    class copy_depth_guard
+    /*!
+    @brief counts one level of a bounded descent for as long as it runs
+
+    The count is taken rather than looked up here, because the caller has looked
+    it up already to test it against the limit: reaching thread-local storage is
+    not free, and the path that is taken almost every time should reach it once
+    rather than twice.
+    */
+    class nesting_depth_guard
     {
       public:
-        explicit copy_depth_guard(std::size_t& depth) noexcept
+        explicit nesting_depth_guard(std::size_t& depth) noexcept
             : m_depth(depth)
         {
             ++m_depth;
         }
 
-        ~copy_depth_guard() noexcept
+        ~nesting_depth_guard()
         {
             --m_depth;
         }
 
-        copy_depth_guard(const copy_depth_guard&) = delete;
-        copy_depth_guard& operator=(const copy_depth_guard&) = delete;
-        copy_depth_guard(copy_depth_guard&&) = delete;
-        copy_depth_guard& operator=(copy_depth_guard&&) = delete;
+        nesting_depth_guard(const nesting_depth_guard&) = delete;
+        nesting_depth_guard& operator=(const nesting_depth_guard&) = delete;
+        nesting_depth_guard(nesting_depth_guard&&) = delete;
+        nesting_depth_guard& operator=(nesting_depth_guard&&) = delete;
 
       private:
         std::size_t& m_depth;
     };
-#endif
 
     /// an entry of the iterative deep copy's worklist: a structured value and
     /// the value that is to become its copy
@@ -887,27 +903,21 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     /*!
-    @brief copy everything of @a src into the null value @a dst but the children
+    @brief copy the value of @a src into @a dst, which must not be structured
 
-    Objects and arrays are not copied here; they are appended to @a worklist to
-    be created later by @ref copy_iteratively. Until that happens, @a dst remains
-    a null value, so that a partially built copy can be destroyed at any point
-    without ever violating the class invariants.
+    Objects and arrays are left alone: creating those is the one thing the copy
+    constructor and @ref copy_shallow do differently from one another, and it is
+    the reason copying a value can descend at all.
     */
-    static void copy_shallow(const basic_json& src, basic_json& dst, copy_worklist_t& worklist)
+    /// @note inlined on purpose: both callers have already told an object or an
+    ///       array apart from the rest, and letting the compiler fold that test
+    ///       into this switch is worth a few percent when copying a value made
+    ///       mostly of numbers
+    JSON_HEDLEY_ALWAYS_INLINE
+    static void copy_leaf_value(const basic_json& src, basic_json& dst)
     {
-        copy_metadata(src, dst);
-
         switch (src.m_data.m_type)
         {
-            case value_t::object:
-            case value_t::array:
-            {
-                // defer: dst stays a null value until its container exists
-                worklist.emplace_back(&src, &dst);
-                return;
-            }
-
             case value_t::string:
             {
                 dst.m_data.m_value = *src.m_data.m_value.string;
@@ -944,11 +954,35 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 break;
             }
 
+            case value_t::object:
+            case value_t::array:
             case value_t::null:
             case value_t::discarded:
             default:
                 break;
         }
+    }
+
+    /*!
+    @brief copy everything of @a src into the null value @a dst but the children
+
+    Objects and arrays are not copied here; they are appended to @a worklist to
+    be created later by @ref copy_iteratively. Until that happens, @a dst remains
+    a null value, so that a partially built copy can be destroyed at any point
+    without ever violating the class invariants.
+    */
+    static void copy_shallow(const basic_json& src, basic_json& dst, copy_worklist_t& worklist)
+    {
+        copy_metadata(src, dst);
+
+        if (src.m_data.m_type == value_t::object || src.m_data.m_type == value_t::array)
+        {
+            // defer: dst stays a null value until its container exists
+            worklist.emplace_back(&src, &dst);
+            return;
+        }
+
+        copy_leaf_value(src, dst);
 
         // only now that the value exists may the type be set: had the creation
         // of the value thrown, dst would have been left as a valid null value
@@ -1018,7 +1052,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     The values whose copy has not been created yet are kept on an explicit
     worklist rather than on the call stack. This is only reached for values
-    nested deeper than @ref copy_depth_limit levels, which is why it copies
+    nested deeper than @ref nesting_depth_limit levels, which is why it copies
     every container by hand instead of letting the container do it: the fast
     ways of doing so would descend into the elements and defeat the purpose.
     */
@@ -1049,8 +1083,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 break;
             }
 
-            src_value = worklist.back().first;
-            dst_value = worklist.back().second;
+            const auto& next = worklist.back();
+            src_value = next.first;
+            dst_value = next.second;
             worklist.pop_back();
 
             // the value stops being a null value exactly here
@@ -1058,7 +1093,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
-#ifndef JSON_NO_THREAD_LOCAL
     /*!
     @brief copy one level of the object or array @a src into this value
 
@@ -1078,14 +1112,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         set_parents();
     }
-#endif
 
     /*!
     @brief deep-copy the object or array @a src into this value
 
     Copying a container copies its elements, so a value nested deeply enough
     used to exhaust the call stack. The descent is bounded here: the first
-    @ref copy_depth_limit levels are copied by the containers themselves, just
+    @ref nesting_depth_limit levels are copied by the containers themselves, just
     as they always were, and anything below that is copied without the call
     stack by @ref copy_iteratively. Copying a value can therefore no longer
     exhaust the stack, however deeply it is nested, just like destroying one
@@ -1099,26 +1132,22 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     */
     void copy_structured(const basic_json& src)
     {
-#ifdef JSON_NO_THREAD_LOCAL
-        // without a counter of its own per thread, the descent cannot be
-        // bounded without racing another one, so none is made
-        copy_iteratively(src);
-#else
-        std::size_t& depth = copy_depth();
+#ifndef JSON_NO_THREAD_LOCAL
+        std::size_t& depth = nesting_depth();
 
-        if (JSON_HEDLEY_UNLIKELY(depth >= copy_depth_limit()))
+        if (JSON_HEDLEY_LIKELY(depth < nesting_depth_limit()))
         {
-            // Finish this value without descending any further. It is completed
-            // before this returns, so a copy made by a custom base class - or by
-            // anything else that runs while a copy is going on - is unaffected
-            // by the copy it is nested in.
-            copy_iteratively(src);
+            const nesting_depth_guard guard(depth);
+            copy_level(src);
             return;
         }
-
-        const copy_depth_guard guard(depth);
-        copy_level(src);
 #endif
+
+        // Finish this value without descending any further. It is completed
+        // before this returns, so a copy made by a custom base class - or by
+        // anything else that runs while a copy is going on - is unaffected by
+        // the copy it is nested in.
+        copy_iteratively(src);
     }
 
 
@@ -1501,57 +1530,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // check of passed value is valid
         other.assert_invariant();
 
-        switch (m_data.m_type)
+        if (m_data.m_type == value_t::object || m_data.m_type == value_t::array)
         {
-            case value_t::object:
-            case value_t::array:
-            {
-                // copying the container directly would call this constructor
-                // again for every element, once per nesting level
-                copy_structured(other);
-                break;
-            }
-
-            case value_t::string:
-            {
-                m_data.m_value = *other.m_data.m_value.string;
-                break;
-            }
-
-            case value_t::boolean:
-            {
-                m_data.m_value = other.m_data.m_value.boolean;
-                break;
-            }
-
-            case value_t::number_integer:
-            {
-                m_data.m_value = other.m_data.m_value.number_integer;
-                break;
-            }
-
-            case value_t::number_unsigned:
-            {
-                m_data.m_value = other.m_data.m_value.number_unsigned;
-                break;
-            }
-
-            case value_t::number_float:
-            {
-                m_data.m_value = other.m_data.m_value.number_float;
-                break;
-            }
-
-            case value_t::binary:
-            {
-                m_data.m_value = *other.m_data.m_value.binary;
-                break;
-            }
-
-            case value_t::null:
-            case value_t::discarded:
-            default:
-                break;
+            // copying the container directly would call this constructor again
+            // for every element, once per nesting level
+            copy_structured(other);
+        }
+        else
+        {
+            copy_leaf_value(other, *this);
         }
 
         set_parents();
