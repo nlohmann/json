@@ -188,7 +188,7 @@ TEST_CASE("tests on deeply nested JSONs")
         SECTION("comparing objects")
         {
             std::string text;
-            text.reserve(6 * depth + 1);
+            text.reserve((6 * depth) + 1);
             for (std::size_t i = 0; i < depth; ++i)
             {
                 text += "{\"a\":";
