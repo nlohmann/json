@@ -540,7 +540,7 @@ TEST_CASE("serialization of deeply nested values")
         CHECK(json::parse(array_text).dump() == array_text);
 
         std::string object_text;
-        object_text.reserve(6 * depth + 1);
+        object_text.reserve((6 * depth) + 1);
         for (std::size_t i = 0; i < depth; ++i)
         {
             object_text += "{\"a\":";
