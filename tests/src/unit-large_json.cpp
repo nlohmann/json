@@ -67,7 +67,7 @@ TEST_CASE("tests on deeply nested JSONs")
         {
             const json j = json::parse(std::string(depth, '[') + '0' + std::string(depth, ']'));
 
-            const json copy(j);
+            const json copy(j); // NOLINT(performance-unnecessary-copy-initialization): the copy is what is tested
 
             std::size_t copy_depth = 0;
             CHECK(*innermost_value(copy, copy_depth) == 0);
@@ -77,7 +77,7 @@ TEST_CASE("tests on deeply nested JSONs")
         SECTION("object")
         {
             std::string s;
-            s.reserve(6 * depth + 1);
+            s.reserve((6 * depth) + 1);
             for (std::size_t i = 0; i < depth; ++i)
             {
                 s += "{\"a\":";
@@ -87,7 +87,7 @@ TEST_CASE("tests on deeply nested JSONs")
 
             const json j = json::parse(s);
 
-            const json copy(j);
+            const json copy(j); // NOLINT(performance-unnecessary-copy-initialization): the copy is what is tested
 
             std::size_t copy_depth = 0;
             CHECK(*innermost_value(copy, copy_depth) == 1);
@@ -119,7 +119,7 @@ TEST_CASE("tests on deeply nested JSONs")
                 CAPTURE(d);
 
                 const json array = json::parse(std::string(d, '[') + '0' + std::string(d, ']'));
-                const json array_copy(array);
+                const json array_copy(array); // NOLINT(performance-unnecessary-copy-initialization): the copy is what is tested
                 std::size_t array_depth = 0;
                 CHECK(*innermost_value(array_copy, array_depth) == 0);
                 CHECK(array_depth == d);
@@ -133,7 +133,7 @@ TEST_CASE("tests on deeply nested JSONs")
                 object_text.append(d, '}');
 
                 const json object = json::parse(object_text);
-                const json object_copy(object);
+                const json object_copy(object); // NOLINT(performance-unnecessary-copy-initialization): the copy is what is tested
                 std::size_t object_depth = 0;
                 CHECK(*innermost_value(object_copy, object_depth) == 1);
                 CHECK(object_depth == d);
