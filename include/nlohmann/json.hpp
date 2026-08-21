@@ -846,14 +846,32 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         static thread_local std::uint8_t depth = 0; // NOLINT(misc-use-internal-linkage)
         return depth;
     }
-
-    /// @brief how many levels the comparison going on in this thread has descended into
-    static std::size_t& compare_depth() noexcept
-    {
-        static thread_local std::size_t depth = 0; // NOLINT(misc-use-internal-linkage)
-        return depth;
-    }
 #endif
+
+    /*!
+    @brief whether a descent must stop here and finish without the call stack
+
+    @a may_descend says whether the operator descends at all; it is a constant
+    at every call site, and is passed rather than tested by the caller so that
+    the test does not become a constant condition there, which MSVC reports as
+    C4127.
+
+    The comparison operators use this rather than @ref nesting_depth_guard::okay,
+    because they are written as a macro and a macro cannot use the preprocessor
+    the way the guard's constructor does; @ref copy_structured, which can, asks
+    the guard instead and never calls this.
+    */
+    static bool nesting_depth_exhausted(bool may_descend = true) noexcept
+    {
+#ifdef JSON_NO_THREAD_LOCAL
+        // without a count of its own per thread, a descent cannot be bounded
+        // without racing another one, so none is made
+        static_cast<void>(may_descend);
+        return true;
+#else
+        return !may_descend || nesting_depth() >= nesting_depth_limit();
+#endif
+    }
 
     /*!
     @brief counts one level of a bounded descent for as long as it runs, and
@@ -1177,53 +1195,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// ordered at all, such as a discarded value or a NaN
     enum class compare_result { less, equal, greater, unordered };
 
-    /*!
-    @brief counts one level of a comparison for as long as it runs
-
-    Does nothing without thread_local storage, where no descent is made at all.
-    */
-    class compare_depth_guard
-    {
-      public:
-        compare_depth_guard() noexcept
-        {
-#ifndef JSON_NO_THREAD_LOCAL
-            ++compare_depth();
-#endif
-        }
-
-        ~compare_depth_guard() noexcept
-        {
-#ifndef JSON_NO_THREAD_LOCAL
-            --compare_depth();
-#endif
-        }
-
-        compare_depth_guard(const compare_depth_guard&) = delete;
-        compare_depth_guard& operator=(const compare_depth_guard&) = delete;
-        compare_depth_guard(compare_depth_guard&&) = delete;
-        compare_depth_guard& operator=(compare_depth_guard&&) = delete;
-    };
-
-    /*!
-    @brief whether a comparison must stop descending and finish iteratively
-
-    @a may_descend says whether the operator descends at all; it is constant at
-    every call site, and is passed rather than tested by the caller so that the
-    test does not become a constant condition there, which MSVC reports (C4127).
-    */
-    static bool compare_descent_exhausted(bool may_descend) noexcept
-    {
-#ifdef JSON_NO_THREAD_LOCAL
-        // without a counter of its own per thread, the descent cannot be
-        // bounded without racing another one, so none is made
-        static_cast<void>(may_descend);
-        return true;
-#else
-        return !may_descend || compare_depth() >= compare_depth_limit();
-#endif
-    }
-
 #if JSON_HAS_THREE_WAY_COMPARISON
     /// @brief the ordering that @a result stands for
     static std::partial_ordering to_partial_ordering(compare_result result) noexcept // *NOPAD*
@@ -1243,18 +1214,18 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 #endif
 
-    /// the number of levels a comparison descends into before it compares what
-    /// is left without the call stack
-    static constexpr std::size_t compare_depth_limit()
-    {
-        return 128;
-    }
-
     /*!
     @brief compare two values that are not both an array or both an object
 
     Such a pair is compared by the operators themselves, which cannot descend
     into it and therefore cannot recurse.
+
+    That holds for a pair whose types differ as much as for a pair of leaves: an
+    array and an object are told apart by their types alone, because an operator
+    only ever descends into two values of the same type. So `==` reports them as
+    unequal without looking inside either, and an ordering falls back to the
+    order of the types - an object sorts before an array - exactly as it does
+    for a value that is not nested deeply enough to get here.
     */
     template<bool Ordered>
     static compare_result compare_leaves(const_reference lhs, const_reference rhs) noexcept
@@ -1328,7 +1299,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /*!
     @brief compare @a lhs and @a rhs without descending into them
 
-    Reached once a comparison has descended @ref compare_depth_limit levels, so
+    Reached once a comparison has descended @ref nesting_depth_limit levels, so
     that comparing values cannot exhaust the call stack however deeply they are
     nested. The two values are walked in lockstep on an explicit stack and
     compared lexicographically, element by element in the order the containers
@@ -1337,6 +1308,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     nlohmann::ordered_map in insertion order. An object type that enumerates its
     entries in an unspecified order, such as std::unordered_map, compares them
     pairwise instead; the difference could only ever show below the bound.
+
+    Note that the stack this walks with is allocated, while the comparison
+    operators are noexcept and the container comparison this replaces allocated
+    nothing. Failing that allocation therefore ends the process rather than
+    throwing. It only arises for values nested past the bound, and only when
+    memory has run out - where the same comparison used to exhaust the call
+    stack instead - but it is a way to fail that the operators did not have.
     */
     template<bool Ordered>
     static compare_result compare_iteratively(const_reference lhs, const_reference rhs,
@@ -4265,21 +4243,21 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         {                                                                                                \
             case value_t::array:                                                                         \
             {                                                                                            \
-                if (JSON_HEDLEY_UNLIKELY(compare_descent_exhausted(may_descend)))                        \
+                if (JSON_HEDLEY_UNLIKELY(nesting_depth_exhausted(may_descend)))                        \
                 {                                                                                        \
                     return (deep_result);                                                                \
                 }                                                                                        \
-                const compare_depth_guard guard;                                                          \
+                const nesting_depth_guard guard;                                                         \
                 return (*lhs.m_data.m_value.array) op (*rhs.m_data.m_value.array);                                     \
             }                                                                                            \
             \
             case value_t::object:                                                                        \
             {                                                                                            \
-                if (JSON_HEDLEY_UNLIKELY(compare_descent_exhausted(may_descend)))                        \
+                if (JSON_HEDLEY_UNLIKELY(nesting_depth_exhausted(may_descend)))                        \
                 {                                                                                        \
                     return (deep_result);                                                                \
                 }                                                                                        \
-                const compare_depth_guard guard;                                                          \
+                const nesting_depth_guard guard;                                                         \
                 return (*lhs.m_data.m_value.object) op (*rhs.m_data.m_value.object);                                   \
             }                                                                                            \
             \
