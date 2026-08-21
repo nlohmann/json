@@ -79,18 +79,18 @@ TEST_CASE("Better diagnostics with positions")
             CAPTURE(depth)
             CAPTURE(objects)
 
-            const std::string open = objects ? R"({"a":)" : "[";
-            const std::string close = objects ? "}" : "]";
+            const std::string opening = objects ? R"({"a":)" : "[";
+            const std::string closing = objects ? "}" : "]";
 
             std::string text;
             for (std::size_t i = 0; i < depth; ++i)
             {
-                text += open;
+                text += opening;
             }
             text += "12";
             for (std::size_t i = 0; i < depth; ++i)
             {
-                text += close;
+                text += closing;
             }
 
             const json original = json::parse(text);
