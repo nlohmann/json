@@ -27,6 +27,7 @@ using json = nlohmann::json;
 using ordered_json = nlohmann::ordered_json;
 
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <string>
@@ -58,6 +59,12 @@ using ordered_json = nlohmann::ordered_json;
     std::vector<std::byte>,    // BinaryType
     void                       // CustomBaseClass
     >;
+#endif
+
+#ifdef JSON_HAS_CPP_20
+    #if __has_include(<span>)
+        #include <span>
+    #endif
 #endif
 
 #if JSON_HAS_RANGES == 1
