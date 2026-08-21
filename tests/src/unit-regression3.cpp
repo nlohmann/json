@@ -42,6 +42,22 @@ using ordered_json = nlohmann::ordered_json;
     #elif __has_include(<experimental/optional>)
         #include <experimental/optional>
     #endif
+
+    /////////////////////////////////////////////////////////////////////
+    // for #4804
+    /////////////////////////////////////////////////////////////////////
+    using json_4804 = nlohmann::basic_json<std::map,        // ObjectType
+    std::vector,     // ArrayType
+    std::string,     // StringType
+    bool,            // BooleanType
+    std::int64_t,    // NumberIntegerType
+    std::uint64_t,   // NumberUnsignedType
+    double,          // NumberFloatType
+    std::allocator,  // AllocatorType
+    nlohmann::adl_serializer,  // JSONSerializer
+    std::vector<std::byte>,    // BinaryType
+    void                       // CustomBaseClass
+    >;
 #endif
 
 #if JSON_HAS_RANGES == 1
