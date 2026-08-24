@@ -34,6 +34,11 @@ class key
         return m_value;
     }
 
+    const char* c_str() const noexcept
+    {
+        return m_value.c_str();
+    }
+
     friend bool operator<(const key& lhs, const key& rhs)
     {
         return lhs.m_value < rhs.m_value;
