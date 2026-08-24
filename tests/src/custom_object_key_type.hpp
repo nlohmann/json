@@ -1,10 +1,17 @@
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++ (supporting code)
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 #pragma once
 
 #include <map>
 #include <memory>
 #include <string>
 #include <utility>
-
 #include <nlohmann/json.hpp>
 
 namespace custom_object_key_test
@@ -25,11 +32,6 @@ class key
     operator std::string() const
     {
         return m_value;
-    }
-
-    const char* c_str() const noexcept
-    {
-        return m_value.c_str();
     }
 
     friend bool operator<(const key& lhs, const key& rhs)
