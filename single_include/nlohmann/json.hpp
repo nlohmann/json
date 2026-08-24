@@ -18059,12 +18059,6 @@ class binary_writer
             value.size());
     }
 
-    template<typename KeyType>
-    void write_cbor_string(const KeyType& value)
-    {
-        write_cbor_string(string_t(value));
-    }
-
     static constexpr CharType get_cbor_float_prefix(float /*unused*/)
     {
         return to_char_type(0xFA);  // Single-Precision Float
@@ -18112,13 +18106,6 @@ class binary_writer
             reinterpret_cast<const CharType*>(value.c_str()),
             value.size());
     }
-
-    template<typename KeyType>
-    void write_msgpack_string(const KeyType& value)
-    {
-        write_msgpack_string(string_t(value));
-    }
-
 
     static constexpr CharType get_msgpack_float_prefix(float /*unused*/)
     {
