@@ -3843,6 +3843,48 @@ TEST_CASE("all BJData first bytes")
 }
 #endif
 
+TEST_CASE("BJData use_type requires use_size")
+{
+    SECTION("non-empty object throws other_error.502")
+    {
+        const json j = {{"a", 1}, {"b", 2}};
+        CHECK_THROWS_WITH_AS(json::to_bjdata(j, false, true),
+                             "[json.exception.other_error.502] use_type requires use_size = true",
+                             json::other_error&);
+    }
+
+    SECTION("non-empty array throws other_error.502")
+    {
+        const json j = {1, 2, 3};
+        CHECK_THROWS_WITH_AS(json::to_bjdata(j, false, true),
+                             "[json.exception.other_error.502] use_type requires use_size = true",
+                             json::other_error&);
+    }
+
+    SECTION("scalars do not throw with use_type=true, use_count=false")
+    {
+        CHECK_NOTHROW(json::to_bjdata(42, false, true));
+        CHECK_NOTHROW(json::to_bjdata(3.14, false, true));
+        CHECK_NOTHROW(json::to_bjdata("hello", false, true));
+        CHECK_NOTHROW(json::to_bjdata(true, false, true));
+        CHECK_NOTHROW(json::to_bjdata(nullptr, false, true));
+    }
+
+    SECTION("empty containers do not throw with use_type=true, use_count=false")
+    {
+        CHECK_NOTHROW(json::to_bjdata(json::array(), false, true));
+        CHECK_NOTHROW(json::to_bjdata(json::object(), false, true));
+    }
+
+    SECTION("valid combinations on non-empty containers")
+    {
+        const json j = {{"a", 1}, {"b", 2}};
+        CHECK_NOTHROW(json::to_bjdata(j, false, false));
+        CHECK_NOTHROW(json::to_bjdata(j, true, false));
+        CHECK_NOTHROW(json::to_bjdata(j, true, true));
+    }
+}
+
 TEST_CASE("BJData roundtrips" * doctest::skip())
 {
     SECTION("input from self-generated BJData files")

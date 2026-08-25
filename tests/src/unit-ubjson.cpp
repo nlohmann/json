@@ -2503,6 +2503,48 @@ TEST_CASE("all UBJSON first bytes")
 }
 #endif
 
+TEST_CASE("UBJSON use_type requires use_size")
+{
+    SECTION("non-empty array throws other_error.502")
+    {
+        const json j = {1, 2, 3};
+        CHECK_THROWS_WITH_AS(json::to_ubjson(j, false, true),
+                             "[json.exception.other_error.502] use_type requires use_size = true",
+                             json::other_error&);
+    }
+
+    SECTION("non-empty object throws other_error.502")
+    {
+        const json j = {{"a", 1}, {"b", 2}};
+        CHECK_THROWS_WITH_AS(json::to_ubjson(j, false, true),
+                             "[json.exception.other_error.502] use_type requires use_size = true",
+                             json::other_error&);
+    }
+
+    SECTION("scalars do not throw with use_type=true, use_count=false")
+    {
+        CHECK_NOTHROW(json::to_ubjson(42, false, true));
+        CHECK_NOTHROW(json::to_ubjson(3.14, false, true));
+        CHECK_NOTHROW(json::to_ubjson("hello", false, true));
+        CHECK_NOTHROW(json::to_ubjson(true, false, true));
+        CHECK_NOTHROW(json::to_ubjson(nullptr, false, true));
+    }
+
+    SECTION("empty containers do not throw with use_type=true, use_count=false")
+    {
+        CHECK_NOTHROW(json::to_ubjson(json::array(), false, true));
+        CHECK_NOTHROW(json::to_ubjson(json::object(), false, true));
+    }
+
+    SECTION("valid combinations on non-empty containers")
+    {
+        const json j = {1, 2, 3};
+        CHECK_NOTHROW(json::to_ubjson(j, false, false));
+        CHECK_NOTHROW(json::to_ubjson(j, true, false));
+        CHECK_NOTHROW(json::to_ubjson(j, true, true));
+    }
+}
+
 TEST_CASE("UBJSON roundtrips" * doctest::skip())
 {
     SECTION("input from self-generated UBJSON files")
