@@ -1126,3 +1126,17 @@ Executing `{"op":"test", "path":"/baz", "value":"bar"}` on `{"baz": "qux"}`:
 ```
 [json.exception.other_error.501] unsuccessful: {"op":"test","path":"/baz","value":"bar"}
 ```
+
+### json.exception.other_error.502
+
+[`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) and [`to_bjdata`](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md) were called with `use_type = true` but `use_size = false`. UBJSON requires a size marker (`#`) after a type marker (`$`).
+
+Example message
+
+```
+[json.exception.other_error.502] use_type requires use_size = true
+```
+
+Note
+
+This exception was added in version 3.13.0. Before that, debug builds aborted on an assertion and release builds wrote a `$` marker without `#`, which [`from_ubjson`](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md) then rejected.

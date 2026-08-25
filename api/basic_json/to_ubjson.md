@@ -45,6 +45,11 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 
 Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
 
+## Exceptions
+
+- Throws [`other_error.502`](../../home/exceptions.md#jsonexceptionother_error502) if `use_type` is true and `use_size`
+  is false.
+
 ## Complexity
 
 Linear in the size of the JSON value `j`.

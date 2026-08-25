@@ -228,7 +228,7 @@ this requirement is not met.
 
   Postconditions
 
-  - `` `*this `` has the same value as `other` before the call.
+  - \*this`has the same value as`other\` before the call.
   - `other` is a JSON `null` value
 
 ## Examples
