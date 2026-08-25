@@ -98,6 +98,17 @@ The library maps BSON record types to JSON value types as follows:
     This library deserializes BSON type `0x11` (Timestamp) as a `number_unsigned` value. The 64-bit value is preserved,
     but the Timestamp type information is not.
 
+!!! warning "Lenient BSON input handling"
+
+    The BSON reader is lenient in a few areas where the BSON specification is more restrictive:
+
+    - array element keys are not checked against the required decimal sequence (`0`, `1`, `2`, ...),
+    - any non-zero byte is accepted as `true` for the boolean type, and
+    - the payload for binary subtype `0x02` is returned as-is, including its inner length prefix.
+
+    If BSON input must be validated for strict specification compliance, validate it separately before passing it to
+    `from_bson()`.
+
 ??? example
 
     ```cpp
