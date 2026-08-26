@@ -1562,22 +1562,47 @@ TEST_CASE("issue #5338 - truncated CBOR tagged binary subtype is rejected")
 
 TEST_CASE("issue #5408 - JSON_HEDLEY macros do not leak after include")
 {
+    const bool pragma_leaked =
 #ifdef JSON_HEDLEY_PRAGMA
-    FAIL_CHECK("JSON_HEDLEY_PRAGMA leaked");
+        true
+#else
+        false
 #endif
+        ;
+    const bool predict_true_leaked =
 #ifdef JSON_HEDLEY_PREDICT_TRUE
-    FAIL_CHECK("JSON_HEDLEY_PREDICT_TRUE leaked");
+        true
+#else
+        false
 #endif
+        ;
+    const bool predict_false_leaked =
 #ifdef JSON_HEDLEY_PREDICT_FALSE
-    FAIL_CHECK("JSON_HEDLEY_PREDICT_FALSE leaked");
+        true
+#else
+        false
 #endif
+        ;
+    const bool clang_declspec_leaked =
 #ifdef JSON_HEDLEY_CLANG_HAS_DECLSPEC_ATTRIBUTE
-    FAIL_CHECK("JSON_HEDLEY_CLANG_HAS_DECLSPEC_ATTRIBUTE leaked");
+        true
+#else
+        false
 #endif
+        ;
+    const bool likely_leaked =
 #ifdef JSON_HEDLEY_LIKELY
-    FAIL_CHECK("JSON_HEDLEY_LIKELY leaked");
+        true
+#else
+        false
 #endif
-    CHECK(true);
+        ;
+
+    CHECK_FALSE(pragma_leaked);
+    CHECK_FALSE(predict_true_leaked);
+    CHECK_FALSE(predict_false_leaked);
+    CHECK_FALSE(clang_declspec_leaked);
+    CHECK_FALSE(likely_leaked);
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
