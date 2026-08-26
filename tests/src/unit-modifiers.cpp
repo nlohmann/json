@@ -801,6 +801,30 @@ TEST_CASE("modifiers")
                     j1.update(j2, true);
                     CHECK(j1 == json({{"string", "t"}, {"numbers", 1}}));
                 }
+
+                SECTION("overwrite primitive with object")
+                {
+                    json j1 = {{"k", 1}};
+                    json const j2 = {{"k", {{"x", 2}}}};
+                    j1.update(j2, true);
+                    CHECK(j1 == json({{"k", {{"x", 2}}}}));
+                }
+
+                SECTION("overwrite array with object")
+                {
+                    json j1 = {{"k", {1, 2}}};
+                    json const j2 = {{"k", {{"x", 2}}}};
+                    j1.update(j2, true);
+                    CHECK(j1 == json({{"k", {{"x", 2}}}}));
+                }
+
+                SECTION("overwrite nested primitive with object")
+                {
+                    json j1 = {{"k", {{"inner", 1}}}};
+                    json const j2 = {{"k", {{"inner", {{"x", 2}}}}}};
+                    j1.update(j2, true);
+                    CHECK(j1 == json({{"k", {{"inner", {{"x", 2}}}}}}));
+                }
             }
         }
     }
