@@ -21,6 +21,11 @@
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
+// Issue #5408: these JSON_HEDLEY_* names must not leak into user code.
+#if defined(JSON_HEDLEY_PRAGMA) || defined(JSON_HEDLEY_PREDICT_TRUE) || defined(JSON_HEDLEY_PREDICT_FALSE) || defined(JSON_HEDLEY_CLANG_HAS_DECLSPEC_ATTRIBUTE)
+    #error "JSON_HEDLEY macros leaked after including nlohmann/json.hpp (issue #5408)"
+#endif
 using ordered_json = nlohmann::ordered_json;
 #ifdef JSON_TEST_NO_GLOBAL_UDLS
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
@@ -1553,6 +1558,26 @@ TEST_CASE("issue #5338 - truncated CBOR tagged binary subtype is rejected")
             CHECK(result.is_discarded());
         }
     }
+}
+
+TEST_CASE("issue #5408 - JSON_HEDLEY macros do not leak after include")
+{
+#ifdef JSON_HEDLEY_PRAGMA
+    FAIL_CHECK("JSON_HEDLEY_PRAGMA leaked");
+#endif
+#ifdef JSON_HEDLEY_PREDICT_TRUE
+    FAIL_CHECK("JSON_HEDLEY_PREDICT_TRUE leaked");
+#endif
+#ifdef JSON_HEDLEY_PREDICT_FALSE
+    FAIL_CHECK("JSON_HEDLEY_PREDICT_FALSE leaked");
+#endif
+#ifdef JSON_HEDLEY_CLANG_HAS_DECLSPEC_ATTRIBUTE
+    FAIL_CHECK("JSON_HEDLEY_CLANG_HAS_DECLSPEC_ATTRIBUTE leaked");
+#endif
+#ifdef JSON_HEDLEY_LIKELY
+    FAIL_CHECK("JSON_HEDLEY_LIKELY leaked");
+#endif
+    CHECK(true);
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
