@@ -128,7 +128,7 @@ The library uses the following mapping from JSON values types to BJData types ac
     - every entry of `"_ArraySize_"` is a non-negative integer, and their product is representable as a `std::size_t`,
     - `"_ArrayData_"` holds exactly that many elements, and
     - every element of `"_ArrayData_"` is a number of the kind named by `"_ArrayType_"` (a floating-point number for
-      `single` and `double`, an integer otherwise).
+      `single` and `double`, an integer otherwise) and, for integer types, fits in that type's range without truncation.
 
     The current version of this library does not yet support automatic detection of and conversion from a nested JSON
     array input to a BJData ND-array.

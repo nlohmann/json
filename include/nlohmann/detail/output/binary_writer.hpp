@@ -1648,6 +1648,70 @@ class binary_writer
     }
 
     /*!
+    @brief whether an ndarray _ArrayData_ integer fits the BJData wire type
+
+    @param[in] el    an integer JSON value
+    @param[in] dtype BJData type marker (U/i/u/I/m/l/M/L/C/B)
+
+    @return true if `el` can be written as `dtype` without truncation
+    */
+    static bool bjdata_ndarray_element_in_range(const BasicJsonType& el, const CharType dtype)
+    {
+        if (el.is_number_unsigned())
+        {
+            const auto v = el.template get<std::uint64_t>();
+            switch (dtype)
+            {
+                case 'U':
+                case 'C':
+                case 'B':
+                    return value_in_range_of<std::uint8_t>(v);
+                case 'i':
+                    return value_in_range_of<std::int8_t>(v);
+                case 'u':
+                    return value_in_range_of<std::uint16_t>(v);
+                case 'I':
+                    return value_in_range_of<std::int16_t>(v);
+                case 'm':
+                    return value_in_range_of<std::uint32_t>(v);
+                case 'l':
+                    return value_in_range_of<std::int32_t>(v);
+                case 'M':
+                    return true;
+                case 'L':
+                    return value_in_range_of<std::int64_t>(v);
+                default:
+                    return true; // LCOV_EXCL_LINE
+            }
+        }
+
+        const auto v = el.template get<std::int64_t>();
+        switch (dtype)
+        {
+            case 'U':
+            case 'C':
+            case 'B':
+                return value_in_range_of<std::uint8_t>(v);
+            case 'i':
+                return value_in_range_of<std::int8_t>(v);
+            case 'u':
+                return value_in_range_of<std::uint16_t>(v);
+            case 'I':
+                return value_in_range_of<std::int16_t>(v);
+            case 'm':
+                return value_in_range_of<std::uint32_t>(v);
+            case 'l':
+                return value_in_range_of<std::int32_t>(v);
+            case 'M':
+                return value_in_range_of<std::uint64_t>(v);
+            case 'L':
+                return true;
+            default:
+                return true; // LCOV_EXCL_LINE
+        }
+    }
+
+    /*!
     @return false if the object is successfully converted to a bjdata ndarray, true if the type or size is invalid
     */
     bool write_bjdata_ndarray(const typename BasicJsonType::object_t& value, const bool use_count, const bool use_type, const bjdata_version_t bjdata_version)
@@ -1713,10 +1777,20 @@ class binary_writer
         // was built (parsing stores non-negative integers as unsigned, the C++
         // API stores int literals as signed), so both are accepted here and the
         // writes below go through get<>, which reads the member that is active.
+        //
+        // dtype also names the wire *range*. An in-kind integer that does not
+        // fit (e.g. 256 as uint8) is static_cast-truncated today, so the value
+        // round-trips to a different number with no error. That is the same
+        // class of silent corruption as a wrong kind; fall back to a plain
+        // object encoding instead.
         const bool ndarray_is_float = (dtype == 'd' || dtype == 'D');
         for (const auto& el : value.at(key))
         {
             if (ndarray_is_float ? !el.is_number_float() : !el.is_number_integer())
+            {
+                return true;
+            }
+            if (!ndarray_is_float && !bjdata_ndarray_element_in_range(el, dtype))
             {
                 return true;
             }

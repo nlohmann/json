@@ -2623,6 +2623,62 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(out_neg) == j_neg);
             }
 
+            SECTION("ndarray with out-of-range _ArrayData_ is written as an object")
+            {
+                // The writer used to static_cast-truncate values that did not
+                // fit the named type (256 as uint8 became 0). Fall back to a
+                // plain object so the value is not silently changed.
+
+                auto check_object_fallback = [](const json& j)
+                {
+                    const auto out = json::to_bjdata(j);
+                    CHECK(out.at(0) == '{');
+                    CHECK(json::from_bjdata(out) == j);
+                };
+
+                auto check_ndarray = [](const json& j)
+                {
+                    // 1-D annotated objects encode as a packed array, which
+                    // from_bjdata() returns as a JSON array rather than the
+                    // original annotation object
+                    const auto out = json::to_bjdata(j);
+                    CHECK(out.at(0) == '[');
+                };
+
+                // reported case: 256 does not fit uint8
+                check_object_fallback(json({{"_ArrayType_", "uint8"}, {"_ArraySize_", {2}}, {"_ArrayData_", {1, 256}}}));
+                check_object_fallback(json::parse(R"({"_ArrayType_":"uint8","_ArraySize_":[2],"_ArrayData_":[1,256]})"));
+
+                // negative value does not fit any unsigned type
+                check_object_fallback(json({{"_ArrayType_", "uint8"}, {"_ArraySize_", {1}}, {"_ArrayData_", {-1}}}));
+                check_object_fallback(json({{"_ArrayType_", "uint16"}, {"_ArraySize_", {1}}, {"_ArrayData_", {-1}}}));
+                check_object_fallback(json({{"_ArrayType_", "uint32"}, {"_ArraySize_", {1}}, {"_ArrayData_", {-1}}}));
+                check_object_fallback(json({{"_ArrayType_", "uint64"}, {"_ArraySize_", {1}}, {"_ArrayData_", {-1}}}));
+                check_object_fallback(json({{"_ArrayType_", "char"}, {"_ArraySize_", {1}}, {"_ArrayData_", {-1}}}));
+                check_object_fallback(json({{"_ArrayType_", "byte"}, {"_ArraySize_", {1}}, {"_ArrayData_", {256}}}));
+
+                // signed types: one past the max / one below the min
+                check_object_fallback(json({{"_ArrayType_", "int8"}, {"_ArraySize_", {1}}, {"_ArrayData_", {128}}}));
+                check_object_fallback(json({{"_ArrayType_", "int8"}, {"_ArraySize_", {1}}, {"_ArrayData_", {-129}}}));
+                check_object_fallback(json({{"_ArrayType_", "int16"}, {"_ArraySize_", {1}}, {"_ArrayData_", {32768}}}));
+                check_object_fallback(json({{"_ArrayType_", "int16"}, {"_ArraySize_", {1}}, {"_ArrayData_", {-32769}}}));
+                check_object_fallback(json({{"_ArrayType_", "int32"}, {"_ArraySize_", {1}}, {"_ArrayData_", {2147483648ll}}}));
+                check_object_fallback(json::parse(R"({"_ArrayType_":"int32","_ArraySize_":[1],"_ArrayData_":[-2147483649]})"));
+                check_object_fallback(json::parse(R"({"_ArrayType_":"int64","_ArraySize_":[1],"_ArrayData_":[9223372036854775808]})"));
+
+                // unsigned types: one past the max
+                check_object_fallback(json({{"_ArrayType_", "uint16"}, {"_ArraySize_", {1}}, {"_ArrayData_", {65536}}}));
+                check_object_fallback(json::parse(R"({"_ArrayType_":"uint32","_ArraySize_":[1],"_ArrayData_":[4294967296]})"));
+                check_object_fallback(json({{"_ArrayType_", "char"}, {"_ArraySize_", {1}}, {"_ArrayData_", {256}}}));
+
+                // in-range values still encode as an ndarray, including the
+                // extrema of each integer type
+                check_ndarray(json({{"_ArrayType_", "uint8"}, {"_ArraySize_", {2}}, {"_ArrayData_", {0, 255}}}));
+                check_ndarray(json({{"_ArrayType_", "int8"}, {"_ArraySize_", {2}}, {"_ArrayData_", {-128, 127}}}));
+                check_ndarray(json({{"_ArrayType_", "uint16"}, {"_ArraySize_", {1}}, {"_ArrayData_", {65535}}}));
+                check_ndarray(json({{"_ArrayType_", "int16"}, {"_ArraySize_", {2}}, {"_ArrayData_", {-32768, 32767}}}));
+            }
+
             SECTION("ndarray parsed from text is written as a typed array")
             {
                 // json::parse stores a non-negative integer as number_unsigned while
@@ -3883,6 +3939,18 @@ TEST_CASE("BJData use_type requires use_size")
         CHECK_NOTHROW(json::to_bjdata(j, true, false));
         CHECK_NOTHROW(json::to_bjdata(j, true, true));
     }
+}
+
+TEST_CASE("issue #5403 out-of-range ndarray elements fall back to object")
+{
+    // 256 does not fit uint8; previously static_cast truncated it to 0
+    json const j = {{"_ArrayType_", "uint8"}, {"_ArraySize_", {2}}, {"_ArrayData_", {1, 256}}};
+    const auto out = json::to_bjdata(j);
+    CHECK(out.at(0) == '{');
+    CHECK(json::from_bjdata(out) == j);
+
+    json const in_range = {{"_ArrayType_", "uint8"}, {"_ArraySize_", {2}}, {"_ArrayData_", {1, 255}}};
+    CHECK(json::to_bjdata(in_range).at(0) == '[');
 }
 
 TEST_CASE("BJData roundtrips" * doctest::skip())
