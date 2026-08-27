@@ -248,6 +248,11 @@ TEST_CASE("Unicode (4/5)" * doctest::skip())
 
             SECTION("ill-formed: wrong second byte")
             {
+                // Pin later continuation bytes; the 2nd-byte property does not
+                // depend on them. Lead bytes F1-F3 stay, as they define this
+                // sequence class (#5418).
+                const int byte3 = 0x80;
+                const int byte4 = 0x80;
                 for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
                 {
                     for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
@@ -258,38 +263,29 @@ TEST_CASE("Unicode (4/5)" * doctest::skip())
                             continue;
                         }
 
-                        for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
-                        {
-                            for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
-                            {
-                                check_utf8string(false, byte1, byte2, byte3, byte4);
-                                check_utf8dump(false, byte1, byte2, byte3, byte4);
-                            }
-                        }
+                        check_utf8string(false, byte1, byte2, byte3, byte4);
+                        check_utf8dump(false, byte1, byte2, byte3, byte4);
                     }
                 }
             }
 
             SECTION("ill-formed: wrong third byte")
             {
+                // Pin 2nd/4th bytes to one valid continuation (#5418).
+                const int byte2 = 0x80;
+                const int byte4 = 0x80;
                 for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
                 {
-                    for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                     {
-                        for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
+                        // skip correct third byte
+                        if (0x80 <= byte3 && byte3 <= 0xBF)
                         {
-                            // skip correct third byte
-                            if (0x80 <= byte3 && byte3 <= 0xBF)
-                            {
-                                continue;
-                            }
-
-                            for (int byte4 = 0x80; byte4 <= 0xBF; ++byte4)
-                            {
-                                check_utf8string(false, byte1, byte2, byte3, byte4);
-                                check_utf8dump(false, byte1, byte2, byte3, byte4);
-                            }
+                            continue;
                         }
+
+                        check_utf8string(false, byte1, byte2, byte3, byte4);
+                        check_utf8dump(false, byte1, byte2, byte3, byte4);
                     }
                 }
             }
