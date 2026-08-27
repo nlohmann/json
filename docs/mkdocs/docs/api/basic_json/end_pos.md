@@ -6,7 +6,7 @@ constexpr std::size_t end_pos() const noexcept;
 #endif
 ```
 
-Returns the position immediately following the last character of the JSON string from which the value was parsed from.
+Returns the UTF-8 byte offset immediately following the last character of the JSON text from which the value was parsed.
 
 | JSON type | return value                      |
 |-----------|-----------------------------------|
@@ -19,8 +19,9 @@ Returns the position immediately following the last character of the JSON string
 
 ## Return value
 
-the position of the character _following_ the last character of the given value in the parsed JSON string, if the
-value was created by the [`parse`](parse.md) function, or `std::string::npos` if the value was constructed otherwise
+the UTF-8 byte offset of the character _following_ the last character of the given value in the parsed JSON text, if
+the value was created by the [`parse`](parse.md) function, or `std::string::npos` if the value was constructed
+otherwise (including via [`sax_parse`](sax_parse.md) or a binary format parser)
 
 ## Exception safety
 
@@ -40,7 +41,18 @@ Constant.
 !!! warning "Invalidation"
 
     The returned positions are only valid as long as the JSON value is not changed. The positions are *not* updated
-    when the JSON value is changed.
+    when the JSON value is changed. Assigning, `push_back`, or `erase` leaves parent and remaining sibling positions
+    pointing at the original text; newly constructed replacements have `std::string::npos`.
+
+!!! note "Copy, move, and swap"
+
+    Copying a value copies its positions. Moving transfers them and resets the source to `std::string::npos`.
+    Swapping two `basic_json` values exchanges positions.
+
+!!! note "Wide strings"
+
+    Positions from `parse(std::wstring)` / `u16string` / `u32string` index the transcoded UTF-8 byte stream, not the
+    original wide string.
 
 ## Examples
 

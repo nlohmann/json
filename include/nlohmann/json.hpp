@@ -1266,8 +1266,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         : json_base_class_t(std::forward<json_base_class_t>(other)),
           m_data(std::move(other.m_data)) // cppcheck-suppress[accessForwarded] TODO check
 #if JSON_DIAGNOSTIC_POSITIONS
-        , start_position(other.start_position) // cppcheck-suppress[accessForwarded] TODO check
-        , end_position(other.end_position) // cppcheck-suppress[accessForwarded] TODO check
+        , start_position(other.start_position) // cppcheck-suppress[accessForwarded]
+        , end_position(other.end_position) // cppcheck-suppress[accessForwarded]
 #endif
     {
         // check that the passed value is valid

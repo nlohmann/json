@@ -1263,3 +1263,46 @@ TEST_CASE_TEMPLATE("deserialization of different character types (UTF-32)", T, c
     CHECK(json::sax_parse(v, &l));
     CHECK(l.events.size() == 1);
 }
+
+TEST_CASE("accept and sax_parse ignore trailing commas")
+{
+    const std::string array_with_comma = "[1, 2, ]";
+    const std::string object_with_comma = "{\"a\": 1, }";
+
+    CHECK(!json::accept(array_with_comma));
+    CHECK(json::accept(array_with_comma, false, true));
+    CHECK(!json::accept(object_with_comma));
+    CHECK(json::accept(object_with_comma, false, true));
+
+    {
+        SaxEventLogger l;
+        CHECK(!json::sax_parse(array_with_comma, &l));
+    }
+    {
+        SaxEventLogger l;
+        CHECK(json::sax_parse(array_with_comma, &l, json::input_format_t::json, true, false, true));
+        CHECK(l.events == std::vector<std::string>(
+        {
+            "start_array()", "number_unsigned(1)", "number_unsigned(2)", "end_array()"
+        }));
+    }
+    {
+        SaxEventLogger l;
+        CHECK(!json::sax_parse(object_with_comma, &l));
+    }
+    {
+        SaxEventLogger l;
+        CHECK(json::sax_parse(object_with_comma, &l, json::input_format_t::json, true, false, true));
+        CHECK(l.events == std::vector<std::string>(
+        {
+            "start_object()", "key(a)", "number_unsigned(1)", "end_object()"
+        }));
+    }
+
+    CHECK(!json::accept("[,]", false, true));
+    CHECK(!json::accept("{,}", false, true));
+    {
+        SaxEventLogger l;
+        CHECK(!json::sax_parse("[,]", &l, json::input_format_t::json, true, false, true));
+    }
+}
