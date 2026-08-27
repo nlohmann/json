@@ -296,25 +296,23 @@ TEST_CASE("Unicode (4/5)" * doctest::skip())
 
             SECTION("ill-formed: wrong fourth byte")
             {
-                for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
+                // Pin unrelated bytes to representative valid values. The
+                // previous guard checked byte3 (always valid in this loop) so
+                // the body never ran. Sweeping every valid prefix would add
+                // ~2.3e6 iterations; the fourth-byte property is independent.
+                const int byte1 = 0xF1;
+                const int byte2 = 0x80;
+                const int byte3 = 0x80;
+                for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
                 {
-                    for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
+                    // skip correct fourth byte
+                    if (0x80 <= byte4 && byte4 <= 0xBF)
                     {
-                        for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
-                        {
-                            for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
-                            {
-                                // skip correct fourth byte
-                                if (0x80 <= byte3 && byte3 <= 0xBF)
-                                {
-                                    continue;
-                                }
-
-                                check_utf8string(false, byte1, byte2, byte3, byte4);
-                                check_utf8dump(false, byte1, byte2, byte3, byte4);
-                            }
-                        }
+                        continue;
                     }
+
+                    check_utf8string(false, byte1, byte2, byte3, byte4);
+                    check_utf8dump(false, byte1, byte2, byte3, byte4);
                 }
             }
         }
