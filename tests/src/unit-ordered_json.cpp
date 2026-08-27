@@ -70,6 +70,83 @@ TEST_CASE("ordered_json")
     CHECK(oj1.dump() == "{\"c\":1,\"b\":2,\"a\":3,\"d\":42}");
 }
 
+TEST_CASE("ordered_json binary formats preserve insertion order")
+{
+    ordered_json oj;
+    oj["z"] = 1;
+    oj["a"] = 2;
+    oj["m"] = 3;
+
+    SECTION("CBOR")
+    {
+        const auto packed = ordered_json::to_cbor(oj);
+        const auto back = ordered_json::from_cbor(packed);
+        CHECK(back.dump() == "{\"z\":1,\"a\":2,\"m\":3}");
+    }
+
+    SECTION("MessagePack")
+    {
+        const auto packed = ordered_json::to_msgpack(oj);
+        const auto back = ordered_json::from_msgpack(packed);
+        CHECK(back.dump() == "{\"z\":1,\"a\":2,\"m\":3}");
+    }
+
+    SECTION("BSON")
+    {
+        const auto packed = ordered_json::to_bson(oj);
+        const auto back = ordered_json::from_bson(packed);
+        CHECK(back.dump() == "{\"z\":1,\"a\":2,\"m\":3}");
+    }
+
+    SECTION("UBJSON")
+    {
+        const auto packed = ordered_json::to_ubjson(oj);
+        const auto back = ordered_json::from_ubjson(packed);
+        CHECK(back.dump() == "{\"z\":1,\"a\":2,\"m\":3}");
+    }
+}
+
+TEST_CASE("ordered_json flatten, unflatten, and patch")
+{
+    ordered_json oj;
+    oj["z"] = {{"b", 1}};
+    oj["a"] = 2;
+
+    SECTION("flatten/unflatten keep object key order")
+    {
+        const auto flat = oj.flatten();
+        CHECK(flat.dump() == "{\"/z/b\":1,\"/a\":2}");
+        CHECK(flat.unflatten().dump() == oj.dump());
+    }
+
+    SECTION("diff/patch round-trip")
+    {
+        ordered_json other = oj;
+        other["a"] = 9;
+        const auto patch = ordered_json::diff(oj, other);
+        CHECK(oj.patch(patch) == other);
+
+        ordered_json inplace = oj;
+        inplace.patch_inplace(patch);
+        CHECK(inplace == other);
+    }
+
+    SECTION("update merge_objects=true recurses into objects")
+    {
+        ordered_json target;
+        target["z"] = {{"b", 1}, {"c", 2}};
+        target["a"] = 3;
+        ordered_json source;
+        source["z"] = {{"c", 9}, {"d", 4}};
+        target.update(source, true);
+        CHECK(target["z"]["b"] == 1);
+        CHECK(target["z"]["c"] == 9);
+        CHECK(target["z"]["d"] == 4);
+        CHECK(target["a"] == 3);
+        CHECK(target.dump() == "{\"z\":{\"b\":1,\"c\":9,\"d\":4},\"a\":3}");
+    }
+}
+
 TEST_CASE("regression test for issue #3732 - iteration_proxy_value<iter_impl<ordered_json>>")
 {
     // Naming the proxy type in a function-parameter position forces eager
