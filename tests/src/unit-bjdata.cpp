@@ -3885,6 +3885,26 @@ TEST_CASE("BJData use_type requires use_size")
     }
 }
 
+TEST_CASE("issue #5398 non-string _ArrayType_ falls back to object")
+{
+    json j;
+    j["_ArrayType_"] = 1;
+    j["_ArraySize_"] = json::array({2});
+    j["_ArrayData_"] = json::array({1, 2});
+
+    const auto out = json::to_bjdata(j);
+    CHECK(out.at(0) == '{');
+    CHECK(json::from_bjdata(out) == j);
+
+    json j_bool = {{"_ArrayType_", true}, {"_ArraySize_", {1}}, {"_ArrayData_", {1}}};
+    CHECK(json::to_bjdata(j_bool).at(0) == '{');
+    CHECK(json::from_bjdata(json::to_bjdata(j_bool)) == j_bool);
+
+    json j_null = {{"_ArrayType_", nullptr}, {"_ArraySize_", {1}}, {"_ArrayData_", {1}}};
+    CHECK(json::to_bjdata(j_null).at(0) == '{');
+    CHECK(json::from_bjdata(json::to_bjdata(j_null)) == j_null);
+}
+
 TEST_CASE("BJData roundtrips" * doctest::skip())
 {
     SECTION("input from self-generated BJData files")
