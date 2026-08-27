@@ -88,6 +88,20 @@ target_include_directories(test_main PUBLIC
     ${PROJECT_BINARY_DIR}/include)
 target_link_libraries(test_main PUBLIC ${NLOHMANN_JSON_TARGET_NAME})
 
+# Generate leak checks for every JSON_HEDLEY_* macro defined in hedley.hpp.
+# unit-hedley.cpp includes the result after nlohmann/json.hpp.
+set(hedley_undef_checks "${PROJECT_BINARY_DIR}/include/hedley_undef_checks.inc")
+execute_process(
+    COMMAND ${CMAKE_COMMAND}
+        "-DHEDLEY_HPP=${PROJECT_SOURCE_DIR}/include/nlohmann/thirdparty/hedley/hedley.hpp"
+        "-DOUTPUT=${hedley_undef_checks}"
+        -P ${PROJECT_SOURCE_DIR}/cmake/scripts/gen_hedley_undef_check.cmake
+    RESULT_VARIABLE hedley_undef_check_result
+)
+if(NOT hedley_undef_check_result EQUAL 0)
+    message(FATAL_ERROR "Failed to generate Hedley undef checks")
+endif()
+
 #############################################################################
 # define test- and standard-specific build settings
 #############################################################################

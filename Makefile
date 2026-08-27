@@ -1,4 +1,4 @@
-.PHONY: pretty clean ChangeLog.md release
+.PHONY: pretty clean ChangeLog.md release update_hedley update_hedley_undef
 
 ##########################################################################
 # configuration
@@ -41,6 +41,8 @@ all:
 	@echo "fuzz_testing_ubjson - prepare fuzz testing of the UBJSON parser"
 	@echo "pretty - beautify code with Artistic Style"
 	@echo "run_benchmarks - build and run benchmarks"
+	@echo "update_hedley - download Hedley and regenerate hedley.hpp / hedley_undef.hpp"
+	@echo "update_hedley_undef - rebuild hedley_undef.hpp from JSON_HEDLEY_* #define names"
 
 
 ##########################################################################
@@ -241,10 +243,16 @@ update_hedley:
 	rm -f include/nlohmann/thirdparty/hedley/hedley.hpp include/nlohmann/thirdparty/hedley/hedley_undef.hpp
 	curl https://raw.githubusercontent.com/nemequ/hedley/master/hedley.h -o include/nlohmann/thirdparty/hedley/hedley.hpp
 	$(SED) -i 's/HEDLEY_/JSON_HEDLEY_/g' include/nlohmann/thirdparty/hedley/hedley.hpp
-	grep "[[:blank:]]*#[[:blank:]]*undef" include/nlohmann/thirdparty/hedley/hedley.hpp | grep -v "__" | sort | uniq | $(SED) 's/ //g' | $(SED) 's/undef/undef /g' > include/nlohmann/thirdparty/hedley/hedley_undef.hpp
 	$(SED) -i '1s/^/#pragma once\n\n/' include/nlohmann/thirdparty/hedley/hedley.hpp
-	$(SED) -i '1s/^/#pragma once\n\n/' include/nlohmann/thirdparty/hedley/hedley_undef.hpp
+	$(MAKE) update_hedley_undef
 	$(MAKE) amalgamate
+
+# Rebuild hedley_undef.hpp from every JSON_HEDLEY_* name that hedley.hpp #defines.
+# Hedley does not #undef all of its public macros internally (see #5408), so
+# grepping those #undef lines misses names such as JSON_HEDLEY_PRAGMA.
+update_hedley_undef:
+	grep -E '^[[:blank:]]*#[[:blank:]]*define[[:blank:]]+JSON_HEDLEY_[A-Z0-9_]+' include/nlohmann/thirdparty/hedley/hedley.hpp | $(SED) 's/^[[:blank:]]*#[[:blank:]]*define[[:blank:]]*\(JSON_HEDLEY_[A-Z0-9_]*\).*/#undef \1/' | sort | uniq > include/nlohmann/thirdparty/hedley/hedley_undef.hpp
+	$(SED) -i '1s/^/#pragma once\n\n/' include/nlohmann/thirdparty/hedley/hedley_undef.hpp
 
 ##########################################################################
 # serve_header.py
