@@ -3986,3 +3986,20 @@ TEST_CASE("BJData roundtrips" * doctest::skip())
         }
     }
 }
+
+TEST_CASE("issue #5404 byte ndarray is Draft-3 only")
+{
+    const json ndarray =
+    {
+        {"_ArrayType_", "byte"},
+        {"_ArraySize_", {2}},
+        {"_ArrayData_", {1, 2}}
+    };
+
+    const auto draft2 = json::to_bjdata(ndarray);
+    CHECK(std::find(draft2.begin(), draft2.end(), static_cast<std::uint8_t>('B')) == draft2.end());
+    CHECK(json::from_bjdata(draft2).is_object());
+
+    const auto draft3 = json::to_bjdata(ndarray, false, false, json::bjdata_version_t::draft3);
+    CHECK(std::find(draft3.begin(), draft3.end(), static_cast<std::uint8_t>('B')) != draft3.end());
+}
