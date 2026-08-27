@@ -4936,6 +4936,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 // note erase performs range check
                 parent.erase(json_pointer::template array_index<basic_json_t>(last_path));
             }
+            else
+            {
+                // RFC 6902 §4.2: the target location MUST exist. A primitive
+                // or null parent cannot contain the token, so this is the same
+                // class of error as a missing object key.
+                JSON_THROW(out_of_range::create(403, detail::concat("key '", last_path, "' not found"), &parent));
+            }
         };
 
         // type check: top level value must be an array
