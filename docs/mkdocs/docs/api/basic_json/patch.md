@@ -34,6 +34,8 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
   ("add", "remove", "move")
 - Throws [`out_of_range.411`](../../home/exceptions.md#jsonexceptionout_of_range411) if an "add" operation's target
   location has a parent that is neither an object nor an array.
+- Throws [`out_of_range.413`](../../home/exceptions.md#jsonexceptionout_of_range413) if a "move" operation's `from`
+  location is a proper prefix of `path` (RFC 6902 §4.4).
 - Throws [`other_error.501`](../../home/exceptions.md#jsonexceptionother_error501) if "test" operation was
   unsuccessful.
 
@@ -75,3 +77,5 @@ is thrown. In any case, the original value is not changed: the patch is applied 
 - Added in version 2.0.0.
 - Added [`out_of_range.411`](../../home/exceptions.md#jsonexceptionout_of_range411) and stopped relying on an internal assertion when an "add" operation's
   target location has a non-object/non-array parent in version 3.13.0.
+- Added [`out_of_range.413`](../../home/exceptions.md#jsonexceptionout_of_range413) when a "move" operation's `from`
+  location is a proper prefix of `path` in version 3.13.0.

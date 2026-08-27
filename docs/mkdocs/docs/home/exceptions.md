@@ -933,6 +933,20 @@ BSON stores the length of documents, arrays, strings, and binary values in a sig
     [`to_bson`](../api/basic_json/to_bson.md) produced documents with negative length prefixes that
     [`from_bson`](../api/basic_json/from_bson.md) rejected.
 
+### json.exception.out_of_range.413
+
+A JSON Patch `move` operation is forbidden when the `from` location is a proper prefix of the `path` location. [RFC 6902 §4.4](https://datatracker.ietf.org/doc/html/rfc6902#section-4.4) requires that a location cannot be moved into one of its children. The check compares JSON Pointer reference tokens, so an escaped token such as `/a~1b` (the single token `a/b`) is not treated as a prefix of `/a`.
+
+!!! failure "Example message"
+
+    ```
+    JSON Patch 'move': 'from' must not be a proper prefix of 'path'
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0. Before that, object targets happened to throw [`out_of_range.403`](#jsonexceptionout_of_range403) as a side effect of the subsequent `add`, while array targets silently produced a corrupted document.
+
 ## Further exceptions
 
 This exception is thrown in case of errors that cannot be classified with the
