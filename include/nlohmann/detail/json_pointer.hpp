@@ -748,7 +748,19 @@ class json_pointer
                         }
                     }
 
-                    const auto idx = array_index<BasicJsonType>(reference_token);
+                    // array_index throws out_of_range.404/410 when the token is
+                    // all digits but does not fit size_type; contains() is
+                    // documented not to throw, so treat that as "not present"
+                    // (same approach as get_unchecked above)
+                    typename BasicJsonType::size_type idx{};
+                    JSON_TRY
+                    {
+                        idx = array_index<BasicJsonType>(reference_token);
+                    }
+                    JSON_INTERNAL_CATCH (detail::out_of_range&)
+                    {
+                        return false;
+                    }
                     if (idx >= ptr->size())
                     {
                         // index out of range
