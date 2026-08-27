@@ -1388,3 +1388,13 @@ TEST_CASE("JSON patch - add to a primitive parent (regression #4292)")
         CHECK_THROWS_AS(doc.patch(patch), json::out_of_range&);
     }
 }
+
+TEST_CASE("JSON patch move from a proper prefix of path is rejected (RFC 6902 §4.4)")
+{
+    // Moving a location into one of its own children must fail. Without the
+    // prefix check, array targets "succeed" with a corrupted document.
+    json doc = json::parse("[[1,2],3]");
+    json const patch = json::parse(R"([{"op":"move","from":"/0","path":"/0/0"}])");
+    CHECK_THROWS_AS(doc.patch(patch), json::parse_error&);
+    CHECK(doc == json::parse("[[1,2],3]"));
+}
