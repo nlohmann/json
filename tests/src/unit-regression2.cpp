@@ -1555,4 +1555,18 @@ TEST_CASE("issue #5338 - truncated CBOR tagged binary subtype is rejected")
     }
 }
 
+TEST_CASE("issue #5407 - accept() overloads return a usable bool")
+{
+    // parse() already carries JSON_HEDLEY_WARN_UNUSED_RESULT; the two primary
+    // accept() overloads must as well. Using the return value is the
+    // observable contract those attributes protect.
+    CHECK(json::accept("true"));
+    CHECK(json::accept(std::string("true")));
+    const std::string array = "[1,2,3]";
+    CHECK(json::accept(array.begin(), array.end()));
+    CHECK(!json::accept("{"));
+    const std::string bad = "{";
+    CHECK(!json::accept(bad.begin(), bad.end()));
+}
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP

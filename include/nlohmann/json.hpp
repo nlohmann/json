@@ -4126,6 +4126,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief check if the input is valid JSON
     /// @sa https://json.nlohmann.me/api/basic_json/accept/
     template<typename InputType>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
     static bool accept(InputType&& i,
                        const bool ignore_comments = false,
                        const bool ignore_trailing_commas = false)
@@ -4137,6 +4138,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/accept/
     template<typename IteratorType, typename SentinelType = IteratorType,
              detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
     static bool accept(IteratorType first, SentinelType last,
                        const bool ignore_comments = false,
                        const bool ignore_trailing_commas = false)
