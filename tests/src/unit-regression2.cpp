@@ -1555,4 +1555,13 @@ TEST_CASE("issue #5338 - truncated CBOR tagged binary subtype is rejected")
     }
 }
 
+TEST_CASE("issue #5410 query functions return values that must be used")
+{
+    const json j = {{"a", 1}, {"b", json::array({2, 3})}};
+    CHECK(j.dump() == "{\"a\":1,\"b\":[2,3]}");
+    CHECK(j.type() == json::value_t::object);
+    CHECK_FALSE(j.empty());
+    CHECK(j.size() == 2);
+}
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
