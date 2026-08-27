@@ -77,4 +77,45 @@ TEST_CASE("Better diagnostics with positions")
         CHECK_THROWS_WITH_AS(doc.patch(patch),
                              "[json.exception.out_of_range.411] (/foo/bar) (bytes 14-24) cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array", json::out_of_range);
     }
+
+    SECTION("copy constructor keeps start/end positions")
+    {
+        const std::string text = R"({"a":1,"b":[2]})";
+        const json a = json::parse(text);
+        const json b = a;
+        CHECK(b.start_pos() == a.start_pos());
+        CHECK(b.end_pos() == a.end_pos());
+        CHECK(b.at("a").start_pos() == a.at("a").start_pos());
+        CHECK(b.at("b").end_pos() == a.at("b").end_pos());
+        CHECK(text.substr(b.at("a").start_pos(), b.at("a").end_pos() - b.at("a").start_pos()) == "1");
+    }
+
+    SECTION("move constructor resets the source positions to npos")
+    {
+        const std::string text = R"({"a":1})";
+        json a = json::parse(text);
+        const auto start = a.start_pos();
+        const auto end = a.end_pos();
+        json b = std::move(a);
+        CHECK(b.start_pos() == start);
+        CHECK(b.end_pos() == end);
+        CHECK(a.start_pos() == std::string::npos);
+        CHECK(a.end_pos() == std::string::npos);
+    }
+
+    SECTION("swap exchanges positions")
+    {
+        json a = json::parse(R"({"a":1})");
+        json b = json::parse(R"({"bb":22})");
+        const auto a_start = a.start_pos();
+        const auto a_end = a.end_pos();
+        const auto b_start = b.start_pos();
+        const auto b_end = b.end_pos();
+        using std::swap;
+        swap(a, b);
+        CHECK(a.start_pos() == b_start);
+        CHECK(a.end_pos() == b_end);
+        CHECK(b.start_pos() == a_start);
+        CHECK(b.end_pos() == a_end);
+    }
 }
