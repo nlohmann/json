@@ -6,7 +6,7 @@ the way the library uses the resulting [`object_t`](../../api/basic_json/object_
 [`array_t`](../../api/basic_json/array_t.md), [`string_t`](../../api/basic_json/string_t.md), etc. This page collects
 these requirements so they do not have to be discovered by trial and error. Each section also lists the concrete
 types that are known to work for that parameter, checked against Boost 1.83, Abseil 20250127.0, EASTL 3.21, `ankerl::unordered_dense`, `phmap`, and
-`robin_hood`.
+`robin_hood`, and Folly.
 
 ## How to read this page
 
@@ -47,9 +47,15 @@ Requirements are split into two groups:
     incomplete type. `#!cpp std::map` and `#!cpp std::vector` are required by the standard to support incomplete
     value types; most third-party containers are not, and inspecting the value type at class scope (for instance with
     `#!cpp std::is_trivially_move_assignable`) makes them unusable as `ObjectType` or `ArrayType`. This rules out
-    `absl::btree_map`, `phmap::btree_map`, `robin_hood::unordered_node_map`, `absl::InlinedVector`, `eastl::vector`,
-    and `eastl::hash_map`, among others, no matter how their template arguments are adapted. Boost.Container is the notable exception: it documents support for incomplete
+    `absl::btree_map`, `phmap::btree_map`, `robin_hood::unordered_node_map`, `folly::F14FastMap`,
+    `absl::InlinedVector`, `eastl::vector`, and `eastl::hash_map`, among others, no matter how their template
+    arguments are adapted. Boost.Container is the notable exception: it documents support for incomplete
     types, and all of its containers work here.
+
+!!! note "Folly requires C++20"
+
+    Folly's headers use `#!cpp consteval` and `#!cpp std::type_identity`, so any `basic_json` specialization that
+    names a Folly type has to be compiled as C++20 or later, whatever the rest of the library supports.
 
 ## `ObjectType`
 
@@ -179,7 +185,8 @@ The library does not sort or de-duplicate keys itself; the behavior described in
 | `boost::unordered_map`, `boost::unordered_flat_map`, `boost::unordered_node_map`, through the adapter shown above         | full                                                                          |
 | `absl::flat_hash_map`, `absl::node_hash_map`, through the adapter shown above                                            | full                                                                          |
 | `ankerl::unordered_dense::map` and `segmented_map`, `phmap::flat_hash_map` and `node_hash_map`, `robin_hood::unordered_flat_map`, through the adapter shown above | full                        |
-| `absl::btree_map`, `phmap::btree_map`, `robin_hood::unordered_node_map`, `eastl::hash_map`                               | not usable; require a complete value type                                     |
+| `folly::F14NodeMap`, through the adapter shown above                                                                     | full; requires C++20, see the note below                                      |
+| `absl::btree_map`, `phmap::btree_map`, `robin_hood::unordered_node_map`, `folly::F14FastMap`, `eastl::hash_map`           | not usable; require a complete value type                                     |
 | `eastl::map`                                                                                                             | not usable; EASTL iterators do not work with `#!cpp std::iterator_traits`      |
 | `tsl::ordered_map`                                                                                                       | not usable; its iterators expose the mapped value as `#!cpp const`             |
 | `#!cpp std::multimap`, `#!cpp std::unordered_multimap`                                                                   | not usable; `emplace` does not return `#!cpp std::pair<iterator, bool>`        |
@@ -224,8 +231,11 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | `#!cpp std::vector` (default) | full                                                                             |
 | `#!cpp std::deque`            | full; keeps references valid while the array grows, but see the note on `capacity()` above |
 | `#!cpp std::list`             | not usable; no `operator[]` and no random-access iterators                        |
-| `boost::container::vector`, `boost::container::deque`, `boost::container::stable_vector` | full; `stable_vector` keeps references valid across every insertion    |
-| `boost::container::small_vector` | full, through an alias that fixes the inline capacity                         |
+| `boost::container::vector`, `boost::container::deque`, `boost::container::stable_vector`, `boost::container::devector` | full; `stable_vector` keeps references valid across every insertion |
+| `boost::container::small_vector`, `folly::small_vector` | full, through an alias that fixes the inline capacity          |
+| `boost::container::static_vector` | full for arrays that stay within the fixed capacity, through the same kind of alias |
+| `folly::fbvector`             | full; requires C++20, see the note below                                         |
+| `#!cpp std::pmr::vector`      | full, through an alias, as the allocator comes from `AllocatorType` instead       |
 | `absl::InlinedVector`, `eastl::vector` | not usable; require a complete value type                               |
 | `absl::FixedArray`            | not usable; the size is fixed at construction                                    |
 
@@ -286,6 +296,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | `#!cpp std::string` (default)                                               | full                                                                        |
 | `#!cpp std::pmr::string`, `#!cpp std::basic_string` with a custom allocator | full                                                                        |
 | `boost::container::string`                                                  | full, once a `#!cpp std::hash` specialization is supplied (Boost provides `boost::hash` instead) |
+| `folly::fbstring`                                                           | full; requires C++20, see the note below                                    |
 | `eastl::string`                                                             | full, except that [`parse`](../../api/basic_json/parse.md) does not accept it directly; pass a character range or a `#!cpp std::string` |
 | a custom string class in a user-defined namespace                           | full, if the requirements above are met                                     |
 | `#!cpp std::wstring`, `#!cpp std::u16string`, `#!cpp std::u32string`        | not usable; the character type is not one byte wide                         |
@@ -500,7 +511,7 @@ such a container to a `basic_json` value.
 | `#!cpp std::vector<std::uint8_t>` (default) | full                                                                                       |
 | `#!cpp std::vector<char>`                | full                                                                                          |
 | `#!cpp std::vector<std::byte>`           | full                                                                                          |
-| `absl::InlinedVector<std::uint8_t, N>`, `eastl::vector<std::uint8_t>`, `boost::container::vector<std::uint8_t>`, `boost::container::small_vector<std::uint8_t, N>` | full |
+| `absl::InlinedVector<std::uint8_t, N>`, `eastl::vector<std::uint8_t>`, `folly::fbvector<std::uint8_t>`, `boost::container::vector<std::uint8_t>`, `boost::container::small_vector<std::uint8_t, N>` | full |
 | `#!cpp std::string`                      | not usable; `binary_t::container_type` and `string_t` would be the same type, which makes the [`swap`](../../api/basic_json/swap.md) overloads ambiguous |
 | containers whose `value_type` is wider than one byte | not usable                                                                        |
 
