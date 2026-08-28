@@ -21,9 +21,11 @@ Requirements are split into two groups:
 !!! warning "Requirements are not checked"
 
     Apart from a `#!cpp static_assert` on the array iterator category, the requirements below are not diagnosed with
-    dedicated error messages. Violating most of them results in a compiler error somewhere inside the library. Five
+    dedicated error messages. Violating most of them results in a compiler error somewhere inside the library. Six
     violations are not caught at compile time at all:
 
+    - A [`StringType`](#stringtype) whose `data()` is not null-terminated compiles and silently misparses numbers,
+      because the lexer hands the buffer to `#!cpp std::strtoull`/`#!cpp std::strtoll`/`#!cpp std::strtod`.
     - A [`BinaryType`](#binarytype) whose `value_type` is wider than one byte compiles and silently produces wrong
       results, because the readers and writers reinterpret its storage as raw bytes.
     - A stateful [`AllocatorType`](#allocatortype) compiles and silently ignores its state: allocation, deallocation,
@@ -240,10 +242,11 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 - Member types `value_type` and `iterator`.
 - Constructors: default, copy, and move; and from an iterator range `(first, last)`.
 - Member functions `begin()`, `end()`, `cbegin()`, `cend()`, `empty()`, `size()`, `max_size()`, `clear()`,
-  `operator[](size_type)`, `at(size_type)`, `back()`, `push_back()`, `emplace_back()`, `pop_back()`, `resize()`,
+  `operator[](size_type)`, `back()`, `push_back()`, `emplace_back()`, `pop_back()`, `resize()`,
   `insert()` (single element, count, and range), `erase(pos)`, and `erase(first, last)`.
   `basic_json::insert(pos, initializer_list)` goes through the range overload, so no initializer-list `insert` is
-  needed.
+  needed. `at(size_type)` is **not** required: [`basic_json::at(size_type)`](../../api/basic_json/at.md) checks the
+  index itself and then uses `operator[]`.
 - `iterator` must be default-constructible, and it as well as the type returned by `cbegin()`/`cend()` must satisfy
   [LegacyRandomAccessIterator](https://en.cppreference.com/w/cpp/named_req/RandomAccessIterator).
   A `#!cpp static_assert` only checks for
@@ -302,9 +305,9 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
   `#!cpp std::wstring`, `#!cpp std::u16string`, and `#!cpp std::u32string` are **not** valid choices; see the FAQ on
   [wide string handling](../../home/faq.md#wide-string-handling).
 - Constructors: default, copy, move, from `#!cpp const char*` (which must not be `#!cpp explicit`), from
-  `#!cpp (const char*, size_type)`, and from `#!cpp (size_type, char)`.
-- Member functions `size()`, `clear()`, `resize(n, c)`, `back()`, `c_str()`, `data()`, `push_back(char)`, and
-  `operator[]` (const and non-const, returning references).
+  `#!cpp (const char*, size_type)`, and from `#!cpp (size_type, char)`; and copy or move assignment.
+- Member functions `size()`, `clear()`, `resize(n, c)`, `data()`, `push_back(char)`, and `operator[]`
+  (const and non-const, returning references). `c_str()` and `back()` are **not** required.
 - `data()` must return a pointer to a contiguous, **null-terminated** buffer -- the parser hands it to
   `#!cpp std::strtoull`. A type whose `data()` is not null-terminated does not fail to compile; it silently
   misparses numbers.
@@ -324,10 +327,11 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 
 ### Required for JSON Pointer, `flatten`, and `diff`
 
-- A static member `npos`, and the member functions `find(const StringType&, size_type)`,
-  `find_first_of(char, size_type)`, `substr(pos, count)`, and `replace(pos, count, const StringType&)` -- these
-  implement the escaping and unescaping of reference tokens described in RFC 6901.
-- `empty()` and `reserve(n)`.
+- A static member `npos` and the member function `find_first_of(char, size_type)` -- together with `data()`,
+  `reserve(n)`, and `append(const char*, size_type)` they implement the escaping and unescaping of reference tokens
+  described in RFC 6901. Neither `find(const StringType&, size_type)`, nor `substr(pos, count)`, nor
+  `replace(pos, count, const StringType&)` is required.
+- `empty()`.
 - `begin()` and `end()` -- used by
   [`operator[](const json_pointer&)`](../../api/basic_json/operator%5B%5D.md) to decide whether a reference token
   denotes an array index.
@@ -340,7 +344,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | [`std::hash<basic_json>`](../../api/basic_json/std_hash.md)                                                      | additionally a specialization of `#!cpp std::hash<StringType>`                        |
 | [`to_bson`](../../api/basic_json/to_bson.md)                                                                    | `find(value_type)` and `npos`                                                         |
 | [`parse`](../../api/basic_json/parse.md) from a `string_t`                                                      | the input adapters must accept it; otherwise pass a character range                   |
-| `#!cpp operator<<(std::ostream&, const json_pointer&)`                                                           | streamability to `#!cpp std::ostream`, **and** assignability from a `#!cpp std::string`: it goes through `json_pointer::to_string()`, which accumulates a `#!cpp std::string`. An ADL `int_to_string` does not cover this |
+| `#!cpp operator<<(std::ostream&, const json_pointer&)`                                                           | streamability to `#!cpp std::ostream`                                                 |
 | exception messages                                                                                               | `data()` and `size()`, or `begin()` and `end()`                                       |
 
 ### Compatible types
@@ -362,7 +366,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | `#!cpp std::wstring`, `#!cpp std::u16string`, `#!cpp std::u32string` | the character type is not one byte wide                               |
 | `#!cpp std::u8string`                                               | one byte wide, but `#!cpp char8_t` is not `#!cpp char`-compatible      |
 | `absl::Cord`                                                        | no `value_type`, and the storage is not contiguous                    |
-| `QString`                                                           | no `c_str()` and no `append(const char*, size_type)`; its `QChar` is also two bytes wide, though that is never diagnosed |
+| `QString`                                                           | no `append(const char*, size_type)`; its `QChar` is also two bytes wide, though that is never diagnosed |
 
 !!! warning "A `std::pmr::string` mostly does not use the memory resource you choose"
 
