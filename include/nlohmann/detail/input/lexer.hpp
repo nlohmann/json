@@ -1538,7 +1538,10 @@ scan_number_done:
                 position.chars_read_current_line += (len - 1);
                 return integer_result;
             }
-            // the value overflowed: fall through and let the float tail handle it
+            // The value does not fit an integer, so this token converts as a
+            // float. Recording that here keeps convert_number() below from
+            // repeating the integer attempt that just failed.
+            number_type = token_type::value_float;
         }
 #endif
 
