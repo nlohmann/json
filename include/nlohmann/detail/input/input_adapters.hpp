@@ -620,23 +620,45 @@ typename iterator_input_adapter_factory<IteratorType, SentinelType>::adapter_typ
     return factory_type::create(first, last);
 }
 
+// The element type a container's data() points at, cv-qualifiers removed.
+// Ill-formed - and therefore SFINAE-friendly - for types without data().
+template<typename ContainerType>
+using container_data_t = typename std::remove_cv<typename std::remove_pointer <
+                         decltype(std::declval<const ContainerType&>().data()) >::type >::type;
+
+// The container's own element type, cv-qualifiers removed. It is looked up on
+// the bare type so it is also found when ContainerType is deduced as a
+// reference by the forwarding-reference overload below.
+template<typename ContainerType>
+using container_value_t = typename std::remove_cv <
+                          typename std::remove_cv<typename std::remove_reference<ContainerType>::type>::type::value_type >::type;
+
 // Detect a container that stores its elements contiguously as single bytes
 // (std::string, std::vector<char/unsigned char>, std::array<char, N>,
 // std::string_view, ...). Such inputs are wrapped in a pointer-based adapter so
 // they benefit from the contiguous fast paths (bulk string scanning, memcpy for
 // binary formats) in every C++ standard - not only in C++20, where the standard
 // library iterators model std::contiguous_iterator and are detected directly.
+//
+// data() and size() on their own would be duck typing: they say nothing about
+// size() counting the units data() points at, and reading [data(), data() +
+// size()) as bytes would be wrong for a type where it does not. Requiring the
+// container's own value_type to be that same single-byte element ties the two
+// together; every contiguous standard container satisfies it. Anything else
+// keeps the iterator-based adapter, which is always correct - only slower.
 template<typename ContainerType, typename = void>
 struct is_contiguous_byte_container : std::false_type {};
 
 template<typename ContainerType>
 struct is_contiguous_byte_container < ContainerType, void_t <
-decltype(std::declval<const ContainerType&>().data()),
+    container_data_t<ContainerType>,
+    container_value_t<ContainerType>,
 decltype(std::declval<const ContainerType&>().size()) >>
             : std::integral_constant < bool,
         std::is_pointer<decltype(std::declval<const ContainerType&>().data())>::value&&
-        std::is_integral<typename std::remove_pointer<decltype(std::declval<const ContainerType&>().data())>::type>::value&&
-        sizeof(typename std::remove_pointer<decltype(std::declval<const ContainerType&>().data())>::type) == 1 > {};
+        std::is_integral<container_data_t<ContainerType>>::value&&
+        sizeof(container_data_t<ContainerType>) == 1 &&
+        std::is_same<container_data_t<ContainerType>, container_value_t<ContainerType>>::value > {};
 
 // Convenience shorthand from container to iterator
 // Enables ADL on begin(container) and end(container)

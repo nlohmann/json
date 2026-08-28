@@ -18,6 +18,9 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <array> // array
+#include <cstddef> // size_t
+#include <cstdint> // uint8_t
 #include <list>
 #include <string> // string
 #include <vector> // vector
@@ -212,6 +215,65 @@ TEST_CASE("Parse with heterogeneous iterator and sentinel types")
     std::list<char> data(raw_data.begin(), raw_data.end());
     json j2 = json::parse(data.begin(), data.end());
     CHECK(j2.at(0) == 1);
+}
+
+// A type whose data() hands out raw bytes but whose size() counts something
+// else - here fixed-size records. Reading [data(), data() + size()) as bytes
+// would silently truncate the input, so data() and size() alone must not be
+// taken as evidence of contiguous byte storage.
+struct record_buffer
+{
+    using value_type = std::array<char, 4>;
+
+    std::string bytes;
+
+    const char* data() const noexcept
+    {
+        return bytes.data();
+    }
+    std::size_t size() const noexcept
+    {
+        return bytes.size() / sizeof(value_type);
+    }
+    const char* begin() const noexcept
+    {
+        return bytes.data();
+    }
+    const char* end() const noexcept
+    {
+        return bytes.data() + bytes.size();
+    }
+};
+
+TEST_CASE("Contiguous byte containers take the pointer adapter")
+{
+    // Containers with contiguous single-byte storage are routed through the
+    // pointer-based adapter so the bulk fast paths apply in every standard, not
+    // only in C++20 where the library iterators model std::contiguous_iterator.
+    CHECK(nlohmann::detail::is_contiguous_byte_container<std::string>::value);
+    CHECK(nlohmann::detail::is_contiguous_byte_container<std::vector<char>>::value);
+    CHECK(nlohmann::detail::is_contiguous_byte_container<std::vector<std::uint8_t>>::value);
+    CHECK(nlohmann::detail::is_contiguous_byte_container<std::array<char, 4>>::value);
+
+    // input_adapter() takes its container by forwarding reference, so the trait
+    // is also asked about reference types
+    CHECK(nlohmann::detail::is_contiguous_byte_container<std::string&>::value);
+    CHECK(nlohmann::detail::is_contiguous_byte_container<const std::string&>::value);
+
+    // everything else keeps the iterator-based adapter
+    CHECK_FALSE(nlohmann::detail::is_contiguous_byte_container<std::list<char>>::value);
+    CHECK_FALSE(nlohmann::detail::is_contiguous_byte_container<std::vector<int>>::value);
+    CHECK_FALSE(nlohmann::detail::is_contiguous_byte_container<const char*>::value);
+
+    // including a type that has data() and size() but whose size() does not
+    // count the units data() points at: its value_type says so
+    CHECK_FALSE(nlohmann::detail::is_contiguous_byte_container<record_buffer>::value);
+
+    // and such a container still parses through its iterators, in full - taking
+    // it for a byte container would stop after data() + size() bytes
+    const record_buffer buffer{"[1,2,3,4,5]"};
+    CHECK(buffer.size() * sizeof(record_buffer::value_type) < buffer.bytes.size());
+    CHECK(json::parse(buffer) == json({1, 2, 3, 4, 5}));
 }
 
 #if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
