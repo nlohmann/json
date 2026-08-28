@@ -26375,7 +26375,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                         ancestor = ancestor.parent_pointer();
                         if (ancestor == from_ptr)
                         {
-                            JSON_THROW(out_of_range::create(413, "JSON Patch 'move': 'from' must not be a proper prefix of 'path'", nullptr));
+                            JSON_THROW(out_of_range::create(413, detail::concat("JSON Patch 'move': 'from' '", from_path, "' must not be a proper prefix of 'path' '", path, "'"), nullptr));
                         }
                     }
 

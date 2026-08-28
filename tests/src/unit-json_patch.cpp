@@ -1391,13 +1391,11 @@ TEST_CASE("JSON patch - add to a primitive parent (regression #4292)")
 
 TEST_CASE("JSON patch move from a proper prefix of path is rejected (RFC 6902 §4.4)")
 {
-    const auto *const prefix_error = "[json.exception.out_of_range.413] JSON Patch 'move': 'from' must not be a proper prefix of 'path'";
-
     SECTION("nested array (the MUST-violation that previously succeeded)")
     {
         json doc = json::parse("[[1,2],3]");
         json const patch = json::parse(R"([{"op":"move","from":"/0","path":"/0/0"}])");
-        CHECK_THROWS_WITH_AS(doc.patch(patch), prefix_error, json::out_of_range&);
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.413] JSON Patch 'move': 'from' '/0' must not be a proper prefix of 'path' '/0/0'", json::out_of_range&);
         CHECK(doc == json::parse("[[1,2],3]"));
     }
 
@@ -1405,7 +1403,7 @@ TEST_CASE("JSON patch move from a proper prefix of path is rejected (RFC 6902 §
     {
         json doc = json::parse("[[1,2],3]");
         json const patch = json::parse(R"([{"op":"move","from":"/0","path":"/0/0"}])");
-        CHECK_THROWS_WITH_AS(doc.patch_inplace(patch), prefix_error, json::out_of_range&);
+        CHECK_THROWS_WITH_AS(doc.patch_inplace(patch), "[json.exception.out_of_range.413] JSON Patch 'move': 'from' '/0' must not be a proper prefix of 'path' '/0/0'", json::out_of_range&);
         CHECK(doc == json::parse("[[1,2],3]"));
     }
 
@@ -1428,7 +1426,7 @@ TEST_CASE("JSON patch move from a proper prefix of path is rejected (RFC 6902 §
     {
         json doc = json::parse(R"({"a":1})");
         json const patch = json::parse(R"([{"op":"move","from":"","path":"/a"}])");
-        CHECK_THROWS_WITH_AS(doc.patch(patch), prefix_error, json::out_of_range&);
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.413] JSON Patch 'move': 'from' '' must not be a proper prefix of 'path' '/a'", json::out_of_range&);
         CHECK(doc == json::parse(R"({"a":1})"));
     }
 
@@ -1443,7 +1441,7 @@ TEST_CASE("JSON patch move from a proper prefix of path is rejected (RFC 6902 §
     {
         json doc = json::parse("[1,2]");
         json const patch = json::parse(R"([{"op":"move","from":"","path":"/-"}])");
-        CHECK_THROWS_WITH_AS(doc.patch(patch), prefix_error, json::out_of_range&);
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.413] JSON Patch 'move': 'from' '' must not be a proper prefix of 'path' '/-'", json::out_of_range&);
         CHECK(doc == json::parse("[1,2]"));
     }
 

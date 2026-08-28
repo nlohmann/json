@@ -940,7 +940,7 @@ A JSON Patch `move` operation is forbidden when the `from` location is a proper 
 !!! failure "Example message"
 
     ```
-    JSON Patch 'move': 'from' must not be a proper prefix of 'path'
+    JSON Patch 'move': 'from' '/0' must not be a proper prefix of 'path' '/0/0'
     ```
 
 !!! note
