@@ -5,7 +5,8 @@ never formally states what a type passed for one of these parameters has to prov
 the way the library uses the resulting [`object_t`](../../api/basic_json/object_t.md),
 [`array_t`](../../api/basic_json/array_t.md), [`string_t`](../../api/basic_json/string_t.md), etc. This page collects
 these requirements so they do not have to be discovered by trial and error. Each section also lists the concrete
-types that are known to work for that parameter, checked against Boost 1.83, Abseil 20250127.0, and EASTL 3.21.
+types that are known to work for that parameter, checked against Boost 1.83, Abseil 20250127.0, EASTL 3.21, `ankerl::unordered_dense`, `phmap`, and
+`robin_hood`.
 
 ## How to read this page
 
@@ -46,8 +47,8 @@ Requirements are split into two groups:
     incomplete type. `#!cpp std::map` and `#!cpp std::vector` are required by the standard to support incomplete
     value types; most third-party containers are not, and inspecting the value type at class scope (for instance with
     `#!cpp std::is_trivially_move_assignable`) makes them unusable as `ObjectType` or `ArrayType`. This rules out
-    `absl::btree_map`, `absl::InlinedVector`, `eastl::vector`, and `eastl::hash_map`, among others, no matter how their
-    template arguments are adapted. Boost.Container is the notable exception: it documents support for incomplete
+    `absl::btree_map`, `phmap::btree_map`, `robin_hood::unordered_node_map`, `absl::InlinedVector`, `eastl::vector`,
+    and `eastl::hash_map`, among others, no matter how their template arguments are adapted. Boost.Container is the notable exception: it documents support for incomplete
     types, and all of its containers work here.
 
 ## `ObjectType`
@@ -120,8 +121,11 @@ struct unordered_map_object
 using unordered_json = nlohmann::basic_json<unordered_map_object>;
 ```
 
-The same pattern (ignoring the third argument) is how [`tsl::ordered_map`](https://github.com/Tessil/ordered-map) and
-similar containers are integrated; see [Object Order](../object_order.md).
+The same adapter works for every hash map that has been tried -- Abseil's, Boost's, `ankerl::unordered_dense`,
+`phmap`, and `robin_hood` -- since they all place the hash function third. None of them defines `key_compare` either,
+so all of them additionally rely on `object_comparator_t` falling back to
+[`default_object_comparator_t`](../../api/basic_json/default_object_comparator_t.md); see
+[`object_comparator_t`](../../api/basic_json/object_comparator_t.md).
 
 #### Abseil hash maps
 
@@ -174,7 +178,8 @@ The library does not sort or de-duplicate keys itself; the behavior described in
 | `boost::container::map`, `boost::container::flat_map`                                                                    | full, with no adapter                                                         |
 | `boost::unordered_map`, `boost::unordered_flat_map`, `boost::unordered_node_map`, through the adapter shown above         | full                                                                          |
 | `absl::flat_hash_map`, `absl::node_hash_map`, through the adapter shown above                                            | full                                                                          |
-| `absl::btree_map`, `eastl::hash_map`                                                                                     | not usable; require a complete value type                                     |
+| `ankerl::unordered_dense::map` and `segmented_map`, `phmap::flat_hash_map` and `node_hash_map`, `robin_hood::unordered_flat_map`, through the adapter shown above | full                        |
+| `absl::btree_map`, `phmap::btree_map`, `robin_hood::unordered_node_map`, `eastl::hash_map`                               | not usable; require a complete value type                                     |
 | `eastl::map`                                                                                                             | not usable; EASTL iterators do not work with `#!cpp std::iterator_traits`      |
 | `tsl::ordered_map`                                                                                                       | not usable; its iterators expose the mapped value as `#!cpp const`             |
 | `#!cpp std::multimap`, `#!cpp std::unordered_multimap`                                                                   | not usable; `emplace` does not return `#!cpp std::pair<iterator, bool>`        |
