@@ -126,3 +126,4 @@ the object is silently converted as an array of key-value pairs, which is incorr
 ## Version history
 
 - Added in version 1.0.0.
+- Allowed object types whose `erase(iterator)` returns `#!cpp void` in version 3.13.0.

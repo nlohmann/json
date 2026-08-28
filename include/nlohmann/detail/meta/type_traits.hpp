@@ -779,6 +779,13 @@ using has_erase_with_key_type = typename std::conditional <
                                 std::true_type,
                                 std::false_type >::type;
 
+template<typename T>
+using detect_capacity = decltype(std::declval<const T&>().capacity());
+
+// type trait to check if a type has a capacity() member function
+template<typename T>
+struct has_capacity : std::integral_constant<bool, is_detected<detect_capacity, T>::value> {};
+
 // a naive helper to check if a type is an ordered_map (exploits the fact that
 // ordered_map inherits capacity() from std::vector)
 template <typename T>

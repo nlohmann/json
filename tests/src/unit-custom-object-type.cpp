@@ -35,7 +35,75 @@ struct unordered_map_object
 
 using unordered_json = nlohmann::basic_json<unordered_map_object>;
 
+// An ObjectType whose erase(iterator) returns void rather than the following
+// iterator, as for instance Abseil's hash maps do
+template<class Key, class T, class Compare, class Allocator>
+struct void_erase_map : std::map<Key, T, Compare, Allocator>
+{
+    using base_t = std::map<Key, T, Compare, Allocator>;
+    using base_t::base_t;
+    using iterator = typename base_t::iterator;
+    using base_t::erase;
+
+    void erase(iterator pos)
+    {
+        base_t::erase(pos);
+    }
+};
+
+using void_erase_json = nlohmann::basic_json<void_erase_map>;
+
 } // namespace
+
+TEST_CASE("object type whose erase() returns void")
+{
+    SECTION("erasing every element through the returned iterator")
+    {
+        void_erase_json j;
+        for (int i = 0; i < 8; ++i)
+        {
+            j["k" + std::to_string(i)] = i;
+        }
+
+        std::size_t erased = 0;
+        for (auto it = j.begin(); it != j.end(); ++erased)
+        {
+            it = j.erase(it);
+        }
+        CHECK(erased == 8);
+        CHECK(j.empty());
+    }
+
+    SECTION("erasing in the middle returns the following element")
+    {
+        void_erase_json j;
+        for (int i = 0; i < 4; ++i)
+        {
+            j["k" + std::to_string(i)] = i;
+        }
+
+        auto it = j.begin();
+        ++it;
+        const auto after = j.erase(it);
+        CHECK(j.size() == 3);
+        CHECK(after.key() == "k2");
+        CHECK(after.value() == 2);
+        CHECK(!j.contains("k1"));
+    }
+
+    SECTION("the other erase overloads are unaffected")
+    {
+        void_erase_json j;
+        j["a"] = 1;
+        j["b"] = 2;
+        j["c"] = 3;
+
+        CHECK(j.erase("a") == 1);
+        CHECK(j.erase("nope") == 0);
+        j.erase(j.begin(), j.end());
+        CHECK(j.empty());
+    }
+}
 
 TEST_CASE("object type without key_compare")
 {

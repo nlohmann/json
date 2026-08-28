@@ -4542,6 +4542,13 @@ using has_erase_with_key_type = typename std::conditional <
                                 std::true_type,
                                 std::false_type >::type;
 
+template<typename T>
+using detect_capacity = decltype(std::declval<const T&>().capacity());
+
+// type trait to check if a type has a capacity() member function
+template<typename T>
+struct has_capacity : std::integral_constant<bool, is_detected<detect_capacity, T>::value> {};
+
 // a naive helper to check if a type is an ordered_map (exploits the fact that
 // ordered_map inherits capacity() from std::vector)
 template <typename T>
@@ -22192,21 +22199,76 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return it;
     }
 
-    reference set_parent(reference j, std::size_t old_capacity = detail::unknown_size())
+    /// @brief erase an element from the object and return the following one
+    /// Not every map returns an iterator from erase(iterator): some containers
+    /// (e.g., Abseil's hash maps) return void to avoid computing a successor
+    /// the caller may not need. Compute it before erasing for those.
+    template < typename It, detail::enable_if_t <
+                   !std::is_void<decltype(std::declval<object_t&>().erase(std::declval<It>()))>::value, int > = 0 >
+    typename object_t::iterator erase_from_object(It pos)
+    {
+        return m_data.m_value.object->erase(pos);
+    }
+
+    template < typename It, detail::enable_if_t <
+                   std::is_void<decltype(std::declval<object_t&>().erase(std::declval<It>()))>::value, int > = 0 >
+    typename object_t::iterator erase_from_object(It pos)
+    {
+        typename object_t::iterator next = std::next(pos);
+        m_data.m_value.object->erase(pos);
+        return next;
+    }
+
+    /// @brief the capacity of the stored array, or unknown_size()
+    /// Only JSON_DIAGNOSTICS uses the value, to detect a reallocation that
+    /// would invalidate the parent pointers. Array types that do not have a
+    /// capacity() member function report unknown_size(), which is treated as
+    /// "the elements may have moved".
+#if JSON_DIAGNOSTICS
+    template < typename A = array_t, detail::enable_if_t < detail::has_capacity<A>::value, int > = 0 >
+    std::size_t array_capacity() const noexcept
+    {
+        return m_data.m_value.array->capacity();
+    }
+
+    template < typename A = array_t, detail::enable_if_t < !detail::has_capacity<A>::value, int > = 0 >
+    std::size_t array_capacity() const noexcept
+    {
+        return detail::unknown_size();
+    }
+#else
+    static constexpr std::size_t array_capacity() noexcept
+    {
+        return detail::unknown_size();
+    }
+#endif
+
+    /// @brief set the parent of a value that has just been added to an array
+    /// @param j the added value
+    /// @param old_capacity the value @ref array_capacity() returned before the
+    ///        insertion
+    reference set_parent_after_array_insert(reference j, std::size_t old_capacity)
     {
 #if JSON_DIAGNOSTICS
-        if (old_capacity != detail::unknown_size())
+        // see https://github.com/nlohmann/json/issues/2838
+        JSON_ASSERT(type() == value_t::array);
+        if (JSON_HEDLEY_UNLIKELY(old_capacity == detail::unknown_size()
+                                 || array_capacity() != old_capacity))
         {
-            // see https://github.com/nlohmann/json/issues/2838
-            JSON_ASSERT(type() == value_t::array);
-            if (JSON_HEDLEY_UNLIKELY(m_data.m_value.array->capacity() != old_capacity))
-            {
-                // capacity has changed: update all parents
-                set_parents();
-                return j;
-            }
+            // the capacity has changed, or the array type does not let us tell:
+            // the elements may have moved, so update all parents
+            set_parents();
+            return j;
         }
+#else
+        static_cast<void>(old_capacity);
+#endif
+        return set_parent(j);
+    }
 
+    reference set_parent(reference j)
+    {
+#if JSON_DIAGNOSTICS
         // ordered_json uses a vector internally, so pointers could have
         // been invalidated; see https://github.com/nlohmann/json/issues/2962
 #ifdef JSON_HEDLEY_MSVC_VERSION
@@ -22225,7 +22287,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         j.m_parent = this;
 #else
         static_cast<void>(j);
-        static_cast<void>(old_capacity);
 #endif
         return j;
     }
@@ -23556,12 +23617,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #if JSON_DIAGNOSTICS
                 // remember array size & capacity before resizing
                 const auto old_size = m_data.m_value.array->size();
-                const auto old_capacity = m_data.m_value.array->capacity();
+                const auto old_capacity = array_capacity();
 #endif
                 m_data.m_value.array->resize(idx + 1);
 
 #if JSON_DIAGNOSTICS
-                if (JSON_HEDLEY_UNLIKELY(m_data.m_value.array->capacity() != old_capacity))
+                if (JSON_HEDLEY_UNLIKELY(old_capacity == detail::unknown_size()
+                                         || array_capacity() != old_capacity))
                 {
                     // capacity has changed: update all parents
                     set_parents();
@@ -23952,7 +24014,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
             case value_t::object:
             {
-                result.m_it.object_iterator = m_data.m_value.object->erase(pos.m_it.object_iterator);
+                result.m_it.object_iterator = erase_from_object(pos.m_it.object_iterator);
                 break;
             }
 
@@ -24582,9 +24644,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         // add the element to the array (move semantics)
-        const auto old_capacity = m_data.m_value.array->capacity();
+        const auto old_capacity = array_capacity();
         m_data.m_value.array->push_back(std::move(val));
-        set_parent(m_data.m_value.array->back(), old_capacity);
+        set_parent_after_array_insert(m_data.m_value.array->back(), old_capacity);
         // if val is moved from, basic_json move constructor marks it null, so we do not call the destructor
     }
 
@@ -24615,9 +24677,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         // add the element to the array
-        const auto old_capacity = m_data.m_value.array->capacity();
+        const auto old_capacity = array_capacity();
         m_data.m_value.array->push_back(val);
-        set_parent(m_data.m_value.array->back(), old_capacity);
+        set_parent_after_array_insert(m_data.m_value.array->back(), old_capacity);
     }
 
     /// @brief add an object to an array
@@ -24703,9 +24765,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 
         // add the element to the array (perfect forwarding)
-        const auto old_capacity = m_data.m_value.array->capacity();
+        const auto old_capacity = array_capacity();
         m_data.m_value.array->emplace_back(std::forward<Args>(args)...);
-        return set_parent(m_data.m_value.array->back(), old_capacity);
+        return set_parent_after_array_insert(m_data.m_value.array->back(), old_capacity);
     }
 
     /// @brief add an object to an object if key does not exist

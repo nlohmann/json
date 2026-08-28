@@ -29,7 +29,7 @@ Requirements are split into two groups:
 | Template parameter                                                | Default                           | Notable substitutes                                                    |
 |-------------------------------------------------------------------|-----------------------------------|------------------------------------------------------------------------|
 | [`ObjectType`](#objecttype)                                       | `std::map`                        | [`nlohmann::ordered_map`](../../api/ordered_map.md), Abseil hash maps  |
-| [`ArrayType`](#arraytype)                                         | `std::vector`                     | vector-like containers only                                            |
+| [`ArrayType`](#arraytype)                                         | `std::vector`                     | `#!cpp std::deque`                                                     |
 | [`StringType`](#stringtype)                                       | `std::string`                     | `std::string`-like types over `char`                                   |
 | [`BooleanType`](#booleantype)                                     | `bool`                            | none worth using                                                       |
 | [`NumberIntegerType`](#numberintegertype-and-numberunsignedtype)  | `std::int64_t`                    | any signed integer type                                                |
@@ -79,7 +79,8 @@ i.e., the template arguments follow the order and meaning of `std::map`.
 - Constructors: default, copy, move, and from an iterator range `(first, last)`.
 - Member functions `begin()`, `end()`, `cbegin()`, `cend()`, `empty()`, `size()`, `max_size()`, `clear()`,
   `find(key)`, `count(key)`, `emplace(key, value)`, `insert(value_type)`, `insert(first, last)`, `operator[](key)`,
-  `erase(iterator)`, `erase(first, last)`, and `erase(key)`.
+  `erase(iterator)`, `erase(first, last)`, and `erase(key)`. `erase(iterator)` may return the following iterator or
+  `#!cpp void`; in the latter case the library computes the successor itself, before erasing.
 - `emplace` and `insert(value_type)` must return `#!cpp std::pair<iterator, bool>` and must have **unique-key**
   semantics; multimaps cannot be used.
 - The type must be swappable (via `std::swap` or an ADL `swap`).
@@ -123,32 +124,16 @@ similar containers are integrated; see [Object Order](../object_order.md).
 #### Abseil hash maps
 
 `absl::flat_hash_map` and `absl::node_hash_map` tolerate an incomplete value type, but they take a hash function as
-their third template argument and their `erase(iterator)` returns `#!cpp void` rather than the following iterator. An
-adapter that fixes both makes them usable:
+their third template argument. The same adapter as for `#!cpp std::unordered_map` makes them usable:
 
 ```cpp
-template<template<class, class, class, class, class> class Map>
-struct absl_object
+template<class Key, class T, class IgnoredCompare, class Allocator>
+struct flat_hash_object
+    : absl::flat_hash_map<Key, T, absl::Hash<Key>, std::equal_to<Key>, Allocator>
 {
-    template<class Key, class T, class IgnoredCompare, class Allocator>
-    struct type : Map<Key, T, absl::Hash<Key>, std::equal_to<Key>, Allocator>
-    {
-        using base_t = Map<Key, T, absl::Hash<Key>, std::equal_to<Key>, Allocator>;
-        using base_t::base_t;
-        using iterator = typename base_t::iterator;
-        using base_t::erase;
-
-        iterator erase(iterator pos)
-        {
-            iterator next = std::next(pos);
-            base_t::erase(pos);
-            return next;
-        }
-    };
+    using base_t = absl::flat_hash_map<Key, T, absl::Hash<Key>, std::equal_to<Key>, Allocator>;
+    using base_t::base_t;
 };
-
-template<class Key, class T, class Compare, class Allocator>
-using flat_hash_object = typename absl_object<absl::flat_hash_map>::template type<Key, T, Compare, Allocator>;
 
 using flat_hash_json = nlohmann::basic_json<flat_hash_object>;
 ```
@@ -204,8 +189,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 - Constructors: default, copy, move, from an iterator range `(first, last)`, and from `(count, value)`.
 - Member functions `begin()`, `end()`, `cbegin()`, `cend()`, `empty()`, `size()`, `max_size()`, `clear()`,
   `operator[](size_type)`, `at(size_type)`, `back()`, `push_back()`, `emplace_back()`, `pop_back()`, `resize()`,
-  `insert()` (single element, count, range, and initializer list), `erase(pos)`, `erase(first, last)`, and
-  **`capacity()`**.
+  `insert()` (single element, count, range, and initializer list), `erase(pos)`, and `erase(first, last)`.
 - `iterator` must be default-constructible, and it as well as the type returned by `cbegin()`/`cend()` must satisfy
   [LegacyRandomAccessIterator](https://en.cppreference.com/w/cpp/named_req/RandomAccessIterator).
   A `#!cpp static_assert` only checks for
@@ -215,23 +199,21 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
   [`basic_json::iterator`](../../api/basic_json/begin.md) require random access.
 - The type must be swappable and provide the comparison operators `==`, `!=`, `<`, `<=`, `>`, `>=` (or `<=>`).
 
-!!! note "`capacity()` is required unconditionally"
+!!! note "`capacity()` is optional"
 
-    [`push_back`](../../api/basic_json/push_back.md), [`emplace_back`](../../api/basic_json/emplace_back.md),
-    [`operator+=`](../../api/basic_json/operator+=.md), and
-    [`operator[]`](../../api/basic_json/operator%5B%5D.md) with an array index read `array_t::capacity()` to
-    detect reallocations, regardless of whether [`JSON_DIAGNOSTICS`](../../api/macros/json_diagnostics.md) is enabled.
-    Consequently `#!cpp std::deque` and `#!cpp std::list` cannot be used as `ArrayType` as-is. A `std::deque` becomes
-    usable when wrapped in a type that adds a `capacity()` member function; `#!cpp std::list` additionally lacks
-    `operator[]` and random-access iterators and cannot be used at all.
+    With [`JSON_DIAGNOSTICS`](../../api/macros/json_diagnostics.md) enabled, the library reads `array_t::capacity()`
+    to find out whether adding an element reallocated the array and moved its elements, which would invalidate the
+    parent pointers. An array type without a `capacity()` member function is handled conservatively: the parent
+    pointers of all elements are refreshed after every insertion, which makes adding *n* elements cost O(*n*²). Only
+    diagnostics builds pay this; without them `capacity()` is never called.
 
 ### Compatible containers
 
 | Container                     | Support                                                                          |
 |-------------------------------|----------------------------------------------------------------------------------|
 | `#!cpp std::vector` (default) | full                                                                             |
-| `#!cpp std::deque`            | only when wrapped in a type that adds a `capacity()` member function              |
-| `#!cpp std::list`             | not usable; no `operator[]`, no `capacity()`, and no random-access iterators      |
+| `#!cpp std::deque`            | full; keeps references valid while the array grows, but see the note on `capacity()` above |
+| `#!cpp std::list`             | not usable; no `operator[]` and no random-access iterators                        |
 | `absl::InlinedVector`         | not usable; requires a complete value type                                       |
 | `absl::FixedArray`            | not usable; the size is fixed at construction                                    |
 
