@@ -1555,4 +1555,15 @@ TEST_CASE("issue #5338 - truncated CBOR tagged binary subtype is rejected")
     }
 }
 
+TEST_CASE("issue #5405 definite-length binary arrays round-trip")
+{
+    json j = json::array();
+    for (int i = 0; i < 512; ++i)
+    {
+        j.push_back(i);
+    }
+    CHECK(json::from_cbor(json::to_cbor(j)) == j);
+    CHECK(json::from_msgpack(json::to_msgpack(j)) == j);
+}
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP

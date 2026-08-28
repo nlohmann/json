@@ -301,6 +301,11 @@ class json_sax_dom_parser
             JSON_THROW(out_of_range::create(408, concat("excessive array size: ", std::to_string(len)), ref_stack.back()));
         }
 
+        if (len != detail::unknown_size())
+        {
+            ref_stack.back()->m_data.m_value.array->reserve(len);
+        }
+
         return true;
     }
 
@@ -660,6 +665,11 @@ class json_sax_dom_callback_parser
             if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref_stack.back()->max_size()))
             {
                 JSON_THROW(out_of_range::create(408, concat("excessive array size: ", std::to_string(len)), ref_stack.back()));
+            }
+
+            if (len != detail::unknown_size())
+            {
+                ref_stack.back()->m_data.m_value.array->reserve(len);
             }
         }
 
