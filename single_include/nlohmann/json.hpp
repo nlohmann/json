@@ -14764,8 +14764,13 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
 
     iter_impl() = default;
     ~iter_impl() = default;
-    iter_impl(iter_impl&&) noexcept = default;
-    iter_impl& operator=(iter_impl&&) noexcept = default;
+    // the exception specification is left to be computed rather than declared:
+    // an array or object type whose iterator is not nothrow move constructible
+    // (std::deque's is not before libstdc++ 11) would make a declared noexcept
+    // differ from the implicit one, which deletes the function -- and is an
+    // error outright with older compilers
+    iter_impl(iter_impl&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor,cppcoreguidelines-noexcept-move-operations)
+    iter_impl& operator=(iter_impl&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor,cppcoreguidelines-noexcept-move-operations)
 
     /*!
     @brief constructor for a given JSON instance

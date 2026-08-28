@@ -14,6 +14,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 namespace
@@ -40,6 +41,19 @@ using no_at_json = nlohmann::basic_json<std::map, vector_without_at>;
 
 TEST_CASE("array type without capacity()")
 {
+    SECTION("the iterators of the default configuration stay nothrow movable")
+    {
+        // basic_json's iterators take their exception specification from the
+        // container iterators; std::deque's is not nothrow move constructible
+        // with older standard libraries, which must not cost the default
+        // configuration its noexcept
+        CHECK(std::is_nothrow_move_constructible<nlohmann::json::iterator>::value);
+        CHECK(std::is_nothrow_move_assignable<nlohmann::json::iterator>::value);
+        CHECK(std::is_nothrow_move_constructible<nlohmann::json::const_iterator>::value);
+        CHECK(std::is_move_constructible<deque_json::iterator>::value);
+        CHECK(std::is_move_assignable<deque_json::iterator>::value);
+    }
+
     SECTION("adding elements")
     {
         deque_json j = deque_json::array();
