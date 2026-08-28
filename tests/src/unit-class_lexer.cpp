@@ -411,11 +411,22 @@ TEST_CASE("lexer number fast path")
             CHECK(contiguous_what == streaming_error(doc));
         }
 
-        // the column must be the one the offending token actually starts at,
-        // not the 0 that an unget() across the newline used to leave behind
+        // A number terminated by a newline must report the same position as the
+        // same number terminated by anything else: scan_number() reads the
+        // terminator and ungets it, so the reported column is the one reached
+        // after the number's last character - not the 0 that an unget() across
+        // the newline used to leave behind.
+        CHECK(contiguous_error("[01\n]") == contiguous_error("[01 ]"));
         CHECK(contiguous_error("[01\n]") ==
               "[json.exception.parse_error.101] parse error at line 1, column 3: "
               "syntax error while parsing array - unexpected number literal; expected ']'");
+
+        // the same for a multi-character token, where the column of the last
+        // character (the '3' of "-2.5e3") differs from the column it starts at
+        CHECK(contiguous_error("null -2.5e3\nfalse") == contiguous_error("null -2.5e3 false"));
+        CHECK(contiguous_error("null -2.5e3\nfalse") ==
+              "[json.exception.parse_error.101] parse error at line 1, column 11: "
+              "syntax error while parsing value - unexpected number literal; expected end of input");
     }
 #endif
 }
