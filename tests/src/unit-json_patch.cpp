@@ -1391,7 +1391,7 @@ TEST_CASE("JSON patch - add to a primitive parent (regression #4292)")
 
 TEST_CASE("JSON patch move from a proper prefix of path is rejected (RFC 6902 §4.4)")
 {
-    const auto prefix_error = "[json.exception.out_of_range.413] JSON Patch 'move': 'from' must not be a proper prefix of 'path'";
+    const auto *const prefix_error = "[json.exception.out_of_range.413] JSON Patch 'move': 'from' must not be a proper prefix of 'path'";
 
     SECTION("nested array (the MUST-violation that previously succeeded)")
     {
