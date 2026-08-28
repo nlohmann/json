@@ -23,6 +23,10 @@ JSON class into byte-sized characters during deserialization.
     `StringType`. To work with wide-character data, convert it to/from UTF-8 at the boundary instead -- see the
     FAQ's [wide string handling](../../home/faq.md#wide-string-handling) section for a conversion recipe.
 
+    Beyond the character type, the library expects a substantial part of the `#!cpp std::string` interface (contiguous
+    null-terminated `data()`, `substr()`, `find()`, `append()`, ...). See
+    [Template Parameter Requirements](../../features/types/template_parameters.md#stringtype) for the full list.
+
 ## Notes
 
 #### Default type
