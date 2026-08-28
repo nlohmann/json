@@ -12,16 +12,22 @@
 #include <cstdint> // uint64_t
 #include <cstring> // memcpy
 
-#if defined(JSON_USE_SIMDUTF)
-    // Optional SIMD backend for bulk UTF-8 validation. This is an opt-in
-    // external dependency: nlohmann/json itself stays header-only and the C++11
-    // scalar validator below is always available; defining JSON_USE_SIMDUTF
-    // additionally requires the simdutf headers on the include path and linking
-    // the simdutf library. See string_bulk_run().
+#include <nlohmann/detail/macro_scope.hpp>
+
+// Optional SIMD backend for bulk UTF-8 validation. This is an opt-in external
+// dependency: nlohmann/json itself stays header-only and the C++11 scalar
+// validator below is always available; defining JSON_USE_SIMDUTF additionally
+// requires the simdutf headers on the include path and linking the simdutf
+// library. See string_bulk_run().
+//
+// simdutf.h itself requires C++17 - it rejects older standards with an #error -
+// so the backend is only compiled in from C++17 on. Below that the macro has no
+// effect and the scalar validator is used; it accepts and rejects exactly the
+// same input, so only throughput differs. macro_scope.hpp is included above to
+// have JSON_HAS_CPP_17 available for this test.
+#if defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17)
     #include <simdutf.h>
 #endif
-
-#include <nlohmann/detail/macro_scope.hpp>
 
 // This file contains the byte-level string-scanning helpers used by the lexer's
 // contiguous fast path. They operate purely on raw bytes (no dependency on the
@@ -174,7 +180,7 @@ inline std::size_t scalar_string_bulk_run(const unsigned char* data, std::size_t
     return pos;
 }
 
-#if defined(JSON_USE_SIMDUTF)
+#if defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17)
 // Index of the first quote/escape/control byte in [data, data+n) (non-ASCII
 // bytes are *not* stops here - the whole run is handed to simdutf), or n.
 inline std::size_t find_string_delimiter(const unsigned char* data, std::size_t n) noexcept
@@ -221,7 +227,7 @@ inline std::size_t find_string_delimiter(const unsigned char* data, std::size_t 
 // produces the precise diagnostic. Without it, the pure scalar path is used.
 inline std::size_t string_bulk_run(const unsigned char* data, std::size_t n) noexcept
 {
-#if defined(JSON_USE_SIMDUTF)
+#if defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17)
     const std::size_t run = find_string_delimiter(data, n);
     if (run != 0 && simdutf::validate_utf8(reinterpret_cast<const char*>(data), run))
     {
