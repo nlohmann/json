@@ -289,6 +289,21 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | [`std::hash<basic_json>`](../../api/basic_json/std_hash.md) | a specialization of `#!cpp std::hash<StringType>` |
 | exception messages                                          | `data()` and `size()`, or `begin()` and `end()`   |
 
+### Compatible types
+
+| Type                                                                        | Support                                                                     |
+|-----------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| `#!cpp std::string` (default)                                               | full                                                                        |
+| `#!cpp std::basic_string` with a custom **stateless** allocator             | full                                                                        |
+| `#!cpp std::pmr::string`                                                    | compiles and behaves correctly, but always allocates from the default memory resource -- see below |
+| `boost::container::string`                                                  | full, once a `#!cpp std::hash` specialization is supplied (Boost provides `boost::hash` instead) |
+| `folly::fbstring`                                                           | full; requires C++20, see the note below                                    |
+| `eastl::string`                                                             | full, except that [`parse`](../../api/basic_json/parse.md) does not accept it directly; pass a character range or a `#!cpp std::string` |
+| a custom string class in a user-defined namespace                           | full, if the requirements above are met                                     |
+| `#!cpp std::wstring`, `#!cpp std::u16string`, `#!cpp std::u32string`        | not usable; the character type is not one byte wide                         |
+| `absl::Cord`                                                                | not usable; no `value_type`, and the storage is not contiguous              |
+| `QString`                                                                   | not usable; UTF-16, so the character type is not one byte wide              |
+
 !!! warning "A `std::pmr::string` does not allocate from a memory resource you choose"
 
     `basic_json` cannot be given an allocator or a memory resource. `AllocatorType` is default-constructed at every
@@ -310,46 +325,6 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 
     The unit test `tests/src/unit-alt-string.cpp` contains `alt_string`, a minimal string type that satisfies the
     requirements needed for the tested subset of the API. It is a good starting point for a custom `StringType`.
-
-### Compatible types
-
-| Type                                                                        | Support                                                                     |
-|-----------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| `#!cpp std::string` (default)                                               | full                                                                        |
-| `#!cpp std::basic_string` with a custom **stateless** allocator             | full                                                                        |
-| `#!cpp std::pmr::string`                                                    | compiles and behaves correctly, but always allocates from the default memory resource -- see below |
-| `boost::container::string`                                                  | full, once a `#!cpp std::hash` specialization is supplied (Boost provides `boost::hash` instead) |
-| `folly::fbstring`                                                           | full; requires C++20, see the note below                                    |
-| `eastl::string`                                                             | full, except that [`parse`](../../api/basic_json/parse.md) does not accept it directly; pass a character range or a `#!cpp std::string` |
-| a custom string class in a user-defined namespace                           | full, if the requirements above are met                                     |
-| `#!cpp std::wstring`, `#!cpp std::u16string`, `#!cpp std::u32string`        | not usable; the character type is not one byte wide                         |
-| `absl::Cord`                                                                | not usable; no `value_type`, and the storage is not contiguous              |
-| `QString`                                                                   | not usable; UTF-16, so the character type is not one byte wide              |
-
-!!! tip "Reference implementation"
-
-    The unit test `tests/src/unit-alt-string.cpp` contains `alt_string`, a minimal string type that satisfies the
-    requirements needed for the tested subset of the API. It is a good starting point for a custom `StringType`.
-
-### Compatible types
-
-| Type                                                                        | Support                                                                     |
-|-----------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| `#!cpp std::string` (default)                                               | full                                                                        |
-| a custom string class in a user-defined namespace                           | full, if the requirements above are met                                     |
-| `#!cpp std::pmr::string`, `#!cpp std::basic_string` with a custom allocator | not usable beyond the DOM, `dump`, and `parse` -- see below                 |
-| `#!cpp std::wstring`, `#!cpp std::u16string`, `#!cpp std::u32string`        | not usable; the character type is not one byte wide                         |
-| `absl::Cord`                                                                | not usable; no `value_type`, and the storage is not contiguous              |
-
-!!! warning "`std::basic_string` with a non-default allocator"
-
-    In several places the library builds a `#!cpp std::string` and assigns it to a `string_t`: `int_to_string()` (used
-    by [`flatten`](../../api/basic_json/flatten.md) and [`diff`](../../api/basic_json/diff.md)) and the UBJSON
-    high-precision number reader, which every binary reader instantiates. A `#!cpp std::basic_string` with a different
-    allocator is not assignable from `#!cpp std::string`, and because such a type lives in namespace `std`, the ADL
-    customization point `int_to_string()` cannot be provided for it either. Only the DOM,
-    [`dump`](../../api/basic_json/dump.md), and [`parse`](../../api/basic_json/parse.md) compile with such a type.
-    Wrap it in a class of your own namespace if you need a custom allocator.
 
 ## `BooleanType`
 
