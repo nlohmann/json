@@ -88,6 +88,16 @@ TEST_CASE("object type without key_compare")
         CHECK(unordered_json::from_msgpack(unordered_json::to_msgpack(j)) == j);
     }
 
+    SECTION("flatten and unflatten do not depend on the iteration order")
+    {
+        // the flattened object is iterated in an unspecified order, so
+        // unflatten() must not decide between array and object based on
+        // whichever reference token it happens to see first
+        const auto j = unordered_json::parse(
+                           R"({"c":[1,2,3],"d":{"e":"s"},"n":[[0,1],[2]],"o":{"2":"x"}})");
+        CHECK(j.flatten().unflatten() == j);
+    }
+
     SECTION("conversion to and from nlohmann::json")
     {
         const auto j = unordered_json::parse(R"({"a":1,"b":[true,null]})");

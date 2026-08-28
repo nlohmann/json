@@ -274,10 +274,10 @@ class serializer
                         for (auto i = val.m_data.m_value.binary->cbegin();
                                 i != val.m_data.m_value.binary->cend() - 1; ++i)
                         {
-                            dump_integer(*i);
+                            dump_integer(to_byte_value(*i));
                             o->write_characters(", ", 2);
                         }
-                        dump_integer(val.m_data.m_value.binary->back());
+                        dump_integer(to_byte_value(val.m_data.m_value.binary->back()));
                     }
 
                     o->write_characters("],\n", 3);
@@ -305,10 +305,10 @@ class serializer
                         for (auto i = val.m_data.m_value.binary->cbegin();
                                 i != val.m_data.m_value.binary->cend() - 1; ++i)
                         {
-                            dump_integer(*i);
+                            dump_integer(to_byte_value(*i));
                             o->write_character(',');
                         }
-                        dump_integer(val.m_data.m_value.binary->back());
+                        dump_integer(to_byte_value(val.m_data.m_value.binary->back()));
                     }
 
                     o->write_characters("],\"subtype\":", 12);
@@ -703,6 +703,19 @@ class serializer
         pos += 6;
     }
 
+    /*!
+    @brief convert a single element of a binary value to its byte value
+
+    The elements of a binary value are dumped as the numbers 0..255, regardless
+    of the value type of the configured BinaryType: that type may be signed
+    (`char`), unsigned (`std::uint8_t`), or not an integer at all
+    (`std::byte`), none of which @ref dump_integer can handle uniformly.
+    */
+    static std::uint8_t to_byte_value(binary_char_t x) noexcept
+    {
+        return static_cast<std::uint8_t>(x);
+    }
+
     // templates to avoid warnings about useless casts
     template <typename NumberType, enable_if_t<std::is_signed<NumberType>::value, int> = 0>
     bool is_negative_number(NumberType x)
@@ -728,8 +741,7 @@ class serializer
     template < typename NumberType, detail::enable_if_t <
                    std::is_integral<NumberType>::value ||
                    std::is_same<NumberType, number_unsigned_t>::value ||
-                   std::is_same<NumberType, number_integer_t>::value ||
-                   std::is_same<NumberType, binary_char_t>::value,
+                   std::is_same<NumberType, number_integer_t>::value,
                    int > = 0 >
     void dump_integer(NumberType x)
     {

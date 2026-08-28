@@ -6954,7 +6954,9 @@ std::size_t hash(const BasicJsonType& j)
             seed = combine(seed, static_cast<std::size_t>(j.get_binary().subtype()));
             for (const auto byte : j.get_binary())
             {
-                seed = combine(seed, std::hash<std::uint8_t> {}(byte));
+                // the cast is needed for binary types whose value type is not
+                // an integer (e.g., std::byte)
+                seed = combine(seed, std::hash<std::uint8_t> {}(static_cast<std::uint8_t>(byte)));
             }
             return seed;
         }
@@ -15594,6 +15596,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #endif  // JSON_NO_IO
 #include <limits> // max
 #include <numeric> // accumulate
+#include <set> // set
 #include <string> // string
 #include <utility> // move
 #include <vector> // vector
@@ -15883,17 +15886,33 @@ class json_pointer
 
   private:
     /*!
+    @brief the reference token sequences that denote arrays
+
+    @ref unflatten collects the pointer prefixes that have a reference token 0
+    among their children; @ref get_and_create creates arrays exactly below
+    those prefixes and objects everywhere else. Deciding this up front keeps
+    the result independent of the order in which the flattened object is
+    iterated, which is unspecified for some object types.
+    */
+    using array_parents_t = std::set<std::vector<string_t>>;
+
+    /*!
     @brief create and return a reference to the pointed to value
 
     @complexity Linear in the number of reference tokens.
 
+    @throw parse_error.106 if an array index begins with '0'
     @throw parse_error.109 if array index is not a number
     @throw type_error.313 if value cannot be unflattened
     */
     template<typename BasicJsonType>
-    BasicJsonType& get_and_create(BasicJsonType& j) const
+    BasicJsonType& get_and_create(BasicJsonType& j, const array_parents_t& array_parents) const
     {
         auto* result = &j;
+
+        // the reference tokens that have been consumed so far; used to look up
+        // whether the value to be created below is an array or an object
+        std::vector<string_t> prefix;
 
         // in case no reference tokens exist, return a reference to the JSON value
         // j which will be overwritten by a primitive value
@@ -15903,10 +15922,11 @@ class json_pointer
             {
                 case detail::value_t::null:
                 {
-                    if (reference_token == "0")
+                    if (array_parents.find(prefix) != array_parents.end())
                     {
-                        // start a new array if the reference token is 0
-                        result = &result->operator[](0);
+                        // some reference token below this position is 0, so the
+                        // value is an array
+                        result = &result->operator[](array_index<BasicJsonType>(reference_token));
                     }
                     else
                     {
@@ -15946,6 +15966,8 @@ class json_pointer
                 default:
                     JSON_THROW(detail::type_error::create(313, "invalid value to unflatten", &j));
             }
+
+            prefix.push_back(reference_token);
         }
 
         return *result;
@@ -16521,6 +16543,24 @@ class json_pointer
 
         BasicJsonType result;
 
+        // collect the pointer prefixes that have a reference token 0 among
+        // their children; the values below them are arrays, all others are
+        // objects (see array_parents_t)
+        array_parents_t array_parents;
+        for (const auto& element : *value.m_data.m_value.object)
+        {
+            json_pointer ptr(element.first);
+            std::vector<string_t> prefix;
+            for (auto& reference_token : ptr.reference_tokens)
+            {
+                if (reference_token == "0")
+                {
+                    array_parents.insert(prefix);
+                }
+                prefix.push_back(std::move(reference_token));
+            }
+        }
+
         // iterate the JSON object values
         for (const auto& element : *value.m_data.m_value.object)
         {
@@ -16533,7 +16573,7 @@ class json_pointer
             // that if the JSON pointer is "" (i.e., points to the whole value),
             // function get_and_create returns a reference to the result itself.
             // An assignment will then create a primitive value.
-            json_pointer(element.first).get_and_create(result) = element.second;
+            json_pointer(element.first).get_and_create(result, array_parents) = element.second;
         }
 
         return result;
@@ -17831,7 +17871,9 @@ class binary_writer
                     for (size_t i = 0; i < j.m_data.m_value.binary->size(); ++i)
                     {
                         oa->write_character(to_char_type(bjdata_draft3 ? 'B' : 'U'));
-                        oa->write_character(to_char_type(j.m_data.m_value.binary->data()[i]));
+                        // the cast is needed for binary types whose value type
+                        // is not an integer (e.g., std::byte)
+                        oa->write_character(to_char_type(static_cast<std::uint8_t>(j.m_data.m_value.binary->data()[i])));
                     }
                 }
 
@@ -20280,10 +20322,10 @@ class serializer
                         for (auto i = val.m_data.m_value.binary->cbegin();
                                 i != val.m_data.m_value.binary->cend() - 1; ++i)
                         {
-                            dump_integer(*i);
+                            dump_integer(to_byte_value(*i));
                             o->write_characters(", ", 2);
                         }
-                        dump_integer(val.m_data.m_value.binary->back());
+                        dump_integer(to_byte_value(val.m_data.m_value.binary->back()));
                     }
 
                     o->write_characters("],\n", 3);
@@ -20311,10 +20353,10 @@ class serializer
                         for (auto i = val.m_data.m_value.binary->cbegin();
                                 i != val.m_data.m_value.binary->cend() - 1; ++i)
                         {
-                            dump_integer(*i);
+                            dump_integer(to_byte_value(*i));
                             o->write_character(',');
                         }
-                        dump_integer(val.m_data.m_value.binary->back());
+                        dump_integer(to_byte_value(val.m_data.m_value.binary->back()));
                     }
 
                     o->write_characters("],\"subtype\":", 12);
@@ -20709,6 +20751,19 @@ class serializer
         pos += 6;
     }
 
+    /*!
+    @brief convert a single element of a binary value to its byte value
+
+    The elements of a binary value are dumped as the numbers 0..255, regardless
+    of the value type of the configured BinaryType: that type may be signed
+    (`char`), unsigned (`std::uint8_t`), or not an integer at all
+    (`std::byte`), none of which @ref dump_integer can handle uniformly.
+    */
+    static std::uint8_t to_byte_value(binary_char_t x) noexcept
+    {
+        return static_cast<std::uint8_t>(x);
+    }
+
     // templates to avoid warnings about useless casts
     template <typename NumberType, enable_if_t<std::is_signed<NumberType>::value, int> = 0>
     bool is_negative_number(NumberType x)
@@ -20734,8 +20789,7 @@ class serializer
     template < typename NumberType, detail::enable_if_t <
                    std::is_integral<NumberType>::value ||
                    std::is_same<NumberType, number_unsigned_t>::value ||
-                   std::is_same<NumberType, number_integer_t>::value ||
-                   std::is_same<NumberType, binary_char_t>::value,
+                   std::is_same<NumberType, number_integer_t>::value,
                    int > = 0 >
     void dump_integer(NumberType x)
     {

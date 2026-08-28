@@ -112,13 +112,11 @@ using unordered_json = nlohmann::basic_json<unordered_map_object>;
 The same pattern (ignoring the third argument) is how [`tsl::ordered_map`](https://github.com/Tessil/ordered-map) and
 similar containers are integrated; see [Object Order](../object_order.md).
 
-#### Hash-ordered containers and `unflatten`
+#### Iteration order
 
-[`unflatten`](../../api/basic_json/unflatten.md) rebuilds an array only if it encounters the reference token `0`
-before the other indices of that array. Sorted containers (`#!cpp std::map`) and insertion-ordered containers
-(`nlohmann::ordered_map`) both iterate the flattened object in an order that satisfies this. A container with an
-unspecified iteration order does not, and `#!cpp j.flatten().unflatten()` may then return objects with the keys
-`#!json "0"`, `#!json "1"`, ... where the original had arrays.
+The library never relies on the container's iteration order for correctness; it does determine the order in which
+object keys are serialized by [`dump`](../../api/basic_json/dump.md) and visited by
+[`items`](../../api/basic_json/items.md). See [Object Order](../object_order.md).
 
 #### `capacity()` marks a container as insertion-ordered
 
@@ -138,7 +136,7 @@ The library does not sort or de-duplicate keys itself; the behavior described in
 |--------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
 | `#!cpp std::map` (default)                                                                                               | full                                                                          |
 | [`nlohmann::ordered_map`](../../api/ordered_map.md)                                                                      | full; used by [`ordered_json`](../../api/ordered_json.md)                      |
-| `#!cpp std::unordered_map`, through the adapter shown above                                                              | full except [`unflatten`](../../api/basic_json/unflatten.md)                   |
+| `#!cpp std::unordered_map`, through the adapter shown above                                                              | full                                                                          |
 | [`tsl::ordered_map`](https://github.com/Tessil/ordered-map), [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map) | through the same adapter pattern; see [Object Order](../object_order.md)       |
 | `#!cpp std::multimap`, `#!cpp std::unordered_multimap`                                                                   | not usable; `emplace` does not return `#!cpp std::pair<iterator, bool>`        |
 
@@ -437,7 +435,7 @@ such a container to a `basic_json` value.
 |------------------------------------------|-----------------------------------------------------------------------------------------------|
 | `#!cpp std::vector<std::uint8_t>` (default) | full                                                                                       |
 | `#!cpp std::vector<char>`                | full                                                                                          |
-| `#!cpp std::vector<std::byte>`           | assignment, [`get`](../../api/basic_json/get.md), and the binary formats work, but [`dump`](../../api/basic_json/dump.md) and [`std::hash<basic_json>`](../../api/basic_json/std_hash.md) do not compile |
+| `#!cpp std::vector<std::byte>`           | full                                                                                          |
 | `#!cpp std::string`                      | not usable; `binary_t::container_type` and `string_t` would be the same type, which makes the [`swap`](../../api/basic_json/swap.md) overloads ambiguous |
 | containers whose `value_type` is wider than one byte | not usable                                                                        |
 

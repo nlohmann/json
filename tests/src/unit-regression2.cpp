@@ -1154,6 +1154,39 @@ TEST_CASE("regression tests 2")
         CHECK(!default_json.is_binary());
     }
 
+    SECTION("dumping a binary value with a custom BinaryType")
+    {
+        // the elements of a binary value are dumped as the numbers 0..255,
+        // whatever the value type of the configured BinaryType is
+        const std::vector<std::byte> bytes{std::byte{0}, std::byte{1}, std::byte{0xFF}};
+        CHECK(json_4804::binary(bytes).dump() == R"({"bytes":[0,1,255],"subtype":null})");
+        CHECK(json_4804::binary(bytes, 42).dump() == R"({"bytes":[0,1,255],"subtype":42})");
+        CHECK(json_4804::binary({}).dump() == R"({"bytes":[],"subtype":null})");
+
+        // a signed byte type must not dump negative numbers
+        using json_char_binary = nlohmann::basic_json <
+                                 std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
+                                 double, std::allocator, nlohmann::adl_serializer, std::vector<char>, void >;
+        const std::vector<char> chars{char(0), char(1), char(0xFF)};
+        CHECK(json_char_binary::binary(chars).dump() == R"({"bytes":[0,1,255],"subtype":null})");
+
+        // the default binary type is unchanged
+        CHECK(json::binary({0, 1, 255}, 42).dump() == R"({"bytes":[0,1,255],"subtype":42})");
+    }
+
+    SECTION("hashing and UBJSON with a custom BinaryType")
+    {
+        const std::vector<std::byte> bytes{std::byte{0}, std::byte{1}, std::byte{0xFF}};
+        const auto j = json_4804::binary(bytes);
+
+        CHECK(std::hash<json_4804> {}(j) == std::hash<json_4804> {}(j));
+        CHECK(json_4804::from_cbor(json_4804::to_cbor(j)) == j);
+        CHECK(json_4804::from_msgpack(json_4804::to_msgpack(j)) == j);
+
+        // UBJSON has no binary type, so binary values are written as arrays
+        CHECK(json_4804::from_ubjson(json_4804::to_ubjson(j)) == json_4804({0, 1, 255}));
+    }
+
     SECTION("discussion #4209 - custom BinaryType extraction from parsed array")
     {
         // Test that extracting a custom BinaryType from a parsed JSON array still works
