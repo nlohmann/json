@@ -11,29 +11,36 @@
 #include <nlohmann/json.hpp>
 
 #include <cstdint>
-#include <functional>
 #include <map>
 #include <string>
 #include <type_traits>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
 namespace
 {
 
-// An ObjectType that does *not* define a key_compare member type. It adapts
-// std::unordered_map to the template argument order expected by basic_json,
-// where the third argument is a comparator rather than a hash function.
-template<class Key, class T, class IgnoredCompare, class Allocator>
-struct unordered_map_object
-    : std::unordered_map<Key, T, std::hash<Key>, std::equal_to<Key>, Allocator>
+// An ObjectType that does *not* define a key_compare member type, which is
+// what every hash map looks like to the library.
+//
+// A hash map is deliberately not used here: object_t is probed for
+// key_compare inside the definition of basic_json, that is, while basic_json
+// is still an incomplete type, and whether a hash map can be instantiated
+// with an incomplete mapped type depends on the standard library (libstdc++ 9
+// needs the size of the mapped type for its node type and rejects it). So the
+// object type is built from std::map, and the inherited key_compare member
+// type is shadowed by an entity that is not a type -- the library's probe
+// then finds no type, exactly as for a hash map.
+template<class Key, class T, class Compare, class Allocator>
+struct no_key_compare_map : std::map<Key, T, Compare, Allocator>
 {
-    using base_t = std::unordered_map<Key, T, std::hash<Key>, std::equal_to<Key>, Allocator>;
+    using base_t = std::map<Key, T, Compare, Allocator>;
     using base_t::base_t;
+
+    enum { key_compare }; // shadows base_t::key_compare, which is a type
 };
 
-using unordered_json = nlohmann::basic_json<unordered_map_object>;
+using no_key_compare_json = nlohmann::basic_json<no_key_compare_map>;
 
 // An ObjectType whose erase(iterator) returns void rather than the following
 // iterator, as for instance Abseil's hash maps do
@@ -109,8 +116,8 @@ TEST_CASE("object type without key_compare")
 {
     SECTION("object_comparator_t falls back to default_object_comparator_t")
     {
-        CHECK(std::is_same < unordered_json::object_comparator_t,
-              unordered_json::default_object_comparator_t >::value);
+        CHECK(std::is_same < no_key_compare_json::object_comparator_t,
+              no_key_compare_json::default_object_comparator_t >::value);
     }
 
     SECTION("object types defining key_compare are unaffected")
@@ -123,7 +130,7 @@ TEST_CASE("object type without key_compare")
 
     SECTION("creating and accessing values")
     {
-        unordered_json j;
+        no_key_compare_json j;
         j["one"] = 1;
         j["two"] = "zwei";
         j["three"]["nested"] = true;
@@ -142,39 +149,38 @@ TEST_CASE("object type without key_compare")
 
     SECTION("serialization and deserialization")
     {
-        const auto j = unordered_json::parse(R"({"a":[1,2,3],"b":{"c":null}})");
+        const auto j = no_key_compare_json::parse(R"({"a":[1,2,3],"b":{"c":null}})");
         CHECK(j["a"].size() == 3);
         CHECK(j["a"][2] == 3);
         CHECK(j["b"]["c"].is_null());
-        CHECK(unordered_json::parse(j.dump()) == j);
+        CHECK(no_key_compare_json::parse(j.dump()) == j);
     }
 
     SECTION("binary formats")
     {
-        const auto j = unordered_json::parse(R"({"a":[1,2,3],"b":"x"})");
-        CHECK(unordered_json::from_cbor(unordered_json::to_cbor(j)) == j);
-        CHECK(unordered_json::from_msgpack(unordered_json::to_msgpack(j)) == j);
+        const auto j = no_key_compare_json::parse(R"({"a":[1,2,3],"b":"x"})");
+        CHECK(no_key_compare_json::from_cbor(no_key_compare_json::to_cbor(j)) == j);
+        CHECK(no_key_compare_json::from_msgpack(no_key_compare_json::to_msgpack(j)) == j);
     }
 
-    SECTION("flatten and unflatten do not depend on the iteration order")
+    SECTION("flatten and unflatten")
     {
-        // the flattened object is iterated in an unspecified order, so
-        // unflatten() must not decide between array and object based on
-        // whichever reference token it happens to see first
-        const auto j = unordered_json::parse(
+        // "o" has a key that looks like an array index, so unflatten() must
+        // not turn it into an array
+        const auto j = no_key_compare_json::parse(
                            R"({"c":[1,2,3],"d":{"e":"s"},"n":[[0,1],[2]],"o":{"2":"x"}})");
         CHECK(j.flatten().unflatten() == j);
     }
 
     SECTION("conversion to and from nlohmann::json")
     {
-        const auto j = unordered_json::parse(R"({"a":1,"b":[true,null]})");
+        const auto j = no_key_compare_json::parse(R"({"a":1,"b":[true,null]})");
         const nlohmann::json converted(j);
 
         CHECK(converted.is_object());
         CHECK(converted["a"] == 1);
         CHECK(converted["b"][0] == true);
         CHECK(converted["b"][1].is_null());
-        CHECK(unordered_json(converted) == j);
+        CHECK(no_key_compare_json(converted) == j);
     }
 }

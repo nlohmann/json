@@ -148,6 +148,11 @@ struct unordered_map_object
 using unordered_json = nlohmann::basic_json<unordered_map_object>;
 ```
 
+Whether `#!cpp std::unordered_map` can be instantiated at all depends on the standard library: `object_t` is formed
+while `basic_json` is still incomplete (see the warning above), and libstdc++ 9 needs the size of the mapped type to
+instantiate the hash map's node type, so the adapter does not compile there. Newer libstdc++ versions, and the hash
+maps listed below, do not have that problem.
+
 The adapter above works verbatim for Abseil's, Boost's, `phmap`'s and `gtl`'s hash maps, which all place the hash
 function third and take a `#!cpp std::pair<const Key, T>` allocator fifth. Two need a different adapter:
 
@@ -208,7 +213,7 @@ The library does not sort or de-duplicate keys itself; the behavior described in
 | [`nlohmann::ordered_map`](../../api/ordered_map.md)                                                           | used by [`ordered_json`](../../api/ordered_json.md); keeps insertion order |
 | [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map)                                                  | keeps insertion order; adapter puts `fifo_map_compare` in the comparator slot |
 | `boost::container::map`, `boost::container::flat_map`                                                         | no adapter needed                                                        |
-| `#!cpp std::unordered_map`                                                                                    | through the adapter above                                                |
+| `#!cpp std::unordered_map`                                                                                    | through the adapter above; not with libstdc++ 9, see the note            |
 | `boost::unordered_map`, `boost::unordered_flat_map`, `boost::unordered_node_map`                              | through the adapter above                                                |
 | `absl::flat_hash_map`, `absl::node_hash_map`                                                                  | through the adapter above; `flat_hash_map` moves mapped values on rehash  |
 | `phmap::flat_hash_map`, `phmap::node_hash_map`, `gtl::flat_hash_map`                                          | through the adapter above                                                |

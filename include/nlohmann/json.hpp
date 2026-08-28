@@ -798,7 +798,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    std::is_void<decltype(std::declval<object_t&>().erase(std::declval<It>()))>::value, int > = 0 >
     typename object_t::iterator erase_from_object(It pos)
     {
-        typename object_t::iterator next = std::next(pos);
+        auto next = std::next(pos);
         m_data.m_value.object->erase(pos);
         return next;
     }
@@ -2063,18 +2063,17 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     reference at(size_type idx)
     {
         // at only works for arrays
-        if (JSON_HEDLEY_LIKELY(is_array()))
-        {
-            if (JSON_HEDLEY_UNLIKELY(idx >= m_data.m_value.array->size()))
-            {
-                JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), this));
-            }
-            return set_parent((*m_data.m_value.array)[idx]);
-        }
-        else
+        if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
             JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
         }
+
+        if (JSON_HEDLEY_UNLIKELY(idx >= m_data.m_value.array->size()))
+        {
+            JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), this));
+        }
+
+        return set_parent((*m_data.m_value.array)[idx]);
     }
 
     /// @brief access specified array element with bounds checking
@@ -2082,18 +2081,17 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     const_reference at(size_type idx) const
     {
         // at only works for arrays
-        if (JSON_HEDLEY_LIKELY(is_array()))
-        {
-            if (JSON_HEDLEY_UNLIKELY(idx >= m_data.m_value.array->size()))
-            {
-                JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), this));
-            }
-            return (*m_data.m_value.array)[idx];
-        }
-        else
+        if (JSON_HEDLEY_UNLIKELY(!is_array()))
         {
             JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
         }
+
+        if (JSON_HEDLEY_UNLIKELY(idx >= m_data.m_value.array->size()))
+        {
+            JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), this));
+        }
+
+        return (*m_data.m_value.array)[idx];
     }
 
     /// @brief access specified object element with bounds checking
