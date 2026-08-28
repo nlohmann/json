@@ -60,6 +60,12 @@ By default, `#!cpp JSON_USE_SIMDUTF` is not defined and the portable C++11 scala
     target_link_libraries(your_target PRIVATE simdutf::simdutf)
     ```
 
+!!! hint "Testing this configuration"
+
+    The unit tests can be built against the simdutf backend with the CMake option `JSON_TestSimdutf` (`OFF` by
+    default), which fetches simdutf and defines `JSON_USE_SIMDUTF` for every test target. The `ci_test_simdutf` target
+    runs the whole test suite in that configuration.
+
 ## Version history
 
 - Added in version 3.13.0.

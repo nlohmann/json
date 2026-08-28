@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.13...4.0)
 
 option(JSON_Valgrind    "Execute test suite with Valgrind." OFF)
 option(JSON_FastTests   "Skip expensive/slow tests." OFF)
+option(JSON_TestSimdutf "Build the unit tests against the simdutf UTF-8 validation backend." OFF)
+
+set(JSON_SIMDUTF_VERSION 9.1.0 CACHE STRING "The simdutf version used by JSON_TestSimdutf.")
 
 set(JSON_32bitTest     AUTO CACHE STRING "Enable the 32bit unit test (ON/OFF/AUTO/ONLY).")
 set(JSON_TestStandards "" CACHE STRING "The list of standards to test explicitly.")
@@ -87,6 +90,43 @@ target_include_directories(test_main PUBLIC
     thirdparty/fifo_map
     ${PROJECT_BINARY_DIR}/include)
 target_link_libraries(test_main PUBLIC ${NLOHMANN_JSON_TARGET_NAME})
+
+#############################################################################
+# optionally validate UTF-8 with simdutf (JSON_USE_SIMDUTF)
+#############################################################################
+
+# The simdutf backend is opt-in and not vendored, so it is fetched here rather
+# than being a checked-in dependency. Everything below hangs off test_main,
+# whose usage requirements every test target inherits; the library target and
+# the installed CMake package are deliberately left untouched.
+if (JSON_TestSimdutf)
+    if (CMAKE_VERSION VERSION_LESS 3.18)
+        message(FATAL_ERROR "JSON_TestSimdutf requires CMake 3.18 or later (simdutf's minimum).")
+    endif()
+
+    include(FetchContent)
+
+    # simdutf builds its tests and tools by default, and its tests pull further
+    # dependencies of their own; only the library itself is needed here
+    set(SIMDUTF_TESTS OFF CACHE BOOL "" FORCE)
+    set(SIMDUTF_TOOLS OFF CACHE BOOL "" FORCE)
+    set(SIMDUTF_BENCHMARKS OFF CACHE BOOL "" FORCE)
+    set(SIMDUTF_ICONV OFF CACHE BOOL "" FORCE)
+
+    FetchContent_Declare(simdutf
+        URL https://github.com/simdutf/simdutf/archive/refs/tags/v${JSON_SIMDUTF_VERSION}.tar.gz
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+    FetchContent_MakeAvailable(simdutf)
+
+    target_compile_definitions(test_main PUBLIC JSON_USE_SIMDUTF)
+    target_link_libraries(test_main PUBLIC simdutf::simdutf)
+
+    # simdutf.h requires C++17; below that the library keeps its scalar
+    # validator, so the C++11/14 test targets exercise the fallback and the
+    # C++17-and-later ones exercise simdutf. Both must agree.
+    message(STATUS "UTF-8 validation delegated to simdutf ${JSON_SIMDUTF_VERSION} for C++17 and later (JSON_USE_SIMDUTF)")
+endif()
 
 #############################################################################
 # define test- and standard-specific build settings
