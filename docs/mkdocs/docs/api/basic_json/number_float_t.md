@@ -25,7 +25,9 @@ type to use.
 `NumberFloatType`
 :   the type to store floating-point numbers. Parsing and serialization are implemented in terms of
     `#!cpp std::strtof`/`#!cpp std::strtod`/`#!cpp std::strtold` and `#!cpp std::snprintf`, so the type must be
-    `#!cpp float`, `#!cpp double`, or `#!cpp long double`. See
+    `#!cpp float`, `#!cpp double`, or `#!cpp long double`. The
+    [binary formats](../../features/binary_formats/index.md) additionally require `#!cpp float` or `#!cpp double`,
+    because they have no encoding for `#!cpp long double`. See
     [Template Parameter Requirements](../../features/types/template_parameters.md#numberfloattype).
 
 ## Notes

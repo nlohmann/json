@@ -4,7 +4,8 @@ Class [`basic_json`](../../api/basic_json/index.md) is configurable through elev
 never formally states what a type passed for one of these parameters has to provide -- the requirements are implied by
 the way the library uses the resulting [`object_t`](../../api/basic_json/object_t.md),
 [`array_t`](../../api/basic_json/array_t.md), [`string_t`](../../api/basic_json/string_t.md), etc. This page collects
-these requirements so they do not have to be discovered by trial and error.
+these requirements so they do not have to be discovered by trial and error. Each section also lists the concrete
+types that are known to work for that parameter.
 
 ## How to read this page
 
@@ -30,13 +31,13 @@ Requirements are split into two groups:
 | [`ObjectType`](#objecttype)                                       | `std::map`                        | [`nlohmann::ordered_map`](../../api/ordered_map.md), `tsl::ordered_map` |
 | [`ArrayType`](#arraytype)                                         | `std::vector`                     | vector-like containers only                                            |
 | [`StringType`](#stringtype)                                       | `std::string`                     | `std::string`-like types over `char`                                   |
-| [`BooleanType`](#booleantype)                                     | `bool`                            | (none)                                                                 |
+| [`BooleanType`](#booleantype)                                     | `bool`                            | none worth using                                                       |
 | [`NumberIntegerType`](#numberintegertype-and-numberunsignedtype)  | `std::int64_t`                    | any signed integer type                                                |
 | [`NumberUnsignedType`](#numberintegertype-and-numberunsignedtype) | `std::uint64_t`                   | any unsigned integer type                                              |
-| [`NumberFloatType`](#numberfloattype)                             | `double`                          | `float`, `long double`                                                 |
+| [`NumberFloatType`](#numberfloattype)                             | `double`                          | `float` (`long double`: no binary formats)                             |
 | [`AllocatorType`](#allocatortype)                                 | `std::allocator`                  | stateless allocators                                                   |
 | [`JSONSerializer`](#jsonserializer)                               | `adl_serializer`                  | serializers with the same interface                                    |
-| [`BinaryType`](#binarytype)                                       | `#!cpp std::vector<std::uint8_t>` | contiguous byte containers                                             |
+| [`BinaryType`](#binarytype)                                       | `#!cpp std::vector<std::uint8_t>` | `#!cpp std::vector<char>`                                              |
 | [`CustomBaseClass`](#custombaseclass)                             | `void`                            | any default-constructible class                                        |
 
 ## `ObjectType`
@@ -58,7 +59,10 @@ i.e., the template arguments follow the order and meaning of `std::map`.
 - The template must be usable with **four** type arguments in the order shown above. The third argument is a
   **comparator**; containers that expect something else in this position (e.g., a hash function) need an alias template
   or wrapper -- see [Notes](#notes).
-- Member types `key_type`, `mapped_type`, `value_type`, `iterator`, and **`key_compare`**.
+- An optional member type `key_compare`. If it is present it becomes
+  [`object_comparator_t`](../../api/basic_json/object_comparator_t.md); otherwise
+  [`default_object_comparator_t`](../../api/basic_json/default_object_comparator_t.md) is used.
+- Member types `key_type`, `mapped_type`, `value_type`, and `iterator`.
 - `value_type` must behave like `#!cpp std::pair<const key_type, mapped_type>`; the library accesses `.first` and
   `.second` on it.
 - `iterator` must be default-constructible and satisfy
@@ -87,25 +91,11 @@ The overloads of [`at`](../../api/basic_json/at.md), [`operator[]`](../../api/ba
 
 ### Notes
 
-#### `key_compare` is mandatory
+#### `std::unordered_map` needs an adapter
 
-[`object_comparator_t`](../../api/basic_json/object_comparator_t.md) is defined as
-
-```cpp
-using type = typename std::conditional<has_key_compare<object_t>::value,
-                                       typename object_t::key_compare,
-                                       default_object_comparator_t>::type;
-```
-
-Both type arguments of `#!cpp std::conditional` have to name valid types, so `#!cpp object_t::key_compare` must exist
-even when `has_key_compare<object_t>` evaluates to `#!cpp false`. A container without a `key_compare` member type
-therefore fails to compile.
-
-#### `std::unordered_map` cannot be used directly
-
-`#!cpp std::unordered_map` fails on both counts: it has no `key_compare` member type, and its third template parameter
-is a hash function rather than a comparator. It can be used through a wrapper that fixes the argument order and adds
-the missing member type:
+`#!cpp std::unordered_map` cannot be passed directly: its third template parameter is a hash function, but
+`basic_json` passes a comparator in that position. An alias template or wrapper that restores the expected argument
+order makes it usable:
 
 ```cpp
 template<class Key, class T, class IgnoredCompare, class Allocator>
@@ -114,7 +104,6 @@ struct unordered_map_object
 {
     using base_t = std::unordered_map<Key, T, std::hash<Key>, std::equal_to<Key>, Allocator>;
     using base_t::base_t;
-    using key_compare = std::equal_to<Key>;
 };
 
 using unordered_json = nlohmann::basic_json<unordered_map_object>;
@@ -122,6 +111,14 @@ using unordered_json = nlohmann::basic_json<unordered_map_object>;
 
 The same pattern (ignoring the third argument) is how [`tsl::ordered_map`](https://github.com/Tessil/ordered-map) and
 similar containers are integrated; see [Object Order](../object_order.md).
+
+#### Hash-ordered containers and `unflatten`
+
+[`unflatten`](../../api/basic_json/unflatten.md) rebuilds an array only if it encounters the reference token `0`
+before the other indices of that array. Sorted containers (`#!cpp std::map`) and insertion-ordered containers
+(`nlohmann::ordered_map`) both iterate the flattened object in an order that satisfies this. A container with an
+unspecified iteration order does not, and `#!cpp j.flatten().unflatten()` may then return objects with the keys
+`#!json "0"`, `#!json "1"`, ... where the original had arrays.
 
 #### `capacity()` marks a container as insertion-ordered
 
@@ -134,6 +131,16 @@ conservatively -- this is correct, but slower.
 
 The library does not sort or de-duplicate keys itself; the behavior described in
 [`object_t`](../../api/basic_json/object_t.md) is entirely the behavior of the chosen container.
+
+### Compatible containers
+
+| Container                                                                                                                | Support                                                                       |
+|--------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
+| `#!cpp std::map` (default)                                                                                               | full                                                                          |
+| [`nlohmann::ordered_map`](../../api/ordered_map.md)                                                                      | full; used by [`ordered_json`](../../api/ordered_json.md)                      |
+| `#!cpp std::unordered_map`, through the adapter shown above                                                              | full except [`unflatten`](../../api/basic_json/unflatten.md)                   |
+| [`tsl::ordered_map`](https://github.com/Tessil/ordered-map), [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map) | through the same adapter pattern; see [Object Order](../object_order.md)       |
+| `#!cpp std::multimap`, `#!cpp std::unordered_multimap`                                                                   | not usable; `emplace` does not return `#!cpp std::pair<iterator, bool>`        |
 
 ## `ArrayType`
 
@@ -170,6 +177,14 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
     Consequently `#!cpp std::deque` and `#!cpp std::list` cannot be used as `ArrayType` as-is. A `std::deque` becomes
     usable when wrapped in a type that adds a `capacity()` member function; `#!cpp std::list` additionally lacks
     `operator[]` and random-access iterators and cannot be used at all.
+
+### Compatible containers
+
+| Container                     | Support                                                                          |
+|-------------------------------|----------------------------------------------------------------------------------|
+| `#!cpp std::vector` (default) | full                                                                             |
+| `#!cpp std::deque`            | only when wrapped in a type that adds a `capacity()` member function              |
+| `#!cpp std::list`             | not usable; no `operator[]`, no `capacity()`, and no random-access iterators      |
 
 ## `StringType`
 
@@ -220,6 +235,25 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
     The unit test `tests/src/unit-alt-string.cpp` contains `alt_string`, a minimal string type that satisfies the
     requirements needed for the tested subset of the API. It is a good starting point for a custom `StringType`.
 
+### Compatible types
+
+| Type                                                                        | Support                                                                     |
+|-----------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| `#!cpp std::string` (default)                                               | full                                                                        |
+| a custom string class in a user-defined namespace                           | full, if the requirements above are met                                     |
+| `#!cpp std::pmr::string`, `#!cpp std::basic_string` with a custom allocator | not usable beyond the DOM, `dump`, and `parse` -- see below                 |
+| `#!cpp std::wstring`, `#!cpp std::u16string`, `#!cpp std::u32string`        | not usable; the character type is not one byte wide                         |
+
+!!! warning "`std::basic_string` with a non-default allocator"
+
+    In several places the library builds a `#!cpp std::string` and assigns it to a `string_t`: `int_to_string()` (used
+    by [`flatten`](../../api/basic_json/flatten.md) and [`diff`](../../api/basic_json/diff.md)) and the UBJSON
+    high-precision number reader, which every binary reader instantiates. A `#!cpp std::basic_string` with a different
+    allocator is not assignable from `#!cpp std::string`, and because such a type lives in namespace `std`, the ADL
+    customization point `int_to_string()` cannot be provided for it either. Only the DOM,
+    [`dump`](../../api/basic_json/dump.md), and [`parse`](../../api/basic_json/parse.md) compile with such a type.
+    Wrap it in a class of your own namespace if you need a custom allocator.
+
 ## `BooleanType`
 
 `boolean_t` is stored **directly** inside `basic_json`, as a member of an anonymous union.
@@ -234,6 +268,12 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
   [`get<bool>()`](../../api/basic_json/get.md) is used internally.
 
 There is little reason to use anything other than `#!cpp bool` here.
+
+### Compatible types
+
+`#!cpp bool` is the only meaningful choice. Other trivially copyable types that convert to and from `#!cpp bool` (for
+example `#!cpp std::uint8_t`) do compile and behave correctly, but they gain nothing and make the
+[`get`](../../api/basic_json/get.md) overloads harder to reason about.
 
 ## `NumberIntegerType` and `NumberUnsignedType`
 
@@ -259,6 +299,15 @@ is stored as [`number_float_t`](../../api/basic_json/number_float_t.md) instead.
 therefore silently changes parse results rather than raising an error. See
 [Number Handling](number_handling.md) for details.
 
+### Compatible types
+
+| Type pair                                                                                    | Support                                                             |
+|----------------------------------------------------------------------------------------------|---------------------------------------------------------------------|
+| `#!cpp std::int64_t` / `#!cpp std::uint64_t` (default)                                       | full                                                                |
+| `#!cpp std::int32_t` / `#!cpp std::uint32_t`, `#!cpp long long` / `#!cpp unsigned long long` | full; narrower types change which literals the parser can represent |
+| any other pair of standard signed/unsigned integer types                                     | full                                                                |
+| class types, `#!cpp bool`, enumerations                                                      | not usable; `#!cpp std::is_integral` must hold                      |
+
 ## `NumberFloatType`
 
 `number_float_t` is stored **directly** inside `basic_json`'s union.
@@ -283,6 +332,21 @@ If `#!cpp std::numeric_limits<NumberFloatType>` describes an IEEE 754 binary32 o
 Grisu2 algorithm, which produces the shortest representation that round-trips. Otherwise the `snprintf` fallback with
 `max_digits10` digits is used.
 
+### Required for the binary formats
+
+`NumberFloatType` must be `#!cpp float` or `#!cpp double`. The writers for
+[CBOR, MessagePack, UBJSON, BJData, and BSON](../binary_formats/index.md) map a floating-point value onto an IEEE 754
+binary32 or binary64 field and have no encoding for `#!cpp long double`.
+
+### Compatible types
+
+| Type                        | Support                                                                                             |
+|-----------------------------|-----------------------------------------------------------------------------------------------------|
+| `#!cpp double` (default)    | full; short round-trip output through Grisu2                                                        |
+| `#!cpp float`               | full; short round-trip output through Grisu2                                                        |
+| `#!cpp long double`         | `dump` and `parse` only; the binary format writers do not compile, as they only handle IEEE 754 binary32 and binary64 |
+| any other type              | not usable                                                                                          |
+
 ## `AllocatorType`
 
 `AllocatorType` is instantiated with **one** argument, for each of `object_t`, `array_t`, `string_t`, `binary_t`,
@@ -304,6 +368,14 @@ Grisu2 algorithm, which produces the shortest representation that round-trips. O
   [`basic_json::pointer`](../../api/basic_json/index.md#container-types), and iterators are constructed from raw
   `#!cpp basic_json*` values. The `pointer` type must therefore be a plain pointer; fancy pointers are not supported.
 
+### Compatible types
+
+| Type                                                            | Support                                            |
+|-----------------------------------------------------------------|----------------------------------------------------|
+| `#!cpp std::allocator` (default)                                | full                                               |
+| a custom stateless allocator template                           | full                                               |
+| stateful allocators, e.g. `#!cpp std::pmr::polymorphic_allocator`| not usable; see the requirements above             |
+
 ## `JSONSerializer`
 
 `JSONSerializer` is instantiated as `JSONSerializer<T, void>` and defaults to
@@ -322,6 +394,14 @@ Grisu2 algorithm, which produces the shortest representation that round-trips. O
 - To support the [converting constructor](../../api/basic_json/basic_json.md) between different `basic_json`
   specializations, `to_json` must be available for `boolean_t`, `number_integer_t`, `number_unsigned_t`,
   `number_float_t`, `string_t`, `object_t`, `array_t`, and `binary_t` of the *source* specialization.
+
+### Compatible types
+
+| Type                                                              | Support                                                                 |
+|-------------------------------------------------------------------|-------------------------------------------------------------------------|
+| [`nlohmann::adl_serializer`](../../api/adl_serializer/index.md) (default) | full                                                             |
+| a class template deriving from `adl_serializer`                   | full; the usual way to change behavior while keeping the defaults        |
+| an unrelated template with the same interface                     | full, but it has to handle every type the library converts               |
 
 ## `BinaryType`
 
@@ -351,6 +431,16 @@ using binary_t = nlohmann::byte_container_with_subtype<BinaryType>;
 See [`binary_t`](../../api/basic_json/binary_t.md) for how a non-default `BinaryType` changes the meaning of assigning
 such a container to a `basic_json` value.
 
+### Compatible containers
+
+| Container                                | Support                                                                                       |
+|------------------------------------------|-----------------------------------------------------------------------------------------------|
+| `#!cpp std::vector<std::uint8_t>` (default) | full                                                                                       |
+| `#!cpp std::vector<char>`                | full                                                                                          |
+| `#!cpp std::vector<std::byte>`           | assignment, [`get`](../../api/basic_json/get.md), and the binary formats work, but [`dump`](../../api/basic_json/dump.md) and [`std::hash<basic_json>`](../../api/basic_json/std_hash.md) do not compile |
+| `#!cpp std::string`                      | not usable; `binary_t::container_type` and `string_t` would be the same type, which makes the [`swap`](../../api/basic_json/swap.md) overloads ambiguous |
+| containers whose `value_type` is wider than one byte | not usable                                                                        |
+
 ## `CustomBaseClass`
 
 `CustomBaseClass` is an extension point: unless it is `#!cpp void` (the default, which selects the empty
@@ -371,6 +461,13 @@ Note the namespace of `CustomBaseClass` becomes an associated namespace of `basi
 argument-dependent lookup.
 
 See [`json_base_class_t`](../../api/basic_json/json_base_class_t.md) for an example.
+
+### Compatible types
+
+| Type                                                     | Support                                                      |
+|----------------------------------------------------------|--------------------------------------------------------------|
+| `#!cpp void` (default)                                   | an empty base class is used; no effect on `basic_json`        |
+| any default-constructible, non-`final` class             | full; see [`json_base_class_t`](../../api/basic_json/json_base_class_t.md) |
 
 ## Cross-specialization conversions
 

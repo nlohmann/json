@@ -52,6 +52,13 @@ represent a byte array in modern C++.
 
 The default values for `BinaryType` is `#!cpp std::vector<std::uint8_t>`.
 
+#### Supported byte types
+
+`#!cpp std::vector<std::uint8_t>` and `#!cpp std::vector<char>` are fully supported. With
+`#!cpp std::vector<std::byte>`, assignment, [`get`](get.md), and the [binary formats](../../features/binary_formats/index.md)
+work, but [`dump`](dump.md) and [`std::hash<basic_json>`](std_hash.md) do not compile, because `#!cpp std::byte` neither
+converts to an integer nor is hashable as one.
+
 #### Custom BinaryType behavior
 
 When a custom `BinaryType` is configured (other than the default `#!cpp std::vector<std::uint8_t>`), you can assign
