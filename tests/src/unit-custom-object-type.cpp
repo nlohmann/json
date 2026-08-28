@@ -37,7 +37,8 @@ struct no_key_compare_map : std::map<Key, T, Compare, Allocator>
     using base_t = std::map<Key, T, Compare, Allocator>;
     using base_t::base_t;
 
-    enum { key_compare }; // shadows base_t::key_compare, which is a type
+    // shadows base_t::key_compare, which is a type; never defined or called
+    void key_compare();
 };
 
 using no_key_compare_json = nlohmann::basic_json<no_key_compare_map>;
