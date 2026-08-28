@@ -41,7 +41,6 @@ By default, `#!cpp JSON_USE_SIMDUTF` is not defined and the portable C++11 scala
 
     ```cpp
     #define JSON_USE_SIMDUTF 1
-    #include <simdutf.h>
     #include <nlohmann/json.hpp>
 
     ...
@@ -56,4 +55,4 @@ By default, `#!cpp JSON_USE_SIMDUTF` is not defined and the portable C++11 scala
 
 ## Version history
 
-- Added in version 3.12.1.
+- Added in version 3.13.0.

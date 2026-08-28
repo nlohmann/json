@@ -227,10 +227,8 @@ inline std::size_t string_bulk_run(const unsigned char* data, std::size_t n) noe
     {
         return run;
     }
-    return scalar_string_bulk_run(data, n);
-#else
-    return scalar_string_bulk_run(data, n);
 #endif
+    return scalar_string_bulk_run(data, n);
 }
 
 }  // namespace detail
