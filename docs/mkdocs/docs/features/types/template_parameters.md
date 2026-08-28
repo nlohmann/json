@@ -6,7 +6,7 @@ the way the library uses the resulting [`object_t`](../../api/basic_json/object_
 [`array_t`](../../api/basic_json/array_t.md), [`string_t`](../../api/basic_json/string_t.md), etc. This page collects
 these requirements so they do not have to be discovered by trial and error. Each section also lists the concrete
 types that are known to work for that parameter, checked against Boost 1.83, Abseil 20250127.0, EASTL 3.21, `ankerl::unordered_dense`, `phmap`, and
-`robin_hood`, and Folly.
+`robin_hood`, `gtl`, Folly, and Qt 6.
 
 ## How to read this page
 
@@ -185,8 +185,12 @@ The library does not sort or de-duplicate keys itself; the behavior described in
 | `boost::unordered_map`, `boost::unordered_flat_map`, `boost::unordered_node_map`, through the adapter shown above         | full                                                                          |
 | `absl::flat_hash_map`, `absl::node_hash_map`, through the adapter shown above                                            | full                                                                          |
 | `ankerl::unordered_dense::map` and `segmented_map`, `phmap::flat_hash_map` and `node_hash_map`, `robin_hood::unordered_flat_map`, through the adapter shown above | full                        |
-| `folly::F14NodeMap`, through the adapter shown above                                                                     | full; requires C++20, see the note below                                      |
-| `absl::btree_map`, `phmap::btree_map`, `robin_hood::unordered_node_map`, `folly::F14FastMap`, `eastl::hash_map`           | not usable; require a complete value type                                     |
+| `folly::F14NodeMap`, `gtl::flat_hash_map`, through the adapter shown above                                               | full; Folly requires C++20, see the note below                                |
+| [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map)                                                             | full, through an adapter that puts `fifo_map_compare` in the comparator slot; keeps insertion order |
+| `folly::sorted_vector_map`                                                                                               | full, through an alias that drops the allocator, whose value type it disagrees on |
+| `absl::btree_map`, `phmap::btree_map`, `gtl::btree_map`, `robin_hood::unordered_node_map`, `folly::F14FastMap`, `eastl::hash_map` | not usable; require a complete value type                             |
+| `QMap`                                                                                                                   | not usable; no `value_type` member type                                       |
+| `QHash`                                                                                                                  | not usable; its iterators yield the mapped value rather than a key/value pair  |
 | `eastl::map`                                                                                                             | not usable; EASTL iterators do not work with `#!cpp std::iterator_traits`      |
 | `tsl::ordered_map`                                                                                                       | not usable; its iterators expose the mapped value as `#!cpp const`             |
 | `#!cpp std::multimap`, `#!cpp std::unordered_multimap`                                                                   | not usable; `emplace` does not return `#!cpp std::pair<iterator, bool>`        |
@@ -237,6 +241,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | `folly::fbvector`             | full; requires C++20, see the note below                                         |
 | `#!cpp std::pmr::vector`      | full, through an alias, as the allocator comes from `AllocatorType` instead       |
 | `absl::InlinedVector`, `eastl::vector` | not usable; require a complete value type                               |
+| `QList`, `QVector`            | not usable; no `max_size()`                                                      |
 | `absl::FixedArray`            | not usable; the size is fixed at construction                                    |
 
 ## `StringType`
@@ -301,6 +306,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | a custom string class in a user-defined namespace                           | full, if the requirements above are met                                     |
 | `#!cpp std::wstring`, `#!cpp std::u16string`, `#!cpp std::u32string`        | not usable; the character type is not one byte wide                         |
 | `absl::Cord`                                                                | not usable; no `value_type`, and the storage is not contiguous              |
+| `QString`                                                                   | not usable; UTF-16, so the character type is not one byte wide              |
 
 !!! tip "Reference implementation"
 
@@ -512,6 +518,7 @@ such a container to a `basic_json` value.
 | `#!cpp std::vector<char>`                | full                                                                                          |
 | `#!cpp std::vector<std::byte>`           | full                                                                                          |
 | `absl::InlinedVector<std::uint8_t, N>`, `eastl::vector<std::uint8_t>`, `folly::fbvector<std::uint8_t>`, `boost::container::vector<std::uint8_t>`, `boost::container::small_vector<std::uint8_t, N>` | full |
+| `QByteArray`                             | not usable; no `empty()` -- it spells that `isEmpty()`                                         |
 | `#!cpp std::string`                      | not usable; `binary_t::container_type` and `string_t` would be the same type, which makes the [`swap`](../../api/basic_json/swap.md) overloads ambiguous |
 | containers whose `value_type` is wider than one byte | not usable                                                                        |
 
