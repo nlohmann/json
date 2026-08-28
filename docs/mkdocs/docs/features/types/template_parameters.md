@@ -4,9 +4,9 @@ Class [`basic_json`](../../api/basic_json/index.md) is configurable through elev
 never formally states what a type passed for one of these parameters has to provide -- the requirements are implied by
 the way the library uses the resulting [`object_t`](../../api/basic_json/object_t.md),
 [`array_t`](../../api/basic_json/array_t.md), [`string_t`](../../api/basic_json/string_t.md), etc. This page collects
-these requirements so they do not have to be discovered by trial and error. Each section also lists the concrete
-types that are known to work for that parameter, checked against Boost 1.83, Abseil 20250127.0, EASTL 3.21, `ankerl::unordered_dense`, `phmap`, and
-`robin_hood`, `gtl`, Folly, and Qt 6.
+these requirements so they do not have to be discovered by trial and error. Each section lists the concrete types
+that are known to work for that parameter and the ones that do not, checked against Boost 1.83, Abseil 20250127.0,
+Folly, EASTL 3.21, `ankerl::unordered_dense`, `phmap`, `gtl`, `robin_hood`, `tsl::ordered_map`, and Qt 6.
 
 ## How to read this page
 
@@ -21,9 +21,18 @@ Requirements are split into two groups:
 !!! warning "Requirements are not checked"
 
     Apart from a `#!cpp static_assert` on the array iterator category, the requirements below are not diagnosed with
-    dedicated error messages. Violating them results in a compiler error somewhere inside the library -- or, in the two
-    cases described in [Cross-specialization conversions](#cross-specialization-conversions), in silently wrong
-    behavior at runtime.
+    dedicated error messages. Violating most of them results in a compiler error somewhere inside the library. Five
+    violations are not caught at compile time at all:
+
+    - A [`BinaryType`](#binarytype) whose `value_type` is wider than one byte compiles and silently produces wrong
+      results, because the readers and writers reinterpret its storage as raw bytes.
+    - A stateful [`AllocatorType`](#allocatortype) compiles and silently ignores its state: allocation, deallocation,
+      and [`get_allocator()`](../../api/basic_json/get_allocator.md) each use a different default-constructed instance.
+    - A [`NumberUnsignedType`](#numberintegertype-and-numberunsignedtype) too narrow to hold the absolute value of
+      every `NumberIntegerType` value silently corrupts: with `#!cpp std::int64_t`/`#!cpp std::uint32_t`,
+      `#!cpp basic_json(INT64_MIN).dump()` yields `#!json -0`.
+    - The two [cross-specialization conversions](#cross-specialization-conversions) below. These abort on an assertion
+      in a normal build, and only fail silently under `#!cpp NDEBUG`.
 
 ## Overview
 
@@ -43,14 +52,19 @@ Requirements are split into two groups:
 
 !!! warning "Third-party containers and incomplete types"
 
-    `object_t` and `array_t` are formed inside the definition of `basic_json`, i.e. while `basic_json` is still an
-    incomplete type. `#!cpp std::map` and `#!cpp std::vector` are required by the standard to support incomplete
-    value types; most third-party containers are not, and inspecting the value type at class scope (for instance with
-    `#!cpp std::is_trivially_move_assignable`) makes them unusable as `ObjectType` or `ArrayType`. This rules out
-    `absl::btree_map`, `phmap::btree_map`, `robin_hood::unordered_node_map`, `folly::F14FastMap`,
-    `absl::InlinedVector`, `eastl::vector`, and `eastl::hash_map`, among others, no matter how their template
-    arguments are adapted. Boost.Container is the notable exception: it documents support for incomplete
-    types, and all of its containers work here.
+    `object_t` is instantiated inside the definition of `basic_json` -- it is probed for a `key_compare` member to
+    form [`object_comparator_t`](../../api/basic_json/object_comparator_t.md) -- i.e. while `basic_json` is still an
+    incomplete type. `#!cpp std::map` is required by the standard to support incomplete mapped types; most
+    third-party maps are not, and inspecting the mapped type at class scope (for instance with
+    `#!cpp std::is_trivially_move_assignable`) makes them unusable as `ObjectType`, no matter how their template
+    arguments are adapted. This rules out `absl::btree_map`, `phmap::btree_map`, `gtl::btree_map`,
+    `robin_hood::unordered_node_map`, `folly::F14FastMap`, and `eastl::hash_map`.
+
+    `array_t` is only *named* in the class definition and is not instantiated until `basic_json` is complete, so an
+    `ArrayType` that inspects its value type at class scope is generally fine -- `boost::container::small_vector` and
+    `static_vector` both reject incomplete value types yet work here. `absl::InlinedVector` is the exception: the
+    `#!cpp std::is_trivially_move_assignable<basic_json>` it evaluates while instantiating itself re-enters the
+    library's own trait machinery mid-instantiation.
 
 !!! note "Folly requires C++20"
 
@@ -88,13 +102,18 @@ i.e., the template arguments follow the order and meaning of `std::map`.
 - Constructors: default, copy, move, and from an iterator range `(first, last)`.
 - Member functions `begin()`, `end()`, `cbegin()`, `cend()`, `empty()`, `size()`, `max_size()`, `clear()`,
   `find(key)`, `count(key)`, `emplace(key, value)`, `insert(value_type)`, `insert(first, last)`, `operator[](key)`,
-  `erase(iterator)`, `erase(first, last)`, and `erase(key)`. `erase(iterator)` may return the following iterator or
-  `#!cpp void`; in the latter case the library computes the successor itself, before erasing.
+  `erase(iterator)`, and `erase(first, last)`. `erase(iterator)` may return the following iterator or `#!cpp void`;
+  in the latter case the library computes the successor itself, before erasing.
+- `erase(key)` is **optional**: if the container does not provide one, the library falls back to `find(key)` followed
+  by `erase(iterator)`.
+- `at(key)` is required only by [`to_ubjson`](../../api/basic_json/to_ubjson.md) and
+  [`to_bjdata`](../../api/basic_json/to_bjdata.md), but every container tried here provides it.
 - `emplace` and `insert(value_type)` must return `#!cpp std::pair<iterator, bool>` and must have **unique-key**
   semantics; multimaps cannot be used.
 - The type must be swappable (via `std::swap` or an ADL `swap`).
-- The comparison operators `==`, `!=`, `<`, `<=`, `>`, and `>=` (or `<=>` in C++20) must be available; they implement
-  [`basic_json`'s comparison operators](../../api/basic_json/operator_eq.md).
+- The comparison operators `==` and `<`; `!=`, `<=`, `>`, and `>=` are derived from them. Where the library uses
+  three-way comparison (C++20), `==` and `<=>` are required **instead** -- the six two-way operators do not satisfy
+  it. They implement [`basic_json`'s comparison operators](../../api/basic_json/operator_eq.md).
 
 ### Required for heterogeneous key lookup
 
@@ -127,10 +146,15 @@ struct unordered_map_object
 using unordered_json = nlohmann::basic_json<unordered_map_object>;
 ```
 
-The same adapter works for every hash map that has been tried -- Abseil's, Boost's, `ankerl::unordered_dense`,
-`phmap`, and `robin_hood` -- since they all place the hash function third. None of them defines `key_compare` either,
-so all of them additionally rely on `object_comparator_t` falling back to
-[`default_object_comparator_t`](../../api/basic_json/default_object_comparator_t.md); see
+The adapter above works verbatim for Abseil's, Boost's, `phmap`'s and `gtl`'s hash maps, which all place the hash
+function third and take a `#!cpp std::pair<const Key, T>` allocator fifth. Two need a different adapter:
+
+- `ankerl::unordered_dense` expects an allocator over `#!cpp std::pair<Key, T>` (non-const key), so the allocator has
+  to be rebound to that or dropped.
+- `robin_hood`'s fifth parameter is the non-type `MaxLoadFactor100`, so its adapter must drop the allocator entirely.
+
+None of these hash maps defines `key_compare`, so all of them additionally rely on `object_comparator_t` falling back
+to [`default_object_comparator_t`](../../api/basic_json/default_object_comparator_t.md); see
 [`object_comparator_t`](../../api/basic_json/object_comparator_t.md).
 
 #### Abseil hash maps
@@ -176,24 +200,31 @@ The library does not sort or de-duplicate keys itself; the behavior described in
 
 ### Compatible containers
 
-| Container                                                                                                                | Support                                                                       |
-|--------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
-| `#!cpp std::map` (default)                                                                                               | full                                                                          |
-| [`nlohmann::ordered_map`](../../api/ordered_map.md)                                                                      | full; used by [`ordered_json`](../../api/ordered_json.md)                      |
-| `#!cpp std::unordered_map`, through the adapter shown above                                                              | full                                                                          |
-| `boost::container::map`, `boost::container::flat_map`                                                                    | full, with no adapter                                                         |
-| `boost::unordered_map`, `boost::unordered_flat_map`, `boost::unordered_node_map`, through the adapter shown above         | full                                                                          |
-| `absl::flat_hash_map`, `absl::node_hash_map`, through the adapter shown above                                            | full                                                                          |
-| `ankerl::unordered_dense::map` and `segmented_map`, `phmap::flat_hash_map` and `node_hash_map`, `robin_hood::unordered_flat_map`, through the adapter shown above | full                        |
-| `folly::F14NodeMap`, `gtl::flat_hash_map`, through the adapter shown above                                               | full; Folly requires C++20, see the note below                                |
-| [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map)                                                             | full, through an adapter that puts `fifo_map_compare` in the comparator slot; keeps insertion order |
-| `folly::sorted_vector_map`                                                                                               | full, through an alias that drops the allocator, whose value type it disagrees on |
-| `absl::btree_map`, `phmap::btree_map`, `gtl::btree_map`, `robin_hood::unordered_node_map`, `folly::F14FastMap`, `eastl::hash_map` | not usable; require a complete value type                             |
-| `QMap`                                                                                                                   | not usable; no `value_type` member type                                       |
-| `QHash`                                                                                                                  | not usable; its iterators yield the mapped value rather than a key/value pair  |
-| `eastl::map`                                                                                                             | not usable; EASTL iterators do not work with `#!cpp std::iterator_traits`      |
-| `tsl::ordered_map`                                                                                                       | not usable; its iterators expose the mapped value as `#!cpp const`             |
-| `#!cpp std::multimap`, `#!cpp std::unordered_multimap`                                                                   | not usable; `emplace` does not return `#!cpp std::pair<iterator, bool>`        |
+| Container                                                                                                     | Notes                                                                    |
+|---------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
+| `#!cpp std::map` (default)                                                                                    |                                                                          |
+| [`nlohmann::ordered_map`](../../api/ordered_map.md)                                                           | used by [`ordered_json`](../../api/ordered_json.md); keeps insertion order |
+| [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map)                                                  | keeps insertion order; adapter puts `fifo_map_compare` in the comparator slot |
+| `boost::container::map`, `boost::container::flat_map`                                                         | no adapter needed                                                        |
+| `#!cpp std::unordered_map`                                                                                    | through the adapter above                                                |
+| `boost::unordered_map`, `boost::unordered_flat_map`, `boost::unordered_node_map`                              | through the adapter above                                                |
+| `absl::flat_hash_map`, `absl::node_hash_map`                                                                  | through the adapter above; `flat_hash_map` moves mapped values on rehash  |
+| `phmap::flat_hash_map`, `phmap::node_hash_map`, `gtl::flat_hash_map`                                          | through the adapter above                                                |
+| `ankerl::unordered_dense::map` and `segmented_map`                                                            | adapter must rebind or drop the allocator                                |
+| `robin_hood::unordered_flat_map`                                                                              | adapter must drop the allocator                                          |
+| `folly::F14NodeMap`                                                                                           | through the adapter above; requires C++20, see the note above            |
+| `folly::sorted_vector_map`                                                                                    | alias must drop the allocator, whose value type it disagrees on          |
+
+### Containers that cannot be used
+
+| Container                                                                                                     | Reason                                                                   |
+|---------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
+| `absl::btree_map`, `phmap::btree_map`, `gtl::btree_map`, `robin_hood::unordered_node_map`, `folly::F14FastMap`, `eastl::hash_map` | require a complete mapped type                          |
+| `eastl::map`                                                                                                  | EASTL iterators do not work with `#!cpp std::iterator_traits`            |
+| `tsl::ordered_map`                                                                                            | its iterators expose the mapped value as `#!cpp const`                   |
+| `QMap`                                                                                                        | no `value_type` member type                                              |
+| `QHash`                                                                                                       | its `value_type` is the mapped type rather than a key/value pair, and its iterators dereference to the mapped value |
+| `#!cpp std::multimap`, `#!cpp std::unordered_multimap`                                                         | `emplace` does not return `#!cpp std::pair<iterator, bool>`              |
 
 ## `ArrayType`
 
@@ -207,10 +238,12 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 
 - The template must be usable with **two** type arguments (value type and allocator).
 - Member types `value_type` and `iterator`.
-- Constructors: default, copy, move, from an iterator range `(first, last)`, and from `(count, value)`.
+- Constructors: default, copy, and move; and from an iterator range `(first, last)`.
 - Member functions `begin()`, `end()`, `cbegin()`, `cend()`, `empty()`, `size()`, `max_size()`, `clear()`,
   `operator[](size_type)`, `at(size_type)`, `back()`, `push_back()`, `emplace_back()`, `pop_back()`, `resize()`,
-  `insert()` (single element, count, range, and initializer list), `erase(pos)`, and `erase(first, last)`.
+  `insert()` (single element, count, and range), `erase(pos)`, and `erase(first, last)`.
+  `basic_json::insert(pos, initializer_list)` goes through the range overload, so no initializer-list `insert` is
+  needed.
 - `iterator` must be default-constructible, and it as well as the type returned by `cbegin()`/`cend()` must satisfy
   [LegacyRandomAccessIterator](https://en.cppreference.com/w/cpp/named_req/RandomAccessIterator).
   A `#!cpp static_assert` only checks for
@@ -218,7 +251,14 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
   [`dump`](../../api/basic_json/dump.md) (`cend() - 1`),
   [`erase(idx)`](../../api/basic_json/erase.md) (`begin() + idx`), and the random-access operations of
   [`basic_json::iterator`](../../api/basic_json/begin.md) require random access.
-- The type must be swappable and provide the comparison operators `==`, `!=`, `<`, `<=`, `>`, `>=` (or `<=>`).
+- The comparison operators, as for [`ObjectType`](#objecttype): `==` and `<`, or `==` and `<=>` under C++20.
+
+### Required for individual functions
+
+- A member type `value_type`, for [`to_bson`](../../api/basic_json/to_bson.md) of an array.
+- A constructor from `(count, value)`, for
+  [`basic_json(size_type, const basic_json&)`](../../api/basic_json/basic_json.md).
+- Swappability, via `#!cpp std::swap` or an ADL `swap`, for [`swap(array_t&)`](../../api/basic_json/swap.md).
 
 !!! note "`capacity()` is optional"
 
@@ -230,19 +270,25 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 
 ### Compatible containers
 
-| Container                     | Support                                                                          |
-|-------------------------------|----------------------------------------------------------------------------------|
-| `#!cpp std::vector` (default) | full                                                                             |
-| `#!cpp std::deque`            | full; keeps references valid while the array grows, but see the note on `capacity()` above |
-| `#!cpp std::list`             | not usable; no `operator[]` and no random-access iterators                        |
-| `boost::container::vector`, `boost::container::deque`, `boost::container::stable_vector`, `boost::container::devector` | full; `stable_vector` keeps references valid across every insertion |
-| `boost::container::small_vector`, `folly::small_vector` | full, through an alias that fixes the inline capacity          |
-| `boost::container::static_vector` | full for arrays that stay within the fixed capacity, through the same kind of alias |
-| `folly::fbvector`             | full; requires C++20, see the note below                                         |
-| `#!cpp std::pmr::vector`      | full, through an alias, as the allocator comes from `AllocatorType` instead       |
-| `absl::InlinedVector`, `eastl::vector` | not usable; require a complete value type                               |
-| `QList`, `QVector`            | not usable; no `max_size()`                                                      |
-| `absl::FixedArray`            | not usable; the size is fixed at construction                                    |
+| Container                                                                               | Notes                                                    |
+|-------------------------------------------------------------------------------------------|----------------------------------------------------------|
+| `#!cpp std::vector` (default)                                                           |                                                          |
+| `#!cpp std::deque`                                                                      | references survive appends, but not insertions elsewhere; see the `capacity()` note above |
+| `#!cpp std::pmr::vector`                                                                | through an alias, as the allocator comes from `AllocatorType` instead |
+| `boost::container::vector`, `deque`, `devector`                                         |                                                          |
+| `boost::container::stable_vector`                                                       | the only one tried that keeps references valid across *every* insertion |
+| `boost::container::small_vector`, `folly::small_vector`                                 | through an alias that fixes the inline capacity          |
+| `boost::container::static_vector`                                                       | through the same kind of alias, for arrays that stay within the fixed capacity |
+| `folly::fbvector`                                                                       | requires C++20, see the note above                       |
+
+### Containers that cannot be used
+
+| Container                        | Reason                                                                                       |
+|----------------------------------|----------------------------------------------------------------------------------------------|
+| `#!cpp std::list`                | no `operator[]`, and no random-access iterators                                              |
+| `eastl::vector`, `QList`, `QVector` | no `max_size()`; they handle the incomplete value type fine                                |
+| `absl::InlinedVector`            | requires a complete value type, see the note above                                            |
+| `absl::FixedArray`               | the size is fixed at construction, so `resize`, `push_back`, `insert` and `erase` are missing |
 
 ## `StringType`
 
@@ -252,74 +298,91 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 ### Always required
 
 - A member type `value_type` that is one byte wide and `char`-compatible. The library stores and processes UTF-8
-  encoded `char` data and passes `data()` to `#!cpp std::strtoull`/`#!cpp std::strtoll` and to `#!cpp std::memcpy`.
+  encoded `char` data and hands `data()` to `#!cpp std::strtoull`/`#!cpp std::strtoll`.
   `#!cpp std::wstring`, `#!cpp std::u16string`, and `#!cpp std::u32string` are **not** valid choices; see the FAQ on
   [wide string handling](../../home/faq.md#wide-string-handling).
-- Constructors: default, copy, move, from `#!cpp const char*`, from `#!cpp (const char*, size_type)`, and from
-  `#!cpp (size_type, char)`.
-- Member functions `size()`, `empty()`, `clear()`, `resize(n)`, `resize(n, c)`, `reserve(n)`, `back()`, `c_str()`,
-  `data()`, `push_back(char)`, and `operator[]` (const and non-const, returning references).
-- `data()` must return a pointer to a contiguous, null-terminated buffer: the parser hands it to
-  `#!cpp std::strtoull`, and the binary readers write into `#!cpp &s[n]` with `#!cpp std::memcpy`.
-- `append(const char*, size_type)` -- used by [`dump`](../../api/basic_json/dump.md) -- plus at least one of
-  `append(str)`, `operator+=`, `append(first, last)`, or `append(data, size)`, which the library's internal string
-  concatenation selects between.
-- The comparison operators `==` and `!=` against another `StringType` and against `#!cpp const char*`, and `<` for use
-  as a key of the chosen [`ObjectType`](#objecttype) (with the default comparator, `#!cpp std::less<>` must be able to
-  compare two `StringType` values and a `StringType` with the key types used for lookup).
+- Constructors: default, copy, move, from `#!cpp const char*` (which must not be `#!cpp explicit`), from
+  `#!cpp (const char*, size_type)`, and from `#!cpp (size_type, char)`.
+- Member functions `size()`, `clear()`, `resize(n, c)`, `back()`, `c_str()`, `data()`, `push_back(char)`, and
+  `operator[]` (const and non-const, returning references).
+- `data()` must return a pointer to a contiguous, **null-terminated** buffer -- the parser hands it to
+  `#!cpp std::strtoull`. A type whose `data()` is not null-terminated does not fail to compile; it silently
+  misparses numbers.
+- `append(const char*, size_type)`, used by [`dump`](../../api/basic_json/dump.md), and `append(const StringType&)`,
+  used by the CBOR reader for indefinite-length strings. The library's internal string concatenation additionally has
+  to append a `#!cpp char` and a `#!cpp const char*`; for each it selects between `append(arg)`, `#!cpp operator+=`,
+  `append(first, last)`, and `append(data, size)`.
+- The comparison operator `==` against another `StringType`, and `<` for use as a key of the chosen
+  [`ObjectType`](#objecttype) (with the default comparator, `#!cpp std::less<>` must be able to compare two
+  `StringType` values, and a `StringType` with the key types used for lookup). `!=` is never applied to a
+  `StringType`, and `==` against `#!cpp const char*` is resolved by the implicit `#!cpp const char*` constructor.
+
+### Required for the binary formats
+
+- `resize(n)`, used by the readers to make room for a block of bytes.
+- Non-const `operator[]`, into which the readers `#!cpp std::memcpy` those bytes.
 
 ### Required for JSON Pointer, `flatten`, and `diff`
 
 - A static member `npos`, and the member functions `find(const StringType&, size_type)`,
   `find_first_of(char, size_type)`, `substr(pos, count)`, and `replace(pos, count, const StringType&)` -- these
   implement the escaping and unescaping of reference tokens described in RFC 6901.
-- Conversion of a `#!cpp std::size_t` to `StringType`: either the type is assignable from the result of
-  `#!cpp std::to_string`, or an overload `#!cpp void int_to_string(StringType&, std::size_t)` must be found by ADL.
+- `empty()` and `reserve(n)`.
 - `begin()` and `end()` -- used by
   [`operator[](const json_pointer&)`](../../api/basic_json/operator%5B%5D.md) to decide whether a reference token
   denotes an array index.
-- Streamability to `#!cpp std::ostream` for `#!cpp operator<<(std::ostream&, const json_pointer&)`.
 
 ### Required for other functionality
 
-| Functionality                                               | Additional requirement                            |
-|-------------------------------------------------------------|---------------------------------------------------|
-| [`to_bson`](../../api/basic_json/to_bson.md)                | `find(value_type)` and `npos`                     |
-| [`parse`](../../api/basic_json/parse.md) from a `string_t` | the input adapters must accept it; otherwise pass a character range |
-| [`std::hash<basic_json>`](../../api/basic_json/std_hash.md) | a specialization of `#!cpp std::hash<StringType>` |
-| exception messages                                          | `data()` and `size()`, or `begin()` and `end()`   |
+| Functionality                                                                                                    | Additional requirement                                                              |
+|--------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
+| [`diff`](../../api/basic_json/diff.md), [`items`](../../api/basic_json/items.md), [`std::hash`](../../api/basic_json/std_hash.md) | conversion of a `#!cpp std::size_t` to `StringType`: either assignability from the result of `#!cpp std::to_string`, or an ADL overload `#!cpp void int_to_string(StringType&, std::size_t)` |
+| [`std::hash<basic_json>`](../../api/basic_json/std_hash.md)                                                      | additionally a specialization of `#!cpp std::hash<StringType>`                        |
+| [`to_bson`](../../api/basic_json/to_bson.md)                                                                    | `find(value_type)` and `npos`                                                         |
+| [`parse`](../../api/basic_json/parse.md) from a `string_t`                                                      | the input adapters must accept it; otherwise pass a character range                   |
+| `#!cpp operator<<(std::ostream&, const json_pointer&)`                                                           | streamability to `#!cpp std::ostream`, **and** assignability from a `#!cpp std::string`: it goes through `json_pointer::to_string()`, which accumulates a `#!cpp std::string`. An ADL `int_to_string` does not cover this |
+| exception messages                                                                                               | `data()` and `size()`, or `begin()` and `end()`                                       |
 
 ### Compatible types
 
-| Type                                                                        | Support                                                                     |
-|-----------------------------------------------------------------------------|-----------------------------------------------------------------------------|
-| `#!cpp std::string` (default)                                               | full                                                                        |
-| `#!cpp std::basic_string` with a custom **stateless** allocator             | full                                                                        |
-| `#!cpp std::pmr::string`                                                    | compiles and behaves correctly, but always allocates from the default memory resource -- see below |
-| `boost::container::string`                                                  | full, once a `#!cpp std::hash` specialization is supplied (Boost provides `boost::hash` instead) |
-| `folly::fbstring`                                                           | full; requires C++20, see the note below                                    |
-| `eastl::string`                                                             | full, except that [`parse`](../../api/basic_json/parse.md) does not accept it directly; pass a character range or a `#!cpp std::string` |
-| a custom string class in a user-defined namespace                           | full, if the requirements above are met                                     |
-| `#!cpp std::wstring`, `#!cpp std::u16string`, `#!cpp std::u32string`        | not usable; the character type is not one byte wide                         |
-| `absl::Cord`                                                                | not usable; no `value_type`, and the storage is not contiguous              |
-| `QString`                                                                   | not usable; UTF-16, so the character type is not one byte wide              |
+| Type                                                            | Notes                                                                     |
+|-------------------------------------------------------------------|---------------------------------------------------------------------------|
+| `#!cpp std::string` (default)                                   |                                                                           |
+| `#!cpp std::basic_string` with a custom **stateless** allocator |                                                                           |
+| `#!cpp std::pmr::string`                                        | see the warning below before relying on the memory resource               |
+| `boost::container::string`                                      | needs a user-supplied `#!cpp std::hash` specialization (Boost provides `boost::hash` instead) |
+| `folly::fbstring`                                               | requires C++20, see the note above                                        |
+| `eastl::string`                                                 | needs a user-supplied `#!cpp std::hash` and an ADL `int_to_string` (it is not assignable from a `#!cpp std::string`); [`parse`](../../api/basic_json/parse.md) does not accept it directly -- pass a character range or a `#!cpp std::string` |
+| a custom string class in a user-defined namespace               | if the requirements above are met                                          |
 
-!!! warning "A `std::pmr::string` does not allocate from a memory resource you choose"
+### Types that cannot be used
+
+| Type                                                                | Reason                                                                |
+|-----------------------------------------------------------------------|-----------------------------------------------------------------------|
+| `#!cpp std::wstring`, `#!cpp std::u16string`, `#!cpp std::u32string` | the character type is not one byte wide                               |
+| `#!cpp std::u8string`                                               | one byte wide, but `#!cpp char8_t` is not `#!cpp char`-compatible      |
+| `absl::Cord`                                                        | no `value_type`, and the storage is not contiguous                    |
+| `QString`                                                           | no `c_str()` and no `append(const char*, size_type)`; its `QChar` is also two bytes wide, though that is never diagnosed |
+
+!!! warning "A `std::pmr::string` mostly does not use the memory resource you choose"
 
     `basic_json` cannot be given an allocator or a memory resource. `AllocatorType` is default-constructed at every
-    allocation and has to be stateless (see [`AllocatorType`](#allocatortype)), and string values are constructed with
-    their own default allocator. Three consequences:
+    allocation and has to be stateless (see [`AllocatorType`](#allocatortype)), and string values the library creates
+    are constructed with their own default allocator. So:
 
-    - A `#!cpp std::pmr::string` inside a `basic_json` always allocates from
+    - Every string the library itself produces -- from [`parse`](../../api/basic_json/parse.md), from
+      [`dump`](../../api/basic_json/dump.md), or by default construction -- allocates from
       `#!cpp std::pmr::get_default_resource()`.
-    - Assigning an arena-backed string into a value **silently drops its memory resource**: the copy lands on the
+    - **Copying** an arena-backed string into a value silently drops its memory resource: the copy lands on the
       default resource, because `#!cpp std::pmr::polymorphic_allocator` does not propagate on copy construction.
       Nothing warns about this.
-    - Passing `#!cpp std::pmr::polymorphic_allocator` as `AllocatorType` does not work around it; it does not compile.
+    - **Moving** one in does keep it, and later growth still allocates from that arena -- but it does not survive a
+      copy of the enclosing `basic_json`.
+    - Passing `#!cpp std::pmr::polymorphic_allocator` as `AllocatorType` does not work around any of this; it does
+      not compile.
 
-    The only way to redirect these allocations is the process-global `#!cpp std::pmr::set_default_resource()`. So
-    `#!cpp std::pmr::string` gives you the indirection cost of PMR without per-instance arena allocation. Use it if
-    you need that string type for interface reasons, not to control where the data lives.
+    Apart from moving a string in, the only way to redirect these allocations is the process-global
+    `#!cpp std::pmr::set_default_resource()`.
 
 !!! tip "Reference implementation"
 
@@ -334,7 +397,9 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 
 - A literal type that is trivially default-constructible, trivially copyable, and trivially destructible; otherwise the
   union's special member functions are deleted.
-- Constructible from `#!cpp bool` via `#!cpp static_cast` and contextually convertible to `#!cpp bool`.
+- **Implicitly** convertible from `#!cpp bool` -- an `#!cpp explicit` constructor is not enough, because the
+  `to_json` overload for a custom `BooleanType` is constrained on `#!cpp std::is_convertible` -- and contextually
+  convertible to `#!cpp bool` (here an `#!cpp explicit operator bool` is fine).
 - Comparison operators `==`, `!=`, `<`, `<=`, `>`, `>=` (or `<=>`).
 - Convertible from and to `#!cpp bool` through the serializer, because
   [`get<bool>()`](../../api/basic_json/get.md) is used internally.
@@ -343,9 +408,12 @@ There is little reason to use anything other than `#!cpp bool` here.
 
 ### Compatible types
 
-`#!cpp bool` is the only meaningful choice. Other trivially copyable types that convert to and from `#!cpp bool` (for
-example `#!cpp std::uint8_t`) do compile and behave correctly, but they gain nothing and make the
-[`get`](../../api/basic_json/get.md) overloads harder to reason about.
+`#!cpp bool` is the only usable choice. Another trivially copyable type that is implicitly convertible to and from
+`#!cpp bool` -- `#!cpp std::uint8_t`, say -- does compile, and JSON booleans still round-trip, but the type then
+serves as both `boolean_t` and an ordinary integer: `basic_json` can no longer be constructed or assigned from a
+`#!cpp std::uint8_t` at all (the boolean and unsigned-integer `to_json` overloads become ambiguous), and
+[`get<std::uint8_t>()`](../../api/basic_json/get.md) on a number throws
+[`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) instead of returning the value.
 
 ## `NumberIntegerType` and `NumberUnsignedType`
 
@@ -378,7 +446,8 @@ therefore silently changes parse results rather than raising an error. See
 | `#!cpp std::int64_t` / `#!cpp std::uint64_t` (default)                                       | full                                                                |
 | `#!cpp std::int32_t` / `#!cpp std::uint32_t`, `#!cpp long long` / `#!cpp unsigned long long` | full; narrower types change which literals the parser can represent |
 | any other pair of standard signed/unsigned integer types                                     | full                                                                |
-| class types, `#!cpp bool`, enumerations                                                      | not usable; `#!cpp std::is_integral` must hold                      |
+| class types, enumerations                                                                    | not usable; `#!cpp std::is_integral` must hold                      |
+| `#!cpp bool`, or a type already used for another member of the union                         | not usable; `#!cpp std::is_integral<bool>` is in fact `#!cpp true`, but the `get_impl_ptr` overloads for `boolean_t`, `number_integer_t`, `number_unsigned_t` and `number_float_t` would collide |
 
 ## `NumberFloatType`
 
@@ -434,7 +503,8 @@ binary32 or binary64 field and have no encoding for `#!cpp long double`.
   deallocated with a *different* default-constructed allocator, and
   [`get_allocator()`](../../api/basic_json/get_allocator.md) returns a default-constructed instance. Allocators
   carrying state are not supported, so there is no way to tell a `basic_json` where to allocate from; see the note
-  under [`StringType`](#stringtype) for what that means in practice.
+  under [`StringType`](#stringtype) for what that means in practice. A stateful allocator is **not diagnosed**: it
+  compiles and silently ignores the state.
 - It must support **incomplete types**: `AllocatorType<basic_json>` is instantiated inside the definition of
   `basic_json` itself.
 - `#!cpp std::allocator_traits<AllocatorType<basic_json>>::pointer` becomes
@@ -456,8 +526,10 @@ binary32 or binary64 field and have no encoding for `#!cpp long double`.
 
 ### Always required
 
-- The template must accept **two** type arguments, the second one defaulted (it exists so that partial specializations
-  can be constrained by SFINAE).
+- The template must accept **two** type arguments. It does not have to give the second one a default -- `basic_json`
+  declares the parameter as `#!cpp template<typename T, typename SFINAE = void> class JSONSerializer`, so uses such as
+  `#!cpp JSONSerializer<T>` inside the library supply `#!cpp void` themselves. The second parameter exists so that
+  partial specializations can be constrained by SFINAE.
 - For every type `T` that is converted **to** a JSON value, a static member function
   `#!cpp static void to_json(basic_json&, T)` must exist.
 - For every type `T` that is converted **from** a JSON value, either
@@ -490,31 +562,46 @@ using binary_t = nlohmann::byte_container_with_subtype<BinaryType>;
 - A non-`final` class type -- [`byte_container_with_subtype`](../../api/byte_container_with_subtype/index.md) derives
   from it publicly.
 - A member type `value_type` that is **exactly one byte** wide (e.g., `#!cpp std::uint8_t`, `#!cpp char`, or
-  `#!cpp std::byte`). Readers and writers reinterpret the container's storage as raw bytes, so a container such as
-  `#!cpp std::vector<std::intptr_t>` produces wrong results.
+  `#!cpp std::byte`). Readers and writers reinterpret the container's storage as raw bytes. A wider `value_type` is
+  **not diagnosed**: it compiles and silently produces wrong results.
 - Contiguous storage: the binary readers `#!cpp std::memcpy` into `#!cpp &binary[n]`, the writers `reinterpret_cast`
   `data()`.
 - Default-constructible, copy-constructible, and move-constructible.
-- Member functions `size()`, `empty()`, `clear()`, `data()`, `resize()`, `push_back()`, `operator[]`, `back()`,
-  `begin()`, `end()`, `cbegin()`, and `cend()` with random-access iterators.
+- Member functions `size()`, `empty()`, `data()`, `resize()`, `operator[]`, `back()`, `begin()`, `end()`, `cbegin()`,
+  and `cend()` with random-access iterators, and `insert(pos, first, last)`, which the CBOR reader uses to join the
+  chunks of an indefinite-length byte string. `push_back()` is **not** required.
 - Comparison operators: `==` is used by
   [`byte_container_with_subtype`](../../api/byte_container_with_subtype/index.md), the relational operators by
   [`basic_json`'s comparison operators](../../api/basic_json/operator_le.md).
+
+### Required for individual functions
+
+- `clear()`, for [`basic_json::clear()`](../../api/basic_json/clear.md).
+
+`max_size()`, `at()`, `reserve()`, `erase()`, `pop_back()`, and `emplace_back()` are **not** used at all.
 
 See [`binary_t`](../../api/basic_json/binary_t.md) for how a non-default `BinaryType` changes the meaning of assigning
 such a container to a `basic_json` value.
 
 ### Compatible containers
 
-| Container                                | Support                                                                                       |
-|------------------------------------------|-----------------------------------------------------------------------------------------------|
-| `#!cpp std::vector<std::uint8_t>` (default) | full                                                                                       |
-| `#!cpp std::vector<char>`                | full                                                                                          |
-| `#!cpp std::vector<std::byte>`           | full                                                                                          |
-| `absl::InlinedVector<std::uint8_t, N>`, `eastl::vector<std::uint8_t>`, `folly::fbvector<std::uint8_t>`, `boost::container::vector<std::uint8_t>`, `boost::container::small_vector<std::uint8_t, N>` | full |
-| `QByteArray`                             | not usable; no `empty()` -- it spells that `isEmpty()`                                         |
-| `#!cpp std::string`                      | not usable; `binary_t::container_type` and `string_t` would be the same type, which makes the [`swap`](../../api/basic_json/swap.md) overloads ambiguous |
-| containers whose `value_type` is wider than one byte | not usable                                                                        |
+| Container                                                                                                                  | Notes                                                              |
+|------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
+| `#!cpp std::vector<std::uint8_t>` (default)                                                                                |                                                                    |
+| `#!cpp std::vector<char>`, `#!cpp std::vector<std::byte>`                                                                  | `dump()` writes the bytes as 0..255 whichever is used              |
+| `boost::container::vector<std::uint8_t>`, `boost::container::small_vector<std::uint8_t, N>`                                |                                                                    |
+| `absl::InlinedVector<std::uint8_t, N>`                                                                                     | usable here, unlike as an `ArrayType`, because the value type is complete |
+| `eastl::vector<std::uint8_t>`                                                                                              | usable here, unlike as an `ArrayType`, because `max_size()` is not needed |
+| `folly::fbvector<std::uint8_t>`                                                                                            | requires C++20, see the note above                                 |
+
+### Containers that cannot be used
+
+| Container                                            | Reason                                                                                  |
+|--------------------------------------------------------|-----------------------------------------------------------------------------------------|
+| `QByteArray`                                         | no `empty()` (it spells that `isEmpty()`); its `insert` takes an index rather than an iterator; and it converts to `string_t`, which makes `to_json` ambiguous between a string and a binary value |
+| `#!cpp std::string`                                  | `binary_t::container_type` and `string_t` would be the same type, so the two [`swap`](../../api/basic_json/swap.md) overloads collide and `basic_json` cannot be instantiated at all |
+| `#!cpp std::deque<std::uint8_t>`                     | storage is not contiguous, so there is no `data()`                                       |
+| containers whose `value_type` is wider than one byte | see above -- accepted by the compiler, wrong at runtime                                  |
 
 ## `CustomBaseClass`
 
@@ -547,8 +634,9 @@ See [`json_base_class_t`](../../api/basic_json/json_base_class_t.md) for an exam
 ## Cross-specialization conversions
 
 Converting a value from one `basic_json` specialization into another (see the
-[converting constructor](../../api/basic_json/basic_json.md)) imposes two additional requirements that fail
-**silently** rather than at compile time:
+[converting constructor](../../api/basic_json/basic_json.md)) imposes two additional requirements that are not
+diagnosed at compile time. With assertions enabled they abort on the `#!cpp JSON_ASSERT` at the end of the converting
+constructor; under `#!cpp NDEBUG` they fail **silently** at runtime:
 
 - The target `string_t` must be directly constructible from the source `string_t`. Otherwise the string is converted to
   an array of character codes.
