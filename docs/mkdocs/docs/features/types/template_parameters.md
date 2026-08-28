@@ -5,7 +5,7 @@ never formally states what a type passed for one of these parameters has to prov
 the way the library uses the resulting [`object_t`](../../api/basic_json/object_t.md),
 [`array_t`](../../api/basic_json/array_t.md), [`string_t`](../../api/basic_json/string_t.md), etc. This page collects
 these requirements so they do not have to be discovered by trial and error. Each section also lists the concrete
-types that are known to work for that parameter.
+types that are known to work for that parameter; the Abseil entries were checked against release 20250127.0.
 
 ## How to read this page
 
@@ -28,7 +28,7 @@ Requirements are split into two groups:
 
 | Template parameter                                                | Default                           | Notable substitutes                                                    |
 |-------------------------------------------------------------------|-----------------------------------|------------------------------------------------------------------------|
-| [`ObjectType`](#objecttype)                                       | `std::map`                        | [`nlohmann::ordered_map`](../../api/ordered_map.md), `tsl::ordered_map` |
+| [`ObjectType`](#objecttype)                                       | `std::map`                        | [`nlohmann::ordered_map`](../../api/ordered_map.md), Abseil hash maps  |
 | [`ArrayType`](#arraytype)                                         | `std::vector`                     | vector-like containers only                                            |
 | [`StringType`](#stringtype)                                       | `std::string`                     | `std::string`-like types over `char`                                   |
 | [`BooleanType`](#booleantype)                                     | `bool`                            | none worth using                                                       |
@@ -39,6 +39,14 @@ Requirements are split into two groups:
 | [`JSONSerializer`](#jsonserializer)                               | `adl_serializer`                  | serializers with the same interface                                    |
 | [`BinaryType`](#binarytype)                                       | `#!cpp std::vector<std::uint8_t>` | `#!cpp std::vector<char>`                                              |
 | [`CustomBaseClass`](#custombaseclass)                             | `void`                            | any default-constructible class                                        |
+
+!!! warning "Third-party containers and incomplete types"
+
+    `object_t` and `array_t` are formed inside the definition of `basic_json`, i.e. while `basic_json` is still an
+    incomplete type. `#!cpp std::map` and `#!cpp std::vector` are required by the standard to support incomplete
+    value types; most third-party containers are not, and inspecting the value type at class scope (for instance with
+    `#!cpp std::is_trivially_move_assignable`) makes them unusable as `ObjectType` or `ArrayType`. This rules out
+    `absl::btree_map` and `absl::InlinedVector`, among others, no matter how their template arguments are adapted.
 
 ## `ObjectType`
 
@@ -112,6 +120,45 @@ using unordered_json = nlohmann::basic_json<unordered_map_object>;
 The same pattern (ignoring the third argument) is how [`tsl::ordered_map`](https://github.com/Tessil/ordered-map) and
 similar containers are integrated; see [Object Order](../object_order.md).
 
+#### Abseil hash maps
+
+`absl::flat_hash_map` and `absl::node_hash_map` tolerate an incomplete value type, but they take a hash function as
+their third template argument and their `erase(iterator)` returns `#!cpp void` rather than the following iterator. An
+adapter that fixes both makes them usable:
+
+```cpp
+template<template<class, class, class, class, class> class Map>
+struct absl_object
+{
+    template<class Key, class T, class IgnoredCompare, class Allocator>
+    struct type : Map<Key, T, absl::Hash<Key>, std::equal_to<Key>, Allocator>
+    {
+        using base_t = Map<Key, T, absl::Hash<Key>, std::equal_to<Key>, Allocator>;
+        using base_t::base_t;
+        using iterator = typename base_t::iterator;
+        using base_t::erase;
+
+        iterator erase(iterator pos)
+        {
+            iterator next = std::next(pos);
+            base_t::erase(pos);
+            return next;
+        }
+    };
+};
+
+template<class Key, class T, class Compare, class Allocator>
+using flat_hash_object = typename absl_object<absl::flat_hash_map>::template type<Key, T, Compare, Allocator>;
+
+using flat_hash_json = nlohmann::basic_json<flat_hash_object>;
+```
+
+`absl::node_hash_map` keeps references to the mapped values valid across insertions; `absl::flat_hash_map` does not,
+which makes it behave like [`ordered_json`](../../api/ordered_json.md) with respect to
+[iterator invalidation](../../api/basic_json/index.md#iterator-invalidation). Both expose a `capacity()` member
+function, so [`JSON_DIAGNOSTICS`](../../api/macros/json_diagnostics.md) treats them conservatively and keeps the
+parent pointers correct either way.
+
 #### Iteration order
 
 The library never relies on the container's iteration order for correctness; it does determine the order in which
@@ -138,6 +185,8 @@ The library does not sort or de-duplicate keys itself; the behavior described in
 | [`nlohmann::ordered_map`](../../api/ordered_map.md)                                                                      | full; used by [`ordered_json`](../../api/ordered_json.md)                      |
 | `#!cpp std::unordered_map`, through the adapter shown above                                                              | full                                                                          |
 | [`tsl::ordered_map`](https://github.com/Tessil/ordered-map), [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map) | through the same adapter pattern; see [Object Order](../object_order.md)       |
+| `absl::flat_hash_map`, `absl::node_hash_map`, through the adapter shown above                                            | full                                                                          |
+| `absl::btree_map`                                                                                                        | not usable; requires a complete value type                                    |
 | `#!cpp std::multimap`, `#!cpp std::unordered_multimap`                                                                   | not usable; `emplace` does not return `#!cpp std::pair<iterator, bool>`        |
 
 ## `ArrayType`
@@ -183,6 +232,8 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | `#!cpp std::vector` (default) | full                                                                             |
 | `#!cpp std::deque`            | only when wrapped in a type that adds a `capacity()` member function              |
 | `#!cpp std::list`             | not usable; no `operator[]`, no `capacity()`, and no random-access iterators      |
+| `absl::InlinedVector`         | not usable; requires a complete value type                                       |
+| `absl::FixedArray`            | not usable; the size is fixed at construction                                    |
 
 ## `StringType`
 
@@ -241,6 +292,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | a custom string class in a user-defined namespace                           | full, if the requirements above are met                                     |
 | `#!cpp std::pmr::string`, `#!cpp std::basic_string` with a custom allocator | not usable beyond the DOM, `dump`, and `parse` -- see below                 |
 | `#!cpp std::wstring`, `#!cpp std::u16string`, `#!cpp std::u32string`        | not usable; the character type is not one byte wide                         |
+| `absl::Cord`                                                                | not usable; no `value_type`, and the storage is not contiguous              |
 
 !!! warning "`std::basic_string` with a non-default allocator"
 
@@ -436,6 +488,7 @@ such a container to a `basic_json` value.
 | `#!cpp std::vector<std::uint8_t>` (default) | full                                                                                       |
 | `#!cpp std::vector<char>`                | full                                                                                          |
 | `#!cpp std::vector<std::byte>`           | full                                                                                          |
+| `absl::InlinedVector<std::uint8_t, N>`   | full                                                                                          |
 | `#!cpp std::string`                      | not usable; `binary_t::container_type` and `string_t` would be the same type, which makes the [`swap`](../../api/basic_json/swap.md) overloads ambiguous |
 | containers whose `value_type` is wider than one byte | not usable                                                                        |
 
