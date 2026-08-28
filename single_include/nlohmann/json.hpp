@@ -3297,6 +3297,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
+#include <cstddef> // size_t
+
 // #include <nlohmann/detail/abi_macros.hpp>
 
 
@@ -3305,43 +3307,47 @@ namespace detail
 {
 
 /*!
-@brief replace all occurrences of a substring by another string
-
-@param[in,out] s  the string to manipulate; changed so that all
-               occurrences of @a f are replaced with @a t
-@param[in]     f  the substring to replace with @a t
-@param[in]     t  the string to replace @a f
-
-@pre The search string @a f must not be empty. **This precondition is
-enforced with an assertion.**
-
-@since version 2.0.0
-*/
-template<typename StringType>
-inline void replace_substring(StringType& s, const StringType& f,
-                              const StringType& t)
-{
-    JSON_ASSERT(!f.empty());
-    for (auto pos = s.find(f);                // find the first occurrence of f
-            pos != StringType::npos;          // make sure f was found
-            s.replace(pos, f.size(), t),      // replace with t, and
-            pos = s.find(f, pos + t.size()))  // find the next occurrence of f
-    {}
-}
-
-/*!
  * @brief string escaping as described in RFC 6901 (Sect. 4)
  * @param[in] s string to escape
  * @return    escaped string
  *
  * Note the order of escaping "~" to "~0" and "/" to "~1" is important.
+ *
+ * The string is rebuilt in a single pass, appending whole runs between the
+ * characters that need escaping. Scanning with find_first_of() keeps the
+ * common case -- nothing to escape -- as fast as a single search, while
+ * repeated replace() calls would move the tail of the string once per
+ * escaped character.
  */
 template<typename StringType>
-inline StringType escape(StringType s)
+inline StringType escape(const StringType& s)
 {
-    replace_substring(s, StringType{"~"}, StringType{"~0"});
-    replace_substring(s, StringType{"/"}, StringType{"~1"});
-    return s;
+    auto next_special = [&s](std::size_t from)
+    {
+        const auto tilde = s.find_first_of('~', from);
+        const auto slash = s.find_first_of('/', from);
+        return tilde < slash ? tilde : slash; // npos is the largest value
+    };
+
+    auto pos = next_special(0);
+    if (pos == StringType::npos)
+    {
+        return s;
+    }
+
+    StringType result;
+    result.reserve(s.size() + 2);
+
+    std::size_t run = 0;
+    while (pos != StringType::npos)
+    {
+        result.append(s.data() + run, pos - run);
+        result.append(s[pos] == '~' ? "~0" : "~1", 2);
+        run = pos + 1;
+        pos = next_special(run);
+    }
+    result.append(s.data() + run, s.size() - run);
+    return result;
 }
 
 /*!
@@ -3350,12 +3356,43 @@ inline StringType escape(StringType s)
  * @return    unescaped string
  *
  * Note the order of escaping "~1" to "/" and "~0" to "~" is important.
+ *
+ * Rebuilt in a single pass, see @ref escape. A "~" that is followed by
+ * neither "0" nor "1" is passed through unchanged; @ref json_pointer rejects
+ * such input before it gets here.
  */
 template<typename StringType>
 inline void unescape(StringType& s)
 {
-    replace_substring(s, StringType{"~1"}, StringType{"/"});
-    replace_substring(s, StringType{"~0"}, StringType{"~"});
+    auto pos = s.find_first_of('~', 0);
+    if (pos == StringType::npos)
+    {
+        return;
+    }
+
+    StringType result;
+    result.reserve(s.size());
+
+    std::size_t run = 0;
+    while (pos != StringType::npos)
+    {
+        result.append(s.data() + run, pos - run);
+
+        const auto next = pos + 1;
+        if (next < s.size() && (s[next] == '0' || s[next] == '1'))
+        {
+            result.append(s[next] == '0' ? "~" : "/", 1);
+            run = pos + 2;
+        }
+        else
+        {
+            result.append("~", 1);
+            run = pos + 1;
+        }
+        pos = s.find_first_of('~', run);
+    }
+    result.append(s.data() + run, s.size() - run);
+    s = result;
 }
 
 }  // namespace detail
@@ -4956,7 +4993,7 @@ class exception : public std::exception
                     {
                         if (&element.second == current)
                         {
-                            tokens.emplace_back(element.first.c_str());
+                            tokens.emplace_back(element.first.data(), element.first.size());
                             break;
                         }
                     }
@@ -15666,7 +15703,7 @@ class json_pointer
                                string_t{},
                                [](const string_t& a, const string_t& b)
         {
-            return detail::concat(a, '/', detail::escape(b));
+            return detail::concat<string_t>(a, '/', detail::escape(b));
         });
     }
 
@@ -15860,7 +15897,7 @@ class json_pointer
             JSON_THROW(detail::parse_error::create(109, 0, detail::concat("array index '", s, "' is not a number"), nullptr));
         }
 
-        const char* p = s.c_str();
+        const char* p = s.data();
         char* p_end = nullptr; // NOLINT(misc-const-correctness)
         errno = 0; // strtoull doesn't reset errno
         const unsigned long long res = std::strtoull(p, &p_end, 10); // NOLINT(runtime/int)
@@ -16437,7 +16474,8 @@ class json_pointer
         {
             // use the text between the beginning of the reference token
             // (start) and the last slash (slash).
-            auto reference_token = reference_string.substr(start, slash - start);
+            const auto count = (slash == string_t::npos ? reference_string.size() : slash) - start;
+            auto reference_token = string_t(reference_string.data() + start, count);
 
             // check reference tokens are properly escaped
             for (std::size_t pos = reference_token.find_first_of('~');
@@ -17255,7 +17293,7 @@ class binary_writer
 
                 // step 2: write the string
                 oa->write_characters(
-                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->c_str()),
+                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->data()),
                     j.m_data.m_value.string->size());
                 break;
             }
@@ -17575,7 +17613,7 @@ class binary_writer
 
                 // step 2: write the string
                 oa->write_characters(
-                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->c_str()),
+                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->data()),
                     j.m_data.m_value.string->size());
                 break;
             }
@@ -17792,7 +17830,7 @@ class binary_writer
                 }
                 write_number_with_ubjson_prefix(j.m_data.m_value.string->size(), true, use_bjdata);
                 oa->write_characters(
-                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->c_str()),
+                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->data()),
                     j.m_data.m_value.string->size());
                 break;
             }
@@ -17944,7 +17982,7 @@ class binary_writer
                 {
                     write_number_with_ubjson_prefix(el.first.size(), true, use_bjdata);
                     oa->write_characters(
-                        reinterpret_cast<const CharType*>(el.first.c_str()),
+                        reinterpret_cast<const CharType*>(el.first.data()),
                         el.first.size());
                     write_ubjson(el.second, use_count, use_type, prefix_required, use_bjdata, bjdata_version);
                 }
@@ -18007,8 +18045,11 @@ class binary_writer
     {
         oa->write_character(to_char_type(element_type));
         oa->write_characters(
-            reinterpret_cast<const CharType*>(name.c_str()),
-            name.size() + 1u);
+            reinterpret_cast<const CharType*>(name.data()),
+            name.size());
+        // the terminating null byte is written explicitly rather than taken
+        // from the buffer, so that string_t::data() need not be null-terminated
+        oa->write_character(to_char_type(0x00));
     }
 
     /*!
@@ -18049,8 +18090,9 @@ class binary_writer
 
         write_number<std::int32_t>(to_bson_length(value.size() + 1ul), true);
         oa->write_characters(
-            reinterpret_cast<const CharType*>(value.c_str()),
-            value.size() + 1);
+            reinterpret_cast<const CharType*>(value.data()),
+            value.size());
+        oa->write_character(to_char_type(0x00));
     }
 
     /*!
@@ -20198,7 +20240,7 @@ class serializer
                     auto i = val.m_data.m_value.object->cbegin();
                     for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
                     {
-                        o->write_characters(indent_string.c_str(), new_indent);
+                        o->write_characters(indent_string.data(), new_indent);
                         o->write_character('\"');
                         dump_escaped(i->first, ensure_ascii);
                         o->write_characters("\": ", 3);
@@ -20209,14 +20251,14 @@ class serializer
                     // last element
                     JSON_ASSERT(i != val.m_data.m_value.object->cend());
                     JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
-                    o->write_characters(indent_string.c_str(), new_indent);
+                    o->write_characters(indent_string.data(), new_indent);
                     o->write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
                     o->write_characters("\": ", 3);
                     dump(i->second, true, ensure_ascii, indent_step, new_indent);
 
                     o->write_character('\n');
-                    o->write_characters(indent_string.c_str(), current_indent);
+                    o->write_characters(indent_string.data(), current_indent);
                     o->write_character('}');
                 }
                 else
@@ -20271,18 +20313,18 @@ class serializer
                     for (auto i = val.m_data.m_value.array->cbegin();
                             i != val.m_data.m_value.array->cend() - 1; ++i)
                     {
-                        o->write_characters(indent_string.c_str(), new_indent);
+                        o->write_characters(indent_string.data(), new_indent);
                         dump(*i, true, ensure_ascii, indent_step, new_indent);
                         o->write_characters(",\n", 2);
                     }
 
                     // last element
                     JSON_ASSERT(!val.m_data.m_value.array->empty());
-                    o->write_characters(indent_string.c_str(), new_indent);
+                    o->write_characters(indent_string.data(), new_indent);
                     dump(val.m_data.m_value.array->back(), true, ensure_ascii, indent_step, new_indent);
 
                     o->write_character('\n');
-                    o->write_characters(indent_string.c_str(), current_indent);
+                    o->write_characters(indent_string.data(), current_indent);
                     o->write_character(']');
                 }
                 else
@@ -20328,7 +20370,7 @@ class serializer
                         indent_string.resize(indent_string.size() * 2, ' ');
                     }
 
-                    o->write_characters(indent_string.c_str(), new_indent);
+                    o->write_characters(indent_string.data(), new_indent);
 
                     o->write_characters("\"bytes\": [", 10);
 
@@ -20344,7 +20386,7 @@ class serializer
                     }
 
                     o->write_characters("],\n", 3);
-                    o->write_characters(indent_string.c_str(), new_indent);
+                    o->write_characters(indent_string.data(), new_indent);
 
                     o->write_characters("\"subtype\": ", 11);
                     if (val.m_data.m_value.binary->has_subtype())
@@ -20356,7 +20398,7 @@ class serializer
                         o->write_characters("null", 4);
                     }
                     o->write_character('\n');
-                    o->write_characters(indent_string.c_str(), current_indent);
+                    o->write_characters(indent_string.data(), current_indent);
                     o->write_character('}');
                 }
                 else
@@ -20659,7 +20701,7 @@ class serializer
             {
                 case error_handler_t::strict:
                 {
-                    JSON_THROW(type_error::create(316, concat("incomplete UTF-8 string; last byte: 0x", hex_bytes(static_cast<std::uint8_t>(s.back() | 0))), nullptr));
+                    JSON_THROW(type_error::create(316, concat("incomplete UTF-8 string; last byte: 0x", hex_bytes(static_cast<std::uint8_t>(s[s.size() - 1] | 0))), nullptr));
                 }
 
                 case error_handler_t::ignore:
@@ -23489,15 +23531,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // at only works for arrays
         if (JSON_HEDLEY_LIKELY(is_array()))
         {
-            JSON_TRY
+            if (JSON_HEDLEY_UNLIKELY(idx >= m_data.m_value.array->size()))
             {
-                return set_parent(m_data.m_value.array->at(idx));
-            }
-            JSON_CATCH (std::out_of_range&)
-            {
-                // create a better exception explanation
                 JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), this));
-            } // cppcheck-suppress[missingReturn]
+            }
+            return set_parent((*m_data.m_value.array)[idx]);
         }
         else
         {
@@ -23512,15 +23550,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // at only works for arrays
         if (JSON_HEDLEY_LIKELY(is_array()))
         {
-            JSON_TRY
+            if (JSON_HEDLEY_UNLIKELY(idx >= m_data.m_value.array->size()))
             {
-                return m_data.m_value.array->at(idx);
-            }
-            JSON_CATCH (std::out_of_range&)
-            {
-                // create a better exception explanation
                 JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), this));
-            } // cppcheck-suppress[missingReturn]
+            }
+            return (*m_data.m_value.array)[idx];
         }
         else
         {

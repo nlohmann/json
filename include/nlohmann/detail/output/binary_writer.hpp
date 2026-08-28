@@ -261,7 +261,7 @@ class binary_writer
 
                 // step 2: write the string
                 oa->write_characters(
-                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->c_str()),
+                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->data()),
                     j.m_data.m_value.string->size());
                 break;
             }
@@ -581,7 +581,7 @@ class binary_writer
 
                 // step 2: write the string
                 oa->write_characters(
-                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->c_str()),
+                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->data()),
                     j.m_data.m_value.string->size());
                 break;
             }
@@ -798,7 +798,7 @@ class binary_writer
                 }
                 write_number_with_ubjson_prefix(j.m_data.m_value.string->size(), true, use_bjdata);
                 oa->write_characters(
-                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->c_str()),
+                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->data()),
                     j.m_data.m_value.string->size());
                 break;
             }
@@ -950,7 +950,7 @@ class binary_writer
                 {
                     write_number_with_ubjson_prefix(el.first.size(), true, use_bjdata);
                     oa->write_characters(
-                        reinterpret_cast<const CharType*>(el.first.c_str()),
+                        reinterpret_cast<const CharType*>(el.first.data()),
                         el.first.size());
                     write_ubjson(el.second, use_count, use_type, prefix_required, use_bjdata, bjdata_version);
                 }
@@ -1013,8 +1013,11 @@ class binary_writer
     {
         oa->write_character(to_char_type(element_type));
         oa->write_characters(
-            reinterpret_cast<const CharType*>(name.c_str()),
-            name.size() + 1u);
+            reinterpret_cast<const CharType*>(name.data()),
+            name.size());
+        // the terminating null byte is written explicitly rather than taken
+        // from the buffer, so that string_t::data() need not be null-terminated
+        oa->write_character(to_char_type(0x00));
     }
 
     /*!
@@ -1055,8 +1058,9 @@ class binary_writer
 
         write_number<std::int32_t>(to_bson_length(value.size() + 1ul), true);
         oa->write_characters(
-            reinterpret_cast<const CharType*>(value.c_str()),
-            value.size() + 1);
+            reinterpret_cast<const CharType*>(value.data()),
+            value.size());
+        oa->write_character(to_char_type(0x00));
     }
 
     /*!

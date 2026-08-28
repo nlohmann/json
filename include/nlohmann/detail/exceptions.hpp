@@ -101,7 +101,7 @@ class exception : public std::exception
                     {
                         if (&element.second == current)
                         {
-                            tokens.emplace_back(element.first.c_str());
+                            tokens.emplace_back(element.first.data(), element.first.size());
                             break;
                         }
                     }

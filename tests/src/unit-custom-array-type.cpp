@@ -12,7 +12,9 @@
 
 #include <deque>
 #include <map>
+#include <memory>
 #include <string>
+#include <vector>
 
 namespace
 {
@@ -20,6 +22,19 @@ namespace
 // std::deque has no capacity() member function, which the library only needs
 // to detect a reallocation for JSON_DIAGNOSTICS
 using deque_json = nlohmann::basic_json<std::map, std::deque>;
+
+// a std::vector whose at() is hidden: the library performs its own bounds
+// check and must not fall back to the container's checked accessor
+template<class T, class Allocator = std::allocator<T>>
+class vector_without_at : public std::vector<T, Allocator>
+{
+  public:
+    using std::vector<T, Allocator>::vector;
+
+    void at() = delete;
+};
+
+using no_at_json = nlohmann::basic_json<std::map, vector_without_at>;
 
 } // namespace
 
@@ -86,4 +101,20 @@ TEST_CASE("array type without capacity()")
         CHECK(&first == &j[0]);
         CHECK(first == 1);
     }
+}
+
+TEST_CASE("array type without at()")
+{
+    auto j = no_at_json::parse(R"([1,2,3])");
+    const auto& jc = j;
+
+    CHECK(j.at(0) == 1);
+    CHECK(j.at(2) == 3);
+    CHECK(jc.at(2) == 3);
+
+    CHECK_THROWS_WITH_AS(j.at(3), "[json.exception.out_of_range.401] array index 3 is out of range", no_at_json::out_of_range);
+    CHECK_THROWS_WITH_AS(jc.at(3), "[json.exception.out_of_range.401] array index 3 is out of range", no_at_json::out_of_range);
+
+    CHECK(j.at(no_at_json::json_pointer("/1")) == 2);
+    CHECK_THROWS_AS(j.at(no_at_json::json_pointer("/3")), no_at_json::out_of_range);
 }

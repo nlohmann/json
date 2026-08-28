@@ -24,6 +24,10 @@ void int_to_string(alt_string& target, std::size_t value); // NOLINT(misc-use-in
 /*
  * This is virtually a string class.
  * It covers std::string under the hood.
+ *
+ * It deliberately does not provide c_str(), back(), find(str, pos), replace(),
+ * or substr(): the library must not rely on them. Do not add members here
+ * without checking that the library actually needs them.
  */
 class alt_string
 {
@@ -108,11 +112,6 @@ class alt_string
         return str_impl < op.str_impl;
     }
 
-    const char* c_str() const
-    {
-        return str_impl.c_str();
-    }
-
     char& operator[](std::size_t index)
     {
         return str_impl[index];
@@ -121,16 +120,6 @@ class alt_string
     const char& operator[](std::size_t index) const
     {
         return str_impl[index];
-    }
-
-    char& back()
-    {
-        return str_impl.back();
-    }
-
-    const char& back() const
-    {
-        return str_impl.back();
     }
 
     void clear()
@@ -148,26 +137,9 @@ class alt_string
         return str_impl.empty();
     }
 
-    std::size_t find(const alt_string& str, std::size_t pos = 0) const
-    {
-        return str_impl.find(str.str_impl, pos);
-    }
-
     std::size_t find_first_of(char c, std::size_t pos = 0) const
     {
         return str_impl.find_first_of(c, pos);
-    }
-
-    alt_string substr(std::size_t pos = 0, std::size_t count = npos) const
-    {
-        const std::string s = str_impl.substr(pos, count);
-        return {s.data(), s.size()};
-    }
-
-    alt_string& replace(std::size_t pos, std::size_t count, const alt_string& str)
-    {
-        str_impl.replace(pos, count, str.str_impl);
-        return *this;
     }
 
     void reserve( std::size_t new_cap = 0 )
@@ -359,6 +331,15 @@ TEST_CASE("alternative string type")
 
         CHECK(j.at(alt_json::json_pointer("/foo/0")) == j["foo"][0]);
         CHECK(j.at(alt_json::json_pointer("/foo/1")) == j["foo"][1]);
+
+        // RFC 6901 escaping works without string_t::find(str, pos), replace(),
+        // and substr()
+        auto j2 = alt_json::parse(R"({"a/b": 1, "m~n": 2, "~/~~//": 3})");
+        CHECK(j2.at(alt_json::json_pointer("/a~1b")) == 1);
+        CHECK(j2.at(alt_json::json_pointer("/m~0n")) == 2);
+        CHECK(j2.at(alt_json::json_pointer("/~0~1~0~0~1~1")) == 3);
+        CHECK(alt_json::json_pointer("/~0~1~0~0~1~1").to_string() == alt_string("/~0~1~0~0~1~1"));
+        CHECK(j2.flatten().unflatten() == j2);
     }
 
     SECTION("patch")

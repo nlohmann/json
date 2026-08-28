@@ -2065,15 +2065,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // at only works for arrays
         if (JSON_HEDLEY_LIKELY(is_array()))
         {
-            JSON_TRY
+            if (JSON_HEDLEY_UNLIKELY(idx >= m_data.m_value.array->size()))
             {
-                return set_parent(m_data.m_value.array->at(idx));
-            }
-            JSON_CATCH (std::out_of_range&)
-            {
-                // create a better exception explanation
                 JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), this));
-            } // cppcheck-suppress[missingReturn]
+            }
+            return set_parent((*m_data.m_value.array)[idx]);
         }
         else
         {
@@ -2088,15 +2084,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // at only works for arrays
         if (JSON_HEDLEY_LIKELY(is_array()))
         {
-            JSON_TRY
+            if (JSON_HEDLEY_UNLIKELY(idx >= m_data.m_value.array->size()))
             {
-                return m_data.m_value.array->at(idx);
-            }
-            JSON_CATCH (std::out_of_range&)
-            {
-                // create a better exception explanation
                 JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), this));
-            } // cppcheck-suppress[missingReturn]
+            }
+            return (*m_data.m_value.array)[idx];
         }
         else
         {

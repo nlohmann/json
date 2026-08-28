@@ -72,7 +72,7 @@ class json_pointer
                                string_t{},
                                [](const string_t& a, const string_t& b)
         {
-            return detail::concat(a, '/', detail::escape(b));
+            return detail::concat<string_t>(a, '/', detail::escape(b));
         });
     }
 
@@ -266,7 +266,7 @@ class json_pointer
             JSON_THROW(detail::parse_error::create(109, 0, detail::concat("array index '", s, "' is not a number"), nullptr));
         }
 
-        const char* p = s.c_str();
+        const char* p = s.data();
         char* p_end = nullptr; // NOLINT(misc-const-correctness)
         errno = 0; // strtoull doesn't reset errno
         const unsigned long long res = std::strtoull(p, &p_end, 10); // NOLINT(runtime/int)
@@ -843,7 +843,8 @@ class json_pointer
         {
             // use the text between the beginning of the reference token
             // (start) and the last slash (slash).
-            auto reference_token = reference_string.substr(start, slash - start);
+            const auto count = (slash == string_t::npos ? reference_string.size() : slash) - start;
+            auto reference_token = string_t(reference_string.data() + start, count);
 
             // check reference tokens are properly escaped
             for (std::size_t pos = reference_token.find_first_of('~');
