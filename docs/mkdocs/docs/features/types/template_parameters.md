@@ -289,6 +289,23 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | [`std::hash<basic_json>`](../../api/basic_json/std_hash.md) | a specialization of `#!cpp std::hash<StringType>` |
 | exception messages                                          | `data()` and `size()`, or `begin()` and `end()`   |
 
+!!! warning "A `std::pmr::string` does not allocate from a memory resource you choose"
+
+    `basic_json` cannot be given an allocator or a memory resource. `AllocatorType` is default-constructed at every
+    allocation and has to be stateless (see [`AllocatorType`](#allocatortype)), and string values are constructed with
+    their own default allocator. Three consequences:
+
+    - A `#!cpp std::pmr::string` inside a `basic_json` always allocates from
+      `#!cpp std::pmr::get_default_resource()`.
+    - Assigning an arena-backed string into a value **silently drops its memory resource**: the copy lands on the
+      default resource, because `#!cpp std::pmr::polymorphic_allocator` does not propagate on copy construction.
+      Nothing warns about this.
+    - Passing `#!cpp std::pmr::polymorphic_allocator` as `AllocatorType` does not work around it; it does not compile.
+
+    The only way to redirect these allocations is the process-global `#!cpp std::pmr::set_default_resource()`. So
+    `#!cpp std::pmr::string` gives you the indirection cost of PMR without per-instance arena allocation. Use it if
+    you need that string type for interface reasons, not to control where the data lives.
+
 !!! tip "Reference implementation"
 
     The unit test `tests/src/unit-alt-string.cpp` contains `alt_string`, a minimal string type that satisfies the
@@ -299,7 +316,8 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | Type                                                                        | Support                                                                     |
 |-----------------------------------------------------------------------------|-----------------------------------------------------------------------------|
 | `#!cpp std::string` (default)                                               | full                                                                        |
-| `#!cpp std::pmr::string`, `#!cpp std::basic_string` with a custom allocator | full                                                                        |
+| `#!cpp std::basic_string` with a custom **stateless** allocator             | full                                                                        |
+| `#!cpp std::pmr::string`                                                    | compiles and behaves correctly, but always allocates from the default memory resource -- see below |
 | `boost::container::string`                                                  | full, once a `#!cpp std::hash` specialization is supplied (Boost provides `boost::hash` instead) |
 | `folly::fbstring`                                                           | full; requires C++20, see the note below                                    |
 | `eastl::string`                                                             | full, except that [`parse`](../../api/basic_json/parse.md) does not accept it directly; pass a character range or a `#!cpp std::string` |
@@ -440,7 +458,8 @@ binary32 or binary64 field and have no encoding for `#!cpp long double`.
 - It must be **default-constructible and stateless**. Objects are allocated with a default-constructed allocator and
   deallocated with a *different* default-constructed allocator, and
   [`get_allocator()`](../../api/basic_json/get_allocator.md) returns a default-constructed instance. Allocators
-  carrying state are not supported.
+  carrying state are not supported, so there is no way to tell a `basic_json` where to allocate from; see the note
+  under [`StringType`](#stringtype) for what that means in practice.
 - It must support **incomplete types**: `AllocatorType<basic_json>` is instantiated inside the definition of
   `basic_json` itself.
 - `#!cpp std::allocator_traits<AllocatorType<basic_json>>::pointer` becomes
