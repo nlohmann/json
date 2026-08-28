@@ -24870,7 +24870,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             if (merge_objects && it.value().is_object())
             {
                 auto it2 = m_data.m_value.object->find(it.key());
-                if (it2 != m_data.m_value.object->end())
+                // Only recurse when the existing value is itself an object.
+                // Otherwise overwrite, matching the documented "all other values
+                // are overwritten as usual" behavior (see #5402).
+                if (it2 != m_data.m_value.object->end() && it2->second.is_object())
                 {
                     it2->second.update(it.value(), true);
 #if JSON_DIAGNOSTICS

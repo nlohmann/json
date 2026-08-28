@@ -1555,4 +1555,15 @@ TEST_CASE("issue #5338 - truncated CBOR tagged binary subtype is rejected")
     }
 }
 
+TEST_CASE("issue #5402 - update(merge_objects=true) overwrites a primitive with an object")
+{
+    json t = {{"k", 1}};
+    t.update(json{{"k", {{"x", 2}}}}, true);
+    CHECK(t == json({{"k", {{"x", 2}}}}));
+
+    json mixed = {{"keep", {{"a", 1}}}, {"replace", 1}};
+    mixed.update(json{{"keep", {{"b", 2}}}, {"replace", {{"x", 2}}}}, true);
+    CHECK(mixed == json({{"keep", {{"a", 1}, {"b", 2}}}, {"replace", {{"x", 2}}}}));
+}
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
