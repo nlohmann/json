@@ -1167,7 +1167,7 @@ TEST_CASE("regression tests 2")
         using json_char_binary = nlohmann::basic_json <
                                  std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
                                  double, std::allocator, nlohmann::adl_serializer, std::vector<char>, void >;
-        const std::vector<char> chars{char(0), char(1), char(0xFF)};
+        const std::vector<char> chars{'\0', '\x01', '\xFF'};
         CHECK(json_char_binary::binary(chars).dump() == R"({"bytes":[0,1,255],"subtype":null})");
 
         // the default binary type is unchanged
