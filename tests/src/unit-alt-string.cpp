@@ -11,8 +11,10 @@
 
 #include <nlohmann/json.hpp>
 
+#include <cstdint>
 #include <string>
 #include <utility>
+#include <vector>
 
 /* forward declarations */
 class alt_string;
@@ -202,6 +204,31 @@ bool operator<(const char* op1, const alt_string& op2) noexcept
 
 TEST_CASE("alternative string type")
 {
+    SECTION("binary formats")
+    {
+        alt_json doc;
+        doc["pi"] = 3.141;
+        doc["happy"] = true;
+        doc["list"] = {1, 2, 3};
+
+        CHECK(alt_json::from_cbor(alt_json::to_cbor(doc)) == doc);
+        CHECK(alt_json::from_msgpack(alt_json::to_msgpack(doc)) == doc);
+        // BSON is not covered: it additionally needs string_t::find(value_type),
+        // which alt_string does not provide
+        CHECK(alt_json::from_ubjson(alt_json::to_ubjson(doc)) == doc);
+
+        // a UBJSON high-precision number is parsed into a std::string that the
+        // reader has to hand to the SAX interface as an alt_string
+        const std::vector<uint8_t> high_precision =
+        {
+            'H', 'i', 0x16, '3', '.', '1', '4', '1', '5', '9', '2', '6', '5', '3',
+            '5', '8', '9', '7', '9', '3', '2', '3', '8', '4', '6'
+        };
+        const auto number = alt_json::from_ubjson(high_precision);
+        CHECK(number.is_number_float());
+        CHECK(number.get<double>() == doctest::Approx(3.14159265358979323846));
+    }
+
     SECTION("dump")
     {
         {

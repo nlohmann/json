@@ -5,7 +5,7 @@ never formally states what a type passed for one of these parameters has to prov
 the way the library uses the resulting [`object_t`](../../api/basic_json/object_t.md),
 [`array_t`](../../api/basic_json/array_t.md), [`string_t`](../../api/basic_json/string_t.md), etc. This page collects
 these requirements so they do not have to be discovered by trial and error. Each section also lists the concrete
-types that are known to work for that parameter; the Abseil entries were checked against release 20250127.0.
+types that are known to work for that parameter, checked against Boost 1.83, Abseil 20250127.0, and EASTL 3.21.
 
 ## How to read this page
 
@@ -46,7 +46,9 @@ Requirements are split into two groups:
     incomplete type. `#!cpp std::map` and `#!cpp std::vector` are required by the standard to support incomplete
     value types; most third-party containers are not, and inspecting the value type at class scope (for instance with
     `#!cpp std::is_trivially_move_assignable`) makes them unusable as `ObjectType` or `ArrayType`. This rules out
-    `absl::btree_map` and `absl::InlinedVector`, among others, no matter how their template arguments are adapted.
+    `absl::btree_map`, `absl::InlinedVector`, `eastl::vector`, and `eastl::hash_map`, among others, no matter how their
+    template arguments are adapted. Boost.Container is the notable exception: it documents support for incomplete
+    types, and all of its containers work here.
 
 ## `ObjectType`
 
@@ -169,9 +171,12 @@ The library does not sort or de-duplicate keys itself; the behavior described in
 | `#!cpp std::map` (default)                                                                                               | full                                                                          |
 | [`nlohmann::ordered_map`](../../api/ordered_map.md)                                                                      | full; used by [`ordered_json`](../../api/ordered_json.md)                      |
 | `#!cpp std::unordered_map`, through the adapter shown above                                                              | full                                                                          |
-| [`tsl::ordered_map`](https://github.com/Tessil/ordered-map), [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map) | through the same adapter pattern; see [Object Order](../object_order.md)       |
+| `boost::container::map`, `boost::container::flat_map`                                                                    | full, with no adapter                                                         |
+| `boost::unordered_map`, `boost::unordered_flat_map`, `boost::unordered_node_map`, through the adapter shown above         | full                                                                          |
 | `absl::flat_hash_map`, `absl::node_hash_map`, through the adapter shown above                                            | full                                                                          |
-| `absl::btree_map`                                                                                                        | not usable; requires a complete value type                                    |
+| `absl::btree_map`, `eastl::hash_map`                                                                                     | not usable; require a complete value type                                     |
+| `eastl::map`                                                                                                             | not usable; EASTL iterators do not work with `#!cpp std::iterator_traits`      |
+| `tsl::ordered_map`                                                                                                       | not usable; its iterators expose the mapped value as `#!cpp const`             |
 | `#!cpp std::multimap`, `#!cpp std::unordered_multimap`                                                                   | not usable; `emplace` does not return `#!cpp std::pair<iterator, bool>`        |
 
 ## `ArrayType`
@@ -214,7 +219,9 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | `#!cpp std::vector` (default) | full                                                                             |
 | `#!cpp std::deque`            | full; keeps references valid while the array grows, but see the note on `capacity()` above |
 | `#!cpp std::list`             | not usable; no `operator[]` and no random-access iterators                        |
-| `absl::InlinedVector`         | not usable; requires a complete value type                                       |
+| `boost::container::vector`, `boost::container::deque`, `boost::container::stable_vector` | full; `stable_vector` keeps references valid across every insertion    |
+| `boost::container::small_vector` | full, through an alias that fixes the inline capacity                         |
+| `absl::InlinedVector`, `eastl::vector` | not usable; require a complete value type                               |
 | `absl::FixedArray`            | not usable; the size is fixed at construction                                    |
 
 ## `StringType`
@@ -258,8 +265,26 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | Functionality                                               | Additional requirement                            |
 |-------------------------------------------------------------|---------------------------------------------------|
 | [`to_bson`](../../api/basic_json/to_bson.md)                | `find(value_type)` and `npos`                     |
+| [`parse`](../../api/basic_json/parse.md) from a `string_t` | the input adapters must accept it; otherwise pass a character range |
 | [`std::hash<basic_json>`](../../api/basic_json/std_hash.md) | a specialization of `#!cpp std::hash<StringType>` |
 | exception messages                                          | `data()` and `size()`, or `begin()` and `end()`   |
+
+!!! tip "Reference implementation"
+
+    The unit test `tests/src/unit-alt-string.cpp` contains `alt_string`, a minimal string type that satisfies the
+    requirements needed for the tested subset of the API. It is a good starting point for a custom `StringType`.
+
+### Compatible types
+
+| Type                                                                        | Support                                                                     |
+|-----------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| `#!cpp std::string` (default)                                               | full                                                                        |
+| `#!cpp std::pmr::string`, `#!cpp std::basic_string` with a custom allocator | full                                                                        |
+| `boost::container::string`                                                  | full, once a `#!cpp std::hash` specialization is supplied (Boost provides `boost::hash` instead) |
+| `eastl::string`                                                             | full, except that [`parse`](../../api/basic_json/parse.md) does not accept it directly; pass a character range or a `#!cpp std::string` |
+| a custom string class in a user-defined namespace                           | full, if the requirements above are met                                     |
+| `#!cpp std::wstring`, `#!cpp std::u16string`, `#!cpp std::u32string`        | not usable; the character type is not one byte wide                         |
+| `absl::Cord`                                                                | not usable; no `value_type`, and the storage is not contiguous              |
 
 !!! tip "Reference implementation"
 
@@ -470,7 +495,7 @@ such a container to a `basic_json` value.
 | `#!cpp std::vector<std::uint8_t>` (default) | full                                                                                       |
 | `#!cpp std::vector<char>`                | full                                                                                          |
 | `#!cpp std::vector<std::byte>`           | full                                                                                          |
-| `absl::InlinedVector<std::uint8_t, N>`   | full                                                                                          |
+| `absl::InlinedVector<std::uint8_t, N>`, `eastl::vector<std::uint8_t>`, `boost::container::vector<std::uint8_t>`, `boost::container::small_vector<std::uint8_t, N>` | full |
 | `#!cpp std::string`                      | not usable; `binary_t::container_type` and `string_t` would be the same type, which makes the [`swap`](../../api/basic_json/swap.md) overloads ambiguous |
 | containers whose `value_type` is wider than one byte | not usable                                                                        |
 
