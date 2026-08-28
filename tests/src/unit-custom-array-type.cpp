@@ -105,7 +105,9 @@ TEST_CASE("array type without capacity()")
 
 TEST_CASE("array type without at()")
 {
-    auto j = no_at_json::parse(R"([1,2,3])");
+    // built in memory rather than parsed, so that the exception message does
+    // not gain a byte range with JSON_DIAGNOSTIC_POSITIONS
+    no_at_json j = {1, 2, 3};
     const auto& jc = j;
 
     CHECK(j.at(0) == 1);
