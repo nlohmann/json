@@ -16,5 +16,5 @@
 TEST_CASE("JSON_HEDLEY macros do not leak after including json.hpp")
 {
 #include "hedley_undef_checks.inc"
-    CHECK(true);
+    CHECK(true); // keep an assertion when nothing leaks
 }

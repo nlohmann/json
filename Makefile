@@ -250,9 +250,14 @@ update_hedley:
 # Rebuild hedley_undef.hpp from every JSON_HEDLEY_* name that hedley.hpp #defines.
 # Hedley does not #undef all of its public macros internally (see #5408), so
 # grepping those #undef lines misses names such as JSON_HEDLEY_PRAGMA.
+# The CMake script is the single source of truth for name extraction (the
+# unit-hedley leak checks use it too) and emits the SPDX header so this
+# target is self-contained and byte-stable.
 update_hedley_undef:
-	grep -E '^[[:blank:]]*#[[:blank:]]*define[[:blank:]]+JSON_HEDLEY_[A-Z0-9_]+' include/nlohmann/thirdparty/hedley/hedley.hpp | $(SED) 's/^[[:blank:]]*#[[:blank:]]*define[[:blank:]]*\(JSON_HEDLEY_[A-Z0-9_]*\).*/#undef \1/' | sort | uniq > include/nlohmann/thirdparty/hedley/hedley_undef.hpp
-	$(SED) -i '1s/^/#pragma once\n\n/' include/nlohmann/thirdparty/hedley/hedley_undef.hpp
+	cmake -DHEDLEY_HPP=include/nlohmann/thirdparty/hedley/hedley.hpp \
+	      -DOUTPUT=include/nlohmann/thirdparty/hedley/hedley_undef.hpp \
+	      -DMODE=undef \
+	      -P cmake/scripts/gen_hedley_undef_check.cmake
 
 ##########################################################################
 # serve_header.py
