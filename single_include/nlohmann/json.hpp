@@ -7583,8 +7583,10 @@ std::size_t hash_iteratively(const BasicJsonType& j);
 @brief hash a JSON value
 
 The hash function tries to rely on std::hash where possible. Furthermore, the
-type of the JSON value is taken into account to have different hash values for
-null, 0, 0U, and false, etc.
+type of the JSON value is taken into account, so null, false, and numbers all
+hash differently from each other, but any two numbers that compare equal
+under operator== hash equally regardless of which of number_integer,
+number_unsigned, or number_float actually holds the value.
 
 Hashing an array or an object hashes its elements, which used to call this
 function again once per nesting level, so a value nested deeply enough
@@ -7661,21 +7663,18 @@ std::size_t hash(const BasicJsonType& j, const std::size_t depth = 0)
         }
 
         case BasicJsonType::value_t::number_integer:
-        {
-            const auto h = std::hash<number_integer_t> {}(j.template get<number_integer_t>());
-            return combine(type, h);
-        }
-
         case BasicJsonType::value_t::number_unsigned:
-        {
-            const auto h = std::hash<number_unsigned_t> {}(j.template get<number_unsigned_t>());
-            return combine(type, h);
-        }
-
         case BasicJsonType::value_t::number_float:
         {
+            // operator== converts between number_integer, number_unsigned, and
+            // number_float before comparing, so equal numbers of different
+            // internal types (0, 0U, 0.0) must hash the same. Combining a
+            // single shared type tag with the value converted to
+            // number_float_t keeps the hash consistent with operator== for
+            // every pair of numbers it considers equal.
+            const auto number_type = static_cast<std::size_t>(BasicJsonType::value_t::number_float);
             const auto h = std::hash<number_float_t> {}(j.template get<number_float_t>());
-            return combine(type, h);
+            return combine(number_type, h);
         }
 
         case BasicJsonType::value_t::binary:
