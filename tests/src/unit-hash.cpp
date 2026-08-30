@@ -73,7 +73,7 @@ TEST_CASE("hash<nlohmann::json>")
     CHECK(std::hash<json> {}(json(-1)) == std::hash<json> {}(json(-1.0)));
 
     // a std::unordered_set relies on this same consistency between == and hash
-    std::unordered_set<json> numbers {json(0), json(static_cast<unsigned>(0)), json(0.0)};
+    const std::unordered_set<json> numbers {json(0), json(static_cast<unsigned>(0)), json(0.0)};
     CHECK(numbers.size() == 1);
 }
 
