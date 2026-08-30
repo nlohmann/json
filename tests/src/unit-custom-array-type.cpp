@@ -41,15 +41,25 @@ using no_at_json = nlohmann::basic_json<std::map, vector_without_at>;
 
 TEST_CASE("array type without capacity()")
 {
-    SECTION("the iterators of the default configuration stay nothrow movable")
+    SECTION("the iterators take their exception specification from the container")
     {
-        // basic_json's iterators take their exception specification from the
-        // container iterators; std::deque's is not nothrow move constructible
-        // with older standard libraries, which must not cost the default
-        // configuration its noexcept
-        CHECK(std::is_nothrow_move_constructible<nlohmann::json::iterator>::value);
-        CHECK(std::is_nothrow_move_assignable<nlohmann::json::iterator>::value);
-        CHECK(std::is_nothrow_move_constructible<nlohmann::json::const_iterator>::value);
+        // basic_json's iterators move exactly as the container iterators do:
+        // their move operations are defaulted without a declared noexcept,
+        // because an array or object type whose iterator is not nothrow move
+        // constructible would otherwise have them deleted (std::deque's is not
+        // with libstdc++ before 11, and neither are MSVC's debug iterators)
+        CHECK(std::is_nothrow_move_constructible<nlohmann::json::iterator>::value ==
+              (std::is_nothrow_move_constructible<nlohmann::json::object_t::iterator>::value
+               && std::is_nothrow_move_constructible<nlohmann::json::array_t::iterator>::value));
+        CHECK(std::is_nothrow_move_assignable<nlohmann::json::iterator>::value ==
+              (std::is_nothrow_move_assignable<nlohmann::json::object_t::iterator>::value
+               && std::is_nothrow_move_assignable<nlohmann::json::array_t::iterator>::value));
+        CHECK(std::is_nothrow_move_constructible<nlohmann::json::const_iterator>::value ==
+              (std::is_nothrow_move_constructible<nlohmann::json::object_t::const_iterator>::value
+               && std::is_nothrow_move_constructible<nlohmann::json::array_t::const_iterator>::value));
+
+        // and they are movable at all, which is what dropping the declared
+        // noexcept buys for a std::deque array
         CHECK(std::is_move_constructible<deque_json::iterator>::value);
         CHECK(std::is_move_assignable<deque_json::iterator>::value);
     }
