@@ -6882,8 +6882,6 @@ template<typename BasicJsonType>
 std::size_t hash(const BasicJsonType& j)
 {
     using string_t = typename BasicJsonType::string_t;
-    using number_integer_t = typename BasicJsonType::number_integer_t;
-    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using number_float_t = typename BasicJsonType::number_float_t;
 
     const auto type = static_cast<std::size_t>(j.type());
