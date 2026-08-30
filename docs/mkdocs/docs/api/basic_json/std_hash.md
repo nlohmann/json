@@ -7,8 +7,9 @@ namespace std {
 ```
 
 Return a hash value for a JSON object. The hash function tries to rely on `std::hash` where possible. Furthermore, the
-type of the JSON value is taken into account to have different hash values for `#!json null`, `#!cpp 0`, `#!cpp 0U`, and
-`#!cpp false`, etc.
+type of the JSON value is taken into account, so `#!json null`, `#!cpp false`, and numbers all hash differently from
+each other. Numbers that compare equal under [`operator==`](operator_eq.md) always hash equally, regardless of
+whether they are stored as `#!cpp 0`, `#!cpp 0U`, or `#!cpp 0.0`.
 
 ## Examples
 
