@@ -1060,6 +1060,8 @@ class binary_writer
         oa->write_characters(
             reinterpret_cast<const CharType*>(value.data()),
             value.size());
+        // the terminating null byte is written explicitly rather than taken
+        // from the buffer, so that string_t::data() need not be null-terminated
         oa->write_character(to_char_type(0x00));
     }
 
@@ -1151,6 +1153,9 @@ class binary_writer
 
         const std::size_t embedded_document_size = std::accumulate(std::begin(value), std::end(value), static_cast<std::size_t>(0), [&array_index](std::size_t result, const typename BasicJsonType::array_t::value_type & el)
         {
+            // the index is built as a std::string, while calc_bson_element_size
+            // takes a string_t; convert explicitly, as the two are only
+            // implicitly convertible for some string types
             const auto key = std::to_string(array_index++);
             return result + calc_bson_element_size(string_t(key.data(), key.size()), el);
         });
