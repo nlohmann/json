@@ -788,14 +788,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// (e.g., Abseil's hash maps) return void to avoid computing a successor
     /// the caller may not need. Compute it before erasing for those.
     template < typename It, detail::enable_if_t <
-                   !std::is_void<decltype(std::declval<object_t&>().erase(std::declval<It>()))>::value, int > = 0 >
+                   !detail::erase_returns_void<object_t, It>::value, int > = 0 >
     typename object_t::iterator erase_from_object(It pos)
     {
         return m_data.m_value.object->erase(pos);
     }
 
     template < typename It, detail::enable_if_t <
-                   std::is_void<decltype(std::declval<object_t&>().erase(std::declval<It>()))>::value, int > = 0 >
+                   detail::erase_returns_void<object_t, It>::value, int > = 0 >
     typename object_t::iterator erase_from_object(It pos)
     {
         auto next = std::next(pos);
