@@ -30,7 +30,11 @@ template<class T, class Allocator = std::allocator<T>>
 class vector_without_at : public std::vector<T, Allocator>
 {
   public:
-    using std::vector<T, Allocator>::vector;
+    vector_without_at() = default;
+
+    // the array of an initializer list is built from a range
+    template<class InputIt>
+    vector_without_at(InputIt first, InputIt last) : std::vector<T, Allocator>(first, last) {}
 
     void at() = delete;
 };

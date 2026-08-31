@@ -35,7 +35,12 @@ template<class Key, class T, class Compare, class Allocator>
 struct no_key_compare_map : std::map<Key, T, Compare, Allocator>
 {
     using base_t = std::map<Key, T, Compare, Allocator>;
-    using base_t::base_t;
+
+    no_key_compare_map() = default;
+
+    // converting between two basic_json types builds the object from a range
+    template<class InputIt>
+    no_key_compare_map(InputIt first, InputIt last) : base_t(first, last) {}
 
     // shadows base_t::key_compare, which is a type; never defined or called
     void key_compare();
@@ -49,7 +54,6 @@ template<class Key, class T, class Compare, class Allocator>
 struct void_erase_map : std::map<Key, T, Compare, Allocator>
 {
     using base_t = std::map<Key, T, Compare, Allocator>;
-    using base_t::base_t;
     using iterator = typename base_t::iterator;
     using base_t::erase;
 
