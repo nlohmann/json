@@ -63,13 +63,14 @@ class serializer
 
   public:
     /*!
-    @param[in] s  output stream to serialize to
+    @param[in] s  output adapter to serialize to; not owned by the serializer,
+                  so it must outlive it (it lives at the call site)
     @param[in] ichar  indentation character to use
     @param[in] error_handler_  how to react on decoding errors
     */
-    serializer(output_adapter_t<char> s, const char ichar,
+    serializer(output_adapter_protocol<char>* s, const char ichar,
                error_handler_t error_handler_ = error_handler_t::strict)
-        : o(std::move(s))
+        : o(s)
         , loc(std::localeconv())
         , thousands_sep(loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->thousands_sep)))
         , decimal_point(loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->decimal_point)))
@@ -1672,8 +1673,8 @@ class serializer
     }
 
   private:
-    /// the output of the serializer
-    output_adapter_t<char> o = nullptr;
+    /// the output of the serializer (non-owning; the adapter lives at the call site)
+    output_adapter_protocol<char>* o = nullptr;
 
     /// a (hopefully) large enough character buffer
     std::array<char, 64> number_buffer{{}};
