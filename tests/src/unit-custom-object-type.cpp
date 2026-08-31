@@ -17,11 +17,6 @@
 #include <utility>
 #include <vector>
 
-// TEMPORARY: this translation unit is disabled to narrow down an AppVeyor
-// failure on MSVC 2015/2017 whose build log this environment cannot reach.
-// The macro is deliberately never defined; the guard is removed again as soon
-// as the cause is known.
-#ifdef JSON_BISECT_CUSTOM_CONTAINER_TESTS
 
 namespace
 {
@@ -196,4 +191,3 @@ TEST_CASE("object type without key_compare")
     }
 }
 
-#endif
