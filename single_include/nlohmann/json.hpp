@@ -21410,7 +21410,8 @@ class serializer
 
   public:
     /*!
-    @param[in] s  output stream to serialize to
+    @param[in] s  output adapter to serialize to; not owned by the serializer,
+                  so it must outlive it (it lives at the call site)
     @param[in] ichar  indentation character to use
     @param[in] pretty_print_  whether the output shall be pretty-printed
     @param[in] ensure_ascii_ If @a ensure_ascii_ is true, all non-ASCII
@@ -21424,12 +21425,12 @@ class serializer
     being threaded through every call to @ref dump, @ref dump_internal and
     @ref dump_iteratively.
     */
-    serializer(output_adapter_t<char> s, const char ichar,
+    serializer(output_adapter_protocol<char>* s, const char ichar,
                const bool pretty_print_ = false,
                const bool ensure_ascii_ = false,
                const std::size_t indent_step_ = 0,
                error_handler_t error_handler_ = error_handler_t::strict)
-        : o(std::move(s))
+        : o(s)
         , locale(std::localeconv())
         , indent_char(ichar)
         , pretty_print(pretty_print_)
@@ -23026,8 +23027,8 @@ class serializer
         const char decimal_point;
     };
 
-    /// the output of the serializer
-    output_adapter_t<char> o = nullptr;
+    /// the output of the serializer (non-owning; the adapter lives at the call site)
+    output_adapter_protocol<char>* o = nullptr;
 
     /// a (hopefully) large enough character buffer
     std::array<char, 64> number_buffer{{}};
@@ -24738,16 +24739,17 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                   const error_handler_t error_handler = error_handler_t::strict) const
     {
         string_t result;
+        detail::output_string_adapter<char, string_t> string_adapter(result);
 
         if (indent >= 0)
         {
-            serializer s(detail::output_adapter<char, string_t>(result), indent_char,
+            serializer s(&string_adapter, indent_char,
                          true, ensure_ascii, static_cast<std::size_t>(indent), error_handler);
             s.dump(*this);
         }
         else
         {
-            serializer s(detail::output_adapter<char, string_t>(result), indent_char,
+            serializer s(&string_adapter, indent_char,
                          false, ensure_ascii, 0, error_handler);
             s.dump(*this);
         }
@@ -27478,7 +27480,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         o.width(0);
 
         // do the actual serialization
-        serializer s(detail::output_adapter<char>(o), o.fill(),
+        detail::output_stream_adapter<char> stream_adapter(o);
+        serializer s(&stream_adapter, o.fill(),
                      pretty_print, false, static_cast<std::size_t>(indentation));
         s.dump(j);
         return o;
