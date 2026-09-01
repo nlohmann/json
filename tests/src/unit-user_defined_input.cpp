@@ -272,6 +272,7 @@ TEST_CASE("Contiguous byte containers take the pointer adapter")
     // and such a container still parses through its iterators, in full - taking
     // it for a byte container would stop after data() + size() bytes
     const record_buffer buffer{"[1,2,3,4,5]"};
+    CHECK(buffer.data() == buffer.bytes.data());
     CHECK(buffer.size() * sizeof(record_buffer::value_type) < buffer.bytes.size());
     CHECK(json::parse(buffer) == json({1, 2, 3, 4, 5}));
 }
