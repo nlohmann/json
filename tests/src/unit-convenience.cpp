@@ -99,7 +99,7 @@ void check_escaped(const char* original, const char* escaped, const bool ensure_
 {
     std::stringstream ss;
     nlohmann::detail::output_stream_adapter<char> adapter(ss);
-    json::serializer s(&adapter, ' ');
+    json::serializer s(adapter, ' ');
     s.dump_escaped(original, ensure_ascii);
     s.flush(); // dump_escaped writes into the serializer's internal buffer
     CHECK(ss.str() == escaped);

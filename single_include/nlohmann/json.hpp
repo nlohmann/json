@@ -21193,9 +21193,9 @@ class serializer
     @param[in] ichar  indentation character to use
     @param[in] error_handler_  how to react on decoding errors
     */
-    serializer(output_adapter_protocol<char>* s, const char ichar,
+    serializer(output_adapter_protocol<char>& s, const char ichar,
                error_handler_t error_handler_ = error_handler_t::strict)
-        : o(s)
+        : o(&s)
         , loc(std::localeconv())
         , thousands_sep(loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->thousands_sep)))
         , decimal_point(loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->decimal_point)))
@@ -24502,7 +24502,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         string_t result;
         detail::output_string_adapter<char, string_t> string_adapter(result);
-        serializer s(&string_adapter, indent_char, error_handler);
+        serializer s(string_adapter, indent_char, error_handler);
 
         if (indent >= 0)
         {
@@ -27217,7 +27217,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         // do the actual serialization
         detail::output_stream_adapter<char> stream_adapter(o);
-        serializer s(&stream_adapter, o.fill());
+        serializer s(stream_adapter, o.fill());
         s.dump(j, pretty_print, false, static_cast<unsigned int>(indentation));
         return o;
     }

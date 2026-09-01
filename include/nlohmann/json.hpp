@@ -1342,7 +1342,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         string_t result;
         detail::output_string_adapter<char, string_t> string_adapter(result);
-        serializer s(&string_adapter, indent_char, error_handler);
+        serializer s(string_adapter, indent_char, error_handler);
 
         if (indent >= 0)
         {
@@ -4057,7 +4057,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         // do the actual serialization
         detail::output_stream_adapter<char> stream_adapter(o);
-        serializer s(&stream_adapter, o.fill());
+        serializer s(stream_adapter, o.fill());
         s.dump(j, pretty_print, false, static_cast<unsigned int>(indentation));
         return o;
     }

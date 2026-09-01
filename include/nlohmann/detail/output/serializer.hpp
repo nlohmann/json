@@ -68,9 +68,9 @@ class serializer
     @param[in] ichar  indentation character to use
     @param[in] error_handler_  how to react on decoding errors
     */
-    serializer(output_adapter_protocol<char>* s, const char ichar,
+    serializer(output_adapter_protocol<char>& s, const char ichar,
                error_handler_t error_handler_ = error_handler_t::strict)
-        : o(s)
+        : o(&s)
         , loc(std::localeconv())
         , thousands_sep(loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->thousands_sep)))
         , decimal_point(loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->decimal_point)))
