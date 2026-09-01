@@ -77,12 +77,12 @@ class serializer
     being threaded through every call to @ref dump, @ref dump_internal and
     @ref dump_iteratively.
     */
-    serializer(output_adapter_protocol<char>* s, const char ichar,
+    serializer(output_adapter_protocol<char>& s, const char ichar,
                const bool pretty_print_ = false,
                const bool ensure_ascii_ = false,
                const std::size_t indent_step_ = 0,
                error_handler_t error_handler_ = error_handler_t::strict)
-        : o(s)
+        : o(&s)
         , locale(std::localeconv())
         , indent_char(ichar)
         , pretty_print(pretty_print_)

@@ -21425,12 +21425,12 @@ class serializer
     being threaded through every call to @ref dump, @ref dump_internal and
     @ref dump_iteratively.
     */
-    serializer(output_adapter_protocol<char>* s, const char ichar,
+    serializer(output_adapter_protocol<char>& s, const char ichar,
                const bool pretty_print_ = false,
                const bool ensure_ascii_ = false,
                const std::size_t indent_step_ = 0,
                error_handler_t error_handler_ = error_handler_t::strict)
-        : o(s)
+        : o(&s)
         , locale(std::localeconv())
         , indent_char(ichar)
         , pretty_print(pretty_print_)
@@ -24743,13 +24743,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         if (indent >= 0)
         {
-            serializer s(&string_adapter, indent_char,
+            serializer s(string_adapter, indent_char,
                          true, ensure_ascii, static_cast<std::size_t>(indent), error_handler);
             s.dump(*this);
         }
         else
         {
-            serializer s(&string_adapter, indent_char,
+            serializer s(string_adapter, indent_char,
                          false, ensure_ascii, 0, error_handler);
             s.dump(*this);
         }
@@ -27481,7 +27481,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         // do the actual serialization
         detail::output_stream_adapter<char> stream_adapter(o);
-        serializer s(&stream_adapter, o.fill(),
+        serializer s(stream_adapter, o.fill(),
                      pretty_print, false, static_cast<std::size_t>(indentation));
         s.dump(j);
         return o;
