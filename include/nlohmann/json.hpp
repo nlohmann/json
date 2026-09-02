@@ -3703,19 +3703,19 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }                                                                                                    \
     else if (lhs_type == value_t::number_integer && rhs_type == value_t::number_float)                   \
     {                                                                                                    \
-        return static_cast<number_float_t>(lhs.m_data.m_value.number_integer) op rhs.m_data.m_value.number_float;      \
+        return (detail::compare_integer_with_float(lhs.m_data.m_value.number_integer, rhs.m_data.m_value.number_float)) op (static_cast<number_float_t>(0)); \
     }                                                                                                    \
     else if (lhs_type == value_t::number_float && rhs_type == value_t::number_integer)                   \
     {                                                                                                    \
-        return lhs.m_data.m_value.number_float op static_cast<number_float_t>(rhs.m_data.m_value.number_integer);      \
+        return (static_cast<number_float_t>(0)) op (detail::compare_integer_with_float(rhs.m_data.m_value.number_integer, lhs.m_data.m_value.number_float)); \
     }                                                                                                    \
     else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_float)                  \
     {                                                                                                    \
-        return static_cast<number_float_t>(lhs.m_data.m_value.number_unsigned) op rhs.m_data.m_value.number_float;     \
+        return (detail::compare_integer_with_float(lhs.m_data.m_value.number_unsigned, rhs.m_data.m_value.number_float)) op (static_cast<number_float_t>(0)); \
     }                                                                                                    \
     else if (lhs_type == value_t::number_float && rhs_type == value_t::number_unsigned)                  \
     {                                                                                                    \
-        return lhs.m_data.m_value.number_float op static_cast<number_float_t>(rhs.m_data.m_value.number_unsigned);     \
+        return (static_cast<number_float_t>(0)) op (detail::compare_integer_with_float(rhs.m_data.m_value.number_unsigned, lhs.m_data.m_value.number_float)); \
     }                                                                                                    \
     else if (lhs_type == value_t::number_unsigned && rhs_type == value_t::number_integer)                \
     {                                                                                                    \
