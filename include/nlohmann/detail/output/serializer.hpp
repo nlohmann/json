@@ -844,9 +844,20 @@ class serializer
             if (state == UTF8_ACCEPT)
             {
                 const auto* const data = reinterpret_cast<const unsigned char*>(s.data());
-                const std::size_t run = EnsureAscii
-                                        ? find_ascii_copyable_run(data + i, s.size() - i)
-                                        : string_bulk_run(data + i, s.size() - i);
+                // A run can only be non-empty when the very first byte is one
+                // the scanner may copy, so test that single byte before paying
+                // for the scan. Without it, text whose characters all have to be
+                // escaped - CJK under ensure_ascii, where every byte is >= 0x80 -
+                // runs the scanner once per character only to be told zero.
+                std::size_t run = 0;
+                if (!EnsureAscii)
+                {
+                    run = string_bulk_run(data + i, s.size() - i);
+                }
+                else if (is_ascii_copyable(data[i]))
+                {
+                    run = find_ascii_copyable_run(data + i, s.size() - i);
+                }
                 if (run != 0)
                 {
                     // emit any bytes still pending in string_buffer first to
