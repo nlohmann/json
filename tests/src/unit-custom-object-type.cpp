@@ -59,42 +59,108 @@ class no_key_compare_map
     template<class InputIt>
     no_key_compare_map(InputIt first, InputIt last) : data(first, last) {}
 
-    iterator begin() { return data.begin(); }
-    iterator end() { return data.end(); }
-    const_iterator begin() const { return data.begin(); }
-    const_iterator end() const { return data.end(); }
-    const_iterator cbegin() const { return data.cbegin(); }
-    const_iterator cend() const { return data.cend(); }
+    iterator begin()
+    {
+        return data.begin();
+    }
+    iterator end()
+    {
+        return data.end();
+    }
+    const_iterator begin() const
+    {
+        return data.begin();
+    }
+    const_iterator end() const
+    {
+        return data.end();
+    }
+    const_iterator cbegin() const
+    {
+        return data.cbegin();
+    }
+    const_iterator cend() const
+    {
+        return data.cend();
+    }
 
-    bool empty() const { return data.empty(); }
-    size_type size() const { return data.size(); }
-    size_type max_size() const { return data.max_size(); }
-    void clear() { data.clear(); }
+    bool empty() const
+    {
+        return data.empty();
+    }
+    size_type size() const
+    {
+        return data.size();
+    }
+    size_type max_size() const
+    {
+        return data.max_size();
+    }
+    void clear()
+    {
+        data.clear();
+    }
 
-    iterator find(const key_type& key) { return data.find(key); }
-    const_iterator find(const key_type& key) const { return data.find(key); }
-    size_type count(const key_type& key) const { return data.count(key); }
+    iterator find(const key_type& key)
+    {
+        return data.find(key);
+    }
+    const_iterator find(const key_type& key) const
+    {
+        return data.find(key);
+    }
+    size_type count(const key_type& key) const
+    {
+        return data.count(key);
+    }
 
     std::pair<iterator, bool> emplace(const key_type& key, const mapped_type& value)
     {
         return data.emplace(key, value);
     }
 
-    std::pair<iterator, bool> insert(const value_type& value) { return data.insert(value); }
+    std::pair<iterator, bool> insert(const value_type& value)
+    {
+        return data.insert(value);
+    }
 
     template<class InputIt>
-    void insert(InputIt first, InputIt last) { data.insert(first, last); }
+    void insert(InputIt first, InputIt last)
+    {
+        data.insert(first, last);
+    }
 
-    mapped_type& operator[](const key_type& key) { return data[key]; }
+    mapped_type& operator[](const key_type& key)
+    {
+        return data[key];
+    }
 
-    mapped_type& at(const key_type& key) { return data.at(key); }
-    const mapped_type& at(const key_type& key) const { return data.at(key); }
+    mapped_type& at(const key_type& key)
+    {
+        return data.at(key);
+    }
+    const mapped_type& at(const key_type& key) const
+    {
+        return data.at(key);
+    }
 
-    iterator erase(iterator pos) { return data.erase(pos); }
-    iterator erase(iterator first, iterator last) { return data.erase(first, last); }
-    size_type erase(const key_type& key) { return data.erase(key); }
+    iterator erase(iterator pos)
+    {
+        return data.erase(pos);
+    }
+    iterator erase(iterator first, iterator last)
+    {
+        return data.erase(first, last);
+    }
+    size_type erase(const key_type& key)
+    {
+        return data.erase(key);
+    }
 
-    void swap(no_key_compare_map& other) { data.swap(other.data); }
+    void swap(no_key_compare_map& other)
+    {
+        data.swap(other.data);
+    }
 
     friend bool operator==(const no_key_compare_map& lhs, const no_key_compare_map& rhs)
     {
