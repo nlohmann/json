@@ -162,7 +162,7 @@ class no_key_compare_map
         return data.erase(key);
     }
 
-    void swap(no_key_compare_map& other)
+    void swap(no_key_compare_map& other) noexcept(noexcept(data.swap(other.data)))
     {
         data.swap(other.data);
     }
