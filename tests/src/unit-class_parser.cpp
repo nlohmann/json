@@ -1564,6 +1564,58 @@ TEST_CASE("parser class")
             CHECK (j_filtered2 == json({{"foo", {1, 2}}}));
         }
 
+        SECTION("filter many members of one container")
+        {
+            // Rejecting a value makes the parser remove the placeholder its key
+            // event stored. Locating that placeholder used to be a scan of the
+            // whole parent, which made filtering a large container quadratic:
+            // 128k members took ~25 s. These cases keep many members alive
+            // while discarding many others, so the removal cost is the whole
+            // point; they run in milliseconds when the placeholder is erased
+            // directly.
+            constexpr int count = 20000;
+
+            std::string s = "{";
+            for (int i = 0; i < count; ++i)
+            {
+                // "a<i>" is kept, "z<i>" is discarded
+                s += "\"a" + std::to_string(i) + "\":" + std::to_string(i) + ",";
+                s += "\"z" + std::to_string(i) + "\":-1,";
+            }
+            s.back() = '}';
+
+            const json j_values = json::parse(s, [](int /*unused*/, json::parse_event_t e, const json & parsed) noexcept
+            {
+                return !(e == json::parse_event_t::value && parsed == json(-1));
+            });
+
+            CHECK(j_values.size() == count);
+            CHECK(j_values.at("a0") == json(0));
+            CHECK(j_values.at("a" + std::to_string(count - 1)) == json(count - 1));
+            CHECK_FALSE(j_values.contains("z0"));
+            CHECK_FALSE(j_values.contains("z" + std::to_string(count - 1)));
+
+            // the same, but discarding whole containers rather than values,
+            // which takes the end_object()/end_array() removal path
+            std::string s_nested = "{";
+            for (int i = 0; i < count; ++i)
+            {
+                s_nested += "\"a" + std::to_string(i) + "\":" + std::to_string(i) + ",";
+                s_nested += "\"z" + std::to_string(i) + "\":[1,2],";
+            }
+            s_nested.back() = '}';
+
+            const json j_arrays = json::parse(s_nested, [](int /*unused*/, json::parse_event_t e, const json& /*unused*/) noexcept
+            {
+                return e != json::parse_event_t::array_end;
+            });
+
+            CHECK(j_arrays.size() == count);
+            CHECK(j_arrays.at("a0") == json(0));
+            CHECK_FALSE(j_arrays.contains("z0"));
+            CHECK_FALSE(j_arrays.contains("z" + std::to_string(count - 1)));
+        }
+
         SECTION("filter specific events")
         {
             SECTION("first closing event")
