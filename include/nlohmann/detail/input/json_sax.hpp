@@ -222,7 +222,9 @@ class json_sax_dom_parser
 
     bool string(string_t& val)
     {
-        handle_value(val);
+        // the interface allows moving the value (see json_sax::string), which
+        // hands the lexer's buffer to the new value instead of copying it
+        handle_value(std::move(val));
         return true;
     }
 
@@ -532,7 +534,8 @@ class json_sax_dom_callback_parser
 
     bool string(string_t& val)
     {
-        handle_value(val);
+        // see json_sax_dom_parser::string()
+        handle_value(std::move(val));
         return true;
     }
 
