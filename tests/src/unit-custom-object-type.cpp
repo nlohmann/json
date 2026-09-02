@@ -59,44 +59,44 @@ class no_key_compare_map
     template<class InputIt>
     no_key_compare_map(InputIt first, InputIt last) : data(first, last) {}
 
-    iterator begin()
+    iterator begin() noexcept
     {
         return data.begin();
     }
-    iterator end()
+    iterator end() noexcept
     {
         return data.end();
     }
-    const_iterator begin() const
+    const_iterator begin() const noexcept
     {
         return data.begin();
     }
-    const_iterator end() const
+    const_iterator end() const noexcept
     {
         return data.end();
     }
-    const_iterator cbegin() const
+    const_iterator cbegin() const noexcept
     {
         return data.cbegin();
     }
-    const_iterator cend() const
+    const_iterator cend() const noexcept
     {
         return data.cend();
     }
 
-    bool empty() const
+    bool empty() const noexcept
     {
         return data.empty();
     }
-    size_type size() const
+    size_type size() const noexcept
     {
         return data.size();
     }
-    size_type max_size() const
+    size_type max_size() const noexcept
     {
         return data.max_size();
     }
-    void clear()
+    void clear() noexcept
     {
         data.clear();
     }
