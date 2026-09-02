@@ -12,6 +12,7 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <cstdlib> // strtod
 #include <sstream> // stringstream
 #include <string> // string
 #include <vector> // vector
@@ -270,6 +271,56 @@ TEST_CASE("lexer number fast path")
             CHECK(a == b);
             CHECK(a.dump() == b.dump());
             CHECK(a[0].type() == b[0].type());
+        }
+    }
+
+    SECTION("significant-digit gate for the Clinger fast path")
+    {
+        // Clinger's fast path needs a significand below 2^53, so it cannot
+        // succeed once the mantissa has 17 or more significant digits (the
+        // significand would be at least 10^16). The lexer skips the attempt
+        // there. That is only allowed to save work: every value must still come
+        // out bit-exactly, and both scanners must agree. In particular the gate
+        // must not fire for tokens whose leading zeros merely look like extra
+        // digits - "0.1234567890123456" has 16 significant digits, not 17.
+        const std::vector<std::string> numbers =
+        {
+            "1234567890123456",                  // 16 significant digits
+            "12345678901234567",                 // 17 -> attempt skipped
+            "123456789012345678",                // 18 -> attempt skipped
+            "0.1234567890123456",                // 16: the leading "0" is not significant
+            "0.12345678901234567",               // 17
+            "0.00000000000000001",               // 1, in a long token
+            "0.000000000000000012345678901234",  // 14, in a long token
+            "-0.0000000000000000000001",         // 1, negative
+            "1.0000000000000000",                // 17: trailing zeros are significant here
+            "10000000000000000",                 // 17
+            "9007199254740992",                  // 2^53
+            "9007199254740993",                  // 2^53 + 1
+            "-65.613616999999977",               // canada.json shape
+            "1.2345678901234567e-250",           // 17 with an exponent
+            "1.234567890123456e-250",            // 16 with an exponent
+            "1e10", "0.0", "-0.0", "0e0", "0.000123"
+        };
+
+        for (const auto& n : numbers)
+        {
+            CAPTURE(n);
+            const std::string doc = "[" + n + "]";
+
+            const json a = json::parse(doc);   // contiguous fast path
+            std::stringstream ss(doc);
+            const json b = json::parse(ss);    // streaming byte path
+
+            CHECK(a[0].type() == b[0].type());
+            CHECK(a == b);
+
+            if (a[0].is_number_float())
+            {
+                const double expected = std::strtod(n.c_str(), nullptr);
+                CHECK(a[0].get<double>() == expected);
+                CHECK(b[0].get<double>() == expected);
+            }
         }
     }
 
