@@ -53,7 +53,12 @@ class no_key_compare_map
     using iterator = typename map_t::iterator;
     using const_iterator = typename map_t::const_iterator;
 
-    no_key_compare_map() = default;
+    // -Weffc++ asks for the member to be initialized in the member
+    // initialization list, which a defaulted constructor does not do; the
+    // exception specification a defaulted one would have carried has to be
+    // written out as well, or -Wnoexcept objects where the standard library
+    // takes noexcept(construct(...))
+    no_key_compare_map() noexcept(std::is_nothrow_default_constructible<map_t>::value) : data() {}
 
     // converting between two basic_json types builds the object from a range
     template<class InputIt>
