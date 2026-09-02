@@ -22187,9 +22187,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #ifndef JSON_NO_THREAD_LOCAL
     /// the number of levels an operation descends into before it finishes the
     /// value below it without the call stack
-    ///
-    /// only meaningful together with @ref nesting_depth_guard, which is why
-    /// both live inside this very guard's own #ifndef
     static constexpr std::uint8_t nesting_depth_limit()
     {
         return 128;
@@ -22212,6 +22209,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         static thread_local std::uint8_t depth = 0; // NOLINT(misc-use-internal-linkage)
         return depth;
     }
+#endif
 
     /*!
     @brief counts one level of a bounded descent for as long as it runs, and
@@ -22220,19 +22218,32 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     Looks the count up and tests it against the limit itself, rather than
     leaving that to the caller: either way it is reached exactly once, so
     there is nothing to be gained by making the caller do it.
+
+    Does nothing and is never @ref okay without thread-local storage, where no
+    descent can be bounded at all: a caller that only descends while this says
+    it may always ends up finishing without the call stack, exactly as if every
+    value were nested past the limit.
     */
     class nesting_depth_guard
     {
       public:
         nesting_depth_guard() noexcept
+#ifdef JSON_NO_THREAD_LOCAL
+            : m_okay(false)
+#else
             : m_okay(nesting_depth() < nesting_depth_limit())
+#endif
         {
+#ifndef JSON_NO_THREAD_LOCAL
             ++nesting_depth();
+#endif
         }
 
         ~nesting_depth_guard()
         {
+#ifndef JSON_NO_THREAD_LOCAL
             --nesting_depth();
+#endif
         }
 
         nesting_depth_guard(const nesting_depth_guard&) = delete;
@@ -22248,7 +22259,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
       private:
         bool m_okay;
     };
-#endif
 
     /// an entry of the iterative deep copy's worklist: a structured value and
     /// the value that is to become its copy
@@ -22503,7 +22513,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     */
     void copy_structured(const basic_json& src)
     {
-#ifndef JSON_NO_THREAD_LOCAL
         const nesting_depth_guard guard;
 
         if (JSON_HEDLEY_LIKELY(guard.okay()))
@@ -22511,7 +22520,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             copy_level(src);
             return;
         }
-#endif
 
         // Finish this value without descending any further. It is completed
         // before this returns, so a copy made by a custom base class - or by
