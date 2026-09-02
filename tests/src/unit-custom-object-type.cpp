@@ -29,30 +29,84 @@ namespace
 // is still an incomplete type, and whether a hash map can be instantiated
 // with an incomplete mapped type depends on the standard library (libstdc++ 9
 // needs the size of the mapped type for its node type and rejects it). So the
-// object type is built from std::map, and the inherited key_compare member
-// type is shadowed by an entity that is not a type -- the library's probe
-// then finds no type, exactly as for a hash map.
+// object type wraps a std::map instead of inheriting from it: an earlier
+// version derived from std::map and shadowed the inherited key_compare type
+// with a same-named member function, relying on ordinary member hiding to
+// make key_compare unreachable as a type. MSVC 2017 (AppVeyor, /std:c++17)
+// does not honor that hiding for a typename-qualified lookup performed from
+// outside the class and still resolves key_compare to the base's comparator
+// type, so the library's probe incorrectly found one. Composition sidesteps
+// the question entirely: with no base class, there is no key_compare to find
+// under any lookup rule.
 template<class Key, class T, class Compare, class Allocator>
-struct no_key_compare_map : std::map<Key, T, Compare, Allocator>
+class no_key_compare_map
 {
-    using base_t = std::map<Key, T, Compare, Allocator>;
+    using map_t = std::map<Key, T, Compare, Allocator>;
+    map_t data;
+
+  public:
+    using key_type = typename map_t::key_type;
+    using mapped_type = typename map_t::mapped_type;
+    using value_type = typename map_t::value_type;
+    using size_type = typename map_t::size_type;
+    using allocator_type = typename map_t::allocator_type;
+    using iterator = typename map_t::iterator;
+    using const_iterator = typename map_t::const_iterator;
 
     no_key_compare_map() = default;
 
     // converting between two basic_json types builds the object from a range
     template<class InputIt>
-    no_key_compare_map(InputIt first, InputIt last) : base_t(first, last) {}
+    no_key_compare_map(InputIt first, InputIt last) : data(first, last) {}
 
-    // shadows base_t::key_compare, which is a type; never defined or called
-    void key_compare();
+    iterator begin() { return data.begin(); }
+    iterator end() { return data.end(); }
+    const_iterator begin() const { return data.begin(); }
+    const_iterator end() const { return data.end(); }
+    const_iterator cbegin() const { return data.cbegin(); }
+    const_iterator cend() const { return data.cend(); }
+
+    bool empty() const { return data.empty(); }
+    size_type size() const { return data.size(); }
+    size_type max_size() const { return data.max_size(); }
+    void clear() { data.clear(); }
+
+    iterator find(const key_type& key) { return data.find(key); }
+    const_iterator find(const key_type& key) const { return data.find(key); }
+    size_type count(const key_type& key) const { return data.count(key); }
+
+    std::pair<iterator, bool> emplace(const key_type& key, const mapped_type& value)
+    {
+        return data.emplace(key, value);
+    }
+
+    std::pair<iterator, bool> insert(const value_type& value) { return data.insert(value); }
+
+    template<class InputIt>
+    void insert(InputIt first, InputIt last) { data.insert(first, last); }
+
+    mapped_type& operator[](const key_type& key) { return data[key]; }
+
+    mapped_type& at(const key_type& key) { return data.at(key); }
+    const mapped_type& at(const key_type& key) const { return data.at(key); }
+
+    iterator erase(iterator pos) { return data.erase(pos); }
+    iterator erase(iterator first, iterator last) { return data.erase(first, last); }
+    size_type erase(const key_type& key) { return data.erase(key); }
+
+    void swap(no_key_compare_map& other) { data.swap(other.data); }
+
+    friend bool operator==(const no_key_compare_map& lhs, const no_key_compare_map& rhs)
+    {
+        return lhs.data == rhs.data;
+    }
+    friend bool operator<(const no_key_compare_map& lhs, const no_key_compare_map& rhs)
+    {
+        return lhs.data < rhs.data;
+    }
 };
 
 using no_key_compare_json = nlohmann::basic_json<no_key_compare_map>;
-
-// TEMPORARY: guarded out to split this translation unit's two object types
-// while narrowing down an AppVeyor failure on MSVC 2015/2017 whose build log
-// this environment cannot reach. The macro is deliberately never defined.
-#ifdef JSON_BISECT_CUSTOM_CONTAINER_TESTS
 
 // An ObjectType whose erase(iterator) returns void rather than the following
 // iterator, as for instance Abseil's hash maps do
@@ -71,11 +125,8 @@ struct void_erase_map : std::map<Key, T, Compare, Allocator>
 
 using void_erase_json = nlohmann::basic_json<void_erase_map>;
 
-#endif
-
 } // namespace
 
-#ifdef JSON_BISECT_CUSTOM_CONTAINER_TESTS
 TEST_CASE("object type whose erase() returns void")
 {
     SECTION("erasing every element through the returned iterator")
@@ -125,7 +176,6 @@ TEST_CASE("object type whose erase() returns void")
         CHECK(j.empty());
     }
 }
-#endif
 
 TEST_CASE("object type without key_compare")
 {
