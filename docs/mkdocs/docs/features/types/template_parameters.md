@@ -202,6 +202,29 @@ conservatively -- this is correct, but slower.
 The library does not sort or de-duplicate keys itself; the behavior described in
 [`object_t`](../../api/basic_json/object_t.md) is entirely the behavior of the chosen container.
 
+!!! tip "Reference implementation"
+
+    `docs/mkdocs/docs/examples/custom_object_type.hpp` wraps a private `#!cpp std::map` and satisfies every
+    requirement above. It does not define `key_compare`, so `object_comparator_t` falls back to
+    [`default_object_comparator_t`](../../api/basic_json/default_object_comparator_t.md) -- a good starting point for
+    a custom `ObjectType`.
+
+    ```cpp
+    --8<-- "examples/custom_object_type.hpp"
+    ```
+
+??? example "Compiling and using it"
+
+    ```cpp
+    --8<-- "examples/custom_object_type.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/custom_object_type.output"
+    ```
+
 ### Compatible containers
 
 | Container                                                                        | Notes                                                                         |
@@ -273,6 +296,27 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
     parent pointers. An array type without a `capacity()` member function is handled conservatively: the parent
     pointers of all elements are refreshed after every insertion, which makes adding *n* elements cost O(*n*²). Only
     diagnostics builds pay this; without them `capacity()` is never called.
+
+!!! tip "Reference implementation"
+
+    `docs/mkdocs/docs/examples/custom_array_type.hpp` wraps a private `#!cpp std::vector` and satisfies every
+    requirement above -- a good starting point for a custom `ArrayType`.
+
+    ```cpp
+    --8<-- "examples/custom_array_type.hpp"
+    ```
+
+??? example "Compiling and using it"
+
+    ```cpp
+    --8<-- "examples/custom_array_type.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/custom_array_type.output"
+    ```
 
 ### Compatible containers
 
@@ -394,8 +438,26 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 
 !!! tip "Reference implementation"
 
-    The unit test `tests/src/unit-alt-string.cpp` contains `alt_string`, a minimal string type that satisfies the
-    requirements needed for the tested subset of the API. It is a good starting point for a custom `StringType`.
+    `docs/mkdocs/docs/examples/custom_string_type.hpp` wraps a private `#!cpp std::string` and satisfies every
+    requirement above -- a good starting point for a custom `StringType`. The unit test
+    `tests/src/unit-alt-string.cpp` contains a more thorough variant, `alt_string`, exercised against a larger part
+    of the API.
+
+    ```cpp
+    --8<-- "examples/custom_string_type.hpp"
+    ```
+
+??? example "Compiling and using it"
+
+    ```cpp
+    --8<-- "examples/custom_string_type.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/custom_string_type.output"
+    ```
 
 ## `BooleanType`
 
@@ -592,6 +654,27 @@ using binary_t = nlohmann::byte_container_with_subtype<BinaryType>;
 
 See [`binary_t`](../../api/basic_json/binary_t.md) for how a non-default `BinaryType` changes the meaning of assigning
 such a container to a `basic_json` value.
+
+!!! tip "Reference implementation"
+
+    `docs/mkdocs/docs/examples/custom_binary_type.hpp` wraps a private `#!cpp std::vector<std::uint8_t>` and satisfies
+    every requirement above -- a good starting point for a custom `BinaryType`.
+
+    ```cpp
+    --8<-- "examples/custom_binary_type.hpp"
+    ```
+
+??? example "Compiling and using it"
+
+    ```cpp
+    --8<-- "examples/custom_binary_type.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/custom_binary_type.output"
+    ```
 
 ### Compatible containers
 
