@@ -2751,6 +2751,31 @@ TEST_CASE("BJData")
                 CHECK(json::to_bjdata(j_ok) == std::vector<uint8_t>({'[', '$', 'U', '#', '[', 'i', 2, 'i', 3, ']', 1, 2, 3, 4, 5, 6}));
                 CHECK(json::from_bjdata(json::to_bjdata(j_ok), true, true) == j_ok);
             }
+
+            SECTION("ndarray whose _ArraySize_ is not an array stays as object")
+            {
+                // the shape is written verbatim as the header length, so a
+                // value that is not an array cannot produce a valid one: null
+                // would emit 'Z' and an object '{', neither of which a reader
+                // accepts after '#'. Both have to stay plain objects.
+                json const j_null = json({{"_ArrayType_", "uint8"}, {"_ArraySize_", nullptr}, {"_ArrayData_", json::array()}});
+                const auto out_null = json::to_bjdata(j_null);
+                CHECK(out_null.at(0) == '{');
+                CHECK(json::from_bjdata(out_null) == j_null);
+
+                // an object shape passes the per-entry check by iterating its
+                // values rather than dimensions, so it needs rejecting too
+                json const j_obj = json({{"_ArrayType_", "uint8"}, {"_ArraySize_", {{"a", 1}}}, {"_ArrayData_", {1}}});
+                const auto out_obj = json::to_bjdata(j_obj);
+                CHECK(out_obj.at(0) == '{');
+                CHECK(json::from_bjdata(out_obj) == j_obj);
+
+                // a scalar shape is not a dimension list either
+                json const j_num = json({{"_ArrayType_", "uint8"}, {"_ArraySize_", 1}, {"_ArrayData_", {1}}});
+                const auto out_num = json::to_bjdata(j_num);
+                CHECK(out_num.at(0) == '{');
+                CHECK(json::from_bjdata(out_num) == j_num);
+            }
         }
     }
 
