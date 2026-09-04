@@ -5128,19 +5128,17 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 // We now reached the end of at least one array
                 // in a second pass, traverse the remaining elements
 
-                // remove my remaining elements
-                const auto end_index = static_cast<difference_type>(result.size());
-                while (i < source.size())
+                // remove my remaining elements, highest index first; appending
+                // in that order avoids the quadratic reinsertion done before
+                for (std::size_t j = source.size(); j > i; --j)
                 {
-                    // add operations in reverse order to avoid invalid
-                    // indices
-                    result.insert(result.begin() + end_index, object(
+                    result.push_back(object(
                     {
                         {"op", "remove"},
-                        {"path", detail::concat<string_t>(path, '/', detail::to_string<string_t>(i))}
+                        {"path", detail::concat<string_t>(path, '/', detail::to_string<string_t>(j - 1))}
                     }));
-                    ++i;
                 }
+                i = source.size();
 
                 // add other remaining elements
                 while (i < target.size())

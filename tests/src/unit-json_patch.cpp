@@ -1388,3 +1388,84 @@ TEST_CASE("JSON patch - add to a primitive parent (regression #4292)")
         CHECK_THROWS_AS(doc.patch(patch), json::out_of_range&);
     }
 }
+
+TEST_CASE("JSON patch - diff emits array removals in descending index order")
+{
+    SECTION("array shrunk to empty")
+    {
+        json const source = {0, 1, 2, 3, 4};
+        json const target = json::array();
+
+        json const patch = json::diff(source, target);
+
+        json const expected = R"(
+            [
+                {"op": "remove", "path": "/4"},
+                {"op": "remove", "path": "/3"},
+                {"op": "remove", "path": "/2"},
+                {"op": "remove", "path": "/1"},
+                {"op": "remove", "path": "/0"}
+            ]
+        )"_json;
+
+        CHECK(patch == expected);
+        CHECK(source.patch(patch) == target);
+    }
+
+    SECTION("array partially shrunk, after a replacement at a common index")
+    {
+        json const source = {0, 1, 2, 3, 4};
+        json const target = {0, 9};
+
+        json const patch = json::diff(source, target);
+
+        // the replacement comes first, then the removals, highest index first
+        json const expected = R"(
+            [
+                {"op": "replace", "path": "/1", "value": 9},
+                {"op": "remove", "path": "/4"},
+                {"op": "remove", "path": "/3"},
+                {"op": "remove", "path": "/2"}
+            ]
+        )"_json;
+
+        CHECK(patch == expected);
+        CHECK(source.patch(patch) == target);
+    }
+
+    SECTION("nested array shrunk")
+    {
+        json const source = {{"a", {0, 1, 2}}};
+        json const target = {{"a", json::array()}};
+
+        json const patch = json::diff(source, target);
+
+        json const expected = R"(
+            [
+                {"op": "remove", "path": "/a/2"},
+                {"op": "remove", "path": "/a/1"},
+                {"op": "remove", "path": "/a/0"}
+            ]
+        )"_json;
+
+        CHECK(patch == expected);
+        CHECK(source.patch(patch) == target);
+    }
+
+    SECTION("many removals still round-trip")
+    {
+        json source = json::array();
+        for (int i = 0; i < 1000; ++i)
+        {
+            source.push_back(i);
+        }
+        json const target = json::array();
+
+        json const patch = json::diff(source, target);
+
+        CHECK(patch.size() == 1000);
+        CHECK(patch.front().at("path") == "/999");
+        CHECK(patch.back().at("path") == "/0");
+        CHECK(source.patch(patch) == target);
+    }
+}
