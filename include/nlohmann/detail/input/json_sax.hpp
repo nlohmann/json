@@ -254,7 +254,7 @@ class json_sax_dom_parser
 
         if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408, concat("excessive object size: ", std::to_string(len)), ref_stack.back()));
+            return parse_error(0, "", out_of_range::create(408, concat("excessive object size: ", std::to_string(len)), ref_stack.back()));
         }
 
         return true;
@@ -303,7 +303,7 @@ class json_sax_dom_parser
 
         if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref_stack.back()->max_size()))
         {
-            JSON_THROW(out_of_range::create(408, concat("excessive array size: ", std::to_string(len)), ref_stack.back()));
+            return parse_error(0, "", out_of_range::create(408, concat("excessive array size: ", std::to_string(len)), ref_stack.back()));
         }
 
         return true;
@@ -582,7 +582,7 @@ class json_sax_dom_callback_parser
             // check object limit
             if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref_stack.back()->max_size()))
             {
-                JSON_THROW(out_of_range::create(408, concat("excessive object size: ", std::to_string(len)), ref_stack.back()));
+                return parse_error(0, "", out_of_range::create(408, concat("excessive object size: ", std::to_string(len)), ref_stack.back()));
             }
         }
         return true;
@@ -701,7 +701,7 @@ class json_sax_dom_callback_parser
             // check array limit
             if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref_stack.back()->max_size()))
             {
-                JSON_THROW(out_of_range::create(408, concat("excessive array size: ", std::to_string(len)), ref_stack.back()));
+                return parse_error(0, "", out_of_range::create(408, concat("excessive array size: ", std::to_string(len)), ref_stack.back()));
             }
         }
 
