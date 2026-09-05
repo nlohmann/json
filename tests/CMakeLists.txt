@@ -72,7 +72,12 @@ target_compile_options(test_main PUBLIC
     #                              is annotated JSON_HEDLEY_NO_RETURN (it always throws), which
     #                              makes MSVC flag the code following its call in binary_reader.hpp
     #                              as unreachable for that instantiation, in both Debug and Release
-    $<$<CXX_COMPILER_ID:MSVC>:/W4;/wd4566;/wd4996;/wd4702>
+    #       Disable warning C4503: decorated name length exceeded, name was truncated; the deep
+    #                              copy support added for #5387 pushes the mangled name of
+    #                              std::allocator_traits<...>::construct for the custom-base-class
+    #                              test's map type past VS2015's limit. The name is only used for
+    #                              debug info, so truncation does not affect the build.
+    $<$<CXX_COMPILER_ID:MSVC>:/W4;/wd4566;/wd4996;/wd4702;/wd4503>
     # https://github.com/nlohmann/json/issues/1114
     $<$<CXX_COMPILER_ID:MSVC>:/bigobj> $<$<BOOL:${MINGW}>:-Wa,-mbig-obj>
 

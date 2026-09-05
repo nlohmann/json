@@ -100,7 +100,7 @@ jobs:
     container: ubuntu:focal
     strategy:
       matrix:
-        target: [ci_cmake_flags, ci_test_diagnostics, ci_test_diagnostic_positions, ci_test_noexceptions, ci_test_noimplicitconversions, ci_test_legacycomparison, ci_test_noglobaludls]
+        target: [ci_cmake_flags, ci_test_diagnostics, ci_test_diagnostic_positions, ci_test_noexceptions, ci_test_noimplicitconversions, ci_test_legacycomparison, ci_test_noglobaludls, ci_test_no_thread_local]
     steps:
       - name: Install build-essential
         run: apt-get update ; apt-get install -y build-essential unzip wget git libssl-dev
