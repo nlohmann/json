@@ -319,6 +319,8 @@ TEST_CASE("JSON pointers")
 
                 CHECK_THROWS_WITH_AS(j[jp] = 1, throw_msg.c_str(), json::out_of_range&);
                 CHECK_THROWS_WITH_AS(j_const[jp] == 1, throw_msg.c_str(), json::out_of_range&);
+                CHECK(!j.contains(jp));
+                CHECK(!j_const.contains(jp));
             }
 
             // on some machines, the check below is not constant
@@ -334,6 +336,8 @@ TEST_CASE("JSON pointers")
 
                 CHECK_THROWS_WITH_AS(j[jp] = 1, throw_msg.c_str(), json::out_of_range&);
                 CHECK_THROWS_WITH_AS(j_const[jp] == 1, throw_msg.c_str(), json::out_of_range&);
+                CHECK(!j.contains(jp));
+                CHECK(!j_const.contains(jp));
             }
 
             DOCTEST_MSVC_SUPPRESS_WARNING_POP
@@ -819,4 +823,20 @@ TEST_CASE("JSON pointers")
         CHECK(j[p2] == 123);
     }
 #endif
+}
+
+TEST_CASE("issue #5395 contains(json_pointer) does not throw on huge array tokens")
+{
+    json const arr = json::array({1, 2, 3});
+
+    // all digits, value == ULLONG_MAX: operator[] throws out_of_range.410
+    json::json_pointer const jp_max("/18446744073709551615");
+    CHECK(!arr.contains(jp_max));
+
+    // all digits, value > ULLONG_MAX: operator[] throws out_of_range.404
+    json::json_pointer const jp_erange("/99999999999999999999");
+    CHECK(!arr.contains(jp_erange));
+
+    CHECK(arr.contains(json::json_pointer("/0")));
+    CHECK(!arr.contains(json::json_pointer("/3")));
 }
