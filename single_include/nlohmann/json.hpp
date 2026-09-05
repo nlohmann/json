@@ -9229,8 +9229,7 @@ scan_number_done:
     */
     char_int_type get()
     {
-        ++position.chars_read_total;
-        ++position.chars_read_current_line;
+        advance_position();
 
         if (next_unget)
         {
@@ -9243,6 +9242,15 @@ scan_number_done:
         }
 
         return track_after_read();
+    }
+
+    /// shared head of get() / get_ignoring_pending_unget(): bump the
+    /// per-character position counters (line-count-on-'\n' bookkeeping is
+    /// handled afterwards, in track_after_read(), once `current` is known)
+    void advance_position() noexcept
+    {
+        ++position.chars_read_total;
+        ++position.chars_read_current_line;
     }
 
     /// shared tail of get() / get_ignoring_pending_unget(): capture the
@@ -9280,8 +9288,7 @@ scan_number_done:
     {
         JSON_ASSERT(!next_unget);
 
-        ++position.chars_read_total;
-        ++position.chars_read_current_line;
+        advance_position();
         current = ia.get_character();
 
         return track_after_read();
