@@ -20195,11 +20195,7 @@ class serializer
                     o->write_characters("{\n", 2);
 
                     // variable to hold indentation for recursive calls
-                    const auto new_indent = current_indent + indent_step;
-                    if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
-                    {
-                        indent_string.resize(indent_string.size() * 2, ' ');
-                    }
+                    const auto new_indent = reserve_indent(current_indent, indent_step);
 
                     // first n-1 elements
                     auto i = val.m_data.m_value.object->cbegin();
@@ -20268,11 +20264,7 @@ class serializer
                     o->write_characters("[\n", 2);
 
                     // variable to hold indentation for recursive calls
-                    const auto new_indent = current_indent + indent_step;
-                    if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
-                    {
-                        indent_string.resize(indent_string.size() * 2, ' ');
-                    }
+                    const auto new_indent = reserve_indent(current_indent, indent_step);
 
                     // first n-1 elements
                     for (auto i = val.m_data.m_value.array->cbegin();
@@ -20329,11 +20321,7 @@ class serializer
                     o->write_characters("{\n", 2);
 
                     // variable to hold indentation for recursive calls
-                    const auto new_indent = current_indent + indent_step;
-                    if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
-                    {
-                        indent_string.resize(indent_string.size() * 2, ' ');
-                    }
+                    const auto new_indent = reserve_indent(current_indent, indent_step);
 
                     o->write_characters(indent_string.c_str(), new_indent);
 
@@ -20441,6 +20429,33 @@ class serializer
             default:            // LCOV_EXCL_LINE
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
+    }
+
+    /*!
+    @brief compute the next indentation level and grow the indentation string
+
+    Computes the new indentation level @a current_indent + @a indent_step and
+    grows the indentation string (by doubling its size, but at least to the new
+    level) so that it can be used as a source for writing that many indentation
+    characters. The newly added characters use the configured @ref indent_char.
+
+    @param[in] current_indent  the current indentation level
+    @param[in] indent_step     the number of characters to indent per level
+
+    @return the new indentation level @a current_indent + @a indent_step
+    */
+    unsigned int reserve_indent(const unsigned int current_indent, const unsigned int indent_step)
+    {
+        const unsigned int new_indent = current_indent + indent_step;
+        // a very large indent_step can wrap the unsigned accumulation on deep
+        // nesting, which would silently truncate the indentation
+        JSON_ASSERT(new_indent >= current_indent);
+        if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
+        {
+            indent_string.resize((std::max)(indent_string.size() * 2, static_cast<std::size_t>(new_indent)), indent_char);
+        }
+        JSON_ASSERT(indent_string.size() >= new_indent);
+        return new_indent;
     }
 
   JSON_PRIVATE_UNLESS_TESTED:
