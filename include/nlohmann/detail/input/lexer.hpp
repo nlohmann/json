@@ -1704,6 +1704,12 @@ scan_number_done:
         return true;
     }
 
+    /// whether `current` is one of the four JSON whitespace characters
+    bool current_is_whitespace() const noexcept
+    {
+        return current == ' ' || current == '\t' || current == '\n' || current == '\r';
+    }
+
     void skip_whitespace()
     {
         // the first character may be a pending unget() left over from the
@@ -1712,6 +1718,11 @@ scan_number_done:
         // nothing below calls unget()
         get();
 
+        if (!current_is_whitespace())
+        {
+            return;
+        }
+
         // this is written as an if-guarded do-while (rather than a plain
         // while loop) because that shape is what lets both GCC and Clang
         // keep the input adapter's read pointer in a register across
@@ -1719,14 +1730,11 @@ scan_number_done:
         // optimization in testing, turning long whitespace runs (e.g. the
         // indentation of pretty-printed JSON) from a register-only loop
         // into one that reloads the pointer from memory every character
-        if (current == ' ' || current == '\t' || current == '\n' || current == '\r')
+        do
         {
-            do
-            {
-                get_ignoring_pending_unget();
-            }
-            while (current == ' ' || current == '\t' || current == '\n' || current == '\r');
+            get_ignoring_pending_unget();
         }
+        while (current_is_whitespace());
     }
 
     token_type scan()
