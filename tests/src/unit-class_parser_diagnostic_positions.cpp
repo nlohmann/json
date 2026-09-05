@@ -1955,3 +1955,80 @@ TEST_CASE("parser class")
         }
     }
 }
+
+TEST_CASE("diagnostic positions: value lifetime")
+{
+    SECTION("copy constructor copies positions, recursively")
+    {
+        const std::string s = R"({"a":1,"b":[1,2,3]})";
+        const json a = json::parse(s);
+        const json b = a; // NOLINT(performance-unnecessary-copy-initialization)
+
+        CHECK(b.start_pos() == a.start_pos());
+        CHECK(b.end_pos() == a.end_pos());
+        CHECK(b["b"].start_pos() == a["b"].start_pos());
+        CHECK(b["b"].end_pos() == a["b"].end_pos());
+    }
+
+    SECTION("move constructor resets the moved-from value to npos")
+    {
+        const std::string s = R"({"a":1,"b":[1,2,3]})";
+        json a = json::parse(s);
+        const auto a_start = a.start_pos();
+        const auto a_end = a.end_pos();
+
+        const json b(std::move(a));
+
+        CHECK(b.start_pos() == a_start);
+        CHECK(b.end_pos() == a_end);
+
+        CHECK(a.start_pos() == std::string::npos); // NOLINT(bugprone-use-after-move,clang-analyzer-cplusplus.Move)
+        CHECK(a.end_pos() == std::string::npos); // NOLINT(bugprone-use-after-move,clang-analyzer-cplusplus.Move)
+    }
+
+    SECTION("swap() exchanges positions along with the values")
+    {
+        // basic_json::swap() (and the friend swap() that forwards to it) used
+        // to swap only m_data.m_type/m_data.m_value, leaving
+        // start_position/end_position untouched -- unlike copy-assignment's
+        // operator=(basic_json), which swaps positions as part of its
+        // copy-and-swap implementation. After swap(a, b), each value ended up
+        // with the *other* value's content but its *own* original position.
+        // This is now fixed so that swap() is consistent with copy-assignment.
+        json a = json::parse(R"({"a":1})");
+        json b = json::parse(R"([1,2,3,4,5])");
+        const auto a_start = a.start_pos();
+        const auto a_end = a.end_pos();
+        const auto b_start = b.start_pos();
+        const auto b_end = b.end_pos();
+        // lengths (and thus end positions) differ, which is enough to tell
+        // after the swap whether positions actually moved with the values
+        CHECK(a_end != b_end);
+
+        using std::swap;
+        swap(a, b);
+
+        CHECK(a == json::parse(R"([1,2,3,4,5])"));
+        CHECK(b == json::parse(R"({"a":1})"));
+
+        CHECK(a.start_pos() == b_start);
+        CHECK(a.end_pos() == b_end);
+        CHECK(b.start_pos() == a_start);
+        CHECK(b.end_pos() == a_end);
+
+        // member swap() behaves the same as the free function
+        json c = json::parse(R"({"a":1})");
+        json d = json::parse(R"([1,2,3,4,5])");
+        const auto c_start = c.start_pos();
+        const auto c_end = c.end_pos();
+        const auto d_start = d.start_pos();
+        const auto d_end = d.end_pos();
+
+        c.swap(d);
+
+        CHECK(c.start_pos() == d_start);
+        CHECK(c.end_pos() == d_end);
+        CHECK(d.start_pos() == c_start);
+        CHECK(d.end_pos() == c_end);
+    }
+}
