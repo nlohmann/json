@@ -1459,6 +1459,14 @@ scan_number_done:
             current = ia.get_character();
         }
 
+        return track_after_read();
+    }
+
+    /// shared tail of get() / get_ignoring_pending_unget(): capture the
+    /// character for error messages (if needed) and update line/column
+    /// bookkeeping for the character now in `current`
+    char_int_type track_after_read()
+    {
         // seekable adapters reconstruct the token lazily on error (see
         // get_token_string), so the eager per-character copy is skipped
         capture_char(std::integral_constant<bool, lazy_token_string> {});
@@ -1470,6 +1478,30 @@ scan_number_done:
         }
 
         return current;
+    }
+
+    /*!
+    @brief like get(), but for call sites that can prove no unget() is pending
+
+    get() has to check the `next_unget` flag on every call, because a
+    previous token may have ended with unget() (e.g. scan_number() always
+    ungets the character that terminated the number, so the next call to
+    scan() can see it again). skip_whitespace() reads that first,
+    possibly-ungotten character via a plain get(), but every further
+    character it reads is guaranteed to be a fresh read: nothing between
+    those calls invokes unget(). This variant skips the (otherwise always
+    false) next_unget branch for those calls; it is not a general
+    replacement for get().
+    */
+    char_int_type get_ignoring_pending_unget()
+    {
+        JSON_ASSERT(!next_unget);
+
+        ++position.chars_read_total;
+        ++position.chars_read_current_line;
+        current = ia.get_character();
+
+        return track_after_read();
     }
 
     /// seekable adapter: nothing to capture, the token is rebuilt on error
@@ -1667,11 +1699,16 @@ scan_number_done:
 
     void skip_whitespace()
     {
-        do
+        // the first character may be a pending unget() left over from the
+        // previous token (see get_ignoring_pending_unget()); every
+        // subsequent character read by this loop is guaranteed fresh, since
+        // nothing below calls unget()
+        get();
+
+        while (current == ' ' || current == '\t' || current == '\n' || current == '\r')
         {
-            get();
+            get_ignoring_pending_unget();
         }
-        while (current == ' ' || current == '\t' || current == '\n' || current == '\r');
     }
 
     token_type scan()
