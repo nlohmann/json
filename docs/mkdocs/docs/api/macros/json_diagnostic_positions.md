@@ -55,15 +55,38 @@ When the macro is not defined, the library will define it to its default value.
 
 !!! note "Availability"
 
-    Diagnostic positions are only available if the value was created by the [`parse`](../basic_json/parse.md) function.
-    The [`sax_parse`](../basic_json/sax_parse.md) function or all other means to create a JSON value **do not** set the
-    diagnostic positions and [`start_pos()`](../basic_json/start_pos.md) and [`end_pos()`](../basic_json/end_pos.md)
-    will only return `std::string::npos` for these values.
+    Diagnostic positions are only available if the value was created by the [`parse`](../basic_json/parse.md) function
+    from JSON text. The [`sax_parse`](../basic_json/sax_parse.md) function, a user-constructed `json_sax_dom_parser`
+    (which has no lexer and therefore cannot record offsets), binary format parsers
+    (`from_cbor` / `from_msgpack` / `from_ubjson` / `from_bjdata` / `from_bson`), and all other means to create a JSON
+    value **do not** set the diagnostic positions. [`start_pos()`](../basic_json/start_pos.md) and
+    [`end_pos()`](../basic_json/end_pos.md) return `std::string::npos` for these values.
+
+!!! note "UTF-8 byte offsets"
+
+    Positions are UTF-8 byte offsets in the input the lexer consumed. For `#!cpp std::string` / stream / iterator /
+    contiguous-container input they index that byte sequence. Wide-string input (`#!cpp std::wstring`,
+    `#!cpp std::u16string`, `#!cpp std::u32string`) is transcoded to UTF-8 first, so the offsets index the *transcoded*
+    byte stream and cannot be used to subscript the original wide string.
+
+!!! note "Byte-order mark"
+
+    A UTF-8 BOM (`EF BB BF`) is skipped as input but still counted, so a document that starts with a BOM has root
+    [`start_pos()`](../basic_json/start_pos.md) `== 3`.
+
+!!! note "Copy, move, and swap"
+
+    The copy constructor copies positions, including on children: the copy keeps offsets into the original parse input
+    even though it never saw that buffer. The move constructor transfers positions and resets the source to
+    `std::string::npos`. [`swap`](../basic_json/swap.md) of two `basic_json` values exchanges positions. Type-specific
+    `swap` overloads (`array_t` / `object_t` / `string_t` / `binary_t`) only exchange container storage and leave
+    positions in place.
 
 !!! warning "Invalidation"
 
     The returned positions are only valid as long as the JSON value is not changed. The positions are *not* updated
-    when the JSON value is changed.
+    when the JSON value is changed. Assigning, `push_back`, or `erase` leaves parent and remaining sibling positions
+    pointing at the original text; newly constructed replacements have `std::string::npos`.
 
 ## Examples
 

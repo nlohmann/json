@@ -211,6 +211,7 @@ class SaxCountdown : public nlohmann::json::json_sax_t
 json parser_helper(const std::string& s);
 bool accept_helper(const std::string& s);
 void comments_helper(const std::string& s);
+void trailing_comma_helper(const std::string& s);
 
 json parser_helper(const std::string& s)
 {
@@ -227,8 +228,11 @@ json parser_helper(const std::string& s)
     nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type> sdp(j_sax);
     json::sax_parse(s, &sdp);
     CHECK(j_sax == j);
+    CHECK(j_sax.start_pos() == std::string::npos);
+    CHECK(j_sax.end_pos() == std::string::npos);
 
     comments_helper(s);
+    trailing_comma_helper(s);
 
     return j;
 }
@@ -264,10 +268,11 @@ bool accept_helper(const std::string& s)
     // 6. check if this approach came to the same result
     CHECK(ok_noexcept == ok_noexcept_cb);
 
-    // 7. check if comments are properly ignored
+    // 7. check if comments or trailing commas are properly ignored
     if (ok_accept)
     {
         comments_helper(s);
+        trailing_comma_helper(s);
     }
 
     // 8. return result
@@ -304,6 +309,38 @@ void comments_helper(const std::string& s)
 
         CHECK_NOTHROW(_ = json::parse(json_with_comment, nullptr, true, true));
         CHECK(json::accept(json_with_comment, true));
+    }
+}
+
+void trailing_comma_helper(const std::string& s)
+{
+    json _;
+
+    // parse/accept with default parser
+    CHECK_NOTHROW(_ = json::parse(s));
+    CHECK(json::accept(s));
+
+    // parse/accept while allowing trailing commas
+    CHECK_NOTHROW(_ = json::parse(s, nullptr, false, false, true));
+    CHECK(json::accept(s, false, true));
+
+    // note: [,] and {,} are not allowed
+    if (s.size() > 1 && (s.back() == ']' || s.back() == '}') && !_.empty())
+    {
+        std::vector<std::string> json_with_trailing_commas;
+        json_with_trailing_commas.push_back(s.substr(0, s.size() - 1) + " ," + s.back());
+        json_with_trailing_commas.push_back(s.substr(0, s.size() - 1) + "," + s.back());
+        json_with_trailing_commas.push_back(s.substr(0, s.size() - 1) + ", " + s.back());
+
+        for (const auto& json_with_trailing_comma : json_with_trailing_commas)
+        {
+            CAPTURE(json_with_trailing_comma)
+            CHECK_THROWS_AS(_ = json::parse(json_with_trailing_comma), json::parse_error);
+            CHECK(!json::accept(json_with_trailing_comma));
+
+            CHECK_NOTHROW(_ = json::parse(json_with_trailing_comma, nullptr, true, false, true));
+            CHECK(json::accept(json_with_trailing_comma, false, true));
+        }
     }
 }
 
@@ -1954,4 +1991,20 @@ TEST_CASE("parser class")
             CHECK(j.end_pos() == root_type_json_str.size() - end_whitespace.size());
         }
     }
+}
+
+TEST_CASE("trailing commas record diagnostic positions")
+{
+    // The skipped comma still occupies input, so end_pos must cover it.
+    const std::string array_with_comma = "[1, 2, ]";
+    const json ja = json::parse(array_with_comma, nullptr, true, false, true);
+    CHECK(ja == json::array({1, 2}));
+    CHECK(ja.start_pos() == 0);
+    CHECK(ja.end_pos() == array_with_comma.size());
+
+    const std::string object_with_comma = "{\"a\": 1, }";
+    const json jo = json::parse(object_with_comma, nullptr, true, false, true);
+    CHECK(jo == json({{"a", 1}}));
+    CHECK(jo.start_pos() == 0);
+    CHECK(jo.end_pos() == object_with_comma.size());
 }
