@@ -26450,6 +26450,19 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     const auto from_path = get_value("move", "from", true).template get<string_t>();
                     json_pointer from_ptr(from_path);
 
+                    // RFC 6902 (section 4.4) forbids "from" from being a
+                    // proper prefix of "path": a location cannot be moved
+                    // into one of its own children. Compare the pointers'
+                    // reference tokens (already unescaped by json_pointer's
+                    // parser) rather than the raw pointer strings, since a
+                    // token may itself contain an escaped '/' or '~' that
+                    // would defeat a naive string-prefix comparison.
+                    if (JSON_HEDLEY_UNLIKELY(from_ptr.reference_tokens.size() < ptr.reference_tokens.size()
+                                             && std::equal(from_ptr.reference_tokens.begin(), from_ptr.reference_tokens.end(), ptr.reference_tokens.begin())))
+                    {
+                        JSON_THROW(out_of_range::create(414, detail::concat("cannot move value: 'from' path '", from_path, "' is a proper prefix of 'path' '", path, "'"), &result));
+                    }
+
                     // the "from" location must exist - use at()
                     basic_json const v = result.at(from_ptr);
 
