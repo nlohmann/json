@@ -16394,6 +16394,20 @@ class json_pointer
                         }
                     }
 
+                    // the reference token consists only of digits at this point (cf. checks
+                    // above); however, its numeric value might not be representable, in which
+                    // case array_index() would throw out_of_range.404/410 -- contains() must
+                    // not throw (see #5395), so such a reference token is treated as "not found"
+                    errno = 0; // strtoull() does not reset errno on success
+                    char* p_end = nullptr; // NOLINT(misc-const-correctness)
+                    const unsigned long long magnitude = std::strtoull(reference_token.c_str(), &p_end, 10); // NOLINT(runtime/int)
+                    if (JSON_HEDLEY_UNLIKELY(errno == ERANGE // the value exceeds ULLONG_MAX
+                                             || magnitude >= static_cast<unsigned long long>((std::numeric_limits<typename BasicJsonType::size_type>::max)()))) // NOLINT(runtime/int)
+                    {
+                        // the array index cannot be represented as size_type
+                        return false;
+                    }
+
                     const auto idx = array_index<BasicJsonType>(reference_token);
                     if (idx >= ptr->size())
                     {
