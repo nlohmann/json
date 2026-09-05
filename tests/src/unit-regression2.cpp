@@ -639,7 +639,8 @@ TEST_CASE("regression tests 2")
                 s += static_cast<char>(i);
             }
             dump_test["1"] = s;
-            dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace);
+            // dump() is nodiscard; this only checks that dumping does not throw/crash
+            (void)dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace);
         }
     }
 
