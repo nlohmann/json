@@ -81,3 +81,84 @@ TEST_CASE("regression test for issue #3732 - iteration_proxy_value<iter_impl<ord
     };
     static_cast<void>(fn);
 }
+
+TEST_CASE("regression test - diff() must account for ordered_json member order")
+{
+    SECTION("pure reorder, no value changes")
+    {
+        ordered_json a = {{"a", 1}, {"b", 2}};
+        ordered_json b = {{"b", 2}, {"a", 1}};
+        CHECK(a != b); // order-sensitive equality
+        CHECK(a.patch(ordered_json::diff(a, b)) == b);
+    }
+
+    SECTION("new key must land at the front")
+    {
+        ordered_json c = {{"b", 2}};
+        ordered_json e = {{"a", 1}, {"b", 2}};
+        CHECK(c.patch(ordered_json::diff(c, e)) == e);
+    }
+
+    SECTION("reorder plus a value change on one of the reordered keys")
+    {
+        ordered_json a = {{"a", 1}, {"b", 2}};
+        ordered_json b = {{"b", 20}, {"a", 1}};
+        CHECK(a != b);
+        CHECK(a.patch(ordered_json::diff(a, b)) == b);
+    }
+
+    SECTION("reorder plus a deleted key")
+    {
+        ordered_json a = {{"a", 1}, {"b", 2}, {"c", 3}};
+        ordered_json b = {{"b", 2}, {"a", 1}};
+        CHECK(a != b);
+        CHECK(a.patch(ordered_json::diff(a, b)) == b);
+    }
+
+    SECTION("reorder plus a nested value that itself needs a recursive diff")
+    {
+        ordered_json a = {{"a", {{"x", 1}, {"y", 2}}}, {"b", 2}};
+        ordered_json b = {{"b", 2}, {"a", {{"x", 1}, {"y", 99}}}};
+        CHECK(a != b);
+        CHECK(a.patch(ordered_json::diff(a, b)) == b);
+    }
+
+    SECTION("three or more keys shuffled into a different order")
+    {
+        ordered_json a = {{"a", 1}, {"b", 2}, {"c", 3}, {"d", 4}};
+        ordered_json b = {{"d", 4}, {"b", 2}, {"a", 1}, {"c", 3}};
+        CHECK(a != b);
+        CHECK(a.patch(ordered_json::diff(a, b)) == b);
+    }
+
+    SECTION("matching order still produces a minimal patch (fast path unaffected)")
+    {
+        ordered_json a = {{"a", 1}, {"b", 2}, {"c", 3}};
+        ordered_json b = {{"a", 1}, {"b", 20}, {"c", 3}};
+        auto p = ordered_json::diff(a, b);
+        // only the changed value should be touched, not a wholesale remove+add
+        CHECK(p.size() == 1);
+        CHECK(p[0]["op"] == "replace");
+        CHECK(p[0]["path"] == "/b");
+        CHECK(a.patch(p) == b);
+    }
+
+    SECTION("plain json (std::map-backed) is unaffected by same-key-different-insertion-order")
+    {
+        json a;
+        a["b"] = 2;
+        a["a"] = 1;
+
+        json b;
+        b["a"] = 1;
+        b["b"] = 2;
+
+        // std::map iteration is always sorted by key, so a == b regardless of
+        // insertion order, and diff() must still produce the same minimal
+        // (empty) result as before this fix
+        CHECK(a == b);
+        auto p = json::diff(a, b);
+        CHECK(p.empty());
+        CHECK(a.patch(p) == b);
+    }
+}
