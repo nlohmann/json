@@ -1761,6 +1761,33 @@ TEST_CASE("std::filesystem::path")
 }
 #endif
 
+// the ADL to_json overload for std::u8string only exists under the same guard
+// as std::filesystem::path support (it is otherwise only reached indirectly,
+// via std::filesystem::path::u8string()) -- mirror both #if conditions from
+// include/nlohmann/detail/conversions/to_json.hpp exactly
+#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
+#if defined(__cpp_lib_char8_t)
+TEST_CASE("std::u8string")
+{
+    SECTION("ascii")
+    {
+        const std::u8string s = u8"Path";
+        json const j = s;
+
+        CHECK(j.template get<std::string>() == "Path");
+    }
+
+    SECTION("utf-8")
+    {
+        const std::u8string s = u8"P\xc4\x9b\xc5\xa1ina";
+        json const j = s;
+
+        CHECK(j.template get<std::string>() == "P\xc4\x9b\xc5\xa1ina");
+    }
+}
+#endif
+#endif
+
 TEST_CASE("std::optional")
 {
     SECTION("null")
