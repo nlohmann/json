@@ -246,10 +246,10 @@ add_custom_target(ci_test_noglobaludls
 # Disable thread-local storage.
 ###############################################################################
 
-# Without thread-local storage, the copy constructor cannot bound its descent
-# and copies every object and array without the call stack. That path is
-# otherwise only reached by values nested deeper than the bound, so this target
-# is what runs the whole test suite through it.
+# Without thread-local storage, copying and comparing cannot bound their
+# descent and handle every object and array without the call stack. Those paths
+# are otherwise only reached by values nested deeper than the bound, so this
+# target is what runs the whole test suite through them.
 add_custom_target(ci_test_no_thread_local
     COMMAND ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
