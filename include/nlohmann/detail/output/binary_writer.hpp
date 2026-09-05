@@ -1658,6 +1658,12 @@ class binary_writer
         };
 
         string_t key = "_ArrayType_";
+        // a non-string _ArrayType_ is not a packed-array annotation; fall back
+        // to plain object encoding instead of throwing type_error.302 from get<>
+        if (!value.at(key).is_string())
+        {
+            return true;
+        }
         // use get<string_t>() instead of static_cast<string_t> to avoid an
         // ambiguous conversion under explicit instantiation on C++17 (see #4825)
         auto it = bjdtype.find(value.at(key).template get<string_t>());
