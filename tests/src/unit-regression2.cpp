@@ -1637,4 +1637,35 @@ TEST_CASE("regression test - parser callback must not lose a duplicate key's pri
     }
 }
 
+TEST_CASE("regression test - excessive binary container size honors allow_exceptions=false")
+{
+    // CBOR array with declared length 2^63
+    const std::vector<std::uint8_t> cbor = {0x9b, 0x80, 0, 0, 0, 0, 0, 0, 0};
+    // CBOR map with declared length 2^63
+    const std::vector<std::uint8_t> cbor_m = {0xbb, 0x80, 0, 0, 0, 0, 0, 0, 0};
+    // UBJSON array with declared length 2^63-1
+    const std::vector<std::uint8_t> ubj = {'[', '#', 'L', 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    // BJData array with declared length 2^63-1 (little endian)
+    const std::vector<std::uint8_t> bjd = {'[', '#', 'L', 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f};
+
+    // allow_exceptions=false must report failure instead of throwing/aborting
+    CHECK(json::from_cbor(cbor, true, false).is_discarded());
+    CHECK(json::from_cbor(cbor_m, true, false).is_discarded());
+    CHECK(json::from_ubjson(ubj, true, false).is_discarded());
+    CHECK(json::from_bjdata(bjd, true, false).is_discarded());
+
+    // allow_exceptions=true (the default) must still throw exactly as before.
+    // The exact message text is not checked here: on platforms where
+    // std::size_t is 32-bit, the CBOR reader's own length-narrowing check
+    // (get_cbor_container_size(), unrelated to this fix) intercepts a
+    // declared length of 2^63 before it ever reaches the check this test
+    // targets, with different (but equally valid, and already correct)
+    // wording -- see unit-cbor.cpp for coverage of that message.
+    json _;
+    CHECK_THROWS_AS(_ = json::from_cbor(cbor), json::out_of_range);
+
+    // regression guard: a genuinely truncated CBOR input must remain discarded
+    CHECK(json::from_cbor(std::vector<std::uint8_t> {0x9b, 0, 0, 0, 0, 0, 0, 0, 0x02}, true, false).is_discarded());
+}
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
