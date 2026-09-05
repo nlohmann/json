@@ -103,10 +103,20 @@ TEST_CASE("CBOR")
     {
         SECTION("discarded")
         {
-            // discarded values are not serialized
             json const j = json::value_t::discarded;
-            const auto result = json::to_cbor(j);
-            CHECK(result.empty());
+            CHECK_THROWS_WITH_AS(json::to_cbor(j), "[json.exception.type_error.318] cannot serialize discarded values to binary format", json::type_error&);
+        }
+
+        SECTION("discarded in array")
+        {
+            json const j = {json::value_t::discarded, json::value_t::discarded, 1};
+            CHECK_THROWS_WITH_AS(json::to_cbor(j), "[json.exception.type_error.318] cannot serialize discarded values to binary format", json::type_error&);
+        }
+
+        SECTION("discarded in object")
+        {
+            json const j = {{"foo", 1}, {"bar", json::value_t::discarded}};
+            CHECK_THROWS_WITH_AS(json::to_cbor(j), "[json.exception.type_error.318] cannot serialize discarded values to binary format", json::type_error&);
         }
 
         SECTION("NaN")
@@ -2514,6 +2524,23 @@ TEST_CASE("examples from RFC 8949 Appendix A")
         CHECK(json::to_cbor(json::binary(std::vector<uint8_t> {}, 8589934590)) == std::vector<uint8_t> {0xdb, 0x00, 0x00, 0x00, 0x01, 0xff, 0xff, 0xff, 0xfe, 0x40});
         CHECK(!json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t> {}, 8589934590)), true, true, json::cbor_tag_handler_t::ignore).get_binary().has_subtype());
         CHECK(json::from_cbor(json::to_cbor(json::binary(std::vector<uint8_t> {}, 8589934590)), true, true, json::cbor_tag_handler_t::store).get_binary().subtype() == 8589934590);
+    }
+
+    SECTION("cbor_tag_handler_t::store falls back for non-binary tagged items (#5316)")
+    {
+        // CBOR self-describe tag (55799) followed by a map
+        const std::vector<uint8_t> self_describe_map{0xD9, 0xD9, 0xF7, 0xA1, 0x61, 0x61, 0x01};
+        const json j_ignore = json::from_cbor(self_describe_map, true, true, json::cbor_tag_handler_t::ignore);
+        CHECK(j_ignore == json({{"a", 1}}));
+        const json j_store = json::from_cbor(self_describe_map, true, true, json::cbor_tag_handler_t::store);
+        CHECK(j_store == j_ignore);
+
+        // tag 24 over an unsigned integer
+        const std::vector<uint8_t> tagged_uint{0xD8, 0x18, 0x00};
+        const json j_uint_ignore = json::from_cbor(tagged_uint, true, true, json::cbor_tag_handler_t::ignore);
+        CHECK(j_uint_ignore == json(0));
+        const json j_uint_store = json::from_cbor(tagged_uint, true, true, json::cbor_tag_handler_t::store);
+        CHECK(j_uint_store == j_uint_ignore);
     }
 
     SECTION("arrays")
