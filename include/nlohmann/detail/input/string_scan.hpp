@@ -93,6 +93,58 @@ inline std::size_t find_string_special(const unsigned char* data, std::size_t n)
     return n;
 }
 
+// classify a byte as one the serializer must NOT copy verbatim when
+// ensure_ascii is requested: the closing quote, an escape, a control character
+// (< 0x20), DEL (0x7F), or any non-ASCII byte (>= 0x80). Everything else -
+// printable ASCII except '"' and '\\' - is emitted unchanged. Note this differs
+// from is_string_special() only in that 0x7F is also a stop (it is escaped as
+// \u007f under ensure_ascii).
+inline bool is_ascii_copyable(unsigned char c) noexcept
+{
+    return c >= 0x20u && c < 0x7Fu && c != '\"' && c != '\\';
+}
+
+// return the index of the first byte in [data, data+n) that is NOT
+// is_ascii_copyable(), or n if every byte can be copied verbatim; scans 8 bytes
+// at a time. Used by the serializer's ensure_ascii fast path.
+inline std::size_t find_ascii_copyable_run(const unsigned char* data, std::size_t n) noexcept
+{
+    constexpr std::uint64_t ones = 0x0101010101010101ull;
+    constexpr std::uint64_t high = 0x8080808080808080ull;
+    std::size_t i = 0;
+    for (; i + 8 <= n; i += 8)
+    {
+        std::uint64_t v = 0;
+        std::memcpy(&v, data + i, sizeof(v));
+        const std::uint64_t q = v ^ 0x2222222222222222ull; // '"'  (0x22)
+        const std::uint64_t b = v ^ 0x5C5C5C5C5C5C5C5Cull; // '\\' (0x5C)
+        const std::uint64_t d = v ^ 0x7F7F7F7F7F7F7F7Full; // DEL  (0x7F)
+        const std::uint64_t stop = ((q - ones) & ~q & high)   // == '"'
+                                   | ((b - ones) & ~b & high)  // == '\\'
+                                   | ((d - ones) & ~d & high)  // == 0x7F
+                                   | ((v - 0x2020202020202020ull) & ~v & high) // < 0x20
+                                   | (v & high);               // >= 0x80
+        if (stop != 0)
+        {
+            for (std::size_t j = 0; j < 8; ++j)
+            {
+                if (!is_ascii_copyable(data[i + j]))
+                {
+                    return i + j;
+                }
+            }
+        }
+    }
+    for (; i < n; ++i)
+    {
+        if (!is_ascii_copyable(data[i]))
+        {
+            return i;
+        }
+    }
+    return n;
+}
+
 // Validate one UTF-8 sequence at the front of [data, data+avail). Returns its
 // length (2..4) only when the bytes form a *well-formed* sequence using exactly
 // the same ranges as scan_string()'s per-byte switch, so the bulk path accepts

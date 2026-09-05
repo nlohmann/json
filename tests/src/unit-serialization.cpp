@@ -382,3 +382,232 @@ TEST_CASE("dump for basic_json with long double number_float_t")
         check_same(100.0L,  100.0);
     }
 }
+
+TEST_CASE("serialization of strings (bulk fast path)")
+{
+    // These cases exercise the SWAR bulk-copy fast path in dump_escaped and the
+    // internal write buffer: long runs, escapes interrupting runs, 0x7F/DEL,
+    // multibyte UTF-8 under both ensure_ascii settings, and payloads larger than
+    // the write buffer.
+
+    SECTION("long unescaped ASCII exceeds the write buffer")
+    {
+        const std::string big(3000, 'a');
+        const json j = big;
+        CHECK(j.dump() == '"' + big + '"');
+        CHECK(j.dump(-1, ' ', true) == '"' + big + '"');
+        // round-trips
+        CHECK(json::parse(j.dump()) == j);
+    }
+
+    SECTION("runs interrupted by escapes")
+    {
+        const json j = std::string(500, 'x') + "\n\"\\" + std::string(500, 'y');
+        const std::string out = j.dump();
+        CHECK(out == '"' + std::string(500, 'x') + "\\n\\\"\\\\" + std::string(500, 'y') + '"');
+        CHECK(json::parse(out) == j);
+    }
+
+    SECTION("DEL (0x7F) depends on ensure_ascii")
+    {
+        const json j = std::string("a\x7f" "b");
+        CHECK(j.dump(-1, ' ', false) == "\"a\x7f" "b\"");   // copied verbatim
+        CHECK(j.dump(-1, ' ', true) == "\"a\\u007fb\"");    // escaped
+    }
+
+    SECTION("multibyte UTF-8 under both ensure_ascii settings")
+    {
+        const json j = std::string("A\xc3\xa9\xe4\xbd\xa0\xf0\x9f\x98\x80Z"); // A é 你 😀 Z
+        // not escaping non-ASCII: bytes are copied through the bulk validator
+        CHECK(j.dump(-1, ' ', false) == "\"A\xc3\xa9\xe4\xbd\xa0\xf0\x9f\x98\x80Z\"");
+        // ensure_ascii: escaped (with a surrogate pair for the emoji)
+        CHECK(j.dump(-1, ' ', true) == "\"A\\u00e9\\u4f60\\ud83d\\ude00Z\"");
+        CHECK(json::parse(j.dump(-1, ' ', true)) == j);
+    }
+
+    SECTION("many small structural writes exceed the write buffer")
+    {
+        json arr = json::array();
+        for (int i = 0; i < 2000; ++i)
+        {
+            arr.push_back(i);
+        }
+        const std::string out = arr.dump();
+        CHECK(out.front() == '[');
+        CHECK(out.back() == ']');
+        CHECK(json::parse(out) == arr);
+
+        json obj = json::object();
+        for (int i = 0; i < 500; ++i)
+        {
+            obj["key" + std::to_string(i)] = i;
+        }
+        CHECK(json::parse(obj.dump()) == obj);
+        CHECK(json::parse(obj.dump(2)) == obj);
+
+        // an array of many empty strings emits a long run of single-character
+        // writes ('"', '"', ',') at shallow nesting depth, so the write buffer
+        // fills and flushes mid-run without the deep recursion that would
+        // overflow the stack on some debug builds
+        json many_empty = json::array();
+        for (int i = 0; i < 500; ++i)
+        {
+            many_empty.push_back("");
+        }
+        const std::string out2 = many_empty.dump();
+        CHECK(out2.size() > 1024); // spans multiple write-buffer flushes
+        CHECK(out2.front() == '[');
+        CHECK(out2.back() == ']');
+        CHECK(json::parse(out2) == many_empty);
+    }
+
+    SECTION("invalid UTF-8 handling is unaffected by the fast path")
+    {
+        const json j = std::string("valid\xff" "more");
+        CHECK_THROWS_WITH_AS(j.dump(), "[json.exception.type_error.316] invalid UTF-8 byte at index 5: 0xFF", json::type_error&);
+        CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"valid\xef\xbf\xbd" "more\"");
+        CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == "\"valid\\ufffdmore\"");
+        CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == "\"validmore\"");
+    }
+}
+
+TEST_CASE("indentation is written straight into the write buffer")
+{
+    // put_indent() memsets the indentation into the write buffer instead of
+    // copying it out of a pre-grown indentation string. These cases cover an
+    // indentation wider than the buffer, a non-space indentation character, and
+    // nesting deep enough that the accumulated indentation spans several
+    // buffer-fulls - the situations the old grow-a-string approach got wrong.
+
+    SECTION("indent_step wider than the write buffer")
+    {
+        const json j = {{"a", 1}};
+        // 2000 > the 1024-byte write buffer, and > the 512 the indentation
+        // string used to start at
+        CHECK(j.dump(2000) == "{\n" + std::string(2000, ' ') + "\"a\": 1\n}");
+        // several whole buffer-fulls, so the buffer is refilled once and then
+        // flushed repeatedly
+        CHECK(j.dump(5000) == "{\n" + std::string(5000, ' ') + "\"a\": 1\n}");
+        CHECK(j.dump(5000, '\t') == "{\n" + std::string(5000, '\t') + "\"a\": 1\n}");
+        // an exact multiple of the buffer size
+        CHECK(j.dump(4096) == "{\n" + std::string(4096, ' ') + "\"a\": 1\n}");
+    }
+
+    SECTION("a non-space indentation character is used throughout")
+    {
+        const json j = {{"a", 1}};
+        // 600 is past the point where the indentation used to be grown, which
+        // is where a hard-coded space would have shown up
+        CHECK(j.dump(600, '\t') == "{\n" + std::string(600, '\t') + "\"a\": 1\n}");
+        CHECK(j.dump(3, '.') == "{\n...\"a\": 1\n}");
+    }
+
+    SECTION("accumulated indentation spans several buffer-fulls")
+    {
+        // five levels deep at 400 per level: the innermost value is indented by
+        // 2000 characters, reached in steps that each straddle the buffer end
+        json j = json::array({1});
+        for (int i = 0; i < 4; ++i)
+        {
+            j = json::array({j});
+        }
+
+        const std::string out = j.dump(400);
+        CHECK(out.find(std::string("\n") + std::string(2000, ' ') + "1\n") != std::string::npos);
+        CHECK(json::parse(out) == j);
+    }
+
+    SECTION("indentation is unchanged for ordinary widths")
+    {
+        const json j = {{"a", {1, 2}}, {"b", nullptr}};
+        CHECK(j.dump(2) == "{\n  \"a\": [\n    1,\n    2\n  ],\n  \"b\": null\n}");
+        CHECK(j.dump(0) == "{\n\"a\": [\n1,\n2\n],\n\"b\": null\n}");
+    }
+}
+
+TEST_CASE("serialization of deeply nested values")
+{
+    // dump() descends into a bounded number of levels and writes out whatever
+    // is nested deeper than that without the call stack; see
+    // https://github.com/nlohmann/json/issues/5387
+
+    SECTION("nested deeper than the call stack could follow")
+    {
+        // parsing is iterative, so building these costs little
+        const std::size_t depth = 100000;
+
+        const std::string array_text = std::string(depth, '[') + '0' + std::string(depth, ']');
+        CHECK(json::parse(array_text).dump() == array_text);
+
+        std::string object_text;
+        object_text.reserve((6 * depth) + 1);
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            object_text += "{\"a\":";
+        }
+        object_text += '1';
+        object_text.append(depth, '}');
+        CHECK(json::parse(object_text).dump() == object_text);
+    }
+
+    SECTION("depths around the bound of the descent")
+    {
+        // Cover every depth around the bound, so that the two ways of writing a
+        // value are known to meet cleanly - wherever the bound is set.
+        for (std::size_t d = 1; d <= 300; ++d)
+        {
+            CAPTURE(d);
+
+            const std::string array_text = std::string(d, '[') + '7' + std::string(d, ']');
+            CHECK(json::parse(array_text).dump() == array_text);
+
+            std::string object_text;
+            for (std::size_t i = 0; i < d; ++i)
+            {
+                object_text += "{\"k\":";
+            }
+            object_text += '7';
+            object_text.append(d, '}');
+            CHECK(json::parse(object_text).dump() == object_text);
+        }
+    }
+
+    SECTION("pretty-printing across the bound")
+    {
+        for (std::size_t d = 120; d <= 140; ++d)
+        {
+            CAPTURE(d);
+
+            const json j = json::parse(std::string(d, '[') + '7' + std::string(d, ']'));
+
+            std::string expected;
+            for (std::size_t i = 0; i < d; ++i)
+            {
+                expected += std::string(2 * i, ' ') + "[\n";
+            }
+            expected += std::string(2 * d, ' ') + '7';
+            for (std::size_t i = d; i > 0; --i)
+            {
+                expected += '\n' + std::string(2 * (i - 1), ' ') + ']';
+            }
+
+            CHECK(j.dump(2) == expected);
+        }
+    }
+
+    SECTION("an empty container below the bound")
+    {
+        // an empty container is written out in full and never descended into,
+        // so it must not gain a newline when it is reached iteratively
+        for (std::size_t d = 125; d <= 135; ++d)
+        {
+            CAPTURE(d);
+
+            const std::string compact = std::string(d, '[') + "[]" + std::string(d, ']');
+            CHECK(json::parse(compact).dump() == compact);
+
+            const std::string with_object = std::string(d, '[') + "{}" + std::string(d, ']');
+            CHECK(json::parse(with_object).dump() == with_object);
+        }
+    }
+}
