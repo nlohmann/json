@@ -815,6 +815,26 @@ TEST_CASE("JSON patch")
                 json const patch = {{{"op", "remove"}, {"path", ""}}};
                 CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
             }
+
+            SECTION("parent is a primitive")
+            {
+                json const j = {{"a", 1}};
+                json const patch = {{{"op", "remove"}, {"path", "/a/b"}}};
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.out_of_range.403] (/a) key 'b' not found", json::out_of_range&);
+#elif JSON_DIAGNOSTIC_POSITIONS
+                CHECK_THROWS_AS(j.patch(patch), json::out_of_range&);
+#else
+                CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.out_of_range.403] key 'b' not found", json::out_of_range&);
+#endif
+            }
+
+            SECTION("parent is null")
+            {
+                json const j = nullptr;
+                json const patch = {{{"op", "remove"}, {"path", "/a"}}};
+                CHECK_THROWS_WITH_AS(j.patch(patch), "[json.exception.out_of_range.403] key 'a' not found", json::out_of_range&);
+            }
         }
 
         SECTION("replace")
