@@ -26435,6 +26435,18 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     const auto from_path = get_value("move", "from", true).template get<string_t>();
                     json_pointer from_ptr(from_path);
 
+                    // RFC 6902 §4.4: "from" MUST NOT be a proper prefix of "path".
+                    // Compare ancestors with json_pointer::operator== so the check is
+                    // by reference token, not a raw-string prefix (so /a~1b is "a/b").
+                    for (json_pointer ancestor = ptr; !ancestor.empty(); )
+                    {
+                        ancestor = ancestor.parent_pointer();
+                        if (ancestor == from_ptr)
+                        {
+                            JSON_THROW(out_of_range::create(413, detail::concat("JSON Patch 'move': 'from' '", from_path, "' must not be a proper prefix of 'path' '", path, "'"), nullptr));
+                        }
+                    }
+
                     // the "from" location must exist - use at()
                     basic_json const v = result.at(from_ptr);
 

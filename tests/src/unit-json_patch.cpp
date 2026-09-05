@@ -1388,3 +1388,67 @@ TEST_CASE("JSON patch - add to a primitive parent (regression #4292)")
         CHECK_THROWS_AS(doc.patch(patch), json::out_of_range&);
     }
 }
+
+TEST_CASE("JSON patch move from a proper prefix of path is rejected (RFC 6902 §4.4)")
+{
+    SECTION("nested array (the MUST-violation that previously succeeded)")
+    {
+        json doc = json::parse("[[1,2],3]");
+        json const patch = json::parse(R"([{"op":"move","from":"/0","path":"/0/0"}])");
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.413] JSON Patch 'move': 'from' '/0' must not be a proper prefix of 'path' '/0/0'", json::out_of_range&);
+        CHECK(doc == json::parse("[[1,2],3]"));
+    }
+
+    SECTION("patch_inplace rejects the same move and leaves the document unchanged")
+    {
+        json doc = json::parse("[[1,2],3]");
+        json const patch = json::parse(R"([{"op":"move","from":"/0","path":"/0/0"}])");
+        CHECK_THROWS_WITH_AS(doc.patch_inplace(patch), "[json.exception.out_of_range.413] JSON Patch 'move': 'from' '/0' must not be a proper prefix of 'path' '/0/0'", json::out_of_range&);
+        CHECK(doc == json::parse("[[1,2],3]"));
+    }
+
+    SECTION("from == path is allowed (not a proper prefix)")
+    {
+        json const doc = json::parse(R"({"a":[1,2]})");
+        json const patch = json::parse(R"([{"op":"move","from":"/a","path":"/a"}])");
+        CHECK(doc.patch(patch) == doc);
+    }
+
+    SECTION("escaped token is a single reference token, not a string prefix")
+    {
+        // /a~1b is the token "a/b", not /a followed by b
+        json const doc = json::parse(R"({"a":{"x":1},"a/b":{"y":2}})");
+        json const patch = json::parse(R"([{"op":"move","from":"/a","path":"/a~1b/y"}])");
+        CHECK(doc.patch(patch) == json::parse(R"({"a/b":{"y":{"x":1}}})"));
+    }
+
+    SECTION("root from is a proper prefix of any non-root path")
+    {
+        json doc = json::parse(R"({"a":1})");
+        json const patch = json::parse(R"([{"op":"move","from":"","path":"/a"}])");
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.413] JSON Patch 'move': 'from' '' must not be a proper prefix of 'path' '/a'", json::out_of_range&);
+        CHECK(doc == json::parse(R"({"a":1})"));
+    }
+
+    SECTION("root path is not prefixed by a non-root from")
+    {
+        json const doc = json::parse(R"({"a":{"b":1}})");
+        json const patch = json::parse(R"([{"op":"move","from":"/a","path":""}])");
+        CHECK(doc.patch(patch) == json::parse(R"({"b":1})"));
+    }
+
+    SECTION("append token '-' still counts as a child of from")
+    {
+        json doc = json::parse("[1,2]");
+        json const patch = json::parse(R"([{"op":"move","from":"","path":"/-"}])");
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.413] JSON Patch 'move': 'from' '' must not be a proper prefix of 'path' '/-'", json::out_of_range&);
+        CHECK(doc == json::parse("[1,2]"));
+    }
+
+    SECTION("path is a prefix of from is allowed (move a child onto its parent)")
+    {
+        json const doc = json::parse(R"({"a":{"b":1,"c":2}})");
+        json const patch = json::parse(R"([{"op":"move","from":"/a/b","path":"/a"}])");
+        CHECK(doc.patch(patch) == json::parse(R"({"a":1})"));
+    }
+}
