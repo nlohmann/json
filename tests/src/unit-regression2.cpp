@@ -1566,4 +1566,75 @@ TEST_CASE("issue #5402 - update(merge_objects=true) overwrites a primitive with 
     CHECK(mixed == json({{"keep", {{"a", 1}, {"b", 2}}}, {"replace", {{"x", 2}}}}));
 }
 
+TEST_CASE("regression test - parser callback must not lose a duplicate key's prior value")
+{
+    // a callback that rejects only the scalar value 2
+    const json::parser_callback_t drop_value_2 = [](int /*depth*/, json::parse_event_t ev, json & v)
+    {
+        return !(ev == json::parse_event_t::value && v == 2);
+    };
+
+    SECTION("duplicate key, second (scalar) value rejected - prior value is restored")
+    {
+        const json j = json::parse(R"({"a":1,"a":2})", drop_value_2);
+        CHECK(j.dump() == "{\"a\":1}");
+    }
+
+    SECTION("duplicate key, second value is an object rejected at object_end - prior value is restored")
+    {
+        const json j = json::parse(R"({"a":1,"a":{"x":2}})",
+                                   [](int depth, json::parse_event_t ev, json& /*parsed*/)
+        {
+            return !(ev == json::parse_event_t::object_end && depth == 1);
+        });
+        CHECK(j.dump() == "{\"a\":1}");
+    }
+
+    SECTION("duplicate key, second value is an array rejected at array_end - prior value is restored")
+    {
+        const json j = json::parse(R"({"a":1,"a":[9,9]})",
+                                   [](int depth, json::parse_event_t ev, json& /*parsed*/)
+        {
+            return !(ev == json::parse_event_t::array_end && depth == 1);
+        });
+        CHECK(j.dump() == "{\"a\":1}");
+    }
+
+    SECTION("duplicate key, second value accepted (scalar) - last value wins")
+    {
+        const json j = json::parse(R"({"a":1,"a":2})", [](int, json::parse_event_t, json&) noexcept
+        {
+            return true;
+        });
+        CHECK(j.dump() == "{\"a\":2}");
+    }
+
+    SECTION("duplicate key, second value accepted (object) - last value wins")
+    {
+        const json j = json::parse(R"({"a":1,"a":{"x":2}})", [](int, json::parse_event_t, json&) noexcept
+        {
+            return true;
+        });
+        CHECK(j.dump() == "{\"a\":{\"x\":2}}");
+    }
+
+    SECTION("brand new (non-duplicate) key, value rejected - member is fully absent")
+    {
+        const json j = json::parse(R"({"a":1,"b":2})", drop_value_2);
+        CHECK(j.dump() == "{\"a\":1}");
+    }
+
+    SECTION("duplicate key nested two levels deep")
+    {
+        const json j = json::parse(R"({"outer":{"a":1,"a":2}})", drop_value_2);
+        CHECK(j.dump() == "{\"outer\":{\"a\":1}}");
+    }
+
+    SECTION("three occurrences of the same key - middle rejected, last accepted")
+    {
+        const json j = json::parse(R"({"k":1,"k":2,"k":3})", drop_value_2);
+        CHECK(j.dump() == "{\"k\":3}");
+    }
+}
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
