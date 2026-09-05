@@ -18,7 +18,11 @@ To store objects in C++, a type is defined by the template parameters described 
 ## Template parameters
 
 `ObjectType`
-:   the container to store objects (e.g., `std::map` or `std::unordered_map`)
+:   the container to store objects. Its template parameters must have the same order and meaning as those of
+    `std::map`; in particular, the third parameter is a comparator. `#!cpp std::unordered_map`, whose third parameter
+    is a hash function, therefore needs an adapter -- see
+    [Template Parameter Requirements](../../features/types/template_parameters.md#objecttype) for the full list of
+    requirements, an adapter example, and the containers that are known to work.
 
 `StringType`
 :   the type of the keys or names (e.g., `std::string`). The comparison function `std::less<StringType>` is used to
@@ -122,3 +126,4 @@ the object is silently converted as an array of key-value pairs, which is incorr
 ## Version history
 
 - Added in version 1.0.0.
+- Allowed object types whose `erase(iterator)` returns `#!cpp void` in version 3.13.0.

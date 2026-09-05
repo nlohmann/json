@@ -135,7 +135,7 @@ class serializer
                     auto i = val.m_data.m_value.object->cbegin();
                     for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
                     {
-                        o->write_characters(indent_string.c_str(), new_indent);
+                        o->write_characters(indent_string.data(), new_indent);
                         o->write_character('\"');
                         dump_escaped(i->first, ensure_ascii);
                         o->write_characters("\": ", 3);
@@ -146,14 +146,14 @@ class serializer
                     // last element
                     JSON_ASSERT(i != val.m_data.m_value.object->cend());
                     JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
-                    o->write_characters(indent_string.c_str(), new_indent);
+                    o->write_characters(indent_string.data(), new_indent);
                     o->write_character('\"');
                     dump_escaped(i->first, ensure_ascii);
                     o->write_characters("\": ", 3);
                     dump(i->second, true, ensure_ascii, indent_step, new_indent);
 
                     o->write_character('\n');
-                    o->write_characters(indent_string.c_str(), current_indent);
+                    o->write_characters(indent_string.data(), current_indent);
                     o->write_character('}');
                 }
                 else
@@ -208,18 +208,18 @@ class serializer
                     for (auto i = val.m_data.m_value.array->cbegin();
                             i != val.m_data.m_value.array->cend() - 1; ++i)
                     {
-                        o->write_characters(indent_string.c_str(), new_indent);
+                        o->write_characters(indent_string.data(), new_indent);
                         dump(*i, true, ensure_ascii, indent_step, new_indent);
                         o->write_characters(",\n", 2);
                     }
 
                     // last element
                     JSON_ASSERT(!val.m_data.m_value.array->empty());
-                    o->write_characters(indent_string.c_str(), new_indent);
+                    o->write_characters(indent_string.data(), new_indent);
                     dump(val.m_data.m_value.array->back(), true, ensure_ascii, indent_step, new_indent);
 
                     o->write_character('\n');
-                    o->write_characters(indent_string.c_str(), current_indent);
+                    o->write_characters(indent_string.data(), current_indent);
                     o->write_character(']');
                 }
                 else
@@ -265,7 +265,7 @@ class serializer
                         indent_string.resize(indent_string.size() * 2, ' ');
                     }
 
-                    o->write_characters(indent_string.c_str(), new_indent);
+                    o->write_characters(indent_string.data(), new_indent);
 
                     o->write_characters("\"bytes\": [", 10);
 
@@ -274,14 +274,14 @@ class serializer
                         for (auto i = val.m_data.m_value.binary->cbegin();
                                 i != val.m_data.m_value.binary->cend() - 1; ++i)
                         {
-                            dump_integer(*i);
+                            dump_integer(to_byte_value(*i));
                             o->write_characters(", ", 2);
                         }
-                        dump_integer(val.m_data.m_value.binary->back());
+                        dump_integer(to_byte_value(val.m_data.m_value.binary->back()));
                     }
 
                     o->write_characters("],\n", 3);
-                    o->write_characters(indent_string.c_str(), new_indent);
+                    o->write_characters(indent_string.data(), new_indent);
 
                     o->write_characters("\"subtype\": ", 11);
                     if (val.m_data.m_value.binary->has_subtype())
@@ -293,7 +293,7 @@ class serializer
                         o->write_characters("null", 4);
                     }
                     o->write_character('\n');
-                    o->write_characters(indent_string.c_str(), current_indent);
+                    o->write_characters(indent_string.data(), current_indent);
                     o->write_character('}');
                 }
                 else
@@ -305,10 +305,10 @@ class serializer
                         for (auto i = val.m_data.m_value.binary->cbegin();
                                 i != val.m_data.m_value.binary->cend() - 1; ++i)
                         {
-                            dump_integer(*i);
+                            dump_integer(to_byte_value(*i));
                             o->write_character(',');
                         }
-                        dump_integer(val.m_data.m_value.binary->back());
+                        dump_integer(to_byte_value(val.m_data.m_value.binary->back()));
                     }
 
                     o->write_characters("],\"subtype\":", 12);
@@ -596,7 +596,7 @@ class serializer
             {
                 case error_handler_t::strict:
                 {
-                    JSON_THROW(type_error::create(316, concat("incomplete UTF-8 string; last byte: 0x", hex_bytes(static_cast<std::uint8_t>(s.back() | 0))), nullptr));
+                    JSON_THROW(type_error::create(316, concat("incomplete UTF-8 string; last byte: 0x", hex_bytes(static_cast<std::uint8_t>(s[s.size() - 1] | 0))), nullptr));
                 }
 
                 case error_handler_t::ignore:
@@ -703,6 +703,19 @@ class serializer
         pos += 6;
     }
 
+    /*!
+    @brief convert a single element of a binary value to its byte value
+
+    The elements of a binary value are dumped as the numbers 0..255, regardless
+    of the value type of the configured BinaryType: that type may be signed
+    (`char`), unsigned (`std::uint8_t`), or not an integer at all
+    (`std::byte`), none of which @ref dump_integer can handle uniformly.
+    */
+    static std::uint8_t to_byte_value(binary_char_t x) noexcept
+    {
+        return static_cast<std::uint8_t>(x);
+    }
+
     // templates to avoid warnings about useless casts
     template <typename NumberType, enable_if_t<std::is_signed<NumberType>::value, int> = 0>
     bool is_negative_number(NumberType x)
@@ -728,8 +741,7 @@ class serializer
     template < typename NumberType, detail::enable_if_t <
                    std::is_integral<NumberType>::value ||
                    std::is_same<NumberType, number_unsigned_t>::value ||
-                   std::is_same<NumberType, number_integer_t>::value ||
-                   std::is_same<NumberType, binary_char_t>::value,
+                   std::is_same<NumberType, number_integer_t>::value,
                    int > = 0 >
     void dump_integer(NumberType x)
     {

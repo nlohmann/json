@@ -23,6 +23,11 @@ JSON class into byte-sized characters during deserialization.
     `StringType`. To work with wide-character data, convert it to/from UTF-8 at the boundary instead -- see the
     FAQ's [wide string handling](../../home/faq.md#wide-string-handling) section for a conversion recipe.
 
+    Beyond the character type, the library expects a substantial part of the `#!cpp std::string` interface (contiguous
+    null-terminated `data()`, `substr()`, `find()`, `append()`, ...). See
+    [Template Parameter Requirements](../../features/types/template_parameters.md#stringtype) for the full list and
+    for the string types that are known to work.
+
 ## Notes
 
 #### Default type
@@ -78,3 +83,5 @@ and an example.
 ## Version history
 
 - Added in version 1.0.0.
+- Removed the requirement that `string_t` be implicitly convertible from `#!cpp std::string`, which the BSON writer and
+  the UBJSON reader relied on, in version 3.13.0.
