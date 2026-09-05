@@ -149,10 +149,11 @@ class lexer : public lexer_base<BasicJsonType>
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
 
-    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false) noexcept
+    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false, bool discard_number_values_ = false) noexcept
         : ia(std::move(adapter))
         , ignore_comments(ignore_comments_)
         , decimal_point_char(static_cast<char_int_type>(get_decimal_point()))
+        , discard_number_values(discard_number_values_)
     {}
 
     // deleted because of pointer members
@@ -1279,6 +1280,38 @@ scan_number_done:
         // we are done scanning a number)
         unget();
 
+        // If the caller does not need the converted value (only whether the
+        // input is syntactically valid; see json_sax_acceptor/accept()), an
+        // unsigned/integer token can be reported without calling
+        // strtoull()/strtoll() at all, *provided* we can already tell from
+        // the digit count alone that the conversion cannot overflow 64 bits.
+        // Such tokens are always finite and are accepted unconditionally by
+        // the parser regardless of their actual value (parser::sax_parse_internal()
+        // never checks finiteness for value_unsigned/value_integer), so the
+        // classification below is all that is needed.
+        //
+        // A decimal number with up to 18 digits is always representable in
+        // both std::uint64_t and std::int64_t (18 nines is ~1e18, well below
+        // both UINT64_MAX ~1.8e19 and INT64_MAX ~9.2e18), so strtoull()/strtoll()
+        // could not have set errno to ERANGE for it. Numbers with more digits
+        // (rare in practice) fall through to the exact code below, unchanged,
+        // so their handling -- including reclassification to value_float when
+        // the value overflows 64 bits, and rejection when it is not even
+        // finite as a double -- is bit-for-bit identical to before this
+        // optimization.
+        if (discard_number_values)
+        {
+            constexpr std::size_t safe_digit_count = 18;
+            if (number_type == token_type::value_unsigned && token_buffer.size() <= safe_digit_count)
+            {
+                return token_type::value_unsigned;
+            }
+            if (number_type == token_type::value_integer && token_buffer.size() - 1 <= safe_digit_count)
+            {
+                return token_type::value_integer;
+            }
+        }
+
         char* endptr = nullptr; // NOLINT(misc-const-correctness,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
         errno = 0;
 
@@ -1754,6 +1787,13 @@ scan_number_done:
     const char_int_type decimal_point_char = '.';
     /// the position of the decimal point in the input
     std::size_t decimal_point_position = std::string::npos;
+
+    /// whether the caller (e.g. accept()/json_sax_acceptor) only needs the
+    /// token classification and never looks at the converted numeric value;
+    /// when set, scan_number() may skip strtoull()/strtoll() for
+    /// value_unsigned/value_integer tokens whose digit count guarantees they
+    /// fit into 64 bits (see scan_number())
+    const bool discard_number_values = false;
 };
 
 }  // namespace detail

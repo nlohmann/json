@@ -164,11 +164,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::parser_callback_t<basic_json>cb = nullptr,
         const bool allow_exceptions = true,
         const bool ignore_comments = false,
-        const bool ignore_trailing_commas = false
+        const bool ignore_trailing_commas = false,
+        const bool discard_number_values = false
     )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
-               std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
+               std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas, discard_number_values);
     }
 
   private:
@@ -4133,7 +4134,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                        const bool ignore_comments = false,
                        const bool ignore_trailing_commas = false)
     {
-        return parser(detail::input_adapter(std::forward<InputType>(i)), nullptr, false, ignore_comments, ignore_trailing_commas).accept(true);
+        return parser(detail::input_adapter(std::forward<InputType>(i)), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
     }
 
     /// @brief check if the input is valid JSON (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -4144,7 +4145,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                        const bool ignore_comments = false,
                        const bool ignore_trailing_commas = false)
     {
-        return parser(detail::input_adapter(std::move(first), std::move(last)), nullptr, false, ignore_comments, ignore_trailing_commas).accept(true);
+        return parser(detail::input_adapter(std::move(first), std::move(last)), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
     }
 
     JSON_HEDLEY_WARN_UNUSED_RESULT
@@ -4153,7 +4154,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                        const bool ignore_comments = false,
                        const bool ignore_trailing_commas = false)
     {
-        return parser(i.get(), nullptr, false, ignore_comments, ignore_trailing_commas).accept(true);
+        return parser(i.get(), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
     }
 
     /// @brief generate SAX events

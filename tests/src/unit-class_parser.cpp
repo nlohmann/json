@@ -930,6 +930,94 @@ TEST_CASE("parser class")
                 CHECK(accept_helper("+1") == false);
                 CHECK(accept_helper("+0") == false);
             }
+
+            SECTION("issue #5411 - skip conversion when accept() does not need the numeric value")
+            {
+                // lexer::scan_number() may skip strtoull()/strtoll() for
+                // value_unsigned/value_integer tokens when the caller (e.g.
+                // json::accept()) does not need the converted value, as long
+                // as the digit count alone guarantees no 64-bit overflow (see
+                // the "safe_digit_count" fast path in scan_number()). This
+                // differential test checks that json::accept() (which enables
+                // the fast path) and json::parse() (which never does) always
+                // agree, over a corpus that exercises both the fast path
+                // (<=18 digits) and the untouched, exact fallback path (>=19
+                // digits) -- including reclassification of huge digit-only
+                // integers to a (possibly non-finite) floating-point value.
+                const std::vector<std::pair<std::string, bool>> cases =
+                {
+                    // normal small/large integers, both signs
+                    {"0", true}, {"1", true}, {"-1", true}, {"42", true}, {"-42", true},
+                    {"123456789", true}, {"-123456789", true},
+
+                    // digit-count boundary around the 18-digit safe cutoff (both signs)
+                    {std::string(17, '9'), true},
+                    {std::string(18, '9'), true},
+                    {std::string(19, '9'), true},
+                    {std::string(20, '9'), true},
+                    {"-" + std::string(17, '9'), true},
+                    {"-" + std::string(18, '9'), true},
+                    {"-" + std::string(19, '9'), true},
+                    {"-" + std::string(20, '9'), true},
+
+                    // 64-bit boundaries
+                    {"9223372036854775807", true},    // INT64_MAX
+                    {"-9223372036854775808", true},   // INT64_MIN
+                    {"18446744073709551615", true},   // UINT64_MAX
+                    {"18446744073709551616", true},   // UINT64_MAX + 1 (overflows uint64_t, finite double)
+
+                    // the 28-digit example from the issue: overflows uint64_t
+                    // but is finite as a double, so the scanner reclassifies
+                    // it to value_float and it is accepted
+                    {"9999999999999999999999999999", true},
+
+                    // huge digit-only integers that overflow even a double -> rejected
+                    {std::string(309, '9'), false},
+                    {std::string(400, '9'), false},
+                    {"1" + std::string(400, '0'), false},
+
+                    // 1e999 / 1e400 style overflow -> rejected
+                    {"1e999", false},
+                    {"1e400", false},
+                    {"-1e999", false},
+                    {"1E999", false},
+
+                    // values straddling DBL_MAX
+                    {"1.7976931348623157e308", true},   // <= DBL_MAX, finite
+                    {"1.7976931348623159e308", false},  // > DBL_MAX, overflows to inf
+
+                    // a mix of other valid/invalid numeric syntax
+                    {"3.14159", true},
+                    {"-0.0", true},
+                    {"1.0e10", true},
+                    {"01", false},
+                    {"-", false},
+                    {"1.", false},
+                    {"1e", false},
+                    {"+1", false},
+                };
+
+                for (const auto& c : cases)
+                {
+                    const std::string& number = c.first;
+                    const bool expected = c.second;
+                    CAPTURE(number)
+                    CAPTURE(expected)
+
+                    // accept() takes the fast path (skips conversion when possible)
+                    CHECK(json::accept(number) == expected);
+
+                    // parse() always performs the full conversion; it must agree
+                    json j;
+                    CHECK_NOTHROW(json::parser(nlohmann::detail::input_adapter(number), nullptr, false).parse(true, j));
+                    CHECK(!j.is_discarded() == expected);
+
+                    // wrap in an array so get_token() is exercised beyond the
+                    // very first (constructor-time) scan as well
+                    const std::string wrapped = "[" + number + "," + number + "]";
+                    CHECK(json::accept(wrapped) == expected);
+                }
+            }
         }
     }
 
