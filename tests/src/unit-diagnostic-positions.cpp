@@ -8,7 +8,9 @@
 
 #include "doctest_compatibility.h"
 
-#define JSON_DIAGNOSTICS 1
+#ifndef JSON_DIAGNOSTICS
+    #define JSON_DIAGNOSTICS 1
+#endif
 #define JSON_DIAGNOSTIC_POSITIONS 1
 #include <nlohmann/json.hpp>
 
@@ -27,8 +29,13 @@ TEST_CASE("Better diagnostics with positions")
         }
         )";
         json j = json::parse(json_invalid_string);
+#if JSON_DIAGNOSTICS
         CHECK_THROWS_WITH_AS(j.at("address").at("housenumber").get<int>(),
                              "[json.exception.type_error.302] (/address/housenumber) (bytes 108-111) type must be number, but is string", json::type_error);
+#else
+        CHECK_THROWS_WITH_AS(j.at("address").at("housenumber").get<int>(),
+                             "[json.exception.type_error.302] (bytes 108-111) type must be number, but is string", json::type_error);
+#endif
     }
 
     SECTION("invalid type without positions")
@@ -74,7 +81,12 @@ TEST_CASE("Better diagnostics with positions")
         // (/foo/bar); the position of that parent is reported in the message
         const json doc = json::parse(R"({"foo":{"bar":"a string"}})");
         const json patch = json::parse(R"([{"op":"add","path":"/foo/bar/baz","value":1}])");
+#if JSON_DIAGNOSTICS
         CHECK_THROWS_WITH_AS(doc.patch(patch),
                              "[json.exception.out_of_range.411] (/foo/bar) (bytes 14-24) cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array", json::out_of_range);
+#else
+        CHECK_THROWS_WITH_AS(doc.patch(patch),
+                             "[json.exception.out_of_range.411] (bytes 14-24) cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array", json::out_of_range);
+#endif
     }
 }
