@@ -2746,6 +2746,39 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(json::to_bjdata(j_size), true, true) == j_size);
             }
 
+            SECTION("ndarray whose _ArrayType_ is not a string stays as object")
+            {
+                // the type name is looked up as a string below the annotation
+                // check; a non-string _ArrayType_ cannot name a known dtype,
+                // so calling get<string_t>() on it would throw type_error.302
+                // instead of falling back like an unrecognized type name
+                // already does (see GitHub issue #5398)
+                json const j_number = json({{"_ArrayType_", 1}, {"_ArraySize_", {2}}, {"_ArrayData_", {1, 2}}});
+                const auto out_number = json::to_bjdata(j_number);
+                CHECK(out_number.at(0) == '{');
+                CHECK(json::from_bjdata(out_number) == j_number);
+
+                json const j_null = json({{"_ArrayType_", nullptr}, {"_ArraySize_", {2}}, {"_ArrayData_", {1, 2}}});
+                const auto out_null = json::to_bjdata(j_null);
+                CHECK(out_null.at(0) == '{');
+                CHECK(json::from_bjdata(out_null) == j_null);
+
+                json const j_bool = json({{"_ArrayType_", true}, {"_ArraySize_", {2}}, {"_ArrayData_", {1, 2}}});
+                const auto out_bool = json::to_bjdata(j_bool);
+                CHECK(out_bool.at(0) == '{');
+                CHECK(json::from_bjdata(out_bool) == j_bool);
+
+                json const j_array = json({{"_ArrayType_", {"uint8"}}, {"_ArraySize_", {2}}, {"_ArrayData_", {1, 2}}});
+                const auto out_array = json::to_bjdata(j_array);
+                CHECK(out_array.at(0) == '{');
+                CHECK(json::from_bjdata(out_array) == j_array);
+
+                json const j_object = json({{"_ArrayType_", {{"a", 1}}}, {"_ArraySize_", {2}}, {"_ArrayData_", {1, 2}}});
+                const auto out_object = json::to_bjdata(j_object);
+                CHECK(out_object.at(0) == '{');
+                CHECK(json::from_bjdata(out_object) == j_object);
+            }
+
             SECTION("ndarray whose dimensions overflow stays as object")
             {
                 // the product of the dimensions wraps around std::size_t to 0
