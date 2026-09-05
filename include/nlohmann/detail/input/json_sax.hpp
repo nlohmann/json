@@ -222,14 +222,16 @@ class json_sax_dom_parser
 
     bool string(string_t& val)
     {
-        // the interface allows moving the value (see json_sax::string), which
-        // hands the lexer's buffer to the new value instead of copying it
+        // json_sax documents that the passed value may be moved from,
+        // so hand the buffer over instead of copying it
         handle_value(std::move(val));
         return true;
     }
 
     bool binary(binary_t& val)
     {
+        // json_sax documents that the passed value may be moved from,
+        // so hand the buffer over instead of copying it
         handle_value(std::move(val));
         return true;
     }
@@ -534,13 +536,16 @@ class json_sax_dom_callback_parser
 
     bool string(string_t& val)
     {
-        // see json_sax_dom_parser::string()
+        // json_sax documents that the passed value may be moved from,
+        // so hand the buffer over instead of copying it
         handle_value(std::move(val));
         return true;
     }
 
     bool binary(binary_t& val)
     {
+        // json_sax documents that the passed value may be moved from,
+        // so hand the buffer over instead of copying it
         handle_value(std::move(val));
         return true;
     }
