@@ -304,8 +304,8 @@ TEST_CASE("Unicode (3/5)" * doctest::skip())
                         {
                             for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
                             {
-                                // skip fourth second byte
-                                if (0x80 <= byte3 && byte3 <= 0xBF)
+                                // skip correct fourth byte
+                                if (0x80 <= byte4 && byte4 <= 0xBF)
                                 {
                                     continue;
                                 }
