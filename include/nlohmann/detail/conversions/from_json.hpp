@@ -72,7 +72,7 @@ void from_json(const BasicJsonType& j, std::optional<T>& opt)
 
 // overloads for basic_json template parameters
 template < typename BasicJsonType, typename ArithmeticType,
-           enable_if_t < std::is_arithmetic<ArithmeticType>::value&&
+           enable_if_t < std::numeric_limits<ArithmeticType>::is_specialized&&
                          !std::is_same<ArithmeticType, typename BasicJsonType::boolean_t>::value,
                          int > = 0 >
 void get_arithmetic_value(const BasicJsonType& j, ArithmeticType& val)
