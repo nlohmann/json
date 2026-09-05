@@ -641,6 +641,20 @@ TEST_CASE("modifiers")
                 CHECK_THROWS_WITH_AS(j_array.insert(j_array.end(), j_other_array.begin(), j_other_array2.end()), "[json.exception.invalid_iterator.210] iterators do not fit",
                                      json::invalid_iterator&);
             }
+
+            SECTION("iterators not pointing into an array")
+            {
+                json j_object2 = {{"k", 1}, {"l", 2}};
+                json j_primitive = 5;
+                json j_null;
+
+                CHECK_THROWS_WITH_AS(j_array.insert(j_array.begin(), j_object2.begin(), j_object2.end()), "[json.exception.invalid_iterator.202] iterators first and last must point to arrays",
+                                     json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(j_array.insert(j_array.begin(), j_primitive.begin(), j_primitive.end()), "[json.exception.invalid_iterator.202] iterators first and last must point to arrays",
+                                     json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(j_array.insert(j_array.begin(), j_null.begin(), j_null.end()), "[json.exception.invalid_iterator.202] iterators first and last must point to arrays",
+                                     json::invalid_iterator&);
+            }
         }
 
         SECTION("range for object")
