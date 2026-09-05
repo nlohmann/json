@@ -71,7 +71,7 @@ class serializer
         , thousands_sep(loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->thousands_sep)))
         , decimal_point(loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->decimal_point)))
         , indent_char(ichar)
-        , indent_string(512, indent_char)
+        , indent_string()
         , error_handler(error_handler_)
     {}
 
@@ -126,6 +126,10 @@ class serializer
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
+                    if (JSON_HEDLEY_UNLIKELY(indent_string.empty()))
+                    {
+                        indent_string.resize(512, indent_char);
+                    }
                     if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
                     {
                         indent_string.resize(indent_string.size() * 2, ' ');
@@ -199,6 +203,10 @@ class serializer
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
+                    if (JSON_HEDLEY_UNLIKELY(indent_string.empty()))
+                    {
+                        indent_string.resize(512, indent_char);
+                    }
                     if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
                     {
                         indent_string.resize(indent_string.size() * 2, ' ');
@@ -260,6 +268,10 @@ class serializer
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
+                    if (JSON_HEDLEY_UNLIKELY(indent_string.empty()))
+                    {
+                        indent_string.resize(512, indent_char);
+                    }
                     if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
                     {
                         indent_string.resize(indent_string.size() * 2, ' ');
@@ -1010,7 +1022,7 @@ class serializer
 
     /// the indentation character
     const char indent_char;
-    /// the indentation string
+    /// the indentation string (lazily allocated on first use by a pretty-print branch)
     string_t indent_string;
 
     /// error_handler how to react on decoding errors

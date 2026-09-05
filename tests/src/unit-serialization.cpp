@@ -14,6 +14,40 @@ using nlohmann::json;
 #include <array>
 #include <sstream>
 #include <iomanip>
+#include <cstdlib>
+#include <new>
+
+namespace
+{
+// heap allocation counter used by the regression test for issue #5413
+// (https://github.com/nlohmann/json/issues/5413); disabled (and thus a
+// no-op besides the counting) unless explicitly toggled on
+bool count_heap_allocations = false; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+std::size_t heap_allocations = 0; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+} // namespace
+
+void* operator new (std::size_t size) // NOLINT(cppcoreguidelines-owning-memory,misc-new-delete-overloads)
+{
+    if (count_heap_allocations)
+    {
+        ++heap_allocations;
+    }
+    if (void* ptr = std::malloc(size)) // NOLINT(cppcoreguidelines-no-malloc,cppcoreguidelines-owning-memory)
+    {
+        return ptr;
+    }
+    throw std::bad_alloc(); // NOLINT(hicpp-exception-baseclass)
+}
+
+void operator delete (void* ptr) noexcept // NOLINT(cppcoreguidelines-owning-memory,misc-new-delete-overloads)
+{
+    std::free(ptr); // NOLINT(cppcoreguidelines-no-malloc,cppcoreguidelines-owning-memory)
+}
+
+void operator delete (void* ptr, std::size_t /*size*/) noexcept // NOLINT(cppcoreguidelines-owning-memory,misc-new-delete-overloads)
+{
+    std::free(ptr); // NOLINT(cppcoreguidelines-no-malloc,cppcoreguidelines-owning-memory)
+}
 
 TEST_CASE("serialization")
 {
@@ -380,5 +414,78 @@ TEST_CASE("dump for basic_json with long double number_float_t")
         check_same(-2.25L, -2.25);
         check_same(1.0L,    1.0);
         check_same(100.0L,  100.0);
+    }
+}
+
+TEST_CASE("regression test for issue #5413 - lazily allocated indent_string")
+{
+    // the serializer used to unconditionally allocate a 512-byte
+    // indent_string in its constructor, even though it is only ever read
+    // inside the pretty_print branches of dump(). This wasted a heap
+    // allocation (and its matching deallocation) on every single compact
+    // (i.e. non-pretty, the default) dump() call. indent_string is now
+    // allocated lazily, the first time a pretty-print branch actually
+    // needs it -- so a compact dump() must perform strictly fewer heap
+    // allocations than a pretty dump() of the same value.
+    const json j = {{"level", "info"}, {"msg", "hello world"}, {"id", 12345}};
+
+    // warm up anything unrelated to indentation (e.g., one-time locale
+    // lookups) that might otherwise allocate on first use regardless of
+    // pretty-printing, so it does not skew the counts measured below
+    const auto warmup = j.dump();
+    const auto warmup_pretty = j.dump(4);
+    CHECK(!warmup.empty());
+    CHECK(!warmup_pretty.empty());
+
+    SECTION("compact dump() has a stable, minimal allocation count")
+    {
+        count_heap_allocations = true;
+
+        heap_allocations = 0;
+        const auto compact1 = j.dump();
+        const auto allocs_compact1 = heap_allocations;
+
+        heap_allocations = 0;
+        const auto compact2 = j.dump(-1);
+        const auto allocs_compact2 = heap_allocations;
+
+        count_heap_allocations = false;
+
+        CHECK(compact1 == compact2);
+        // dump() and dump(-1) both take the compact code path and must
+        // never touch indent_string, so they allocate identically often
+        CHECK(allocs_compact1 == allocs_compact2);
+    }
+
+    SECTION("first pretty dump() allocates more than a compact dump()")
+    {
+        // use a tiny value whose compact ({"a":1}, 7 bytes) and pretty
+        // ({"a": 1} with 1-space indent, 11 bytes) serializations both stay
+        // well inside every common std::string small-string-optimization
+        // buffer (>= 15 bytes on libstdc++/MSVC STL, >= 22 on libc++), so
+        // building the result string itself causes no heap allocation
+        // either way -- isolating indent_string as the only thing that can
+        // possibly account for a difference in allocation count
+        const json tiny = {{"a", 1}};
+
+        count_heap_allocations = true;
+
+        heap_allocations = 0;
+        const auto compact = tiny.dump();
+        const auto allocs_compact = heap_allocations;
+
+        heap_allocations = 0;
+        const auto pretty = tiny.dump(1);
+        const auto allocs_pretty = heap_allocations;
+
+        count_heap_allocations = false;
+
+        CHECK(compact == "{\"a\":1}");
+        CHECK(pretty == "{\n \"a\": 1\n}");
+        // a fresh serializer is created per dump() call; the pretty branch
+        // lazily allocates indent_string on its first use, so it must
+        // allocate at least once more than the compact branch, which never
+        // touches indent_string at all
+        CHECK(allocs_pretty > allocs_compact);
     }
 }
