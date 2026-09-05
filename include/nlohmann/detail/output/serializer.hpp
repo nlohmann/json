@@ -68,8 +68,8 @@ class serializer
                error_handler_t error_handler_ = error_handler_t::strict)
         : o(std::move(s))
         , loc(std::localeconv())
-        , thousands_sep(loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->thousands_sep)))
-        , decimal_point(loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->decimal_point)))
+        , thousands_sep(loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type( * (loc->thousands_sep)))
+        , decimal_point(loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type( * (loc->decimal_point)))
         , indent_char(ichar)
         , indent_string(512, indent_char)
         , error_handler(error_handler_)
@@ -104,272 +104,326 @@ class serializer
     @param[in] indent_step       the indent level
     @param[in] current_indent    the current indent level (only used internally)
     */
-    void dump(const BasicJsonType& val,
+    void dump(const BasicJsonType& start_val,
               const bool pretty_print,
               const bool ensure_ascii,
               const unsigned int indent_step,
-              const unsigned int current_indent = 0)
+              const unsigned int start_indent = 0)
     {
-        switch (val.m_data.m_type)
+        struct dump_state
         {
-            case value_t::object:
+            dump_state(const BasicJsonType& v, unsigned int indent, unsigned int off = 0, decltype(start_val.m_data.m_value.object->cbegin()) it = {})
+                : val(v), new_indent(indent), offset(off), iterator(it)
             {
-                if (val.m_data.m_value.object->empty())
-                {
-                    o->write_characters("{}", 2);
-                    return;
-                }
-
-                if (pretty_print)
-                {
-                    o->write_characters("{\n", 2);
-
-                    // variable to hold indentation for recursive calls
-                    const auto new_indent = current_indent + indent_step;
-                    if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
-                    {
-                        indent_string.resize(indent_string.size() * 2, ' ');
-                    }
-
-                    // first n-1 elements
-                    auto i = val.m_data.m_value.object->cbegin();
-                    for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
-                    {
-                        o->write_characters(indent_string.c_str(), new_indent);
-                        o->write_character('\"');
-                        dump_escaped(i->first, ensure_ascii);
-                        o->write_characters("\": ", 3);
-                        dump(i->second, true, ensure_ascii, indent_step, new_indent);
-                        o->write_characters(",\n", 2);
-                    }
-
-                    // last element
-                    JSON_ASSERT(i != val.m_data.m_value.object->cend());
-                    JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
-                    o->write_characters(indent_string.c_str(), new_indent);
-                    o->write_character('\"');
-                    dump_escaped(i->first, ensure_ascii);
-                    o->write_characters("\": ", 3);
-                    dump(i->second, true, ensure_ascii, indent_step, new_indent);
-
-                    o->write_character('\n');
-                    o->write_characters(indent_string.c_str(), current_indent);
-                    o->write_character('}');
-                }
-                else
-                {
-                    o->write_character('{');
-
-                    // first n-1 elements
-                    auto i = val.m_data.m_value.object->cbegin();
-                    for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
-                    {
-                        o->write_character('\"');
-                        dump_escaped(i->first, ensure_ascii);
-                        o->write_characters("\":", 2);
-                        dump(i->second, false, ensure_ascii, indent_step, current_indent);
-                        o->write_character(',');
-                    }
-
-                    // last element
-                    JSON_ASSERT(i != val.m_data.m_value.object->cend());
-                    JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
-                    o->write_character('\"');
-                    dump_escaped(i->first, ensure_ascii);
-                    o->write_characters("\":", 2);
-                    dump(i->second, false, ensure_ascii, indent_step, current_indent);
-
-                    o->write_character('}');
-                }
-
-                return;
             }
 
-            case value_t::array:
+
+            const BasicJsonType& val;
+            const unsigned int new_indent;
+            const unsigned int offset;
+            const decltype(start_val.m_data.m_value.object->cbegin()) iterator;
+        };
+        std::vector<dump_state> stack;
+        stack.push_back(dump_state(start_val, start_indent));
+
+        while (!stack.empty())
+        {
+            const dump_state& state = stack.back();
+            const BasicJsonType& val = state.val;
+            const unsigned int current_indent = state.new_indent;
+            const unsigned int offset = state.offset;
+            auto iterator = state.iterator;
+            stack.pop_back();
+
+            switch (val.m_data.m_type)
             {
-                if (val.m_data.m_value.array->empty())
+                case value_t::object:
                 {
-                    o->write_characters("[]", 2);
-                    return;
-                }
-
-                if (pretty_print)
-                {
-                    o->write_characters("[\n", 2);
-
-                    // variable to hold indentation for recursive calls
-                    const auto new_indent = current_indent + indent_step;
-                    if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
+                    if (val.m_data.m_value.object->empty())
                     {
-                        indent_string.resize(indent_string.size() * 2, ' ');
+                        o->write_characters("{}", 2);
+                        continue;
                     }
 
-                    // first n-1 elements
-                    for (auto i = val.m_data.m_value.array->cbegin();
-                            i != val.m_data.m_value.array->cend() - 1; ++i)
+                    if (pretty_print)
                     {
-                        o->write_characters(indent_string.c_str(), new_indent);
-                        dump(*i, true, ensure_ascii, indent_step, new_indent);
-                        o->write_characters(",\n", 2);
-                    }
-
-                    // last element
-                    JSON_ASSERT(!val.m_data.m_value.array->empty());
-                    o->write_characters(indent_string.c_str(), new_indent);
-                    dump(val.m_data.m_value.array->back(), true, ensure_ascii, indent_step, new_indent);
-
-                    o->write_character('\n');
-                    o->write_characters(indent_string.c_str(), current_indent);
-                    o->write_character(']');
-                }
-                else
-                {
-                    o->write_character('[');
-
-                    // first n-1 elements
-                    for (auto i = val.m_data.m_value.array->cbegin();
-                            i != val.m_data.m_value.array->cend() - 1; ++i)
-                    {
-                        dump(*i, false, ensure_ascii, indent_step, current_indent);
-                        o->write_character(',');
-                    }
-
-                    // last element
-                    JSON_ASSERT(!val.m_data.m_value.array->empty());
-                    dump(val.m_data.m_value.array->back(), false, ensure_ascii, indent_step, current_indent);
-
-                    o->write_character(']');
-                }
-
-                return;
-            }
-
-            case value_t::string:
-            {
-                o->write_character('\"');
-                dump_escaped(*val.m_data.m_value.string, ensure_ascii);
-                o->write_character('\"');
-                return;
-            }
-
-            case value_t::binary:
-            {
-                if (pretty_print)
-                {
-                    o->write_characters("{\n", 2);
-
-                    // variable to hold indentation for recursive calls
-                    const auto new_indent = current_indent + indent_step;
-                    if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
-                    {
-                        indent_string.resize(indent_string.size() * 2, ' ');
-                    }
-
-                    o->write_characters(indent_string.c_str(), new_indent);
-
-                    o->write_characters("\"bytes\": [", 10);
-
-                    if (!val.m_data.m_value.binary->empty())
-                    {
-                        for (auto i = val.m_data.m_value.binary->cbegin();
-                                i != val.m_data.m_value.binary->cend() - 1; ++i)
+                        // variable to hold indentation for recursive calls
+                        unsigned int new_indent = current_indent;
+                        auto i = val.m_data.m_value.object->cbegin();
+                        if (offset == 0)
                         {
-                            dump_integer(*i);
-                            o->write_characters(", ", 2);
+                            o->write_characters("{\n", 2);
+
+                            new_indent = current_indent + indent_step;
+                            if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
+                            {
+                                indent_string.resize(indent_string.size() * 2, ' ');
+                            }
                         }
-                        dump_integer(val.m_data.m_value.binary->back());
-                    }
+                        else if (offset < val.m_data.m_value.object->size())
+                        {
+                            o->write_characters(",\n", 2);
+                            i = iterator;
+                        }
 
-                    o->write_characters("],\n", 3);
-                    o->write_characters(indent_string.c_str(), new_indent);
-
-                    o->write_characters("\"subtype\": ", 11);
-                    if (val.m_data.m_value.binary->has_subtype())
-                    {
-                        dump_integer(val.m_data.m_value.binary->subtype());
+                        // first n-1 elements
+                        if (offset < val.m_data.m_value.object->size() - 1)
+                        {
+                            o->write_characters(indent_string.c_str(), new_indent);
+                            o->write_character('\"');
+                            dump_escaped(i->first, ensure_ascii);
+                            o->write_characters("\": ", 3);
+                            stack.push_back(dump_state(val, new_indent, offset + 1, std::next(i)));
+                            stack.push_back(dump_state(i->second, new_indent, 0));
+                            continue;
+                        }
+                        else if (offset < val.m_data.m_value.object->size())
+                        {
+                            // last element
+                            JSON_ASSERT(i != val.m_data.m_value.object->cend());
+                            JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
+                            o->write_characters(indent_string.c_str(), new_indent);
+                            o->write_character('\"');
+                            dump_escaped(i->first, ensure_ascii);
+                            o->write_characters("\": ", 3);
+                            stack.push_back(dump_state(val, new_indent, offset + 1, std::next(i)));
+                            stack.push_back(dump_state(i->second, new_indent));
+                            continue;
+                        }
+                        else
+                        {
+                            o->write_character('\n');
+                            o->write_characters(indent_string.c_str(), new_indent - indent_step);
+                            o->write_character('}');
+                        }
                     }
                     else
                     {
-                        o->write_characters("null", 4);
-                    }
-                    o->write_character('\n');
-                    o->write_characters(indent_string.c_str(), current_indent);
-                    o->write_character('}');
-                }
-                else
-                {
-                    o->write_characters("{\"bytes\":[", 10);
-
-                    if (!val.m_data.m_value.binary->empty())
-                    {
-                        for (auto i = val.m_data.m_value.binary->cbegin();
-                                i != val.m_data.m_value.binary->cend() - 1; ++i)
+                        auto i = val.m_data.m_value.object->cbegin();
+                        if (offset == 0)
                         {
-                            dump_integer(*i);
+                            o->write_character('{');
+                        }
+                        else if (offset < val.m_data.m_value.object->size())
+                        {
+                            i = iterator;
                             o->write_character(',');
                         }
-                        dump_integer(val.m_data.m_value.binary->back());
+
+                        if (offset < val.m_data.m_value.object->size())
+                        {
+                            o->write_character('\"');
+                            dump_escaped(i->first, ensure_ascii);
+                            o->write_characters("\":", 2);
+                            stack.push_back(dump_state(val,  current_indent, offset + 1, std::next(i)));
+                            stack.push_back(dump_state( i->second, current_indent, 0));
+                            continue;
+                        }
+                        else
+                        {
+                            o->write_character('}');
+                        }
                     }
 
-                    o->write_characters("],\"subtype\":", 12);
-                    if (val.m_data.m_value.binary->has_subtype())
+                    continue;
+                }
+
+                case value_t::array:
+                {
+                    if (val.m_data.m_value.array->empty())
                     {
-                        dump_integer(val.m_data.m_value.binary->subtype());
+                        o->write_characters("[]", 2);
+                        continue;
+                    }
+
+                    if (pretty_print)
+                    {
+                        // variable to hold indentation for recursive calls
+                        unsigned int new_indent = current_indent;
+                        if (offset == 0)
+                        {
+                            o->write_characters("[\n", 2);
+
+                            new_indent = current_indent + indent_step;
+                            if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
+                            {
+                                indent_string.resize(indent_string.size() * 2, ' ');
+                            }
+                        }
+                        else if (offset < val.m_data.m_value.array->size())
+                        {
+                            o->write_characters(",\n", 2);
+                        }
+
+                        if (offset < val.m_data.m_value.array->size())
+                        {
+                            o->write_characters(indent_string.c_str(), new_indent);
+                            stack.push_back(dump_state(val, new_indent, offset + 1));
+                            stack.push_back(dump_state( ( *val.m_data.m_value.array)[offset], new_indent));
+                            continue;
+                        }
+                        else
+                        {
+                            o->write_character('\n');
+                            o->write_characters(indent_string.c_str(), new_indent - indent_step);
+                            o->write_character(']');
+                        }
+                    }
+                    else
+                    {
+                        if (offset == 0)
+                        {
+                            o->write_character('[');
+                        }
+                        else if (offset < val.m_data.m_value.array->size())
+                        {
+                            o->write_character(',');
+                        }
+                        if (offset < val.m_data.m_value.array->size())
+                        {
+                            stack.push_back(dump_state( val, current_indent, offset + 1));
+
+                            stack.push_back(dump_state( (* val.m_data.m_value.array)[offset], current_indent));
+                            continue;
+                        }
+                        else
+                        {
+                            o->write_character(']');
+                        }
+                    }
+
+                    continue;
+                }
+
+                case value_t::string:
+                {
+                    o->write_character('\"');
+                    dump_escaped( * val.m_data.m_value.string, ensure_ascii);
+                    o->write_character('\"');
+                    continue;
+                }
+
+                case value_t::binary:
+                {
+                    if (pretty_print)
+                    {
+                        o->write_characters("{\n", 2);
+
+                        // variable to hold indentation for recursive calls
+                        const auto new_indent = current_indent + indent_step;
+                        if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
+                        {
+                            indent_string.resize(indent_string.size() * 2, ' ');
+                        }
+
+                        o->write_characters(indent_string.c_str(), new_indent);
+
+                        o->write_characters("\"bytes\": [", 10);
+
+                        if (!val.m_data.m_value.binary->empty())
+                        {
+                            for (auto i = val.m_data.m_value.binary->cbegin();
+                                    i != val.m_data.m_value.binary->cend() - 1;
+                                    ++i)
+                            {
+                                dump_integer( * i);
+                                o->write_characters(", ", 2);
+                            }
+                            dump_integer(val.m_data.m_value.binary->back());
+                        }
+
+                        o->write_characters("],\n", 3);
+                        o->write_characters(indent_string.c_str(), new_indent);
+
+                        o->write_characters("\"subtype\": ", 11);
+                        if (val.m_data.m_value.binary->has_subtype())
+                        {
+                            dump_integer(val.m_data.m_value.binary->subtype());
+                        }
+                        else
+                        {
+                            o->write_characters("null", 4);
+                        }
+                        o->write_character('\n');
+                        o->write_characters(indent_string.c_str(), current_indent);
                         o->write_character('}');
                     }
                     else
                     {
-                        o->write_characters("null}", 5);
+                        o->write_characters("{\"bytes\":[", 10);
+
+                        if (!val.m_data.m_value.binary->empty())
+                        {
+                            for (auto i = val.m_data.m_value.binary->cbegin();
+                                    i != val.m_data.m_value.binary->cend() - 1;
+                                    ++i)
+                            {
+                                dump_integer( * i);
+                                o->write_character(',');
+                            }
+                            dump_integer(val.m_data.m_value.binary->back());
+                        }
+
+                        o->write_characters("],\"subtype\":", 12);
+                        if (val.m_data.m_value.binary->has_subtype())
+                        {
+                            dump_integer(val.m_data.m_value.binary->subtype());
+                            o->write_character('}');
+                        }
+                        else
+                        {
+                            o->write_characters("null}", 5);
+                        }
                     }
+                    continue;
                 }
-                return;
-            }
 
-            case value_t::boolean:
-            {
-                if (val.m_data.m_value.boolean)
+                case value_t::boolean:
                 {
-                    o->write_characters("true", 4);
+                    if (val.m_data.m_value.boolean)
+                    {
+                        o->write_characters("true", 4);
+                    }
+                    else
+                    {
+                        o->write_characters("false", 5);
+                    }
+                    continue;
                 }
-                else
+
+                case value_t::number_integer:
                 {
-                    o->write_characters("false", 5);
+                    dump_integer(val.m_data.m_value.number_integer);
+                    continue;
                 }
-                return;
-            }
 
-            case value_t::number_integer:
-            {
-                dump_integer(val.m_data.m_value.number_integer);
-                return;
-            }
+                case value_t::number_unsigned:
+                {
+                    dump_integer(val.m_data.m_value.number_unsigned);
+                    continue;
+                }
 
-            case value_t::number_unsigned:
-            {
-                dump_integer(val.m_data.m_value.number_unsigned);
-                return;
-            }
+                case value_t::number_float:
+                {
+                    dump_float(val.m_data.m_value.number_float);
+                    continue;
+                }
 
-            case value_t::number_float:
-            {
-                dump_float(val.m_data.m_value.number_float);
-                return;
-            }
+                case value_t::discarded:
+                {
+                    o->write_characters("<discarded>", 11);
+                    continue;
+                }
 
-            case value_t::discarded:
-            {
-                o->write_characters("<discarded>", 11);
-                return;
-            }
+                case value_t::null:
+                {
+                    o->write_characters("null", 4);
+                    continue;
+                }
 
-            case value_t::null:
-            {
-                o->write_characters("null", 4);
-                return;
+                default:            // LCOV_EXCL_LINE
+                    JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
             }
-
-            default:            // LCOV_EXCL_LINE
-                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
     }
 
@@ -765,7 +819,7 @@ class serializer
 
         if (is_negative_number(x))
         {
-            *buffer_ptr = '-';
+            * buffer_ptr = '-';
             abs_value = remove_sign(static_cast<number_integer_t>(x));
 
             // account one more byte for the minus sign
@@ -790,19 +844,19 @@ class serializer
         {
             const auto digits_index = static_cast<unsigned>((abs_value % 100));
             abs_value /= 100;
-            *(--buffer_ptr) = digits_to_99[digits_index][1];
-            *(--buffer_ptr) = digits_to_99[digits_index][0];
+            * (--buffer_ptr) = digits_to_99[digits_index][1];
+            * (--buffer_ptr) = digits_to_99[digits_index][0];
         }
 
         if (abs_value >= 10)
         {
             const auto digits_index = static_cast<unsigned>(abs_value);
-            *(--buffer_ptr) = digits_to_99[digits_index][1];
-            *(--buffer_ptr) = digits_to_99[digits_index][0];
+            * (--buffer_ptr) = digits_to_99[digits_index][1];
+            * (--buffer_ptr) = digits_to_99[digits_index][0];
         }
         else
         {
-            *(--buffer_ptr) = static_cast<char>('0' + abs_value);
+            * (--buffer_ptr) = static_cast<char>('0' + abs_value);
         }
 
         o->write_characters(number_buffer.data(), n_chars);
@@ -889,7 +943,7 @@ class serializer
             const auto dec_pos = std::find(number_buffer.begin(), number_buffer.end(), decimal_point);
             if (dec_pos != number_buffer.end())
             {
-                *dec_pos = '.';
+                * dec_pos = '.';
             }
         }
 
