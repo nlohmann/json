@@ -125,6 +125,45 @@ TEST_CASE("BSON")
         CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 10: syntax error while parsing BSON string: string length must be at least 1, is -2147483648", json::parse_error&);
     }
 
+    SECTION("non-zero boolean values are accepted")
+    {
+        std::vector<std::uint8_t> const input =
+        {
+            0x0D, 0x00, 0x00, 0x00,
+            0x08, 'v', 'a', 'l', 'u', 'e', 0x00, 0x02,
+            0x00
+        };
+        CHECK(json::from_bson(input) == json({{"value", true}}));
+    }
+
+    SECTION("array element keys are not required to be decimal indices")
+    {
+        std::vector<std::uint8_t> const input =
+        {
+            0x18, 0x00, 0x00, 0x00,
+            0x04, 'a', 'r', 'r', 'a', 'y', 0x00,
+            0x0C, 0x00, 0x00, 0x00,
+            0x10, 'x', 0x00, 0x2A, 0x00, 0x00, 0x00,
+            0x00,
+            0x00
+        };
+        CHECK(json::from_bson(input) == json({{"array", {42}}}));
+    }
+
+    SECTION("old binary subtype retains its inner length prefix")
+    {
+        std::vector<std::uint8_t> const input =
+        {
+            0x15, 0x00, 0x00, 0x00,
+            0x05, 'd', 'a', 't', 'a', 0x00,
+            0x05, 0x00, 0x00, 0x00, 0x02,
+            0x01, 0x00, 0x00, 0x00, 0x7F,
+            0x00
+        };
+        json expected = {{"data", json::binary({0x01, 0x00, 0x00, 0x00, 0x7F}, 0x02)}};
+        CHECK(json::from_bson(input) == expected);
+    }
+
     SECTION("objects")
     {
         SECTION("empty object")
