@@ -125,6 +125,43 @@ json_test_set_test_options(test-unicode4 TEST_PROPERTIES TIMEOUT 3000)
 # add unit tests
 #############################################################################
 
+# Generate leak checks for every JSON_HEDLEY_* macro defined in hedley.hpp.
+# unit-hedley.cpp includes the result after nlohmann/json.hpp. Reconfigure
+# when the vendor header or the generator changes so an incremental rebuild
+# after `make update_hedley` does not keep a stale macro list.
+set(hedley_hpp "${PROJECT_SOURCE_DIR}/include/nlohmann/thirdparty/hedley/hedley.hpp")
+set(hedley_undef_check_script "${PROJECT_SOURCE_DIR}/cmake/scripts/gen_hedley_undef_check.cmake")
+set(hedley_undef_checks "${PROJECT_BINARY_DIR}/include/hedley_undef_checks.inc")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${hedley_hpp}"
+    "${hedley_undef_check_script}")
+execute_process(
+    COMMAND ${CMAKE_COMMAND}
+        "-DHEDLEY_HPP=${hedley_hpp}"
+        "-DOUTPUT=${hedley_undef_checks}"
+        -DMODE=checks
+        -P "${hedley_undef_check_script}"
+    RESULT_VARIABLE hedley_undef_check_result
+)
+if(NOT hedley_undef_check_result EQUAL 0)
+    message(FATAL_ERROR "Failed to generate Hedley undef checks")
+endif()
+
+# Also generate at build time so a changed hedley.hpp is picked up even if
+# the configure-depends check does not re-run CMake (the exact incremental
+# `make update_hedley` then `cmake --build` path this test is meant to cover).
+add_custom_command(
+    OUTPUT "${hedley_undef_checks}"
+    COMMAND ${CMAKE_COMMAND}
+        "-DHEDLEY_HPP=${hedley_hpp}"
+        "-DOUTPUT=${hedley_undef_checks}"
+        -DMODE=checks
+        -P "${hedley_undef_check_script}"
+    DEPENDS "${hedley_hpp}" "${hedley_undef_check_script}"
+    COMMENT "Generating Hedley undef leak checks"
+    VERBATIM)
+add_custom_target(generate_hedley_undef_checks DEPENDS "${hedley_undef_checks}")
+
 if("${JSON_TestStandards}" STREQUAL "")
     set(test_cxx_standards 11 14 17 20 23)
     unset(test_force)
@@ -161,6 +198,12 @@ endif()
 
 foreach(file ${files})
     json_test_add_test_for(${file} MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force})
+endforeach()
+
+foreach(cxx_standard ${test_cxx_standards})
+    if(TARGET test-hedley_cpp${cxx_standard})
+        add_dependencies(test-hedley_cpp${cxx_standard} generate_hedley_undef_checks)
+    endif()
 endforeach()
 
 if(json_32bit_test_only)
