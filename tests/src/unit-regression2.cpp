@@ -1661,7 +1661,8 @@ TEST_CASE("regression test - excessive binary container size honors allow_except
     // declared length of 2^63 before it ever reaches the check this test
     // targets, with different (but equally valid, and already correct)
     // wording -- see unit-cbor.cpp for coverage of that message.
-    CHECK_THROWS_AS(json::from_cbor(cbor), json::out_of_range);
+    json _;
+    CHECK_THROWS_AS(_ = json::from_cbor(cbor), json::out_of_range);
 
     // regression guard: a genuinely truncated CBOR input must remain discarded
     CHECK(json::from_cbor(std::vector<std::uint8_t> {0x9b, 0, 0, 0, 0, 0, 0, 0, 0x02}, true, false).is_discarded());
