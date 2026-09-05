@@ -177,6 +177,24 @@ json_test_add_test_for(src/unit-comparison.cpp
     MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
 )
 
+# test the parser again with JSON_DIAGNOSTIC_POSITIONS enabled
+json_test_set_test_options(test-class_parser_diagnostic_positions
+    COMPILE_DEFINITIONS JSON_DIAGNOSTIC_POSITIONS=1
+)
+json_test_add_test_for(src/unit-class_parser.cpp
+    NAME test-class_parser_diagnostic_positions
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+
+# test diagnostic positions again without regular diagnostics (JSON pointer paths)
+json_test_set_test_options(test-diagnostic-positions_only
+    COMPILE_DEFINITIONS JSON_DIAGNOSTICS=0
+)
+json_test_add_test_for(src/unit-diagnostic-positions.cpp
+    NAME test-diagnostic-positions_only
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+
 # *DO NOT* use json_test_set_test_options() below this line
 
 #############################################################################
