@@ -21911,20 +21911,6 @@ class serializer
 
     @complexity Linear in the length of string @a s.
     */
-    /*!
-    @brief dump escaped string
-
-    Escape a string by replacing certain special characters by a sequence of an
-    escape character (backslash) and another character and other control
-    characters by a sequence of "\u" followed by a four-digit hex
-    representation. The escaped string is written to output stream @a o.
-
-    @param[in] s  the string to escape
-    @param[in] ensure_ascii  whether to escape non-ASCII characters with
-                             \uXXXX sequences
-
-    @complexity Linear in the length of string @a s.
-    */
     void dump_escaped(const string_t& s, const bool ensure_ascii)
     {
         // dispatch once here rather than test the flag inside the loop: it does
@@ -21940,6 +21926,12 @@ class serializer
         }
     }
 
+    /*!
+    @brief worker for @ref dump_escaped
+
+    @a ensure_ascii is a template parameter here so that the branch on it is
+    resolved once, outside the loop; see @ref dump_escaped.
+    */
     template<bool EnsureAscii>
     void dump_escaped_impl(const string_t& s)
     {
@@ -22307,7 +22299,7 @@ class serializer
 
     The length comes from the array bound rather than a hand-written count, so
     it cannot drift out of sync with the literal. A literal always fits into the
-    buffer (checked at compile time), so unlike @ref put_chars this needs no
+    buffer (checked at compile time), so unlike @ref put_string this needs no
     write-through path for oversized runs.
     */
     template<std::size_t N>
@@ -22329,43 +22321,21 @@ class serializer
     /*!
     @brief append the characters of @a str in [@a start, @a end)
 
-    Keeps the pointer arithmetic and the bounds checking inside the function
-    rather than at the call site, which is all @ref put_chars could offer.
+    The only way to append a run of characters: @a str carries its own bound,
+    so the range can be checked against it, which a bare pointer plus a count
+    could not do. Runs that do not fit the buffer are written straight through
+    the output adapter (after flushing what is pending), so large string and
+    number payloads are not copied an extra time.
     */
     template<typename StringType>
     void put_string(const StringType& str, std::size_t start, std::size_t end)
     {
         JSON_ASSERT(start <= end);
         JSON_ASSERT(end <= str.size());
-        put_chars(str.data() + start, end - start);
-    }
 
-    /*!
-    @brief append the first @a length characters of a fixed-size buffer
+        const char* const s = str.data() + start;
+        const std::size_t length = end - start;
 
-    Same as @ref put_chars, but the buffer carries its own bound, so the length
-    can be checked against it - which a bare pointer plus count cannot do.
-    */
-    template<std::size_t N>
-    void put_buffer(const std::array<char, N>& buffer, std::size_t length)
-    {
-        JSON_ASSERT(length <= N);
-        put_chars(buffer.data(), length);
-    }
-
-    /*!
-    @brief append @a length characters to the write buffer
-
-    Runs that do not fit the buffer are written straight through the output
-    adapter (after flushing what is pending), so large string/number payloads
-    are not copied an extra time.
-
-    The callers all reach this through @ref put_literal, @ref put_buffer or
-    @ref put_string, which each derive the length from something that knows it.
-    */
-    JSON_HEDLEY_NON_NULL(2)
-    void put_chars(const char* s, std::size_t length)
-    {
         if (JSON_HEDLEY_UNLIKELY(length >= write_buffer.size()))
         {
             flush();
@@ -22378,6 +22348,15 @@ class serializer
         }
         std::memcpy(write_buffer.data() + write_buffer_pos, s, length);
         write_buffer_pos += length;
+    }
+
+    /*!
+    @brief append the first @a length characters of a fixed-size buffer
+    */
+    template<std::size_t N>
+    void put_buffer(const std::array<char, N>& buffer, std::size_t length)
+    {
+        put_string(buffer, 0, length);
     }
 
   JSON_PRIVATE_UNLESS_TESTED:
@@ -22520,6 +22499,11 @@ class serializer
         }
 
         const auto byte = static_cast<unsigned>(value);
+        // Accumulate the offset in a local and store it back once. Writing
+        // through write_buffer[] is a char write, which may alias any object,
+        // so with the member updated in place the compiler has to reload and
+        // store it around every digit - measured 2.4x slower on a dump of a
+        // multi-megabyte binary value.
         std::size_t pos = write_buffer_pos;
 
         if (byte >= 100)
