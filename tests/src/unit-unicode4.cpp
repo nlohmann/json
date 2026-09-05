@@ -296,42 +296,23 @@ TEST_CASE("Unicode (4/5)" * doctest::skip())
 
             SECTION("ill-formed: wrong fourth byte")
             {
-                // The lexer (see next_byte_in_range() in lexer.hpp) validates the
-                // continuation bytes strictly in sequence and bails out on the first
-                // byte that is out of range. So once byte2 and byte3 are anywhere
-                // inside their own valid range, whether byte4 is accepted or rejected
-                // depends only on byte4's value -- not on which particular valid
-                // byte2/byte3 combination was used to reach it. Sweeping the full
-                // byte2 x byte3 combinatorics here (as the other "wrong Nth byte"
-                // sections do for the byte they target) would therefore add a huge
-                // number of iterations for zero additional coverage. Instead, byte2
-                // and byte3 are held to a small hedge of representative valid
-                // prefixes -- the corners and midpoint of their valid ranges -- while
-                // byte4 is still swept exhaustively over 0x00-0xFF, since "byte4 out
-                // of range is rejected for every value it could take" is the actual
-                // property under test. If the UTF-8 decoder is ever reworked (e.g.
-                // into a table-driven/bulk scanner), this equivalence-class
-                // assumption should be re-audited.
-                static const int byte2_values[] = {0x80, 0x80, 0xBF, 0xBF, 0xA0};
-                static const int byte3_values[] = {0x80, 0xBF, 0x80, 0xBF, 0xA0};
-
                 for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
                 {
-                    for (size_t idx = 0; idx < sizeof(byte2_values) / sizeof(byte2_values[0]); ++idx)
+                    for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
                     {
-                        const int byte2 = byte2_values[idx];
-                        const int byte3 = byte3_values[idx];
-
-                        for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
+                        for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
                         {
-                            // skip correct fourth byte
-                            if (0x80 <= byte4 && byte4 <= 0xBF)
+                            for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
                             {
-                                continue;
-                            }
+                                // skip correct fourth byte
+                                if (0x80 <= byte4 && byte4 <= 0xBF)
+                                {
+                                    continue;
+                                }
 
-                            check_utf8string(false, byte1, byte2, byte3, byte4);
-                            check_utf8dump(false, byte1, byte2, byte3, byte4);
+                                check_utf8string(false, byte1, byte2, byte3, byte4);
+                                check_utf8dump(false, byte1, byte2, byte3, byte4);
+                            }
                         }
                     }
                 }
