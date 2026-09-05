@@ -955,6 +955,71 @@ TEST_CASE("Unsupported BSON input")
     CHECK(!json::sax_parse(bson, &scp, json::input_format_t::bson));
 }
 
+TEST_CASE("Lenient BSON input handling")
+{
+    SECTION("any non-zero boolean byte is true")
+    {
+        std::vector<std::uint8_t> const bson =
+        {
+            0x09, 0x00, 0x00, 0x00, // size
+            0x08,                   // boolean
+            'b', '\x00',
+            0x02,                   // not 0x00 or 0x01
+            0x00                    // end marker
+        };
+
+        const auto j = json::from_bson(bson);
+        CHECK(j["b"] == true);
+    }
+
+    SECTION("array element keys are not checked against 0,1,2,...")
+    {
+        // Embedded array whose keys are "5", "x", "0" rather than "0","1","2".
+        // parse_bson_element_list(is_array=true) drops keys, so order is
+        // document order.
+        std::vector<std::uint8_t> const bson =
+        {
+            0x22, 0x00, 0x00, 0x00, // outer size
+            0x04,                   // array
+            'a', '\x00',
+            0x1A, 0x00, 0x00, 0x00, // array document size
+            0x10, '5', '\x00', 0x01, 0x00, 0x00, 0x00,
+            0x10, 'x', '\x00', 0x02, 0x00, 0x00, 0x00,
+            0x10, '0', '\x00', 0x03, 0x00, 0x00, 0x00,
+            0x00,                   // array end
+            0x00                    // outer end
+        };
+
+        const auto j = json::from_bson(bson);
+        CHECK(j["a"].is_array());
+        CHECK(j["a"] == json::array({1, 2, 3}));
+    }
+
+    SECTION("binary subtype 0x02 payload includes the inner length prefix")
+    {
+        // subtype 0x02 ("old binary"): payload is int32 length + bytes.
+        // from_bson returns that payload as-is, including the inner prefix.
+        std::vector<std::uint8_t> const bson =
+        {
+            0x14, 0x00, 0x00, 0x00, // outer size
+            0x05,                   // binary
+            'b', '\x00',
+            0x07, 0x00, 0x00, 0x00, // binary length (inner prefix + 3 bytes)
+            0x02,                   // old binary subtype
+            0x03, 0x00, 0x00, 0x00, // inner length
+            'a', 'b', 'c',
+            0x00                    // end marker
+        };
+
+        const auto j = json::from_bson(bson);
+        const auto& bin = j["b"].get_binary();
+        CHECK(bin.has_subtype());
+        CHECK(bin.subtype() == 0x02);
+        const std::vector<std::uint8_t> payload(bin.begin(), bin.end());
+        CHECK(payload == std::vector<std::uint8_t>({0x03, 0x00, 0x00, 0x00, 'a', 'b', 'c'}));
+    }
+}
+
 TEST_CASE("BSON document size mismatch")
 {
     json _;
