@@ -213,6 +213,24 @@ add_custom_target(ci_test_legacycomparison
 )
 
 ###############################################################################
+# Validate UTF-8 with simdutf.
+###############################################################################
+
+add_custom_target(ci_test_simdutf
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_TestSimdutf=ON
+    # simdutf needs C++17, so the library falls back to its scalar validator
+    # below that: build the suite at C++11 to cover the fallback with the macro
+    # defined, and at C++17 to run every test against simdutf itself
+    "-DJSON_TestStandards=11\;17"
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_simdutf
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_simdutf
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_simdutf && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with simdutf UTF-8 validation enabled"
+)
+
+###############################################################################
 # Enable brace-init copy semantics.
 ###############################################################################
 

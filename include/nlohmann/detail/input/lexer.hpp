@@ -19,7 +19,9 @@
 #include <vector> // vector
 
 #include <nlohmann/detail/input/input_adapters.hpp>
+#include <nlohmann/detail/input/number_parse.hpp>
 #include <nlohmann/detail/input/position_t.hpp>
+#include <nlohmann/detail/input/string_scan.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 
@@ -125,6 +127,25 @@ constexpr bool input_adapter_supports_seek(std::false_type /*detected*/)
     return false;
 }
 
+// Detect whether an input adapter exposes a contiguous byte block that the
+// lexer can scan directly (see iterator_input_adapter::supports_bulk_scan).
+// Adapters without the flag - file, stream, wide-string, user-defined - fall
+// back to the character-at-a-time string scanner.
+template<typename InputAdapterType>
+using detect_supports_bulk_scan = decltype(InputAdapterType::supports_bulk_scan);
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_bulk_scan(std::true_type /*detected*/)
+{
+    return InputAdapterType::supports_bulk_scan;
+}
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_bulk_scan(std::false_type /*detected*/)
+{
+    return false;
+}
+
 /*!
 @brief lexical analysis
 
@@ -145,6 +166,14 @@ class lexer : public lexer_base<BasicJsonType>
     /// character; see input_adapter_supports_seek
     static constexpr bool lazy_token_string =
         input_adapter_supports_seek<InputAdapterType>(is_detected<detect_supports_seek, InputAdapterType> {});
+
+    /// whether string scanning may bulk-consume runs of ordinary characters
+    /// directly from a contiguous input buffer (SWAR fast path). This requires
+    /// the token to be reconstructible lazily (lazy_token_string), so bypassing
+    /// the per-character capture in get() cannot lose error diagnostics.
+    static constexpr bool bulk_scan =
+        lazy_token_string
+        && input_adapter_supports_bulk_scan<InputAdapterType>(is_detected<detect_supports_bulk_scan, InputAdapterType> {});
 
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
@@ -265,6 +294,40 @@ class lexer : public lexer_base<BasicJsonType>
         return true;
     }
 
+    /// contiguous input: bulk-append the run of ordinary characters and complete
+    /// well-formed UTF-8 sequences starting at the current read position, leaving
+    /// the first byte that needs individual handling (the closing quote, an
+    /// escape, a control character, or an ill-formed UTF-8 byte) for get()
+    void scan_string_bulk(std::true_type /*bulk*/)
+    {
+        // a pending unget must be consumed through the normal path first
+        if (next_unget)
+        {
+            return;
+        }
+        const std::size_t remaining = ia.bulk_remaining();
+        if (remaining == 0)
+        {
+            return;
+        }
+        const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+
+        const std::size_t pos = string_bulk_run(data, remaining);
+        if (pos == 0)
+        {
+            return;
+        }
+        token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), pos);
+        ia.bulk_skip(pos);
+        // the run contains no newline (all bytes < 0x20 are treated as special),
+        // so only the flat character counters advance
+        position.chars_read_total += pos;
+        position.chars_read_current_line += pos;
+    }
+
+    /// streaming input: no bulk fast path
+    void scan_string_bulk(std::false_type /*bulk*/) const noexcept {}
+
     /*!
     @brief scan a string literal
 
@@ -290,6 +353,10 @@ class lexer : public lexer_base<BasicJsonType>
 
         while (true)
         {
+            // bulk-consume ordinary characters from contiguous input, then
+            // handle the next special byte through the switch below
+            scan_string_bulk(std::integral_constant<bool, bulk_scan> {});
+
             // get the next character
             switch (get())
             {
@@ -1008,6 +1075,12 @@ class lexer : public lexer_base<BasicJsonType>
         // changed if minus sign, decimal point, or exponent is read
         token_type number_type = token_type::value_unsigned;
 
+        // offset just past the last mantissa byte in token_buffer (i.e. the
+        // index of 'e'/'E', or the whole token when there is no exponent).
+        // convert_number() uses it to count significant digits; npos means
+        // "not seen an exponent yet" and is resolved at scan_number_done
+        std::size_t mantissa_end = std::string::npos;
+
         // state (init): we just found out we need to scan a number
         switch (current)
         {
@@ -1193,6 +1266,9 @@ scan_number_decimal2:
 scan_number_exponent:
         // we just parsed an exponent
         number_type = token_type::value_float;
+        // this label is reached only right after the 'e'/'E' was appended (from
+        // the zero, any1, and decimal2 states), so the mantissa ends before it
+        mantissa_end = token_buffer.size() - 1;
         switch (get())
         {
             case '+':
@@ -1279,51 +1355,305 @@ scan_number_done:
         // we are done scanning a number)
         unget();
 
-        char* endptr = nullptr; // NOLINT(misc-const-correctness,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        errno = 0;
+        // no exponent was scanned: the mantissa spans the whole token
+        if (mantissa_end == std::string::npos)
+        {
+            mantissa_end = token_buffer.size();
+        }
 
-        // try to parse integers first and fall back to floats
+        return convert_number(number_type, mantissa_end);
+    }
+
+    /*!
+    @brief convert an already-validated integer token to its value
+
+    The digit sequence in [first, last) has been validated by the caller, so a
+    dedicated parser can avoid the locale/errno overhead of std::strtoull.
+
+    @return the token type on success; token_type::uninitialized if @a
+            number_type is not an integer type or the value does not fit, in
+            which case the caller falls back to the floating-point conversion
+            (matching the previous std::strtoull/std::strtoll behavior)
+    */
+    token_type convert_integer(token_type number_type, const char* first, const char* last)
+    {
         if (number_type == token_type::value_unsigned)
         {
-            const auto x = std::strtoull(token_buffer.data(), &endptr, 10);
-
-            // we checked the number format before
-            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
-
-            if (errno != ERANGE)
+            if (parse_integer_unsigned(first, last, value_unsigned))
             {
-                value_unsigned = static_cast<number_unsigned_t>(x);
-                if (value_unsigned == x)
-                {
-                    return token_type::value_unsigned;
-                }
+                return token_type::value_unsigned;
             }
         }
         else if (number_type == token_type::value_integer)
         {
-            const auto x = std::strtoll(token_buffer.data(), &endptr, 10);
-
-            // we checked the number format before
-            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
-
-            if (errno != ERANGE)
+            if (parse_integer_signed(first, last, value_integer))
             {
-                value_integer = static_cast<number_integer_t>(x);
-                if (value_integer == x)
-                {
-                    return token_type::value_integer;
-                }
+                return token_type::value_integer;
+            }
+        }
+
+        return token_type::uninitialized;
+    }
+
+    /*!
+    @brief check whether Clinger's fast path can still succeed for this token
+
+    parse_float_fast() needs a significand below 2^53. A mantissa with 17 or
+    more significant digits is at least 10^16 and therefore always exceeds it,
+    so calling the fast path would walk the token one extra time only to
+    decline before strtod has to run anyway.
+
+    Significant digits are the mantissa's digits from the first nonzero one on;
+    the sign, the decimal point, leading zeros, and the exponent do not count.
+    The answer is derived from indices - the digits are not scanned again - so
+    this stays off the hot path of the number scanners.
+
+    @param[in] mantissa_end  offset just past the last mantissa byte in
+                             token_buffer
+    @return false if parse_float_fast() is guaranteed to decline
+    */
+    bool mantissa_fits_clinger(std::size_t mantissa_end) const
+    {
+        // 10^16 already exceeds 2^53, so 17 digits can never fit
+        constexpr std::size_t limit = 17;
+
+        const std::size_t neg = (!token_buffer.empty() && token_buffer[0] == '-') ? 1u : 0u;
+        const std::size_t has_dot = (decimal_point_position != std::string::npos) ? 1u : 0u;
+        // the JSON grammar restricts the integer part to "0" or [1-9][0-9]*, so
+        // a leading zero can only be a lone "0", which is not significant
+        const std::size_t lead_zero = (token_buffer[neg] == '0') ? 1u : 0u;
+        JSON_ASSERT(mantissa_end >= neg + has_dot + lead_zero);
+        std::size_t digits = mantissa_end - neg - has_dot - lead_zero;
+
+        if (JSON_HEDLEY_LIKELY(digits < limit))
+        {
+            return true;
+        }
+
+        // Only a number below 1 can carry further insignificant zeros, and only
+        // while the count stays at the limit does removing them change the
+        // answer - so this loop is skipped for all but a few tokens. Note
+        // token_buffer holds the locale's decimal point, so the fraction is
+        // located through decimal_point_position rather than by searching '.'.
+        if (lead_zero != 0)
+        {
+            JSON_ASSERT(has_dot != 0); // an integer "0" cannot reach the limit
+            for (std::size_t i = decimal_point_position + 1;
+                    digits >= limit && i < mantissa_end && token_buffer[i] == '0'; ++i)
+            {
+                --digits;
+            }
+        }
+
+        return digits < limit;
+    }
+
+    /*!
+    @brief convert the number text in token_buffer to its value and token type
+
+    The digit sequence in token_buffer has already been validated (by the
+    scan_number() state machine or by the contiguous fast path) and holds the
+    locale decimal point in place of '.'. Integers are parsed first and fall
+    back to floating point on overflow. This is shared so both scanners produce
+    identical results.
+
+    @param[in] mantissa_end  offset just past the last mantissa byte in
+                             token_buffer (the index of 'e'/'E', or
+                             token_buffer.size() when there is no exponent);
+                             used to skip Clinger's fast path when it cannot
+                             possibly succeed - see mantissa_fits_clinger()
+    */
+    token_type convert_number(token_type number_type, std::size_t mantissa_end)
+    {
+        const char* const num_begin = token_buffer.data();
+        const char* const num_end = num_begin + token_buffer.size();
+
+        if (number_type != token_type::value_float)
+        {
+            const token_type integer_result = convert_integer(number_type, num_begin, num_end);
+            if (integer_result != token_type::uninitialized)
+            {
+                return integer_result;
             }
         }
 
         // this code is reached if we parse a floating-point number or if an
-        // integer conversion above failed
+        // integer conversion above overflowed. Prefer std::from_chars
+        // (Eisel-Lemire, locale-independent, correctly rounded) when available;
+        // otherwise the exact Clinger fast path (double only); otherwise the
+        // locale-aware strtof/strtod.
+        if (parse_float_from_chars(num_begin, num_end, value_float))
+        {
+            return token_type::value_float;
+        }
+        // Skipping a fast path that cannot succeed is lossless and saves a full
+        // extra pass over the token's bytes, which otherwise shows up on
+        // high-precision inputs such as canada.json
+        if (mantissa_fits_clinger(mantissa_end)
+                && parse_float_fast(num_begin, num_end, decimal_point_char, value_float))
+        {
+            return token_type::value_float;
+        }
+
+        char* endptr = nullptr; // NOLINT(misc-const-correctness,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
         strtof(value_float, token_buffer.data(), &endptr);
 
         // we checked the number format before
         JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
 
         return token_type::value_float;
+    }
+
+    /*!
+    @brief contiguous fast path for scanning a number
+
+    Parses the whole number token straight from the input buffer, avoiding the
+    per-character get()/add() of scan_number(). On success it fills token_buffer
+    (with the locale decimal point substituted, as scan_number() does) and
+    returns the token type. On anything it does not fully recognize as a
+    well-formed number it makes no state change and returns
+    token_type::uninitialized, so the caller falls back to scan_number(), which
+    then produces the exact diagnostic. @a current is the first digit or the
+    leading minus (already read); the remaining bytes are taken from the adapter.
+    */
+    token_type scan_number_bulk_contiguous()
+    {
+        // a pending unget offsets the buffer position from current; fall back
+        if (next_unget)
+        {
+            return token_type::uninitialized;
+        }
+        const std::size_t rem = ia.bulk_remaining();
+        if (rem == 0)
+        {
+            // the first digit is the last input byte; let scan_number() finish
+            return token_type::uninitialized;
+        }
+        // the byte before the next unread one is current (contiguous input)
+        const char* const data = reinterpret_cast<const char*>(ia.bulk_data()) - 1;
+        const std::size_t avail = rem + 1;
+
+        // validate + classify the number extent (mirrors scan_number()'s grammar)
+        std::size_t i = 0;
+        std::size_t dot_index = std::string::npos;
+        token_type number_type = token_type::value_unsigned;
+        if (data[0] == '-')
+        {
+            number_type = token_type::value_integer;
+            i = 1;
+            if (i >= avail)
+            {
+                return token_type::uninitialized;
+            }
+        }
+        if (data[i] == '0')
+        {
+            ++i;
+        }
+        else if (data[i] >= '1' && data[i] <= '9')
+        {
+            ++i;
+            while (i < avail && data[i] >= '0' && data[i] <= '9')
+            {
+                ++i;
+            }
+        }
+        else
+        {
+            return token_type::uninitialized;
+        }
+        if (i < avail && data[i] == '.')
+        {
+            number_type = token_type::value_float;
+            dot_index = i;
+            ++i;
+            if (i >= avail || !(data[i] >= '0' && data[i] <= '9'))
+            {
+                return token_type::uninitialized;
+            }
+            while (i < avail && data[i] >= '0' && data[i] <= '9')
+            {
+                ++i;
+            }
+        }
+        // the mantissa ends here, whether or not an exponent part follows
+        const std::size_t mantissa_end = i;
+        if (i < avail && (data[i] == 'e' || data[i] == 'E'))
+        {
+            number_type = token_type::value_float;
+            ++i;
+            if (i < avail && (data[i] == '+' || data[i] == '-'))
+            {
+                ++i;
+            }
+            if (i >= avail || !(data[i] >= '0' && data[i] <= '9'))
+            {
+                return token_type::uninitialized;
+            }
+            while (i < avail && data[i] >= '0' && data[i] <= '9')
+            {
+                ++i;
+            }
+        }
+        const std::size_t len = i;
+
+        // reset() records where this token starts (for diagnostics), so it has
+        // to run before the input position advances below
+        reset();
+
+        // An integer token needs no token_buffer: the SAX callbacks for
+        // number_integer/number_unsigned take only the value, and the overflow
+        // diagnostic rebuilds the text from the input. Convert straight from the
+        // input buffer and leave token_buffer empty. (JSON_DIAGNOSTIC_POSITIONS
+        // derives a number's start position from get_string().size(), so there
+        // the token still has to be materialized.)
+#if !JSON_DIAGNOSTIC_POSITIONS
+        if (number_type != token_type::value_float)
+        {
+            const token_type integer_result = convert_integer(number_type, data, data + len);
+            if (JSON_HEDLEY_LIKELY(integer_result != token_type::uninitialized))
+            {
+                ia.bulk_skip(len - 1);
+                position.chars_read_total += (len - 1);
+                position.chars_read_current_line += (len - 1);
+                return integer_result;
+            }
+            // The value does not fit an integer, so this token converts as a
+            // float. Recording that here keeps convert_number() below from
+            // repeating the integer attempt that just failed.
+            number_type = token_type::value_float;
+        }
+#endif
+
+        // materialize the token exactly as scan_number() would, substituting the
+        // locale decimal point so convert_number()'s strtof fallback stays valid.
+        // reset() already cleared token_buffer, so append() fills it (assign() is
+        // avoided because custom string_t types need not provide it)
+        token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), len);
+        if (dot_index != std::string::npos)
+        {
+            token_buffer[dot_index] = static_cast<typename string_t::value_type>(decimal_point_char);
+            decimal_point_position = dot_index;
+        }
+
+        ia.bulk_skip(len - 1);
+        position.chars_read_total += (len - 1);
+        position.chars_read_current_line += (len - 1);
+
+        return convert_number(number_type, mantissa_end);
+    }
+
+    /// contiguous input: try the number fast path, else the byte-path scanner
+    token_type scan_number_dispatch(std::true_type /*bulk*/)
+    {
+        const token_type t = scan_number_bulk_contiguous();
+        return (t != token_type::uninitialized) ? t : scan_number();
+    }
+
+    /// streaming input: always use the byte-path scanner
+    token_type scan_number_dispatch(std::false_type /*bulk*/)
+    {
+        return scan_number();
     }
 
     /*!
@@ -1413,6 +1743,9 @@ scan_number_done:
         if (current == '\n')
         {
             ++position.lines_read;
+            // remember the column the newline was read at: chars_read_current_line
+            // is about to be cleared, and a matching unget() cannot reconstruct it
+            chars_read_before_newline = position.chars_read_current_line;
             position.chars_read_current_line = 0;
         }
 
@@ -1446,12 +1779,20 @@ scan_number_done:
         --position.chars_read_total;
 
         // in case we "unget" a newline, we have to also decrement the lines_read
+        // and restore the column that get() cleared when it saw the newline;
+        // chars_read_current_line == 0 can only mean the last get() read one
         if (position.chars_read_current_line == 0)
         {
             if (position.lines_read > 0)
             {
                 --position.lines_read;
             }
+
+            // chars_read_before_newline counts the newline itself, which is the
+            // character being ungotten, hence the -1
+            position.chars_read_current_line = (chars_read_before_newline > 0)
+                                               ? chars_read_before_newline - 1
+                                               : 0;
         }
         else
         {
@@ -1694,7 +2035,7 @@ scan_number_done:
             case '7':
             case '8':
             case '9':
-                return scan_number();
+                return scan_number_dispatch(std::integral_constant<bool, bulk_scan> {});
 
             // end of input (the null byte is needed when parsing from
             // string literals)
@@ -1724,6 +2065,10 @@ scan_number_done:
 
     /// the start position of the current token
     position_t position {};
+
+    /// the value chars_read_current_line had when the last newline was read, so
+    /// that unget() can restore the column instead of leaving it at 0
+    std::size_t chars_read_before_newline = 0;
 
     /// raw input token string for error messages; only populated for streaming
     /// adapters (seekable adapters reconstruct it lazily via token_string_start)

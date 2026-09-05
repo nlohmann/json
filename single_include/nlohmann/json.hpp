@@ -7223,11 +7223,31 @@ class input_stream_adapter
 
 // General-purpose iterator-based adapter. It might not be as fast as
 // theoretically possible for some containers, but it is extremely versatile.
-// SentinelType defaults to IteratorType for backward compatibility, but may
-// be a different type (e.g., a C++20 sentinel or counted_iterator).
+// SentinelType defaults to IteratorType for backward compatibility, but may be
+// a different type, e.g. a C++20 sentinel such as std::default_sentinel_t when
+// IteratorType is a std::counted_iterator.
 template<typename IteratorType, typename SentinelType = IteratorType>
 class iterator_input_adapter
 {
+    // Whether the number of elements between two positions can be computed in
+    // O(1): either the iterator and the sentinel have the same type (plain
+    // std::distance) or, in C++20, the sentinel is a sized sentinel for the
+    // iterator (std::ranges::distance), e.g. std::default_sentinel_t paired
+    // with std::counted_iterator.
+    //
+    // JSON_HAS_RANGES gates the C++20 branch: on standard libraries with an
+    // incomplete <ranges> (libstdc++ < 11, see #4440) evaluating
+    // std::contiguous_iterator on a std::counted_iterator is a hard error
+    // instead of yielding false, and these traits are instantiated for every
+    // adapter. Such toolchains fall back to the pointer-only test and simply
+    // use the byte-at-a-time scanner.
+    static constexpr bool sentinel_is_sized =
+#if JSON_HAS_RANGES && defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
+        std::is_same<IteratorType, SentinelType>::value || std::sized_sentinel_for<SentinelType, IteratorType>;
+#else
+        std::is_same<IteratorType, SentinelType>::value;
+#endif
+
   public:
     using char_type = typename std::iterator_traits<IteratorType>::value_type;
 
@@ -7239,7 +7259,7 @@ class iterator_input_adapter
     // in wide_string_input_adapter, which does not expose this).
     static constexpr bool supports_seek =
         std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value
-        && std::is_same<IteratorType, SentinelType>::value
+        && sentinel_is_sized
         && sizeof(char_type) == 1;
 
     iterator_input_adapter(IteratorType first, SentinelType last)
@@ -7287,30 +7307,60 @@ class iterator_input_adapter
   private:
     // whether IteratorType refers to a contiguous range and therefore supports
     // a std::memcpy fast path (pointers always do; in C++20 we can also detect
-    // library iterators such as those of std::vector and std::string).
-    // Computing the available element count needs either same-type iterators
-    // (plain std::distance) or, in C++20, a sized sentinel (std::ranges::distance),
-    // e.g. std::counted_iterator paired with std::default_sentinel_t.
-    static constexpr bool iterator_is_contiguous =
-#if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
-        (std::is_same<IteratorType, SentinelType>::value || std::sized_sentinel_for<SentinelType, IteratorType>)
-        && (std::contiguous_iterator<IteratorType> || std::is_pointer<IteratorType>::value);
+    // library iterators such as those of std::vector and std::string). The
+    // available element count must also be computable in O(1), hence
+    // sentinel_is_sized.
+    static constexpr bool iterator_is_contiguous = sentinel_is_sized &&
+#if JSON_HAS_RANGES && defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
+        (std::contiguous_iterator<IteratorType> || std::is_pointer<IteratorType>::value);
 #else
-        std::is_same<IteratorType, SentinelType>::value && std::is_pointer<IteratorType>::value;
+        std::is_pointer<IteratorType>::value;
 #endif
 
+    // number of unread elements in [current, end)
+    std::size_t remaining_count() const
+    {
+#if JSON_HAS_RANGES && defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
+        // std::ranges::distance also supports sized sentinels of a different
+        // type (e.g. std::counted_iterator + std::default_sentinel_t)
+        return static_cast<std::size_t>(std::ranges::distance(current, end));
+#else
+        return static_cast<std::size_t>(std::distance(current, end));
+#endif
+    }
+
+  public:
+    // Whether the remaining input is a single contiguous block of 1-byte
+    // elements that the lexer can inspect directly (used for the SWAR string
+    // fast path).
+    static constexpr bool supports_bulk_scan =
+        iterator_is_contiguous && sizeof(char_type) == 1;
+
+    // Pointer to the next unread element; only valid when bulk_remaining() > 0.
+    const char_type* bulk_data() const
+    {
+        return &*current;
+    }
+
+    // Number of unread elements available as one contiguous block.
+    std::size_t bulk_remaining() const
+    {
+        return remaining_count();
+    }
+
+    // Consume @a n elements previously inspected via bulk_data().
+    void bulk_skip(std::size_t n)
+    {
+        std::advance(current, static_cast<typename std::iterator_traits<IteratorType>::difference_type>(n));
+    }
+
+  private:
     // contiguous fast path: bulk copy the remaining range with std::memcpy
     template<class T>
     std::size_t get_elements_impl(T* dest, std::size_t count, std::true_type /*contiguous*/)
     {
         const std::size_t wanted = count * sizeof(T);
-#if defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
-        // std::ranges::distance also supports sized sentinels of a different
-        // type (e.g. std::counted_iterator + std::default_sentinel_t)
-        const std::size_t available = static_cast<std::size_t>(std::ranges::distance(current, end)) * sizeof(char_type);
-#else
-        const std::size_t available = static_cast<std::size_t>(std::distance(current, end)) * sizeof(char_type);
-#endif
+        const std::size_t available = remaining_count() * sizeof(char_type);
         const std::size_t copied = (std::min)(wanted, available);
         if (JSON_HEDLEY_LIKELY(copied != 0))
         {
@@ -7638,6 +7688,46 @@ typename iterator_input_adapter_factory<IteratorType, SentinelType>::adapter_typ
     return factory_type::create(first, last);
 }
 
+// The element type a container's data() points at, cv-qualifiers removed.
+// Ill-formed - and therefore SFINAE-friendly - for types without data().
+template<typename ContainerType>
+using container_data_t = typename std::remove_cv<typename std::remove_pointer <
+                         decltype(std::declval<const ContainerType&>().data()) >::type >::type;
+
+// The container's own element type, cv-qualifiers removed. It is looked up on
+// the bare type so it is also found when ContainerType is deduced as a
+// reference by the forwarding-reference overload below.
+template<typename ContainerType>
+using container_value_t = typename std::remove_cv <
+                          typename std::remove_cv<typename std::remove_reference<ContainerType>::type>::type::value_type >::type;
+
+// Detect a container that stores its elements contiguously as single bytes
+// (std::string, std::vector<char/unsigned char>, std::array<char, N>,
+// std::string_view, ...). Such inputs are wrapped in a pointer-based adapter so
+// they benefit from the contiguous fast paths (bulk string scanning, memcpy for
+// binary formats) in every C++ standard - not only in C++20, where the standard
+// library iterators model std::contiguous_iterator and are detected directly.
+//
+// data() and size() on their own would be duck typing: they say nothing about
+// size() counting the units data() points at, and reading [data(), data() +
+// size()) as bytes would be wrong for a type where it does not. Requiring the
+// container's own value_type to be that same single-byte element ties the two
+// together; every contiguous standard container satisfies it. Anything else
+// keeps the iterator-based adapter, which is always correct - only slower.
+template<typename ContainerType, typename = void>
+struct is_contiguous_byte_container : std::false_type {};
+
+template<typename ContainerType>
+struct is_contiguous_byte_container < ContainerType, void_t <
+    container_data_t<ContainerType>,
+    container_value_t<ContainerType>,
+decltype(std::declval<const ContainerType&>().size()) >>
+            : std::integral_constant < bool,
+        std::is_pointer<decltype(std::declval<const ContainerType&>().data())>::value&&
+        std::is_integral<container_data_t<ContainerType>>::value&&
+        sizeof(container_data_t<ContainerType>) == 1 &&
+        std::is_same<container_data_t<ContainerType>, container_value_t<ContainerType>>::value > {};
+
 // Convenience shorthand from container to iterator
 // Enables ADL on begin(container) and end(container)
 // Encloses the using declarations in namespace for not to leak them to outside scope
@@ -7665,10 +7755,30 @@ struct container_input_adapter_factory< ContainerType,
 
 }  // namespace container_input_adapter_factory_impl
 
-template<typename ContainerType>
-typename container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::adapter_type input_adapter(ContainerType&& container)
+// General container path (iterator-based). Contiguous single-byte containers
+// are excluded here and routed through the pointer-based overload below.
+template < typename ContainerType,
+           enable_if_t < !is_contiguous_byte_container<ContainerType>::value, int > = 0 >
+typename container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::adapter_type input_adapter(ContainerType && container)
 {
     return container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::create(std::forward<ContainerType>(container));
+}
+
+// Contiguous single-byte containers (std::string, std::vector<char>, ...) are
+// wrapped in a pointer-based adapter so the contiguous fast paths apply in every
+// standard. The pointer keeps the container's own element type (const char* for
+// std::string, const std::uint8_t* for std::vector<std::uint8_t>, ...), so the
+// resulting char_type - and therefore the parsing behavior - is byte-for-byte
+// identical to the iterator-based path; only the raw pointer additionally
+// enables the bulk fast paths. The container outlives the adapter for the whole
+// parse (temporaries live until the end of the full expression), exactly as the
+// iterators it replaces did.
+template < typename ContainerType,
+           enable_if_t < is_contiguous_byte_container<ContainerType>::value, int > = 0 >
+auto input_adapter(const ContainerType& container)
+-> decltype(input_adapter(container.data(), container.data() + container.size()))
+{
+    return input_adapter(container.data(), container.data() + container.size());
 }
 
 // specialization for std::string
@@ -7799,7 +7909,556 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
+// #include <nlohmann/detail/input/number_parse.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <array> // array
+#include <cfloat> // FLT_EVAL_METHOD
+#include <cstddef> // size_t
+#include <cstdint> // int64_t, uint64_t
+#include <limits> // numeric_limits
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+
+// std::from_chars lives in <charconv>, but being in C++17 mode does not
+// guarantee the header exists: GCC 7 sets __cplusplus to C++17 yet ships no
+// <charconv> (added in GCC 8; floating-point support in GCC 11). Guard the
+// include with __has_include so such toolchains fall back to the scalar path.
+#if defined(JSON_HAS_CPP_17) && defined(__has_include)
+    #if __has_include(<charconv>)
+        #include <charconv> // from_chars (only used when __cpp_lib_to_chars is defined)
+        #include <system_error> // errc
+    #endif
+#endif
+
+// This file contains the value-conversion helpers used by the lexer to turn an
+// already-validated number token into a value, without the locale/errno
+// overhead of std::strtoull/std::strtod. They are free functions so the lexer
+// stays focused on scanning; see lexer::convert_number().
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+
+/*!
+@brief fast integer parser for an already-validated unsigned integer
+
+The number scanner has already checked that [first, last) is a valid JSON
+integer, so this only needs to accumulate the digits and detect overflow. This
+avoids the locale/errno machinery of std::strtoull, which dominates
+integer-heavy inputs.
+
+@param[in]  first   pointer to the first character (a digit)
+@param[in]  last    pointer past the last character
+@param[out] value   the parsed value on success
+@return true if the value fit into @a NumberUnsignedType; false on overflow, in
+        which case the caller falls back to floating-point parsing (matching the
+        previous std::strtoull behavior)
+*/
+template<typename NumberUnsignedType>
+bool parse_integer_unsigned(const char* first, const char* last, NumberUnsignedType& value) noexcept
+{
+    // accumulate in the widest unsigned type used by the previous strtoull
+    // path so the overflow behavior is unchanged for custom number types
+    std::uint64_t x = 0;
+    constexpr std::uint64_t cutoff = (std::numeric_limits<std::uint64_t>::max)() / 10u;
+    constexpr std::uint64_t cutlim = (std::numeric_limits<std::uint64_t>::max)() % 10u;
+    for (const char* p = first; p != last; ++p)
+    {
+        const auto digit = static_cast<std::uint64_t>(static_cast<unsigned char>(*p) - static_cast<unsigned char>('0'));
+        if (JSON_HEDLEY_UNLIKELY(x > cutoff || (x == cutoff && digit > cutlim)))
+        {
+            return false;
+        }
+        x = (x * 10u) + digit;
+    }
+    value = static_cast<NumberUnsignedType>(x);
+    // reject values that do not round-trip into a narrower NumberUnsignedType
+    return static_cast<std::uint64_t>(value) == x;
+}
+
+/*!
+@brief fast integer parser for an already-validated negative integer
+
+@param[in]  first   pointer to the leading '-'
+@param[in]  last    pointer past the last character
+@param[out] value   the parsed (negative) value on success
+@return true on success; false on overflow (caller falls back to float)
+*/
+template<typename NumberIntegerType>
+bool parse_integer_signed(const char* first, const char* last, NumberIntegerType& value) noexcept
+{
+    // the state machine only reaches the signed path via a leading '-'
+    JSON_ASSERT(first != last && *first == '-');
+    std::uint64_t magnitude = 0;
+    // |INT64_MIN| == INT64_MAX + 1; this is the largest admissible magnitude
+    constexpr std::uint64_t limit = static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()) + 1u;
+    for (const char* p = first + 1; p != last; ++p)
+    {
+        const auto digit = static_cast<std::uint64_t>(static_cast<unsigned char>(*p) - static_cast<unsigned char>('0'));
+        if (JSON_HEDLEY_UNLIKELY(magnitude > (limit - digit) / 10u))
+        {
+            return false;
+        }
+        magnitude = (magnitude * 10u) + digit;
+    }
+    const std::int64_t x = (magnitude == limit)
+                           ? (std::numeric_limits<std::int64_t>::min)()
+                           : -static_cast<std::int64_t>(magnitude);
+    value = static_cast<NumberIntegerType>(x);
+    // reject values that do not round-trip into a narrower NumberIntegerType
+    return static_cast<std::int64_t>(value) == x;
+}
+
+/*!
+@brief exact fast path for parsing a `double` (Clinger's algorithm)
+
+For the common case - at most 19 significant digits, a decimal exponent in
+[-22, 22], and a significand below 2^53 - the value equals significand *
+10^exp computed in IEEE-754 double arithmetic, which is exact under
+round-to-nearest because both operands are exactly representable. This is the
+same fast path used by fast_float/simdjson; the general cases are left to
+std::strtod. The parser only activates for number_float_t == double; float and
+long double keep the std::strtof/std::strtold paths (see the templated overload
+below).
+
+@param[in]  first          pointer to the first character of the number
+@param[in]  last           pointer past the last character
+@param[in]  decimal_point  the (locale-dependent) decimal point character
+@param[out] out            the parsed value on success
+@return true if the value was parsed exactly; false to fall back to strtod
+*/
+template<typename DecimalPointType>
+bool parse_float_fast(const char* first, const char* last, DecimalPointType decimal_point, double& out) noexcept
+{
+#if defined(FLT_EVAL_METHOD) && FLT_EVAL_METHOD != 0
+    // Clinger's fast path is only exact when double operations are evaluated in
+    // true double precision. On platforms that keep intermediates in extended
+    // precision (e.g. the x87 FPU on 32-bit x86, where FLT_EVAL_METHOD == 2) the
+    // single significand * 10^scale step is double-rounded and can be 1 ULP off,
+    // so decline and let the caller fall back to the correctly-rounded
+    // std::from_chars / std::strtod path.
+    static_cast<void>(first);
+    static_cast<void>(last);
+    static_cast<void>(decimal_point);
+    static_cast<void>(out);
+    return false;
+#else
+    static const std::array<double, 23> powers_of_ten =
+    {
+        {
+            1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11,
+            1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19, 1e20, 1e21, 1e22
+        }
+    };
+
+    const char* p = first;
+    bool negative = false;
+    if (p != last && (*p == '-' || *p == '+'))
+    {
+        negative = (*p == '-');
+        ++p;
+    }
+
+    std::uint64_t significand = 0;
+    int num_digits = 0;
+    int fractional_digits = 0;
+    bool seen_dot = false;
+    bool any_digit = false;
+    for (; p != last; ++p)
+    {
+        const char c = *p;
+        if (c >= '0' && c <= '9')
+        {
+            any_digit = true;
+            if (JSON_HEDLEY_UNLIKELY(num_digits >= 19))
+            {
+                return false; // significand may not fit into uint64_t
+            }
+            significand = (significand * 10u) + static_cast<std::uint64_t>(c - '0');
+            ++num_digits;
+            fractional_digits += static_cast<int>(seen_dot);
+        }
+        else if (static_cast<DecimalPointType>(c) == decimal_point)
+        {
+            if (JSON_HEDLEY_UNLIKELY(seen_dot))
+            {
+                return false;
+            }
+            seen_dot = true;
+        }
+        else if (c == 'e' || c == 'E')
+        {
+            ++p;
+            break;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    if (JSON_HEDLEY_UNLIKELY(!any_digit))
+    {
+        return false;
+    }
+
+    int exponent = 0;
+    if (p != last) // an exponent part remains
+    {
+        bool exp_negative = false;
+        if (p != last && (*p == '-' || *p == '+'))
+        {
+            exp_negative = (*p == '-');
+            ++p;
+        }
+        bool any_exp_digit = false;
+        for (; p != last; ++p)
+        {
+            if (JSON_HEDLEY_UNLIKELY(*p < '0' || *p > '9'))
+            {
+                return false;
+            }
+            exponent = (exponent * 10) + (*p - '0');
+            any_exp_digit = true;
+            if (JSON_HEDLEY_UNLIKELY(exponent > 9999))
+            {
+                return false;
+            }
+        }
+        if (JSON_HEDLEY_UNLIKELY(!any_exp_digit))
+        {
+            return false;
+        }
+        if (exp_negative)
+        {
+            exponent = -exponent;
+        }
+    }
+
+    const int scale = exponent - fractional_digits;
+    if (JSON_HEDLEY_UNLIKELY(significand >= (static_cast<std::uint64_t>(1) << 53)))
+    {
+        return false; // significand not exactly representable as double
+    }
+
+    auto result = static_cast<double>(significand);
+    if (scale >= 0)
+    {
+        if (JSON_HEDLEY_UNLIKELY(scale > 22))
+        {
+            return false;
+        }
+        result *= powers_of_ten[static_cast<std::size_t>(scale)];
+    }
+    else
+    {
+        if (JSON_HEDLEY_UNLIKELY(-scale > 22))
+        {
+            return false;
+        }
+        result /= powers_of_ten[static_cast<std::size_t>(-scale)];
+    }
+    out = negative ? -result : result;
+    return true;
+#endif
+}
+
+/// fast float path is only exact for `double`; decline for float/long double
+template<typename DecimalPointType, typename FloatType>
+bool parse_float_fast(const char* /*first*/, const char* /*last*/, DecimalPointType /*decimal_point*/, FloatType& /*out*/) noexcept
+{
+    return false;
+}
+
+/*!
+@brief parse a float with std::from_chars (Eisel-Lemire) when available
+
+std::from_chars is locale-independent, correctly rounded, and - via the
+Eisel-Lemire algorithm in modern standard libraries - much faster than strtod
+over the whole value range (not just the Clinger subset). It is used only when
+__cpp_lib_to_chars indicates full floating-point support and only when it
+consumes the entire token ([first, last)); a partial parse means the buffer
+uses a non-'.' locale decimal point, in which case the caller falls back to the
+locale-aware path. An under-/overflow (result_out_of_range) also declines, so
+the caller's strtod fallback supplies the well-defined ±inf/0 result the parser
+expects (side-stepping the P4168 divergence between implementations).
+
+@return true if the value was parsed exactly and fully; false to fall back
+*/
+template<typename FloatType>
+bool parse_float_from_chars(const char* first, const char* last, FloatType& out) noexcept
+{
+    // JSON_HAS_CPP_17 must gate the use as well as the <charconv> include above:
+    // some standard libraries (e.g. libstdc++ 15) define __cpp_lib_to_chars even
+    // in C++14 mode, where <charconv> is not included.
+#if defined(JSON_HAS_CPP_17) && defined(__cpp_lib_to_chars)
+    const auto result = std::from_chars(first, last, out);
+    return result.ec == std::errc() && result.ptr == last;
+#else
+    static_cast<void>(first);
+    static_cast<void>(last);
+    static_cast<void>(out);
+    return false;
+#endif
+}
+
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
 // #include <nlohmann/detail/input/position_t.hpp>
+
+// #include <nlohmann/detail/input/string_scan.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <cstddef> // size_t
+#include <cstdint> // uint64_t
+#include <cstring> // memcpy
+
+// #include <nlohmann/detail/macro_scope.hpp>
+
+
+// Optional SIMD backend for bulk UTF-8 validation. This is an opt-in external
+// dependency: nlohmann/json itself stays header-only and the C++11 scalar
+// validator below is always available; defining JSON_USE_SIMDUTF additionally
+// requires the simdutf headers on the include path and linking the simdutf
+// library. See string_bulk_run().
+//
+// simdutf.h itself requires C++17 - it rejects older standards with an #error -
+// so the backend is only compiled in from C++17 on. Below that the macro has no
+// effect and the scalar validator is used; it accepts and rejects exactly the
+// same input, so only throughput differs. macro_scope.hpp is included above to
+// have JSON_HAS_CPP_17 available for this test.
+#if defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17)
+    #include <simdutf.h>
+#endif
+
+// This file contains the byte-level string-scanning helpers used by the lexer's
+// contiguous fast path. They operate purely on raw bytes (no dependency on the
+// lexer's template parameters) so they are free functions, keeping the lexer
+// itself focused on the state machine; see lexer::scan_string_bulk().
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+
+// classify a single byte as needing individual string handling: the closing
+// quote, an escape, a control character, or a non-ASCII (UTF-8)
+// lead/continuation byte. Ordinary bytes (0x20..0x7F except '"' and '\\') are
+// copied verbatim, which the bulk scanner does 8 bytes at a time.
+inline bool is_string_special(unsigned char c) noexcept
+{
+    return c == '\"' || c == '\\' || c < 0x20u || c >= 0x80u;
+}
+
+// SWAR helper: return a word whose high bit is set in every byte of @a v that
+// is_string_special(); zero if the 8 bytes are all ordinary.
+inline std::uint64_t swar_string_special(std::uint64_t v) noexcept
+{
+    constexpr std::uint64_t ones = 0x0101010101010101ull;
+    constexpr std::uint64_t high = 0x8080808080808080ull;
+    const std::uint64_t q = v ^ 0x2222222222222222ull; // '"'  (0x22)
+    const std::uint64_t b = v ^ 0x5C5C5C5C5C5C5C5Cull; // '\\' (0x5C)
+    const std::uint64_t has_quote     = (q - ones) & ~q & high;
+    const std::uint64_t has_backslash = (b - ones) & ~b & high;
+    const std::uint64_t has_control   = (v - 0x2020202020202020ull) & ~v & high; // < 0x20
+    const std::uint64_t has_non_ascii = v & high;                                // >= 0x80
+    return has_quote | has_backslash | has_control | has_non_ascii;
+}
+
+// return the index of the first is_string_special() byte in [data, data+n), or
+// n if every byte is ordinary; scans 8 bytes at a time
+inline std::size_t find_string_special(const unsigned char* data, std::size_t n) noexcept
+{
+    std::size_t i = 0;
+    for (; i + 8 <= n; i += 8)
+    {
+        std::uint64_t word = 0;
+        std::memcpy(&word, data + i, sizeof(word));
+        if (swar_string_special(word) != 0)
+        {
+            // a special byte is in this word; locate it (endian-agnostic)
+            for (std::size_t j = 0; j < 8; ++j)
+            {
+                if (is_string_special(data[i + j]))
+                {
+                    return i + j;
+                }
+            }
+        }
+    }
+    for (; i < n; ++i)
+    {
+        if (is_string_special(data[i]))
+        {
+            return i;
+        }
+    }
+    return n;
+}
+
+// Validate one UTF-8 sequence at the front of [data, data+avail). Returns its
+// length (2..4) only when the bytes form a *well-formed* sequence using exactly
+// the same ranges as scan_string()'s per-byte switch, so the bulk path accepts
+// precisely what the byte path accepts. Returns 0 for anything that is invalid,
+// incomplete, or that the byte path must diagnose (the caller then defers to
+// that path, keeping error messages unchanged). Lead bytes < 0x80 are handled
+// by the caller and never passed here.
+inline std::size_t validate_one_utf8(const unsigned char* data, std::size_t avail) noexcept
+{
+    const unsigned char c0 = data[0];
+    if (c0 >= 0xC2 && c0 <= 0xDF)  // U+0080..U+07FF
+    {
+        if (avail >= 2 && data[1] >= 0x80 && data[1] <= 0xBF)
+        {
+            return 2;
+        }
+    }
+    else if (c0 == 0xE0)  // U+0800..U+0FFF
+    {
+        if (avail >= 3 && data[1] >= 0xA0 && data[1] <= 0xBF && data[2] >= 0x80 && data[2] <= 0xBF)
+        {
+            return 3;
+        }
+    }
+    else if ((c0 >= 0xE1 && c0 <= 0xEC) || c0 == 0xEE || c0 == 0xEF)  // U+1000..U+CFFF, U+E000..U+FFFF
+    {
+        if (avail >= 3 && data[1] >= 0x80 && data[1] <= 0xBF && data[2] >= 0x80 && data[2] <= 0xBF)
+        {
+            return 3;
+        }
+    }
+    else if (c0 == 0xED)  // U+D000..U+D7FF (excludes surrogates)
+    {
+        if (avail >= 3 && data[1] >= 0x80 && data[1] <= 0x9F && data[2] >= 0x80 && data[2] <= 0xBF)
+        {
+            return 3;
+        }
+    }
+    else if (c0 == 0xF0)  // U+10000..U+3FFFF
+    {
+        if (avail >= 4 && data[1] >= 0x90 && data[1] <= 0xBF && data[2] >= 0x80 && data[2] <= 0xBF && data[3] >= 0x80 && data[3] <= 0xBF)
+        {
+            return 4;
+        }
+    }
+    else if (c0 >= 0xF1 && c0 <= 0xF3)  // U+40000..U+FFFFF
+    {
+        if (avail >= 4 && data[1] >= 0x80 && data[1] <= 0xBF && data[2] >= 0x80 && data[2] <= 0xBF && data[3] >= 0x80 && data[3] <= 0xBF)
+        {
+            return 4;
+        }
+    }
+    else if (c0 == 0xF4)  // U+100000..U+10FFFF
+    {
+        if (avail >= 4 && data[1] >= 0x80 && data[1] <= 0x8F && data[2] >= 0x80 && data[2] <= 0xBF && data[3] >= 0x80 && data[3] <= 0xBF)
+        {
+            return 4;
+        }
+    }
+    return 0; // invalid, incomplete, or must be diagnosed by the byte path
+}
+
+// Scalar (C++11) computation of the bulk run length: the number of leading
+// bytes in [data, data+n) that are ordinary ASCII or complete well-formed UTF-8
+// sequences, stopping before the first byte that needs individual handling (the
+// closing quote, an escape, a control character, or an ill-formed/truncated
+// sequence). ASCII is skipped 8 bytes at a time.
+inline std::size_t scalar_string_bulk_run(const unsigned char* data, std::size_t n) noexcept
+{
+    std::size_t pos = 0;
+    while (pos < n)
+    {
+        pos += find_string_special(data + pos, n - pos);
+        if (pos >= n || data[pos] < 0x80u)
+        {
+            break; // end of buffer, or a quote/escape/control byte
+        }
+        const std::size_t seq = validate_one_utf8(data + pos, n - pos);
+        if (seq == 0)
+        {
+            break; // ill-formed or truncated: let the byte path diagnose it
+        }
+        pos += seq;
+    }
+    return pos;
+}
+
+#if defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17)
+// Index of the first quote/escape/control byte in [data, data+n) (non-ASCII
+// bytes are *not* stops here - the whole run is handed to simdutf), or n.
+inline std::size_t find_string_delimiter(const unsigned char* data, std::size_t n) noexcept
+{
+    constexpr std::uint64_t ones = 0x0101010101010101ull;
+    constexpr std::uint64_t high = 0x8080808080808080ull;
+    std::size_t i = 0;
+    for (; i + 8 <= n; i += 8)
+    {
+        std::uint64_t v = 0;
+        std::memcpy(&v, data + i, sizeof(v));
+        const std::uint64_t q = v ^ 0x2222222222222222ull;
+        const std::uint64_t b = v ^ 0x5C5C5C5C5C5C5C5Cull;
+        const std::uint64_t hit = ((q - ones) & ~q & high)
+                                  | ((b - ones) & ~b & high)
+                                  | ((v - 0x2020202020202020ull) & ~v & high);
+        if (hit != 0)
+        {
+            for (std::size_t j = 0; j < 8; ++j)
+            {
+                const unsigned char c = data[i + j];
+                if (c == '\"' || c == '\\' || c < 0x20u)
+                {
+                    return i + j;
+                }
+            }
+        }
+    }
+    for (; i < n; ++i)
+    {
+        const unsigned char c = data[i];
+        if (c == '\"' || c == '\\' || c < 0x20u)
+        {
+            return i;
+        }
+    }
+    return n;
+}
+#endif
+
+// Backend-dispatched bulk run length. With JSON_USE_SIMDUTF the run up to the
+// next delimiter is validated in one shot by simdutf; on the rare failure the
+// scalar helper recomputes the exact valid prefix so the byte path still
+// produces the precise diagnostic. Without it, the pure scalar path is used.
+inline std::size_t string_bulk_run(const unsigned char* data, std::size_t n) noexcept
+{
+#if defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17)
+    const std::size_t run = find_string_delimiter(data, n);
+    if (run != 0 && simdutf::validate_utf8(reinterpret_cast<const char*>(data), run))
+    {
+        return run;
+    }
+#endif
+    return scalar_string_bulk_run(data, n);
+}
+
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
@@ -7908,6 +8567,25 @@ constexpr bool input_adapter_supports_seek(std::false_type /*detected*/)
     return false;
 }
 
+// Detect whether an input adapter exposes a contiguous byte block that the
+// lexer can scan directly (see iterator_input_adapter::supports_bulk_scan).
+// Adapters without the flag - file, stream, wide-string, user-defined - fall
+// back to the character-at-a-time string scanner.
+template<typename InputAdapterType>
+using detect_supports_bulk_scan = decltype(InputAdapterType::supports_bulk_scan);
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_bulk_scan(std::true_type /*detected*/)
+{
+    return InputAdapterType::supports_bulk_scan;
+}
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_bulk_scan(std::false_type /*detected*/)
+{
+    return false;
+}
+
 /*!
 @brief lexical analysis
 
@@ -7928,6 +8606,14 @@ class lexer : public lexer_base<BasicJsonType>
     /// character; see input_adapter_supports_seek
     static constexpr bool lazy_token_string =
         input_adapter_supports_seek<InputAdapterType>(is_detected<detect_supports_seek, InputAdapterType> {});
+
+    /// whether string scanning may bulk-consume runs of ordinary characters
+    /// directly from a contiguous input buffer (SWAR fast path). This requires
+    /// the token to be reconstructible lazily (lazy_token_string), so bypassing
+    /// the per-character capture in get() cannot lose error diagnostics.
+    static constexpr bool bulk_scan =
+        lazy_token_string
+        && input_adapter_supports_bulk_scan<InputAdapterType>(is_detected<detect_supports_bulk_scan, InputAdapterType> {});
 
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
@@ -8048,6 +8734,40 @@ class lexer : public lexer_base<BasicJsonType>
         return true;
     }
 
+    /// contiguous input: bulk-append the run of ordinary characters and complete
+    /// well-formed UTF-8 sequences starting at the current read position, leaving
+    /// the first byte that needs individual handling (the closing quote, an
+    /// escape, a control character, or an ill-formed UTF-8 byte) for get()
+    void scan_string_bulk(std::true_type /*bulk*/)
+    {
+        // a pending unget must be consumed through the normal path first
+        if (next_unget)
+        {
+            return;
+        }
+        const std::size_t remaining = ia.bulk_remaining();
+        if (remaining == 0)
+        {
+            return;
+        }
+        const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+
+        const std::size_t pos = string_bulk_run(data, remaining);
+        if (pos == 0)
+        {
+            return;
+        }
+        token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), pos);
+        ia.bulk_skip(pos);
+        // the run contains no newline (all bytes < 0x20 are treated as special),
+        // so only the flat character counters advance
+        position.chars_read_total += pos;
+        position.chars_read_current_line += pos;
+    }
+
+    /// streaming input: no bulk fast path
+    void scan_string_bulk(std::false_type /*bulk*/) const noexcept {}
+
     /*!
     @brief scan a string literal
 
@@ -8073,6 +8793,10 @@ class lexer : public lexer_base<BasicJsonType>
 
         while (true)
         {
+            // bulk-consume ordinary characters from contiguous input, then
+            // handle the next special byte through the switch below
+            scan_string_bulk(std::integral_constant<bool, bulk_scan> {});
+
             // get the next character
             switch (get())
             {
@@ -8791,6 +9515,12 @@ class lexer : public lexer_base<BasicJsonType>
         // changed if minus sign, decimal point, or exponent is read
         token_type number_type = token_type::value_unsigned;
 
+        // offset just past the last mantissa byte in token_buffer (i.e. the
+        // index of 'e'/'E', or the whole token when there is no exponent).
+        // convert_number() uses it to count significant digits; npos means
+        // "not seen an exponent yet" and is resolved at scan_number_done
+        std::size_t mantissa_end = std::string::npos;
+
         // state (init): we just found out we need to scan a number
         switch (current)
         {
@@ -8976,6 +9706,9 @@ scan_number_decimal2:
 scan_number_exponent:
         // we just parsed an exponent
         number_type = token_type::value_float;
+        // this label is reached only right after the 'e'/'E' was appended (from
+        // the zero, any1, and decimal2 states), so the mantissa ends before it
+        mantissa_end = token_buffer.size() - 1;
         switch (get())
         {
             case '+':
@@ -9062,51 +9795,305 @@ scan_number_done:
         // we are done scanning a number)
         unget();
 
-        char* endptr = nullptr; // NOLINT(misc-const-correctness,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        errno = 0;
+        // no exponent was scanned: the mantissa spans the whole token
+        if (mantissa_end == std::string::npos)
+        {
+            mantissa_end = token_buffer.size();
+        }
 
-        // try to parse integers first and fall back to floats
+        return convert_number(number_type, mantissa_end);
+    }
+
+    /*!
+    @brief convert an already-validated integer token to its value
+
+    The digit sequence in [first, last) has been validated by the caller, so a
+    dedicated parser can avoid the locale/errno overhead of std::strtoull.
+
+    @return the token type on success; token_type::uninitialized if @a
+            number_type is not an integer type or the value does not fit, in
+            which case the caller falls back to the floating-point conversion
+            (matching the previous std::strtoull/std::strtoll behavior)
+    */
+    token_type convert_integer(token_type number_type, const char* first, const char* last)
+    {
         if (number_type == token_type::value_unsigned)
         {
-            const auto x = std::strtoull(token_buffer.data(), &endptr, 10);
-
-            // we checked the number format before
-            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
-
-            if (errno != ERANGE)
+            if (parse_integer_unsigned(first, last, value_unsigned))
             {
-                value_unsigned = static_cast<number_unsigned_t>(x);
-                if (value_unsigned == x)
-                {
-                    return token_type::value_unsigned;
-                }
+                return token_type::value_unsigned;
             }
         }
         else if (number_type == token_type::value_integer)
         {
-            const auto x = std::strtoll(token_buffer.data(), &endptr, 10);
-
-            // we checked the number format before
-            JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
-
-            if (errno != ERANGE)
+            if (parse_integer_signed(first, last, value_integer))
             {
-                value_integer = static_cast<number_integer_t>(x);
-                if (value_integer == x)
-                {
-                    return token_type::value_integer;
-                }
+                return token_type::value_integer;
+            }
+        }
+
+        return token_type::uninitialized;
+    }
+
+    /*!
+    @brief check whether Clinger's fast path can still succeed for this token
+
+    parse_float_fast() needs a significand below 2^53. A mantissa with 17 or
+    more significant digits is at least 10^16 and therefore always exceeds it,
+    so calling the fast path would walk the token one extra time only to
+    decline before strtod has to run anyway.
+
+    Significant digits are the mantissa's digits from the first nonzero one on;
+    the sign, the decimal point, leading zeros, and the exponent do not count.
+    The answer is derived from indices - the digits are not scanned again - so
+    this stays off the hot path of the number scanners.
+
+    @param[in] mantissa_end  offset just past the last mantissa byte in
+                             token_buffer
+    @return false if parse_float_fast() is guaranteed to decline
+    */
+    bool mantissa_fits_clinger(std::size_t mantissa_end) const
+    {
+        // 10^16 already exceeds 2^53, so 17 digits can never fit
+        constexpr std::size_t limit = 17;
+
+        const std::size_t neg = (!token_buffer.empty() && token_buffer[0] == '-') ? 1u : 0u;
+        const std::size_t has_dot = (decimal_point_position != std::string::npos) ? 1u : 0u;
+        // the JSON grammar restricts the integer part to "0" or [1-9][0-9]*, so
+        // a leading zero can only be a lone "0", which is not significant
+        const std::size_t lead_zero = (token_buffer[neg] == '0') ? 1u : 0u;
+        JSON_ASSERT(mantissa_end >= neg + has_dot + lead_zero);
+        std::size_t digits = mantissa_end - neg - has_dot - lead_zero;
+
+        if (JSON_HEDLEY_LIKELY(digits < limit))
+        {
+            return true;
+        }
+
+        // Only a number below 1 can carry further insignificant zeros, and only
+        // while the count stays at the limit does removing them change the
+        // answer - so this loop is skipped for all but a few tokens. Note
+        // token_buffer holds the locale's decimal point, so the fraction is
+        // located through decimal_point_position rather than by searching '.'.
+        if (lead_zero != 0)
+        {
+            JSON_ASSERT(has_dot != 0); // an integer "0" cannot reach the limit
+            for (std::size_t i = decimal_point_position + 1;
+                    digits >= limit && i < mantissa_end && token_buffer[i] == '0'; ++i)
+            {
+                --digits;
+            }
+        }
+
+        return digits < limit;
+    }
+
+    /*!
+    @brief convert the number text in token_buffer to its value and token type
+
+    The digit sequence in token_buffer has already been validated (by the
+    scan_number() state machine or by the contiguous fast path) and holds the
+    locale decimal point in place of '.'. Integers are parsed first and fall
+    back to floating point on overflow. This is shared so both scanners produce
+    identical results.
+
+    @param[in] mantissa_end  offset just past the last mantissa byte in
+                             token_buffer (the index of 'e'/'E', or
+                             token_buffer.size() when there is no exponent);
+                             used to skip Clinger's fast path when it cannot
+                             possibly succeed - see mantissa_fits_clinger()
+    */
+    token_type convert_number(token_type number_type, std::size_t mantissa_end)
+    {
+        const char* const num_begin = token_buffer.data();
+        const char* const num_end = num_begin + token_buffer.size();
+
+        if (number_type != token_type::value_float)
+        {
+            const token_type integer_result = convert_integer(number_type, num_begin, num_end);
+            if (integer_result != token_type::uninitialized)
+            {
+                return integer_result;
             }
         }
 
         // this code is reached if we parse a floating-point number or if an
-        // integer conversion above failed
+        // integer conversion above overflowed. Prefer std::from_chars
+        // (Eisel-Lemire, locale-independent, correctly rounded) when available;
+        // otherwise the exact Clinger fast path (double only); otherwise the
+        // locale-aware strtof/strtod.
+        if (parse_float_from_chars(num_begin, num_end, value_float))
+        {
+            return token_type::value_float;
+        }
+        // Skipping a fast path that cannot succeed is lossless and saves a full
+        // extra pass over the token's bytes, which otherwise shows up on
+        // high-precision inputs such as canada.json
+        if (mantissa_fits_clinger(mantissa_end)
+                && parse_float_fast(num_begin, num_end, decimal_point_char, value_float))
+        {
+            return token_type::value_float;
+        }
+
+        char* endptr = nullptr; // NOLINT(misc-const-correctness,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
         strtof(value_float, token_buffer.data(), &endptr);
 
         // we checked the number format before
         JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
 
         return token_type::value_float;
+    }
+
+    /*!
+    @brief contiguous fast path for scanning a number
+
+    Parses the whole number token straight from the input buffer, avoiding the
+    per-character get()/add() of scan_number(). On success it fills token_buffer
+    (with the locale decimal point substituted, as scan_number() does) and
+    returns the token type. On anything it does not fully recognize as a
+    well-formed number it makes no state change and returns
+    token_type::uninitialized, so the caller falls back to scan_number(), which
+    then produces the exact diagnostic. @a current is the first digit or the
+    leading minus (already read); the remaining bytes are taken from the adapter.
+    */
+    token_type scan_number_bulk_contiguous()
+    {
+        // a pending unget offsets the buffer position from current; fall back
+        if (next_unget)
+        {
+            return token_type::uninitialized;
+        }
+        const std::size_t rem = ia.bulk_remaining();
+        if (rem == 0)
+        {
+            // the first digit is the last input byte; let scan_number() finish
+            return token_type::uninitialized;
+        }
+        // the byte before the next unread one is current (contiguous input)
+        const char* const data = reinterpret_cast<const char*>(ia.bulk_data()) - 1;
+        const std::size_t avail = rem + 1;
+
+        // validate + classify the number extent (mirrors scan_number()'s grammar)
+        std::size_t i = 0;
+        std::size_t dot_index = std::string::npos;
+        token_type number_type = token_type::value_unsigned;
+        if (data[0] == '-')
+        {
+            number_type = token_type::value_integer;
+            i = 1;
+            if (i >= avail)
+            {
+                return token_type::uninitialized;
+            }
+        }
+        if (data[i] == '0')
+        {
+            ++i;
+        }
+        else if (data[i] >= '1' && data[i] <= '9')
+        {
+            ++i;
+            while (i < avail && data[i] >= '0' && data[i] <= '9')
+            {
+                ++i;
+            }
+        }
+        else
+        {
+            return token_type::uninitialized;
+        }
+        if (i < avail && data[i] == '.')
+        {
+            number_type = token_type::value_float;
+            dot_index = i;
+            ++i;
+            if (i >= avail || !(data[i] >= '0' && data[i] <= '9'))
+            {
+                return token_type::uninitialized;
+            }
+            while (i < avail && data[i] >= '0' && data[i] <= '9')
+            {
+                ++i;
+            }
+        }
+        // the mantissa ends here, whether or not an exponent part follows
+        const std::size_t mantissa_end = i;
+        if (i < avail && (data[i] == 'e' || data[i] == 'E'))
+        {
+            number_type = token_type::value_float;
+            ++i;
+            if (i < avail && (data[i] == '+' || data[i] == '-'))
+            {
+                ++i;
+            }
+            if (i >= avail || !(data[i] >= '0' && data[i] <= '9'))
+            {
+                return token_type::uninitialized;
+            }
+            while (i < avail && data[i] >= '0' && data[i] <= '9')
+            {
+                ++i;
+            }
+        }
+        const std::size_t len = i;
+
+        // reset() records where this token starts (for diagnostics), so it has
+        // to run before the input position advances below
+        reset();
+
+        // An integer token needs no token_buffer: the SAX callbacks for
+        // number_integer/number_unsigned take only the value, and the overflow
+        // diagnostic rebuilds the text from the input. Convert straight from the
+        // input buffer and leave token_buffer empty. (JSON_DIAGNOSTIC_POSITIONS
+        // derives a number's start position from get_string().size(), so there
+        // the token still has to be materialized.)
+#if !JSON_DIAGNOSTIC_POSITIONS
+        if (number_type != token_type::value_float)
+        {
+            const token_type integer_result = convert_integer(number_type, data, data + len);
+            if (JSON_HEDLEY_LIKELY(integer_result != token_type::uninitialized))
+            {
+                ia.bulk_skip(len - 1);
+                position.chars_read_total += (len - 1);
+                position.chars_read_current_line += (len - 1);
+                return integer_result;
+            }
+            // The value does not fit an integer, so this token converts as a
+            // float. Recording that here keeps convert_number() below from
+            // repeating the integer attempt that just failed.
+            number_type = token_type::value_float;
+        }
+#endif
+
+        // materialize the token exactly as scan_number() would, substituting the
+        // locale decimal point so convert_number()'s strtof fallback stays valid.
+        // reset() already cleared token_buffer, so append() fills it (assign() is
+        // avoided because custom string_t types need not provide it)
+        token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), len);
+        if (dot_index != std::string::npos)
+        {
+            token_buffer[dot_index] = static_cast<typename string_t::value_type>(decimal_point_char);
+            decimal_point_position = dot_index;
+        }
+
+        ia.bulk_skip(len - 1);
+        position.chars_read_total += (len - 1);
+        position.chars_read_current_line += (len - 1);
+
+        return convert_number(number_type, mantissa_end);
+    }
+
+    /// contiguous input: try the number fast path, else the byte-path scanner
+    token_type scan_number_dispatch(std::true_type /*bulk*/)
+    {
+        const token_type t = scan_number_bulk_contiguous();
+        return (t != token_type::uninitialized) ? t : scan_number();
+    }
+
+    /// streaming input: always use the byte-path scanner
+    token_type scan_number_dispatch(std::false_type /*bulk*/)
+    {
+        return scan_number();
     }
 
     /*!
@@ -9196,6 +10183,9 @@ scan_number_done:
         if (current == '\n')
         {
             ++position.lines_read;
+            // remember the column the newline was read at: chars_read_current_line
+            // is about to be cleared, and a matching unget() cannot reconstruct it
+            chars_read_before_newline = position.chars_read_current_line;
             position.chars_read_current_line = 0;
         }
 
@@ -9229,12 +10219,20 @@ scan_number_done:
         --position.chars_read_total;
 
         // in case we "unget" a newline, we have to also decrement the lines_read
+        // and restore the column that get() cleared when it saw the newline;
+        // chars_read_current_line == 0 can only mean the last get() read one
         if (position.chars_read_current_line == 0)
         {
             if (position.lines_read > 0)
             {
                 --position.lines_read;
             }
+
+            // chars_read_before_newline counts the newline itself, which is the
+            // character being ungotten, hence the -1
+            position.chars_read_current_line = (chars_read_before_newline > 0)
+                                               ? chars_read_before_newline - 1
+                                               : 0;
         }
         else
         {
@@ -9477,7 +10475,7 @@ scan_number_done:
             case '7':
             case '8':
             case '9':
-                return scan_number();
+                return scan_number_dispatch(std::integral_constant<bool, bulk_scan> {});
 
             // end of input (the null byte is needed when parsing from
             // string literals)
@@ -9507,6 +10505,10 @@ scan_number_done:
 
     /// the start position of the current token
     position_t position {};
+
+    /// the value chars_read_current_line had when the last newline was read, so
+    /// that unget() can restore the column instead of leaving it at 0
+    std::size_t chars_read_before_newline = 0;
 
     /// raw input token string for error messages; only populated for streaming
     /// adapters (seekable adapters reconstruct it lazily via token_string_start)

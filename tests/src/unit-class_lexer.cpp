@@ -12,6 +12,11 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <cstdlib> // strtod
+#include <sstream> // stringstream
+#include <string> // string
+#include <vector> // vector
+
 namespace
 {
 // shortcut to scan a string literal
@@ -222,5 +227,433 @@ TEST_CASE("lexer class")
 
         CHECK((scan_string("//\n//\n", true) == json::lexer::token_type::end_of_input));
         CHECK((scan_string("/**//**//**/", true) == json::lexer::token_type::end_of_input));
+    }
+}
+
+TEST_CASE("lexer number fast path")
+{
+    // The contiguous fast path (used for pointer/string input) must agree with
+    // the streaming byte path (used for std::istream) on token type, numeric
+    // value, and round-trip text for every well-formed number, and reject the
+    // same malformed numbers with the same message.
+    SECTION("contiguous vs streaming parity")
+    {
+        const std::vector<std::string> numbers =
+        {
+            "0", "-0", "1", "-1", "42", "-42", "10", "100", "1234567890",
+            "0.0", "-0.0", "3.14", "-3.14", "0.5", "-0.001", "123.456789",
+            "1e0", "1E0", "1e10", "1e-10", "1e+10", "1.5e3", "-2.5E-4",
+            "9223372036854775807",             // INT64_MAX -> unsigned
+            "9223372036854775808",             // INT64_MAX + 1 -> unsigned
+            "18446744073709551615",            // UINT64_MAX -> unsigned
+            "18446744073709551616",            // UINT64_MAX + 1 -> float
+            "-9223372036854775808",            // INT64_MIN -> integer
+            "-9223372036854775809",            // INT64_MIN - 1 -> float
+            "123456789012345678901234567890",  // huge -> float
+            "0.30000000000000004", "2.2250738585072014e-308", "1e308",
+            // high-precision / wide-exponent values that exercise the
+            // std::from_chars (Eisel-Lemire) path beyond the Clinger subset
+            "1.7976931348623157e308", "1.2345678901234567e-250",
+            "9007199254740993", "5e-324", "1e-320"
+        };
+
+        for (const auto& n : numbers)
+        {
+            const std::string doc = "[" + n + "]";
+
+            // contiguous fast path
+            const json a = json::parse(doc);
+            // streaming byte path
+            std::stringstream ss(doc);
+            const json b = json::parse(ss);
+
+            CAPTURE(n);
+            CHECK(a == b);
+            CHECK(a.dump() == b.dump());
+            CHECK(a[0].type() == b[0].type());
+        }
+    }
+
+    SECTION("significant-digit gate for the Clinger fast path")
+    {
+        // Clinger's fast path needs a significand below 2^53, so it cannot
+        // succeed once the mantissa has 17 or more significant digits (the
+        // significand would be at least 10^16). The lexer skips the attempt
+        // there. That is only allowed to save work: every value must still come
+        // out bit-exactly, and both scanners must agree. In particular the gate
+        // must not fire for tokens whose leading zeros merely look like extra
+        // digits - "0.1234567890123456" has 16 significant digits, not 17.
+        const std::vector<std::string> numbers =
+        {
+            "1234567890123456",                  // 16 significant digits
+            "12345678901234567",                 // 17 -> attempt skipped
+            "123456789012345678",                // 18 -> attempt skipped
+            "0.1234567890123456",                // 16: the leading "0" is not significant
+            "0.12345678901234567",               // 17
+            "0.00000000000000001",               // 1, in a long token
+            "0.000000000000000012345678901234",  // 14, in a long token
+            "-0.0000000000000000000001",         // 1, negative
+            "1.0000000000000000",                // 17: trailing zeros are significant here
+            "10000000000000000",                 // 17
+            "9007199254740992",                  // 2^53
+            "9007199254740993",                  // 2^53 + 1
+            "-65.613616999999977",               // canada.json shape
+            "1.2345678901234567e-250",           // 17 with an exponent
+            "1.234567890123456e-250",            // 16 with an exponent
+            "1e10", "0.0", "-0.0", "0e0", "0.000123"
+        };
+
+        for (const auto& n : numbers)
+        {
+            CAPTURE(n);
+            const std::string doc = "[" + n + "]";
+
+            const json a = json::parse(doc);   // contiguous fast path
+            std::stringstream ss(doc);
+            const json b = json::parse(ss);    // streaming byte path
+
+            CHECK(a[0].type() == b[0].type());
+            CHECK(a == b);
+
+            if (a[0].is_number_float())
+            {
+                const double expected = std::strtod(n.c_str(), nullptr);
+                CHECK(a[0].get<double>() == expected);
+                CHECK(b[0].get<double>() == expected);
+            }
+        }
+    }
+
+    SECTION("token type classification")
+    {
+        CHECK((scan_string("0") == json::lexer::token_type::value_unsigned));
+        CHECK((scan_string("-1") == json::lexer::token_type::value_integer));
+        CHECK((scan_string("1.5") == json::lexer::token_type::value_float));
+        CHECK((scan_string("1e5") == json::lexer::token_type::value_float));
+        CHECK((scan_string("18446744073709551615") == json::lexer::token_type::value_unsigned));
+        CHECK((scan_string("18446744073709551616") == json::lexer::token_type::value_float));
+        CHECK((scan_string("-9223372036854775808") == json::lexer::token_type::value_integer));
+        CHECK((scan_string("-9223372036854775809") == json::lexer::token_type::value_float));
+    }
+
+    SECTION("malformed numbers are rejected identically")
+    {
+        for (const char* bad :
+                {"-", "1.", "1e", "1e+", "1.2e", "01", "-01", "1..2", "1.2.3"
+                })
+        {
+            CAPTURE(bad);
+            // the contiguous fast path must decline and let the byte path report
+            const std::string doc = std::string("[") + bad + "]";
+            CHECK_FALSE(json::accept(doc));
+            std::stringstream ss(doc);
+            CHECK_FALSE(json::accept(ss));
+        }
+    }
+
+#if !defined(JSON_NOEXCEPTION)
+    // these sections parse invalid input, which aborts when exceptions are off
+    SECTION("exhaustive grammar parity with the streaming path")
+    {
+        // The JSON number grammar is encoded twice: once as the scan_number()
+        // state machine and once as the contiguous fast path. Enumerate every
+        // short string over the number alphabet and require the two encodings to
+        // agree exactly - on acceptance, on the reported error, and on the parsed
+        // value - so they cannot drift apart.
+        const std::string alphabet = "01.eE+-";
+
+        // full outcome of parsing @a doc, so a mismatch in type, value, or error
+        // message is caught, not just a mismatch in acceptance
+        const auto outcome = [](const std::string & doc, bool streaming) -> std::string
+        {
+            try
+            {
+                if (streaming)
+                {
+                    std::stringstream ss(doc);
+                    const json j = json::parse(ss);
+                    return std::string(j[0].type_name()) + '|' + j.dump();
+                }
+                const json j = json::parse(doc);
+                return std::string(j[0].type_name()) + '|' + j.dump();
+            }
+            catch (const json::parse_error& e)
+            {
+                return {e.what()};
+            }
+        };
+
+        std::vector<std::string> mismatches;
+        std::vector<std::string> tokens{""};
+        for (std::size_t length = 1; length <= 4; ++length)
+        {
+            std::vector<std::string> next;
+            next.reserve(tokens.size() * alphabet.size());
+            for (const auto& prefix : tokens)
+            {
+                for (const char c : alphabet)
+                {
+                    next.push_back(prefix + c);
+                }
+            }
+            tokens = next;
+
+            for (const auto& token : tokens)
+            {
+                const std::string doc = "[" + token + "]";
+                if (outcome(doc, false) != outcome(doc, true))
+                {
+                    mismatches.push_back(doc);
+                }
+            }
+        }
+
+        // 7 + 49 + 343 + 2401 tokens
+        CHECK(tokens.size() == 2401);
+        CAPTURE(mismatches);
+        CHECK(mismatches.empty());
+    }
+
+    SECTION("error positions match the streaming path")
+    {
+        // Rejecting identically is not enough: the fast path must also report the
+        // error at the same position as the byte path. A number directly followed
+        // by a newline is the interesting case, because the byte path reaches the
+        // newline (which resets the column) and then ungets it.
+        // returns the parse_error message, or "" if the document parsed
+        const auto contiguous_error = [](const std::string & doc) -> std::string
+        {
+            try
+            {
+                const json j = json::parse(doc);
+                static_cast<void>(j);
+            }
+            catch (const json::parse_error& e)
+            {
+                return {e.what()};
+            }
+            return {};
+        };
+        const auto streaming_error = [](const std::string & doc) -> std::string
+        {
+            try
+            {
+                std::stringstream ss(doc);
+                const json j = json::parse(ss);
+                static_cast<void>(j);
+            }
+            catch (const json::parse_error& e)
+            {
+                return {e.what()};
+            }
+            return {};
+        };
+
+        for (const char* bad :
+                {"[01\n]", "[00\n]", "[-01\n]", "{1\n}", "[1\n2]", "[1.2.3\n]",
+                 "[1 \n2]", "[\n1\n2]", "1\n2", "[01\r\n]", "[1e\n]", "[-\n]"
+                })
+        {
+            CAPTURE(bad);
+            const std::string doc = bad;
+            const std::string contiguous_what = contiguous_error(doc);
+
+            CHECK_FALSE(contiguous_what.empty());
+            CHECK(contiguous_what == streaming_error(doc));
+        }
+
+        // A number terminated by a newline must report the same position as the
+        // same number terminated by anything else: scan_number() reads the
+        // terminator and ungets it, so the reported column is the one reached
+        // after the number's last character - not the 0 that an unget() across
+        // the newline used to leave behind.
+        CHECK(contiguous_error("[01\n]") == contiguous_error("[01 ]"));
+        CHECK(contiguous_error("[01\n]") ==
+              "[json.exception.parse_error.101] parse error at line 1, column 3: "
+              "syntax error while parsing array - unexpected number literal; expected ']'");
+
+        // the same for a multi-character token, where the column of the last
+        // character (the '3' of "-2.5e3") differs from the column it starts at
+        CHECK(contiguous_error("null -2.5e3\nfalse") == contiguous_error("null -2.5e3 false"));
+        CHECK(contiguous_error("null -2.5e3\nfalse") ==
+              "[json.exception.parse_error.101] parse error at line 1, column 11: "
+              "syntax error while parsing value - unexpected number literal; expected end of input");
+    }
+#endif
+}
+
+TEST_CASE("lexer string fast path")
+{
+    // Build a byte string from explicit values: a hex escape in a string
+    // literal swallows every following hex digit, which makes sequences like
+    // "\xC3\xA9b" mean something other than they look like.
+    const auto bytes = [](std::initializer_list<int> values)
+    {
+        std::string result;
+        for (const int value : values)
+        {
+            result.push_back(static_cast<char>(value));
+        }
+        return result;
+    };
+
+#if !defined(JSON_NOEXCEPTION)
+    // the full outcome of parsing @a doc: the parsed value, or the exact error
+    // message, so a mismatch in either is caught. Only usable with exceptions
+    // on: parsing invalid input aborts when they are off.
+    const auto outcome = [](const std::string & doc, bool streaming) -> std::string
+    {
+        try
+        {
+            if (streaming)
+            {
+                std::stringstream ss(doc);
+                const json j = json::parse(ss);
+                return j.dump();
+            }
+            const json j = json::parse(doc);
+            return j.dump();
+        }
+        // not just parse_error: if a bulk scanner ever let ill-formed UTF-8
+        // through, dump() would throw type_error.316, and that has to surface
+        // as a reported mismatch rather than as an uncaught exception
+        catch (const json::exception& e)
+        {
+            return {e.what()};
+        }
+    };
+#endif
+
+    // once at the start of the string, once past the first 8-byte SWAR word, so
+    // the bulk scanner sees each case with and without a run behind it
+    const std::vector<std::size_t> offsets{0, 9};
+
+#if !defined(JSON_NOEXCEPTION)
+    SECTION("exhaustive contiguous vs streaming parity")
+    {
+        // ordinary ASCII, both specials, a control byte, characters that make
+        // the preceding backslash a valid escape, a UTF-8 lead byte of each
+        // length, a continuation byte, and a byte that is never valid
+        const std::vector<std::string> alphabet =
+        {
+            "a", "\"", "\\", "n", "u", "0", bytes({0x01}),
+            bytes({0xC3}), bytes({0xA9}), bytes({0xE4}), bytes({0xF0}),
+            bytes({0x80}), bytes({0xFF})
+        };
+
+        std::vector<std::string> mismatches;
+        std::vector<std::string> tokens{""};
+        for (std::size_t length = 1; length <= 3; ++length)
+        {
+            std::vector<std::string> next;
+            next.reserve(tokens.size() * alphabet.size());
+            for (const auto& prefix : tokens)
+            {
+                for (const auto& symbol : alphabet)
+                {
+                    next.push_back(prefix + symbol);
+                }
+            }
+            tokens = next;
+
+            for (const auto& token : tokens)
+            {
+                for (const std::size_t offset : offsets)
+                {
+                    const std::string doc = "[\"" + std::string(offset, 'a') + token + "\"]";
+                    if (outcome(doc, false) != outcome(doc, true))
+                    {
+                        mismatches.push_back(doc);
+                    }
+                }
+            }
+        }
+
+        // 13 + 169 + 2197 tokens, each at two offsets
+        CHECK(tokens.size() == 2197);
+        CAPTURE(mismatches);
+        CHECK(mismatches.empty());
+    }
+
+    SECTION("special bytes at every offset of the SWAR stride")
+    {
+        // The bulk scanner consumes 8 bytes at a time and then a tail; place
+        // every kind of byte that ends a run at each offset across two words,
+        // so multibyte sequences also straddle the word boundary.
+        const std::vector<std::string> specials =
+        {
+            "\"", "\\", bytes({0x01}), bytes({0x1F}), bytes({0x7F}),
+            bytes({0xC3, 0xA9}), bytes({0xE4, 0xB8, 0xAD}), bytes({0xF0, 0x9F, 0x98, 0x80}),
+            bytes({0xFF}), bytes({0xC3}), bytes({0xE4, 0xB8})
+        };
+
+        std::vector<std::string> mismatches;
+        for (std::size_t offset = 0; offset <= 17; ++offset)
+        {
+            for (const auto& special : specials)
+            {
+                const std::string doc = "[\"" + std::string(offset, 'a') + special + "\"]";
+                if (outcome(doc, false) != outcome(doc, true))
+                {
+                    mismatches.push_back(doc);
+                }
+            }
+        }
+        CAPTURE(mismatches);
+        CHECK(mismatches.empty());
+    }
+#endif
+
+    // json::accept() never throws, so the ranges stay covered without exceptions
+    SECTION("UTF-8 ranges are accepted and rejected as documented")
+    {
+        // The bulk validator must accept exactly what the byte-at-a-time
+        // scanner accepts, so pin the boundaries of every range it recognizes.
+        // aggregate, only ever brace-initialized below; default member
+        // initializers would stop it being an aggregate in C++11
+        struct utf8_case // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init)
+        {
+            std::string sequence;
+            bool valid;
+            const char* description;
+        };
+        const std::vector<utf8_case> cases =
+        {
+            {bytes({0xC2, 0x80}), true, "U+0080, shortest two-byte"},
+            {bytes({0xDF, 0xBF}), true, "U+07FF, longest two-byte"},
+            {bytes({0xC1, 0xBF}), false, "overlong two-byte"},
+            {bytes({0xC2, 0x7F}), false, "two-byte with bad continuation"},
+            {bytes({0xE0, 0xA0, 0x80}), true, "U+0800, shortest three-byte"},
+            {bytes({0xE0, 0x9F, 0xBF}), false, "overlong three-byte"},
+            {bytes({0xED, 0x9F, 0xBF}), true, "U+D7FF, just below the surrogates"},
+            {bytes({0xED, 0xA0, 0x80}), false, "surrogate U+D800"},
+            {bytes({0xED, 0xBF, 0xBF}), false, "surrogate U+DFFF"},
+            {bytes({0xEE, 0x80, 0x80}), true, "U+E000, just above the surrogates"},
+            {bytes({0xEF, 0xBF, 0xBF}), true, "U+FFFF"},
+            {bytes({0xF0, 0x90, 0x80, 0x80}), true, "U+10000, shortest four-byte"},
+            {bytes({0xF0, 0x8F, 0xBF, 0xBF}), false, "overlong four-byte"},
+            {bytes({0xF4, 0x8F, 0xBF, 0xBF}), true, "U+10FFFF, highest code point"},
+            {bytes({0xF4, 0x90, 0x80, 0x80}), false, "above U+10FFFF"},
+            {bytes({0xF5, 0x80, 0x80, 0x80}), false, "lead byte out of range"},
+            {bytes({0x80}), false, "bare continuation byte"},
+            {bytes({0xFF}), false, "byte that never appears in UTF-8"},
+            {bytes({0xC3}), false, "truncated two-byte"},
+            {bytes({0xE4, 0xB8}), false, "truncated three-byte"},
+            {bytes({0xF0, 0x9F, 0x98}), false, "truncated four-byte"}
+        };
+
+        for (const auto& test_case : cases)
+        {
+            CAPTURE(test_case.description);
+            for (const std::size_t offset : offsets)
+            {
+                CAPTURE(offset);
+                const std::string doc = "[\"" + std::string(offset, 'a') + test_case.sequence + "\"]";
+                CHECK(json::accept(doc) == test_case.valid);
+#if !defined(JSON_NOEXCEPTION)
+                CHECK(outcome(doc, false) == outcome(doc, true));
+#endif
+            }
+        }
     }
 }
