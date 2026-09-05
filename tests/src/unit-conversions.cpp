@@ -95,6 +95,19 @@ TEST_CASE("value conversion")
             CHECK(json(o) == j);
         }
 
+        SECTION("std::unordered_map reserve path with many keys")
+        {
+            json big;
+            for (int i = 0; i < 200; ++i)
+            {
+                big[std::to_string(i)] = i;
+            }
+            const auto o = big.get<std::unordered_map<std::string, int>>();
+            CHECK(o.size() == 200);
+            CHECK(o.at("0") == 0);
+            CHECK(o.at("199") == 199);
+        }
+
         SECTION("std::unordered_multimap<json::string_t, json>")
         {
             const std::unordered_multimap<json::string_t, json> o =

@@ -44,6 +44,15 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
+template<typename Container, typename Size>
+auto try_reserve(Container& c, Size n, int) -> decltype(c.reserve(n), void())
+{
+    c.reserve(n);
+}
+
+template<typename Container, typename Size>
+void try_reserve(Container& /*c*/, Size /*n*/, ...) {}
+
 template<typename BasicJsonType>
 inline void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
 {
@@ -409,6 +418,7 @@ inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
 
     ConstructibleObjectType ret;
     const auto* inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
+    try_reserve(ret, inner_object->size(), 0);
     for (const auto& p : *inner_object)
     {
         ret.emplace(p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>());
