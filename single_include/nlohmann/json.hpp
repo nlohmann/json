@@ -26587,7 +26587,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
             case value_t::object:
             {
-                // first pass: find keys that were deleted (i.e., in source but not in target)
+                // first pass: find keys that were deleted (i.e., in source but
+                // not in target), and record the keys common to both, in
+                // source's iteration order -- this is a by-product of the
+                // target.find() call already needed to detect removed keys,
+                // so it adds no extra lookups.
+                std::vector<typename object_t::key_type> common_keys_source_order;
                 for (auto it = source.cbegin(); it != source.cend(); ++it)
                 {
                     if (target.find(it.key()) == target.end())
@@ -26599,77 +26604,82 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                             {"op", "remove"}, {"path", path_key}
                         }));
                     }
-                }
-
-                // determine whether the relative order of the keys common to
-                // source and target already matches. For an object_t whose
-                // iteration order is a pure function of the key set (e.g.,
-                // the default std::map, which always iterates in sorted key
-                // order), this is always true, so this check (and the "else"
-                // branch below) is effectively a no-op for a regular `json`
-                // object; it only matters for a reorderable object_t such as
-                // the one backing `ordered_json`.
-                std::vector<typename object_t::key_type> order_in_source;
-                for (auto it = source.cbegin(); it != source.cend(); ++it)
-                {
-                    if (target.find(it.key()) != target.end())
+                    else
                     {
-                        order_in_source.push_back(it.key());
+                        common_keys_source_order.push_back(it.key());
                     }
                 }
 
-                std::vector<typename object_t::key_type> order_in_target;
+                // second pass: find keys that were added (i.e., in target but
+                // not in source), and record the keys common to both, in
+                // target's iteration order -- again a by-product of the
+                // source.find() call already needed to detect added keys. At
+                // the same time, determine whether every added key comes
+                // after every common key in target's order (a precondition
+                // for the fast path below, which only ever appends new keys
+                // at the very end): for an object_t whose iteration order is
+                // a pure function of the key set (e.g. the default std::map,
+                // which always iterates in sorted key order), the order
+                // check further below is always true and this whole
+                // mechanism is effectively a no-op; it only matters for a
+                // reorderable object_t such as the one backing `ordered_json`.
+                // patch ops for keys that were added (i.e., in target but not
+                // in source); built here so the fast path below can reuse
+                // them without a second source.find() per target key. Only
+                // used by the fast path -- the slow (reordering) path
+                // rebuilds "add" ops for every key itself.
+                std::vector<typename object_t::key_type> common_keys_target_order;
+                basic_json added_ops(value_t::array);
+                bool new_keys_form_suffix = true;
+                bool seen_new_key = false;
                 for (auto it = target.cbegin(); it != target.cend(); ++it)
                 {
-                    if (source.find(it.key()) != source.end())
+                    if (source.find(it.key()) == source.end())
                     {
-                        order_in_target.push_back(it.key());
-                    }
-                }
-
-                // The fast path below (like the original implementation)
-                // only ever recurses into common keys -- without touching
-                // their relative position -- and appends brand-new keys at
-                // the very end. That reproduces target's order only if the
-                // common keys already appear in target in the same relative
-                // order as in source, AND every brand-new key comes after
-                // every common key in target (i.e., the new keys form a
-                // suffix of target's key order); otherwise a new key would
-                // need to be inserted somewhere other than the end.
-                bool new_keys_form_suffix = true;
-                {
-                    bool seen_new_key = false;
-                    for (auto it = target.cbegin(); it != target.cend(); ++it)
-                    {
-                        if (source.find(it.key()) == source.end())
+                        seen_new_key = true;
+                        const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
+                        added_ops.push_back(
                         {
-                            seen_new_key = true;
-                        }
-                        else if (seen_new_key)
+                            {"op", "add"}, {"path", path_key},
+                            {"value", it.value()}
+                        });
+                    }
+                    else
+                    {
+                        common_keys_target_order.push_back(it.key());
+                        if (seen_new_key)
                         {
                             new_keys_form_suffix = false;
-                            break;
                         }
                     }
                 }
 
-                bool reordered = false;
-
-                if (order_in_source == order_in_target && new_keys_form_suffix)
+                if (common_keys_source_order == common_keys_target_order && new_keys_form_suffix)
                 {
                     // fast path: order of common keys already matches (or the
                     // object_t's iteration order does not depend on
                     // insertion history), so a plain per-key recursive diff
-                    // is correct and minimal, as before
-                    for (auto it = source.cbegin(); it != source.cend(); ++it)
+                    // is correct and minimal, as before. common_keys_source_order
+                    // is, by construction, the subsequence of source's keys
+                    // that are common to both objects, in source's iteration
+                    // order -- so it can be walked in lockstep with `source`
+                    // using a cheap key comparison instead of another lookup.
+                    auto common_it = common_keys_source_order.cbegin();
+                    for (auto it = source.cbegin(); it != source.cend() && common_it != common_keys_source_order.cend(); ++it)
                     {
-                        if (target.find(it.key()) != target.end())
+                        if (it.key() == *common_it)
                         {
                             const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
                             auto temp_diff = diff(it.value(), target[it.key()], path_key);
                             result.insert(result.end(), temp_diff.begin(), temp_diff.end());
+                            ++common_it;
                         }
                     }
+
+                    // append the "add" ops for brand-new keys collected above
+                    // during the pass over target -- no second source.find()
+                    // per target key needed
+                    result.insert(result.end(), added_ops.begin(), added_ops.end());
                 }
                 else
                 {
@@ -26686,9 +26696,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     // when the key does not already exist -- so removing a
                     // key and then adding it moves it to the end, fixing its
                     // position.
-                    reordered = true;
-
-                    for (const auto& key : order_in_source)
+                    for (const auto& key : common_keys_source_order)
                     {
                         const auto path_key = detail::concat<string_t>(path, '/', detail::escape(key));
                         result.push_back(object(
@@ -26709,26 +26717,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                             {"op", "add"}, {"path", path_key},
                             {"value", it.value()}
                         });
-                    }
-                }
-
-                // second pass: find keys that were added (i.e., in target but
-                // not in source); already handled above when reordering, to
-                // keep them correctly interleaved with the moved keys
-                if (!reordered)
-                {
-                    for (auto it = target.cbegin(); it != target.cend(); ++it)
-                    {
-                        if (source.find(it.key()) == source.end())
-                        {
-                            // found a key that is not in source -> add it
-                            const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
-                            result.push_back(
-                            {
-                                {"op", "add"}, {"path", path_key},
-                                {"value", it.value()}
-                            });
-                        }
                     }
                 }
 
