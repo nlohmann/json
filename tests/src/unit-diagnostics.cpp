@@ -273,5 +273,36 @@ TEST_CASE("Regression tests for extended diagnostics")
         CHECK(j1["numbers"]["two"] == 2);
         CHECK(j1["string"] == "t");
     }
+
+    SECTION("Regression test - swap(array_t&)/swap(object_t&) must update JSON_DIAGNOSTICS parent pointers")
+    {
+        // swap(array_t&)
+        {
+            json j = json::array();
+            json::array_t arr = {json::array({1})};
+            j.swap(arr);
+
+            // parent pointers of the moved-in elements must point into j, not
+            // into the now-defunct free-standing array_t
+            CHECK_THROWS_WITH_AS(j[0][0].get<std::string>(), "[json.exception.type_error.302] (/0/0) type must be string, but is number", json::type_error);
+
+            // must not trigger assert_invariant() in a debug/assert-enabled build
+            json const k = j;
+            CHECK(k == j);
+        }
+
+        // swap(object_t&)
+        {
+            json o = json::object();
+            json::object_t obj = {{"a", json::array({1})}};
+            o.swap(obj);
+
+            CHECK_THROWS_WITH_AS(o["a"][0].get<std::string>(), "[json.exception.type_error.302] (/a/0) type must be string, but is number", json::type_error);
+
+            // must not trigger assert_invariant() in a debug/assert-enabled build
+            json const p = o;
+            CHECK(p == o);
+        }
+    }
 }
 
