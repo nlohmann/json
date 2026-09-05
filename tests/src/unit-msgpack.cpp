@@ -1597,6 +1597,60 @@ TEST_CASE("MessagePack")
     }
 }
 
+TEST_CASE("issue #5405 - array reserve for definite-length MessagePack arrays")
+{
+    SECTION("a huge claimed length with no element data must not over-allocate")
+    {
+        // 0xdd: array 32 (four-byte length); claims 0xFFFFFFFF (4294967295)
+        // elements but provides none. max_size() for a std::vector is far
+        // larger than this count, so it does not reject the header outright;
+        // the (capped) reservation must not attempt to allocate space for
+        // billions of elements before the missing data is detected.
+        json _;
+        const std::vector<uint8_t> input = {0xdd, 0xFF, 0xFF, 0xFF, 0xFF};
+        CHECK_THROWS_WITH_AS(_ = json::from_msgpack(input),
+                             "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing MessagePack value: unexpected end of input",
+                             json::parse_error&);
+        CHECK(json::from_msgpack(input, true, false).is_discarded());
+    }
+
+    SECTION("arrays of various sizes decode to the same value as before the reserve optimization")
+    {
+        for (const auto size :
+                {
+                    std::size_t(0), std::size_t(1), std::size_t(5), // small
+                    std::size_t(16384),                             // exactly at the reserve cap
+                    std::size_t(20000)                              // above the reserve cap
+                })
+        {
+            CAPTURE(size)
+            json j = json::array();
+            for (std::size_t i = 0; i < size; ++i)
+            {
+                j.push_back(static_cast<int>(i % 1000));
+            }
+
+            const auto packed = json::to_msgpack(j);
+            CHECK(json::from_msgpack(packed) == j);
+        }
+    }
+
+    SECTION("a user-defined SAX consumer is unaffected by the internal DOM reserve optimization")
+    {
+        // the reserve() call is local to json_sax_dom_parser / json_sax_dom_callback_parser;
+        // a custom SAX consumer that does not touch a DOM array sees identical events
+        json j = json::array();
+        for (int i = 0; i < 100; ++i)
+        {
+            j.push_back(i);
+        }
+        const auto packed = json::to_msgpack(j);
+
+        SaxCountdown scp(1000000); // large enough to never trigger an abort
+        CHECK(json::sax_parse(packed, &scp, json::input_format_t::msgpack));
+    }
+}
+
 // use this testcase outside [hide] to run it with Valgrind
 TEST_CASE("single MessagePack roundtrip")
 {
