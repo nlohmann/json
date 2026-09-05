@@ -933,6 +933,17 @@ BSON stores the length of documents, arrays, strings, and binary values in a sig
     [`to_bson`](../api/basic_json/to_bson.md) produced documents with negative length prefixes that
     [`from_bson`](../api/basic_json/from_bson.md) rejected.
 
+### json.exception.out_of_range.413
+
+MessagePack's ext type and BSON's binary subtype are each stored in a single byte. This exception is thrown when serializing a
+[`byte_container_with_subtype`](../api/byte_container_with_subtype/index.md) whose subtype exceeds 255.
+
+!!! failure "Example message"
+
+    ```
+    [json.exception.out_of_range.413] subtype 70000 is too large for the MessagePack ext type (max 255)
+    ```
+
 ## Further exceptions
 
 This exception is thrown in case of errors that cannot be classified with the
