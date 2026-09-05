@@ -326,6 +326,57 @@ TEST_CASE("lexicographical comparison operators")
 #endif
         }
 
+        SECTION("integer/float mixed comparison is exact")
+        {
+            // Widening the integer to a double loses precision past the
+            // mantissa, so 2^63-2 and 2^63-1 both used to compare equal to the
+            // double 2^63 while differing from each other. That makes equality
+            // intransitive and the ordering not a strict weak ordering.
+            const json below_two_63 = static_cast<std::int64_t>(9223372036854775806LL);
+            const json max_int64 = (std::numeric_limits<std::int64_t>::max)();
+            const json two_63 = 9223372036854775808.0;
+
+            CHECK_FALSE(below_two_63 == two_63);
+            CHECK_FALSE(max_int64 == two_63);
+            CHECK(below_two_63 != max_int64);
+            CHECK(below_two_63 < max_int64);
+            CHECK(below_two_63 < two_63);
+            CHECK(max_int64 < two_63);
+            CHECK(two_63 > max_int64);
+            CHECK_FALSE(two_63 < max_int64);
+
+            // the same past the unsigned range
+            const json max_uint64 = (std::numeric_limits<std::uint64_t>::max)();
+            const json two_64 = 18446744073709551616.0;
+            CHECK_FALSE(max_uint64 == two_64);
+            CHECK(max_uint64 < two_64);
+            CHECK(two_64 > max_uint64);
+
+            // values a double represents exactly still compare equal
+            CHECK(json(1) == json(1.0));
+            CHECK(json(1u) == json(1.0));
+            CHECK(json(-3) == json(-3.0));
+            CHECK(json(1) < json(1.5));
+            CHECK(json(1.5) < json(2));
+            CHECK(json(2) > json(1.5));
+
+            // a NaN operand stays unordered against either integer kind
+            CHECK_FALSE(json(1) == json(nan));
+            CHECK_FALSE(json(1) < json(nan));
+            CHECK_FALSE(json(nan) < json(1));
+            CHECK_FALSE(json(1u) == json(nan));
+
+#if JSON_HAS_THREE_WAY_COMPARISON
+            // JSON_HAS_CPP_20 (do not remove; see note at top of file)
+            CHECK((max_int64 <=> two_63) == std::partial_ordering::less); // *NOPAD*
+            CHECK((two_63 <=> max_int64) == std::partial_ordering::greater); // *NOPAD*
+            CHECK((below_two_63 <=> max_int64) == std::partial_ordering::less); // *NOPAD*
+            CHECK((max_uint64 <=> two_64) == std::partial_ordering::less); // *NOPAD*
+            CHECK((json(1) <=> json(1.0)) == std::partial_ordering::equivalent); // *NOPAD*
+            CHECK((json(1) <=> json(nan)) == std::partial_ordering::unordered); // *NOPAD*
+#endif
+        }
+
         SECTION("compares unordered")
         {
             std::vector<std::vector<bool>> expected =
