@@ -1388,3 +1388,32 @@ TEST_CASE("JSON patch - add to a primitive parent (regression #4292)")
         CHECK_THROWS_AS(doc.patch(patch), json::out_of_range&);
     }
 }
+
+TEST_CASE("JSON patch_inplace")
+{
+    SECTION("matches patch() on success")
+    {
+        json doc = {{"a", 1}, {"b", json::array({2, 3})}};
+        const json patch = {{{"op", "replace"}, {"path", "/a"}, {"value", 9}}};
+        const json expected = doc.patch(patch);
+        doc.patch_inplace(patch);
+        CHECK(doc == expected);
+    }
+
+    SECTION("leaves earlier operations applied when a later op throws")
+    {
+        json doc = {{"a", 1}, {"b", 2}};
+        const json patch =
+        {
+            {{"op", "replace"}, {"path", "/a"}, {"value", 9}},
+            {{"op", "replace"}, {"path", "/missing"}, {"value", 0}}
+        };
+        CHECK_THROWS_AS(doc.patch_inplace(patch), json::out_of_range&);
+        CHECK(doc["a"] == 9);
+        CHECK(doc["b"] == 2);
+        // patch() copies first, so the original is unchanged
+        json const original = {{"a", 1}, {"b", 2}};
+        CHECK_THROWS_AS(original.patch(patch), json::out_of_range&);
+        CHECK(original["a"] == 1);
+    }
+}

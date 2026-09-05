@@ -52,6 +52,9 @@ TEST_CASE("std::formatter<nlohmann::json>")
         CHECK(std::format("{:2}", j) == j.dump(2));
         CHECK(std::format("{:#2}", j) == j.dump(2));
         CHECK(std::format("{:8}", j) == j.dump(8));
+        // multi-digit width exercises the 2nd+ iterations of the width loop
+        CHECK(std::format("{:12}", j) == j.dump(12));
+        CHECK(std::format("{:#12}", j) == j.dump(12));
     }
 
     SECTION("fill-and-align sets the indent character, like dump(indent, indent_char)")
@@ -64,6 +67,13 @@ TEST_CASE("std::formatter<nlohmann::json>")
         // JSON values -- only the fill character before it is used as the indent character
         CHECK(std::format("{:.<3}", j) == j.dump(3, '.'));
         CHECK(std::format("{:.^3}", j) == j.dump(3, '.'));
+        // bare alignment with no fill char is accepted and ignored; indent stays
+        // compact unless '#' or a width requests pretty-printing
+        CHECK(std::format("{:<}", j) == j.dump());
+        CHECK(std::format("{:>}", j) == j.dump());
+        CHECK(std::format("{:^}", j) == j.dump());
+        CHECK(std::format("{:<#}", j) == j.dump(4));
+        CHECK(std::format("{:>2}", j) == j.dump(2));
     }
 
     SECTION("format args with no meaning for JSON values are rejected")
