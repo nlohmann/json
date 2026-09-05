@@ -27335,6 +27335,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         {
             using std::swap;
             swap(*(m_data.m_value.array), other);
+            set_parents();
         }
         else
         {
@@ -27351,6 +27352,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         {
             using std::swap;
             swap(*(m_data.m_value.object), other);
+            set_parents();
         }
         else
         {
