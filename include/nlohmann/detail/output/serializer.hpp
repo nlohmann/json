@@ -71,7 +71,6 @@ class serializer
         , thousands_sep(loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->thousands_sep)))
         , decimal_point(loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->decimal_point)))
         , indent_char(ichar)
-        , indent_string(512, indent_char)
         , error_handler(error_handler_)
     {}
 
@@ -126,10 +125,7 @@ class serializer
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
-                    if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
-                    {
-                        indent_string.resize(indent_string.size() * 2, ' ');
-                    }
+                    ensure_indent(new_indent);
 
                     // first n-1 elements
                     auto i = val.m_data.m_value.object->cbegin();
@@ -199,10 +195,7 @@ class serializer
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
-                    if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
-                    {
-                        indent_string.resize(indent_string.size() * 2, ' ');
-                    }
+                    ensure_indent(new_indent);
 
                     // first n-1 elements
                     for (auto i = val.m_data.m_value.array->cbegin();
@@ -260,10 +253,7 @@ class serializer
 
                     // variable to hold indentation for recursive calls
                     const auto new_indent = current_indent + indent_step;
-                    if (JSON_HEDLEY_UNLIKELY(indent_string.size() < new_indent))
-                    {
-                        indent_string.resize(indent_string.size() * 2, ' ');
-                    }
+                    ensure_indent(new_indent);
 
                     o->write_characters(indent_string.c_str(), new_indent);
 
@@ -992,6 +982,17 @@ class serializer
     }
 
   private:
+    /// Grow the indent buffer on demand. Compact dump() never calls this, so
+    /// the 512-byte indent_string is not allocated unless pretty-printing.
+    void ensure_indent(std::size_t needed)
+    {
+        if (JSON_HEDLEY_UNLIKELY(indent_string.size() < needed))
+        {
+            const auto cap = (std::max)(needed, static_cast<std::size_t>(512));
+            indent_string.assign(cap, indent_char);
+        }
+    }
+
     /// the output of the serializer
     output_adapter_t<char> o = nullptr;
 

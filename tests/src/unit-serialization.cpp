@@ -382,3 +382,13 @@ TEST_CASE("dump for basic_json with long double number_float_t")
         check_same(100.0L,  100.0);
     }
 }
+
+TEST_CASE("issue #5413 compact dump and pretty dump with custom indent char")
+{
+    const json j = {{"a", json::array({1, 2})}, {"b", true}};
+
+    CHECK(j.dump() == "{\"a\":[1,2],\"b\":true}");
+    CHECK(j.dump(-1) == j.dump());
+    CHECK(j.dump(2) == "{\n  \"a\": [\n    1,\n    2\n  ],\n  \"b\": true\n}");
+    CHECK(j.dump(1, '\t') == "{\n\t\"a\": [\n\t\t1,\n\t\t2\n\t],\n\t\"b\": true\n}");
+}
