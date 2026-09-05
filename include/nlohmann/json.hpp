@@ -3425,6 +3425,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_THROW(invalid_iterator::create(211, "passed iterators may not belong to container", this));
         }
 
+        // passed iterators must belong to arrays
+        if (JSON_HEDLEY_UNLIKELY(!first.m_object->is_array()))
+        {
+            JSON_THROW(invalid_iterator::create(202, "iterators first and last must point to arrays", this));
+        }
+
         // insert to array and return iterator
         return insert_iterator(pos, first.m_it.array_iterator, last.m_it.array_iterator);
     }
