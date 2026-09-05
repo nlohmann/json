@@ -26,8 +26,11 @@ using ordered_json = nlohmann::ordered_json;
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 #endif
 
+#include <atomic>
+#include <clocale>
 #include <cstdio>
 #include <list>
+#include <thread>
 #include <type_traits>
 #include <utility>
 
@@ -1239,6 +1242,44 @@ TEST_CASE("regression tests 2")
         CHECK(j == json({2, 4, 6}));
     }
 #endif
+
+    SECTION("issue #5198 - TOCTOU race between lexer construction and locale changes causes float truncation")
+    {
+        std::atomic<bool> stop_requested{};
+        std::thread switcher([&stop_requested]
+        {
+            bool german = true;
+            const std::string initial_locale = std::setlocale(LC_NUMERIC, nullptr);
+
+            while (!stop_requested)
+            {
+                const bool setlocale_res = std::setlocale(LC_NUMERIC, german ? "de_DE.UTF-8" : "C");
+                WARN_MESSAGE(setlocale_res,
+                             "Setting locale failed, probably because de_DE.UTF-8 is not installed. "
+                             "This test was skipped as it would be inconclusive.");
+                if (!setlocale_res)
+                {
+                    stop_requested = true;
+                }
+                german = !german;
+            }
+
+            (void)std::setlocale(LC_NUMERIC, initial_locale.c_str()); // restore original locale
+        });
+
+        for (std::size_t i = 0; i < 10000 && !stop_requested; ++i)
+        {
+            const json j = json::parse("{\"val\": 99.123456789}");
+            const double parsed = j.value("val", 0.0);
+            if (!CHECK(parsed == 99.123456789))
+            {
+                break;
+            }
+        }
+
+        stop_requested = true;
+        switcher.join();
+    }
 }
 
 TEST_CASE_TEMPLATE("issue #4798 - nlohmann::json::to_msgpack() encode float NaN as double", T, double, float) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)

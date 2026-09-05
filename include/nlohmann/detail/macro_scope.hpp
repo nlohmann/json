@@ -124,6 +124,20 @@
     #define JSON_HAS_FILESYSTEM 0
 #endif
 
+#ifndef JSON_HAS_FROM_CHARS
+    #if defined(JSON_HAS_CPP_17) && defined(__cpp_lib_to_chars)
+        // The std::from_chars<float> implementation in libstdc++ 11 gets some of the corner cases wrong;
+        // starting with libstdc++ 12, these are fixed by switching the implementation to fast_float.
+        #if defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE < 12
+            #define JSON_HAS_FROM_CHARS 0
+        #else
+            #define JSON_HAS_FROM_CHARS 1
+        #endif
+    #else
+        #define JSON_HAS_FROM_CHARS 0
+    #endif
+#endif
+
 #ifndef JSON_HAS_THREE_WAY_COMPARISON
     #if defined(__cpp_impl_three_way_comparison) && __cpp_impl_three_way_comparison >= 201907L \
         && defined(__cpp_lib_three_way_comparison) && __cpp_lib_three_way_comparison >= 201907L
