@@ -1569,7 +1569,7 @@ TEST_CASE("issue #5402 - update(merge_objects=true) overwrites a primitive with 
 TEST_CASE("regression test - parser callback must not lose a duplicate key's prior value")
 {
     // a callback that rejects only the scalar value 2
-    const json::parser_callback_t drop_value_2 = [](int /*depth*/, json::parse_event_t ev, json & v)
+    const json::parser_callback_t drop_value_2 = [](int /*depth*/, json::parse_event_t ev, json & v) noexcept
     {
         return !(ev == json::parse_event_t::value && v == 2);
     };
@@ -1583,7 +1583,7 @@ TEST_CASE("regression test - parser callback must not lose a duplicate key's pri
     SECTION("duplicate key, second value is an object rejected at object_end - prior value is restored")
     {
         const json j = json::parse(R"({"a":1,"a":{"x":2}})",
-                                   [](int depth, json::parse_event_t ev, json& /*parsed*/)
+                                   [](int depth, json::parse_event_t ev, json& /*parsed*/) noexcept
         {
             return !(ev == json::parse_event_t::object_end && depth == 1);
         });
@@ -1593,7 +1593,7 @@ TEST_CASE("regression test - parser callback must not lose a duplicate key's pri
     SECTION("duplicate key, second value is an array rejected at array_end - prior value is restored")
     {
         const json j = json::parse(R"({"a":1,"a":[9,9]})",
-                                   [](int depth, json::parse_event_t ev, json& /*parsed*/)
+                                   [](int depth, json::parse_event_t ev, json& /*parsed*/) noexcept
         {
             return !(ev == json::parse_event_t::array_end && depth == 1);
         });
