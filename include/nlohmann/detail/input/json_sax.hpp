@@ -8,10 +8,11 @@
 
 #pragma once
 
+#include <algorithm> // find_if
 #include <cstddef>
 #include <string> // string
 #include <type_traits> // enable_if_t
-#include <utility> // move
+#include <utility> // move, pair
 #include <vector> // vector
 
 #include <nlohmann/detail/exceptions.hpp>
@@ -585,7 +586,17 @@ class json_sax_dom_callback_parser
         // add discarded value at the given key and store the reference for later
         if (keep && ref_stack.back())
         {
-            object_element = &(ref_stack.back()->m_data.m_value.object->operator[](val) = discarded);
+            auto& obj = *ref_stack.back()->m_data.m_value.object;
+            const auto it = obj.find(val);
+            if (it != obj.end())
+            {
+                // this is a duplicate key (legal in JSON); remember its
+                // current value so it can be restored later if the new
+                // value is rejected by the callback, instead of being
+                // erased together with the discarded placeholder
+                duplicate_key_stash.emplace_back(&(it->second), it->second);
+            }
+            object_element = &(obj[val] = discarded);
         }
 
         return true;
@@ -597,13 +608,18 @@ class json_sax_dom_callback_parser
         {
             if (!callback(static_cast<int>(ref_stack.size()) - 1, parse_event_t::object_end, *ref_stack.back()))
             {
-                // discard object
-                *ref_stack.back() = discarded;
+                // discard object, unless this slot holds a duplicate key's
+                // previous value pending restoration, in which case that
+                // value is restored instead of being discarded
+                if (!resolve_duplicate_key_stash(ref_stack.back(), true))
+                {
+                    *ref_stack.back() = discarded;
 
 #if JSON_DIAGNOSTIC_POSITIONS
-                // Set start/end positions for discarded object.
-                handle_diagnostic_positions_for_json_value(*ref_stack.back());
+                    // Set start/end positions for discarded object.
+                    handle_diagnostic_positions_for_json_value(*ref_stack.back());
 #endif
+                }
             }
             else
             {
@@ -617,6 +633,10 @@ class json_sax_dom_callback_parser
 #endif
 
                 ref_stack.back()->set_parents();
+                // this object is finally, definitively kept; drop any
+                // pending duplicate-key stash entry for its slot since it
+                // can no longer be restored
+                resolve_duplicate_key_stash(ref_stack.back(), false);
             }
         }
 
@@ -686,16 +706,25 @@ class json_sax_dom_callback_parser
 #endif
 
                 ref_stack.back()->set_parents();
+                // this array is finally, definitively kept; drop any
+                // pending duplicate-key stash entry for its slot since it
+                // can no longer be restored
+                resolve_duplicate_key_stash(ref_stack.back(), false);
             }
             else
             {
-                // discard array
-                *ref_stack.back() = discarded;
+                // discard array, unless this slot holds a duplicate key's
+                // previous value pending restoration, in which case that
+                // value is restored instead of being discarded
+                if (!resolve_duplicate_key_stash(ref_stack.back(), true))
+                {
+                    *ref_stack.back() = discarded;
 
 #if JSON_DIAGNOSTIC_POSITIONS
-                // Set start/end positions for discarded array.
-                handle_diagnostic_positions_for_json_value(*ref_stack.back());
+                    // Set start/end positions for discarded array.
+                    handle_diagnostic_positions_for_json_value(*ref_stack.back());
 #endif
+                }
             }
         }
 
@@ -809,14 +838,48 @@ class json_sax_dom_callback_parser
     }
 #endif
 
-    /// remove the discarded value the callback rejected from its parent
-    static void remove_discarded_value(BasicJsonType& parent)
+    /// if there is a pending duplicate-key stash entry for this exact slot,
+    /// remove it from the stash; if restore_value is true, the stashed
+    /// previous value is moved back into the slot first (use this when the
+    /// new value at that slot was rejected); otherwise the stash entry is
+    /// simply dropped (use this when the new value was accepted, so it
+    /// correctly supersedes the old one and no restore should ever happen
+    /// for this slot again)
+    /// @return whether a matching stash entry was found (and processed)
+    bool resolve_duplicate_key_stash(BasicJsonType* slot, bool restore_value)
+    {
+        const auto it = std::find_if(duplicate_key_stash.begin(), duplicate_key_stash.end(),
+                                     [slot](const std::pair<BasicJsonType*, BasicJsonType>& entry)
+        {
+            return entry.first == slot;
+        });
+
+        if (it == duplicate_key_stash.end())
+        {
+            return false;
+        }
+
+        if (restore_value)
+        {
+            *slot = std::move(it->second);
+        }
+        duplicate_key_stash.erase(it);
+        return true;
+    }
+
+    /// remove the discarded value the callback rejected from its parent,
+    /// unless it is a duplicate key's slot with a stashed previous value,
+    /// in which case that previous value is restored instead
+    void remove_discarded_value(BasicJsonType& parent)
     {
         for (auto it = parent.begin(); it != parent.end(); ++it)
         {
             if (it->is_discarded())
             {
-                parent.erase(it);
+                if (!resolve_duplicate_key_stash(&(*it), true))
+                {
+                    parent.erase(it);
+                }
                 break;
             }
         }
@@ -914,6 +977,16 @@ class json_sax_dom_callback_parser
 
         JSON_ASSERT(object_element);
         *object_element = std::move(value);
+        if (!skip_callback)
+        {
+            // this scalar value finally, definitively replaces whatever was
+            // at this slot; drop any pending duplicate-key stash entry for
+            // it since it can no longer be restored (a container value at
+            // this slot is resolved later, in end_object()/end_array(),
+            // since skip_callback is true for the placeholder handling that
+            // happens here for those)
+            resolve_duplicate_key_stash(object_element, false);
+        }
         return {true, object_element};
     }
 
@@ -927,6 +1000,12 @@ class json_sax_dom_callback_parser
     std::vector<bool> key_keep_stack {}; // NOLINT(readability-redundant-member-init)
     /// helper to hold the reference for the next object element
     BasicJsonType* object_element = nullptr;
+    /// stash of (slot pointer, previous value) for object members that
+    /// already existed when key() was called again for the same key
+    /// (duplicate keys); used to restore the previous value if the new
+    /// value is later rejected by the callback, instead of erasing the
+    /// member entirely
+    std::vector<std::pair<BasicJsonType*, BasicJsonType>> duplicate_key_stash {};
     /// whether a syntax error occurred
     bool errored = false;
     /// callback function
