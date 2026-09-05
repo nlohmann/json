@@ -18676,6 +18676,15 @@ class binary_writer
         CharType dtype = it->second;
 
         key = "_ArraySize_";
+        // the dimensions are written verbatim as the header length below, so a
+        // value that is not an array cannot produce a valid one: null emits 'Z'
+        // and an object emits '{', neither of which a reader accepts after '#'.
+        // Such an object is not a valid ndarray and falls back to a plain object.
+        if (!value.at(key).is_array())
+        {
+            return true;
+        }
+
         std::size_t len = (value.at(key).empty() ? 0 : 1);
         for (const auto& el : value.at(key))
         {
