@@ -24975,6 +24975,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         std::swap(m_data.m_type, other.m_data.m_type);
         std::swap(m_data.m_value, other.m_data.m_value);
 
+#if JSON_DIAGNOSTIC_POSITIONS
+        std::swap(start_position, other.start_position);
+        std::swap(end_position, other.end_position);
+#endif
+
         set_parents();
         other.set_parents();
         assert_invariant();
