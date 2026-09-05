@@ -703,6 +703,16 @@ TEST_CASE("JSON patch")
             CHECK(doc == expected);
         }
 
+        // this test relies on the "test" operation actually throwing so the
+        // partial-application state can be observed right after the throw
+        // point; under JSON_NOEXCEPTION, JSON_THROW() calls std::abort()
+        // instead (there is no C++ exception to throw), and doctest's
+        // CHECK_THROWS_AS() is compiled out to a no-op that never even
+        // invokes the given expression (see doctest's "--no-throw" test
+        // filter, which ci_test_noexceptions passes) -- so patch()/
+        // patch_inplace() would never be called at all and the follow-up
+        // state assertions below would fail against the untouched original
+#if !defined(JSON_NOEXCEPTION)
         SECTION("distinguishing contract vs patch(): partial application on failure")
         {
             // Unlike patch(), which is all-or-nothing because it applies the
@@ -747,6 +757,7 @@ TEST_CASE("JSON patch")
             CHECK(doc.at("baz") == "boo");
             CHECK(doc.at("foo") == "bar");
         }
+#endif // !defined(JSON_NOEXCEPTION)
     }
 
     SECTION("errors")
