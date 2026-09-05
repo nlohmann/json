@@ -125,6 +125,24 @@ constexpr bool input_adapter_supports_seek(std::false_type /*detected*/)
     return false;
 }
 
+// Detect whether an input adapter reads with one character of lookahead that
+// can be left in the input (see input_stream_adapter::supports_lookahead),
+// detected like supports_seek above.
+template<typename InputAdapterType>
+using detect_supports_lookahead = decltype(InputAdapterType::supports_lookahead);
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_lookahead(std::true_type /*detected*/)
+{
+    return InputAdapterType::supports_lookahead;
+}
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_lookahead(std::false_type /*detected*/)
+{
+    return false;
+}
+
 /*!
 @brief lexical analysis
 
@@ -145,6 +163,12 @@ class lexer : public lexer_base<BasicJsonType>
     /// character; see input_adapter_supports_seek
     static constexpr bool lazy_token_string =
         input_adapter_supports_seek<InputAdapterType>(is_detected<detect_supports_seek, InputAdapterType> {});
+
+    /// whether a simulated unget can be passed on to the input adapter, which
+    /// then leaves the character in the input; see
+    /// input_adapter_supports_lookahead
+    static constexpr bool can_release_lookahead =
+        input_adapter_supports_lookahead<InputAdapterType>(is_detected<detect_supports_lookahead, InputAdapterType> {});
 
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
@@ -1461,6 +1485,21 @@ scan_number_done:
         uncapture_char(std::integral_constant<bool, lazy_token_string> {});
     }
 
+    /// adapter without lookahead: nothing to do (see release_lookahead)
+    void release_lookahead_impl(std::false_type /*can_release*/) const noexcept {}
+
+    /// adapter with lookahead: leave the character in the input instead
+    void release_lookahead_impl(std::true_type /*can_release*/)
+    {
+        if (next_unget)
+        {
+            // the character is read from the input again rather than replayed
+            // from current, so the adapter must not step over it
+            next_unget = false;
+            ia.release_lookahead();
+        }
+    }
+
     /// seekable adapter: nothing was captured, so nothing to undo
     void uncapture_char(std::true_type /*lazy*/) const noexcept {}
 
@@ -1522,6 +1561,29 @@ scan_number_done:
     constexpr position_t get_position() const noexcept
     {
         return position;
+    }
+
+    /*!
+    @brief pass a pending simulated unget on to the input
+
+    unget() only rewinds the lexer's own bookkeeping, so the character that
+    terminated the last token (e.g. the character after a number) would still
+    be stepped over when the input adapter is done. Callers that hand the
+    input back to the user afterwards - operator>> and non-strict sax_parse -
+    call this once when scanning is done, so that the input is positioned
+    right after the value.
+
+    Adapters without lookahead (see input_adapter_supports_lookahead) are not
+    handed back to the user, so this is a no-op for them.
+
+    Scanning may continue after this call: @a next_unget is cleared, and the
+    character is read from the input again instead of being replayed from
+    @a current. A pending unget of EOF needs no special case, because reaching
+    EOF leaves no lookahead to release.
+    */
+    void release_lookahead()
+    {
+        release_lookahead_impl(std::integral_constant<bool, can_release_lookahead> {});
     }
 
 #if JSON_DIAGNOSTIC_POSITIONS
