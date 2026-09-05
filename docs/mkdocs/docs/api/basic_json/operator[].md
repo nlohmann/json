@@ -128,10 +128,13 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
         When the JSON pointer traverses intermediate levels that don't exist at all yet (not just a missing
         leaf), each missing level is created as an array or an object depending on whether the corresponding
-        pointer token parses as a non-negative integer: a numeric token creates an array, a non-numeric token
-        creates an object. For example, on an initially `#!json null` value, `/foo/0/0/0` creates nested arrays,
-        while `/foo/one/one/one` creates nested objects. This is not specified by the JSON Pointer RFC; it is
-        this library's own, intentional disambiguation rule. See also [JSON Pointer](../../features/json_pointer.md).
+        pointer token is a valid array index: a token that is a nonempty sequence of digits without a leading
+        `0` (or the token `-`) creates an array, and every other token creates an object. For example, on an
+        initially `#!json null` value, `/foo/0/0/0` creates nested arrays, while `/foo/one/one/one` creates
+        nested objects. Tokens such as `01` or the empty token cannot be array indices (cf. RFC 6901, Sect. 4)
+        and therefore create objects, just as they would if the level already existed as an object. This is not
+        specified by the JSON Pointer RFC; it is this library's own, intentional disambiguation rule. See also
+        [JSON Pointer](../../features/json_pointer.md).
 
 ## Examples
 

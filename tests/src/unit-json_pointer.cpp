@@ -396,6 +396,72 @@ TEST_CASE("JSON pointers")
         }
     }
 
+    SECTION("creating intermediate levels")
+    {
+        SECTION("tokens that are valid array indices create arrays")
+        {
+            json j;
+            j["/0"_json_pointer] = 1;
+            CHECK(j == json({1}));
+
+            json j2;
+            j2["/2"_json_pointer] = 1;
+            CHECK(j2 == json({nullptr, nullptr, 1}));
+
+            json j3;
+            j3["/-"_json_pointer] = 1;
+            CHECK(j3 == json({1}));
+
+            json j4;
+            j4["/foo/0/0"_json_pointer] = 1;
+            CHECK(j4 == json({{"foo", {{1}}}}));
+        }
+
+        SECTION("tokens that are no valid array indices create objects")
+        {
+            json j;
+            j["/one"_json_pointer] = 1;
+            CHECK(j == json({{"one", 1}}));
+
+            // leading '0' can never be a valid array index (RFC 6901, Sect. 4)
+            json j2;
+            j2["/01"_json_pointer] = 1;
+            CHECK(j2 == json({{"01", 1}}));
+
+            // the empty token is a valid object key, but no valid array index
+            json j3;
+            j3["/"_json_pointer] = 1;
+            CHECK(j3 == json({{"", 1}}));
+        }
+
+        SECTION("creating a level yields the same result as reusing it (#5357)")
+        {
+            json j;
+            j["/a/b/01/d"_json_pointer] = "value";
+
+            json j_init = json::object();
+            j_init["/a/b"_json_pointer] = json::object();
+            j_init["/a/b/01/d"_json_pointer] = "value";
+
+            const json expected = json::parse(R"({"a":{"b":{"01":{"d":"value"}}}})");
+            CHECK(j == expected);
+            CHECK(j_init == expected);
+
+            // unflatten uses the same key
+            const json flat = {{"/a/b/01/d", "value"}};
+            CHECK(flat.unflatten() == expected);
+        }
+
+        SECTION("existing arrays still reject invalid indices")
+        {
+            json j = {1, 2, 3};
+            CHECK_THROWS_WITH_AS(j["/01"_json_pointer],
+                                 "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
+            CHECK_THROWS_WITH_AS(j.at("/01"_json_pointer),
+                                 "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
+        }
+    }
+
     SECTION("flatten")
     {
         json j =
