@@ -1523,6 +1523,36 @@ TEST_CASE("JSON patch - move where 'from' is a proper prefix of 'path' (regressi
         json const patch3 = {{{"op", "move"}, {"from", "/a/b"}, {"path", "/a"}}};
         CHECK(doc3.patch(patch3) == R"({"a": 1})"_json);
     }
+
+    SECTION("root 'from' is a proper prefix of every non-root 'path'")
+    {
+        // the whole document is a proper prefix of any location inside it
+        json const doc = R"({"a": 1})"_json;
+        json const patch = {{{"op", "move"}, {"from", ""}, {"path", "/a"}}};
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] cannot move value: 'from' path '' is a proper prefix of 'path' '/a'", json::out_of_range&);
+    }
+
+    SECTION("root 'path' is never a proper prefix violation for a non-root 'from'")
+    {
+        // the reverse of the above: moving a non-root location to the root
+        // is the "path is a prefix of from" relationship, which RFC 6902
+        // permits (already covered generally above; this pins the root
+        // case specifically, since root is the one path with no reference
+        // tokens at all)
+        json const doc = R"({"a": {"b": 1}})"_json;
+        json const patch = {{{"op", "move"}, {"from", "/a"}, {"path", ""}}};
+        CHECK(doc.patch(patch) == R"({"b": 1})"_json);
+    }
+
+    SECTION("the array-append token '-' is an ordinary child token")
+    {
+        // "-" (append-to-array) addresses a location *inside* the array,
+        // so "from" pointing at the array is still a proper prefix of
+        // "path" ending in "-" and must be rejected like any other child.
+        json const doc = R"({"a": [1, 2]})"_json;
+        json const patch = {{{"op", "move"}, {"from", "/a"}, {"path", "/a/-"}}};
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] cannot move value: 'from' path '/a' is a proper prefix of 'path' '/a/-'", json::out_of_range&);
+    }
 }
 
 TEST_CASE("JSON patch - diff emits array removals in descending index order")
