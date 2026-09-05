@@ -5159,24 +5159,20 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
             case value_t::object:
             {
-                // first pass: find keys that were deleted (i.e., in source but
-                // not in target), and record the keys common to both, in
-                // source's iteration order -- this is a by-product of the
-                // target.find() call already needed to detect removed keys,
-                // so it adds no extra lookups.
+                // first pass: record, for every source key, whether it is
+                // common to both objects (in source's iteration order) or
+                // was deleted (i.e., in source but not in target) -- this is
+                // a by-product of the target.find() call already needed to
+                // tell the two cases apart, so it adds no extra lookups. The
+                // "remove" ops themselves are emitted later, interleaved
+                // with the recursive per-key diffs in the fast path below,
+                // to match source's original iteration order (as the
+                // original, pre-reordering-aware implementation did) instead
+                // of grouping all removes before all recursive diffs.
                 std::vector<typename object_t::key_type> common_keys_source_order;
                 for (auto it = source.cbegin(); it != source.cend(); ++it)
                 {
-                    if (target.find(it.key()) == target.end())
-                    {
-                        // found a key that is not in target -> remove it
-                        const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
-                        result.push_back(object(
-                        {
-                            {"op", "remove"}, {"path", path_key}
-                        }));
-                    }
-                    else
+                    if (target.find(it.key()) != target.end())
                     {
                         common_keys_source_order.push_back(it.key());
                     }
@@ -5236,15 +5232,27 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     // that are common to both objects, in source's iteration
                     // order -- so it can be walked in lockstep with `source`
                     // using a cheap key comparison instead of another lookup.
+                    // Deleted keys (those source keys not in common_keys_source_order)
+                    // are interleaved here too, in source's original order, to
+                    // match the historical (pre-reordering-aware) output order.
                     auto common_it = common_keys_source_order.cbegin();
-                    for (auto it = source.cbegin(); it != source.cend() && common_it != common_keys_source_order.cend(); ++it)
+                    for (auto it = source.cbegin(); it != source.cend(); ++it)
                     {
-                        if (it.key() == *common_it)
+                        if (common_it != common_keys_source_order.cend() && it.key() == *common_it)
                         {
                             const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
                             auto temp_diff = diff(it.value(), target[it.key()], path_key);
                             result.insert(result.end(), temp_diff.begin(), temp_diff.end());
                             ++common_it;
+                        }
+                        else
+                        {
+                            // found a key that is not in target -> remove it
+                            const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
+                            result.push_back(object(
+                            {
+                                {"op", "remove"}, {"path", path_key}
+                            }));
                         }
                     }
 
@@ -5259,18 +5267,19 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     // order in source and target (only possible for a
                     // reorderable object_t like ordered_map). Building a
                     // minimal reordering patch is a nontrivial (LCS-like)
-                    // problem; instead, remove every common key and re-add it
-                    // (with its final target value) in target's order, which
-                    // is enough to guarantee source.patch(diff(source,
-                    // target)) == target. basic_json::patch()'s "add"
-                    // operation on an object uses operator[], which appends
-                    // at the end for a vector-backed insertion-ordered map
-                    // when the key does not already exist -- so removing a
-                    // key and then adding it moves it to the end, fixing its
-                    // position.
-                    for (const auto& key : common_keys_source_order)
+                    // problem; instead, remove every source key -- both
+                    // deleted keys (which must be removed regardless) and
+                    // common keys (removed so they can be re-added in
+                    // target's order) -- and re-add every key that should
+                    // remain, with its final target value, in target's
+                    // order. basic_json::patch()'s "add" operation on an
+                    // object uses operator[], which appends at the end for a
+                    // vector-backed insertion-ordered map when the key does
+                    // not already exist -- so removing a key and then adding
+                    // it moves it to the end, fixing its position.
+                    for (auto it = source.cbegin(); it != source.cend(); ++it)
                     {
-                        const auto path_key = detail::concat<string_t>(path, '/', detail::escape(key));
+                        const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
                         result.push_back(object(
                         {
                             {"op", "remove"}, {"path", path_key}
