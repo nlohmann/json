@@ -82,6 +82,44 @@ BENCHMARK_CAPTURE(ParseString, unsigned_ints,     TEST_DATA_DIRECTORY "/regressi
 BENCHMARK_CAPTURE(ParseString, small_signed_ints, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json");
 
 //////////////////////////////////////////////////////////////////////////////
+// parse pretty-printed JSON from string
+//
+// Every file in the corpus above is minified or only lightly spaced, so none of
+// them exercise the lexer's whitespace handling. Real-world JSON is frequently
+// indented - configuration files, pretty-printed API responses, anything kept
+// under version control - where insignificant whitespace can outweigh the data.
+// Re-serializing a document with an indentation and parsing that keeps the
+// content identical to the ParseString row above, so the pair isolates the cost
+// of the whitespace alone.
+//////////////////////////////////////////////////////////////////////////////
+
+static void ParseIndented(benchmark::State& state, const char* filename, int indent)
+{
+    std::ifstream f(filename);
+    std::string str((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+    const std::string indented = json::parse(str).dump(indent);
+
+    while (state.KeepRunning())
+    {
+        state.PauseTiming();
+        auto* j = new json();
+        state.ResumeTiming();
+
+        *j = json::parse(indented);
+
+        state.PauseTiming();
+        delete j;
+        state.ResumeTiming();
+    }
+
+    state.SetBytesProcessed(state.iterations() * indented.size());
+}
+BENCHMARK_CAPTURE(ParseIndented, jeopardy / 4,     TEST_DATA_DIRECTORY "/jeopardy/jeopardy.json",                 4);
+BENCHMARK_CAPTURE(ParseIndented, canada / 4,       TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json",       4);
+BENCHMARK_CAPTURE(ParseIndented, citm_catalog / 4, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json", 4);
+BENCHMARK_CAPTURE(ParseIndented, twitter / 4,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json",      4);
+
+//////////////////////////////////////////////////////////////////////////////
 // serialize JSON
 //////////////////////////////////////////////////////////////////////////////
 
