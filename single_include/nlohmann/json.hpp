@@ -26578,21 +26578,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
             case value_t::object:
             {
-                // first pass: traverse this object's elements
+                // first pass: find keys that were deleted (i.e., in source but not in target)
                 for (auto it = source.cbegin(); it != source.cend(); ++it)
                 {
-                    // escape the key name to be used in a JSON patch
-                    const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
-
-                    if (target.find(it.key()) != target.end())
+                    if (target.find(it.key()) == target.end())
                     {
-                        // recursive call to compare object values at key it
-                        auto temp_diff = diff(it.value(), target[it.key()], path_key);
-                        result.insert(result.end(), temp_diff.begin(), temp_diff.end());
-                    }
-                    else
-                    {
-                        // found a key that is not in o -> remove it
+                        // found a key that is not in target -> remove it
+                        const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
                         result.push_back(object(
                         {
                             {"op", "remove"}, {"path", path_key}
@@ -26600,18 +26592,134 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     }
                 }
 
-                // second pass: traverse other object's elements
+                // determine whether the relative order of the keys common to
+                // source and target already matches. For an object_t whose
+                // iteration order is a pure function of the key set (e.g.,
+                // the default std::map, which always iterates in sorted key
+                // order), this is always true, so this check (and the "else"
+                // branch below) is effectively a no-op for a regular `json`
+                // object; it only matters for a reorderable object_t such as
+                // the one backing `ordered_json`.
+                std::vector<typename object_t::key_type> order_in_source;
+                for (auto it = source.cbegin(); it != source.cend(); ++it)
+                {
+                    if (target.find(it.key()) != target.end())
+                    {
+                        order_in_source.push_back(it.key());
+                    }
+                }
+
+                std::vector<typename object_t::key_type> order_in_target;
                 for (auto it = target.cbegin(); it != target.cend(); ++it)
                 {
-                    if (source.find(it.key()) == source.end())
+                    if (source.find(it.key()) != source.end())
                     {
-                        // found a key that is not in this -> add it
+                        order_in_target.push_back(it.key());
+                    }
+                }
+
+                // The fast path below (like the original implementation)
+                // only ever recurses into common keys -- without touching
+                // their relative position -- and appends brand-new keys at
+                // the very end. That reproduces target's order only if the
+                // common keys already appear in target in the same relative
+                // order as in source, AND every brand-new key comes after
+                // every common key in target (i.e., the new keys form a
+                // suffix of target's key order); otherwise a new key would
+                // need to be inserted somewhere other than the end.
+                bool new_keys_form_suffix = true;
+                {
+                    bool seen_new_key = false;
+                    for (auto it = target.cbegin(); it != target.cend(); ++it)
+                    {
+                        if (source.find(it.key()) == source.end())
+                        {
+                            seen_new_key = true;
+                        }
+                        else if (seen_new_key)
+                        {
+                            new_keys_form_suffix = false;
+                            break;
+                        }
+                    }
+                }
+
+                bool reordered = false;
+
+                if (order_in_source == order_in_target && new_keys_form_suffix)
+                {
+                    // fast path: order of common keys already matches (or the
+                    // object_t's iteration order does not depend on
+                    // insertion history), so a plain per-key recursive diff
+                    // is correct and minimal, as before
+                    for (auto it = source.cbegin(); it != source.cend(); ++it)
+                    {
+                        if (target.find(it.key()) != target.end())
+                        {
+                            const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
+                            auto temp_diff = diff(it.value(), target[it.key()], path_key);
+                            result.insert(result.end(), temp_diff.begin(), temp_diff.end());
+                        }
+                    }
+                }
+                else
+                {
+                    // slow path: the common keys are in a different relative
+                    // order in source and target (only possible for a
+                    // reorderable object_t like ordered_map). Building a
+                    // minimal reordering patch is a nontrivial (LCS-like)
+                    // problem; instead, remove every common key and re-add it
+                    // (with its final target value) in target's order, which
+                    // is enough to guarantee source.patch(diff(source,
+                    // target)) == target. basic_json::patch()'s "add"
+                    // operation on an object uses operator[], which appends
+                    // at the end for a vector-backed insertion-ordered map
+                    // when the key does not already exist -- so removing a
+                    // key and then adding it moves it to the end, fixing its
+                    // position.
+                    reordered = true;
+
+                    for (const auto& key : order_in_source)
+                    {
+                        const auto path_key = detail::concat<string_t>(path, '/', detail::escape(key));
+                        result.push_back(object(
+                        {
+                            {"op", "remove"}, {"path", path_key}
+                        }));
+                    }
+
+                    // add every key that is either common (just removed
+                    // above) or brand new, in target's iteration order, so
+                    // that the final order after applying the patch matches
+                    // target exactly
+                    for (auto it = target.cbegin(); it != target.cend(); ++it)
+                    {
                         const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
                         result.push_back(
                         {
                             {"op", "add"}, {"path", path_key},
                             {"value", it.value()}
                         });
+                    }
+                }
+
+                // second pass: find keys that were added (i.e., in target but
+                // not in source); already handled above when reordering, to
+                // keep them correctly interleaved with the moved keys
+                if (!reordered)
+                {
+                    for (auto it = target.cbegin(); it != target.cend(); ++it)
+                    {
+                        if (source.find(it.key()) == source.end())
+                        {
+                            // found a key that is not in source -> add it
+                            const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
+                            result.push_back(
+                            {
+                                {"op", "add"}, {"path", path_key},
+                                {"value", it.value()}
+                            });
+                        }
                     }
                 }
 
