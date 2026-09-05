@@ -1667,6 +1667,12 @@ class binary_writer
         }
         CharType dtype = it->second;
 
+        // 'B' (byte) is Draft-3 only; Draft 2 must not emit it.
+        if (dtype == 'B' && bjdata_version != bjdata_version_t::draft3)
+        {
+            return true;
+        }
+
         key = "_ArraySize_";
         std::size_t len = (value.at(key).empty() ? 0 : 1);
         for (const auto& el : value.at(key))
