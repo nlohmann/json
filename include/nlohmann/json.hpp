@@ -4939,6 +4939,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 // note erase performs range check
                 parent.erase(json_pointer::template array_index<basic_json_t>(last_path));
             }
+            else
+            {
+                // the parent of a "remove" target must be an object or array
+                // (see #5396)
+                JSON_THROW(out_of_range::create(413, detail::concat("cannot remove value: the JSON Patch 'remove' target's parent is of type ", parent.type_name(), ", but must be an object or array"), &parent));
+            }
         };
 
         // type check: top level value must be an array
