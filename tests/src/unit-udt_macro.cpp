@@ -778,7 +778,57 @@ class derived_person_only_serialize_private_3 : person_without_default_construct
     NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES(derived_person_only_serialize_private_3, person_without_default_constructor_3, "json_hair_color", hair_color)
 };
 
+class empty_intrusive
+{
+  public:
+    bool operator==(const empty_intrusive&) const
+    {
+        return true;
+    }
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(empty_intrusive)
+};
+
+class empty_non_intrusive
+{
+  public:
+    bool operator==(const empty_non_intrusive&) const
+    {
+        return true;
+    }
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(empty_non_intrusive)
+
+
 } // namespace persons
+
+TEST_CASE_TEMPLATE(
+    "Serialization/deserialization of zero-member types",
+    Pair,
+    std::pair<nlohmann::json, persons::empty_intrusive>,
+    std::pair<nlohmann::json, persons::empty_non_intrusive>,
+    std::pair<nlohmann::ordered_json, persons::empty_intrusive>,
+    std::pair<nlohmann::ordered_json, persons::empty_non_intrusive>)
+{
+    using Json = typename Pair::first_type;
+    using T = typename Pair::second_type;
+
+    SECTION("empty object")
+    {
+        T obj{};
+
+        Json j = obj;
+
+        CHECK(j == Json::object());
+
+        auto obj2 = j.template get<T>();
+
+        CHECK(obj == obj2);
+
+        CHECK(Json(obj2) == j);
+    }
+}
 
 TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", Pair, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
                    std::pair<nlohmann::json, persons::person_with_private_data>,
