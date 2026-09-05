@@ -9082,6 +9082,26 @@ scan_number_done:
         // the value overflows 64 bits, and rejection when it is not even
         // finite as a double -- is bit-for-bit identical to before this
         // optimization.
+        //
+        // Note this reasons about std::uint64_t/std::int64_t, not about
+        // number_unsigned_t/number_integer_t (BasicJsonType's own, possibly
+        // narrower, template parameters -- e.g. std::uint32_t). That is fine
+        // *only* because discard_number_values is exclusively set by
+        // accept() (see json.hpp), and accept() always parses through the
+        // library's own json_sax_acceptor -- never a user-supplied SAX
+        // consumer -- whose number_unsigned()/number_integer()/number_float()
+        // callbacks unconditionally discard their argument and return true.
+        // So for every caller that can reach this branch, neither the token
+        // classification below nor the eventual (possibly narrowed, and on
+        // this fast path left stale/unset) value_unsigned/value_integer is
+        // ever consulted -- an unsigned/integer token is accepted outright,
+        // and even a >18-digit token that this fast path deliberately falls
+        // through for is, once reclassified to value_float, still finite
+        // (and thus accepted) for any digit count that fits in number_unsigned_t
+        // or number_integer_t regardless of that type's width. If this
+        // function is ever taught to run with discard_number_values true for
+        // a caller that *does* read the converted value, this reasoning (and
+        // the fast path below) would need to be revisited.
         if (discard_number_values)
         {
             constexpr std::size_t safe_digit_count = 18;
