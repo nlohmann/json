@@ -1648,6 +1648,20 @@ class binary_writer
     }
 
     /*!
+    @brief checks whether a JSON number fits into @a TargetType
+    @param[in] el a JSON number of either the signed or unsigned integer kind
+    @return whether @a el's value can be represented by @a TargetType without
+            wrapping, regardless of which of the two kinds it is stored as
+    */
+    template<typename TargetType>
+    static bool bjdata_ndarray_value_in_range(const BasicJsonType& el)
+    {
+        return el.is_number_unsigned()
+               ? value_in_range_of<TargetType>(el.template get<std::uint64_t>())
+               : value_in_range_of<TargetType>(el.template get<std::int64_t>());
+    }
+
+    /*!
     @return false if the object is successfully converted to a bjdata ndarray, true if the type or size is invalid
     */
     bool write_bjdata_ndarray(const typename BasicJsonType::object_t& value, const bool use_count, const bool use_type, const bjdata_version_t bjdata_version)
@@ -1726,6 +1740,60 @@ class binary_writer
         for (const auto& el : value.at(key))
         {
             if (ndarray_is_float ? !el.is_number_float() : !el.is_number_integer())
+            {
+                return true;
+            }
+        }
+
+        // every element is cast to the (possibly narrower) C++ type matching
+        // dtype below; a value that does not fit that type would silently
+        // wrap (integers) or overflow to infinity (the "single" precision
+        // float) instead of being reported, so such an object falls back to
+        // a plain object encoding as well
+        for (const auto& el : value.at(key))
+        {
+            bool in_range = true;
+            switch (dtype)
+            {
+                case 'U':
+                case 'C':
+                case 'B':
+                    in_range = bjdata_ndarray_value_in_range<std::uint8_t>(el);
+                    break;
+                case 'i':
+                    in_range = bjdata_ndarray_value_in_range<std::int8_t>(el);
+                    break;
+                case 'u':
+                    in_range = bjdata_ndarray_value_in_range<std::uint16_t>(el);
+                    break;
+                case 'I':
+                    in_range = bjdata_ndarray_value_in_range<std::int16_t>(el);
+                    break;
+                case 'm':
+                    in_range = bjdata_ndarray_value_in_range<std::uint32_t>(el);
+                    break;
+                case 'l':
+                    in_range = bjdata_ndarray_value_in_range<std::int32_t>(el);
+                    break;
+                case 'M':
+                    in_range = bjdata_ndarray_value_in_range<std::uint64_t>(el);
+                    break;
+                case 'L':
+                    in_range = bjdata_ndarray_value_in_range<std::int64_t>(el);
+                    break;
+                case 'd':
+                {
+                    const auto dval = el.template get<double>();
+                    in_range = !std::isfinite(dval) ||
+                               (dval >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
+                                dval <= static_cast<double>((std::numeric_limits<float>::max)()));
+                    break;
+                }
+                default:
+                    // 'D' (double) already spans the full range of number_float_t
+                    break;
+            }
+            if (!in_range)
             {
                 return true;
             }
