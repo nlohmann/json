@@ -29,6 +29,7 @@ using nlohmann::json;
 #include <limits>
 #include <cstdio>
 #include "make_test_data_available.hpp"
+#include "test_utils.hpp"
 
 #ifdef JSON_HAS_CPP_17
     #include <variant>
@@ -1373,7 +1374,8 @@ TEST_CASE("regression tests 1")
         std::array<uint8_t, 28> key1 = {{ 103, 92, 117, 48, 48, 48, 55, 92, 114, 215, 126, 214, 95, 92, 34, 174, 40, 71, 38, 174, 40, 71, 38, 223, 134, 247, 127, 0 }};
         std::string const key1_str(reinterpret_cast<char*>(key1.data()));
         json const j = key1_str;
-        CHECK_THROWS_WITH_AS(j.dump(), "[json.exception.type_error.316] invalid UTF-8 byte at index 10: 0x7E", json::type_error&);
+        // dump() is nodiscard; the exception is thrown by dump() itself before it would return
+        CHECK_THROWS_WITH_AS(utils::ignore_return_value(j.dump()), "[json.exception.type_error.316] invalid UTF-8 byte at index 10: 0x7E", json::type_error&);
     }
 
 #if JSON_USE_IMPLICIT_CONVERSIONS
