@@ -18689,6 +18689,16 @@ class binary_writer
         }
         CharType dtype = it->second;
 
+        // the 'B' (byte) marker is only defined by BJData Draft 3; emitting it
+        // under the default Draft 2 mode would produce a stream that Draft 2
+        // readers reject, so such an object falls back to a plain object
+        // encoding instead (see the "Binary values" section of the BJData
+        // documentation)
+        if (dtype == 'B' && bjdata_version != bjdata_version_t::draft3)
+        {
+            return true;
+        }
+
         key = "_ArraySize_";
         // the dimensions are written verbatim as the header length below, so a
         // value that is not an array cannot produce a valid one: null emits 'Z'
