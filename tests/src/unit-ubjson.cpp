@@ -2149,6 +2149,111 @@ TEST_CASE("UBJSON")
     }
 }
 
+TEST_CASE("issue #5405 - array reserve for definite-length UBJSON arrays")
+{
+#if !defined(JSON_NOEXCEPTION)
+    // this SECTION relies on catching a thrown exception to distinguish
+    // which of two acceptable, bounded rejections a hostile header took;
+    // under JSON_NOEXCEPTION, JSON_THROW never produces a catchable C++
+    // exception (it aborts instead), so this cannot be tested that way here
+    SECTION("a huge claimed length with no element data must not over-allocate")
+    {
+        // optimized form [$type#count: type 'i' (int8), count as a four-byte
+        // 'l' (int32) of 0x7FFFFFFF (2147483647), but no element data at all.
+        // max_size() for a std::vector is far larger than this count, so it
+        // does not reject the header outright; the (capped) reservation must
+        // not attempt to allocate space for billions of elements before the
+        // missing data is detected.
+        json _;
+        const std::vector<uint8_t> input = {'[', '$', 'i', '#', 'l', 0x7F, 0xFF, 0xFF, 0xFF};
+        // On a platform where std::vector<json>::max_size() is smaller than
+        // the claimed count (e.g. 32-bit, where max_size() is bounded by a
+        // 32-bit SIZE_MAX divided by sizeof(json)), the SAX consumer's own
+        // check rejects the header outright (out_of_range.408, with the
+        // claimed count in the message) instead of accepting it and only
+        // finding it short of data once the (capped) reservation looks for
+        // element bytes that were never provided (parse_error.110). Either
+        // is an acceptable, bounded rejection of the hostile header -- the
+        // property under test is that no path attempts to allocate space
+        // for billions of elements.
+        bool threw = false;
+        try
+        {
+            _ = json::from_ubjson(input);
+        }
+        catch (const json::parse_error& e)
+        {
+            threw = true;
+            CHECK(e.id == 110);
+            CHECK(std::string(e.what()) == "[json.exception.parse_error.110] parse error at byte 10: syntax error while parsing UBJSON number: unexpected end of input");
+        }
+        catch (const json::out_of_range& e)
+        {
+            threw = true;
+            CHECK(e.id == 408);
+            CHECK(std::string(e.what()).find("excessive array size") != std::string::npos);
+        }
+        CHECK(threw);
+
+        // json_sax_dom_parser::start_array()'s max_size() check (unlike the
+        // scanner's own parse_error path) throws unconditionally via
+        // JSON_THROW rather than going through sax->parse_error(), so it is
+        // not gated by allow_exceptions=false on a platform where this
+        // header hits that check (e.g. 32-bit, see above) -- allow either
+        // a discarded result or the same out_of_range it throws with
+        // exceptions enabled.
+        try
+        {
+            CHECK(json::from_ubjson(input, true, false).is_discarded());
+        }
+        catch (const json::out_of_range& e)
+        {
+            CHECK(e.id == 408);
+        }
+    }
+#endif
+
+    SECTION("arrays of various sizes decode to the same value as before the reserve optimization")
+    {
+        for (const auto size :
+                {
+                    std::size_t{0}, std::size_t{1}, std::size_t{5}, // small
+                    std::size_t{16384},                             // exactly at the reserve cap
+                    std::size_t{20000}                              // above the reserve cap
+                })
+        {
+            CAPTURE(size)
+            json j = json::array();
+            for (std::size_t i = 0; i < size; ++i)
+            {
+                j.push_back(static_cast<int>(i % 1000));
+            }
+
+            // exercise both the plain and the optimized [$type#count encoding
+            const auto packed_plain = json::to_ubjson(j);
+            CHECK(json::from_ubjson(packed_plain) == j);
+
+            const auto packed_optimized = json::to_ubjson(j, true, true);
+            CHECK(json::from_ubjson(packed_optimized) == j);
+        }
+    }
+
+    SECTION("a user-defined SAX consumer is unaffected by the internal DOM reserve optimization")
+    {
+        // the reserve() call is local to json_sax_dom_parser / json_sax_dom_callback_parser;
+        // a custom SAX consumer that does not touch a DOM array sees identical events
+        json j = json::array();
+        for (int i = 0; i < 100; ++i)
+        {
+            j.push_back(i);
+        }
+        const auto packed = json::to_ubjson(j, true, true);
+
+        SaxCountdown scp(1000000); // large enough to never trigger an abort
+        CHECK(json::sax_parse(packed, &scp, json::input_format_t::ubjson));
+    }
+}
+
 TEST_CASE("Universal Binary JSON Specification Examples 1")
 {
     SECTION("Null Value")
