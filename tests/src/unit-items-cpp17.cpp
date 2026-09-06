@@ -17,8 +17,8 @@
 using nlohmann::json;
 
 #ifdef JSON_HAS_CPP_17
-    #include <map>
-    #include <string>
+#include <map>
+#include <string>
 
 TEST_CASE("items()")
 {
