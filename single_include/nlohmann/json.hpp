@@ -10817,6 +10817,7 @@ class binary_reader
                    const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         sax = sax_;
+        container_stack.clear();
         bool result = false;
 
         switch (format)
@@ -10866,6 +10867,57 @@ class binary_reader
     }
 
   private:
+    ////////////////////////
+    // nested containers  //
+    ////////////////////////
+
+    /*!
+    @brief a container that has been opened and not closed yet
+
+    The binary readers do not call themselves once per nesting level. Like
+    @ref parser::sax_parse_internal, which does the same for JSON text, they
+    keep the containers they are inside of on a heap-allocated stack, so that
+    the native call stack does not grow with the nesting depth of the input
+    and a deeply nested value is bounded by memory rather than by the stack
+    (see #5104).
+
+    The members are ordered widest first: frames are stored in a vector, and
+    declaring the `bool` first would pad the struct out for no reason.
+    */
+    struct container_frame
+    {
+        /// number of elements that have not been read yet
+        std::size_t remaining = 0;
+        /// whether to close this container with end_object() or end_array()
+        bool is_object = false;
+    };
+
+    /*!
+    @brief open a nested array or object
+
+    Emits the SAX start event and records the container. This is the only
+    place the binary readers start a container, so a check that rejects one
+    can be made here and is then guaranteed to run before the start event.
+
+    @param[in] is_object  whether an object (true) or an array (false) begins
+    @param[in] len        number of elements the container declares
+
+    @return whether the SAX parser accepted the start event
+    */
+    bool enter_container(const bool is_object, const std::size_t len)
+    {
+        if (JSON_HEDLEY_UNLIKELY(is_object ? !sax->start_object(len) : !sax->start_array(len)))
+        {
+            return false;
+        }
+
+        container_frame frame;
+        frame.remaining = len;
+        frame.is_object = is_object;
+        container_stack.push_back(frame);
+        return true;
+    }
+
     //////////
     // BSON //
     //////////
@@ -12109,7 +12161,17 @@ class binary_reader
     /*!
     @return whether a valid MessagePack value was passed to the SAX parser
     */
-    bool parse_msgpack_internal()
+    /*!
+    @brief read one MessagePack value
+
+    Reads a single value and passes it to the SAX parser. A value that begins
+    a container is not read to its end: the container is opened with
+    @ref enter_container and its elements are read by
+    @ref parse_msgpack_internal, so that nesting does not consume native stack.
+
+    @return whether reading the value succeeded
+    */
+    bool parse_msgpack_value()
     {
         switch (get())
         {
@@ -12265,7 +12327,7 @@ class binary_reader
             case 0x8D:
             case 0x8E:
             case 0x8F:
-                return get_msgpack_object(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
+                return enter_container(/*is_object*/true, conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
 
             // fixarray
             case 0x90:
@@ -12284,7 +12346,7 @@ class binary_reader
             case 0x9D:
             case 0x9E:
             case 0x9F:
-                return get_msgpack_array(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
+                return enter_container(/*is_object*/false, conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x0Fu));
 
             // fixstr
             case 0xA0:
@@ -12415,25 +12477,25 @@ class binary_reader
             case 0xDC: // array 16
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::msgpack, len) && get_msgpack_array(static_cast<std::size_t>(len));
+                return get_number(input_format_t::msgpack, len) && enter_container(/*is_object*/false, static_cast<std::size_t>(len));
             }
 
             case 0xDD: // array 32
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::msgpack, len) && get_msgpack_array(conditional_static_cast<std::size_t>(len));
+                return get_number(input_format_t::msgpack, len) && enter_container(/*is_object*/false, conditional_static_cast<std::size_t>(len));
             }
 
             case 0xDE: // map 16
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::msgpack, len) && get_msgpack_object(static_cast<std::size_t>(len));
+                return get_number(input_format_t::msgpack, len) && enter_container(/*is_object*/true, static_cast<std::size_t>(len));
             }
 
             case 0xDF: // map 32
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::msgpack, len) && get_msgpack_object(conditional_static_cast<std::size_t>(len));
+                return get_number(input_format_t::msgpack, len) && enter_container(/*is_object*/true, conditional_static_cast<std::size_t>(len));
             }
 
             // negative fixint
@@ -12681,55 +12743,69 @@ class binary_reader
     }
 
     /*!
-    @param[in] len  the length of the array
-    @return whether array creation completed
+    @brief read a MessagePack value and everything nested inside it
+
+    Reads values until the one that was begun here is complete, resuming the
+    enclosing container each time an element ends, so that the nesting depth
+    of the input costs heap rather than native stack (see #5104).
+
+    @return whether reading the value succeeded
     */
-    bool get_msgpack_array(const std::size_t len)
+    bool parse_msgpack_internal()
     {
-        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(len)))
-        {
-            return false;
-        }
-
-        for (std::size_t i = 0; i < len; ++i)
-        {
-            if (JSON_HEDLEY_UNLIKELY(!parse_msgpack_internal()))
-            {
-                return false;
-            }
-        }
-
-        return sax->end_array();
-    }
-
-    /*!
-    @param[in] len  the length of the object
-    @return whether object creation completed
-    */
-    bool get_msgpack_object(const std::size_t len)
-    {
-        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(len)))
-        {
-            return false;
-        }
-
+        // the key currently being read; hoisted out of the loop so that its
+        // capacity is reused across elements and across nesting levels
         string_t key;
-        for (std::size_t i = 0; i < len; ++i)
+
+        while (true)
         {
-            get();
-            if (JSON_HEDLEY_UNLIKELY(!get_msgpack_string(key) || !sax->key(key)))
+            if (!container_stack.empty())
+            {
+                // copied out before anything can push onto the stack and
+                // invalidate a reference into it
+                const bool is_object = container_stack.back().is_object;
+
+                if (container_stack.back().remaining == 0)
+                {
+                    container_stack.pop_back();
+                    if (JSON_HEDLEY_UNLIKELY(is_object ? !sax->end_object() : !sax->end_array()))
+                    {
+                        return false;
+                    }
+                    // the value begun here is complete once its container is
+                    if (container_stack.empty())
+                    {
+                        return true;
+                    }
+                    continue;
+                }
+
+                // claim the element about to be read
+                --container_stack.back().remaining;
+
+                if (is_object)
+                {
+                    get();
+                    key.clear();
+                    if (JSON_HEDLEY_UNLIKELY(!get_msgpack_string(key) || !sax->key(key)))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            if (JSON_HEDLEY_UNLIKELY(!parse_msgpack_value()))
             {
                 return false;
             }
 
-            if (JSON_HEDLEY_UNLIKELY(!parse_msgpack_internal()))
+            // a value that opened a container left it on the stack; one that
+            // did not, and that was not inside a container, was the whole value
+            if (container_stack.empty())
             {
-                return false;
+                return true;
             }
-            key.clear();
         }
-
-        return sax->end_object();
     }
 
     ////////////
@@ -14033,6 +14109,9 @@ class binary_reader
 
     /// the SAX parser
     json_sax_t* sax = nullptr;
+
+    /// the containers that have been opened and not closed yet; see @ref container_frame
+    std::vector<container_frame> container_stack{};
 
     // excluded markers in bjdata optimized type
 #define JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_ \
