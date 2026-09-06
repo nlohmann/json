@@ -3501,9 +3501,34 @@ TEST_CASE("issue #5405 - array reserve for definite-length BJData arrays")
         // billions of elements before the missing data is detected.
         json _;
         const std::vector<uint8_t> input = {'[', '$', 'i', '#', 'l', 0xFF, 0xFF, 0xFF, 0x7F};
-        CHECK_THROWS_WITH_AS(_ = json::from_bjdata(input),
-                             "[json.exception.parse_error.110] parse error at byte 10: syntax error while parsing BJData number: unexpected end of input",
-                             json::parse_error&);
+        // On a platform where std::vector<json>::max_size() is smaller than
+        // the claimed count (e.g. 32-bit, where max_size() is bounded by a
+        // 32-bit SIZE_MAX divided by sizeof(json)), the SAX consumer's own
+        // check rejects the header outright (out_of_range.408, with the
+        // claimed count in the message) instead of accepting it and only
+        // finding it short of data once the (capped) reservation looks for
+        // element bytes that were never provided (parse_error.110). Either
+        // is an acceptable, bounded rejection of the hostile header -- the
+        // property under test is that no path attempts to allocate space
+        // for billions of elements.
+        bool threw = false;
+        try
+        {
+            _ = json::from_bjdata(input);
+        }
+        catch (const json::parse_error& e)
+        {
+            threw = true;
+            CHECK(e.id == 110);
+            CHECK(std::string(e.what()) == "[json.exception.parse_error.110] parse error at byte 10: syntax error while parsing BJData number: unexpected end of input");
+        }
+        catch (const json::out_of_range& e)
+        {
+            threw = true;
+            CHECK(e.id == 408);
+            CHECK(std::string(e.what()).find("excessive array size") != std::string::npos);
+        }
+        CHECK(threw);
         CHECK(json::from_bjdata(input, true, false).is_discarded());
     }
 

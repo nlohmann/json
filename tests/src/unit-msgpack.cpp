@@ -1608,9 +1608,34 @@ TEST_CASE("issue #5405 - array reserve for definite-length MessagePack arrays")
         // billions of elements before the missing data is detected.
         json _;
         const std::vector<uint8_t> input = {0xdd, 0xFF, 0xFF, 0xFF, 0xFF};
-        CHECK_THROWS_WITH_AS(_ = json::from_msgpack(input),
-                             "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing MessagePack value: unexpected end of input",
-                             json::parse_error&);
+        // On a platform where std::size_t is narrower than 64 bits (e.g.
+        // 32-bit), the claimed count 0xFFFFFFFF coincides with that
+        // platform's SIZE_MAX, which some size-narrowing checks treat the
+        // same as detail::unknown_size(); it may then be rejected before
+        // the SAX consumer's own max_size() check (out_of_range.408) rather
+        // than being accepted and only found short of data once the
+        // (capped) reservation looks for element bytes that were never
+        // provided (parse_error.110). Either is an acceptable, bounded
+        // rejection of the hostile header -- the property under test is
+        // that no path attempts to allocate space for billions of elements.
+        bool threw = false;
+        try
+        {
+            _ = json::from_msgpack(input);
+        }
+        catch (const json::parse_error& e)
+        {
+            threw = true;
+            CHECK(e.id == 110);
+            CHECK(std::string(e.what()) == "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing MessagePack value: unexpected end of input");
+        }
+        catch (const json::out_of_range& e)
+        {
+            threw = true;
+            CHECK(e.id == 408);
+            CHECK(std::string(e.what()).find("excessive") != std::string::npos);
+        }
+        CHECK(threw);
         CHECK(json::from_msgpack(input, true, false).is_discarded());
     }
 

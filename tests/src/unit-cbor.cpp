@@ -2046,9 +2046,35 @@ TEST_CASE("issue #5405 - array reserve for definite-length CBOR arrays")
         // billions of elements before the missing data is detected.
         json _;
         const std::vector<uint8_t> input = {0x9A, 0xFF, 0xFF, 0xFF, 0xFF};
-        CHECK_THROWS_WITH_AS(_ = json::from_cbor(input),
-                             "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing CBOR value: unexpected end of input",
-                             json::parse_error&);
+        // On a platform where std::size_t is narrower than 64 bits (e.g.
+        // 32-bit), the claimed count 0xFFFFFFFF coincides with that
+        // platform's detail::unknown_size() sentinel (SIZE_MAX), so the
+        // format-level size check rejects it outright (out_of_range.408,
+        // "excessive ... size") before the SAX consumer's own max_size()
+        // check would even run; on a 64-bit platform it passes both of
+        // those checks and is only found short of data once the (capped)
+        // reservation looks for element bytes that were never provided
+        // (parse_error.110). Either is an acceptable, bounded rejection of
+        // the hostile header -- the property under test is that no path
+        // attempts to allocate space for billions of elements.
+        bool threw = false;
+        try
+        {
+            _ = json::from_cbor(input);
+        }
+        catch (const json::parse_error& e)
+        {
+            threw = true;
+            CHECK(e.id == 110);
+            CHECK(std::string(e.what()) == "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing CBOR value: unexpected end of input");
+        }
+        catch (const json::out_of_range& e)
+        {
+            threw = true;
+            CHECK(e.id == 408);
+            CHECK(std::string(e.what()).find("excessive") != std::string::npos);
+        }
+        CHECK(threw);
         CHECK(json::from_cbor(input, true, false).is_discarded());
     }
 
@@ -2056,9 +2082,9 @@ TEST_CASE("issue #5405 - array reserve for definite-length CBOR arrays")
     {
         for (const auto size :
                 {
-                    std::size_t(0), std::size_t(1), std::size_t(5), // small
-                    std::size_t(16384),                             // exactly at the reserve cap
-                    std::size_t(20000)                              // above the reserve cap
+                    std::size_t{0}, std::size_t{1}, std::size_t{5}, // small
+                    std::size_t{16384},                             // exactly at the reserve cap
+                    std::size_t{20000}                              // above the reserve cap
                 })
         {
             CAPTURE(size)
