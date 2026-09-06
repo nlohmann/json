@@ -563,9 +563,12 @@ class binary_reader
 
     @return whether a valid CBOR value was passed to the SAX parser
     */
-    bool parse_cbor_internal(const bool get_char,
-                             const cbor_tag_handler_t tag_handler)
+    bool parse_cbor_value(const bool get_char,
+                          const cbor_tag_handler_t tag_handler,
+                          bool& tag_pending)
     {
+        tag_pending = false;
+
         switch (get_char ? get() : current)
         {
             // EOF
@@ -757,37 +760,37 @@ class binary_reader
             case 0x95:
             case 0x96:
             case 0x97:
-                return get_cbor_array(
-                           conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu), tag_handler);
+                return enter_container(/*is_object*/false,
+                                                    conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu));
 
             case 0x98: // array (one-byte uint8_t for n follows)
             {
                 std::uint8_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_array(static_cast<std::size_t>(len), tag_handler);
+                return get_number(input_format_t::cbor, len) && enter_container(/*is_object*/false, static_cast<std::size_t>(len));
             }
 
             case 0x99: // array (two-byte uint16_t for n follow)
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_array(static_cast<std::size_t>(len), tag_handler);
+                return get_number(input_format_t::cbor, len) && enter_container(/*is_object*/false, static_cast<std::size_t>(len));
             }
 
             case 0x9A: // array (four-byte uint32_t for n follow)
             {
                 std::uint32_t len{};
                 std::size_t size{};
-                return get_number(input_format_t::cbor, len) && get_cbor_container_size(len, size, "array") && get_cbor_array(size, tag_handler);
+                return get_number(input_format_t::cbor, len) && get_cbor_container_size(len, size, "array") && enter_container(/*is_object*/false, size);
             }
 
             case 0x9B: // array (eight-byte uint64_t for n follow)
             {
                 std::uint64_t len{};
                 std::size_t size{};
-                return get_number(input_format_t::cbor, len) && get_cbor_container_size(len, size, "array") && get_cbor_array(size, tag_handler);
+                return get_number(input_format_t::cbor, len) && get_cbor_container_size(len, size, "array") && enter_container(/*is_object*/false, size);
             }
 
             case 0x9F: // array (indefinite length)
-                return get_cbor_array(detail::unknown_size(), tag_handler);
+                return enter_container(/*is_object*/false, detail::unknown_size());
 
             // map (0x00..0x17 pairs of data items follow)
             case 0xA0:
@@ -814,36 +817,36 @@ class binary_reader
             case 0xB5:
             case 0xB6:
             case 0xB7:
-                return get_cbor_object(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu), tag_handler);
+                return enter_container(/*is_object*/true, conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu));
 
             case 0xB8: // map (one-byte uint8_t for n follows)
             {
                 std::uint8_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_object(static_cast<std::size_t>(len), tag_handler);
+                return get_number(input_format_t::cbor, len) && enter_container(/*is_object*/true, static_cast<std::size_t>(len));
             }
 
             case 0xB9: // map (two-byte uint16_t for n follow)
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::cbor, len) && get_cbor_object(static_cast<std::size_t>(len), tag_handler);
+                return get_number(input_format_t::cbor, len) && enter_container(/*is_object*/true, static_cast<std::size_t>(len));
             }
 
             case 0xBA: // map (four-byte uint32_t for n follow)
             {
                 std::uint32_t len{};
                 std::size_t size{};
-                return get_number(input_format_t::cbor, len) && get_cbor_container_size(len, size, "map") && get_cbor_object(size, tag_handler);
+                return get_number(input_format_t::cbor, len) && get_cbor_container_size(len, size, "map") && enter_container(/*is_object*/true, size);
             }
 
             case 0xBB: // map (eight-byte uint64_t for n follow)
             {
                 std::uint64_t len{};
                 std::size_t size{};
-                return get_number(input_format_t::cbor, len) && get_cbor_container_size(len, size, "map") && get_cbor_object(size, tag_handler);
+                return get_number(input_format_t::cbor, len) && get_cbor_container_size(len, size, "map") && enter_container(/*is_object*/true, size);
             }
 
             case 0xBF: // map (indefinite length)
-                return get_cbor_object(detail::unknown_size(), tag_handler);
+                return enter_container(/*is_object*/true, detail::unknown_size());
 
             case 0xC0: // tagged item
             case 0xC1:
@@ -927,7 +930,10 @@ class binary_reader
                             default:
                                 break;
                         }
-                        return parse_cbor_internal(true, tag_handler);
+                        // the tagged value follows; it is read by the loop in
+                        // parse_cbor_internal() rather than by recursing here
+                        tag_pending = true;
+                        return true;
                     }
 
                     case cbor_tag_handler_t::store:
@@ -977,7 +983,11 @@ class binary_reader
                                 break;
                             }
                             default:
-                                return parse_cbor_internal(true, tag_handler);
+                            {
+                                // as above, the tagged value is read by the caller
+                                tag_pending = true;
+                                return true;
+                            }
                         }
                         get();
                         return get_cbor_binary(b) && sax->binary(b);
@@ -1375,96 +1385,110 @@ class binary_reader
     }
 
     /*!
-    @param[in] len  the length of the array or detail::unknown_size() for an
-                    array of indefinite size
+    @brief read a CBOR value and everything nested inside it
+
+    Reads values until the one that was begun here is complete, resuming the
+    enclosing container after each element, so that the nesting depth of the
+    input costs heap rather than native stack (see #5104).
+
+    @param[in] get_char  whether a new character should be retrieved from the
+                         input (true) or whether the last read character
+                         @a current should be considered instead
     @param[in] tag_handler how CBOR tags should be treated
-    @return whether array creation completed
+
+    @return whether reading the value succeeded
     */
-    bool get_cbor_array(const std::size_t len,
-                        const cbor_tag_handler_t tag_handler)
+    bool parse_cbor_internal(const bool get_char,
+                             const cbor_tag_handler_t tag_handler)
     {
-        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(len)))
-        {
-            return false;
-        }
+        // whether the next value starts at a fresh byte or at the one already
+        // read into `current`
+        bool fetch = get_char;
 
-        if (len != detail::unknown_size())
+        // the key currently being read; hoisted out of the loop so that its
+        // capacity is reused across elements and across nesting levels
+        string_t key;
+
+        while (true)
         {
-            for (std::size_t i = 0; i < len; ++i)
+            if (!container_stack.empty())
             {
-                if (JSON_HEDLEY_UNLIKELY(!parse_cbor_internal(true, tag_handler)))
+                // the reference is not held across parse_cbor_value() below,
+                // which can push onto the stack and reallocate it
+                container_frame& top = container_stack.back();
+                bool at_end;
+
+                if (top.remaining != npos)
                 {
-                    return false;
+                    // definite length: the container ends once its elements
+                    // have been read
+                    at_end = (top.remaining == 0);
+                    if (!at_end)
+                    {
+                        // claim the element about to be read
+                        --top.remaining;
+                        if (top.is_object)
+                        {
+                            get();
+                        }
+                    }
+                    fetch = true;
                 }
-            }
-        }
-        else
-        {
-            while (get() != 0xFF)
-            {
-                if (JSON_HEDLEY_UNLIKELY(!parse_cbor_internal(false, tag_handler)))
+                else
                 {
-                    return false;
+                    // indefinite length: the container ends at a break marker.
+                    // Testing for it consumes a byte, which is the first byte
+                    // of the next element when it is not one.
+                    at_end = (get() == 0xFF);
+                    fetch = top.is_object;
                 }
-            }
-        }
 
-        return sax->end_array();
-    }
-
-    /*!
-    @param[in] len  the length of the object or detail::unknown_size() for an
-                    object of indefinite size
-    @param[in] tag_handler how CBOR tags should be treated
-    @return whether object creation completed
-    */
-    bool get_cbor_object(const std::size_t len,
-                         const cbor_tag_handler_t tag_handler)
-    {
-        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(len)))
-        {
-            return false;
-        }
-
-        if (len != 0)
-        {
-            string_t key;
-            if (len != detail::unknown_size())
-            {
-                for (std::size_t i = 0; i < len; ++i)
+                if (at_end)
                 {
-                    get();
+                    const bool is_object = top.is_object;
+                    container_stack.pop_back();
+                    if (JSON_HEDLEY_UNLIKELY(is_object ? !sax->end_object() : !sax->end_array()))
+                    {
+                        return false;
+                    }
+                    // the value begun here is complete once its container is
+                    if (container_stack.empty())
+                    {
+                        return true;
+                    }
+                    continue;
+                }
+
+                if (top.is_object)
+                {
+                    key.clear();
                     if (JSON_HEDLEY_UNLIKELY(!get_cbor_string(key) || !sax->key(key)))
                     {
                         return false;
                     }
-
-                    if (JSON_HEDLEY_UNLIKELY(!parse_cbor_internal(true, tag_handler)))
-                    {
-                        return false;
-                    }
-                    key.clear();
+                    fetch = true;
                 }
             }
-            else
-            {
-                while (get() != 0xFF)
-                {
-                    if (JSON_HEDLEY_UNLIKELY(!get_cbor_string(key) || !sax->key(key)))
-                    {
-                        return false;
-                    }
 
-                    if (JSON_HEDLEY_UNLIKELY(!parse_cbor_internal(true, tag_handler)))
-                    {
-                        return false;
-                    }
-                    key.clear();
+            // a tag is not a value of its own: read on until the tagged value
+            bool tag_pending;
+            do
+            {
+                if (JSON_HEDLEY_UNLIKELY(!parse_cbor_value(fetch, tag_handler, tag_pending)))
+                {
+                    return false;
                 }
+                fetch = true;
+            }
+            while (tag_pending);
+
+            // a value that opened a container left it on the stack; one that
+            // did not, and that was not inside a container, was the whole value
+            if (container_stack.empty())
+            {
+                return true;
             }
         }
-
-        return sax->end_object();
     }
 
     /////////////
