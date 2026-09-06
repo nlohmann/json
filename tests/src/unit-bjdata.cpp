@@ -3288,8 +3288,10 @@ TEST_CASE("BJData")
             CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR1), "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing BJData size: ndarray dimensional vector is not allowed", json::parse_error&);
             CHECK(json::from_bjdata(vR1, true, false).is_discarded());
 
+            // a dimension vector that opens another one is rejected where the
+            // nested '[' is read, rather than after it has been descended into
             std::vector<uint8_t> const vR2 = {'[', '$', 'i', '#', '[', '#', '[', 'i', 1, ']', ']', 1};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR2), "[json.exception.parse_error.113] parse error at byte 11: syntax error while parsing BJData size: expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x5D", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR2), "[json.exception.parse_error.113] parse error at byte 7: syntax error while parsing BJData size: ndarray dimensional vector is not allowed", json::parse_error&);
             CHECK(json::from_bjdata(vR2, true, false).is_discarded());
 
             std::vector<uint8_t> const vR3 = {'[', '#', '[', 'i', '2', 'i', 2, ']'};
@@ -3297,7 +3299,7 @@ TEST_CASE("BJData")
             CHECK(json::from_bjdata(vR3, true, false).is_discarded());
 
             std::vector<uint8_t> const vR4 = {'[', '$', 'i', '#', '[', '$', 'i', '#', '[', 'i', 1, ']', 1};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR4), "[json.exception.parse_error.110] parse error at byte 14: syntax error while parsing BJData number: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR4), "[json.exception.parse_error.113] parse error at byte 9: syntax error while parsing BJData size: ndarray dimensional vector is not allowed", json::parse_error&);
             CHECK(json::from_bjdata(vR4, true, false).is_discarded());
 
             std::vector<uint8_t> const vR5 = {'[', '$', 'i', '#', '[', '[', '[', ']', ']', ']'};
@@ -3305,12 +3307,25 @@ TEST_CASE("BJData")
             CHECK(json::from_bjdata(vR5, true, false).is_discarded());
 
             std::vector<uint8_t> const vR6 = {'[', '$', 'i', '#', '[', '$', 'i', '#', '[', 'i', '2', 'i', 2, ']'};
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR6), "[json.exception.parse_error.112] parse error at byte 14: syntax error while parsing BJData size: ndarray can not be recursive", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vR6), "[json.exception.parse_error.113] parse error at byte 9: syntax error while parsing BJData size: ndarray dimensional vector is not allowed", json::parse_error&);
             CHECK(json::from_bjdata(vR6, true, false).is_discarded());
 
             std::vector<uint8_t> const vH = {'[', 'H', '[', '#', '[', '$', 'i', '#', '[', 'i', '2', 'i', 2, ']'};
             CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vH), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData size: ndarray dimensional vector is not allowed", json::parse_error&);
             CHECK(json::from_bjdata(vH, true, false).is_discarded());
+
+            // Every "#[" of this chain used to open another dimension vector
+            // and cost several stack frames before anything was rejected, so a
+            // long enough chain crashed the process (see #5104). The nested
+            // vector is refused where it is read, so the length is irrelevant.
+            std::vector<uint8_t> vRdeep = {'['};
+            for (std::size_t i = 0; i < 100000; ++i)
+            {
+                vRdeep.push_back('#');
+                vRdeep.push_back('[');
+            }
+            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vRdeep), "[json.exception.parse_error.113] parse error at byte 5: syntax error while parsing BJData size: ndarray dimensional vector is not allowed", json::parse_error&);
+            CHECK(json::from_bjdata(vRdeep, true, false).is_discarded());
         }
 
         SECTION("objects")

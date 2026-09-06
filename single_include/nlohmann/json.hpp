@@ -13164,7 +13164,12 @@ class binary_reader
     {
         result.first = npos; // size
         result.second = 0; // type
-        bool is_ndarray = false;
+        // seed the flag with the caller's context: inside an ndarray dimension
+        // vector another ndarray is not allowed, and get_ubjson_size_value()
+        // rejects it up front instead of reading it and reporting afterwards.
+        // Seeding it with `false` made every '#' of a "[#[#[..." chain descend
+        // another level, which overflowed the stack (see #5104).
+        bool is_ndarray = inside_ndarray;
 
         get_ignore_noop();
 
@@ -13197,13 +13202,11 @@ class binary_reader
             }
 
             const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
-            if (input_format == input_format_t::bjdata && is_ndarray)
+            // an ndarray was read here only if the flag flipped; when it was
+            // seeded true, get_ubjson_size_value() already rejected the nested
+            // dimension vector
+            if (input_format == input_format_t::bjdata && is_ndarray && !inside_ndarray)
             {
-                if (inside_ndarray)
-                {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
-                                            exception_message(input_format, "ndarray can not be recursive", "size"), nullptr));
-                }
                 result.second |= (1 << 8); // use bit 8 to indicate ndarray, all UBJSON and BJData markers should be ASCII letters
             }
             return is_error;
@@ -13212,7 +13215,7 @@ class binary_reader
         if (current == '#')
         {
             const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
-            if (input_format == input_format_t::bjdata && is_ndarray)
+            if (input_format == input_format_t::bjdata && is_ndarray && !inside_ndarray)
             {
                 return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
                                         exception_message(input_format, "ndarray requires both type and size", "size"), nullptr));
