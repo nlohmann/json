@@ -2195,9 +2195,10 @@ TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
         {
             // basic_json(basic_json&&) (json.hpp, around line 1265) copies
             // other's start_position/end_position into *this and then resets
-            // other's to npos (see the "// cppcheck-suppress[accessForwarded]
-            // TODO check" comments there). Only the top-level moved-from value
-            // is affected; its (moved-away) children are gone along with it.
+            // other's to npos (see the cppcheck-suppress[accessForwarded]
+            // annotation there, which flags this reset as worth a second
+            // look). Only the top-level moved-from value is affected; its
+            // (moved-away) children are gone along with it.
             const std::string s = R"({"a":1,"b":[1,2,3]})";
             json a = json::parse(s);
             const auto a_start = a.start_pos();
@@ -2346,7 +2347,12 @@ TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
             // transcoded UTF-8 byte stream, so reported positions are byte
             // offsets into that UTF-8 stream, not indices into the original
             // std::wstring.
-            const std::wstring ws = L"{\"a\":\"éé\"}";
+            // é (rather than a literal 'é' byte sequence in this source
+            // file) so the wide-string literal's meaning does not depend on
+            // the compiler's assumed source character set (MSVC, without
+            // /utf-8, would otherwise decode the raw UTF-8 bytes using the
+            // system code page instead of as UTF-8)
+            const std::wstring ws = L"{\"a\":\"\u00e9\u00e9\"}";
             CHECK(ws.size() == 10); // 10 wide characters
 
             const json j = json::parse(ws);
