@@ -62,6 +62,12 @@ set(generated "")
 if(MODE STREQUAL "undef")
     # Same banner `make update_hedley_undef` would stamp by hand, so the
     # recipe is self-contained and its output is byte-stable across reruns.
+    # The embedded SPDX tags below are part of the *generated* file's
+    # content, not a REUSE header for this .cmake script itself (which is
+    # already covered by the blanket "Files: *" rule in .reuse/dep5) -- keep
+    # them wrapped in REUSE-IgnoreStart/End so `reuse lint` does not try to
+    # parse "MIT\n")" as this file's own SPDX-License-Identifier value.
+    # REUSE-IgnoreStart
     string(APPEND generated "//     __ _____ _____ _____\n")
     string(APPEND generated "//  __|  |   __|     |   | |  JSON for Modern C++\n")
     string(APPEND generated "// |  |  |__   |  |  | | | |  version 3.12.0\n")
@@ -69,6 +75,7 @@ if(MODE STREQUAL "undef")
     string(APPEND generated "//\n")
     string(APPEND generated "// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>\n")
     string(APPEND generated "// SPDX-License-Identifier: MIT\n")
+    # REUSE-IgnoreEnd
     string(APPEND generated "\n")
     string(APPEND generated "#pragma once\n")
     string(APPEND generated "\n")
