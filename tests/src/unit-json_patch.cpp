@@ -743,8 +743,16 @@ TEST_CASE("JSON patch")
 
             // patch() never modifies the object it is called on -- it always
             // operates on (and returns) a separate copy, so the original is
-            // left completely untouched, regardless of success or failure
-            json copy_for_patch = original;
+            // left completely untouched, regardless of success or failure.
+            // copy_for_patch is intentionally a real copy, not a reference
+            // to `original`: the whole point of this check is to catch a
+            // hypothetical future regression where patch() *does* mutate its
+            // receiver. Using a reference here would make the assertion
+            // below compare `original` to itself -- trivially true even if
+            // such a bug existed -- which is exactly what a static analyzer
+            // can't see when it suggests "this copy is never modified, use
+            // a reference instead".
+            json copy_for_patch = original; // NOLINT(performance-unnecessary-copy-initialization)
             CHECK_THROWS_AS(copy_for_patch.patch(patch), json::other_error&);
             CHECK(copy_for_patch == original);
 
