@@ -33,6 +33,15 @@ equally valid, single-byte type marker than the dedicated binary-data writer
 would have. Both encodings are valid BJData and both decode to the same
 value, so this is not treated as a round-trip failure here.
 
+"Value-stable" is checked by comparing dump()s rather than with operator==
+directly: a BJData/UBJSON payload can decode to a non-finite double (NaN or
++-Infinity), and IEEE 754 NaN is never equal to itself, so operator== would
+report two structurally-identical trees as different whenever a NaN is
+involved -- not a round-trip bug, just NaN's ordinary (non-)reflexivity.
+dump() serializes any non-finite double the same deterministic way (as JSON
+`null`, since JSON itself cannot represent NaN/Infinity), so comparing
+dumps is stable under exactly the same values that break operator==.
+
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
@@ -42,6 +51,13 @@ drivers.
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
+
+// value-stable comparison for the round-trip checks below; see the note
+// above on why this compares dump()s rather than the json values directly
+static bool is_value_stable(const json& lhs, const json& rhs)
+{
+    return lhs.dump() == rhs.dump();
+}
 
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
@@ -68,11 +84,12 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
             json const j3 = json::from_bjdata(vec3);
             json const j4 = json::from_bjdata(vec4);
 
-            // re-serializing must be value-stable (see the note above on why
-            // byte-exact stability is not guaranteed in general)
-            assert(json::from_bjdata(json::to_bjdata(j2, false, false)) == j2);
-            assert(json::from_bjdata(json::to_bjdata(j3, true, false)) == j3);
-            assert(json::from_bjdata(json::to_bjdata(j4, true, true)) == j4);
+            // re-serializing must be value-stable (see the notes above on
+            // why byte-exact stability is not guaranteed in general, and
+            // why this compares dump()s rather than the values directly)
+            assert(is_value_stable(json::from_bjdata(json::to_bjdata(j2, false, false)), j2));
+            assert(is_value_stable(json::from_bjdata(json::to_bjdata(j3, true, false)), j3));
+            assert(is_value_stable(json::from_bjdata(json::to_bjdata(j4, true, true)), j4));
         }
         catch (const json::parse_error&)
         {
