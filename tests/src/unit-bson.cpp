@@ -652,6 +652,15 @@ TEST_CASE("BSON")
     }
 }
 
+TEST_CASE("regression test - BSON binary subtype rejects a value that doesn't fit a single byte")
+{
+    json const doc255 = {{"b", json::binary({1, 2}, 255)}};
+    CHECK(json::from_bson(json::to_bson(doc255))["b"].get_binary().subtype() == 255);
+
+    CHECK_THROWS_AS(json::to_bson(json{{"b", json::binary({1, 2}, 256)}}), json::out_of_range);
+    CHECK_THROWS_WITH_AS(json::to_bson(json{{"b", json::binary({1, 2}, 300)}}), "[json.exception.out_of_range.413] subtype 300 is too large for the BSON binary subtype (max 255)", json::out_of_range);
+}
+
 TEST_CASE("BSON input/output_adapters")
 {
     const json json_representation =

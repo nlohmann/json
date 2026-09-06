@@ -17775,6 +17775,11 @@ class binary_writer
                 // step 1.5: if this is an ext type, write the subtype
                 if (use_ext)
                 {
+                    if (JSON_HEDLEY_UNLIKELY(j.m_data.m_value.binary->subtype() > (std::numeric_limits<std::uint8_t>::max)()))
+                    {
+                        JSON_THROW(out_of_range::create(413, concat("subtype ", std::to_string(j.m_data.m_value.binary->subtype()), " is too large for the MessagePack ext type (max 255)"), &j));
+                    }
+
                     write_number(static_cast<std::int8_t>(j.m_data.m_value.binary->subtype()));
                 }
 
@@ -18274,6 +18279,12 @@ class binary_writer
         write_bson_entry_header(name, 0x05);
 
         write_number<std::int32_t>(to_bson_length(value.size()), true);
+
+        if (value.has_subtype() && JSON_HEDLEY_UNLIKELY(value.subtype() > (std::numeric_limits<std::uint8_t>::max)()))
+        {
+            JSON_THROW(out_of_range::create(413, concat("subtype ", std::to_string(value.subtype()), " is too large for the BSON binary subtype (max 255)"), nullptr));
+        }
+
         write_number(value.has_subtype() ? static_cast<std::uint8_t>(value.subtype()) : static_cast<std::uint8_t>(0x00));
 
         oa->write_characters(reinterpret_cast<const CharType*>(value.data()), value.size());
