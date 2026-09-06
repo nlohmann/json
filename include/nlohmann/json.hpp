@@ -5028,9 +5028,21 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     // reference tokens (already unescaped by json_pointer's
                     // parser) rather than the raw pointer strings, since a
                     // token may itself contain an escaped '/' or '~' that
-                    // would defeat a naive string-prefix comparison.
-                    if (JSON_HEDLEY_UNLIKELY(from_ptr.reference_tokens.size() < ptr.reference_tokens.size()
-                                             && std::equal(from_ptr.reference_tokens.begin(), from_ptr.reference_tokens.end(), ptr.reference_tokens.begin())))
+                    // would defeat a naive string-prefix comparison. This is
+                    // written as an explicit, manually-bounded loop (rather
+                    // than std::equal(first1, last1, first2), whose second
+                    // range has no explicit end iterator) so every access to
+                    // ptr.reference_tokens is visibly guarded by the same
+                    // index the loop condition already bounds against
+                    // from_size -- from_size < ptr.reference_tokens.size()
+                    // is checked once, up front, before the loop runs at all.
+                    const auto from_size = from_ptr.reference_tokens.size();
+                    bool from_is_proper_prefix_of_path = from_size < ptr.reference_tokens.size();
+                    for (std::size_t i = 0; from_is_proper_prefix_of_path && i < from_size; ++i)
+                    {
+                        from_is_proper_prefix_of_path = from_ptr.reference_tokens[i] == ptr.reference_tokens[i];
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(from_is_proper_prefix_of_path))
                     {
                         JSON_THROW(out_of_range::create(414, detail::concat("cannot move value: 'from' path '", from_path, "' is a proper prefix of 'path' '", path, "'"), &result));
                     }
