@@ -26375,6 +26375,30 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             }
         };
 
+        // RFC 6902 (section 4.4) forbids "from" from being a proper prefix
+        // of "path" for a "move" operation: a location cannot be moved into
+        // one of its own children. Compares reference tokens (already
+        // unescaped by json_pointer's parser) rather than the raw pointer
+        // strings, since a token may itself contain an escaped '/' or '~'
+        // that would defeat a naive string-prefix comparison. "from" equal
+        // to "path" is *not* a proper prefix and must return false.
+        const auto is_proper_prefix = [](const json_pointer & from, const json_pointer & to)
+        {
+            const auto from_size = from.reference_tokens.size();
+            if (from_size >= to.reference_tokens.size())
+            {
+                return false;
+            }
+            for (std::size_t i = 0; i < from_size; ++i)
+            {
+                if (!(from.reference_tokens[i] == to.reference_tokens[i]))
+                {
+                    return false;
+                }
+            }
+            return true;
+        };
+
         // type check: top level value must be an array
         if (JSON_HEDLEY_UNLIKELY(!json_patch.is_array()))
         {
@@ -26450,27 +26474,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     const auto from_path = get_value("move", "from", true).template get<string_t>();
                     json_pointer from_ptr(from_path);
 
-                    // RFC 6902 (section 4.4) forbids "from" from being a
-                    // proper prefix of "path": a location cannot be moved
-                    // into one of its own children. Compare the pointers'
-                    // reference tokens (already unescaped by json_pointer's
-                    // parser) rather than the raw pointer strings, since a
-                    // token may itself contain an escaped '/' or '~' that
-                    // would defeat a naive string-prefix comparison. This is
-                    // written as an explicit, manually-bounded loop (rather
-                    // than std::equal(first1, last1, first2), whose second
-                    // range has no explicit end iterator) so every access to
-                    // ptr.reference_tokens is visibly guarded by the same
-                    // index the loop condition already bounds against
-                    // from_size -- from_size < ptr.reference_tokens.size()
-                    // is checked once, up front, before the loop runs at all.
-                    const auto from_size = from_ptr.reference_tokens.size();
-                    bool from_is_proper_prefix_of_path = from_size < ptr.reference_tokens.size();
-                    for (std::size_t i = 0; from_is_proper_prefix_of_path && i < from_size; ++i)
-                    {
-                        from_is_proper_prefix_of_path = from_ptr.reference_tokens[i] == ptr.reference_tokens[i];
-                    }
-                    if (JSON_HEDLEY_UNLIKELY(from_is_proper_prefix_of_path))
+                    if (JSON_HEDLEY_UNLIKELY(is_proper_prefix(from_ptr, ptr)))
                     {
                         JSON_THROW(out_of_range::create(414, detail::concat("cannot move value: 'from' path '", from_path, "' is a proper prefix of 'path' '", path, "'"), &result));
                     }
