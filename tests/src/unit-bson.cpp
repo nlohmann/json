@@ -39,20 +39,48 @@ using huge_binary_json = nlohmann::basic_json <
                          std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
                          double, std::allocator, nlohmann::adl_serializer, huge_binary_t, void >;
 
-// a string type that reports a size beyond INT32_MAX without allocating that
-// much memory, so BSON length overflow can be tested for strings and
-// (embedded) documents as well, following the same idea as huge_binary_t
+// a string type that can be made to report a size beyond INT32_MAX without
+// allocating that much memory, so BSON length overflow can be tested for
+// strings and (embedded) documents as well, following the same idea as
+// huge_binary_t.
+//
+// Unlike huge_binary_t (which is only ever used as the BSON *value* type),
+// this type doubles as basic_json's StringType and is therefore also used
+// for *object keys* (e.g. "s" or "nested" below). Only the designated test
+// value is meant to lie about its size - if every huge_string_t (including
+// keys) reported a huge size, the running totals computed while walking the
+// BSON document (see calc_bson_object_size & friends in binary_writer.hpp)
+// would need more than 32 bits, and on platforms where std::size_t is only
+// 32 bits wide that arithmetic would silently wrap around, producing wrong
+// (or even unguarded) lengths. The fake size is therefore opt-in via
+// as_huge(), and plain strings - in particular object keys - keep reporting
+// their real, small size.
 class huge_string_t : public std::string
 {
   public:
     using std::string::string;
     huge_string_t(const std::string& s) : std::string(s) {} // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
 
-    size_type size() const noexcept // NOLINT(readability-convert-member-functions-to-static)
+    // returns a copy of @a s whose size() pretends to be huge
+    static huge_string_t as_huge(const std::string& s)
     {
-        // one byte more than the BSON length field can represent
-        return static_cast<size_type>((std::numeric_limits<std::int32_t>::max)()) + 1;
+        huge_string_t result(s);
+        result.pretend_huge = true;
+        return result;
     }
+
+    size_type size() const noexcept
+    {
+        if (pretend_huge)
+        {
+            // one byte more than the BSON length field can represent
+            return static_cast<size_type>((std::numeric_limits<std::int32_t>::max)()) + 1;
+        }
+        return std::string::size();
+    }
+
+  private:
+    bool pretend_huge = false;
 };
 
 using huge_string_json = nlohmann::basic_json <
@@ -139,9 +167,9 @@ TEST_CASE("BSON")
         SECTION("string")
         {
             huge_string_json j;
-            j["s"] = huge_string_json::string_t("value");
+            j["s"] = huge_string_t::as_huge("value");
 
-            CHECK_THROWS_WITH_AS(huge_string_json::to_bson(j), "[json.exception.out_of_range.412] BSON length 4294967308 exceeds maximum of 2147483647", huge_string_json::out_of_range&);
+            CHECK_THROWS_WITH_AS(huge_string_json::to_bson(j), "[json.exception.out_of_range.412] BSON length 2147483661 exceeds maximum of 2147483647", huge_string_json::out_of_range&);
         }
 
         SECTION("document")
@@ -149,11 +177,11 @@ TEST_CASE("BSON")
             // an oversized string nested one level deep makes the
             // *embedded* document's own length exceed INT32_MAX as well
             huge_string_json nested;
-            nested["s"] = huge_string_json::string_t("value");
+            nested["s"] = huge_string_t::as_huge("value");
             huge_string_json j;
             j["nested"] = nested;
 
-            CHECK_THROWS_WITH_AS(huge_string_json::to_bson(j), "[json.exception.out_of_range.412] BSON length 6442450963 exceeds maximum of 2147483647", huge_string_json::out_of_range&);
+            CHECK_THROWS_WITH_AS(huge_string_json::to_bson(j), "[json.exception.out_of_range.412] BSON length 2147483674 exceeds maximum of 2147483647", huge_string_json::out_of_range&);
         }
     }
 
