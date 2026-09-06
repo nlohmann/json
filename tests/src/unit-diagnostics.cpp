@@ -273,5 +273,62 @@ TEST_CASE("Regression tests for extended diagnostics")
         CHECK(j1["numbers"]["two"] == 2);
         CHECK(j1["string"] == "t");
     }
+
+    SECTION("Regression test for issue #5387 - copying keeps the parents of nested values")
+    {
+        // A value nested deeper than the copy constructor's descent bound is
+        // copied without the call stack. Every container that path creates has
+        // to have the parents of its children set, or the JSON Pointer in the
+        // diagnostic is cut short.
+        const std::size_t depth = 300;
+
+        SECTION("objects")
+        {
+            json j = "not a number";
+            std::string pointer;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                j = json{{"a", j}};
+                pointer += "/a";
+            }
+
+            json const copy(j); // NOLINT(performance-unnecessary-copy-initialization)
+
+            const json* inner = &copy;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                inner = &inner->at("a");
+            }
+
+            std::string const expected = "[json.exception.type_error.302] (" + pointer + ") type must be number, but is string";
+            int i = 0;
+            CHECK_THROWS_WITH_AS(i = inner->get<int>(), expected.c_str(), json::type_error);
+            CHECK(i == 0);
+        }
+
+        SECTION("arrays")
+        {
+            json j = "not a number";
+            std::string pointer;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                j = json::array({j});
+                pointer += "/0";
+            }
+
+            json const copy(j); // NOLINT(performance-unnecessary-copy-initialization)
+
+            const json* inner = &copy;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                inner = &inner->at(0);
+            }
+
+            std::string const expected = "[json.exception.type_error.302] (" + pointer + ") type must be number, but is string";
+            int i = 0;
+            CHECK_THROWS_WITH_AS(i = inner->get<int>(), expected.c_str(), json::type_error);
+            CHECK(i == 0);
+        }
+    }
 }
 
