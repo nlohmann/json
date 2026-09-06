@@ -243,6 +243,40 @@ add_custom_target(ci_test_noglobaludls
 )
 
 ###############################################################################
+# Disable enum serialization.
+###############################################################################
+
+add_custom_target(ci_test_disableenumserialization
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_DisableEnumSerialization=ON
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_disableenumserialization
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_disableenumserialization
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_disableenumserialization && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with enum serialization disabled"
+)
+
+###############################################################################
+# Skip the multiple-inclusion library version check.
+###############################################################################
+
+# tests/src/skip_library_version_check.cpp deliberately simulates a scenario
+# (mixing two differently-versioned inclusions of the library in one
+# translation unit) that unavoidably triggers the compiler's own "macro
+# redefined" warning, so -- unlike the ci_test_* targets above -- it is
+# compiled directly here, with a modest warning set, instead of being folded
+# into the library's own -Weverything/-Werror unit test matrix.
+add_custom_target(ci_test_skiplibraryversioncheck
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/skip_library_version_check
+    COMMAND ${CMAKE_CXX_COMPILER} -std=c++11 -Wall -Wextra
+        -I${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/tests/src/skip_library_version_check.cpp
+        -o ${PROJECT_BINARY_DIR}/skip_library_version_check/skip_library_version_check
+    COMMAND ${PROJECT_BINARY_DIR}/skip_library_version_check/skip_library_version_check
+    COMMENT "Compile and run a translation unit simulating a mismatched library version, with JSON_SKIP_LIBRARY_VERSION_CHECK defined"
+)
+
+###############################################################################
 # Coverage.
 ###############################################################################
 

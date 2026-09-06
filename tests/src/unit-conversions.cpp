@@ -1761,6 +1761,40 @@ TEST_CASE("std::filesystem::path")
 }
 #endif
 
+// the ADL to_json overload for std::u8string only exists under the same guard
+// as std::filesystem::path support (it is otherwise only reached indirectly,
+// via std::filesystem::path::u8string()) -- mirror both #if conditions from
+// include/nlohmann/detail/conversions/to_json.hpp exactly
+#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
+#if defined(__cpp_lib_char8_t)
+TEST_CASE("std::u8string")
+{
+    SECTION("ascii")
+    {
+        const std::u8string s = u8"Path";
+        json const j = s;
+
+        CHECK(j.template get<std::string>() == "Path");
+    }
+
+    SECTION("utf-8")
+    {
+        // use \u universal-character-names (rather than raw \x byte escapes
+        // or literal non-ASCII source bytes) to compose the multi-byte UTF-8
+        // encoding -- MSVC treats \x escapes used that way inside a u8
+        // literal as a nonstandard extension (warning C5321), which some of
+        // our CI configs promote to an error; \u is portable and produces
+        // the exact same encoded bytes without depending on the source
+        // file's encoding
+        const std::u8string s = u8"P\u011B\u0161ina";
+        json const j = s;
+
+        CHECK(j.template get<std::string>() == "P\xc4\x9b\xc5\xa1ina");
+    }
+}
+#endif
+#endif
+
 TEST_CASE("std::optional")
 {
     SECTION("null")
