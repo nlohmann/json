@@ -17,6 +17,8 @@ using nlohmann::json;
 
 #include <valarray>
 #include <algorithm>
+#include <cstdio>
+#include <fstream>
 #include <list>
 #include <sstream>
 #include <string>
@@ -2153,3 +2155,321 @@ TEST_CASE("last-read diagnostics are identical across input adapters")
     }
 }
 #endif // !defined(JSON_NOEXCEPTION)
+
+// this test characterizes the current (documented-by-example, not otherwise
+// specified) behavior of JSON_DIAGNOSTIC_POSITIONS positions with respect to
+// value lifetime (copy/move/swap/mutation), the various input adapters, and
+// user-driven SAX usage. It is regression protection, not a behavior
+// specification: if any of these checks fail after a change to json.hpp,
+// that change deliberately altered observable behavior and the test (and
+// this comment) should be updated accordingly, rather than "fixed" blindly.
+#if JSON_DIAGNOSTIC_POSITIONS
+TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
+{
+    SECTION("value lifetime")
+    {
+        SECTION("copy constructor copies positions, recursively")
+        {
+            // basic_json(const basic_json&) (json.hpp, around line 1192) copies
+            // start_position/end_position for the value itself; nested values
+            // are copied via their own copy constructor (through the copied
+            // object/array container), so positions are preserved throughout
+            // the whole tree.
+            const std::string s = R"({"a":1,"b":[1,2,3]})";
+            const json a = json::parse(s);
+            const json b = a; // NOLINT(performance-unnecessary-copy-initialization)
+
+            CHECK(b.start_pos() == a.start_pos());
+            CHECK(b.end_pos() == a.end_pos());
+            CHECK(b["b"].start_pos() == a["b"].start_pos());
+            CHECK(b["b"].end_pos() == a["b"].end_pos());
+            CHECK(b["b"][0].start_pos() == a["b"][0].start_pos());
+            CHECK(b["b"][0].end_pos() == a["b"][0].end_pos());
+
+            // sanity: the positions are meaningful (not all npos)
+            CHECK(b.start_pos() == 0);
+            CHECK(b.end_pos() == s.size());
+        }
+
+        SECTION("move constructor resets the moved-from value to npos")
+        {
+            // basic_json(basic_json&&) (json.hpp, around line 1265) copies
+            // other's start_position/end_position into *this and then resets
+            // other's to npos (see the cppcheck-suppress[accessForwarded]
+            // annotation there, which flags this reset as worth a second
+            // look). Only the top-level moved-from value is affected; its
+            // (moved-away) children are gone along with it.
+            const std::string s = R"({"a":1,"b":[1,2,3]})";
+            json a = json::parse(s);
+            const auto a_start = a.start_pos();
+            const auto a_end = a.end_pos();
+            const auto nested_start = a["b"].start_pos();
+            const auto nested_end = a["b"].end_pos();
+
+            const json b(std::move(a));
+
+            // the destination retains the original positions, recursively
+            CHECK(b.start_pos() == a_start);
+            CHECK(b.end_pos() == a_end);
+            CHECK(b["b"].start_pos() == nested_start);
+            CHECK(b["b"].end_pos() == nested_end);
+
+            // the moved-from value is reset to a null and reports npos
+            CHECK(a.is_null()); // NOLINT(bugprone-use-after-move,clang-analyzer-cplusplus.Move)
+            CHECK(a.start_pos() == std::string::npos); // NOLINT(bugprone-use-after-move,clang-analyzer-cplusplus.Move)
+            CHECK(a.end_pos() == std::string::npos); // NOLINT(bugprone-use-after-move,clang-analyzer-cplusplus.Move)
+        }
+
+        SECTION("swap() does NOT exchange positions (likely a real bug, see below)")
+        {
+            // NOTE (characterizing, not fixing, for #5420): basic_json::swap()
+            // (json.hpp, around line 3540, and the friend swap() that forwards
+            // to it) swaps m_data.m_type and m_data.m_value but -- unlike
+            // copy-assignment's operator=(basic_json) (json.hpp, around line
+            // 1291), which swaps start_position/end_position as part of its
+            // copy-and-swap implementation -- it never touches
+            // start_position/end_position. So after swap(a, b), the *values*
+            // of a and b are exchanged, but their *positions* are not: each
+            // ends up with its own original position describing the other's
+            // new content. This looks like an oversight/inconsistency rather
+            // than intended behavior, and is flagged to the maintainer; this
+            // test only pins the current (surprising) behavior so a fix (or a
+            // deliberate decision to keep it) shows up here as an intentional
+            // change rather than a silent regression.
+            json a = json::parse(R"({"a":1})");
+            json b = json::parse(R"([1,2,3,4,5])");
+            const auto a_start = a.start_pos();
+            const auto a_end = a.end_pos();
+            const auto b_start = b.start_pos();
+            const auto b_end = b.end_pos();
+            // both start at 0 (root values start right away), but their
+            // lengths (and thus end positions) differ, which is enough to
+            // tell after the swap whether positions actually moved with
+            // the values
+            CHECK(a_end != b_end);
+
+            using std::swap;
+            swap(a, b);
+
+            // values were exchanged as expected ...
+            CHECK(a == json::parse(R"([1,2,3,4,5])"));
+            CHECK(b == json::parse(R"({"a":1})"));
+
+            // ... but positions were NOT: each variable kept its own
+            // original position, now describing the other's content
+            CHECK(a.start_pos() == a_start);
+            CHECK(a.end_pos() == a_end);
+            CHECK(b.start_pos() == b_start);
+            CHECK(b.end_pos() == b_end);
+        }
+
+        SECTION("mutating a parsed document leaves positions of unrelated values untouched")
+        {
+            // Positions are recorded once, during parsing, and are not
+            // recomputed on mutation. As a consequence, after a mutation the
+            // parent's own recorded span may no longer describe its current
+            // (serialized) content -- it still describes what was originally
+            // parsed. This is characterized here as current behavior, not
+            // asserted to be desirable or specified.
+            SECTION("operator[] adding a new object key")
+            {
+                const std::string s = R"({"a":1})";
+                json j = json::parse(s);
+                const auto root_start = j.start_pos();
+                const auto root_end = j.end_pos();
+                const auto a_start = j["a"].start_pos();
+                const auto a_end = j["a"].end_pos();
+
+                j["c"] = 42;
+
+                // the newly-added value was never parsed, so it has no position
+                CHECK(j["c"].start_pos() == std::string::npos);
+                CHECK(j["c"].end_pos() == std::string::npos);
+
+                // the existing sibling's position is unaffected
+                CHECK(j["a"].start_pos() == a_start);
+                CHECK(j["a"].end_pos() == a_end);
+
+                // the parent's own recorded span is left as-is (now stale:
+                // it still reflects the original, shorter `{"a":1}` string)
+                CHECK(j.start_pos() == root_start);
+                CHECK(j.end_pos() == root_end);
+            }
+
+            SECTION("push_back on a parsed array")
+            {
+                const std::string s = R"([1,2,3])";
+                json j = json::parse(s);
+                const auto root_start = j.start_pos();
+                const auto root_end = j.end_pos();
+                const auto first_start = j[0].start_pos();
+
+                j.push_back(4);
+
+                CHECK(j.back().start_pos() == std::string::npos);
+                CHECK(j.back().end_pos() == std::string::npos);
+                CHECK(j[0].start_pos() == first_start);
+                CHECK(j.start_pos() == root_start);
+                CHECK(j.end_pos() == root_end);
+            }
+
+            SECTION("erase on a parsed array shifts elements but keeps their own positions")
+            {
+                const std::string s = R"([1,2,3])";
+                json j = json::parse(s);
+                const auto second_start = j[1].start_pos();
+                const auto third_start = j[2].start_pos();
+                const auto root_start = j.start_pos();
+                const auto root_end = j.end_pos();
+
+                j.erase(0);
+
+                // remaining elements moved down an index, but each one still
+                // reports the position it had *before* the erase (i.e. its
+                // position in the original source string, not a
+                // recalculated one)
+                CHECK(j[0].start_pos() == second_start);
+                CHECK(j[1].start_pos() == third_start);
+
+                // the parent's own recorded span is again left as-is
+                CHECK(j.start_pos() == root_start);
+                CHECK(j.end_pos() == root_end);
+            }
+        }
+    }
+
+    SECTION("input adapters")
+    {
+        SECTION("wide string input: positions count transcoded UTF-8 bytes, not wide characters")
+        {
+            // 'é' (U+00E9) is a single code unit in a wchar_t/UTF-16 string, but
+            // transcodes to 2 bytes in UTF-8; the lexer only ever sees the
+            // transcoded UTF-8 byte stream, so reported positions are byte
+            // offsets into that UTF-8 stream, not indices into the original
+            // std::wstring.
+            // é (rather than a literal 'é' byte sequence in this source
+            // file) so the wide-string literal's meaning does not depend on
+            // the compiler's assumed source character set (MSVC, without
+            // /utf-8, would otherwise decode the raw UTF-8 bytes using the
+            // system code page instead of as UTF-8)
+            const std::wstring ws = L"{\"a\":\"\u00e9\u00e9\"}";
+            CHECK(ws.size() == 10); // 10 wide characters
+
+            const json j = json::parse(ws);
+            CHECK(j.start_pos() == 0);
+            // the transcoded UTF-8 form is 2 bytes longer than the wide string,
+            // because each of the two 'é' characters becomes 2 UTF-8 bytes
+            CHECK(j.end_pos() == 12);
+            CHECK(j.end_pos() != ws.size());
+
+            const json& a = j["a"];
+            CHECK(a.start_pos() == 5);
+            CHECK(a.end_pos() == 11);
+        }
+
+        SECTION("BOM-prefixed input: start_pos() reflects the skipped 3-byte BOM")
+        {
+            const std::string s = "\xEF\xBB\xBF{\"a\":1}";
+            const json j = json::parse(s);
+
+            // the lexer silently skips the BOM before parsing the value, so
+            // the root value's recorded span starts right after it
+            CHECK(j.start_pos() == 3);
+            CHECK(j.end_pos() == s.size());
+        }
+
+        SECTION("std::istringstream: positions are consistent, not npos")
+        {
+            const std::string s = R"({"a":1,"b":2})";
+            std::istringstream ss(s);
+            const json j = json::parse(ss);
+
+            CHECK(j.start_pos() == 0);
+            CHECK(j.end_pos() == s.size());
+            CHECK(j["a"].start_pos() == 5);
+        }
+
+        SECTION("std::ifstream: positions are consistent, not npos")
+        {
+            const std::string s = R"({"a":1,"b":2})";
+            {
+                std::ofstream file("unit-class_parser_diagnostic_positions.tmp");
+                file << s;
+            }
+
+            {
+                std::ifstream f("unit-class_parser_diagnostic_positions.tmp");
+                const json j = json::parse(f);
+
+                CHECK(j.start_pos() == 0);
+                CHECK(j.end_pos() == s.size());
+                CHECK(j["a"].start_pos() == 5);
+            }
+
+            static_cast<void>(std::remove("unit-class_parser_diagnostic_positions.tmp"));
+        }
+
+        SECTION("iterator-pair input: positions are consistent, not npos")
+        {
+            const std::string s = R"({"a":1,"b":2})";
+            const json j = json::parse(s.begin(), s.end());
+
+            CHECK(j.start_pos() == 0);
+            CHECK(j.end_pos() == s.size());
+            CHECK(j["a"].start_pos() == 5);
+        }
+
+        SECTION("binary formats have no text positions")
+        {
+            // binary formats (CBOR, MessagePack, UBJSON, BSON, BJData) are
+            // parsed via detail::binary_reader, which never sets
+            // start_position/end_position on the values it produces (they
+            // have no notion of a text offset), so every value's position
+            // stays at its default of npos.
+            const json src = json::parse(R"({"a":1,"b":[1,2]})");
+
+            const json from_cbor = json::from_cbor(json::to_cbor(src));
+            CHECK(from_cbor.start_pos() == std::string::npos);
+            CHECK(from_cbor.end_pos() == std::string::npos);
+            CHECK(from_cbor["a"].start_pos() == std::string::npos);
+            CHECK(from_cbor["b"][0].start_pos() == std::string::npos);
+
+            const json from_msgpack = json::from_msgpack(json::to_msgpack(src));
+            CHECK(from_msgpack.start_pos() == std::string::npos);
+            CHECK(from_msgpack.end_pos() == std::string::npos);
+
+            const json from_ubjson = json::from_ubjson(json::to_ubjson(src));
+            CHECK(from_ubjson.start_pos() == std::string::npos);
+            CHECK(from_ubjson.end_pos() == std::string::npos);
+
+            const json from_bson_val = json::from_bson(json::to_bson(src));
+            CHECK(from_bson_val.start_pos() == std::string::npos);
+            CHECK(from_bson_val.end_pos() == std::string::npos);
+        }
+    }
+
+    SECTION("user-driven SAX consumers with no lexer report npos")
+    {
+        // json::parse() internally wires up its json_sax_dom_parser with a
+        // pointer to its own lexer (see parser.hpp), which is how positions
+        // get set at all. A user who constructs a json_sax_dom_parser
+        // directly (e.g. to drive it via json::sax_parse()) and does not
+        // supply a lexer pointer gets a consumer with m_lexer_ref == nullptr;
+        // every "if (m_lexer_ref)" guard in json_sax.hpp is then skipped, so
+        // every value it produces keeps its default, unset position (npos).
+        // This was previously true but silently unasserted (operator==
+        // ignores positions), see #5420.
+        json result;
+        nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type> sdp(result);
+        const std::string s = R"({"a":1,"b":[1,2,3]})";
+        CHECK(json::sax_parse(s, &sdp));
+
+        CHECK(result.start_pos() == std::string::npos);
+        CHECK(result.end_pos() == std::string::npos);
+        CHECK(result["a"].start_pos() == std::string::npos);
+        CHECK(result["a"].end_pos() == std::string::npos);
+        CHECK(result["b"][0].start_pos() == std::string::npos);
+        CHECK(result["b"][0].end_pos() == std::string::npos);
+    }
+}
+#endif
