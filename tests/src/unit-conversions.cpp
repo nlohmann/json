@@ -1779,7 +1779,14 @@ TEST_CASE("std::u8string")
 
     SECTION("utf-8")
     {
-        const std::u8string s = u8"P\xc4\x9b\xc5\xa1ina";
+        // use \u universal-character-names (rather than raw \x byte escapes
+        // or literal non-ASCII source bytes) to compose the multi-byte UTF-8
+        // encoding -- MSVC treats \x escapes used that way inside a u8
+        // literal as a nonstandard extension (warning C5321), which some of
+        // our CI configs promote to an error; \u is portable and produces
+        // the exact same encoded bytes without depending on the source
+        // file's encoding
+        const std::u8string s = u8"P\u011B\u0161ina";
         json const j = s;
 
         CHECK(j.template get<std::string>() == "P\xc4\x9b\xc5\xa1ina");
