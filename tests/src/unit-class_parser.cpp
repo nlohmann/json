@@ -1014,7 +1014,11 @@ TEST_CASE("parser class")
 
                     // wrap in an array so get_token() is exercised beyond the
                     // very first (constructor-time) scan as well
-                    const std::string wrapped = "[" + number + "," + number + "]";
+                    std::string wrapped = "[";
+                    wrapped += number;
+                    wrapped += ",";
+                    wrapped += number;
+                    wrapped += "]";
                     CHECK(json::accept(wrapped) == expected);
                 }
             }
