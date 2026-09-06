@@ -1074,9 +1074,9 @@ char* to_chars(char* first, const char* last, FloatType value)
         *first++ = '-';
     }
 
+    JSON_HEDLEY_DIAGNOSTIC_PUSH
 #ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
+    JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
     if (value == 0) // +-0
     {
@@ -1086,9 +1086,7 @@ char* to_chars(char* first, const char* last, FloatType value)
         *first++ = '0';
         return first;
     }
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
+    JSON_HEDLEY_DIAGNOSTIC_POP
 
     JSON_ASSERT(last - first >= std::numeric_limits<FloatType>::max_digits10);
 

@@ -3769,15 +3769,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
     bool operator==(const_reference rhs) const noexcept
     {
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
 #ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
+        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
         const_reference lhs = *this;
         JSON_IMPLEMENT_OPERATOR( ==, true, false, false)
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
+        JSON_HEDLEY_DIAGNOSTIC_POP
     }
 
     /// @brief comparison: equal
@@ -3862,14 +3860,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
     friend bool operator==(const_reference lhs, const_reference rhs) noexcept
     {
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
 #ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
+        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
         JSON_IMPLEMENT_OPERATOR( ==, true, false, false)
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
+        JSON_HEDLEY_DIAGNOSTIC_POP
     }
 
     /// @brief comparison: equal

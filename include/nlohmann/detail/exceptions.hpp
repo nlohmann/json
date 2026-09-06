@@ -32,9 +32,9 @@
 // functions to. As a result, we suppress this warning here to avoid client
 // code stumbling over this. See https://github.com/nlohmann/json/issues/4087
 // for a discussion.
+JSON_HEDLEY_DIAGNOSTIC_PUSH
 #if defined(__clang__)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wweak-vtables"
+    JSON_HEDLEY_PRAGMA(clang diagnostic ignored "-Wweak-vtables")
 #endif
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -286,6 +286,4 @@ class other_error : public exception
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-#if defined(__clang__)
-    #pragma clang diagnostic pop
-#endif
+JSON_HEDLEY_DIAGNOSTIC_POP
