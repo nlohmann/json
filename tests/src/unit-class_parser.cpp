@@ -1486,6 +1486,69 @@ TEST_CASE("parser class")
         CHECK(accept_helper("\"\\uD80C\\uFFFF\"") == false);
     }
 
+    SECTION("issue #5412 - whitespace skipping bookkeeping (compact vs. pretty-printed)")
+    {
+        // lexer::skip_whitespace() reads its first character with get() (to
+        // honor a possibly pending unget() from the previous token) and every
+        // further whitespace character with get_ignoring_pending_unget() (a
+        // get() variant that skips the then-always-false next_unget check).
+        // This must not change the reported byte offset, line, or column of
+        // a syntax error, even when a long run of whitespace containing
+        // multiple newlines is skipped beforehand (as with pretty-printed
+        // input). The expected values below were captured from the
+        // unmodified do-while(get()) loop, so any regression that miscounts
+        // characters or newlines while skipping whitespace changes them.
+        const auto check_error = [](const std::string & input, std::size_t expected_byte,
+                                    const std::string & expected_what)
+        {
+            CAPTURE(input)
+            try
+            {
+                json _ = json::parse(input);
+                FAIL_CHECK("expected a parse_error, but parsing succeeded");
+            }
+            catch (const json::parse_error& e)
+            {
+                CHECK(e.byte == expected_byte);
+                CHECK(std::string(e.what()) == expected_what);
+            }
+        };
+
+        // a nested document, serialized both compactly and pretty-printed
+        // (dump(4)), each truncated right before the final closing '}' so
+        // that the parser hits EOF after skipping all of the (in the
+        // pretty-printed case, substantial) indentation whitespace
+        const json doc =
+        {
+            {"a", 1},
+            {"b", json::array({true, false, nullptr, "x"})},
+            {"c", json::object({{"d", 3.14}, {"e", json::array({1, 2, 3})}})}
+        };
+
+        const std::string compact = doc.dump();
+        const std::string pretty = doc.dump(4);
+
+        check_error(compact.substr(0, compact.size() - 1), 60,
+                    "[json.exception.parse_error.101] parse error at line 1, column 60: syntax error while parsing object - unexpected end of input; expected '}'");
+        check_error(pretty.substr(0, pretty.size() - 1), 193,
+                    "[json.exception.parse_error.101] parse error at line 17, column 1: syntax error while parsing object - unexpected end of input; expected '}'");
+
+        // an invalid token appearing after several indented, multi-line
+        // whitespace runs vs. the same document without any of that
+        // whitespace
+        check_error(R"({
+    "a": 1,
+    "b": [
+        true,
+        false
+    ],
+    "c": @
+})", 70,
+                    "[json.exception.parse_error.101] parse error at line 7, column 10: syntax error while parsing value - invalid literal; last read: '\"c\": @'");
+        check_error("{\"a\":1,\"b\":[true,false],\"c\":@}", 29,
+                    "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing value - invalid literal; last read: '\"c\":@'");
+    }
+
     SECTION("tests found by mutate++")
     {
         // test case to make sure no comma precedes the first key

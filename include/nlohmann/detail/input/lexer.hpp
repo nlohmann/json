@@ -1446,8 +1446,7 @@ scan_number_done:
     */
     char_int_type get()
     {
-        ++position.chars_read_total;
-        ++position.chars_read_current_line;
+        advance_position();
 
         if (next_unget)
         {
@@ -1459,6 +1458,23 @@ scan_number_done:
             current = ia.get_character();
         }
 
+        return track_after_read();
+    }
+
+    /// shared head of get() / get_ignoring_pending_unget(): bump the
+    /// per-character position counters (line-count-on-'\n' bookkeeping is
+    /// handled afterwards, in track_after_read(), once `current` is known)
+    void advance_position() noexcept
+    {
+        ++position.chars_read_total;
+        ++position.chars_read_current_line;
+    }
+
+    /// shared tail of get() / get_ignoring_pending_unget(): capture the
+    /// character for error messages (if needed) and update line/column
+    /// bookkeeping for the character now in `current`
+    char_int_type track_after_read()
+    {
         // seekable adapters reconstruct the token lazily on error (see
         // get_token_string), so the eager per-character copy is skipped
         capture_char(std::integral_constant<bool, lazy_token_string> {});
@@ -1470,6 +1486,29 @@ scan_number_done:
         }
 
         return current;
+    }
+
+    /*!
+    @brief like get(), but for call sites that can prove no unget() is pending
+
+    get() has to check the `next_unget` flag on every call, because a
+    previous token may have ended with unget() (e.g. scan_number() always
+    ungets the character that terminated the number, so the next call to
+    scan() can see it again). skip_whitespace() reads that first,
+    possibly-ungotten character via a plain get(), but every further
+    character it reads is guaranteed to be a fresh read: nothing between
+    those calls invokes unget(). This variant skips the (otherwise always
+    false) next_unget branch for those calls; it is not a general
+    replacement for get().
+    */
+    char_int_type get_ignoring_pending_unget()
+    {
+        JSON_ASSERT(!next_unget);
+
+        advance_position();
+        current = ia.get_character();
+
+        return track_after_read();
     }
 
     /// seekable adapter: nothing to capture, the token is rebuilt on error
@@ -1665,13 +1704,37 @@ scan_number_done:
         return true;
     }
 
+    /// whether `current` is one of the four JSON whitespace characters
+    bool current_is_whitespace() const noexcept
+    {
+        return current == ' ' || current == '\t' || current == '\n' || current == '\r';
+    }
+
     void skip_whitespace()
     {
+        // the first character may be a pending unget() left over from the
+        // previous token (see get_ignoring_pending_unget()); every
+        // subsequent character read by this loop is guaranteed fresh, since
+        // nothing below calls unget()
+        get();
+
+        if (!current_is_whitespace())
+        {
+            return;
+        }
+
+        // this is written as an if-guarded do-while (rather than a plain
+        // while loop) because that shape is what lets both GCC and Clang
+        // keep the input adapter's read pointer in a register across
+        // iterations; the equivalent while-loop measurably defeated that
+        // optimization in testing, turning long whitespace runs (e.g. the
+        // indentation of pretty-printed JSON) from a register-only loop
+        // into one that reloads the pointer from memory every character
         do
         {
-            get();
+            get_ignoring_pending_unget();
         }
-        while (current == ' ' || current == '\t' || current == '\n' || current == '\r');
+        while (current_is_whitespace());
     }
 
     token_type scan()
