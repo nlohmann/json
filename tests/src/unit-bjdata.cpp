@@ -2779,6 +2779,50 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(out_object) == j_object);
             }
 
+            SECTION("re-serializing a value containing a plain-array-of-bytes is value-stable but not byte-stable")
+            {
+                // OSS-Fuzz found this input (an array whose first element is a
+                // binary_t byte, followed by an object whose _ArrayType_ is
+                // not a string) while exercising the fix for #5398 above: once
+                // the fix stops to_bjdata() from throwing type_error.302 for
+                // the third element, serialization proceeds far enough to
+                // reach a pre-existing, unrelated round-trip quirk in how a
+                // single-byte binary_t value is re-encoded.
+                std::vector<std::uint8_t> const input
+                {
+                    0x5b, 0x5b, 0x24, 0x42, 0x23, 0x5b, 0x69, 0x01, 0x5d, 0x5b, 0x5b, 0x5d, 0x7b, 0x55, 0x0b,
+                    0x5f, 0x41, 0x72, 0x72, 0x61, 0x79, 0x44, 0x61, 0x74, 0x61, 0x5f, 0x54, 0x55, 0x0b, 0x5f,
+                    0x41, 0x72, 0x72, 0x61, 0x79, 0x53, 0x69, 0x7a, 0x65, 0x5f, 0x5a, 0x55, 0x0b, 0x5f, 0x41,
+                    0x72, 0x72, 0x61, 0x79, 0x54, 0x79, 0x70, 0x65, 0x5f, 0x54, 0x7d, 0x5d
+                };
+                json const j1 = json::from_bjdata(input);
+
+                // to_bjdata() must not throw (this is what #5398 fixes)
+                std::vector<std::uint8_t> vec2;
+                CHECK_NOTHROW(vec2 = json::to_bjdata(j1, false, false));
+
+                // parsing back a plain (non-optimized) array of bytes cannot
+                // recover that it used to be a binary_t: from_bjdata() has no
+                // way to distinguish "array of uint8 numbers" from "array of
+                // bytes" unless the compact "$U#" array header is used, so
+                // the binary_t collapses into a plain JSON array
+                json const j2 = json::from_bjdata(vec2);
+                CHECK(j1 != j2);
+                CHECK(j2 == json({{91}, json::array(), {{"_ArrayData_", true}, {"_ArraySize_", nullptr}, {"_ArrayType_", true}}}));
+
+                // re-serializing j2 no longer goes through the dedicated
+                // binary_t writer (which always uses the 'U' marker for raw
+                // bytes); the now-plain number 91 goes through the generic
+                // smallest-type writer instead, which - like the rest of the
+                // UBJSON/BJData writer, and unchanged by this fix - prefers
+                // the 'i' (int8) marker over 'U' (uint8) for values that fit
+                // both. Both markers are valid BJData and both decode back to
+                // 91, so this is not byte-for-byte identical to vec2, but it
+                // is value-stable: parsing it again reproduces j2 exactly.
+                std::vector<std::uint8_t> const vec3 = json::to_bjdata(j2, false, false);
+                CHECK(json::from_bjdata(vec3) == j2);
+            }
+
             SECTION("ndarray whose dimensions overflow stays as object")
             {
                 // the product of the dimensions wraps around std::size_t to 0
