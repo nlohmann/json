@@ -11683,23 +11683,21 @@ class binary_reader
     }
 
     /*!
-    @brief reads a CBOR string
+    @brief reads a definite-length CBOR string
 
-    This function first reads starting bytes to determine the expected
-    string length and then copies this number of bytes into a string.
-    Additionally, CBOR's strings with indefinite lengths are supported.
+    Reads everything @ref get_cbor_string accepts except the indefinite-length
+    form, which that function handles itself. The bytes are appended to @a
+    result, so consecutive chunks of an indefinite-length string can be read
+    into the same string.
 
-    @param[out] result  created string
+    @param[out] result  string the bytes are appended to
 
     @return whether string creation completed
-    */
-    bool get_cbor_string(string_t& result)
-    {
-        if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::cbor, "string")))
-        {
-            return false;
-        }
 
+    @pre @a current is not EOF
+    */
+    bool get_cbor_string_chunk(string_t& result)
+    {
         switch (current)
         {
             // UTF-8 string (0x00..0x17 bytes follow)
@@ -11755,20 +11753,6 @@ class binary_reader
                 return get_number(input_format_t::cbor, len) && get_string(input_format_t::cbor, len, result);
             }
 
-            case 0x7F: // UTF-8 string (indefinite length)
-            {
-                while (get() != 0xFF)
-                {
-                    string_t chunk;
-                    if (!get_cbor_string(chunk))
-                    {
-                        return false;
-                    }
-                    result.append(chunk);
-                }
-                return true;
-            }
-
             default:
             {
                 auto last_token = get_token_string();
@@ -11779,23 +11763,82 @@ class binary_reader
     }
 
     /*!
-    @brief reads a CBOR byte array
+    @brief reads a CBOR string
 
     This function first reads starting bytes to determine the expected
-    byte array length and then copies this number of bytes into the byte array.
-    Additionally, CBOR's byte arrays with indefinite lengths are supported.
+    string length and then copies this number of bytes into a string.
+    Additionally, CBOR's strings with indefinite lengths are supported.
 
-    @param[out] result  created byte array
+    @param[out] result  created string
+
+    @return whether string creation completed
+    */
+    bool get_cbor_string(string_t& result)
+    {
+        // number of indefinite-length strings that have been opened and not
+        // closed yet. RFC 8949, Section 3.2.3 does not permit nesting them,
+        // but this reader has always accepted it, so the open levels are
+        // counted instead of recursed through, which overflowed the stack for
+        // an input of repeated 0x7F bytes (see #5104). Every chunk is appended
+        // to the same result, so no per-level state is needed.
+        std::size_t open = 0;
+
+        while (true)
+        {
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::cbor, "string")))
+            {
+                return false;
+            }
+
+            if (current == 0x7F) // UTF-8 string (indefinite length)
+            {
+                ++open;
+                get();
+                continue;
+            }
+
+            // a break marker closes the innermost indefinite-length string;
+            // outside of one it is not a string and falls through to the error
+            if (open != 0 && current == 0xFF)
+            {
+                if (--open == 0)
+                {
+                    return true;
+                }
+                get();
+                continue;
+            }
+
+            if (JSON_HEDLEY_UNLIKELY(!get_cbor_string_chunk(result)))
+            {
+                return false;
+            }
+
+            if (open == 0)
+            {
+                return true;
+            }
+
+            get();
+        }
+    }
+
+    /*!
+    @brief reads a definite-length CBOR byte array
+
+    Reads everything @ref get_cbor_binary accepts except the indefinite-length
+    form, which that function handles itself. The bytes are appended to @a
+    result, so consecutive chunks of an indefinite-length byte array can be
+    read into the same byte array.
+
+    @param[out] result  byte array the bytes are appended to
 
     @return whether byte array creation completed
-    */
-    bool get_cbor_binary(binary_t& result)
-    {
-        if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::cbor, "binary")))
-        {
-            return false;
-        }
 
+    @pre @a current is not EOF
+    */
+    bool get_cbor_binary_chunk(binary_t& result)
+    {
         switch (current)
         {
             // Binary data (0x00..0x17 bytes follow)
@@ -11855,26 +11898,69 @@ class binary_reader
                        get_binary(input_format_t::cbor, len, result);
             }
 
-            case 0x5F: // Binary data (indefinite length)
-            {
-                while (get() != 0xFF)
-                {
-                    binary_t chunk;
-                    if (!get_cbor_binary(chunk))
-                    {
-                        return false;
-                    }
-                    result.insert(result.end(), chunk.begin(), chunk.end());
-                }
-                return true;
-            }
-
             default:
             {
                 auto last_token = get_token_string();
                 return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
                                         exception_message(input_format_t::cbor, concat("expected length specification (0x40-0x5B) or indefinite binary array type (0x5F); last byte: 0x", last_token), "binary"), nullptr));
             }
+        }
+    }
+
+    /*!
+    @brief reads a CBOR byte array
+
+    This function first reads starting bytes to determine the expected
+    byte array length and then copies this number of bytes into the byte array.
+    Additionally, CBOR's byte arrays with indefinite lengths are supported.
+
+    @param[out] result  created byte array
+
+    @return whether byte array creation completed
+    */
+    bool get_cbor_binary(binary_t& result)
+    {
+        // the open indefinite-length byte arrays are counted rather than
+        // recursed through, for the reason given in @ref get_cbor_string
+        std::size_t open = 0;
+
+        while (true)
+        {
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::cbor, "binary")))
+            {
+                return false;
+            }
+
+            if (current == 0x5F) // Binary data (indefinite length)
+            {
+                ++open;
+                get();
+                continue;
+            }
+
+            // a break marker closes the innermost indefinite-length byte
+            // array; outside of one it falls through to the error below
+            if (open != 0 && current == 0xFF)
+            {
+                if (--open == 0)
+                {
+                    return true;
+                }
+                get();
+                continue;
+            }
+
+            if (JSON_HEDLEY_UNLIKELY(!get_cbor_binary_chunk(result)))
+            {
+                return false;
+            }
+
+            if (open == 0)
+            {
+                return true;
+            }
+
+            get();
         }
     }
 
