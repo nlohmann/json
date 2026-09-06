@@ -2149,6 +2149,111 @@ TEST_CASE("UBJSON")
     }
 }
 
+TEST_CASE("UBJSON nesting does not consume the call stack")
+{
+    // Containers used to be read by calling back into the value reader once
+    // per element, so the native call stack grew with the nesting depth of the
+    // input. '[' alone opens a container, so a payload of repeated '[' crashed
+    // the process (#5104), as did the optimized forms, which reach the same
+    // path through a type or size annotation. The containers are kept on a
+    // heap stack now.
+    //
+    // Deeply nested values must not be compared, copied or dumped here: those
+    // operations are still recursive and would reintroduce the crash.
+    json _;
+
+    SECTION("containers that end at a marker")
+    {
+        const std::vector<uint8_t> input(500000, '[');
+        CHECK_THROWS_WITH_AS(_ = json::from_ubjson(input), "[json.exception.parse_error.110] parse error at byte 500001: syntax error while parsing UBJSON value: unexpected end of input", json::parse_error&);
+        CHECK(json::from_ubjson(input, true, false).is_discarded());
+    }
+
+    SECTION("containers with a size")
+    {
+        std::vector<uint8_t> input;
+        for (std::size_t i = 0; i < 100000; ++i)
+        {
+            input.push_back('[');
+            input.push_back('#');
+            input.push_back('i');
+            input.push_back(1);
+        }
+        CHECK_THROWS_AS(_ = json::from_ubjson(input), json::parse_error&);
+        CHECK(json::from_ubjson(input, true, false).is_discarded());
+    }
+
+    SECTION("containers with a type and a size")
+    {
+        // '[' is a permitted optimized type in UBJSON, so each element of such
+        // a container is itself a container, read without a marker of its own
+        std::vector<uint8_t> input;
+        for (std::size_t i = 0; i < 100000; ++i)
+        {
+            const std::vector<uint8_t> level = {'[', '$', '[', '#', 'i', 1};
+            input.insert(input.end(), level.begin(), level.end());
+        }
+        CHECK_THROWS_AS(_ = json::from_ubjson(input), json::parse_error&);
+        CHECK(json::from_ubjson(input, true, false).is_discarded());
+    }
+
+    SECTION("a well-formed deep value is read through the SAX interface")
+    {
+        std::vector<uint8_t> input(100000, '[');
+        input.insert(input.end(), 100000, ']');
+
+        SaxCountdown accept_all(1000000);
+        CHECK(json::sax_parse(input, &accept_all, json::input_format_t::ubjson));
+    }
+
+    SECTION("a well-formed deep value is read into a value")
+    {
+        const std::size_t depth = 10000;
+        std::vector<uint8_t> input(depth, '[');
+        input.insert(input.end(), depth, ']');
+
+        json j = json::from_ubjson(input);
+
+        std::size_t measured = 0;
+        const json* p = &j;
+        while (p->is_array() && !p->empty())
+        {
+            p = &p->front();
+            ++measured;
+        }
+        // the innermost array is empty, so the descent stops one level short
+        CHECK(measured == depth - 1);
+    }
+
+    SECTION("containers are still read the same way")
+    {
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', ']'})) == json::array());
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'{', '}'})) == json::object());
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '#', 'i', 0})) == json::array());
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'{', '#', 'i', 0})) == json::object());
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '$', 'i', '#', 'i', 2, 1, 2})) == json({1, 2}));
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '#', 'i', 2, 'i', 1, 'i', 2})) == json({1, 2}));
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'{', '$', 'i', '#', 'i', 1, 'i', 1, 'a', 1})) == json({{"a", 1}}));
+        // a no-op is not a value, so a container of them holds none
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '$', 'N', '#', 'i', 2})) == json::array());
+        // sized and unsized forms nested inside one another
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '[', '#', 'i', 2, 'i', 1, 'i', 2, ']'})) == json({{1, 2}}));
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '#', 'i', 1, '[', 'i', 1, ']'})) == json({{1}}));
+        // an optimized container of containers
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '$', '[', '#', 'i', 2, 'i', 1, ']', 'i', 2, ']'})) == json({{1}, {2}}));
+    }
+
+    SECTION("BJData containers are still read the same way")
+    {
+        // the ND-array wrapper and the binary shortcut are complete values,
+        // not containers the reader descends into
+        CHECK(json::from_bjdata(std::vector<uint8_t>({'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 1, 2, 3, 4, 5, 6})) ==
+        json({{"_ArrayType_", "uint8"}, {"_ArraySize_", {2, 3}}, {"_ArrayData_", {1, 2, 3, 4, 5, 6}}}));
+        CHECK(json::from_bjdata(std::vector<uint8_t>({'[', '$', 'i', '#', 'i', 2, 1, 2})) == json({1, 2}));
+        CHECK(json::from_bjdata(std::vector<uint8_t>({'[', '[', 'i', 1, ']', ']'})) == json({{1}}));
+    }
+}
+
 TEST_CASE("UBJSON optimized arrays of a valueless type are bounded")
 {
     // An element of type 'Z', 'T' or 'F' is encoded by its marker alone, so an
