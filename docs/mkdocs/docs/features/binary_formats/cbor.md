@@ -131,6 +131,7 @@ The library maps CBOR types to JSON value types as follows:
 | Byte string            | binary          | 0x59       |
 | Byte string            | binary          | 0x5A       |
 | Byte string            | binary          | 0x5B       |
+| Byte string            | binary          | 0x5F       |
 | UTF-8 string           | string          | 0x60..0x77 |
 | UTF-8 string           | string          | 0x78       |
 | UTF-8 string           | string          | 0x79       |
@@ -155,6 +156,9 @@ The library maps CBOR types to JSON value types as follows:
 | Half-Precision Float   | number_float    | 0xF9       |
 | Single-Precision Float | number_float    | 0xFA       |
 | Double-Precision Float | number_float    | 0xFB       |
+
+Indefinite-length UTF-8 strings (0x7F) and byte strings (0x5F) are supported. Each chunk must be a definite-length
+string of the same major type, as required by [RFC 8949, Section 3.2.3](https://www.rfc-editor.org/rfc/rfc8949.html#section-3.2.3).
 
 !!! warning "Incomplete mapping"
 

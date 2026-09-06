@@ -1239,6 +1239,13 @@ TEST_CASE("regression tests 2")
         CHECK(j == json({2, 4, 6}));
     }
 #endif
+
+    SECTION("issue #5317 - nested indefinite-length CBOR string chunks are rejected")
+    {
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<std::uint8_t>({0x7F, 0x7F, 0x61, 0x61, 0xFF, 0xFF})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: indefinite-length string is not allowed inside indefinite-length string; last byte: 0x7F", json::parse_error&);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<std::uint8_t>({0x5F, 0x5F, 0x41, 0x61, 0xFF, 0xFF})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR binary: indefinite-length binary array is not allowed inside indefinite-length binary array; last byte: 0x5F", json::parse_error&);
+    }
 }
 
 TEST_CASE_TEMPLATE("issue #4798 - nlohmann::json::to_msgpack() encode float NaN as double", T, double, float) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
