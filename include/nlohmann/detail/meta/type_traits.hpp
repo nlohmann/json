@@ -172,17 +172,18 @@ struct has_to_json < BasicJsonType, T, enable_if_t < !is_basic_json<T>::value >>
 template<typename T>
 using detect_key_compare = typename T::key_compare;
 
-template<typename T>
-struct has_key_compare : std::integral_constant<bool, is_detected<detect_key_compare, T>::value> {};
-
-// obtains the actual object key comparator
+// obtains the actual object key comparator: object_t::key_compare if the
+// object type defines it, and default_object_comparator_t otherwise
+//
+// note detected_or_t is used rather than std::conditional, because the latter
+// names both of its type arguments eagerly; object_t::key_compare would then
+// be a hard error for an object type that does not define it
 template<typename BasicJsonType>
 struct actual_object_comparator
 {
     using object_t = typename BasicJsonType::object_t;
     using object_comparator_t = typename BasicJsonType::default_object_comparator_t;
-    using type = typename std::conditional < has_key_compare<object_t>::value,
-          typename object_t::key_compare, object_comparator_t>::type;
+    using type = detected_or_t<object_comparator_t, detect_key_compare, object_t>;
 };
 
 template<typename BasicJsonType>
@@ -777,6 +778,22 @@ using has_erase_with_key_type = typename std::conditional <
                                 typename BasicJsonType::object_t, KeyType >::value,
                                 std::true_type,
                                 std::false_type >::type;
+
+template<typename ObjectType, typename IteratorType>
+using detect_erase_with_iterator = decltype(std::declval<ObjectType&>().erase(std::declval<IteratorType>()));
+
+// type trait to check if erase(iterator) returns void instead of the following
+// iterator, as the object types that do not compute a successor the caller may
+// not need do
+template<typename ObjectType, typename IteratorType>
+using erase_returns_void = is_detected_exact<void, detect_erase_with_iterator, ObjectType, IteratorType>;
+
+template<typename T>
+using detect_capacity = decltype(std::declval<const T&>().capacity());
+
+// type trait to check if a type has a capacity() member function
+template<typename T>
+struct has_capacity : std::integral_constant<bool, is_detected<detect_capacity, T>::value> {};
 
 // a naive helper to check if a type is an ordered_map (exploits the fact that
 // ordered_map inherits capacity() from std::vector)

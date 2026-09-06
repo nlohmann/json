@@ -465,6 +465,16 @@ TEST_CASE("JSON pointers")
         // explicit roundtrip check
         CHECK(j.flatten().unflatten() == j);
 
+        // an object is only unflattened to an array if one of its keys is the
+        // reference token 0; this must not depend on which key is seen first
+        CHECK(json({{"/2", "x"}}).unflatten() == json({{"2", "x"}}));
+        CHECK(json({{"/10", "y"}, {"/2", "z"}}).unflatten() == json({{"10", "y"}, {"2", "z"}}));
+        CHECK(json({{"/0", 1}, {"/1", 2}}).unflatten() == json({1, 2}));
+        CHECK(json({{"/1", 2}, {"/0", 1}}).unflatten() == json({1, 2}));
+        CHECK(json({{"/0", 1}, {"/2", 3}}).unflatten() == json({1, nullptr, 3}));
+        CHECK(json({{"/a/1", 2}, {"/a/0", 1}}).unflatten() == json({{"a", {1, 2}}}));
+        CHECK(json({{"/a/1", 2}, {"/a/x", 1}}).unflatten() == json({{"a", {{"1", 2}, {"x", 1}}}}));
+
         // roundtrip for primitive values
         json j_null;
         CHECK(j_null.flatten().unflatten() == j_null);

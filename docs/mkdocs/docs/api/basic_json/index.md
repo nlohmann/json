@@ -35,6 +35,10 @@ class basic_json;
 | `BinaryType`         | type for binary arrays                                                    | [`binary_t`](binary_t.md)                   |
 | `CustomBaseClass`    | extension point for user code                                             | [`json_base_class_t`](json_base_class_t.md) |
 
+The library imposes a number of requirements on these types that are not expressed as C++ concepts, such as the
+container operations `object_t` and `array_t` must provide, or the fact that `StringType` must be `char`-based. They
+are collected in [Template Parameter Requirements](../../features/types/template_parameters.md).
+
 ## Specializations
 
 - [**json**](../json.md) - default specialization

@@ -261,7 +261,7 @@ class binary_writer
 
                 // step 2: write the string
                 oa->write_characters(
-                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->c_str()),
+                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->data()),
                     j.m_data.m_value.string->size());
                 break;
             }
@@ -581,7 +581,7 @@ class binary_writer
 
                 // step 2: write the string
                 oa->write_characters(
-                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->c_str()),
+                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->data()),
                     j.m_data.m_value.string->size());
                 break;
             }
@@ -798,7 +798,7 @@ class binary_writer
                 }
                 write_number_with_ubjson_prefix(j.m_data.m_value.string->size(), true, use_bjdata);
                 oa->write_characters(
-                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->c_str()),
+                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->data()),
                     j.m_data.m_value.string->size());
                 break;
             }
@@ -887,7 +887,9 @@ class binary_writer
                     for (size_t i = 0; i < j.m_data.m_value.binary->size(); ++i)
                     {
                         oa->write_character(to_char_type(bjdata_draft3 ? 'B' : 'U'));
-                        oa->write_character(to_char_type(j.m_data.m_value.binary->data()[i]));
+                        // the cast is needed for binary types whose value type
+                        // is not an integer (e.g., std::byte)
+                        oa->write_character(to_char_type(static_cast<std::uint8_t>(j.m_data.m_value.binary->data()[i])));
                     }
                 }
 
@@ -948,7 +950,7 @@ class binary_writer
                 {
                     write_number_with_ubjson_prefix(el.first.size(), true, use_bjdata);
                     oa->write_characters(
-                        reinterpret_cast<const CharType*>(el.first.c_str()),
+                        reinterpret_cast<const CharType*>(el.first.data()),
                         el.first.size());
                     write_ubjson(el.second, use_count, use_type, prefix_required, use_bjdata, bjdata_version);
                 }
@@ -1011,8 +1013,11 @@ class binary_writer
     {
         oa->write_character(to_char_type(element_type));
         oa->write_characters(
-            reinterpret_cast<const CharType*>(name.c_str()),
-            name.size() + 1u);
+            reinterpret_cast<const CharType*>(name.data()),
+            name.size());
+        // the terminating null byte is written explicitly rather than taken
+        // from the buffer, so that string_t::data() need not be null-terminated
+        oa->write_character(to_char_type(0x00));
     }
 
     /*!
@@ -1053,8 +1058,11 @@ class binary_writer
 
         write_number<std::int32_t>(to_bson_length(value.size() + 1ul), true);
         oa->write_characters(
-            reinterpret_cast<const CharType*>(value.c_str()),
-            value.size() + 1);
+            reinterpret_cast<const CharType*>(value.data()),
+            value.size());
+        // the terminating null byte is written explicitly rather than taken
+        // from the buffer, so that string_t::data() need not be null-terminated
+        oa->write_character(to_char_type(0x00));
     }
 
     /*!
@@ -1145,7 +1153,11 @@ class binary_writer
 
         const std::size_t embedded_document_size = std::accumulate(std::begin(value), std::end(value), static_cast<std::size_t>(0), [&array_index](std::size_t result, const typename BasicJsonType::array_t::value_type & el)
         {
-            return result + calc_bson_element_size(std::to_string(array_index++), el);
+            // the index is built as a std::string, while calc_bson_element_size
+            // takes a string_t; convert explicitly, as the two are only
+            // implicitly convertible for some string types
+            const auto key = std::to_string(array_index++);
+            return result + calc_bson_element_size(string_t(key.data(), key.size()), el);
         });
 
         return sizeof(std::int32_t) + embedded_document_size + 1ul;
@@ -1172,7 +1184,11 @@ class binary_writer
 
         for (const auto& el : value)
         {
-            write_bson_element(std::to_string(array_index++), el);
+            // the index is built as a std::string, while write_bson_element takes
+            // a string_t; convert explicitly, as the two are only implicitly
+            // convertible for some string types
+            const auto key = std::to_string(array_index++);
+            write_bson_element(string_t(key.data(), key.size()), el);
         }
 
         oa->write_character(to_char_type(0x00));

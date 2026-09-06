@@ -2899,7 +2899,10 @@ class binary_reader
                                number_string,
                                out_of_range::create(406, concat("number overflow parsing '", number_string, '\''), nullptr));
                 }
-                return sax->number_float(parsed_float, std::move(number_string));
+                // number_string is a std::string, while the SAX interface takes a
+                // string_t; convert explicitly, as the two are only implicitly
+                // convertible for some string types
+                return sax->number_float(parsed_float, string_t(number_string.data(), number_string.size()));
             }
             case token_type::uninitialized:
             case token_type::literal_true:
