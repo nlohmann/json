@@ -2149,6 +2149,61 @@ TEST_CASE("UBJSON")
     }
 }
 
+TEST_CASE("UBJSON optimized arrays of a valueless type are bounded")
+{
+    // An element of type 'Z', 'T' or 'F' is encoded by its marker alone, so an
+    // optimized array of one of those has no payload and the declared count is
+    // the only thing deciding how much is allocated. Ten bytes used to produce
+    // billions of values (#2793); every other type costs at least one byte per
+    // element and is bounded by the end of the input.
+    json _;
+
+    SECTION("an excessive count is rejected")
+    {
+        // 'l' is a big-endian int32: 0x7FFFFFFF elements, about 34 GB of value
+        for (const auto marker :
+                {'Z', 'T', 'F'
+                })
+        {
+            const std::vector<uint8_t> input = {'[', '$', static_cast<uint8_t>(marker), '#', 'l', 0x7F, 0xFF, 0xFF, 0xFF};
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(input), "[json.exception.out_of_range.408] syntax error while parsing UBJSON size: excessive array size", json::out_of_range&);
+            CHECK(json::from_ubjson(input, true, false).is_discarded());
+        }
+    }
+
+    SECTION("ordinary counts are unaffected")
+    {
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '$', 'Z', '#', 'i', 3})) == json({nullptr, nullptr, nullptr}));
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '$', 'T', '#', 'i', 2})) == json({true, true}));
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '$', 'F', '#', 'i', 2})) == json({false, false}));
+        // 'N' is a no-op rather than a value, and still yields an empty array
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '$', 'N', '#', 'i', 2})) == json::array());
+    }
+
+    SECTION("a type with a payload is unaffected")
+    {
+        // the same count for 'U' is bounded by the end of the input instead
+        const std::vector<uint8_t> input = {'[', '$', 'U', '#', 'l', 0x7F, 0xFF, 0xFF, 0xFF};
+        CHECK_THROWS_AS(_ = json::from_ubjson(input), json::parse_error&);
+    }
+
+    SECTION("the writer stays within what the reader accepts")
+    {
+        // below the limit the optimized form is used and is tiny; above it the
+        // writer falls back so that the result can still be read back
+        json const at_limit(1048576, nullptr);
+        const auto v_at_limit = json::to_ubjson(at_limit, true, true);
+        CHECK(v_at_limit.size() == 9);
+        CHECK(v_at_limit.at(1) == '$');
+        CHECK(json::from_ubjson(v_at_limit) == at_limit);
+
+        json const above_limit(1048577, nullptr);
+        const auto v_above_limit = json::to_ubjson(above_limit, true, true);
+        CHECK(v_above_limit.at(1) != '$');
+        CHECK(json::from_ubjson(v_above_limit) == above_limit);
+    }
+}
+
 TEST_CASE("Universal Binary JSON Specification Examples 1")
 {
     SECTION("Null Value")
