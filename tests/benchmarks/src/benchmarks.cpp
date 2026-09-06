@@ -214,4 +214,323 @@ static void BinaryToCbor(benchmark::State& state)
 }
 BENCHMARK(BinaryToCbor)->RangeMultiplier(2)->Range(8, 8 << 12);
 
+//////////////////////////////////////////////////////////////////////////////
+// parse binary formats
+//////////////////////////////////////////////////////////////////////////////
+
+// Only MessagePack had a read benchmark (FromMsgpack above, left untouched so
+// its numbers stay comparable across releases). The benchmarks below cover the
+// other formats, and read from a contiguous buffer as well as from a FILE*:
+// most callers pass a container, and the two adapters compile to different
+// code. The test data repository ships JSON only, so the input for each is
+// derived at setup time by serializing a parsed test file.
+
+/// binary format to benchmark; the _optimized variants add UBJSON/BJData size
+/// and type annotations, which the readers handle in a separate code path
+enum class binary_format
+{
+    cbor,
+    msgpack,
+    ubjson,
+    ubjson_optimized,
+    bjdata,
+    bjdata_optimized,
+    bson
+};
+
+static std::vector<std::uint8_t> to_binary(const json& j, const binary_format format)
+{
+    switch (format)
+    {
+        case binary_format::cbor:
+            return json::to_cbor(j);
+        case binary_format::msgpack:
+            return json::to_msgpack(j);
+        case binary_format::ubjson:
+            return json::to_ubjson(j);
+        case binary_format::ubjson_optimized:
+            return json::to_ubjson(j, true, true);
+        case binary_format::bjdata:
+            return json::to_bjdata(j);
+        case binary_format::bjdata_optimized:
+            return json::to_bjdata(j, true, true);
+        case binary_format::bson:
+        default:
+            return json::to_bson(j);
+    }
+}
+
+static json from_binary(const std::vector<std::uint8_t>& bytes, const binary_format format)
+{
+    switch (format)
+    {
+        case binary_format::cbor:
+            return json::from_cbor(bytes);
+        case binary_format::msgpack:
+            return json::from_msgpack(bytes);
+        case binary_format::ubjson:
+        case binary_format::ubjson_optimized:
+            return json::from_ubjson(bytes);
+        case binary_format::bjdata:
+        case binary_format::bjdata_optimized:
+            return json::from_bjdata(bytes);
+        case binary_format::bson:
+        default:
+            return json::from_bson(bytes);
+    }
+}
+
+static json from_binary(std::FILE* file, const binary_format format)
+{
+    switch (format)
+    {
+        case binary_format::cbor:
+            return json::from_cbor(file);
+        case binary_format::msgpack:
+            return json::from_msgpack(file);
+        case binary_format::ubjson:
+        case binary_format::ubjson_optimized:
+            return json::from_ubjson(file);
+        case binary_format::bjdata:
+        case binary_format::bjdata_optimized:
+            return json::from_bjdata(file);
+        case binary_format::bson:
+        default:
+            return json::from_bson(file);
+    }
+}
+
+/*!
+@brief serialize a parsed test file to @a format
+
+Returns an empty vector and marks the benchmark as skipped if the file cannot
+be represented in the format, rather than letting the exception escape: BSON
+requires an object at the top level, and several test files are arrays.
+*/
+static std::vector<std::uint8_t> binary_input(benchmark::State& state, const char* filename, const binary_format format)
+{
+    std::ifstream f(filename);
+    std::string const str((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+    const json j = json::parse(str);
+
+    if (format == binary_format::bson && !j.is_object())
+    {
+        state.SkipWithError("BSON requires an object at the top level");
+        return {};
+    }
+
+    return to_binary(j, format);
+}
+
+static void FromBinaryBuffer(benchmark::State& state, const char* filename, const binary_format format)
+{
+    const std::vector<std::uint8_t> bytes = binary_input(state, filename, format);
+    if (bytes.empty())
+    {
+        return;
+    }
+
+    for (auto _ : state)
+    {
+        // the value is destroyed outside the timed section, because destroying
+        // a large DOM is not what this benchmark measures
+        state.PauseTiming();
+        auto* j = new json();
+        state.ResumeTiming();
+
+        *j = from_binary(bytes, format);
+
+        state.PauseTiming();
+        delete j;
+        state.ResumeTiming();
+    }
+
+    state.SetBytesProcessed(state.iterations() * bytes.size());
+}
+
+BENCHMARK_CAPTURE(FromBinaryBuffer, cbor / jeopardy, TEST_DATA_DIRECTORY "/jeopardy/jeopardy.json", binary_format::cbor);
+BENCHMARK_CAPTURE(FromBinaryBuffer, cbor / canada, TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json", binary_format::cbor);
+BENCHMARK_CAPTURE(FromBinaryBuffer, cbor / citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json", binary_format::cbor);
+BENCHMARK_CAPTURE(FromBinaryBuffer, cbor / twitter, TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json", binary_format::cbor);
+BENCHMARK_CAPTURE(FromBinaryBuffer, cbor / floats, TEST_DATA_DIRECTORY "/regression/floats.json", binary_format::cbor);
+BENCHMARK_CAPTURE(FromBinaryBuffer, cbor / signed_ints, TEST_DATA_DIRECTORY "/regression/signed_ints.json", binary_format::cbor);
+BENCHMARK_CAPTURE(FromBinaryBuffer, msgpack / jeopardy, TEST_DATA_DIRECTORY "/jeopardy/jeopardy.json", binary_format::msgpack);
+BENCHMARK_CAPTURE(FromBinaryBuffer, msgpack / canada, TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json", binary_format::msgpack);
+BENCHMARK_CAPTURE(FromBinaryBuffer, msgpack / citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json", binary_format::msgpack);
+BENCHMARK_CAPTURE(FromBinaryBuffer, msgpack / twitter, TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json", binary_format::msgpack);
+BENCHMARK_CAPTURE(FromBinaryBuffer, ubjson / jeopardy, TEST_DATA_DIRECTORY "/jeopardy/jeopardy.json", binary_format::ubjson);
+BENCHMARK_CAPTURE(FromBinaryBuffer, ubjson / canada, TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json", binary_format::ubjson);
+BENCHMARK_CAPTURE(FromBinaryBuffer, ubjson / citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json", binary_format::ubjson);
+BENCHMARK_CAPTURE(FromBinaryBuffer, ubjson / twitter, TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json", binary_format::ubjson);
+BENCHMARK_CAPTURE(FromBinaryBuffer, ubjson_optimized / canada, TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json", binary_format::ubjson_optimized);
+BENCHMARK_CAPTURE(FromBinaryBuffer, ubjson_optimized / twitter, TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json", binary_format::ubjson_optimized);
+BENCHMARK_CAPTURE(FromBinaryBuffer, bjdata / canada, TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json", binary_format::bjdata);
+BENCHMARK_CAPTURE(FromBinaryBuffer, bjdata / twitter, TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json", binary_format::bjdata);
+BENCHMARK_CAPTURE(FromBinaryBuffer, bjdata_optimized / canada, TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json", binary_format::bjdata_optimized);
+BENCHMARK_CAPTURE(FromBinaryBuffer, bjdata_optimized / twitter, TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json", binary_format::bjdata_optimized);
+// BSON requires an object at the top level, so the array-rooted test files
+// (jeopardy and the regression files) cannot be captured here
+BENCHMARK_CAPTURE(FromBinaryBuffer, bson / canada, TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json", binary_format::bson);
+BENCHMARK_CAPTURE(FromBinaryBuffer, bson / citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json", binary_format::bson);
+BENCHMARK_CAPTURE(FromBinaryBuffer, bson / twitter, TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json", binary_format::bson);
+
+static void FromBinaryFile(benchmark::State& state, const char* filename, const binary_format format)
+{
+    const std::vector<std::uint8_t> bytes = binary_input(state, filename, format);
+    if (bytes.empty())
+    {
+        return;
+    }
+
+    const char* tmp = "benchmark_input.bin";
+    std::ofstream o(tmp, std::ios::binary);
+    o.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
+    o.flush();
+    o.close();
+
+    for (auto _ : state)
+    {
+        state.PauseTiming();
+        auto* j = new json();
+        auto* file = std::fopen(tmp, "rb");
+        state.ResumeTiming();
+
+        *j = from_binary(file, format);
+
+        state.PauseTiming();
+        std::fclose(file);
+        delete j;
+        state.ResumeTiming();
+    }
+
+    state.SetBytesProcessed(state.iterations() * bytes.size());
+}
+
+BENCHMARK_CAPTURE(FromBinaryFile, cbor / canada, TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json", binary_format::cbor);
+BENCHMARK_CAPTURE(FromBinaryFile, cbor / twitter, TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json", binary_format::cbor);
+BENCHMARK_CAPTURE(FromBinaryFile, ubjson / canada, TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json", binary_format::ubjson);
+BENCHMARK_CAPTURE(FromBinaryFile, ubjson / twitter, TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json", binary_format::ubjson);
+BENCHMARK_CAPTURE(FromBinaryFile, bjdata / twitter, TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json", binary_format::bjdata);
+BENCHMARK_CAPTURE(FromBinaryFile, bson / twitter, TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json", binary_format::bson);
+
+//////////////////////////////////////////////////////////////////////////////
+// parse binary formats: value shapes
+//////////////////////////////////////////////////////////////////////////////
+
+// The test files above are wide and shallow, but the readers' cost is per
+// container, so these cover the shapes that stress the container handling
+// itself. Every shape is wrapped in an object so that BSON, which requires an
+// object at the top level, measures the same value as the other formats.
+
+/// deeply nested arrays: one container per level, no other work
+static json make_nested()
+{
+    json nested = json::array();
+    json* p = &nested;
+    for (std::size_t i = 1; i < 1000; ++i)
+    {
+        p->push_back(json::array());
+        p = &p->operator[](0);
+    }
+
+    json j = json::object();
+    j["data"] = std::move(nested);
+    return j;
+}
+
+/// many sibling containers: maximum container churn, minimum nesting
+static json make_containers()
+{
+    json data = json::array();
+    for (std::size_t i = 0; i < 100000; ++i)
+    {
+        data.push_back(json::array({1, 2}));
+    }
+
+    json j = json::object();
+    j["data"] = std::move(data);
+    return j;
+}
+
+/// one flat array of numbers: the scalar decoding path, which must not move
+static json make_scalars()
+{
+    json data = json::array();
+    for (std::size_t i = 0; i < 1000000; ++i)
+    {
+        data.push_back(i);
+    }
+
+    json j = json::object();
+    j["data"] = std::move(data);
+    return j;
+}
+
+static void FromBinaryShape(benchmark::State& state, json (*build)(), const binary_format format)
+{
+    const std::vector<std::uint8_t> bytes = to_binary(build(), format);
+
+    for (auto _ : state)
+    {
+        state.PauseTiming();
+        auto* j = new json();
+        state.ResumeTiming();
+
+        *j = from_binary(bytes, format);
+
+        state.PauseTiming();
+        delete j;
+        state.ResumeTiming();
+    }
+
+    state.SetBytesProcessed(state.iterations() * bytes.size());
+}
+
+BENCHMARK_CAPTURE(FromBinaryShape, nested / cbor, make_nested, binary_format::cbor);
+BENCHMARK_CAPTURE(FromBinaryShape, nested / msgpack, make_nested, binary_format::msgpack);
+BENCHMARK_CAPTURE(FromBinaryShape, nested / ubjson, make_nested, binary_format::ubjson);
+BENCHMARK_CAPTURE(FromBinaryShape, nested / bjdata, make_nested, binary_format::bjdata);
+BENCHMARK_CAPTURE(FromBinaryShape, nested / bson, make_nested, binary_format::bson);
+BENCHMARK_CAPTURE(FromBinaryShape, containers / cbor, make_containers, binary_format::cbor);
+BENCHMARK_CAPTURE(FromBinaryShape, containers / msgpack, make_containers, binary_format::msgpack);
+BENCHMARK_CAPTURE(FromBinaryShape, containers / ubjson, make_containers, binary_format::ubjson);
+BENCHMARK_CAPTURE(FromBinaryShape, containers / ubjson_optimized, make_containers, binary_format::ubjson_optimized);
+BENCHMARK_CAPTURE(FromBinaryShape, containers / bjdata, make_containers, binary_format::bjdata);
+BENCHMARK_CAPTURE(FromBinaryShape, containers / bson, make_containers, binary_format::bson);
+// BSON names every array element, so a large array measures key generation
+// rather than scalar decoding and is left out here
+BENCHMARK_CAPTURE(FromBinaryShape, scalars / cbor, make_scalars, binary_format::cbor);
+BENCHMARK_CAPTURE(FromBinaryShape, scalars / msgpack, make_scalars, binary_format::msgpack);
+BENCHMARK_CAPTURE(FromBinaryShape, scalars / ubjson, make_scalars, binary_format::ubjson);
+BENCHMARK_CAPTURE(FromBinaryShape, scalars / bjdata, make_scalars, binary_format::bjdata);
+
+/*!
+@brief parse an indefinite-length CBOR string
+
+The writer never emits this form, so the input is assembled by hand: 0x7F
+opens the string, each chunk is a one-character string, and 0xFF closes it.
+*/
+static void FromCborChunkedString(benchmark::State& state, const std::size_t chunks)
+{
+    std::vector<std::uint8_t> bytes;
+    bytes.reserve(2 * chunks + 2);
+    bytes.push_back(0x7F);
+    for (std::size_t i = 0; i < chunks; ++i)
+    {
+        bytes.push_back(0x61); // string of length 1
+        bytes.push_back(0x61); // 'a'
+    }
+    bytes.push_back(0xFF);
+
+    for (auto _ : state)
+    {
+        json j = json::from_cbor(bytes);
+        benchmark::DoNotOptimize(j);
+    }
+
+    state.SetBytesProcessed(state.iterations() * bytes.size());
+}
+
+BENCHMARK_CAPTURE(FromCborChunkedString, 10000 chunks, 10000);
+
 BENCHMARK_MAIN();
