@@ -2176,6 +2176,11 @@ TEST_CASE("CBOR indefinite-length strings do not recurse per chunk")
 
 TEST_CASE("issue #5405 - array reserve for definite-length CBOR arrays")
 {
+#if !defined(JSON_NOEXCEPTION)
+    // this SECTION relies on catching a thrown exception to distinguish
+    // which of two acceptable, bounded rejections a hostile header took;
+    // under JSON_NOEXCEPTION, JSON_THROW never produces a catchable C++
+    // exception (it aborts instead), so this cannot be tested that way here
     SECTION("a huge claimed length with no element data must not over-allocate")
     {
         // 0x9A: array with a four-byte length; claims 0xFFFFFFFF (4294967295)
@@ -2216,6 +2221,7 @@ TEST_CASE("issue #5405 - array reserve for definite-length CBOR arrays")
         CHECK(threw);
         CHECK(json::from_cbor(input, true, false).is_discarded());
     }
+#endif
 
     SECTION("arrays of various sizes decode to the same value as before the reserve optimization")
     {

@@ -1599,6 +1599,11 @@ TEST_CASE("MessagePack")
 
 TEST_CASE("issue #5405 - array reserve for definite-length MessagePack arrays")
 {
+#if !defined(JSON_NOEXCEPTION)
+    // this SECTION relies on catching a thrown exception to distinguish
+    // which of two acceptable, bounded rejections a hostile header took;
+    // under JSON_NOEXCEPTION, JSON_THROW never produces a catchable C++
+    // exception (it aborts instead), so this cannot be tested that way here
     SECTION("a huge claimed length with no element data must not over-allocate")
     {
         // 0xdd: array 32 (four-byte length); claims 0xFFFFFFFF (4294967295)
@@ -1638,14 +1643,15 @@ TEST_CASE("issue #5405 - array reserve for definite-length MessagePack arrays")
         CHECK(threw);
         CHECK(json::from_msgpack(input, true, false).is_discarded());
     }
+#endif
 
     SECTION("arrays of various sizes decode to the same value as before the reserve optimization")
     {
         for (const auto size :
                 {
-                    std::size_t(0), std::size_t(1), std::size_t(5), // small
-                    std::size_t(16384),                             // exactly at the reserve cap
-                    std::size_t(20000)                              // above the reserve cap
+                    std::size_t{0}, std::size_t{1}, std::size_t{5}, // small
+                    std::size_t{16384},                             // exactly at the reserve cap
+                    std::size_t{20000}                              // above the reserve cap
                 })
         {
             CAPTURE(size)
