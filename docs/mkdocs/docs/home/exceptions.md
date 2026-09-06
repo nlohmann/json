@@ -868,6 +868,12 @@ The size of an array or object in a [binary format](../features/binary_formats/i
 the size following `#` for [UBJSON](../features/binary_formats/ubjson.md)/[BJData](../features/binary_formats/bjdata.md),
 or the encoded length for [CBOR](../features/binary_formats/cbor.md).
 
+The exception is also thrown for a [UBJSON](../features/binary_formats/ubjson.md) array of a type that is encoded by its
+marker alone (`Z`, `T` or `F`) whose declared count exceeds 1,048,576. Such an array has no payload, so its count alone
+decides how much memory is allocated, and a handful of bytes would otherwise describe billions of values.
+[`to_ubjson`](../api/basic_json/to_ubjson.md) writes longer arrays of these types without the size and type annotation,
+so any value it produces can still be read back.
+
 !!! failure "Example messages"
 
     ```
@@ -878,6 +884,9 @@ or the encoded length for [CBOR](../features/binary_formats/cbor.md).
     ```
     ```
     [json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive map size
+    ```
+    ```
+    [json.exception.out_of_range.408] syntax error while parsing UBJSON size: excessive array size
     ```
 
 ### json.exception.out_of_range.409
