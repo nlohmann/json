@@ -199,8 +199,12 @@ class binary_reader
     */
     struct container_frame
     {
-        /// number of elements that have not been read yet
+        /// number of elements that have not been read yet, or npos when the
+        /// container is not sized and ends at a marker instead
         std::size_t remaining = 0;
+        /// UBJSON/BJData: the type marker of an optimized container, so that
+        /// its elements are read without one of their own; 0 otherwise
+        char_int_type type_marker = 0;
         /// whether to close this container with end_object() or end_array()
         bool is_object = false;
     };
@@ -217,7 +221,8 @@ class binary_reader
 
     @return whether the SAX parser accepted the start event
     */
-    bool enter_container(const bool is_object, const std::size_t len)
+    bool enter_container(const bool is_object, const std::size_t len,
+                         const char_int_type type_marker = 0)
     {
         if (JSON_HEDLEY_UNLIKELY(is_object ? !sax->start_object(len) : !sax->start_array(len)))
         {
@@ -226,6 +231,7 @@ class binary_reader
 
         container_frame frame;
         frame.remaining = len;
+        frame.type_marker = type_marker;
         frame.is_object = is_object;
         container_stack.push_back(frame);
         return true;
@@ -2158,7 +2164,99 @@ class binary_reader
     */
     bool parse_ubjson_internal(const bool get_char = true)
     {
-        return get_ubjson_value(get_char ? get_ignore_noop() : current);
+        // the key currently being read; hoisted out of the loop so that its
+        // capacity is reused across elements and across nesting levels
+        string_t key;
+
+        // the type marker of the value to read next
+        char_int_type prefix = get_char ? get_ignore_noop() : current;
+
+        while (true)
+        {
+            const std::size_t depth = container_stack.size();
+
+            if (JSON_HEDLEY_UNLIKELY(!get_ubjson_value(prefix)))
+            {
+                return false;
+            }
+
+            // the value begun here is complete once it is not inside anything
+            if (container_stack.empty())
+            {
+                return true;
+            }
+
+            // a value was completed rather than a container opened; a
+            // container that ends at a marker needs the next byte to test
+            if (container_stack.size() == depth && container_stack.back().remaining == npos)
+            {
+                get_ignore_noop();
+            }
+
+            // advance to the next element, closing the containers that ended.
+            // The reference is not held across get_ubjson_value() above, which
+            // can push onto the stack and reallocate it.
+            for (;;)
+            {
+                container_frame& top = container_stack.back();
+
+                if (top.remaining != npos)
+                {
+                    if (top.remaining != 0)
+                    {
+                        --top.remaining;
+                        if (top.is_object)
+                        {
+                            key.clear();
+                            if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key) || !sax->key(key)))
+                            {
+                                return false;
+                            }
+                        }
+                        // an optimized container gives its elements no marker
+                        prefix = (top.type_marker != 0) ? top.type_marker : get_ignore_noop();
+                        break;
+                    }
+                }
+                else if (current != (top.is_object ? '}' : ']'))
+                {
+                    // a container that ends at a marker is never optimized, so
+                    // every element carries its own marker; for an object the
+                    // byte tested above is the first byte of the key
+                    if (top.is_object)
+                    {
+                        key.clear();
+                        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key, false) || !sax->key(key)))
+                        {
+                            return false;
+                        }
+                        prefix = get_ignore_noop();
+                    }
+                    else
+                    {
+                        prefix = current;
+                    }
+                    break;
+                }
+
+                const bool is_object = top.is_object;
+                container_stack.pop_back();
+                if (JSON_HEDLEY_UNLIKELY(is_object ? !sax->end_object() : !sax->end_array()))
+                {
+                    return false;
+                }
+                if (container_stack.empty())
+                {
+                    return true;
+                }
+                // the container that just ended was an element of the one
+                // below it, which may need the next byte for its own test
+                if (container_stack.back().remaining == npos)
+                {
+                    get_ignore_noop();
+                }
+            }
+        }
     }
 
     /*!
@@ -2930,53 +3028,22 @@ class binary_reader
                                         exception_message(input_format, "excessive array size", "size"), nullptr));
             }
 
-            if (JSON_HEDLEY_UNLIKELY(!sax->start_array(size_and_type.first)))
+            if (JSON_HEDLEY_UNLIKELY(!enter_container(/*is_object*/false, size_and_type.first, size_and_type.second)))
             {
                 return false;
             }
 
-            if (size_and_type.second != 0)
+            if (size_and_type.second == 'N')
             {
-                if (size_and_type.second != 'N')
-                {
-                    for (std::size_t i = 0; i < size_and_type.first; ++i)
-                    {
-                        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_value(size_and_type.second)))
-                        {
-                            return false;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                for (std::size_t i = 0; i < size_and_type.first; ++i)
-                {
-                    if (JSON_HEDLEY_UNLIKELY(!parse_ubjson_internal()))
-                    {
-                        return false;
-                    }
-                }
-            }
-        }
-        else
-        {
-            if (JSON_HEDLEY_UNLIKELY(!sax->start_array(detail::unknown_size())))
-            {
-                return false;
+                // a no-op is not a value, so a container of them holds none;
+                // the declared size has already been passed to the SAX parser
+                container_stack.back().remaining = 0;
             }
 
-            while (current != ']')
-            {
-                if (JSON_HEDLEY_UNLIKELY(!parse_ubjson_internal(false)))
-                {
-                    return false;
-                }
-                get_ignore_noop();
-            }
+            return true;
         }
 
-        return sax->end_array();
+        return enter_container(/*is_object*/false, detail::unknown_size());
     }
 
     /*!
@@ -2998,68 +3065,12 @@ class binary_reader
                                     exception_message(input_format, "BJData object does not support ND-array size in optimized format", "object"), nullptr));
         }
 
-        string_t key;
         if (size_and_type.first != npos)
         {
-            if (JSON_HEDLEY_UNLIKELY(!sax->start_object(size_and_type.first)))
-            {
-                return false;
-            }
-
-            if (size_and_type.second != 0)
-            {
-                for (std::size_t i = 0; i < size_and_type.first; ++i)
-                {
-                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key) || !sax->key(key)))
-                    {
-                        return false;
-                    }
-                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_value(size_and_type.second)))
-                    {
-                        return false;
-                    }
-                    key.clear();
-                }
-            }
-            else
-            {
-                for (std::size_t i = 0; i < size_and_type.first; ++i)
-                {
-                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key) || !sax->key(key)))
-                    {
-                        return false;
-                    }
-                    if (JSON_HEDLEY_UNLIKELY(!parse_ubjson_internal()))
-                    {
-                        return false;
-                    }
-                    key.clear();
-                }
-            }
-        }
-        else
-        {
-            if (JSON_HEDLEY_UNLIKELY(!sax->start_object(detail::unknown_size())))
-            {
-                return false;
-            }
-
-            while (current != '}')
-            {
-                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key, false) || !sax->key(key)))
-                {
-                    return false;
-                }
-                if (JSON_HEDLEY_UNLIKELY(!parse_ubjson_internal()))
-                {
-                    return false;
-                }
-                get_ignore_noop();
-                key.clear();
-            }
+            return enter_container(/*is_object*/true, size_and_type.first, size_and_type.second);
         }
 
-        return sax->end_object();
+        return enter_container(/*is_object*/true, detail::unknown_size());
     }
 
     // Note, no reader for UBJSON binary types is implemented because they do
