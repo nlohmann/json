@@ -1672,6 +1672,16 @@ class binary_writer
         };
 
         string_t key = "_ArrayType_";
+        // the type name is looked up as a string below; a non-string
+        // annotation (e.g. a number, null, or an array) cannot name a known
+        // dtype, so it is treated the same as an unrecognized type name and
+        // falls back to a plain object encoding instead of throwing
+        // type_error.302 out of get<string_t>()
+        if (!value.at(key).is_string())
+        {
+            return true;
+        }
+
         // use get<string_t>() instead of static_cast<string_t> to avoid an
         // ambiguous conversion under explicit instantiation on C++17 (see #4825)
         auto it = bjdtype.find(value.at(key).template get<string_t>());
