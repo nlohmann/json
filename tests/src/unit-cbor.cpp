@@ -2035,6 +2035,93 @@ TEST_CASE("CBOR definite length equal to the indefinite-length sentinel")
     }
 }
 
+TEST_CASE("CBOR nesting does not consume the call stack")
+{
+    // Containers used to be read by calling back into the value reader once
+    // per element, and a tag by calling it for the tagged value, so the native
+    // call stack grew with the nesting depth of the input. Each of the three
+    // costs a single byte to encode -- 0x9F, 0x81 and 0xC2 -- so a payload of
+    // repeated bytes crashed the process (#5104). The containers are kept on a
+    // heap stack now, and a tag is read in a loop.
+    //
+    // Deeply nested values must not be compared, copied or dumped here: those
+    // operations are still recursive and would reintroduce the crash.
+    json _;
+
+    SECTION("indefinite-length containers")
+    {
+        const std::vector<uint8_t> input(500000, 0x9F);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.parse_error.110] parse error at byte 500001: syntax error while parsing CBOR value: unexpected end of input", json::parse_error&);
+        CHECK(json::from_cbor(input, true, false).is_discarded());
+    }
+
+    SECTION("definite-length containers")
+    {
+        const std::vector<uint8_t> input(500000, 0x81);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.parse_error.110] parse error at byte 500001: syntax error while parsing CBOR value: unexpected end of input", json::parse_error&);
+        CHECK(json::from_cbor(input, true, false).is_discarded());
+    }
+
+    SECTION("tags")
+    {
+        // a tag is not a value of its own, so a chain of them used to recurse
+        const std::vector<uint8_t> input(500000, 0xC2);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(input, true, true, json::cbor_tag_handler_t::ignore), "[json.exception.parse_error.110] parse error at byte 500001: syntax error while parsing CBOR value: unexpected end of input", json::parse_error&);
+        CHECK(json::from_cbor(input, true, false, json::cbor_tag_handler_t::ignore).is_discarded());
+    }
+
+    SECTION("a well-formed deep value is read through the SAX interface")
+    {
+        std::vector<uint8_t> input(200000, 0x9F);
+        input.insert(input.end(), 200000, 0xFF);
+
+        SaxCountdown accept_all(1000000);
+        CHECK(json::sax_parse(input, &accept_all, json::input_format_t::cbor));
+    }
+
+    SECTION("a well-formed deep value is read into a value")
+    {
+        const std::size_t depth = 10000;
+        std::vector<uint8_t> input(depth, 0x81);
+        input.push_back(0x00);
+
+        json j = json::from_cbor(input);
+
+        std::size_t measured = 0;
+        const json* p = &j;
+        while (p->is_array() && !p->empty())
+        {
+            p = &p->front();
+            ++measured;
+        }
+        CHECK(measured == depth);
+        CHECK(p->is_number());
+    }
+
+    SECTION("containers are still read the same way")
+    {
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x80})) == json::array());
+        CHECK(json::from_cbor(std::vector<uint8_t>({0xA0})) == json::object());
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x9F, 0xFF})) == json::array());
+        CHECK(json::from_cbor(std::vector<uint8_t>({0xBF, 0xFF})) == json::object());
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x9F, 0x01, 0x02, 0xFF})) == json({1, 2}));
+        CHECK(json::from_cbor(std::vector<uint8_t>({0xBF, 0x61, 'a', 0x01, 0xFF})) == json({{"a", 1}}));
+        // definite and indefinite forms nested inside each other
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x9F, 0x82, 0x01, 0x02, 0xA1, 0x61, 'k', 0xBF, 0xFF, 0xFF})) == json({{1, 2}, {{"k", json::object()}}}));
+    }
+
+    SECTION("tagged values are still read the same way")
+    {
+        const auto ignore = json::cbor_tag_handler_t::ignore;
+        CHECK(json::from_cbor(std::vector<uint8_t>({0xC2, 0x01}), true, true, ignore) == json(1));
+        // a chain of tags resolves to the value that follows it
+        CHECK(json::from_cbor(std::vector<uint8_t>({0xC2, 0xC2, 0xC2, 0x01}), true, true, ignore) == json(1));
+        // a tag inside a container, and one in front of a container
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x82, 0xC2, 0x01, 0x02}), true, true, ignore) == json({1, 2}));
+        CHECK(json::from_cbor(std::vector<uint8_t>({0xC2, 0x82, 0x01, 0x02}), true, true, ignore) == json({1, 2}));
+    }
+}
+
 TEST_CASE("CBOR indefinite-length strings do not recurse per chunk")
 {
     // Reading an indefinite-length string or byte array used to call itself
