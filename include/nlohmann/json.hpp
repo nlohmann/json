@@ -4474,7 +4474,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler); // cppcheck-suppress[accessMoved]
-        return res ? result : basic_json(value_t::discarded);
+        return res ? std::move(result) : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in CBOR format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -4491,7 +4491,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler); // cppcheck-suppress[accessMoved]
-        return res ? result : basic_json(value_t::discarded);
+        return res ? std::move(result) : basic_json(value_t::discarded);
     }
 
     template<typename T>
@@ -4517,7 +4517,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler); // cppcheck-suppress[accessMoved]
-        return res ? result : basic_json(value_t::discarded);
+        return res ? std::move(result) : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in MessagePack format
@@ -4532,7 +4532,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict); // cppcheck-suppress[accessMoved]
-        return res ? result : basic_json(value_t::discarded);
+        return res ? std::move(result) : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in MessagePack format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -4548,7 +4548,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict); // cppcheck-suppress[accessMoved]
-        return res ? result : basic_json(value_t::discarded);
+        return res ? std::move(result) : basic_json(value_t::discarded);
     }
 
     template<typename T>
@@ -4572,7 +4572,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict); // cppcheck-suppress[accessMoved]
-        return res ? result : basic_json(value_t::discarded);
+        return res ? std::move(result) : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in UBJSON format
@@ -4587,7 +4587,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict); // cppcheck-suppress[accessMoved]
-        return res ? result : basic_json(value_t::discarded);
+        return res ? std::move(result) : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in UBJSON format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -4603,7 +4603,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict); // cppcheck-suppress[accessMoved]
-        return res ? result : basic_json(value_t::discarded);
+        return res ? std::move(result) : basic_json(value_t::discarded);
     }
 
     template<typename T>
@@ -4627,7 +4627,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict); // cppcheck-suppress[accessMoved]
-        return res ? result : basic_json(value_t::discarded);
+        return res ? std::move(result) : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in BJData format
@@ -4642,7 +4642,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(input_format_t::bjdata, &sdp, strict); // cppcheck-suppress[accessMoved]
-        return res ? result : basic_json(value_t::discarded);
+        return res ? std::move(result) : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in BJData format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -4658,7 +4658,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(input_format_t::bjdata, &sdp, strict); // cppcheck-suppress[accessMoved]
-        return res ? result : basic_json(value_t::discarded);
+        return res ? std::move(result) : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in BSON format
@@ -4673,7 +4673,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict); // cppcheck-suppress[accessMoved]
-        return res ? result : basic_json(value_t::discarded);
+        return res ? std::move(result) : basic_json(value_t::discarded);
     }
 
     /// @brief create a JSON value from an input in BSON format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -4689,7 +4689,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict); // cppcheck-suppress[accessMoved]
-        return res ? result : basic_json(value_t::discarded);
+        return res ? std::move(result) : basic_json(value_t::discarded);
     }
 
     template<typename T>
@@ -4713,7 +4713,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
         const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict); // cppcheck-suppress[accessMoved]
-        return res ? result : basic_json(value_t::discarded);
+        return res ? std::move(result) : basic_json(value_t::discarded);
     }
     /// @}
 
