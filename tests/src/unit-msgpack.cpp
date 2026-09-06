@@ -1597,6 +1597,21 @@ TEST_CASE("MessagePack")
     }
 }
 
+TEST_CASE("regression test - MessagePack ext type rejects a subtype that doesn't fit a single byte")
+{
+    // subtype 0-255 must still round-trip correctly (regression guard, pre-existing behavior)
+    CHECK(json::from_msgpack(json::to_msgpack(json::binary({1, 2}, 0))).get_binary().subtype() == 0);
+    CHECK(json::from_msgpack(json::to_msgpack(json::binary({1, 2}, 200))).get_binary().subtype() == 200);
+    CHECK(json::from_msgpack(json::to_msgpack(json::binary({1, 2}, 255))).get_binary().subtype() == 255);
+
+    // a subtype > 255 must throw instead of silently truncating
+    CHECK_THROWS_AS(json::to_msgpack(json::binary({1, 2}, 256)), json::out_of_range);
+    CHECK_THROWS_WITH_AS(json::to_msgpack(json::binary({1, 2}, 70000)), "[json.exception.out_of_range.413] subtype 70000 is too large for the MessagePack ext type (max 255)", json::out_of_range);
+
+    // a binary value with no subtype at all must be unaffected
+    CHECK(json::from_msgpack(json::to_msgpack(json::binary({1, 2}))).get_binary().has_subtype() == false);
+}
+
 // use this testcase outside [hide] to run it with Valgrind
 TEST_CASE("single MessagePack roundtrip")
 {

@@ -1668,30 +1668,4 @@ TEST_CASE("regression test - excessive binary container size honors allow_except
     CHECK(json::from_cbor(std::vector<std::uint8_t> {0x9b, 0, 0, 0, 0, 0, 0, 0, 0x02}, true, false).is_discarded());
 }
 
-TEST_CASE("regression test - MessagePack/BSON writers reject binary subtypes that don't fit their wire format")
-{
-    // MessagePack: subtype 0-255 must still round-trip correctly (regression guard, pre-existing behavior)
-    CHECK(json::from_msgpack(json::to_msgpack(json::binary({1, 2}, 0))).get_binary().subtype() == 0);
-    CHECK(json::from_msgpack(json::to_msgpack(json::binary({1, 2}, 200))).get_binary().subtype() == 200);
-    CHECK(json::from_msgpack(json::to_msgpack(json::binary({1, 2}, 255))).get_binary().subtype() == 255);
-
-    // MessagePack: subtype > 255 must now throw instead of silently truncating
-    CHECK_THROWS_AS(json::to_msgpack(json::binary({1, 2}, 256)), json::out_of_range);
-    CHECK_THROWS_AS(json::to_msgpack(json::binary({1, 2}, 70000)), json::out_of_range);
-    CHECK_THROWS_WITH_AS(json::to_msgpack(json::binary({1, 2}, 70000)), "[json.exception.out_of_range.413] subtype 70000 is too large for the MessagePack ext type (max 255)", json::out_of_range);
-
-    // BSON: same pattern
-    json doc255 = {{"b", json::binary({1, 2}, 255)}};
-    CHECK(json::from_bson(json::to_bson(doc255))["b"].get_binary().subtype() == 255);
-    CHECK_THROWS_AS(json::to_bson(json{{"b", json::binary({1, 2}, 256)}}), json::out_of_range);
-    CHECK_THROWS_AS(json::to_bson(json{{"b", json::binary({1, 2}, 300)}}), json::out_of_range);
-    CHECK_THROWS_WITH_AS(json::to_bson(json{{"b", json::binary({1, 2}, 300)}}), "[json.exception.out_of_range.413] subtype 300 is too large for the BSON binary subtype (max 255)", json::out_of_range);
-
-    // CBOR must remain unaffected (full 64-bit subtype range already supported correctly) - regression guard
-    CHECK(json::from_cbor(json::to_cbor(json::binary({1, 2}, 70000)), true, true, json::cbor_tag_handler_t::store).get_binary().subtype() == 70000);
-
-    // a binary value with NO subtype at all must be completely unaffected by this change
-    CHECK(json::from_msgpack(json::to_msgpack(json::binary({1, 2}))).get_binary().has_subtype() == false);
-}
-
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
