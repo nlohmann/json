@@ -1598,6 +1598,67 @@ TEST_CASE("MessagePack")
 }
 
 // use this testcase outside [hide] to run it with Valgrind
+TEST_CASE("MessagePack nesting does not consume the call stack")
+{
+    // Reading a container used to call back into the value reader once per
+    // element, so the native call stack grew with the nesting depth of the
+    // input: one frame per byte for repeated 0x91 (a one-element array), which
+    // crashes the process long before the input is exhausted (#5104). The
+    // containers are kept on a heap stack now.
+    //
+    // Note that deeply nested values must not be compared, copied or dumped
+    // here: those operations are still recursive, and would reintroduce the
+    // very crash this checks for. Depth is measured by descending instead.
+
+    SECTION("an unterminated chain is reported, not crashed on")
+    {
+        json _;
+        const std::vector<uint8_t> input(300000, 0x91);
+        CHECK_THROWS_WITH_AS(_ = json::from_msgpack(input), "[json.exception.parse_error.110] parse error at byte 300001: syntax error while parsing MessagePack value: unexpected end of input", json::parse_error&);
+        CHECK(json::from_msgpack(input, true, false).is_discarded());
+    }
+
+    SECTION("a well-formed deep value is read through the SAX interface")
+    {
+        std::vector<uint8_t> input(300000, 0x91);
+        input.push_back(0x01); // innermost value
+
+        SaxCountdown accept_all(600001);
+        CHECK(json::sax_parse(input, &accept_all, json::input_format_t::msgpack));
+    }
+
+    SECTION("a well-formed deep value is read into a value")
+    {
+        const std::size_t depth = 10000;
+        std::vector<uint8_t> input(depth, 0x91);
+        input.push_back(0x01);
+
+        json j = json::from_msgpack(input);
+
+        std::size_t measured = 0;
+        const json* p = &j;
+        while (p->is_array() && !p->empty())
+        {
+            p = &p->front();
+            ++measured;
+        }
+        CHECK(measured == depth);
+        CHECK(p->is_number());
+    }
+
+    SECTION("containers are still read the same way")
+    {
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0x90})) == json::array());
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0x80})) == json::object());
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0x92, 0x90, 0x80})) == json({json::array(), json::object()}));
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0x91, 0x91, 0x91, 0x90})) == json({{{json::array()}}}));
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0x81, 0xA1, 'a', 0x81, 0xA1, 'b', 0x92, 0x01, 0x02})) == json({{"a", {{"b", {1, 2}}}}}));
+        // array 16 and map 32, i.e. the counted forms
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0xDC, 0x00, 0x02, 0x01, 0x02})) == json({1, 2}));
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0xDF, 0x00, 0x00, 0x00, 0x01, 0xA1, 'k', 0xC3})) == json({{"k", true}}));
+    }
+}
+
 TEST_CASE("single MessagePack roundtrip")
 {
     SECTION("sample.json")
