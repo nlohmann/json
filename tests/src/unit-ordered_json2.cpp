@@ -57,7 +57,7 @@ class alt_string
 
     alt_string(const char* str): str_impl(str) {}
     alt_string(const char* str, std::size_t count): str_impl(str, count) {}
-    alt_string(const std::string& str): str_impl(str) {}
+    alt_string(std::string str): str_impl(std::move(str)) {}
     alt_string(size_t count, char chr): str_impl(count, chr) {}
     alt_string() = default;
 
