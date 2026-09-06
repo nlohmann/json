@@ -50,13 +50,34 @@ TEST_CASE("JSON_NO_IO")
     CHECK(j.at("b").get<bool>() == true);
 }
 
+// this test relies on CHECK_THROWS_AS() actually invoking the guarded
+// expression so json_throw_user_call_count gets bumped and can be observed
+// afterwards; doctest's "--no-throw" test filter (which ci_test_noexceptions
+// passes, together with a global -DJSON_NOEXCEPTION added to CMAKE_CXX_FLAGS
+// for every translation unit in that build, this file included) compiles
+// CHECK_THROWS_AS() out to a no-op that never even invokes the given
+// expression -- so json::parse()/at() below would never be called at all and
+// the call-count assertions would fail even though our JSON_THROW_USER
+// override (which always really throws, regardless of JSON_NOEXCEPTION) would
+// have worked fine on its own
+#if !defined(JSON_NOEXCEPTION)
 TEST_CASE("JSON_THROW_USER, JSON_TRY_USER, JSON_CATCH_USER")
 {
     json_throw_user_call_count = 0;
 
+    // json::parse() is [[nodiscard]] (JSON_HEDLEY_WARN_UNUSED_RESULT); under
+    // GCC in C++11 mode that expands to __attribute__((warn_unused_result)),
+    // which -- unlike a [[nodiscard]] attribute proper -- GCC does not
+    // consider satisfied by doctest's CHECK_THROWS_AS() wrapping the
+    // expression in a (void) cast, so the discarded return value would still
+    // be flagged under -Werror=unused-result; assign it to discard it instead,
+    // matching the established `json _ = json::parse(...)` pattern used
+    // elsewhere in the test suite (see unit-class_parser.cpp)
+    json _; // NOLINT(readability-identifier-naming)
+
     // a parse error goes through JSON_THROW directly, i.e., through our
     // JSON_THROW_USER override
-    CHECK_THROWS_AS(json::parse("this is not JSON"), json::parse_error&);
+    CHECK_THROWS_AS(_ = json::parse("this is not JSON"), json::parse_error&);
     CHECK(json_throw_user_call_count > 0);
 
     // at() on an out-of-range array index internally catches std::out_of_range
@@ -67,3 +88,4 @@ TEST_CASE("JSON_THROW_USER, JSON_TRY_USER, JSON_CATCH_USER")
     CHECK_THROWS_AS(arr.at(10), json::out_of_range&);
     CHECK(json_throw_user_call_count > count_before);
 }
+#endif
