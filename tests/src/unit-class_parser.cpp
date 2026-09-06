@@ -1536,7 +1536,14 @@ TEST_CASE("parser class")
         // an invalid token appearing after several indented, multi-line
         // whitespace runs vs. the same document without any of that
         // whitespace
-        check_error("{\n    \"a\": 1,\n    \"b\": [\n        true,\n        false\n    ],\n    \"c\": @\n}", 70,
+        check_error(R"({
+    "a": 1,
+    "b": [
+        true,
+        false
+    ],
+    "c": @
+})", 70,
                     "[json.exception.parse_error.101] parse error at line 7, column 10: syntax error while parsing value - invalid literal; last read: '\"c\": @'");
         check_error("{\"a\":1,\"b\":[true,false],\"c\":@}", 29,
                     "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing value - invalid literal; last read: '\"c\":@'");
