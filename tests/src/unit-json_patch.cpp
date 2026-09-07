@@ -1462,14 +1462,22 @@ TEST_CASE("JSON patch - move where 'from' is a proper prefix of 'path' (regressi
     {
         json const doc = R"([[1,2],[3]])"_json;
         json const patch = {{{"op", "move"}, {"from", "/0"}, {"path", "/0/0"}}};
+#if JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] (bytes 0-11) cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'", json::out_of_range&);
+#else
         CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'", json::out_of_range&);
+#endif
     }
 
     SECTION("object target")
     {
         json const doc = R"({"a": {"b": 1}})"_json;
         json const patch = {{{"op", "move"}, {"from", "/a"}, {"path", "/a/b"}}};
+#if JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] (bytes 0-15) cannot move value: 'from' path '/a' is a proper prefix of 'path' '/a/b'", json::out_of_range&);
+#else
         CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] cannot move value: 'from' path '/a' is a proper prefix of 'path' '/a/b'", json::out_of_range&);
+#endif
     }
 
     SECTION("from == path is not a proper prefix and must not be rejected")
@@ -1502,7 +1510,11 @@ TEST_CASE("JSON patch - move where 'from' is a proper prefix of 'path' (regressi
         // proper (token-level) prefix of "path" and must be rejected.
         json const doc = R"({"a/b": {"x": 1}})"_json;
         json const patch = {{{"op", "move"}, {"from", "/a~1b"}, {"path", "/a~1b/x"}}};
+#if JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] (bytes 0-17) cannot move value: 'from' path '/a~1b' is a proper prefix of 'path' '/a~1b/x'", json::out_of_range&);
+#else
         CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] cannot move value: 'from' path '/a~1b' is a proper prefix of 'path' '/a~1b/x'", json::out_of_range&);
+#endif
     }
 
     SECTION("ordinary valid moves still work")
@@ -1529,7 +1541,11 @@ TEST_CASE("JSON patch - move where 'from' is a proper prefix of 'path' (regressi
         // the whole document is a proper prefix of any location inside it
         json const doc = R"({"a": 1})"_json;
         json const patch = {{{"op", "move"}, {"from", ""}, {"path", "/a"}}};
+#if JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] (bytes 0-8) cannot move value: 'from' path '' is a proper prefix of 'path' '/a'", json::out_of_range&);
+#else
         CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] cannot move value: 'from' path '' is a proper prefix of 'path' '/a'", json::out_of_range&);
+#endif
     }
 
     SECTION("root 'path' is never a proper prefix violation for a non-root 'from'")
@@ -1551,7 +1567,11 @@ TEST_CASE("JSON patch - move where 'from' is a proper prefix of 'path' (regressi
         // "path" ending in "-" and must be rejected like any other child.
         json const doc = R"({"a": [1, 2]})"_json;
         json const patch = {{{"op", "move"}, {"from", "/a"}, {"path", "/a/-"}}};
+#if JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] (bytes 0-13) cannot move value: 'from' path '/a' is a proper prefix of 'path' '/a/-'", json::out_of_range&);
+#else
         CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] cannot move value: 'from' path '/a' is a proper prefix of 'path' '/a/-'", json::out_of_range&);
+#endif
     }
 }
 
