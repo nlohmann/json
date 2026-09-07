@@ -31,7 +31,7 @@
 // keeps working exactly as it would with the library's own default macros.
 static int json_throw_user_call_count = 0; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 
-#define JSON_THROW_USER(exception) do { ++json_throw_user_call_count; throw exception; } while (false) // NOLINT(cppcoreguidelines-macro-usage)
+#define JSON_THROW_USER(exception) do { ++json_throw_user_call_count; throw (exception); } while (false) // NOLINT(cppcoreguidelines-macro-usage)
 #define JSON_TRY_USER try // NOLINT(cppcoreguidelines-macro-usage)
 #define JSON_CATCH_USER(exception) catch (exception) // NOLINT(cppcoreguidelines-macro-usage)
 
@@ -44,8 +44,8 @@ TEST_CASE("JSON_NO_IO")
 {
     // everything that does not touch <istream>/<ostream> must keep working:
     // parsing from and dumping to std::string
-    const json j = json::parse("{\"a\":[1,2,3],\"b\":true}");
-    CHECK(j.dump() == "{\"a\":[1,2,3],\"b\":true}");
+    const json j = json::parse(R"({"a":[1,2,3],"b":true})");
+    CHECK(j.dump() == R"({"a":[1,2,3],"b":true})");
     CHECK(j.at("a").size() == 3);
     CHECK(j.at("b").get<bool>() == true);
 }
