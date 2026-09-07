@@ -1486,6 +1486,7 @@ TEST_CASE("parser class")
         CHECK(accept_helper("\"\\uD80C\\uFFFF\"") == false);
     }
 
+#if !defined(JSON_NOEXCEPTION)
     SECTION("issue #5412 - whitespace skipping bookkeeping (compact vs. pretty-printed)")
     {
         // lexer::skip_whitespace() reads its first character with get() (to
@@ -1545,9 +1546,10 @@ TEST_CASE("parser class")
     "c": @
 })", 70,
                     "[json.exception.parse_error.101] parse error at line 7, column 10: syntax error while parsing value - invalid literal; last read: '\"c\": @'");
-        check_error("{\"a\":1,\"b\":[true,false],\"c\":@}", 29,
+        check_error(R"({"a":1,"b":[true,false],"c":@})", 29,
                     "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing value - invalid literal; last read: '\"c\":@'");
     }
+#endif
 
     SECTION("tests found by mutate++")
     {
