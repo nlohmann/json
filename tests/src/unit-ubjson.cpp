@@ -101,10 +101,8 @@ TEST_CASE("UBJSON")
     {
         SECTION("discarded")
         {
-            // discarded values are not serialized
             json const j = json::value_t::discarded;
-            const auto result = json::to_ubjson(j);
-            CHECK(result.empty());
+            CHECK_THROWS_WITH_AS(json::to_ubjson(j), "[json.exception.type_error.318] cannot serialize discarded values to binary format", json::type_error&);
         }
 
         SECTION("null")
@@ -2143,8 +2141,7 @@ TEST_CASE("UBJSON")
         SECTION("discarded")
         {
             json const j = {json::value_t::discarded, json::value_t::discarded};
-            std::vector<uint8_t> expected = {'[', '$', 'N', '#', 'i', 2};
-            CHECK(json::to_ubjson(j, true, true) == expected);
+            CHECK_THROWS_WITH_AS(json::to_ubjson(j, true, true), "[json.exception.type_error.318] cannot serialize discarded values to binary format", json::type_error&);
         }
     }
 }

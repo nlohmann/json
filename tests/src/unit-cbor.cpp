@@ -103,10 +103,20 @@ TEST_CASE("CBOR")
     {
         SECTION("discarded")
         {
-            // discarded values are not serialized
             json const j = json::value_t::discarded;
-            const auto result = json::to_cbor(j);
-            CHECK(result.empty());
+            CHECK_THROWS_WITH_AS(json::to_cbor(j), "[json.exception.type_error.318] cannot serialize discarded values to binary format", json::type_error&);
+        }
+
+        SECTION("discarded in array")
+        {
+            json const j = {json::value_t::discarded, json::value_t::discarded, 1};
+            CHECK_THROWS_WITH_AS(json::to_cbor(j), "[json.exception.type_error.318] cannot serialize discarded values to binary format", json::type_error&);
+        }
+
+        SECTION("discarded in object")
+        {
+            json const j = {{"foo", 1}, {"bar", json::value_t::discarded}};
+            CHECK_THROWS_WITH_AS(json::to_cbor(j), "[json.exception.type_error.318] cannot serialize discarded values to binary format", json::type_error&);
         }
 
         SECTION("NaN")

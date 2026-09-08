@@ -771,6 +771,21 @@ The dynamic type of the object cannot be represented in the requested serializat
 
     Encapsulate the JSON value in an object. That is, instead of serializing `#!json true`, serialize `#!json {"value": true}`
 
+### json.exception.type_error.318
+
+The dynamic type of the object cannot be represented in the requested serialization format (e.g., a discarded value cannot be serialized to CBOR, MessagePack, or UBJSON)
+
+!!! failure "Example messages"
+
+    Serializing a discarded value to MessagePack:
+    ```
+    [json.exception.type_error.318] cannot serialize discarded values to binary format
+    ```
+
+!!! tip
+
+    Check for discarded values with `is_discarded()` before calling binary serialization functions, or handle parse errors at the point where JSON is parsed.
+
 ## Out of range
 
 This exception is thrown in case a library function is called on an input parameter that exceeds the expected range, for instance, in the case of array indices or nonexisting object keys.
