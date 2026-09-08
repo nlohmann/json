@@ -580,8 +580,8 @@ class binary_writer
                 }
                 else
                 {
-                    JSON_THROW(out_of_range::create(412, concat("MessagePack size ", std::to_string(size), " exceeds maximum of ",
-                                                      std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
+                    JSON_THROW(out_of_range::create(412, concat("MessagePack size ", std::to_string(N), " exceeds maximum of ",
+                                                    std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
                 }
 
                 // step 2: write the string
@@ -614,8 +614,8 @@ class binary_writer
                 }
                 else
                 {
-                    JSON_THROW(out_of_range::create(412, concat("MessagePack size ", std::to_string(size), " exceeds maximum of ",
-                                                      std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
+                    JSON_THROW(out_of_range::create(412, concat("MessagePack size ", std::to_string(N), " exceeds maximum of ",
+                                                    std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
                 }
 
                 // step 2: write each element
@@ -696,8 +696,8 @@ class binary_writer
                 }
                 else
                 {
-                    JSON_THROW(out_of_range::create(412, concat("MessagePack size ", std::to_string(size), " exceeds maximum of ",
-                                                      std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
+                    JSON_THROW(out_of_range::create(412, concat("MessagePack size ", std::to_string(N), " exceeds maximum of ",
+                                                    std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
                 }
 
                 // step 1.5: if this is an ext type, write the subtype
@@ -737,8 +737,8 @@ class binary_writer
                 }
                 else
                 {
-                    JSON_THROW(out_of_range::create(412, concat("MessagePack size ", std::to_string(size), " exceeds maximum of ",
-                                                      std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
+                    JSON_THROW(out_of_range::create(412, concat("MessagePack size ", std::to_string(N), " exceeds maximum of ",
+                                                    std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
                 }
 
                 // step 2: write each element
