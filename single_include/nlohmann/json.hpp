@@ -18970,7 +18970,6 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstdio> // snprintf
 #include <limits> // numeric_limits
 #include <string> // string, char_traits
-#include <iomanip> // setfill, setw
 #include <type_traits> // is_same
 #include <utility> // move
 
