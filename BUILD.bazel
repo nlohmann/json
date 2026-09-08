@@ -21,6 +21,7 @@ cc_library(
         "include/nlohmann/adl_serializer.hpp",
         "include/nlohmann/byte_container_with_subtype.hpp",
         "include/nlohmann/detail/abi_macros.hpp",
+        "include/nlohmann/detail/conversions/from_chars.hpp",
         "include/nlohmann/detail/conversions/from_json.hpp",
         "include/nlohmann/detail/conversions/to_chars.hpp",
         "include/nlohmann/detail/conversions/to_json.hpp",
