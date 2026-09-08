@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <algorithm> // min
 #include <cstddef>
 #include <string> // string
 #include <type_traits> // enable_if_t
@@ -312,7 +313,7 @@ class json_sax_dom_parser
             // by max_size(), unlike e.g. std::vector) cannot trigger an oversized
             // allocation for a small or truncated input
             constexpr std::size_t reserve_cap = 16384;
-            ref_stack.back()->m_data.m_value.array->reserve(len < reserve_cap ? len : reserve_cap);
+            ref_stack.back()->m_data.m_value.array->reserve((std::min)(len, reserve_cap));
         }
 
         return true;
@@ -701,7 +702,7 @@ class json_sax_dom_callback_parser
                 // by max_size(), unlike e.g. std::vector) cannot trigger an oversized
                 // allocation for a small or truncated input
                 constexpr std::size_t reserve_cap = 16384;
-                ref_stack.back()->m_data.m_value.array->reserve(len < reserve_cap ? len : reserve_cap);
+                ref_stack.back()->m_data.m_value.array->reserve((std::min)(len, reserve_cap));
             }
         }
 
