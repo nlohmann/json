@@ -4944,8 +4944,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // functions to. As a result, we suppress this warning here to avoid client
 // code stumbling over this. See https://github.com/nlohmann/json/issues/4087
 // for a discussion.
-JSON_HEDLEY_DIAGNOSTIC_PUSH
 #if defined(__clang__)
+    JSON_HEDLEY_DIAGNOSTIC_PUSH
     JSON_HEDLEY_PRAGMA(clang diagnostic ignored "-Wweak-vtables")
 #endif
 
@@ -5198,7 +5198,9 @@ class other_error : public exception
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
-JSON_HEDLEY_DIAGNOSTIC_POP
+#if defined(__clang__)
+    JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
@@ -6205,8 +6207,8 @@ namespace std
 {
 
 // Fix: https://github.com/nlohmann/json/issues/1401
-JSON_HEDLEY_DIAGNOSTIC_PUSH
 #if defined(__clang__)
+    JSON_HEDLEY_DIAGNOSTIC_PUSH
     JSON_HEDLEY_PRAGMA(clang diagnostic ignored "-Wmismatched-tags")
 #endif
 template<typename IteratorType>
@@ -6221,7 +6223,9 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
                      get<N>(std::declval <
                             ::nlohmann::detail::iteration_proxy_value<IteratorType >> ()));
 };
-JSON_HEDLEY_DIAGNOSTIC_POP
+#if defined(__clang__)
+    JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
 
 }  // namespace std
 
@@ -18979,8 +18983,8 @@ class binary_writer
 
     void write_compact_float(const number_float_t n, detail::input_format_t format)
     {
-        JSON_HEDLEY_DIAGNOSTIC_PUSH
 #ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
         JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
         if (!std::isfinite(n) || ((static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
@@ -18999,7 +19003,9 @@ class binary_writer
                                 : get_msgpack_float_prefix(n));
             write_number(n);
         }
+#ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
     }
 
   public:
@@ -20172,8 +20178,8 @@ char* to_chars(char* first, const char* last, FloatType value)
         *first++ = '-';
     }
 
-    JSON_HEDLEY_DIAGNOSTIC_PUSH
 #ifdef __GNUC__
+    JSON_HEDLEY_DIAGNOSTIC_PUSH
     JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
     if (value == 0) // +-0
@@ -20184,7 +20190,9 @@ char* to_chars(char* first, const char* last, FloatType value)
         *first++ = '0';
         return first;
     }
+#ifdef __GNUC__
     JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
 
     JSON_ASSERT(last - first >= std::numeric_limits<FloatType>::max_digits10);
 
@@ -25316,13 +25324,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
     bool operator==(const_reference rhs) const noexcept
     {
-        JSON_HEDLEY_DIAGNOSTIC_PUSH
 #ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
         JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
         const_reference lhs = *this;
         JSON_IMPLEMENT_OPERATOR( ==, true, false, false)
+#ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
     }
 
     /// @brief comparison: equal
@@ -25407,12 +25417,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
     friend bool operator==(const_reference lhs, const_reference rhs) noexcept
     {
-        JSON_HEDLEY_DIAGNOSTIC_PUSH
 #ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
         JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
         JSON_IMPLEMENT_OPERATOR( ==, true, false, false)
+#ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
     }
 
     /// @brief comparison: equal

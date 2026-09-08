@@ -1849,8 +1849,8 @@ class binary_writer
 
     void write_compact_float(const number_float_t n, detail::input_format_t format)
     {
-        JSON_HEDLEY_DIAGNOSTIC_PUSH
 #ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
         JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
         if (!std::isfinite(n) || ((static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
@@ -1869,7 +1869,9 @@ class binary_writer
                                 : get_msgpack_float_prefix(n));
             write_number(n);
         }
+#ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
     }
 
   public:

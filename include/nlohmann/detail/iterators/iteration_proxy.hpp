@@ -208,8 +208,8 @@ namespace std
 {
 
 // Fix: https://github.com/nlohmann/json/issues/1401
-JSON_HEDLEY_DIAGNOSTIC_PUSH
 #if defined(__clang__)
+    JSON_HEDLEY_DIAGNOSTIC_PUSH
     JSON_HEDLEY_PRAGMA(clang diagnostic ignored "-Wmismatched-tags")
 #endif
 template<typename IteratorType>
@@ -224,7 +224,9 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
                      get<N>(std::declval <
                             ::nlohmann::detail::iteration_proxy_value<IteratorType >> ()));
 };
-JSON_HEDLEY_DIAGNOSTIC_POP
+#if defined(__clang__)
+    JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
 
 }  // namespace std
 
