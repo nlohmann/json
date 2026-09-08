@@ -398,27 +398,23 @@ inline void from_json(const BasicJsonType& j, CompatibleArrayType& bin)
     }
 }
 
-template<typename BasicJsonType, typename ConstructibleObjectType>
-auto from_json_object_impl(const BasicJsonType& j, ConstructibleObjectType& obj, priority_tag<1> /*unused*/)
--> decltype(
-    obj.reserve(std::declval<typename ConstructibleObjectType::size_type>()),
-    void())
+template<typename ConstructibleObjectType>
+auto from_json_object_reserve(ConstructibleObjectType& obj, typename ConstructibleObjectType::size_type size, priority_tag<1> /*unused*/)
+-> decltype(obj.reserve(size), void())
 {
-    ConstructibleObjectType ret;
-    const auto* inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
-    ret.reserve(inner_object->size());
-    for (const auto& p : *inner_object)
-    {
-        ret.emplace(p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>());
-    }
-    obj = std::move(ret);
+    obj.reserve(size);
 }
 
+template<typename ConstructibleObjectType>
+inline void from_json_object_reserve(ConstructibleObjectType& /*obj*/, std::size_t /*size*/, priority_tag<0> /*unused*/)
+{}
+
 template<typename BasicJsonType, typename ConstructibleObjectType>
-inline void from_json_object_impl(const BasicJsonType& j, ConstructibleObjectType& obj, priority_tag<0> /*unused*/)
+inline void from_json_object_impl(const BasicJsonType& j, ConstructibleObjectType& obj)
 {
     ConstructibleObjectType ret;
     const auto* inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
+    from_json_object_reserve(ret, inner_object->size(), priority_tag<1> {});
     for (const auto& p : *inner_object)
     {
         ret.emplace(p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>());
@@ -435,7 +431,7 @@ inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
         JSON_THROW(type_error::create(302, concat("type must be object, but is ", j.type_name()), &j));
     }
 
-    from_json_object_impl(j, obj, priority_tag<1> {});
+    from_json_object_impl(j, obj);
 }
 
 // overload for arithmetic types, not chosen for basic_json template arguments
