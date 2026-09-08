@@ -641,12 +641,8 @@ TEST_CASE("regression tests 2")
                 s += static_cast<char>(i);
             }
             dump_test["1"] = s;
-            // dump() is nodiscard; this only checks that dumping does not throw/crash.
-            // A (void) cast on the call itself does not suppress GCC's warning for the
-            // GNU warn_unused_result attribute (unlike a real C++17 [[nodiscard]]), so
-            // capture the result in a variable and discard that instead.
-            auto dump_result = dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace);
-            (void)dump_result;
+            // dump() is nodiscard; this only checks that dumping does not throw/crash
+            utils::ignore_return_value(dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace));
         }
     }
 
