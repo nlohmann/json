@@ -125,6 +125,51 @@ json_test_set_test_options(test-unicode4 TEST_PROPERTIES TIMEOUT 3000)
 # add unit tests
 #############################################################################
 
+# Generate the leak checks for every JSON_HEDLEY_* macro defined in
+# hedley.hpp; tests/src/unit-no-macro-leak.cpp #include-s the result after
+# nlohmann/json.hpp (see issue #5408). Using the shared
+# cmake/scripts/gen_hedley_undef_check.cmake script (also used by `make
+# update_hedley_undef`) instead of a hand-maintained list of macro names
+# means this test can never go stale after a future `make update_hedley`.
+set(hedley_hpp "${PROJECT_SOURCE_DIR}/include/nlohmann/thirdparty/hedley/hedley.hpp")
+set(hedley_undef_check_script "${PROJECT_SOURCE_DIR}/cmake/scripts/gen_hedley_undef_check.cmake")
+set(hedley_undef_checks "${PROJECT_BINARY_DIR}/include/hedley_undef_checks.inc")
+
+# Reconfigure whenever the vendored header or the generator script changes,
+# so a `cmake --build` after `make update_hedley` does not silently keep a
+# stale generated file around.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${hedley_hpp}"
+    "${hedley_undef_check_script}")
+
+# Generate once at configure time, so the very first build (before any
+# custom-command build step has run) already has an up-to-date file.
+execute_process(
+    COMMAND ${CMAKE_COMMAND}
+        "-DHEDLEY_HPP=${hedley_hpp}"
+        "-DOUTPUT=${hedley_undef_checks}"
+        -DMODE=checks
+        -P "${hedley_undef_check_script}"
+    RESULT_VARIABLE hedley_undef_check_result
+)
+if(NOT hedley_undef_check_result EQUAL 0)
+    message(FATAL_ERROR "Failed to generate ${hedley_undef_checks}")
+endif()
+
+# Also (re)generate as a build step, so an incremental build after editing
+# hedley.hpp without a full reconfigure still picks up the change.
+add_custom_command(
+    OUTPUT "${hedley_undef_checks}"
+    COMMAND ${CMAKE_COMMAND}
+        "-DHEDLEY_HPP=${hedley_hpp}"
+        "-DOUTPUT=${hedley_undef_checks}"
+        -DMODE=checks
+        -P "${hedley_undef_check_script}"
+    DEPENDS "${hedley_hpp}" "${hedley_undef_check_script}"
+    COMMENT "Generating Hedley undef leak checks"
+    VERBATIM)
+add_custom_target(generate_hedley_undef_checks DEPENDS "${hedley_undef_checks}")
+
 if("${JSON_TestStandards}" STREQUAL "")
     set(test_cxx_standards 11 14 17 20 23)
     unset(test_force)
@@ -161,6 +206,14 @@ endif()
 
 foreach(file ${files})
     json_test_add_test_for(${file} MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force})
+endforeach()
+
+# tests/src/unit-no-macro-leak.cpp #include-s the generated leak-check file,
+# so its test targets must be built after generate_hedley_undef_checks.
+foreach(cxx_standard ${test_cxx_standards})
+    if(TARGET test-no-macro-leak_cpp${cxx_standard})
+        add_dependencies(test-no-macro-leak_cpp${cxx_standard} generate_hedley_undef_checks)
+    endif()
 endforeach()
 
 if(json_32bit_test_only)
