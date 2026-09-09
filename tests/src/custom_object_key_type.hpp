@@ -34,7 +34,8 @@ class key
         return m_value;
     }
 
-    // Kept for compatibility with serializers that access object keys as C strings.
+    // Kept for compatibility with serialization paths that access object keys
+    // through c_str(); CBOR and MessagePack themselves do not require it.
     const char* c_str() const noexcept
     {
         return m_value.c_str();
