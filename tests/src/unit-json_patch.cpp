@@ -1389,6 +1389,61 @@ TEST_CASE("JSON patch - add to a primitive parent (regression #4292)")
     }
 }
 
+TEST_CASE("JSON patch - remove with primitive or null parent (regression #5396)")
+{
+    // Regression test for https://github.com/nlohmann/json/issues/5396
+    //
+    // RFC 6902 (§4.2) requires the target location of a "remove" operation
+    // to exist. When the target's parent resolves to a primitive value or
+    // null, the operation must fail. Previously operation_remove silently
+    // did nothing in this case (neither the "is_object" nor the "is_array"
+    // branch matched, and there was no final "else"), so the patch appeared
+    // to succeed without changing the document. It now throws
+    // out_of_range.413.
+
+    SECTION("parent is a primitive (number)")
+    {
+        json const doc = {{"a", 1}};
+        json const patch = {{{"op", "remove"}, {"path", "/a/b"}}};
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.413] (/a) cannot remove value: the JSON Patch 'remove' target's parent is of type number, but must be an object or array", json::out_of_range&);
+#else
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.413] cannot remove value: the JSON Patch 'remove' target's parent is of type number, but must be an object or array", json::out_of_range&);
+#endif
+    }
+
+    SECTION("parent is a primitive (string)")
+    {
+        json const doc = {{"foo", {{"bar", "a string"}}}};
+        json const patch = {{{"op", "remove"}, {"path", "/foo/bar/baz"}}};
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.413] (/foo/bar) cannot remove value: the JSON Patch 'remove' target's parent is of type string, but must be an object or array", json::out_of_range&);
+#else
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.413] cannot remove value: the JSON Patch 'remove' target's parent is of type string, but must be an object or array", json::out_of_range&);
+#endif
+    }
+
+    SECTION("top-level document is null")
+    {
+        json const doc = nullptr;
+        json const patch = {{{"op", "remove"}, {"path", "/a"}}};
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.413] cannot remove value: the JSON Patch 'remove' target's parent is of type null, but must be an object or array", json::out_of_range&);
+    }
+
+    SECTION("legitimate removes still work")
+    {
+        // object member
+        json const doc1 = {{"a", 1}, {"b", 2}};
+        json const patch1 = {{{"op", "remove"}, {"path", "/a"}}};
+        CHECK(doc1.patch(patch1) == json({{"b", 2}}));
+
+        // array element
+        json const doc2 = R"([1, 2, 3])"_json;
+        json const patch2 = {{{"op", "remove"}, {"path", "/1"}}};
+        CHECK(doc2.patch(patch2) == R"([1, 3])"_json);
+    }
+}
+
 TEST_CASE("JSON patch - diff emits array removals in descending index order")
 {
     SECTION("array shrunk to empty")
