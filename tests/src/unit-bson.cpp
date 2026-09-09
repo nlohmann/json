@@ -38,6 +38,54 @@ class huge_binary_t : public std::vector<std::uint8_t>
 using huge_binary_json = nlohmann::basic_json <
                          std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
                          double, std::allocator, nlohmann::adl_serializer, huge_binary_t, void >;
+
+// a string type that can be made to report a size beyond INT32_MAX without
+// allocating that much memory, so BSON length overflow can be tested for
+// strings and (embedded) documents as well, following the same idea as
+// huge_binary_t.
+//
+// Unlike huge_binary_t (which is only ever used as the BSON *value* type),
+// this type doubles as basic_json's StringType and is therefore also used
+// for *object keys* (e.g. "s" or "nested" below). Only the designated test
+// value is meant to lie about its size - if every huge_string_t (including
+// keys) reported a huge size, the running totals computed while walking the
+// BSON document (see calc_bson_object_size & friends in binary_writer.hpp)
+// would need more than 32 bits, and on platforms where std::size_t is only
+// 32 bits wide that arithmetic would silently wrap around, producing wrong
+// (or even unguarded) lengths. The fake size is therefore opt-in via
+// as_huge(), and plain strings - in particular object keys - keep reporting
+// their real, small size.
+class huge_string_t : public std::string
+{
+  public:
+    using std::string::string;
+    huge_string_t(const std::string& s) : std::string(s) {} // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
+
+    // returns a copy of @a s whose size() pretends to be huge
+    static huge_string_t as_huge(const std::string& s)
+    {
+        huge_string_t result(s);
+        result.pretend_huge = true;
+        return result;
+    }
+
+    size_type size() const noexcept
+    {
+        if (pretend_huge)
+        {
+            // one byte more than the BSON length field can represent
+            return static_cast<size_type>((std::numeric_limits<std::int32_t>::max)()) + 1;
+        }
+        return std::string::size();
+    }
+
+  private:
+    bool pretend_huge = false;
+};
+
+using huge_string_json = nlohmann::basic_json <
+                         std::map, std::vector, huge_string_t, bool, std::int64_t, std::uint64_t,
+                         double, std::allocator, nlohmann::adl_serializer, std::vector<std::uint8_t>, void >;
 } // namespace
 
 TEST_CASE("BSON")
@@ -105,10 +153,36 @@ TEST_CASE("BSON")
 
     SECTION("lengths exceeding INT32_MAX cannot be serialized to BSON")
     {
-        huge_binary_json j;
-        j["b"] = huge_binary_json::binary(huge_binary_t{});
+        // out_of_range.412 is thrown from a single shared helper
+        // (to_bson_length) that guards the BSON length fields of binary
+        // values, strings, and (embedded) documents alike
+        SECTION("binary")
+        {
+            huge_binary_json j;
+            j["b"] = huge_binary_json::binary(huge_binary_t{});
 
-        CHECK_THROWS_WITH_AS(huge_binary_json::to_bson(j), "[json.exception.out_of_range.412] BSON length 2147483661 exceeds maximum of 2147483647", huge_binary_json::out_of_range&);
+            CHECK_THROWS_WITH_AS(huge_binary_json::to_bson(j), "[json.exception.out_of_range.412] BSON length 2147483661 exceeds maximum of 2147483647", huge_binary_json::out_of_range&);
+        }
+
+        SECTION("string")
+        {
+            huge_string_json j;
+            j["s"] = huge_string_t::as_huge("value");
+
+            CHECK_THROWS_WITH_AS(huge_string_json::to_bson(j), "[json.exception.out_of_range.412] BSON length 2147483661 exceeds maximum of 2147483647", huge_string_json::out_of_range&);
+        }
+
+        SECTION("document")
+        {
+            // an oversized string nested one level deep makes the
+            // *embedded* document's own length exceed INT32_MAX as well
+            huge_string_json nested;
+            nested["s"] = huge_string_t::as_huge("value");
+            huge_string_json j;
+            j["nested"] = nested;
+
+            CHECK_THROWS_WITH_AS(huge_string_json::to_bson(j), "[json.exception.out_of_range.412] BSON length 2147483674 exceeds maximum of 2147483647", huge_string_json::out_of_range&);
+        }
     }
 
     SECTION("string length must be at least 1")
@@ -191,6 +265,23 @@ TEST_CASE("BSON")
             // roundtrip
             CHECK(json::from_bson(result) == j);
             CHECK(json::from_bson(result, true, false) == j);
+        }
+
+        SECTION("non-empty object with bool from a non-0/1 byte (lenient parsing)")
+        {
+            // documented lenient behavior (see gh-5333): any non-zero byte
+            // is accepted as `true`, not just 0x01
+            std::vector<std::uint8_t> const input =
+            {
+                0x0D, 0x00, 0x00, 0x00, // size (little endian)
+                0x08,               // entry: boolean
+                'e', 'n', 't', 'r', 'y', '\x00',
+                0x02,           // value = 0x02 (neither 0x00 nor 0x01)
+                0x00                    // end marker
+            };
+
+            const json expected = { { "entry", true } };
+            CHECK(json::from_bson(input) == expected);
         }
 
         SECTION("non-empty object with double")
@@ -499,6 +590,29 @@ TEST_CASE("BSON")
             CHECK(json::from_bson(result, true, false) == j);
         }
 
+        SECTION("array elements with non-conforming keys (lenient parsing)")
+        {
+            // documented lenient behavior (see gh-5333): BSON array element
+            // keys are not checked against the required decimal sequence
+            // "0", "1", "2", ... - elements are taken in encoded order
+            std::vector<std::uint8_t> const input =
+            {
+                0x26, 0x00, 0x00, 0x00, // size (little endian)
+                0x04, 'e', 'n', 't', 'r', 'y', '\x00', // entry: embedded array
+
+                0x1A, 0x00, 0x00, 0x00, // size (little endian)
+                0x10, '5', 0x00, 0x0A, 0x00, 0x00, 0x00, // key "5" (bogus)      -> 10
+                0x10, 'x', 0x00, 0x14, 0x00, 0x00, 0x00, // key "x" (non-numeric) -> 20
+                0x10, '1', 0x00, 0x1E, 0x00, 0x00, 0x00, // key "1" (out of order) -> 30
+                0x00, // end marker (embedded array)
+
+                0x00 // end marker
+            };
+
+            const json expected = { { "entry", json::array({10, 20, 30}) } };
+            CHECK(json::from_bson(input) == expected);
+        }
+
         SECTION("non-empty object with binary member")
         {
             const size_t N = 10;
@@ -592,6 +706,31 @@ TEST_CASE("BSON")
             // roundtrip
             CHECK(json::from_bson(result) == j);
             CHECK(json::from_bson(result, true, false) == j);
+        }
+
+        SECTION("binary member with subtype 0x02 (old binary) keeps its inner length prefix (lenient parsing)")
+        {
+            // documented lenient behavior (see gh-5333): the payload for
+            // binary subtype 0x02 ("old binary") is returned as-is,
+            // including its own inner 4-byte length prefix; it is not
+            // stripped or reinterpreted
+            std::vector<std::uint8_t> const input =
+            {
+                0x17, 0x00, 0x00, 0x00, // size (little endian)
+                0x05, 'e', 'n', 't', 'r', 'y', '\x00', // entry: binary
+
+                0x06, 0x00, 0x00, 0x00, // size of binary (little endian)
+                0x02, // "old binary" subtype
+                0x02, 0x00, 0x00, 0x00, // inner length prefix (part of the old-binary payload)
+                0x68, 0x69, // payload ('h', 'i')
+
+                0x00 // end marker
+            };
+
+            // the inner length prefix is part of the (unmodified) payload
+            const std::vector<std::uint8_t> expected_payload = {0x02, 0x00, 0x00, 0x00, 0x68, 0x69};
+            const json expected = { { "entry", json::binary(expected_payload, 0x02) } };
+            CHECK(json::from_bson(input) == expected);
         }
 
         SECTION("Some more complex document")
