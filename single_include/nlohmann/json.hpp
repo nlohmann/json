@@ -7932,10 +7932,11 @@ class lexer : public lexer_base<BasicJsonType>
   public:
     using token_type = typename lexer_base<BasicJsonType>::token_type;
 
-    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false) noexcept
+    explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false, bool discard_number_values_ = false) noexcept
         : ia(std::move(adapter))
         , ignore_comments(ignore_comments_)
         , decimal_point_char(static_cast<char_int_type>(get_decimal_point()))
+        , discard_number_values(discard_number_values_)
     {}
 
     // deleted because of pointer members
@@ -9062,6 +9063,58 @@ scan_number_done:
         // we are done scanning a number)
         unget();
 
+        // If the caller does not need the converted value (only whether the
+        // input is syntactically valid; see json_sax_acceptor/accept()), an
+        // unsigned/integer token can be reported without calling
+        // strtoull()/strtoll() at all, *provided* we can already tell from
+        // the digit count alone that the conversion cannot overflow 64 bits.
+        // Such tokens are always finite and are accepted unconditionally by
+        // the parser regardless of their actual value (parser::sax_parse_internal()
+        // never checks finiteness for value_unsigned/value_integer), so the
+        // classification below is all that is needed.
+        //
+        // A decimal number with up to 18 digits is always representable in
+        // both std::uint64_t and std::int64_t (18 nines is ~1e18, well below
+        // both UINT64_MAX ~1.8e19 and INT64_MAX ~9.2e18), so strtoull()/strtoll()
+        // could not have set errno to ERANGE for it. Numbers with more digits
+        // (rare in practice) fall through to the exact code below, unchanged,
+        // so their handling -- including reclassification to value_float when
+        // the value overflows 64 bits, and rejection when it is not even
+        // finite as a double -- is bit-for-bit identical to before this
+        // optimization.
+        //
+        // Note this reasons about std::uint64_t/std::int64_t, not about
+        // number_unsigned_t/number_integer_t (BasicJsonType's own, possibly
+        // narrower, template parameters -- e.g. std::uint32_t). That is fine
+        // *only* because discard_number_values is exclusively set by
+        // accept() (see json.hpp), and accept() always parses through the
+        // library's own json_sax_acceptor -- never a user-supplied SAX
+        // consumer -- whose number_unsigned()/number_integer()/number_float()
+        // callbacks unconditionally discard their argument and return true.
+        // So for every caller that can reach this branch, neither the token
+        // classification below nor the eventual (possibly narrowed, and on
+        // this fast path left stale/unset) value_unsigned/value_integer is
+        // ever consulted -- an unsigned/integer token is accepted outright,
+        // and even a >18-digit token that this fast path deliberately falls
+        // through for is, once reclassified to value_float, still finite
+        // (and thus accepted) for any digit count that fits in number_unsigned_t
+        // or number_integer_t regardless of that type's width. If this
+        // function is ever taught to run with discard_number_values true for
+        // a caller that *does* read the converted value, this reasoning (and
+        // the fast path below) would need to be revisited.
+        if (discard_number_values)
+        {
+            constexpr std::size_t safe_digit_count = 18;
+            if (number_type == token_type::value_unsigned && token_buffer.size() <= safe_digit_count)
+            {
+                return token_type::value_unsigned;
+            }
+            if (number_type == token_type::value_integer && token_buffer.size() - 1 <= safe_digit_count)
+            {
+                return token_type::value_integer;
+            }
+        }
+
         char* endptr = nullptr; // NOLINT(misc-const-correctness,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
         errno = 0;
 
@@ -9537,6 +9590,13 @@ scan_number_done:
     const char_int_type decimal_point_char = '.';
     /// the position of the decimal point in the input
     std::size_t decimal_point_position = std::string::npos;
+
+    /// whether the caller (e.g. accept()/json_sax_acceptor) only needs the
+    /// token classification and never looks at the converted numeric value;
+    /// when set, scan_number() may skip strtoull()/strtoll() for
+    /// value_unsigned/value_integer tokens whose digit count guarantees they
+    /// fit into 64 bits (see scan_number())
+    const bool discard_number_values = false;
 };
 
 }  // namespace detail
@@ -14043,9 +14103,10 @@ class parser
                     parser_callback_t<BasicJsonType> cb = nullptr,
                     const bool allow_exceptions_ = true,
                     const bool ignore_comments = false,
-                    const bool ignore_trailing_commas_ = false)
+                    const bool ignore_trailing_commas_ = false,
+                    const bool discard_number_values_ = false)
         : callback(std::move(cb))
-        , m_lexer(std::move(adapter), ignore_comments)
+        , m_lexer(std::move(adapter), ignore_comments, discard_number_values_)
         , allow_exceptions(allow_exceptions_)
         , ignore_trailing_commas(ignore_trailing_commas_)
     {
@@ -21592,11 +21653,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::parser_callback_t<basic_json>cb = nullptr,
         const bool allow_exceptions = true,
         const bool ignore_comments = false,
-        const bool ignore_trailing_commas = false
+        const bool ignore_trailing_commas = false,
+        const bool discard_number_values = false
                                  )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
-            std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
+            std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas, discard_number_values);
     }
 
   private:
@@ -25561,7 +25623,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                        const bool ignore_comments = false,
                        const bool ignore_trailing_commas = false)
     {
-        return parser(detail::input_adapter(std::forward<InputType>(i)), nullptr, false, ignore_comments, ignore_trailing_commas).accept(true);
+        return parser(detail::input_adapter(std::forward<InputType>(i)), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
     }
 
     /// @brief check if the input is valid JSON (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -25572,7 +25634,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                        const bool ignore_comments = false,
                        const bool ignore_trailing_commas = false)
     {
-        return parser(detail::input_adapter(std::move(first), std::move(last)), nullptr, false, ignore_comments, ignore_trailing_commas).accept(true);
+        return parser(detail::input_adapter(std::move(first), std::move(last)), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
     }
 
     JSON_HEDLEY_WARN_UNUSED_RESULT
@@ -25581,7 +25643,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                        const bool ignore_comments = false,
                        const bool ignore_trailing_commas = false)
     {
-        return parser(i.get(), nullptr, false, ignore_comments, ignore_trailing_commas).accept(true);
+        return parser(i.get(), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
     }
 
     /// @brief generate SAX events
