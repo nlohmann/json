@@ -23,6 +23,8 @@ using nlohmann::json;
 #include <utility>
 #include <vector>
 
+#include "test_utils.hpp"
+
 namespace
 {
 class SaxEventLogger
@@ -624,7 +626,8 @@ TEST_CASE("parser class")
             SECTION("overflow")
             {
                 // overflows during parsing yield an exception
-                CHECK_THROWS_WITH_AS(parser_helper("1.18973e+4932").empty(), "[json.exception.out_of_range.406] number overflow parsing '1.18973e+4932'", json::out_of_range&);
+                // empty() is nodiscard; the exception is thrown by parser_helper() itself, before empty() would run
+                CHECK_THROWS_WITH_AS(utils::ignore_return_value(parser_helper("1.18973e+4932").empty()), "[json.exception.out_of_range.406] number overflow parsing '1.18973e+4932'", json::out_of_range&);
             }
 
             SECTION("invalid numbers")
