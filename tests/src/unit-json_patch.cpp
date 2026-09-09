@@ -1389,6 +1389,192 @@ TEST_CASE("JSON patch - add to a primitive parent (regression #4292)")
     }
 }
 
+TEST_CASE("JSON patch - remove with primitive or null parent (regression #5396)")
+{
+    // Regression test for https://github.com/nlohmann/json/issues/5396
+    //
+    // RFC 6902 (§4.2) requires the target location of a "remove" operation
+    // to exist. When the target's parent resolves to a primitive value or
+    // null, the operation must fail. Previously operation_remove silently
+    // did nothing in this case (neither the "is_object" nor the "is_array"
+    // branch matched, and there was no final "else"), so the patch appeared
+    // to succeed without changing the document. It now throws
+    // out_of_range.413.
+
+    SECTION("parent is a primitive (number)")
+    {
+        json const doc = {{"a", 1}};
+        json const patch = {{{"op", "remove"}, {"path", "/a/b"}}};
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.413] (/a) cannot remove value: the JSON Patch 'remove' target's parent is of type number, but must be an object or array", json::out_of_range&);
+#else
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.413] cannot remove value: the JSON Patch 'remove' target's parent is of type number, but must be an object or array", json::out_of_range&);
+#endif
+    }
+
+    SECTION("parent is a primitive (string)")
+    {
+        json const doc = {{"foo", {{"bar", "a string"}}}};
+        json const patch = {{{"op", "remove"}, {"path", "/foo/bar/baz"}}};
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.413] (/foo/bar) cannot remove value: the JSON Patch 'remove' target's parent is of type string, but must be an object or array", json::out_of_range&);
+#else
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.413] cannot remove value: the JSON Patch 'remove' target's parent is of type string, but must be an object or array", json::out_of_range&);
+#endif
+    }
+
+    SECTION("top-level document is null")
+    {
+        json const doc = nullptr;
+        json const patch = {{{"op", "remove"}, {"path", "/a"}}};
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.413] cannot remove value: the JSON Patch 'remove' target's parent is of type null, but must be an object or array", json::out_of_range&);
+    }
+
+    SECTION("legitimate removes still work")
+    {
+        // object member
+        json const doc1 = {{"a", 1}, {"b", 2}};
+        json const patch1 = {{{"op", "remove"}, {"path", "/a"}}};
+        CHECK(doc1.patch(patch1) == json({{"b", 2}}));
+
+        // array element
+        json const doc2 = R"([1, 2, 3])"_json;
+        json const patch2 = {{{"op", "remove"}, {"path", "/1"}}};
+        CHECK(doc2.patch(patch2) == R"([1, 3])"_json);
+    }
+}
+
+TEST_CASE("JSON patch - move where 'from' is a proper prefix of 'path' (regression #5397)")
+{
+    // Regression test for https://github.com/nlohmann/json/issues/5397
+    //
+    // RFC 6902 (§4.4) forbids "from" from being a proper prefix of "path"
+    // for a "move" operation: "a location cannot be moved into one of its
+    // children." "move" is implemented as remove-then-add; for an object
+    // target this happened to throw anyway as a side effect of the "add"
+    // step re-resolving through the now-removed parent, but for an array
+    // target the removal shifted subsequent indices, so "path" silently
+    // re-resolved to a different element and the operation "succeeded"
+    // with a corrupted result. It now throws out_of_range.414 for both
+    // object and array targets.
+
+    SECTION("array target (from the issue)")
+    {
+        json const doc = R"([[1,2],[3]])"_json;
+        json const patch = {{{"op", "move"}, {"from", "/0"}, {"path", "/0/0"}}};
+#if JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] (bytes 0-11) cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'", json::out_of_range&);
+#else
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'", json::out_of_range&);
+#endif
+    }
+
+    SECTION("object target")
+    {
+        json const doc = R"({"a": {"b": 1}})"_json;
+        json const patch = {{{"op", "move"}, {"from", "/a"}, {"path", "/a/b"}}};
+#if JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] (bytes 0-15) cannot move value: 'from' path '/a' is a proper prefix of 'path' '/a/b'", json::out_of_range&);
+#else
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] cannot move value: 'from' path '/a' is a proper prefix of 'path' '/a/b'", json::out_of_range&);
+#endif
+    }
+
+    SECTION("from == path is not a proper prefix and must not be rejected")
+    {
+        // "from" equal to "path" is a no-op move; it is not a *proper*
+        // prefix relationship, so this new check must not reject it.
+        json const doc = R"({"a": 1, "b": 2})"_json;
+        json const patch = {{{"op", "move"}, {"from", "/a"}, {"path", "/a"}}};
+        CHECK(doc.patch(patch) == doc);
+    }
+
+    SECTION("raw string prefix that is not a pointer-token prefix must be allowed")
+    {
+        // "/ab" is a string-prefix of "/abc/x" as raw text, but "ab" and
+        // "abc" are different reference tokens, so this is NOT a
+        // pointer-token prefix relationship and the move must succeed.
+        // This is the key case proving the check compares tokens, not
+        // raw pointer text (a naive std::string prefix/rfind check on
+        // the undecoded pointer would wrongly reject this).
+        json const doc = R"({"ab": 1, "abc": {"x": 2}})"_json;
+        json const patch = {{{"op", "move"}, {"from", "/ab"}, {"path", "/abc/x"}}};
+        json const result = R"({"abc": {"x": 1}})"_json;
+        CHECK(doc.patch(patch) == result);
+    }
+
+    SECTION("escaped reference tokens are compared unescaped")
+    {
+        // "from" is the single token "a/b" (escaped as "a~1b"); "path"
+        // addresses member "x" of that same value, so "from" is a
+        // proper (token-level) prefix of "path" and must be rejected.
+        json const doc = R"({"a/b": {"x": 1}})"_json;
+        json const patch = {{{"op", "move"}, {"from", "/a~1b"}, {"path", "/a~1b/x"}}};
+#if JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] (bytes 0-17) cannot move value: 'from' path '/a~1b' is a proper prefix of 'path' '/a~1b/x'", json::out_of_range&);
+#else
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] cannot move value: 'from' path '/a~1b' is a proper prefix of 'path' '/a~1b/x'", json::out_of_range&);
+#endif
+    }
+
+    SECTION("ordinary valid moves still work")
+    {
+        // unrelated top-level members
+        json const doc1 = R"({"a": 1, "b": 2})"_json;
+        json const patch1 = {{{"op", "move"}, {"from", "/a"}, {"path", "/c"}}};
+        CHECK(doc1.patch(patch1) == R"({"b": 2, "c": 1})"_json);
+
+        // sibling paths that share a textual prefix but are unrelated
+        json const doc2 = R"({"a": {"x": 1}, "b": {"y": 2}})"_json;
+        json const patch2 = {{{"op", "move"}, {"from", "/a/x"}, {"path", "/b/z"}}};
+        CHECK(doc2.patch(patch2) == R"({"a": {}, "b": {"y": 2, "z": 1}})"_json);
+
+        // "path" is a proper prefix of "from" (the reverse relationship,
+        // which RFC 6902 does not forbid)
+        json const doc3 = R"({"a": {"b": 1}})"_json;
+        json const patch3 = {{{"op", "move"}, {"from", "/a/b"}, {"path", "/a"}}};
+        CHECK(doc3.patch(patch3) == R"({"a": 1})"_json);
+    }
+
+    SECTION("root 'from' is a proper prefix of every non-root 'path'")
+    {
+        // the whole document is a proper prefix of any location inside it
+        json const doc = R"({"a": 1})"_json;
+        json const patch = {{{"op", "move"}, {"from", ""}, {"path", "/a"}}};
+#if JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] (bytes 0-8) cannot move value: 'from' path '' is a proper prefix of 'path' '/a'", json::out_of_range&);
+#else
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] cannot move value: 'from' path '' is a proper prefix of 'path' '/a'", json::out_of_range&);
+#endif
+    }
+
+    SECTION("root 'path' is never a proper prefix violation for a non-root 'from'")
+    {
+        // the reverse of the above: moving a non-root location to the root
+        // is the "path is a prefix of from" relationship, which RFC 6902
+        // permits (already covered generally above; this pins the root
+        // case specifically, since root is the one path with no reference
+        // tokens at all)
+        json const doc = R"({"a": {"b": 1}})"_json;
+        json const patch = {{{"op", "move"}, {"from", "/a"}, {"path", ""}}};
+        CHECK(doc.patch(patch) == R"({"b": 1})"_json);
+    }
+
+    SECTION("the array-append token '-' is an ordinary child token")
+    {
+        // "-" (append-to-array) addresses a location *inside* the array,
+        // so "from" pointing at the array is still a proper prefix of
+        // "path" ending in "-" and must be rejected like any other child.
+        json const doc = R"({"a": [1, 2]})"_json;
+        json const patch = {{{"op", "move"}, {"from", "/a"}, {"path", "/a/-"}}};
+#if JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] (bytes 0-13) cannot move value: 'from' path '/a' is a proper prefix of 'path' '/a/-'", json::out_of_range&);
+#else
+        CHECK_THROWS_WITH_AS(doc.patch(patch), "[json.exception.out_of_range.414] cannot move value: 'from' path '/a' is a proper prefix of 'path' '/a/-'", json::out_of_range&);
+#endif
+    }
+}
+
 TEST_CASE("JSON patch - diff emits array removals in descending index order")
 {
     SECTION("array shrunk to empty")
