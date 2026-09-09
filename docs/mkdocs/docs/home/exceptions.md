@@ -947,6 +947,20 @@ A JSON Patch `remove` operation cannot be applied because the target location's 
 
     This exception was added in version 3.13.0. Before that, this situation was silently ignored (the `remove` operation had no effect).
 
+### json.exception.out_of_range.414
+
+A JSON Patch `move` operation's `"from"` location is a proper prefix of its `"path"` location. Per [RFC 6902](https://datatracker.ietf.org/doc/html/rfc6902) (section 4.4), a location cannot be moved into one of its own children.
+
+!!! failure "Example message"
+
+    ```
+    cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0. Before that, this situation could succeed with a corrupted result: for an array target, removing the "from" element before the "add" step shifted subsequent indices, so "path" silently re-resolved to a different element than intended.
+
 ## Further exceptions
 
 This exception is thrown in case of errors that cannot be classified with the
