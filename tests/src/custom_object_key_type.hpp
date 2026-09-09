@@ -34,6 +34,7 @@ class key
         return m_value;
     }
 
+    // Kept for compatibility with serializers that access object keys as C strings.
     const char* c_str() const noexcept
     {
         return m_value.c_str();

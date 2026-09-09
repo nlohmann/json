@@ -17152,6 +17152,10 @@ class binary_writer
                 }
                 // LCOV_EXCL_STOP
 
+                static_assert(
+                    std::is_convertible<typename BasicJsonType::object_t::key_type, string_t>::value,
+                    "object_t::key_type must be convertible to string_t");
+
                 // step 2: write each element
                 for (const auto& el : *j.m_data.m_value.object)
                 {
@@ -17444,6 +17448,10 @@ class binary_writer
                     oa->write_character(to_char_type(0xDF));
                     write_number(static_cast<std::uint32_t>(N));
                 }
+
+                static_assert(
+                    std::is_convertible<typename BasicJsonType::object_t::key_type, string_t>::value,
+                    "object_t::key_type must be convertible to string_t");
 
                 // step 2: write each element
                 for (const auto& el : *j.m_data.m_value.object)
