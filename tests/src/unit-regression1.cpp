@@ -31,10 +31,6 @@ using nlohmann::json;
 #include "make_test_data_available.hpp"
 #include "test_utils.hpp"
 
-#ifdef JSON_HAS_CPP_17
-    #include <variant>
-#endif
-
 #include "fifo_map.hpp"
 
 /////////////////////////////////////////////////////////////////////
