@@ -16660,58 +16660,81 @@ class json_pointer
                         const BasicJsonType& value,
                         BasicJsonType& result)
     {
-        switch (value.type())
+        struct flatten_task
         {
-            case detail::value_t::array:
-            {
-                if (value.m_data.m_value.array->empty())
-                {
-                    // flatten empty array as null
-                    result[reference_string] = nullptr;
-                }
-                else
-                {
-                    // iterate array and use index as a reference string
-                    for (std::size_t i = 0; i < value.m_data.m_value.array->size(); ++i)
-                    {
-                        flatten(detail::concat<string_t>(reference_string, '/', std::to_string(i)),
-                                value.m_data.m_value.array->operator[](i), result);
-                    }
-                }
-                break;
-            }
+            string_t reference_string;
+            const BasicJsonType* value;
+        };
 
-            case detail::value_t::object:
-            {
-                if (value.m_data.m_value.object->empty())
-                {
-                    // flatten empty object as null
-                    result[reference_string] = nullptr;
-                }
-                else
-                {
-                    // iterate object and use keys as reference string
-                    for (const auto& element : *value.m_data.m_value.object)
-                    {
-                        flatten(detail::concat<string_t>(reference_string, '/', detail::escape(element.first)), element.second, result);
-                    }
-                }
-                break;
-            }
+        std::vector<flatten_task> stack;
+        stack.push_back({reference_string, &value});
 
-            case detail::value_t::null:
-            case detail::value_t::string:
-            case detail::value_t::boolean:
-            case detail::value_t::number_integer:
-            case detail::value_t::number_unsigned:
-            case detail::value_t::number_float:
-            case detail::value_t::binary:
-            case detail::value_t::discarded:
-            default:
+        while (!stack.empty())
+        {
+            auto current = std::move(stack.back());
+            stack.pop_back();
+
+            switch (current.value->type())
             {
-                // add a primitive value with its reference string
-                result[reference_string] = value;
-                break;
+                case detail::value_t::array:
+                {
+                    if (current.value->m_data.m_value.array->empty())
+                    {
+                        // flatten empty array as null
+                        result[current.reference_string] = nullptr;
+                    }
+                    else
+                    {
+                        // iterate array and use index as a reference string
+                        for (std::size_t i = current.value->m_data.m_value.array->size(); i > 0; --i)
+                        {
+                            const auto index = i - 1;
+                            stack.push_back({detail::concat<string_t>(current.reference_string, '/', std::to_string(index)),
+                                             &current.value->m_data.m_value.array->operator[](index)});
+                        }
+                    }
+                    break;
+                }
+
+                case detail::value_t::object:
+                {
+                    if (current.value->m_data.m_value.object->empty())
+                    {
+                        // flatten empty object as null
+                        result[current.reference_string] = nullptr;
+                    }
+                    else
+                    {
+                        // iterate object and use keys as reference string
+                        std::vector<flatten_task> children;
+                        children.reserve(current.value->m_data.m_value.object->size());
+                        for (const auto& element : *current.value->m_data.m_value.object)
+                        {
+                            children.push_back({detail::concat<string_t>(current.reference_string, '/', detail::escape(element.first)),
+                                                &element.second});
+                        }
+                        for (auto it = children.rbegin(); it != children.rend(); ++it)
+                        {
+                            stack.push_back(std::move(*it));
+                        }
+                    }
+                    break;
+                }
+
+                case detail::value_t::null:
+                case detail::value_t::string:
+                case detail::value_t::boolean:
+                case detail::value_t::number_integer:
+                case detail::value_t::number_unsigned:
+                case detail::value_t::number_float:
+                case detail::value_t::binary:
+                case detail::value_t::discarded:
+                default:
+                {
+                    // add a primitive value with its reference string
+                    result[current.reference_string] = *current.value;
+                    break;
+                }
             }
         }
     }
