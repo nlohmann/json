@@ -15,6 +15,7 @@
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
+#include <type_traits>
 #include <string> // string
 #include <utility> // move
 #include <vector> // vector
@@ -338,6 +339,12 @@ class binary_writer
 
             case value_t::object:
             {
+                static_assert(
+                    std::is_convertible <
+                    typename BasicJsonType::object_t::key_type,
+                    string_t >::value,
+                    "object_t::key_type must be convertible to string_t");
+
                 // step 1: write control byte and the object size
                 const auto N = j.m_data.m_value.object->size();
                 if (N <= 0x17)
@@ -640,6 +647,12 @@ class binary_writer
 
             case value_t::object:
             {
+                static_assert(
+                    std::is_convertible <
+                    typename BasicJsonType::object_t::key_type,
+                    string_t >::value,
+                    "object_t::key_type must be convertible to string_t");
+
                 // step 1: write control byte and the object size
                 const auto N = j.m_data.m_value.object->size();
                 if (N <= 15)

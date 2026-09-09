@@ -16648,6 +16648,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
+#include <type_traits>
 #include <string> // string
 #include <utility> // move
 #include <vector> // vector
@@ -17123,6 +17124,12 @@ class binary_writer
 
             case value_t::object:
             {
+                static_assert(
+                    std::is_convertible <
+                    typename BasicJsonType::object_t::key_type,
+                    string_t >::value,
+                    "object_t::key_type must be convertible to string_t");
+
                 // step 1: write control byte and the object size
                 const auto N = j.m_data.m_value.object->size();
                 if (N <= 0x17)
@@ -17151,10 +17158,6 @@ class binary_writer
                     write_number(static_cast<std::uint64_t>(N));
                 }
                 // LCOV_EXCL_STOP
-
-                static_assert(
-                    std::is_convertible<typename BasicJsonType::object_t::key_type, string_t>::value,
-                    "object_t::key_type must be convertible to string_t");
 
                 // step 2: write each element
                 for (const auto& el : *j.m_data.m_value.object)
@@ -17429,6 +17432,12 @@ class binary_writer
 
             case value_t::object:
             {
+                static_assert(
+                    std::is_convertible <
+                    typename BasicJsonType::object_t::key_type,
+                    string_t >::value,
+                    "object_t::key_type must be convertible to string_t");
+
                 // step 1: write control byte and the object size
                 const auto N = j.m_data.m_value.object->size();
                 if (N <= 15)
@@ -17448,10 +17457,6 @@ class binary_writer
                     oa->write_character(to_char_type(0xDF));
                     write_number(static_cast<std::uint32_t>(N));
                 }
-
-                static_assert(
-                    std::is_convertible<typename BasicJsonType::object_t::key_type, string_t>::value,
-                    "object_t::key_type must be convertible to string_t");
 
                 // step 2: write each element
                 for (const auto& el : *j.m_data.m_value.object)
