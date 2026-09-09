@@ -23,6 +23,8 @@ using nlohmann::json;
 #include <utility>
 #include <vector>
 
+#include "test_utils.hpp"
+
 namespace
 {
 class SaxEventLogger
@@ -624,7 +626,8 @@ TEST_CASE("parser class")
             SECTION("overflow")
             {
                 // overflows during parsing yield an exception
-                CHECK_THROWS_WITH_AS(parser_helper("1.18973e+4932").empty(), "[json.exception.out_of_range.406] number overflow parsing '1.18973e+4932'", json::out_of_range&);
+                // empty() is nodiscard; the exception is thrown by parser_helper() itself, before empty() would run
+                CHECK_THROWS_WITH_AS(utils::ignore_return_value(parser_helper("1.18973e+4932").empty()), "[json.exception.out_of_range.406] number overflow parsing '1.18973e+4932'", json::out_of_range&);
             }
 
             SECTION("invalid numbers")
@@ -929,6 +932,98 @@ TEST_CASE("parser class")
                 // numbers must not begin with "+"
                 CHECK(accept_helper("+1") == false);
                 CHECK(accept_helper("+0") == false);
+            }
+
+            SECTION("issue #5411 - skip conversion when accept() does not need the numeric value")
+            {
+                // lexer::scan_number() may skip strtoull()/strtoll() for
+                // value_unsigned/value_integer tokens when the caller (e.g.
+                // json::accept()) does not need the converted value, as long
+                // as the digit count alone guarantees no 64-bit overflow (see
+                // the "safe_digit_count" fast path in scan_number()). This
+                // differential test checks that json::accept() (which enables
+                // the fast path) and json::parse() (which never does) always
+                // agree, over a corpus that exercises both the fast path
+                // (<=18 digits) and the untouched, exact fallback path (>=19
+                // digits) -- including reclassification of huge digit-only
+                // integers to a (possibly non-finite) floating-point value.
+                const std::vector<std::pair<std::string, bool>> cases =
+                {
+                    // normal small/large integers, both signs
+                    {"0", true}, {"1", true}, {"-1", true}, {"42", true}, {"-42", true},
+                    {"123456789", true}, {"-123456789", true},
+
+                    // digit-count boundary around the 18-digit safe cutoff (both signs)
+                    {std::string(17, '9'), true},
+                    {std::string(18, '9'), true},
+                    {std::string(19, '9'), true},
+                    {std::string(20, '9'), true},
+                    {"-" + std::string(17, '9'), true},
+                    {"-" + std::string(18, '9'), true},
+                    {"-" + std::string(19, '9'), true},
+                    {"-" + std::string(20, '9'), true},
+
+                    // 64-bit boundaries
+                    {"9223372036854775807", true},    // INT64_MAX
+                    {"-9223372036854775808", true},   // INT64_MIN
+                    {"18446744073709551615", true},   // UINT64_MAX
+                    {"18446744073709551616", true},   // UINT64_MAX + 1 (overflows uint64_t, finite double)
+
+                    // the 28-digit example from the issue: overflows uint64_t
+                    // but is finite as a double, so the scanner reclassifies
+                    // it to value_float and it is accepted
+                    {"9999999999999999999999999999", true},
+
+                    // huge digit-only integers that overflow even a double -> rejected
+                    {std::string(309, '9'), false},
+                    {std::string(400, '9'), false},
+                    {"1" + std::string(400, '0'), false},
+
+                    // 1e999 / 1e400 style overflow -> rejected
+                    {"1e999", false},
+                    {"1e400", false},
+                    {"-1e999", false},
+                    {"1E999", false},
+
+                    // values straddling DBL_MAX
+                    {"1.7976931348623157e308", true},   // <= DBL_MAX, finite
+                    {"1.7976931348623159e308", false},  // > DBL_MAX, overflows to inf
+
+                    // a mix of other valid/invalid numeric syntax
+                    {"3.14159", true},
+                    {"-0.0", true},
+                    {"1.0e10", true},
+                    {"01", false},
+                    {"-", false},
+                    {"1.", false},
+                    {"1e", false},
+                    {"+1", false},
+                };
+
+                for (const auto& c : cases)
+                {
+                    const std::string& number = c.first;
+                    const bool expected = c.second;
+                    CAPTURE(number)
+                    CAPTURE(expected)
+
+                    // accept() takes the fast path (skips conversion when possible)
+                    CHECK(json::accept(number) == expected);
+
+                    // parse() always performs the full conversion; it must agree
+                    json j;
+                    CHECK_NOTHROW(json::parser(nlohmann::detail::input_adapter(number), nullptr, false).parse(true, j));
+                    CHECK(!j.is_discarded() == expected);
+
+                    // wrap in an array so get_token() is exercised beyond the
+                    // very first (constructor-time) scan as well
+                    std::string wrapped = "[";
+                    wrapped += number;
+                    wrapped += ",";
+                    wrapped += number;
+                    wrapped += "]";
+                    CHECK(json::accept(wrapped) == expected);
+                }
             }
         }
     }
@@ -1393,6 +1488,71 @@ TEST_CASE("parser class")
         CHECK(accept_helper("\"\\uD80C\\u0000\"") == false);
         CHECK(accept_helper("\"\\uD80C\\uFFFF\"") == false);
     }
+
+#if !defined(JSON_NOEXCEPTION)
+    SECTION("issue #5412 - whitespace skipping bookkeeping (compact vs. pretty-printed)")
+    {
+        // lexer::skip_whitespace() reads its first character with get() (to
+        // honor a possibly pending unget() from the previous token) and every
+        // further whitespace character with get_ignoring_pending_unget() (a
+        // get() variant that skips the then-always-false next_unget check).
+        // This must not change the reported byte offset, line, or column of
+        // a syntax error, even when a long run of whitespace containing
+        // multiple newlines is skipped beforehand (as with pretty-printed
+        // input). The expected values below were captured from the
+        // unmodified do-while(get()) loop, so any regression that miscounts
+        // characters or newlines while skipping whitespace changes them.
+        const auto check_error = [](const std::string & input, std::size_t expected_byte,
+                                    const std::string & expected_what)
+        {
+            CAPTURE(input)
+            try
+            {
+                json _ = json::parse(input);
+                FAIL_CHECK("expected a parse_error, but parsing succeeded");
+            }
+            catch (const json::parse_error& e)
+            {
+                CHECK(e.byte == expected_byte);
+                CHECK(std::string(e.what()) == expected_what);
+            }
+        };
+
+        // a nested document, serialized both compactly and pretty-printed
+        // (dump(4)), each truncated right before the final closing '}' so
+        // that the parser hits EOF after skipping all of the (in the
+        // pretty-printed case, substantial) indentation whitespace
+        const json doc =
+        {
+            {"a", 1},
+            {"b", json::array({true, false, nullptr, "x"})},
+            {"c", json::object({{"d", 3.14}, {"e", json::array({1, 2, 3})}})}
+        };
+
+        const std::string compact = doc.dump();
+        const std::string pretty = doc.dump(4);
+
+        check_error(compact.substr(0, compact.size() - 1), 60,
+                    "[json.exception.parse_error.101] parse error at line 1, column 60: syntax error while parsing object - unexpected end of input; expected '}'");
+        check_error(pretty.substr(0, pretty.size() - 1), 193,
+                    "[json.exception.parse_error.101] parse error at line 17, column 1: syntax error while parsing object - unexpected end of input; expected '}'");
+
+        // an invalid token appearing after several indented, multi-line
+        // whitespace runs vs. the same document without any of that
+        // whitespace
+        check_error(R"({
+    "a": 1,
+    "b": [
+        true,
+        false
+    ],
+    "c": @
+})", 70,
+                    "[json.exception.parse_error.101] parse error at line 7, column 10: syntax error while parsing value - invalid literal; last read: '\"c\": @'");
+        check_error(R"({"a":1,"b":[true,false],"c":@})", 29,
+                    "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing value - invalid literal; last read: '\"c\":@'");
+    }
+#endif
 
     SECTION("tests found by mutate++")
     {

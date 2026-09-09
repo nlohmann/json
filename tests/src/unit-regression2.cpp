@@ -31,6 +31,8 @@ using ordered_json = nlohmann::ordered_json;
 #include <type_traits>
 #include <utility>
 
+#include "test_utils.hpp"
+
 #ifdef JSON_HAS_CPP_17
     #include <any>
     #include <variant>
@@ -355,7 +357,8 @@ TEST_CASE("regression tests 2")
                 s += static_cast<char>(i);
             }
             dump_test["1"] = s;
-            dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace);
+            // dump() is nodiscard; this only checks that dumping does not throw/crash
+            utils::ignore_return_value(dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace));
         }
     }
 

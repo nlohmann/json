@@ -319,6 +319,44 @@ TEST_CASE("JSON pointers")
 
                 CHECK_THROWS_WITH_AS(j[jp] = 1, throw_msg.c_str(), json::out_of_range&);
                 CHECK_THROWS_WITH_AS(j_const[jp] == 1, throw_msg.c_str(), json::out_of_range&);
+
+                // #5395: contains() must not throw for a reference token that is a
+                // syntactically valid array index but numerically exceeds ULLONG_MAX
+                // (causing strtoull() to set errno to ERANGE) -- it should just report
+                // that the pointer does not resolve to an element
+                CHECK(!j.contains(jp));
+                CHECK(!j_const.contains(jp));
+            }
+
+            {
+                // #5395: same as above, but using the exact reproduction from the issue
+                json::json_pointer const jp("/99999999999999999999");
+                std::string const throw_msg = "[json.exception.out_of_range.404] unresolved reference token '99999999999999999999'";
+
+                CHECK_THROWS_WITH_AS(j[jp] = 1, throw_msg.c_str(), json::out_of_range&);
+                CHECK_THROWS_WITH_AS(j_const[jp] == 1, throw_msg.c_str(), json::out_of_range&);
+                CHECK_THROWS_WITH_AS(j.at(jp) = 1, throw_msg.c_str(), json::out_of_range&);
+                CHECK_THROWS_WITH_AS(j_const.at(jp) == 1, throw_msg.c_str(), json::out_of_range&);
+
+                CHECK(!j.contains(jp));
+                CHECK(!j_const.contains(jp));
+            }
+
+            {
+                // #5395: a reference token that is numerically representable in
+                // unsigned long long but exceeds size_type's max (e.g. ULLONG_MAX
+                // itself on typical 64-bit platforms, where size_type's max equals
+                // ULLONG_MAX) must not make contains() throw either
+                json::json_pointer const jp("/18446744073709551615");
+                std::string const throw_msg = "[json.exception.out_of_range.410] array index 18446744073709551615 exceeds size_type";
+
+                CHECK_THROWS_WITH_AS(j[jp] = 1, throw_msg.c_str(), json::out_of_range&);
+                CHECK_THROWS_WITH_AS(j_const[jp] == 1, throw_msg.c_str(), json::out_of_range&);
+                CHECK_THROWS_WITH_AS(j.at(jp) = 1, throw_msg.c_str(), json::out_of_range&);
+                CHECK_THROWS_WITH_AS(j_const.at(jp) == 1, throw_msg.c_str(), json::out_of_range&);
+
+                CHECK(!j.contains(jp));
+                CHECK(!j_const.contains(jp));
             }
 
             // on some machines, the check below is not constant
@@ -334,6 +372,10 @@ TEST_CASE("JSON pointers")
 
                 CHECK_THROWS_WITH_AS(j[jp] = 1, throw_msg.c_str(), json::out_of_range&);
                 CHECK_THROWS_WITH_AS(j_const[jp] == 1, throw_msg.c_str(), json::out_of_range&);
+
+                // #5395: contains() must not throw for a reference token exceeding size_type's max
+                CHECK(!j.contains(jp));
+                CHECK(!j_const.contains(jp));
             }
 
             DOCTEST_MSVC_SUPPRESS_WARNING_POP

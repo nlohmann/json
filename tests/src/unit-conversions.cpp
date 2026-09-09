@@ -1389,6 +1389,37 @@ TEST_CASE("value conversion")
                 // CHECK(m5["one"] == "eins");
             }
 
+            SECTION("reserve is called on containers that support it (#5406)")
+            {
+                // build a larger object so that a missing/incorrect reserve()
+                // call would be more likely to corrupt or drop elements
+                json j_large;
+                for (int i = 0; i < 100; ++i)
+                {
+                    j_large[std::to_string(i)] = i;
+                }
+
+                SECTION("std::unordered_map (supports reserve)")
+                {
+                    const auto m = j_large.get<std::unordered_map<std::string, int>>();
+                    CHECK(m.size() == 100);
+                    for (int i = 0; i < 100; ++i)
+                    {
+                        CHECK(m.at(std::to_string(i)) == i);
+                    }
+                }
+
+                SECTION("std::map (no reserve, fallback path)")
+                {
+                    const auto m = j_large.get<std::map<std::string, int>>();
+                    CHECK(m.size() == 100);
+                    for (int i = 0; i < 100; ++i)
+                    {
+                        CHECK(m.at(std::to_string(i)) == i);
+                    }
+                }
+            }
+
             SECTION("std::multimap")
             {
                 j1.get<std::multimap<std::string, int>>();

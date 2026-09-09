@@ -933,6 +933,34 @@ BSON stores the length of documents, arrays, strings, and binary values in a sig
     [`to_bson`](../api/basic_json/to_bson.md) produced documents with negative length prefixes that
     [`from_bson`](../api/basic_json/from_bson.md) rejected.
 
+### json.exception.out_of_range.413
+
+A JSON Patch `remove` operation cannot be applied because the target location's parent is neither an object nor an array. Per [RFC 6902](https://datatracker.ietf.org/doc/html/rfc6902), a `remove` target must reference a member of an existing object or an element of an existing array; a primitive value (string, number, boolean, etc.) or `null` has no members or elements to remove.
+
+!!! failure "Example message"
+
+    ```
+    cannot remove value: the JSON Patch 'remove' target's parent is of type number, but must be an object or array
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0. Before that, this situation was silently ignored (the `remove` operation had no effect).
+
+### json.exception.out_of_range.414
+
+A JSON Patch `move` operation's `"from"` location is a proper prefix of its `"path"` location. Per [RFC 6902](https://datatracker.ietf.org/doc/html/rfc6902) (section 4.4), a location cannot be moved into one of its own children.
+
+!!! failure "Example message"
+
+    ```
+    cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0. Before that, this situation could succeed with a corrupted result: for an array target, removing the "from" element before the "add" step shifted subsequent indices, so "path" silently re-resolved to a different element than intended.
+
 ## Further exceptions
 
 This exception is thrown in case of errors that cannot be classified with the
