@@ -22,6 +22,8 @@ No guarantees, value may be corrupted by an unsuccessful patch operation.
 - Throws [`out_of_range.403`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range403) if a JSON pointer inside the patch could not be resolved successfully in the current JSON value; example: `"key baz not found"`.
 - Throws [`out_of_range.405`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range405) if JSON pointer has no parent ("add", "remove", "move")
 - Throws [`out_of_range.411`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range411) if an "add" operation's target location has a parent that is neither an object nor an array.
+- Throws [`out_of_range.413`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range413) if a "remove" operation's target location has a parent that is neither an object nor an array.
+- Throws [`out_of_range.414`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range414) if a "move" operation's "from" location is a proper prefix of its "path" location.
 - Throws [`other_error.501`](https://json.nlohmann.me/home/exceptions/#jsonexceptionother_error501) if "test" operation was unsuccessful.
 
 ## Complexity
@@ -105,3 +107,5 @@ After
 
 - Added in version 3.11.0.
 - Added [`out_of_range.411`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range411) and stopped relying on an internal assertion when an "add" operation's target location has a non-object/non-array parent in version 3.13.0.
+- Added [`out_of_range.413`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range413) and stopped silently ignoring a "remove" operation whose target location has a non-object/non-array parent in version 3.13.0.
+- Added [`out_of_range.414`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range414) and rejected a "move" operation whose "from" location is a proper prefix of its "path" location instead of silently producing a corrupted result in version 3.13.0.
