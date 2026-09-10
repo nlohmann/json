@@ -16664,10 +16664,14 @@ class json_pointer
         {
             string_t reference_string;
             const BasicJsonType* value;
+
+            flatten_task(string_t reference_string_, const BasicJsonType* value_)
+                : reference_string(std::move(reference_string_)), value(value_)
+            {}
         };
 
         std::vector<flatten_task> stack;
-        stack.push_back({reference_string, &value});
+        stack.emplace_back(reference_string, &value);
 
         while (!stack.empty())
         {
@@ -16689,8 +16693,8 @@ class json_pointer
                         for (std::size_t i = current.value->m_data.m_value.array->size(); i > 0; --i)
                         {
                             const auto index = i - 1;
-                            stack.push_back({detail::concat<string_t>(current.reference_string, '/', std::to_string(index)),
-                                             &current.value->m_data.m_value.array->operator[](index)});
+                            stack.emplace_back(detail::concat<string_t>(current.reference_string, '/', std::to_string(index)),
+                                                &current.value->m_data.m_value.array->operator[](index));
                         }
                     }
                     break;
@@ -16710,12 +16714,13 @@ class json_pointer
                         children.reserve(current.value->m_data.m_value.object->size());
                         for (const auto& element : *current.value->m_data.m_value.object)
                         {
-                            children.push_back({detail::concat<string_t>(current.reference_string, '/', detail::escape(element.first)),
-                                                &element.second});
+                            children.emplace_back(detail::concat<string_t>(current.reference_string, '/', detail::escape(element.first)),
+                                                  &element.second);
                         }
+                        // Push children in reverse so the LIFO stack preserves object iteration order.
                         for (auto it = children.rbegin(); it != children.rend(); ++it)
                         {
-                            stack.push_back(std::move(*it));
+                            stack.emplace_back(std::move(*it));
                         }
                     }
                     break;
