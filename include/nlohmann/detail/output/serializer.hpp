@@ -82,18 +82,13 @@ class serializer
                const std::size_t indent_step_ = 0,
                error_handler_t error_handler_ = error_handler_t::strict)
         : o(std::move(s))
+        , locale(std::localeconv())
         , indent_char(ichar)
         , pretty_print(pretty_print_)
         , ensure_ascii(ensure_ascii_)
         , indent_step(indent_step_)
         , error_handler(error_handler_)
-    {
-        // only used here to seed thousands_sep/decimal_point, so a local
-        // suffices and the serializer does not need to hold onto it
-        const auto* loc = std::localeconv();
-        thousands_sep = loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->thousands_sep));
-        decimal_point = loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->decimal_point));
-    }
+    {}
 
     // deleted because of pointer members
     serializer(const serializer&) = delete;
@@ -1552,20 +1547,20 @@ class serializer
         JSON_ASSERT(static_cast<std::size_t>(len) < number_buffer.size());
 
         // erase thousands separators
-        if (thousands_sep != '\0')
+        if (locale.thousands_sep != '\0')
         {
             // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::remove returns an iterator, see https://github.com/nlohmann/json/issues/3081
-            const auto end = std::remove(number_buffer.begin(), number_buffer.begin() + len, thousands_sep);
+            const auto end = std::remove(number_buffer.begin(), number_buffer.begin() + len, locale.thousands_sep);
             std::fill(end, number_buffer.end(), '\0');
             JSON_ASSERT((end - number_buffer.begin()) <= len);
             len = (end - number_buffer.begin());
         }
 
         // convert decimal point to '.'
-        if (decimal_point != '\0' && decimal_point != '.')
+        if (locale.decimal_point != '\0' && locale.decimal_point != '.')
         {
             // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::find returns an iterator, see https://github.com/nlohmann/json/issues/3081
-            const auto dec_pos = std::find(number_buffer.begin(), number_buffer.end(), decimal_point);
+            const auto dec_pos = std::find(number_buffer.begin(), number_buffer.end(), locale.decimal_point);
             if (dec_pos != number_buffer.end())
             {
                 *dec_pos = '.';
@@ -1671,16 +1666,28 @@ class serializer
     }
 
   private:
+    /// the locale's thousand separator and decimal point characters
+    struct locale_chars
+    {
+        explicit locale_chars(const std::lconv* loc) noexcept
+            : thousands_sep(loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->thousands_sep)))
+            , decimal_point(loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->decimal_point)))
+        {}
+
+        const char thousands_sep;
+        const char decimal_point;
+    };
+
     /// the output of the serializer
     output_adapter_t<char> o = nullptr;
 
     /// a (hopefully) large enough character buffer
     std::array<char, 64> number_buffer{{}};
 
-    /// the locale's thousand separator character
-    char thousands_sep = '\0';
-    /// the locale's decimal point character
-    char decimal_point = '\0';
+    /// computed once from std::localeconv() at construction; @ref
+    /// locale_chars keeps std::localeconv()'s pointer from having to be held
+    /// past the constructor, while still letting these stay const
+    const locale_chars locale;
 
     /// string buffer
     std::array<char, 512> string_buffer{{}};
