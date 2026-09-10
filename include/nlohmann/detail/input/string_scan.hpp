@@ -101,7 +101,7 @@ inline std::size_t find_string_special(const unsigned char* data, std::size_t n)
 // \u007f under ensure_ascii).
 inline bool is_ascii_copyable(unsigned char c) noexcept
 {
-    return c >= 0x20u && c < 0x7Fu && c != '\"' && c != '\\';
+    return c >= 0x20u && c < 0x7Fu && c != '"' && c != '\\';
 }
 
 // return the index of the first byte in [data, data+n) that is NOT
@@ -126,13 +126,7 @@ inline std::size_t find_ascii_copyable_run(const unsigned char* data, std::size_
                                    | (v & high);               // >= 0x80
         if (stop != 0)
         {
-            for (std::size_t j = 0; j < 8; ++j)
-            {
-                if (!is_ascii_copyable(data[i + j]))
-                {
-                    return i + j;
-                }
-            }
+            break;
         }
     }
     for (; i < n; ++i)

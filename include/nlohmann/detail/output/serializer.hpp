@@ -168,7 +168,7 @@ class serializer
                     for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
                     {
                         put_indent(new_indent);
-                        put_char('\"');
+                        put_char('"');
                         dump_escaped(i->first, ensure_ascii);
                         put_literal("\": ");
                         dump_internal(i->second, true, ensure_ascii, indent_step, new_indent, depth + 1);
@@ -179,7 +179,7 @@ class serializer
                     JSON_ASSERT(i != val.m_data.m_value.object->cend());
                     JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
                     put_indent(new_indent);
-                    put_char('\"');
+                    put_char('"');
                     dump_escaped(i->first, ensure_ascii);
                     put_literal("\": ");
                     dump_internal(i->second, true, ensure_ascii, indent_step, new_indent, depth + 1);
@@ -196,7 +196,7 @@ class serializer
                     auto i = val.m_data.m_value.object->cbegin();
                     for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
                     {
-                        put_char('\"');
+                        put_char('"');
                         dump_escaped(i->first, ensure_ascii);
                         put_literal("\":");
                         dump_internal(i->second, false, ensure_ascii, indent_step, current_indent, depth + 1);
@@ -206,7 +206,7 @@ class serializer
                     // last element
                     JSON_ASSERT(i != val.m_data.m_value.object->cend());
                     JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
-                    put_char('\"');
+                    put_char('"');
                     dump_escaped(i->first, ensure_ascii);
                     put_literal("\":");
                     dump_internal(i->second, false, ensure_ascii, indent_step, current_indent, depth + 1);
@@ -280,9 +280,9 @@ class serializer
 
             case value_t::string:
             {
-                put_char('\"');
+                put_char('"');
                 dump_escaped(*val.m_data.m_value.string, ensure_ascii);
-                put_char('\"');
+                put_char('"');
                 return;
             }
 
@@ -473,7 +473,7 @@ class serializer
                     put_indent(frame.child_indent);
                 }
 
-                put_char('\"');
+                put_char('"');
                 dump_escaped(frame.object_it->first, ensure_ascii);
 
                 if (pretty_print)
@@ -631,9 +631,9 @@ class serializer
 
             case value_t::string:
             {
-                put_char('\"');
+                put_char('"');
                 dump_escaped(*val.m_data.m_value.string, ensure_ascii);
-                put_char('\"');
+                put_char('"');
                 return;
             }
 
@@ -915,7 +915,7 @@ class serializer
                         case 0x22: // quotation mark
                         {
                             string_buffer[bytes++] = '\\';
-                            string_buffer[bytes++] = '\"';
+                            string_buffer[bytes++] = '"';
                             break;
                         }
 
