@@ -18966,6 +18966,7 @@ class binary_writer
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
 // #include <nlohmann/detail/output/output_adapters.hpp>
 
 // #include <nlohmann/detail/output/serializer.hpp>
