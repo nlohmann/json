@@ -14154,17 +14154,18 @@ class binary_reader
             }
 
             // advance to the next element, closing the containers that ended.
-            // The reference is not held across get_ubjson_value() above, which
-            // can push onto the stack and reallocate it.
+            // top is a copy, not a reference: it must stay valid across the
+            // pop_back() below, which destroys the container_stack element it
+            // would otherwise alias.
             for (;;)
             {
-                container_frame& top = container_stack.back();
+                container_frame top = container_stack.back();
 
                 if (top.remaining != npos)
                 {
                     if (top.remaining != 0)
                     {
-                        --top.remaining;
+                        --container_stack.back().remaining;
                         if (top.is_object)
                         {
                             key.clear();
@@ -14203,9 +14204,8 @@ class binary_reader
                     break;
                 }
 
-                const bool is_object = top.is_object;
                 container_stack.pop_back();
-                if (JSON_HEDLEY_UNLIKELY(is_object ? !sax->end_object() : !sax->end_array()))
+                if (JSON_HEDLEY_UNLIKELY(top.is_object ? !sax->end_object() : !sax->end_array()))
                 {
                     return false;
                 }
