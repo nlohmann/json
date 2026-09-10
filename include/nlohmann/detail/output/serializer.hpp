@@ -82,15 +82,18 @@ class serializer
                const std::size_t indent_step_ = 0,
                error_handler_t error_handler_ = error_handler_t::strict)
         : o(std::move(s))
-        , loc(std::localeconv())
-        , thousands_sep(loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->thousands_sep)))
-        , decimal_point(loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->decimal_point)))
         , indent_char(ichar)
         , pretty_print(pretty_print_)
         , ensure_ascii(ensure_ascii_)
         , indent_step(indent_step_)
         , error_handler(error_handler_)
-    {}
+    {
+        // only used here to seed thousands_sep/decimal_point, so a local
+        // suffices and the serializer does not need to hold onto it
+        const auto* loc = std::localeconv();
+        thousands_sep = loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->thousands_sep));
+        decimal_point = loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->decimal_point));
+    }
 
     // deleted because of pointer members
     serializer(const serializer&) = delete;
@@ -1674,12 +1677,10 @@ class serializer
     /// a (hopefully) large enough character buffer
     std::array<char, 64> number_buffer{{}};
 
-    /// the locale
-    const std::lconv* loc = nullptr;
     /// the locale's thousand separator character
-    const char thousands_sep = '\0';
+    char thousands_sep = '\0';
     /// the locale's decimal point character
-    const char decimal_point = '\0';
+    char decimal_point = '\0';
 
     /// string buffer
     std::array<char, 512> string_buffer{{}};
