@@ -18255,8 +18255,14 @@ class binary_writer
     /*!
     @param[in] j  JSON value to serialize
     */
-    void write_cbor(const BasicJsonType& j)
+    void write_cbor(const BasicJsonType& j, const int depth = 0)
     {
+        if (JSON_HEDLEY_UNLIKELY(depth >= binary_write_depth_limit()) && (j.is_array() || j.is_object()))
+        {
+            write_cbor_iterative(j);
+            return;
+        }
+
         switch (j.type())
         {
             case value_t::null:
@@ -18430,39 +18436,10 @@ class binary_writer
 
             case value_t::array:
             {
-                // step 1: write control byte and the array size
-                const auto N = j.m_data.m_value.array->size();
-                if (N <= 0x17)
-                {
-                    write_number(static_cast<std::uint8_t>(0x80 + N));
-                }
-                else if (N <= (std::numeric_limits<std::uint8_t>::max)())
-                {
-                    oa->write_character(to_char_type(0x98));
-                    write_number(static_cast<std::uint8_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint16_t>::max)())
-                {
-                    oa->write_character(to_char_type(0x99));
-                    write_number(static_cast<std::uint16_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
-                {
-                    oa->write_character(to_char_type(0x9A));
-                    write_number(static_cast<std::uint32_t>(N));
-                }
-                // LCOV_EXCL_START
-                else if (N <= (std::numeric_limits<std::uint64_t>::max)())
-                {
-                    oa->write_character(to_char_type(0x9B));
-                    write_number(static_cast<std::uint64_t>(N));
-                }
-                // LCOV_EXCL_STOP
-
-                // step 2: write each element
+                write_cbor_array_prefix(j.m_data.m_value.array->size());
                 for (const auto& el : *j.m_data.m_value.array)
                 {
-                    write_cbor(el);
+                    write_cbor(el, depth + 1);
                 }
                 break;
             }
@@ -18532,40 +18509,11 @@ class binary_writer
 
             case value_t::object:
             {
-                // step 1: write control byte and the object size
-                const auto N = j.m_data.m_value.object->size();
-                if (N <= 0x17)
-                {
-                    write_number(static_cast<std::uint8_t>(0xA0 + N));
-                }
-                else if (N <= (std::numeric_limits<std::uint8_t>::max)())
-                {
-                    oa->write_character(to_char_type(0xB8));
-                    write_number(static_cast<std::uint8_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint16_t>::max)())
-                {
-                    oa->write_character(to_char_type(0xB9));
-                    write_number(static_cast<std::uint16_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
-                {
-                    oa->write_character(to_char_type(0xBA));
-                    write_number(static_cast<std::uint32_t>(N));
-                }
-                // LCOV_EXCL_START
-                else if (N <= (std::numeric_limits<std::uint64_t>::max)())
-                {
-                    oa->write_character(to_char_type(0xBB));
-                    write_number(static_cast<std::uint64_t>(N));
-                }
-                // LCOV_EXCL_STOP
-
-                // step 2: write each element
+                write_cbor_object_prefix(j.m_data.m_value.object->size());
                 for (const auto& el : *j.m_data.m_value.object)
                 {
                     write_cbor(el.first);
-                    write_cbor(el.second);
+                    write_cbor(el.second, depth + 1);
                 }
                 break;
             }
@@ -18579,8 +18527,14 @@ class binary_writer
     /*!
     @param[in] j  JSON value to serialize
     */
-    void write_msgpack(const BasicJsonType& j)
+    void write_msgpack(const BasicJsonType& j, const int depth = 0)
     {
+        if (JSON_HEDLEY_UNLIKELY(depth >= binary_write_depth_limit()) && (j.is_array() || j.is_object()))
+        {
+            write_msgpack_iterative(j);
+            return;
+        }
+
         switch (j.type())
         {
             case value_t::null: // nil
@@ -18750,30 +18704,10 @@ class binary_writer
 
             case value_t::array:
             {
-                // step 1: write control byte and the array size
-                const auto N = j.m_data.m_value.array->size();
-                if (N <= 15)
-                {
-                    // fixarray
-                    write_number(static_cast<std::uint8_t>(0x90 | N));
-                }
-                else if (N <= (std::numeric_limits<std::uint16_t>::max)())
-                {
-                    // array 16
-                    oa->write_character(to_char_type(0xDC));
-                    write_number(static_cast<std::uint16_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
-                {
-                    // array 32
-                    oa->write_character(to_char_type(0xDD));
-                    write_number(static_cast<std::uint32_t>(N));
-                }
-
-                // step 2: write each element
+                write_msgpack_array_prefix(j.m_data.m_value.array->size());
                 for (const auto& el : *j.m_data.m_value.array)
                 {
-                    write_msgpack(el);
+                    write_msgpack(el, depth + 1);
                 }
                 break;
             }
@@ -18863,31 +18797,11 @@ class binary_writer
 
             case value_t::object:
             {
-                // step 1: write control byte and the object size
-                const auto N = j.m_data.m_value.object->size();
-                if (N <= 15)
-                {
-                    // fixmap
-                    write_number(static_cast<std::uint8_t>(0x80 | (N & 0xF)));
-                }
-                else if (N <= (std::numeric_limits<std::uint16_t>::max)())
-                {
-                    // map 16
-                    oa->write_character(to_char_type(0xDE));
-                    write_number(static_cast<std::uint16_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
-                {
-                    // map 32
-                    oa->write_character(to_char_type(0xDF));
-                    write_number(static_cast<std::uint32_t>(N));
-                }
-
-                // step 2: write each element
+                write_msgpack_object_prefix(j.m_data.m_value.object->size());
                 for (const auto& el : *j.m_data.m_value.object)
                 {
                     write_msgpack(el.first);
-                    write_msgpack(el.second);
+                    write_msgpack(el.second, depth + 1);
                 }
                 break;
             }
@@ -18908,8 +18822,15 @@ class binary_writer
     */
     void write_ubjson(const BasicJsonType& j, const bool use_count,
                       const bool use_type, const bool add_prefix = true,
-                      const bool use_bjdata = false, const bjdata_version_t bjdata_version = bjdata_version_t::draft2)
+                      const bool use_bjdata = false, const bjdata_version_t bjdata_version = bjdata_version_t::draft2,
+                      const int depth = 0)
     {
+        if (JSON_HEDLEY_UNLIKELY(depth >= binary_write_depth_limit()) && (j.is_array() || j.is_object()))
+        {
+            write_ubjson_iterative(j, use_count, use_type, add_prefix, use_bjdata, bjdata_version);
+            return;
+        }
+
         const bool bjdata_draft3 = use_bjdata && bjdata_version == bjdata_version_t::draft3;
 
         switch (j.type())
@@ -19004,7 +18925,7 @@ class binary_writer
 
                 for (const auto& el : *j.m_data.m_value.array)
                 {
-                    write_ubjson(el, use_count, use_type, prefix_required, use_bjdata, bjdata_version);
+                    write_ubjson(el, use_count, use_type, prefix_required, use_bjdata, bjdata_version, depth + 1);
                 }
 
                 if (!use_count)
@@ -19112,7 +19033,7 @@ class binary_writer
                     oa->write_characters(
                         reinterpret_cast<const CharType*>(el.first.c_str()),
                         el.first.size());
-                    write_ubjson(el.second, use_count, use_type, prefix_required, use_bjdata, bjdata_version);
+                    write_ubjson(el.second, use_count, use_type, prefix_required, use_bjdata, bjdata_version, depth + 1);
                 }
 
                 if (!use_count)
@@ -19130,6 +19051,445 @@ class binary_writer
     }
 
   private:
+    /// Nesting levels written on the C++ call stack before switching to a heap stack.
+    static constexpr int binary_write_depth_limit() noexcept
+    {
+        return 128;
+    }
+
+    void write_cbor_array_prefix(const std::size_t N)
+    {
+        if (N <= 0x17)
+        {
+            write_number(static_cast<std::uint8_t>(0x80 + N));
+        }
+        else if (N <= (std::numeric_limits<std::uint8_t>::max)())
+        {
+            oa->write_character(to_char_type(0x98));
+            write_number(static_cast<std::uint8_t>(N));
+        }
+        else if (N <= (std::numeric_limits<std::uint16_t>::max)())
+        {
+            oa->write_character(to_char_type(0x99));
+            write_number(static_cast<std::uint16_t>(N));
+        }
+        else if (N <= (std::numeric_limits<std::uint32_t>::max)())
+        {
+            oa->write_character(to_char_type(0x9A));
+            write_number(static_cast<std::uint32_t>(N));
+        }
+        // LCOV_EXCL_START
+        else if (N <= (std::numeric_limits<std::uint64_t>::max)())
+        {
+            oa->write_character(to_char_type(0x9B));
+            write_number(static_cast<std::uint64_t>(N));
+        }
+        // LCOV_EXCL_STOP
+    }
+
+    void write_cbor_object_prefix(const std::size_t N)
+    {
+        if (N <= 0x17)
+        {
+            write_number(static_cast<std::uint8_t>(0xA0 + N));
+        }
+        else if (N <= (std::numeric_limits<std::uint8_t>::max)())
+        {
+            oa->write_character(to_char_type(0xB8));
+            write_number(static_cast<std::uint8_t>(N));
+        }
+        else if (N <= (std::numeric_limits<std::uint16_t>::max)())
+        {
+            oa->write_character(to_char_type(0xB9));
+            write_number(static_cast<std::uint16_t>(N));
+        }
+        else if (N <= (std::numeric_limits<std::uint32_t>::max)())
+        {
+            oa->write_character(to_char_type(0xBA));
+            write_number(static_cast<std::uint32_t>(N));
+        }
+        // LCOV_EXCL_START
+        else if (N <= (std::numeric_limits<std::uint64_t>::max)())
+        {
+            oa->write_character(to_char_type(0xBB));
+            write_number(static_cast<std::uint64_t>(N));
+        }
+        // LCOV_EXCL_STOP
+    }
+
+    void write_cbor_iterative(const BasicJsonType& root)
+    {
+        struct frame
+        {
+            const BasicJsonType* val;
+            bool started;
+            typename BasicJsonType::array_t::const_iterator arr_it;
+            typename BasicJsonType::array_t::const_iterator arr_end;
+            typename BasicJsonType::object_t::const_iterator obj_it;
+            typename BasicJsonType::object_t::const_iterator obj_end;
+
+            explicit frame(const BasicJsonType* v) : val(v), started(false) {}
+        };
+
+        std::vector<frame> stack;
+        stack.push_back(frame(&root));
+
+        while (!stack.empty())
+        {
+            if (!stack.back().started)
+            {
+                const BasicJsonType& j = *stack.back().val;
+                if (!j.is_array() && !j.is_object())
+                {
+                    write_cbor(j);
+                    stack.pop_back();
+                    continue;
+                }
+
+                if (j.is_array())
+                {
+                    write_cbor_array_prefix(j.m_data.m_value.array->size());
+                    stack.back().arr_it = j.m_data.m_value.array->begin();
+                    stack.back().arr_end = j.m_data.m_value.array->end();
+                }
+                else
+                {
+                    write_cbor_object_prefix(j.m_data.m_value.object->size());
+                    stack.back().obj_it = j.m_data.m_value.object->begin();
+                    stack.back().obj_end = j.m_data.m_value.object->end();
+                }
+                stack.back().started = true;
+                continue;
+            }
+
+            frame& f = stack.back();
+            const BasicJsonType& j = *f.val;
+            if (j.is_array())
+            {
+                if (f.arr_it == f.arr_end)
+                {
+                    stack.pop_back();
+                    continue;
+                }
+                const BasicJsonType* child = &(*f.arr_it);
+                ++f.arr_it;
+                stack.push_back(frame(child));
+            }
+            else
+            {
+                if (f.obj_it == f.obj_end)
+                {
+                    stack.pop_back();
+                    continue;
+                }
+                write_cbor(f.obj_it->first);
+                const BasicJsonType* child = &(f.obj_it->second);
+                ++f.obj_it;
+                stack.push_back(frame(child));
+            }
+        }
+    }
+
+    void write_msgpack_array_prefix(const std::size_t N)
+    {
+        if (N <= 15)
+        {
+            write_number(static_cast<std::uint8_t>(0x90 | N));
+        }
+        else if (N <= (std::numeric_limits<std::uint16_t>::max)())
+        {
+            oa->write_character(to_char_type(0xDC));
+            write_number(static_cast<std::uint16_t>(N));
+        }
+        else if (N <= (std::numeric_limits<std::uint32_t>::max)())
+        {
+            oa->write_character(to_char_type(0xDD));
+            write_number(static_cast<std::uint32_t>(N));
+        }
+    }
+
+    void write_msgpack_object_prefix(const std::size_t N)
+    {
+        if (N <= 15)
+        {
+            write_number(static_cast<std::uint8_t>(0x80 | (N & 0xF)));
+        }
+        else if (N <= (std::numeric_limits<std::uint16_t>::max)())
+        {
+            oa->write_character(to_char_type(0xDE));
+            write_number(static_cast<std::uint16_t>(N));
+        }
+        else if (N <= (std::numeric_limits<std::uint32_t>::max)())
+        {
+            oa->write_character(to_char_type(0xDF));
+            write_number(static_cast<std::uint32_t>(N));
+        }
+    }
+
+    void write_msgpack_iterative(const BasicJsonType& root)
+    {
+        struct frame
+        {
+            const BasicJsonType* val;
+            bool started;
+            typename BasicJsonType::array_t::const_iterator arr_it;
+            typename BasicJsonType::array_t::const_iterator arr_end;
+            typename BasicJsonType::object_t::const_iterator obj_it;
+            typename BasicJsonType::object_t::const_iterator obj_end;
+
+            explicit frame(const BasicJsonType* v) : val(v), started(false) {}
+        };
+
+        std::vector<frame> stack;
+        stack.push_back(frame(&root));
+
+        while (!stack.empty())
+        {
+            if (!stack.back().started)
+            {
+                const BasicJsonType& j = *stack.back().val;
+                if (!j.is_array() && !j.is_object())
+                {
+                    write_msgpack(j);
+                    stack.pop_back();
+                    continue;
+                }
+
+                if (j.is_array())
+                {
+                    write_msgpack_array_prefix(j.m_data.m_value.array->size());
+                    stack.back().arr_it = j.m_data.m_value.array->begin();
+                    stack.back().arr_end = j.m_data.m_value.array->end();
+                }
+                else
+                {
+                    write_msgpack_object_prefix(j.m_data.m_value.object->size());
+                    stack.back().obj_it = j.m_data.m_value.object->begin();
+                    stack.back().obj_end = j.m_data.m_value.object->end();
+                }
+                stack.back().started = true;
+                continue;
+            }
+
+            frame& f = stack.back();
+            const BasicJsonType& j = *f.val;
+            if (j.is_array())
+            {
+                if (f.arr_it == f.arr_end)
+                {
+                    stack.pop_back();
+                    continue;
+                }
+                const BasicJsonType* child = &(*f.arr_it);
+                ++f.arr_it;
+                stack.push_back(frame(child));
+            }
+            else
+            {
+                if (f.obj_it == f.obj_end)
+                {
+                    stack.pop_back();
+                    continue;
+                }
+                write_msgpack(f.obj_it->first);
+                const BasicJsonType* child = &(f.obj_it->second);
+                ++f.obj_it;
+                stack.push_back(frame(child));
+            }
+        }
+    }
+
+    bool write_ubjson_start_array(const BasicJsonType& j, const bool use_count, const bool use_type,
+                                  const bool add_prefix, const bool use_bjdata, bool& prefix_required)
+    {
+        prefix_required = true;
+        if (add_prefix)
+        {
+            oa->write_character(to_char_type('['));
+        }
+
+        if (use_type && !j.m_data.m_value.array->empty())
+        {
+            if (!use_count)
+            {
+                JSON_THROW(other_error::create(502, "use_type requires use_size = true", &j));
+            }
+            const CharType first_prefix = ubjson_prefix(j.front(), use_bjdata);
+            const bool same_prefix = std::all_of(j.begin() + 1, j.end(),
+                                                 [this, first_prefix, use_bjdata](const BasicJsonType & v)
+            {
+                return ubjson_prefix(v, use_bjdata) == first_prefix;
+            });
+
+            std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'};
+
+            if (same_prefix && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
+            {
+                prefix_required = false;
+                oa->write_character(to_char_type('$'));
+                oa->write_character(first_prefix);
+            }
+        }
+
+        if (use_count)
+        {
+            oa->write_character(to_char_type('#'));
+            write_number_with_ubjson_prefix(j.m_data.m_value.array->size(), true, use_bjdata);
+        }
+
+        return !use_count;
+    }
+
+    bool write_ubjson_start_object(const BasicJsonType& j, const bool use_count, const bool use_type,
+                                   const bool add_prefix, const bool use_bjdata, bool& prefix_required)
+    {
+        prefix_required = true;
+        if (add_prefix)
+        {
+            oa->write_character(to_char_type('{'));
+        }
+
+        if (use_type && !j.m_data.m_value.object->empty())
+        {
+            if (!use_count)
+            {
+                JSON_THROW(other_error::create(502, "use_type requires use_size = true", &j));
+            }
+            const CharType first_prefix = ubjson_prefix(j.front(), use_bjdata);
+            const bool same_prefix = std::all_of(j.begin(), j.end(),
+                                                 [this, first_prefix, use_bjdata](const BasicJsonType & v)
+            {
+                return ubjson_prefix(v, use_bjdata) == first_prefix;
+            });
+
+            std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'};
+
+            if (same_prefix && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
+            {
+                prefix_required = false;
+                oa->write_character(to_char_type('$'));
+                oa->write_character(first_prefix);
+            }
+        }
+
+        if (use_count)
+        {
+            oa->write_character(to_char_type('#'));
+            write_number_with_ubjson_prefix(j.m_data.m_value.object->size(), true, use_bjdata);
+        }
+
+        return !use_count;
+    }
+
+    void write_ubjson_iterative(const BasicJsonType& root, const bool use_count, const bool use_type,
+                                const bool add_prefix, const bool use_bjdata, const bjdata_version_t bjdata_version)
+    {
+        struct frame
+        {
+            const BasicJsonType* val;
+            bool add_prefix;
+            bool prefix_required;
+            bool started;
+            bool write_closer;
+            bool is_object;
+            typename BasicJsonType::array_t::const_iterator arr_it;
+            typename BasicJsonType::array_t::const_iterator arr_end;
+            typename BasicJsonType::object_t::const_iterator obj_it;
+            typename BasicJsonType::object_t::const_iterator obj_end;
+
+            frame(const BasicJsonType* v, const bool prefix)
+                : val(v), add_prefix(prefix), prefix_required(true), started(false), write_closer(false), is_object(false)
+            {}
+        };
+
+        std::vector<frame> stack;
+        stack.push_back(frame(&root, add_prefix));
+
+        while (!stack.empty())
+        {
+            if (!stack.back().started)
+            {
+                const BasicJsonType& j = *stack.back().val;
+                const bool this_prefix = stack.back().add_prefix;
+                if (!j.is_array() && !j.is_object())
+                {
+                    write_ubjson(j, use_count, use_type, this_prefix, use_bjdata, bjdata_version);
+                    stack.pop_back();
+                    continue;
+                }
+
+                if (j.is_object() && use_bjdata && j.m_data.m_value.object->size() == 3 &&
+                        j.m_data.m_value.object->find("_ArrayType_") != j.m_data.m_value.object->end() &&
+                        j.m_data.m_value.object->find("_ArraySize_") != j.m_data.m_value.object->end() &&
+                        j.m_data.m_value.object->find("_ArrayData_") != j.m_data.m_value.object->end())
+                {
+                    if (!write_bjdata_ndarray(*j.m_data.m_value.object, use_count, use_type, bjdata_version))
+                    {
+                        stack.pop_back();
+                        continue;
+                    }
+                }
+
+                bool prefix_required = true;
+                if (j.is_array())
+                {
+                    stack.back().write_closer = write_ubjson_start_array(j, use_count, use_type, this_prefix, use_bjdata, prefix_required);
+                    stack.back().is_object = false;
+                    stack.back().arr_it = j.m_data.m_value.array->begin();
+                    stack.back().arr_end = j.m_data.m_value.array->end();
+                }
+                else
+                {
+                    stack.back().write_closer = write_ubjson_start_object(j, use_count, use_type, this_prefix, use_bjdata, prefix_required);
+                    stack.back().is_object = true;
+                    stack.back().obj_it = j.m_data.m_value.object->begin();
+                    stack.back().obj_end = j.m_data.m_value.object->end();
+                }
+                stack.back().prefix_required = prefix_required;
+                stack.back().started = true;
+                continue;
+            }
+
+            frame& f = stack.back();
+            if (f.is_object)
+            {
+                if (f.obj_it == f.obj_end)
+                {
+                    if (f.write_closer)
+                    {
+                        oa->write_character(to_char_type('}'));
+                    }
+                    stack.pop_back();
+                    continue;
+                }
+                write_number_with_ubjson_prefix(f.obj_it->first.size(), true, use_bjdata);
+                oa->write_characters(
+                    reinterpret_cast<const CharType*>(f.obj_it->first.c_str()),
+                    f.obj_it->first.size());
+                const BasicJsonType* child = &(f.obj_it->second);
+                const bool child_prefix = f.prefix_required;
+                ++f.obj_it;
+                stack.push_back(frame(child, child_prefix));
+            }
+            else
+            {
+                if (f.arr_it == f.arr_end)
+                {
+                    if (f.write_closer)
+                    {
+                        oa->write_character(to_char_type(']'));
+                    }
+                    stack.pop_back();
+                    continue;
+                }
+                const BasicJsonType* child = &(*f.arr_it);
+                const bool child_prefix = f.prefix_required;
+                ++f.arr_it;
+                stack.push_back(frame(child, child_prefix));
+            }
+        }
+    }
+
     //////////
     // BSON //
     //////////
