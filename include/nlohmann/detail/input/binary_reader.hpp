@@ -337,8 +337,10 @@ class binary_reader
 
             if (element_type == 0) // end of the innermost document
             {
-                const container_frame& top = container_stack.back();
-                const bool is_object = top.is_object;
+                // a copy, not a reference: it must stay valid across the
+                // pop_back() below, which destroys the container_stack
+                // element it would otherwise alias
+                const container_frame top = container_stack.back();
 
                 if (JSON_HEDLEY_UNLIKELY(!check_bson_document_size(top.start_position, top.declared_size)))
                 {
@@ -346,7 +348,7 @@ class binary_reader
                 }
 
                 container_stack.pop_back();
-                if (JSON_HEDLEY_UNLIKELY(is_object ? !sax->end_object() : !sax->end_array()))
+                if (JSON_HEDLEY_UNLIKELY(top.is_object ? !sax->end_object() : !sax->end_array()))
                 {
                     return false;
                 }
