@@ -21412,15 +21412,31 @@ class serializer
     /*!
     @param[in] s  output stream to serialize to
     @param[in] ichar  indentation character to use
+    @param[in] pretty_print_  whether the output shall be pretty-printed
+    @param[in] ensure_ascii_ If @a ensure_ascii_ is true, all non-ASCII
+    characters in the output are escaped with `\uXXXX` sequences, and the
+    result consists of ASCII characters only.
+    @param[in] indent_step_  the indent level
     @param[in] error_handler_  how to react on decoding errors
+
+    None of @a pretty_print_, @a ensure_ascii_ and @a indent_step_ change over
+    the life of the serializer, so they are captured once here instead of
+    being threaded through every call to @ref dump, @ref dump_internal and
+    @ref dump_iteratively.
     */
     serializer(output_adapter_t<char> s, const char ichar,
+               const bool pretty_print_ = false,
+               const bool ensure_ascii_ = false,
+               const std::size_t indent_step_ = 0,
                error_handler_t error_handler_ = error_handler_t::strict)
         : o(std::move(s))
         , loc(std::localeconv())
         , thousands_sep(loc->thousands_sep == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->thousands_sep)))
         , decimal_point(loc->decimal_point == nullptr ? '\0' : std::char_traits<char>::to_char_type(* (loc->decimal_point)))
         , indent_char(ichar)
+        , pretty_print(pretty_print_)
+        , ensure_ascii(ensure_ascii_)
+        , indent_step(indent_step_)
         , error_handler(error_handler_)
     {}
 
@@ -21446,20 +21462,12 @@ class serializer
       byte array
 
     @param[in] val               value to serialize
-    @param[in] pretty_print      whether the output shall be pretty-printed
-    @param[in] ensure_ascii If @a ensure_ascii is true, all non-ASCII characters
-    in the output are escaped with `\uXXXX` sequences, and the result consists
-    of ASCII characters only.
-    @param[in] indent_step       the indent level
     @param[in] current_indent    the current indent level (only used internally)
     */
     void dump(const BasicJsonType& val,
-              const bool pretty_print,
-              const bool ensure_ascii,
-              const std::size_t indent_step,
               const std::size_t current_indent = 0)
     {
-        dump_internal(val, pretty_print, ensure_ascii, indent_step, current_indent);
+        dump_internal(val, current_indent);
         flush();
     }
 
@@ -21482,9 +21490,6 @@ class serializer
     @sa https://github.com/nlohmann/json/issues/5387
     */
     void dump_internal(const BasicJsonType& val,
-                       const bool pretty_print,
-                       const bool ensure_ascii,
-                       const std::size_t indent_step,
                        const std::size_t current_indent = 0,
                        const std::size_t depth = 0)
     {
@@ -21494,7 +21499,7 @@ class serializer
             {
                 if (JSON_HEDLEY_UNLIKELY(depth >= dump_depth_limit()))
                 {
-                    dump_iteratively(val, pretty_print, ensure_ascii, indent_step, current_indent);
+                    dump_iteratively(val, current_indent);
                     return;
                 }
 
@@ -21517,9 +21522,9 @@ class serializer
                     {
                         put_indent(new_indent);
                         put_char('"');
-                        dump_escaped(i->first, ensure_ascii);
+                        dump_escaped(i->first);
                         put_literal("\": ");
-                        dump_internal(i->second, true, ensure_ascii, indent_step, new_indent, depth + 1);
+                        dump_internal(i->second, new_indent, depth + 1);
                         put_literal(",\n");
                     }
 
@@ -21528,9 +21533,9 @@ class serializer
                     JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
                     put_indent(new_indent);
                     put_char('"');
-                    dump_escaped(i->first, ensure_ascii);
+                    dump_escaped(i->first);
                     put_literal("\": ");
-                    dump_internal(i->second, true, ensure_ascii, indent_step, new_indent, depth + 1);
+                    dump_internal(i->second, new_indent, depth + 1);
 
                     put_char('\n');
                     put_indent(current_indent);
@@ -21545,9 +21550,9 @@ class serializer
                     for (std::size_t cnt = 0; cnt < val.m_data.m_value.object->size() - 1; ++cnt, ++i)
                     {
                         put_char('"');
-                        dump_escaped(i->first, ensure_ascii);
+                        dump_escaped(i->first);
                         put_literal("\":");
-                        dump_internal(i->second, false, ensure_ascii, indent_step, current_indent, depth + 1);
+                        dump_internal(i->second, current_indent, depth + 1);
                         put_char(',');
                     }
 
@@ -21555,9 +21560,9 @@ class serializer
                     JSON_ASSERT(i != val.m_data.m_value.object->cend());
                     JSON_ASSERT(std::next(i) == val.m_data.m_value.object->cend());
                     put_char('"');
-                    dump_escaped(i->first, ensure_ascii);
+                    dump_escaped(i->first);
                     put_literal("\":");
-                    dump_internal(i->second, false, ensure_ascii, indent_step, current_indent, depth + 1);
+                    dump_internal(i->second, current_indent, depth + 1);
 
                     put_char('}');
                 }
@@ -21569,7 +21574,7 @@ class serializer
             {
                 if (JSON_HEDLEY_UNLIKELY(depth >= dump_depth_limit()))
                 {
-                    dump_iteratively(val, pretty_print, ensure_ascii, indent_step, current_indent);
+                    dump_iteratively(val, current_indent);
                     return;
                 }
 
@@ -21591,14 +21596,14 @@ class serializer
                             i != val.m_data.m_value.array->cend() - 1; ++i)
                     {
                         put_indent(new_indent);
-                        dump_internal(*i, true, ensure_ascii, indent_step, new_indent, depth + 1);
+                        dump_internal(*i, new_indent, depth + 1);
                         put_literal(",\n");
                     }
 
                     // last element
                     JSON_ASSERT(!val.m_data.m_value.array->empty());
                     put_indent(new_indent);
-                    dump_internal(val.m_data.m_value.array->back(), true, ensure_ascii, indent_step, new_indent, depth + 1);
+                    dump_internal(val.m_data.m_value.array->back(), new_indent, depth + 1);
 
                     put_char('\n');
                     put_indent(current_indent);
@@ -21612,13 +21617,13 @@ class serializer
                     for (auto i = val.m_data.m_value.array->cbegin();
                             i != val.m_data.m_value.array->cend() - 1; ++i)
                     {
-                        dump_internal(*i, false, ensure_ascii, indent_step, current_indent, depth + 1);
+                        dump_internal(*i, current_indent, depth + 1);
                         put_char(',');
                     }
 
                     // last element
                     JSON_ASSERT(!val.m_data.m_value.array->empty());
-                    dump_internal(val.m_data.m_value.array->back(), false, ensure_ascii, indent_step, current_indent, depth + 1);
+                    dump_internal(val.m_data.m_value.array->back(), current_indent, depth + 1);
 
                     put_char(']');
                 }
@@ -21629,7 +21634,7 @@ class serializer
             case value_t::string:
             {
                 put_char('"');
-                dump_escaped(*val.m_data.m_value.string, ensure_ascii);
+                dump_escaped(*val.m_data.m_value.string);
                 put_char('"');
                 return;
             }
@@ -21769,9 +21774,6 @@ class serializer
     object-heavy documents than letting the compiler drive the descent.
     */
     void dump_iteratively(const BasicJsonType& val,
-                          const bool pretty_print,
-                          const bool ensure_ascii,
-                          const std::size_t indent_step,
                           const std::size_t current_indent = 0)
     {
         // Scalars, empty containers and binary values are written by dump_value
@@ -21779,7 +21781,7 @@ class serializer
         // elements is ever pushed.
         std::vector<dump_frame> stack;
 
-        dump_value(val, pretty_print, ensure_ascii, indent_step, current_indent, stack);
+        dump_value(val, current_indent, stack);
 
         while (!stack.empty())
         {
@@ -21822,7 +21824,7 @@ class serializer
                 }
 
                 put_char('"');
-                dump_escaped(frame.object_it->first, ensure_ascii);
+                dump_escaped(frame.object_it->first);
 
                 if (pretty_print)
                 {
@@ -21839,7 +21841,7 @@ class serializer
                 // read everything needed from the frame before this: entering a
                 // container pushes another one and can move them all
                 const std::size_t element_indent = frame.child_indent;
-                dump_value(element, pretty_print, ensure_ascii, indent_step, element_indent, stack);
+                dump_value(element, element_indent, stack);
             }
             else
             {
@@ -21880,7 +21882,7 @@ class serializer
 
                 // see above
                 const std::size_t element_indent = frame.child_indent;
-                dump_value(element, pretty_print, ensure_ascii, indent_step, element_indent, stack);
+                dump_value(element, element_indent, stack);
             }
         }
     }
@@ -21919,9 +21921,6 @@ class serializer
     out here in full.
     */
     void dump_value(const BasicJsonType& val,
-                    const bool pretty_print,
-                    const bool ensure_ascii,
-                    const std::size_t indent_step,
                     const std::size_t current_indent,
                     std::vector<dump_frame>& stack)
     {
@@ -21980,7 +21979,7 @@ class serializer
             case value_t::string:
             {
                 put_char('"');
-                dump_escaped(*val.m_data.m_value.string, ensure_ascii);
+                dump_escaped(*val.m_data.m_value.string);
                 put_char('"');
                 return;
             }
@@ -22128,12 +22127,10 @@ class serializer
     representation. The escaped string is written to output stream @a o.
 
     @param[in] s  the string to escape
-    @param[in] ensure_ascii  whether to escape non-ASCII characters with
-                             \uXXXX sequences
 
     @complexity Linear in the length of string @a s.
     */
-    void dump_escaped(const string_t& s, const bool ensure_ascii)
+    void dump_escaped(const string_t& s)
     {
         // dispatch once here rather than test the flag inside the loop: it does
         // not change while a string is written, and folding it lets each of the
@@ -23037,6 +23034,15 @@ class serializer
 
     /// the indentation character
     const char indent_char;
+
+    /// whether to pretty-print the output
+    const bool pretty_print;
+
+    /// whether to escape non-ASCII characters with \uXXXX sequences
+    const bool ensure_ascii;
+
+    /// the indent level
+    const std::size_t indent_step;
 
     /// error_handler how to react on decoding errors
     const error_handler_t error_handler;
@@ -24724,15 +24730,18 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                   const error_handler_t error_handler = error_handler_t::strict) const
     {
         string_t result;
-        serializer s(detail::output_adapter<char, string_t>(result), indent_char, error_handler);
 
         if (indent >= 0)
         {
-            s.dump(*this, true, ensure_ascii, static_cast<std::size_t>(indent));
+            serializer s(detail::output_adapter<char, string_t>(result), indent_char,
+                         true, ensure_ascii, static_cast<std::size_t>(indent), error_handler);
+            s.dump(*this);
         }
         else
         {
-            s.dump(*this, false, ensure_ascii, 0);
+            serializer s(detail::output_adapter<char, string_t>(result), indent_char,
+                         false, ensure_ascii, 0, error_handler);
+            s.dump(*this);
         }
 
         return result;
@@ -27461,8 +27470,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         o.width(0);
 
         // do the actual serialization
-        serializer s(detail::output_adapter<char>(o), o.fill());
-        s.dump(j, pretty_print, false, static_cast<unsigned int>(indentation));
+        serializer s(detail::output_adapter<char>(o), o.fill(),
+                     pretty_print, false, static_cast<std::size_t>(indentation));
+        s.dump(j);
         return o;
     }
 
