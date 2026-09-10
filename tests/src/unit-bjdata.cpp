@@ -2776,6 +2776,53 @@ TEST_CASE("BJData")
                 CHECK(out_num.at(0) == '{');
                 CHECK(json::from_bjdata(out_num) == j_num);
             }
+
+            SECTION("ndarray with out-of-range _ArrayData_ elements stays as object")
+            {
+                // each element is cast to the (possibly narrower) C++ type
+                // named by _ArrayType_ before being written; a value that
+                // does not fit that type would silently wrap instead of
+                // being reported, so such an object falls back to a plain
+                // object encoding that still round-trips (see GitHub issue #5403)
+
+                // an unsigned element that does not fit uint8
+                json const j_uint8 = json({{"_ArrayType_", "uint8"}, {"_ArraySize_", {2}}, {"_ArrayData_", {1, 256}}});
+                const auto out_uint8 = json::to_bjdata(j_uint8);
+                CHECK(out_uint8.at(0) == '{');
+                CHECK(json::from_bjdata(out_uint8) == j_uint8);
+
+                // a signed element that does not fit int8
+                json const j_int8 = json({{"_ArrayType_", "int8"}, {"_ArraySize_", {2}}, {"_ArrayData_", {1, 200}}});
+                const auto out_int8 = json::to_bjdata(j_int8);
+                CHECK(out_int8.at(0) == '{');
+                CHECK(json::from_bjdata(out_int8) == j_int8);
+
+                // a negative element is likewise out of range for an
+                // unsigned _ArrayType_
+                json const j_uint16_neg = json({{"_ArrayType_", "uint16"}, {"_ArraySize_", {2}}, {"_ArrayData_", {1, -1}}});
+                const auto out_uint16_neg = json::to_bjdata(j_uint16_neg);
+                CHECK(out_uint16_neg.at(0) == '{');
+                CHECK(json::from_bjdata(out_uint16_neg) == j_uint16_neg);
+
+                // a double element that overflows to infinity when narrowed
+                // to the "single" (float) precision named by _ArrayType_
+                json const j_single = json({{"_ArrayType_", "single"}, {"_ArraySize_", {2}}, {"_ArrayData_", {1.5, 1e40}}});
+                const auto out_single = json::to_bjdata(j_single);
+                CHECK(out_single.at(0) == '{');
+                CHECK(json::from_bjdata(out_single) == j_single);
+
+                // in-range boundary values still use the compact ndarray encoding
+                json const j_uint8_ok = json({{"_ArrayType_", "uint8"}, {"_ArraySize_", {2}}, {"_ArrayData_", {0, 255}}});
+                CHECK(json::to_bjdata(j_uint8_ok) == std::vector<uint8_t>({'[', '$', 'U', '#', '[', 'i', 2, ']', 0, 255}));
+
+                json const j_int8_ok = json({{"_ArrayType_", "int8"}, {"_ArraySize_", {2}}, {"_ArrayData_", {-128, 127}}});
+                CHECK(json::to_bjdata(j_int8_ok) == std::vector<uint8_t>({'[', '$', 'i', '#', '[', 'i', 2, ']', 0x80, 0x7F}));
+
+                json const j_single_ok = json({{"_ArrayType_", "single"}, {"_ArraySize_", {1}}, {"_ArrayData_", {1.5}}});
+                const auto out_single_ok = json::to_bjdata(j_single_ok);
+                CHECK(out_single_ok.at(0) == '[');
+                CHECK(json::from_bjdata(out_single_ok) == json({1.5f}));
+            }
         }
     }
 
