@@ -1560,6 +1560,14 @@ TEST_CASE("issue #5338 - truncated CBOR tagged binary subtype is rejected")
     }
 }
 
+TEST_CASE("issue #5392 - to_cbor of a nested array does not overflow")
+{
+    const json j = json::parse(std::string(200, '[') + "1" + std::string(200, ']'));
+    CHECK(json::from_cbor(json::to_cbor(j)) == j);
+    CHECK(json::from_msgpack(json::to_msgpack(j)) == j);
+    CHECK(json::from_ubjson(json::to_ubjson(j)) == j);
+}
+
 TEST_CASE("issue #5402 - update(merge_objects=true) overwrites a primitive with an object")
 {
     json t = {{"k", 1}};
