@@ -910,7 +910,7 @@ class json_pointer
                         {
                             const auto index = i - 1;
                             stack.emplace_back(detail::concat<string_t>(current.reference_string, '/', std::to_string(index)),
-                                                &current.value->m_data.m_value.array->operator[](index));
+                                               &current.value->m_data.m_value.array->operator[](index));
                         }
                     }
                     break;
