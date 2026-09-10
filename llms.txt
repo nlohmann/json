@@ -250,6 +250,7 @@ JSON for Modern C++ is a C++11 header-only library implementing a JSON value typ
 - [JSON_USE_GLOBAL_UDLS](https://json.nlohmann.me/api/macros/json_use_global_udls/index.md)
 - [JSON_USE_IMPLICIT_CONVERSIONS](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md)
 - [JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON](https://json.nlohmann.me/api/macros/json_use_legacy_discarded_value_comparison/index.md)
+- [JSON_USE_SIMDUTF](https://json.nlohmann.me/api/macros/json_use_simdutf/index.md)
 - [NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md)
 - [NLOHMANN_DEFINE_TYPE_INTRUSIVE, NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE](https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/index.md)
 - [NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE](https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/index.md)

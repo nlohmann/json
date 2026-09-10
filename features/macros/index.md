@@ -110,6 +110,12 @@ When defined to `1`, the library restores the legacy behavior in which a discard
 
 See [full documentation of `JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](https://json.nlohmann.me/api/macros/json_use_legacy_discarded_value_comparison/index.md).
 
+## `JSON_USE_SIMDUTF`
+
+When defined, UTF-8 validation of JSON strings read from contiguous byte input is delegated to the [simdutf](https://github.com/simdutf/simdutf) library instead of the built-in scalar validator. This is an opt-in external dependency and is not defined by default.
+
+See [full documentation of `JSON_USE_SIMDUTF`](https://json.nlohmann.me/api/macros/json_use_simdutf/index.md).
+
 ## `NLOHMANN_DEFINE_TYPE_*(...)`, `NLOHMANN_DEFINE_DERIVED_TYPE_*(...)`
 
 The library defines 12 macros to simplify the serialization/deserialization of types. See the page on [arbitrary type conversion](https://json.nlohmann.me/features/arbitrary_types/#simplify-your-life-with-macros) for a detailed discussion.
