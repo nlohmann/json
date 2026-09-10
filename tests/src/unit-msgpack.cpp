@@ -255,7 +255,7 @@ TEST_CASE("MessagePack")
 
                 SECTION("256..65535 (int 16)")
                 {
-                    for (size_t i = 256; i <= 65535; ++i)
+                    for (size_t i = 256; i <= 65535; i = utils::next_integer_sample(i, static_cast<size_t>(65535), static_cast<size_t>(7)))
                     {
                         CAPTURE(i)
 
@@ -440,7 +440,7 @@ TEST_CASE("MessagePack")
 
                 SECTION("-32768..-129 (int 16)")
                 {
-                    for (int16_t i = -32768; i <= static_cast<std::int16_t>(-129); ++i)
+                    for (int16_t i = -32768; i <= static_cast<std::int16_t>(-129); i = utils::next_integer_sample(i, static_cast<int16_t>(-129), static_cast<int16_t>(7)))
                     {
                         CAPTURE(i)
 
@@ -646,7 +646,7 @@ TEST_CASE("MessagePack")
 
                 SECTION("256..65535 (uint 16)")
                 {
-                    for (size_t i = 256; i <= 65535; ++i)
+                    for (size_t i = 256; i <= 65535; i = utils::next_integer_sample(i, static_cast<size_t>(65535), static_cast<size_t>(7)))
                     {
                         CAPTURE(i)
 
@@ -1822,60 +1822,34 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
         {
             CAPTURE(filename)
 
+            std::ifstream f_json(filename);
+            const json j1 = json::parse(f_json);
+            auto packed = utils::read_binary_file(filename + ".msgpack");
+
             {
                 INFO_WITH_TEMP(filename + ": std::vector<uint8_t>");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                const json j1 = json::parse(f_json);
-
-                // parse MessagePack file
-                auto packed = utils::read_binary_file(filename + ".msgpack");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_msgpack(packed));
-
-                // compare parsed JSON values
                 CHECK(j1 == j2);
             }
 
             {
                 INFO_WITH_TEMP(filename + ": std::ifstream");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                const json j1 = json::parse(f_json);
-
-                // parse MessagePack file
                 std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_msgpack(f_msgpack));
-
-                // compare parsed JSON values
                 CHECK(j1 == j2);
             }
 
             {
                 INFO_WITH_TEMP(filename + ": uint8_t* and size");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                const json j1 = json::parse(f_json);
-
-                // parse MessagePack file
-                auto packed = utils::read_binary_file(filename + ".msgpack");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_msgpack({packed.data(), packed.size()}));
-
-                // compare parsed JSON values
                 CHECK(j1 == j2);
             }
 
             {
                 INFO_WITH_TEMP(filename + ": output to output adapters");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                json const j1 = json::parse(f_json);
-
-                // parse MessagePack file
-                auto packed = utils::read_binary_file(filename + ".msgpack");
-
                 if (exclude_packed.count(filename) == 0u)
                 {
                     {

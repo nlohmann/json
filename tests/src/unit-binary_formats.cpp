@@ -14,7 +14,7 @@ using nlohmann::json;
 #include <fstream>
 #include "make_test_data_available.hpp"
 
-TEST_CASE("Binary Formats" * doctest::skip())
+TEST_CASE("Binary Formats")
 {
     SECTION("canada.json")
     {
@@ -133,45 +133,6 @@ TEST_CASE("Binary Formats" * doctest::skip())
         CHECK((100.0 * double(ubjson_3_size) / double(json_size)) == Approx(84.963));
     }
 
-    SECTION("jeopardy.json")
-    {
-        const auto* filename = TEST_DATA_DIRECTORY "/jeopardy/jeopardy.json";
-        json j = json::parse(std::ifstream(filename));
-
-        const auto json_size = j.dump().size();
-        const auto bjdata_1_size = json::to_bjdata(j).size();
-        const auto bjdata_2_size = json::to_bjdata(j, true).size();
-        const auto bjdata_3_size = json::to_bjdata(j, true, true).size();
-        const auto bson_size = json::to_bson({{"", j}}).size(); // wrap array in object for BSON
-        const auto cbor_size = json::to_cbor(j).size();
-        const auto msgpack_size = json::to_msgpack(j).size();
-        const auto ubjson_1_size = json::to_ubjson(j).size();
-        const auto ubjson_2_size = json::to_ubjson(j, true).size();
-        const auto ubjson_3_size = json::to_ubjson(j, true, true).size();
-
-        CHECK(json_size == 52508728);
-        CHECK(bjdata_1_size == 50710965);
-        CHECK(bjdata_2_size == 51144830);
-        CHECK(bjdata_3_size == 51144830);
-        CHECK(bson_size == 56008520);
-        CHECK(cbor_size == 46187320);
-        CHECK(msgpack_size == 46158575);
-        CHECK(ubjson_1_size == 50710965);
-        CHECK(ubjson_2_size == 51144830);
-        CHECK(ubjson_3_size == 49861422);
-
-        CHECK((100.0 * double(json_size) / double(json_size)) == Approx(100.0));
-        CHECK((100.0 * double(bjdata_1_size) / double(json_size)) == Approx(96.576));
-        CHECK((100.0 * double(bjdata_2_size) / double(json_size)) == Approx(97.402));
-        CHECK((100.0 * double(bjdata_3_size) / double(json_size)) == Approx(97.402));
-        CHECK((100.0 * double(bson_size) / double(json_size)) == Approx(106.665));
-        CHECK((100.0 * double(cbor_size) / double(json_size)) == Approx(87.961));
-        CHECK((100.0 * double(msgpack_size) / double(json_size)) == Approx(87.906));
-        CHECK((100.0 * double(ubjson_1_size) / double(json_size)) == Approx(96.576));
-        CHECK((100.0 * double(ubjson_2_size) / double(json_size)) == Approx(97.402));
-        CHECK((100.0 * double(ubjson_3_size) / double(json_size)) == Approx(94.958));
-    }
-
     SECTION("sample.json")
     {
         const auto* filename = TEST_DATA_DIRECTORY "/json_testsuite/sample.json";
@@ -208,4 +169,43 @@ TEST_CASE("Binary Formats" * doctest::skip())
         CHECK((100.0 * double(ubjson_2_size) / double(json_size)) == Approx(89.264));
         CHECK((100.0 * double(ubjson_3_size) / double(json_size)) == Approx(89.450));
     }
+}
+
+TEST_CASE("Binary Formats jeopardy.json" * doctest::skip())
+{
+    const auto* filename = TEST_DATA_DIRECTORY "/jeopardy/jeopardy.json";
+    json j = json::parse(std::ifstream(filename));
+
+    const auto json_size = j.dump().size();
+    const auto bjdata_1_size = json::to_bjdata(j).size();
+    const auto bjdata_2_size = json::to_bjdata(j, true).size();
+    const auto bjdata_3_size = json::to_bjdata(j, true, true).size();
+    const auto bson_size = json::to_bson({{"", j}}).size(); // wrap array in object for BSON
+    const auto cbor_size = json::to_cbor(j).size();
+    const auto msgpack_size = json::to_msgpack(j).size();
+    const auto ubjson_1_size = json::to_ubjson(j).size();
+    const auto ubjson_2_size = json::to_ubjson(j, true).size();
+    const auto ubjson_3_size = json::to_ubjson(j, true, true).size();
+
+    CHECK(json_size == 52508728);
+    CHECK(bjdata_1_size == 50710965);
+    CHECK(bjdata_2_size == 51144830);
+    CHECK(bjdata_3_size == 51144830);
+    CHECK(bson_size == 56008520);
+    CHECK(cbor_size == 46187320);
+    CHECK(msgpack_size == 46158575);
+    CHECK(ubjson_1_size == 50710965);
+    CHECK(ubjson_2_size == 51144830);
+    CHECK(ubjson_3_size == 49861422);
+
+    CHECK((100.0 * double(json_size) / double(json_size)) == Approx(100.0));
+    CHECK((100.0 * double(bjdata_1_size) / double(json_size)) == Approx(96.576));
+    CHECK((100.0 * double(bjdata_2_size) / double(json_size)) == Approx(97.402));
+    CHECK((100.0 * double(bjdata_3_size) / double(json_size)) == Approx(97.402));
+    CHECK((100.0 * double(bson_size) / double(json_size)) == Approx(106.665));
+    CHECK((100.0 * double(cbor_size) / double(json_size)) == Approx(87.961));
+    CHECK((100.0 * double(msgpack_size) / double(json_size)) == Approx(87.906));
+    CHECK((100.0 * double(ubjson_1_size) / double(json_size)) == Approx(96.576));
+    CHECK((100.0 * double(ubjson_2_size) / double(json_size)) == Approx(97.402));
+    CHECK((100.0 * double(ubjson_3_size) / double(json_size)) == Approx(94.958));
 }

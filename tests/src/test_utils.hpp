@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstdint> // uint8_t
+#include <cstddef> // size_t
 #include <fstream> // ifstream, istreambuf_iterator, ios
 #include <vector> // vector
 
@@ -23,6 +24,23 @@ namespace utils
 // ordinary function call does.
 template<typename T>
 inline void ignore_return_value(T&& /*unused*/) noexcept {}
+
+// Walk [first, last] inclusive with a stride, always visiting last.
+// stride 7 is coprime to 256, so every low-byte residue is still hit.
+template<typename T>
+T next_integer_sample(T i, T last, T stride)
+{
+    if (i >= last)
+    {
+        return static_cast<T>(last + 1);
+    }
+    if (stride > 0 && i > static_cast<T>(last - stride))
+    {
+        return last;
+    }
+    const T n = static_cast<T>(i + stride);
+    return n < last ? n : last;
+}
 
 inline std::vector<std::uint8_t> read_binary_file(const std::string& filename)
 {

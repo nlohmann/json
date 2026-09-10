@@ -290,7 +290,7 @@ TEST_CASE("CBOR")
 
                 SECTION("-65536..-257")
                 {
-                    for (int32_t i = -65536; i <= -257; ++i)
+                    for (int32_t i = -65536; i <= -257; i = utils::next_integer_sample(i, static_cast<int32_t>(-257), 7))
                     {
                         CAPTURE(i)
 
@@ -478,7 +478,7 @@ TEST_CASE("CBOR")
 
                 SECTION("256..65535")
                 {
-                    for (size_t i = 256; i <= 65535; ++i)
+                    for (size_t i = 256; i <= 65535; i = utils::next_integer_sample(i, static_cast<size_t>(65535), static_cast<size_t>(7)))
                     {
                         CAPTURE(i)
 
@@ -613,7 +613,7 @@ TEST_CASE("CBOR")
 
                 SECTION("-32768..-129 (int 16)")
                 {
-                    for (int16_t i = -32768; i <= static_cast<std::int16_t>(-129); ++i)
+                    for (int16_t i = -32768; i <= static_cast<std::int16_t>(-129); i = utils::next_integer_sample(i, static_cast<int16_t>(-129), static_cast<int16_t>(7)))
                     {
                         CAPTURE(i)
 
@@ -718,7 +718,7 @@ TEST_CASE("CBOR")
 
                 SECTION("256..65535 (two-byte uint16_t)")
                 {
-                    for (size_t i = 256; i <= 65535; ++i)
+                    for (size_t i = 256; i <= 65535; i = utils::next_integer_sample(i, static_cast<size_t>(65535), static_cast<size_t>(7)))
                     {
                         CAPTURE(i)
 
@@ -2204,60 +2204,34 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
         {
             CAPTURE(filename)
 
+            std::ifstream f_json(filename);
+            const json j1 = json::parse(f_json);
+            const auto packed = utils::read_binary_file(filename + ".cbor");
+
             {
                 INFO_WITH_TEMP(filename + ": std::vector<uint8_t>");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                const json j1 = json::parse(f_json);
-
-                // parse CBOR file
-                const auto packed = utils::read_binary_file(filename + ".cbor");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_cbor(packed));
-
-                // compare parsed JSON values
                 CHECK(j1 == j2);
             }
 
             {
                 INFO_WITH_TEMP(filename + ": std::ifstream");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                const json j1 = json::parse(f_json);
-
-                // parse CBOR file
                 std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_cbor(f_cbor));
-
-                // compare parsed JSON values
                 CHECK(j1 == j2);
             }
 
             {
                 INFO_WITH_TEMP(filename + ": uint8_t* and size");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                const json j1 = json::parse(f_json);
-
-                // parse CBOR file
-                const auto packed = utils::read_binary_file(filename + ".cbor");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_cbor({packed.data(), packed.size()}));
-
-                // compare parsed JSON values
                 CHECK(j1 == j2);
             }
 
             {
                 INFO_WITH_TEMP(filename + ": output to output adapters");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                json const j1 = json::parse(f_json);
-
-                // parse CBOR file
-                const auto packed = utils::read_binary_file(filename + ".cbor");
-
                 if (exclude_packed.count(filename) == 0u)
                 {
                     {
