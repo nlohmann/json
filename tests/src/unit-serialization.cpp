@@ -469,7 +469,7 @@ TEST_CASE("serialization of strings (bulk fast path)")
     SECTION("invalid UTF-8 handling is unaffected by the fast path")
     {
         const json j = std::string("valid\xff" "more");
-        CHECK_THROWS_WITH_AS(j.dump(), "[json.exception.type_error.316] invalid UTF-8 byte at index 5: 0xFF", json::type_error&);
+        CHECK_THROWS_WITH_AS(utils::ignore_return_value(j.dump()), "[json.exception.type_error.316] invalid UTF-8 byte at index 5: 0xFF", json::type_error&);
         CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"valid\xef\xbf\xbd" "more\"");
         CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == "\"valid\\ufffdmore\"");
         CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == "\"validmore\"");
