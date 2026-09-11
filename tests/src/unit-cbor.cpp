@@ -2493,10 +2493,8 @@ TEST_CASE("examples from RFC 8949 Appendix A")
     {
         const auto packed = utils::read_binary_file(TEST_DATA_DIRECTORY "/binary_data/cbor_binary.cbor");
         json j;
-        CHECK_NOTHROW(j = json::from_cbor(packed));
-
-        const auto expected = utils::read_binary_file(TEST_DATA_DIRECTORY "/binary_data/cbor_binary.out");
-        CHECK(j == json::binary(expected));
+        // The fixture ends with nested indefinite-length byte strings, which RFC 8949 Section 3.2.3 forbids.
+        CHECK_THROWS_WITH_AS(j = json::from_cbor(packed), "[json.exception.parse_error.113] parse error at byte 513: syntax error while parsing CBOR binary: indefinite-length binary array is not allowed inside indefinite-length binary array; last byte: 0x5F", json::parse_error&);
 
         // 0xd8
         CHECK(json::to_cbor(json::binary(std::vector<uint8_t> {}, 0x42)) == std::vector<uint8_t> {0xd8, 0x42, 0x40});
