@@ -2035,6 +2035,58 @@ TEST_CASE("CBOR definite length equal to the indefinite-length sentinel")
     }
 }
 
+TEST_CASE("CBOR indefinite-length strings do not recurse per chunk")
+{
+    // Reading an indefinite-length string or byte array used to call itself
+    // once per chunk, so a payload of repeated 0x7F (or 0x5F) bytes exhausted
+    // the call stack before any of the input was rejected. The open levels are
+    // counted now, and the levels below prove the reader still reads the same
+    // values and reports the same errors at the same byte offsets.
+    json _;
+
+    SECTION("many open levels are reported, not crashed on")
+    {
+        const std::vector<uint8_t> input(200000, 0x7F);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.parse_error.110] parse error at byte 200001: syntax error while parsing CBOR string: unexpected end of input", json::parse_error&);
+        CHECK(json::from_cbor(input, true, false).is_discarded());
+    }
+
+    SECTION("many open levels are reported, not crashed on (binary)")
+    {
+        const std::vector<uint8_t> input(200000, 0x5F);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.parse_error.110] parse error at byte 200001: syntax error while parsing CBOR binary: unexpected end of input", json::parse_error&);
+        CHECK(json::from_cbor(input, true, false).is_discarded());
+    }
+
+    SECTION("chunks are still concatenated")
+    {
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x7F, 0xFF})) == json(""));
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x7F, 0x61, 0x61, 0xFF})) == json("a"));
+        // nested indefinite-length strings are concatenated across levels
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x7F, 0x7F, 0x61, 0x61, 0xFF, 0x61, 0x62, 0xFF})) == json("ab"));
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x7F, 0x7F, 0x7F, 0x61, 0x7A, 0xFF, 0xFF, 0xFF})) == json("z"));
+        CHECK(json::from_cbor(std::vector<uint8_t>({0xA1, 0x7F, 0x61, 0x61, 0xFF, 0x01})) == json({{"a", 1}}));
+    }
+
+    SECTION("chunks are still concatenated (binary)")
+    {
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x5F, 0x41, 0x61, 0xFF})) == json::binary({0x61}));
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x5F, 0x5F, 0x41, 0x61, 0xFF, 0x41, 0x62, 0xFF})) == json::binary({0x61, 0x62}));
+    }
+
+    SECTION("a chunk that is not a string is still rejected")
+    {
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x7F, 0x7F, 0x00})), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x00", json::parse_error&);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x5F, 0x5F, 0x00})), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing CBOR binary: expected length specification (0x40-0x5B) or indefinite binary array type (0x5F); last byte: 0x00", json::parse_error&);
+    }
+
+    SECTION("a break marker outside an indefinite-length string is not a string")
+    {
+        // 0xFF only closes a string that was opened; on its own it is not one
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xA1, 0xFF, 0x01})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0xFF", json::parse_error&);
+    }
+}
+
 TEST_CASE("CBOR roundtrips" * doctest::skip())
 {
     SECTION("input from flynn")
