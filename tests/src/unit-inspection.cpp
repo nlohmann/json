@@ -245,6 +245,71 @@ TEST_CASE("object inspection")
             CHECK(binary.dump(1024).size() == 2086);
         }
 
+        SECTION("indentation and resize")
+        {
+            SECTION("array")
+            {
+                const auto j_array = json::parse("[[[[[[]]]]]]");
+                // check right size after indentation triggering a resize
+                CHECK(j_array.dump(1024).size() == 25622);
+                // check if right indentation symbol is used
+                CHECK(j_array.dump(1024, '\t')[4096] == '\t');
+                // check resize is large enough
+                CHECK(j_array.dump(10000).size() == 250022);
+            }
+
+            SECTION("object")
+            {
+                const auto j_object = json::parse(R"({"":{"":{"":{"":{"":{}}}}}})");
+                // check right size after indentation triggering a resize
+                CHECK(j_object.dump(1024).size() == 25642);
+                // check if right indentation symbol is used
+                CHECK(j_object.dump(1024, '\t')[4096] == '\t');
+                // check resize is large enough
+                CHECK(j_object.dump(10000).size() == 250042);
+            }
+
+            SECTION("binary")
+            {
+                const auto j_binary = json::binary({1, 2, 3}, 128);
+                // check right size after indentation triggering a resize
+                CHECK(j_binary.dump(1024).size() == 2086);
+                CHECK(j_binary.dump(1024, '\t')[1024] == '\t');
+                // check resize is large enough
+                CHECK(j_binary.dump(10000).size() == 20038);
+            }
+
+            SECTION("full-width run integrity")
+            {
+                // the size/single-index checks above can't catch a corrupted byte
+                // in the middle of an indentation run, so also verify each level's
+                // indentation is an intact, uninterrupted run of the indent character
+                const std::string::size_type width = 1100;
+
+                SECTION("object")
+                {
+                    const json j_object = {{"outer", {{"inner", 1}}}};
+                    const std::string s = j_object.dump(static_cast<int>(width));
+                    CHECK(s.find('\n' + std::string(width, ' ') + "\"outer\"") != std::string::npos);
+                    CHECK(s.find('\n' + std::string(2 * width, ' ') + "\"inner\"") != std::string::npos);
+                }
+
+                SECTION("array")
+                {
+                    const json j_array = json::array({json::array({1})});
+                    const std::string s = j_array.dump(static_cast<int>(width));
+                    CHECK(s.find('\n' + std::string(2 * width, ' ') + '1') != std::string::npos);
+                }
+
+                SECTION("binary")
+                {
+                    const json j_binary = json::binary({1, 2, 3});
+                    const std::string s = j_binary.dump(static_cast<int>(width));
+                    CHECK(s.find('\n' + std::string(width, ' ') + "\"bytes\"") != std::string::npos);
+                }
+            }
+        }
+
         SECTION("dump and floating-point numbers")
         {
             auto s = json(42.23).dump();
