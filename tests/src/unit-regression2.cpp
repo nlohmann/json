@@ -44,6 +44,22 @@ using ordered_json = nlohmann::ordered_json;
     #elif __has_include(<experimental/optional>)
         #include <experimental/optional>
     #endif
+
+    /////////////////////////////////////////////////////////////////////
+    // for #4804
+    /////////////////////////////////////////////////////////////////////
+    using json_4804 = nlohmann::basic_json<std::map,        // ObjectType
+    std::vector,     // ArrayType
+    std::string,     // StringType
+    bool,            // BooleanType
+    std::int64_t,    // NumberIntegerType
+    std::uint64_t,   // NumberUnsignedType
+    double,          // NumberFloatType
+    std::allocator,  // AllocatorType
+    nlohmann::adl_serializer,  // JSONSerializer
+    std::vector<std::byte>,    // BinaryType
+    void                       // CustomBaseClass
+    >;
 #endif
 
 #ifdef JSON_HAS_CPP_20
@@ -159,6 +175,71 @@ struct NotSerializableData
     float myfloat;
 };
 
+/////////////////////////////////////////////////////////////////////
+// for #2574
+/////////////////////////////////////////////////////////////////////
+
+struct NonDefaultConstructible
+{
+    explicit NonDefaultConstructible(int a)
+        : x(a)
+    {}
+    int x;
+};
+
+namespace nlohmann
+{
+template<>
+struct adl_serializer<NonDefaultConstructible>
+{
+    static NonDefaultConstructible from_json(json const& j)
+    {
+        return NonDefaultConstructible(j.get<int>());
+    }
+};
+}  // namespace nlohmann
+
+/////////////////////////////////////////////////////////////////////
+// for #2824
+/////////////////////////////////////////////////////////////////////
+
+class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type>
+{
+  public:
+    explicit sax_no_exception(json& j)
+        : nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type>(j, false)
+    {}
+
+    static bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& ex)
+    {
+        error_string = new std::string(ex.what());  // NOLINT(cppcoreguidelines-owning-memory)
+        return false;
+    }
+
+    static std::string* error_string;
+};
+
+std::string* sax_no_exception::error_string = nullptr;
+
+/////////////////////////////////////////////////////////////////////
+// for #2982
+/////////////////////////////////////////////////////////////////////
+
+template<class T>
+class my_allocator : public std::allocator<T>
+{
+  public:
+    using std::allocator<T>::allocator;
+
+    my_allocator() = default;
+    template<class U> my_allocator(const my_allocator<U>& /*unused*/) { }
+
+    template <class U>
+    struct rebind
+    {
+        using other = my_allocator<U>;
+    };
+};
 
 TEST_CASE("regression tests 2")
 {
@@ -444,6 +525,240 @@ TEST_CASE("regression tests 2")
         const auto target = R"({"foo": [ "1", "2", "3" ]})"_json;
         const auto result = json::diff(source, target);
         CHECK(result.dump() == R"([{"op":"add","path":"/foo/-","value":"3"}])");
+    }
+
+    SECTION("issue #2067 - cannot serialize binary data to text JSON")
+    {
+        const std::array<unsigned char, 23> data = {{0x81, 0xA4, 0x64, 0x61, 0x74, 0x61, 0xC4, 0x0F, 0x33, 0x30, 0x30, 0x32, 0x33, 0x34, 0x30, 0x31, 0x30, 0x37, 0x30, 0x35, 0x30, 0x31, 0x30}};
+        const json j = json::from_msgpack(data.data(), data.size());
+        // dump() is nodiscard; this only checks that dumping does not throw
+        CHECK_NOTHROW(
+            utils::ignore_return_value(
+                j.dump(4,                             // Indent
+                       ' ',                           // Indent char
+                       false,                         // Ensure ascii
+                       json::error_handler_t::strict  // Error
+                      )));
+    }
+
+    SECTION("PR #2181 - regression bug with lvalue")
+    {
+        // see https://github.com/nlohmann/json/pull/2181#issuecomment-653326060
+        const json j{{"x", "test"}};
+        const std::string defval = "default value";
+        auto val = j.value("x", defval); // NOLINT(bugprone-unused-local-non-trivial-variable)
+        auto val2 = j.value("y", defval); // NOLINT(bugprone-unused-local-non-trivial-variable)
+    }
+
+    SECTION("issue #2293 - eof doesn't cause parsing to stop")
+    {
+        const std::vector<uint8_t> data =
+        {
+            0x7B,
+            0x6F,
+            0x62,
+            0x6A,
+            0x65,
+            0x63,
+            0x74,
+            0x20,
+            0x4F,
+            0x42
+        };
+        const json result = json::from_cbor(data, true, false);
+        CHECK(result.is_discarded());
+    }
+
+    SECTION("issue #2315 - json.update and vector<pair>does not work with ordered_json")
+    {
+        nlohmann::ordered_json jsonAnimals = {{"animal", "dog"}};
+        const nlohmann::ordered_json jsonCat = {{"animal", "cat"}};
+        jsonAnimals.update(jsonCat);
+        CHECK(jsonAnimals["animal"] == "cat");
+
+        auto jsonAnimals_parsed = nlohmann::ordered_json::parse(jsonAnimals.dump());
+        CHECK(jsonAnimals == jsonAnimals_parsed);
+
+        const std::vector<std::pair<std::string, int64_t>> intData = {std::make_pair("aaaa", 11),
+                                                                      std::make_pair("bbb", 222)
+                                                                     };
+        nlohmann::ordered_json jsonObj;
+        for (const auto& data : intData)
+        {
+            jsonObj[data.first] = data.second;
+        }
+        CHECK(jsonObj["aaaa"] == 11);
+        CHECK(jsonObj["bbb"] == 222);
+    }
+
+    SECTION("issue #2330 - ignore_comment=true fails on multiple consecutive lines starting with comments")
+    {
+        const std::string ss = "//\n//\n{\n}\n";
+        const json j = json::parse(ss, nullptr, true, true);
+        CHECK(j.dump() == "{}");
+    }
+
+#ifdef JSON_HAS_CPP_20
+#ifndef _LIBCPP_VERSION // see https://github.com/nlohmann/json/issues/4490
+    // classic Intel ICC reports <span> as includable but cannot actually compile
+    // std::span/std::as_bytes usage below
+#if __has_include(<span>) && !defined(__ICC) && !defined(__INTEL_COMPILER)
+    SECTION("issue #2546 - parsing containers of std::byte")
+    {
+        const char DATA[] = R"("Hello, world!")"; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        const auto s = std::as_bytes(std::span(DATA));
+        const json j = json::parse(s);
+        CHECK(j.dump() == "\"Hello, world!\"");
+    }
+#endif
+#endif
+#endif
+
+    SECTION("issue #2574 - Deserialization to std::array, std::pair, and std::tuple with non-default constructable types fails")
+    {
+        SECTION("std::array")
+        {
+            {
+                const json j = {7, 4};
+                auto arr = j.get<std::array<NonDefaultConstructible, 2>>();
+                CHECK(arr[0].x == 7);
+                CHECK(arr[1].x == 4);
+            }
+
+            {
+                const json j = 7;
+                CHECK_THROWS_AS((j.get<std::array<NonDefaultConstructible, 1>>()), json::type_error);
+            }
+        }
+
+        SECTION("std::pair")
+        {
+            {
+                const json j = {3, 8};
+                auto p = j.get<std::pair<NonDefaultConstructible, NonDefaultConstructible>>();
+                CHECK(p.first.x == 3);
+                CHECK(p.second.x == 8);
+            }
+
+            {
+                const json j = {4, 1};
+                auto p = j.get<std::pair<int, NonDefaultConstructible>>();
+                CHECK(p.first == 4);
+                CHECK(p.second.x == 1);
+            }
+
+            {
+                const json j = {6, 7};
+                auto p = j.get<std::pair<NonDefaultConstructible, int>>();
+                CHECK(p.first.x == 6);
+                CHECK(p.second == 7);
+            }
+
+            {
+                const json j = 7;
+                CHECK_THROWS_AS((j.get<std::pair<NonDefaultConstructible, int>>()), json::type_error);
+            }
+        }
+
+        SECTION("std::tuple")
+        {
+            {
+                const json j = {9};
+                auto t = j.get<std::tuple<NonDefaultConstructible>>();
+                CHECK(std::get<0>(t).x == 9);
+            }
+
+            {
+                const json j = {9, 8, 7};
+                auto t = j.get<std::tuple<NonDefaultConstructible, int, NonDefaultConstructible>>();
+                CHECK(std::get<0>(t).x == 9);
+                CHECK(std::get<1>(t) == 8);
+                CHECK(std::get<2>(t).x == 7);
+            }
+
+            {
+                const json j = 7;
+                CHECK_THROWS_AS((j.get<std::tuple<NonDefaultConstructible>>()), json::type_error);
+            }
+        }
+    }
+
+    SECTION("issue #4530 - Serialization of empty tuple")
+    {
+        const auto source_tuple = std::tuple<>();
+        const nlohmann::json j = source_tuple;
+
+        CHECK(j.get<decltype(source_tuple)>() == source_tuple);
+        CHECK("[]" == j.dump());
+    }
+
+    SECTION("issue #2865 - ASAN detects memory leaks")
+    {
+        // the code below is expected to not leak memory
+        {
+            nlohmann::json o;
+            const std::string s = "bar";
+
+            nlohmann::to_json(o["foo"], s);
+
+            nlohmann::json p = o;
+
+            // call to_json with a non-null JSON value
+            nlohmann::to_json(p["foo"], s);
+        }
+
+        {
+            nlohmann::json o;
+            const std::string s = "bar";
+
+            nlohmann::to_json(o["foo"], s);
+
+            // call to_json with a non-null JSON value
+            nlohmann::to_json(o["foo"], s);
+        }
+    }
+
+    SECTION("issue #2824 - encoding of json::exception::what()")
+    {
+        json j;
+        sax_no_exception sax(j);
+
+        CHECK(!json::sax_parse("xyz", &sax));
+        CHECK(*sax_no_exception::error_string == "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: 'x'");
+        delete sax_no_exception::error_string;  // NOLINT(cppcoreguidelines-owning-memory)
+    }
+
+    SECTION("issue #2825 - Properly constrain the basic_json conversion operator")
+    {
+        static_assert(std::is_copy_assignable<nlohmann::ordered_json>::value, "ordered_json must be copy assignable");
+    }
+
+    SECTION("issue #2958 - Inserting in unordered json using a pointer retains the leading slash")
+    {
+        const std::string p = "/root";
+
+        json test1;
+        test1[json::json_pointer(p)] = json::object();
+        CHECK(test1.dump() == "{\"root\":{}}");
+
+        ordered_json test2;
+        test2[ordered_json::json_pointer(p)] = json::object();
+        CHECK(test2.dump() == "{\"root\":{}}");
+
+        // json::json_pointer and ordered_json::json_pointer are the same type; behave as above
+        ordered_json test3;
+        test3[json::json_pointer(p)] = json::object();
+        CHECK(std::is_same<json::json_pointer::string_t, ordered_json::json_pointer::string_t>::value);
+        CHECK(test3.dump() == "{\"root\":{}}");
+    }
+
+    SECTION("issue #2982 - to_{binary format} does not provide a mechanism for specifying a custom allocator for the returned type")
+    {
+        std::vector<std::uint8_t, my_allocator<std::uint8_t>> my_vector;
+        const json j = {1, 2, 3, 4};
+        json::to_cbor(j, my_vector);
+        json k = json::from_cbor(my_vector);
+        CHECK(j == k);
     }
 
 }
