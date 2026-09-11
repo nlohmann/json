@@ -91,6 +91,13 @@ security reasons (e.g., Intel Software Guard Extensions (SGX)).
 
 See [full documentation of `JSON_NO_IO`](../api/macros/json_no_io.md).
 
+## `JSON_NO_THREAD_LOCAL`
+
+When defined, the library does not use `#!cpp thread_local` storage. Copying a value then always avoids the call stack
+rather than descending into a bounded number of levels first, which is slower but yields the same values.
+
+See [full documentation of `JSON_NO_THREAD_LOCAL`](../api/macros/json_no_thread_local.md).
+
 ## `JSON_SKIP_LIBRARY_VERSION_CHECK`
 
 When defined, the library will not create a compiler warning when a different version of the library was already

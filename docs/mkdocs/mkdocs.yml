@@ -291,6 +291,7 @@ nav:
           - 'JSON_HAS_THREE_WAY_COMPARISON': api/macros/json_has_three_way_comparison.md
           - 'JSON_NOEXCEPTION': api/macros/json_noexception.md
           - 'JSON_NO_IO': api/macros/json_no_io.md
+          - 'JSON_NO_THREAD_LOCAL': api/macros/json_no_thread_local.md
           - 'JSON_SKIP_LIBRARY_VERSION_CHECK': api/macros/json_skip_library_version_check.md
           - 'JSON_SKIP_UNSUPPORTED_COMPILER_CHECK': api/macros/json_skip_unsupported_compiler_check.md
           - 'JSON_USE_GLOBAL_UDLS': api/macros/json_use_global_udls.md
