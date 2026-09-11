@@ -1150,6 +1150,91 @@ TEST_CASE("BSON document size mismatch")
     }
 }
 
+TEST_CASE("BSON nesting does not consume the call stack")
+{
+    // An embedded document or array used to be read by calling back into the
+    // document reader, so the native call stack grew with the nesting depth of
+    // the input (#5104). The open documents are kept on a heap stack now.
+    //
+    // Deeply nested values must not be compared, copied or dumped here: those
+    // operations are still recursive and would reintroduce the crash.
+
+    // A document nested deeply enough to have crashed. The bytes are built
+    // here rather than with to_bson(), because the writer still recurses once
+    // per level and would overflow the stack before the reader is ever
+    // reached. Every level is
+    //     <int32 size> 0x03 'a' 0x00 <inner document> 0x00
+    // so a level is eight bytes larger than the one it holds, and the sizes
+    // can be filled in from the outside in.
+    const std::size_t depth = 30000;
+    std::vector<uint8_t> input;
+    input.reserve(5 + (8 * depth));
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        const auto size = static_cast<std::uint32_t>(5 + (8 * (depth - i)));
+        input.push_back(static_cast<uint8_t>(size & 0xFF));
+        input.push_back(static_cast<uint8_t>((size >> 8) & 0xFF));
+        input.push_back(static_cast<uint8_t>((size >> 16) & 0xFF));
+        input.push_back(static_cast<uint8_t>((size >> 24) & 0xFF));
+        input.push_back(0x03); // embedded document
+        input.push_back('a');
+        input.push_back(0x00);
+    }
+    // the innermost document is empty, then one terminator closes each level
+    input.insert(input.end(), {0x05, 0x00, 0x00, 0x00, 0x00});
+    input.insert(input.end(), depth, 0x00);
+
+    SECTION("a well-formed deep document is read through the SAX interface")
+    {
+        SaxCountdown accept_all(1000000);
+        CHECK(json::sax_parse(input, &accept_all, json::input_format_t::bson));
+    }
+
+    SECTION("a well-formed deep document is read into a value")
+    {
+        json j = json::from_bson(input);
+
+        // walked rather than compared: comparing, copying or dumping a value
+        // this deep is still recursive
+        std::size_t measured = 0;
+        const json* q = &j;
+        while (q->is_object() && !q->empty())
+        {
+            q = &q->begin().value();
+            ++measured;
+        }
+        CHECK(measured == depth);
+    }
+
+    SECTION("embedded documents and arrays are still read the same way")
+    {
+        const json values = {{"a", {{"b", {{"c", 1}}}}}};
+        CHECK(json::from_bson(json::to_bson(values)) == values);
+
+        const json array = {{"a", {1, 2, 3}}};
+        CHECK(json::from_bson(json::to_bson(array)) == array);
+
+        const json mixed = {{"a", {json{{"x", 1}}, json{{"y", 2}}}}};
+        CHECK(json::from_bson(json::to_bson(mixed)) == mixed);
+
+        CHECK(json::from_bson(json::to_bson(json::object())) == json::object());
+    }
+
+    SECTION("a size that does not match is still reported per document")
+    {
+        // the embedded document claims one byte too many
+        std::vector<uint8_t> const bad =
+        {
+            0x15, 0x00, 0x00, 0x00, 0x03, 'a', 0x00,
+            0x0D, 0x00, 0x00, 0x00, 0x08, 'b', 0x00, 0x01, 0x00,
+            0x00
+        };
+        json _;
+        CHECK_THROWS_AS(_ = json::from_bson(bad), json::parse_error&);
+        CHECK(json::from_bson(bad, true, false).is_discarded());
+    }
+}
+
 TEST_CASE("BSON numerical data")
 {
     SECTION("number")
