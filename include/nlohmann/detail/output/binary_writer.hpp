@@ -2071,7 +2071,7 @@ class binary_writer
         // (-Wduplicated-branches only exists from GCC 7 on; naming it on an older
         // GCC would itself warn under -Wpragmas)
 #if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 7)
-#pragma GCC diagnostic ignored "-Wduplicated-branches"
+        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wduplicated-branches")
 #endif
         if (!std::isfinite(n) || ((static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
                                    static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
