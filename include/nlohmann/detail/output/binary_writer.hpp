@@ -826,7 +826,17 @@ class binary_writer
 
                     std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'}; // excluded markers in bjdata optimized type
 
-                    if (same_prefix && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
+                    // an optimized array of a valueless type carries no payload, so a
+                    // reader has nothing but the declared count to bound the allocation
+                    // by and refuses an excessive one. Write the unoptimized form for
+                    // those, at one byte per element, so the result can be read back.
+                    // Objects are not affected: every element is preceded by its key.
+                    const bool valueless_type = (first_prefix == 'Z' || first_prefix == 'T' || first_prefix == 'F');
+                    const bool excessive_valueless = valueless_type
+                                                     && j.m_data.m_value.array->size() > detail::max_valueless_container_size;
+
+                    if (same_prefix && !excessive_valueless
+                            && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
                     {
                         prefix_required = false;
                         oa->write_character(to_char_type('$'));
