@@ -98,6 +98,7 @@ nav:
       - Types:
           - features/types/index.md
           - features/types/number_handling.md
+          - features/types/template_parameters.md
   - Integration:
       - integration/index.md
       - integration/migration_guide.md

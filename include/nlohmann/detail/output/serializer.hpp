@@ -1061,7 +1061,7 @@ class serializer
             {
                 case error_handler_t::strict:
                 {
-                    JSON_THROW(type_error::create(316, concat("incomplete UTF-8 string; last byte: 0x", hex_bytes(static_cast<std::uint8_t>(s.back() | 0))), nullptr));
+                    JSON_THROW(type_error::create(316, concat("incomplete UTF-8 string; last byte: 0x", hex_bytes(static_cast<std::uint8_t>(s[s.size() - 1] | 0))), nullptr));
                 }
 
                 case error_handler_t::ignore:
@@ -1322,6 +1322,19 @@ class serializer
         pos += 6;
     }
 
+    /*!
+    @brief convert a single element of a binary value to its byte value
+
+    The elements of a binary value are dumped as the numbers 0..255, regardless
+    of the value type of the configured BinaryType: that type may be signed
+    (`char`), unsigned (`std::uint8_t`), or not an integer at all
+    (`std::byte`), none of which @ref dump_integer can handle uniformly.
+    */
+    static std::uint8_t to_byte_value(binary_char_t x) noexcept
+    {
+        return static_cast<std::uint8_t>(x);
+    }
+
     // templates to avoid warnings about useless casts
     template <typename NumberType, enable_if_t<std::is_signed<NumberType>::value, int> = 0>
     bool is_negative_number(NumberType x)
@@ -1343,8 +1356,10 @@ class serializer
     an arbitrary number, and the three digits it takes at most are written
     straight into the write buffer.
 
-    Any byte type that is not a plain unsigned byte is left to @ref dump_integer,
-    whose representation of it may differ.
+    Any byte type that is not a plain unsigned byte is converted to its
+    @ref to_byte_value "byte value" and left to @ref dump_integer, so a signed
+    or non-integral BinaryType::value_type (`char`, `std::byte`, ...) still
+    dumps as 0..255.
     */
     template<typename ByteType>
     void dump_byte(const ByteType value)
@@ -1357,7 +1372,7 @@ class serializer
     template<typename ByteType>
     void dump_byte(const ByteType value, std::false_type /*is_plain_byte*/)
     {
-        dump_integer(value);
+        dump_integer(to_byte_value(value));
     }
 
     template<typename ByteType>
@@ -1403,8 +1418,7 @@ class serializer
     template < typename NumberType, detail::enable_if_t <
                    std::is_integral<NumberType>::value ||
                    std::is_same<NumberType, number_unsigned_t>::value ||
-                   std::is_same<NumberType, number_integer_t>::value ||
-                   std::is_same<NumberType, binary_char_t>::value,
+                   std::is_same<NumberType, number_integer_t>::value,
                    int > = 0 >
     void dump_integer(NumberType x)
     {

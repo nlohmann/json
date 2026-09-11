@@ -21,8 +21,11 @@ The default value for `CustomBaseClass` is `void`. In this case, an
 
 #### Limitations
 
-The type `CustomBaseClass` has to be a default-constructible class.
+The type `CustomBaseClass` has to be a default-constructible, non-`final` class.
 `basic_json` only supports copy/move construction/assignment if `CustomBaseClass` does so as well.
+A `CustomBaseClass` with non-static data members forfeits `basic_json`'s
+[standard layout](https://en.cppreference.com/w/cpp/named_req/StandardLayoutType) guarantee. See
+[Template Parameter Requirements](../../features/types/template_parameters.md#custombaseclass).
 
 ## Examples
 

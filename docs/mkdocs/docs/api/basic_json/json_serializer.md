@@ -19,6 +19,12 @@ using json_serializer = JSONSerializer<T, SFINAE>;
 
 The default values for `json_serializer` is [`adl_serializer`](../adl_serializer/index.md).
 
+#### Requirements
+
+A custom serializer must provide `#!cpp static void to_json(basic_json&, T)` for every type it serializes, and either
+`#!cpp static void from_json(const basic_json&, T&)` or `#!cpp static T from_json(const basic_json&)` for every type it
+deserializes. See [Template Parameter Requirements](../../features/types/template_parameters.md#jsonserializer).
+
 ## Examples
 
 ??? example

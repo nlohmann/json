@@ -79,7 +79,8 @@ template<
     class NumberFloatType = double,
     template<typename U> class AllocatorType = std::allocator,
     template<typename T, typename SFINAE = void> class JSONSerializer = adl_serializer,
-    class BinaryType = std::vector<std::uint8_t>
+    class BinaryType = std::vector<std::uint8_t>,
+    class CustomBaseClass = void
 >
 class basic_json;
 ```
@@ -105,6 +106,10 @@ using number_float_t = NumberFloatType;
 
 using binary_t = nlohmann::byte_container_with_subtype<BinaryType>;
 ```
+
+Not every type can be passed for these template arguments: the library uses the resulting types in ways that imply a
+number of requirements, for instance that `StringType` is `char`-based or that `ArrayType` is vector-like. These
+requirements are collected in [Template Parameter Requirements](template_parameters.md).
 
 
 ## Objects
