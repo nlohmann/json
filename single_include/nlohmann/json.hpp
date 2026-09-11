@@ -13442,7 +13442,7 @@ class binary_reader
                 // a copy, not a reference: it must stay valid across the
                 // pop_back() below, which destroys the container_stack element
                 // it would otherwise alias
-                container_frame top = container_stack.back();
+                const container_frame top = container_stack.back();
                 bool at_end = false;
 
                 if (top.remaining != npos)
@@ -14219,7 +14219,7 @@ class binary_reader
             // would otherwise alias.
             for (;;)
             {
-                container_frame top = container_stack.back();
+                const container_frame top = container_stack.back();
 
                 if (top.remaining != npos)
                 {
