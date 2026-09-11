@@ -398,6 +398,17 @@ inline void from_json(const BasicJsonType& j, CompatibleArrayType& bin)
     }
 }
 
+template<typename ConstructibleObjectType>
+auto from_json_object_reserve(ConstructibleObjectType& obj, typename ConstructibleObjectType::size_type size, priority_tag<1> /*unused*/)
+-> decltype(obj.reserve(size), void())
+{
+    obj.reserve(size);
+}
+
+template<typename ConstructibleObjectType>
+inline void from_json_object_reserve(ConstructibleObjectType& /*obj*/, std::size_t /*size*/, priority_tag<0> /*unused*/)
+{}
+
 template<typename BasicJsonType, typename ConstructibleObjectType,
          enable_if_t<is_constructible_object_type<BasicJsonType, ConstructibleObjectType>::value, int> = 0>
 inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
@@ -409,6 +420,7 @@ inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
 
     ConstructibleObjectType ret;
     const auto* inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
+    from_json_object_reserve(ret, inner_object->size(), priority_tag<1> {});
     for (const auto& p : *inner_object)
     {
         ret.emplace(p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>());

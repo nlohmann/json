@@ -826,7 +826,17 @@ class binary_writer
 
                     std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'}; // excluded markers in bjdata optimized type
 
-                    if (same_prefix && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
+                    // an optimized array of a valueless type carries no payload, so a
+                    // reader has nothing but the declared count to bound the allocation
+                    // by and refuses an excessive one. Write the unoptimized form for
+                    // those, at one byte per element, so the result can be read back.
+                    // Objects are not affected: every element is preceded by its key.
+                    const bool valueless_type = (first_prefix == 'Z' || first_prefix == 'T' || first_prefix == 'F');
+                    const bool excessive_valueless = valueless_type
+                                                     && j.m_data.m_value.array->size() > detail::max_valueless_container_size;
+
+                    if (same_prefix && !excessive_valueless
+                            && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
                     {
                         prefix_required = false;
                         oa->write_character(to_char_type('$'));
@@ -1664,6 +1674,20 @@ class binary_writer
     }
 
     /*!
+    @brief checks whether a JSON number fits into @a TargetType
+    @param[in] el a JSON number of either the signed or unsigned integer kind
+    @return whether @a el's value can be represented by @a TargetType without
+            wrapping, regardless of which of the two kinds it is stored as
+    */
+    template<typename TargetType>
+    static bool bjdata_ndarray_value_in_range(const BasicJsonType& el)
+    {
+        return el.is_number_unsigned()
+               ? value_in_range_of<TargetType>(el.template get<std::uint64_t>())
+               : value_in_range_of<TargetType>(el.template get<std::int64_t>());
+    }
+
+    /*!
     @return false if the object is successfully converted to a bjdata ndarray, true if the type or size is invalid
     */
     bool write_bjdata_ndarray(const typename BasicJsonType::object_t& value, const bool use_count, const bool use_type, const bjdata_version_t bjdata_version)
@@ -1684,6 +1708,15 @@ class binary_writer
         CharType dtype = it->second;
 
         key = "_ArraySize_";
+        // the dimensions are written verbatim as the header length below, so a
+        // value that is not an array cannot produce a valid one: null emits 'Z'
+        // and an object emits '{', neither of which a reader accepts after '#'.
+        // Such an object is not a valid ndarray and falls back to a plain object.
+        if (!value.at(key).is_array())
+        {
+            return true;
+        }
+
         std::size_t len = (value.at(key).empty() ? 0 : 1);
         for (const auto& el : value.at(key))
         {
@@ -1733,6 +1766,60 @@ class binary_writer
         for (const auto& el : value.at(key))
         {
             if (ndarray_is_float ? !el.is_number_float() : !el.is_number_integer())
+            {
+                return true;
+            }
+        }
+
+        // every element is cast to the (possibly narrower) C++ type matching
+        // dtype below; a value that does not fit that type would silently
+        // wrap (integers) or overflow to infinity (the "single" precision
+        // float) instead of being reported, so such an object falls back to
+        // a plain object encoding as well
+        for (const auto& el : value.at(key))
+        {
+            bool in_range = true;
+            switch (dtype)
+            {
+                case 'U':
+                case 'C':
+                case 'B':
+                    in_range = bjdata_ndarray_value_in_range<std::uint8_t>(el);
+                    break;
+                case 'i':
+                    in_range = bjdata_ndarray_value_in_range<std::int8_t>(el);
+                    break;
+                case 'u':
+                    in_range = bjdata_ndarray_value_in_range<std::uint16_t>(el);
+                    break;
+                case 'I':
+                    in_range = bjdata_ndarray_value_in_range<std::int16_t>(el);
+                    break;
+                case 'm':
+                    in_range = bjdata_ndarray_value_in_range<std::uint32_t>(el);
+                    break;
+                case 'l':
+                    in_range = bjdata_ndarray_value_in_range<std::int32_t>(el);
+                    break;
+                case 'M':
+                    in_range = bjdata_ndarray_value_in_range<std::uint64_t>(el);
+                    break;
+                case 'L':
+                    in_range = bjdata_ndarray_value_in_range<std::int64_t>(el);
+                    break;
+                case 'd':
+                {
+                    const auto dval = el.template get<double>();
+                    in_range = !std::isfinite(dval) ||
+                               (dval >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
+                                dval <= static_cast<double>((std::numeric_limits<float>::max)()));
+                    break;
+                }
+                default:
+                    // 'D' (double) already spans the full range of number_float_t
+                    break;
+            }
+            if (!in_range)
             {
                 return true;
             }
@@ -1857,8 +1944,8 @@ class binary_writer
     void write_compact_float(const number_float_t n, detail::input_format_t format)
     {
 #ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
+        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
         if (!std::isfinite(n) || ((static_cast<double>(n) >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
                                    static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
@@ -1877,7 +1964,7 @@ class binary_writer
             write_number(n);
         }
 #ifdef __GNUC__
-#pragma GCC diagnostic pop
+        JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
     }
 
