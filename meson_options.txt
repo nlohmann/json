@@ -1,0 +1,18 @@
+option(
+    'MultipleHeaders',
+    type: 'boolean',
+    value: true,
+    description: 'Use non-amalgamated version of the library',
+)
+option(
+    'GlobalUDLs',
+    type: 'boolean',
+    value: true,
+    description: 'Place user-defined string literals in the global namespace',
+)
+option(
+    'ImplicitConversions',
+    type: 'boolean',
+    value: true,
+    description: 'Enable implicit conversions',
+)
