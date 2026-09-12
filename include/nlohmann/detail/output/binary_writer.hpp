@@ -15,6 +15,7 @@
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
+#include <type_traits>
 #include <string> // string
 #include <utility> // move
 #include <vector> // vector
@@ -230,39 +231,7 @@ class binary_writer
 
             case value_t::string:
             {
-                // step 1: write control byte and the string length
-                const auto N = j.m_data.m_value.string->size();
-                if (N <= 0x17)
-                {
-                    write_number(static_cast<std::uint8_t>(0x60 + N));
-                }
-                else if (N <= (std::numeric_limits<std::uint8_t>::max)())
-                {
-                    oa->write_character(to_char_type(0x78));
-                    write_number(static_cast<std::uint8_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint16_t>::max)())
-                {
-                    oa->write_character(to_char_type(0x79));
-                    write_number(static_cast<std::uint16_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
-                {
-                    oa->write_character(to_char_type(0x7A));
-                    write_number(static_cast<std::uint32_t>(N));
-                }
-                // LCOV_EXCL_START
-                else if (N <= (std::numeric_limits<std::uint64_t>::max)())
-                {
-                    oa->write_character(to_char_type(0x7B));
-                    write_number(static_cast<std::uint64_t>(N));
-                }
-                // LCOV_EXCL_STOP
-
-                // step 2: write the string
-                oa->write_characters(
-                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->c_str()),
-                    j.m_data.m_value.string->size());
+                write_cbor_string(*j.m_data.m_value.string);
                 break;
             }
 
@@ -370,6 +339,12 @@ class binary_writer
 
             case value_t::object:
             {
+                static_assert(
+                    std::is_convertible <
+                    typename BasicJsonType::object_t::key_type,
+                    string_t >::value,
+                    "object_t::key_type must be convertible to string_t");
+
                 // step 1: write control byte and the object size
                 const auto N = j.m_data.m_value.object->size();
                 if (N <= 0x17)
@@ -402,7 +377,7 @@ class binary_writer
                 // step 2: write each element
                 for (const auto& el : *j.m_data.m_value.object)
                 {
-                    write_cbor(el.first);
+                    write_cbor_string(el.first);
                     write_cbor(el.second);
                 }
                 break;
@@ -553,36 +528,7 @@ class binary_writer
 
             case value_t::string:
             {
-                // step 1: write control byte and the string length
-                const auto N = j.m_data.m_value.string->size();
-                if (N <= 31)
-                {
-                    // fixstr
-                    write_number(static_cast<std::uint8_t>(0xA0 | N));
-                }
-                else if (N <= (std::numeric_limits<std::uint8_t>::max)())
-                {
-                    // str 8
-                    oa->write_character(to_char_type(0xD9));
-                    write_number(static_cast<std::uint8_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint16_t>::max)())
-                {
-                    // str 16
-                    oa->write_character(to_char_type(0xDA));
-                    write_number(static_cast<std::uint16_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
-                {
-                    // str 32
-                    oa->write_character(to_char_type(0xDB));
-                    write_number(static_cast<std::uint32_t>(N));
-                }
-
-                // step 2: write the string
-                oa->write_characters(
-                    reinterpret_cast<const CharType*>(j.m_data.m_value.string->c_str()),
-                    j.m_data.m_value.string->size());
+                write_msgpack_string(*j.m_data.m_value.string);
                 break;
             }
 
@@ -701,6 +647,12 @@ class binary_writer
 
             case value_t::object:
             {
+                static_assert(
+                    std::is_convertible <
+                    typename BasicJsonType::object_t::key_type,
+                    string_t >::value,
+                    "object_t::key_type must be convertible to string_t");
+
                 // step 1: write control byte and the object size
                 const auto N = j.m_data.m_value.object->size();
                 if (N <= 15)
@@ -724,7 +676,7 @@ class binary_writer
                 // step 2: write each element
                 for (const auto& el : *j.m_data.m_value.object)
                 {
-                    write_msgpack(el.first);
+                    write_msgpack_string(el.first);
                     write_msgpack(el.second);
                 }
                 break;
@@ -1332,6 +1284,43 @@ class binary_writer
     // CBOR //
     //////////
 
+    void write_cbor_string(const string_t& value)
+    {
+        // step 1: write control byte and the string length
+        const auto N = value.size();
+        if (N <= 0x17)
+        {
+            write_number(static_cast<std::uint8_t>(0x60 + N));
+        }
+        else if (N <= (std::numeric_limits<std::uint8_t>::max)())
+        {
+            oa->write_character(to_char_type(0x78));
+            write_number(static_cast<std::uint8_t>(N));
+        }
+        else if (N <= (std::numeric_limits<std::uint16_t>::max)())
+        {
+            oa->write_character(to_char_type(0x79));
+            write_number(static_cast<std::uint16_t>(N));
+        }
+        else if (N <= (std::numeric_limits<std::uint32_t>::max)())
+        {
+            oa->write_character(to_char_type(0x7A));
+            write_number(static_cast<std::uint32_t>(N));
+        }
+        // LCOV_EXCL_START
+        else if (N <= (std::numeric_limits<std::uint64_t>::max)())
+        {
+            oa->write_character(to_char_type(0x7B));
+            write_number(static_cast<std::uint64_t>(N));
+        }
+        // LCOV_EXCL_STOP
+
+        // step 2: write the string
+        oa->write_characters(
+            reinterpret_cast<const CharType*>(value.c_str()),
+            value.size());
+    }
+
     static constexpr CharType get_cbor_float_prefix(float /*unused*/)
     {
         return to_char_type(0xFA);  // Single-Precision Float
@@ -1345,6 +1334,40 @@ class binary_writer
     /////////////
     // MsgPack //
     /////////////
+
+    void write_msgpack_string(const string_t& value)
+    {
+        // step 1: write control byte and the string length
+        const auto N = value.size();
+        if (N <= 31)
+        {
+            // fixstr
+            write_number(static_cast<std::uint8_t>(0xA0 | N));
+        }
+        else if (N <= (std::numeric_limits<std::uint8_t>::max)())
+        {
+            // str 8
+            oa->write_character(to_char_type(0xD9));
+            write_number(static_cast<std::uint8_t>(N));
+        }
+        else if (N <= (std::numeric_limits<std::uint16_t>::max)())
+        {
+            // str 16
+            oa->write_character(to_char_type(0xDA));
+            write_number(static_cast<std::uint16_t>(N));
+        }
+        else if (N <= (std::numeric_limits<std::uint32_t>::max)())
+        {
+            // str 32
+            oa->write_character(to_char_type(0xDB));
+            write_number(static_cast<std::uint32_t>(N));
+        }
+
+        // step 2: write the string
+        oa->write_characters(
+            reinterpret_cast<const CharType*>(value.c_str()),
+            value.size());
+    }
 
     static constexpr CharType get_msgpack_float_prefix(float /*unused*/)
     {
