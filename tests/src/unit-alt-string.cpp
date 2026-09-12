@@ -58,6 +58,36 @@ class alt_string
         str_impl.push_back(c);
     }
 
+    void  shrink_to_fit()
+    {
+        str_impl.shrink_to_fit();
+    }
+
+    std::string::iterator begin()
+    {
+        return str_impl.begin();
+    }
+
+    std::string::const_iterator begin() const
+    {
+        return str_impl.begin();
+    }
+
+    std::string::iterator end() noexcept
+    {
+        return str_impl.end();
+    }
+
+    std::string::const_iterator end() const noexcept
+    {
+        return str_impl.end();
+    }
+
+    std::string::iterator erase(std::string::const_iterator first, std::string::const_iterator last )
+    {
+        return str_impl.erase(first, last);
+    }
+
     template <typename op_type>
     bool operator==(const op_type& op) const
     {
