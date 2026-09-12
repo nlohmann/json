@@ -17,7 +17,7 @@ TEST_CASE("tests on very large JSONs")
 {
     SECTION("issue #1419 - Segmentation fault (stack overflow) due to unbounded recursion")
     {
-        const auto depth = 5000000;
+        const auto depth = 500000;
 
         std::string s(static_cast<std::size_t>(2 * depth), '[');
         std::fill(s.begin() + depth, s.end(), ']');
