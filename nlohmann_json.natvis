@@ -35,6 +35,26 @@
         </Expand>
     </Type>
 
+    <Type Name="nlohmann::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::detail::value_t::object">
+            *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::detail::value_t::array">
+            *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi -->
     <Type Name="nlohmann::json_abi::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi::detail::value_t::null">null</DisplayString>
@@ -62,6 +82,26 @@
         <DisplayString>{second}</DisplayString>
         <Expand>
             <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi::detail::value_t::object">
+            *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi::detail::value_t::array">
+            *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
         </Expand>
     </Type>
 
@@ -95,6 +135,26 @@
         </Expand>
     </Type>
 
+    <Type Name="nlohmann::json_abi_v3_12_0::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_v3_12_0::detail::value_t::object">
+            *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_v3_12_0::detail::value_t::array">
+            *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_diag -->
     <Type Name="nlohmann::json_abi_diag::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag::detail::value_t::null">null</DisplayString>
@@ -122,6 +182,26 @@
         <DisplayString>{second}</DisplayString>
         <Expand>
             <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_diag::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag::detail::value_t::object">
+            *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag::detail::value_t::array">
+            *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
         </Expand>
     </Type>
 
@@ -155,6 +235,26 @@
         </Expand>
     </Type>
 
+    <Type Name="nlohmann::json_abi_diag_v3_12_0::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_v3_12_0::detail::value_t::object">
+            *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_v3_12_0::detail::value_t::array">
+            *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_ldvcmp -->
     <Type Name="nlohmann::json_abi_ldvcmp::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp::detail::value_t::null">null</DisplayString>
@@ -182,6 +282,26 @@
         <DisplayString>{second}</DisplayString>
         <Expand>
             <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_ldvcmp::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp::detail::value_t::object">
+            *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp::detail::value_t::array">
+            *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
         </Expand>
     </Type>
 
@@ -215,6 +335,26 @@
         </Expand>
     </Type>
 
+    <Type Name="nlohmann::json_abi_ldvcmp_v3_12_0::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_v3_12_0::detail::value_t::object">
+            *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_v3_12_0::detail::value_t::array">
+            *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_diag_ldvcmp -->
     <Type Name="nlohmann::json_abi_diag_ldvcmp::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp::detail::value_t::null">null</DisplayString>
@@ -245,6 +385,26 @@
         </Expand>
     </Type>
 
+    <Type Name="nlohmann::json_abi_diag_ldvcmp::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp::detail::value_t::object">
+            *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp::detail::value_t::array">
+            *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_diag_ldvcmp_v3_12_0 -->
     <Type Name="nlohmann::json_abi_diag_ldvcmp_v3_12_0::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_v3_12_0::detail::value_t::null">null</DisplayString>
@@ -272,6 +432,26 @@
         <DisplayString>{second}</DisplayString>
         <Expand>
             <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <Type Name="nlohmann::json_abi_diag_ldvcmp_v3_12_0::detail::json_default_base">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_v3_12_0::detail::value_t::object">
+            *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_v3_12_0::detail::value_t::array">
+            *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
         </Expand>
     </Type>
 
