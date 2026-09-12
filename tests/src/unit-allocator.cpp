@@ -261,3 +261,95 @@ TEST_CASE("bad my_allocator::construct")
         j["test"].push_back("should not leak");
     }
 }
+
+#if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND))
+namespace
+{
+struct QuotaReached : std::exception {};
+
+template<class T>
+struct allocator_controlled_throw : std::allocator<T>
+{
+    static bool& should_throw()
+    {
+        static bool flag = false;
+        return flag;
+    }
+
+    allocator_controlled_throw() = default;
+    template <class U>
+    allocator_controlled_throw(allocator_controlled_throw<U> /*unused*/) {}
+
+    template <class U>
+    struct rebind
+    {
+        using other = allocator_controlled_throw<U>;
+    };
+
+    T* allocate(size_t n)
+    {
+        if (should_throw())
+        {
+            throw QuotaReached{};
+        }
+        return std::allocator<T>::allocate(n);
+    }
+};
+} // namespace
+
+TEST_CASE("~basic_json tolerates allocator exceptions")
+{
+    using my_alloc_json = nlohmann::basic_json<std::map,
+          std::vector,
+          std::string,
+          bool,
+          std::int64_t,
+          std::uint64_t,
+          double,
+          allocator_controlled_throw>;
+
+    SECTION("flat array")
+    {
+        {
+            auto j = my_alloc_json{1, 2, 3, 4};
+            allocator_controlled_throw<my_alloc_json>::should_throw() = true;
+        } // should not std::terminate
+        allocator_controlled_throw<my_alloc_json>::should_throw() = false;
+    }
+
+    SECTION("nested array")
+    {
+        {
+            auto j = my_alloc_json::array();
+            j.push_back(my_alloc_json{1, 2});
+            j.push_back(my_alloc_json{3, 4});
+            allocator_controlled_throw<my_alloc_json>::should_throw() = true;
+        }
+        allocator_controlled_throw<my_alloc_json>::should_throw() = false;
+    }
+
+    SECTION("object with nested array")
+    {
+        {
+            auto j = my_alloc_json::object();
+            j["arr"] = my_alloc_json{1, 2, 3};
+            j["val"] = 42;
+            allocator_controlled_throw<my_alloc_json>::should_throw() = true;
+        }
+        allocator_controlled_throw<my_alloc_json>::should_throw() = false;
+    }
+
+    SECTION("deeply nested array")
+    {
+        {
+            auto inner = my_alloc_json{1, 2};
+            auto mid = my_alloc_json::array();
+            mid.push_back(std::move(inner));
+            auto outer = my_alloc_json::array();
+            outer.push_back(std::move(mid));
+            allocator_controlled_throw<my_alloc_json>::should_throw() = true;
+        }
+        allocator_controlled_throw<my_alloc_json>::should_throw() = false;
+    }
+}
+#endif
