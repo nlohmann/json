@@ -33,7 +33,8 @@ Summary:
 :   name of the type (class, struct) to serialize/deserialize
 
 `member` (in)
-:   name of the member variable to serialize/deserialize; up to 63 members can be given as a comma-separated list
+:   name of the member variable to serialize/deserialize; up to 63 members can be given as a comma-separated
+    list, which may also be empty
 
 ## Default definition
 
@@ -57,6 +58,20 @@ See the examples below for the concrete generated code.
     2. The macro must be used inside the type (class/struct).
 
 [GetNonDefNonCopy]: ../../features/arbitrary_types.md#how-can-i-use-get-for-non-default-constructiblenon-copyable-types
+
+!!! info "Types without members"
+
+    The member list may be empty. The macro then generates a `to_json` that produces an empty JSON object
+    `#!json {}`, and a `from_json` that reads no members:
+
+    ```cpp
+    struct marker
+    {
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(marker)
+    };
+    ```
+
+    The `WITH_NAMES` variants do not support this.
 
 !!! warning "Implementation limits"
 

@@ -778,6 +778,154 @@ class derived_person_only_serialize_private_3 : person_without_default_construct
     NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES(derived_person_only_serialize_private_3, person_without_default_constructor_3, "json_hair_color", hair_color)
 };
 
+// Zero-member types for issue #4041: NLOHMANN_DEFINE_TYPE_* and
+// NLOHMANN_DEFINE_DERIVED_TYPE_* must compile and produce a valid (empty)
+// JSON object when no member arguments are given.
+class empty_intrusive
+{
+  public:
+    bool operator==(const empty_intrusive& /*rhs*/) const
+    {
+        return true;
+    }
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(empty_intrusive)
+};
+
+class empty_intrusive_with_default
+{
+  public:
+    bool operator==(const empty_intrusive_with_default& /*rhs*/) const
+    {
+        return true;
+    }
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(empty_intrusive_with_default)
+};
+
+class empty_intrusive_only_serialize
+{
+  public:
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE(empty_intrusive_only_serialize)
+};
+
+class empty_non_intrusive
+{
+  public:
+    bool operator==(const empty_non_intrusive& /*rhs*/) const
+    {
+        return true;
+    }
+};
+// NOLINTNEXTLINE(misc-use-internal-linkage)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(empty_non_intrusive)
+
+class empty_non_intrusive_with_default
+{
+  public:
+    bool operator==(const empty_non_intrusive_with_default& /*rhs*/) const
+    {
+        return true;
+    }
+};
+// NOLINTNEXTLINE(misc-use-internal-linkage)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(empty_non_intrusive_with_default)
+
+class empty_non_intrusive_only_serialize {};
+// NOLINTNEXTLINE(misc-use-internal-linkage)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(empty_non_intrusive_only_serialize)
+
+class empty_derived_intrusive : public person_with_private_data
+{
+  public:
+    empty_derived_intrusive() = default;
+    empty_derived_intrusive(std::string name_, int age_, json metadata_)
+        : person_with_private_data(std::move(name_), age_, std::move(metadata_))
+    {}
+    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(empty_derived_intrusive, person_with_private_data)
+};
+
+class empty_derived_intrusive_with_default : public person_with_private_data
+{
+  public:
+    empty_derived_intrusive_with_default() = default;
+    empty_derived_intrusive_with_default(std::string name_, int age_, json metadata_)
+        : person_with_private_data(std::move(name_), age_, std::move(metadata_))
+    {}
+    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT(empty_derived_intrusive_with_default, person_with_private_data)
+};
+
+class empty_derived_intrusive_only_serialize : public person_with_private_data
+{
+  public:
+    empty_derived_intrusive_only_serialize() = default;
+    empty_derived_intrusive_only_serialize(std::string name_, int age_, json metadata_)
+        : person_with_private_data(std::move(name_), age_, std::move(metadata_))
+    {}
+    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE(empty_derived_intrusive_only_serialize, person_with_private_data)
+};
+
+class empty_derived_non_intrusive : public person_with_private_data
+{
+  public:
+    empty_derived_non_intrusive() = default;
+    empty_derived_non_intrusive(std::string name_, int age_, json metadata_)
+        : person_with_private_data(std::move(name_), age_, std::move(metadata_))
+    {}
+};
+// NOLINTNEXTLINE(misc-use-internal-linkage)
+NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(empty_derived_non_intrusive, person_with_private_data)
+
+class empty_derived_non_intrusive_with_default : public person_with_private_data
+{
+  public:
+    empty_derived_non_intrusive_with_default() = default;
+    empty_derived_non_intrusive_with_default(std::string name_, int age_, json metadata_)
+        : person_with_private_data(std::move(name_), age_, std::move(metadata_))
+    {}
+};
+// NOLINTNEXTLINE(misc-use-internal-linkage)
+NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT(empty_derived_non_intrusive_with_default, person_with_private_data)
+
+class empty_derived_non_intrusive_only_serialize : public person_with_private_data
+{
+  public:
+    empty_derived_non_intrusive_only_serialize() = default;
+    empty_derived_non_intrusive_only_serialize(std::string name_, int age_, json metadata_)
+        : person_with_private_data(std::move(name_), age_, std::move(metadata_))
+    {}
+};
+// NOLINTNEXTLINE(misc-use-internal-linkage)
+NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(empty_derived_non_intrusive_only_serialize, person_with_private_data)
+
+// Types at the documented maximum member count (63) for issue #4041's
+// argument-count dispatch. The derived-type macros carry a two-token
+// Type,BaseType prefix, so they reach two slots further into
+// NLOHMANN_JSON_GET_MACRO than the non-derived ones and are the first to break
+// if the tag dispatch runs out of positional slots.
+class max_members
+{
+  public:
+    int m1{}, m2{}, m3{}, m4{}, m5{}, m6{}, m7{}, m8{}, m9{}, m10{}, m11{}, m12{}, m13{}, m14{}, m15{}, m16{}, m17{}, m18{}, m19{}, m20{}, m21{}, m22{}, m23{}, m24{}, m25{}, m26{}, m27{}, m28{}, m29{}, m30{}, m31{}, m32{}, m33{}, m34{}, m35{}, m36{}, m37{}, m38{}, m39{}, m40{}, m41{}, m42{}, m43{}, m44{}, m45{}, m46{}, m47{}, m48{}, m49{}, m50{}, m51{}, m52{}, m53{}, m54{}, m55{}, m56{}, m57{}, m58{}, m59{}, m60{}, m61{}, m62{}, m63{};
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(max_members, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, m27, m28, m29, m30, m31, m32, m33, m34, m35, m36, m37, m38, m39, m40, m41, m42, m43, m44, m45, m46, m47, m48, m49, m50, m51, m52, m53, m54, m55, m56, m57, m58, m59, m60, m61, m62, m63)
+};
+
+class max_members_base
+{
+  public:
+    int base_value = 0;
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(max_members_base, base_value)
+};
+
+class max_members_derived : public max_members_base
+{
+  public:
+    int m1{}, m2{}, m3{}, m4{}, m5{}, m6{}, m7{}, m8{}, m9{}, m10{}, m11{}, m12{}, m13{}, m14{}, m15{}, m16{}, m17{}, m18{}, m19{}, m20{}, m21{}, m22{}, m23{}, m24{}, m25{}, m26{}, m27{}, m28{}, m29{}, m30{}, m31{}, m32{}, m33{}, m34{}, m35{}, m36{}, m37{}, m38{}, m39{}, m40{}, m41{}, m42{}, m43{}, m44{}, m45{}, m46{}, m47{}, m48{}, m49{}, m50{}, m51{}, m52{}, m53{}, m54{}, m55{}, m56{}, m57{}, m58{}, m59{}, m60{}, m61{}, m62{}, m63{};
+
+    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(max_members_derived, max_members_base, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, m27, m28, m29, m30, m31, m32, m33, m34, m35, m36, m37, m38, m39, m40, m41, m42, m43, m44, m45, m46, m47, m48, m49, m50, m51, m52, m53, m54, m55, m56, m57, m58, m59, m60, m61, m62, m63)
+};
+
+
 } // namespace persons
 
 TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", Pair, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
@@ -1189,5 +1337,143 @@ TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHM
             };
             CHECK(json(two_persons).dump() == "[{\"json_age\":1,\"json_hair_color\":\"brown\",\"json_name\":\"Erik\"},{\"json_age\":2,\"json_hair_color\":\"black\",\"json_name\":\"Kyle\"}]");
         }
+    }
+}
+
+// Regression tests for issue #4041: NLOHMANN_DEFINE_TYPE_* and
+// NLOHMANN_DEFINE_DERIVED_TYPE_* macros must compile and produce valid
+// (empty, or base-only for the derived case) JSON objects when no member
+// arguments are given, on every supported C++ standard.
+TEST_CASE_TEMPLATE("Serialization/deserialization of zero-member types via NLOHMANN_DEFINE_TYPE_* (issue #4041)", Json, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
+                   nlohmann::json, nlohmann::ordered_json)
+{
+    constexpr bool is_ordered = std::is_same<Json, nlohmann::ordered_json>::value;
+    const char* const derived_dump = is_ordered
+                                     ? R"({"age":1,"name":"Erik","metadata":null})"
+                                     : R"({"age":1,"metadata":null,"name":"Erik"})";
+
+    SECTION("NLOHMANN_DEFINE_TYPE_INTRUSIVE with zero members")
+    {
+        persons::empty_intrusive obj{};
+        Json j = obj;
+        CHECK(j.dump() == "{}");
+        CHECK(j.template get<persons::empty_intrusive>() == obj);
+    }
+
+    SECTION("NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT with zero members")
+    {
+        persons::empty_intrusive_with_default obj{};
+        Json j = obj;
+        CHECK(j.dump() == "{}");
+        CHECK(j.template get<persons::empty_intrusive_with_default>() == obj);
+    }
+
+    SECTION("NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE with zero members")
+    {
+        const persons::empty_intrusive_only_serialize obj{};
+        Json j = obj;
+        CHECK(j.dump() == "{}");
+    }
+
+    SECTION("NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE with zero members")
+    {
+        persons::empty_non_intrusive obj{};
+        Json j = obj;
+        CHECK(j.dump() == "{}");
+        CHECK(j.template get<persons::empty_non_intrusive>() == obj);
+    }
+
+    SECTION("NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT with zero members")
+    {
+        persons::empty_non_intrusive_with_default obj{};
+        Json j = obj;
+        CHECK(j.dump() == "{}");
+        CHECK(j.template get<persons::empty_non_intrusive_with_default>() == obj);
+    }
+
+    SECTION("NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE with zero members")
+    {
+        const persons::empty_non_intrusive_only_serialize obj{};
+        Json j = obj;
+        CHECK(j.dump() == "{}");
+    }
+
+    SECTION("NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE with zero own members")
+    {
+        persons::empty_derived_intrusive obj{"Erik", 1, nullptr};
+        Json j = obj;
+        CHECK(j.dump() == derived_dump);
+        CHECK(j.template get<persons::empty_derived_intrusive>() == obj);
+    }
+
+    SECTION("NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT with zero own members")
+    {
+        persons::empty_derived_intrusive_with_default obj{"Erik", 1, nullptr};
+        Json j = obj;
+        CHECK(j.dump() == derived_dump);
+        CHECK(j.template get<persons::empty_derived_intrusive_with_default>() == obj);
+    }
+
+    SECTION("NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE with zero own members")
+    {
+        const persons::empty_derived_intrusive_only_serialize obj{"Erik", 1, nullptr};
+        Json j = obj;
+        CHECK(j.dump() == derived_dump);
+    }
+
+    SECTION("NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE with zero own members")
+    {
+        persons::empty_derived_non_intrusive obj{"Erik", 1, nullptr};
+        Json j = obj;
+        CHECK(j.dump() == derived_dump);
+        CHECK(j.template get<persons::empty_derived_non_intrusive>() == obj);
+    }
+
+    SECTION("NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT with zero own members")
+    {
+        persons::empty_derived_non_intrusive_with_default obj{"Erik", 1, nullptr};
+        Json j = obj;
+        CHECK(j.dump() == derived_dump);
+        CHECK(j.template get<persons::empty_derived_non_intrusive_with_default>() == obj);
+    }
+
+    SECTION("NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE with zero own members")
+    {
+        const persons::empty_derived_non_intrusive_only_serialize obj{"Erik", 1, nullptr};
+        Json j = obj;
+        CHECK(j.dump() == derived_dump);
+    }
+}
+
+// Regression test for the argument-count dispatch added for issue #4041: the
+// documented maximum of 63 members must keep working, including for the
+// derived-type macros whose Type,BaseType prefix consumes two dispatch slots.
+TEST_CASE_TEMPLATE("Serialization/deserialization of maximum-member-count types via NLOHMANN_DEFINE_TYPE_*", Json, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
+                   nlohmann::json, nlohmann::ordered_json)
+{
+    SECTION("NLOHMANN_DEFINE_TYPE_INTRUSIVE with 63 members")
+    {
+        persons::max_members obj{};
+        obj.m1 = 1;
+        obj.m63 = 63;
+        Json j = obj;
+        CHECK(j.size() == 63);
+        const auto obj2 = j.template get<persons::max_members>();
+        CHECK(obj2.m1 == 1);
+        CHECK(obj2.m63 == 63);
+    }
+
+    SECTION("NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE with 63 own members")
+    {
+        persons::max_members_derived obj{};
+        obj.base_value = 7;
+        obj.m1 = 1;
+        obj.m63 = 63;
+        Json j = obj;
+        CHECK(j.size() == 64);
+        const auto obj2 = j.template get<persons::max_members_derived>();
+        CHECK(obj2.base_value == 7);
+        CHECK(obj2.m1 == 1);
+        CHECK(obj2.m63 == 63);
     }
 }
