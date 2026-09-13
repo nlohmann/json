@@ -63,6 +63,8 @@ The optimized formats for containers are supported: Parameter `use_size` adds si
 
 Note that `use_size = true` alone may result in larger representations - the benefit of this parameter is that the receiving side is immediately informed on the number of elements of the container.
 
+An array whose type marker is `Z` (null), `T` (true) or `F` (false) stores no payload at all, because the marker already is the value. Its declared count is therefore the only thing that decides how much memory the receiving side allocates, and a handful of bytes can describe billions of elements. `from_ubjson` rejects such an array with [`out_of_range.408`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range408) when the count exceeds 1,048,576 (`1 << 20`), and `to_ubjson` writes longer arrays of these types without the annotation, so any value it produces can be read back.
+
 Binary values
 
 If the JSON data contains the binary type, the value stored is a list of integers, as suggested by the UBJSON documentation. In particular, this means that serialization and the deserialization of a JSON containing binary values into UBJSON and back will result in a different JSON object.

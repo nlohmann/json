@@ -1002,6 +1002,8 @@ Exception cannot occur any more
 
 The size of an array or object in a [binary format](https://json.nlohmann.me/features/binary_formats/index.md) exceeds the maximal capacity: the size following `#` for [UBJSON](https://json.nlohmann.me/features/binary_formats/ubjson/index.md)/[BJData](https://json.nlohmann.me/features/binary_formats/bjdata/index.md), or the encoded length for [CBOR](https://json.nlohmann.me/features/binary_formats/cbor/index.md).
 
+The exception is also thrown for a [UBJSON](https://json.nlohmann.me/features/binary_formats/ubjson/index.md) array of a type that is encoded by its marker alone (`Z`, `T` or `F`) whose declared count exceeds 1,048,576 (`1 << 20`). Such an array has no payload, so its count alone decides how much memory is allocated, and a handful of bytes would otherwise describe billions of values. [`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) writes longer arrays of these types without the size and type annotation, so any value it produces can still be read back.
+
 Example messages
 
 ```
@@ -1014,6 +1016,10 @@ excessive array size: 8658170730974374167
 
 ```
 [json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive map size
+```
+
+```
+[json.exception.out_of_range.408] syntax error while parsing UBJSON size: excessive array size
 ```
 
 ### json.exception.out_of_range.409
