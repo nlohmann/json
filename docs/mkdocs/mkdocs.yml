@@ -395,7 +395,14 @@ plugins:
         - http://nlohmann.github.io/json/*
         - https://nlohmann.github.io/json/*
         - mailto:*
-  - privacy
+  - privacy:
+      # repology.org refuses requests from GitHub Actions runners, which made
+      # the privacy plugin abort the whole build when it could not download the
+      # package badges (the fetch fails, then reading the missing cache entry
+      # raises FileNotFoundError). Readers' browsers are served normally, so
+      # leave these badges as external references instead of self-hosting them.
+      assets_exclude:
+        - repology.org/*
   - llmstxt:
       markdown_description: >
         JSON for Modern C++ is a C++11 header-only library implementing a JSON
