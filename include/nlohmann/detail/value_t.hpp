@@ -9,9 +9,12 @@
 #pragma once
 
 #include <array> // array
+#include <cmath> // isnan, ldexp, trunc
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t
+#include <limits> // numeric_limits
 #include <string> // string
+#include <type_traits> // is_signed
 
 #include <nlohmann/detail/macro_scope.hpp>
 #if JSON_HAS_THREE_WAY_COMPARISON
@@ -113,6 +116,68 @@ inline bool operator<(const value_t lhs, const value_t rhs) noexcept
     return std::is_lt(lhs <=> rhs); // *NOPAD*
 }
 #endif
+
+
+/*!
+@brief compare an integer with a floating point number without precision loss
+
+Widening the integer to the floating point type loses precision beyond the
+float's mantissa, which makes equality intransitive: both 2^63-2 and 2^63-1
+round to 2^63, so each compares equal to that float while differing from each
+other. Ordering built on that is not a strict weak ordering, so sorting such
+values, or using them as keys in an ordered container, is undefined behavior.
+
+Returns a value to be compared against zero with the original operator, which
+reproduces the exact ordering. A NaN operand is returned as is, so comparing it
+against zero keeps NaN's semantics: false for the relational operators and
+unordered for `<=>`.
+*/
+template<typename IntegerType, typename FloatType>
+FloatType compare_integer_with_float(const IntegerType i, const FloatType f) noexcept
+{
+    const auto ordered = [](int c) noexcept
+    {
+        return static_cast<FloatType>(c);
+    };
+
+    if (std::isnan(f))
+    {
+        return f;
+    }
+
+    // values of IntegerType lie in [-bound, bound) when signed and in
+    // [0, bound) when unsigned; digits excludes the sign bit, so bound is a
+    // power of two that the float represents exactly
+    const FloatType bound = std::ldexp(static_cast<FloatType>(1), std::numeric_limits<IntegerType>::digits);
+    if (f >= bound)
+    {
+        return ordered(-1);
+    }
+    if (std::is_signed<IntegerType>::value ? (f < -bound) : (f < static_cast<FloatType>(0)))
+    {
+        return ordered(1);
+    }
+
+    // f is now within the integer's range, so truncating it is exact
+    const FloatType truncated = std::trunc(f);
+    const auto as_integer = static_cast<IntegerType>(truncated);
+    if (i != as_integer)
+    {
+        return ordered(i < as_integer ? -1 : 1);
+    }
+
+    // the integer parts agree, so any fractional part decides
+    const FloatType fraction = f - truncated;
+    if (fraction > static_cast<FloatType>(0))
+    {
+        return ordered(-1);
+    }
+    if (fraction < static_cast<FloatType>(0))
+    {
+        return ordered(1);
+    }
+    return ordered(0);
+}
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END

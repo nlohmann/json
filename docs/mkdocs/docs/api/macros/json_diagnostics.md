@@ -38,7 +38,8 @@ When the macro is not defined, the library will define it to its default value.
 
     Diagnostic messages can also be controlled with the CMake option
     [`JSON_Diagnostics`](../../integration/cmake.md#json_diagnostics) (`OFF` by default)
-    which defines `JSON_DIAGNOSTICS` accordingly.
+    which defines `JSON_DIAGNOSTICS` accordingly. Note this only applies when building the
+    library from source — see the pre-installed-package caveat on that page.
 
 ## Examples
 

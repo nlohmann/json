@@ -132,3 +132,37 @@ TEST_CASE("BJData")
         }
     }
 }
+
+TEST_CASE("CBOR")
+{
+    SECTION("parse errors")
+    {
+        SECTION("array/map size larger than std::size_t")
+        {
+            // declared lengths do not fit in a 32-bit std::size_t and must not be truncated
+            std::vector<uint8_t> const varr = {0x9B, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x05};
+            std::vector<uint8_t> const vmap = {0xBB, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x05};
+
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(varr), "[json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive array size", json::out_of_range&);
+            CHECK(json::from_cbor(varr, true, false).is_discarded());
+
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(vmap), "[json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive map size", json::out_of_range&);
+            CHECK(json::from_cbor(vmap, true, false).is_discarded());
+        }
+
+        SECTION("array/map size equal to the indefinite-length sentinel")
+        {
+            // on 32-bit platforms a four-byte length of 0xFFFFFFFF aliases unknown_size()
+            std::vector<uint8_t> const varr = {0x9A, 0xFF, 0xFF, 0xFF, 0xFF};
+            std::vector<uint8_t> const vmap = {0xBA, 0xFF, 0xFF, 0xFF, 0xFF};
+
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(varr), "[json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive array size", json::out_of_range&);
+            CHECK(json::from_cbor(varr, true, false).is_discarded());
+
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(vmap), "[json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive map size", json::out_of_range&);
+            CHECK(json::from_cbor(vmap, true, false).is_discarded());
+        }
+    }
+}

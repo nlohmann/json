@@ -135,6 +135,31 @@ Enable CI build targets. The exact targets are used during the several CI steps 
 
 Enable [extended diagnostic messages](../home/exceptions.md#extended-diagnostic-messages) by defining macro [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md). This option is `OFF` by default.
 
+!!! warning "Does not apply to a pre-installed package"
+
+    This option only takes effect when building nlohmann/json from source as part of your own
+    CMake project (e.g. via [`FetchContent`](#fetchcontent) or [`add_subdirectory`](#external)).
+    It has **no effect** on a package that was already built and installed elsewhere (Homebrew,
+    vcpkg, a system package, etc.) — the resulting compile definition is baked into the exported
+    `nlohmann_jsonTargets.cmake` at install time, and `set(JSON_Diagnostics ON)` before
+    `find_package()` does not change it (verified against the Homebrew-installed package: the
+    exported target still carries a fixed `$<$<BOOL:OFF>:JSON_DIAGNOSTICS=1>`, regardless of any
+    variable set in the consuming project).
+
+    To enable extended diagnostics for a pre-installed package, override the imported target's
+    property directly after `find_package()`:
+
+    ```cmake
+    find_package(nlohmann_json REQUIRED)
+    set_target_properties(nlohmann_json::nlohmann_json PROPERTIES
+        INTERFACE_COMPILE_DEFINITIONS "JSON_DIAGNOSTICS=1")
+    ```
+
+    This only works cleanly when your project is the sole consumer of that imported target. If
+    nlohmann_json is pulled in from more than one place in your dependency graph with different
+    `JSON_DIAGNOSTICS` values, you may see a `"JSON_DIAGNOSTICS" redefined` compiler error, since
+    conflicting `-D` flags can end up on the same compile command line.
+
 ### `JSON_Diagnostic_Positions`
 
 Enable position diagnostics by defining macro [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md). This option is `OFF` by default.

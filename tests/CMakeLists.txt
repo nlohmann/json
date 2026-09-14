@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.13...4.0)
 
 option(JSON_Valgrind    "Execute test suite with Valgrind." OFF)
 option(JSON_FastTests   "Skip expensive/slow tests." OFF)
+option(JSON_TestSimdutf "Build the unit tests against the simdutf UTF-8 validation backend." OFF)
+
+set(JSON_SIMDUTF_VERSION 9.1.0 CACHE STRING "The simdutf version used by JSON_TestSimdutf.")
 
 set(JSON_32bitTest     AUTO CACHE STRING "Enable the 32bit unit test (ON/OFF/AUTO/ONLY).")
 set(JSON_TestStandards "" CACHE STRING "The list of standards to test explicitly.")
@@ -125,6 +128,51 @@ json_test_set_test_options(test-unicode4 TEST_PROPERTIES TIMEOUT 3000)
 # add unit tests
 #############################################################################
 
+# Generate the leak checks for every JSON_HEDLEY_* macro defined in
+# hedley.hpp; tests/src/unit-no-macro-leak.cpp #include-s the result after
+# nlohmann/json.hpp (see issue #5408). Using the shared
+# cmake/scripts/gen_hedley_undef_check.cmake script (also used by `make
+# update_hedley_undef`) instead of a hand-maintained list of macro names
+# means this test can never go stale after a future `make update_hedley`.
+set(hedley_hpp "${PROJECT_SOURCE_DIR}/include/nlohmann/thirdparty/hedley/hedley.hpp")
+set(hedley_undef_check_script "${PROJECT_SOURCE_DIR}/cmake/scripts/gen_hedley_undef_check.cmake")
+set(hedley_undef_checks "${PROJECT_BINARY_DIR}/include/hedley_undef_checks.inc")
+
+# Reconfigure whenever the vendored header or the generator script changes,
+# so a `cmake --build` after `make update_hedley` does not silently keep a
+# stale generated file around.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${hedley_hpp}"
+    "${hedley_undef_check_script}")
+
+# Generate once at configure time, so the very first build (before any
+# custom-command build step has run) already has an up-to-date file.
+execute_process(
+    COMMAND ${CMAKE_COMMAND}
+        "-DHEDLEY_HPP=${hedley_hpp}"
+        "-DOUTPUT=${hedley_undef_checks}"
+        -DMODE=checks
+        -P "${hedley_undef_check_script}"
+    RESULT_VARIABLE hedley_undef_check_result
+)
+if(NOT hedley_undef_check_result EQUAL 0)
+    message(FATAL_ERROR "Failed to generate ${hedley_undef_checks}")
+endif()
+
+# Also (re)generate as a build step, so an incremental build after editing
+# hedley.hpp without a full reconfigure still picks up the change.
+add_custom_command(
+    OUTPUT "${hedley_undef_checks}"
+    COMMAND ${CMAKE_COMMAND}
+        "-DHEDLEY_HPP=${hedley_hpp}"
+        "-DOUTPUT=${hedley_undef_checks}"
+        -DMODE=checks
+        -P "${hedley_undef_check_script}"
+    DEPENDS "${hedley_hpp}" "${hedley_undef_check_script}"
+    COMMENT "Generating Hedley undef leak checks"
+    VERBATIM)
+add_custom_target(generate_hedley_undef_checks DEPENDS "${hedley_undef_checks}")
+
 if("${JSON_TestStandards}" STREQUAL "")
     set(test_cxx_standards 11 14 17 20 23)
     unset(test_force)
@@ -149,6 +197,71 @@ if(test_force)
 endif()
 message(STATUS "${msg}")
 
+#############################################################################
+# optionally validate UTF-8 with simdutf (JSON_USE_SIMDUTF)
+#############################################################################
+
+# The simdutf backend is opt-in and not vendored, so it is fetched here rather
+# than being a checked-in dependency. Everything below hangs off test_main,
+# whose usage requirements every test target inherits; the library target and
+# the installed CMake package are deliberately left untouched.
+if (JSON_TestSimdutf)
+    # simdutf requires C++17, both to compile itself and to be reachable from
+    # the library, which keeps its scalar validator below that. Find a tested
+    # standard that satisfies it.
+    set(simdutf_standard "")
+    foreach(cxx_standard ${test_cxx_standards})
+        if(NOT cxx_standard LESS 17 AND compiler_supports_cpp_${cxx_standard})
+            set(simdutf_standard ${cxx_standard})
+            break()
+        endif()
+    endforeach()
+
+    if("${simdutf_standard}" STREQUAL "")
+        # Building simdutf would fail outright without a C++17 compiler, and
+        # even with one it would go unused if no C++17-or-later standard is
+        # tested. Say so and fall back to the scalar validator rather than
+        # failing the build.
+        if(NOT compiler_supports_cpp_17)
+            set(simdutf_reason "the compiler does not support C++17")
+        else()
+            set(simdutf_reason "no tested standard is C++17 or later (testing ${msg_standards})")
+        endif()
+        message(WARNING
+            "JSON_TestSimdutf is enabled, but ${simdutf_reason}. simdutf requires C++17, so it "
+            "is not fetched and JSON_USE_SIMDUTF is not defined: the tests run against the "
+            "built-in scalar UTF-8 validator instead. Set JSON_TestStandards to include 17 or "
+            "later, or build with a compiler that supports C++17.")
+    else()
+        if (CMAKE_VERSION VERSION_LESS 3.18)
+            message(FATAL_ERROR "JSON_TestSimdutf requires CMake 3.18 or later (simdutf's minimum).")
+        endif()
+
+        include(FetchContent)
+
+        # simdutf builds its tests and tools by default, and its tests pull
+        # further dependencies of their own; only the library is needed here
+        set(SIMDUTF_TESTS OFF CACHE BOOL "" FORCE)
+        set(SIMDUTF_TOOLS OFF CACHE BOOL "" FORCE)
+        set(SIMDUTF_BENCHMARKS OFF CACHE BOOL "" FORCE)
+        set(SIMDUTF_ICONV OFF CACHE BOOL "" FORCE)
+
+        FetchContent_Declare(simdutf
+            URL https://github.com/simdutf/simdutf/archive/refs/tags/v${JSON_SIMDUTF_VERSION}.tar.gz
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        )
+        FetchContent_MakeAvailable(simdutf)
+
+        target_compile_definitions(test_main PUBLIC JSON_USE_SIMDUTF)
+        target_link_libraries(test_main PUBLIC simdutf::simdutf)
+
+        # simdutf.h requires C++17; below that the library keeps its scalar
+        # validator, so any C++11/14 test targets exercise the fallback and the
+        # C++17-and-later ones exercise simdutf. Both must agree.
+        message(STATUS "UTF-8 validation delegated to simdutf ${JSON_SIMDUTF_VERSION} for C++17 and later (JSON_USE_SIMDUTF)")
+    endif()
+endif()
+
 # *DO* use json_test_set_test_options() above this line
 
 json_test_should_build_32bit_test(json_32bit_test json_32bit_test_only "${JSON_32bitTest}")
@@ -163,6 +276,14 @@ foreach(file ${files})
     json_test_add_test_for(${file} MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force})
 endforeach()
 
+# tests/src/unit-no-macro-leak.cpp #include-s the generated leak-check file,
+# so its test targets must be built after generate_hedley_undef_checks.
+foreach(cxx_standard ${test_cxx_standards})
+    if(TARGET test-no-macro-leak_cpp${cxx_standard})
+        add_dependencies(test-no-macro-leak_cpp${cxx_standard} generate_hedley_undef_checks)
+    endif()
+endforeach()
+
 if(json_32bit_test_only)
     # Skip all other tests in this file
     return()
@@ -174,6 +295,24 @@ json_test_set_test_options(test-comparison_legacy
 )
 json_test_add_test_for(src/unit-comparison.cpp
     NAME test-comparison_legacy
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+
+# test the parser again with JSON_DIAGNOSTIC_POSITIONS enabled
+json_test_set_test_options(test-class_parser_diagnostic_positions
+    COMPILE_DEFINITIONS JSON_DIAGNOSTIC_POSITIONS=1
+)
+json_test_add_test_for(src/unit-class_parser.cpp
+    NAME test-class_parser_diagnostic_positions
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+
+# test diagnostic positions again without regular diagnostics (JSON pointer paths)
+json_test_set_test_options(test-diagnostic-positions_only
+    COMPILE_DEFINITIONS JSON_DIAGNOSTICS=0
+)
+json_test_add_test_for(src/unit-diagnostic-positions.cpp
+    NAME test-diagnostic-positions_only
     MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
 )
 

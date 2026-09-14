@@ -13,9 +13,8 @@ is compatible with both of the binary data formats that use binary subtyping, (t
 incompatible with each other, and it is up to the user to translate between them). The subtype is added to `BinaryType`
 via the helper type [byte_container_with_subtype](../byte_container_with_subtype/index.md).
 
-[CBOR's RFC 7049](https://tools.ietf.org/html/rfc7049) describes this type as:
-> Major type 2: a byte string. The string's length in bytes is represented following the rules for positive integers
-> (major type 0).
+[CBOR's RFC 8949](https://www.rfc-editor.org/rfc/rfc8949.html#section-3.1) describes this type as:
+> Major type 2: A byte string. The number of bytes in the string is equal to the argument.
 
 [MessagePack's documentation on the bin type
 family](https://github.com/msgpack/msgpack/blob/master/spec.md#bin-format-family) describes this type as:

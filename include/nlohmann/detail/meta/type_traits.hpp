@@ -231,7 +231,9 @@ struct char_traits<signed char> : std::char_traits<char>
     // Redefine to_int_type function
     static int_type to_int_type(char_type c) noexcept
     {
-        return static_cast<int_type>(c);
+        // cast via unsigned char: sign-extending a negative char_type would make
+        // byte 0xFF indistinguishable from eof()
+        return static_cast<int_type>(static_cast<unsigned char>(c));
     }
 
     static char_type to_char_type(int_type i) noexcept
@@ -699,20 +701,34 @@ struct is_json_pointer_of<A, ::nlohmann::json_pointer<A>> : std::true_type {};
 template <typename A>
 struct is_json_pointer_of<A, ::nlohmann::json_pointer<A>&> : std::true_type {};
 
-// checks if A and B are comparable using Compare functor
+// checks if A and B are comparable using Compare functor, assuming that
+// neither A nor B is a json_pointer type (that case is handled by
+// is_comparable below, which never instantiates this helper otherwise)
 template<typename Compare, typename A, typename B, typename = void>
-struct is_comparable : std::false_type {};
+struct is_comparable_no_json_pointer : std::false_type {};
 
-// We exclude json_pointer here, because the checks using Compare(A, B) will
-// use json_pointer::operator string_t() which triggers a deprecation warning
-// for GCC. See https://github.com/nlohmann/json/issues/4621. The call to
-// is_json_pointer_of can be removed once the deprecated function has been
-// removed.
 template<typename Compare, typename A, typename B>
-struct is_comparable < Compare, A, B, enable_if_t < !is_json_pointer_of<A, B>::value
-&& std::is_constructible <decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>()))>::value
+struct is_comparable_no_json_pointer < Compare, A, B, enable_if_t <
+std::is_constructible <decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>()))>::value
 && std::is_constructible <decltype(std::declval<Compare>()(std::declval<B>(), std::declval<A>()))>::value
 >> : std::true_type {};
+
+// checks if A and B are comparable using Compare functor
+// We dispatch on is_json_pointer_of as a plain bool (rather than folding it
+// into a single enable_if_t condition together with the checks below) so
+// that the Compare(A, B) checks are only ever written - and thus only ever
+// instantiated - when A/B are not a json_pointer/string pair. Those checks
+// use json_pointer::operator string_t() (GCC, see #4621) resp. the
+// deprecated json_pointer/string operator== (Clang, see #5288), and merely
+// naming them as later operands of a plain && chain is not sufficient to
+// avoid their instantiation on all compilers, even when the first operand
+// is false. The dispatch on is_json_pointer_of can be removed once the
+// deprecated json_pointer comparison operators have been removed.
+template<typename Compare, typename A, typename B, bool = is_json_pointer_of<A, B>::value>
+struct is_comparable : std::false_type {};
+
+template<typename Compare, typename A, typename B>
+struct is_comparable<Compare, A, B, false> : is_comparable_no_json_pointer<Compare, A, B> {};
 
 template<typename T>
 using detect_is_transparent = typename T::is_transparent;

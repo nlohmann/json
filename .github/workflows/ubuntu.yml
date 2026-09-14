@@ -21,11 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     container: gcc:latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
@@ -43,11 +43,11 @@ jobs:
         run: |
           wget -q -O - "https://github.com/facebook/infer/releases/download/v1.3.0/infer-linux-x86_64-v1.3.0.tar.xz" | sudo tar -C /opt -xJ
           sudo ln -s /opt/infer-linux-x86_64-v1.3.0/bin/infer /usr/local/bin/infer
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -60,17 +60,17 @@ jobs:
         target: [ci_test_amalgamation, ci_test_single_header, ci_cppcheck, ci_cpplint, ci_reproducible_tests, ci_non_git_tests, ci_offline_testdata, ci_reuse_compliance, ci_test_valgrind]
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
       - name: Install Valgrind
         run: sudo apt-get update ; sudo apt-get install -y valgrind
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -85,11 +85,11 @@ jobs:
     steps:
       - name: Install git, clang-tools, iwyu (ci_single_binaries), and unzip
         run: apt-get update ; apt-get install -y git clang-tools iwyu unzip
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -100,15 +100,15 @@ jobs:
     container: ubuntu:focal
     strategy:
       matrix:
-        target: [ci_cmake_flags, ci_test_diagnostics, ci_test_diagnostic_positions, ci_test_noexceptions, ci_test_noimplicitconversions, ci_test_legacycomparison, ci_test_noglobaludls]
+        target: [ci_cmake_flags, ci_test_diagnostics, ci_test_diagnostic_positions, ci_test_noexceptions, ci_test_noimplicitconversions, ci_test_legacycomparison, ci_test_noglobaludls, ci_test_simdutf]
     steps:
       - name: Install build-essential
         run: apt-get update ; apt-get install -y build-essential unzip wget git libssl-dev
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -118,11 +118,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Install dependencies and de_DE locale
@@ -142,7 +142,7 @@ jobs:
           name: code-coverage-report
           path: ${{ github.workspace }}/build/html
       - name: Publish report to Coveralls
-        uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
+        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329 # v2.3.8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ${{ github.workspace }}/build/json.info.filtered.noexcept
@@ -163,7 +163,15 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           apt-get update
           apt-get install -y --no-install-recommends software-properties-common ca-certificates gnupg make git
-          add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          # add-apt-repository resolves the PPA through the Launchpad API,
+          # which intermittently times out or fails the team lookup (the plain
+          # "deb ..." sources below never hit Launchpad and never flake).
+          # Retry with backoff so a transient Launchpad blip does not fail CI.
+          for attempt in 1 2 3 4 5; do
+            add-apt-repository -y ppa:ubuntu-toolchain-r/test && break
+            echo "::warning::add-apt-repository ppa:ubuntu-toolchain-r/test failed (attempt ${attempt}/5); retrying"
+            sleep $((attempt * 10))
+          done
           apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ bionic main"
           apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ bionic universe"
           apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial main"
@@ -172,11 +180,11 @@ jobs:
           apt-add-repository -y "deb http://archive.ubuntu.com/ubuntu/ xenial-updates universe"
           apt-get update
           apt-get install -y --no-install-recommends g++-${{ matrix.compiler }}
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Run CMake
         run: CXX=g++-${{ matrix.compiler }} cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -190,11 +198,11 @@ jobs:
         compiler: ['7', '8', '9', '10', '11', '12', '13', '14', '15', 'latest']
     container: gcc:${{ matrix.compiler }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -204,14 +212,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: ['3.4', '3.5', '3.6', '3.7', '3.8', '3.9', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15-bullseye', '16', '17', '18', '19', '20', 'latest']
+        compiler: ['3.4', '3.5', '3.6', '3.7', '3.8', '3.9', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15-bullseye', '16', '17', '18', '19', '20', '21', '22', 'latest']
     container: silkeh/clang:${{ matrix.compiler }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Set env FORCE_STDCPPFS_FLAG for clang 7 / 8 / 9 / 10
         run: echo "JSON_FORCED_GLOBAL_COMPILE_OPTIONS=-DJSON_HAS_FILESYSTEM=0;-DJSON_HAS_EXPERIMENTAL_FILESYSTEM=0" >> "$GITHUB_ENV"
         if: ${{ matrix.compiler == '7' || matrix.compiler == '8' || matrix.compiler == '9' || matrix.compiler == '10' }}
@@ -227,11 +235,11 @@ jobs:
       matrix:
         standard: [11, 14, 17, 20, 23, 26]
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -247,11 +255,11 @@ jobs:
     steps:
       - name: Install git and unzip
         run: apt-get update ; apt-get install -y git unzip
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build with libc++
@@ -274,11 +282,11 @@ jobs:
         cuda: ['11.8.0', '12.1.1', '12.6.3']
     container: nvidia/cuda:${{ matrix.cuda }}-devel-ubuntu22.04
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -291,14 +299,14 @@ jobs:
     runs-on: ubuntu-latest
     container: ${{ matrix.container }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       # The module test uses `import std;`, which needs CMake's experimental
       # import-std support. Its opt-in token is CMake-version-specific, so pin
       # CMake to the version whose token is set in tests/module_cpp20/CMakeLists.txt.
       - name: Get pinned CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
         with:
           cmakeVersion: 4.3.4
       # Clang: the std library module is provided by libc++ (the image's libstdc++
@@ -320,11 +328,11 @@ jobs:
     # Intel's own last officially published image that still includes it.
     container: intel/oneapi-hpckit:2023.2.1-devel-ubuntu22.04
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -337,9 +345,9 @@ jobs:
     runs-on: ubuntu-latest
     container: intel/oneapi-hpckit:latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -349,9 +357,9 @@ jobs:
     runs-on: ubuntu-latest
     container: nvcr.io/nvidia/nvhpc:25.5-devel-cuda12.9-ubuntu22.04
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -361,17 +369,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
       - name: Install emscripten
         uses: mymindstorm/setup-emsdk@4528d102f7230f0e7b276855c01ea1159be0e984 # v16
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@f5b8fbb4d77cec1acc5a5f9f0df4beffaf5d98d9 # v4.3.4
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Run CMake
         run: cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -GNinja
       - name: Build
@@ -384,11 +392,11 @@ jobs:
         target: [ci_test_examples, ci_test_build_documentation]
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Run CMake

@@ -1389,6 +1389,37 @@ TEST_CASE("value conversion")
                 // CHECK(m5["one"] == "eins");
             }
 
+            SECTION("reserve is called on containers that support it (#5406)")
+            {
+                // build a larger object so that a missing/incorrect reserve()
+                // call would be more likely to corrupt or drop elements
+                json j_large;
+                for (int i = 0; i < 100; ++i)
+                {
+                    j_large[std::to_string(i)] = i;
+                }
+
+                SECTION("std::unordered_map (supports reserve)")
+                {
+                    const auto m = j_large.get<std::unordered_map<std::string, int>>();
+                    CHECK(m.size() == 100);
+                    for (int i = 0; i < 100; ++i)
+                    {
+                        CHECK(m.at(std::to_string(i)) == i);
+                    }
+                }
+
+                SECTION("std::map (no reserve, fallback path)")
+                {
+                    const auto m = j_large.get<std::map<std::string, int>>();
+                    CHECK(m.size() == 100);
+                    for (int i = 0; i < 100; ++i)
+                    {
+                        CHECK(m.at(std::to_string(i)) == i);
+                    }
+                }
+            }
+
             SECTION("std::multimap")
             {
                 j1.get<std::multimap<std::string, int>>();
@@ -1782,6 +1813,21 @@ TEST_CASE("std::optional")
                              "[json.exception.type_error.302] type must be string, but is null", json::type_error&);
         CHECK_THROWS_WITH_AS(std::optional<int>(j_null),
                              "[json.exception.type_error.302] type must be number, but is null", json::type_error&);
+
+        // Assignment goes through the same overload resolution as direct
+        // construction, so it throws for the same reason. This relies on
+        // basic_json's implicit conversion operator, so it only applies
+        // when JSON_USE_IMPLICIT_CONVERSIONS is enabled (the default).
+#if JSON_USE_IMPLICIT_CONVERSIONS
+        std::optional<std::string> opt_assign;
+        CHECK_THROWS_WITH_AS(opt_assign = j_null,
+                             "[json.exception.type_error.302] type must be string, but is null", json::type_error&);
+#endif
+
+        // get_to() is the correct way to obtain std::nullopt from a JSON null.
+        std::optional<std::string> opt_get_to = "placeholder";
+        j_null.get_to(opt_get_to);
+        CHECK(opt_get_to == std::nullopt);
     }
 
     SECTION("string")

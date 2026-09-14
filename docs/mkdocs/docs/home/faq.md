@@ -194,6 +194,27 @@ The library uses `std::numeric_limits<number_float_t>::digits10` (15 for IEEE `d
 
 See [this section](../features/types/number_handling.md#number-serialization) on the library's number handling for more information.
 
+### Serializing untrusted or invalid UTF-8
+
+!!! question "Questions"
+
+    - Why does `dump()` throw when I serialize data that came from the network?
+    - Is CVE-2024-34363 a vulnerability in this library?
+
+Crashes reported against this library that stem from an uncaught
+[`type_error.316`](exceptions.md#jsonexceptiontype_error316) while serializing unvalidated input (e.g.,
+CVE-2024-34363) are a usage issue, not a library vulnerability:
+[`dump()`](../api/basic_json/dump.md) throws in its default `strict` mode because
+[RFC 8259](https://datatracker.ietf.org/doc/html/rfc8259#section-8.1) requires JSON text to be valid UTF-8.
+
+The recommended pattern is to pass a non-strict [`error_handler`](../api/basic_json/error_handler_t.md) or to handle the
+exception:
+
+```cpp
+// replace invalid sequences with U+FFFD instead of throwing
+const auto s = j.dump(-1, ' ', false, json::error_handler_t::replace);
+```
+
 ### Using JSON values with `std::format` or `fmt`
 
 !!! question

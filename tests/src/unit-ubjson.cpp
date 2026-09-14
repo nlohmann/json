@@ -819,6 +819,8 @@ TEST_CASE("UBJSON")
                     CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec2), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A", json::parse_error);
                     std::vector<uint8_t> const vec3 = {'H', 'i', 2, '1', '.'};
                     CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec3), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1.", json::parse_error);
+                    std::vector<uint8_t> const vec_overflow = {'H', 'i', 5, '1', 'e', '4', '0', '0'};
+                    CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec_overflow), "[json.exception.out_of_range.406] number overflow parsing '1e400'", json::out_of_range&);
                     std::vector<uint8_t> const vec4 = {'H', 2, '1', '0'};
                     CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec4), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON size: expected length type specification (U, i, I, l, L) after '#'; last byte: 0x02", json::parse_error);
                 }
@@ -1711,6 +1713,44 @@ TEST_CASE("UBJSON")
             CHECK(json::to_ubjson(json::from_ubjson(s_L)) == s_i);
         }
 
+        SECTION("no-op markers")
+        {
+            // A no-op ('N') is valid wherever a value may start; it is consumed
+            // by get_ignore_noop() before the value is read. It is not valid
+            // where a string length type specification is expected.
+
+            SECTION("accepted where a value may start")
+            {
+                // at top level, also repeated
+                CHECK(json::from_ubjson(std::vector<uint8_t>({'N', 'i', 1})) == json(1));
+                CHECK(json::from_ubjson(std::vector<uint8_t>({'N', 'N', 'N', 'i', 1})) == json(1));
+
+                // inside an array of unknown size, before and after an element
+                CHECK(json::from_ubjson(std::vector<uint8_t>({'[', 'N', 'i', 1, ']'})) == json({1}));
+                CHECK(json::from_ubjson(std::vector<uint8_t>({'[', 'i', 1, 'N', ']'})) == json({1}));
+
+                // inside an object of unknown size: before a key, between key
+                // and value, and before the closing '}'
+                CHECK(json::from_ubjson(std::vector<uint8_t>({'{', 'N', 'U', 1, 'a', 'i', 1, '}'})) == json({{"a", 1}}));
+                CHECK(json::from_ubjson(std::vector<uint8_t>({'{', 'U', 1, 'a', 'N', 'i', 1, '}'})) == json({{"a", 1}}));
+                CHECK(json::from_ubjson(std::vector<uint8_t>({'{', 'U', 1, 'a', 'i', 1, 'N', '}'})) == json({{"a", 1}}));
+            }
+
+            SECTION("rejected where a length type specification is expected")
+            {
+                json _;
+
+                // after the 'S' marker of a string value
+                std::vector<uint8_t> const v_S = {'S', 'N', 'U', 1, 'a'};
+                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v_S), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON string: expected length type specification (U, i, I, l, L); last byte: 0x4E", json::parse_error&);
+
+                // as the key length of an object with a known size, where
+                // no-ops are not permitted in the first place
+                std::vector<uint8_t> const v_key = {'{', '#', 'i', 1, 'N', 'U', 1, 'a', 'i', 1};
+                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v_key), "[json.exception.parse_error.113] parse error at byte 5: syntax error while parsing UBJSON string: expected length type specification (U, i, I, l, L); last byte: 0x4E", json::parse_error&);
+            }
+        }
+
         SECTION("number")
         {
             SECTION("float")
@@ -1861,6 +1901,31 @@ TEST_CASE("UBJSON")
                 std::vector<uint8_t> const v = {'S', '1', 'a'};
                 json _;
                 CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON string: expected length type specification (U, i, I, l, L); last byte: 0x31", json::parse_error&);
+            }
+
+            SECTION("negative length")
+            {
+                json _;
+
+                std::vector<uint8_t> const vi = {'S', 'i', 0xFF};
+                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vi), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing UBJSON string: string length must not be negative", json::parse_error&);
+                CHECK(json::from_ubjson(vi, true, false).is_discarded());
+
+                std::vector<uint8_t> const vI = {'S', 'I', 0xFF, 0xFF};
+                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vI), "[json.exception.parse_error.113] parse error at byte 4: syntax error while parsing UBJSON string: string length must not be negative", json::parse_error&);
+                CHECK(json::from_ubjson(vI, true, false).is_discarded());
+
+                std::vector<uint8_t> const vl = {'S', 'l', 0xFF, 0xFF, 0xFF, 0xFF};
+                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vl), "[json.exception.parse_error.113] parse error at byte 6: syntax error while parsing UBJSON string: string length must not be negative", json::parse_error&);
+                CHECK(json::from_ubjson(vl, true, false).is_discarded());
+
+                std::vector<uint8_t> const vL = {'S', 'L', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vL), "[json.exception.parse_error.113] parse error at byte 10: syntax error while parsing UBJSON string: string length must not be negative", json::parse_error&);
+                CHECK(json::from_ubjson(vL, true, false).is_discarded());
+
+                // a length of zero remains valid and yields an empty string
+                std::vector<uint8_t> const v0 = {'S', 'i', 0};
+                CHECK(json::from_ubjson(v0) == json(""));
             }
         }
 
@@ -2083,6 +2148,278 @@ TEST_CASE("UBJSON")
         }
     }
 }
+
+TEST_CASE("UBJSON nesting does not consume the call stack")
+{
+    // Containers used to be read by calling back into the value reader once
+    // per element, so the native call stack grew with the nesting depth of the
+    // input. '[' alone opens a container, so a payload of repeated '[' crashed
+    // the process (#5104), as did the optimized forms, which reach the same
+    // path through a type or size annotation. The containers are kept on a
+    // heap stack now.
+    //
+    // Deeply nested values must not be compared, copied or dumped here: those
+    // operations are still recursive and would reintroduce the crash.
+    json _;
+
+    SECTION("containers that end at a marker")
+    {
+        const std::vector<uint8_t> input(500000, '[');
+        CHECK_THROWS_WITH_AS(_ = json::from_ubjson(input), "[json.exception.parse_error.110] parse error at byte 500001: syntax error while parsing UBJSON value: unexpected end of input", json::parse_error&);
+        CHECK(json::from_ubjson(input, true, false).is_discarded());
+    }
+
+    SECTION("containers with a size")
+    {
+        std::vector<uint8_t> input;
+        for (std::size_t i = 0; i < 100000; ++i)
+        {
+            input.push_back('[');
+            input.push_back('#');
+            input.push_back('i');
+            input.push_back(1);
+        }
+        CHECK_THROWS_AS(_ = json::from_ubjson(input), json::parse_error&);
+        CHECK(json::from_ubjson(input, true, false).is_discarded());
+    }
+
+    SECTION("containers with a type and a size")
+    {
+        // '[' is a permitted optimized type in UBJSON, so each element of such
+        // a container is itself a container, read without a marker of its own
+        std::vector<uint8_t> input;
+        for (std::size_t i = 0; i < 100000; ++i)
+        {
+            const std::vector<uint8_t> level = {'[', '$', '[', '#', 'i', 1};
+            input.insert(input.end(), level.begin(), level.end());
+        }
+        CHECK_THROWS_AS(_ = json::from_ubjson(input), json::parse_error&);
+        CHECK(json::from_ubjson(input, true, false).is_discarded());
+    }
+
+    SECTION("a well-formed deep value is read through the SAX interface")
+    {
+        std::vector<uint8_t> input(100000, '[');
+        input.insert(input.end(), 100000, ']');
+
+        SaxCountdown accept_all(1000000);
+        CHECK(json::sax_parse(input, &accept_all, json::input_format_t::ubjson));
+    }
+
+    SECTION("a well-formed deep value is read into a value")
+    {
+        const std::size_t depth = 10000;
+        std::vector<uint8_t> input(depth, '[');
+        input.insert(input.end(), depth, ']');
+
+        json j = json::from_ubjson(input);
+
+        std::size_t measured = 0;
+        const json* p = &j;
+        while (p->is_array() && !p->empty())
+        {
+            p = &p->front();
+            ++measured;
+        }
+        // the innermost array is empty, so the descent stops one level short
+        CHECK(measured == depth - 1);
+    }
+
+    SECTION("containers are still read the same way")
+    {
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', ']'})) == json::array());
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'{', '}'})) == json::object());
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '#', 'i', 0})) == json::array());
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'{', '#', 'i', 0})) == json::object());
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '$', 'i', '#', 'i', 2, 1, 2})) == json({1, 2}));
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '#', 'i', 2, 'i', 1, 'i', 2})) == json({1, 2}));
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'{', '$', 'i', '#', 'i', 1, 'i', 1, 'a', 1})) == json({{"a", 1}}));
+        // a no-op is not a value, so a container of them holds none
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '$', 'N', '#', 'i', 2})) == json::array());
+        // sized and unsized forms nested inside one another
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '[', '#', 'i', 2, 'i', 1, 'i', 2, ']'})) == json({{1, 2}}));
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '#', 'i', 1, '[', 'i', 1, ']'})) == json({{1}}));
+        // an optimized container of containers
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '$', '[', '#', 'i', 2, 'i', 1, ']', 'i', 2, ']'})) == json({{1}, {2}}));
+    }
+
+    SECTION("BJData containers are still read the same way")
+    {
+        // the ND-array wrapper and the binary shortcut are complete values,
+        // not containers the reader descends into
+        CHECK(json::from_bjdata(std::vector<uint8_t>({'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 1, 2, 3, 4, 5, 6})) ==
+        json({{"_ArrayType_", "uint8"}, {"_ArraySize_", {2, 3}}, {"_ArrayData_", {1, 2, 3, 4, 5, 6}}}));
+        CHECK(json::from_bjdata(std::vector<uint8_t>({'[', '$', 'i', '#', 'i', 2, 1, 2})) == json({1, 2}));
+        CHECK(json::from_bjdata(std::vector<uint8_t>({'[', '[', 'i', 1, ']', ']'})) == json({{1}}));
+    }
+}
+
+TEST_CASE("UBJSON optimized arrays of a valueless type are bounded")
+{
+    // An element of type 'Z', 'T' or 'F' is encoded by its marker alone, so an
+    // optimized array of one of those has no payload and the declared count is
+    // the only thing deciding how much is allocated. Ten bytes used to produce
+    // billions of values (#2793); every other type costs at least one byte per
+    // element and is bounded by the end of the input.
+    json _;
+
+    SECTION("an excessive count is rejected")
+    {
+        // 'l' is a big-endian int32: 0x7FFFFFFF elements, about 34 GB of value
+        for (const auto marker :
+                {'Z', 'T', 'F'
+                })
+        {
+            const std::vector<uint8_t> input = {'[', '$', static_cast<uint8_t>(marker), '#', 'l', 0x7F, 0xFF, 0xFF, 0xFF};
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(input), "[json.exception.out_of_range.408] syntax error while parsing UBJSON size: excessive array size", json::out_of_range&);
+            CHECK(json::from_ubjson(input, true, false).is_discarded());
+        }
+    }
+
+    SECTION("ordinary counts are unaffected")
+    {
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '$', 'Z', '#', 'i', 3})) == json({nullptr, nullptr, nullptr}));
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '$', 'T', '#', 'i', 2})) == json({true, true}));
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '$', 'F', '#', 'i', 2})) == json({false, false}));
+        // 'N' is a no-op rather than a value, and still yields an empty array
+        CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '$', 'N', '#', 'i', 2})) == json::array());
+    }
+
+    SECTION("a type with a payload is unaffected")
+    {
+        // A count past the limit is not rejected for 'U', which costs a byte
+        // per element and is bounded by the end of the input instead. The
+        // count is kept just past the limit rather than made huge, because a
+        // count that also exceeds the array's max_size() is reported as
+        // out_of_range before the input runs out, and max_size() depends on
+        // the width of std::size_t.
+        const std::vector<uint8_t> input = {'[', '$', 'U', '#', 'l', 0x00, 0x10, 0x00, 0x01};
+        CHECK_THROWS_WITH_AS(_ = json::from_ubjson(input), "[json.exception.parse_error.110] parse error at byte 10: syntax error while parsing UBJSON number: unexpected end of input", json::parse_error&);
+        CHECK(json::from_ubjson(input, true, false).is_discarded());
+    }
+
+    SECTION("the writer stays within what the reader accepts")
+    {
+        // below the limit the optimized form is used and is tiny; above it the
+        // writer falls back so that the result can still be read back
+        json const at_limit(1048576, nullptr);
+        const auto v_at_limit = json::to_ubjson(at_limit, true, true);
+        CHECK(v_at_limit.size() == 9);
+        CHECK(v_at_limit.at(1) == '$');
+        CHECK(json::from_ubjson(v_at_limit) == at_limit);
+
+        json const above_limit(1048577, nullptr);
+        const auto v_above_limit = json::to_ubjson(above_limit, true, true);
+        CHECK(v_above_limit.at(1) != '$');
+        CHECK(json::from_ubjson(v_above_limit) == above_limit);
+    }
+}
+
+TEST_CASE("issue #5405 - array reserve for definite-length UBJSON arrays")
+{
+#if !defined(JSON_NOEXCEPTION)
+    // this SECTION relies on catching a thrown exception to distinguish
+    // which of two acceptable, bounded rejections a hostile header took;
+    // under JSON_NOEXCEPTION, JSON_THROW never produces a catchable C++
+    // exception (it aborts instead), so this cannot be tested that way here
+    SECTION("a huge claimed length with no element data must not over-allocate")
+    {
+        // optimized form [$type#count: type 'i' (int8), count as a four-byte
+        // 'l' (int32) of 0x7FFFFFFF (2147483647), but no element data at all.
+        // max_size() for a std::vector is far larger than this count, so it
+        // does not reject the header outright; the (capped) reservation must
+        // not attempt to allocate space for billions of elements before the
+        // missing data is detected.
+        json _;
+        const std::vector<uint8_t> input = {'[', '$', 'i', '#', 'l', 0x7F, 0xFF, 0xFF, 0xFF};
+        // On a platform where std::vector<json>::max_size() is smaller than
+        // the claimed count (e.g. 32-bit, where max_size() is bounded by a
+        // 32-bit SIZE_MAX divided by sizeof(json)), the SAX consumer's own
+        // check rejects the header outright (out_of_range.408, with the
+        // claimed count in the message) instead of accepting it and only
+        // finding it short of data once the (capped) reservation looks for
+        // element bytes that were never provided (parse_error.110). Either
+        // is an acceptable, bounded rejection of the hostile header -- the
+        // property under test is that no path attempts to allocate space
+        // for billions of elements.
+        bool threw = false;
+        try
+        {
+            _ = json::from_ubjson(input);
+        }
+        catch (const json::parse_error& e)
+        {
+            threw = true;
+            CHECK(e.id == 110);
+            CHECK(std::string(e.what()) == "[json.exception.parse_error.110] parse error at byte 10: syntax error while parsing UBJSON number: unexpected end of input");
+        }
+        catch (const json::out_of_range& e)
+        {
+            threw = true;
+            CHECK(e.id == 408);
+            CHECK(std::string(e.what()).find("excessive array size") != std::string::npos);
+        }
+        CHECK(threw);
+
+        // json_sax_dom_parser::start_array()'s max_size() check (unlike the
+        // scanner's own parse_error path) throws unconditionally via
+        // JSON_THROW rather than going through sax->parse_error(), so it is
+        // not gated by allow_exceptions=false on a platform where this
+        // header hits that check (e.g. 32-bit, see above) -- allow either
+        // a discarded result or the same out_of_range it throws with
+        // exceptions enabled.
+        try
+        {
+            CHECK(json::from_ubjson(input, true, false).is_discarded());
+        }
+        catch (const json::out_of_range& e)
+        {
+            CHECK(e.id == 408);
+        }
+    }
+#endif
+
+    SECTION("arrays of various sizes decode to the same value as before the reserve optimization")
+    {
+        for (const auto size :
+                {
+                    std::size_t{0}, std::size_t{1}, std::size_t{5}, // small
+                    std::size_t{16384},                             // exactly at the reserve cap
+                    std::size_t{20000}                              // above the reserve cap
+                })
+        {
+            CAPTURE(size)
+            json j = json::array();
+            for (std::size_t i = 0; i < size; ++i)
+            {
+                j.push_back(static_cast<int>(i % 1000));
+            }
+
+            // exercise both the plain and the optimized [$type#count encoding
+            const auto packed_plain = json::to_ubjson(j);
+            CHECK(json::from_ubjson(packed_plain) == j);
+
+            const auto packed_optimized = json::to_ubjson(j, true, true);
+            CHECK(json::from_ubjson(packed_optimized) == j);
+        }
+    }
+
+    SECTION("a user-defined SAX consumer is unaffected by the internal DOM reserve optimization")
+    {
+        // the reserve() call is local to json_sax_dom_parser / json_sax_dom_callback_parser;
+        // a custom SAX consumer that does not touch a DOM array sees identical events
+        json j = json::array();
+        for (int i = 0; i < 100; ++i)
+        {
+            j.push_back(i);
+        }
+        const auto packed = json::to_ubjson(j, true, true);
+
+        SaxCountdown scp(1000000); // large enough to never trigger an abort
+        CHECK(json::sax_parse(packed, &scp, json::input_format_t::ubjson));
+    }
+}
+
 
 TEST_CASE("Universal Binary JSON Specification Examples 1")
 {
@@ -2437,6 +2774,48 @@ TEST_CASE("all UBJSON first bytes")
     }
 }
 #endif
+
+TEST_CASE("UBJSON use_type requires use_size")
+{
+    SECTION("non-empty array throws other_error.502")
+    {
+        const json j = {1, 2, 3};
+        CHECK_THROWS_WITH_AS(json::to_ubjson(j, false, true),
+                             "[json.exception.other_error.502] use_type requires use_size = true",
+                             json::other_error&);
+    }
+
+    SECTION("non-empty object throws other_error.502")
+    {
+        const json j = {{"a", 1}, {"b", 2}};
+        CHECK_THROWS_WITH_AS(json::to_ubjson(j, false, true),
+                             "[json.exception.other_error.502] use_type requires use_size = true",
+                             json::other_error&);
+    }
+
+    SECTION("scalars do not throw with use_type=true, use_count=false")
+    {
+        CHECK_NOTHROW(json::to_ubjson(42, false, true));
+        CHECK_NOTHROW(json::to_ubjson(3.14, false, true));
+        CHECK_NOTHROW(json::to_ubjson("hello", false, true));
+        CHECK_NOTHROW(json::to_ubjson(true, false, true));
+        CHECK_NOTHROW(json::to_ubjson(nullptr, false, true));
+    }
+
+    SECTION("empty containers do not throw with use_type=true, use_count=false")
+    {
+        CHECK_NOTHROW(json::to_ubjson(json::array(), false, true));
+        CHECK_NOTHROW(json::to_ubjson(json::object(), false, true));
+    }
+
+    SECTION("valid combinations on non-empty containers")
+    {
+        const json j = {1, 2, 3};
+        CHECK_NOTHROW(json::to_ubjson(j, false, false));
+        CHECK_NOTHROW(json::to_ubjson(j, true, false));
+        CHECK_NOTHROW(json::to_ubjson(j, true, true));
+    }
+}
 
 TEST_CASE("UBJSON roundtrips" * doctest::skip())
 {

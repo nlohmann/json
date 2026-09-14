@@ -48,7 +48,7 @@ static basic_json parse(IteratorType first, SentinelType last,
 :   defaults to `IteratorType`; may be a different type comparable to `IteratorType` via `operator!=`, for instance.
 
     - a custom sentinel type for C++20 ranges
-    - `std::counted_iterator` with a different sentinel type
+    - `std::default_sentinel_t`, when `IteratorType` is `std::counted_iterator`
 
 ## Parameters
 

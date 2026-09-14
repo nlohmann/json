@@ -137,6 +137,14 @@ behavior is deprecated and switched off (`0`) by default.
 
 See [full documentation of `JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](../api/macros/json_use_legacy_discarded_value_comparison.md).
 
+## `JSON_USE_SIMDUTF`
+
+When defined, UTF-8 validation of JSON strings read from contiguous byte input is delegated to the
+[simdutf](https://github.com/simdutf/simdutf) library instead of the built-in scalar validator. This is an opt-in
+external dependency and is not defined by default.
+
+See [full documentation of `JSON_USE_SIMDUTF`](../api/macros/json_use_simdutf.md).
+
 ## `NLOHMANN_DEFINE_TYPE_*(...)`, `NLOHMANN_DEFINE_DERIVED_TYPE_*(...)`
 
 The library defines 12 macros to simplify the serialization/deserialization of types. See the page on

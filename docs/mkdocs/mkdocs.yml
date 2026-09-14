@@ -325,6 +325,7 @@ nav:
           - 'JSON_USE_GLOBAL_UDLS': api/macros/json_use_global_udls.md
           - 'JSON_USE_IMPLICIT_CONVERSIONS': api/macros/json_use_implicit_conversions.md
           - 'JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON': api/macros/json_use_legacy_discarded_value_comparison.md
+          - 'JSON_USE_SIMDUTF': api/macros/json_use_simdutf.md
           - 'NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_derived_type.md
           - 'NLOHMANN_DEFINE_TYPE_INTRUSIVE, NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_type_intrusive.md
           - 'NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_type_non_intrusive.md
@@ -337,6 +338,7 @@ nav:
           - 'NLOHMANN_JSON_VERSION_MAJOR, NLOHMANN_JSON_VERSION_MINOR, NLOHMANN_JSON_VERSION_PATCH': api/macros/nlohmann_json_version_major.md
   - Community:
       - community/index.md
+      - community/ecosystem.md
       - "Code of Conduct": community/code_of_conduct.md
       - community/contribution_guidelines.md
       - community/quality_assurance.md
@@ -421,7 +423,14 @@ plugins:
         - http://nlohmann.github.io/json/*
         - https://nlohmann.github.io/json/*
         - mailto:*
-  - privacy
+  - privacy:
+      # repology.org refuses requests from GitHub Actions runners, which made
+      # the privacy plugin abort the whole build when it could not download the
+      # package badges (the fetch fails, then reading the missing cache entry
+      # raises FileNotFoundError). Readers' browsers are served normally, so
+      # leave these badges as external references instead of self-hosting them.
+      assets_exclude:
+        - repology.org/*
   - llmstxt:
       markdown_description: >
         JSON for Modern C++ is a C++11 header-only library implementing a JSON

@@ -47,6 +47,58 @@ json j = {{"one", 1}, {"two", 2}};
 auto m = j.get<std::map<std::string, int>>();  // {{"one", 1}, {"two", 2}}
 ```
 
+`#!cpp std::pair` and `#!cpp std::tuple` are also supported, converting positionally to and from a JSON array:
+
+```cpp
+json j = {1.0, "hello", 42};
+auto t = j.get<std::tuple<double, std::string, int>>();  // {1.0, "hello", 42}
+```
+
+!!! warning "Serializing a `std::pair`/`std::tuple` whose every element is a string-keyed pair"
+
+    When *every* element of a `#!cpp std::pair` or `#!cpp std::tuple` is itself a two-element array whose first
+    element is a string (for example `#!cpp std::pair<std::string, int>`), serializing it produces a JSON **object**
+    instead of the expected array:
+
+    ```cpp
+    using kv = std::pair<std::string, int>;
+    json j = std::pair<kv, kv>{{"a", 1}, {"b", 2}};  // {"a":1,"b":2}, not [["a",1],["b",2]]
+    ```
+
+    This is a consequence of the [brace-initializer object-detection rule](creating_values.md): the same rule that
+    lets `#!cpp json{{"a", 1}, {"b", 2}}` create an object also fires here. The resulting object cannot be read back
+    into the original type (`#!cpp get<std::pair<kv, kv>>()` throws [`type_error.302`](../home/exceptions.md#jsonexceptiontype_error302)),
+    and duplicate keys collapse into one, losing elements. This only affects `#!cpp std::pair`/`#!cpp std::tuple`
+    themselves; a `#!cpp std::vector<std::pair<std::string, int>>`, or a pair/tuple with at least one element that is
+    not a string-keyed pair, serializes to an array as expected. To force an array, build one explicitly from the
+    elements with [`array`](../api/basic_json/array.md):
+
+    ```cpp
+    std::pair<kv, kv> p{{"a", 1}, {"b", 2}};
+    json a = json::array({p.first, p.second});  // [["a",1],["b",2]]
+    ```
+
+!!! info "Extracting references into a tuple"
+
+    A tuple type may also hold references (e.g. `#!cpp std::tuple<double&, std::string&>`) to avoid copying: `get`
+    then returns a tuple of references pointing directly at the elements stored inside the `basic_json` array,
+    rather than a tuple of copies:
+
+    ```cpp
+    json j = {1.0, "hello"};
+    auto refs = j.get<std::tuple<double&, std::string&>>();
+    std::get<1>(refs) = "world";  // modifies j[1] in place
+    ```
+
+    A referenced element must name the type the library actually *stores* — one of [`boolean_t`](../api/basic_json/boolean_t.md),
+    [`number_integer_t`](../api/basic_json/number_integer_t.md), [`number_unsigned_t`](../api/basic_json/number_unsigned_t.md),
+    [`number_float_t`](../api/basic_json/number_float_t.md), [`string_t`](../api/basic_json/string_t.md),
+    [`binary_t`](../api/basic_json/binary_t.md), [`array_t`](../api/basic_json/array_t.md), or
+    [`object_t`](../api/basic_json/object_t.md). There is nothing else to refer to, so a reference to any other type is a
+    compile error even when a conversion would exist: `#!cpp std::tuple<int&>` is rejected, because the library stores a
+    `#!cpp number_integer_t` (`#!cpp std::int64_t` by default) and not an `#!cpp int`. This restriction applies only to
+    reference elements — a plain `#!cpp std::tuple<int>` converts by value as usual.
+
 ## Implicit conversions
 
 By default, a JSON value implicitly converts to a compatible C++ type, so the explicit `get` call can often be omitted:
@@ -94,16 +146,33 @@ which forces the explicit `get` form and can catch unintended conversions at com
     with a custom `adl_serializer<std::optional<T>>` specialization. Prefer `get<std::optional<T>>()`/`get_to()`
     over `static_cast` for optional types.
 
-!!! warning "Converting to a fixed-size `std::array` does not check length"
+!!! warning "Converting to a fixed-size destination does not check the array size"
 
-    Converting a JSON array to `#!cpp std::array<T, N>` does not check that the JSON array's size matches `N`:
-    if the JSON array is longer, the extra elements are silently dropped; if it is shorter, the remaining
-    `std::array` elements are left default-constructed. No exception is thrown in either case.
+    Some destination types have a size that is fixed by their C++ type rather than by the JSON value:
+    `#!cpp std::pair<A, B>`, `#!cpp std::tuple<Ts...>`, `#!cpp std::array<T, N>`, C arrays `#!cpp T[N]`, and
+    `#!cpp std::map`/`#!cpp std::unordered_map` with a non-string key type (which is read from an array of
+    two-element arrays). All of them read exactly as many elements as they need via
+    [`at`](../api/basic_json/at.md) and **never compare the JSON array's size to that number**. The two
+    mismatch directions therefore behave differently:
+
+    - The JSON array has **too many** elements: the surplus is **silently discarded**, and no exception is
+      thrown.
+    - The JSON array has **too few** elements: `at` throws
+      [`out_of_range.401`](../home/exceptions.md#jsonexceptionout_of_range401) for the first missing index --
+      an out-of-range error, not a [`type_error`](../home/exceptions.md#type-errors), even though the cause
+      is a shape mismatch.
 
     ```cpp
     json j = {1, 2, 3, 4, 5};
-    auto a = j.get<std::array<int, 3>>();  // {1, 2, 3} -- elements 4 and 5 silently dropped
+
+    auto a = j.get<std::array<int, 3>>();       // {1, 2, 3} -- elements 4 and 5 silently dropped
+    auto p = j.get<std::pair<int, int>>();      // (1, 2)    -- elements 3, 4, and 5 silently dropped
+
+    json k = {1};
+    auto q = k.get<std::pair<int, int>>();      // ❌ throws out_of_range.401
     ```
+
+    If a size mismatch is an error in your application, check the size yourself before converting.
 
 ## Omitting a field when serializing `std::optional`
 
@@ -135,6 +204,20 @@ The reverse direction works the same way: assigning or constructing a `json` fro
 std::vector<int> numbers = {1, 2, 3};
 json j = numbers;   // [1,2,3]
 ```
+
+!!! info "Constructing from a C++20 range view"
+
+    A `json` array can also be constructed directly from a C++20 range view (`std::ranges::view`), such as the result
+    of `std::views::filter` or `std::views::transform` -- no intermediate container is needed:
+
+    ```cpp
+    std::vector<int> nums{1, 2, 37, 42, 21};
+    auto filtered = nums | std::views::filter([](int i) { return i > 10; });
+    json j(filtered);   // [37,42,21]
+    ```
+
+    This requires [`JSON_HAS_RANGES`](../api/macros/json_has_ranges.md) to be enabled and is unavailable on MinGW due
+    to incomplete C++20 ranges support there.
 
 ## Your own types
 
