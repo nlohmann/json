@@ -7892,6 +7892,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
+#include <algorithm> // min
 #include <cstddef>
 #include <string> // string
 #include <type_traits> // enable_if_t
@@ -10729,6 +10730,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
+// #include <nlohmann/detail/meta/cpp_future.hpp>
+
 // #include <nlohmann/detail/string_concat.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -10862,6 +10865,29 @@ constexpr std::size_t unknown_size()
 {
     return (std::numeric_limits<std::size_t>::max)();
 }
+
+/*!
+@brief reserve capacity for @a len elements in array @a arr
+
+Reserving upfront avoids repeated reallocations while the elements are added,
+but the reservation is capped so a bogus/hostile length (which is not bounded
+by max_size(), unlike e.g. std::vector) cannot trigger an oversized allocation
+for a small or truncated input.
+
+The overload below is selected for array types without reserve() (e.g.,
+std::deque), which are then left untouched.
+*/
+template<typename ArrayType>
+auto reserve_array(ArrayType& arr, std::size_t len, priority_tag<1> /*unused*/)
+-> decltype(arr.reserve(len), void())
+{
+    constexpr std::size_t reserve_cap = 16384;
+    arr.reserve((std::min)(len, reserve_cap));
+}
+
+template<typename ArrayType>
+inline void reserve_array(ArrayType& /*arr*/, std::size_t /*len*/, priority_tag<0> /*unused*/)
+{}
 
 /*!
 @brief SAX implementation to create a JSON value from SAX events
@@ -11016,6 +11042,11 @@ class json_sax_dom_parser
         if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref_stack.back()->max_size()))
         {
             JSON_THROW(out_of_range::create(408, concat("excessive array size: ", std::to_string(len)), ref_stack.back()));
+        }
+
+        if (len != detail::unknown_size())
+        {
+            reserve_array(*ref_stack.back()->m_data.m_value.array, len, priority_tag<1> {});
         }
 
         return true;
@@ -11395,6 +11426,11 @@ class json_sax_dom_callback_parser
             if (JSON_HEDLEY_UNLIKELY(len != detail::unknown_size() && len > ref_stack.back()->max_size()))
             {
                 JSON_THROW(out_of_range::create(408, concat("excessive array size: ", std::to_string(len)), ref_stack.back()));
+            }
+
+            if (len != detail::unknown_size())
+            {
+                reserve_array(*ref_stack.back()->m_data.m_value.array, len, priority_tag<1> {});
             }
         }
 
@@ -27318,6 +27354,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         std::swap(m_data.m_type, other.m_data.m_type);
         std::swap(m_data.m_value, other.m_data.m_value);
+
+#if JSON_DIAGNOSTIC_POSITIONS
+        std::swap(start_position, other.start_position);
+        std::swap(end_position, other.end_position);
+#endif
 
         set_parents();
         other.set_parents();
