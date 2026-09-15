@@ -19149,6 +19149,11 @@ class binary_writer
                     oa->write_character(to_char_type(0xDB));
                     write_number(static_cast<std::uint32_t>(N));
                 }
+                else
+                {
+                    JSON_THROW(out_of_range::create(412, concat("MessagePack size ", std::to_string(N), " exceeds maximum of ",
+                                                    std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
+                }
 
                 // step 2: write the string
                 oa->write_characters(
@@ -19177,6 +19182,11 @@ class binary_writer
                     // array 32
                     oa->write_character(to_char_type(0xDD));
                     write_number(static_cast<std::uint32_t>(N));
+                }
+                else
+                {
+                    JSON_THROW(out_of_range::create(412, concat("MessagePack size ", std::to_string(N), " exceeds maximum of ",
+                                                    std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
                 }
 
                 // step 2: write each element
@@ -19255,6 +19265,11 @@ class binary_writer
                     oa->write_character(to_char_type(output_type));
                     write_number(static_cast<std::uint32_t>(N));
                 }
+                else
+                {
+                    JSON_THROW(out_of_range::create(412, concat("MessagePack size ", std::to_string(N), " exceeds maximum of ",
+                                                    std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
+                }
 
                 // step 1.5: if this is an ext type, write the subtype
                 if (use_ext)
@@ -19290,6 +19305,11 @@ class binary_writer
                     // map 32
                     oa->write_character(to_char_type(0xDF));
                     write_number(static_cast<std::uint32_t>(N));
+                }
+                else
+                {
+                    JSON_THROW(out_of_range::create(412, concat("MessagePack size ", std::to_string(N), " exceeds maximum of ",
+                                                    std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
                 }
 
                 // step 2: write each element
