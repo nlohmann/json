@@ -64,7 +64,7 @@
       "name": "operator<<",
       "pretty_signature": "nlohmann::operator<<",
       "scope": "nlohmann",
-      "signature": "friend std::ostream& operator<<(std::ostream& o, const basic_json& j) { const bool pretty_print = o.width() > 0; const auto indentation = pretty_print ? o.width() : 0; o.width(0); serializer s(detail::output_adapter<char>(o), o.fill()); s.dump(j, pretty_print, false, static_cast<unsigned int>(indentation)); return o; }",
+      "signature": "friend std::ostream& operator<<(std::ostream& o, const basic_json& j) { const bool pretty_print = o.width() > 0; const auto indentation = pretty_print ? o.width() : 0; o.width(0); detail::output_stream_adapter<char> stream_adapter(o); serializer s(stream_adapter, o.fill(), pretty_print, false, static_cast<std::size_t>(indentation)); s.dump(j); return o; }",
       "tier": "callable"
     },
     {
@@ -181,7 +181,7 @@
       "name": "accept",
       "pretty_signature": "nlohmann::basic_json::accept",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename InputType> static bool accept(InputType&& i, const bool ignore_comments = false, const bool ignore_trailing_commas = false)",
+      "signature": "template<typename InputType> JSON_HEDLEY_WARN_UNUSED_RESULT static bool accept(InputType&& i, const bool ignore_comments = false, const bool ignore_trailing_commas = false)",
       "tier": "callable"
     },
     {
@@ -190,7 +190,7 @@
       "name": "accept",
       "pretty_signature": "nlohmann::basic_json::accept",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename IteratorType, typename SentinelType = IteratorType, detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0> static bool accept(IteratorType first, SentinelType last, const bool ignore_comments = false, const bool ignore_trailing_commas = false)",
+      "signature": "template<typename IteratorType, typename SentinelType = IteratorType, detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT static bool accept(IteratorType first, SentinelType last, const bool ignore_comments = false, const bool ignore_trailing_commas = false)",
       "tier": "callable"
     },
     {
@@ -577,7 +577,7 @@
       "name": "contains",
       "pretty_signature": "nlohmann::basic_json::contains",
       "scope": "nlohmann::basic_json",
-      "signature": "bool contains(const json_pointer& ptr) const",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT bool contains(const json_pointer& ptr) const",
       "tier": "callable"
     },
     {
@@ -586,7 +586,7 @@
       "name": "contains",
       "pretty_signature": "nlohmann::basic_json::contains",
       "scope": "nlohmann::basic_json",
-      "signature": "bool contains(const typename object_t::key_type& key) const",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT bool contains(const typename object_t::key_type& key) const",
       "tier": "callable"
     },
     {
@@ -595,7 +595,7 @@
       "name": "contains",
       "pretty_signature": "nlohmann::basic_json::contains",
       "scope": "nlohmann::basic_json",
-      "signature": "template<class KeyType, detail::enable_if_t< detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0> bool contains(KeyType && key) const",
+      "signature": "template<class KeyType, detail::enable_if_t< detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT bool contains(KeyType && key) const",
       "tier": "callable"
     },
     {
@@ -604,7 +604,7 @@
       "name": "contains",
       "pretty_signature": "nlohmann::basic_json::contains",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0> JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) bool contains(const typename ::nlohmann::json_pointer<BasicJsonType>& ptr) const",
+      "signature": "template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) bool contains(const typename ::nlohmann::json_pointer<BasicJsonType>& ptr) const",
       "tier": "callable"
     },
     {
@@ -613,7 +613,7 @@
       "name": "count",
       "pretty_signature": "nlohmann::basic_json::count",
       "scope": "nlohmann::basic_json",
-      "signature": "size_type count(const typename object_t::key_type& key) const",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT size_type count(const typename object_t::key_type& key) const",
       "tier": "callable"
     },
     {
@@ -622,7 +622,7 @@
       "name": "count",
       "pretty_signature": "nlohmann::basic_json::count",
       "scope": "nlohmann::basic_json",
-      "signature": "template<class KeyType, detail::enable_if_t< detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0> size_type count(KeyType && key) const",
+      "signature": "template<class KeyType, detail::enable_if_t< detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT size_type count(KeyType && key) const",
       "tier": "callable"
     },
     {
@@ -676,7 +676,7 @@
       "name": "dump",
       "pretty_signature": "nlohmann::basic_json::dump",
       "scope": "nlohmann::basic_json",
-      "signature": "string_t dump(const int indent = -1, const char indent_char = ' ', const bool ensure_ascii = false, const error_handler_t error_handler = error_handler_t::strict) const",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT string_t dump(const int indent = -1, const char indent_char = ' ', const bool ensure_ascii = false, const error_handler_t error_handler = error_handler_t::strict) const",
       "tier": "callable"
     },
     {
@@ -703,7 +703,7 @@
       "name": "empty",
       "pretty_signature": "nlohmann::basic_json::empty",
       "scope": "nlohmann::basic_json",
-      "signature": "bool empty() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT bool empty() const noexcept",
       "tier": "callable"
     },
     {
@@ -1216,7 +1216,7 @@
       "name": "is_array",
       "pretty_signature": "nlohmann::basic_json::is_array",
       "scope": "nlohmann::basic_json",
-      "signature": "constexpr bool is_array() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT constexpr bool is_array() const noexcept",
       "tier": "callable"
     },
     {
@@ -1225,7 +1225,7 @@
       "name": "is_binary",
       "pretty_signature": "nlohmann::basic_json::is_binary",
       "scope": "nlohmann::basic_json",
-      "signature": "constexpr bool is_binary() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT constexpr bool is_binary() const noexcept",
       "tier": "callable"
     },
     {
@@ -1234,7 +1234,7 @@
       "name": "is_boolean",
       "pretty_signature": "nlohmann::basic_json::is_boolean",
       "scope": "nlohmann::basic_json",
-      "signature": "constexpr bool is_boolean() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT constexpr bool is_boolean() const noexcept",
       "tier": "callable"
     },
     {
@@ -1243,7 +1243,7 @@
       "name": "is_discarded",
       "pretty_signature": "nlohmann::basic_json::is_discarded",
       "scope": "nlohmann::basic_json",
-      "signature": "constexpr bool is_discarded() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT constexpr bool is_discarded() const noexcept",
       "tier": "callable"
     },
     {
@@ -1252,7 +1252,7 @@
       "name": "is_null",
       "pretty_signature": "nlohmann::basic_json::is_null",
       "scope": "nlohmann::basic_json",
-      "signature": "constexpr bool is_null() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT constexpr bool is_null() const noexcept",
       "tier": "callable"
     },
     {
@@ -1261,7 +1261,7 @@
       "name": "is_number",
       "pretty_signature": "nlohmann::basic_json::is_number",
       "scope": "nlohmann::basic_json",
-      "signature": "constexpr bool is_number() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT constexpr bool is_number() const noexcept",
       "tier": "callable"
     },
     {
@@ -1270,7 +1270,7 @@
       "name": "is_number_float",
       "pretty_signature": "nlohmann::basic_json::is_number_float",
       "scope": "nlohmann::basic_json",
-      "signature": "constexpr bool is_number_float() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT constexpr bool is_number_float() const noexcept",
       "tier": "callable"
     },
     {
@@ -1279,7 +1279,7 @@
       "name": "is_number_integer",
       "pretty_signature": "nlohmann::basic_json::is_number_integer",
       "scope": "nlohmann::basic_json",
-      "signature": "constexpr bool is_number_integer() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT constexpr bool is_number_integer() const noexcept",
       "tier": "callable"
     },
     {
@@ -1288,7 +1288,7 @@
       "name": "is_number_unsigned",
       "pretty_signature": "nlohmann::basic_json::is_number_unsigned",
       "scope": "nlohmann::basic_json",
-      "signature": "constexpr bool is_number_unsigned() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT constexpr bool is_number_unsigned() const noexcept",
       "tier": "callable"
     },
     {
@@ -1297,7 +1297,7 @@
       "name": "is_object",
       "pretty_signature": "nlohmann::basic_json::is_object",
       "scope": "nlohmann::basic_json",
-      "signature": "constexpr bool is_object() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT constexpr bool is_object() const noexcept",
       "tier": "callable"
     },
     {
@@ -1306,7 +1306,7 @@
       "name": "is_primitive",
       "pretty_signature": "nlohmann::basic_json::is_primitive",
       "scope": "nlohmann::basic_json",
-      "signature": "constexpr bool is_primitive() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT constexpr bool is_primitive() const noexcept",
       "tier": "callable"
     },
     {
@@ -1315,7 +1315,7 @@
       "name": "is_string",
       "pretty_signature": "nlohmann::basic_json::is_string",
       "scope": "nlohmann::basic_json",
-      "signature": "constexpr bool is_string() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT constexpr bool is_string() const noexcept",
       "tier": "callable"
     },
     {
@@ -1324,7 +1324,7 @@
       "name": "is_structured",
       "pretty_signature": "nlohmann::basic_json::is_structured",
       "scope": "nlohmann::basic_json",
-      "signature": "constexpr bool is_structured() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT constexpr bool is_structured() const noexcept",
       "tier": "callable"
     },
     {
@@ -1396,7 +1396,7 @@
       "name": "max_size",
       "pretty_signature": "nlohmann::basic_json::max_size",
       "scope": "nlohmann::basic_json",
-      "signature": "size_type max_size() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT size_type max_size() const noexcept",
       "tier": "callable"
     },
     {
@@ -1864,7 +1864,7 @@
       "name": "size",
       "pretty_signature": "nlohmann::basic_json::size",
       "scope": "nlohmann::basic_json",
-      "signature": "size_type size() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT size_type size() const noexcept",
       "tier": "callable"
     },
     {
@@ -2080,7 +2080,7 @@
       "name": "type",
       "pretty_signature": "nlohmann::basic_json::type",
       "scope": "nlohmann::basic_json",
-      "signature": "constexpr value_t type() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT constexpr value_t type() const noexcept",
       "tier": "callable"
     },
     {
@@ -2098,7 +2098,7 @@
       "name": "type_name",
       "pretty_signature": "nlohmann::basic_json::type_name",
       "scope": "nlohmann::basic_json",
-      "signature": "JSON_HEDLEY_RETURNS_NON_NULL const char* type_name() const noexcept",
+      "signature": "JSON_HEDLEY_WARN_UNUSED_RESULT JSON_HEDLEY_RETURNS_NON_NULL const char* type_name() const noexcept",
       "tier": "callable"
     },
     {
@@ -2383,8 +2383,8 @@
     {
       "identity_name": "operator string_t",
       "kind": "CONVERSION_FUNCTION",
-      "name": "operator nlohmann::json_pointer::string_t_helper<type-parameter-0-0>::type",
-      "pretty_signature": "nlohmann::json_pointer::operator nlohmann::json_pointer::string_t_helper<type-parameter-0-0>::type",
+      "name": "operator typename string_t_helper<type-parameter-0-0>::type",
+      "pretty_signature": "nlohmann::json_pointer::operator typename string_t_helper<type-parameter-0-0>::type",
       "scope": "nlohmann::json_pointer",
       "signature": "JSON_HEDLEY_DEPRECATED_FOR(3.11.0, to_string()) operator string_t() const",
       "tier": "callable"
