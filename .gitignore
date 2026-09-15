@@ -45,3 +45,6 @@ nlohmann_json.spdx
 
 # Bazel-related
 MODULE.bazel.lock
+
+# Claude Code local tooling state (agent worktrees, etc.)
+/.claude/
