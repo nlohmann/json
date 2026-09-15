@@ -90,6 +90,41 @@ The library supports **Unicode input** as follows:
 In most cases, the parser is right to complain, because the input is not UTF-8 encoded. This is especially true for Microsoft Windows, where Latin-1 or ISO 8859-1 is often the standard encoding.
 
 
+### NUL bytes in the input
+
+!!! question "Questions"
+
+    - Why does `json::parse()` silently ignore part of my input?
+    - Why does a `std::string`/buffer with extra data after the JSON text parse without error, while a similar-looking string with extra text does not?
+
+A `'\0'` (NUL) byte anywhere in the input is treated the same as the real end of the input, rather than as an ordinary (and, outside of a string, invalid) byte. Everything from that byte onward is silently ignored, without a parse error — including further, otherwise well-formed JSON:
+
+```cpp
+json::parse(std::string("123") + '\0');          // == 123, no error
+json::parse(std::string("123") + '\0' + "true"); // == 123, the "true" is silently ignored too
+```
+
+This is different from any other unexpected trailing byte, which *does* raise [`parse_error.101`](../home/exceptions.md#jsonexceptionparse_error101):
+
+```cpp
+json::parse("123x"); // throws parse_error.101: unexpected additional data
+```
+
+This falls out of the same convention used when no explicit input length is given at all: `json::parse(const char*)` already stops at the first NUL byte via `strlen()`, since a bare pointer has no length of its own. The library applies that same NUL-terminated-C-string convention uniformly, rather than only when a length is genuinely unavailable — so a `std::string`, iterator range, or container whose content happens to include a NUL byte is affected the same way a raw `const char*` would be.
+
+If your input may contain a trailing or embedded NUL that is **not** meant to signal the end of the JSON text — for instance, a fixed-size, zero-padded buffer — trim it yourself before calling `parse()`, since the library will otherwise silently stop there instead of raising an error:
+
+```cpp
+s.resize(s.find('\0')); // drop everything from the first NUL onward, if any
+json::parse(s);
+```
+
+Note that this is unrelated to an *unescaped* NUL byte occurring **inside** a quoted JSON string, which is a different, already-invalid case and is correctly rejected either way:
+
+```cpp
+json::parse(std::string("\"") + '\0' + "\""); // throws parse_error.101: control character U+0000 (NUL) must be escaped to \u0000
+```
+
 ### Wide string handling
 
 !!! question
