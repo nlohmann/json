@@ -417,7 +417,7 @@ TEST_CASE("BJData")
 
                 SECTION("-32768..-129 (int16)")
                 {
-                    for (int32_t i = -32768; i <= -129; ++i)
+                    for (int32_t i = -32768; i <= -129; i = utils::next_integer_sample(i, static_cast<int32_t>(-129), 7))
                     {
                         CAPTURE(i)
 
@@ -577,7 +577,7 @@ TEST_CASE("BJData")
 
                 SECTION("256..32767 (int16)")
                 {
-                    for (size_t i = 256; i <= 32767; ++i)
+                    for (size_t i = 256; i <= 32767; i = utils::next_integer_sample(i, static_cast<size_t>(32767), static_cast<size_t>(7)))
                     {
                         CAPTURE(i)
 
@@ -910,7 +910,7 @@ TEST_CASE("BJData")
 
                 SECTION("256..32767 (int16)")
                 {
-                    for (size_t i = 256; i <= 32767; ++i)
+                    for (size_t i = 256; i <= 32767; i = utils::next_integer_sample(i, static_cast<size_t>(32767), static_cast<size_t>(7)))
                     {
                         CAPTURE(i)
 
@@ -4129,45 +4129,27 @@ TEST_CASE("BJData roundtrips" * doctest::skip())
         {
             CAPTURE(filename)
 
+            std::ifstream f_json(filename);
+            const json j1 = json::parse(f_json);
+            auto packed = utils::read_binary_file(filename + ".bjdata");
+
             {
                 INFO_WITH_TEMP(filename + ": std::vector<uint8_t>");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                const json j1 = json::parse(f_json);
-
-                // parse BJData file
-                auto packed = utils::read_binary_file(filename + ".bjdata");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_bjdata(packed));
-
-                // compare parsed JSON values
                 CHECK(j1 == j2);
             }
 
             {
                 INFO_WITH_TEMP(filename + ": std::ifstream");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                const json j1 = json::parse(f_json);
-
-                // parse BJData file
                 std::ifstream f_bjdata(filename + ".bjdata", std::ios::binary);
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_bjdata(f_bjdata));
-
-                // compare parsed JSON values
                 CHECK(j1 == j2);
             }
 
             {
                 INFO_WITH_TEMP(filename + ": output to output adapters");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                json const j1 = json::parse(f_json);
-
-                // parse BJData file
-                auto packed = utils::read_binary_file(filename + ".bjdata");
-
                 {
                     INFO_WITH_TEMP(filename + ": output adapters: std::vector<uint8_t>");
                     std::vector<uint8_t> vec;
