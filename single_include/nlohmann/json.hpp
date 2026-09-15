@@ -20384,12 +20384,12 @@ class binary_writer
         }
         CharType dtype = it->second;
 
-        // the 'B' (byte) marker is only defined by BJData Draft 3; emitting it
-        // under the default Draft 2 mode would produce a stream that Draft 2
-        // readers reject, so such an object falls back to a plain object
-        // encoding instead (see the "Binary values" section of the BJData
-        // documentation)
-        if (dtype == 'B' && bjdata_version != bjdata_version_t::draft3)
+        // the 'B' (byte) marker is only defined from BJData Draft 3 onward;
+        // emitting it under an earlier draft would produce a stream that an
+        // earlier-draft reader rejects, so such an object falls back to a
+        // plain object encoding instead (see the "Binary values" section of
+        // the BJData documentation)
+        if (dtype == 'B' && bjdata_version < bjdata_version_t::draft3)
         {
             return true;
         }
