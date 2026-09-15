@@ -136,6 +136,14 @@ The library maps MessagePack types to JSON value types as follows:
 
     Any MessagePack output created by `to_msgpack` can be successfully parsed by `from_msgpack`.
 
+!!! warning "UTF-8 validation of string values"
+
+    The MessagePack specification requires `str` values (`fixstr`, `str 8`, `str 16`, `str 32`) to be valid UTF-8.
+    This library validates the bytes of every such string (object keys included) at decode time and rejects
+    ill-formed UTF-8 with a [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) exception (or,
+    with `allow_exceptions` set to `false`, a discarded value), rather than only failing later when the resulting
+    value is dumped. `bin`/`ext`/`fixext` values are unaffected and are never validated, since they are not required
+    to hold text.
 
 ??? example
 

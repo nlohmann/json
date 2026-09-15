@@ -94,6 +94,16 @@ TEST_CASE("serialization")
             CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == "\"\\u00e4\\ufffd\\u00fc\"");
         }
 
+        SECTION("invalid character (regression guard for shared UTF-8 decoder, see #5529)")
+        {
+            // dump_escaped_impl() now calls the UTF-8 decoder shared with the
+            // binary readers (detail::decode() in string_utils.hpp) instead
+            // of a private copy; the exact type_error.316 message/behavior
+            // must stay byte-for-byte the same as before that extraction
+            const json j = "ä\xA9ü";
+            CHECK_THROWS_WITH_AS(utils::ignore_return_value(j.dump()), "[json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9", json::type_error&);
+        }
+
         SECTION("ending with incomplete character")
         {
             const json j = "123\xC2";
