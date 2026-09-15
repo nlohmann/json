@@ -214,11 +214,13 @@ TEST_CASE("compliance tests from nativejson-benchmark")
                     5708990770823839524233143877797980545530986496.0);
 
         {
-            std::string n1e308(312, '0');   // '1' followed by 308 '0'
+            // note: no trailing NUL byte - a NUL is ordinary (invalid) data
+            // now, not end-of-input, so it is no longer needed (or valid)
+            // padding here; see issue #5530
+            std::string n1e308(311, '0');   // '1' followed by 308 '0'
             n1e308[0] = '[';
             n1e308[1] = '1';
             n1e308[310] = ']';
-            n1e308[311] = '\0';
             TEST_DOUBLE(n1e308, 1E308);
         }
 
