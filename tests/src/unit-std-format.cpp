@@ -17,6 +17,7 @@
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
 
 // JSON_HAS_CPP_20 (do not remove; see note at top of file)
 #if JSON_HAS_STD_FORMAT
@@ -91,6 +92,18 @@ TEST_CASE("std::formatter<nlohmann::json>")
         std::format_to(std::back_inserter(out), "{}", j);
         CHECK(out == j.dump());
     }
+}
+
+TEST_CASE("std::formatter<nlohmann::ordered_json>")
+{
+    // spot-check a non-default basic_json instantiation, since the formatter
+    // is written against the generic NLOHMANN_BASIC_JSON_TPL_DECLARATION
+    // template and must actually instantiate (and behave correctly) for
+    // template arguments other than nlohmann::json
+    const ordered_json j = {{"foo", 1}, {"bar", {1, 2, 3}}};
+    CHECK(std::format("{}", j) == j.dump());
+    CHECK(std::format("{:#}", j) == j.dump(4));
+    CHECK(std::format("{:2}", j) == j.dump(2));
 }
 
 #endif
