@@ -42,13 +42,20 @@ represent a byte array in modern C++.
     `value_type` must additionally be exactly one byte wide (e.g., `std::uint8_t`/`char`/`std::byte`): the binary
     serializers (CBOR, MessagePack, BSON, UBJSON) read and write the container's raw bytes via
     `reinterpret_cast`, which is only correct for byte-sized elements -- a container like
-    `#!cpp std::vector<std::intptr_t>` will not work as `BinaryType`.
+    `#!cpp std::vector<std::intptr_t>` will not work as `BinaryType`. The elements must be stored contiguously, and
+    the binary readers additionally require `resize()` and `operator[]`. See
+    [Template Parameter Requirements](../../features/types/template_parameters.md#binarytype) for the full list.
 
 ## Notes
 
 #### Default type
 
 The default values for `BinaryType` is `#!cpp std::vector<std::uint8_t>`.
+
+#### Supported byte types
+
+`#!cpp std::vector<std::uint8_t>`, `#!cpp std::vector<char>`, and `#!cpp std::vector<std::byte>` are supported.
+Regardless of which of them is configured, [`dump`](dump.md) writes the bytes as the numbers 0..255.
 
 #### Custom BinaryType behavior
 
@@ -126,3 +133,6 @@ type `#!cpp binary_t*` must be dereferenced.
 ## Version history
 
 - Added in version 3.8.0. Changed the type of subtype to `std::uint64_t` in version 3.10.0.
+- Fixed [`dump`](dump.md), [`std::hash`](std_hash.md), and [`to_ubjson`](to_ubjson.md) for byte types that are not
+  integers (e.g., `#!cpp std::byte`) in version 3.13.0. `dump` now writes the bytes of a signed byte type (e.g.,
+  `#!cpp char`) as 0..255 rather than as negative numbers.
