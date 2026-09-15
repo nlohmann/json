@@ -55,6 +55,7 @@ class json_pointer
 
   public:
     // for backwards compatibility accept BasicJsonType
+    /// @sa https://json.nlohmann.me/api/json_pointer/string_t/
     using string_t = typename string_t_helper<RefStringType>::type;
 
     /// @brief create JSON pointer
