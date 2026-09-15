@@ -24693,9 +24693,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #if JSON_DIAGNOSTIC_POSITIONS
         dst.start_position = src.start_position;
         dst.end_position = src.end_position;
-#else
-        static_cast<void>(src);
-        static_cast<void>(dst);
 #endif
     }
 
