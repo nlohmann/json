@@ -114,7 +114,9 @@ std::size_t hash(const BasicJsonType& j)
             seed = combine(seed, static_cast<std::size_t>(j.get_binary().subtype()));
             for (const auto byte : j.get_binary())
             {
-                seed = combine(seed, std::hash<std::uint8_t> {}(byte));
+                // the cast is needed for binary types whose value type is not
+                // an integer (e.g., std::byte)
+                seed = combine(seed, std::hash<std::uint8_t> {}(static_cast<std::uint8_t>(byte)));
             }
             return seed;
         }

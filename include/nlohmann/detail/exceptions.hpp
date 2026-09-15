@@ -101,7 +101,10 @@ class exception : public std::exception
                     {
                         if (&element.second == current)
                         {
-                            tokens.emplace_back(element.first.c_str());
+                            // data() is null-terminated, so a key containing
+                            // a null byte is cut short here rather than
+                            // truncating the whole message at what()
+                            tokens.emplace_back(element.first.data());
                             break;
                         }
                     }
