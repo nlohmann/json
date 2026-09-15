@@ -455,6 +455,59 @@ TEST_CASE("parser class")
                     json _;
                     CHECK_THROWS_WITH_AS(_ = json::parse(s.begin(), s.end()), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0000 (NUL) must be escaped to \\u0000; last read: '\"<U+0000>'", json::parse_error&);
                 }
+
+                SECTION("a NUL byte is not end of input (#5530)")
+                {
+                    // a NUL byte is an ordinary byte like any other; unlike EOF,
+                    // it does not implicitly end the input
+                    json _;
+
+                    // a NUL byte right after a complete value is unexpected
+                    // trailing data, not end of input
+                    std::string trailing_nul = "123";
+                    trailing_nul.push_back('\0');
+                    CHECK_THROWS_WITH_AS(_ = json::parse(trailing_nul),
+                                         "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: '123<U+0000>'; expected end of input", json::parse_error&);
+
+                    // a NUL byte where a value is expected is an ordinary
+                    // invalid byte
+                    CHECK_THROWS_WITH_AS(_ = json::parse(std::string(1, '\0')),
+                                         "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: '<U+0000>'", json::parse_error&);
+
+                    std::string missing_value = "{\"a\":";
+                    missing_value.push_back('\0');
+                    CHECK_THROWS_WITH_AS(_ = json::parse(missing_value),
+                                         "[json.exception.parse_error.101] parse error at line 1, column 6: syntax error while parsing value - invalid literal; last read: '\"a\":<U+0000>'", json::parse_error&);
+
+                    // an embedded NUL byte inside a single-line comment does
+                    // not stop the comment-skip loop early; scanning
+                    // continues to the actual end of the comment (a real
+                    // newline, or EOF)
+                    std::string line_comment = "// hello";
+                    line_comment.push_back('\0');
+                    line_comment += "world\n123";
+                    CHECK(json::parse(line_comment, nullptr, true, true) == json(123));
+
+                    // same for a multi-line comment: an embedded NUL byte
+                    // does not stop the scan for the closing '*/'
+                    std::string block_comment = "/* hello";
+                    block_comment.push_back('\0');
+                    block_comment += "world */123";
+                    CHECK(json::parse(block_comment, nullptr, true, true) == json(123));
+
+                    // regression check: the plain C-string convenience
+                    // overload is unaffected, because it never sees a NUL
+                    // byte in the first place - see the FAQ entry on NUL
+                    // bytes in the input
+                    CHECK(json::parse("123") == json(123));
+
+                    // regression check: the existing test above (a NUL byte
+                    // inside a quoted string) must still be rejected exactly
+                    // as before
+                    std::string in_string = "\"1\"";
+                    in_string[1] = '\0';
+                    CHECK_THROWS_WITH_AS(_ = json::parse(in_string.begin(), in_string.end()), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: control character U+0000 (NUL) must be escaped to \\u0000; last read: '\"<U+0000>'", json::parse_error&);
+                }
             }
 
             SECTION("escaped")
@@ -1636,7 +1689,11 @@ TEST_CASE("parser class")
 
         SECTION("from std::array")
         {
-            std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
+            // note: the array is sized to hold exactly "true" and no more;
+            // a trailing NUL byte (as a 5-element array with only 4
+            // initializers would implicitly zero-pad) is not end-of-input
+            // but ordinary (invalid, trailing) data - see issue #5530
+            std::array<uint8_t, 4> v { {'t', 'r', 'u', 'e'} };
             json j;
             json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(true, j);
             CHECK(j == json(true));
@@ -1777,7 +1834,7 @@ TEST_CASE("parser class")
     {
         json _;
         CHECK_THROWS_WITH_AS(_ = json::parse("/a", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid comment; expecting '/' or '*' after '/'; last read: '/a'", json::parse_error);
-        CHECK_THROWS_WITH_AS(_ = json::parse("/*", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid comment; missing closing '*/'; last read: '/*<U+0000>'", json::parse_error);
+        CHECK_THROWS_WITH_AS(_ = json::parse("/*", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid comment; missing closing '*/'; last read: '/*'", json::parse_error);
     }
 }
 

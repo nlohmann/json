@@ -908,7 +908,6 @@ class lexer : public lexer_base<BasicJsonType>
                         case '\n':
                         case '\r':
                         case char_traits<char_type>::eof():
-                        case '\0':
                             return true;
 
                         default:
@@ -927,7 +926,6 @@ class lexer : public lexer_base<BasicJsonType>
                     switch (get())
                     {
                         case char_traits<char_type>::eof():
-                        case '\0':
                         {
                             error_message = "invalid comment; missing closing '*/'";
                             return false;
@@ -1758,9 +1756,7 @@ scan_number_done:
             case '9':
                 return scan_number();
 
-            // end of input (the null byte is needed when parsing from
-            // string literals)
-            case '\0':
+            // end of input
             case char_traits<char_type>::eof():
                 return token_type::end_of_input;
 

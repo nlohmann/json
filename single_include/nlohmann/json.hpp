@@ -7700,7 +7700,29 @@ contiguous_bytes_input_adapter input_adapter(CharT b)
     return input_adapter(ptr, ptr + length); // cppcheck-suppress[nullPointerArithmeticRedundantCheck]
 }
 
-template<typename T, std::size_t N>
+// char arrays are usually string literals (e.g. json::parse("[1,2,3]")),
+// which the compiler pads with a trailing '\0' that is not part of the
+// text to parse; mirror the const char* overload above (which computes
+// its length with strlen()) and exclude a single trailing NUL terminator,
+// if present, so parsing a literal behaves the same whether the argument
+// decays to a pointer or binds directly to this array overload.
+template < typename T, std::size_t N,
+           typename std::enable_if<std::is_same<typename std::remove_cv<T>::type, char>::value, int>::type = 0 >
+contiguous_bytes_input_adapter input_adapter(T (&array)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+{
+    std::size_t length = N;
+    if (length > 0 && array[length - 1] == 0)
+    {
+        --length;
+    }
+    const auto* ptr = static_cast<const char*>(array);
+    return input_adapter(ptr, ptr + length);
+}
+
+// all other arrays (e.g. byte arrays used for binary formats) are passed
+// through unchanged, trailing zero byte included, since it may be data.
+template < typename T, std::size_t N,
+           typename std::enable_if < !std::is_same<typename std::remove_cv<T>::type, char>::value, int >::type = 0 >
 auto input_adapter(T (&array)[N]) -> decltype(input_adapter(array, array + N)) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 {
     return input_adapter(array, array + N);
@@ -8674,7 +8696,6 @@ class lexer : public lexer_base<BasicJsonType>
                         case '\n':
                         case '\r':
                         case char_traits<char_type>::eof():
-                        case '\0':
                             return true;
 
                         default:
@@ -8693,7 +8714,6 @@ class lexer : public lexer_base<BasicJsonType>
                     switch (get())
                     {
                         case char_traits<char_type>::eof():
-                        case '\0':
                         {
                             error_message = "invalid comment; missing closing '*/'";
                             return false;
@@ -9524,9 +9544,7 @@ scan_number_done:
             case '9':
                 return scan_number();
 
-            // end of input (the null byte is needed when parsing from
-            // string literals)
-            case '\0':
+            // end of input
             case char_traits<char_type>::eof():
                 return token_type::end_of_input;
 

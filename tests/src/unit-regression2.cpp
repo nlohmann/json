@@ -804,7 +804,10 @@ TEST_CASE("regression tests 2")
     SECTION("issue #2546 - parsing containers of std::byte")
     {
         const char DATA[] = R"("Hello, world!")"; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-        const auto s = std::as_bytes(std::span(DATA));
+        // exclude the array's implicit trailing '\0': it is not part of the
+        // JSON text and, since #5530, is no longer silently treated as
+        // end-of-input, but as ordinary (invalid, trailing) data
+        const auto s = std::as_bytes(std::span(DATA, std::size(DATA) - 1));
         const json j = json::parse(s);
         CHECK(j.dump() == "\"Hello, world!\"");
     }

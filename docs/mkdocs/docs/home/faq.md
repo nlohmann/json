@@ -90,6 +90,21 @@ The library supports **Unicode input** as follows:
 In most cases, the parser is right to complain, because the input is not UTF-8 encoded. This is especially true for Microsoft Windows, where Latin-1 or ISO 8859-1 is often the standard encoding.
 
 
+### NUL bytes in the input
+
+!!! question
+
+    Why does parsing fail with "invalid literal" or "unexpected additional data" when my input contains a `'\0'` (NUL) byte?
+
+A `'\0'` byte that occurs inside or at the end of the input is **not** treated as end-of-input; it is treated as an ordinary, invalid byte, exactly like any other unexpected byte in that position. [RFC 8259](https://tools.ietf.org/html/rfc8259.html) does not give the NUL byte any special end-of-text meaning, so a JSON text that is embedded in a larger byte sequence (for instance, a `std::string` with a trailing `'\0'` appended, or a buffer that happens to be zero-padded) will yield a `parse_error.101`, the same error you would get for any other unexpected trailing or misplaced byte:
+
+- If the NUL byte follows a complete value, parsing fails with the usual "expected end of input" message the library also gives for any other unexpected trailing byte (e.g., `json::parse(std::string("123") + '\0')` fails the same way `json::parse("123x")` does).
+- If the NUL byte occurs where a value is expected (for instance, at the very start of the input, or right after a `:` or `,`), the library reports "invalid literal".
+- A NUL byte inside a quoted string still needs to be escaped as `\u0000`, as required by [RFC 8259](https://tools.ietf.org/html/rfc8259.html#section-7); an unescaped NUL there is reported separately as a control character that must be escaped.
+
+Only the length actually passed to the parser matters here: parsing a `const char*` (for example, a string literal) uses `strlen()`-like semantics and therefore never sees the terminating NUL, so `json::parse("[1,2,3]")` is unaffected. What is affected is input that explicitly includes a NUL byte as data, such as a `std::string` with `'\0'` appended, or an iterator range/container whose end includes it.
+
+
 ### Wide string handling
 
 !!! question

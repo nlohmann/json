@@ -510,7 +510,9 @@ TEST_CASE("deserialization")
 
             SECTION("from std::array")
             {
-                std::array<uint8_t, 5> const v { {'t', 'r', 'u', 'e'} };
+                // note: sized to hold exactly "true"; a trailing NUL byte is
+                // not end-of-input but ordinary trailing data - see #5530
+                std::array<uint8_t, 4> const v { {'t', 'r', 'u', 'e'} };
                 CHECK(json::parse(v) == json(true));
                 CHECK(json::accept(v));
 
@@ -606,7 +608,9 @@ TEST_CASE("deserialization")
 
             SECTION("from std::array")
             {
-                std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
+                // note: sized to hold exactly "true"; a trailing NUL byte is
+                // not end-of-input but ordinary trailing data - see #5530
+                std::array<uint8_t, 4> v { {'t', 'r', 'u', 'e'} };
                 CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
                 CHECK(json::accept(std::begin(v), std::end(v)));
 
