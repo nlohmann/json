@@ -522,6 +522,19 @@ TEST_CASE("indentation is written straight into the write buffer")
         CHECK(json::parse(out) == j);
     }
 
+    SECTION("binary values are indented the same way")
+    {
+        // a binary value is serialized as an object with "bytes" and
+        // "subtype" keys; the byte array itself is always written compactly
+        // (see dump_byte()), so only the surrounding object's indentation
+        // goes through put_indent()
+        const json j = json::binary({1, 2, 3}, 128);
+        CHECK(j.dump(2000) == "{\n" + std::string(2000, ' ') + "\"bytes\": [1, 2, 3],\n"
+              + std::string(2000, ' ') + "\"subtype\": 128\n}");
+        CHECK(j.dump(2000, '\t') == "{\n" + std::string(2000, '\t') + "\"bytes\": [1, 2, 3],\n"
+              + std::string(2000, '\t') + "\"subtype\": 128\n}");
+    }
+
     SECTION("indentation is unchanged for ordinary widths")
     {
         const json j = {{"a", {1, 2}}, {"b", nullptr}};
