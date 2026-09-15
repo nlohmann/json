@@ -35,6 +35,8 @@ class basic_json;
 | `BinaryType`         | type for binary arrays                                                    | [`binary_t`](https://json.nlohmann.me/api/basic_json/binary_t/index.md)                   |
 | `CustomBaseClass`    | extension point for user code                                             | [`json_base_class_t`](https://json.nlohmann.me/api/basic_json/json_base_class_t/index.md) |
 
+The library imposes a number of requirements on these types that are not expressed as C++ concepts, such as the container operations `object_t` and `array_t` must provide, or the fact that `StringType` must be `char`-based. They are collected in [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/index.md).
+
 ## Specializations
 
 - [**json**](https://json.nlohmann.me/api/json/index.md) - default specialization

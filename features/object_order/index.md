@@ -68,7 +68,11 @@ Output:
 }
 ```
 
-Alternatively, you can use a more sophisticated ordered map like [`tsl::ordered_map`](https://github.com/Tessil/ordered-map) ([integration](https://github.com/nlohmann/json/issues/546#issuecomment-304447518)) or [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map) ([integration](https://github.com/nlohmann/json/issues/485#issuecomment-333652309)).
+Alternatively, [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map) also preserves the insertion order and, unlike [`ordered_map`](https://json.nlohmann.me/api/ordered_map/index.md), keeps a lookup index, so it does not have the quadratic cost described below. It is used through a small adapter ([integration](https://github.com/nlohmann/json/issues/485#issuecomment-333652309)).
+
+If the order does not matter and you only want faster lookup, `boost::unordered_flat_map`, `absl::flat_hash_map`, `absl::node_hash_map`, and several other hash maps work through an adapter that restores the template argument order `basic_json` expects; see [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#objecttype). Note these are *unordered*, not insertion-ordered.
+
+[`tsl::ordered_map`](https://github.com/Tessil/ordered-map) cannot be used: its iterators expose the mapped value as `const`, while `basic_json` needs to modify it in place.
 
 The [`ordered_map`](https://json.nlohmann.me/api/ordered_map/index.md) behind `nlohmann::ordered_json` is deliberately minimal and has no lookup index, so every key access is a linear scan and building an object of `n` keys costs O(n²). This is unnoticeable at typical object sizes but becomes significant for objects with many thousands of keys; see [`ordered_map` complexity](https://json.nlohmann.me/api/ordered_map/#complexity). The alternatives above keep a lookup index and do not have this cost.
 

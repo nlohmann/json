@@ -54,6 +54,7 @@ JSON for Modern C++ is a C++11 header-only library implementing a JSON value typ
 - [SAX Interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md)
 - [Types](https://json.nlohmann.me/features/types/index.md)
 - [Number Handling](https://json.nlohmann.me/features/types/number_handling/index.md)
+- [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/index.md)
 
 ## Integration
 

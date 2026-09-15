@@ -17,6 +17,10 @@ using json_serializer = JSONSerializer<T, SFINAE>;
 
 The default values for `json_serializer` is [`adl_serializer`](https://json.nlohmann.me/api/adl_serializer/index.md).
 
+#### Requirements
+
+A custom serializer must provide `static void to_json(basic_json&, T)` for every type it serializes, and either `static void from_json(const basic_json&, T&)` or `static T from_json(const basic_json&)` for every type it deserializes. See [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#jsonserializer).
+
 ## Examples
 
 Example

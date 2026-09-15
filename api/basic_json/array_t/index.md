@@ -14,7 +14,7 @@ To store objects in C++, a type is defined by the template parameters explained 
 
 ## Template parameters
 
-`ArrayType` : container type to store arrays (e.g., `std::vector` or `std::list`)
+`ArrayType` : container type to store arrays. It must be a vector-like container: the library uses `operator[]`, `at()`, and `resize()`, and requires random-access iterators. `std::vector` and `std::deque` qualify; `std::list` does not. See [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#arraytype) for the full list of requirements.
 
 `AllocatorType` : the allocator to use for objects (e.g., `std::allocator`)
 
@@ -71,3 +71,4 @@ true
 ## Version history
 
 - Added in version 1.0.0.
+- Made `capacity()` optional, so that array types such as `std::deque` can be used, in version 3.13.0.

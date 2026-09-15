@@ -14,6 +14,10 @@ This description includes both integer and floating-point numbers. However, C++ 
 
 To store floating-point numbers in C++, a type is defined by the template parameter `NumberFloatType` which chooses the type to use.
 
+## Template parameters
+
+`NumberFloatType` : the type to store floating-point numbers. Parsing and serialization are implemented in terms of `std::strtof`/`std::strtod`/`std::strtold` and `std::snprintf`, so the type must be `float`, `double`, or `long double`. The [binary formats](https://json.nlohmann.me/features/binary_formats/index.md) additionally require `float` or `double`, because they have no encoding for `long double`. See [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#numberfloattype).
+
 ## Notes
 
 #### Default type

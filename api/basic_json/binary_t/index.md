@@ -35,7 +35,9 @@ copy/move-constructible, and support `push_back()`, `.data()`, and `.size()`, be
 `value_type` must additionally be exactly one byte wide (e.g., `std::uint8_t`/`char`/`std::byte`): the binary
 serializers (CBOR, MessagePack, BSON, UBJSON) read and write the container's raw bytes via
 `reinterpret_cast`, which is only correct for byte-sized elements -- a container like
-`std::vector<std::intptr_t>` will not work as `BinaryType`.
+`std::vector<std::intptr_t>` will not work as `BinaryType`. The elements must be stored contiguously, and
+the binary readers additionally require `resize()` and `operator[]`. See
+[Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#binarytype) for the full list.
 ```
 
 ## Notes
@@ -43,6 +45,10 @@ serializers (CBOR, MessagePack, BSON, UBJSON) read and write the container's raw
 #### Default type
 
 The default values for `BinaryType` is `std::vector<std::uint8_t>`.
+
+#### Supported byte types
+
+`std::vector<std::uint8_t>`, `std::vector<char>`, and `std::vector<std::byte>` are supported. Regardless of which of them is configured, [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) writes the bytes as the numbers 0..255.
 
 #### Custom BinaryType behavior
 
@@ -125,3 +131,4 @@ true
 ## Version history
 
 - Added in version 3.8.0. Changed the type of subtype to `std::uint64_t` in version 3.10.0.
+- Fixed [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md), [`std::hash`](https://json.nlohmann.me/api/basic_json/std_hash/index.md), and [`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) for byte types that are not integers (e.g., `std::byte`) in version 3.13.0. `dump` now writes the bytes of a signed byte type (e.g., `char`) as 0..255 rather than as negative numbers.

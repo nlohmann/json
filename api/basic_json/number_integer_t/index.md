@@ -14,6 +14,10 @@ This description includes both integer and floating-point numbers. However, C++ 
 
 To store integer numbers in C++, a type is defined by the template parameter `NumberIntegerType` which chooses the type to use.
 
+## Template parameters
+
+`NumberIntegerType` : the type to store signed integers. It must be a **signed integral** type (`std::is_integral`) with a `std::numeric_limits` specialization, and it is stored directly inside a `basic_json` value. See [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#numberintegertype-and-numberunsignedtype).
+
 ## Notes
 
 #### Default type

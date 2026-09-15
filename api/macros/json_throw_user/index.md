@@ -11,7 +11,7 @@
 
 Controls how exceptions are handled by the library.
 
-1. This macro overrides [`catch`](https://en.cppreference.com/w/cpp/language/try_catch) calls inside the library. The argument is the type of the exception to catch. As of version 3.8.0, the library only catches `std::out_of_range` exceptions internally to rethrow them as [`json::out_of_range`](https://json.nlohmann.me/home/exceptions/#out-of-range) exceptions. The macro is always followed by a scope.
+1. This macro overrides [`catch`](https://en.cppreference.com/w/cpp/language/try_catch) calls inside the library. The argument is the type of the exception to catch. The library uses it in a single place: to swallow any exception escaping the parent-pointer check that [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) adds to the class invariant. The places where the library catches its own [`json::out_of_range`](https://json.nlohmann.me/home/exceptions/#out-of-range) exceptions use `JSON_INTERNAL_CATCH` instead, which `JSON_CATCH_USER` also overrides unless `JSON_INTERNAL_CATCH_USER` is defined. The macro is always followed by a scope.
 1. This macro overrides `throw` calls inside the library. The argument is the exception to be thrown. Note that `JSON_THROW_USER` should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield undefined behavior.
 1. This macro overrides `try` calls inside the library. It has no arguments and is always followed by a scope.
 

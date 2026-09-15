@@ -14,6 +14,10 @@ This description includes both integer and floating-point numbers. However, C++ 
 
 To store unsigned integer numbers in C++, a type is defined by the template parameter `NumberUnsignedType` which chooses the type to use.
 
+## Template parameters
+
+`NumberUnsignedType` : the type to store unsigned integers. It must be an **unsigned integral** type (`std::is_integral`) with a `std::numeric_limits` specialization, and it must be able to represent the absolute value of every [`number_integer_t`](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md) value. See [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#numberintegertype-and-numberunsignedtype).
+
 ## Notes
 
 #### Default type

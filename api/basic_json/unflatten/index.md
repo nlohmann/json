@@ -33,7 +33,11 @@ Linear in the size of the JSON value.
 
 ## Notes
 
-Empty objects and arrays are flattened by [`flatten()`](https://json.nlohmann.me/api/basic_json/flatten/index.md) to `null` values and cannot unflattened to their original type. Apart from this example, for a JSON value `j`, the following is always true: `j == j.flatten().unflatten()`.
+Empty objects and arrays are flattened by [`flatten()`](https://json.nlohmann.me/api/basic_json/flatten/index.md) to `null` values and cannot unflattened to their original type.
+
+A flattened array and a flattened object whose keys are array indices are indistinguishable, because both are described by the same JSON pointers. A value is therefore restored as an array if and only if one of its keys is the reference token `0`, and as an object otherwise: `{"2": 1}` is restored unchanged, whereas `{"0": 1}` is restored as `[1]`. This decision does not depend on the order in which the flattened object is iterated.
+
+Apart from these two cases, for a JSON value `j`, the following is always true: `j == j.flatten().unflatten()`.
 
 ## Examples
 
@@ -100,3 +104,4 @@ Output:
 ## Version history
 
 - Added in version 2.0.0.
+- Made the array/object decision independent of the object's iteration order in version 3.13.0.
