@@ -59,6 +59,7 @@ option(JSON_LegacyDiscardedValueComparison "Enable legacy discarded value compar
 option(JSON_Install                        "Install CMake targets during install step." ${MAIN_PROJECT})
 option(JSON_MultipleHeaders                "Use non-amalgamated version of the library." ON)
 option(JSON_SystemInclude                  "Include as system headers (skip for clang-tidy)." OFF)
+option(JSON_StrictNulHandling              "Build with strict NUL-byte handling enabled." OFF)
 
 if (JSON_CI)
     include(ci)
@@ -108,6 +109,10 @@ if (JSON_Diagnostics)
     message(STATUS "Diagnostics enabled (JSON_DIAGNOSTICS=1)")
 endif()
 
+if (JSON_StrictNulHandling)
+    message(STATUS "Strict NUL-byte handling enabled (JSON_STRICT_NUL_HANDLING=1)")
+endif()
+
 if (JSON_Diagnostic_Positions)
     message(STATUS "Diagnostic positions enabled (JSON_DIAGNOSTIC_POSITIONS=1)")
 endif()
@@ -141,6 +146,7 @@ target_compile_definitions(
     $<$<BOOL:${JSON_Diagnostics}>:JSON_DIAGNOSTICS=1>
     $<$<BOOL:${JSON_Diagnostic_Positions}>:JSON_DIAGNOSTIC_POSITIONS=1>
     $<$<BOOL:${JSON_LegacyDiscardedValueComparison}>:JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1>
+    $<$<BOOL:${JSON_StrictNulHandling}>:JSON_STRICT_NUL_HANDLING=1>
 )
 
 target_include_directories(

@@ -8,6 +8,14 @@
 
 #include "doctest_compatibility.h"
 
+// capture whether JSON_STRICT_NUL_HANDLING was enabled on the command line
+// (e.g. -DJSON_STRICT_NUL_HANDLING=1) *before* including json.hpp, since the
+// library #undefs JSON_STRICT_NUL_HANDLING itself once the header has been
+// fully processed (see include/nlohmann/detail/macro_unscope.hpp)
+#if defined(JSON_STRICT_NUL_HANDLING) && (JSON_STRICT_NUL_HANDLING == 1)
+    #define JSON_TEST_STRICT_NUL_HANDLING_ENABLED 1
+#endif
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 #ifdef JSON_TEST_NO_GLOBAL_UDLS
@@ -323,6 +331,23 @@ TEST_CASE("deserialization")
             CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
         }
 
+        SECTION("operator>> with a NUL byte after the value (issue #5530)")
+        {
+            // operator>> parses non-strictly (it does not require the whole
+            // stream to be consumed), so a NUL byte following a complete
+            // value is simply left unread on the stream and never reaches
+            // the "expected end of input" check that JSON_STRICT_NUL_HANDLING
+            // affects; this holds regardless of the macro (verified below for
+            // the opt-in state as well)
+            std::string data = "123";
+            data.push_back('\0');
+            std::istringstream ss(data);
+            json j;
+            ss >> j;
+            CHECK(j == json(123));
+            CHECK(ss.good());
+        }
+
         SECTION("user-defined string literal")
         {
             CHECK("[\"foo\",1,2,3,false,{\"one\":1}]"_json == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
@@ -405,6 +430,27 @@ TEST_CASE("deserialization")
             CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'", json::parse_error&);
         }
 
+#if defined(JSON_TEST_STRICT_NUL_HANDLING_ENABLED)
+        SECTION("operator>> with a NUL byte where a value is expected (JSON_STRICT_NUL_HANDLING == 1, issue #5530)")
+        {
+            // a trailing NUL byte *after* a complete value is unaffected by the
+            // macro (see the successful-deserialization "operator>> with a NUL
+            // byte after the value" section above): operator>> parses
+            // non-strictly and never reaches the "expected end of input" check
+            // that the macro changes. A NUL byte where a *value* is expected,
+            // however, goes through the same token dispatch as any other input
+            // and is affected: with the macro enabled it now raises
+            // parse_error.101 (like any other unrecognized byte) instead of
+            // being silently treated the same as an empty stream.
+            std::string const data(1, '\0');
+            std::istringstream ss(data);
+            json j;
+            CHECK_THROWS_WITH_AS(ss >> j,
+                                 "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: '<U+0000>'",
+                                 json::parse_error&);
+        }
+#endif
+
         SECTION("user-defined string literal")
         {
             CHECK_THROWS_WITH_AS("[\"foo\",1,2,3,false,{\"one\":1}"_json, "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'", json::parse_error&);
@@ -453,7 +499,11 @@ TEST_CASE("deserialization")
 
             SECTION("from std::array")
             {
-                std::array<uint8_t, 5> const v { {'t', 'r', 'u', 'e'} };
+                // sized to exactly the length of "true": a size of 5 would leave
+                // a value-initialized trailing 0x00 element that is only
+                // silently accepted as end-of-input by default and would fail
+                // under JSON_STRICT_NUL_HANDLING
+                std::array<uint8_t, 4> const v { {'t', 'r', 'u', 'e'} };
                 CHECK(json::parse(v) == json(true));
                 CHECK(json::accept(v));
 
@@ -549,7 +599,9 @@ TEST_CASE("deserialization")
 
             SECTION("from std::array")
             {
-                std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
+                // sized to exactly the length of "true", see the analogous
+                // "from std::array" section above for why
+                std::array<uint8_t, 4> v { {'t', 'r', 'u', 'e'} };
                 CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
                 CHECK(json::accept(std::begin(v), std::end(v)));
 

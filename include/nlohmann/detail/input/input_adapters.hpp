@@ -762,6 +762,21 @@ contiguous_bytes_input_adapter input_adapter(CharT b)
 template<typename T, std::size_t N>
 auto input_adapter(T (&array)[N]) -> decltype(input_adapter(array, array + N)) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 {
+#if JSON_STRICT_NUL_HANDLING
+    // A `char` array from string-literal initialization (e.g. json::parse("123"))
+    // carries a trailing '\0' contributed by the compiler, not by the source
+    // text; drop exactly that one byte so it is not mistaken for real trailing
+    // data. Every other element type (unsigned char, std::uint8_t, ...) keeps
+    // the full extent unconditionally, since a trailing zero byte there is
+    // genuine data (e.g. CBOR/MessagePack). This intentionally does not
+    // strlen()-scan the array (as the pointer overload above does for a
+    // null-delimited string): for a `char` array that is not NUL-terminated
+    // within its bounds, that would read past the end of the array.
+    if (std::is_same<typename std::remove_cv<T>::type, char>::value && N > 0 && array[N - 1] == 0)
+    {
+        return input_adapter(array, array + N - 1);
+    }
+#endif
     return input_adapter(array, array + N);
 }
 
