@@ -970,6 +970,21 @@ A JSON Patch `move` operation's `"from"` location is a proper prefix of its `"pa
 
     This exception was added in version 3.13.0. Before that, this situation could succeed with a corrupted result: for an array target, removing the "from" element before the "add" step shifted subsequent indices, so "path" silently re-resolved to a different element than intended.
 
+### json.exception.out_of_range.415
+
+MessagePack's ext type and BSON's binary subtype are each stored in a single byte. This exception is thrown when serializing a
+[`byte_container_with_subtype`](../api/byte_container_with_subtype/index.md) whose subtype exceeds 255.
+
+!!! failure "Example message"
+
+    ```
+    [json.exception.out_of_range.415] subtype 70000 is too large for the MessagePack ext type (max 255)
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0. Before that, subtypes above 255 were silently truncated modulo 256 instead of raising an error.
+
 ## Further exceptions
 
 This exception is thrown in case of errors that cannot be classified with the
