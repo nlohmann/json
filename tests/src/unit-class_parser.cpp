@@ -8,6 +8,14 @@
 
 #include "doctest_compatibility.h"
 
+// capture whether JSON_STRICT_NUL_HANDLING was enabled on the command line
+// (e.g. -DJSON_STRICT_NUL_HANDLING=1) *before* including json.hpp, since the
+// library #undefs JSON_STRICT_NUL_HANDLING itself once the header has been
+// fully processed (see include/nlohmann/detail/macro_unscope.hpp)
+#if defined(JSON_STRICT_NUL_HANDLING) && (JSON_STRICT_NUL_HANDLING == 1)
+    #define JSON_TEST_STRICT_NUL_HANDLING_ENABLED 1
+#endif
+
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -541,6 +549,88 @@ TEST_CASE("parser class")
                 CHECK(parser_helper("\"\\ud80c\\udc60\"").get<json::string_t>() == "\xf0\x93\x81\xa0");
                 CHECK(parser_helper("\"\\ud83c\\udf1e\"").get<json::string_t>() == "🌞");
             }
+        }
+
+        SECTION("NUL byte handling (issue #5530, JSON_STRICT_NUL_HANDLING)")
+        {
+            // by default, a NUL byte anywhere in the input (not inside a quoted
+            // string, which is covered above) is silently treated the same as
+            // real end of input; JSON_STRICT_NUL_HANDLING (off by default, see
+            // docs/mkdocs/docs/api/macros/json_strict_nul_handling.md) makes a
+            // NUL byte an error like any other unexpected byte instead.
+            //
+            // The two sections below are mutually exclusive: this whole test
+            // binary is compiled once, with JSON_STRICT_NUL_HANDLING either
+            // left at its default or forced to 1 (e.g. by the dedicated
+            // ci_test_strict_nul_handling CI target), so only the section
+            // matching the actual, compiled-in behavior can pass.
+#if !defined(JSON_TEST_STRICT_NUL_HANDLING_ENABLED)
+            SECTION("default behavior (macro not enabled)")
+            {
+                // a NUL byte after a complete value silently truncates the input
+                std::string s = "123";
+                s.push_back('\0');
+                s += "4";
+                CHECK(json::parse(s) == json(123));
+                CHECK(json::accept(s));
+
+                // parsing from a string literal is unaffected either way
+                CHECK(json::parse("123") == json(123));
+            }
+#endif
+
+#if defined(JSON_TEST_STRICT_NUL_HANDLING_ENABLED)
+            SECTION("opt-in strict behavior (JSON_STRICT_NUL_HANDLING == 1)")
+            {
+                // a NUL byte after a complete value is now a parse error,
+                // instead of silently truncating the input
+                {
+                    std::string s = "123";
+                    s.push_back('\0');
+                    json _; // NOLINT(readability-identifier-naming)
+                    CHECK_THROWS_WITH_AS(_ = json::parse(s),
+                                         "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: '123<U+0000>'; expected end of input",
+                                         json::parse_error&);
+                    CHECK_FALSE(json::accept(s));
+                }
+
+                // a NUL byte where a value is expected is now a parse error,
+                // instead of being treated the same as an empty input
+                {
+                    const std::string s(1, '\0');
+                    json _; // NOLINT(readability-identifier-naming)
+                    CHECK_THROWS_WITH_AS(_ = json::parse(s),
+                                         "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: '<U+0000>'",
+                                         json::parse_error&);
+                    CHECK_FALSE(json::accept(s));
+                }
+
+                // a NUL byte inside a // comment no longer stops the comment
+                // scan early; scanning continues correctly past it
+                {
+                    std::string s = "1 // a";
+                    s.push_back('\0');
+                    s += "b\n";
+                    CHECK(json::parse(s, nullptr, true, true) == json(1));
+                    CHECK(json::accept(s, true, true));
+                }
+
+                // a NUL byte inside a /* */ comment no longer stops the
+                // comment scan early either
+                {
+                    std::string s = "1 /* a";
+                    s.push_back('\0');
+                    s += "b */ ";
+                    CHECK(json::parse(s, nullptr, true, true) == json(1));
+                    CHECK(json::accept(s, true, true));
+                }
+
+                // regression guard: parsing from a string literal (which
+                // carries a compiler-appended trailing '\0') still works,
+                // even though a NUL byte is now rejected everywhere else
+                CHECK(json::parse("123") == json(123));
+            }
+#endif
         }
 
         SECTION("number")
@@ -1892,7 +1982,13 @@ TEST_CASE("parser class")
 
         SECTION("from std::array")
         {
-            std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
+            // NOTE: this array is sized to exactly the length of "true" (unlike
+            // the trailing-NUL-tolerant default behavior elsewhere in this file,
+            // see the "NUL byte handling" section above); a size of 5 here would
+            // leave a value-initialized trailing 0x00 element that is only
+            // silently accepted as end-of-input by default and would fail under
+            // JSON_STRICT_NUL_HANDLING
+            std::array<uint8_t, 4> v { {'t', 'r', 'u', 'e'} };
             json j;
             json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(true, j);
             CHECK(j == json(true));
@@ -2033,7 +2129,17 @@ TEST_CASE("parser class")
     {
         json _;
         CHECK_THROWS_WITH_AS(_ = json::parse("/a", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid comment; expecting '/' or '*' after '/'; last read: '/a'", json::parse_error);
+        // "/*" is a string literal, so it carries a compiler-appended trailing
+        // '\0'; by default that NUL is read like any other byte and shows up
+        // in "last read", but JSON_STRICT_NUL_HANDLING trims exactly that one
+        // trailing byte from a char array (see
+        // docs/mkdocs/docs/api/macros/json_strict_nul_handling.md), so it no
+        // longer appears in the message in that state
+#if defined(JSON_TEST_STRICT_NUL_HANDLING_ENABLED)
+        CHECK_THROWS_WITH_AS(_ = json::parse("/*", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid comment; missing closing '*/'; last read: '/*'", json::parse_error);
+#else
         CHECK_THROWS_WITH_AS(_ = json::parse("/*", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid comment; missing closing '*/'; last read: '/*<U+0000>'", json::parse_error);
+#endif
     }
 
 #if JSON_DIAGNOSTIC_POSITIONS
