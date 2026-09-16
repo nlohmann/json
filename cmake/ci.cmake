@@ -246,6 +246,23 @@ add_custom_target(ci_test_brace_init_copy_semantics
 )
 
 ###############################################################################
+# Enable strict NUL-byte handling.
+###############################################################################
+
+add_custom_target(ci_test_strict_nul_handling
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_StrictNulHandling=ON
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_strict_nul_handling
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_strict_nul_handling
+    # unit-testsuites contains a fixture (a "1e308" test value) that relies on the
+    # legacy NUL-as-end-of-input behavior this macro disables; exclude it here, as
+    # it is expected to fail under strict NUL handling and is out of scope for it
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_strict_nul_handling && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure -E "test-testsuites"
+    COMMENT "Compile and test with strict NUL-byte handling enabled"
+)
+
+###############################################################################
 # Disable global UDLs.
 ###############################################################################
 

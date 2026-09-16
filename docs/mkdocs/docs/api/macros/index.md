@@ -14,6 +14,11 @@ header. See also the [macro overview page](../../features/macros.md).
 - [**JSON_DIAGNOSTIC_POSITIONS**](json_diagnostic_positions.md) - access positions of elements
 - [**JSON_NOEXCEPTION**](json_noexception.md) - switch off exceptions
 
+## Parsing
+
+- [**JSON_STRICT_NUL_HANDLING**](json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input instead of
+  treating it as end of input
+
 ## Language support
 
 - [**JSON_HAS_CPP_11**<br>**JSON_HAS_CPP_14**<br>**JSON_HAS_CPP_17**<br>**JSON_HAS_CPP_20**](json_has_cpp_11.md) - set supported C++ standard

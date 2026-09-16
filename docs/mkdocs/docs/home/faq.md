@@ -119,6 +119,19 @@ s.resize(s.find('\0')); // drop everything from the first NUL onward, if any
 json::parse(s);
 ```
 
+**Opt-in strict handling (since version 3.13.0)**
+
+Manually trimming every input is easy to forget. If you define [`JSON_STRICT_NUL_HANDLING`](../api/macros/json_strict_nul_handling.md) to `1` before including the library, a `'\0'` byte is instead rejected like any other unexpected byte and raises `parse_error.101`, instead of being treated as end of input:
+
+```cpp
+#define JSON_STRICT_NUL_HANDLING 1
+#include <nlohmann/json.hpp>
+
+json::parse(std::string("123") + '\0'); // throws parse_error.101 instead of silently returning 123
+```
+
+This macro defaults to `0` (disabled, preserving the behavior described above) to avoid breaking existing code that may depend on it, even unknowingly; it is planned to become the default in version 4.0.0. See [its documentation](../api/macros/json_strict_nul_handling.md) for details, including how it also affects `char` arrays such as string literals.
+
 Note that this is unrelated to an *unescaped* NUL byte occurring **inside** a quoted JSON string, which is a different, already-invalid case and is correctly rejected either way:
 
 ```cpp
