@@ -1554,6 +1554,27 @@ TEST_CASE("MessagePack")
             CHECK(json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01}), true, false).is_discarded());
         }
 
+        SECTION("invalid UTF-8 in string (see #5529)")
+        {
+            // a fixstr of length 2 (0xA0 | 2) whose bytes are not valid UTF-8
+            // (0xC0 0xAE is an overlong encoding of '.') must be rejected at
+            // decode time, matching every other kind of malformed binary
+            // input, rather than only failing later when the resulting
+            // value is dumped
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xa2, 0xc0, 0xae})), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing MessagePack string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_msgpack(std::vector<uint8_t>({0xa2, 0xc0, 0xae}), true, false).is_discarded());
+
+            // a MessagePack bin8 blob with the very same bytes is NOT text
+            // and must still be accepted as-is
+            CHECK_NOTHROW(_ = json::from_msgpack(std::vector<uint8_t>({0xc4, 0x02, 0xc0, 0xae})));
+            CHECK(_ == json::binary(std::vector<std::uint8_t>({0xc0, 0xae})));
+
+            // valid UTF-8 must still round-trip
+            const json j = "h\xc3\xa9llo, w\xc3\xb6rld! \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e"; // héllo, wörld! 日本語
+            CHECK(json::from_msgpack(json::to_msgpack(j)) == j);
+        }
+
         SECTION("strict mode")
         {
             std::vector<uint8_t> const vec = {0xc0, 0xc0};

@@ -6059,10 +6059,14 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
+#include <array> // array
 #include <cstddef> // size_t
+#include <cstdint> // uint8_t, uint32_t
 #include <string> // string, to_string
 
 // #include <nlohmann/detail/abi_macros.hpp>
+
+// #include <nlohmann/detail/macro_scope.hpp>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -6083,6 +6087,100 @@ StringType to_string(std::size_t value)
     StringType result;
     int_to_string(result, value);
     return result;
+}
+
+///////////////////
+// UTF-8 decoding //
+///////////////////
+
+// UTF-8 decoder states used by decode() below
+static constexpr std::uint8_t UTF8_ACCEPT = 0;
+static constexpr std::uint8_t UTF8_REJECT = 1;
+
+/*!
+@brief process a byte of a UTF-8 sequence
+
+This is a single-byte step of a "shift-based" UTF-8 decoder originally
+written by Björn Hoehrmann. See
+http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
+
+This decoder is the single source of truth for UTF-8 validation in this
+library: it is used both by the serializer (to escape and, in strict mode,
+reject ill-formed UTF-8 when dumping a string) and by the binary readers
+(to reject ill-formed UTF-8 in CBOR/MessagePack/BSON/UBJSON text strings at
+decode time; see @ref is_valid_utf8 below).
+
+@param[in,out] state  the current decoder state
+@param[in,out] codep  codepoint (valid only if resulting state is UTF8_ACCEPT)
+@param[in] byte       next byte to decode
+@return               new state
+
+@note Original source: http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+@sa http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+*/
+inline std::uint8_t decode(std::uint8_t& state, std::uint32_t& codep, const std::uint8_t byte) noexcept
+{
+    static const std::array<std::uint8_t, 400> utf8d =
+    {
+        {
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 00..1F
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 20..3F
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 40..5F
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 60..7F
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, // 80..9F
+            7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, // A0..BF
+            8, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // C0..DF
+            0xA, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x4, 0x3, 0x3, // E0..EF
+            0xB, 0x6, 0x6, 0x6, 0x5, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, // F0..FF
+            0x0, 0x1, 0x2, 0x3, 0x5, 0x8, 0x7, 0x1, 0x1, 0x1, 0x4, 0x6, 0x1, 0x1, 0x1, 0x1, // s0..s0
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, // s1..s2
+            1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, // s3..s4
+            1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, // s5..s6
+            1, 3, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 // s7..s8
+        }
+    };
+
+    JSON_ASSERT(static_cast<std::size_t>(byte) < utf8d.size());
+    const std::uint8_t type = utf8d[byte];
+
+    codep = (state != UTF8_ACCEPT)
+            ? (byte & 0x3fu) | (codep << 6u)
+            : (0xFFu >> type) & (byte);
+
+    const std::size_t index = 256u + (static_cast<std::size_t>(state) * 16u) + static_cast<std::size_t>(type);
+    JSON_ASSERT(index < utf8d.size());
+    state = utf8d[index];
+    return state;
+}
+
+/*!
+@brief check whether a string consists solely of valid UTF-8
+
+Used by the CBOR/MessagePack/BSON/UBJSON binary readers to reject text
+strings that are not valid UTF-8 at decode time (RFC 8949 §3.1 and the
+MessagePack/BSON specifications all require text strings to be UTF-8), so
+that malformed input is caught immediately instead of only surfacing later
+as a type_error.316 when the resulting value is dumped.
+
+@param[in] s  the string to check
+@return whether @a s is valid UTF-8
+*/
+template<typename StringType>
+inline bool is_valid_utf8(const StringType& s) noexcept
+{
+    std::uint8_t state = UTF8_ACCEPT;
+    std::uint32_t codepoint = 0;
+
+    for (std::size_t i = 0; i < s.size(); ++i)
+    {
+        decode(state, codepoint, static_cast<std::uint8_t>(s[i]));
+        if (state == UTF8_REJECT)
+        {
+            return false;
+        }
+    }
+
+    return state == UTF8_ACCEPT;
 }
 
 }  // namespace detail
@@ -12075,6 +12173,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/string_concat.hpp>
 
+// #include <nlohmann/detail/string_utils.hpp>
+
 // #include <nlohmann/detail/value_t.hpp>
 
 
@@ -12476,7 +12576,21 @@ class binary_reader
                                     exception_message(input_format_t::bson, concat("string length must be at least 1, is ", std::to_string(len)), "string"), nullptr));
         }
 
-        return get_string(input_format_t::bson, len - static_cast<NumberType>(1), result) && get() != char_traits<char_type>::eof();
+        if (JSON_HEDLEY_UNLIKELY(!get_string(input_format_t::bson, len - static_cast<NumberType>(1), result)))
+        {
+            return false;
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(get() != 0x00))
+        {
+            auto last_token = get_token_string();
+            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format_t::bson,
+                                            "BSON string is not null-terminated",
+                                            "string"), nullptr));
+        }
+
+        return true;
     }
 
     /*!
@@ -12593,8 +12707,6 @@ class binary_reader
             }
         }
     }
-
-
 
     //////////
     // CBOR //
@@ -15348,7 +15460,24 @@ class binary_reader
                     const NumberType len,
                     string_t& result)
     {
-        return get_bytes(format, len, "string", result);
+        if (JSON_HEDLEY_UNLIKELY(!get_bytes(format, len, "string", result)))
+        {
+            return false;
+        }
+
+        // RFC 8949 (CBOR) §3.1 and the MessagePack/BSON/UBJSON specifications
+        // all require text strings to be valid UTF-8; reject anything else
+        // right here so malformed input is caught at decode time instead of
+        // only surfacing later as a type_error.316 when the value is dumped
+        // (which would defeat allow_exceptions=false / strict discarding).
+        if (JSON_HEDLEY_UNLIKELY(!is_valid_utf8(result)))
+        {
+            return sax->parse_error(chars_read, get_token_string(),
+                                    parse_error::create(113, chars_read,
+                                            exception_message(format, "invalid string: ill-formed UTF-8 byte", "string"), nullptr));
+        }
+
+        return true;
     }
 
     /*!
@@ -21893,6 +22022,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/string_concat.hpp>
 
+// #include <nlohmann/detail/string_utils.hpp>
+
 // #include <nlohmann/detail/value_t.hpp>
 
 
@@ -21920,8 +22051,6 @@ class serializer
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using binary_char_t = typename BasicJsonType::binary_t::value_type;
-    static constexpr std::uint8_t UTF8_ACCEPT = 0;
-    static constexpr std::uint8_t UTF8_REJECT = 1;
 
   public:
     /*!
@@ -23459,62 +23588,6 @@ class serializer
         {
             put_literal(".0");
         }
-    }
-
-    /*!
-    @brief check whether a string is UTF-8 encoded
-
-    The function checks each byte of a string whether it is UTF-8 encoded. The
-    result of the check is stored in the @a state parameter. The function must
-    be called initially with state 0 (accept). State 1 means the string must
-    be rejected, because the current byte is not allowed. If the string is
-    completely processed, but the state is non-zero, the string ended
-    prematurely; that is, the last byte indicated more bytes should have
-    followed.
-
-    @param[in,out] state  the state of the decoding
-    @param[in,out] codep  codepoint (valid only if resulting state is UTF8_ACCEPT)
-    @param[in] byte       next byte to decode
-    @return               new state
-
-    @note The function has been edited: a std::array is used.
-
-    @copyright Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
-    @sa http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
-    */
-    static std::uint8_t decode(std::uint8_t& state, std::uint32_t& codep, const std::uint8_t byte) noexcept
-    {
-        static const std::array<std::uint8_t, 400> utf8d =
-        {
-            {
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 00..1F
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 20..3F
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 40..5F
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 60..7F
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, // 80..9F
-                7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, // A0..BF
-                8, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // C0..DF
-                0xA, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x4, 0x3, 0x3, // E0..EF
-                0xB, 0x6, 0x6, 0x6, 0x5, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, // F0..FF
-                0x0, 0x1, 0x2, 0x3, 0x5, 0x8, 0x7, 0x1, 0x1, 0x1, 0x4, 0x6, 0x1, 0x1, 0x1, 0x1, // s0..s0
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, // s1..s2
-                1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, // s3..s4
-                1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, // s5..s6
-                1, 3, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 // s7..s8
-            }
-        };
-
-        JSON_ASSERT(static_cast<std::size_t>(byte) < utf8d.size());
-        const std::uint8_t type = utf8d[byte];
-
-        codep = (state != UTF8_ACCEPT)
-                ? (byte & 0x3fu) | (codep << 6u)
-                : (0xFFu >> type) & (byte);
-
-        const std::size_t index = 256u + (static_cast<size_t>(state) * 16u) + static_cast<size_t>(type);
-        JSON_ASSERT(index < utf8d.size());
-        state = utf8d[index];
-        return state;
     }
 
     /*
