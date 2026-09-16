@@ -1078,8 +1078,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         const array_t& src_array = *src.m_data.m_value.array;
 
         // create all elements up front: growing the array afterwards could
-        // invalidate the pointers that are handed to the worklist
-        dst.m_data.m_value.array = create<array_t>(src_array.size(), basic_json());
+        // invalidate the pointers that are handed to the worklist; resize()
+        // rather than the fill constructor, because not every array type
+        // provides the latter (e.g., ones without a matching allocator-aware
+        // fill constructor)
+        dst.m_data.m_value.array = create<array_t>();
+        dst.m_data.m_value.array->resize(src_array.size());
 
         auto dst_it = dst.m_data.m_value.array->begin();
         for (auto src_it = src_array.cbegin(); src_it != src_array.cend(); ++src_it, ++dst_it)
