@@ -22,7 +22,7 @@ To store objects in C++, a type is defined by the template parameters described 
 
 `StringType`
 :   the type of the keys or names (e.g., `std::string`). The comparison function `std::less<StringType>` is used to
-    order elements inside the container.
+    order elements inside the container. The `object_t::key_type` must be convertible to `string_t`.
 
 `AllocatorType`
 :   the allocator to use for objects (e.g., `std::allocator`)
