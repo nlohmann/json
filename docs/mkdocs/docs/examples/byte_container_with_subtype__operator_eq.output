@@ -1,0 +1,2 @@
+c1 == c2: true
+c1 == c3: false
