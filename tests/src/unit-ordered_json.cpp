@@ -81,3 +81,37 @@ TEST_CASE("regression test for issue #3732 - iteration_proxy_value<iter_impl<ord
     };
     static_cast<void>(fn);
 }
+
+TEST_CASE("copying an ordered_json with nested values")
+{
+    // ordered_map is backed by a vector, so copying an object that has
+    // structured values takes a different route than copying a std::map-backed
+    // one; see https://github.com/nlohmann/json/issues/5387
+    ordered_json oj;
+    oj["z"] = 1;
+    oj["a"]["y"] = 2;
+    oj["a"]["b"]["x"] = 3;
+    oj["m"] = {1, 2, {{"w", 4}}};
+
+    const ordered_json copy(oj);
+
+    SECTION("the copy is equal to the original")
+    {
+        CHECK(copy == oj);
+        CHECK(copy.dump() == oj.dump());
+    }
+
+    SECTION("the key order is preserved at every level")
+    {
+        CHECK(copy.dump() == R"({"z":1,"a":{"y":2,"b":{"x":3}},"m":[1,2,{"w":4}]})");
+    }
+
+    SECTION("the copy is independent of the original")
+    {
+        ordered_json mutated(oj);
+        mutated["a"]["b"]["x"] = 99;
+
+        CHECK(oj["a"]["b"]["x"] == 3);
+        CHECK(mutated["a"]["b"]["x"] == 99);
+    }
+}
