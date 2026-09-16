@@ -2,23 +2,39 @@ project('nlohmann_json',
     'cpp',
     version : '3.12.0',
     license : 'MIT',
+    meson_version : '>= 0.64',
+    default_options: ['cpp_std=c++11'],
 )
+
+if get_option('MultipleHeaders')
+    incdir = 'include'
+else
+    incdir = 'single_include'
+endif
+
+cpp_args = [
+    '-DJSON_USE_GLOBAL_UDLS=@0@'.format(
+        (not get_option('GlobalUDLs')).to_int()),
+    '-DJSON_USE_IMPLICIT_CONVERSIONS=@0@'.format(
+        (not get_option('ImplicitConversions')).to_int()),
+]
 
 nlohmann_json_dep = declare_dependency(
-    include_directories: include_directories('single_include')
+    compile_args: cpp_args,
+    include_directories: include_directories(incdir)
 )
-
-nlohmann_json_multiple_headers = declare_dependency(
-    include_directories: include_directories('include')
-)
+meson.override_dependency('nlohmann_json', nlohmann_json_dep)
 
 if not meson.is_subproject()
-install_headers('single_include/nlohmann/json.hpp', subdir: 'nlohmann')
-install_headers('single_include/nlohmann/json_fwd.hpp', subdir: 'nlohmann')
+    install_subdir(
+        incdir / 'nlohmann',
+        install_dir: get_option('includedir'),
+        install_tag: 'devel',
+    )
 
-pkgc = import('pkgconfig')
-pkgc.generate(name: 'nlohmann_json',
-    version: meson.project_version(),
-    description: 'JSON for Modern C++'
-)
+    pkgc = import('pkgconfig')
+    pkgc.generate(name: 'nlohmann_json',
+        version: meson.project_version(),
+        description: 'JSON for Modern C++'
+    )
 endif
