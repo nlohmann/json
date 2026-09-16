@@ -2892,6 +2892,23 @@ TEST_CASE("BJData")
                 CHECK(json::from_bjdata(vl, true, false).is_discarded());
             }
 
+            SECTION("invalid UTF-8 in string (see #5529)")
+            {
+                // a BJData string of length 2 whose bytes are not valid
+                // UTF-8 (0xC0 0xAE is an overlong encoding of '.') must be
+                // rejected at decode time, matching every other kind of
+                // malformed binary input, rather than only failing later
+                // when the resulting value is dumped
+                std::vector<uint8_t> const v = {'S', 'i', 0x02, 0xc0, 0xae};
+                json _;
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v), "[json.exception.parse_error.113] parse error at byte 5: syntax error while parsing BJData string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+                CHECK(json::from_bjdata(v, true, false).is_discarded());
+
+                // valid UTF-8 must still round-trip
+                const json j = "h\xc3\xa9llo, w\xc3\xb6rld! \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e"; // héllo, wörld! 日本語
+                CHECK(json::from_bjdata(json::to_bjdata(j)) == j);
+            }
+
             SECTION("parse bjdata markers in ubjson")
             {
                 // create a single-character string for all number types

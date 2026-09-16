@@ -3824,71 +3824,71 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 #ifndef INCLUDE_NLOHMANN_JSON_FWD_HPP_
-    #define INCLUDE_NLOHMANN_JSON_FWD_HPP_
+#define INCLUDE_NLOHMANN_JSON_FWD_HPP_
 
-    #include <cstdint> // int64_t, uint64_t
-    #include <map> // map
-    #include <memory> // allocator
-    #include <string> // string
-    #include <vector> // vector
+#include <cstdint> // int64_t, uint64_t
+#include <map> // map
+#include <memory> // allocator
+#include <string> // string
+#include <vector> // vector
 
-    // #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.hpp>
 
 
-    /*!
-    @brief namespace for Niels Lohmann
-    @see https://github.com/nlohmann
-    @since version 1.0.0
-    */
-    NLOHMANN_JSON_NAMESPACE_BEGIN
+/*!
+@brief namespace for Niels Lohmann
+@see https://github.com/nlohmann
+@since version 1.0.0
+*/
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
-    /*!
-    @brief default JSONSerializer template argument
+/*!
+@brief default JSONSerializer template argument
 
-    This serializer ignores the template arguments and uses ADL
-    ([argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl))
-    for serialization.
-    */
-    template<typename T = void, typename SFINAE = void>
-    struct adl_serializer;
+This serializer ignores the template arguments and uses ADL
+([argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl))
+for serialization.
+*/
+template<typename T = void, typename SFINAE = void>
+struct adl_serializer;
 
-    /// a class to store JSON values
-    /// @sa https://json.nlohmann.me/api/basic_json/
-    template<template<typename U, typename V, typename... Args> class ObjectType =
-    std::map,
-    template<typename U, typename... Args> class ArrayType = std::vector,
-    class StringType = std::string, class BooleanType = bool,
-    class NumberIntegerType = std::int64_t,
-    class NumberUnsignedType = std::uint64_t,
-    class NumberFloatType = double,
-    template<typename U> class AllocatorType = std::allocator,
-    template<typename T, typename SFINAE = void> class JSONSerializer =
-    adl_serializer,
-    class BinaryType = std::vector<std::uint8_t>, // cppcheck-suppress syntaxError
-    class CustomBaseClass = void>
-    class basic_json;
+/// a class to store JSON values
+/// @sa https://json.nlohmann.me/api/basic_json/
+template<template<typename U, typename V, typename... Args> class ObjectType =
+         std::map,
+         template<typename U, typename... Args> class ArrayType = std::vector,
+         class StringType = std::string, class BooleanType = bool,
+         class NumberIntegerType = std::int64_t,
+         class NumberUnsignedType = std::uint64_t,
+         class NumberFloatType = double,
+         template<typename U> class AllocatorType = std::allocator,
+         template<typename T, typename SFINAE = void> class JSONSerializer =
+         adl_serializer,
+         class BinaryType = std::vector<std::uint8_t>, // cppcheck-suppress syntaxError
+         class CustomBaseClass = void>
+class basic_json;
 
-    /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
-    /// @sa https://json.nlohmann.me/api/json_pointer/
-    template<typename RefStringType>
-    class json_pointer;
+/// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
+/// @sa https://json.nlohmann.me/api/json_pointer/
+template<typename RefStringType>
+class json_pointer;
 
-    /*!
-    @brief default specialization
-    @sa https://json.nlohmann.me/api/json/
-    */
-    using json = basic_json<>;
+/*!
+@brief default specialization
+@sa https://json.nlohmann.me/api/json/
+*/
+using json = basic_json<>;
 
-    /// @brief a minimal map-like container that preserves insertion order
-    /// @sa https://json.nlohmann.me/api/ordered_map/
-    template<class Key, class T, class IgnoredLess, class Allocator>
-    struct ordered_map;
+/// @brief a minimal map-like container that preserves insertion order
+/// @sa https://json.nlohmann.me/api/ordered_map/
+template<class Key, class T, class IgnoredLess, class Allocator>
+struct ordered_map;
 
-    /// @brief specialization that maintains the insertion order of object keys
-    /// @sa https://json.nlohmann.me/api/ordered_json/
-    using ordered_json = basic_json<nlohmann::ordered_map>;
+/// @brief specialization that maintains the insertion order of object keys
+/// @sa https://json.nlohmann.me/api/ordered_json/
+using ordered_json = basic_json<nlohmann::ordered_map>;
 
-    NLOHMANN_JSON_NAMESPACE_END
+NLOHMANN_JSON_NAMESPACE_END
 
 #endif  // INCLUDE_NLOHMANN_JSON_FWD_HPP_
 
@@ -6007,7 +6007,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 // #include <nlohmann/detail/macro_scope.hpp>
-// JSON_HAS_CPP_17
+ // JSON_HAS_CPP_17
 #ifdef JSON_HAS_CPP_17
     #include <optional> // optional
 #endif
@@ -6059,10 +6059,14 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
+#include <array> // array
 #include <cstddef> // size_t
+#include <cstdint> // uint8_t, uint32_t
 #include <string> // string, to_string
 
 // #include <nlohmann/detail/abi_macros.hpp>
+
+// #include <nlohmann/detail/macro_scope.hpp>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -6083,6 +6087,100 @@ StringType to_string(std::size_t value)
     StringType result;
     int_to_string(result, value);
     return result;
+}
+
+///////////////////
+// UTF-8 decoding //
+///////////////////
+
+// UTF-8 decoder states used by decode() below
+static constexpr std::uint8_t UTF8_ACCEPT = 0;
+static constexpr std::uint8_t UTF8_REJECT = 1;
+
+/*!
+@brief process a byte of a UTF-8 sequence
+
+This is a single-byte step of a "shift-based" UTF-8 decoder originally
+written by Björn Hoehrmann. See
+http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
+
+This decoder is the single source of truth for UTF-8 validation in this
+library: it is used both by the serializer (to escape and, in strict mode,
+reject ill-formed UTF-8 when dumping a string) and by the binary readers
+(to reject ill-formed UTF-8 in CBOR/MessagePack/BSON/UBJSON text strings at
+decode time; see @ref is_valid_utf8 below).
+
+@param[in,out] state  the current decoder state
+@param[in,out] codep  codepoint (valid only if resulting state is UTF8_ACCEPT)
+@param[in] byte       next byte to decode
+@return               new state
+
+@note Original source: http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+@sa http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+*/
+inline std::uint8_t decode(std::uint8_t& state, std::uint32_t& codep, const std::uint8_t byte) noexcept
+{
+    static const std::array<std::uint8_t, 400> utf8d =
+    {
+        {
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 00..1F
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 20..3F
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 40..5F
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 60..7F
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, // 80..9F
+            7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, // A0..BF
+            8, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // C0..DF
+            0xA, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x4, 0x3, 0x3, // E0..EF
+            0xB, 0x6, 0x6, 0x6, 0x5, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, // F0..FF
+            0x0, 0x1, 0x2, 0x3, 0x5, 0x8, 0x7, 0x1, 0x1, 0x1, 0x4, 0x6, 0x1, 0x1, 0x1, 0x1, // s0..s0
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, // s1..s2
+            1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, // s3..s4
+            1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, // s5..s6
+            1, 3, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 // s7..s8
+        }
+    };
+
+    JSON_ASSERT(static_cast<std::size_t>(byte) < utf8d.size());
+    const std::uint8_t type = utf8d[byte];
+
+    codep = (state != UTF8_ACCEPT)
+            ? (byte & 0x3fu) | (codep << 6u)
+            : (0xFFu >> type) & (byte);
+
+    const std::size_t index = 256u + (static_cast<std::size_t>(state) * 16u) + static_cast<std::size_t>(type);
+    JSON_ASSERT(index < utf8d.size());
+    state = utf8d[index];
+    return state;
+}
+
+/*!
+@brief check whether a string consists solely of valid UTF-8
+
+Used by the CBOR/MessagePack/BSON/UBJSON binary readers to reject text
+strings that are not valid UTF-8 at decode time (RFC 8949 §3.1 and the
+MessagePack/BSON specifications all require text strings to be UTF-8), so
+that malformed input is caught immediately instead of only surfacing later
+as a type_error.316 when the resulting value is dumped.
+
+@param[in] s  the string to check
+@return whether @a s is valid UTF-8
+*/
+template<typename StringType>
+inline bool is_valid_utf8(const StringType& s) noexcept
+{
+    std::uint8_t state = UTF8_ACCEPT;
+    std::uint32_t codepoint = 0;
+
+    for (std::size_t i = 0; i < s.size(); ++i)
+    {
+        decode(state, codepoint, static_cast<std::uint8_t>(s[i]));
+        if (state == UTF8_REJECT)
+        {
+            return false;
+        }
+    }
+
+    return state == UTF8_ACCEPT;
 }
 
 }  // namespace detail
@@ -12075,6 +12173,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/string_concat.hpp>
 
+// #include <nlohmann/detail/string_utils.hpp>
+
 // #include <nlohmann/detail/value_t.hpp>
 
 
@@ -15348,7 +15448,24 @@ class binary_reader
                     const NumberType len,
                     string_t& result)
     {
-        return get_bytes(format, len, "string", result);
+        if (JSON_HEDLEY_UNLIKELY(!get_bytes(format, len, "string", result)))
+        {
+            return false;
+        }
+
+        // RFC 8949 (CBOR) §3.1 and the MessagePack/BSON/UBJSON specifications
+        // all require text strings to be valid UTF-8; reject anything else
+        // right here so malformed input is caught at decode time instead of
+        // only surfacing later as a type_error.316 when the value is dumped
+        // (which would defeat allow_exceptions=false / strict discarding).
+        if (JSON_HEDLEY_UNLIKELY(!is_valid_utf8(result)))
+        {
+            return sax->parse_error(chars_read, get_token_string(),
+                                     parse_error::create(113, chars_read,
+                                             exception_message(format, "invalid string: ill-formed UTF-8 byte", "string"), nullptr));
+        }
+
+        return true;
     }
 
     /*!
@@ -21873,6 +21990,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/string_concat.hpp>
 
+// #include <nlohmann/detail/string_utils.hpp>
+
 // #include <nlohmann/detail/value_t.hpp>
 
 
@@ -21900,8 +22019,6 @@ class serializer
     using number_integer_t = typename BasicJsonType::number_integer_t;
     using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
     using binary_char_t = typename BasicJsonType::binary_t::value_type;
-    static constexpr std::uint8_t UTF8_ACCEPT = 0;
-    static constexpr std::uint8_t UTF8_REJECT = 1;
 
   public:
     /*!
@@ -23441,62 +23558,6 @@ class serializer
         }
     }
 
-    /*!
-    @brief check whether a string is UTF-8 encoded
-
-    The function checks each byte of a string whether it is UTF-8 encoded. The
-    result of the check is stored in the @a state parameter. The function must
-    be called initially with state 0 (accept). State 1 means the string must
-    be rejected, because the current byte is not allowed. If the string is
-    completely processed, but the state is non-zero, the string ended
-    prematurely; that is, the last byte indicated more bytes should have
-    followed.
-
-    @param[in,out] state  the state of the decoding
-    @param[in,out] codep  codepoint (valid only if resulting state is UTF8_ACCEPT)
-    @param[in] byte       next byte to decode
-    @return               new state
-
-    @note The function has been edited: a std::array is used.
-
-    @copyright Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
-    @sa http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
-    */
-    static std::uint8_t decode(std::uint8_t& state, std::uint32_t& codep, const std::uint8_t byte) noexcept
-    {
-        static const std::array<std::uint8_t, 400> utf8d =
-        {
-            {
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 00..1F
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 20..3F
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 40..5F
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 60..7F
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, // 80..9F
-                7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, // A0..BF
-                8, 8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // C0..DF
-                0xA, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x4, 0x3, 0x3, // E0..EF
-                0xB, 0x6, 0x6, 0x6, 0x5, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, // F0..FF
-                0x0, 0x1, 0x2, 0x3, 0x5, 0x8, 0x7, 0x1, 0x1, 0x1, 0x4, 0x6, 0x1, 0x1, 0x1, 0x1, // s0..s0
-                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, // s1..s2
-                1, 2, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, // s3..s4
-                1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, // s5..s6
-                1, 3, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 // s7..s8
-            }
-        };
-
-        JSON_ASSERT(static_cast<std::size_t>(byte) < utf8d.size());
-        const std::uint8_t type = utf8d[byte];
-
-        codep = (state != UTF8_ACCEPT)
-                ? (byte & 0x3fu) | (codep << 6u)
-                : (0xFFu >> type) & (byte);
-
-        const std::size_t index = 256u + (static_cast<size_t>(state) * 16u) + static_cast<size_t>(type);
-        JSON_ASSERT(index < utf8d.size());
-        state = utf8d[index];
-        return state;
-    }
-
     /*
      * Overload to make the compiler happy while it is instantiating
      * dump_integer for number_unsigned_t.
@@ -24071,10 +24132,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         const bool ignore_comments = false,
         const bool ignore_trailing_commas = false,
         const bool discard_number_values = false
-                                 )
+    )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
-            std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas, discard_number_values);
+               std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas, discard_number_values);
     }
 
   private:
@@ -24838,8 +24899,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                detail::enable_if_t <
                    !detail::is_basic_json<U>::value && detail::is_compatible_type<basic_json_t, U>::value, int > = 0 >
     basic_json(CompatibleType && val) noexcept(noexcept( // NOLINT(bugprone-forwarding-reference-overload,bugprone-exception-escape)
-            JSONSerializer<U>::to_json(std::declval<basic_json_t&>(),
-                                       std::forward<CompatibleType>(val))))
+                JSONSerializer<U>::to_json(std::declval<basic_json_t&>(),
+                                           std::forward<CompatibleType>(val))))
     {
         JSONSerializer<U>::to_json(*this, std::forward<CompatibleType>(val));
         set_parents();
@@ -25661,7 +25722,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    detail::has_from_json<basic_json_t, ValueType>::value,
                    int > = 0 >
     ValueType get_impl(detail::priority_tag<0> /*unused*/) const noexcept(noexcept(
-            JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), std::declval<ValueType&>())))
+                JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), std::declval<ValueType&>())))
     {
         auto ret = ValueType();
         JSONSerializer<ValueType>::from_json(*this, ret);
@@ -25703,7 +25764,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    detail::has_non_default_from_json<basic_json_t, ValueType>::value,
                    int > = 0 >
     ValueType get_impl(detail::priority_tag<1> /*unused*/) const noexcept(noexcept(
-            JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>())))
+                JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>())))
     {
         return JSONSerializer<ValueType>::from_json(*this);
     }
@@ -25853,7 +25914,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    detail::has_from_json<basic_json_t, ValueType>::value,
                    int > = 0 >
     ValueType & get_to(ValueType& v) const noexcept(noexcept(
-            JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), v)))
+                JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), v)))
     {
         JSONSerializer<ValueType>::from_json(*this, v);
         return v;

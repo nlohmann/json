@@ -199,6 +199,32 @@ TEST_CASE("BSON")
         CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 10: syntax error while parsing BSON string: string length must be at least 1, is -2147483648", json::parse_error&);
     }
 
+    SECTION("invalid UTF-8 in string (see #5529)")
+    {
+        // a BSON document with a string field "k" whose value bytes are not
+        // valid UTF-8 (0xC0 0xAE is an overlong encoding of '.') must be
+        // rejected at decode time, matching every other kind of malformed
+        // binary input, rather than only failing later when the resulting
+        // value is dumped
+        std::vector<std::uint8_t> const v =
+        {
+            0x0F, 0x00, 0x00, 0x00, // size (little endian)
+            0x02, /// entry: string (UTF-8)
+            'k', 0x00, // key "k"
+            0x03, 0x00, 0x00, 0x00, // string length (including trailing zero byte)
+            0xc0, 0xae, // ill-formed UTF-8
+            0x00, // string terminator
+            0x00 // end marker
+        };
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.113] parse error at byte 13: syntax error while parsing BSON string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+        CHECK(json::from_bson(v, true, false).is_discarded());
+
+        // valid UTF-8 must still round-trip
+        const json j = {{"k", "h\xc3\xa9llo, w\xc3\xb6rld! \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e"}}; // héllo, wörld! 日本語
+        CHECK(json::from_bson(json::to_bson(j)) == j);
+    }
+
     SECTION("objects")
     {
         SECTION("empty object")

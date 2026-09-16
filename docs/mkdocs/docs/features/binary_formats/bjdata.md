@@ -204,6 +204,14 @@ The library maps BJData types to JSON value types as follows:
 
     The mapping is **complete** in the sense that any BJData value can be converted to a JSON value.
 
+!!! warning "UTF-8 validation of string values"
+
+    BJData does not specify an encoding for its `string`/`char` types, but this library requires them to be valid
+    UTF-8, consistent with the rest of the library. The bytes of every such string (object keys included) are
+    validated at decode time, and ill-formed UTF-8 is rejected with a
+    [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) exception (or, with `allow_exceptions`
+    set to `false`, a discarded value), rather than only failing later when the resulting value is dumped.
+
 ??? example
 
     ```cpp

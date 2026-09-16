@@ -32,6 +32,7 @@
 #include <nlohmann/detail/meta/is_sax.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/string_concat.hpp>
+#include <nlohmann/detail/string_utils.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -3304,7 +3305,24 @@ class binary_reader
                     const NumberType len,
                     string_t& result)
     {
-        return get_bytes(format, len, "string", result);
+        if (JSON_HEDLEY_UNLIKELY(!get_bytes(format, len, "string", result)))
+        {
+            return false;
+        }
+
+        // RFC 8949 (CBOR) §3.1 and the MessagePack/BSON/UBJSON specifications
+        // all require text strings to be valid UTF-8; reject anything else
+        // right here so malformed input is caught at decode time instead of
+        // only surfacing later as a type_error.316 when the value is dumped
+        // (which would defeat allow_exceptions=false / strict discarding).
+        if (JSON_HEDLEY_UNLIKELY(!is_valid_utf8(result)))
+        {
+            return sax->parse_error(chars_read, get_token_string(),
+                                     parse_error::create(113, chars_read,
+                                             exception_message(format, "invalid string: ill-formed UTF-8 byte", "string"), nullptr));
+        }
+
+        return true;
     }
 
     /*!

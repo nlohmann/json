@@ -1927,6 +1927,23 @@ TEST_CASE("UBJSON")
                 std::vector<uint8_t> const v0 = {'S', 'i', 0};
                 CHECK(json::from_ubjson(v0) == json(""));
             }
+
+            SECTION("invalid UTF-8 in string (see #5529)")
+            {
+                // a UBJSON string of length 2 whose bytes are not valid
+                // UTF-8 (0xC0 0xAE is an overlong encoding of '.') must be
+                // rejected at decode time, matching every other kind of
+                // malformed binary input, rather than only failing later
+                // when the resulting value is dumped
+                std::vector<uint8_t> const v = {'S', 'i', 0x02, 0xc0, 0xae};
+                json _;
+                CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v), "[json.exception.parse_error.113] parse error at byte 5: syntax error while parsing UBJSON string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+                CHECK(json::from_ubjson(v, true, false).is_discarded());
+
+                // valid UTF-8 must still round-trip
+                const json j = "h\xc3\xa9llo, w\xc3\xb6rld! \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e"; // héllo, wörld! 日本語
+                CHECK(json::from_ubjson(json::to_ubjson(j)) == j);
+            }
         }
 
         SECTION("array")
