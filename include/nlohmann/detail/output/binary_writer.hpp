@@ -630,6 +630,10 @@ class binary_writer
                     oa.write_character(to_char_type(0xDB));
                     write_number(static_cast<std::uint32_t>(N));
                 }
+                else
+                {
+                    to_msgpack_length(N);
+                }
 
                 // step 2: write the string
                 oa.write_characters(
@@ -658,6 +662,10 @@ class binary_writer
                     // array 32
                     oa.write_character(to_char_type(0xDD));
                     write_number(static_cast<std::uint32_t>(N));
+                }
+                else
+                {
+                    to_msgpack_length(N);
                 }
 
                 // step 2: write each element
@@ -736,6 +744,10 @@ class binary_writer
                     oa.write_character(to_char_type(output_type));
                     write_number(static_cast<std::uint32_t>(N));
                 }
+                else
+                {
+                    to_msgpack_length(N);
+                }
 
                 // step 1.5: if this is an ext type, write the subtype
                 if (use_ext)
@@ -776,6 +788,10 @@ class binary_writer
                     // map 32
                     oa.write_character(to_char_type(0xDF));
                     write_number(static_cast<std::uint32_t>(N));
+                }
+                else
+                {
+                    to_msgpack_length(N);
                 }
 
                 // step 2: write each element
@@ -1070,6 +1086,18 @@ class binary_writer
         }
 
         return static_cast<std::int32_t>(size);
+    }
+
+    /*!
+    @brief Checks that @a size fits into the 32-bit length field used by MessagePack
+    @throw out_of_range.412 if @a size exceeds the range of std::uint32_t
+    */
+    static void to_msgpack_length(const std::size_t size)
+    {
+        if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::uint32_t>(size)))
+        {
+            JSON_THROW(out_of_range::create(412, concat("MessagePack length ", std::to_string(size), " exceeds maximum of ", std::to_string((std::numeric_limits<std::uint32_t>::max)())), nullptr));
+        }
     }
 
     /*!
