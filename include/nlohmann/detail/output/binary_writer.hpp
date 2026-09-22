@@ -606,7 +606,7 @@ class binary_writer
             case value_t::string:
             {
                 // step 1: write control byte and the string length
-                const auto N = j.m_data.m_value.string->size();
+                const auto N = get_msgpack_length(j.m_data.m_value.string->size());
                 if (N <= 31)
                 {
                     // fixstr
@@ -630,10 +630,6 @@ class binary_writer
                     oa.write_character(to_char_type(0xDB));
                     write_number(static_cast<std::uint32_t>(N));
                 }
-                else
-                {
-                    to_msgpack_length(N);
-                }
 
                 // step 2: write the string
                 oa.write_characters(
@@ -645,7 +641,7 @@ class binary_writer
             case value_t::array:
             {
                 // step 1: write control byte and the array size
-                const auto N = j.m_data.m_value.array->size();
+                const auto N = get_msgpack_length(j.m_data.m_value.array->size());
                 if (N <= 15)
                 {
                     // fixarray
@@ -663,10 +659,6 @@ class binary_writer
                     oa.write_character(to_char_type(0xDD));
                     write_number(static_cast<std::uint32_t>(N));
                 }
-                else
-                {
-                    to_msgpack_length(N);
-                }
 
                 // step 2: write each element
                 for (const auto& el : *j.m_data.m_value.array)
@@ -683,7 +675,7 @@ class binary_writer
                 const bool use_ext = j.m_data.m_value.binary->has_subtype();
 
                 // step 1: write control byte and the byte string length
-                const auto N = j.m_data.m_value.binary->size();
+                const auto N = get_msgpack_length(j.m_data.m_value.binary->size());
                 if (N <= (std::numeric_limits<std::uint8_t>::max)())
                 {
                     std::uint8_t output_type{};
@@ -744,10 +736,6 @@ class binary_writer
                     oa.write_character(to_char_type(output_type));
                     write_number(static_cast<std::uint32_t>(N));
                 }
-                else
-                {
-                    to_msgpack_length(N);
-                }
 
                 // step 1.5: if this is an ext type, write the subtype
                 if (use_ext)
@@ -771,7 +759,7 @@ class binary_writer
             case value_t::object:
             {
                 // step 1: write control byte and the object size
-                const auto N = j.m_data.m_value.object->size();
+                const auto N = get_msgpack_length(j.m_data.m_value.object->size());
                 if (N <= 15)
                 {
                     // fixmap
@@ -788,10 +776,6 @@ class binary_writer
                     // map 32
                     oa.write_character(to_char_type(0xDF));
                     write_number(static_cast<std::uint32_t>(N));
-                }
-                else
-                {
-                    to_msgpack_length(N);
                 }
 
                 // step 2: write each element
@@ -1089,15 +1073,16 @@ class binary_writer
     }
 
     /*!
-    @brief Checks that @a size fits into the 32-bit length field used by MessagePack
+    @brief Validates and returns the given size as a std::uint32_t for MessagePack
     @throw out_of_range.412 if @a size exceeds the range of std::uint32_t
     */
-    static void to_msgpack_length(const std::size_t size)
+    static std::uint32_t get_msgpack_length(const std::size_t size)
     {
         if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::uint32_t>(size)))
         {
             JSON_THROW(out_of_range::create(412, concat("MessagePack length ", std::to_string(size), " exceeds maximum of ", std::to_string((std::numeric_limits<std::uint32_t>::max)())), nullptr));
         }
+        return static_cast<std::uint32_t>(size);
     }
 
     /*!
