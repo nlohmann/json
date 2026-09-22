@@ -69,6 +69,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
    - Throws [`invalid_iterator.202`](https://json.nlohmann.me/home/exceptions/#jsonexceptioninvalid_iterator202) if called on an iterator which does not belong to the current JSON value; example: `"iterator does not fit current value"`
    - Throws [`invalid_iterator.210`](https://json.nlohmann.me/home/exceptions/#jsonexceptioninvalid_iterator210) if `first` and `last` do not belong to the same JSON value; example: `"iterators do not fit"`
    - Throws [`invalid_iterator.211`](https://json.nlohmann.me/home/exceptions/#jsonexceptioninvalid_iterator211) if `first` or `last` are iterators into container for which insert is called; example: `"passed iterators may not belong to container"`
+   - Throws [`invalid_iterator.202`](https://json.nlohmann.me/home/exceptions/#jsonexceptioninvalid_iterator202) if `first` or `last` do not point to an array; example: `"iterators first and last must point to arrays"`
 1. The function can throw the following exceptions:
    - Throws [`type_error.309`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error309) if called on JSON values other than arrays; example: `"cannot use insert() with string"`
    - Throws [`invalid_iterator.202`](https://json.nlohmann.me/home/exceptions/#jsonexceptioninvalid_iterator202) if called on an iterator which does not belong to the current JSON value; example: `"iterator does not fit current value"`
