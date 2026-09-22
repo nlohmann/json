@@ -2512,22 +2512,15 @@ TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
             CHECK(a.end_pos() == std::string::npos); // NOLINT(bugprone-use-after-move,clang-analyzer-cplusplus.Move)
         }
 
-        SECTION("swap() does NOT exchange positions (likely a real bug, see below)")
+        SECTION("swap() exchanges positions along with values")
         {
-            // NOTE (characterizing, not fixing, for #5420): basic_json::swap()
-            // (json.hpp, around line 3540, and the friend swap() that forwards
-            // to it) swaps m_data.m_type and m_data.m_value but -- unlike
-            // copy-assignment's operator=(basic_json) (json.hpp, around line
-            // 1291), which swaps start_position/end_position as part of its
-            // copy-and-swap implementation -- it never touches
-            // start_position/end_position. So after swap(a, b), the *values*
-            // of a and b are exchanged, but their *positions* are not: each
-            // ends up with its own original position describing the other's
-            // new content. This looks like an oversight/inconsistency rather
-            // than intended behavior, and is flagged to the maintainer; this
-            // test only pins the current (surprising) behavior so a fix (or a
-            // deliberate decision to keep it) shows up here as an intentional
-            // change rather than a silent regression.
+            // basic_json::swap() (json.hpp, around line 3626, and the friend
+            // swap() that forwards to it) swaps start_position/end_position
+            // together with m_data.m_type and m_data.m_value, so after
+            // swap(a, b) each variable's position describes its own new
+            // content, consistent with copy-assignment's
+            // operator=(basic_json) (json.hpp, around line 1291), which also
+            // swaps positions as part of its copy-and-swap implementation.
             json a = json::parse(R"({"a":1})");
             json b = json::parse(R"([1,2,3,4,5])");
             const auto a_start = a.start_pos();
@@ -2547,12 +2540,12 @@ TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
             CHECK(a == json::parse(R"([1,2,3,4,5])"));
             CHECK(b == json::parse(R"({"a":1})"));
 
-            // ... but positions were NOT: each variable kept its own
-            // original position, now describing the other's content
-            CHECK(a.start_pos() == a_start);
-            CHECK(a.end_pos() == a_end);
-            CHECK(b.start_pos() == b_start);
-            CHECK(b.end_pos() == b_end);
+            // ... and so were positions: each variable now carries the
+            // other's original position, describing its own new content
+            CHECK(a.start_pos() == b_start);
+            CHECK(a.end_pos() == b_end);
+            CHECK(b.start_pos() == a_start);
+            CHECK(b.end_pos() == a_end);
         }
 
         SECTION("mutating a parsed document leaves positions of unrelated values untouched")
