@@ -17,6 +17,7 @@
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
 
 // JSON_HAS_CPP_20 (do not remove; see note at top of file)
 #if JSON_HAS_STD_FORMAT
@@ -52,6 +53,23 @@ TEST_CASE("std::formatter<nlohmann::json>")
         CHECK(std::format("{:2}", j) == j.dump(2));
         CHECK(std::format("{:#2}", j) == j.dump(2));
         CHECK(std::format("{:8}", j) == j.dump(8));
+        // multi-digit widths must accumulate every digit, not just the first
+        CHECK(std::format("{:12}", j) == j.dump(12));
+        CHECK(std::format("{:#12}", j) == j.dump(12));
+        CHECK(std::format("{:10}", j) == j.dump(10));
+    }
+
+    SECTION("bare alignment with no fill character defaults to a space indent character")
+    {
+        const json j = {{"foo", 1}, {"bar", {1, 2, 3}}};
+        // without a preceding fill character, the alignment character itself must not
+        // be mistaken for the indent character -- the default space is kept
+        CHECK(std::format("{:<}", j) == j.dump());
+        CHECK(std::format("{:>}", j) == j.dump());
+        CHECK(std::format("{:^}", j) == j.dump());
+        CHECK(std::format("{:<3}", j) == j.dump(3, ' '));
+        CHECK(std::format("{:>3}", j) == j.dump(3, ' '));
+        CHECK(std::format("{:^3}", j) == j.dump(3, ' '));
     }
 
     SECTION("fill-and-align sets the indent character, like dump(indent, indent_char)")
@@ -91,6 +109,18 @@ TEST_CASE("std::formatter<nlohmann::json>")
         std::format_to(std::back_inserter(out), "{}", j);
         CHECK(out == j.dump());
     }
+}
+
+TEST_CASE("std::formatter<nlohmann::ordered_json>")
+{
+    // spot-check a non-default basic_json instantiation, since the formatter
+    // is written against the generic NLOHMANN_BASIC_JSON_TPL_DECLARATION
+    // template and must actually instantiate (and behave correctly) for
+    // template arguments other than nlohmann::json
+    const ordered_json j = {{"foo", 1}, {"bar", {1, 2, 3}}};
+    CHECK(std::format("{}", j) == j.dump());
+    CHECK(std::format("{:#}", j) == j.dump(4));
+    CHECK(std::format("{:2}", j) == j.dump(2));
 }
 
 #endif
