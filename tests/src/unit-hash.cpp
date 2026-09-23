@@ -20,7 +20,7 @@ namespace
 // how detail::hash defines the hash of an array or object: the seeds of the
 // elements, combined in order. Recursive, so only usable on values nested a
 // few hundred levels deep - which is exactly what is needed to check that the
-// iterative path taken below detail::hash_depth_limit() computes the same.
+// iterative path taken below detail::recursion_depth_limit() computes the same.
 template<typename BasicJsonType>
 std::size_t reference_hash(const BasicJsonType& j)
 {
@@ -189,7 +189,7 @@ TEST_CASE("hash of deeply nested values")
     SECTION("hashing past the descent bound computes the same values")
     {
         // every depth on either side of where the iterative path takes over
-        for (std::size_t depth = 0; depth <= 2 * nlohmann::detail::hash_depth_limit() + 10; ++depth)
+        for (std::size_t depth = 0; depth <= 2 * nlohmann::detail::recursion_depth_limit() + 10; ++depth)
         {
             CAPTURE(depth);
             const auto arrays = nested<json>(depth, false);

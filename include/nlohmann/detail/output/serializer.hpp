@@ -30,6 +30,7 @@
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/output/binary_writer.hpp>
 #include <nlohmann/detail/output/output_adapters.hpp>
+#include <nlohmann/detail/recursion_depth_limit.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
@@ -133,7 +134,7 @@ class serializer
 
     Serializing a container descends into its elements, so a value nested deeply
     enough used to exhaust the call stack and terminate the process with no
-    exception to catch. The descent is bounded here: once @ref dump_depth_limit
+    exception to catch. The descent is bounded here: once @ref recursion_depth_limit
     levels have been entered, @ref dump_iteratively writes out what is left
     without the call stack. A value nested less deeply than that - all but a
     vanishing minority - is written by exactly the code that always wrote it.
@@ -148,7 +149,7 @@ class serializer
         {
             case value_t::object:
             {
-                if (JSON_HEDLEY_UNLIKELY(depth >= dump_depth_limit()))
+                if (JSON_HEDLEY_UNLIKELY(depth >= recursion_depth_limit()))
                 {
                     dump_iteratively(val, current_indent);
                     return;
@@ -223,7 +224,7 @@ class serializer
 
             case value_t::array:
             {
-                if (JSON_HEDLEY_UNLIKELY(depth >= dump_depth_limit()))
+                if (JSON_HEDLEY_UNLIKELY(depth >= recursion_depth_limit()))
                 {
                     dump_iteratively(val, current_indent);
                     return;
@@ -408,19 +409,12 @@ class serializer
     }
 
   private:
-    /// the number of levels @ref dump_internal descends into before it hands
-    /// over to @ref dump_iteratively
-    static constexpr std::size_t dump_depth_limit()
-    {
-        return 128;
-    }
-
     /*!
     @brief write out @a val and everything below it without the call stack
 
     Emits the same bytes as @ref dump_internal, keeping the containers it has
     entered on an explicit stack instead of descending into them. Only reached
-    for values nested deeper than @ref dump_depth_limit, which is why it is not
+    for values nested deeper than @ref recursion_depth_limit, which is why it is not
     written for speed: walking every value this way measured up to 20% slower on
     object-heavy documents than letting the compiler drive the descent.
     */
