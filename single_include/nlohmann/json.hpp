@@ -30204,6 +30204,40 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
+    /// @brief two arrays or two objects @ref diff_iteratively is diffing
+    struct diff_frame
+    {
+        diff_frame(const basic_json* source_, const basic_json* target_, const std::size_t path_length_) noexcept
+            : source(source_), target(target_), path_length(path_length_)
+        {}
+
+        // declared for GCC's -Weffc++, which asks for them in a class with
+        // pointer members and a non-trivial destructor; the exception
+        // specifications are left implicit, as GCC 4.8 rejects explicit ones
+        // that differ from them
+        diff_frame(const diff_frame&) = default;
+        diff_frame(diff_frame&&) = default;
+        diff_frame& operator=(const diff_frame&) = default;
+        diff_frame& operator=(diff_frame&&) = default;
+        ~diff_frame() = default;
+
+        /// the values being diffed, both arrays or both objects
+        const basic_json* source;
+        const basic_json* target;
+        /// the length of their path in `current_path`
+        std::size_t path_length;
+        /// arrays: the next index to diff
+        std::size_t index = 0;
+        /// objects: the next member of source to look at
+        const_iterator member{};
+        /// objects: the keys common to both, in source's order
+        std::vector<typename object_t::key_type> common_keys{};
+        /// objects: the next entry of common_keys
+        std::size_t next_common = 0;
+        /// objects: the "add" operations for keys only target has
+        basic_json added_ops{};
+    };
+
     /// @ref diff for a @a source nested no more than @ref diff_depth_limit levels deep
     static basic_json diff_recursively(const basic_json& source, const basic_json& target,
                                        const string_t& path)
@@ -30459,28 +30493,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // diff_recursively. The path of the values being diffed is kept in
         // one buffer that grows and shrinks with the stack, rather than in a
         // new string per level.
-        struct diff_frame
-        {
-            diff_frame(const basic_json* source_, const basic_json* target_, const std::size_t path_length_)
-                : source(source_), target(target_), path_length(path_length_)
-            {}
-
-            /// the values being diffed, both arrays or both objects
-            const basic_json* source;
-            const basic_json* target;
-            /// the length of their path in `current_path`
-            std::size_t path_length;
-            /// arrays: the next index to diff
-            std::size_t index = 0;
-            /// objects: the next member of source to look at
-            const_iterator member{};
-            /// objects: the keys common to both, in source's order
-            std::vector<typename object_t::key_type> common_keys{};
-            /// objects: the next entry of common_keys
-            std::size_t next_common = 0;
-            /// objects: the "add" operations for keys only target has
-            basic_json added_ops{};
-        };
         std::vector<diff_frame> stack;
         string_t current_path = path;
 
