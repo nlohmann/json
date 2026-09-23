@@ -19150,7 +19150,7 @@ class binary_writer
         {
             case value_t::object:
             {
-                write_bson_object(*j.m_data.m_value.object);
+                write_bson_document(j);
                 break;
             }
 
@@ -20226,63 +20226,11 @@ class binary_writer
     }
 
     /*!
-    @brief Writes a BSON element with key @a name and object @a value
-    */
-    void write_bson_object_entry(const string_t& name,
-                                 const typename BasicJsonType::object_t& value)
-    {
-        write_bson_entry_header(name, 0x03); // object
-        write_bson_object(value);
-    }
-
-    /*!
-    @return The size of the BSON-encoded array @a value
-    */
-    static std::size_t calc_bson_array_size(const typename BasicJsonType::array_t& value)
-    {
-        std::size_t array_index = 0ul;
-
-        const std::size_t embedded_document_size = std::accumulate(std::begin(value), std::end(value), static_cast<std::size_t>(0), [&array_index](std::size_t result, const typename BasicJsonType::array_t::value_type & el)
-        {
-            // the index is built as a std::string, while calc_bson_element_size
-            // takes a string_t; convert explicitly, as the two are only
-            // implicitly convertible for some string types
-            const auto key = std::to_string(array_index++);
-            return result + calc_bson_element_size(string_t(key.data(), key.size()), el);
-        });
-
-        return sizeof(std::int32_t) + embedded_document_size + 1ul;
-    }
-
-    /*!
     @return The size of the BSON-encoded binary array @a value
     */
     static std::size_t calc_bson_binary_size(const typename BasicJsonType::binary_t& value)
     {
         return sizeof(std::int32_t) + value.size() + 1ul;
-    }
-
-    /*!
-    @brief Writes a BSON element with key @a name and array @a value
-    */
-    void write_bson_array(const string_t& name,
-                          const typename BasicJsonType::array_t& value)
-    {
-        write_bson_entry_header(name, 0x04); // array
-        write_number<std::int32_t>(to_bson_length(calc_bson_array_size(value)), true);
-
-        std::size_t array_index = 0ul;
-
-        for (const auto& el : value)
-        {
-            // the index is built as a std::string, while write_bson_element takes
-            // a string_t; convert explicitly, as the two are only implicitly
-            // convertible for some string types
-            const auto key = std::to_string(array_index++);
-            write_bson_element(string_t(key.data(), key.size()), el);
-        }
-
-        oa.write_character(to_char_type(0x00));
     }
 
     /*!
@@ -20306,43 +20254,37 @@ class binary_writer
     }
 
     /*!
-    @brief Calculates the size necessary to serialize the JSON value @a j with its @a name
-    @return The calculated size for the BSON document entry for @a j with the given @a name.
+    @return The size of the value of the BSON document entry for @a j, which
+            is neither an object nor an array
     */
-    static std::size_t calc_bson_element_size(const string_t& name,
-            const BasicJsonType& j)
+    static std::size_t calc_bson_value_size(const BasicJsonType& j)
     {
-        const auto header_size = calc_bson_entry_header_size(name, j);
         switch (j.type())
         {
-            case value_t::object:
-                return header_size + calc_bson_object_size(*j.m_data.m_value.object);
-
-            case value_t::array:
-                return header_size + calc_bson_array_size(*j.m_data.m_value.array);
-
             case value_t::binary:
-                return header_size + calc_bson_binary_size(*j.m_data.m_value.binary);
+                return calc_bson_binary_size(*j.m_data.m_value.binary);
 
             case value_t::boolean:
-                return header_size + 1ul;
+                return 1ul;
 
             case value_t::number_float:
-                return header_size + 8ul;
+                return 8ul;
 
             case value_t::number_integer:
-                return header_size + calc_bson_integer_size(j.m_data.m_value.number_integer);
+                return calc_bson_integer_size(j.m_data.m_value.number_integer);
 
             case value_t::number_unsigned:
-                return header_size + calc_bson_unsigned_size(j.m_data.m_value.number_unsigned);
+                return calc_bson_unsigned_size(j.m_data.m_value.number_unsigned);
 
             case value_t::string:
-                return header_size + calc_bson_string_size(*j.m_data.m_value.string);
+                return calc_bson_string_size(*j.m_data.m_value.string);
 
             case value_t::null:
-                return header_size + 0ul;
+                return 0ul;
 
             // LCOV_EXCL_START
+            case value_t::object:
+            case value_t::array:
             case value_t::discarded:
             default:
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
@@ -20352,22 +20294,13 @@ class binary_writer
     }
 
     /*!
-    @brief Serializes the JSON value @a j to BSON and associates it with the
-           key @a name.
-    @param name The name to associate with the JSON entity @a j within the
-                current BSON document
+    @brief Writes the BSON document entry with key @a name for @a j, which is
+           neither an object nor an array
     */
-    void write_bson_element(const string_t& name,
-                            const BasicJsonType& j)
+    void write_bson_value(const string_t& name, const BasicJsonType& j)
     {
         switch (j.type())
         {
-            case value_t::object:
-                return write_bson_object_entry(name, *j.m_data.m_value.object);
-
-            case value_t::array:
-                return write_bson_array(name, *j.m_data.m_value.array);
-
             case value_t::binary:
                 return write_bson_binary(name, *j.m_data.m_value.binary);
 
@@ -20390,6 +20323,8 @@ class binary_writer
                 return write_bson_null(name);
 
             // LCOV_EXCL_START
+            case value_t::object:
+            case value_t::array:
             case value_t::discarded:
             default:
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
@@ -20398,37 +20333,219 @@ class binary_writer
         }
     }
 
-    /*!
-    @brief Calculates the size of the BSON serialization of the given
-           JSON-object @a j.
-    @param[in] value  JSON value to serialize
-    @pre       value.type() == value_t::object
-    */
-    static std::size_t calc_bson_object_size(const typename BasicJsonType::object_t& value)
+    /// @brief an object or array of the BSON document being sized or written
+    struct bson_frame
     {
-        const std::size_t document_size = std::accumulate(value.begin(), value.end(), static_cast<std::size_t>(0),
-                                          [](size_t result, const typename BasicJsonType::object_t::value_type & el)
+        explicit bson_frame(const BasicJsonType* value_, const std::size_t size_slot_ = 0)
+            : value(value_)
+            , size_slot(size_slot_)
         {
-            return result += calc_bson_element_size(el.first, el.second);
-        });
+            if (value->is_object())
+            {
+                member = value->m_data.m_value.object->cbegin();
+            }
+        }
 
-        return sizeof(std::int32_t) + document_size + 1ul;
+        /// the object or array
+        const BasicJsonType* value;
+        /// objects: the next member
+        typename BasicJsonType::object_t::const_iterator member{};
+        /// arrays: the index of the next element
+        std::size_t index = 0;
+        /// @ref calc_bson_sizes only: where its size goes in the table
+        std::size_t size_slot;
+        /// @ref calc_bson_sizes only: the size of its entries seen so far
+        std::size_t entries_size = 0;
+    };
+
+    /*!
+    @brief the name BSON gives the array element with index @a index
+    @param[out] name  receives the decimal index
+    */
+    static const string_t& bson_index_name(const std::size_t index, string_t& name)
+    {
+        // the index is built as a std::string; convert explicitly, as the
+        // two are only implicitly convertible for some string types
+        const auto key = std::to_string(index);
+        name = string_t(key.data(), key.size());
+        return name;
     }
 
     /*!
-    @param[in] value  JSON value to serialize
-    @pre       value.type() == value_t::object
+    @brief Calculates the size of every object and array in the BSON document
+           @a document, including the document itself.
+
+    BSON prefixes every document and array with its size, so all of them have
+    to be known before the first byte is written. They are computed in a
+    single pass, each one from the sizes of its entries, which keeps
+    serializing linear in the size of the document; computing each size by
+    walking the entire value below it made it quadratic in the nesting depth.
+    The pass keeps the objects and arrays it has entered on an explicit stack,
+    so a deeply nested value cannot exhaust the call stack.
+
+    @param[in] document  the JSON object to serialize
+    @param[out] nested_sizes  the sizes of the objects and arrays in
+                              @a document, in the order they are written
+    @return the size of @a document
+    @throw out_of_range.409 if a key contains U+0000, before anything is
+           written
     */
-    void write_bson_object(const typename BasicJsonType::object_t& value)
+    static std::size_t calc_bson_sizes(const BasicJsonType& document, std::vector<std::size_t>& nested_sizes)
     {
-        write_number<std::int32_t>(to_bson_length(calc_bson_object_size(value)), true);
+        // the object or array whose entries are being sized, and the ones it
+        // is in; nothing is allocated unless the document nests
+        bson_frame current(&document);
+        std::vector<bson_frame> parents;
+        string_t index_name;
 
-        for (const auto& el : value)
+        while (true)
         {
-            write_bson_element(el.first, el.second);
-        }
+            // size entries until the current object or array is done, or an
+            // entry is an object or array itself
+            const BasicJsonType* nested = nullptr;
+            if (current.value->is_object())
+            {
+                const auto& object = *current.value->m_data.m_value.object;
+                while (nested == nullptr && current.member != object.cend())
+                {
+                    const auto& el = *current.member;
+                    ++current.member;
+                    current.entries_size += calc_bson_entry_header_size(el.first, el.second);
+                    if (el.second.is_structured())
+                    {
+                        nested = &el.second;
+                    }
+                    else
+                    {
+                        current.entries_size += calc_bson_value_size(el.second);
+                    }
+                }
+            }
+            else
+            {
+                const auto& array = *current.value->m_data.m_value.array;
+                while (nested == nullptr && current.index < array.size())
+                {
+                    const BasicJsonType& el = array[current.index];
+                    current.entries_size += calc_bson_entry_header_size(bson_index_name(current.index, index_name), el);
+                    ++current.index;
+                    if (el.is_structured())
+                    {
+                        nested = &el;
+                    }
+                    else
+                    {
+                        current.entries_size += calc_bson_value_size(el);
+                    }
+                }
+            }
 
-        oa.write_character(to_char_type(0x00));
+            if (nested != nullptr)
+            {
+                // its size is added to the current one's once it is done
+                nested_sizes.push_back(0);
+                parents.push_back(std::move(current));
+                current = bson_frame(nested, nested_sizes.size() - 1);
+                continue;
+            }
+
+            // the int32 size, the entries, and the terminating null byte
+            const std::size_t size = sizeof(std::int32_t) + current.entries_size + 1ul;
+            if (parents.empty())
+            {
+                return size;
+            }
+            nested_sizes[current.size_slot] = size;
+            current = std::move(parents.back());
+            parents.pop_back();
+            current.entries_size += size;
+        }
+    }
+
+    /*!
+    @brief Serializes the JSON object @a document as a BSON document
+
+    Writes the objects and arrays in it without the call stack, keeping the
+    ones it has entered on an explicit stack, so a deeply nested value
+    cannot exhaust the call stack.
+
+    @param[in] document  the JSON object to serialize
+    @pre       document.type() == value_t::object
+    */
+    void write_bson_document(const BasicJsonType& document)
+    {
+        std::vector<std::size_t> nested_sizes;
+        const std::size_t document_size = calc_bson_sizes(document, nested_sizes);
+        write_number<std::int32_t>(to_bson_length(document_size), true);
+
+        // the object or array whose entries are being written, and the ones
+        // it is in
+        bson_frame current(&document);
+        std::vector<bson_frame> parents;
+        std::size_t next_size = 0;
+        string_t index_name;
+
+        while (true)
+        {
+            // write entries until the current object or array is done, or an
+            // entry is an object or array itself
+            const string_t* nested_name = nullptr;
+            const BasicJsonType* nested = nullptr;
+            if (current.value->is_object())
+            {
+                const auto& object = *current.value->m_data.m_value.object;
+                while (nested == nullptr && current.member != object.cend())
+                {
+                    const auto& el = *current.member;
+                    ++current.member;
+                    if (el.second.is_structured())
+                    {
+                        nested_name = &el.first;
+                        nested = &el.second;
+                    }
+                    else
+                    {
+                        write_bson_value(el.first, el.second);
+                    }
+                }
+            }
+            else
+            {
+                const auto& array = *current.value->m_data.m_value.array;
+                while (nested == nullptr && current.index < array.size())
+                {
+                    const BasicJsonType& el = array[current.index];
+                    const string_t& name = bson_index_name(current.index, index_name);
+                    ++current.index;
+                    if (el.is_structured())
+                    {
+                        nested_name = &name;
+                        nested = &el;
+                    }
+                    else
+                    {
+                        write_bson_value(name, el);
+                    }
+                }
+            }
+
+            if (nested != nullptr)
+            {
+                write_bson_entry_header(*nested_name, nested->is_object() ? 0x03 : 0x04);
+                write_number<std::int32_t>(to_bson_length(nested_sizes[next_size++]), true);
+                parents.push_back(std::move(current));
+                current = bson_frame(nested);
+                continue;
+            }
+
+            oa.write_character(to_char_type(0x00));
+            if (parents.empty())
+            {
+                return;
+            }
+            current = std::move(parents.back());
+            parents.pop_back();
+        }
     }
 
     //////////
