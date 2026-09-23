@@ -925,6 +925,41 @@ class max_members_derived : public max_members_base
     NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(max_members_derived, max_members_base, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15, m16, m17, m18, m19, m20, m21, m22, m23, m24, m25, m26, m27, m28, m29, m30, m31, m32, m33, m34, m35, m36, m37, m38, m39, m40, m41, m42, m43, m44, m45, m46, m47, m48, m49, m50, m51, m52, m53, m54, m55, m56, m57, m58, m59, m60, m61, m62, m63)
 };
 
+// User macros named like the dispatch suffixes (EMPTY is a common empty-macro
+// idiom) must not leak into the NLOHMANN_DEFINE_TYPE_* dispatch.
+#define EMPTY
+#define MEMBERS clobbered_by_user_macro
+
+class dispatch_with_user_macros_empty
+{
+  public:
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(dispatch_with_user_macros_empty)
+};
+
+class dispatch_with_user_macros_members
+{
+  public:
+    int value = 0;
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(dispatch_with_user_macros_members, value)
+};
+
+class dispatch_with_user_macros_derived_empty : public dispatch_with_user_macros_members
+{
+};
+// NOLINTNEXTLINE(misc-use-internal-linkage)
+NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(dispatch_with_user_macros_derived_empty, dispatch_with_user_macros_members)
+
+class dispatch_with_user_macros_derived_members : public dispatch_with_user_macros_members
+{
+  public:
+    int own = 0;
+};
+// NOLINTNEXTLINE(misc-use-internal-linkage)
+NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(dispatch_with_user_macros_derived_members, dispatch_with_user_macros_members, own)
+
+#undef EMPTY
+#undef MEMBERS
 
 } // namespace persons
 
@@ -1475,5 +1510,47 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of maximum-member-count types 
         CHECK(obj2.base_value == 7);
         CHECK(obj2.m1 == 1);
         CHECK(obj2.m63 == 63);
+    }
+}
+
+TEST_CASE_TEMPLATE("NLOHMANN_DEFINE_TYPE_* dispatch is unaffected by user macros named EMPTY or MEMBERS", Json, // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
+                   nlohmann::json, nlohmann::ordered_json)
+{
+    SECTION("zero members")
+    {
+        const persons::dispatch_with_user_macros_empty obj{};
+        const Json j = obj;
+        CHECK(j == Json::object());
+        CHECK_NOTHROW(j.template get<persons::dispatch_with_user_macros_empty>());
+    }
+
+    SECTION("one member")
+    {
+        persons::dispatch_with_user_macros_members obj{};
+        obj.value = 42;
+        const Json j = obj;
+        CHECK(j == Json({{"value", 42}}));
+        CHECK(j.template get<persons::dispatch_with_user_macros_members>().value == 42);
+    }
+
+    SECTION("derived with zero own members")
+    {
+        persons::dispatch_with_user_macros_derived_empty obj{};
+        obj.value = 42;
+        const Json j = obj;
+        CHECK(j == Json({{"value", 42}}));
+        CHECK(j.template get<persons::dispatch_with_user_macros_derived_empty>().value == 42);
+    }
+
+    SECTION("derived with own members")
+    {
+        persons::dispatch_with_user_macros_derived_members obj{};
+        obj.value = 42;
+        obj.own = 7;
+        const Json j = obj;
+        CHECK(j == Json({{"value", 42}, {"own", 7}}));
+        const auto obj2 = j.template get<persons::dispatch_with_user_macros_derived_members>();
+        CHECK(obj2.value == 42);
+        CHECK(obj2.own == 7);
     }
 }
