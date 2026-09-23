@@ -290,7 +290,7 @@ TEST_CASE("CBOR")
 
                 SECTION("-65536..-257")
                 {
-                    for (int32_t i = -65536; i <= -257; i = utils::next_integer_sample(i, static_cast<int32_t>(-257), 7))
+                    for (int32_t i = -65536; i <= -257; i = utils::next_integer_sample(i, -257, 7))
                     {
                         CAPTURE(i)
 

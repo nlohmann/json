@@ -417,7 +417,7 @@ TEST_CASE("BJData")
 
                 SECTION("-32768..-129 (int16)")
                 {
-                    for (int32_t i = -32768; i <= -129; i = utils::next_integer_sample(i, static_cast<int32_t>(-129), 7))
+                    for (int32_t i = -32768; i <= -129; i = utils::next_integer_sample(i, -129, 7))
                     {
                         CAPTURE(i)
 
