@@ -161,7 +161,7 @@ std::size_t hash(const BasicJsonType& j, const std::size_t depth = 0)
 template<typename BasicJsonType>
 struct hash_frame
 {
-    hash_frame(const BasicJsonType* value_, std::size_t seed_)
+    hash_frame(const BasicJsonType* value_, std::size_t seed_) noexcept
         : value(value_), position(value_->cbegin()), seed(seed_)
     {}
 
