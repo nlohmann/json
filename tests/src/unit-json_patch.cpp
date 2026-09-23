@@ -1813,7 +1813,7 @@ TEST_CASE("JSON patch: diff of deeply nested values")
     SECTION("the diff reproduces the target at every depth")
     {
         // every depth on either side of the nesting depth up to which diff()
-        // recurses (basic_json::diff_depth_limit(), 128)
+        // recurses (detail::recursion_depth_limit(), 128)
         for (std::size_t depth = 0; depth <= 300; ++depth)
         {
             CAPTURE(depth);

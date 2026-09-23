@@ -30145,21 +30145,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // compares them with operator== on the way, which recurses as well,
         // so values nested deeply enough used to exhaust the call stack.
         // Both only descend as far as the source is nested, so a source
-        // nested no more than diff_depth_limit() levels deep - all but a
-        // vanishing minority - is diffed recursively as before; deeper ones
-        // are diffed without the call stack.
-        if (JSON_HEDLEY_LIKELY(!nesting_exceeds(source, diff_depth_limit())))
+        // nested no more than detail::recursion_depth_limit() levels deep -
+        // all but a vanishing minority - is diffed recursively as before;
+        // deeper ones are diffed without the call stack.
+        if (JSON_HEDLEY_LIKELY(!nesting_exceeds(source, detail::recursion_depth_limit())))
         {
             return diff_recursively(source, target, path);
         }
         return diff_iteratively(source, target, path);
-    }
-
-  JSON_PRIVATE_UNLESS_TESTED:
-    /// the nesting depth up to which @ref diff recurses
-    static constexpr std::size_t diff_depth_limit() noexcept
-    {
-        return 128;
     }
 
   private:
@@ -30238,7 +30231,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json added_ops{};
     };
 
-    /// @ref diff for a @a source nested no more than @ref diff_depth_limit levels deep
+    /// @ref diff for a @a source nested no more than @ref detail::recursion_depth_limit levels deep
     static basic_json diff_recursively(const basic_json& source, const basic_json& target,
                                        const string_t& path)
     {
@@ -30478,7 +30471,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @brief @ref diff without the call stack
 
     Produces the same patch as @ref diff_recursively. Only used for a source
-    nested more deeply than @ref diff_depth_limit; any arrays and objects
+    nested more deeply than @ref detail::recursion_depth_limit; any arrays and objects
     below it that are not nested that deeply are diffed recursively.
     */
     static basic_json diff_iteratively(const basic_json& source, const basic_json& target,
@@ -30521,7 +30514,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
             // arrays and objects that are not nested too deeply for the call
             // stack are diffed recursively, which can skip equal parts
-            if (!nesting_exceeds(s, diff_depth_limit()))
+            if (!nesting_exceeds(s, detail::recursion_depth_limit()))
             {
                 const basic_json partial = diff_recursively(s, t, current_path);
                 result.insert(result.end(), partial.begin(), partial.end());
