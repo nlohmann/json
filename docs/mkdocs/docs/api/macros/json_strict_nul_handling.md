@@ -4,8 +4,19 @@
 #define JSON_STRICT_NUL_HANDLING /* value */
 ```
 
-When defined to `1`, a `'\0'` (NUL) byte anywhere in the input is rejected with `parse_error.101`, like any other
+When defined to `1`, a `'\0'` (NUL) byte in JSON text input is rejected with `parse_error.101`, like any other
 unexpected byte, instead of being silently treated as end of input.
+
+The macro only affects the JSON text parser ([`parse`](../basic_json/parse.md), [`accept`](../basic_json/accept.md),
+[`sax_parse`](../basic_json/sax_parse.md), and [`operator>>`](../operator_gtgt.md)). There are three cases where a NUL
+byte is still not rejected:
+
+- The binary formats ([`from_bjdata`](../basic_json/from_bjdata.md), [`from_bson`](../basic_json/from_bson.md),
+  [`from_cbor`](../basic_json/from_cbor.md), [`from_msgpack`](../basic_json/from_msgpack.md),
+  [`from_ubjson`](../basic_json/from_ubjson.md)) are never affected: there, `0x00` is ordinary data.
+- A bare `const char*` pointer has no length of its own, so its length is still determined with `strlen()`. The first
+  NUL byte therefore still marks the end of the input, and nothing after it is read.
+- One trailing `'\0'` at the end of a `char` array (e.g., a string literal) is trimmed; see the warning below.
 
 ## Default definition
 
