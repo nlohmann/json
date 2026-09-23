@@ -283,5 +283,214 @@ inline std::size_t string_bulk_run(const unsigned char* data, std::size_t n) noe
     return scalar_string_bulk_run(data, n);
 }
 
+/*!
+@brief find the index of the first invalid UTF-8 byte in a buffer
+
+@param[in] data  pointer to the byte buffer
+@param[in] len   length of the buffer in bytes
+
+@return index of the first invalid UTF-8 byte, or @a len if valid UTF-8
+*/
+inline std::size_t find_invalid_utf8(const unsigned char* data, std::size_t len) noexcept
+{
+#if defined(JSON_USE_SIMDUTF) && defined(JSON_HAS_CPP_17)
+    if (simdutf::validate_utf8(reinterpret_cast<const char*>(data), len))
+    {
+        return len;
+    }
+#endif
+
+    std::size_t i = 0;
+    while (i < len)
+    {
+        // fast-forward 8 ASCII bytes at a time using SWAR
+        while (i + 8 <= len)
+        {
+            std::uint64_t v = 0;
+            std::memcpy(&v, data + i, sizeof(v));
+            if ((v & 0x8080808080808080ull) == 0)
+            {
+                i += 8;
+            }
+            else
+            {
+                break;
+            }
+        }
+        if (i >= len)
+        {
+            break;
+        }
+
+        const unsigned char c0 = data[i];
+        if (c0 < 0x80u)
+        {
+            ++i;
+        }
+        else if (c0 < 0xC2u || c0 > 0xF4u)
+        {
+            // 0x80..0xBF (unexpected continuation byte), 0xC0..0xC1 (overlong), 0xF5..0xFF (out of range)
+            return i;
+        }
+        else if (c0 <= 0xDFu) // 2-byte sequence (U+0080..U+07FF)
+        {
+            if (i + 1 >= len)
+            {
+                return i; // truncated sequence
+            }
+            if (data[i + 1] < 0x80u || data[i + 1] > 0xBFu)
+            {
+                return i + 1;
+            }
+            i += 2;
+        }
+        else if (c0 == 0xE0u) // 3-byte sequence (U+0800..U+0FFF, excludes overlong)
+        {
+            if (i + 1 >= len)
+            {
+                return i;
+            }
+            if (data[i + 1] < 0xA0u || data[i + 1] > 0xBFu)
+            {
+                return i + 1;
+            }
+            if (i + 2 >= len)
+            {
+                return i;
+            }
+            if (data[i + 2] < 0x80u || data[i + 2] > 0xBFu)
+            {
+                return i + 2;
+            }
+            i += 3;
+        }
+        else if ((c0 >= 0xE1u && c0 <= 0xECu) || c0 == 0xEEu || c0 == 0xEFu) // 3-byte sequence (U+1000..U+CFFF, U+E000..U+FFFF)
+        {
+            if (i + 1 >= len)
+            {
+                return i;
+            }
+            if (data[i + 1] < 0x80u || data[i + 1] > 0xBFu)
+            {
+                return i + 1;
+            }
+            if (i + 2 >= len)
+            {
+                return i;
+            }
+            if (data[i + 2] < 0x80u || data[i + 2] > 0xBFu)
+            {
+                return i + 2;
+            }
+            i += 3;
+        }
+        else if (c0 == 0xEDu) // 3-byte sequence (U+D000..U+D7FF, excludes surrogates U+D800..U+DFFF)
+        {
+            if (i + 1 >= len)
+            {
+                return i;
+            }
+            if (data[i + 1] < 0x80u || data[i + 1] > 0x9Fu)
+            {
+                return i + 1;
+            }
+            if (i + 2 >= len)
+            {
+                return i;
+            }
+            if (data[i + 2] < 0x80u || data[i + 2] > 0xBFu)
+            {
+                return i + 2;
+            }
+            i += 3;
+        }
+        else if (c0 == 0xF0u) // 4-byte sequence (U+10000..U+3FFFF, excludes overlong)
+        {
+            if (i + 1 >= len)
+            {
+                return i;
+            }
+            if (data[i + 1] < 0x90u || data[i + 1] > 0xBFu)
+            {
+                return i + 1;
+            }
+            if (i + 2 >= len)
+            {
+                return i;
+            }
+            if (data[i + 2] < 0x80u || data[i + 2] > 0xBFu)
+            {
+                return i + 2;
+            }
+            if (i + 3 >= len)
+            {
+                return i;
+            }
+            if (data[i + 3] < 0x80u || data[i + 3] > 0xBFu)
+            {
+                return i + 3;
+            }
+            i += 4;
+        }
+        else if (c0 >= 0xF1u && c0 <= 0xF3u) // 4-byte sequence (U+40000..U+FFFFF)
+        {
+            if (i + 1 >= len)
+            {
+                return i;
+            }
+            if (data[i + 1] < 0x80u || data[i + 1] > 0xBFu)
+            {
+                return i + 1;
+            }
+            if (i + 2 >= len)
+            {
+                return i;
+            }
+            if (data[i + 2] < 0x80u || data[i + 2] > 0xBFu)
+            {
+                return i + 2;
+            }
+            if (i + 3 >= len)
+            {
+                return i;
+            }
+            if (data[i + 3] < 0x80u || data[i + 3] > 0xBFu)
+            {
+                return i + 3;
+            }
+            i += 4;
+        }
+        else if (c0 == 0xF4u) // 4-byte sequence (U+100000..U+10FFFF, excludes > U+10FFFF)
+        {
+            if (i + 1 >= len)
+            {
+                return i;
+            }
+            if (data[i + 1] < 0x80u || data[i + 1] > 0x8Fu)
+            {
+                return i + 1;
+            }
+            if (i + 2 >= len)
+            {
+                return i;
+            }
+            if (data[i + 2] < 0x80u || data[i + 2] > 0xBFu)
+            {
+                return i + 2;
+            }
+            if (i + 3 >= len)
+            {
+                return i;
+            }
+            if (data[i + 3] < 0x80u || data[i + 3] > 0xBFu)
+            {
+                return i + 3;
+            }
+            i += 4;
+        }
+    }
+    return len;
+}
+
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END

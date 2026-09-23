@@ -1554,6 +1554,51 @@ TEST_CASE("MessagePack")
             CHECK(json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01}), true, false).is_discarded());
         }
 
+        SECTION("invalid UTF-8 in strings")
+        {
+            json _;
+
+            // invalid lead byte: 0xFF
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xa1, 0xff})),
+                                 "[json.exception.parse_error.112] parse error at byte 2: syntax error while parsing MessagePack string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_msgpack(std::vector<uint8_t>({0xa1, 0xff}), true, false).is_discarded());
+
+            // stray continuation byte: 0x80
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xa1, 0x80})),
+                                 "[json.exception.parse_error.112] parse error at byte 2: syntax error while parsing MessagePack string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_msgpack(std::vector<uint8_t>({0xa1, 0x80}), true, false).is_discarded());
+
+            // overlong 2-byte sequence: 0xC0, 0xAF
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xa2, 0xc0, 0xaf})),
+                                 "[json.exception.parse_error.112] parse error at byte 2: syntax error while parsing MessagePack string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_msgpack(std::vector<uint8_t>({0xa2, 0xc0, 0xaf}), true, false).is_discarded());
+
+            // invalid continuation byte: 0xC3 followed by 0x20
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xa2, 0xc3, 0x20})),
+                                 "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing MessagePack string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_msgpack(std::vector<uint8_t>({0xa2, 0xc3, 0x20}), true, false).is_discarded());
+
+            // truncated 2-byte sequence
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xa1, 0xc3})),
+                                 "[json.exception.parse_error.112] parse error at byte 2: syntax error while parsing MessagePack string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_msgpack(std::vector<uint8_t>({0xa1, 0xc3}), true, false).is_discarded());
+
+            // surrogate code point (U+D800): 0xED, 0xA0, 0x80
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xa3, 0xed, 0xa0, 0x80})),
+                                 "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing MessagePack string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_msgpack(std::vector<uint8_t>({0xa3, 0xed, 0xa0, 0x80}), true, false).is_discarded());
+
+            // invalid byte in map key
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0x81, 0xa1, 0xff, 0x01})),
+                                 "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing MessagePack string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_msgpack(std::vector<uint8_t>({0x81, 0xa1, 0xff, 0x01}), true, false).is_discarded());
+
+            // str 8 with invalid UTF-8
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xd9, 0x01, 0xff})),
+                                 "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing MessagePack string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_msgpack(std::vector<uint8_t>({0xd9, 0x01, 0xff}), true, false).is_discarded());
+        }
+
         SECTION("strict mode")
         {
             std::vector<uint8_t> const vec = {0xc0, 0xc0};

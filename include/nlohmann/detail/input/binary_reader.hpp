@@ -28,6 +28,7 @@
 #include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/json_sax.hpp>
 #include <nlohmann/detail/input/lexer.hpp>
+#include <nlohmann/detail/input/string_scan.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/is_sax.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
@@ -3304,7 +3305,29 @@ class binary_reader
                     const NumberType len,
                     string_t& result)
     {
-        return get_bytes(format, len, "string", result);
+        const std::size_t start = result.size();
+        if (JSON_HEDLEY_UNLIKELY(!get_bytes(format, len, "string", result)))
+        {
+            return false;
+        }
+
+        if (static_cast<std::size_t>(len) > 0)
+        {
+            const auto* const data = reinterpret_cast<const unsigned char*>(result.data() + start);
+            const std::size_t bad_idx = find_invalid_utf8(data, static_cast<std::size_t>(len));
+            if (JSON_HEDLEY_UNLIKELY(bad_idx < static_cast<std::size_t>(len)))
+            {
+                const std::size_t string_start_char = chars_read - static_cast<std::size_t>(len);
+                const std::size_t error_pos = string_start_char + bad_idx + 1;
+                current = static_cast<char_int_type>(data[bad_idx]);
+                result.resize(start);
+                return sax->parse_error(error_pos, get_token_string(),
+                                        parse_error::create(112, error_pos,
+                                                exception_message(format, "invalid string: ill-formed UTF-8 byte", "string"), nullptr));
+            }
+        }
+
+        return true;
     }
 
     /*!

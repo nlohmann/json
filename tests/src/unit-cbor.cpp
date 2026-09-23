@@ -1833,6 +1833,51 @@ TEST_CASE("CBOR")
             CHECK(json::from_cbor(std::vector<uint8_t>({0xa1, 0xff, 0x01}), true, false).is_discarded());
         }
 
+        SECTION("invalid UTF-8 in strings")
+        {
+            json _;
+
+            // invalid lead byte: 0xFF
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x61, 0xff})),
+                                 "[json.exception.parse_error.112] parse error at byte 2: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x61, 0xff}), true, false).is_discarded());
+
+            // stray continuation byte: 0x80
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x61, 0x80})),
+                                 "[json.exception.parse_error.112] parse error at byte 2: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x61, 0x80}), true, false).is_discarded());
+
+            // overlong 2-byte sequence: 0xC0, 0xAF
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x62, 0xc0, 0xaf})),
+                                 "[json.exception.parse_error.112] parse error at byte 2: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x62, 0xc0, 0xaf}), true, false).is_discarded());
+
+            // invalid continuation byte: 0xC3 followed by 0x20
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x62, 0xc3, 0x20})),
+                                 "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x62, 0xc3, 0x20}), true, false).is_discarded());
+
+            // truncated 2-byte sequence
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x61, 0xc3})),
+                                 "[json.exception.parse_error.112] parse error at byte 2: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x61, 0xc3}), true, false).is_discarded());
+
+            // surrogate code point (U+D800): 0xED, 0xA0, 0x80
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x63, 0xed, 0xa0, 0x80})),
+                                 "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x63, 0xed, 0xa0, 0x80}), true, false).is_discarded());
+
+            // invalid byte in object key
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xa1, 0x61, 0xff, 0x01})),
+                                 "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_cbor(std::vector<uint8_t>({0xa1, 0x61, 0xff, 0x01}), true, false).is_discarded());
+
+            // invalid byte in indefinite-length string chunk
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x7f, 0x61, 0xff, 0xff})),
+                                 "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x7f, 0x61, 0xff, 0xff}), true, false).is_discarded());
+        }
+
         SECTION("strict mode")
         {
             std::vector<uint8_t> const vec = {0xf6, 0xf6};
