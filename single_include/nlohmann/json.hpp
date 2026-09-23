@@ -7032,6 +7032,44 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/abi_macros.hpp>
 
+// #include <nlohmann/detail/recursion_depth_limit.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <cstddef> // size_t
+
+// #include <nlohmann/detail/abi_macros.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+
+/*!
+@brief the number of nesting levels an operation recurses into
+
+Operations that walk a value (serializing, hashing, merging, ...) recurse once
+per nesting level, which is fastest, but a value nested deeply enough would
+exhaust the call stack. So they recurse only this many levels deep and finish
+whatever lies below with an explicit stack. All of them share this limit.
+
+@sa https://github.com/nlohmann/json/issues/5387
+*/
+constexpr std::size_t recursion_depth_limit() noexcept
+{
+    return 128;
+}
+
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
 // #include <nlohmann/detail/value_t.hpp>
 
 
@@ -7044,13 +7082,6 @@ inline std::size_t combine(std::size_t seed, std::size_t h) noexcept
 {
     seed ^= h + 0x9e3779b9 + (seed << 6U) + (seed >> 2U);
     return seed;
-}
-
-/// the number of levels @ref hash descends into before handing over to
-/// @ref hash_iteratively
-constexpr std::size_t hash_depth_limit() noexcept
-{
-    return 128;
 }
 
 template<typename BasicJsonType>
@@ -7066,7 +7097,7 @@ null, 0, 0U, and false, etc.
 Hashing an array or an object hashes its elements, which used to call this
 function again once per nesting level, so a value nested deeply enough
 exhausted the call stack and terminated the process. The descent is bounded
-here: once @ref hash_depth_limit levels have been entered, @ref
+here: once @ref recursion_depth_limit levels have been entered, @ref
 hash_iteratively hashes what is left without the call stack. A value nested
 less deeply than that - all but a vanishing minority - is hashed exactly as
 before, without allocating.
@@ -7095,7 +7126,7 @@ std::size_t hash(const BasicJsonType& j, const std::size_t depth = 0)
 
         case BasicJsonType::value_t::object:
         {
-            if (JSON_HEDLEY_UNLIKELY(depth >= hash_depth_limit()))
+            if (JSON_HEDLEY_UNLIKELY(depth >= recursion_depth_limit()))
             {
                 return hash_iteratively(j);
             }
@@ -7112,7 +7143,7 @@ std::size_t hash(const BasicJsonType& j, const std::size_t depth = 0)
 
         case BasicJsonType::value_t::array:
         {
-            if (JSON_HEDLEY_UNLIKELY(depth >= hash_depth_limit()))
+            if (JSON_HEDLEY_UNLIKELY(depth >= recursion_depth_limit()))
             {
                 return hash_iteratively(j);
             }
@@ -7194,7 +7225,7 @@ struct hash_frame
 
 Computes the same value as @ref hash, keeping the arrays and objects it has
 entered on an explicit stack instead of descending into them. Only reached for
-values nested deeper than @ref hash_depth_limit.
+values nested deeper than @ref recursion_depth_limit.
 
 @tparam BasicJsonType basic_json specialization
 @param j array or object to hash
@@ -7210,7 +7241,9 @@ std::size_t hash_iteratively(const BasicJsonType& j)
 
     while (true)
     {
-        hash_frame<BasicJsonType>& frame = stack.back();
+        // a copy, as entering an element below can reallocate the stack; the
+        // frame itself is only changed through stack.back()
+        const hash_frame<BasicJsonType> frame = stack.back();
 
         if (frame.position == frame.value->cend())
         {
@@ -7228,13 +7261,12 @@ std::size_t hash_iteratively(const BasicJsonType& j)
 
         if (frame.value->is_object())
         {
-            frame.seed = combine(frame.seed, std::hash<string_t> {}(frame.position.key()));
+            stack.back().seed = combine(stack.back().seed, std::hash<string_t> {}(frame.position.key()));
         }
 
-        // read the element and advance before entering it: entering can
-        // reallocate the stack and so invalidate `frame`
+        // advance before entering the element, which pushes onto the stack
         const BasicJsonType& element = *frame.position;
-        ++frame.position;
+        ++stack.back().position;
 
         if (element.is_structured())
         {
@@ -7242,7 +7274,7 @@ std::size_t hash_iteratively(const BasicJsonType& j)
         }
         else
         {
-            frame.seed = combine(frame.seed, hash(element));
+            stack.back().seed = combine(stack.back().seed, hash(element));
         }
     }
 }
@@ -22396,6 +22428,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/output/output_adapters.hpp>
 
+// #include <nlohmann/detail/recursion_depth_limit.hpp>
+
 // #include <nlohmann/detail/string_concat.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
@@ -22501,7 +22535,7 @@ class serializer
 
     Serializing a container descends into its elements, so a value nested deeply
     enough used to exhaust the call stack and terminate the process with no
-    exception to catch. The descent is bounded here: once @ref dump_depth_limit
+    exception to catch. The descent is bounded here: once @ref recursion_depth_limit
     levels have been entered, @ref dump_iteratively writes out what is left
     without the call stack. A value nested less deeply than that - all but a
     vanishing minority - is written by exactly the code that always wrote it.
@@ -22516,7 +22550,7 @@ class serializer
         {
             case value_t::object:
             {
-                if (JSON_HEDLEY_UNLIKELY(depth >= dump_depth_limit()))
+                if (JSON_HEDLEY_UNLIKELY(depth >= recursion_depth_limit()))
                 {
                     dump_iteratively(val, current_indent);
                     return;
@@ -22591,7 +22625,7 @@ class serializer
 
             case value_t::array:
             {
-                if (JSON_HEDLEY_UNLIKELY(depth >= dump_depth_limit()))
+                if (JSON_HEDLEY_UNLIKELY(depth >= recursion_depth_limit()))
                 {
                     dump_iteratively(val, current_indent);
                     return;
@@ -22776,19 +22810,12 @@ class serializer
     }
 
   private:
-    /// the number of levels @ref dump_internal descends into before it hands
-    /// over to @ref dump_iteratively
-    static constexpr std::size_t dump_depth_limit()
-    {
-        return 128;
-    }
-
     /*!
     @brief write out @a val and everything below it without the call stack
 
     Emits the same bytes as @ref dump_internal, keeping the containers it has
     entered on an explicit stack instead of descending into them. Only reached
-    for values nested deeper than @ref dump_depth_limit, which is why it is not
+    for values nested deeper than @ref recursion_depth_limit, which is why it is not
     written for speed: walking every value this way measured up to 20% slower on
     object-heavy documents than letting the compiler drive the descent.
     */
@@ -24100,6 +24127,8 @@ class serializer
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
+
+// #include <nlohmann/detail/recursion_depth_limit.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
 
