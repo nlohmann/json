@@ -6105,16 +6105,19 @@ MessagePack/BSON specifications all require text strings to be UTF-8), so
 that malformed input is caught immediately instead of only surfacing later
 as a type_error.316 when the resulting value is dumped.
 
-@param[in] s  the string to check
-@return whether @a s is valid UTF-8
+@param[in] s      the string to check
+@param[in] first  index of the first byte to check; the bytes before it are
+                  assumed to have been validated already and to end on a
+                  code point boundary
+@return whether @a s (from index @a first on) is valid UTF-8
 */
 template<typename StringType>
-inline bool is_valid_utf8(const StringType& s) noexcept
+inline bool is_valid_utf8(const StringType& s, const std::size_t first = 0) noexcept
 {
     std::uint8_t state = UTF8_ACCEPT;
     std::uint32_t codepoint = 0;
 
-    for (std::size_t i = 0; i < s.size(); ++i)
+    for (std::size_t i = first; i < s.size(); ++i)
     {
         decode(state, codepoint, static_cast<std::uint8_t>(s[i]));
         if (state == UTF8_REJECT)
@@ -15398,6 +15401,10 @@ class binary_reader
                     const NumberType len,
                     string_t& result)
     {
+        // get_bytes() appends to result, and CBOR indefinite-length strings
+        // collect all their chunks in the same result; validating only the
+        // newly read bytes keeps the check linear in the input size
+        const std::size_t old_size = result.size();
         if (JSON_HEDLEY_UNLIKELY(!get_bytes(format, len, "string", result)))
         {
             return false;
@@ -15408,7 +15415,7 @@ class binary_reader
         // right here so malformed input is caught at decode time instead of
         // only surfacing later as a type_error.316 when the value is dumped
         // (which would defeat allow_exceptions=false / strict discarding).
-        if (JSON_HEDLEY_UNLIKELY(!is_valid_utf8(result)))
+        if (JSON_HEDLEY_UNLIKELY(!is_valid_utf8(result, old_size)))
         {
             return sax->parse_error(chars_read, get_token_string(),
                                     parse_error::create(113, chars_read,

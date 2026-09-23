@@ -3314,6 +3314,10 @@ class binary_reader
                     const NumberType len,
                     string_t& result)
     {
+        // get_bytes() appends to result, and CBOR indefinite-length strings
+        // collect all their chunks in the same result; validating only the
+        // newly read bytes keeps the check linear in the input size
+        const std::size_t old_size = result.size();
         if (JSON_HEDLEY_UNLIKELY(!get_bytes(format, len, "string", result)))
         {
             return false;
@@ -3324,7 +3328,7 @@ class binary_reader
         // right here so malformed input is caught at decode time instead of
         // only surfacing later as a type_error.316 when the value is dumped
         // (which would defeat allow_exceptions=false / strict discarding).
-        if (JSON_HEDLEY_UNLIKELY(!is_valid_utf8(result)))
+        if (JSON_HEDLEY_UNLIKELY(!is_valid_utf8(result, old_size)))
         {
             return sax->parse_error(chars_read, get_token_string(),
                                     parse_error::create(113, chars_read,
