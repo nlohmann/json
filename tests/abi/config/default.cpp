@@ -32,6 +32,10 @@ TEST_CASE("default namespace")
         expected += "_ldvcmp";
 #endif
 
+#if JSON_BRACE_INIT_COPY_SEMANTICS
+        expected += "_bics";
+#endif
+
         expected += "_v" STRINGIZE(NLOHMANN_JSON_VERSION_MAJOR);
         expected += "_" STRINGIZE(NLOHMANN_JSON_VERSION_MINOR);
         expected += "_" STRINGIZE(NLOHMANN_JSON_VERSION_PATCH) "::basic_json";

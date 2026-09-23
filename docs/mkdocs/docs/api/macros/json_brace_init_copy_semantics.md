@@ -54,10 +54,11 @@ The default value is `0` (disabled — existing behavior is preserved).
     affected. The library's own conversions are not affected either: for example, `std::tuple<int>{5}` still becomes
     `[5]`.
 
-!!! warning "Define it consistently"
+!!! note "ABI compatibility"
 
-    The macro changes the behavior of a `basic_json` constructor but not the library's ABI tag, so all translation units
-    of a program must agree on its value. Mixing translation units compiled with and without it is an ODR violation.
+    The value of this macro is encoded in the [namespace](../../features/namespace.md) (tag `_bics`), resulting in
+    distinct symbol names. Translation units compiled with and without it can therefore be linked into the same program
+    without One Definition Rule (ODR) violations, but they cannot exchange instances of library types.
 
 !!! tip "Workaround without the macro"
 

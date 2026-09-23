@@ -804,10 +804,6 @@ void templated_json_throw(ExceptionType exception)
     #define JSON_USE_GLOBAL_UDLS 1
 #endif
 
-#ifndef JSON_BRACE_INIT_COPY_SEMANTICS
-    #define JSON_BRACE_INIT_COPY_SEMANTICS 0
-#endif
-
 #ifndef JSON_STRICT_NUL_HANDLING
     #define JSON_STRICT_NUL_HANDLING 0
 #endif

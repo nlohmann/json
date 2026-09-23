@@ -9,8 +9,7 @@
 #include "doctest_compatibility.h"
 
 // This file tests the opt-in JSON_BRACE_INIT_COPY_SEMANTICS, so it defines the
-// macro itself rather than relying on a -D flag: the header #undefs the macro
-// before returning, so a test cannot check for it after the #include.
+// macro itself rather than relying on a -D flag, and runs in every build.
 #ifdef JSON_BRACE_INIT_COPY_SEMANTICS
     #undef JSON_BRACE_INIT_COPY_SEMANTICS
 #endif
@@ -28,8 +27,17 @@ using nlohmann::json;
 #include <utility>
 #include <vector>
 
+#define STRINGIZE_EX(x) #x
+#define STRINGIZE(x) STRINGIZE_EX(x)
+
 TEST_CASE("JSON_BRACE_INIT_COPY_SEMANTICS")
 {
+    SECTION("the macro is part of the ABI tag")
+    {
+        const std::string ns = STRINGIZE(NLOHMANN_JSON_NAMESPACE);
+        CHECK(ns.find("json_abi_bics") != std::string::npos);
+    }
+
     SECTION("single-element brace initialization copies the element (#5074)")
     {
         json const j_obj = {{"key", "value"}, {"num", 42}};
