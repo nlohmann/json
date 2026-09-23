@@ -6758,6 +6758,23 @@ inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<
     j = { std::get<Idx>(t)... };
 }
 
+#if JSON_BRACE_INIT_COPY_SEMANTICS
+// JSON_BRACE_INIT_COPY_SEMANTICS makes a one-element braced list copy its
+// element instead of wrapping it, which would serialize std::tuple<int>{5} as 5
+// rather than [5]. Build what the default deduction builds instead: an object
+// if the element is a [string, value] pair, a one-element array otherwise.
+template<typename BasicJsonType, typename Tuple>
+inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<0> /*unused*/)
+{
+    BasicJsonType element(std::get<0>(t));
+    // same test as the initializer-list constructor, including the cast that
+    // keeps a string type constructible from 0 from selecting operator[](key)
+    const bool is_member = element.is_array() && element.size() == 2
+                           && element[static_cast<typename BasicJsonType::size_type>(0)].is_string();
+    j = is_member ? BasicJsonType::object({std::move(element)}) : BasicJsonType::array({std::move(element)});
+}
+#endif
+
 template<typename BasicJsonType, typename Tuple>
 inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& /*unused*/, index_sequence<> /*unused*/)
 {
