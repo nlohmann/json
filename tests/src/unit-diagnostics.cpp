@@ -365,7 +365,7 @@ TEST_CASE("Regression tests for extended diagnostics")
 
 TEST_CASE("Better diagnostics past the descent bound of update() and merge_patch()")
 {
-    // Both merge objects nested more than basic_json::merge_depth_limit()
+    // Both merge objects nested more than detail::recursion_depth_limit()
     // (128) levels deep without recursing; the values they add or replace
     // there must still know their parents.
     const std::size_t depth = 200;

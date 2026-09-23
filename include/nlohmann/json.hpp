@@ -3916,30 +3916,35 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         update_members(first, last, merge_objects, 0);
     }
 
-  JSON_PRIVATE_UNLESS_TESTED:
-    /// the number of nested objects @ref update and @ref merge_patch descend
-    /// into before handing over to their iterative versions
-    static constexpr std::size_t merge_depth_limit() noexcept
-    {
-        return 128;
-    }
-
   private:
+    /// @brief an object @ref update_members_iteratively or @ref
+    /// merge_patch_iteratively is merging into, and the members still to merge
+    struct merge_frame
+    {
+        merge_frame(basic_json* target_, const_iterator position_, const_iterator last_) noexcept
+            : target(target_), position(std::move(position_)), last(std::move(last_))
+        {}
+
+        basic_json* target;
+        const_iterator position;
+        const_iterator last;
+    };
+
     /*!
     @brief the members loop of @ref update, for this object and range
 
     Merging a nested object calls this function again, once per nesting
     level, so a value nested deeply enough used to exhaust the call stack and
     terminate the process. The descent is bounded here: once @ref
-    merge_depth_limit levels have been entered, @ref update_members_iteratively
-    merges what is left without the call stack.
+    detail::recursion_depth_limit levels have been entered, @ref
+    update_members_iteratively merges what is left without the call stack.
 
     @param[in] depth  nesting level of this object, counted from the object
                       @ref update was called on
     */
     void update_members(const const_iterator& first, const const_iterator& last, const bool merge_objects, const std::size_t depth)
     {
-        if (JSON_HEDLEY_UNLIKELY(depth >= merge_depth_limit()))
+        if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
         {
             update_members_iteratively(first, last);
             return;
@@ -3976,17 +3981,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     objects whose merge was interrupted by a nested one on an explicit stack
     instead of descending into them. A nested object is still merged
     completely before the next member, in the same order as the recursive
-    version. Only reached for values nested deeper than @ref merge_depth_limit.
+    version. Only reached for values nested deeper than @ref
+    detail::recursion_depth_limit.
     */
     void update_members_iteratively(const_iterator first, const_iterator last)
     {
-        struct update_frame
-        {
-            basic_json* target;
-            const_iterator position;
-            const_iterator last;
-        };
-        std::vector<update_frame> stack;
+        std::vector<merge_frame> stack;
 
         basic_json* target = this;
         while (true)
@@ -4016,7 +4016,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 {
                     const basic_json& source = first.value();
                     ++first;
-                    stack.push_back({target, first, last});
+                    stack.emplace_back(target, first, last);
                     target = &it2->second;
                     first = source.cbegin();
                     last = source.cend();
@@ -5937,14 +5937,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     Applying a nested object calls this function again, once per nesting
     level, so a patch nested deeply enough used to exhaust the call stack and
     terminate the process. The descent is bounded here: once @ref
-    merge_depth_limit levels have been entered, @ref merge_patch_iteratively
-    applies what is left without the call stack.
+    detail::recursion_depth_limit levels have been entered, @ref
+    merge_patch_iteratively applies what is left without the call stack.
     */
     void apply_merge_patch(const basic_json& apply_patch, const std::size_t depth)
     {
         if (apply_patch.is_object())
         {
-            if (JSON_HEDLEY_UNLIKELY(depth >= merge_depth_limit()))
+            if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
             {
                 merge_patch_iteratively(apply_patch);
                 return;
@@ -5979,16 +5979,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     explicit stack instead of descending into them. A nested object is still
     patched completely before the next member, in the same order as the
     recursive version. Only reached for patches nested deeper than @ref
-    merge_depth_limit.
+    detail::recursion_depth_limit.
     */
     void merge_patch_iteratively(const basic_json& apply_patch)
     {
-        struct merge_frame
-        {
-            basic_json* target;
-            const_iterator position;
-            const_iterator last;
-        };
         std::vector<merge_frame> stack;
 
         // patch `target` with `patch`, or start patching it member by member
@@ -6000,7 +5994,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 {
                     target = basic_json::object();
                 }
-                stack.push_back({&target, patch.cbegin(), patch.cend()});
+                stack.emplace_back(&target, patch.cbegin(), patch.cend());
             }
             else
             {
@@ -6011,7 +6005,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         apply(*this, apply_patch);
         while (!stack.empty())
         {
-            merge_frame& frame = stack.back();
+            // a copy, as applying a member below can reallocate the stack;
+            // the frame itself is only changed through stack.back()
+            const merge_frame frame = stack.back();
             if (frame.position == frame.last)
             {
                 stack.pop_back();
@@ -6019,14 +6015,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             }
 
             const const_iterator member = frame.position;
-            ++frame.position;
+            ++stack.back().position;
             if (member.value().is_null())
             {
                 frame.target->erase(member.key());
             }
             else
             {
-                // may push, which invalidates `frame`
                 apply(frame.target->operator[](member.key()), member.value());
             }
         }

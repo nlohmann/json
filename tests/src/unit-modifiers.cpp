@@ -1041,7 +1041,7 @@ TEST_CASE("update() on deeply nested values")
     SECTION("merging past the descent bound gives the same result")
     {
         // every depth on either side of where the iterative version takes
-        // over (basic_json::merge_depth_limit(), 128)
+        // over (detail::recursion_depth_limit(), 128)
         for (std::size_t depth = 0; depth <= 300; ++depth)
         {
             CAPTURE(depth);
