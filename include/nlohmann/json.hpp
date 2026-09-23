@@ -3913,17 +3913,49 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", first.m_object->type_name()), first.m_object));
         }
 
+        update_members(first, last, merge_objects, 0);
+    }
+
+  JSON_PRIVATE_UNLESS_TESTED:
+    /// the number of nested objects @ref update and @ref merge_patch descend
+    /// into before handing over to their iterative versions
+    static constexpr std::size_t merge_depth_limit() noexcept
+    {
+        return 128;
+    }
+
+  private:
+    /*!
+    @brief the members loop of @ref update, for this object and range
+
+    Merging a nested object calls this function again, once per nesting
+    level, so a value nested deeply enough used to exhaust the call stack and
+    terminate the process. The descent is bounded here: once @ref
+    merge_depth_limit levels have been entered, @ref update_members_iteratively
+    merges what is left without the call stack.
+
+    @param[in] depth  nesting level of this object, counted from the object
+                      @ref update was called on
+    */
+    void update_members(const const_iterator& first, const const_iterator& last, const bool merge_objects, const std::size_t depth)
+    {
+        if (JSON_HEDLEY_UNLIKELY(depth >= merge_depth_limit()))
+        {
+            update_members_iteratively(first, last);
+            return;
+        }
+
         for (auto it = first; it != last; ++it)
         {
             if (merge_objects && it.value().is_object())
             {
-                auto it2 = m_data.m_value.object->find(it.key());
+                const auto it2 = m_data.m_value.object->find(it.key());
                 // Only recurse when the existing value is itself an object.
                 // Otherwise overwrite, matching the documented "all other values
                 // are overwritten as usual" behavior (see #5402).
                 if (it2 != m_data.m_value.object->end() && it2->second.is_object())
                 {
-                    it2->second.update(it.value(), true);
+                    it2->second.update_members(it.value().cbegin(), it.value().cend(), true, depth + 1);
 #if JSON_DIAGNOSTICS
                     it2->second.set_parents();
 #endif
@@ -3937,6 +3969,69 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
+    /*!
+    @brief merge @a first to @a last into this object without the call stack
+
+    Does the same as @ref update_members with `merge_objects` set, keeping the
+    objects whose merge was interrupted by a nested one on an explicit stack
+    instead of descending into them. A nested object is still merged
+    completely before the next member, in the same order as the recursive
+    version. Only reached for values nested deeper than @ref merge_depth_limit.
+    */
+    void update_members_iteratively(const_iterator first, const_iterator last)
+    {
+        struct update_frame
+        {
+            basic_json* target;
+            const_iterator position;
+            const_iterator last;
+        };
+        std::vector<update_frame> stack;
+
+        basic_json* target = this;
+        while (true)
+        {
+            if (first == last)
+            {
+                if (stack.empty())
+                {
+                    break;
+                }
+
+                // a nested object is merged: continue with its parent
+#if JSON_DIAGNOSTICS
+                target->set_parents();
+#endif
+                target = stack.back().target;
+                first = stack.back().position;
+                last = stack.back().last;
+                stack.pop_back();
+                continue;
+            }
+
+            if (first.value().is_object())
+            {
+                const auto it2 = target->m_data.m_value.object->find(first.key());
+                if (it2 != target->m_data.m_value.object->end() && it2->second.is_object())
+                {
+                    const basic_json& source = first.value();
+                    ++first;
+                    stack.push_back({target, first, last});
+                    target = &it2->second;
+                    first = source.cbegin();
+                    last = source.cend();
+                    continue;
+                }
+            }
+            target->m_data.m_value.object->operator[](first.key()) = first.value();
+#if JSON_DIAGNOSTICS
+            target->m_data.m_value.object->operator[](first.key()).m_parent = target;
+#endif
+            ++first;
+        }
+    }
+
+  public:
     /// @brief exchanges the values
     /// @sa https://json.nlohmann.me/api/basic_json/swap/
     void swap(reference other) noexcept (
@@ -5832,8 +5927,29 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/merge_patch/
     void merge_patch(const basic_json& apply_patch)
     {
+        apply_merge_patch(apply_patch, 0);
+    }
+
+  private:
+    /*!
+    @brief @ref merge_patch, for a patch at nesting level @a depth
+
+    Applying a nested object calls this function again, once per nesting
+    level, so a patch nested deeply enough used to exhaust the call stack and
+    terminate the process. The descent is bounded here: once @ref
+    merge_depth_limit levels have been entered, @ref merge_patch_iteratively
+    applies what is left without the call stack.
+    */
+    void apply_merge_patch(const basic_json& apply_patch, const std::size_t depth)
+    {
         if (apply_patch.is_object())
         {
+            if (JSON_HEDLEY_UNLIKELY(depth >= merge_depth_limit()))
+            {
+                merge_patch_iteratively(apply_patch);
+                return;
+            }
+
             if (!is_object())
             {
                 *this = object();
@@ -5846,7 +5962,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 }
                 else
                 {
-                    operator[](it.key()).merge_patch(it.value());
+                    operator[](it.key()).apply_merge_patch(it.value(), depth + 1);
                 }
             }
         }
@@ -5856,6 +5972,67 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
+    /*!
+    @brief apply @a apply_patch to this value without the call stack
+
+    Does the same as @ref merge_patch, keeping the objects being patched on an
+    explicit stack instead of descending into them. A nested object is still
+    patched completely before the next member, in the same order as the
+    recursive version. Only reached for patches nested deeper than @ref
+    merge_depth_limit.
+    */
+    void merge_patch_iteratively(const basic_json& apply_patch)
+    {
+        struct merge_frame
+        {
+            basic_json* target;
+            const_iterator position;
+            const_iterator last;
+        };
+        std::vector<merge_frame> stack;
+
+        // patch `target` with `patch`, or start patching it member by member
+        const auto apply = [&stack](basic_json & target, const basic_json & patch)
+        {
+            if (patch.is_object())
+            {
+                if (!target.is_object())
+                {
+                    target = basic_json::object();
+                }
+                stack.push_back({&target, patch.cbegin(), patch.cend()});
+            }
+            else
+            {
+                target = patch;
+            }
+        };
+
+        apply(*this, apply_patch);
+        while (!stack.empty())
+        {
+            merge_frame& frame = stack.back();
+            if (frame.position == frame.last)
+            {
+                stack.pop_back();
+                continue;
+            }
+
+            const const_iterator member = frame.position;
+            ++frame.position;
+            if (member.value().is_null())
+            {
+                frame.target->erase(member.key());
+            }
+            else
+            {
+                // may push, which invalidates `frame`
+                apply(frame.target->operator[](member.key()), member.value());
+            }
+        }
+    }
+
+  public:
     /// @}
 };
 
