@@ -15,6 +15,7 @@ The complete default namespace name is derived as follows:
     - [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) defined non-zero appends `_diag`.
     - [`JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](../api/macros/json_use_legacy_discarded_value_comparison.md)
       defined non-zero appends `_ldvcmp`.
+    - [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md) defined non-zero appends `_dp`.
 - The inline namespace ends with the suffix `_v` followed by the 3 components of the version number separated by
   underscores. To omit the version component, see [Disabling the version component](#disabling-the-version-component)
   below.
