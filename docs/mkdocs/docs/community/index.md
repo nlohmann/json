@@ -6,3 +6,4 @@
 - [Governance](governance.md) - the governance model of this project
 - [Quality Assurance](quality_assurance.md) - how the quality of this project is assured
 - [Security Policy](security_policy.md) - the security policy of the project
+- [Assurance Case](assurance_case.md) - why the library meets its security requirements
