@@ -1331,16 +1331,15 @@ class binary_writer
     };
 
     /*!
-    @brief the name BSON gives the array element with index @a index
+    @brief creates the name BSON gives the array element with index @a index
     @param[out] name  receives the decimal index
     */
-    static const string_t& bson_index_name(const std::size_t index, string_t& name)
+    static void create_bson_index_name(const std::size_t index, string_t& name)
     {
         // the index is built as a std::string; convert explicitly, as the
         // two are only implicitly convertible for some string types
         const auto key = std::to_string(index);
         name = string_t(key.data(), key.size());
-        return name;
     }
 
     /*!
@@ -1400,7 +1399,8 @@ class binary_writer
                 while (nested == nullptr && current.index < array.size())
                 {
                     const BasicJsonType& el = array[current.index];
-                    current.entries_size += calc_bson_entry_header_size(bson_index_name(current.index, index_name), el);
+                    create_bson_index_name(current.index, index_name);
+                    current.entries_size += calc_bson_entry_header_size(index_name, el);
                     ++current.index;
                     if (el.is_structured())
                     {
@@ -1489,16 +1489,16 @@ class binary_writer
                 while (nested == nullptr && current.index < array.size())
                 {
                     const BasicJsonType& el = array[current.index];
-                    const string_t& name = bson_index_name(current.index, index_name);
+                    create_bson_index_name(current.index, index_name);
                     ++current.index;
                     if (el.is_structured())
                     {
-                        nested_name = &name;
+                        nested_name = &index_name;
                         nested = &el;
                     }
                     else
                     {
-                        write_bson_value(name, el);
+                        write_bson_value(index_name, el);
                     }
                 }
             }
