@@ -60,6 +60,10 @@ int main() {
 `serve_header.py` will try to read a configuration file `serve_header.yml` in the top level or project root directory, and will fall back on built-in defaults if the file cannot be read.
 An annotated example configuration can be found in `tools/serve_header/serve_header.yml.example`.
 
+By default, the server listens on `localhost` only, and only web pages from Compiler Explorer (`https://godbolt.org` and `https://compiler-explorer.com`) may read the header.
+Set `bind` to serve other machines as well; anyone who can reach the server can then trigger `make` runs in your working trees.
+Set `cors_origins` to allow other web pages.
+
 ## Serving `json.hpp` from multiple project directory instances or working trees
 
 `serve_header.py` was designed with the goal of supporting multiple project roots or working trees at the same time.
