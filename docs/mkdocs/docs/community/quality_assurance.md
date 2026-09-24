@@ -164,6 +164,9 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
 - [x] The parser is tested against extensive correctness suites for JSON compliance.
 - [x] In addition, the library is continuously fuzz-tested at [OSS-Fuzz](https://google.github.io/oss-fuzz/) where the
   library is checked against billions of inputs.
+- [x] Every crash reported by OSS-Fuzz is fixed together with a unit test that reproduces it, and the fix references
+  the OSS-Fuzz issue. The round-trip checks of the fuzzer drivers are also part of the unit tests. See the
+  [fuzz testing documentation](https://github.com/nlohmann/json/blob/develop/tests/fuzzing.md#handling-oss-fuzz-reports).
 
 ## Static analysis
 
