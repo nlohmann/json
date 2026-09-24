@@ -23,10 +23,12 @@ The input files are those of [nativejson-benchmark](https://github.com/miloyip/n
 
 ## Requirements
 
-- CMake 3.11 or later, a C++11 compiler, and Ninja for the `make` target.
-- Network access on the first configure: CMake fetches Google Benchmark and downloads the
-  [test data](https://github.com/nlohmann/json_test_data) into the build directory. To reuse a download, pass
-  `-DJSON_TestDataDirectory=<build directory>/test_files`.
+- CMake 3.14 or later, a C++11 compiler, and Ninja for the `make` target.
+- Network access on the first configure: CMake downloads Google Benchmark and the
+  [test data](https://github.com/nlohmann/json_test_data) into the build directory. To reuse a download of the test
+  data, pass `-DJSON_TestDataDirectory=<build directory>/test_files`.
+- Google Benchmark is pinned to a release (1.9.5), so that results from different days stay comparable. To update it,
+  change `JSON_GOOGLE_BENCHMARK_VERSION` and the archive's `URL_HASH` in `CMakeLists.txt` together.
 - The benchmarks include `single_include/nlohmann/json.hpp`, so run `make amalgamate` after changing anything in
   `include/`.
 
@@ -99,8 +101,8 @@ build-venv/bin/pip install numpy scipy
 build-venv/bin/python build-current/_deps/benchmark-src/tools/compare.py -a benchmarks build-baseline/results.json build-current/results.json
 ```
 
-The tool's own `tools/requirements.txt` pins the newest NumPy and SciPy, which may need a newer Python than yours;
-unpinned versions work as well. In its output:
+The tool's own `tools/requirements.txt` pins NumPy and SciPy versions that need Python 3.11 or later; with an older
+Python, unpinned versions work as well. In its output:
 
 - the `Time` and `CPU` columns are relative changes: `-0.35` means 35% faster, `+0.10` means 10% slower;
 - `_pvalue` lines report a Mann-Whitney U test of whether the two versions differ. It needs at least 9
