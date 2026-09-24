@@ -44,7 +44,7 @@ enum class cbor_tag_handler_t
 {
     error,   ///< throw a parse_error exception in case of a tag
     ignore,  ///< ignore tags
-    store    ///< store tags as binary type
+    store    ///< store tagged byte strings (for bytes 0xd8..0xdb) as binary values with the tag as subtype; other tagged values are read as if the tag were ignored
 };
 
 /*!
@@ -592,14 +592,18 @@ class binary_reader
                          input (true) or whether the last read character should
                          be considered instead (false)
     @param[in] tag_handler how CBOR tags should be treated
+    @param[out] tag_pending whether a tag was parsed and its value follows
+    @param[out] item_read whether the tagged value's initial byte is already in current
 
     @return whether a valid CBOR value was passed to the SAX parser
     */
     bool parse_cbor_value(const bool get_char,
                           const cbor_tag_handler_t tag_handler,
-                          bool& tag_pending)
+                          bool& tag_pending,
+                          bool& item_read)
     {
         tag_pending = false;
+        item_read = false;
 
         switch (get_char ? get() : current)
         {
@@ -1021,7 +1025,17 @@ class binary_reader
                             }
                         }
                         get();
-                        return get_cbor_binary(b) && sax->binary(b);
+                        // a byte string (the heads accepted by get_cbor_binary) keeps the tag as subtype
+                        if ((current >= 0x40 && current <= 0x5B) || current == 0x5F)
+                        {
+                            return get_cbor_binary(b) && sax->binary(b);
+                        }
+
+                        // not a byte string: the tagged value, whose first byte
+                        // was just read, is read by the caller like for ignore
+                        tag_pending = true;
+                        item_read = true;
+                        return true;
                     }
 
                     default:                 // LCOV_EXCL_LINE
@@ -1503,13 +1517,14 @@ class binary_reader
 
             // a tag is not a value of its own: read on until the tagged value
             bool tag_pending = false;
+            bool item_read = false;
             do
             {
-                if (JSON_HEDLEY_UNLIKELY(!parse_cbor_value(fetch, tag_handler, tag_pending)))
+                if (JSON_HEDLEY_UNLIKELY(!parse_cbor_value(fetch, tag_handler, tag_pending, item_read)))
                 {
                     return false;
                 }
-                fetch = true;
+                fetch = !item_read;
             }
             while (tag_pending);
 

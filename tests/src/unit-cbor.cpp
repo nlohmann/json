@@ -2123,6 +2123,20 @@ TEST_CASE("CBOR nesting does not consume the call stack")
         CHECK(json::from_cbor(input, true, false, json::cbor_tag_handler_t::ignore).is_discarded());
     }
 
+    SECTION("stored tags")
+    {
+        // a tag over something other than a byte string is read like for
+        // ignore, so a chain of them must not recurse either (#5316)
+        std::vector<uint8_t> input;
+        for (std::size_t i = 0; i < 500000; ++i)
+        {
+            input.push_back(0xD8);
+            input.push_back(0x18);
+        }
+        input.push_back(0x01);
+        CHECK(json::from_cbor(input, true, true, json::cbor_tag_handler_t::store) == 1);
+    }
+
     SECTION("a well-formed deep value is read through the SAX interface")
     {
         std::vector<uint8_t> input(200000, 0x9F);
@@ -3032,6 +3046,77 @@ TEST_CASE("Tagged values")
             CHECK_THROWS_AS(_ = json::from_cbor(v_tagged), json::parse_error);
             CHECK_THROWS_AS(_ = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::error), json::parse_error);
             CHECK_THROWS_AS(_ = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::ignore), json::parse_error);
+        }
+
+        SECTION("issue #5316 - cbor_tag_handler_t::store on non-binary tagged items")
+        {
+            // 55799({"a": 1}) -- CBOR self-describe magic followed by a map
+            const std::vector<std::uint8_t> v_map{0xD9, 0xD9, 0xF7, 0xA1, 0x61, 0x61, 0x01};
+            CHECK(json::from_cbor(v_map, true, true, json::cbor_tag_handler_t::ignore) == json({{"a", 1}}));
+            CHECK(json::from_cbor(v_map, true, true, json::cbor_tag_handler_t::store) == json({{"a", 1}}));
+
+            // Tag 24 over unsigned integer 5
+            const std::vector<std::uint8_t> v_int{0xD8, 0x18, 0x05};
+            CHECK(json::from_cbor(v_int, true, true, json::cbor_tag_handler_t::ignore) == 5);
+            CHECK(json::from_cbor(v_int, true, true, json::cbor_tag_handler_t::store) == 5);
+
+            // Tag 24 over text string "foo"
+            const std::vector<std::uint8_t> v_str{0xD8, 0x18, 0x63, 'f', 'o', 'o'};
+            CHECK(json::from_cbor(v_str, true, true, json::cbor_tag_handler_t::ignore) == "foo");
+            CHECK(json::from_cbor(v_str, true, true, json::cbor_tag_handler_t::store) == "foo");
+
+            // Tag 24 over array [1, 2]
+            const std::vector<std::uint8_t> v_arr{0xD8, 0x18, 0x82, 0x01, 0x02};
+            CHECK(json::from_cbor(v_arr, true, true, json::cbor_tag_handler_t::ignore) == json({1, 2}));
+            CHECK(json::from_cbor(v_arr, true, true, json::cbor_tag_handler_t::store) == json({1, 2}));
+
+            // Tag 24 over boolean true
+            const std::vector<std::uint8_t> v_bool{0xD8, 0x18, 0xF5};
+            CHECK(json::from_cbor(v_bool, true, true, json::cbor_tag_handler_t::ignore) == true);
+            CHECK(json::from_cbor(v_bool, true, true, json::cbor_tag_handler_t::store) == true);
+
+            // Tag 24 over null
+            const std::vector<std::uint8_t> v_null{0xD8, 0x18, 0xF6};
+            CHECK(json::from_cbor(v_null, true, true, json::cbor_tag_handler_t::ignore) == nullptr);
+            CHECK(json::from_cbor(v_null, true, true, json::cbor_tag_handler_t::store) == nullptr);
+
+            // Nested tags: tag 55799 over tag 24 over integer 42
+            const std::vector<std::uint8_t> v_nested{0xD9, 0xD9, 0xF7, 0xD8, 0x18, 0x18, 0x2A};
+            CHECK(json::from_cbor(v_nested, true, true, json::cbor_tag_handler_t::ignore) == 42);
+            CHECK(json::from_cbor(v_nested, true, true, json::cbor_tag_handler_t::store) == 42);
+
+            // Tag 24 over byte string continues to store subtype as before
+            const std::vector<std::uint8_t> v_bin{0xD8, 0x18, 0x42, 0xCA, 0xFE};
+            auto j_bin_store = json::from_cbor(v_bin, true, true, json::cbor_tag_handler_t::store);
+            CHECK(j_bin_store.is_binary());
+            CHECK(j_bin_store.get_binary().has_subtype());
+            CHECK(j_bin_store.get_binary().subtype() == 24);
+            CHECK(j_bin_store.get_binary() == json::binary({0xCA, 0xFE}, 24).get_binary());
+
+            // Tagged values inside a container under store: [24(1), 25(h'0001')]
+            const std::vector<std::uint8_t> v_container{0x82, 0xD8, 0x18, 0x01, 0xD8, 0x19, 0x42, 0x00, 0x01};
+            auto j_container_store = json::from_cbor(v_container, true, true, json::cbor_tag_handler_t::store);
+            CHECK(j_container_store.is_array());
+            CHECK(j_container_store.size() == 2);
+            CHECK(j_container_store[0] == 1);
+            CHECK(j_container_store[1].is_binary());
+            CHECK(j_container_store[1].get_binary().has_subtype());
+            CHECK(j_container_store[1].get_binary().subtype() == 25);
+            CHECK(j_container_store[1].get_binary() == json::binary({0x00, 0x01}, 25).get_binary());
+
+            // Tagged values as object values under store: {"a": 55799(1), "b": 24(h'01')}
+            const std::vector<std::uint8_t> v_object{0xA2, 0x61, 'a', 0xD9, 0xD9, 0xF7, 0x01, 0x61, 'b', 0xD8, 0x18, 0x41, 0x01};
+            CHECK(json::from_cbor(v_object, true, true, json::cbor_tag_handler_t::store) == json({{"a", 1}, {"b", json::binary({0x01}, 24)}}));
+
+            // two tags in a row before a byte string: the inner tag is stored
+            // (this uses item_read and then the byte-string path)
+            const std::vector<std::uint8_t> v_nested_byte_string{0xD8, 0x18, 0xD8, 0x19, 0x42, 0x00, 0x01};
+            CHECK(json::from_cbor(v_nested_byte_string, true, true, json::cbor_tag_handler_t::store) == json::binary({0x00, 0x01}, 25));
+
+            // errors after a stored tag are now the same as with ignore
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<std::uint8_t> {0xD8, 0x18}, true, true, json::cbor_tag_handler_t::store), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<std::uint8_t> {0xD8, 0x18, 0x1C}, true, true, json::cbor_tag_handler_t::store), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing CBOR value: invalid byte: 0x1C", json::parse_error&);
         }
     }
 
