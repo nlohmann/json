@@ -35,7 +35,8 @@ TEST_CASE("JSON_BRACE_INIT_COPY_SEMANTICS")
     SECTION("the macro is part of the ABI tag")
     {
         const std::string ns = STRINGIZE(NLOHMANN_JSON_NAMESPACE);
-        CHECK(ns.find("json_abi_bics") != std::string::npos);
+        // other tags may come before it, e.g. json_abi_ldvcmp_bics
+        CHECK(ns.find("_bics") != std::string::npos);
     }
 
     SECTION("single-element brace initialization copies the element (#5074)")
@@ -156,7 +157,7 @@ TEST_CASE("JSON_BRACE_INIT_COPY_SEMANTICS")
         SECTION("items()")
         {
             json j_obj = {{"key", 1}};
-            for (auto& el : j_obj.items())
+            for (const auto& el : j_obj.items())
             {
                 json const j = el;
                 CHECK(j.dump() == "{\"key\":1}");

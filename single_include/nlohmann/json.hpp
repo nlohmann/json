@@ -6778,7 +6778,14 @@ inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<
     // keeps a string type constructible from 0 from selecting operator[](key)
     const bool is_member = element.is_array() && element.size() == 2
                            && element[static_cast<typename BasicJsonType::size_type>(0)].is_string();
-    j = is_member ? BasicJsonType::object({std::move(element)}) : BasicJsonType::array({std::move(element)});
+    if (is_member)
+    {
+        j = BasicJsonType::object({std::move(element)});
+    }
+    else
+    {
+        j = BasicJsonType::array({std::move(element)});
+    }
 }
 #endif
 
