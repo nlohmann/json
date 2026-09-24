@@ -58,6 +58,7 @@ cc_library(
         "include/nlohmann/detail/output/binary_writer.hpp",
         "include/nlohmann/detail/output/output_adapters.hpp",
         "include/nlohmann/detail/output/serializer.hpp",
+        "include/nlohmann/detail/recursion_depth_limit.hpp",
         "include/nlohmann/detail/string_concat.hpp",
         "include/nlohmann/detail/string_escape.hpp",
         "include/nlohmann/detail/string_utils.hpp",
