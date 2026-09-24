@@ -376,7 +376,7 @@ TEST_CASE("Regression tests for extended diagnostics")
             CHECK_THROWS_WITH_AS(j["z"]["x"].at(0), "[json.exception.type_error.304] (/z/x) cannot use at() with number", ordered_json::type_error);
 
             // must not trigger assert_invariant() in a debug/assert-enabled build
-            ordered_json const copy = j;
+            ordered_json const copy = j; // NOLINT(performance-unnecessary-copy-initialization)
             CHECK(copy == j);
         };
 
