@@ -29,7 +29,7 @@ otherwise.
     | `#!cpp j.at("hobbies").at(0)` | `#!json "hiking"`                                                            |
     | `#!cpp j.at("hobbies").at(1)` | `#!json "reading"`                                                           |
 
-The return value is a reference, so it can be modified by the original value.
+The return value is a reference, so it can be used to modify the original value.
 
 ??? example "Write access"
 
@@ -62,7 +62,7 @@ non-existing, an exception is thrown.
     [json.exception.out_of_range.401] array index 3 is out of range
     ```
 
-    When you [extended diagnostic messages](../../home/exceptions.md#extended-diagnostic-messages) are enabled by
+    When [extended diagnostic messages](../../home/exceptions.md#extended-diagnostic-messages) are enabled by
     defining [`JSON_DIAGNOSTICS`](../../api/macros/json_diagnostics.md), the exception further gives information where
     the key or index is missing or out of range.
     

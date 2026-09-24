@@ -135,6 +135,31 @@ Enable CI build targets. The exact targets are used during the several CI steps 
 
 Enable [extended diagnostic messages](../home/exceptions.md#extended-diagnostic-messages) by defining macro [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md). This option is `OFF` by default.
 
+!!! warning "Does not apply to a pre-installed package"
+
+    This option only takes effect when building nlohmann/json from source as part of your own
+    CMake project (e.g. via [`FetchContent`](#fetchcontent) or [`add_subdirectory`](#external)).
+    It has **no effect** on a package that was already built and installed elsewhere (Homebrew,
+    vcpkg, a system package, etc.) — the resulting compile definition is baked into the exported
+    `nlohmann_jsonTargets.cmake` at install time, and `set(JSON_Diagnostics ON)` before
+    `find_package()` does not change it (verified against the Homebrew-installed package: the
+    exported target still carries a fixed `$<$<BOOL:OFF>:JSON_DIAGNOSTICS=1>`, regardless of any
+    variable set in the consuming project).
+
+    To enable extended diagnostics for a pre-installed package, override the imported target's
+    property directly after `find_package()`:
+
+    ```cmake
+    find_package(nlohmann_json REQUIRED)
+    set_target_properties(nlohmann_json::nlohmann_json PROPERTIES
+        INTERFACE_COMPILE_DEFINITIONS "JSON_DIAGNOSTICS=1")
+    ```
+
+    This only works cleanly when your project is the sole consumer of that imported target. If
+    nlohmann_json is pulled in from more than one place in your dependency graph with different
+    `JSON_DIAGNOSTICS` values, you may see a `"JSON_DIAGNOSTICS" redefined` compiler error, since
+    conflicting `-D` flags can end up on the same compile command line.
+
 ### `JSON_Diagnostic_Positions`
 
 Enable position diagnostics by defining macro [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md). This option is `OFF` by default.
@@ -167,12 +192,34 @@ Enable the (incorrect) legacy comparison behavior of discarded JSON values by de
 
 ### `JSON_MultipleHeaders`
 
-Use the non-amalgamated version of the library. This option is `OFF` by default.
+Use the non-amalgamated version of the library. This option is `ON` by default.
 
 ### `JSON_SystemInclude`
 
 Treat the library headers like system headers (i.e., adding `SYSTEM` to the [`target_include_directories`](https://cmake.org/cmake/help/latest/command/target_include_directories.html) call) to check for this library by tools like Clang-Tidy. This option is `OFF` by default.
 
+### `JSON_StrictNulHandling`
+
+Reject a `'\0'` (NUL) byte in the input instead of treating it as end of input, by defining the macro
+[`JSON_STRICT_NUL_HANDLING`](../api/macros/json_strict_nul_handling.md). This option is `OFF` by default.
+
 ### `JSON_Valgrind`
 
 Execute the test suite with [Valgrind](https://valgrind.org). This option is `OFF` by default. Depends on `JSON_BuildTests`.
+
+### `NLOHMANN_JSON_BUILD_MODULES`
+
+Build the experimental [C++ module](../features/modules.md) `nlohmann.json` (requires CMake 3.28 or later and C++20).
+This option is `OFF` by default.
+
+A consuming project must link the dedicated `nlohmann_json_modules` CMake target (not just
+`nlohmann_json::nlohmann_json`) for `import nlohmann.json;` to resolve:
+
+```cmake
+set(NLOHMANN_JSON_BUILD_MODULES ON)
+add_subdirectory(path/to/json)
+
+add_executable(myproject main.cpp)
+target_link_libraries(myproject PRIVATE nlohmann_json_modules)
+target_compile_definitions(myproject PRIVATE NLOHMANN_JSON_BUILD_MODULES)
+```

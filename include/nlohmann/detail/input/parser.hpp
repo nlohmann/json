@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #pragma once
@@ -72,9 +72,10 @@ class parser
                     parser_callback_t<BasicJsonType> cb = nullptr,
                     const bool allow_exceptions_ = true,
                     const bool ignore_comments = false,
-                    const bool ignore_trailing_commas_ = false)
+                    const bool ignore_trailing_commas_ = false,
+                    const bool discard_number_values_ = false)
         : callback(std::move(cb))
-        , m_lexer(std::move(adapter), ignore_comments)
+        , m_lexer(std::move(adapter), ignore_comments, discard_number_values_)
         , allow_exceptions(allow_exceptions_)
         , ignore_trailing_commas(ignore_trailing_commas_)
     {
@@ -88,9 +89,9 @@ class parser
     @param[in] strict      whether to expect the last token to be EOF
     @param[in,out] result  parsed JSON value
 
-    @throw parse_error.101 in case of an unexpected token
-    @throw parse_error.102 if to_unicode fails or surrogate error
-    @throw parse_error.103 if to_unicode fails
+    @throw parse_error.101 in case of an unexpected token (including invalid
+           unicode escapes and surrogate errors, which are reported with a
+           detailed message)
     */
     void parse(const bool strict, BasicJsonType& result)
     {

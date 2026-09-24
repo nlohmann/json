@@ -20,7 +20,7 @@ class basic_json {
 ```
 
 1. Compares two JSON values for equality according to the following rules:
-    - Two JSON values are equal if (1) neither value is discarded, or (2) they are of the same type and their stored
+    - Two JSON values are equal if (1) neither value is discarded, and (2) they are of the same type and their stored
       values are the same according to their respective `operator==`.
     - Integer and floating-point numbers are automatically converted before comparison.
 
@@ -79,13 +79,13 @@ Linear.
     }
     ```
     
-    Or you can self-defined operator equal function like this:
+    Or you can define your own equality function like this:
     
     ```cpp
     bool my_equal(const_reference lhs, const_reference rhs)
     {
-        const auto lhs_type lhs.type();
-        const auto rhs_type rhs.type();
+        const auto lhs_type = lhs.type();
+        const auto rhs_type = rhs.type();
         if (lhs_type == rhs_type)
         {
             switch(lhs_type)
@@ -161,6 +161,11 @@ Linear.
     ```json
     --8<-- "examples/operator__equal__nullptr_t.output"
     ```
+
+## See also
+
+- [operator!=](operator_ne.md) compare for inequality
+- [operator<=>](operator_spaceship.md) comparison: 3-way (C++20)
 
 ## Version history
 

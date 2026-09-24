@@ -3,10 +3,18 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
+
+// capture whether JSON_STRICT_NUL_HANDLING was enabled on the command line
+// (e.g. -DJSON_STRICT_NUL_HANDLING=1) *before* including json.hpp, since the
+// library #undefs JSON_STRICT_NUL_HANDLING itself once the header has been
+// fully processed (see include/nlohmann/detail/macro_unscope.hpp)
+#if defined(JSON_STRICT_NUL_HANDLING) && (JSON_STRICT_NUL_HANDLING == 1)
+    #define JSON_TEST_STRICT_NUL_HANDLING_ENABLED 1
+#endif
 
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -18,6 +26,11 @@ using nlohmann::json;
 #include <iterator>
 #include <sstream>
 #include <valarray>
+
+#if defined(_WIN32)
+    #define NOMINMAX
+    #include <windows.h> // for GetACP()
+#endif
 
 namespace
 {
@@ -213,6 +226,25 @@ class proxy_iterator
   private:
     iterator* m_it = nullptr;
 };
+
+// JSON_HAS_CPP_20
+#if defined(__cpp_char8_t)
+bool check_utf8()
+{
+#if defined(_WIN32)
+    // Runtime check of the active ANSI code page
+    // 65001 == UTF-8
+    return GetACP() == 65001;
+#elif defined(__ICC) || defined(__INTEL_COMPILER)
+    // classic Intel ICC does not encode narrow string literals containing
+    // non-ASCII source characters as UTF-8, so comparing a decoded u8 literal
+    // against a narrow string literal containing the same characters fails
+    return false;
+#else
+    return true;
+#endif
+}
+#endif
 } // namespace
 
 TEST_CASE("deserialization")
@@ -299,6 +331,23 @@ TEST_CASE("deserialization")
             CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
         }
 
+        SECTION("operator>> with a NUL byte after the value (issue #5530)")
+        {
+            // operator>> parses non-strictly (it does not require the whole
+            // stream to be consumed), so a NUL byte following a complete
+            // value is simply left unread on the stream and never reaches
+            // the "expected end of input" check that JSON_STRICT_NUL_HANDLING
+            // affects; this holds regardless of the macro (verified below for
+            // the opt-in state as well)
+            std::string data = "123";
+            data.push_back('\0');
+            std::istringstream ss(data);
+            json j;
+            ss >> j;
+            CHECK(j == json(123));
+            CHECK(ss.good());
+        }
+
         SECTION("user-defined string literal")
         {
             CHECK("[\"foo\",1,2,3,false,{\"one\":1}]"_json == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
@@ -381,6 +430,27 @@ TEST_CASE("deserialization")
             CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'", json::parse_error&);
         }
 
+#if defined(JSON_TEST_STRICT_NUL_HANDLING_ENABLED)
+        SECTION("operator>> with a NUL byte where a value is expected (JSON_STRICT_NUL_HANDLING == 1, issue #5530)")
+        {
+            // a trailing NUL byte *after* a complete value is unaffected by the
+            // macro (see the successful-deserialization "operator>> with a NUL
+            // byte after the value" section above): operator>> parses
+            // non-strictly and never reaches the "expected end of input" check
+            // that the macro changes. A NUL byte where a *value* is expected,
+            // however, goes through the same token dispatch as any other input
+            // and is affected: with the macro enabled it now raises
+            // parse_error.101 (like any other unrecognized byte) instead of
+            // being silently treated the same as an empty stream.
+            std::string const data(1, '\0');
+            std::istringstream ss(data);
+            json j;
+            CHECK_THROWS_WITH_AS(ss >> j,
+                                 "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: '<U+0000>'",
+                                 json::parse_error&);
+        }
+#endif
+
         SECTION("user-defined string literal")
         {
             CHECK_THROWS_WITH_AS("[\"foo\",1,2,3,false,{\"one\":1}"_json, "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'", json::parse_error&);
@@ -403,9 +473,37 @@ TEST_CASE("deserialization")
                 CHECK(l.events == std::vector<std::string>({"boolean(true)"}));
             }
 
+            SECTION("from std::vector<signed char>")
+            {
+                std::vector<signed char> const v = {'t', 'r', 'u', 'e'};
+                CHECK(json::parse(v) == json(true));
+                CHECK(json::accept(v));
+
+                SaxEventLogger l;
+                CHECK(json::sax_parse(v, &l));
+                CHECK(l.events.size() == 1);
+                CHECK(l.events == std::vector<std::string>({"boolean(true)"}));
+
+                // bytes outside ASCII are negative here and must not be sign-extended;
+                // 0xC3 and 0xA9 do not fit in signed char (MSVC C4309), so spell them as negative values
+                std::vector<signed char> const umlaut = {'"', static_cast<signed char>(0xC3 - 0x100), static_cast<signed char>(0xA9 - 0x100), '"'};
+                CHECK(json::parse(umlaut) == json("\xC3\xA9"));
+                CHECK(json::accept(umlaut));
+
+                // 0xFF (spelled as -1 to stay in range) must not be reported as end of input
+                std::vector<signed char> const trailing = {'t', 'r', 'u', 'e', static_cast<signed char>(0xFF - 0x100)};
+                json _;
+                CHECK_THROWS_WITH_AS(_ = json::parse(trailing), "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid literal; last read: 'true\xFF'; expected end of input", json::parse_error&);
+                CHECK(!json::accept(trailing));
+            }
+
             SECTION("from std::array")
             {
-                std::array<uint8_t, 5> const v { {'t', 'r', 'u', 'e'} };
+                // sized to exactly the length of "true": a size of 5 would leave
+                // a value-initialized trailing 0x00 element that is only
+                // silently accepted as end-of-input by default and would fail
+                // under JSON_STRICT_NUL_HANDLING
+                std::array<uint8_t, 4> const v { {'t', 'r', 'u', 'e'} };
                 CHECK(json::parse(v) == json(true));
                 CHECK(json::accept(v));
 
@@ -501,7 +599,9 @@ TEST_CASE("deserialization")
 
             SECTION("from std::array")
             {
-                std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
+                // sized to exactly the length of "true", see the analogous
+                // "from std::array" section above for why
+                std::array<uint8_t, 4> v { {'t', 'r', 'u', 'e'} };
                 CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
                 CHECK(json::accept(std::begin(v), std::end(v)));
 
@@ -1132,6 +1232,31 @@ TEST_CASE("deserialization")
             CHECK(object_count == 4);
         }
     }
+
+    // build with C++20
+    // JSON_HAS_CPP_20
+#if defined(__cpp_char8_t)
+    SECTION("Using _json with char8_t literals #4945")
+    {
+        // Regular narrow string literal
+        const auto j1 = R"({"key": "value", "num": 42})"_json;
+        CHECK(j1["key"] == "value");
+        CHECK(j1["num"] == 42);
+
+        // UTF-8 prefixed literal (C++20 and later);
+        // MSVC may not set /utf-8, so we need to check
+        if (check_utf8())
+        {
+            const auto j2 = u8R"({"emoji": "😀", "msg": "hello"})"_json;
+            CHECK(j2["emoji"] == "😀");
+            CHECK(j2["msg"] == "hello");
+        }
+
+        const auto j3 = u8R"({"key": "value", "num": 42})"_json;
+        CHECK(j3["key"] == "value");
+        CHECK(j3["num"] == 42);
+    }
+#endif
 }
 
 // select the types to test - char8_t is only available since C++20 if and only
@@ -1143,7 +1268,7 @@ TEST_CASE("deserialization")
     #define ASCII_TYPES TYPE_LIST(char, wchar_t, char16_t, char32_t)
 #endif
 
-TEST_CASE_TEMPLATE("deserialization of different character types (ASCII)", T, ASCII_TYPES) // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("deserialization of different character types (ASCII)", T, ASCII_TYPES) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
 {
     std::vector<T> const v = {'t', 'r', 'u', 'e'};
     CHECK(json::parse(v) == json(true));
@@ -1155,7 +1280,7 @@ TEST_CASE_TEMPLATE("deserialization of different character types (ASCII)", T, AS
     CHECK(l.events == std::vector<std::string>({"boolean(true)"}));
 }
 
-TEST_CASE_TEMPLATE("deserialization of different character types (UTF-8)", T, char, unsigned char, std::uint8_t) // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("deserialization of different character types (UTF-8)", T, char, unsigned char, std::uint8_t) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
 {
     // a star emoji
     std::vector<T> const v = {'"', static_cast<T>(0xe2u), static_cast<T>(0xadu), static_cast<T>(0x90u), static_cast<T>(0xefu), static_cast<T>(0xb8u), static_cast<T>(0x8fu), '"'};
@@ -1167,7 +1292,7 @@ TEST_CASE_TEMPLATE("deserialization of different character types (UTF-8)", T, ch
     CHECK(l.events.size() == 1);
 }
 
-TEST_CASE_TEMPLATE("deserialization of different character types (UTF-16)", T, char16_t) // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("deserialization of different character types (UTF-16)", T, char16_t) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
 {
     // a star emoji
     std::vector<T> const v = {static_cast<T>('"'), static_cast<T>(0x2b50), static_cast<T>(0xfe0f), static_cast<T>('"')};
@@ -1179,7 +1304,7 @@ TEST_CASE_TEMPLATE("deserialization of different character types (UTF-16)", T, c
     CHECK(l.events.size() == 1);
 }
 
-TEST_CASE_TEMPLATE("deserialization of different character types (UTF-32)", T, char32_t) // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("deserialization of different character types (UTF-32)", T, char32_t) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
 {
     // a star emoji
     std::vector<T> const v = {static_cast<T>('"'), static_cast<T>(0x2b50), static_cast<T>(0xfe0f), static_cast<T>('"')};

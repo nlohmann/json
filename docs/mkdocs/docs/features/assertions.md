@@ -11,7 +11,7 @@ Runtime assertions can be switched off by defining the preprocessor macro `NDEBU
 
 ## Change assertion behavior
 
-The behavior of runtime assertions can be changes by defining macro [`JSON_ASSERT(x)`](../api/macros/json_assert.md)
+The behavior of runtime assertions can be changed by defining macro [`JSON_ASSERT(x)`](../api/macros/json_assert.md)
 before including the `json.hpp` header.
 
 ## Function with runtime assertions

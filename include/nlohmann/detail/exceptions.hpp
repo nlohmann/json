@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #pragma once
@@ -33,8 +33,8 @@
 // code stumbling over this. See https://github.com/nlohmann/json/issues/4087
 // for a discussion.
 #if defined(__clang__)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wweak-vtables"
+    JSON_HEDLEY_DIAGNOSTIC_PUSH
+    JSON_HEDLEY_PRAGMA(clang diagnostic ignored "-Wweak-vtables")
 #endif
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -101,7 +101,10 @@ class exception : public std::exception
                     {
                         if (&element.second == current)
                         {
-                            tokens.emplace_back(element.first.c_str());
+                            // data() is null-terminated, so a key containing
+                            // a null byte is cut short here rather than
+                            // truncating the whole message at what()
+                            tokens.emplace_back(element.first.data());
                             break;
                         }
                     }
@@ -287,5 +290,5 @@ class other_error : public exception
 NLOHMANN_JSON_NAMESPACE_END
 
 #if defined(__clang__)
-    #pragma clang diagnostic pop
+    JSON_HEDLEY_DIAGNOSTIC_POP
 #endif

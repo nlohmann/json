@@ -14,15 +14,23 @@ header. See also the [macro overview page](../../features/macros.md).
 - [**JSON_DIAGNOSTIC_POSITIONS**](json_diagnostic_positions.md) - access positions of elements
 - [**JSON_NOEXCEPTION**](json_noexception.md) - switch off exceptions
 
+## Parsing
+
+- [**JSON_STRICT_NUL_HANDLING**](json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input instead of
+  treating it as end of input
+
 ## Language support
 
 - [**JSON_HAS_CPP_11**<br>**JSON_HAS_CPP_14**<br>**JSON_HAS_CPP_17**<br>**JSON_HAS_CPP_20**](json_has_cpp_11.md) - set supported C++ standard
 - [**JSON_HAS_FILESYSTEM**<br>**JSON_HAS_EXPERIMENTAL_FILESYSTEM**](json_has_filesystem.md) - control `std::filesystem` support
 - [**JSON_HAS_RANGES**](json_has_ranges.md) - control `std::ranges` support
+- [**JSON_HAS_STD_FORMAT**](json_has_std_format.md) - control `std::format`/`std::formatter` support
 - [**JSON_HAS_THREE_WAY_COMPARISON**](json_has_three_way_comparison.md) - control 3-way comparison support
 - [**JSON_NO_IO**](json_no_io.md) - switch off functions relying on certain C++ I/O headers
+- [**JSON_NO_THREAD_LOCAL**](json_no_thread_local.md) - switch off the use of `thread_local` storage
 - [**JSON_SKIP_UNSUPPORTED_COMPILER_CHECK**](json_skip_unsupported_compiler_check.md) - do not warn about unsupported compilers
 - [**JSON_USE_GLOBAL_UDLS**](json_use_global_udls.md) - place user-defined string literals (UDLs) into the global namespace
+- [**JSON_USE_SIMDUTF**](json_use_simdutf.md) - use the simdutf library to accelerate UTF-8 validation
 
 ## Library version
 
@@ -40,6 +48,7 @@ header. See also the [macro overview page](../../features/macros.md).
 
 ## Type conversions
 
+- [**JSON_BRACE_INIT_COPY_SEMANTICS**](json_brace_init_copy_semantics.md) - opt in to copy/move semantics for single-element brace initialization
 - [**JSON_DISABLE_ENUM_SERIALIZATION**](json_disable_enum_serialization.md) - switch off default serialization/deserialization functions for enums
 - [**JSON_USE_IMPLICIT_CONVERSIONS**](json_use_implicit_conversions.md) - control implicit conversions
 
@@ -53,6 +62,7 @@ header. See also the [macro overview page](../../features/macros.md).
 ### Enums
 
 - [**NLOHMANN_JSON_SERIALIZE_ENUM**](nlohmann_json_serialize_enum.md) - serialize/deserialize an enum
+- [**NLOHMANN_JSON_SERIALIZE_ENUM_STRICT**](nlohmann_json_serialize_enum_strict.md) - serialize/deserialize an enum with exceptions
 
 ### Classes and structs
 
@@ -81,3 +91,28 @@ header. See also the [macro overview page](../../features/macros.md).
   a derived class; uses default values
 - [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE**](nlohmann_define_derived_type.md) - serialize a derived
   class
+- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize/deserialize a non-derived class
+  with private members; uses custom names
+- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize/deserialize a
+  non-derived class with private members; uses default values; uses custom names
+- [**NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize a non-derived class
+  with private members; uses custom names
+- [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize/deserialize a non-derived
+  class; uses custom names
+- [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize/deserialize a
+  non-derived class; uses default values; uses custom names
+- [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize a
+  non-derived class; uses custom names
+
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize/deserialize a derived class
+  with private members; uses custom names
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize/deserialize a
+  derived class with private members; uses default values; uses custom names
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize a derived
+  class with private members; uses custom names
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize/deserialize a derived
+  class; uses custom names
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize/deserialize
+  a derived class; uses default values; uses custom names
+- [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES**](nlohmann_define_type_with_names.md) - serialize a derived
+  class; uses custom names

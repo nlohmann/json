@@ -10,11 +10,14 @@ types.
 The complete default namespace name is derived as follows:
 
 - The root namespace is always `nlohmann`.
-- The inline namespace starts with `json_abi` and is followed by serveral optional ABI tags according to the value of
+- The inline namespace starts with `json_abi` and is followed by several optional ABI tags according to the value of
   these ABI-affecting macros, in order:
     - [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) defined non-zero appends `_diag`.
     - [`JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](../api/macros/json_use_legacy_discarded_value_comparison.md)
       defined non-zero appends `_ldvcmp`.
+    - [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md) defined non-zero appends `_dp`.
+    - [`JSON_BRACE_INIT_COPY_SEMANTICS`](../api/macros/json_brace_init_copy_semantics.md) defined non-zero appends
+      `_bics`.
 - The inline namespace ends with the suffix `_v` followed by the 3 components of the version number separated by
   underscores. To omit the version component, see [Disabling the version component](#disabling-the-version-component)
   below.
@@ -59,7 +62,7 @@ may complain about undefined references.
 
 Different versions are not necessarily ABI-incompatible, but the project does not actively track changes in the ABI and
 recommends that all parts of a codebase exchanging library types be built with the same version. Users can, **at their
-own risk**, disable the version component of the linline namespace, allowing different versions – but not
+own risk**, disable the version component of the inline namespace, allowing different versions – but not
 configurations – to be used in cases where the linker would otherwise output undefined reference errors.
 
 To do so, define [`NLOHMANN_JSON_NAMESPACE_NO_VERSION`](../api/macros/nlohmann_json_namespace_no_version.md) to `1`.
@@ -71,6 +74,7 @@ section to emulate the effect of the `NLOHMANN_JSON_NAMESPACE_NO_VERSION` macro.
 
     Disabling the namespace version component and mixing ABI-incompatible versions will result in crashes or incorrect
     behavior. You have been warned!
+
 ## Disabling the inline namespace completely
 
 When interoperability with code using a pre-3.11.0 version of the library is required, users can, **at their own risk**

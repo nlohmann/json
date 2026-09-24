@@ -7,8 +7,8 @@ static basic_json from_bson(InputType&& i,
                             const bool strict = true,
                             const bool allow_exceptions = true);
 // (2)
-template<typename IteratorType>
-static basic_json from_bson(IteratorType first, IteratorType last,
+template<typename IteratorType, typename SentinelType = IteratorType>
+static basic_json from_bson(IteratorType first, SentinelType last,
                             const bool strict = true,
                             const bool allow_exceptions = true);
 ```
@@ -16,7 +16,7 @@ static basic_json from_bson(IteratorType first, IteratorType last,
 Deserializes a given input to a JSON value using the BSON (Binary JSON) serialization format.
 
 1. Reads from a compatible input.
-2. Reads from an iterator range.
+2. Reads from an iterator range, or an iterator and a sentinel of a different type (C++20 ranges support).
 
 The exact mapping and its limitations are described on a [dedicated page](../../features/binary_formats/bson.md).
 
@@ -29,10 +29,17 @@ The exact mapping and its limitations are described on a [dedicated page](../../
     - a `FILE` pointer
     - a C-style array of characters
     - a pointer to a null-terminated string of single byte characters
-    - an object `obj` for which `begin(obj)` and `end(obj)` produces a valid pair of iterators.
+    - a container `obj` for which `begin(obj)` and `end(obj)` produce a valid pair of iterators
+      (as found via ADL or member functions, with semantics compatible to `std::begin` and `std::end`)
 
 `IteratorType`
 :   a compatible iterator type
+
+`SentinelType`
+:   defaults to `IteratorType`; may be a different type comparable to `IteratorType` via `operator!=`, for instance.
+
+    - a custom sentinel type for C++20 ranges
+    - `std::default_sentinel_t`, when `IteratorType` is `std::counted_iterator`
 
 ## Parameters
 
@@ -43,7 +50,7 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 :   iterator to the start of the input
 
 `last` (in)
-:   iterator to the end of the input
+:   iterator to the end of the input, or a sentinel value that compares equal to the end iterator with `operator!=`
 
 `strict` (in)
 :   whether to expect the input to be consumed until EOF (`#!cpp true` by default)
@@ -62,8 +69,12 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 ## Exceptions
 
-Throws [`parse_error.114`](../../home/exceptions.md#jsonexceptionparse_error114) if an unsupported BSON record type is
-encountered.
+- Throws [`parse_error.110`](../../home/exceptions.md#jsonexceptionparse_error110) if the given input ends prematurely or
+  the end of the input was not reached when `strict` was set to true
+- Throws [`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112) if a parse error occurs (e.g., an
+  invalid string or byte array length)
+- Throws [`parse_error.114`](../../home/exceptions.md#jsonexceptionparse_error114) if an unsupported BSON record type is
+  encountered
 
 ## Complexity
 
@@ -92,10 +103,13 @@ Linear in the size of the input.
 - [from_cbor](from_cbor.md) for the related CBOR format
 - [from_msgpack](from_msgpack.md) for the related MessagePack format
 - [from_ubjson](from_ubjson.md) for the related UBJSON format
+- [from_bjdata](from_bjdata.md) for the related BJData format
 
 ## Version history
 
 - Added in version 3.4.0.
+- Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
+- Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
 
 !!! warning "Deprecation"
 

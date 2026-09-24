@@ -4,7 +4,8 @@
 
 In many situations, such as configuration files, missing values are not exceptional, but may be treated as if a default
 value was present. For this case, use [`value(key, default_value)`](../../api/basic_json/value.md) which takes the key
-you want to access and a default value in case there is no value stored with that key.
+you want to access and a default value in case there is no value stored with that key. This is equivalent to Python's
+`dict.get(key, default)`.
 
 ## Example
 
@@ -33,14 +34,15 @@ you want to access and a default value in case there is no value stored with tha
 
 !!! failure "Exceptions"
 
-    - `value` can only be used with objects. For other types, a [`basic_json::type_error`](../../home/exceptions.md#jsonexceptiontype_error306) is thrown.
+    - With string keys, `value` can only be used with objects. For other types, a [`basic_json::type_error`](../../home/exceptions.md#jsonexceptiontype_error306) is thrown.
+    - With JSON Pointers, `value` can be used with both objects and arrays. For other types (null, boolean, number, string), a [`basic_json::type_error`](../../home/exceptions.md#jsonexceptiontype_error306) is thrown.
 
 !!! warning "Return type"
 
     The value function is a template, and the return type of the function is determined by the type of the provided
     default value unless otherwise specified. This can have unexpected effects. In the example below, we store a 64-bit
     unsigned integer. We get exactly that value when using [`operator[]`](../../api/basic_json/operator[].md). However,
-    when we call `value` and provide `#!c 0` as default value, then `#!c -1` is returned. The occurs, because `#!c 0`
+    when we call `value` and provide `#!c 0` as default value, then `#!c -1` is returned. This occurs, because `#!c 0`
     has type `#!c int` which overflows when handling the value `#!c 18446744073709551615`.
 
     To address this issue, either provide a correctly typed default value or use the template parameter to specify the

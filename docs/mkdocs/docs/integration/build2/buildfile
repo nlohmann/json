@@ -1,0 +1,6 @@
+libs =
+import libs = nlohmann-json%lib{json}
+
+exe{example}: {hxx ixx txx cxx}{**} $libs testscript
+
+cxx.poptions =+ "-I$out_root" "-I$src_root"

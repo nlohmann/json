@@ -9,7 +9,7 @@ The type used to store JSON strings.
 [RFC 8259](https://tools.ietf.org/html/rfc8259) describes JSON strings as follows:
 > A string is a sequence of zero or more Unicode characters.
 
-To store objects in C++, a type is defined by the template parameter described below. Unicode values are split by the
+To store strings in C++, a type is defined by the template parameter described below. Unicode values are split by the
 JSON class into byte-sized characters during deserialization.
 
 ## Template parameters
@@ -17,6 +17,16 @@ JSON class into byte-sized characters during deserialization.
 `StringType`
 :   the container to store strings (e.g., `std::string`). Note this container is used for keys/names in objects, see
     [object_t](object_t.md).
+
+    `StringType` must have a `char`-compatible `value_type`: the library relies on UTF-8/`char`-based storage and
+    processing internally, so `std::wstring`, `std::u16string`, and `std::u32string` are **not** valid choices for
+    `StringType`. To work with wide-character data, convert it to/from UTF-8 at the boundary instead -- see the
+    FAQ's [wide string handling](../../home/faq.md#wide-string-handling) section for a conversion recipe.
+
+    Beyond the character type, the library expects a substantial part of the `#!cpp std::string` interface (contiguous
+    null-terminated `data()`, `substr()`, `find()`, `append()`, ...). See
+    [Template Parameter Requirements](../../features/types/template_parameters.md#stringtype) for the full list and
+    for the string types that are known to work.
 
 ## Notes
 
@@ -45,6 +55,15 @@ This implementation is interoperable as it does compare strings code unit by cod
 String values are stored as pointers in a `basic_json` type. That is, for any access to string values, a pointer of type
 `string_t*` must be dereferenced.
 
+#### Cross-`basic_json` conversion requirements
+
+When converting a string value from one `basic_json` specialization to another via the
+[converting constructor](basic_json.md#overload-4), the target `string_t` must be directly
+constructible from the source `basic_json`'s `string_t` type. If this requirement is not met, the
+conversion does not fail; instead, the string is silently converted as an array of character codes,
+which is incorrect. See [issue #3425](https://github.com/nlohmann/json/issues/3425) for details
+and an example.
+
 ## Examples
 
 ??? example
@@ -64,3 +83,5 @@ String values are stored as pointers in a `basic_json` type. That is, for any ac
 ## Version history
 
 - Added in version 1.0.0.
+- Removed the requirement that `string_t` be implicitly convertible from `#!cpp std::string`, which the BSON writer and
+  the UBJSON reader relied on, in version 3.13.0.

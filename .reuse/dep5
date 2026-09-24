@@ -4,12 +4,16 @@ Upstream-Contact: Niels Lohmann <mail@nlohmann.me>
 Source: https://github.com/nlohmann/json
 
 Files: *
-Copyright: 2013-2025 Niels Lohmann <https://nlohmann.me>
+Copyright: 2013-2026 Niels Lohmann <https://nlohmann.me>
 License: MIT
 
 Files: include/nlohmann/thirdparty/hedley.hpp
 Copyright: 2016-2021 Evan Nemerson <evan@nemerson.com>
 License: CC0
+
+Files: include/nlohmann/detail/meta/cpp_future.hpp
+Copyright: 2013-2026 Niels Lohmann <https://nlohmann.me> and 2018 The Abseil Authors
+License: MIT AND Apache-2.0
 
 Files: tests/thirdparty/doctest/*
 Copyright: 2016-2023 Viktor Kirilov

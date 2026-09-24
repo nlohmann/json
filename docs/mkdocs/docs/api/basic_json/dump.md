@@ -26,9 +26,9 @@ and `ensure_ascii` parameters.
 
 `error_handler` (in)
 :   how to react on decoding errors; there are three possible values (see [`error_handler_t`](error_handler_t.md):
-    `strict` (throws and exception in case a decoding error occurs; default), `replace` (replace invalid UTF-8 sequences
-    with U+FFFD), and `ignore` (ignore invalid UTF-8 sequences during serialization; all bytes are copied to the output
-    unchanged)).
+    `strict` (throws an exception in case a decoding error occurs; default), `replace` (replace invalid UTF-8 sequences
+    with U+FFFD), and `ignore` (ignore invalid UTF-8 sequences during serialization; all valid bytes are copied to the
+    output unchanged, and invalid bytes are dropped)).
     
 ## Return value
 
@@ -42,6 +42,17 @@ Strong guarantee: if an exception is thrown, there are no changes to any JSON va
 
 Throws [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) if a string stored inside the JSON value
 is not UTF-8 encoded and `error_handler` is set to `strict`
+
+!!! warning "Serializing untrusted input"
+
+    When serializing values that may contain invalid or untrusted UTF-8 (e.g., bytes taken directly from network
+    input), `dump()` throws [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) in the default
+    `strict` mode. To serialize such data without throwing, pass
+    [`error_handler_t::replace`](error_handler_t.md) (substitutes U+FFFD) or
+    [`error_handler_t::ignore`](error_handler_t.md). Callers that serialize untrusted input on a crash-sensitive path
+    should either choose a non-strict error handler or wrap `dump()` in a `#!cpp try`/`#!cpp catch`.
+
+    See the [FAQ](../../home/faq.md#serializing-untrusted-or-invalid-utf-8) for details.
 
 ## Complexity
 
@@ -70,6 +81,12 @@ Binary values are serialized as an object containing two keys:
     ```json
     --8<-- "examples/dump.output"
     ```
+
+## See also
+
+- [to_string](to_string.md) returns a string representation of a JSON value
+- [operator<<](../operator_ltlt.md) serialize to stream
+- [Serialization](../../features/serialization.md) - the serialization article
 
 ## Version history
 

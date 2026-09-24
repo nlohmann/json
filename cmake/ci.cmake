@@ -213,6 +213,41 @@ add_custom_target(ci_test_legacycomparison
 )
 
 ###############################################################################
+# Validate UTF-8 with simdutf.
+###############################################################################
+
+add_custom_target(ci_test_simdutf
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_TestSimdutf=ON
+    # simdutf needs C++17, so the library falls back to its scalar validator
+    # below that: build the suite at C++11 to cover the fallback with the macro
+    # defined, and at C++17 to run every test against simdutf itself
+    "-DJSON_TestStandards=11\;17"
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_simdutf
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_simdutf
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_simdutf && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with simdutf UTF-8 validation enabled"
+)
+
+###############################################################################
+# Enable strict NUL-byte handling.
+###############################################################################
+
+add_custom_target(ci_test_strict_nul_handling
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_StrictNulHandling=ON
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_strict_nul_handling
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_strict_nul_handling
+    # unit-testsuites contains a fixture (a "1e308" test value) that relies on the
+    # legacy NUL-as-end-of-input behavior this macro disables; exclude it here, as
+    # it is expected to fail under strict NUL handling and is out of scope for it
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_strict_nul_handling && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure -E "test-testsuites"
+    COMMENT "Compile and test with strict NUL-byte handling enabled"
+)
+
+###############################################################################
 # Disable global UDLs.
 ###############################################################################
 
@@ -225,6 +260,59 @@ add_custom_target(ci_test_noglobaludls
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_noglobaludls
     COMMAND cd ${PROJECT_BINARY_DIR}/build_noglobaludls && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
     COMMENT "Compile and test with global UDLs disabled"
+)
+
+###############################################################################
+# Disable enum serialization.
+###############################################################################
+
+add_custom_target(ci_test_disableenumserialization
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_DisableEnumSerialization=ON
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_disableenumserialization
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_disableenumserialization
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_disableenumserialization && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with enum serialization disabled"
+)
+
+###############################################################################
+# Skip the multiple-inclusion library version check.
+###############################################################################
+
+# tests/src/skip_library_version_check.cpp deliberately simulates a scenario
+# (mixing two differently-versioned inclusions of the library in one
+# translation unit) that unavoidably triggers the compiler's own "macro
+# redefined" warning, so -- unlike the ci_test_* targets above -- it is
+# compiled directly here, with a modest warning set, instead of being folded
+# into the library's own -Weverything/-Werror unit test matrix.
+add_custom_target(ci_test_skiplibraryversioncheck
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/skip_library_version_check
+    COMMAND ${CMAKE_CXX_COMPILER} -std=c++11 -Wall -Wextra
+        -I${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/tests/src/skip_library_version_check.cpp
+        -o ${PROJECT_BINARY_DIR}/skip_library_version_check/skip_library_version_check
+    COMMAND ${PROJECT_BINARY_DIR}/skip_library_version_check/skip_library_version_check
+    COMMENT "Compile and run a translation unit simulating a mismatched library version, with JSON_SKIP_LIBRARY_VERSION_CHECK defined"
+)
+
+###############################################################################
+# Disable thread-local storage.
+###############################################################################
+
+# Without thread-local storage, the copy constructor cannot bound its descent
+# and copies every object and array without the call stack. That path is
+# otherwise only reached by values nested deeper than the bound, so this target
+# is what runs the whole test suite through it.
+add_custom_target(ci_test_no_thread_local
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON
+    -DCMAKE_CXX_FLAGS=-DJSON_NO_THREAD_LOCAL
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_no_thread_local
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_no_thread_local
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_no_thread_local && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test without thread-local storage"
 )
 
 ###############################################################################
@@ -279,7 +367,7 @@ file(GLOB_RECURSE INDENT_FILES
         ${PROJECT_SOURCE_DIR}/tests/src/*.cpp
         ${PROJECT_SOURCE_DIR}/tests/src/*.hpp
         ${PROJECT_SOURCE_DIR}/tests/benchmarks/src/benchmarks.cpp
-    ${PROJECT_SOURCE_DIR}/docs/examples/*.cpp
+    ${PROJECT_SOURCE_DIR}/docs/mkdocs/docs/examples/*.cpp
 )
 
 set(include_dir ${PROJECT_SOURCE_DIR}/single_include/nlohmann)
@@ -654,7 +742,6 @@ add_custom_target(ci_test_compiler_default
 add_custom_target(ci_cuda_example
     COMMAND ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Debug -GNinja
-        -DCMAKE_CUDA_HOST_COMPILER=g++-8
         -S${PROJECT_SOURCE_DIR}/tests/cuda_example -B${PROJECT_BINARY_DIR}/build_cuda_example
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_cuda_example
 )
@@ -684,6 +771,53 @@ add_custom_target(ci_icpc
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_icpc
     COMMAND cd ${PROJECT_BINARY_DIR}/build_icpc && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" --output-on-failure
     COMMENT "Compile and test with ICPC"
+)
+
+add_custom_target(ci_icpx
+    COMMAND ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DCMAKE_C_COMPILER=icx -DCMAKE_CXX_COMPILER=icpx
+        -DJSON_BuildTests=ON -DJSON_FastTests=ON
+        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_icpx
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_icpx
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_icpx && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode" --output-on-failure
+    COMMENT "Compile and test with ICPX (Intel oneAPI DPC++/C++)"
+)
+
+###############################################################################
+# NVIDIA HPC SDK C++ Compiler
+###############################################################################
+
+# nvc++ defaults to a relaxed, non-IEEE floating-point model that flushes denormals
+# to zero and does not honor NaN ordering; -Kieee restores strict IEEE 754 behavior
+# (needed for the dtoa/grisu and NaN-comparison code paths).
+#
+# -tp=px pins the target processor to the generic x86-64 baseline (SSE2-only) to avoid
+# a nvc++ 25.5 / LLVM issue: when nvc++ auto-detects -tp from the runner's CPU (e.g. -tp znver4),
+# certain attribute combinations trigger an llc instruction-selection crash on std::ldexp<unsigned>.
+# Pinning to px removes this variability and is robust to future llc/nvc++ updates.
+#
+# The following tests are excluded as they trigger known nvc++ 25.5 defects (not
+# library bugs); see https://github.com/nlohmann/json for tracking. Only the
+# affected language-standard variants are excluded so coverage is otherwise kept:
+#   - test-comparison_cpp20, test-comparison_legacy_cpp20
+#         miscompiles cross-type/<=> comparison (e.g. `-17 <= null`)
+#   - test-constructor1_cpp11
+#         std::initializer_list lifetime bug -> SIGSEGV
+#   - test-deserialization_cpp20
+#         mangles the UTF-8 u8"" string literal in the char8_t (C++20) section
+add_custom_target(ci_nvhpc
+    COMMAND ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=Debug -GNinja
+        -DCMAKE_C_COMPILER=nvc -DCMAKE_CXX_COMPILER=nvc++
+        -DCMAKE_CXX_FLAGS="-Kieee;-tp=px"
+        -DJSON_BuildTests=ON -DJSON_FastTests=ON
+        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_nvhpc
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_nvhpc
+    # the pipes are escaped so the surrounding shell passes them to ctest verbatim
+    # instead of treating them as shell pipe operators
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_nvhpc && ${CMAKE_CTEST_COMMAND} --parallel ${N} --exclude-regex "test-unicode\\|test-comparison_cpp20\\|test-comparison_legacy_cpp20\\|test-constructor1_cpp11\\|test-deserialization_cpp20" --output-on-failure
+    COMMENT "Compile and test with NVIDIA HPC SDK (nvc++)"
 )
 
 ###############################################################################

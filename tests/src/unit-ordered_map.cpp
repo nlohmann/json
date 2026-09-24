@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -269,6 +269,11 @@ TEST_CASE("ordered_map")
         CHECK(com.find("vier") == com.end());
         CHECK(com.find(std::string("vier")) == com.end());
         CHECK(com.find(vier) == com.end());
+
+#ifdef JSON_HAS_CPP_17
+        CHECK(om.find(std::string_view("eins")) == om.begin());
+        CHECK(com.find(std::string_view("eins")) == com.begin());
+#endif
     }
 
     SECTION("insert")

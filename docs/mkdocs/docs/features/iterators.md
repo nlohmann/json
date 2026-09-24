@@ -130,7 +130,7 @@ for (auto& [key, val] : j_object.items())
 
 ### Iterating strings and binary values
 
-Note that "value" means a JSON value in this setting, not values stored in the underlying containers. That is, `*begin()` returns the complete string or binary array and is also safe the underlying string or binary array is empty.
+Note that "value" means a JSON value in this setting, not values stored in the underlying containers. That is, `*begin()` returns the complete string or binary array and is also safe if the underlying string or binary array is empty.
 
 ??? example
 

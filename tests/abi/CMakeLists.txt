@@ -5,9 +5,9 @@ target_compile_definitions(abi_compat_common INTERFACE
     JSON_TEST_KEEP_MACROS)
 target_compile_features(abi_compat_common INTERFACE cxx_std_11)
 target_compile_options(abi_compat_common INTERFACE
-    $<$<CXX_COMPILER_ID:MSVC>:/EHsc;$<$<CONFIG:Release>:/Od>>
+    $<$<CXX_COMPILER_ID:MSVC>:/EHsc>
     # MSVC: Force to always compile with W4
-    $<$<CXX_COMPILER_ID:MSVC>:/W4>
+    $<$<CXX_COMPILER_ID:MSVC>:/W4;$<$<CONFIG:Release>:/wd4702>>
 
     # https://github.com/nlohmann/json/pull/3229
     $<$<CXX_COMPILER_ID:Intel>:-diag-disable=2196>

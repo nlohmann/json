@@ -24,7 +24,7 @@ specific naming scheme in order to override the binary type.
 - [(constructor)](byte_container_with_subtype.md)
 - **operator==** - comparison: equal
 - **operator!=** - comparison: not equal
-- [**set_subtype**](subtype.md) - sets the binary subtype
+- [**set_subtype**](set_subtype.md) - sets the binary subtype
 - [**subtype**](subtype.md) - return the binary subtype
 - [**has_subtype**](has_subtype.md) - return whether the value has a subtype
 - [**clear_subtype**](clear_subtype.md) - clears the binary subtype

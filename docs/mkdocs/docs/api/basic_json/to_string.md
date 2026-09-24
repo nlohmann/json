@@ -59,6 +59,7 @@ std::string to_string(const BasicJsonType& j)
 ## See also
 
 - [dump](dump.md)
+- [Serialization](../../features/serialization.md) - the serialization article
 
 ## Version history
 

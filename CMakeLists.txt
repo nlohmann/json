@@ -20,7 +20,11 @@ endif()
 ##
 ##
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
-include(ExternalProject)
+
+if (POLICY CMP0077)
+    # Allow CMake 3.13+ to override options when using FetchContent / add_subdirectory.
+    cmake_policy(SET CMP0077 NEW)
+endif ()
 
 # ---- C++ Modules Support (optional) ----
 option(NLOHMANN_JSON_BUILD_MODULES "Build C++ modules support" OFF)
@@ -38,12 +42,7 @@ endif()
 ## OPTIONS
 ##
 
-if (POLICY CMP0077)
-    # Allow CMake 3.13+ to override options when using FetchContent / add_subdirectory.
-    cmake_policy(SET CMP0077 NEW)
-endif ()
-
-# VERSION_GREATER_EQUAL is not available in CMake 3.1
+# VERSION_GREATER_EQUAL is not available in older CMake (< 3.7)
 if(${MAIN_PROJECT} AND (${CMAKE_VERSION} VERSION_EQUAL 3.13 OR ${CMAKE_VERSION} VERSION_GREATER 3.13))
     set(JSON_BuildTests_INIT ON)
 else()
@@ -60,6 +59,7 @@ option(JSON_LegacyDiscardedValueComparison "Enable legacy discarded value compar
 option(JSON_Install                        "Install CMake targets during install step." ${MAIN_PROJECT})
 option(JSON_MultipleHeaders                "Use non-amalgamated version of the library." ON)
 option(JSON_SystemInclude                  "Include as system headers (skip for clang-tidy)." OFF)
+option(JSON_StrictNulHandling              "Build with strict NUL-byte handling enabled." OFF)
 
 if (JSON_CI)
     include(ci)
@@ -98,7 +98,7 @@ if (NOT JSON_ImplicitConversions)
 endif()
 
 if (JSON_DisableEnumSerialization)
-    message(STATUS "Enum integer serialization is disabled (JSON_DISABLE_ENUM_SERIALIZATION=0)")
+    message(STATUS "Enum integer serialization is disabled (JSON_DISABLE_ENUM_SERIALIZATION=1)")
 endif()
 
 if (JSON_LegacyDiscardedValueComparison)
@@ -107,6 +107,10 @@ endif()
 
 if (JSON_Diagnostics)
     message(STATUS "Diagnostics enabled (JSON_DIAGNOSTICS=1)")
+endif()
+
+if (JSON_StrictNulHandling)
+    message(STATUS "Strict NUL-byte handling enabled (JSON_STRICT_NUL_HANDLING=1)")
 endif()
 
 if (JSON_Diagnostic_Positions)
@@ -142,6 +146,7 @@ target_compile_definitions(
     $<$<BOOL:${JSON_Diagnostics}>:JSON_DIAGNOSTICS=1>
     $<$<BOOL:${JSON_Diagnostic_Positions}>:JSON_DIAGNOSTIC_POSITIONS=1>
     $<$<BOOL:${JSON_LegacyDiscardedValueComparison}>:JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1>
+    $<$<BOOL:${JSON_StrictNulHandling}>:JSON_STRICT_NUL_HANDLING=1>
 )
 
 target_include_directories(
@@ -164,7 +169,7 @@ if (MSVC)
 endif()
 
 # Install a pkg-config file, so other tools can find this.
-CONFIGURE_FILE(
+configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/pkg-config.pc.in"
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
     @ONLY
@@ -174,9 +179,11 @@ CONFIGURE_FILE(
 ## TESTS
 ## create and configure the unit test target
 ##
-if (JSON_BuildTests)
+# Only build tests when JSON_BuildTests is set and testing has not been
+# disabled by a parent project via BUILD_TESTING (see the CTest module, which
+# also calls enable_testing()).
+if (JSON_BuildTests AND (NOT DEFINED BUILD_TESTING OR BUILD_TESTING))
     include(CTest)
-    enable_testing()
     add_subdirectory(tests)
 endif()
 
@@ -212,7 +219,7 @@ if(JSON_Install)
         install(
             FILES ${NLOHMANN_NATVIS_FILE}
             DESTINATION .
-    )
+        )
     endif()
     export(
         TARGETS ${NLOHMANN_JSON_TARGET_NAME}

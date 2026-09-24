@@ -6,29 +6,32 @@ permissions:
 
 jobs:
   Fuzzing:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Harden Runner
-      uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+      uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
       with:
         egress-policy: audit
 
+    # The OSS-Fuzz CIFuzz actions are referenced via @master as recommended by
+    # the OSS-Fuzz documentation; the project does not publish tags or releases
+    # to pin to. See https://google.github.io/oss-fuzz/getting-started/continuous-integration/
     - name: Build Fuzzers
       id: build
-      uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@57fe4475324c5506adbfecdcdd2917f65c86ee9e # master
+      uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master
       with:
         oss-fuzz-project-name: 'json'
         dry-run: false
         language: c++
     - name: Run Fuzzers
-      uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@57fe4475324c5506adbfecdcdd2917f65c86ee9e # master
+      uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@master
       with:
         oss-fuzz-project-name: 'json'
         fuzz-seconds: 300
         dry-run: false
         language: c++
     - name: Upload Crash
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       if: failure() && steps.build.outcome == 'success'
       with:
         name: artifacts

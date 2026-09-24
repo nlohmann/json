@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -24,12 +24,16 @@ TEST_CASE("default namespace")
         expected += "_diag";
 #endif
 
+#if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+        expected += "_ldvcmp";
+#endif
+
 #if JSON_DIAGNOSTIC_POSITIONS
         expected += "_dp";
 #endif
 
-#if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
-        expected += "_ldvcmp";
+#if JSON_BRACE_INIT_COPY_SEMANTICS
+        expected += "_bics";
 #endif
 
         expected += "_v" STRINGIZE(NLOHMANN_JSON_VERSION_MAJOR);

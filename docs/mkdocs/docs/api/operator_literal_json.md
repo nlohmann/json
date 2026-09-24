@@ -2,6 +2,7 @@
 
 ```cpp
 json operator ""_json(const char* s, std::size_t n);
+json operator ""_json(const char8_t* s, std::size_t n);  // since C++20
 ```
 
 This operator implements a user-defined string literal for JSON objects. It can be used by adding `#!cpp _json` to a
@@ -55,7 +56,12 @@ Linear.
     --8<-- "examples/operator_literal_json.output"
     ```
 
+## See also
+
+- [Creating JSON values](../features/creating_values.md) - the article on creating JSON values
+
 ## Version history
 
 - Added in version 1.0.0.
 - Moved to namespace `nlohmann::literals::json_literals` in 3.11.0.
+- Added `char8_t*` overload in 3.13.0.

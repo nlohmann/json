@@ -26,7 +26,7 @@ Constant.
 
 ??? example
 
-    The following code shows an example for `eend()`.
+    The following code shows an example for `rend()`.
     
     ```cpp
     --8<-- "examples/rend.cpp"

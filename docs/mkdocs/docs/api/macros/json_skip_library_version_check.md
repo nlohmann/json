@@ -24,6 +24,17 @@ By default, the macro is not defined.
 
 ## Examples
 
+??? example
+
+    The code below switches off the warning about including a different version of the library.
+
+    ```cpp
+    #define JSON_SKIP_LIBRARY_VERSION_CHECK 1
+    #include <nlohmann/json.hpp>
+
+    ...
+    ```
+
 !!! example
 
     The following warning will be shown in case a different version of the library was already included:

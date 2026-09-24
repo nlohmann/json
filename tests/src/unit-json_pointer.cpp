@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -319,6 +319,44 @@ TEST_CASE("JSON pointers")
 
                 CHECK_THROWS_WITH_AS(j[jp] = 1, throw_msg.c_str(), json::out_of_range&);
                 CHECK_THROWS_WITH_AS(j_const[jp] == 1, throw_msg.c_str(), json::out_of_range&);
+
+                // #5395: contains() must not throw for a reference token that is a
+                // syntactically valid array index but numerically exceeds ULLONG_MAX
+                // (causing strtoull() to set errno to ERANGE) -- it should just report
+                // that the pointer does not resolve to an element
+                CHECK(!j.contains(jp));
+                CHECK(!j_const.contains(jp));
+            }
+
+            {
+                // #5395: same as above, but using the exact reproduction from the issue
+                json::json_pointer const jp("/99999999999999999999");
+                std::string const throw_msg = "[json.exception.out_of_range.404] unresolved reference token '99999999999999999999'";
+
+                CHECK_THROWS_WITH_AS(j[jp] = 1, throw_msg.c_str(), json::out_of_range&);
+                CHECK_THROWS_WITH_AS(j_const[jp] == 1, throw_msg.c_str(), json::out_of_range&);
+                CHECK_THROWS_WITH_AS(j.at(jp) = 1, throw_msg.c_str(), json::out_of_range&);
+                CHECK_THROWS_WITH_AS(j_const.at(jp) == 1, throw_msg.c_str(), json::out_of_range&);
+
+                CHECK(!j.contains(jp));
+                CHECK(!j_const.contains(jp));
+            }
+
+            {
+                // #5395: a reference token that is numerically representable in
+                // unsigned long long but exceeds size_type's max (e.g. ULLONG_MAX
+                // itself on typical 64-bit platforms, where size_type's max equals
+                // ULLONG_MAX) must not make contains() throw either
+                json::json_pointer const jp("/18446744073709551615");
+                std::string const throw_msg = "[json.exception.out_of_range.410] array index 18446744073709551615 exceeds size_type";
+
+                CHECK_THROWS_WITH_AS(j[jp] = 1, throw_msg.c_str(), json::out_of_range&);
+                CHECK_THROWS_WITH_AS(j_const[jp] == 1, throw_msg.c_str(), json::out_of_range&);
+                CHECK_THROWS_WITH_AS(j.at(jp) = 1, throw_msg.c_str(), json::out_of_range&);
+                CHECK_THROWS_WITH_AS(j_const.at(jp) == 1, throw_msg.c_str(), json::out_of_range&);
+
+                CHECK(!j.contains(jp));
+                CHECK(!j_const.contains(jp));
             }
 
             // on some machines, the check below is not constant
@@ -334,6 +372,10 @@ TEST_CASE("JSON pointers")
 
                 CHECK_THROWS_WITH_AS(j[jp] = 1, throw_msg.c_str(), json::out_of_range&);
                 CHECK_THROWS_WITH_AS(j_const[jp] == 1, throw_msg.c_str(), json::out_of_range&);
+
+                // #5395: contains() must not throw for a reference token exceeding size_type's max
+                CHECK(!j.contains(jp));
+                CHECK(!j_const.contains(jp));
             }
 
             DOCTEST_MSVC_SUPPRESS_WARNING_POP
@@ -465,6 +507,16 @@ TEST_CASE("JSON pointers")
         // explicit roundtrip check
         CHECK(j.flatten().unflatten() == j);
 
+        // an object is only unflattened to an array if one of its keys is the
+        // reference token 0; this must not depend on which key is seen first
+        CHECK(json({{"/2", "x"}}).unflatten() == json({{"2", "x"}}));
+        CHECK(json({{"/10", "y"}, {"/2", "z"}}).unflatten() == json({{"10", "y"}, {"2", "z"}}));
+        CHECK(json({{"/0", 1}, {"/1", 2}}).unflatten() == json({1, 2}));
+        CHECK(json({{"/1", 2}, {"/0", 1}}).unflatten() == json({1, 2}));
+        CHECK(json({{"/0", 1}, {"/2", 3}}).unflatten() == json({1, nullptr, 3}));
+        CHECK(json({{"/a/1", 2}, {"/a/0", 1}}).unflatten() == json({{"a", {1, 2}}}));
+        CHECK(json({{"/a/1", 2}, {"/a/x", 1}}).unflatten() == json({{"a", {{"1", 2}, {"x", 1}}}}));
+
         // roundtrip for primitive values
         json j_null;
         CHECK(j_null.flatten().unflatten() == j_null);
@@ -564,6 +616,14 @@ TEST_CASE("JSON pointers")
         CHECK(!ptr.empty());
         CHECK(j[ptr] == j["answer"]["everything"]);
 
+        ptr.pop_front();
+        CHECK(ptr.front() == "everything");
+        ptr.pop_front();
+        CHECK(ptr.empty());
+        ptr.push_front("everything");
+        ptr.push_front(answer);
+        CHECK(j[ptr] == j["answer"]["everything"]);
+
         // check access via const pointer
         const auto cptr = ptr;
         CHECK(cptr.back() == "everything");
@@ -588,8 +648,17 @@ TEST_CASE("JSON pointers")
         CHECK(ptr.empty());
         CHECK(j[ptr] == j);
 
-        CHECK_THROWS_WITH(ptr.pop_back(),
-                          "[json.exception.out_of_range.405] JSON pointer has no parent");
+        CHECK_THROWS_WITH_AS(ptr.pop_back(),
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
+
+        CHECK_THROWS_WITH_AS(ptr.back(),
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
+
+        CHECK_THROWS_WITH_AS(ptr.pop_front(),
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
+
+        CHECK_THROWS_WITH_AS(ptr.front(),
+                             "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
     }
 
     SECTION("operators")
@@ -788,4 +857,18 @@ TEST_CASE("JSON pointers")
             CHECK_FALSE(ptr_oj != ptr);
         }
     }
+
+    // build with C++20
+    // JSON_HAS_CPP_20
+#if defined(__cpp_char8_t)
+    SECTION("Using _json_pointer with char8_t literals #4945")
+    {
+        const json j = R"({"a": {"b": {"c": 123}}})"_json;
+        const auto p1 = "/a/b/c"_json_pointer;
+        CHECK(j[p1] == 123);
+
+        const auto p2 = u8"/a/b/c"_json_pointer;
+        CHECK(j[p2] == 123);
+    }
+#endif
 }

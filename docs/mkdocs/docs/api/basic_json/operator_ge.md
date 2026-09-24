@@ -35,7 +35,7 @@ bool operator>=(ScalarType lhs, const const_reference rhs) noexcept;  // (2)
 
 ## Return value
 
-whether `lhs` is less than or equal to `rhs`
+whether `lhs` is greater than or equal to `rhs`
 
 ## Exception safety
 

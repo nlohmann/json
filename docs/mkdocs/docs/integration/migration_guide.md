@@ -176,6 +176,12 @@ You can prepare existing code by already defining
 conversions with calls to [`get`](../api/basic_json/get.md), [`get_to`](../api/basic_json/get_to.md),
 [`get_ref`](../api/basic_json/get_ref.md), or [`get_ptr`](../api/basic_json/get_ptr.md).
 
+!!! tip "Automatic migration"
+
+    The community-maintained clang-tidy check `modernize-nlohmann-json-explicit-conversions` rewrites most implicit
+    conversions into calls to [`get`](../api/basic_json/get.md). It is not part of clang-tidy itself; see
+    [discussion #4610](https://github.com/nlohmann/json/discussions/4610) for how to build and use it.
+
 === "Deprecated"
 
       ```cpp
@@ -187,7 +193,7 @@ conversions with calls to [`get`](../api/basic_json/get.md), [`get_to`](../api/b
 
       ```cpp
       nlohmann::json j = "Hello, world!";
-      auto s = j.template get<std::string>();
+      auto s = j.get<std::string>();
       ```
 
 === "Future-proof (alternative)"
@@ -197,10 +203,6 @@ conversions with calls to [`get`](../api/basic_json/get.md), [`get_to`](../api/b
       std::string s;
       j.get_to(s);
       ```
-
-You can prepare existing code by already defining
-[`JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md) to `0` and replace any implicit
-conversions with calls to [`get`](../api/basic_json/get.md).
 
 ## Import namespace `literals` for UDLs
 

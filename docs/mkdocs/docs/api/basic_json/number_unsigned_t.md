@@ -20,6 +20,14 @@ used.
 To store unsigned integer numbers in C++, a type is defined by the template parameter `NumberUnsignedType` which chooses
 the type to use.
 
+## Template parameters
+
+`NumberUnsignedType`
+:   the type to store unsigned integers. It must be an **unsigned integral** type (`#!cpp std::is_integral`) with a
+    `#!cpp std::numeric_limits` specialization, and it must be able to represent the absolute value of every
+    [`number_integer_t`](number_integer_t.md) value. See
+    [Template Parameter Requirements](../../features/types/template_parameters.md#numberintegertype-and-numberunsignedtype).
+
 ## Notes
 
 #### Default type
@@ -32,7 +40,6 @@ With the default values for `NumberUnsignedType` (`std::uint64_t`), the default 
 - The restrictions about leading zeros are not enforced in C++. Instead, leading zeros in integer literals lead to an
   interpretation as an octal number. Internally, the value will be stored as a decimal number. For instance, the C++
   integer  literal `010` will be serialized to `8`. During deserialization, leading zeros yield an error.
-- Not-a-number (NaN) values will be serialized to `null`.
 
 #### Limits
 
@@ -45,7 +52,7 @@ when used in a constructor. During deserialization, too large or small integer n
 as [`number_integer_t`](number_integer_t.md) or [`number_float_t`](number_float_t.md).
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) further states:
-> Note that when such software is used, numbers that are integers and are in the range \f$[-2^{53}+1, 2^{53}-1]\f$ are
+> Note that when such software is used, numbers that are integers and are in the range $[-2^{53}+1, 2^{53}-1]$ are
 > interoperable in the sense that implementations will agree exactly on their numeric values.
 
 As this range is a subrange (when considered in conjunction with the `number_integer_t` type) of the exactly supported

@@ -26,6 +26,10 @@ HEADER = 'json.hpp'
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
+# origins whose pages may read the served header from a browser; Compiler
+# Explorer downloads #include <https://...> headers client-side
+DEFAULT_CORS_ORIGINS = ['https://godbolt.org', 'https://compiler-explorer.com']
+
 JSON_VERSION_RE = re.compile(r'\s*#\s*define\s+NLOHMANN_JSON_VERSION_MAJOR\s+')
 
 class ExitHandler(logging.StreamHandler):
@@ -231,6 +235,12 @@ class WorkTrees(FileSystemEventHandler):
             elif event.event_type == 'deleted':
                 # check for deleted working trees
                 self.rescan(path)
+            elif event.event_type == 'moved':
+                # handle moved directories - treat source as deleted and dest as created
+                self.rescan(path)
+                if hasattr(event, 'dest_path'):
+                    dest_path = os.path.abspath(event.dest_path)
+                    self.created_bucket.add_dir(dest_path)
         elif event.event_type == 'closed':
             with self.tree_lock:
                 for tree in self.trees:
@@ -241,6 +251,8 @@ class WorkTrees(FileSystemEventHandler):
         self.observer.join()
 
 class HeaderRequestHandler(SimpleHTTPRequestHandler): # lgtm[py/missing-call-to-init]
+    cors_origins = DEFAULT_CORS_ORIGINS
+
     def __init__(self, request, client_address, server):
         """."""
         self.worktrees = server.worktrees
@@ -265,7 +277,7 @@ class HeaderRequestHandler(SimpleHTTPRequestHandler): # lgtm[py/missing-call-to-
 
     def send_head(self):
         # check if the translated path matches a working tree
-        # and fullfill the request; otherwise, send 404
+        # and fulfill the request; otherwise, send 404
         path = self.translate_path(self.path)
         self.worktree = self.worktrees.find(path)
         if self.worktree is not None:
@@ -304,8 +316,11 @@ class HeaderRequestHandler(SimpleHTTPRequestHandler): # lgtm[py/missing-call-to-
 
         # set content length
         super().send_header('Content-Length', length)
-        # CORS header
-        self.send_header('Access-Control-Allow-Origin', '*')
+        # CORS header; only for the configured origins
+        origin = self.headers.get('Origin')
+        if origin in self.cors_origins:
+            self.send_header('Access-Control-Allow-Origin', origin)
+        self.send_header('Vary', 'Origin')
         # prevent caching
         self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
         self.send_header('Pragma', 'no-cache')
@@ -377,8 +392,15 @@ if __name__ == '__main__':
         # find and monitor working trees
         worktrees = WorkTrees(config.get('root', '.'))
 
-        # start web server
-        infos = socket.getaddrinfo(config.get('bind', None), config.get('port', 8443),
+        # origins allowed to read the header from a browser
+        cors_origins = config.get('cors_origins', DEFAULT_CORS_ORIGINS)
+        if isinstance(cors_origins, str):
+            cors_origins = [cors_origins]
+        HeaderRequestHandler.cors_origins = cors_origins
+
+        # start web server; only reachable from this machine unless configured
+        # otherwise (bind: null listens on all interfaces)
+        infos = socket.getaddrinfo(config.get('bind', 'localhost'), config.get('port', 8443),
                                    type=socket.SOCK_STREAM, flags=socket.AI_PASSIVE)
         DualStackServer.address_family = infos[0][0]
         HeaderRequestHandler.protocol_version = 'HTTP/1.0'

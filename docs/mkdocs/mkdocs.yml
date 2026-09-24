@@ -9,7 +9,7 @@ repo_url: https://github.com/nlohmann/json
 edit_uri: edit/develop/docs/mkdocs/docs
 
 # Copyright
-copyright: Copyright &copy; 2013-2025 Niels Lohmann
+copyright: Copyright &copy; 2013-2026 Niels Lohmann
 
 # Configuration
 theme:
@@ -56,7 +56,9 @@ nav:
       - home/architecture.md
       - home/customers.md
       - home/sponsors.md
+      - home/debugging.md
   - Features:
+      - features/index.md
       - features/arbitrary_types.md
       - Binary Formats:
           - features/binary_formats/index.md
@@ -67,16 +69,18 @@ nav:
           - features/binary_formats/ubjson.md
       - features/binary_values.md
       - features/comments.md
-      - features/trailing_commas.md
+      - features/conversions.md
+      - features/creating_values.md
       - Element Access:
           - features/element_access/index.md
           - features/element_access/unchecked_access.md
           - features/element_access/checked_access.md
           - features/element_access/default_value.md
       - features/iterators.md
-      - features/json_pointer.md
-      - features/json_patch.md
       - features/merge_patch.md
+      - features/json_patch.md
+      - features/json_pointer.md
+      - features/modifying_values.md
       - features/modules.md
       - 'nlohmann Namespace': features/namespace.md
       - features/object_order.md
@@ -87,11 +91,14 @@ nav:
           - features/parsing/parser_callbacks.md
           - features/parsing/sax_interface.md
       - features/assertions.md
+      - features/serialization.md
       - features/enum_conversion.md
       - features/macros.md
+      - features/trailing_commas.md
       - Types:
           - features/types/index.md
           - features/types/number_handling.md
+          - features/types/template_parameters.md
   - Integration:
       - integration/index.md
       - integration/migration_guide.md
@@ -133,6 +140,7 @@ nav:
           - 'exception': api/basic_json/exception.md
           - 'find': api/basic_json/find.md
           - 'flatten': api/basic_json/flatten.md
+          - 'format_as': api/basic_json/format_as.md
           - 'from_bjdata': api/basic_json/from_bjdata.md
           - 'from_bson': api/basic_json/from_bson.md
           - 'from_cbor': api/basic_json/from_cbor.md
@@ -145,6 +153,7 @@ nav:
           - 'get_ptr': api/basic_json/get_ptr.md
           - 'get_ref': api/basic_json/get_ref.md
           - 'get_to': api/basic_json/get_to.md
+          - 'std::formatter&lt;basic_json&gt;': api/basic_json/std_formatter.md
           - 'std::hash&lt;basic_json&gt;': api/basic_json/std_hash.md
           - 'input_format_t': api/basic_json/input_format_t.md
           - 'insert': api/basic_json/insert.md
@@ -233,6 +242,7 @@ nav:
           - '(Constructor)': api/json_pointer/json_pointer.md
           - 'back': api/json_pointer/back.md
           - 'empty': api/json_pointer/empty.md
+          - 'front': api/json_pointer/front.md
           - 'operator string_t': api/json_pointer/operator_string_t.md
           - 'operator==': api/json_pointer/operator_eq.md
           - 'operator!=': api/json_pointer/operator_ne.md
@@ -240,7 +250,9 @@ nav:
           - 'operator/=': api/json_pointer/operator_slasheq.md
           - 'parent_pointer': api/json_pointer/parent_pointer.md
           - 'pop_back': api/json_pointer/pop_back.md
+          - 'pop_front': api/json_pointer/pop_front.md
           - 'push_back': api/json_pointer/push_back.md
+          - 'push_front': api/json_pointer/push_front.md
           - 'string_t': api/json_pointer/string_t.md
           - 'to_string': api/json_pointer/to_string.md
       - json_sax:
@@ -267,6 +279,7 @@ nav:
       - macros:
           - 'Overview': api/macros/index.md
           - 'JSON_ASSERT': api/macros/json_assert.md
+          - 'JSON_BRACE_INIT_COPY_SEMANTICS': api/macros/json_brace_init_copy_semantics.md
           - 'JSON_CATCH_USER, JSON_THROW_USER, JSON_TRY_USER': api/macros/json_throw_user.md
           - 'JSON_DIAGNOSTICS': api/macros/json_diagnostics.md
           - 'JSON_DIAGNOSTIC_POSITIONS': api/macros/json_diagnostic_positions.md
@@ -275,24 +288,31 @@ nav:
           - 'JSON_HAS_EXPERIMENTAL_FILESYSTEM, JSON_HAS_FILESYSTEM': api/macros/json_has_filesystem.md
           - 'JSON_HAS_RANGES': api/macros/json_has_ranges.md
           - 'JSON_HAS_STATIC_RTTI': api/macros/json_has_static_rtti.md
+          - 'JSON_HAS_STD_FORMAT': api/macros/json_has_std_format.md
           - 'JSON_HAS_THREE_WAY_COMPARISON': api/macros/json_has_three_way_comparison.md
           - 'JSON_NOEXCEPTION': api/macros/json_noexception.md
           - 'JSON_NO_IO': api/macros/json_no_io.md
+          - 'JSON_NO_THREAD_LOCAL': api/macros/json_no_thread_local.md
           - 'JSON_SKIP_LIBRARY_VERSION_CHECK': api/macros/json_skip_library_version_check.md
           - 'JSON_SKIP_UNSUPPORTED_COMPILER_CHECK': api/macros/json_skip_unsupported_compiler_check.md
+          - 'JSON_STRICT_NUL_HANDLING': api/macros/json_strict_nul_handling.md
           - 'JSON_USE_GLOBAL_UDLS': api/macros/json_use_global_udls.md
           - 'JSON_USE_IMPLICIT_CONVERSIONS': api/macros/json_use_implicit_conversions.md
           - 'JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON': api/macros/json_use_legacy_discarded_value_comparison.md
+          - 'JSON_USE_SIMDUTF': api/macros/json_use_simdutf.md
           - 'NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_derived_type.md
           - 'NLOHMANN_DEFINE_TYPE_INTRUSIVE, NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_type_intrusive.md
           - 'NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_type_non_intrusive.md
+          - 'NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_NAMES, NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES, NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_NAMES, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT_WITH_NAMES, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_NAMES, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT_WITH_NAMES, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE_WITH_NAMES': api/macros/nlohmann_define_type_with_names.md
           - 'NLOHMANN_JSON_NAMESPACE': api/macros/nlohmann_json_namespace.md
           - 'NLOHMANN_JSON_NAMESPACE_BEGIN, NLOHMANN_JSON_NAMESPACE_END': api/macros/nlohmann_json_namespace_begin.md
           - 'NLOHMANN_JSON_NAMESPACE_NO_VERSION': api/macros/nlohmann_json_namespace_no_version.md
           - 'NLOHMANN_JSON_SERIALIZE_ENUM': api/macros/nlohmann_json_serialize_enum.md
+          - 'NLOHMANN_JSON_SERIALIZE_ENUM_STRICT': api/macros/nlohmann_json_serialize_enum_strict.md
           - 'NLOHMANN_JSON_VERSION_MAJOR, NLOHMANN_JSON_VERSION_MINOR, NLOHMANN_JSON_VERSION_PATCH': api/macros/nlohmann_json_version_major.md
   - Community:
       - community/index.md
+      - community/ecosystem.md
       - "Code of Conduct": community/code_of_conduct.md
       - community/contribution_guidelines.md
       - community/quality_assurance.md
@@ -322,6 +342,7 @@ markdown_extensions:
       guess_lang: false
   - toc:
       permalink: true
+  - md_in_html
   - pymdownx.arithmatex
   - pymdownx.betterem:
       smart_enable: all
@@ -352,6 +373,9 @@ markdown_extensions:
       auto_append:
         - ../includes/glossary.md
 
+hooks:
+  - hooks/copy_markdown_source.py
+
 plugins:
   - search:
       separator: '[\s\-\.]'
@@ -373,7 +397,41 @@ plugins:
         - http://nlohmann.github.io/json/*
         - https://nlohmann.github.io/json/*
         - mailto:*
-  - privacy
+  - privacy:
+      # repology.org refuses requests from GitHub Actions runners, which made
+      # the privacy plugin abort the whole build when it could not download the
+      # package badges (the fetch fails, then reading the missing cache entry
+      # raises FileNotFoundError). Readers' browsers are served normally, so
+      # leave these badges as external references instead of self-hosting them.
+      assets_exclude:
+        - repology.org/*
+  - llmstxt:
+      markdown_description: >
+        JSON for Modern C++ is a C++11 header-only library implementing a JSON
+        value type with an STL-like API, JSON Pointer/Patch, CBOR/MessagePack/
+        BSON/UBJSON/BJData binary format support, and a SAX-style parser interface.
+      sections:
+        Home:
+          - index.md
+          - home/*.md
+        Features:
+          - features/*.md
+          - features/binary_formats/*.md
+          - features/element_access/*.md
+          - features/parsing/*.md
+          - features/types/*.md
+        Integration:
+          - integration/*.md
+        API Documentation:
+          - api/*.md
+          - api/basic_json/*.md
+          - api/adl_serializer/*.md
+          - api/byte_container_with_subtype/*.md
+          - api/json_pointer/*.md
+          - api/json_sax/*.md
+          - api/macros/*.md
+        Community:
+          - community/*.md
 
 extra_css:
   - css/custom.css

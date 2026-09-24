@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -29,10 +29,7 @@ using nlohmann::json;
 #include <limits>
 #include <cstdio>
 #include "make_test_data_available.hpp"
-
-#ifdef JSON_HAS_CPP_17
-    #include <variant>
-#endif
+#include "test_utils.hpp"
 
 #include "fifo_map.hpp"
 
@@ -177,7 +174,7 @@ TEST_CASE("regression tests 1")
 #ifndef SKIP_TESTS_FOR_ENUM_SERIALIZATION
     SECTION("pull request #71 - handle enum type")
     {
-        enum { t = 0, u = 102};
+        enum { t = 0, u = 102}; // NOLINT(cppcoreguidelines-use-enum-class)
         json j = json::array();
         j.push_back(t);
 
@@ -1373,7 +1370,8 @@ TEST_CASE("regression tests 1")
         std::array<uint8_t, 28> key1 = {{ 103, 92, 117, 48, 48, 48, 55, 92, 114, 215, 126, 214, 95, 92, 34, 174, 40, 71, 38, 174, 40, 71, 38, 223, 134, 247, 127, 0 }};
         std::string const key1_str(reinterpret_cast<char*>(key1.data()));
         json const j = key1_str;
-        CHECK_THROWS_WITH_AS(j.dump(), "[json.exception.type_error.316] invalid UTF-8 byte at index 10: 0x7E", json::type_error&);
+        // dump() is nodiscard; the exception is thrown by dump() itself before it would return
+        CHECK_THROWS_WITH_AS(utils::ignore_return_value(j.dump()), "[json.exception.type_error.316] invalid UTF-8 byte at index 10: 0x7E", json::type_error&);
     }
 
 #if JSON_USE_IMPLICIT_CONVERSIONS

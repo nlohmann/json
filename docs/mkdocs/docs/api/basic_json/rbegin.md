@@ -11,7 +11,7 @@ Returns an iterator to the reverse-beginning; that is, the last element.
 
 ## Return value
 
-reverse iterator to the first element
+reverse iterator to the last element
 
 ## Exception safety
 

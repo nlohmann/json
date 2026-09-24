@@ -1,6 +1,6 @@
 # Package Managers
 
-<center>
+<p markdown style="text-align: center">
 ![Homebrew](../images/package_managers/homebrew.svg){: style="height:1em"}&nbsp;[**Homebrew**](#homebrew) `nlohmann-json` &emsp;
 ![Meson](../images/package_managers/meson.svg){: style="height:1em"}&nbsp;[**Meson**](#meson) `nlohmann_json` &emsp;
 ![Bazel](../images/package_managers/bazel.svg){: style="height:1em"}&nbsp;[**Bazel**](#bazel) `nlohmann_json`<br>
@@ -13,9 +13,9 @@
 ![Nuget](../images/package_managers/nuget.svg){: style="height:1em"}&nbsp;[**NuGet**](#nuget) `nlohmann.json` &emsp;
 ![Conda](../images/package_managers/conda.svg){: style="height:1em"}&nbsp;[**Conda**](#conda) `nlohmann_json` &emsp;
 ![MacPorts](../images/package_managers/macports.svg){: style="height:1em"}&nbsp;[**MacPorts**](#macports) `nlohmann-json`<br>
-![cpm.cmake](../images/package_managers/CPM.png){: style="height:1em"}&nbsp;[**CPM.cmake**](#cpmcmake) `gh:nlohmann/json`
+![cpm.cmake](../images/package_managers/CPM.png){: style="height:1em"}&nbsp;[**CPM.cmake**](#cpmcmake) `gh:nlohmann/json` &emsp;
 ![xmake](../images/package_managers/xmake.svg){: style="height:1em"}&nbsp;[**xmake**](#xmake) `nlohmann_json`
-</center>
+</p>
 
 ## Running example
 
@@ -38,7 +38,7 @@ When executed, this program should create output similar to
     formula: [**`nlohmann-json`**](https://formulae.brew.sh/formula/nlohmann-json)
 
     - [![Homebrew package](https://repology.org/badge/version-for-repo/homebrew/nlohmann-json.svg)](https://repology.org/project/nlohmann-json/versions)
-    - :octicons-tag-24: Availalbe versions: current version and development version (with `--HEAD` parameter)
+    - :octicons-tag-24: Available versions: current version and development version (with `--HEAD` parameter)
     - :octicons-rocket-24: The formula is updated with every release.
     - :octicons-person-24: Maintainer: Niels Lohmann
     - :octicons-file-24: File issues at the [Homebrew issue tracker](https://github.com/Homebrew/homebrew-core/issues)
@@ -103,9 +103,9 @@ The header can be used directly in your code or via CMake.
 
     wrap: **`nlohmann_json`**
 
-    - :octicons-tag-24: Availalbe versions: current version and select older versions (see
+    - :octicons-tag-24: Available versions: current version and select older versions (see
       [WrapDB](https://mesonbuild.com/Wrapdb-projects.html))
-    - :octicons-rocket-24: The package is update automatically from file
+    - :octicons-rocket-24: The package is updated automatically from file
       [`meson.build`](https://github.com/nlohmann/json/blob/develop/meson.build).
     - :octicons-file-24: File issues at the [library issue tracker](https://github.com/nlohmann/json/issues)
     - :octicons-question-24: [Meson website](https://mesonbuild.com/index.html)
@@ -195,9 +195,9 @@ repository can be referenced within a `MODULE.bazel` by rules such as `archive_o
     recipe: [**`nlohmann_json`**](https://conan.io/center/recipes/nlohmann_json)
 
     - [![ConanCenter package](https://repology.org/badge/version-for-repo/conancenter/nlohmann-json.svg)](https://repology.org/project/nlohmann-json/versions)
-    - :octicons-tag-24: Availalbe versions: current version and older versions (see
+    - :octicons-tag-24: Available versions: current version and older versions (see
       [Conan Center](https://conan.io/center/recipes/nlohmann_json))
-    - :octicons-rocket-24: The package is update automatically via
+    - :octicons-rocket-24: The package is updated automatically via
       [this recipe](https://github.com/conan-io/conan-center-index/tree/master/recipes/nlohmann_json).
     - :octicons-file-24: File issues at the [Conan Center issue tracker](https://github.com/conan-io/conan-center-index/issues)
     - :octicons-question-24: [Conan website](https://conan.io)
@@ -241,7 +241,7 @@ requires, where `x.y.z` is the release version you want to use.
     package: [**`nlohmann-json`**](https://packages.spack.io/package.html?name=nlohmann-json)
 
     - [![Spack package](https://repology.org/badge/version-for-repo/spack/nlohmann-json.svg)](https://repology.org/project/nlohmann-json/versions)
-    - :octicons-tag-24: Availalbe versions: current version and older versions (see
+    - :octicons-tag-24: Available versions: current version and older versions (see
       [Spack package](https://packages.spack.io/package.html?name=nlohmann-json))
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-person-24: Maintainer: [Axel Huebl](https://github.com/ax3l)
@@ -294,7 +294,7 @@ Please see the [Spack project](https://github.com/spack/spack) for any issues re
 
     package: [**`nlohmann_json`**](https://hunter.readthedocs.io/en/latest/packages/pkg/nlohmann_json.html)
 
-    - :octicons-tag-24: Availalbe versions: current version and older versions (see
+    - :octicons-tag-24: Available versions: current version and older versions (see
       [Hunter package](https://hunter.readthedocs.io/en/latest/packages/pkg/nlohmann_json.html))
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-file-24: File issues at the [Hunter issue tracker](https://github.com/cpp-pm/hunter/issues)
@@ -342,7 +342,7 @@ Please see the Hunter project for any issues regarding the packaging.
     package: [**`nlohmann-json`**](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json)
 
     - [![Vcpkg package](https://repology.org/badge/version-for-repo/vcpkg/nlohmann-json.svg)](https://repology.org/project/nlohmann-json/versions)
-    - :octicons-tag-24: Availalbe versions: current version
+    - :octicons-tag-24: Available versions: current version
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-file-24: File issues at the [vcpkg issue tracker](https://github.com/microsoft/vcpkg/issues)
     - :octicons-question-24: [vcpkg website](https://vcpkg.io/)
@@ -387,7 +387,7 @@ and follow the then displayed descriptions. Please see the vcpkg project for any
 
     package: [**`nlohmann/json`**](https://github.com/pfultz2/cget-recipes/blob/master/recipes/nlohmann/json/package.txt)
 
-    - :octicons-tag-24: Availalbe versions: current version and older versions
+    - :octicons-tag-24: Available versions: current version and older versions
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-file-24: File issues at the [cget issue tracker](https://github.com/pfultz2/cget-recipes/issues)
     - :octicons-question-24: [cget website](https://cget.readthedocs.io/)
@@ -438,7 +438,7 @@ installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nl
 
     package: **`nlohmann/json`**
 
-    - :octicons-tag-24: Availalbe versions: current version and older versions
+    - :octicons-tag-24: Available versions: current version and older versions
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-file-24: File issues at the [library issue tracker](https://github.com/nlohmann/json/issues)
     - :octicons-question-24: [Xcode documentation](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app)
@@ -449,7 +449,7 @@ installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nl
 
     package: [**`nlohmann.json`**](https://www.nuget.org/packages/nlohmann.json/)
 
-    - :octicons-tag-24: Availalbe versions: current and previous versions
+    - :octicons-tag-24: Available versions: current and previous versions
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-person-24: Maintainer: [Hani Kaabi](https://github.com/hnkb)
     - :octicons-file-24: File issues at the [maintainer's issue tracker](https://github.com/hnkb/nlohmann-json-nuget/issues)
@@ -464,7 +464,7 @@ dotnet add package nlohmann.json
 
 ??? example
 
-    Probably the easiest way to use NuGet packages is through Visual Studio graphical interface. Just right-click on a
+    Probably the easiest way to use NuGet packages is through Visual Studio graphical interface. Right-click on a
     project (any C++ project would do) in “Solution Explorer” and select “Manage NuGet Packages…”
 
     ![](nuget/nuget-search-package.png)
@@ -583,7 +583,7 @@ more information.
     package: [**`nlohmann_json`**](https://anaconda.org/conda-forge/nlohmann_json)
 
     - ![](https://img.shields.io/conda/v/conda-forge/nlohmann_json)
-    - :octicons-tag-24: Availalbe versions: current and previous versions
+    - :octicons-tag-24: Available versions: current and previous versions
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-file-24: File issues at the [feedstock's issue tracker](https://github.com/conda-forge/nlohmann_json-feedstock/issues)
     - :octicons-question-24: [Conda documentation](https://docs.conda.io/projects/conda/en/stable/user-guide/getting-started.html)
@@ -603,7 +603,7 @@ conda install -c conda-forge nlohmann_json
         --8<-- "integration/conda/example.cpp"
         ```
 
-    2. Create and activate an anvironment "json`:
+    2. Create and activate an environment `json`:
 
         ```shell
         conda create -n json
@@ -640,7 +640,7 @@ If you are using [MSYS2](http://www.msys2.org/), you can use the [mingw-w64-nloh
     port: [**`nlohmann-json`**](https://ports.macports.org/port/nlohmann-json/)
 
     - [![MacPorts package](https://repology.org/badge/version-for-repo/macports/nlohmann-json.svg)](https://repology.org/project/nlohmann-json/versions)
-    - :octicons-tag-24: Availalbe versions: current version
+    - :octicons-tag-24: Available versions: current version
     - :octicons-rocket-24: The port is updated with every release.
     - :octicons-file-24: File issues at the [MacPorts issue tracker](https://trac.macports.org/newticket?port=nlohmann-json)
     - :octicons-question-24: [MacPorts website](https://www.macports.org)
@@ -667,7 +667,7 @@ to install the [nlohmann-json](https://ports.macports.org/port/nlohmann-json/) p
         sudo port install nlohmann-json
         ```
 
-    3. Compile the code and pass the Homebrew prefix to the include path such that the library can be found:
+    3. Compile the code and pass the MacPorts prefix to the include path such that the library can be found:
 
         ```sh
         c++ example.cpp -I/opt/local/include -std=c++11 -o example
@@ -700,17 +700,128 @@ to install the [nlohmann-json](https://ports.macports.org/port/nlohmann-json/) p
 
 ## build2
 
-If you are using [`build2`](https://build2.org), you can use the [`nlohmann-json`](https://cppget.org/nlohmann-json)
-package from the public repository <http://cppget.org> or directly from the
-[package's sources repository](https://github.com/build2-packaging/nlohmann-json). In your project's `manifest` file,
-add `depends: nlohmann-json` (probably with some [version constraints](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml#guide-add-remove-deps)). If you are not familiar with using dependencies in `build2`, [please read this introduction](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml).
-Please file issues [here](https://github.com/build2-packaging/nlohmann-json) if you experience problems with the packages.
+!!! abstract "Summary"
 
-:material-update: The [package](https://cppget.org/nlohmann-json) is updated automatically.
+    package: **`nlohmann-json`**
+    library target: **`nlohmann-json%lib{json}`**
+    available in package repositories:
+      - [`cppget.org` (recommended)](https://cppget.org/nlohmann-json)
+      - [package's sources (for advanced users)](https://github.com/build2-packaging/nlohmann-json/)
 
-```shell
-bdep new -t exe -l c++
-```
+    - :octicons-tag-24: Available versions: current version and older versions since `3.7.3` (see [cppget.org](https://cppget.org/nlohmann-json))
+    - :octicons-rocket-24: The package is maintained and published by the `build2` community in [this repository](https://github.com/build2-packaging/nlohmann-json/).
+    - :octicons-file-24: File issues at the [package source repository](https://github.com/build2-packaging/nlohmann-json/issues/)
+    - :octicons-question-24: [`build2` website](https://build2.org)
+
+Note: [`build2`](https://build2.org) should not be considered as a standalone package-manager. It is a build-system + package manager + project manager, a set of tools that work hand-in-hand. `build2`-based projects do not rely on existing `CMake` scripts and the build scripts defining the project's targets are specific to `build2`.
+
+To use this package in an existing [`build2`](https://build2.org) project, the general steps are:
+
+  1. <details><summary>Make the package available to download from a package repository that provides it.</summary>
+
+      Your project's `repositories.manifest` specifies where the package manager will try to acquire packages by default. Make sure one of the repositories specified in this file provides `nlohmann-json` package.
+      The recommended open-source repository is [`cppget.org`](https://cppget.org/).
+
+      If the project has been created using [`bdep new`](https://build2.org/bdep/doc/bdep-new.xhtml), `cppget.org` is already specified in `repositories.manifest` but commented, just uncomment these lines:
+      ```
+      :
+      role: prerequisite
+      location: https://pkg.cppget.org/1/stable
+      ```
+      </details>
+
+  2. <details><summary>Add this package as dependency of your project.</summary>
+
+       In your project's `manifest` add the dependency to the package using `depends: nlohmann-json`. You could also add some [version constraints](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml#guide-add-remove-deps).
+       For example, to depend on the latest version available:
+       ```
+       depends: nlohmann-json
+       ```
+       </details>
+
+
+  3. <details><summary>Add this library as dependency of your target that uses it.</summary>
+
+      In the `buildfile` defining the target that will use this library:
+      
+        - import the target `lib{json}` from the `nlohmann-json` package, for example:
+            ```
+            import nljson = nlohmann-json%lib{json}
+            ```
+           
+        - then add the library's target as requirement for your target using it, for example:
+            ```
+            exe{example} : ... $nljson
+            ```
+           
+      </details>
+
+  4. <details><summary>Use the library in your project's code and build it.</summary>
+
+      At this point, assuming your project is initialized in a build-configuration, any `b` or `bdep update` command that will update/build the project will also acquire the missing dependency automatically, then build it and link it with your target.
+
+      If you just want to synchronize dependencies for all your configurations to download the ones you just added:
+        ```
+        bdep sync -af
+        ```
+      </details>
+
+??? example "Example: from scratch, using `build2`'s [`bdep new` command](https://build2.org/bdep/doc/bdep-new.xhtml)"
+
+    1. Create a new executable project "example" (see [`bdep new` command details](https://build2.org/bdep/doc/bdep-new.xhtml) for the various options to create a new project):
+
+        ```shell
+        bdep new example
+        ```
+
+    2. Edit these files by replacing their content:
+
+        - `example/repositories.manifest`: Enable acquiring packages from https://cppget.org by uncommenting the related lines:
+
+            ```make title="project's `repositories.manifest`"
+            --8<-- "integration/build2/repositories.manifest"
+            ```
+
+        - `example/manifest`: Add the latest version of the `nlohmann-json` package as dependency to the project:
+
+            ```make title="project's `manifest`"
+            --8<-- "integration/build2/manifest"
+            ```
+
+        - `example/example/buildfile`: import the library's target to be used as requirement for building the executable target `exe{example}`:
+
+            ```make title="project's `buildfile`"
+            --8<-- "integration/build2/buildfile"
+            ```
+
+        - `example/example/example.cxx`: `bdep new` generates a "hello world" by default, replace it by this:
+
+            ```cpp title="example.cxx"
+            --8<-- "integration/build2/example.cpp"
+            ```
+
+        - `example/example/testscript`: (optional) if you want to be able to test that executable's output is correct using `b test`:
+
+            ```cpp title="`testscript` checking the output of the program"
+            --8<-- "integration/build2/testscript"
+            ```
+
+
+    3. Initialize the project in a default C/C++ build configuration directory, then build and test:
+
+        ```shell
+        cd example/
+
+        # create default C/C++ build configuration in ../example-myconfig/, initialize the project in it (downloads it's dependencies in it too)
+        bdep init -C @myconfig cc
+
+        # build only,
+        b
+
+        # or build and test the executable's output, will only work if the `testscript` is correct
+        b test
+
+        ```
 
 ## CPM.cmake
 
@@ -718,7 +829,7 @@ bdep new -t exe -l c++
 
     package: **`gh:nlohmann/json`**
 
-    - :octicons-tag-24: Availalbe versions: current and previous versions
+    - :octicons-tag-24: Available versions: current and previous versions
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-file-24: File issues at the [CPM.cmake issue tracker](https://github.com/cpm-cmake/CPM.cmake/issues)
     - :octicons-question-24: [CPM.cmake website](https://github.com/cpm-cmake/CPM.cmake)
@@ -762,7 +873,7 @@ CPMAddPackage("gh:nlohmann/json@3.12.0")
 
     package: [**`nlohmann_json`**](https://github.com/xmake-io/xmake-repo/blob/master/packages/n/nlohmann_json/xmake.lua)
 
-    - :octicons-tag-24: Availalbe versions: current and previous versions
+    - :octicons-tag-24: Available versions: current and previous versions
     - :octicons-rocket-24: The package is updated with every release.
     - :octicons-file-24: File issues at the [xmake issue tracker](https://github.com/xmake-io/xmake-repo/issues)
     - :octicons-question-24: [xmake website](https://xmake.io/#/)
@@ -818,6 +929,21 @@ If you are using [Buckaroo](https://buckaroo.pm), you can install this library's
 If you are using [CocoaPods](https://cocoapods.org), you can use the library by adding pod `"nlohmann_json", '~>3.1.2'`
 to your podfile (see [an example](https://bitbucket.org/benman/nlohmann_json-cocoapod/src/master/)). Please file issues
 [here](https://bitbucket.org/benman/nlohmann_json-cocoapod/issues?status=new&status=open).
+
+## npm
+
+This project does not publish an official [npm](https://www.npmjs.com) package. The npm package
+[`nlohmann-json`](https://www.npmjs.com/package/nlohmann-json) (or similarly named packages) is not maintained or
+endorsed by this project. Use one of the package managers listed above, or integrate the single header directly.
+
+## ESP-IDF and PlatformIO
+
+There is no official package published to the [ESP-IDF Component Registry](https://components.espressif.com) or the
+[PlatformIO Registry](https://registry.platformio.org). A community-maintained fork,
+[Johboh/nlohmann-json](https://github.com/Johboh/nlohmann-json), publishes this library to both registries on each
+new release and can be used as an unofficial component/package for ESP-IDF and PlatformIO projects. As the library
+is header-only, it can otherwise be used directly by adding its `include/` directory to your component's/project's
+include paths, like any other integration method described on this page.
 
 ![](https://img.shields.io/cocoapods/v/nlohmann_json)
 

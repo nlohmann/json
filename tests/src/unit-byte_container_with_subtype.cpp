@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -40,6 +40,39 @@ TEST_CASE("byte_container_with_subtype")
         container.clear_subtype();
         CHECK(!container.has_subtype());
         CHECK(container.subtype() == static_cast<subtype_type>(-1));
+    }
+
+    SECTION("move semantics")
+    {
+        // the rvalue-reference constructor (without a subtype) must actually move
+        // the passed-in container rather than copy it; comparing the buffer address
+        // before and after is a stronger check than just observing the source is
+        // empty afterward, since a copy-then-clear could also leave it empty
+        {
+            std::vector<std::uint8_t> bytes = {{0xCA, 0xFE, 0xBA, 0xBE}};
+            const auto* const data_ptr = bytes.data();
+
+            nlohmann::byte_container_with_subtype<std::vector<std::uint8_t>> container(std::move(bytes));
+
+            CHECK(container.size() == 4);
+            CHECK(container.data() == data_ptr);
+            CHECK(!container.has_subtype());
+            CHECK(bytes.empty()); // NOLINT(bugprone-use-after-move,clang-analyzer-cplusplus.Move,hicpp-invalid-access-moved)
+        }
+
+        // same check for the rvalue-reference constructor that also takes a subtype
+        {
+            std::vector<std::uint8_t> bytes = {{0xCA, 0xFE, 0xBA, 0xBE}};
+            const auto* const data_ptr = bytes.data();
+
+            nlohmann::byte_container_with_subtype<std::vector<std::uint8_t>> container(std::move(bytes), 42);
+
+            CHECK(container.size() == 4);
+            CHECK(container.data() == data_ptr);
+            CHECK(container.has_subtype());
+            CHECK(container.subtype() == 42);
+            CHECK(bytes.empty()); // NOLINT(bugprone-use-after-move,clang-analyzer-cplusplus.Move,hicpp-invalid-access-moved)
+        }
     }
 
     SECTION("comparisons")

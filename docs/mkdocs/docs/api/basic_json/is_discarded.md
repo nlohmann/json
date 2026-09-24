@@ -45,11 +45,13 @@ Constant.
 
     When a value is discarded by a callback function (see [`parser_callback_t`](parser_callback_t.md)) during parsing,
     then it is removed when it is part of a structured value. For instance, if the second value of an array is discarded,
-    instead of `#!json [null, discarded, false]`, the array `#!json [null, false]` is returned. Only if the top-level
-    value is discarded, the return value of the `parse` call is discarded.
+    instead of `#!json [null, discarded, false]`, the array `#!json [null, false]` is returned. If the top-level value
+    itself is discarded by the callback, the `parse` call returns a `#!json null` value.
 
-This function will always be `#!cpp false` for JSON values after parsing. That is, discarded values can only occur
-during parsing, but will be removed when inside a structured value or replaced by null in other cases.
+After a successful parse, this function always returns `#!cpp false`: discarded values can only occur during parsing and
+are either removed when inside a structured value or replaced by `#!json null` at the top level. The exception is parsing
+with `allow_exceptions` set to `#!cpp false`: a parse error then yields a discarded value for which this function returns
+`#!cpp true` (see [`parse`](parse.md)).
 
 ## Examples
 

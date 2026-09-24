@@ -291,15 +291,19 @@ A JSON Pointer array index must be a number.
 
 ### json.exception.parse_error.110
 
-When parsing CBOR or MessagePack, the byte vector ends before the complete value has been read.
+When parsing a [binary format](../features/binary_formats/index.md), the byte vector ends before the complete value has
+been read.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.parse_error.110] parse error at byte 5: syntax error while parsing CBOR string: unexpected end of input
     ```
     ```
     [json.exception.parse_error.110] parse error at byte 2: syntax error while parsing UBJSON value: expected end of input; last byte: 0x5A
+    ```
+    ```
+    [json.exception.parse_error.110] parse error at byte 8: syntax error while parsing BSON number: unexpected end of input
     ```
 
 ### json.exception.parse_error.112
@@ -326,10 +330,17 @@ An unexpected byte was read in a [binary format](../features/binary_formats/inde
     ```
     [json.exception.parse_error.112] parse error at byte 15: syntax error while parsing BSON binary: byte array length cannot be negative, is -1
     ```
+    ```
+    [json.exception.parse_error.112] parse error at byte 9: syntax error while parsing CBOR value: negative integer overflow
+    ```
+    ```
+    [json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: document size 6 does not match the number of bytes read (5)
+    ```
 
 ### json.exception.parse_error.113
 
-While parsing a map key, a value that is not a string has been read.
+A string could not be read from a [binary format](../features/binary_formats/index.md): either a value that is not a
+string was read where one was required (for instance as a map key), or the string's length specification is invalid.
 
 !!! failure "Example messages"
 
@@ -341,6 +352,9 @@ While parsing a map key, a value that is not a string has been read.
     ```
     ```
     [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON char: byte after 'C' must be in range 0x00..0x7F; last byte: 0x82
+    ```
+    ```
+    [json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData string: string length must not be negative
     ```
 
 ### json.exception.parse_error.114
@@ -850,12 +864,29 @@ and this exception no longer occurs.
 
 ### json.exception.out_of_range.408
 
-The size (following `#`) of an UBJSON array or object exceeds the maximal capacity.
+The size of an array or object in a [binary format](../features/binary_formats/index.md) exceeds the maximal capacity:
+the size following `#` for [UBJSON](../features/binary_formats/ubjson.md)/[BJData](../features/binary_formats/bjdata.md),
+or the encoded length for [CBOR](../features/binary_formats/cbor.md).
 
-!!! failure "Example message"
+The exception is also thrown for a [UBJSON](../features/binary_formats/ubjson.md) array of a type that is encoded by its
+marker alone (`Z`, `T` or `F`) whose declared count exceeds 1,048,576 (`1 << 20`). Such an array has no payload, so its
+count alone decides how much memory is allocated, and a handful of bytes would otherwise describe billions of values.
+[`to_ubjson`](../api/basic_json/to_ubjson.md) writes longer arrays of these types without the size and type annotation,
+so any value it produces can still be read back.
+
+!!! failure "Example messages"
 
     ```
     excessive array size: 8658170730974374167
+    ```
+    ```
+    [json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive array size
+    ```
+    ```
+    [json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive map size
+    ```
+    ```
+    [json.exception.out_of_range.408] syntax error while parsing UBJSON size: excessive array size
     ```
 
 ### json.exception.out_of_range.409
@@ -867,6 +898,92 @@ Key identifiers to be serialized to BSON cannot contain code point U+0000, since
     ```
     BSON key cannot contain code point U+0000 (at byte 2)
     ```
+
+### json.exception.out_of_range.410
+
+This exception is thrown when an undefined value is used with
+[`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](../api/macros/nlohmann_json_serialize_enum_strict.md), or when an array index in
+a JSON pointer exceeds the range of `size_type` (e.g., on 32-bit platforms).
+
+!!! failure "Example message"
+
+    ```
+    enum value out of range
+    array index 18446744073709551616 exceeds size_type
+    ```
+
+### json.exception.out_of_range.411
+
+A JSON Patch `add` operation cannot be applied because the target location's parent is neither an object nor an array. Per [RFC 6902](https://datatracker.ietf.org/doc/html/rfc6902), an `add` target must reference a member of an existing object or an element of an existing array; a primitive value (string, number, boolean, etc.) cannot receive a new member or element.
+
+!!! failure "Example message"
+
+    ```
+    cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0. Before that, this situation hit an internal assertion (aborting the program in debug builds) or was silently ignored when assertions were disabled.
+
+### json.exception.out_of_range.412
+
+BSON stores the length of documents, arrays, strings, and binary values in a signed 32-bit integer. This exception is thrown when a value is too large to be described by such a length field.
+
+!!! failure "Example message"
+
+    ```
+    BSON length 2147483661 exceeds maximum of 2147483647
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0. Before that, the length was silently truncated, and
+    [`to_bson`](../api/basic_json/to_bson.md) produced documents with negative length prefixes that
+    [`from_bson`](../api/basic_json/from_bson.md) rejected.
+
+### json.exception.out_of_range.413
+
+A JSON Patch `remove` operation cannot be applied because the target location's parent is neither an object nor an array. Per [RFC 6902](https://datatracker.ietf.org/doc/html/rfc6902), a `remove` target must reference a member of an existing object or an element of an existing array; a primitive value (string, number, boolean, etc.) or `null` has no members or elements to remove.
+
+!!! failure "Example message"
+
+    ```
+    cannot remove value: the JSON Patch 'remove' target's parent is of type number, but must be an object or array
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0. Before that, this situation was silently ignored (the `remove` operation had no effect).
+
+### json.exception.out_of_range.414
+
+A JSON Patch `move` operation's `"from"` location is a proper prefix of its `"path"` location. Per [RFC 6902](https://datatracker.ietf.org/doc/html/rfc6902) (section 4.4), a location cannot be moved into one of its own children.
+
+!!! failure "Example message"
+
+    ```
+    cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0. Before that, this situation could succeed with a corrupted result: for an array target, removing the "from" element before the "add" step shifted subsequent indices, so "path" silently re-resolved to a different element than intended.
+
+### json.exception.out_of_range.415
+
+MessagePack's ext type and BSON's binary subtype are each stored in a single byte. This exception is thrown when serializing a
+[`byte_container_with_subtype`](../api/byte_container_with_subtype/index.md) whose subtype exceeds 255.
+
+!!! failure "Example message"
+
+    ```
+    [json.exception.out_of_range.415] subtype 70000 is too large for the MessagePack ext type (max 255)
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0. Before that, subtypes above 255 were silently truncated modulo 256 instead of raising an error.
 
 ## Further exceptions
 
@@ -900,3 +1017,19 @@ A JSON Patch operation 'test' failed. The unsuccessful operation is also printed
     ```
     [json.exception.other_error.501] unsuccessful: {"op":"test","path":"/baz","value":"bar"}
     ```
+
+### json.exception.other_error.502
+
+[`to_ubjson`](../api/basic_json/to_ubjson.md) and [`to_bjdata`](../api/basic_json/to_bjdata.md) were called with
+`use_type = true` but `use_size = false`. UBJSON requires a size marker (`#`) after a type marker (`$`).
+
+!!! failure "Example message"
+
+    ```
+    [json.exception.other_error.502] use_type requires use_size = true
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0. Before that, debug builds aborted on an assertion and release builds
+    wrote a `$` marker without `#`, which [`from_ubjson`](../api/basic_json/from_ubjson.md) then rejected.

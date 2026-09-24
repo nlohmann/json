@@ -20,6 +20,13 @@ used.
 To store integer numbers in C++, a type is defined by the template parameter `NumberIntegerType` which chooses the type
 to use.
 
+## Template parameters
+
+`NumberIntegerType`
+:   the type to store signed integers. It must be a **signed integral** type (`#!cpp std::is_integral`) with a
+    `#!cpp std::numeric_limits` specialization, and it is stored directly inside a `basic_json` value. See
+    [Template Parameter Requirements](../../features/types/template_parameters.md#numberintegertype-and-numberunsignedtype).
+
 ## Notes
 
 #### Default type
@@ -32,7 +39,6 @@ With the default values for `NumberIntegerType` (`std::int64_t`), the default va
 - The restrictions about leading zeros are not enforced in C++. Instead, leading zeros in integer literals lead to an
   interpretation as an octal number. Internally, the value will be stored as a decimal number. For instance, the C++
   integer literal `010` will be serialized to `8`. During deserialization, leading zeros yield an error.
-- Not-a-number (NaN) values will be serialized to `null`.
 
 #### Limits
 

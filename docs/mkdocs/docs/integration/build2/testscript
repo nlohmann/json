@@ -1,0 +1,24 @@
+
+: json basics
+:
+$* >>~/EOO/
+{
+    "compiler": {
+/        "c\+\+": "\d+",/
+/        "family": "[\w\d]+",/
+/        "version": \d+/
+    },
+/    "copyright": "\(C\) 2013-\d+ Niels Lohmann",/
+    "name": "JSON for Modern C++",
+/    "platform": "[\w\d]+",/
+    "url": "https://github.com/nlohmann/json",
+    "version": {
+        "major": 3,
+/        "minor": \d+,/
+/        "patch": \d+,/
+/        "string": "3\.\d+\.\d+"/
+    }
+}
+EOO
+
+

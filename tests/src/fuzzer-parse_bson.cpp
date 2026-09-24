@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 /*
@@ -19,9 +19,15 @@ The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
 
+#include <cassert>
 #include <iostream>
 #include <sstream>
 #include <nlohmann/json.hpp>
+
+// the round-trip checks below are assertions; NDEBUG would compile them away
+#ifdef NDEBUG
+    #error "the fuzzer drivers must be built without NDEBUG"
+#endif
 
 using json = nlohmann::json;
 

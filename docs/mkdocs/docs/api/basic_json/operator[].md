@@ -83,6 +83,8 @@ Strong exception safety: if an exception occurs, the original value stays intact
       in the passed JSON pointer `ptr` for the const version.
     - Throws [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) if the JSON pointer `ptr` can
       not be resolved.
+    - Throws [`out_of_range.410`](../../home/exceptions.md#jsonexceptionout_of_range410) if an array index in the passed
+      JSON pointer `ptr` exceeds the range of `size_type` (e.g., on 32-bit platforms).
 
 ## Complexity
 
@@ -95,7 +97,10 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 !!! danger "Undefined behavior and runtime assertions"
 
-    1. If the element with key `idx` does not exist, the behavior is undefined.
+    The following cases apply to the **const** overloads; the non-const overloads instead insert the missing element
+    (see the notes below).
+
+    1. If the element at index `idx` does not exist, the behavior is undefined.
     2. If the element with key `key` does not exist, the behavior is undefined and is **guarded by a
        [runtime assertion](../../features/assertions.md)**!
 
@@ -118,6 +123,15 @@ Strong exception safety: if an exception occurs, the original value stays intact
       value before a reference to it is returned. All indices between the current maximum and the given index are also
       filled with `#!json null`.
     - The special value `-` is treated as a synonym for the index past the end.
+
+    !!! note "Creating intermediate levels that don't exist yet"
+
+        When the JSON pointer traverses intermediate levels that don't exist at all yet (not just a missing
+        leaf), each missing level is created as an array or an object depending on whether the corresponding
+        pointer token parses as a non-negative integer: a numeric token creates an array, a non-numeric token
+        creates an object. For example, on an initially `#!json null` value, `/foo/0/0/0` creates nested arrays,
+        while `/foo/one/one/one` creates nested objects. This is not specified by the JSON Pointer RFC; it is
+        this library's own, intentional disambiguation rule. See also [JSON Pointer](../../features/json_pointer.md).
 
 ## Examples
 
@@ -246,5 +260,6 @@ Strong exception safety: if an exception occurs, the original value stays intact
 1. Added in version 1.0.0.
 2. Added in version 1.0.0. Added overloads for `T* key` in version 1.1.0. Removed overloads for `T* key` (replaced by 3)
    in version 3.11.0.
-3. Added in version 3.11.0.
+3. Added in version 3.11.0. Fixed in version 3.13.0 to consistently accept `std::string_view`-convertible keys, as
+   already supported by [`at`](at.md), [`value`](value.md), [`find`](find.md), and other lookup functions.
 4. Added in version 2.0.0.

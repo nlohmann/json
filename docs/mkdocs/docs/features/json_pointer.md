@@ -77,6 +77,11 @@ auto val2 = j.at(json::json_pointer("/nested/three/1"));    // false
 auto val3 = j.value(json::json_pointer("/nested/four"), 0); // 0
 ```
 
+!!! note "Creating intermediate levels that don't exist"
+
+    See the [`operator[]` notes](../api/basic_json/operator%5B%5D.md#return-value) for how array vs. object is
+    decided when a pointer creates intermediate levels that don't exist yet.
+
 ## Flatten / unflatten
 
 The library implements a function [`flatten`](../api/basic_json/flatten.md) to convert any JSON document into a JSON

@@ -21,8 +21,6 @@ the stream `i`
 ## Exceptions
 
 - Throws [`parse_error.101`](../home/exceptions.md#jsonexceptionparse_error101) in case of an unexpected token.
-- Throws [`parse_error.102`](../home/exceptions.md#jsonexceptionparse_error102) if `to_unicode` fails or surrogate error.
-- Throws [`parse_error.103`](../home/exceptions.md#jsonexceptionparse_error103) if `to_unicode` fails.
 
 ## Complexity
 
@@ -31,6 +29,55 @@ Linear in the length of the input. The parser is a predictive LL(1) parser.
 ## Notes
 
 A UTF-8 byte order mark is silently ignored.
+
+Invalid Unicode escapes and unpaired surrogates in the input are reported as
+[`parse_error.101`](../home/exceptions.md#jsonexceptionparse_error101) with a detailed message.
+
+`operator>>` parses exactly one JSON value, so it can be called repeatedly to read a sequence of concatenated JSON
+values from the same stream:
+
+```cpp
+json j1, j2;
+input >> j1;  // parses the first value
+input >> j2;  // parses the next value
+```
+
+!!! warning "A number must be followed by whitespace"
+
+    A number is only terminated by the character that follows it. That character is read from the stream to detect the
+    end of the number, and it is **not** put back. When a value that is a number is immediately followed by the next
+    value, the first character of that next value is lost:
+
+    ```cpp
+    std::istringstream input("1true");
+    json j1, j2;
+    input >> j1;  // j1 == 1
+    input >> j2;  // throws parse_error.101: the stream now starts at "rue"
+    ```
+
+    Separating the values with whitespace avoids this, because the character that is eaten is then the separator:
+
+    ```cpp
+    std::istringstream input("1 true");
+    json j1, j2;
+    input >> j1;  // j1 == 1
+    input >> j2;  // j2 == true
+    ```
+
+    Only numbers are affected. Values ending in a self-delimiting character do not read past themselves, so
+    `truefalse`, `[1][2]`, `{"a":1}{"b":2}`, and `"a""b"` can be read back to back without a separator.
+
+    This is tracked in [#5340](https://github.com/nlohmann/json/issues/5340).
+
+Note that reading concatenated values does **not** work for [JSON Lines](../features/parsing/json_lines.md)
+(newline-delimited JSON) input -- see that page for why and for the recommended alternative.
+
+By default, a `'\0'` (NUL) byte encountered while reading a value is treated as end of input, rather than as an
+ordinary (and, outside of a string, invalid) byte; see the [FAQ entry](../home/faq.md#nul-bytes-in-the-input) for
+details and the [`JSON_STRICT_NUL_HANDLING`](macros/json_strict_nul_handling.md) macro to opt into rejecting it
+instead. Because `operator>>` only parses a single value and does not require the rest of the stream to be consumed,
+a NUL byte *after* a complete value has no effect on `operator>>` either way; it only matters while a value is still
+being read.
 
 !!! warning "Deprecation"
 
@@ -58,7 +105,11 @@ A UTF-8 byte order mark is silently ignored.
 
 - [accept](basic_json/accept.md) - check if the input is valid JSON
 - [parse](basic_json/parse.md) - deserialize from a compatible input
+- [`JSON_STRICT_NUL_HANDLING`](macros/json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input
+  instead of treating it as end of input
 
 ## Version history
 
-- Added in version 1.0.0. Deprecated in version 3.0.0.
+- Added in version 1.0.0.
+- `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 to optionally reject a NUL byte in the input instead of treating
+  it as end of input; planned to become the default in version 4.0.0.

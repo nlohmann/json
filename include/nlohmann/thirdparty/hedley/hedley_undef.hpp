@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #pragma once
@@ -17,7 +17,7 @@
 #undef JSON_HEDLEY_CLANG_HAS_ATTRIBUTE
 #undef JSON_HEDLEY_CLANG_HAS_BUILTIN
 #undef JSON_HEDLEY_CLANG_HAS_CPP_ATTRIBUTE
-#undef JSON_HEDLEY_CLANG_HAS_DECLSPEC_DECLSPEC_ATTRIBUTE
+#undef JSON_HEDLEY_CLANG_HAS_DECLSPEC_ATTRIBUTE
 #undef JSON_HEDLEY_CLANG_HAS_EXTENSION
 #undef JSON_HEDLEY_CLANG_HAS_FEATURE
 #undef JSON_HEDLEY_CLANG_HAS_WARNING
@@ -108,7 +108,10 @@
 #undef JSON_HEDLEY_PELLES_VERSION_CHECK
 #undef JSON_HEDLEY_PGI_VERSION
 #undef JSON_HEDLEY_PGI_VERSION_CHECK
+#undef JSON_HEDLEY_PRAGMA
 #undef JSON_HEDLEY_PREDICT
+#undef JSON_HEDLEY_PREDICT_FALSE
+#undef JSON_HEDLEY_PREDICT_TRUE
 #undef JSON_HEDLEY_PRINTF_FORMAT
 #undef JSON_HEDLEY_PRIVATE
 #undef JSON_HEDLEY_PUBLIC

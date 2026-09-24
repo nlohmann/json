@@ -21,13 +21,13 @@ The default definitions open and close the `nlohmann` namespace. The precise def
     ```cpp
     namespace nlohmann
     {
-    inline namespace json_abi_v3_11_2
+    inline namespace json_abi_v3_12_0
     {
     ```
 
 2. Default definition of `NLOHMANN_JSON_NAMESPACE_END`:
     ```cpp
-    }  // namespace json_abi_v3_11_2
+    }  // namespace json_abi_v3_12_0
     }  // namespace nlohmann
     ```
 

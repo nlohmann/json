@@ -78,6 +78,7 @@ This method always returns `end()` when executed on a JSON type that is not an o
 
 ## See also
 
+- [count](count.md) returns the number of occurrences of a key
 - [contains](contains.md) checks whether a key exists
 
 ## Version history

@@ -115,15 +115,30 @@ The library uses the following mapping from JSON values types to BJData types ac
     }
     ```
 
-    Likewise, when a JSON object in the above form is serialzed using
-    [`to_bjdata`](../../api/basic_json/to_bjdata.md), it is automatically converted into a compact BJData ND-array. The
-    only exception is, that when the 1-dimensional vector stored in `"_ArraySize_"` contains a single integer or two
-    integers with one being 1, a regular 1-D optimized array is generated.
+    Likewise, when a JSON object in the above form is serialized using
+    [`to_bjdata`](../../api/basic_json/to_bjdata.md), it is automatically converted into a compact BJData ND-array.
+
+    When parsing, an ND-array whose dimension vector is empty, contains a single integer, contains two integers with the
+    first being 1, or contains a 0 is returned as a regular (possibly empty) array rather than an annotated object.
+
+    An object is only converted if the annotation describes a packed array that is parsed back into the same annotated
+    object; otherwise it is serialized as a regular JSON object, so the annotation is never lost in a round trip. This requires
+    all of the following:
+
+    - `"_ArrayType_"` is one of `uint8`, `int8`, `uint16`, `int16`, `uint32`, `int32`, `uint64`, `int64`, `single`,
+      `double`, `char`, or `byte`,
+    - `"_ArraySize_"` is an array, since the dimensions are written as the ND-array header's length,
+    - `"_ArraySize_"` has at least two entries and is not a 1×N row vector (first entry 1), since other shapes are
+      parsed back as a regular array,
+    - every entry of `"_ArraySize_"` is a positive integer, and their product is representable as a `std::size_t`,
+    - `"_ArrayData_"` is an array holding exactly that many elements, and
+    - every element of `"_ArrayData_"` is a number of the kind named by `"_ArrayType_"` (a floating-point number for
+      `single` and `double`, an integer otherwise).
 
     The current version of this library does not yet support automatic detection of and conversion from a nested JSON
     array input to a BJData ND-array.
 
-    [JDataAAFmt]: https://github.com/NeuroJSON/jdata/blob/master/JData_specification.md#annotated-storage-of-n-d-arrays)
+    [JDataAAFmt]: https://github.com/NeuroJSON/jdata/blob/master/JData_specification.md#annotated-storage-of-n-d-arrays
 
 !!! info "Restrictions in optimized data types for arrays and objects"
 
@@ -146,7 +161,7 @@ The library uses the following mapping from JSON values types to BJData types ac
     suggested by the BJData documentation. In particular, this means that the serialization and the deserialization of
     JSON containing binary values into BJData and back will result in a different JSON object.
 
-    [BJDataBinArr]: https://github.com/NeuroJSON/bjdata/blob/master/Binary_JData_Specification.md#optimized-binary-array)
+    [BJDataBinArr]: https://github.com/NeuroJSON/bjdata/blob/master/Binary_JData_Specification.md#optimized-binary-array
 
 ??? example
 

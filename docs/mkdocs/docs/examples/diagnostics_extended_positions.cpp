@@ -6,7 +6,7 @@
 
 using json = nlohmann::json;
 
-/* Demonstration of type error exception with diagnostic postions support enabled */
+/* Demonstration of type error exception with diagnostic positions support enabled */
 int main()
 {
     //Invalid json string - housenumber type must be int instead of string

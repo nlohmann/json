@@ -17,6 +17,8 @@ ValueType value(const json_pointer& ptr,
                 const ValueType& default_value) const;
 ```
 
+This is equivalent to Python's `dict.get(key, default)`.
+
 1. Returns either a copy of an object's element at the specified key `key` or a given default value if no element with
    key `key` exists.
    
@@ -94,8 +96,12 @@ changes to any JSON value.
 3. The function can throw the following exceptions:
     - Throws [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) if `default_value` does not match
       the type of the value at `ptr`
-    - Throws [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) if the JSON value is not an object;
-      in that case, using `value()` with a key makes no sense.
+    - Throws [`type_error.306`](../../home/exceptions.md#jsonexceptiontype_error306) if the JSON value is not an array
+      or object; in that case, using `value()` with a JSON pointer makes no sense.
+    - Throws [`parse_error.106`](../../home/exceptions.md#jsonexceptionparse_error106) if an array index in the passed
+      JSON pointer `ptr` begins with '0'.
+    - Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) if an array index in the passed
+      JSON pointer `ptr` is not a number.
 
 ## Complexity
 
@@ -110,7 +116,7 @@ changes to any JSON value.
     The value function is a template, and the return type of the function is determined by the type of the provided
     default value unless otherwise specified. This can have unexpected effects. In the example below, we store a 64-bit
     unsigned integer. We get exactly that value when using [`operator[]`](operator[].md). However, when we call `value`
-    and provide `#!c 0` as default value, then `#!c -1` is returned. The occurs, because `#!c 0` has type `#!c int`
+    and provide `#!c 0` as default value, then `#!c -1` is returned. This occurs, because `#!c 0` has type `#!c int`
     which overflows when handling the value `#!c 18446744073709551615`.
 
     To address this issue, either provide a correctly typed default value or use the template parameter to specify the
@@ -180,4 +186,6 @@ changes to any JSON value.
 
 1. Added in version 1.0.0. Changed parameter `default_value` type from `const ValueType&` to `ValueType&&` in version 3.11.0.
 2. Added in version 3.11.0. Made `ValueType` the first template parameter in version 3.11.2.
-3. Added in version 2.0.2.
+3. Added in version 2.0.2. Extended to work with arrays in version 3.13.0, including fixing an issue where resolving
+   `ptr` through an array unexpectedly threw `out_of_range` instead of returning the resolved element (or
+   `default_value`, as documented).

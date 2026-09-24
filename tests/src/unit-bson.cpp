@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -11,11 +11,82 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <cstdint>
 #include <fstream>
 #include <limits>
 #include <sstream>
+#include <vector>
 #include "make_test_data_available.hpp"
 #include "test_utils.hpp"
+
+namespace
+{
+// a binary container that reports a size beyond INT32_MAX without allocating
+// that much memory, so the BSON length overflow can be tested cheaply
+class huge_binary_t : public std::vector<std::uint8_t>
+{
+  public:
+    using std::vector<std::uint8_t>::vector;
+
+    size_type size() const noexcept // NOLINT(readability-convert-member-functions-to-static)
+    {
+        // one byte more than the BSON length field can represent
+        return static_cast<size_type>((std::numeric_limits<std::int32_t>::max)()) + 1;
+    }
+};
+
+using huge_binary_json = nlohmann::basic_json <
+                         std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
+                         double, std::allocator, nlohmann::adl_serializer, huge_binary_t, void >;
+
+// a string type that can be made to report a size beyond INT32_MAX without
+// allocating that much memory, so BSON length overflow can be tested for
+// strings and (embedded) documents as well, following the same idea as
+// huge_binary_t.
+//
+// Unlike huge_binary_t (which is only ever used as the BSON *value* type),
+// this type doubles as basic_json's StringType and is therefore also used
+// for *object keys* (e.g. "s" or "nested" below). Only the designated test
+// value is meant to lie about its size - if every huge_string_t (including
+// keys) reported a huge size, the running totals computed while walking the
+// BSON document (see calc_bson_object_size & friends in binary_writer.hpp)
+// would need more than 32 bits, and on platforms where std::size_t is only
+// 32 bits wide that arithmetic would silently wrap around, producing wrong
+// (or even unguarded) lengths. The fake size is therefore opt-in via
+// as_huge(), and plain strings - in particular object keys - keep reporting
+// their real, small size.
+class huge_string_t : public std::string
+{
+  public:
+    using std::string::string;
+    huge_string_t(const std::string& s) : std::string(s) {} // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
+
+    // returns a copy of @a s whose size() pretends to be huge
+    static huge_string_t as_huge(const std::string& s)
+    {
+        huge_string_t result(s);
+        result.pretend_huge = true;
+        return result;
+    }
+
+    size_type size() const noexcept
+    {
+        if (pretend_huge)
+        {
+            // one byte more than the BSON length field can represent
+            return static_cast<size_type>((std::numeric_limits<std::int32_t>::max)()) + 1;
+        }
+        return std::string::size();
+    }
+
+  private:
+    bool pretend_huge = false;
+};
+
+using huge_string_json = nlohmann::basic_json <
+                         std::map, std::vector, huge_string_t, bool, std::int64_t, std::uint64_t,
+                         double, std::allocator, nlohmann::adl_serializer, std::vector<std::uint8_t>, void >;
+} // namespace
 
 TEST_CASE("BSON")
 {
@@ -78,6 +149,40 @@ TEST_CASE("BSON")
 #else
         CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.out_of_range.409] BSON key cannot contain code point U+0000 (at byte 2)", json::out_of_range&);
 #endif
+    }
+
+    SECTION("lengths exceeding INT32_MAX cannot be serialized to BSON")
+    {
+        // out_of_range.412 is thrown from a single shared helper
+        // (to_bson_length) that guards the BSON length fields of binary
+        // values, strings, and (embedded) documents alike
+        SECTION("binary")
+        {
+            huge_binary_json j;
+            j["b"] = huge_binary_json::binary(huge_binary_t{});
+
+            CHECK_THROWS_WITH_AS(huge_binary_json::to_bson(j), "[json.exception.out_of_range.412] BSON length 2147483661 exceeds maximum of 2147483647", huge_binary_json::out_of_range&);
+        }
+
+        SECTION("string")
+        {
+            huge_string_json j;
+            j["s"] = huge_string_t::as_huge("value");
+
+            CHECK_THROWS_WITH_AS(huge_string_json::to_bson(j), "[json.exception.out_of_range.412] BSON length 2147483661 exceeds maximum of 2147483647", huge_string_json::out_of_range&);
+        }
+
+        SECTION("document")
+        {
+            // an oversized string nested one level deep makes the
+            // *embedded* document's own length exceed INT32_MAX as well
+            huge_string_json nested;
+            nested["s"] = huge_string_t::as_huge("value");
+            huge_string_json j;
+            j["nested"] = nested;
+
+            CHECK_THROWS_WITH_AS(huge_string_json::to_bson(j), "[json.exception.out_of_range.412] BSON length 2147483674 exceeds maximum of 2147483647", huge_string_json::out_of_range&);
+        }
     }
 
     SECTION("string length must be at least 1")
@@ -160,6 +265,23 @@ TEST_CASE("BSON")
             // roundtrip
             CHECK(json::from_bson(result) == j);
             CHECK(json::from_bson(result, true, false) == j);
+        }
+
+        SECTION("non-empty object with bool from a non-0/1 byte (lenient parsing)")
+        {
+            // documented lenient behavior (see gh-5333): any non-zero byte
+            // is accepted as `true`, not just 0x01
+            std::vector<std::uint8_t> const input =
+            {
+                0x0D, 0x00, 0x00, 0x00, // size (little endian)
+                0x08,               // entry: boolean
+                'e', 'n', 't', 'r', 'y', '\x00',
+                0x02,           // value = 0x02 (neither 0x00 nor 0x01)
+                0x00                    // end marker
+            };
+
+            const json expected = { { "entry", true } };
+            CHECK(json::from_bson(input) == expected);
         }
 
         SECTION("non-empty object with double")
@@ -468,6 +590,29 @@ TEST_CASE("BSON")
             CHECK(json::from_bson(result, true, false) == j);
         }
 
+        SECTION("array elements with non-conforming keys (lenient parsing)")
+        {
+            // documented lenient behavior (see gh-5333): BSON array element
+            // keys are not checked against the required decimal sequence
+            // "0", "1", "2", ... - elements are taken in encoded order
+            std::vector<std::uint8_t> const input =
+            {
+                0x26, 0x00, 0x00, 0x00, // size (little endian)
+                0x04, 'e', 'n', 't', 'r', 'y', '\x00', // entry: embedded array
+
+                0x1A, 0x00, 0x00, 0x00, // size (little endian)
+                0x10, '5', 0x00, 0x0A, 0x00, 0x00, 0x00, // key "5" (bogus)      -> 10
+                0x10, 'x', 0x00, 0x14, 0x00, 0x00, 0x00, // key "x" (non-numeric) -> 20
+                0x10, '1', 0x00, 0x1E, 0x00, 0x00, 0x00, // key "1" (out of order) -> 30
+                0x00, // end marker (embedded array)
+
+                0x00 // end marker
+            };
+
+            const json expected = { { "entry", json::array({10, 20, 30}) } };
+            CHECK(json::from_bson(input) == expected);
+        }
+
         SECTION("non-empty object with binary member")
         {
             const size_t N = 10;
@@ -498,6 +643,41 @@ TEST_CASE("BSON")
             CHECK(json::from_bson(result, true, false) == j);
         }
 
+        SECTION("non-empty object with binary member without subtype")
+        {
+            const size_t N = 10;
+            const auto s = std::vector<std::uint8_t>(N, 'x');
+            json const j =
+            {
+                { "entry", json::binary(s) }
+            };
+
+            CHECK(!j.at("entry").get_binary().has_subtype());
+
+            std::vector<std::uint8_t> const expected =
+            {
+                0x1B, 0x00, 0x00, 0x00, // size (little endian)
+                0x05, // entry: binary
+                'e', 'n', 't', 'r', 'y', '\x00',
+
+                0x0A, 0x00, 0x00, 0x00, // size of binary (little endian)
+                0x00, // Generic binary subtype
+                0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78, 0x78,
+
+                0x00 // end marker
+            };
+
+            const auto result = json::to_bson(j);
+            CHECK(result == expected);
+
+            // roundtrip adds the generic binary subtype
+            const auto roundtrip = json::from_bson(result);
+            CHECK(roundtrip != j);
+            CHECK(roundtrip.at("entry").get_binary().has_subtype());
+            CHECK(roundtrip.at("entry").get_binary().subtype() == 0);
+            CHECK(json::from_bson(result, true, false) == roundtrip);
+        }
+
         SECTION("non-empty object with binary member with subtype")
         {
             // an MD5 hash
@@ -526,6 +706,31 @@ TEST_CASE("BSON")
             // roundtrip
             CHECK(json::from_bson(result) == j);
             CHECK(json::from_bson(result, true, false) == j);
+        }
+
+        SECTION("binary member with subtype 0x02 (old binary) keeps its inner length prefix (lenient parsing)")
+        {
+            // documented lenient behavior (see gh-5333): the payload for
+            // binary subtype 0x02 ("old binary") is returned as-is,
+            // including its own inner 4-byte length prefix; it is not
+            // stripped or reinterpreted
+            std::vector<std::uint8_t> const input =
+            {
+                0x17, 0x00, 0x00, 0x00, // size (little endian)
+                0x05, 'e', 'n', 't', 'r', 'y', '\x00', // entry: binary
+
+                0x06, 0x00, 0x00, 0x00, // size of binary (little endian)
+                0x02, // "old binary" subtype
+                0x02, 0x00, 0x00, 0x00, // inner length prefix (part of the old-binary payload)
+                0x68, 0x69, // payload ('h', 'i')
+
+                0x00 // end marker
+            };
+
+            // the inner length prefix is part of the (unmodified) payload
+            const std::vector<std::uint8_t> expected_payload = {0x02, 0x00, 0x00, 0x00, 0x68, 0x69};
+            const json expected = { { "entry", json::binary(expected_payload, 0x02) } };
+            CHECK(json::from_bson(input) == expected);
         }
 
         SECTION("Some more complex document")
@@ -584,6 +789,15 @@ TEST_CASE("BSON")
             CHECK(json::from_bson(dumped) == expected);
         }
     }
+}
+
+TEST_CASE("regression test - BSON binary subtype rejects a value that doesn't fit a single byte")
+{
+    json const doc255 = {{"b", json::binary({1, 2}, 255)}};
+    CHECK(json::from_bson(json::to_bson(doc255))["b"].get_binary().subtype() == 255);
+
+    CHECK_THROWS_AS(json::to_bson(json{{"b", json::binary({1, 2}, 256)}}), json::out_of_range);
+    CHECK_THROWS_WITH_AS(json::to_bson(json{{"b", json::binary({1, 2}, 300)}}), "[json.exception.out_of_range.415] subtype 300 is too large for the BSON binary subtype (max 255)", json::out_of_range);
 }
 
 TEST_CASE("BSON input/output_adapters")
@@ -794,6 +1008,41 @@ TEST_CASE("Incomplete BSON Input")
         CHECK(!json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
     }
 
+    SECTION("Incomplete BSON Input 5")
+    {
+        std::vector<std::uint8_t> const incomplete_bson =
+        {
+            0x09, 0x00, 0x00, 0x00, // size (little endian)
+            0x08,                   // entry: boolean
+            'b', '\x00'             // key, unexpected EOF before the value
+        };
+
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(incomplete_bson), "[json.exception.parse_error.110] parse error at byte 8: syntax error while parsing BSON number: unexpected end of input", json::parse_error&);
+        CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
+
+        SaxCountdown scp(0);
+        CHECK(!json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+    }
+
+    SECTION("Incomplete BSON Input 6")
+    {
+        std::vector<std::uint8_t> const incomplete_bson =
+        {
+            0x0F, 0x00, 0x00, 0x00, // size (little endian)
+            0x05,                   // entry: binary
+            'b', '\x00',            // key
+            0x00, 0x00, 0x00, 0x00  // length, unexpected EOF before the subtype
+        };
+
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(incomplete_bson), "[json.exception.parse_error.110] parse error at byte 12: syntax error while parsing BSON number: unexpected end of input", json::parse_error&);
+        CHECK(json::from_bson(incomplete_bson, true, false).is_discarded());
+
+        SaxCountdown scp(0);
+        CHECK(!json::sax_parse(incomplete_bson, &scp, json::input_format_t::bson));
+    }
+
     SECTION("Improve coverage")
     {
         SECTION("key")
@@ -852,6 +1101,147 @@ TEST_CASE("Unsupported BSON input")
 
     SaxCountdown scp(0);
     CHECK(!json::sax_parse(bson, &scp, json::input_format_t::bson));
+}
+
+TEST_CASE("BSON document size mismatch")
+{
+    json _;
+
+    SECTION("top-level document declaring more bytes than it contains")
+    {
+        // empty object, but the length prefix claims 6 bytes instead of 5
+        std::vector<std::uint8_t> const input = {0x06, 0x00, 0x00, 0x00, 0x00};
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: document size 6 does not match the number of bytes read (5)", json::parse_error&);
+        CHECK(json::from_bson(input, true, false).is_discarded());
+    }
+
+    SECTION("top-level document with a negative size")
+    {
+        std::vector<std::uint8_t> const input = {0xFF, 0xFF, 0xFF, 0xFF, 0x00};
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: document size -1 does not match the number of bytes read (5)", json::parse_error&);
+        CHECK(json::from_bson(input, true, false).is_discarded());
+    }
+
+    SECTION("embedded document whose size disagrees with its terminator")
+    {
+        // the embedded document "d" declares 0x7FFFFFFF bytes but its 0x00
+        // terminator falls right after {"a":null}; the length prefix would
+        // otherwise let the following "h" element be read as a member of the
+        // enclosing document instead of "d"
+        std::vector<std::uint8_t> const input =
+        {
+            0x00, 0x00, 0x00, 0x00, // outer size
+            0x03, 'd', 0x00,        // entry: embedded document "d"
+            0xFF, 0xFF, 0xFF, 0x7F, //   embedded size 0x7FFFFFFF
+            0x0A, 'a', 0x00,        //   entry: null "a"
+            0x00,                   //   embedded end marker
+            0x08, 'h', 0x00, 0x01,  // entry: bool "h" = true
+            0x00                    // outer end marker
+        };
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 15: syntax error while parsing BSON document: document size 2147483647 does not match the number of bytes read (8)", json::parse_error&);
+        CHECK(json::from_bson(input, true, false).is_discarded());
+    }
+
+    SECTION("embedded array whose size disagrees with its terminator")
+    {
+        // array [42] is 12 bytes, but the length prefix claims 13
+        std::vector<std::uint8_t> const input =
+        {
+            0x00, 0x00, 0x00, 0x00, // outer size
+            0x04, 'a', 0x00,        // entry: array "a"
+            0x0D, 0x00, 0x00, 0x00, //   array size 13 (real is 12)
+            0x10, '0', 0x00, 0x2A, 0x00, 0x00, 0x00, //   entry: int32 "0" = 42
+            0x00,                   //   array end marker
+            0x00                    // outer end marker
+        };
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(input), "[json.exception.parse_error.112] parse error at byte 19: syntax error while parsing BSON document: document size 13 does not match the number of bytes read (12)", json::parse_error&);
+        CHECK(json::from_bson(input, true, false).is_discarded());
+    }
+}
+
+TEST_CASE("BSON nesting does not consume the call stack")
+{
+    // An embedded document or array used to be read by calling back into the
+    // document reader, so the native call stack grew with the nesting depth of
+    // the input (#5104). The open documents are kept on a heap stack now.
+    //
+    // Deeply nested values must not be compared, copied or dumped here: those
+    // operations are still recursive and would reintroduce the crash.
+
+    // A document nested deeply enough to have crashed. The bytes are built
+    // here rather than with to_bson(), because the writer still recurses once
+    // per level and would overflow the stack before the reader is ever
+    // reached. Every level is
+    //     <int32 size> 0x03 'a' 0x00 <inner document> 0x00
+    // so a level is eight bytes larger than the one it holds, and the sizes
+    // can be filled in from the outside in.
+    const std::size_t depth = 30000;
+    std::vector<uint8_t> input;
+    input.reserve(5 + (8 * depth));
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        const auto size = static_cast<std::uint32_t>(5 + (8 * (depth - i)));
+        input.push_back(static_cast<uint8_t>(size & 0xFF));
+        input.push_back(static_cast<uint8_t>((size >> 8) & 0xFF));
+        input.push_back(static_cast<uint8_t>((size >> 16) & 0xFF));
+        input.push_back(static_cast<uint8_t>((size >> 24) & 0xFF));
+        input.push_back(0x03); // embedded document
+        input.push_back('a');
+        input.push_back(0x00);
+    }
+    // the innermost document is empty, then one terminator closes each level
+    input.insert(input.end(), {0x05, 0x00, 0x00, 0x00, 0x00});
+    input.insert(input.end(), depth, 0x00);
+
+    SECTION("a well-formed deep document is read through the SAX interface")
+    {
+        SaxCountdown accept_all(1000000);
+        CHECK(json::sax_parse(input, &accept_all, json::input_format_t::bson));
+    }
+
+    SECTION("a well-formed deep document is read into a value")
+    {
+        json j = json::from_bson(input);
+
+        // walked rather than compared: comparing, copying or dumping a value
+        // this deep is still recursive
+        std::size_t measured = 0;
+        const json* q = &j;
+        while (q->is_object() && !q->empty())
+        {
+            q = &q->begin().value();
+            ++measured;
+        }
+        CHECK(measured == depth);
+    }
+
+    SECTION("embedded documents and arrays are still read the same way")
+    {
+        const json values = {{"a", {{"b", {{"c", 1}}}}}};
+        CHECK(json::from_bson(json::to_bson(values)) == values);
+
+        const json array = {{"a", {1, 2, 3}}};
+        CHECK(json::from_bson(json::to_bson(array)) == array);
+
+        const json mixed = {{"a", {json{{"x", 1}}, json{{"y", 2}}}}};
+        CHECK(json::from_bson(json::to_bson(mixed)) == mixed);
+
+        CHECK(json::from_bson(json::to_bson(json::object())) == json::object());
+    }
+
+    SECTION("a size that does not match is still reported per document")
+    {
+        // the embedded document claims one byte too many
+        std::vector<uint8_t> const bad =
+        {
+            0x15, 0x00, 0x00, 0x00, 0x03, 'a', 0x00,
+            0x0D, 0x00, 0x00, 0x00, 0x08, 'b', 0x00, 0x01, 0x00,
+            0x00
+        };
+        json _;
+        CHECK_THROWS_AS(_ = json::from_bson(bad), json::parse_error&);
+        CHECK(json::from_bson(bad, true, false).is_discarded());
+    }
 }
 
 TEST_CASE("BSON numerical data")
@@ -1206,6 +1596,19 @@ TEST_CASE("BSON numerical data")
 
         }
     }
+}
+
+TEST_CASE("Parse BSON directly from a file using iterator and sentinel")
+{
+    std::string const filename = TEST_DATA_DIRECTORY "/json.org/1.json";
+
+    std::ifstream f_json(filename);
+    const json expected = json::parse(f_json);
+
+    std::ifstream file(filename + ".bson", std::ios::binary);
+    const std::istreambuf_iterator<char> first(file);
+    const json parsed = json::from_bson(first, utils::istreambuf_sentinel{});
+    CHECK(parsed == expected);
 }
 
 TEST_CASE("BSON roundtrips" * doctest::skip())

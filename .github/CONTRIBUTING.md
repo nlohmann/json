@@ -108,7 +108,9 @@ The tests are located in [`tests/src/unit-*.cpp`](https://github.com/nlohmann/js
 are structured along the features of the library or the nature of the tests. Usually, it should be clear from the
 context which existing file needs to be extended, and only very few cases require creating new test files.
 
-When fixing a bug, edit `unit-regression2.cpp` and add a section referencing the fixed issue.
+When fixing a bug, edit `unit-regression3.cpp` and add a section referencing the fixed issue.
+`unit-regression2.cpp` holds the older tests; the two files exist because a single one grew large enough for the
+MinGW linker to fail relocating it, so please keep adding to the smaller file rather than growing the larger one.
 
 #### Exceptions
 
@@ -152,6 +154,18 @@ files directly; instead, modify the include/nlohmann sources and regenerate the 
 ```shell
 make amalgamate
 ```
+
+Running `make amalgamate` will also apply automatic formatting to the source files using
+[`Artistic Style`](https://astyle.sourceforge.net/). This formatting may modify your source files in-place. Be certain to review and commit any changes to avoid unintended formatting diffs in commits.
+
+If you add, rename, or remove a header in `include/nlohmann`, also regenerate the header list in
+[`BUILD.bazel`](https://github.com/nlohmann/json/blob/develop/BUILD.bazel) (requires CMake) by executing:
+
+```shell
+make BUILD.bazel
+```
+
+The amalgamation check in CI fails if any of these generated files is out of date.
 
 ## Recommended documentation
 

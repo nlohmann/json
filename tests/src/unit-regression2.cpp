@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 // cmake/test.cmake selects the C++ standard versions with which to build a
@@ -30,6 +30,8 @@ using ordered_json = nlohmann::ordered_json;
 #include <list>
 #include <type_traits>
 #include <utility>
+
+#include "test_utils.hpp"
 
 #ifdef JSON_HAS_CPP_17
     #include <any>
@@ -64,6 +66,21 @@ using ordered_json = nlohmann::ordered_json;
     #if __has_include(<span>)
         #include <span>
     #endif
+#endif
+
+/////////////////////////////////////////////////////////////////////
+// for #4825 - explicitly instantiating basic_json must compile; this
+// forces instantiation of binary_writer::write_bjdata_ndarray, whose
+// static_cast<string_t> was ambiguous under explicit instantiation on
+// C++17. Merely compiling this translation unit is the regression test.
+/////////////////////////////////////////////////////////////////////
+template class nlohmann::basic_json<>;
+
+/////////////////////////////////////////////////////////////////////
+// for #4440
+/////////////////////////////////////////////////////////////////////
+#if JSON_HAS_RANGES == 1
+    #include <ranges>
 #endif
 
 // NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair
@@ -223,209 +240,6 @@ class my_allocator : public std::allocator<T>
         using other = my_allocator<U>;
     };
 };
-
-/////////////////////////////////////////////////////////////////////
-// for #3077
-/////////////////////////////////////////////////////////////////////
-
-class FooAlloc
-{};
-
-class Foo
-{
-  public:
-    explicit Foo(const FooAlloc& /* unused */ = FooAlloc()) {}
-
-    bool value = false;
-};
-
-class FooBar
-{
-  public:
-    Foo foo{}; // NOLINT(readability-redundant-member-init)
-};
-
-inline void from_json(const nlohmann::json& j, FooBar& fb) // NOLINT(misc-use-internal-linkage)
-{
-    j.at("value").get_to(fb.foo.value);
-}
-
-/////////////////////////////////////////////////////////////////////
-// for #3171
-/////////////////////////////////////////////////////////////////////
-
-struct for_3171_base // NOLINT(cppcoreguidelines-special-member-functions)
-{
-    for_3171_base(const std::string& /*unused*/ = {}) {}
-    virtual ~for_3171_base();
-
-    for_3171_base(const for_3171_base& other) // NOLINT(hicpp-use-equals-default,modernize-use-equals-default)
-        : str(other.str)
-    {}
-
-    for_3171_base& operator=(const for_3171_base& other)
-    {
-        if (this != &other)
-        {
-            str = other.str;
-        }
-        return *this;
-    }
-
-    for_3171_base(for_3171_base&& other) noexcept
-        : str(std::move(other.str))
-    {}
-
-    for_3171_base& operator=(for_3171_base&& other) noexcept
-    {
-        if (this != &other)
-        {
-            str = std::move(other.str);
-        }
-        return *this;
-    }
-
-    virtual void _from_json(const json& j)
-    {
-        j.at("str").get_to(str);
-    }
-
-    std::string str{}; // NOLINT(readability-redundant-member-init)
-};
-
-for_3171_base::~for_3171_base() = default;
-
-struct for_3171_derived : public for_3171_base
-{
-    for_3171_derived() = default;
-    ~for_3171_derived() override;
-    explicit for_3171_derived(const std::string& /*unused*/) { }
-
-    for_3171_derived(const for_3171_derived& other) // NOLINT(hicpp-use-equals-default,modernize-use-equals-default)
-        : for_3171_base(other)
-    {}
-
-    for_3171_derived& operator=(const for_3171_derived& other)
-    {
-        if (this != &other)
-        {
-            for_3171_base::operator=(other); // Call base class assignment operator
-        }
-        return *this;
-    }
-
-    for_3171_derived(for_3171_derived&& other) noexcept
-        : for_3171_base(std::move(other))
-    {}
-
-    for_3171_derived& operator=(for_3171_derived&& other) noexcept
-    {
-        if (this != &other)
-        {
-            for_3171_base::operator=(std::move(other)); // Call base class move assignment operator
-        }
-        return *this;
-    }
-};
-
-for_3171_derived::~for_3171_derived() = default;
-
-inline void from_json(const json& j, for_3171_base& tb) // NOLINT(misc-use-internal-linkage)
-{
-    tb._from_json(j);
-}
-
-/////////////////////////////////////////////////////////////////////
-// for #3312
-/////////////////////////////////////////////////////////////////////
-
-#ifdef JSON_HAS_CPP_20
-struct for_3312
-{
-    std::string name;
-};
-
-inline void from_json(const json& j, for_3312& obj) // NOLINT(misc-use-internal-linkage)
-{
-    j.at("name").get_to(obj.name);
-}
-#endif
-
-/////////////////////////////////////////////////////////////////////
-// for #3204
-/////////////////////////////////////////////////////////////////////
-
-struct for_3204_foo
-{
-    for_3204_foo() = default;
-    explicit for_3204_foo(std::string /*unused*/) {} // NOLINT(performance-unnecessary-value-param)
-};
-
-struct for_3204_bar
-{
-    enum constructed_from_t
-    {
-        constructed_from_none = 0,
-        constructed_from_foo = 1,
-        constructed_from_json = 2
-    };
-
-    explicit for_3204_bar(std::function<void(for_3204_foo)> /*unused*/) noexcept // NOLINT(performance-unnecessary-value-param)
-        : constructed_from(constructed_from_foo) {}
-    explicit for_3204_bar(std::function<void(json)> /*unused*/) noexcept // NOLINT(performance-unnecessary-value-param)
-        : constructed_from(constructed_from_json) {}
-
-    constructed_from_t constructed_from = constructed_from_none;
-};
-
-/////////////////////////////////////////////////////////////////////
-// for #3333
-/////////////////////////////////////////////////////////////////////
-
-struct for_3333 final
-{
-    for_3333(int x_ = 0, int y_ = 0) : x(x_), y(y_) {}
-
-    template <class T>
-    for_3333(const T& /*unused*/)
-    {
-        CHECK(false);
-    }
-
-    int x = 0;
-    int y = 0;
-};
-
-template <>
-inline for_3333::for_3333(const json& j)
-    : for_3333(j.value("x", 0), j.value("y", 0))
-{}
-
-/////////////////////////////////////////////////////////////////////
-// for #3810
-/////////////////////////////////////////////////////////////////////
-
-struct Example_3810
-{
-    int bla{};
-
-    Example_3810() = default;
-};
-
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Example_3810, bla) // NOLINT(misc-use-internal-linkage)
-
-/////////////////////////////////////////////////////////////////////
-// for #4740
-/////////////////////////////////////////////////////////////////////
-
-#ifdef JSON_HAS_CPP_17
-struct Example_4740
-{
-    std::optional<std::string> host = std::nullopt;
-    std::optional<int> port = std::nullopt;
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Example_4740, host, port)
-};
-#endif
 
 TEST_CASE("regression tests 2")
 {
@@ -624,7 +438,8 @@ TEST_CASE("regression tests 2")
                 s += static_cast<char>(i);
             }
             dump_test["1"] = s;
-            dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace);
+            // dump() is nodiscard; this only checks that dumping does not throw/crash
+            utils::ignore_return_value(dump_test.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace));
         }
     }
 
@@ -716,12 +531,14 @@ TEST_CASE("regression tests 2")
     {
         const std::array<unsigned char, 23> data = {{0x81, 0xA4, 0x64, 0x61, 0x74, 0x61, 0xC4, 0x0F, 0x33, 0x30, 0x30, 0x32, 0x33, 0x34, 0x30, 0x31, 0x30, 0x37, 0x30, 0x35, 0x30, 0x31, 0x30}};
         const json j = json::from_msgpack(data.data(), data.size());
+        // dump() is nodiscard; this only checks that dumping does not throw
         CHECK_NOTHROW(
-            j.dump(4,                             // Indent
-                   ' ',                           // Indent char
-                   false,                         // Ensure ascii
-                   json::error_handler_t::strict  // Error
-                  ));
+            utils::ignore_return_value(
+                j.dump(4,                             // Indent
+                       ' ',                           // Indent char
+                       false,                         // Ensure ascii
+                       json::error_handler_t::strict  // Error
+                      )));
     }
 
     SECTION("PR #2181 - regression bug with lvalue")
@@ -783,11 +600,17 @@ TEST_CASE("regression tests 2")
 
 #ifdef JSON_HAS_CPP_20
 #ifndef _LIBCPP_VERSION // see https://github.com/nlohmann/json/issues/4490
-#if __has_include(<span>)
+    // classic Intel ICC reports <span> as includable but cannot actually compile
+    // std::span/std::as_bytes usage below
+#if __has_include(<span>) && !defined(__ICC) && !defined(__INTEL_COMPILER)
     SECTION("issue #2546 - parsing containers of std::byte")
     {
         const char DATA[] = R"("Hello, world!")"; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-        const auto s = std::as_bytes(std::span(DATA));
+        // exclude the trailing '\0' that string-literal initialization adds to
+        // DATA: std::span(DATA) would span the full array extent (including
+        // that NUL), which is only silently accepted as end-of-input by default
+        // and would fail under JSON_STRICT_NUL_HANDLING
+        const auto s = std::as_bytes(std::span(DATA, sizeof(DATA) - 1));
         const json j = json::parse(s);
         CHECK(j.dump() == "\"Hello, world!\"");
     }
@@ -942,250 +765,108 @@ TEST_CASE("regression tests 2")
         CHECK(j == k);
     }
 
-#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
-    // JSON_HAS_CPP_17 (do not remove; see note at top of file)
-    SECTION("issue #3070 - Version 3.10.3 breaks backward-compatibility with 3.10.2 ")
-    {
-        nlohmann::detail::std_fs::path text_path("/tmp/text.txt");
-        const json j(text_path);
-
-        const auto j_path = j.get<nlohmann::detail::std_fs::path>();
-        CHECK(j_path == text_path);
-
-#if DOCTEST_CLANG || DOCTEST_GCC >= DOCTEST_COMPILER(8, 4, 0)
-        // only known to work on Clang and GCC >=8.4
-        CHECK_THROWS_WITH_AS(nlohmann::detail::std_fs::path(json(1)), "[json.exception.type_error.302] type must be string, but is number", json::type_error);
-#endif
-    }
-#endif
-
-    SECTION("issue #3077 - explicit constructor with default does not compile")
-    {
-        json j;
-        j[0]["value"] = true;
-        std::vector<FooBar> foo;
-        j.get_to(foo);
-    }
-
-    SECTION("issue #3108 - ordered_json doesn't support range based erase")
-    {
-        ordered_json j = {1, 2, 2, 4};
-
-        auto last = std::unique(j.begin(), j.end());
-        j.erase(last, j.end());
-
-        CHECK(j.dump() == "[1,2,4]");
-
-        j.erase(std::remove_if(j.begin(), j.end(), [](const ordered_json & val)
-        {
-            return val == 2;
-        }), j.end());
-
-        CHECK(j.dump() == "[1,4]");
-    }
-
-    SECTION("issue #3343 - json and ordered_json are not interchangeable")
-    {
-        json::object_t jobj({ { "product", "one" } });
-        ordered_json::object_t ojobj({{"product", "one"}});
-
-        auto jit = jobj.begin();
-        auto ojit = ojobj.begin();
-
-        CHECK(jit->first == ojit->first);
-        CHECK(jit->second.get<std::string>() == ojit->second.get<std::string>());
-    }
-
-    SECTION("issue #3171 - if class is_constructible from std::string wrong from_json overload is being selected, compilation failed")
-    {
-        const json j{{ "str", "value"}};
-
-        // failed with: error: no match for ‘operator=’ (operand types are ‘for_3171_derived’ and ‘const nlohmann::basic_json<>::string_t’
-        //                                               {aka ‘const std::__cxx11::basic_string<char>’})
-        //                  s = *j.template get_ptr<const typename BasicJsonType::string_t*>();
-        auto td = j.get<for_3171_derived>();
-
-        CHECK(td.str == "value");
-    }
-
-#ifdef JSON_HAS_CPP_20
-    SECTION("issue #3312 - Parse to custom class from unordered_json breaks on G++11.2.0 with C++20")
-    {
-        // see test for #3171
-        const ordered_json j = {{"name", "class"}};
-        for_3312 obj{};
-
-        j.get_to(obj);
-
-        CHECK(obj.name == "class");
-    }
-#endif
-
-#if defined(JSON_HAS_CPP_17) && JSON_USE_IMPLICIT_CONVERSIONS
-    SECTION("issue #3428 - Error occurred when converting nlohmann::json to std::any")
-    {
-        const json j;
-        const std::any a1 = j;
-        std::any&& a2 = j;
-
-        CHECK(a1.type() == typeid(j));
-        CHECK(a2.type() == typeid(j));
-    }
-#endif
-
-    SECTION("issue #3204 - ambiguous regression")
-    {
-        const for_3204_bar bar_from_foo([](for_3204_foo) noexcept {}); // NOLINT(performance-unnecessary-value-param)
-        const for_3204_bar bar_from_json([](json) noexcept {}); // NOLINT(performance-unnecessary-value-param)
-
-        CHECK(bar_from_foo.constructed_from == for_3204_bar::constructed_from_foo);
-        CHECK(bar_from_json.constructed_from == for_3204_bar::constructed_from_json);
-    }
-
-    SECTION("issue #3333 - Ambiguous conversion from nlohmann::basic_json<> to custom class")
-    {
-        const json j
-        {
-            {"x", 1},
-            {"y", 2}
-        };
-        const for_3333 p = j;
-
-        CHECK(p.x == 1);
-        CHECK(p.y == 2);
-    }
-
-    SECTION("issue #3810 - ordered_json doesn't support construction from C array of custom type")
-    {
-        Example_3810 states[45]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-
-        // fix "not used" warning
-        states[0].bla = 1;
-
-        const auto* const expected = R"([{"bla":1},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0}])";
-
-        // This works:
-        nlohmann::json j;
-        j["test"] = states;
-        CHECK(j["test"].dump() == expected);
-
-        // This doesn't compile:
-        nlohmann::ordered_json oj;
-        oj["test"] = states;
-        CHECK(oj["test"].dump() == expected);
-    }
-
-#ifdef JSON_HAS_CPP_17
-    SECTION("issue #4740 - build issue with std::optional")
-    {
-        const auto t1 = Example_4740();
-        const auto j1 = nlohmann::json(t1);
-        CHECK(j1.dump() == "{\"host\":null,\"port\":null}");
-        const auto t2 = j1.get<Example_4740>();
-        CHECK(!t2.host.has_value());
-        CHECK(!t2.port.has_value());
-
-        // improve coverage
-        auto t3 = Example_4740();
-        t3.port = 80;
-        t3.host = "example.com";
-        const auto j2 = nlohmann::json(t3);
-        CHECK(j2.dump() == "{\"host\":\"example.com\",\"port\":80}");
-        const auto t4 = j2.get<Example_4740>();
-        CHECK(t4.host.has_value());
-        CHECK(t4.port.has_value());
-    }
-#endif
-
-#if !defined(_MSVC_LANG)
-    // MSVC returns garbage on invalid enum values, so this test is excluded
-    // there.
-    SECTION("issue #4762 - json exception 302 with unhelpful explanation : type must be number, but is number")
-    {
-        // In #4762, the main issue was that a json object with an invalid type
-        // returned "number" as type_name(), because this was the default case.
-        // This test makes sure we now return "invalid" instead.
-        json j;
-        j.m_data.m_type = static_cast<json::value_t>(100); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
-        CHECK(j.type_name() == "invalid");
-    }
-#endif
-
-#ifdef JSON_HAS_CPP_17
-    SECTION("issue #4804: from_cbor incompatible with std::vector<std::byte> as binary_t")
-    {
-        const std::vector<std::uint8_t> data = {0x80};
-        const auto decoded = json_4804::from_cbor(data);
-        CHECK((decoded == json_4804::array()));
-    }
-#endif
 }
 
-TEST_CASE_TEMPLATE("issue #4798 - nlohmann::json::to_msgpack() encode float NaN as double", T, double, float) // NOLINT(readability-math-missing-parentheses)
+TEST_CASE("regression test - parser callback must not lose a duplicate key's prior value")
 {
-    // With issue #4798, we encode NaN, infinity, and -infinity as float instead
-    // of double to allow for smaller encodings.
-    const json jx = std::numeric_limits<T>::quiet_NaN();
-    const json jy = std::numeric_limits<T>::infinity();
-    const json jz = -std::numeric_limits<T>::infinity();
+    // a callback that rejects only the scalar value 2
+    const json::parser_callback_t drop_value_2 = [](int /*depth*/, json::parse_event_t ev, json & v) noexcept
+    {
+        return !(ev == json::parse_event_t::value && v == 2);
+    };
 
-    /////////////////////////////////////////////////////////////////////////
-    // MessagePack
-    /////////////////////////////////////////////////////////////////////////
+    SECTION("duplicate key, second (scalar) value rejected - prior value is restored")
+    {
+        const json j = json::parse(R"({"a":1,"a":2})", drop_value_2);
+        CHECK(j.dump() == "{\"a\":1}");
+    }
 
-    // expected MessagePack values
-    const std::vector<std::uint8_t> msgpack_x = {{0xCA, 0x7F, 0xC0, 0x00, 0x00}};
-    const std::vector<std::uint8_t> msgpack_y = {{0xCA, 0x7F, 0x80, 0x00, 0x00}};
-    const std::vector<std::uint8_t> msgpack_z = {{0xCA, 0xFF, 0x80, 0x00, 0x00}};
+    SECTION("duplicate key, second value is an object rejected at object_end - prior value is restored")
+    {
+        const json j = json::parse(R"({"a":1,"a":{"x":2}})",
+                                   [](int depth, json::parse_event_t ev, json& /*parsed*/) noexcept
+        {
+            return !(ev == json::parse_event_t::object_end && depth == 1);
+        });
+        CHECK(j.dump() == "{\"a\":1}");
+    }
 
-    CHECK(json::to_msgpack(jx) == msgpack_x);
-    CHECK(json::to_msgpack(jy) == msgpack_y);
-    CHECK(json::to_msgpack(jz) == msgpack_z);
+    SECTION("duplicate key, second value is an array rejected at array_end - prior value is restored")
+    {
+        const json j = json::parse(R"({"a":1,"a":[9,9]})",
+                                   [](int depth, json::parse_event_t ev, json& /*parsed*/) noexcept
+        {
+            return !(ev == json::parse_event_t::array_end && depth == 1);
+        });
+        CHECK(j.dump() == "{\"a\":1}");
+    }
 
-    CHECK(std::isnan(json::from_msgpack(msgpack_x).get<T>()));
-    CHECK(json::from_msgpack(msgpack_y).get<T>() == std::numeric_limits<T>::infinity());
-    CHECK(json::from_msgpack(msgpack_z).get<T>() == -std::numeric_limits<T>::infinity());
+    SECTION("duplicate key, second value accepted (scalar) - last value wins")
+    {
+        const json j = json::parse(R"({"a":1,"a":2})", [](int, json::parse_event_t, json&) noexcept
+        {
+            return true;
+        });
+        CHECK(j.dump() == "{\"a\":2}");
+    }
 
-    // Make sure the other MessagePakc encodings for NaN, infinity, and
-    // -infinity are still supported.
-    const std::vector<std::uint8_t> msgpack_x_2 = {{0xCB, 0x7F, 0xF8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
-    const std::vector<std::uint8_t> msgpack_y_2 = {{0xCB, 0x7F, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
-    const std::vector<std::uint8_t> msgpack_z_2 = {{0xCB, 0xFF, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
-    CHECK(std::isnan(json::from_msgpack(msgpack_x_2).get<T>()));
-    CHECK(json::from_msgpack(msgpack_y_2).get<T>() == std::numeric_limits<T>::infinity());
-    CHECK(json::from_msgpack(msgpack_z_2).get<T>() == -std::numeric_limits<T>::infinity());
+    SECTION("duplicate key, second value accepted (object) - last value wins")
+    {
+        const json j = json::parse(R"({"a":1,"a":{"x":2}})", [](int, json::parse_event_t, json&) noexcept
+        {
+            return true;
+        });
+        CHECK(j.dump() == "{\"a\":{\"x\":2}}");
+    }
 
-    /////////////////////////////////////////////////////////////////////////
-    // CBOR
-    /////////////////////////////////////////////////////////////////////////
+    SECTION("brand new (non-duplicate) key, value rejected - member is fully absent")
+    {
+        const json j = json::parse(R"({"a":1,"b":2})", drop_value_2);
+        CHECK(j.dump() == "{\"a\":1}");
+    }
 
-    // expected CBOR values
-    const std::vector<std::uint8_t> cbor_x = {{0xF9, 0x7E, 0x00}};
-    const std::vector<std::uint8_t> cbor_y = {{0xF9, 0x7C, 0x00}};
-    const std::vector<std::uint8_t> cbor_z = {{0xF9, 0xfC, 0x00}};
+    SECTION("duplicate key nested two levels deep")
+    {
+        const json j = json::parse(R"({"outer":{"a":1,"a":2}})", drop_value_2);
+        CHECK(j.dump() == "{\"outer\":{\"a\":1}}");
+    }
 
-    CHECK(json::to_cbor(jx) == cbor_x);
-    CHECK(json::to_cbor(jy) == cbor_y);
-    CHECK(json::to_cbor(jz) == cbor_z);
+    SECTION("three occurrences of the same key - middle rejected, last accepted")
+    {
+        const json j = json::parse(R"({"k":1,"k":2,"k":3})", drop_value_2);
+        CHECK(j.dump() == "{\"k\":3}");
+    }
+}
 
-    CHECK(std::isnan(json::from_cbor(cbor_x).get<T>()));
-    CHECK(json::from_cbor(cbor_y).get<T>() == std::numeric_limits<T>::infinity());
-    CHECK(json::from_cbor(cbor_z).get<T>() == -std::numeric_limits<T>::infinity());
+TEST_CASE("regression test - excessive binary container size honors allow_exceptions=false")
+{
+    // CBOR array with declared length 2^63
+    const std::vector<std::uint8_t> cbor = {0x9b, 0x80, 0, 0, 0, 0, 0, 0, 0};
+    // CBOR map with declared length 2^63
+    const std::vector<std::uint8_t> cbor_m = {0xbb, 0x80, 0, 0, 0, 0, 0, 0, 0};
+    // UBJSON array with declared length 2^63-1
+    const std::vector<std::uint8_t> ubj = {'[', '#', 'L', 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    // BJData array with declared length 2^63-1 (little endian)
+    const std::vector<std::uint8_t> bjd = {'[', '#', 'L', 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f};
 
-    // Make sure the other CBOR encodings for NaN, infinity, and -infinity are
-    // still supported.
-    const std::vector<std::uint8_t> cbor_x_2 = {{0xFA, 0x7F, 0xC0, 0x00, 0x00}};
-    const std::vector<std::uint8_t> cbor_y_2 = {{0xFA, 0x7F, 0x80, 0x00, 0x00}};
-    const std::vector<std::uint8_t> cbor_z_2 = {{0xFA, 0xFF, 0x80, 0x00, 0x00}};
-    const std::vector<std::uint8_t> cbor_x_3 = {{0xFB, 0x7F, 0xF8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
-    const std::vector<std::uint8_t> cbor_y_3 = {{0xFB, 0x7F, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
-    const std::vector<std::uint8_t> cbor_z_3 = {{0xFB, 0xFF, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
-    CHECK(std::isnan(json::from_cbor(cbor_x_2).get<T>()));
-    CHECK(json::from_cbor(cbor_y_2).get<T>() == std::numeric_limits<T>::infinity());
-    CHECK(json::from_cbor(cbor_z_2).get<T>() == -std::numeric_limits<T>::infinity());
-    CHECK(std::isnan(json::from_cbor(cbor_x_3).get<T>()));
-    CHECK(json::from_cbor(cbor_y_3).get<T>() == std::numeric_limits<T>::infinity());
-    CHECK(json::from_cbor(cbor_z_3).get<T>() == -std::numeric_limits<T>::infinity());
+    // allow_exceptions=false must report failure instead of throwing/aborting
+    CHECK(json::from_cbor(cbor, true, false).is_discarded());
+    CHECK(json::from_cbor(cbor_m, true, false).is_discarded());
+    CHECK(json::from_ubjson(ubj, true, false).is_discarded());
+    CHECK(json::from_bjdata(bjd, true, false).is_discarded());
+
+    // allow_exceptions=true (the default) must still throw exactly as before.
+    // The exact message text is not checked here: on platforms where
+    // std::size_t is 32-bit, the CBOR reader's own length-narrowing check
+    // (get_cbor_container_size(), unrelated to this fix) intercepts a
+    // declared length of 2^63 before it ever reaches the check this test
+    // targets, with different (but equally valid, and already correct)
+    // wording -- see unit-cbor.cpp for coverage of that message.
+    json _;
+    CHECK_THROWS_AS(_ = json::from_cbor(cbor), json::out_of_range);
+
+    // regression guard: a genuinely truncated CBOR input must remain discarded
+    CHECK(json::from_cbor(std::vector<std::uint8_t> {0x9b, 0, 0, 0, 0, 0, 0, 0, 0x02}, true, false).is_discarded());
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP

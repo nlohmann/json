@@ -13,6 +13,10 @@ if(NOT json_POPULATED)
   add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
+if(MSVC)
+  add_compile_options(/EHsc)
+endif()
+
 add_executable(with_namespace_target main.cpp)
 target_link_libraries(with_namespace_target nlohmann_json::nlohmann_json)
 

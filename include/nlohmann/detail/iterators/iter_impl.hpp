@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #pragma once
@@ -35,7 +35,7 @@ This class implements a both iterators (iterator and const_iterator) for the
       been set (e.g., by a constructor or a copy assignment). If the iterator is
       default-constructed, it is *uninitialized* and most methods are undefined.
       **The library uses assertions to detect calls on uninitialized iterators.**
-@requirement The class satisfies the following concept requirements:
+@requirement REQ-JSON-01 The class satisfies the following concept requirements:
 -
 [BidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator):
   The iterator that can be moved can be moved in both directions (i.e.
@@ -88,8 +88,13 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
 
     iter_impl() = default;
     ~iter_impl() = default;
-    iter_impl(iter_impl&&) noexcept = default;
-    iter_impl& operator=(iter_impl&&) noexcept = default;
+    // the exception specification is left to be computed rather than declared:
+    // an array or object type whose iterator is not nothrow move constructible
+    // (std::deque's is not before libstdc++ 11) would make a declared noexcept
+    // differ from the implicit one, which deletes the function -- and is an
+    // error outright with older compilers
+    iter_impl(iter_impl&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor,cppcoreguidelines-noexcept-move-operations)
+    iter_impl& operator=(iter_impl&&) = default; // NOLINT(hicpp-noexcept-move,performance-noexcept-move-constructor,cppcoreguidelines-noexcept-move-operations)
 
     /*!
     @brief constructor for a given JSON instance

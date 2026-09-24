@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -16,7 +16,7 @@
 // build test with C++14
 // JSON_HAS_CPP_14
 
-TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_json) // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_json) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
 {
     SECTION("object")
     {
@@ -419,14 +419,6 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                         CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with string", typename Json::type_error&);
                     }
 
-                    SECTION("array")
-                    {
-                        Json j_nonobject(Json::value_t::array);
-                        const Json j_nonobject_const(Json::value_t::array);
-                        CHECK_THROWS_WITH_AS(j_nonobject.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with array", typename Json::type_error&);
-                        CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with array", typename Json::type_error&);
-                    }
-
                     SECTION("number (integer)")
                     {
                         Json j_nonobject(Json::value_t::number_integer);
@@ -450,6 +442,55 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                         CHECK_THROWS_WITH_AS(j_nonobject.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
                         CHECK_THROWS_WITH_AS(j_nonobject_const.value("/foo"_json_pointer, 1), "[json.exception.type_error.306] cannot use value() with number", typename Json::type_error&);
                     }
+                }
+
+                SECTION("access on array type")
+                {
+                    Json j_array = Json::array({j});
+                    const Json j_array_const = Json::array({j});
+
+                    CHECK(j_array.value("/0/integer"_json_pointer, 2) == 1);
+                    CHECK(j_array.value("/0/integer"_json_pointer, 1.0) == Approx(1));
+                    CHECK(j_array.value("/0/unsigned"_json_pointer, 2) == 1u);
+                    CHECK(j_array.value("/0/unsigned"_json_pointer, 1.0) == Approx(1u));
+                    CHECK(j_array.value("/0/null"_json_pointer, Json(1)) == Json());
+                    CHECK(j_array.value("/0/boolean"_json_pointer, false) == true);
+                    CHECK(j_array.value("/0/string"_json_pointer, "bar") == "hello world");
+                    CHECK(j_array.value("/0/string"_json_pointer, std::string("bar")) == "hello world");
+                    CHECK(j_array.value("/0/floating"_json_pointer, 12.34) == Approx(42.23));
+                    CHECK(j_array.value("/0/floating"_json_pointer, 12) == 42);
+                    CHECK(j_array.value("/0/object"_json_pointer, Json({{"foo", "bar"}})) == Json::object());
+                    CHECK(j_array.value("/0/array"_json_pointer, Json({10, 100})) == Json({1, 2, 3}));
+
+                    CHECK(j_array_const.value("/0/integer"_json_pointer, 2) == 1);
+                    CHECK(j_array_const.value("/0/integer"_json_pointer, 1.0) == Approx(1));
+                    CHECK(j_array_const.value("/0/unsigned"_json_pointer, 2) == 1u);
+                    CHECK(j_array_const.value("/0/unsigned"_json_pointer, 1.0) == Approx(1u));
+                    CHECK(j_array_const.value("/0/boolean"_json_pointer, false) == true);
+                    CHECK(j_array_const.value("/0/string"_json_pointer, "bar") == "hello world");
+                    CHECK(j_array_const.value("/0/string"_json_pointer, std::string("bar")) == "hello world");
+                    CHECK(j_array_const.value("/0/floating"_json_pointer, 12.34) == Approx(42.23));
+                    CHECK(j_array_const.value("/0/floating"_json_pointer, 12) == 42);
+                    CHECK(j_array_const.value("/0/object"_json_pointer, Json({{"foo", "bar"}})) == Json::object());
+                    CHECK(j_array_const.value("/0/array"_json_pointer, Json({10, 100})) == Json({1, 2, 3}));
+
+                    // Test out-of-range array index
+                    CHECK(j_array.value("/10"_json_pointer, 42) == 42);
+                    CHECK(j_array_const.value("/10"_json_pointer, 42) == 42);
+
+                    // Test "-" index (append position is invalid)
+                    CHECK(j_array.value("/-"_json_pointer, 42) == 42);
+                    CHECK(j_array_const.value("/-"_json_pointer, 42) == 42);
+
+#if !defined(JSON_NOEXCEPTION)
+                    // Test malformed index (non-numeric) throws parse_error
+                    CHECK_THROWS_WITH_AS(j_array.value("/foo"_json_pointer, 1), "[json.exception.parse_error.109] parse error: array index 'foo' is not a number", typename Json::parse_error&);
+                    CHECK_THROWS_WITH_AS(j_array_const.value("/foo"_json_pointer, 1), "[json.exception.parse_error.109] parse error: array index 'foo' is not a number", typename Json::parse_error&);
+
+                    // Test leading-zero index throws parse_error
+                    CHECK_THROWS_WITH_AS(j_array.value("/01"_json_pointer, 1), "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", typename Json::parse_error&);
+                    CHECK_THROWS_WITH_AS(j_array_const.value("/01"_json_pointer, 1), "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", typename Json::parse_error&);
+#endif
                 }
             }
         }
@@ -1455,7 +1496,7 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
 }
 
 #if !defined(JSON_NOEXCEPTION)
-TEST_CASE_TEMPLATE("element access 2 (throwing tests)", Json, nlohmann::json, nlohmann::ordered_json) // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("element access 2 (throwing tests)", Json, nlohmann::json, nlohmann::ordered_json) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
 {
     SECTION("object")
     {
@@ -1491,7 +1532,7 @@ TEST_CASE_TEMPLATE("element access 2 (throwing tests)", Json, nlohmann::json, nl
 #endif
 
 // TODO(falbrechtskirchinger) merge with the other test case; clean up
-TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann::json, nlohmann::ordered_json) // NOLINT(readability-math-missing-parentheses)
+TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann::json, nlohmann::ordered_json) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
 {
     using string_t = typename Json::string_t;
     using number_integer_t = typename Json::number_integer_t;
@@ -1790,3 +1831,55 @@ TEST_CASE_TEMPLATE("element access 2 (additional value() tests)", Json, nlohmann
 #endif
     }
 }
+
+#ifdef JSON_HAS_CPP_17
+TEST_CASE("operator[] with user-defined std::string_view-convertible types")
+{
+    using json = nlohmann::json;
+
+    class TestClass
+    {
+        std::string key_data_ = "foo";
+
+      public:
+        operator std::string_view() const
+        {
+            return key_data_;
+        }
+    };
+
+    struct TestStruct
+    {
+        operator std::string_view() const
+        {
+            return "bar";
+        }
+    };
+
+    json j = {{"foo", "from_class"}, {"bar", "from_struct"}};
+    TestClass foo_obj;
+    TestStruct bar_obj;
+
+    SECTION("read access")
+    {
+        CHECK(j[foo_obj] == "from_class");
+        CHECK(j[TestClass{}] == "from_class");
+        CHECK(j[bar_obj] == "from_struct");
+        CHECK(j[TestStruct{}] == "from_struct");
+    }
+
+    SECTION("write access")
+    {
+        j[TestClass{}] = "updated_class";
+        j[TestStruct{}] = "updated_struct";
+        CHECK(j["foo"] == "updated_class");
+        CHECK(j["bar"] == "updated_struct");
+
+        SECTION("direct std::string_view access")
+        {
+            CHECK(j[std::string_view{"foo"}] == "updated_class");
+            CHECK(j[std::string_view{"bar"}] == "updated_struct");
+        }
+    }
+}
+#endif

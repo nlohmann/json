@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #pragma once
@@ -19,6 +19,7 @@
 #include <unordered_map> // unordered_map
 #include <utility> // pair, declval
 #include <valarray> // valarray
+#include <vector> // vector
 
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
@@ -26,6 +27,7 @@
 #include <nlohmann/detail/meta/identity_tag.hpp>
 #include <nlohmann/detail/meta/std_fs.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
+#include <nlohmann/detail/meta/logic.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
@@ -53,7 +55,8 @@ inline void from_json(const BasicJsonType& j, typename std::nullptr_t& n)
 }
 
 #ifdef JSON_HAS_CPP_17
-template<typename BasicJsonType, typename T>
+template < typename BasicJsonType, typename T,
+           typename std::enable_if < !nlohmann::detail::is_basic_json<T>::value, int >::type = 0 >
 void from_json(const BasicJsonType& j, std::optional<T>& opt)
 {
     if (j.is_null())
@@ -330,6 +333,7 @@ template < typename BasicJsonType, typename ConstructibleArrayType,
                !is_constructible_object_type<BasicJsonType, ConstructibleArrayType>::value&&
                !is_constructible_string_type<BasicJsonType, ConstructibleArrayType>::value&&
                !std::is_same<ConstructibleArrayType, typename BasicJsonType::binary_t>::value&&
+               !is_compatible_binary_type<BasicJsonType, ConstructibleArrayType>::value&&
                !is_basic_json<ConstructibleArrayType>::value,
                int > = 0 >
 auto from_json(const BasicJsonType& j, ConstructibleArrayType& arr)
@@ -375,6 +379,36 @@ inline void from_json(const BasicJsonType& j, typename BasicJsonType::binary_t& 
     bin = *j.template get_ptr<const typename BasicJsonType::binary_t*>();
 }
 
+template < typename BasicJsonType, typename CompatibleArrayType,
+           enable_if_t < is_compatible_binary_type<BasicJsonType, CompatibleArrayType>::value,
+                         int > = 0 >
+inline void from_json(const BasicJsonType& j, CompatibleArrayType& bin)
+{
+    if (j.is_binary())
+    {
+        bin = static_cast<CompatibleArrayType>(*j.template get_ptr<const typename BasicJsonType::binary_t*>());
+    }
+    else if (j.is_array())
+    {
+        from_json_array_impl(j, bin, priority_tag<3> {});
+    }
+    else
+    {
+        JSON_THROW(type_error::create(302, concat("type must be binary or array, but is ", j.type_name()), &j));
+    }
+}
+
+template<typename ConstructibleObjectType>
+auto from_json_object_reserve(ConstructibleObjectType& obj, typename ConstructibleObjectType::size_type size, priority_tag<1> /*unused*/)
+-> decltype(obj.reserve(size), void())
+{
+    obj.reserve(size);
+}
+
+template<typename ConstructibleObjectType>
+inline void from_json_object_reserve(ConstructibleObjectType& /*obj*/, std::size_t /*size*/, priority_tag<0> /*unused*/)
+{}
+
 template<typename BasicJsonType, typename ConstructibleObjectType,
          enable_if_t<is_constructible_object_type<BasicJsonType, ConstructibleObjectType>::value, int> = 0>
 inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
@@ -386,14 +420,11 @@ inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
 
     ConstructibleObjectType ret;
     const auto* inner_object = j.template get_ptr<const typename BasicJsonType::object_t*>();
-    using value_type = typename ConstructibleObjectType::value_type;
-    std::transform(
-        inner_object->begin(), inner_object->end(),
-        std::inserter(ret, ret.begin()),
-        [](typename BasicJsonType::object_t::value_type const & p)
+    from_json_object_reserve(ret, inner_object->size(), priority_tag<1> {});
+    for (const auto& p : *inner_object)
     {
-        return value_type(p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>());
-    });
+        ret.emplace(p.first, p.second.template get<typename ConstructibleObjectType::mapped_type>());
+    }
     obj = std::move(ret);
 }
 
@@ -445,13 +476,36 @@ inline void from_json(const BasicJsonType& j, ArithmeticType& val)
     }
 }
 
-template<typename BasicJsonType, typename... Args, std::size_t... Idx>
-std::tuple<Args...> from_json_tuple_impl_base(BasicJsonType&& j, index_sequence<Idx...> /*unused*/)
+template<typename BasicJsonType, typename Type>
+detail::uncvref_t<Type> from_json_tuple_get_impl(BasicJsonType&& j, detail::identity_tag<Type> /*unused*/, detail::priority_tag<0> /*unused*/)
 {
-    return std::make_tuple(std::forward<BasicJsonType>(j).at(Idx).template get<Args>()...);
+    return std::forward<BasicJsonType>(j).template get<detail::uncvref_t<Type>>();
 }
 
-template<typename BasicJsonType>
+template<typename BasicJsonType, typename Type,
+         detail::enable_if_t<detail::is_compatible_reference_type<BasicJsonType, Type>::value, int> = 0>
+Type from_json_tuple_get_impl(BasicJsonType && j, detail::identity_tag<Type> /*unused*/, detail::priority_tag<1> /*unused*/)
+{
+    return std::forward<BasicJsonType>(j).template get_ref<Type>();
+}
+
+template<typename BasicJsonType, typename Type,
+         detail::enable_if_t<std::is_arithmetic<uncvref_t<Type>>::value, int> = 0>
+detail::uncvref_t<Type> from_json_tuple_get_impl(BasicJsonType && j, detail::identity_tag<Type> /*unused*/, detail::priority_tag<2> /*unused*/)
+{
+    return std::forward<BasicJsonType>(j).template get<detail::uncvref_t<Type>>();
+}
+
+template<std::size_t PTagValue, typename BasicJsonType, typename... Types>
+using tuple_type = std::tuple < decltype(from_json_tuple_get_impl(std::declval<BasicJsonType>(), detail::identity_tag<Types> {}, detail::priority_tag<PTagValue> {}))... >;
+
+template<std::size_t PTagValue, typename... Args, typename BasicJsonType, std::size_t... Idx>
+tuple_type<PTagValue, BasicJsonType, Args...> from_json_tuple_impl_base(BasicJsonType&& j, index_sequence<Idx...> /*unused*/)
+{
+    return tuple_type<PTagValue, BasicJsonType, Args...>(from_json_tuple_get_impl(std::forward<BasicJsonType>(j).at(Idx), detail::identity_tag<Args> {}, detail::priority_tag<PTagValue> {})...);
+}
+
+template<std::size_t PTagValue, typename BasicJsonType>
 std::tuple<> from_json_tuple_impl_base(BasicJsonType& /*unused*/, index_sequence<> /*unused*/)
 {
     return {};
@@ -473,13 +527,15 @@ inline void from_json_tuple_impl(BasicJsonType&& j, std::pair<A1, A2>& p, priori
 template<typename BasicJsonType, typename... Args>
 std::tuple<Args...> from_json_tuple_impl(BasicJsonType&& j, identity_tag<std::tuple<Args...>> /*unused*/, priority_tag<2> /*unused*/)
 {
-    return from_json_tuple_impl_base<BasicJsonType, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
+    static_assert(cxpr_and<cxpr_or<cxpr_not<std::is_reference<Args>>, is_compatible_reference_type<BasicJsonType, Args>>...>::value,
+                  "Can not return a tuple containing references to types not contained in a Json, try Json::get_to()");
+    return from_json_tuple_impl_base<1, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
 }
 
 template<typename BasicJsonType, typename... Args>
 inline void from_json_tuple_impl(BasicJsonType&& j, std::tuple<Args...>& t, priority_tag<3> /*unused*/)
 {
-    t = from_json_tuple_impl_base<BasicJsonType, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
+    t = from_json_tuple_impl_base<2, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
 }
 
 template<typename BasicJsonType, typename TupleRelated>
@@ -535,6 +591,11 @@ inline void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Has
 }
 
 #if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
+
+// Workaround for MSVC 19.51 (and possibly later): in large in large cpp files, the compiler may fail to resolve with generic has_from_json (issue #4996)
+template<typename BasicJsonType>
+struct has_from_json<BasicJsonType, std_fs::path, void> : std::true_type {};
+
 template<typename BasicJsonType>
 inline void from_json(const BasicJsonType& j, std_fs::path& p)
 {

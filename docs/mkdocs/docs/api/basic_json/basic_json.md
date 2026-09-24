@@ -82,7 +82,13 @@ basic_json(basic_json&& other) noexcept;
 4. This is a constructor for existing `basic_json` types. It does not hijack copy/move constructors, since the parameter
    has different template arguments than the current ones.
 
-    The constructor tries to convert the internal `m_value` of the parameter.
+    The constructor tries to convert the internal `m_value` of the parameter. Each member value (object, array, string,
+    etc.) is serialized via the corresponding `to_json()` overload. For objects and strings, the conversion requires
+    that the *target* `basic_json` type's `object_t::key_type` (or `string_t`) be directly constructible from the
+    *source* type's corresponding member type via `is_constructible`. If this requirement is not met, the conversion
+    does not fail to compile; instead, it silently falls back to the array-conversion path, which represents objects
+    as arrays of `[key, value]` pairs and strings as arrays of character codes. This is a known limitation tracked in
+    [issue #3425](https://github.com/nlohmann/json/issues/3425).
 
 5. Creates a JSON value of type array or object from the passed initializer list `init`. In case `type_deduction` is
    `#!cpp true` (default), the type of the JSON value to be created is deducted from the initializer list `init`
@@ -109,7 +115,22 @@ basic_json(basic_json&& other) noexcept;
    
     Function [`array()`](array.md) and [`object()`](object.md) force array and object creation from initializer lists,
     respectively.
-        
+
+    !!! warning "Brace initialization yields arrays"
+
+        Because this constructor takes an `initializer_list_t`, brace-initializing a `json`/`ordered_json` from
+        another `json` value wraps it in a single-element array rather than copying it:
+
+        ```cpp
+        json j1 = "hello";
+        json j2{j1};   // [!] j2 is ["hello"], NOT a copy of j1
+        json j3(j1);   // j3 is "hello" -- parentheses copy as expected
+        ```
+
+        See the FAQ entry on [brace initialization](../../home/faq.md#brace-initialization-yields-arrays) for the
+        full explanation, an opt-in macro to change this behavior, and how to explicitly create a single-element
+        array (`json::array({value})`) if that is what you want.
+
 6. Constructs a JSON array value by creating `cnt` copies of a passed value. In case `cnt` is `0`, an empty array is
    created.
 
@@ -146,6 +167,11 @@ basic_json(basic_json&& other) noexcept;
 
     - `BasicJsonType` is a `basic_json` type.
     - `BasicJsonType` has different template arguments than `basic_json_t`.
+    
+    **Note:** For cross-`basic_json` conversions to produce correct results, the target `basic_json`'s
+    `object_t::key_type` and `string_t` must be directly constructible from the source `basic_json`'s
+    corresponding types. See the description of overload (4) above for details on what happens when
+    this requirement is not met.
 
 `U`:
 :   `uncvref_t<CompatibleType>`

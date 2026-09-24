@@ -52,6 +52,11 @@ optional, `#!cpp bjdata_version_t::draft2` by default.
 
 Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
 
+## Exceptions
+
+- Throws [`other_error.502`](../../home/exceptions.md#jsonexceptionother_error502) if `use_type` is true and `use_size`
+  is false.
+
 ## Complexity
 
 Linear in the size of the JSON value `j`.
@@ -71,6 +76,14 @@ Linear in the size of the JSON value `j`.
     ```json
     --8<-- "examples/to_bjdata.output"
     ```
+
+## See also
+
+- [from_bjdata](from_bjdata.md) create a JSON value from an input in BJData format
+- [to_cbor](to_cbor.md) create a CBOR serialization of a JSON value
+- [to_msgpack](to_msgpack.md) create a MessagePack serialization of a JSON value
+- [to_bson](to_bson.md) create a BSON serialization of a JSON value
+- [to_ubjson](to_ubjson.md) create a UBJSON serialization of a JSON value
 
 ## Version history
 

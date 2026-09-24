@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -98,8 +98,10 @@ void check_escaped(const char* original, const char* escaped = "", bool ensure_a
 void check_escaped(const char* original, const char* escaped, const bool ensure_ascii)
 {
     std::stringstream ss;
-    json::serializer s(nlohmann::detail::output_adapter<char>(ss), ' ');
-    s.dump_escaped(original, ensure_ascii);
+    nlohmann::detail::output_stream_adapter<char> adapter(ss);
+    json::serializer s(adapter, ' ', false, ensure_ascii);
+    s.dump_escaped(original);
+    s.flush(); // dump_escaped writes into the serializer's internal buffer
     CHECK(ss.str() == escaped);
 }
 } // namespace
@@ -166,6 +168,32 @@ TEST_CASE("convenience functions")
         CHECK_THROWS_WITH_AS(check_escaped("ä\xA9ü"), "[json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9", json::type_error&);
 
         CHECK_THROWS_WITH_AS(check_escaped("\xC2"), "[json.exception.type_error.316] incomplete UTF-8 string; last byte: 0xC2", json::type_error&);
+    }
+
+    SECTION("string escape with ensure_ascii")
+    {
+        // control characters are escaped regardless of ensure_ascii
+        check_escaped("\x01", "\\u0001", true);
+        check_escaped("\x1f", "\\u001f", true);
+
+        // non-ASCII code points in the Basic Multilingual Plane are emitted as
+        // a single lowercase \uXXXX escape (exercises every nibble position)
+        check_escaped("\xC2\x80", "\\u0080", true);         // U+0080
+        check_escaped("\xC3\xBF", "\\u00ff", true);         // U+00FF (ÿ)
+        check_escaped("\xDF\xBF", "\\u07ff", true);         // U+07FF
+        check_escaped("\xE4\xBD\xA0", "\\u4f60", true);     // U+4F60 (你)
+        check_escaped("\xEA\xAF\x8D", "\\uabcd", true);     // U+ABCD
+        check_escaped("\xEF\xBF\xBD", "\\ufffd", true);     // U+FFFD (replacement char, all-f nibbles)
+
+        // code points outside the BMP are emitted as a UTF-16 surrogate pair
+        // of two lowercase \uXXXX escapes
+        check_escaped("\xF0\x90\x80\x80", "\\ud800\\udc00", true); // U+10000 (lowest astral)
+        check_escaped("\xF0\x9F\x98\x80", "\\ud83d\\ude00", true); // U+1F600 (😀)
+        check_escaped("\xF4\x8F\xBF\xBF", "\\udbff\\udfff", true); // U+10FFFF (highest code point)
+
+        // with ensure_ascii disabled, non-ASCII input is passed through verbatim
+        check_escaped("\xE4\xBD\xA0", "\xE4\xBD\xA0", false);
+        check_escaped("\xF0\x9F\x98\x80", "\xF0\x9F\x98\x80", false);
     }
 
     SECTION("string concat")

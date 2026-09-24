@@ -8,8 +8,8 @@ static bool accept(InputType&& i,
                    const bool ignore_trailing_commas = false);
 
 // (2)
-template<typename IteratorType>
-static bool accept(IteratorType first, IteratorType last,
+template<typename IteratorType, typename SentinelType = IteratorType>
+static bool accept(IteratorType first, SentinelType last,
                    const bool ignore_comments = false,
                    const bool ignore_trailing_commas = false);
 ```
@@ -17,10 +17,11 @@ static bool accept(IteratorType first, IteratorType last,
 Checks whether the input is valid JSON.
 
 1. Reads from a compatible input.
-2. Reads from a pair of character iterators
+2. Reads from a pair of character iterators, or an iterator and a sentinel of a different type (C++20 ranges support)
     
     The value_type of the iterator must be an integral type with a size of 1, 2, or 4 bytes, which will be interpreted
-    respectively as UTF-8, UTF-16, and UTF-32.
+    respectively as UTF-8, UTF-16, and UTF-32. If `SentinelType` differs from `IteratorType`, it must be comparable to
+    the iterator type with `operator!=`.
     
 Unlike the [`parse()`](parse.md) function, this function neither throws an exception in case of invalid JSON input
 (i.e., a parse error) nor creates diagnostic information.
@@ -35,13 +36,20 @@ Unlike the [`parse()`](parse.md) function, this function neither throws an excep
     - a C-style array of characters
     - a pointer to a null-terminated string of single byte characters (throws if null)
     - a `std::string`
-    - an object `obj` for which `begin(obj)` and `end(obj)` produces a valid pair of iterators.
+    - a container `obj` for which `begin(obj)` and `end(obj)` produce a valid pair of iterators
+      (as found via ADL or member functions, with semantics compatible to `std::begin` and `std::end`)
 
 `IteratorType`
 :   a compatible iterator type, for instance.
 
     - a pair of `std::string::iterator` or `std::vector<std::uint8_t>::iterator`
     - a pair of pointers such as `ptr` and `ptr + len`
+
+`SentinelType`
+:   defaults to `IteratorType`; may be a different type comparable to `IteratorType` via `operator!=`, for instance.
+
+    - a custom sentinel type for C++20 ranges
+    - `std::default_sentinel_t`, when `IteratorType` is `std::counted_iterator`
 
 ## Parameters
 
@@ -60,7 +68,7 @@ Unlike the [`parse()`](parse.md) function, this function neither throws an excep
 :   iterator to the start of the character range
 
 `last` (in)
-:   iterator to the end of the character range
+:   iterator to the end of the character range, or a sentinel value that compares equal to the end iterator with `operator!=`
 
 ## Return value
 
@@ -82,6 +90,10 @@ Linear in the length of the input. The parser is a predictive LL(1) parser.
 
 A UTF-8 byte order mark is silently ignored.
 
+By default, a `'\0'` (NUL) byte anywhere in the input is treated as end of input, rather than as an ordinary (and,
+outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-bytes-in-the-input) for details and the
+[`JSON_STRICT_NUL_HANDLING`](../macros/json_strict_nul_handling.md) macro to opt into rejecting it instead.
+
 ## Examples
 
 ??? example
@@ -101,14 +113,21 @@ A UTF-8 byte order mark is silently ignored.
 ## See also
 
 - [parse](parse.md) - deserialize from a compatible input
+- [sax_parse](sax_parse.md) - parse input using the SAX interface
 - [operator>>](../operator_gtgt.md) - deserialize from stream
+- [`JSON_STRICT_NUL_HANDLING`](../macros/json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input
+  instead of treating it as end of input
 
 ## Version history
 
 - Added in version 3.0.0.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
 - Changed [runtime assertion](../../features/assertions.md) in case of `FILE*` null pointers to exception in version 3.12.0.
-- Added `ignore_trailing_commas` in version 3.12.1.
+- Added `ignore_trailing_commas` in version 3.13.0.
+- Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
+- Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
+- `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 to optionally reject a NUL byte in the input instead of treating
+  it as end of input; planned to become the default in version 4.0.0.
 
 !!! warning "Deprecation"
 

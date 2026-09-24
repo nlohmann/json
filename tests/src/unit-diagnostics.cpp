@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -261,5 +261,154 @@ TEST_CASE("Regression tests for extended diagnostics")
         const json k(j);
 
         CHECK(k.dump() == "{\"prop1\":\"prop1_value\",\"root\":\"root_str\"}");
+    }
+
+    SECTION("Regression test for issue #4813 - update() with merge_objects=true triggers JSON_ASSERT with JSON_DIAGNOSTICS")
+    {
+        // https://github.com/nlohmann/json/issues/4813
+        nlohmann::ordered_json j1 = {{"numbers", {{"one", 1}}}};
+        nlohmann::ordered_json const j2 = {{"numbers", {{"two", 2}}}, {"string", "t"}};
+        CHECK_NOTHROW(j1.update(j2, true));
+        CHECK(j1["numbers"]["one"] == 1);
+        CHECK(j1["numbers"]["two"] == 2);
+        CHECK(j1["string"] == "t");
+    }
+
+    SECTION("Regression test for issue #5387 - copying keeps the parents of nested values")
+    {
+        // A value nested deeper than the copy constructor's descent bound is
+        // copied without the call stack. Every container that path creates has
+        // to have the parents of its children set, or the JSON Pointer in the
+        // diagnostic is cut short.
+        const std::size_t depth = 300;
+
+        SECTION("objects")
+        {
+            json j = "not a number";
+            std::string pointer;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                j = json{{"a", j}};
+                pointer += "/a";
+            }
+
+            json const copy(j); // NOLINT(performance-unnecessary-copy-initialization)
+
+            const json* inner = &copy;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                inner = &inner->at("a");
+            }
+
+            std::string const expected = "[json.exception.type_error.302] (" + pointer + ") type must be number, but is string";
+            int i = 0;
+            CHECK_THROWS_WITH_AS(i = inner->get<int>(), expected.c_str(), json::type_error);
+            CHECK(i == 0);
+        }
+
+        SECTION("arrays")
+        {
+            json j = "not a number";
+            std::string pointer;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                j = json::array({j});
+                pointer += "/0";
+            }
+
+            json const copy(j); // NOLINT(performance-unnecessary-copy-initialization)
+
+            const json* inner = &copy;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                inner = &inner->at(0);
+            }
+
+            std::string const expected = "[json.exception.type_error.302] (" + pointer + ") type must be number, but is string";
+            int i = 0;
+            CHECK_THROWS_WITH_AS(i = inner->get<int>(), expected.c_str(), json::type_error);
+            CHECK(i == 0);
+        }
+    }
+
+    SECTION("Regression test - swap(array_t&)/swap(object_t&) must update JSON_DIAGNOSTICS parent pointers")
+    {
+        // swap(array_t&)
+        {
+            json j = json::array();
+            json::array_t arr = {json::array({1})};
+            j.swap(arr);
+
+            // parent pointers of the moved-in elements must point into j, not
+            // into the now-defunct free-standing array_t
+            CHECK_THROWS_WITH_AS(j[0][0].get<std::string>(), "[json.exception.type_error.302] (/0/0) type must be string, but is number", json::type_error);
+
+            // must not trigger assert_invariant() in a debug/assert-enabled build
+            json const k = j;
+            CHECK(k == j);
+        }
+
+        // swap(object_t&)
+        {
+            json o = json::object();
+            json::object_t obj = {{"a", json::array({1})}};
+            o.swap(obj);
+
+            CHECK_THROWS_WITH_AS(o["a"][0].get<std::string>(), "[json.exception.type_error.302] (/a/0) type must be string, but is number", json::type_error);
+
+            // must not trigger assert_invariant() in a debug/assert-enabled build
+            json const p = o;
+            CHECK(p == o);
+        }
+    }
+}
+
+TEST_CASE("Better diagnostics past the descent bound of update() and merge_patch()")
+{
+    // Both merge objects nested more than detail::recursion_depth_limit()
+    // (128) levels deep without recursing; the values they add or replace
+    // there must still know their parents.
+    // The values are built rather than parsed, so that the expected messages
+    // carry no byte positions under JSON_DIAGNOSTIC_POSITIONS.
+    const std::size_t depth = 200;
+    json target = {{"x", 1}};
+    json patch = {{"y", 2}};
+    std::string path;
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        target = json{{"a", std::move(target)}};
+        patch = json{{"a", std::move(patch)}};
+        path += "/a";
+    }
+    const std::string expected_x = "[json.exception.type_error.304] (" + path + "/x) cannot use at() with number";
+    const std::string expected_y = "[json.exception.type_error.304] (" + path + "/y) cannot use at() with number";
+
+    SECTION("update()")
+    {
+        json j = target;
+        j.update(patch, true);
+
+        // walk down through const references, which leave m_parent alone
+        const json* p = &j;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            p = &p->at("a");
+        }
+        CHECK_THROWS_WITH_AS(p->at("x").at(0), expected_x.c_str(), json::type_error);
+        CHECK_THROWS_WITH_AS(p->at("y").at(0), expected_y.c_str(), json::type_error);
+    }
+
+    SECTION("merge_patch()")
+    {
+        json j = target;
+        j.merge_patch(patch);
+
+        const json* p = &j;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            p = &p->at("a");
+        }
+        CHECK_THROWS_WITH_AS(p->at("x").at(0), expected_x.c_str(), json::type_error);
+        CHECK_THROWS_WITH_AS(p->at("y").at(0), expected_y.c_str(), json::type_error);
     }
 }

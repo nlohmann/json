@@ -75,6 +75,11 @@ Linear in the size of the JSON value.
     --8<-- "examples/operator__ValueType.output"
     ```
 
+## See also
+
+- [get](get.md) get a value (explicit conversion)
+- [Converting values](../../features/conversions.md) - the type conversions article
+
 ## Version history
 
 - Since version 1.0.0.

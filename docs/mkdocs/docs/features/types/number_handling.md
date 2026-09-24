@@ -63,6 +63,10 @@ In the default [`json`](../../api/json.md) type, numbers are stored as `#!c std:
 number without loss of precision. If this is impossible (e.g., if the number is too large), the number is stored as
 `#!c double`.
 
+Positive integers are stored as `#!c std::uint64_t`, while negative integers are stored as `#!c std::int64_t`. This
+distinction is determined at parse time: if the JSON number has a leading minus sign, it uses signed integer storage;
+otherwise, it uses unsigned integer storage.
+
 !!! info "Notes"
 
     - Numbers with a decimal digit or scientific notation are always stored as `#!c double`.
@@ -91,7 +95,7 @@ This is the same behavior as the code `#!c double x = 3.141592653589793238462643
 
 !!! success "Interoperability"
 
-    - The library interoperable with respect to the specification, because its supported range $[-2^{63}, 2^{64}-1]$ is
+    - The library is interoperable with respect to the specification, because its supported range $[-2^{63}, 2^{64}-1]$ is
       larger than the described range $[-2^{53}+1, 2^{53}-1]$.
     - All integers outside the range $[-2^{63}, 2^{64}-1]$, as well as floating-point numbers are stored as `double`.
       This also concurs with the specification above.
@@ -153,7 +157,7 @@ NaN (not-a-number) cannot be expressed with the number syntax described above an
 
 That is, there is no way to *parse* a NaN value. However, assignments can store NaN values in a JSON value.
 
-This library serializes NaN values  as `#!js null`. This corresponds to the behavior of JavaScript's
+This library serializes NaN values as `#!js null`. This corresponds to the behavior of JavaScript's
 [`JSON.stringify`](https://www.w3schools.com/js/js_json_stringify.asp) function.
 
 !!! example
@@ -182,7 +186,7 @@ This library serializes NaN values  as `#!js null`. This corresponds to the beha
 
 ### Number comparison
 
-Floating-point inside JSON values numbers are compared with `#!c json::number_float_t::operator==` which is
+Floating-point numbers inside JSON values are compared with `#!c json::number_float_t::operator==` which is
 `#!c double::operator==` by default.
 
 !!! example "Alternative comparison functions"
@@ -203,8 +207,8 @@ Floating-point inside JSON values numbers are compared with `#!c json::number_fl
     ```cpp
     bool my_equal(const_reference lhs, const_reference rhs)
     {
-        const auto lhs_type lhs.type();
-        const auto rhs_type rhs.type();
+        const auto lhs_type = lhs.type();
+        const auto rhs_type = rhs.type();
         if (lhs_type == rhs_type)
         {
             switch(lhs_type)
@@ -230,18 +234,31 @@ Floating-point inside JSON values numbers are compared with `#!c json::number_fl
 ### Number conversion
 
 Just like the C++ language itself, the `get` family of functions allows conversions between unsigned and signed
-integers, and between integers and floating-point values to integers. This behavior may be surprising.
+integers, and between integers and floating-point values. This behavior may be surprising.
 
 !!! warning "Unconditional number conversions"
 
     ```cpp hl_lines="3"
-    double d = 42.3;                                   // non-integer double value 42.3
-    json jd = d;                                       // stores double value 42.3
-    std::int64_t i = jd.template get<std::int64_t>();  // now i==42; no warning or error is produced
+    double d = 42.3;                          // non-integer double value 42.3
+    json jd = d;                              // stores double value 42.3
+    std::int64_t i = jd.get<std::int64_t>();  // now i==42; no warning or error is produced
     ```
 
     Note the last line with throw a [`json.exception.type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302)
     exception if `jd` is not a numerical type, for instance a string.
+
+    Numeric conversions are performed according to the corresponding C++ conversion rules. The library does not perform
+    range checks when converting between numeric types.
+    
+    In particular, conversions from floating-point values to integer types, or conversions to integer types with a
+    smaller range than the stored value, may produce implementation-defined or undefined behavior if the source value
+    cannot be represented by the target type.
+    
+    Applications requiring checked conversions should inspect the stored number type with
+    [`is_number_float()`](../../api/basic_json/is_number_float.md),
+    [`is_number_integer()`](../../api/basic_json/is_number_integer.md),
+    [`is_number_unsigned()`](../../api/basic_json/is_number_unsigned.md), or
+    [`type()`](../../api/basic_json/type.md), and perform explicit range checks before converting to a narrower type.
 
 The rationale is twofold:
 
@@ -259,7 +276,7 @@ The rationale is twofold:
     if (jd.is_number_integer())
     {
         // if so, do the conversion and use i
-        std::int64_t i = jd.template get<std::int64_t>();
+        std::int64_t i = jd.get<std::int64_t>();
         // ...
     }
     else

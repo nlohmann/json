@@ -4,7 +4,7 @@
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
 // SPDX-FileCopyrightText: 2009 Florian Loitsch <https://florian.loitsch.com/>
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #pragma once
@@ -1075,8 +1075,8 @@ char* to_chars(char* first, const char* last, FloatType value)
     }
 
 #ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
+    JSON_HEDLEY_DIAGNOSTIC_PUSH
+    JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
     if (value == 0) // +-0
     {
@@ -1087,7 +1087,7 @@ char* to_chars(char* first, const char* last, FloatType value)
         return first;
     }
 #ifdef __GNUC__
-#pragma GCC diagnostic pop
+    JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
 
     JSON_ASSERT(last - first >= std::numeric_limits<FloatType>::max_digits10);

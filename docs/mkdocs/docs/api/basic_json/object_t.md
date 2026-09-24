@@ -18,7 +18,11 @@ To store objects in C++, a type is defined by the template parameters described 
 ## Template parameters
 
 `ObjectType`
-:   the container to store objects (e.g., `std::map` or `std::unordered_map`)
+:   the container to store objects. Its template parameters must have the same order and meaning as those of
+    `std::map`; in particular, the third parameter is a comparator. `#!cpp std::unordered_map`, whose third parameter
+    is a hash function, therefore needs an adapter -- see
+    [Template Parameter Requirements](../../features/types/template_parameters.md#objecttype) for the full list of
+    requirements, an adapter example, and the containers that are known to work.
 
 `StringType`
 :   the type of the keys or names (e.g., `std::string`). The comparison function `std::less<StringType>` is used to
@@ -63,7 +67,8 @@ behavior:
   object will agree on the name-value mappings.
 - When the names within an object are not unique, it is unspecified which one of the values for a given key will be
   chosen. For instance, `#!json {"key": 2, "key": 1}` could be equal to either `#!json {"key": 1}` or
-  `#!json {"key": 2}`.
+  `#!json {"key": 2}`. To reject duplicate keys instead of silently resolving them one way or another, see
+  [this parsing recipe](../../features/parsing/parser_callbacks.md#recipe-rejecting-duplicate-object-keys).
 - Internally, name/value pairs are stored in lexicographical order of the names. Objects will also be serialized (see
   [`dump`](dump.md)) in this order. For instance, `#!json {"b": 1, "a": 2}` and `#!json {"a": 2, "b": 1}` will be stored
   and serialized as `#!json {"a": 2, "b": 1}`.
@@ -93,6 +98,15 @@ alphabetical order as `std::map` with `std::less` is used by default. Please not
 [RFC 8259](https://tools.ietf.org/html/rfc8259), because any order implements the specified "unordered" nature of JSON
 objects.
 
+#### Cross-`basic_json` conversion requirements
+
+When converting an object from one `basic_json` specialization to another via the
+[converting constructor](basic_json.md#overload-4), the target `object_t`'s `key_type` must be
+directly constructible from the source `basic_json`'s `string_t` type (or more generally, from the
+source object's key type). If this requirement is not met, the conversion does not fail; instead,
+the object is silently converted as an array of key-value pairs, which is incorrect. See
+[issue #3425](https://github.com/nlohmann/json/issues/3425) for details and an example.
+
 ## Examples
 
 ??? example
@@ -112,3 +126,4 @@ objects.
 ## Version history
 
 - Added in version 1.0.0.
+- Allowed object types whose `erase(iterator)` returns `#!cpp void` in version 3.13.0.

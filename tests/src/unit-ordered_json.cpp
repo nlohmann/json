@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -68,4 +68,131 @@ TEST_CASE("ordered_json")
     oj1.insert( oj2.cbegin(), oj2.cend() );
     CHECK(oj1.size() == 4);
     CHECK(oj1.dump() == "{\"c\":1,\"b\":2,\"a\":3,\"d\":42}");
+}
+
+TEST_CASE("regression test for issue #3732 - iteration_proxy_value<iter_impl<ordered_json>>")
+{
+    // Naming the proxy type in a function-parameter position forces eager
+    // instantiation of basic_json<ordered_map>; previously this hit an
+    // incomplete-type error in set_parents().
+    auto fn = [](nlohmann::detail::iteration_proxy_value<nlohmann::detail::iter_impl<nlohmann::ordered_json>> const & val)
+    {
+        return val.value();
+    };
+    static_cast<void>(fn);
+}
+
+TEST_CASE("copying an ordered_json with nested values")
+{
+    // ordered_map is backed by a vector, so copying an object that has
+    // structured values takes a different route than copying a std::map-backed
+    // one; see https://github.com/nlohmann/json/issues/5387
+    ordered_json oj;
+    oj["z"] = 1;
+    oj["a"]["y"] = 2;
+    oj["a"]["b"]["x"] = 3;
+    oj["m"] = {1, 2, {{"w", 4}}};
+
+    const ordered_json copy(oj);
+
+    SECTION("the copy is equal to the original")
+    {
+        CHECK(copy == oj);
+        CHECK(copy.dump() == oj.dump());
+    }
+
+    SECTION("the key order is preserved at every level")
+    {
+        CHECK(copy.dump() == R"({"z":1,"a":{"y":2,"b":{"x":3}},"m":[1,2,{"w":4}]})");
+    }
+
+    SECTION("the copy is independent of the original")
+    {
+        ordered_json mutated(oj);
+        mutated["a"]["b"]["x"] = 99;
+
+        CHECK(oj["a"]["b"]["x"] == 3);
+        CHECK(mutated["a"]["b"]["x"] == 99);
+    }
+}
+
+TEST_CASE("regression test - diff() must account for ordered_json member order")
+{
+    SECTION("pure reorder, no value changes")
+    {
+        ordered_json a = {{"a", 1}, {"b", 2}};
+        ordered_json b = {{"b", 2}, {"a", 1}};
+        CHECK(a != b); // order-sensitive equality
+        CHECK(a.patch(ordered_json::diff(a, b)) == b);
+    }
+
+    SECTION("new key must land at the front")
+    {
+        ordered_json c = {{"b", 2}};
+        ordered_json e = {{"a", 1}, {"b", 2}};
+        CHECK(c.patch(ordered_json::diff(c, e)) == e);
+    }
+
+    SECTION("reorder plus a value change on one of the reordered keys")
+    {
+        ordered_json a = {{"a", 1}, {"b", 2}};
+        ordered_json b = {{"b", 20}, {"a", 1}};
+        CHECK(a != b);
+        CHECK(a.patch(ordered_json::diff(a, b)) == b);
+    }
+
+    SECTION("reorder plus a deleted key")
+    {
+        ordered_json a = {{"a", 1}, {"b", 2}, {"c", 3}};
+        ordered_json b = {{"b", 2}, {"a", 1}};
+        CHECK(a != b);
+        CHECK(a.patch(ordered_json::diff(a, b)) == b);
+    }
+
+    SECTION("reorder plus a nested value that itself needs a recursive diff")
+    {
+        ordered_json a = {{"a", {{"x", 1}, {"y", 2}}}, {"b", 2}};
+        ordered_json b = {{"b", 2}, {"a", {{"x", 1}, {"y", 99}}}};
+        CHECK(a != b);
+        CHECK(a.patch(ordered_json::diff(a, b)) == b);
+    }
+
+    SECTION("three or more keys shuffled into a different order")
+    {
+        ordered_json a = {{"a", 1}, {"b", 2}, {"c", 3}, {"d", 4}};
+        ordered_json b = {{"d", 4}, {"b", 2}, {"a", 1}, {"c", 3}};
+        CHECK(a != b);
+        CHECK(a.patch(ordered_json::diff(a, b)) == b);
+    }
+
+    SECTION("matching order still produces a minimal patch (fast path unaffected)")
+    {
+        ordered_json a = {{"a", 1}, {"b", 2}, {"c", 3}};
+        ordered_json b = {{"a", 1}, {"b", 20}, {"c", 3}};
+        auto p = ordered_json::diff(a, b);
+        // only the changed value should be touched, not a wholesale remove+add
+        CHECK(p.size() == 1);
+        CHECK(p[0]["op"] == "replace");
+        CHECK(p[0]["path"] == "/b");
+        CHECK(a.patch(p) == b);
+    }
+
+    SECTION("plain json (std::map-backed) is unaffected by same-key-different-insertion-order")
+    {
+        json a;
+        a["b"] = 2;
+        a["a"] = 1;
+
+        json b;
+        b["a"] = 1;
+        b["b"] = 2;
+
+        // std::map iteration is always sorted by key, so a == b regardless of
+        // insertion order, and diff() must still produce the same minimal
+        // (empty) result as before this fix
+        CHECK(a == b);
+        auto p = json::diff(a, b);
+        CHECK(p.empty());
+        CHECK(a.patch(p) == b);
+    }
 }

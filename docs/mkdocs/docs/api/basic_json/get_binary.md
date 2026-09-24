@@ -40,6 +40,11 @@ Constant.
     --8<-- "examples/get_binary.output"
     ```
 
+## See also
+
+- [get](get.md) get a value (explicit conversion)
+- [get_ref](get_ref.md) get a reference to the stored value
+
 ## Version history
 
 - Added in version 3.8.0.

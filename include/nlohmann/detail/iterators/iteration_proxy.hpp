@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013 - 2025 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #pragma once
@@ -18,6 +18,7 @@
 #endif
 
 #include <nlohmann/detail/abi_macros.hpp>
+#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 #include <nlohmann/detail/string_utils.hpp>
 #include <nlohmann/detail/value_t.hpp>
@@ -206,10 +207,10 @@ NLOHMANN_JSON_NAMESPACE_END
 namespace std
 {
 
+// Fix: https://github.com/nlohmann/json/issues/1401
 #if defined(__clang__)
-    // Fix: https://github.com/nlohmann/json/issues/1401
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wmismatched-tags"
+    JSON_HEDLEY_DIAGNOSTIC_PUSH
+    JSON_HEDLEY_PRAGMA(clang diagnostic ignored "-Wmismatched-tags")
 #endif
 template<typename IteratorType>
 class tuple_size<::nlohmann::detail::iteration_proxy_value<IteratorType>> // NOLINT(cert-dcl58-cpp)
@@ -224,7 +225,7 @@ class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >>
                             ::nlohmann::detail::iteration_proxy_value<IteratorType >> ()));
 };
 #if defined(__clang__)
-    #pragma clang diagnostic pop
+    JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
 
 }  // namespace std

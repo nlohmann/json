@@ -35,6 +35,10 @@ class basic_json;
 | `BinaryType`         | type for binary arrays                                                    | [`binary_t`](binary_t.md)                   |
 | `CustomBaseClass`    | extension point for user code                                             | [`json_base_class_t`](json_base_class_t.md) |
 
+The library imposes a number of requirements on these types that are not expressed as C++ concepts, such as the
+container operations `object_t` and `array_t` must provide, or the fact that `StringType` must be `char`-based. They
+are collected in [Template Parameter Requirements](../../features/types/template_parameters.md).
+
 ## Specializations
 
 - [**json**](../json.md) - default specialization
@@ -301,6 +305,7 @@ Access to the JSON value
 - [**operator<<(std::ostream&)**](../operator_ltlt.md) - serialize to stream
 - [**operator>>(std::istream&)**](../operator_gtgt.md) - deserialize from stream
 - [**to_string**](to_string.md) - user-defined `to_string` function for JSON values
+- [**format_as**](format_as.md) - user-defined `format_as` function for JSON values (fmt support)
 
 ## Literals
 
@@ -308,6 +313,7 @@ Access to the JSON value
 
 ## Helper classes
 
+- [**std::formatter&lt;basic_json&gt;**](std_formatter.md) - make JSON values formattable with `std::format`
 - [**std::hash&lt;basic_json&gt;**](std_hash.md) - return a hash value for a JSON object
 - [**std::swap&lt;basic_json&gt;**](std_swap.md) - exchanges the values of two JSON objects
 

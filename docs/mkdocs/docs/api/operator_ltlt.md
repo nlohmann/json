@@ -80,6 +80,12 @@ Linear.
     ```json
     --8<-- "examples/operator_ltlt__json_pointer.output"
     ```
+
+## See also
+
+- [dump](basic_json/dump.md) - serialize to a JSON-formatted string
+- [Serialization](../features/serialization.md) - the serialization article
+
 ## Version history
 
 1. Added in version 1.0.0. Added support for indentation character and deprecated
