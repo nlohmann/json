@@ -812,7 +812,3 @@ void templated_json_throw(ExceptionType exception)
 #ifndef JSON_USE_GLOBAL_UDLS
     #define JSON_USE_GLOBAL_UDLS 1
 #endif
-
-#ifndef JSON_STRICT_NUL_HANDLING
-    #define JSON_STRICT_NUL_HANDLING 0
-#endif

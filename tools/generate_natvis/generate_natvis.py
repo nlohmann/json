@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
     namespaces = ['nlohmann']
     abi_prefix = 'json_abi'
-    abi_tags = ['_diag', '_ldvcmp', '_dp', '_bics']
+    abi_tags = ['_diag', '_ldvcmp', '_dp', '_bics', '_snul']
     version = '_v' + args.version.replace('.', '_')
     inline_namespaces = []
 
