@@ -422,6 +422,28 @@ TEST_CASE("Regression tests for extended diagnostics")
             check_parents(j);
         }
 
+        // update(j, true) around its descent bound, where the nested vectors
+        // grow while the objects are merged without recursing
+        for (const std::size_t depth :
+                {
+                    nlohmann::detail::recursion_depth_limit() - 1, nlohmann::detail::recursion_depth_limit(), nlohmann::detail::recursion_depth_limit() + 2
+                })
+        {
+            ordered_json j = {{"z", {{"x", 1}}}};
+            ordered_json patch = {{"a", 1}, {"b", 2}, {"c", {{"d", 3}}}};
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                j = ordered_json{{"k", 0}, {"n", std::move(j)}};
+                patch = ordered_json{{"n", std::move(patch)}, {"l", 1}, {"m", 2}};
+            }
+            j.update(patch, true);
+
+            // must not trigger assert_invariant() on any level in a
+            // debug/assert-enabled build
+            ordered_json const copy = j; // NOLINT(performance-unnecessary-copy-initialization)
+            CHECK(copy == j);
+        }
+
         // merge_patch() inserts "c" and removes "d" at /a/c, then inserts "e"
         // at /a, which copies /a/c
         {
