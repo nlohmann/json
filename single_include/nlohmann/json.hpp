@@ -3824,71 +3824,71 @@ NLOHMANN_JSON_NAMESPACE_END
 // SPDX-License-Identifier: MIT
 
 #ifndef INCLUDE_NLOHMANN_JSON_FWD_HPP_
-    #define INCLUDE_NLOHMANN_JSON_FWD_HPP_
+#define INCLUDE_NLOHMANN_JSON_FWD_HPP_
 
-    #include <cstdint> // int64_t, uint64_t
-    #include <map> // map
-    #include <memory> // allocator
-    #include <string> // string
-    #include <vector> // vector
+#include <cstdint> // int64_t, uint64_t
+#include <map> // map
+#include <memory> // allocator
+#include <string> // string
+#include <vector> // vector
 
-    // #include <nlohmann/detail/abi_macros.hpp>
+// #include <nlohmann/detail/abi_macros.hpp>
 
 
-    /*!
-    @brief namespace for Niels Lohmann
-    @see https://github.com/nlohmann
-    @since version 1.0.0
-    */
-    NLOHMANN_JSON_NAMESPACE_BEGIN
+/*!
+@brief namespace for Niels Lohmann
+@see https://github.com/nlohmann
+@since version 1.0.0
+*/
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
-    /*!
-    @brief default JSONSerializer template argument
+/*!
+@brief default JSONSerializer template argument
 
-    This serializer ignores the template arguments and uses ADL
-    ([argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl))
-    for serialization.
-    */
-    template<typename T = void, typename SFINAE = void>
-    struct adl_serializer;
+This serializer ignores the template arguments and uses ADL
+([argument-dependent lookup](https://en.cppreference.com/w/cpp/language/adl))
+for serialization.
+*/
+template<typename T = void, typename SFINAE = void>
+struct adl_serializer;
 
-    /// a class to store JSON values
-    /// @sa https://json.nlohmann.me/api/basic_json/
-    template<template<typename U, typename V, typename... Args> class ObjectType =
-    std::map,
-    template<typename U, typename... Args> class ArrayType = std::vector,
-    class StringType = std::string, class BooleanType = bool,
-    class NumberIntegerType = std::int64_t,
-    class NumberUnsignedType = std::uint64_t,
-    class NumberFloatType = double,
-    template<typename U> class AllocatorType = std::allocator,
-    template<typename T, typename SFINAE = void> class JSONSerializer =
-    adl_serializer,
-    class BinaryType = std::vector<std::uint8_t>, // cppcheck-suppress syntaxError
-    class CustomBaseClass = void>
-    class basic_json;
+/// a class to store JSON values
+/// @sa https://json.nlohmann.me/api/basic_json/
+template<template<typename U, typename V, typename... Args> class ObjectType =
+         std::map,
+         template<typename U, typename... Args> class ArrayType = std::vector,
+         class StringType = std::string, class BooleanType = bool,
+         class NumberIntegerType = std::int64_t,
+         class NumberUnsignedType = std::uint64_t,
+         class NumberFloatType = double,
+         template<typename U> class AllocatorType = std::allocator,
+         template<typename T, typename SFINAE = void> class JSONSerializer =
+         adl_serializer,
+         class BinaryType = std::vector<std::uint8_t>, // cppcheck-suppress syntaxError
+         class CustomBaseClass = void>
+class basic_json;
 
-    /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
-    /// @sa https://json.nlohmann.me/api/json_pointer/
-    template<typename RefStringType>
-    class json_pointer;
+/// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
+/// @sa https://json.nlohmann.me/api/json_pointer/
+template<typename RefStringType>
+class json_pointer;
 
-    /*!
-    @brief default specialization
-    @sa https://json.nlohmann.me/api/json/
-    */
-    using json = basic_json<>;
+/*!
+@brief default specialization
+@sa https://json.nlohmann.me/api/json/
+*/
+using json = basic_json<>;
 
-    /// @brief a minimal map-like container that preserves insertion order
-    /// @sa https://json.nlohmann.me/api/ordered_map/
-    template<class Key, class T, class IgnoredLess, class Allocator>
-    struct ordered_map;
+/// @brief a minimal map-like container that preserves insertion order
+/// @sa https://json.nlohmann.me/api/ordered_map/
+template<class Key, class T, class IgnoredLess, class Allocator>
+struct ordered_map;
 
-    /// @brief specialization that maintains the insertion order of object keys
-    /// @sa https://json.nlohmann.me/api/ordered_json/
-    using ordered_json = basic_json<nlohmann::ordered_map>;
+/// @brief specialization that maintains the insertion order of object keys
+/// @sa https://json.nlohmann.me/api/ordered_json/
+using ordered_json = basic_json<nlohmann::ordered_map>;
 
-    NLOHMANN_JSON_NAMESPACE_END
+NLOHMANN_JSON_NAMESPACE_END
 
 #endif  // INCLUDE_NLOHMANN_JSON_FWD_HPP_
 
@@ -6007,7 +6007,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 // #include <nlohmann/detail/macro_scope.hpp>
-// JSON_HAS_CPP_17
+ // JSON_HAS_CPP_17
 #ifdef JSON_HAS_CPP_17
     #include <optional> // optional
 #endif
@@ -6984,10 +6984,13 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstdint> // uint8_t
 #include <cstddef> // size_t
 #include <functional> // hash
+#include <vector>
 
 // #include <nlohmann/detail/abi_macros.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
+
+// #include <nlohmann/thirdparty/hedley/hedley.hpp>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -7001,19 +7004,83 @@ inline std::size_t combine(std::size_t seed, std::size_t h) noexcept
     return seed;
 }
 
-/*!
-@brief hash a JSON value
+// Forward declaration
+template<typename BasicJsonType>
+std::size_t hash(const BasicJsonType& j);
 
-The hash function tries to rely on std::hash where possible. Furthermore, the
-type of the JSON value is taken into account to have different hash values for
-null, 0, 0U, and false, etc.
+/*!
+@brief hash a structured JSON value iteratively to prevent stack overflow
 
 @tparam BasicJsonType basic_json specialization
-@param j JSON value to hash
-@return hash value of j
+@param root JSON object or array to hash
+@return hash value of root
 */
 template<typename BasicJsonType>
-std::size_t hash(const BasicJsonType& j)
+std::size_t hash_iterative(const BasicJsonType& root)
+{
+    using string_t = typename BasicJsonType::string_t;
+
+    struct hash_frame
+    {
+        const BasicJsonType* j;
+        std::size_t seed;
+        typename BasicJsonType::const_iterator it;
+        typename BasicJsonType::const_iterator end;
+    };
+
+    std::vector<hash_frame> stack;
+    stack.push_back({&root, combine(static_cast<std::size_t>(root.type()), root.size()), root.cbegin(), root.cend()});
+
+    while (true)
+    {
+        auto& frame = stack.back();
+        if (frame.it == frame.end)
+        {
+            const auto finished_seed = frame.seed;
+            stack.pop_back();
+            if (stack.empty())
+            {
+                return finished_seed;
+            }
+            auto& parent = stack.back();
+            parent.seed = combine(parent.seed, finished_seed);
+            ++parent.it;
+            continue;
+        }
+
+        if (frame.j->is_object())
+        {
+            const auto h = std::hash<string_t> {}(frame.it.key());
+            frame.seed = combine(frame.seed, h);
+            const auto& val = frame.it.value();
+            if (val.is_structured())
+            {
+                stack.push_back({&val, combine(static_cast<std::size_t>(val.type()), val.size()), val.cbegin(), val.cend()});
+            }
+            else
+            {
+                frame.seed = combine(frame.seed, hash(val));
+                ++frame.it;
+            }
+        }
+        else // array
+        {
+            const auto& val = *frame.it;
+            if (val.is_structured())
+            {
+                stack.push_back({&val, combine(static_cast<std::size_t>(val.type()), val.size()), val.cbegin(), val.cend()});
+            }
+            else
+            {
+                frame.seed = combine(frame.seed, hash(val));
+                ++frame.it;
+            }
+        }
+    }
+}
+
+template<typename BasicJsonType>
+std::size_t hash_internal(const BasicJsonType& j, std::size_t depth)
 {
     using string_t = typename BasicJsonType::string_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -7031,22 +7098,30 @@ std::size_t hash(const BasicJsonType& j)
 
         case BasicJsonType::value_t::object:
         {
+            if (JSON_HEDLEY_UNLIKELY(depth >= 128))
+            {
+                return hash_iterative(j);
+            }
             auto seed = combine(type, j.size());
             for (const auto& element : j.items())
             {
                 const auto h = std::hash<string_t> {}(element.key());
                 seed = combine(seed, h);
-                seed = combine(seed, hash(element.value()));
+                seed = combine(seed, hash_internal(element.value(), depth + 1));
             }
             return seed;
         }
 
         case BasicJsonType::value_t::array:
         {
+            if (JSON_HEDLEY_UNLIKELY(depth >= 128))
+            {
+                return hash_iterative(j);
+            }
             auto seed = combine(type, j.size());
             for (const auto& element : j)
             {
-                seed = combine(seed, hash(element));
+                seed = combine(seed, hash_internal(element, depth + 1));
             }
             return seed;
         }
@@ -7098,8 +7173,24 @@ std::size_t hash(const BasicJsonType& j)
 
         default:                   // LCOV_EXCL_LINE
             JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
-            return 0;              // LCOV_EXCL_LINE
     }
+}
+
+/*!
+@brief hash a JSON value
+
+The hash function tries to rely on std::hash where possible. Furthermore, the
+type of the JSON value is taken into account to have different hash values for
+null, 0, 0U, and false, etc.
+
+@tparam BasicJsonType basic_json specialization
+@param j JSON value to hash
+@return hash value of j
+*/
+template<typename BasicJsonType>
+std::size_t hash(const BasicJsonType& j)
+{
+    return hash_internal(j, 0);
 }
 
 }  // namespace detail
@@ -24396,10 +24487,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         const bool ignore_comments = false,
         const bool ignore_trailing_commas = false,
         const bool discard_number_values = false
-                                 )
+    )
     {
         return ::nlohmann::detail::parser<basic_json, InputAdapterType>(std::move(adapter),
-            std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas, discard_number_values);
+               std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas, discard_number_values);
     }
 
   private:
@@ -24421,7 +24512,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // binary_writer over a concrete (non-virtual) sink appending into a std::vector,
     // used by the vector-returning to_* overloads
     template<typename CharType> using vector_binary_writer =
-    ::nlohmann::detail::binary_writer<basic_json, CharType, ::nlohmann::detail::output_vector_sink<CharType>>;
+        ::nlohmann::detail::binary_writer<basic_json, CharType, ::nlohmann::detail::output_vector_sink<CharType>>;
     template<typename CharType> static vector_binary_writer<CharType> vector_writer(std::vector<CharType>& v)
     {
         return vector_binary_writer<CharType>(::nlohmann::detail::output_vector_sink<CharType>(v));
@@ -25171,8 +25262,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                detail::enable_if_t <
                    !detail::is_basic_json<U>::value && detail::is_compatible_type<basic_json_t, U>::value, int > = 0 >
     basic_json(CompatibleType && val) noexcept(noexcept( // NOLINT(bugprone-forwarding-reference-overload,bugprone-exception-escape)
-            JSONSerializer<U>::to_json(std::declval<basic_json_t&>(),
-                                       std::forward<CompatibleType>(val))))
+                JSONSerializer<U>::to_json(std::declval<basic_json_t&>(),
+                                           std::forward<CompatibleType>(val))))
     {
         JSONSerializer<U>::to_json(*this, std::forward<CompatibleType>(val));
         set_parents();
@@ -25994,7 +26085,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    detail::has_from_json<basic_json_t, ValueType>::value,
                    int > = 0 >
     ValueType get_impl(detail::priority_tag<0> /*unused*/) const noexcept(noexcept(
-            JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), std::declval<ValueType&>())))
+                JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), std::declval<ValueType&>())))
     {
         auto ret = ValueType();
         JSONSerializer<ValueType>::from_json(*this, ret);
@@ -26036,7 +26127,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    detail::has_non_default_from_json<basic_json_t, ValueType>::value,
                    int > = 0 >
     ValueType get_impl(detail::priority_tag<1> /*unused*/) const noexcept(noexcept(
-            JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>())))
+                JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>())))
     {
         return JSONSerializer<ValueType>::from_json(*this);
     }
@@ -26186,7 +26277,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    detail::has_from_json<basic_json_t, ValueType>::value,
                    int > = 0 >
     ValueType & get_to(ValueType& v) const noexcept(noexcept(
-            JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), v)))
+                JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), v)))
     {
         JSONSerializer<ValueType>::from_json(*this, v);
         return v;
@@ -27816,6 +27907,47 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/update/
     void update(const_iterator first, const_iterator last, bool merge_objects = false) // NOLINT(performance-unnecessary-value-param)
     {
+        update_internal(first, last, merge_objects, 0);
+    }
+
+  private:
+    static void update_iteratively(basic_json& target, const basic_json& source)
+    {
+        std::vector<std::pair<basic_json*, const basic_json*>> worklist;
+        worklist.emplace_back(&target, &source);
+
+        while (!worklist.empty())
+        {
+            auto current_pair = worklist.back();
+            worklist.pop_back();
+
+            basic_json* cur_target = current_pair.first;
+            const basic_json* cur_source = current_pair.second;
+
+            for (auto it = cur_source->cbegin(); it != cur_source->cend(); ++it)
+            {
+                if (it.value().is_object())
+                {
+                    auto it2 = cur_target->m_data.m_value.object->find(it.key());
+                    if (it2 != cur_target->m_data.m_value.object->end() && it2->second.is_object())
+                    {
+                        worklist.emplace_back(&it2->second, &it.value());
+                        continue;
+                    }
+                }
+                cur_target->m_data.m_value.object->operator[](it.key()) = it.value();
+#if JSON_DIAGNOSTICS
+                cur_target->m_data.m_value.object->operator[](it.key()).m_parent = cur_target;
+#endif
+            }
+#if JSON_DIAGNOSTICS
+            cur_target->set_parents();
+#endif
+        }
+    }
+
+    void update_internal(const_iterator first, const_iterator last, bool merge_objects, std::size_t depth)
+    {
         // implicitly convert a null value to an empty object
         if (is_null())
         {
@@ -27851,7 +27983,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 // are overwritten as usual" behavior (see #5402).
                 if (it2 != m_data.m_value.object->end() && it2->second.is_object())
                 {
-                    it2->second.update(it.value(), true);
+                    if (JSON_HEDLEY_UNLIKELY(depth >= 128))
+                    {
+                        update_iteratively(it2->second, it.value());
+                    }
+                    else
+                    {
+                        it2->second.update_internal(it.value().cbegin(), it.value().cend(), true, depth + 1);
+                    }
 #if JSON_DIAGNOSTICS
                     it2->second.set_parents();
 #endif
@@ -27864,6 +28003,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #endif
         }
     }
+
+  public:
 
     /// @brief exchanges the values
     /// @sa https://json.nlohmann.me/api/basic_json/swap/

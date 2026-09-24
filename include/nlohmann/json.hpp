@@ -3586,6 +3586,47 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/update/
     void update(const_iterator first, const_iterator last, bool merge_objects = false) // NOLINT(performance-unnecessary-value-param)
     {
+        update_internal(first, last, merge_objects, 0);
+    }
+
+  private:
+    static void update_iteratively(basic_json& target, const basic_json& source)
+    {
+        std::vector<std::pair<basic_json*, const basic_json*>> worklist;
+        worklist.emplace_back(&target, &source);
+
+        while (!worklist.empty())
+        {
+            auto current_pair = worklist.back();
+            worklist.pop_back();
+
+            basic_json* cur_target = current_pair.first;
+            const basic_json* cur_source = current_pair.second;
+
+            for (auto it = cur_source->cbegin(); it != cur_source->cend(); ++it)
+            {
+                if (it.value().is_object())
+                {
+                    auto it2 = cur_target->m_data.m_value.object->find(it.key());
+                    if (it2 != cur_target->m_data.m_value.object->end() && it2->second.is_object())
+                    {
+                        worklist.emplace_back(&it2->second, &it.value());
+                        continue;
+                    }
+                }
+                cur_target->m_data.m_value.object->operator[](it.key()) = it.value();
+#if JSON_DIAGNOSTICS
+                cur_target->m_data.m_value.object->operator[](it.key()).m_parent = cur_target;
+#endif
+            }
+#if JSON_DIAGNOSTICS
+            cur_target->set_parents();
+#endif
+        }
+    }
+
+    void update_internal(const_iterator first, const_iterator last, bool merge_objects, std::size_t depth)
+    {
         // implicitly convert a null value to an empty object
         if (is_null())
         {
@@ -3621,7 +3662,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 // are overwritten as usual" behavior (see #5402).
                 if (it2 != m_data.m_value.object->end() && it2->second.is_object())
                 {
-                    it2->second.update(it.value(), true);
+                    if (JSON_HEDLEY_UNLIKELY(depth >= 128))
+                    {
+                        update_iteratively(it2->second, it.value());
+                    }
+                    else
+                    {
+                        it2->second.update_internal(it.value().cbegin(), it.value().cend(), true, depth + 1);
+                    }
 #if JSON_DIAGNOSTICS
                     it2->second.set_parents();
 #endif
@@ -3634,6 +3682,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #endif
         }
     }
+
+  public:
 
     /// @brief exchanges the values
     /// @sa https://json.nlohmann.me/api/basic_json/swap/

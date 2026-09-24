@@ -839,6 +839,34 @@ TEST_CASE("modifiers")
                     j1.update(j2, true);
                     CHECK(j1 == json({{"k", {{"inner", {{"x", 2}}}}}}));
                 }
+
+                SECTION("deeply nested object merge (issue #5545)")
+                {
+                    const std::size_t depth = 500;
+                    json j1 = json::object();
+                    json j2 = json::object();
+                    json* curr1 = &j1;
+                    json* curr2 = &j2;
+                    for (std::size_t i = 0; i < depth; ++i)
+                    {
+                        (*curr1)["k"] = json::object();
+                        curr1 = &((*curr1)["k"]);
+                        (*curr2)["k"] = json::object();
+                        curr2 = &((*curr2)["k"]);
+                    }
+                    (*curr1)["val1"] = 1;
+                    (*curr2)["val2"] = 2;
+
+                    CHECK_NOTHROW(j1.update(j2, true));
+
+                    const json* check = &j1;
+                    for (std::size_t i = 0; i < depth; ++i)
+                    {
+                        check = &((*check)["k"]);
+                    }
+                    CHECK((*check)["val1"] == 1);
+                    CHECK((*check)["val2"] == 2);
+                }
             }
         }
     }

@@ -11,9 +11,11 @@
 #include <cstdint> // uint8_t
 #include <cstddef> // size_t
 #include <functional> // hash
+#include <vector>
 
 #include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/value_t.hpp>
+#include <nlohmann/thirdparty/hedley/hedley.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -26,19 +28,83 @@ inline std::size_t combine(std::size_t seed, std::size_t h) noexcept
     return seed;
 }
 
-/*!
-@brief hash a JSON value
+// Forward declaration
+template<typename BasicJsonType>
+std::size_t hash(const BasicJsonType& j);
 
-The hash function tries to rely on std::hash where possible. Furthermore, the
-type of the JSON value is taken into account to have different hash values for
-null, 0, 0U, and false, etc.
+/*!
+@brief hash a structured JSON value iteratively to prevent stack overflow
 
 @tparam BasicJsonType basic_json specialization
-@param j JSON value to hash
-@return hash value of j
+@param root JSON object or array to hash
+@return hash value of root
 */
 template<typename BasicJsonType>
-std::size_t hash(const BasicJsonType& j)
+std::size_t hash_iterative(const BasicJsonType& root)
+{
+    using string_t = typename BasicJsonType::string_t;
+
+    struct hash_frame
+    {
+        const BasicJsonType* j;
+        std::size_t seed;
+        typename BasicJsonType::const_iterator it;
+        typename BasicJsonType::const_iterator end;
+    };
+
+    std::vector<hash_frame> stack;
+    stack.push_back({&root, combine(static_cast<std::size_t>(root.type()), root.size()), root.cbegin(), root.cend()});
+
+    while (true)
+    {
+        auto& frame = stack.back();
+        if (frame.it == frame.end)
+        {
+            const auto finished_seed = frame.seed;
+            stack.pop_back();
+            if (stack.empty())
+            {
+                return finished_seed;
+            }
+            auto& parent = stack.back();
+            parent.seed = combine(parent.seed, finished_seed);
+            ++parent.it;
+            continue;
+        }
+
+        if (frame.j->is_object())
+        {
+            const auto h = std::hash<string_t> {}(frame.it.key());
+            frame.seed = combine(frame.seed, h);
+            const auto& val = frame.it.value();
+            if (val.is_structured())
+            {
+                stack.push_back({&val, combine(static_cast<std::size_t>(val.type()), val.size()), val.cbegin(), val.cend()});
+            }
+            else
+            {
+                frame.seed = combine(frame.seed, hash(val));
+                ++frame.it;
+            }
+        }
+        else // array
+        {
+            const auto& val = *frame.it;
+            if (val.is_structured())
+            {
+                stack.push_back({&val, combine(static_cast<std::size_t>(val.type()), val.size()), val.cbegin(), val.cend()});
+            }
+            else
+            {
+                frame.seed = combine(frame.seed, hash(val));
+                ++frame.it;
+            }
+        }
+    }
+}
+
+template<typename BasicJsonType>
+std::size_t hash_internal(const BasicJsonType& j, std::size_t depth)
 {
     using string_t = typename BasicJsonType::string_t;
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -56,22 +122,30 @@ std::size_t hash(const BasicJsonType& j)
 
         case BasicJsonType::value_t::object:
         {
+            if (JSON_HEDLEY_UNLIKELY(depth >= 128))
+            {
+                return hash_iterative(j);
+            }
             auto seed = combine(type, j.size());
             for (const auto& element : j.items())
             {
                 const auto h = std::hash<string_t> {}(element.key());
                 seed = combine(seed, h);
-                seed = combine(seed, hash(element.value()));
+                seed = combine(seed, hash_internal(element.value(), depth + 1));
             }
             return seed;
         }
 
         case BasicJsonType::value_t::array:
         {
+            if (JSON_HEDLEY_UNLIKELY(depth >= 128))
+            {
+                return hash_iterative(j);
+            }
             auto seed = combine(type, j.size());
             for (const auto& element : j)
             {
-                seed = combine(seed, hash(element));
+                seed = combine(seed, hash_internal(element, depth + 1));
             }
             return seed;
         }
@@ -123,8 +197,24 @@ std::size_t hash(const BasicJsonType& j)
 
         default:                   // LCOV_EXCL_LINE
             JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
-            return 0;              // LCOV_EXCL_LINE
     }
+}
+
+/*!
+@brief hash a JSON value
+
+The hash function tries to rely on std::hash where possible. Furthermore, the
+type of the JSON value is taken into account to have different hash values for
+null, 0, 0U, and false, etc.
+
+@tparam BasicJsonType basic_json specialization
+@param j JSON value to hash
+@return hash value of j
+*/
+template<typename BasicJsonType>
+std::size_t hash(const BasicJsonType& j)
+{
+    return hash_internal(j, 0);
 }
 
 }  // namespace detail
