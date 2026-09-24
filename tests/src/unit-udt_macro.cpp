@@ -958,6 +958,10 @@ class dispatch_with_user_macros_derived_members : public dispatch_with_user_macr
 // NOLINTNEXTLINE(misc-use-internal-linkage)
 NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(dispatch_with_user_macros_derived_members, dispatch_with_user_macros_members, own)
 
+// testing for the macros also keeps -Wunused-macros from rejecting them
+#if !defined(EMPTY) || !defined(MEMBERS)
+    #error "EMPTY and MEMBERS must stay defined for the tests above"
+#endif
 #undef EMPTY
 #undef MEMBERS
 
