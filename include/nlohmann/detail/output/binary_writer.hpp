@@ -881,8 +881,6 @@ class binary_writer
                         return ubjson_prefix(v, use_bjdata) == first_prefix;
                     });
 
-                    std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'}; // excluded markers in bjdata optimized type
-
                     // an optimized array of a valueless type carries no payload, so a
                     // reader has nothing but the declared count to bound the allocation
                     // by and refuses an excessive one. Write the unoptimized form for
@@ -893,7 +891,7 @@ class binary_writer
                                                      && j.m_data.m_value.array->size() > detail::max_valueless_container_size;
 
                     if (same_prefix && !excessive_valueless
-                            && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
+                            && !(use_bjdata && is_bjdata_excluded_type_marker(first_prefix)))
                     {
                         prefix_required = false;
                         oa.write_character(to_char_type('$'));
@@ -997,9 +995,7 @@ class binary_writer
                         return ubjson_prefix(v, use_bjdata) == first_prefix;
                     });
 
-                    std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'}; // excluded markers in bjdata optimized type
-
-                    if (same_prefix && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
+                    if (same_prefix && !(use_bjdata && is_bjdata_excluded_type_marker(first_prefix)))
                     {
                         prefix_required = false;
                         oa.write_character(to_char_type('$'));
@@ -1724,6 +1720,21 @@ class binary_writer
             default:  // discarded values
                 return 'N';
         }
+    }
+
+    /*!
+    @brief whether BJData forbids @a marker as the type of an optimized array
+           or object
+
+    Containers, strings, high-precision numbers, booleans and null cannot be
+    declared as the single type of an optimized container in BJData; such a
+    container is written unoptimized. The reader rejects them with the same
+    list (binary_reader::bjd_optimized_type_markers).
+    */
+    static constexpr bool is_bjdata_excluded_type_marker(const CharType marker) noexcept
+    {
+        return marker == '[' || marker == '{' || marker == 'S' || marker == 'H'
+               || marker == 'T' || marker == 'F' || marker == 'N' || marker == 'Z';
     }
 
     static constexpr CharType get_ubjson_float_prefix(float /*unused*/)
