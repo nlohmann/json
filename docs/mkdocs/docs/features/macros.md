@@ -105,6 +105,19 @@ using the library with compilers that do not fully support C++11 and may only wo
 
 See [full documentation of `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`](../api/macros/json_skip_unsupported_compiler_check.md).
 
+## `JSON_STRICT_NUL_HANDLING`
+
+When defined to `1`, a `'\0'` (NUL) byte anywhere in the input is rejected with `parse_error.101`, like any other
+unexpected byte, instead of being silently treated as end of input (see the
+[FAQ entry](../home/faq.md#nul-bytes-in-the-input) for background). The default value is `0`, which preserves the
+existing behavior; this is planned to become the default in version 4.0.0.
+
+The strict handling can also be enabled with the CMake option
+[`JSON_StrictNulHandling`](../integration/cmake.md#json_strictnulhandling) (`OFF` by default) which sets
+`JSON_STRICT_NUL_HANDLING` accordingly.
+
+See [full documentation of `JSON_STRICT_NUL_HANDLING`](../api/macros/json_strict_nul_handling.md).
+
 ## `JSON_THROW_USER(exception)`
 
 This macro overrides `#!cpp throw` calls inside the library. The argument is the exception to be thrown.
