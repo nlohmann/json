@@ -43,34 +43,42 @@ flowchart LR
 
 ## Source layout
 
-The public headers are `include/nlohmann/json.hpp` (class `basic_json`) and `include/nlohmann/json_fwd.hpp` (forward
-declarations). Everything else lives in `include/nlohmann/detail` and namespace `nlohmann::detail`, which is not part of
-the public API.
+The public headers are in [`include/nlohmann`](https://github.com/nlohmann/json/tree/develop/include/nlohmann):
 
-| Component                              | Location                                                                    |
-|----------------------------------------|-----------------------------------------------------------------------------|
-| Value type enumeration                 | `detail/value_t.hpp`                                                        |
-| Input adapters                         | `detail/input/input_adapters.hpp`                                           |
-| Lexer                                  | `detail/input/lexer.hpp`, `detail/input/number_parse.hpp`                   |
-| Parser                                 | `detail/input/parser.hpp`                                                   |
-| SAX interface and DOM builders         | `detail/input/json_sax.hpp`                                                 |
-| Binary format readers                  | `detail/input/binary_reader.hpp`                                            |
-| JSON serializer                        | `detail/output/serializer.hpp`, `detail/conversions/to_chars.hpp`           |
-| Binary format writers                  | `detail/output/binary_writer.hpp`                                           |
-| Output adapters                        | `detail/output/output_adapters.hpp`                                         |
-| Iterators                              | `detail/iterators/`                                                         |
-| Conversions from/to arbitrary types    | `detail/conversions/from_json.hpp`, `detail/conversions/to_json.hpp`        |
-| JSON Pointer                           | `detail/json_pointer.hpp`                                                   |
-| Exceptions                             | `detail/exceptions.hpp`                                                     |
-| Type traits and C++ feature backports  | `detail/meta/`                                                              |
-| Macros                                 | `detail/macro_scope.hpp`, `detail/macro_unscope.hpp`, `detail/abi_macros.hpp` |
+- [`json.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json.hpp) defines class [`basic_json`](../api/basic_json/index.md).
+- [`json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json_fwd.hpp) contains forward declarations.
+- [`adl_serializer.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/adl_serializer.hpp), [`byte_container_with_subtype.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/byte_container_with_subtype.hpp), and [`ordered_map.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/ordered_map.hpp) define
+  [`adl_serializer`](../api/adl_serializer/index.md),
+  [`byte_container_with_subtype`](../api/byte_container_with_subtype/index.md), and
+  [`ordered_map`](../api/ordered_map.md).
 
-The single-header version `single_include/nlohmann/json.hpp` is generated from these files with `make amalgamate` and
-must not be edited by hand.
+Everything else lives in [`detail/`](https://github.com/nlohmann/json/tree/develop/include/nlohmann/detail) and namespace `nlohmann::detail`, which is not part of the public API. Paths
+below are relative to `include/nlohmann`.
+
+| Component | Location |
+|-----------|----------|
+| Value type enumeration | [`detail/value_t.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/value_t.hpp) |
+| Input adapters | [`detail/input/input_adapters.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/input/input_adapters.hpp) |
+| Lexer | [`detail/input/lexer.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/input/lexer.hpp), [`detail/input/number_parse.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/input/number_parse.hpp), [`detail/input/string_scan.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/input/string_scan.hpp) |
+| Parser | [`detail/input/parser.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/input/parser.hpp) |
+| SAX interface and DOM builders | [`detail/input/json_sax.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/input/json_sax.hpp) |
+| Binary format readers | [`detail/input/binary_reader.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/input/binary_reader.hpp) |
+| JSON serializer | [`detail/output/serializer.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/output/serializer.hpp), [`detail/conversions/to_chars.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/conversions/to_chars.hpp) |
+| Binary format writers | [`detail/output/binary_writer.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/output/binary_writer.hpp) |
+| Output adapters | [`detail/output/output_adapters.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/output/output_adapters.hpp) |
+| Iterators | [`detail/iterators/`](https://github.com/nlohmann/json/tree/develop/include/nlohmann/detail/iterators) |
+| Conversions from/to arbitrary types | [`detail/conversions/from_json.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/conversions/from_json.hpp), [`detail/conversions/to_json.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/conversions/to_json.hpp) |
+| JSON Pointer | [`detail/json_pointer.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/json_pointer.hpp) |
+| Exceptions | [`detail/exceptions.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/exceptions.hpp) |
+| Type traits and C++ feature backports | [`detail/meta/`](https://github.com/nlohmann/json/tree/develop/include/nlohmann/detail/meta) |
+| Macros | [`detail/macro_scope.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/macro_scope.hpp), [`detail/macro_unscope.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/macro_unscope.hpp), [`detail/abi_macros.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/abi_macros.hpp) |
+
+The single-header version [`single_include/nlohmann/json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp)
+is generated from these files with `make amalgamate` and must not be edited by hand.
 
 ## Template parameters
 
-`basic_json` is parameterized by the types it uses to store values and to convert from and to other types:
+[`basic_json`](../api/basic_json/index.md) is parameterized by the types it uses to store values and to convert from and to other types:
 
 | Template parameter   | Default                   | Used for                                                          |
 |----------------------|---------------------------|-------------------------------------------------------------------|
@@ -97,7 +105,7 @@ The requirements on the template arguments are listed in
 
 ## Value storage
 
-Each `basic_json` value stores its content as a tagged union: an enumeration [`value_t`](../api/basic_json/value_t.md)
+Each [`basic_json`](../api/basic_json/index.md) value stores its content as a tagged union: an enumeration [`value_t`](../api/basic_json/value_t.md)
 names the type of the value, and a union `json_value` holds the value itself. Both are members of the nested struct
 `data`, which is the only data member `m_data` of `basic_json`:
 
@@ -158,23 +166,35 @@ maintains the invariant that the pointer matching `m_type` is never null; `asser
 
 ## Input adapters
 
-Input is read via **input adapters** that abstract a source with a common interface:
+Input is read via **input adapters** that abstract a source. Every input adapter provides this interface:
 
 ```cpp
-/// read a single character
-std::char_traits<char>::int_type get_character() noexcept;
+/// the type of the characters in the input
+using char_type = ...;
 
-/// read multiple characters to a destination buffer and
-/// returns the number of characters successfully read
+/// read a single character; returns std::char_traits<char_type>::eof() at the end of the input
+typename std::char_traits<char_type>::int_type get_character();
+
+/// read up to count * sizeof(T) bytes into dest and return the number of bytes read
+/// (used by the binary readers)
 template<class T>
 std::size_t get_elements(T* dest, std::size_t count = 1);
 ```
+
+The lexer detects two optional extensions at compile time. Only `iterator_input_adapter` provides them, and only for
+random-access input of single-byte characters:
+
+- `supports_seek`, `get_consumed_count()`, and `copy_consumed_range()` let the lexer reconstruct already consumed input
+  for error messages instead of copying every character it reads.
+- `supports_bulk_scan`, `bulk_data()`, `bulk_remaining()`, and `bulk_skip()` let the lexer scan strings directly in
+  contiguous memory, several bytes at a time.
 
 The function `input_adapter` picks the right adapter for the argument passed to `parse`, `accept`, `sax_parse`, or the
 `from_*` functions:
 
 - `iterator_input_adapter` reads from an iterator range, which also covers strings, containers, and pointers.
 - `wide_string_input_adapter` reads from ranges of `wchar_t`, `char16_t`, or `char32_t` and converts them to UTF-8.
+  It cannot be used for binary formats; its `get_elements()` throws.
 - `input_stream_adapter` reads from a `std::istream`.
 - `file_input_adapter` reads from a `std::FILE*`.
 
@@ -187,7 +207,7 @@ and `parse_error`.
 
 The library comes with two consumers in `detail/input/json_sax.hpp`:
 
-- `json_sax_dom_parser` builds a `basic_json` value tree. [`parse`](../api/basic_json/parse.md) uses it.
+- `json_sax_dom_parser` builds a [`basic_json`](../api/basic_json/index.md) value tree. [`parse`](../api/basic_json/parse.md) uses it.
 - `json_sax_dom_callback_parser` does the same, but calls a [parser callback](../features/parsing/parser_callbacks.md)
   for each event, which can skip values. `parse` uses it when a callback is given.
 
@@ -233,7 +253,7 @@ for their own types, see [Arbitrary Type Conversions](../features/arbitrary_type
 - [JSON Pointer](../features/json_pointer.md) (class `json_pointer`) addresses values inside a tree. It is also the
   basis of [JSON Patch](../features/json_patch.md).
 - [Binary formats](../features/binary_formats/index.md) are read by `binary_reader` and written by `binary_writer`.
-- A [custom base class](../api/basic_json/json_base_class_t.md) can add members to every `basic_json` value.
+- A [custom base class](../api/basic_json/json_base_class_t.md) can add members to every [`basic_json`](../api/basic_json/index.md) value.
 - [Serialization macros](../features/macros.md) generate `to_json` and `from_json` functions for user-defined types.
 
 ## Details namespace
