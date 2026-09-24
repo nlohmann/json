@@ -25436,7 +25436,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     using copy_worklist_t = std::vector<std::pair<const basic_json*, basic_json*>>;
 
     /// scratch space to build the key skeleton of an object copy in one go
-    using copy_scratch_t = std::vector<std::pair<typename object_t::key_type, basic_json>>;
+    using copy_scratch_value_t = std::pair<typename object_t::key_type, basic_json>;
+    using copy_scratch_t = std::vector<copy_scratch_value_t, AllocatorType<copy_scratch_value_t>>;
 
     /// @brief copy everything of @a src into @a dst but its type and value
     static void copy_metadata(const basic_json& src, basic_json& dst)

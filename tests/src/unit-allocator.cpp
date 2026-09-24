@@ -272,6 +272,69 @@ TEST_CASE("controlled bad_alloc")
 
 namespace
 {
+// counts the allocations of pairs with a non-const first member: the object
+// types store std::pair<const Key, T>, so only the scratch space of the
+// iterative deep copy allocates std::pair<Key, T>
+std::size_t scratch_pair_allocations = 0;
+
+template<class T>
+struct is_scratch_pair : std::false_type {};
+
+template<class K, class V>
+struct is_scratch_pair<std::pair<K, V>> : std::integral_constant < bool, !std::is_const<K>::value > {};
+
+template<class T>
+struct scratch_counting_allocator : std::allocator<T>
+{
+    using std::allocator<T>::allocator;
+
+    T* allocate(std::size_t n)
+    {
+        if (is_scratch_pair<T>::value)
+        {
+            ++scratch_pair_allocations;
+        }
+        return std::allocator<T>::allocate(n);
+    }
+
+    template <class U>
+    struct rebind
+    {
+        using other = scratch_counting_allocator<U>;
+    };
+};
+} // namespace
+
+TEST_CASE("deep copy uses the provided allocator")
+{
+    using counting_json = nlohmann::basic_json<std::map,
+          std::vector,
+          std::string,
+          bool,
+          std::int64_t,
+          std::uint64_t,
+          double,
+          scratch_counting_allocator>;
+
+    // deeper than the 128 levels the copy constructor descends into, so the
+    // innermost objects are copied by the iterative deep copy
+    counting_json j = 1;
+    for (std::size_t i = 0; i < 300; ++i)
+    {
+        counting_json wrapper = counting_json::object();
+        wrapper["a"] = std::move(j);
+        j = std::move(wrapper);
+    }
+
+    scratch_pair_allocations = 0;
+    // NOLINTNEXTLINE(performance-unnecessary-copy-initialization): the copy is what is tested
+    const counting_json copy(j);
+    CHECK(scratch_pair_allocations > 0);
+    CHECK(copy == j);
+}
+
+namespace
+{
 template<class T>
 struct allocator_no_forward : std::allocator<T>
 {
