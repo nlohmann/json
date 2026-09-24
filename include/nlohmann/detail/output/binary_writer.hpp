@@ -913,7 +913,7 @@ class binary_writer
         return 128;
     }
 
-    void write_cbor_array_prefix(const std::size_t N)
+    void write_cbor_array_prefix(const typename BasicJsonType::array_t::size_type N)
     {
         // step 1: write control byte and the array size
         if (N <= 0x17)
@@ -944,7 +944,7 @@ class binary_writer
         // LCOV_EXCL_STOP
     }
 
-    void write_cbor_object_prefix(const std::size_t N)
+    void write_cbor_object_prefix(const typename BasicJsonType::object_t::size_type N)
     {
         // step 1: write control byte and the object size
         if (N <= 0x17)
