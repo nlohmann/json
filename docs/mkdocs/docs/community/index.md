@@ -5,4 +5,5 @@
 - [Contribution Guidelines](contribution_guidelines.md) - guidelines how to contribute to this project
 - [Governance](governance.md) - the governance model of this project
 - [Quality Assurance](quality_assurance.md) - how the quality of this project is assured
+- [Roadmap](roadmap.md) - what the project will and will not do
 - [Security Policy](security_policy.md) - the security policy of the project
