@@ -90,6 +90,8 @@ A UTF-8 byte order mark is silently ignored.
 
 Invalid Unicode escapes and unpaired surrogates in the input are reported as [`parse_error.101`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error101) with a detailed message.
 
+By default, a `'\0'` (NUL) byte anywhere in the input is treated as end of input, rather than as an ordinary (and, outside of a string, invalid) byte; see the [FAQ entry](https://json.nlohmann.me/home/faq/#nul-bytes-in-the-input) for details and the [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) macro to opt into rejecting it instead.
+
 ## Examples
 
 Parsing from a character array
@@ -616,6 +618,7 @@ Output:
 - [accept](https://json.nlohmann.me/api/basic_json/accept/index.md) - check if the input is valid JSON
 - [sax_parse](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - parse input using the SAX interface
 - [operator>>](https://json.nlohmann.me/api/operator_gtgt/index.md) - deserialize from stream
+- [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) - opt in to rejecting a NUL byte in the input instead of treating it as end of input
 
 ## Version history
 
@@ -626,6 +629,7 @@ Output:
 - Added `ignore_trailing_commas` in version 3.13.0.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
+- `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 to optionally reject a NUL byte in the input instead of treating it as end of input; planned to become the default in version 4.0.0.
 
 Deprecation
 

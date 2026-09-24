@@ -84,6 +84,8 @@ Linear in the length of the input. The parser is a predictive LL(1) parser.
 
 A UTF-8 byte order mark is silently ignored.
 
+By default, a `'\0'` (NUL) byte anywhere in the input is treated as end of input, rather than as an ordinary (and, outside of a string, invalid) byte; see the [FAQ entry](https://json.nlohmann.me/home/faq/#nul-bytes-in-the-input) for details and the [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) macro to opt into rejecting it instead.
+
 ## Examples
 
 Example
@@ -130,6 +132,7 @@ true false
 - [parse](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
 - [sax_parse](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - parse input using the SAX interface
 - [operator>>](https://json.nlohmann.me/api/operator_gtgt/index.md) - deserialize from stream
+- [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) - opt in to rejecting a NUL byte in the input instead of treating it as end of input
 
 ## Version history
 
@@ -139,6 +142,7 @@ true false
 - Added `ignore_trailing_commas` in version 3.13.0.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
+- `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 to optionally reject a NUL byte in the input instead of treating it as end of input; planned to become the default in version 4.0.0.
 
 Deprecation
 

@@ -182,6 +182,10 @@ Use the non-amalgamated version of the library. This option is `ON` by default.
 
 Treat the library headers like system headers (i.e., adding `SYSTEM` to the [`target_include_directories`](https://cmake.org/cmake/help/latest/command/target_include_directories.html) call) to check for this library by tools like Clang-Tidy. This option is `OFF` by default.
 
+### `JSON_StrictNulHandling`
+
+Reject a `'\0'` (NUL) byte in the input instead of treating it as end of input, by defining the macro [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md). This option is `OFF` by default.
+
 ### `JSON_Valgrind`
 
 Execute the test suite with [Valgrind](https://valgrind.org). This option is `OFF` by default. Depends on `JSON_BuildTests`.

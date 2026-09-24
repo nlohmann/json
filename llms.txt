@@ -247,6 +247,7 @@ JSON for Modern C++ is a C++11 header-only library implementing a JSON value typ
 - [JSON_NOEXCEPTION](https://json.nlohmann.me/api/macros/json_noexception/index.md)
 - [JSON_SKIP_LIBRARY_VERSION_CHECK](https://json.nlohmann.me/api/macros/json_skip_library_version_check/index.md)
 - [JSON_SKIP_UNSUPPORTED_COMPILER_CHECK](https://json.nlohmann.me/api/macros/json_skip_unsupported_compiler_check/index.md)
+- [JSON_STRICT_NUL_HANDLING](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md)
 - [JSON_CATCH_USER, JSON_THROW_USER, JSON_TRY_USER](https://json.nlohmann.me/api/macros/json_throw_user/index.md)
 - [JSON_USE_GLOBAL_UDLS](https://json.nlohmann.me/api/macros/json_use_global_udls/index.md)
 - [JSON_USE_IMPLICIT_CONVERSIONS](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md)

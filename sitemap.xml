@@ -729,6 +729,10 @@
          <lastmod>2026-09-24</lastmod>
     </url>
     <url>
+         <loc>https://json.nlohmann.me/api/macros/json_strict_nul_handling/</loc>
+         <lastmod>2026-09-24</lastmod>
+    </url>
+    <url>
          <loc>https://json.nlohmann.me/api/macros/json_throw_user/</loc>
          <lastmod>2026-09-24</lastmod>
     </url>

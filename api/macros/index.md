@@ -15,6 +15,10 @@ Some aspects of the library can be configured by defining preprocessor macros **
 - [**JSON_DIAGNOSTIC_POSITIONS**](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) - access positions of elements
 - [**JSON_NOEXCEPTION**](https://json.nlohmann.me/api/macros/json_noexception/index.md) - switch off exceptions
 
+## Parsing
+
+- [**JSON_STRICT_NUL_HANDLING**](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) - opt in to rejecting a NUL byte in the input instead of treating it as end of input
+
 ## Language support
 
 - [**JSON_HAS_CPP_11**\
