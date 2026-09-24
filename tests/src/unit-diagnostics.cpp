@@ -430,7 +430,11 @@ TEST_CASE("Regression tests for extended diagnostics")
             CHECK(j.dump() == R"({"a":{"c":{"c":"s"},"e":"s"}})");
 
             auto const& constJ = j;
+#if JSON_DIAGNOSTIC_POSITIONS
+            CHECK_THROWS_WITH_AS(constJ["a"]["c"]["c"].at(0), "[json.exception.type_error.304] (/a/c/c) (bytes 18-21) cannot use at() with string", ordered_json::type_error);
+#else
             CHECK_THROWS_WITH_AS(constJ["a"]["c"]["c"].at(0), "[json.exception.type_error.304] (/a/c/c) cannot use at() with string", ordered_json::type_error);
+#endif
             ordered_json const copy = j;
             CHECK(copy == j);
         }
