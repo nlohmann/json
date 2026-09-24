@@ -1,4 +1,4 @@
-.PHONY: pretty clean ChangeLog.md release update_hedley update_hedley_undef
+.PHONY: pretty clean ChangeLog.md release update_hedley update_hedley_undef BUILD.bazel
 
 ##########################################################################
 # configuration
@@ -30,8 +30,9 @@ AMALGAMATED_FWD_FILE=single_include/nlohmann/json_fwd.hpp
 # main target
 all:
 	@echo "amalgamate - amalgamate files single_include/nlohmann/json{,_fwd}.hpp from the include/nlohmann sources"
+	@echo "BUILD.bazel - regenerate the Bazel BUILD file from the include/nlohmann sources"
 	@echo "ChangeLog.md - generate ChangeLog file"
-	@echo "check-amalgamation - check whether sources have been amalgamated"
+	@echo "check-amalgamation - check whether sources have been amalgamated and BUILD.bazel is up to date"
 	@echo "clean - remove built files"
 	@echo "doctest - compile example files and check their output"
 	@echo "fuzz_testing - prepare fuzz testing of the JSON parser"
@@ -172,8 +173,13 @@ check-amalgamation:
 	@diff $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_FWD_FILE)~ || (echo "===================================================================\n  Amalgamation required! Please read the contribution guidelines\n  in file .github/CONTRIBUTING.md.\n===================================================================" ; mv $(AMALGAMATED_FWD_FILE)~ $(AMALGAMATED_FWD_FILE) ; false)
 	@mv $(AMALGAMATED_FILE)~ $(AMALGAMATED_FILE)
 	@mv $(AMALGAMATED_FWD_FILE)~ $(AMALGAMATED_FWD_FILE)
+	@mv BUILD.bazel BUILD.bazel~
+	@$(MAKE) BUILD.bazel
+	@diff BUILD.bazel BUILD.bazel~ || (echo "===================================================================\n  BUILD.bazel is out of date! Please run 'make BUILD.bazel'.\n===================================================================" ; mv BUILD.bazel~ BUILD.bazel ; false)
+	@mv BUILD.bazel~ BUILD.bazel
 
-BUILD.bazel: $(SRCS)
+# generate the Bazel BUILD file; phony, because a removed header would not trigger a rebuild
+BUILD.bazel:
 	cmake -P cmake/scripts/gen_bazel_build_file.cmake
 
 ##########################################################################
