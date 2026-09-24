@@ -368,25 +368,25 @@ TEST_CASE("Better diagnostics past the descent bound of update() and merge_patch
     // Both merge objects nested more than detail::recursion_depth_limit()
     // (128) levels deep without recursing; the values they add or replace
     // there must still know their parents.
+    // The values are built rather than parsed, so that the expected messages
+    // carry no byte positions under JSON_DIAGNOSTIC_POSITIONS.
     const std::size_t depth = 200;
-    std::string target_text;
-    std::string patch_text;
+    json target = {{"x", 1}};
+    json patch = {{"y", 2}};
     std::string path;
     for (std::size_t i = 0; i < depth; ++i)
     {
-        target_text += "{\"a\":";
-        patch_text += "{\"a\":";
+        target = json{{"a", std::move(target)}};
+        patch = json{{"a", std::move(patch)}};
         path += "/a";
     }
-    target_text += "{\"x\":1}" + std::string(depth, '}');
-    patch_text += "{\"y\":2}" + std::string(depth, '}');
     const std::string expected_x = "[json.exception.type_error.304] (" + path + "/x) cannot use at() with number";
     const std::string expected_y = "[json.exception.type_error.304] (" + path + "/y) cannot use at() with number";
 
     SECTION("update()")
     {
-        json j = json::parse(target_text);
-        j.update(json::parse(patch_text), true);
+        json j = target;
+        j.update(patch, true);
 
         // walk down through const references, which leave m_parent alone
         const json* p = &j;
@@ -400,8 +400,8 @@ TEST_CASE("Better diagnostics past the descent bound of update() and merge_patch
 
     SECTION("merge_patch()")
     {
-        json j = json::parse(target_text);
-        j.merge_patch(json::parse(patch_text));
+        json j = target;
+        j.merge_patch(patch);
 
         const json* p = &j;
         for (std::size_t i = 0; i < depth; ++i)
