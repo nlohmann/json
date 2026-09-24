@@ -1,0 +1,4 @@
+/* enable ligatures in code and preformatted blocks */
+.md-typeset code, .md-typeset pre {
+    font-variant-ligatures: common-ligatures;
+}

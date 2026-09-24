@@ -1,0 +1,17 @@
+arm_container:
+  image: gcc:latest
+
+check_task:
+  check_script:
+  # the gcc image ships an outdated CMake, so fetch a recent prebuilt binary
+  # instead of compiling CMake from source
+  - wget -q https://github.com/Kitware/CMake/releases/download/v4.3.4/cmake-4.3.4-linux-aarch64.tar.gz
+  - tar xfz cmake-4.3.4-linux-aarch64.tar.gz
+  - export PATH="$(pwd)/cmake-4.3.4-linux-aarch64/bin:$PATH"
+  - cmake --version
+  - mkdir build
+  - cd build
+  - cmake .. -DJSON_FastTests=ON
+  - make -j4
+  - cd tests
+  - ctest -j4

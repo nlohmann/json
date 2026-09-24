@@ -1,0 +1,47 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7
+    groups:
+      codeql-action:
+        patterns:
+          - "github/codeql-action/*"
+
+  - package-ecosystem: pip
+    directory: /docs/mkdocs
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: pip
+    directory: /tools/astyle
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: pip
+    directory: /tools/generate_natvis
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: pip
+    directory: /tools/serve_header
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: pip
+    directory: /cmake/requirements
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7

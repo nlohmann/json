@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://json.nlohmann.me/sitemap.xml

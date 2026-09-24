@@ -1,0 +1,360 @@
+cmake_minimum_required(VERSION 3.13...4.0)
+
+option(JSON_Valgrind    "Execute test suite with Valgrind." OFF)
+option(JSON_FastTests   "Skip expensive/slow tests." OFF)
+option(JSON_TestSimdutf "Build the unit tests against the simdutf UTF-8 validation backend." OFF)
+
+set(JSON_SIMDUTF_VERSION 9.1.0 CACHE STRING "The simdutf version used by JSON_TestSimdutf.")
+
+set(JSON_32bitTest     AUTO CACHE STRING "Enable the 32bit unit test (ON/OFF/AUTO/ONLY).")
+set(JSON_TestStandards "" CACHE STRING "The list of standards to test explicitly.")
+
+# using an env var, since this will also affect targets executing cmake (such as "ci_test_compiler_default")
+set(JSON_FORCED_GLOBAL_COMPILE_OPTIONS $ENV{JSON_FORCED_GLOBAL_COMPILE_OPTIONS})
+if (NOT "" STREQUAL "$ENV{JSON_FORCED_GLOBAL_COMPILE_OPTIONS}")
+    add_compile_options($ENV{JSON_FORCED_GLOBAL_COMPILE_OPTIONS})
+endif()
+if (NOT "" STREQUAL "$ENV{JSON_FORCED_GLOBAL_LINK_OPTIONS}")
+    add_link_options($ENV{JSON_FORCED_GLOBAL_LINK_OPTIONS})
+endif()
+
+include(test)
+
+#############################################################################
+# override standard support
+#############################################################################
+
+# Clang only supports C++14 starting from Clang 3.5 (lesser versions miss std::enable_if_t)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.5)
+    unset(compiler_supports_cpp_14)
+endif()
+
+# Clang only supports C++17 starting from Clang 5.0
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.0)
+    unset(compiler_supports_cpp_17)
+endif()
+# MSVC 2015 (14.0) does not support C++17
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.10)
+    unset(compiler_supports_cpp_17)
+endif()
+# GCC 5 and 6 do claim experimental support for C++17, but do not implement <optional>
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.0)
+    unset(compiler_supports_cpp_17)
+endif()
+
+# Clang C++20 support appears insufficient prior to Clang 9.0 (based on CI build failure)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+    unset(compiler_supports_cpp_20)
+endif()
+# MSVC 2017 (15.x) does not support C++20
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.20)
+    unset(compiler_supports_cpp_20)
+endif()
+# GCC started supporting C++20 features in 8.0 but a test for #3070 segfaults prior to 9.0
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+    unset(compiler_supports_cpp_20)
+endif()
+
+#############################################################################
+# test_main library with shared code to speed up build and common settings
+#############################################################################
+
+add_library(test_main OBJECT src/unit.cpp)
+target_compile_definitions(test_main PUBLIC
+    DOCTEST_CONFIG_SUPER_FAST_ASSERTS
+    JSON_TEST_KEEP_MACROS
+    JSON_TEST_USING_MULTIPLE_HEADERS=$<BOOL:${JSON_MultipleHeaders}>)
+target_compile_features(test_main PRIVATE cxx_std_11)
+target_compile_options(test_main PUBLIC
+    $<$<CXX_COMPILER_ID:MSVC>:/EHsc>
+    # MSVC: Force to always compile with W4
+    #       Disable warning C4566: character represented by universal-character-name '\uFF01'
+    #                              cannot be represented in the current code page (1252)
+    #       Disable warning C4996: 'nlohmann::basic_json<...>::operator <<': was declared deprecated
+    #       Disable warning C4702: unreachable code; wide_string_input_adapter::get_elements()
+    #                              is annotated JSON_HEDLEY_NO_RETURN (it always throws), which
+    #                              makes MSVC flag the code following its call in binary_reader.hpp
+    #                              as unreachable for that instantiation, in both Debug and Release
+    #       Disable warning C4503: decorated name length exceeded, name was truncated; the deep
+    #                              copy support added for #5387 pushes the mangled name of
+    #                              std::allocator_traits<...>::construct for the custom-base-class
+    #                              test's map type past VS2015's limit. The name is only used for
+    #                              debug info, so truncation does not affect the build.
+    $<$<CXX_COMPILER_ID:MSVC>:/W4;/wd4566;/wd4996;/wd4702;/wd4503>
+    # https://github.com/nlohmann/json/issues/1114
+    $<$<CXX_COMPILER_ID:MSVC>:/bigobj> $<$<BOOL:${MINGW}>:-Wa,-mbig-obj>
+
+    # https://github.com/nlohmann/json/pull/3229
+    $<$<CXX_COMPILER_ID:Intel>:-diag-disable=2196>
+
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
+    $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
+    $<$<CXX_COMPILER_ID:Intel>:-diag-disable=1786>)
+target_include_directories(test_main PUBLIC
+    thirdparty/doctest
+    thirdparty/fifo_map
+    ${PROJECT_BINARY_DIR}/include)
+target_link_libraries(test_main PUBLIC ${NLOHMANN_JSON_TARGET_NAME})
+
+#############################################################################
+# define test- and standard-specific build settings
+#############################################################################
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+    AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 8.0
+    AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0 AND NOT MINGW)
+    # fix for https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90050
+    json_test_set_test_options(all CXX_STANDARDS 17 LINK_LIBRARIES stdc++fs)
+endif()
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # avoid stack overflow, see https://github.com/nlohmann/json/issues/2955
+    json_test_set_test_options("test-cbor;test-msgpack;test-ubjson;test-bjdata;test-binary_formats" LINK_OPTIONS /STACK:4000000)
+endif()
+
+# disable exceptions for test-disabled_exceptions
+json_test_set_test_options(test-disabled_exceptions
+    COMPILE_DEFINITIONS
+        JSON_NOEXCEPTION
+        # disabled due to https://github.com/nlohmann/json/discussions/2824
+        #$<$<CXX_COMPILER_ID:MSVC>:_HAS_EXCEPTIONS=0>
+    COMPILE_OPTIONS
+        $<$<CXX_COMPILER_ID:AppleClang>:-fno-exceptions> $<$<CXX_COMPILER_ID:Clang>:-fno-exceptions>
+        $<$<CXX_COMPILER_ID:GNU>:-fno-exceptions>
+        $<$<CXX_COMPILER_ID:Intel>:-fno-exceptions> $<$<CXX_COMPILER_ID:IntelLLVM>:-fno-exceptions>
+        # disabled due to https://github.com/nlohmann/json/discussions/2824
+        #$<$<CXX_COMPILER_ID:MSVC>:/EH>
+)
+
+# raise timeout of expensive Unicode test
+json_test_set_test_options(test-unicode4 TEST_PROPERTIES TIMEOUT 3000)
+
+#############################################################################
+# add unit tests
+#############################################################################
+
+# Generate the leak checks for every JSON_HEDLEY_* macro defined in
+# hedley.hpp; tests/src/unit-no-macro-leak.cpp #include-s the result after
+# nlohmann/json.hpp (see issue #5408). Using the shared
+# cmake/scripts/gen_hedley_undef_check.cmake script (also used by `make
+# update_hedley_undef`) instead of a hand-maintained list of macro names
+# means this test can never go stale after a future `make update_hedley`.
+set(hedley_hpp "${PROJECT_SOURCE_DIR}/include/nlohmann/thirdparty/hedley/hedley.hpp")
+set(hedley_undef_check_script "${PROJECT_SOURCE_DIR}/cmake/scripts/gen_hedley_undef_check.cmake")
+set(hedley_undef_checks "${PROJECT_BINARY_DIR}/include/hedley_undef_checks.inc")
+
+# Reconfigure whenever the vendored header or the generator script changes,
+# so a `cmake --build` after `make update_hedley` does not silently keep a
+# stale generated file around.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${hedley_hpp}"
+    "${hedley_undef_check_script}")
+
+# Generate once at configure time, so the very first build (before any
+# custom-command build step has run) already has an up-to-date file.
+execute_process(
+    COMMAND ${CMAKE_COMMAND}
+        "-DHEDLEY_HPP=${hedley_hpp}"
+        "-DOUTPUT=${hedley_undef_checks}"
+        -DMODE=checks
+        -P "${hedley_undef_check_script}"
+    RESULT_VARIABLE hedley_undef_check_result
+)
+if(NOT hedley_undef_check_result EQUAL 0)
+    message(FATAL_ERROR "Failed to generate ${hedley_undef_checks}")
+endif()
+
+# Also (re)generate as a build step, so an incremental build after editing
+# hedley.hpp without a full reconfigure still picks up the change.
+add_custom_command(
+    OUTPUT "${hedley_undef_checks}"
+    COMMAND ${CMAKE_COMMAND}
+        "-DHEDLEY_HPP=${hedley_hpp}"
+        "-DOUTPUT=${hedley_undef_checks}"
+        -DMODE=checks
+        -P "${hedley_undef_check_script}"
+    DEPENDS "${hedley_hpp}" "${hedley_undef_check_script}"
+    COMMENT "Generating Hedley undef leak checks"
+    VERBATIM)
+add_custom_target(generate_hedley_undef_checks DEPENDS "${hedley_undef_checks}")
+
+if("${JSON_TestStandards}" STREQUAL "")
+    set(test_cxx_standards 11 14 17 20 23)
+    unset(test_force)
+else()
+    set(test_cxx_standards ${JSON_TestStandards})
+    set(test_force FORCE)
+endif()
+
+# Print selected standards marking unavailable ones with brackets
+set(msg_standards "")
+foreach(cxx_standard ${test_cxx_standards})
+    if(compiler_supports_cpp_${cxx_standard})
+        list(APPEND msg_standards ${cxx_standard})
+    else()
+        list(APPEND msg_standards [${cxx_standard}])
+    endif()
+endforeach()
+string(JOIN " " msg_standards ${msg_standards})
+set(msg "Testing standards: ${msg_standards}")
+if(test_force)
+    string(APPEND msg " (forced)")
+endif()
+message(STATUS "${msg}")
+
+#############################################################################
+# optionally validate UTF-8 with simdutf (JSON_USE_SIMDUTF)
+#############################################################################
+
+# The simdutf backend is opt-in and not vendored, so it is fetched here rather
+# than being a checked-in dependency. Everything below hangs off test_main,
+# whose usage requirements every test target inherits; the library target and
+# the installed CMake package are deliberately left untouched.
+if (JSON_TestSimdutf)
+    # simdutf requires C++17, both to compile itself and to be reachable from
+    # the library, which keeps its scalar validator below that. Find a tested
+    # standard that satisfies it.
+    set(simdutf_standard "")
+    foreach(cxx_standard ${test_cxx_standards})
+        if(NOT cxx_standard LESS 17 AND compiler_supports_cpp_${cxx_standard})
+            set(simdutf_standard ${cxx_standard})
+            break()
+        endif()
+    endforeach()
+
+    if("${simdutf_standard}" STREQUAL "")
+        # Building simdutf would fail outright without a C++17 compiler, and
+        # even with one it would go unused if no C++17-or-later standard is
+        # tested. Say so and fall back to the scalar validator rather than
+        # failing the build.
+        if(NOT compiler_supports_cpp_17)
+            set(simdutf_reason "the compiler does not support C++17")
+        else()
+            set(simdutf_reason "no tested standard is C++17 or later (testing ${msg_standards})")
+        endif()
+        message(WARNING
+            "JSON_TestSimdutf is enabled, but ${simdutf_reason}. simdutf requires C++17, so it "
+            "is not fetched and JSON_USE_SIMDUTF is not defined: the tests run against the "
+            "built-in scalar UTF-8 validator instead. Set JSON_TestStandards to include 17 or "
+            "later, or build with a compiler that supports C++17.")
+    else()
+        if (CMAKE_VERSION VERSION_LESS 3.18)
+            message(FATAL_ERROR "JSON_TestSimdutf requires CMake 3.18 or later (simdutf's minimum).")
+        endif()
+
+        include(FetchContent)
+
+        # simdutf builds its tests and tools by default, and its tests pull
+        # further dependencies of their own; only the library is needed here
+        set(SIMDUTF_TESTS OFF CACHE BOOL "" FORCE)
+        set(SIMDUTF_TOOLS OFF CACHE BOOL "" FORCE)
+        set(SIMDUTF_BENCHMARKS OFF CACHE BOOL "" FORCE)
+        set(SIMDUTF_ICONV OFF CACHE BOOL "" FORCE)
+
+        FetchContent_Declare(simdutf
+            URL https://github.com/simdutf/simdutf/archive/refs/tags/v${JSON_SIMDUTF_VERSION}.tar.gz
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        )
+        FetchContent_MakeAvailable(simdutf)
+
+        target_compile_definitions(test_main PUBLIC JSON_USE_SIMDUTF)
+        target_link_libraries(test_main PUBLIC simdutf::simdutf)
+
+        # simdutf.h requires C++17; below that the library keeps its scalar
+        # validator, so any C++11/14 test targets exercise the fallback and the
+        # C++17-and-later ones exercise simdutf. Both must agree.
+        message(STATUS "UTF-8 validation delegated to simdutf ${JSON_SIMDUTF_VERSION} for C++17 and later (JSON_USE_SIMDUTF)")
+    endif()
+endif()
+
+# *DO* use json_test_set_test_options() above this line
+
+json_test_should_build_32bit_test(json_32bit_test json_32bit_test_only "${JSON_32bitTest}")
+file(GLOB files CONFIGURE_DEPENDS src/unit-*.cpp)
+if(json_32bit_test_only)
+    set(files src/unit-32bit.cpp)
+elseif(NOT json_32bit_test)
+    list(FILTER files EXCLUDE REGEX src/unit-32bit.cpp)
+endif()
+
+foreach(file ${files})
+    json_test_add_test_for(${file} MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force})
+endforeach()
+
+# tests/src/unit-no-macro-leak.cpp #include-s the generated leak-check file,
+# so its test targets must be built after generate_hedley_undef_checks.
+foreach(cxx_standard ${test_cxx_standards})
+    if(TARGET test-no-macro-leak_cpp${cxx_standard})
+        add_dependencies(test-no-macro-leak_cpp${cxx_standard} generate_hedley_undef_checks)
+    endif()
+endforeach()
+
+if(json_32bit_test_only)
+    # Skip all other tests in this file
+    return()
+endif()
+
+# test legacy comparison of discarded values
+json_test_set_test_options(test-comparison_legacy
+    COMPILE_DEFINITIONS JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1
+)
+json_test_add_test_for(src/unit-comparison.cpp
+    NAME test-comparison_legacy
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+
+# test the parser again with JSON_DIAGNOSTIC_POSITIONS enabled
+json_test_set_test_options(test-class_parser_diagnostic_positions
+    COMPILE_DEFINITIONS JSON_DIAGNOSTIC_POSITIONS=1
+)
+json_test_add_test_for(src/unit-class_parser.cpp
+    NAME test-class_parser_diagnostic_positions
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+
+# test diagnostic positions again without regular diagnostics (JSON pointer paths)
+json_test_set_test_options(test-diagnostic-positions_only
+    COMPILE_DEFINITIONS JSON_DIAGNOSTICS=0
+)
+json_test_add_test_for(src/unit-diagnostic-positions.cpp
+    NAME test-diagnostic-positions_only
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+
+# *DO NOT* use json_test_set_test_options() below this line
+
+#############################################################################
+# test ABI compatibility
+#############################################################################
+
+add_subdirectory(abi)
+
+#############################################################################
+# Test the generated build configs
+#############################################################################
+
+# these tests depend on the generated file nlohmann_jsonConfig.cmake
+if (JSON_Install)
+    add_subdirectory(cmake_import)
+    add_subdirectory(cmake_import_minver)
+endif()
+
+add_subdirectory(cmake_add_subdirectory)
+add_subdirectory(cmake_fetch_content)
+add_subdirectory(cmake_fetch_content2)
+add_subdirectory(cmake_target_include_directories)
+
+# fmt (fetched by tests/fmt_formatter) requires a genuinely modern, C++17-capable
+# toolchain; skip it on legacy/niche toolchains where fmt itself is known not to build
+set(JSON_FMT_FORMATTER_TEST_SUPPORTED ${compiler_supports_cpp_17})
+# fmt 12's 128-bit integer emulation does not build with 32-bit MinGW
+if (MINGW AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+    set(JSON_FMT_FORMATTER_TEST_SUPPORTED FALSE)
+endif()
+# the MSVC STL rejects Clang versions older than 19 as a host compiler
+if (WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.0)
+    set(JSON_FMT_FORMATTER_TEST_SUPPORTED FALSE)
+endif()
+if (JSON_FMT_FORMATTER_TEST_SUPPORTED)
+    add_subdirectory(fmt_formatter)
+endif()

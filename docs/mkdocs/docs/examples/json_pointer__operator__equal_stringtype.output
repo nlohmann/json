@@ -1,0 +1,4 @@
+"" == "": true
+"" == "": true
+"/foo" == "/foo": true
+"bar" == "/foo": [json.exception.parse_error.107] parse error at byte 1: JSON pointer must be empty or begin with '/' - was: 'bar'

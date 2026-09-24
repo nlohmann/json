@@ -1,0 +1,2 @@
+serialization: {"address":"744 Evergreen Terrace","age":60,"name":"Ned Flanders"}
+roundtrip: {"address":"742 Evergreen Terrace","age":-1,"name":"Maggie Simpson"}

@@ -1,0 +1,22 @@
+# all paths are relative to the project root
+
+# the root directory for the web server
+# root: .
+
+# configure SSL
+# https:
+#   enabled: true
+# these filenames are listed in .gitignore
+#  cert_file: localhost.pem
+#  key_file: localhost-key.pem
+
+# address and port for the server to listen on; by default, only this machine
+# can connect. Binding to a network address, or to null for all interfaces,
+# lets other machines connect, and every request runs make in a working tree.
+# bind: localhost
+# port: 8443
+
+# origins whose web pages may read the header (CORS)
+# cors_origins:
+#   - https://godbolt.org
+#   - https://compiler-explorer.com

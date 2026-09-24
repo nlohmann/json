@@ -1,0 +1,17 @@
+{
+  "color": "blue",
+  "names": {
+    "en": "plane"
+  },
+  "price": 17.99,
+  "speed": 100
+}
+{
+  "color": "blue",
+  "names": {
+    "de": "Flugzeug",
+    "en": "plane"
+  },
+  "price": 17.99,
+  "speed": 100
+}

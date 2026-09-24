@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="64" height="64" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <filter id="dropshadow">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="0.5"/>
+            <feOffset dx="-0.3" dy="-0.3" result="offsetblur"/>
+            <feMerge>
+                <feMergeNode/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+        <clipPath id="circlewrapper">
+            <circle cx="32" cy="32" r="27"/>
+        </clipPath>
+    </defs>
+    <style type="text/css">
+        #background{
+            fill:white;
+        }
+        #midground{
+            fill:#8BC34A;
+        }
+        #shadowline{
+            stroke:#444;
+            stroke-width:1px;
+            fill:transparent;
+        }
+        #foreground{
+            fill:rgba(0,150,136,0.76);
+        }
+        #inside_g{
+            clip-path:url(#circlewrapper);
+        }
+        #outside_g{
+            fill:#e0f2f1;
+        }
+        #inside_layout{
+            transform:translateY(5px);
+        }
+        #outside_s{
+            filter:url(#dropshadow);
+            fill:rgba(0,0,0,0.2);
+        }
+        #inside_w{
+            filter:url(#dropshadow);
+        }
+    </style>
+    <circle id="outside_s" cx="32" cy="32" r="30"/>
+    <circle id="outside_g" cx="32" cy="32" r="30"/>
+    <g id="inside_w">
+        <g id="inside_g">
+            <g id="inside_layout">
+                <polygon id="background" points="64,4 64,62 62,64 1,64 0,63 0,40 60,3"/>
+                <polygon id="midground"  points="0,63 1,64 62,64 64,62 64,50 4,13 1,12.5 0,13"/>
+                <polygon id="foreground" points="64,4 64,62 62,64 1,64 0,63 0,40 60,3"/>
+            </g>
+        </g>
+    </g>
+</svg>

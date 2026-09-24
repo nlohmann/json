@@ -1,0 +1,67 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+# This workflow file requires a free account on Semgrep.dev to
+# manage rules, file ignores, notifications, and more.
+#
+# See https://semgrep.dev/docs
+
+name: Semgrep
+
+on:
+  push:
+    branches: [ "develop" ]
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [ "develop" ]
+  schedule:
+    - cron: '23 2 * * 4'
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+    name: Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      # Checkout project source
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The former returntocorp/semgrep-action is deprecated (the org was renamed
+      # to semgrep/*); the maintained approach is to install the CLI and invoke
+      # it directly. We use `semgrep scan` (not `semgrep ci`, which requires a
+      # login token): with no SEMGREP_APP_TOKEN configured this is exactly what
+      # the old action fell back to, running community rules with no token.
+      # SEMGREP_APP_TOKEN is still passed through so registry auth works if a
+      # token is ever added.
+      - name: Install Semgrep
+        run: python3 -m pip install --user semgrep==1.168.0
+
+      # `semgrep scan --sarif` always exits 0 even with findings; continue-on-error
+      # is a safety net so the SARIF upload still runs if the scan itself errors.
+      - name: Run Semgrep
+        run: semgrep scan --config auto --sarif --output=semgrep.sarif
+        continue-on-error: true
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      # Upload SARIF file generated in previous step
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        with:
+          sarif_file: semgrep.sarif
+        if: always()

@@ -1,0 +1,4 @@
+/ - metadata = 42 -> {"null":null,"object":{"uint":1}}
+/null - metadata = 42 -> null
+/object - metadata = 21 -> {"uint":1}
+/object/uint - metadata = 42 -> 1

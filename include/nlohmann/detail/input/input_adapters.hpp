@@ -1,31 +1,46 @@
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 #pragma once
 
 #include <array> // array
 #include <cstddef> // size_t
-#include <cstdio> //FILE *
 #include <cstring> // strlen
-#include <istream> // istream
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
 #include <memory> // shared_ptr, make_shared, addressof
 #include <numeric> // accumulate
+#include <streambuf> // streambuf
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
 #include <utility> // pair, declval
 
+#ifndef JSON_NO_IO
+    #include <cstdio>   // FILE *
+    #include <istream>  // istream
+#endif                  // JSON_NO_IO
+
+#include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/iterators/iterator_traits.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/meta/type_traits.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
+
 /// the supported input formats
-enum class input_format_t { json, cbor, msgpack, ubjson, bson };
+enum class input_format_t { json, cbor, msgpack, ubjson, bson, bjdata };
 
 ////////////////////
 // input adapters //
 ////////////////////
 
+#ifndef JSON_NO_IO
 /*!
 Input adapter for stdio file access. This adapter read only 1 byte and do not use any
  buffer. This adapter is a very low level adapter.
@@ -38,7 +53,9 @@ class file_input_adapter
     JSON_HEDLEY_NON_NULL(2)
     explicit file_input_adapter(std::FILE* f) noexcept
         : m_file(f)
-    {}
+    {
+        JSON_ASSERT(m_file != nullptr);
+    }
 
     // make class move-only
     file_input_adapter(const file_input_adapter&) = delete;
@@ -52,11 +69,17 @@ class file_input_adapter
         return std::fgetc(m_file);
     }
 
+    // returns the number of characters successfully read
+    template<class T>
+    std::size_t get_elements(T* dest, std::size_t count = 1)
+    {
+        return fread(dest, 1, sizeof(T) * count, m_file);
+    }
+
   private:
     /// the file pointer to read from
     std::FILE* m_file;
 };
-
 
 /*!
 Input adapter for a (caching) istream. Ignores a UFT Byte Order Mark at
@@ -86,7 +109,7 @@ class input_stream_adapter
         : is(&i), sb(i.rdbuf())
     {}
 
-    // delete because of pointer members
+    // deleted because of pointer members
     input_stream_adapter(const input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&&) = delete;
@@ -100,7 +123,7 @@ class input_stream_adapter
 
     // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
     // ensure that std::char_traits<char>::eof() and the character 0xFF do not
-    // end up as the same value, eg. 0xFFFFFFFF.
+    // end up as the same value, e.g., 0xFFFFFFFF.
     std::char_traits<char>::int_type get_character()
     {
         auto res = sb->sbumpc();
@@ -112,39 +135,203 @@ class input_stream_adapter
         return res;
     }
 
+    template<class T>
+    std::size_t get_elements(T* dest, std::size_t count = 1)
+    {
+        auto res = static_cast<std::size_t>(sb->sgetn(reinterpret_cast<char*>(dest), static_cast<std::streamsize>(count * sizeof(T))));
+        if (JSON_HEDLEY_UNLIKELY(res < count * sizeof(T)))
+        {
+            is->clear(is->rdstate() | std::ios::eofbit);
+        }
+        return res;
+    }
+
   private:
     /// the associated input stream
     std::istream* is = nullptr;
     std::streambuf* sb = nullptr;
 };
+#endif  // JSON_NO_IO
 
 // General-purpose iterator-based adapter. It might not be as fast as
 // theoretically possible for some containers, but it is extremely versatile.
-template<typename IteratorType>
+// SentinelType defaults to IteratorType for backward compatibility, but may be
+// a different type, e.g. a C++20 sentinel such as std::default_sentinel_t when
+// IteratorType is a std::counted_iterator.
+template<typename IteratorType, typename SentinelType = IteratorType>
 class iterator_input_adapter
 {
+    // Whether the number of elements between two positions can be computed in
+    // O(1): either the iterator and the sentinel have the same type (plain
+    // std::distance) or, in C++20, the sentinel is a sized sentinel for the
+    // iterator (std::ranges::distance), e.g. std::default_sentinel_t paired
+    // with std::counted_iterator.
+    //
+    // JSON_HAS_RANGES gates the C++20 branch: on standard libraries with an
+    // incomplete <ranges> (libstdc++ < 11, see #4440) evaluating
+    // std::contiguous_iterator on a std::counted_iterator is a hard error
+    // instead of yielding false, and these traits are instantiated for every
+    // adapter. Such toolchains fall back to the pointer-only test and simply
+    // use the byte-at-a-time scanner.
+    static constexpr bool sentinel_is_sized =
+#if JSON_HAS_RANGES && defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
+        std::is_same<IteratorType, SentinelType>::value || std::sized_sentinel_for<SentinelType, IteratorType>;
+#else
+        std::is_same<IteratorType, SentinelType>::value;
+#endif
+
   public:
     using char_type = typename std::iterator_traits<IteratorType>::value_type;
 
-    iterator_input_adapter(IteratorType first, IteratorType last)
-        : current(std::move(first)), end(std::move(last))
+    // Whether the lexer may reconstruct already-consumed input on demand (for
+    // diagnostics) instead of copying every scanned character eagerly. This is
+    // only sound for multi-pass, randomly-addressable byte input: the iterator
+    // must be random-access (so the consumed prefix can be revisited in O(1))
+    // and each element must map 1:1 to an input byte (wide inputs are wrapped
+    // in wide_string_input_adapter, which does not expose this).
+    static constexpr bool supports_seek =
+        std::is_same<typename std::iterator_traits<IteratorType>::iterator_category, std::random_access_iterator_tag>::value
+        && sentinel_is_sized
+        && sizeof(char_type) == 1;
+
+    iterator_input_adapter(IteratorType first, SentinelType last)
+        : begin(first), current(std::move(first)), end(std::move(last))
     {}
 
-    typename std::char_traits<char_type>::int_type get_character()
+    typename char_traits<char_type>::int_type get_character()
     {
         if (JSON_HEDLEY_LIKELY(current != end))
         {
-            auto result = std::char_traits<char_type>::to_int_type(*current);
+            auto result = char_traits<char_type>::to_int_type(*current);
             std::advance(current, 1);
             return result;
         }
 
-        return std::char_traits<char_type>::eof();
+        return char_traits<char_type>::eof();
+    }
+
+    // number of characters consumed from the input so far
+    std::size_t get_consumed_count() const
+    {
+        return static_cast<std::size_t>(std::distance(begin, current));
+    }
+
+    // append the already-consumed characters in the half-open range
+    // [first_index, last_index) to @a out; only valid when supports_seek
+    template<typename ContainerType>
+    void copy_consumed_range(std::size_t first_index, std::size_t last_index, ContainerType& out) const
+    {
+        const auto from = std::next(begin, static_cast<typename std::iterator_traits<IteratorType>::difference_type>(first_index));
+        const auto to = std::next(begin, static_cast<typename std::iterator_traits<IteratorType>::difference_type>(last_index));
+        out.insert(out.end(), from, to);
+    }
+
+    // Copy up to count * sizeof(T) bytes into dest, returning the number of
+    // bytes actually read. For contiguous iterators (e.g. pointers) this is a
+    // single std::memcpy; for general iterators we fall back to processing the
+    // range one-by-one.
+    template<class T>
+    std::size_t get_elements(T* dest, std::size_t count = 1)
+    {
+        return get_elements_impl(dest, count, std::integral_constant<bool, iterator_is_contiguous> {});
     }
 
   private:
+    // whether IteratorType refers to a contiguous range and therefore supports
+    // a std::memcpy fast path (pointers always do; in C++20 we can also detect
+    // library iterators such as those of std::vector and std::string). The
+    // available element count must also be computable in O(1), hence
+    // sentinel_is_sized.
+    static constexpr bool iterator_is_contiguous = sentinel_is_sized &&
+#if JSON_HAS_RANGES && defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
+        (std::contiguous_iterator<IteratorType> || std::is_pointer<IteratorType>::value);
+#else
+        std::is_pointer<IteratorType>::value;
+#endif
+
+    // number of unread elements in [current, end)
+    std::size_t remaining_count() const
+    {
+#if JSON_HAS_RANGES && defined(__cpp_lib_concepts) && defined(JSON_HAS_CPP_20)
+        // std::ranges::distance also supports sized sentinels of a different
+        // type (e.g. std::counted_iterator + std::default_sentinel_t)
+        return static_cast<std::size_t>(std::ranges::distance(current, end));
+#else
+        return static_cast<std::size_t>(std::distance(current, end));
+#endif
+    }
+
+  public:
+    // Whether the remaining input is a single contiguous block of 1-byte
+    // elements that the lexer can inspect directly (used for the SWAR string
+    // fast path).
+    static constexpr bool supports_bulk_scan =
+        iterator_is_contiguous && sizeof(char_type) == 1;
+
+    // Pointer to the next unread element; only valid when bulk_remaining() > 0.
+    const char_type* bulk_data() const
+    {
+        return &*current;
+    }
+
+    // Number of unread elements available as one contiguous block.
+    std::size_t bulk_remaining() const
+    {
+        return remaining_count();
+    }
+
+    // Consume @a n elements previously inspected via bulk_data().
+    void bulk_skip(std::size_t n)
+    {
+        std::advance(current, static_cast<typename std::iterator_traits<IteratorType>::difference_type>(n));
+    }
+
+  private:
+    // contiguous fast path: bulk copy the remaining range with std::memcpy
+    template<class T>
+    std::size_t get_elements_impl(T* dest, std::size_t count, std::true_type /*contiguous*/)
+    {
+        const std::size_t wanted = count * sizeof(T);
+        const std::size_t available = remaining_count() * sizeof(char_type);
+        const std::size_t copied = (std::min)(wanted, available);
+        if (JSON_HEDLEY_LIKELY(copied != 0))
+        {
+            // the copy must stay within both buffers: the caller-provided
+            // destination holds `wanted` bytes and the remaining input range
+            // holds `available` bytes, and `copied` is the minimum of the two
+            JSON_ASSERT(copied <= wanted);    // does not overrun the destination
+            JSON_ASSERT(copied <= available); // does not read past the input end
+            // &*current yields the raw address for both raw pointers and
+            // non-pointer contiguous iterators (e.g. std::vector's iterator)
+            std::memcpy(dest, &*current, copied);
+            std::advance(current, static_cast<typename std::iterator_traits<IteratorType>::difference_type>(copied / sizeof(char_type)));
+        }
+        return copied;
+    }
+
+    // general fallback: copy the range one element at a time
+    template<class T>
+    std::size_t get_elements_impl(T* dest, std::size_t count, std::false_type /*contiguous*/)
+    {
+        auto* ptr = reinterpret_cast<char*>(dest);
+        for (std::size_t read_index = 0; read_index < count * sizeof(T); ++read_index)
+        {
+            if (JSON_HEDLEY_LIKELY(current != end))
+            {
+                ptr[read_index] = static_cast<char>(*current);
+                std::advance(current, 1);
+            }
+            else
+            {
+                return read_index;
+            }
+        }
+        return count * sizeof(T);
+    }
+
+    IteratorType begin;
     IteratorType current;
-    IteratorType end;
+    SentinelType end;
 
     template<typename BaseInputAdapter, size_t T>
     friend struct wide_string_input_helper;
@@ -154,7 +341,6 @@ class iterator_input_adapter
         return current == end;
     }
 };
-
 
 template<typename BaseInputAdapter, size_t T>
 struct wide_string_input_helper;
@@ -209,8 +395,12 @@ struct wide_string_input_helper<BaseInputAdapter, 4>
             }
             else
             {
-                // unknown character
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(wc);
+                // A code point above U+10FFFF has no UTF-8 encoding. Passing the
+                // unit through would narrow it to int, where 0xFFFFFFFF becomes
+                // char_traits<char>::eof() and would end the input silently, so
+                // emit a byte that is never valid UTF-8 and let the decoder
+                // reject it.
+                utf8_bytes[0] = 0xFF;
                 utf8_bytes_filled = 1;
             }
         }
@@ -259,17 +449,30 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
             }
             else
             {
-                if (JSON_HEDLEY_UNLIKELY(!input.empty()))
+                // A supplementary code point is a high surrogate (0xD800..0xDBFF)
+                // followed by a low surrogate (0xDC00..0xDFFF). A lone low
+                // surrogate, a high surrogate at the end of the input, or a high
+                // surrogate followed by any other unit is malformed UTF-16. In
+                // that case the offending unit is passed through unchanged so the
+                // UTF-8 decoder rejects it, matching how \uXXXX surrogate escapes
+                // are handled in the lexer.
+                bool valid_pair = false;
+                if (wc <= 0xDBFF && JSON_HEDLEY_UNLIKELY(!input.empty()))
                 {
                     const auto wc2 = static_cast<unsigned int>(input.get_character());
-                    const auto charcode = 0x10000u + (((static_cast<unsigned int>(wc) & 0x3FFu) << 10u) | (wc2 & 0x3FFu));
-                    utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xF0u | (charcode >> 18u));
-                    utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((charcode >> 12u) & 0x3Fu));
-                    utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | ((charcode >> 6u) & 0x3Fu));
-                    utf8_bytes[3] = static_cast<std::char_traits<char>::int_type>(0x80u | (charcode & 0x3Fu));
-                    utf8_bytes_filled = 4;
+                    if (0xDC00 <= wc2 && wc2 <= 0xDFFF)
+                    {
+                        const auto charcode = 0x10000u + (((static_cast<unsigned int>(wc) & 0x3FFu) << 10u) | (wc2 & 0x3FFu));
+                        utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xF0u | (charcode >> 18u));
+                        utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((charcode >> 12u) & 0x3Fu));
+                        utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | ((charcode >> 6u) & 0x3Fu));
+                        utf8_bytes[3] = static_cast<std::char_traits<char>::int_type>(0x80u | (charcode & 0x3Fu));
+                        utf8_bytes_filled = 4;
+                        valid_pair = true;
+                    }
                 }
-                else
+
+                if (!valid_pair)
                 {
                     utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(wc);
                     utf8_bytes_filled = 1;
@@ -279,7 +482,7 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
     }
 };
 
-// Wraps another input apdater to convert wide character types into individual bytes.
+// Wraps another input adapter to convert wide character types into individual bytes.
 template<typename BaseInputAdapter, typename WideCharType>
 class wide_string_input_adapter
 {
@@ -291,7 +494,7 @@ class wide_string_input_adapter
 
     typename std::char_traits<char>::int_type get_character() noexcept
     {
-        // check if buffer needs to be filled
+        // check if the buffer needs to be filled
         if (utf8_bytes_index == utf8_bytes_filled)
         {
             fill_buffer<sizeof(WideCharType)>();
@@ -304,6 +507,13 @@ class wide_string_input_adapter
         JSON_ASSERT(utf8_bytes_filled > 0);
         JSON_ASSERT(utf8_bytes_index < utf8_bytes_filled);
         return utf8_bytes[utf8_bytes_index++];
+    }
+
+    // parsing binary with wchar doesn't make sense, but since the parsing mode can be runtime, we need something here
+    template<class T>
+    JSON_HEDLEY_NO_RETURN std::size_t get_elements(T* /*dest*/, std::size_t /*count*/ = 1)
+    {
+        JSON_THROW(parse_error::create(112, 1, "wide string type cannot be interpreted as binary data", nullptr));
     }
 
   private:
@@ -324,51 +534,131 @@ class wide_string_input_adapter
     std::size_t utf8_bytes_filled = 0;
 };
 
-
-template<typename IteratorType, typename Enable = void>
+template<typename IteratorType, typename SentinelType = IteratorType, typename Enable = void>
 struct iterator_input_adapter_factory
 {
     using iterator_type = IteratorType;
+    using sentinel_type = SentinelType;
     using char_type = typename std::iterator_traits<iterator_type>::value_type;
-    using adapter_type = iterator_input_adapter<iterator_type>;
+    using adapter_type = iterator_input_adapter<iterator_type, sentinel_type>;
 
-    static adapter_type create(IteratorType first, IteratorType last)
+    static adapter_type create(IteratorType first, SentinelType last)
     {
         return adapter_type(std::move(first), std::move(last));
     }
 };
 
+// Detection: whether IteratorType and SentinelType can be compared with !=
+template<typename IteratorType, typename SentinelType, typename = void>
+struct can_compare_ne_impl : std::false_type {};
+
+template<typename IteratorType, typename SentinelType>
+struct can_compare_ne_impl < IteratorType, SentinelType,
+       void_t < decltype(std::declval<IteratorType>() != std::declval<SentinelType>()) >>
+           : std::true_type {};
+
+// Workaround for reversed operator order
+template<typename IteratorType, typename SentinelType, typename = void>
+struct can_compare_ne_reversed : std::false_type {};
+
+template<typename IteratorType, typename SentinelType>
+struct can_compare_ne_reversed < IteratorType, SentinelType,
+       void_t < decltype(std::declval<SentinelType>() != std::declval<IteratorType>()) >>
+           : std::true_type {};
+
+template<typename IteratorType, typename SentinelType>
+struct can_compare_ne_either_order : std::integral_constant < bool,
+    can_compare_ne_impl<IteratorType, SentinelType>::value ||
+    can_compare_ne_reversed<IteratorType, SentinelType>::value > {};
+
+// std::nullptr_t is excluded explicitly: a literal `nullptr` passed as a
+// trailing default argument (e.g. parse(s, nullptr, ...)) must never be
+// mistaken for a sentinel, and some compilers (e.g. GCC 4.8) unreliably
+// SFINAE the `operator!=` detection above for std::nullptr_t against
+// container/string types, which would otherwise make such calls ambiguous
+// with the compatible-input overload.
+template<typename IteratorType, typename SentinelType>
+struct can_compare_ne : std::integral_constant < bool,
+    !std::is_same<SentinelType, std::nullptr_t>::value &&
+    can_compare_ne_either_order<IteratorType, SentinelType>::value > {};
+
 template<typename T>
 struct is_iterator_of_multibyte
 {
     using value_type = typename std::iterator_traits<T>::value_type;
-    enum
+    enum // NOLINT(cppcoreguidelines-use-enum-class)
     {
         value = sizeof(value_type) > 1
     };
 };
 
-template<typename IteratorType>
-struct iterator_input_adapter_factory<IteratorType, enable_if_t<is_iterator_of_multibyte<IteratorType>::value>>
+template<typename IteratorType, typename SentinelType>
+struct iterator_input_adapter_factory<IteratorType, SentinelType, enable_if_t<is_iterator_of_multibyte<IteratorType>::value>>
 {
     using iterator_type = IteratorType;
+    using sentinel_type = SentinelType;
     using char_type = typename std::iterator_traits<iterator_type>::value_type;
-    using base_adapter_type = iterator_input_adapter<iterator_type>;
+    using base_adapter_type = iterator_input_adapter<iterator_type, sentinel_type>;
     using adapter_type = wide_string_input_adapter<base_adapter_type, char_type>;
 
-    static adapter_type create(IteratorType first, IteratorType last)
+    static adapter_type create(IteratorType first, SentinelType last)
     {
         return adapter_type(base_adapter_type(std::move(first), std::move(last)));
     }
 };
 
-// General purpose iterator-based input
-template<typename IteratorType>
-typename iterator_input_adapter_factory<IteratorType>::adapter_type input_adapter(IteratorType first, IteratorType last)
+// General purpose iterator-based input (iterator+sentinel pair; SentinelType
+// defaults to IteratorType for the common same-type case, but may differ for
+// C++20 ranges-style iterator+sentinel pairs). Only enable for types that can
+// be compared with !=.
+template < typename IteratorType, typename SentinelType = IteratorType,
+           typename = typename std::enable_if <
+               can_compare_ne<IteratorType, SentinelType>::value >::type >
+typename iterator_input_adapter_factory<IteratorType, SentinelType>::adapter_type input_adapter(IteratorType first, SentinelType last)
 {
-    using factory_type = iterator_input_adapter_factory<IteratorType>;
+    using factory_type = iterator_input_adapter_factory<IteratorType, SentinelType>;
     return factory_type::create(first, last);
 }
+
+// The element type a container's data() points at, cv-qualifiers removed.
+// Ill-formed - and therefore SFINAE-friendly - for types without data().
+template<typename ContainerType>
+using container_data_t = typename std::remove_cv<typename std::remove_pointer <
+                         decltype(std::declval<const ContainerType&>().data()) >::type >::type;
+
+// The container's own element type, cv-qualifiers removed. It is looked up on
+// the bare type so it is also found when ContainerType is deduced as a
+// reference by the forwarding-reference overload below.
+template<typename ContainerType>
+using container_value_t = typename std::remove_cv <
+                          typename std::remove_cv<typename std::remove_reference<ContainerType>::type>::type::value_type >::type;
+
+// Detect a container that stores its elements contiguously as single bytes
+// (std::string, std::vector<char/unsigned char>, std::array<char, N>,
+// std::string_view, ...). Such inputs are wrapped in a pointer-based adapter so
+// they benefit from the contiguous fast paths (bulk string scanning, memcpy for
+// binary formats) in every C++ standard - not only in C++20, where the standard
+// library iterators model std::contiguous_iterator and are detected directly.
+//
+// data() and size() on their own would be duck typing: they say nothing about
+// size() counting the units data() points at, and reading [data(), data() +
+// size()) as bytes would be wrong for a type where it does not. Requiring the
+// container's own value_type to be that same single-byte element ties the two
+// together; every contiguous standard container satisfies it. Anything else
+// keeps the iterator-based adapter, which is always correct - only slower.
+template<typename ContainerType, typename = void>
+struct is_contiguous_byte_container : std::false_type {};
+
+template<typename ContainerType>
+struct is_contiguous_byte_container < ContainerType, void_t <
+    container_data_t<ContainerType>,
+    container_value_t<ContainerType>,
+decltype(std::declval<const ContainerType&>().size()) >>
+            : std::integral_constant < bool,
+        std::is_pointer<decltype(std::declval<const ContainerType&>().data())>::value&&
+        std::is_integral<container_data_t<ContainerType>>::value&&
+        sizeof(container_data_t<ContainerType>) == 1 &&
+        std::is_same<container_data_t<ContainerType>, container_value_t<ContainerType>>::value > {};
 
 // Convenience shorthand from container to iterator
 // Enables ADL on begin(container) and end(container)
@@ -389,23 +679,51 @@ struct container_input_adapter_factory< ContainerType,
        {
            using adapter_type = decltype(input_adapter(begin(std::declval<ContainerType>()), end(std::declval<ContainerType>())));
 
-           static adapter_type create(const ContainerType& container)
+           static adapter_type create(ContainerType&& container)
 {
-    return input_adapter(begin(container), end(container));
+    return input_adapter(begin(std::forward<ContainerType>(container)), end(std::forward<ContainerType>(container)));
 }
        };
 
-} // namespace container_input_adapter_factory_impl
+}  // namespace container_input_adapter_factory_impl
 
-template<typename ContainerType>
-typename container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::adapter_type input_adapter(const ContainerType& container)
+// General container path (iterator-based). Contiguous single-byte containers
+// are excluded here and routed through the pointer-based overload below.
+template < typename ContainerType,
+           enable_if_t < !is_contiguous_byte_container<ContainerType>::value, int > = 0 >
+typename container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::adapter_type input_adapter(ContainerType && container)
 {
-    return container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::create(container);
+    return container_input_adapter_factory_impl::container_input_adapter_factory<ContainerType>::create(std::forward<ContainerType>(container));
 }
 
+// Contiguous single-byte containers (std::string, std::vector<char>, ...) are
+// wrapped in a pointer-based adapter so the contiguous fast paths apply in every
+// standard. The pointer keeps the container's own element type (const char* for
+// std::string, const std::uint8_t* for std::vector<std::uint8_t>, ...), so the
+// resulting char_type - and therefore the parsing behavior - is byte-for-byte
+// identical to the iterator-based path; only the raw pointer additionally
+// enables the bulk fast paths. The container outlives the adapter for the whole
+// parse (temporaries live until the end of the full expression), exactly as the
+// iterators it replaces did.
+template < typename ContainerType,
+           enable_if_t < is_contiguous_byte_container<ContainerType>::value, int > = 0 >
+auto input_adapter(const ContainerType& container)
+-> decltype(input_adapter(container.data(), container.data() + container.size()))
+{
+    return input_adapter(container.data(), container.data() + container.size());
+}
+
+// specialization for std::string
+using string_input_adapter_type = decltype(input_adapter(std::declval<std::string>()));
+
+#ifndef JSON_NO_IO
 // Special cases with fast paths
 inline file_input_adapter input_adapter(std::FILE* file)
 {
+    if (file == nullptr)
+    {
+        JSON_THROW(parse_error::create(101, 0, "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
+    }
     return file_input_adapter(file);
 }
 
@@ -418,6 +736,7 @@ inline input_stream_adapter input_adapter(std::istream&& stream)
 {
     return input_stream_adapter(stream);
 }
+#endif  // JSON_NO_IO
 
 using contiguous_bytes_input_adapter = decltype(input_adapter(std::declval<const char*>(), std::declval<const char*>()));
 
@@ -431,19 +750,38 @@ template < typename CharT,
                int >::type = 0 >
 contiguous_bytes_input_adapter input_adapter(CharT b)
 {
+    if (b == nullptr)
+    {
+        JSON_THROW(parse_error::create(101, 0, "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
+    }
     auto length = std::strlen(reinterpret_cast<const char*>(b));
     const auto* ptr = reinterpret_cast<const char*>(b);
-    return input_adapter(ptr, ptr + length);
+    return input_adapter(ptr, ptr + length); // cppcheck-suppress[nullPointerArithmeticRedundantCheck]
 }
 
 template<typename T, std::size_t N>
 auto input_adapter(T (&array)[N]) -> decltype(input_adapter(array, array + N)) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 {
+#if JSON_STRICT_NUL_HANDLING
+    // A `char` array from string-literal initialization (e.g. json::parse("123"))
+    // carries a trailing '\0' contributed by the compiler, not by the source
+    // text; drop exactly that one byte so it is not mistaken for real trailing
+    // data. Every other element type (unsigned char, std::uint8_t, ...) keeps
+    // the full extent unconditionally, since a trailing zero byte there is
+    // genuine data (e.g. CBOR/MessagePack). This intentionally does not
+    // strlen()-scan the array (as the pointer overload above does for a
+    // null-delimited string): for a `char` array that is not NUL-terminated
+    // within its bounds, that would read past the end of the array.
+    if (std::is_same<typename std::remove_cv<T>::type, char>::value && N > 0 && array[N - 1] == 0)
+    {
+        return input_adapter(array, array + N - 1);
+    }
+#endif
     return input_adapter(array, array + N);
 }
 
 // This class only handles inputs of input_buffer_adapter type.
-// It's required so that expressions like {ptr, len} can be implicitely casted
+// It's required so that expressions like {ptr, len} can be implicitly cast
 // to the correct adapter.
 class span_input_adapter
 {
@@ -472,5 +810,6 @@ class span_input_adapter
   private:
     contiguous_bytes_input_adapter ia;
 };
+
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
