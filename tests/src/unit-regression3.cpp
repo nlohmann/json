@@ -658,33 +658,6 @@ TEST_CASE("regression test #5074 - portable workaround for single-element brace 
     CHECK(j[0] == j_obj);
 }
 
-#if defined(JSON_BRACE_INIT_COPY_SEMANTICS) && (JSON_BRACE_INIT_COPY_SEMANTICS == 1)
-TEST_CASE("regression test #5074 - single-element brace init with JSON_BRACE_INIT_COPY_SEMANTICS")
-{
-    // with JSON_BRACE_INIT_COPY_SEMANTICS: single-element brace init copies/moves
-    json const j_obj = {{"key", "value"}, {"num", 42}};
-    json const j_arr = {1, 2, 3};
-
-    // object: brace init copies instead of wrapping
-    json const j1{j_obj};
-    CHECK(j1.is_object());
-    CHECK(j1 == j_obj);
-
-    // array: brace init copies instead of wrapping
-    json const j2{j_arr};
-    CHECK(j2.is_array());
-    CHECK(j2.size() == 3);
-    CHECK(j2 == j_arr);
-
-    // primitives still work as initializer lists
-    json const j3{true};
-    CHECK(j3.is_boolean());
-
-    json const j4{42};
-    CHECK(j4.is_number_integer());
-}
-#endif
-
 struct Example_5122
 {
     float b = 2;

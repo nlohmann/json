@@ -33,6 +33,10 @@ TEST_CASE("default namespace without version component")
         expected += "_dp";
 #endif
 
+#if JSON_BRACE_INIT_COPY_SEMANTICS
+        expected += "_bics";
+#endif
+
         expected += "::basic_json";
 
         // fallback for Clang

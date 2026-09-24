@@ -91,6 +91,10 @@
     #define JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON 0
 #endif
 
+#ifndef JSON_BRACE_INIT_COPY_SEMANTICS
+    #define JSON_BRACE_INIT_COPY_SEMANTICS 0
+#endif
+
 #if JSON_DIAGNOSTICS
     #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS _diag
 #else
@@ -109,20 +113,27 @@
     #define NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON
 #endif
 
+#if JSON_BRACE_INIT_COPY_SEMANTICS
+    #define NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS _bics
+#else
+    #define NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS
+#endif
+
 #ifndef NLOHMANN_JSON_NAMESPACE_NO_VERSION
     #define NLOHMANN_JSON_NAMESPACE_NO_VERSION 0
 #endif
 
 // Construct the namespace ABI tags component
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c) json_abi ## a ## b ## c
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c) \
-    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c)
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d) json_abi ## a ## b ## c ## d
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d) \
+    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d)
 
 #define NLOHMANN_JSON_ABI_TAGS                                       \
     NLOHMANN_JSON_ABI_TAGS_CONCAT(                                   \
             NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS,                       \
             NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON, \
-            NLOHMANN_JSON_ABI_TAG_DIAGNOSTIC_POSITIONS)
+            NLOHMANN_JSON_ABI_TAG_DIAGNOSTIC_POSITIONS,              \
+            NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS)
 
 // Construct the namespace version component
 #define NLOHMANN_JSON_NAMESPACE_VERSION_CONCAT_EX(major, minor, patch) \
@@ -3189,10 +3200,6 @@ void templated_json_throw(ExceptionType exception)
 
 #ifndef JSON_USE_GLOBAL_UDLS
     #define JSON_USE_GLOBAL_UDLS 1
-#endif
-
-#ifndef JSON_BRACE_INIT_COPY_SEMANTICS
-    #define JSON_BRACE_INIT_COPY_SEMANTICS 0
 #endif
 
 #ifndef JSON_STRICT_NUL_HANDLING
@@ -6766,6 +6773,30 @@ inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<
 {
     j = { std::get<Idx>(t)... };
 }
+
+#if JSON_BRACE_INIT_COPY_SEMANTICS
+// JSON_BRACE_INIT_COPY_SEMANTICS makes a one-element braced list copy its
+// element instead of wrapping it, which would serialize std::tuple<int>{5} as 5
+// rather than [5]. Build what the default deduction builds instead: an object
+// if the element is a [string, value] pair, a one-element array otherwise.
+template<typename BasicJsonType, typename Tuple>
+inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<0> /*unused*/)
+{
+    BasicJsonType element(std::get<0>(t));
+    // same test as the initializer-list constructor, including the cast that
+    // keeps a string type constructible from 0 from selecting operator[](key)
+    const bool is_member = element.is_array() && element.size() == 2
+                           && element[static_cast<typename BasicJsonType::size_type>(0)].is_string();
+    if (is_member)
+    {
+        j = BasicJsonType::object({std::move(element)});
+    }
+    else
+    {
+        j = BasicJsonType::array({std::move(element)});
+    }
+}
+#endif
 
 template<typename BasicJsonType, typename Tuple>
 inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& /*unused*/, index_sequence<> /*unused*/)
@@ -30395,7 +30426,6 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 #undef JSON_NO_UNIQUE_ADDRESS
 #undef JSON_DISABLE_ENUM_SERIALIZATION
 #undef JSON_USE_GLOBAL_UDLS
-#undef JSON_BRACE_INIT_COPY_SEMANTICS
 #undef JSON_STRICT_NUL_HANDLING
 
 #ifndef JSON_TEST_KEEP_MACROS
@@ -30414,6 +30444,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
     #undef JSON_HAS_STD_FORMAT
     #undef JSON_HAS_STATIC_RTTI
     #undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+    #undef JSON_BRACE_INIT_COPY_SEMANTICS
 #endif
 
 // #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>
