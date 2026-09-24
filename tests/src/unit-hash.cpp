@@ -68,7 +68,7 @@ std::string nested_text(const std::size_t depth, const bool objects)
     std::string text;
     if (objects)
     {
-        text.reserve(6 * depth + 1);
+        text.reserve((6 * depth) + 1);
         for (std::size_t i = 0; i < depth; ++i)
         {
             text += "{\"a\":";
@@ -189,7 +189,7 @@ TEST_CASE("hash of deeply nested values")
     SECTION("hashing past the descent bound computes the same values")
     {
         // every depth on either side of where the iterative path takes over
-        for (std::size_t depth = 0; depth <= 2 * nlohmann::detail::recursion_depth_limit() + 10; ++depth)
+        for (std::size_t depth = 0; depth <= (2 * nlohmann::detail::recursion_depth_limit()) + 10; ++depth)
         {
             CAPTURE(depth);
             const auto arrays = nested<json>(depth, false);
