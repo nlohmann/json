@@ -2266,7 +2266,9 @@ TEST_CASE("UBJSON optimized arrays of a valueless type are bounded")
 
     SECTION("an excessive count is rejected")
     {
-        // 'l' is a big-endian int32: 0x7FFFFFFF elements, about 34 GB of value
+        // 'l' is a big-endian int32: 0x7FFFFFFF elements, about 34 GB of value;
+        // OSS-Fuzz reported this shape as a parse_ubjson_fuzzer timeout
+        // (testcase 6347769435193344, no issue filed)
         for (const auto marker :
                 {'Z', 'T', 'F'
                 })

@@ -2868,6 +2868,21 @@ TEST_CASE("BJData")
                 const auto out_num = json::to_bjdata(j_num);
                 CHECK(out_num.at(0) == '{');
                 CHECK(json::from_bjdata(out_num) == j_num);
+
+                // OSS-Fuzz issue 474400817: an empty object _ArraySize_ was
+                // written as the ND-array header length, which from_bjdata()
+                // could not read back
+                const std::vector<uint8_t> input =
+                {
+                    '[', '{', 'U', 11, '_', 'A', 'r', 'r', 'a', 'y', 'D', 'a', 't', 'a', '_', 'Z',
+                    'U', 11, '_', 'A', 'r', 'r', 'a', 'y', 'T', 'y', 'p', 'e', '_', 'S', 'i', 5, 'i', 'n', 't', '1', '6',
+                    'U', 11, '_', 'A', 'r', 'r', 'a', 'y', 'S', 'i', 'z', 'e', '_', '{', '}', '}', ']'
+                };
+                const json j1 = json::from_bjdata(input);
+                CHECK(j1 == json::parse(R"([{"_ArrayType_":"int16","_ArraySize_":{},"_ArrayData_":null}])"));
+                json j2;
+                CHECK_NOTHROW(j2 = json::from_bjdata(json::to_bjdata(j1, false, false)));
+                CHECK(j2 == j1);
             }
 
             SECTION("ndarray with out-of-range _ArrayData_ elements stays as object")
@@ -4336,6 +4351,29 @@ TEST_CASE("BJData round-trip invariants")
             }
         }
     }
+}
+
+TEST_CASE("BJData round trip of a binary value is value-stable, not byte-stable")
+{
+    // OSS-Fuzz issue 474480402: a Draft 3 optimized binary array is read as a
+    // binary value, which to_bjdata() writes in the default Draft 2 mode as a
+    // plain array of uint8 numbers. That is read back as an array of numbers,
+    // for which the writer then picks the smallest type marker, int8 ('i'),
+    // so re-serializing changes the bytes, but not the value. This is the
+    // exception described in the "Round trips" note of the BJData
+    // documentation, and why the fuzzer checks value stability (see #5494).
+    const std::vector<uint8_t> input = {'[', '$', 'B', '#', 'U', 1, 0x20};
+    const json j1 = json::from_bjdata(input);
+    CHECK(j1 == json::binary({0x20}));
+
+    const std::vector<uint8_t> vec = json::to_bjdata(j1, false, false);
+    CHECK(vec == std::vector<uint8_t>({'[', 'U', 0x20, ']'}));
+    const json j2 = json::from_bjdata(vec);
+    CHECK(j2 == json::array({0x20}));
+
+    const std::vector<uint8_t> vec2 = json::to_bjdata(j2, false, false);
+    CHECK(vec2 == std::vector<uint8_t>({'[', 'i', 0x20, ']'}));
+    CHECK(json::from_bjdata(vec2) == j2);
 }
 
 TEST_CASE("BJData roundtrips" * doctest::skip())
