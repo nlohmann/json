@@ -80,19 +80,19 @@ is generated from these files with `make amalgamate` and must not be edited by h
 
 [`basic_json`](../api/basic_json/index.md) is parameterized by the types it uses to store values and to convert from and to other types:
 
-| Template parameter   | Default                   | Used for                                                          |
-|----------------------|---------------------------|-------------------------------------------------------------------|
-| `ObjectType`         | `std::map`                | objects, see [`object_t`](../api/basic_json/object_t.md)          |
-| `ArrayType`          | `std::vector`             | arrays, see [`array_t`](../api/basic_json/array_t.md)             |
-| `StringType`         | `std::string`             | strings and object keys, see [`string_t`](../api/basic_json/string_t.md) |
-| `BooleanType`        | `bool`                    | Booleans, see [`boolean_t`](../api/basic_json/boolean_t.md)       |
-| `NumberIntegerType`  | `std::int64_t`            | signed integers, see [`number_integer_t`](../api/basic_json/number_integer_t.md) |
-| `NumberUnsignedType` | `std::uint64_t`           | unsigned integers, see [`number_unsigned_t`](../api/basic_json/number_unsigned_t.md) |
-| `NumberFloatType`    | `double`                  | floating-point numbers, see [`number_float_t`](../api/basic_json/number_float_t.md) |
-| `AllocatorType`      | `std::allocator`          | allocating objects, arrays, strings, and binary values            |
-| `JSONSerializer`     | `adl_serializer`          | conversions from/to other types, see [`adl_serializer`](../api/adl_serializer/index.md) |
+| Template parameter   | Default                     | Used for                                                          |
+|----------------------|-----------------------------|-------------------------------------------------------------------|
+| `ObjectType`         | `std::map`                  | objects, see [`object_t`](../api/basic_json/object_t.md)          |
+| `ArrayType`          | `std::vector`               | arrays, see [`array_t`](../api/basic_json/array_t.md)             |
+| `StringType`         | `std::string`               | strings and object keys, see [`string_t`](../api/basic_json/string_t.md) |
+| `BooleanType`        | `bool`                      | Booleans, see [`boolean_t`](../api/basic_json/boolean_t.md)       |
+| `NumberIntegerType`  | `std::int64_t`              | signed integers, see [`number_integer_t`](../api/basic_json/number_integer_t.md) |
+| `NumberUnsignedType` | `std::uint64_t`             | unsigned integers, see [`number_unsigned_t`](../api/basic_json/number_unsigned_t.md) |
+| `NumberFloatType`    | `double`                    | floating-point numbers, see [`number_float_t`](../api/basic_json/number_float_t.md) |
+| `AllocatorType`      | `std::allocator`            | allocating objects, arrays, strings, and binary values            |
+| `JSONSerializer`     | `adl_serializer`            | conversions from/to other types, see [`adl_serializer`](../api/adl_serializer/index.md) |
 | `BinaryType`         | `std::vector<std::uint8_t>` | binary values, see [`binary_t`](../api/basic_json/binary_t.md)  |
-| `CustomBaseClass`    | `void`                    | an optional base class, see [`json_base_class_t`](../api/basic_json/json_base_class_t.md) |
+| `CustomBaseClass`    | `void`                      | an optional base class, see [`json_base_class_t`](../api/basic_json/json_base_class_t.md) |
 
 The library provides two specializations:
 
