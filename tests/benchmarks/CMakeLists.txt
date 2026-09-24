@@ -26,9 +26,14 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake ${CMAKE_MODULE_PATH})
 include(download_test_data)
 
+# the header to benchmark; point this at a directory holding another version's
+# nlohmann/json.hpp to compare versions (see README.md)
+set(JSON_BENCHMARK_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../single_include" CACHE PATH
+    "directory containing the nlohmann/json.hpp to benchmark")
+
 # benchmark binary
 add_executable(json_benchmarks src/benchmarks.cpp)
 target_compile_features(json_benchmarks PRIVATE cxx_std_11)
 target_link_libraries(json_benchmarks benchmark ${CMAKE_THREAD_LIBS_INIT})
 add_dependencies(json_benchmarks download_test_data)
-target_include_directories(json_benchmarks PRIVATE ${CMAKE_SOURCE_DIR}/../../single_include ${CMAKE_BINARY_DIR}/include)
+target_include_directories(json_benchmarks PRIVATE ${JSON_BENCHMARK_INCLUDE_DIR} ${CMAKE_BINARY_DIR}/include)
