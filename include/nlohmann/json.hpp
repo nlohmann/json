@@ -4975,6 +4975,30 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         binary_writer<char>(o).write_bson(j);
     }
 
+    /// @brief create a BON8 serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_bon8/
+    static std::vector<std::uint8_t> to_bon8(const basic_json& j)
+    {
+        std::vector<std::uint8_t> result;
+        result.reserve(detail::binary_reserve_hint(j));
+        vector_writer(result).write_bon8(j);
+        return result;
+    }
+
+    /// @brief create a BON8 serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_bon8/
+    static void to_bon8(const basic_json& j, detail::output_adapter<std::uint8_t> o)
+    {
+        binary_writer<std::uint8_t>(o).write_bon8(j);
+    }
+
+    /// @brief create a BON8 serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_bon8/
+    static void to_bon8(const basic_json& j, detail::output_adapter<char> o)
+    {
+        binary_writer<char>(o).write_bon8(j);
+    }
+
     /// @brief create a JSON value from an input in CBOR format
     /// @sa https://json.nlohmann.me/api/basic_json/from_cbor/
     template<typename InputType>
@@ -5202,6 +5226,43 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(input_format_t::bjdata, &sdp, strict)) // cppcheck-suppress[accessMoved]
+        {
+            result = value_t::discarded;
+        }
+        return result;
+    }
+
+    /// @brief create a JSON value from an input in BON8 format
+    /// @sa https://json.nlohmann.me/api/basic_json/from_bon8/
+    template<typename InputType>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_bon8(InputType&& i,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
+    {
+        basic_json result;
+        auto ia = detail::input_adapter(std::forward<InputType>(i));
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bon8).sax_parse(input_format_t::bon8, &sdp, strict)) // cppcheck-suppress[accessMoved]
+        {
+            result = value_t::discarded;
+        }
+        return result;
+    }
+
+    /// @brief create a JSON value from an input in BON8 format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
+    /// @sa https://json.nlohmann.me/api/basic_json/from_bon8/
+    template<typename IteratorType, typename SentinelType = IteratorType,
+             detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_bon8(IteratorType first, SentinelType last,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
+    {
+        basic_json result;
+        auto ia = detail::input_adapter(std::move(first), std::move(last));
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bon8).sax_parse(input_format_t::bon8, &sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }

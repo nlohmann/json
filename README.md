@@ -40,7 +40,7 @@
   - [Implicit conversions](#implicit-conversions)
   - [Conversions to/from arbitrary types](#arbitrary-types-conversions)
   - [Specializing enum conversion](#specializing-enum-conversion)
-  - [Binary formats (BSON, CBOR, MessagePack, UBJSON, and BJData)](#binary-formats-bson-cbor-messagepack-ubjson-and-bjdata)
+  - [Binary formats (BSON, CBOR, MessagePack, UBJSON, BJData, and BON8)](#binary-formats-bson-cbor-messagepack-ubjson-bjdata-and-bon8)
 - [Customers](#customers)
 - [Ecosystem](#ecosystem)
 - [Supported compilers](#supported-compilers)
@@ -128,7 +128,7 @@ There is also a [**docset**](https://github.com/Kapeli/Dash-User-Contributions/t
 - **JSON Pointer functions**: [flatten](https://json.nlohmann.me/api/basic_json/flatten), [unflatten](https://json.nlohmann.me/api/basic_json/unflatten)
 - **JSON Patch functions**: [patch](https://json.nlohmann.me/api/basic_json/patch), [patch_inplace](https://json.nlohmann.me/api/basic_json/patch_inplace), [diff](https://json.nlohmann.me/api/basic_json/diff), [merge_patch](https://json.nlohmann.me/api/basic_json/merge_patch)
 - **Static functions**: [meta](https://json.nlohmann.me/api/basic_json/meta), [get_allocator](https://json.nlohmann.me/api/basic_json/get_allocator)
-- **Binary formats**: [from_bjdata](https://json.nlohmann.me/api/basic_json/from_bjdata), [from_bson](https://json.nlohmann.me/api/basic_json/from_bson), [from_cbor](https://json.nlohmann.me/api/basic_json/from_cbor), [from_msgpack](https://json.nlohmann.me/api/basic_json/from_msgpack), [from_ubjson](https://json.nlohmann.me/api/basic_json/from_ubjson), [to_bjdata](https://json.nlohmann.me/api/basic_json/to_bjdata), [to_bson](https://json.nlohmann.me/api/basic_json/to_bson), [to_cbor](https://json.nlohmann.me/api/basic_json/to_cbor), [to_msgpack](https://json.nlohmann.me/api/basic_json/to_msgpack), [to_ubjson](https://json.nlohmann.me/api/basic_json/to_ubjson)
+- **Binary formats**: [from_bjdata](https://json.nlohmann.me/api/basic_json/from_bjdata), [from_bon8](https://json.nlohmann.me/api/basic_json/from_bon8), [from_bson](https://json.nlohmann.me/api/basic_json/from_bson), [from_cbor](https://json.nlohmann.me/api/basic_json/from_cbor), [from_msgpack](https://json.nlohmann.me/api/basic_json/from_msgpack), [from_ubjson](https://json.nlohmann.me/api/basic_json/from_ubjson), [to_bjdata](https://json.nlohmann.me/api/basic_json/to_bjdata), [to_bon8](https://json.nlohmann.me/api/basic_json/to_bon8), [to_bson](https://json.nlohmann.me/api/basic_json/to_bson), [to_cbor](https://json.nlohmann.me/api/basic_json/to_cbor), [to_msgpack](https://json.nlohmann.me/api/basic_json/to_msgpack), [to_ubjson](https://json.nlohmann.me/api/basic_json/to_ubjson)
 - **Non-member functions**: [operator<<](https://json.nlohmann.me/api/operator_ltlt/), [operator>>](https://json.nlohmann.me/api/operator_gtgt/), [to_string](https://json.nlohmann.me/api/basic_json/to_string)
 - **Literals**: [operator""_json](https://json.nlohmann.me/api/operator_literal_json)
 - **Helper classes**: [std::hash&lt;basic_json&gt;](https://json.nlohmann.me/api/basic_json/std_hash), [std::swap&lt;basic_json&gt;](https://json.nlohmann.me/api/basic_json/std_swap)
@@ -1110,9 +1110,9 @@ Other Important points:
 - When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this default pair carefully. If you desire an exception in this circumstance use `NLOHMANN_JSON_SERIALIZE_ENUM_STRICT()` which behaves identically except for throwing an exception on unrecognized values.
 - If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the map will be returned when converting to or from JSON.
 
-### Binary formats (BSON, CBOR, MessagePack, UBJSON, and BJData)
+### Binary formats (BSON, CBOR, MessagePack, UBJSON, BJData, and BON8)
 
-Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [BSON](https://bsonspec.org) (Binary JSON), [CBOR](https://cbor.io) (Concise Binary Object Representation), [MessagePack](https://msgpack.org), [UBJSON](https://ubjson.org) (Universal Binary JSON Specification) and [BJData](https://neurojson.org/bjdata) (Binary JData) to efficiently encode JSON values to byte vectors and to decode such vectors.
+Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [BSON](https://bsonspec.org) (Binary JSON), [CBOR](https://cbor.io) (Concise Binary Object Representation), [MessagePack](https://msgpack.org), [UBJSON](https://ubjson.org) (Universal Binary JSON Specification), [BJData](https://neurojson.org/bjdata) (Binary JData), and [BON8](https://github.com/hikoworks/hikogui/blob/main/docs/BON8.md) (Binary Object Notation 8) to efficiently encode JSON values to byte vectors and to decode such vectors.
 
 ```cpp
 // create a JSON value
@@ -1149,6 +1149,14 @@ std::vector<std::uint8_t> v_ubjson = json::to_ubjson(j);
 
 // roundtrip
 json j_from_ubjson = json::from_ubjson(v_ubjson);
+
+// serialize to BON8
+std::vector<std::uint8_t> v_bon8 = json::to_bon8(j);
+
+// 0x88, 0x63, 0x6F, 0x6D, 0x70, 0x61, 0x63, 0x74, 0xF9, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x61, 0x90
+
+// roundtrip
+json j_from_bon8 = json::from_bon8(v_bon8);
 ```
 
 The library also supports binary types from BSON, CBOR (byte strings), and MessagePack (bin, ext, fixext). They are stored by default as `std::vector<std::uint8_t>` to be processed outside the library.

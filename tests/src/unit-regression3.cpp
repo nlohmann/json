@@ -894,6 +894,7 @@ TEST_CASE("regression test #5476 - array type without reserve()")
         // the binary formats pass a definite length to start_array()
         CHECK(deque_json::from_cbor(deque_json::to_cbor(j)) == j);
         CHECK(deque_json::from_msgpack(deque_json::to_msgpack(j)) == j);
+        CHECK(deque_json::from_bon8(deque_json::to_bon8(j)) == j);
 
         // parse() instantiates the callback parser as well, which reserves too
         const auto with_callback = deque_json::parse(R"([1,2,3])", [](int /*depth*/, deque_json::parse_event_t /*event*/, deque_json& /*parsed*/) noexcept
