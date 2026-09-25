@@ -137,8 +137,8 @@ Non-negative integers are read as number_unsigned, negative integers as number_i
 !!! info
 
     Values that do not use the canonical representation, such as integers with a longer encoding than necessary,
-    arrays and objects with up to four elements that are terminated by 0xFE, unsorted object keys, or unneeded 0xFF
-    bytes after a string, are accepted.
+    arrays and objects with up to four elements that are terminated by 0xFE, unsorted object keys, or a 0xFF after a
+    string that would also end without it, are accepted. A second 0xFF is not a terminator but an empty string.
 
     Strings must be valid UTF-8, and the last string of a message must be terminated by 0xFF.
 

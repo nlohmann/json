@@ -102,6 +102,12 @@ class SaxCountdown
 
 using bytes = std::vector<std::uint8_t>;
 
+/// @return the string with the given bytes
+std::string str(const bytes& b)
+{
+    return {b.begin(), b.end()};
+}
+
 /// check that @a j is serialized to @a expected and that @a expected is read back as @a j
 void check_bon8(const json& j, const bytes& expected)
 {
@@ -112,12 +118,10 @@ void check_bon8(const json& j, const bytes& expected)
     CHECK(decoded == j);
     // integers are not read back as floats and vice versa
     CHECK(decoded.type() == j.type());
-}
 
-/// @return the string with the given bytes
-std::string str(const bytes& b)
-{
-    return {b.begin(), b.end()};
+    // a stream is read byte by byte rather than in bulk
+    std::istringstream stream(str(expected));
+    CHECK(json::from_bon8(stream) == decoded);
 }
 
 /// @return @a b followed by @a tail
@@ -320,6 +324,9 @@ TEST_CASE("BON8")
                 CHECK_THROWS_WITH_AS(_ = json::to_bon8(str({0xC2, 'a'})), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xC2", json::type_error&);
                 CHECK_THROWS_WITH_AS(_ = json::to_bon8(str({'a', 0xE2, 0x82})), "[json.exception.type_error.316] invalid UTF-8 byte at index 1: 0xE2", json::type_error&);
                 CHECK_THROWS_WITH_AS(_ = json::to_bon8(json::object({{str({0xFF}), 1}})), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+                // after a run of ASCII characters that is checked 8 bytes at a time
+                CHECK_THROWS_WITH_AS(_ = json::to_bon8(std::string(17, 'a') + str({0xC0})), "[json.exception.type_error.316] invalid UTF-8 byte at index 17: 0xC0", json::type_error&);
+                CHECK_THROWS_WITH_AS(_ = json::to_bon8(std::string(8, 'a') + "\xC3\xA4" + std::string(8, 'a') + str({0xE2, 0x82})), "[json.exception.type_error.316] invalid UTF-8 byte at index 18: 0xE2", json::type_error&);
             }
         }
 
@@ -636,6 +643,62 @@ TEST_CASE("BON8")
             }
         }
     }
+}
+
+TEST_CASE("BON8 strings from contiguous and stream input")
+{
+    // contiguous input copies the valid UTF-8 of a string in bulk, a stream
+    // is read byte by byte; both must end strings and report errors alike
+    const std::string ascii(20, 'a');
+    const std::vector<bytes> inputs =
+    {
+        // the string ends at 0xFF, at a marker, and at an integer
+        concat(concat(bytes(ascii.begin(), ascii.end()), {0xC3, 0xA4}), {0xFF}),
+        concat(concat({0x82}, bytes(ascii.begin(), ascii.end())), {0x91}),
+        concat(concat({0x85}, bytes(ascii.begin(), ascii.end())), {0xFE}),
+        concat(concat({0x82}, bytes(ascii.begin(), ascii.end())), {0xC2, 0x05}),
+        concat(concat({0x87}, bytes(ascii.begin(), ascii.end())), {0xE2, 0x82, 0xAC, 0xF0, 0x05, 0x00, 0x00}),
+        // invalid UTF-8 and a premature end after a run of valid characters
+        concat(bytes(ascii.begin(), ascii.end()), {0xE0, 0x80, 0x80}),
+        concat(bytes(ascii.begin(), ascii.end()), {0xE2, 0x82, 0x2F}),
+        concat(bytes(ascii.begin(), ascii.end()), {0xE2, 0x82}),
+        bytes(ascii.begin(), ascii.end()),
+        // trailing bytes after a string that ends a container
+        concat(concat({0x81}, bytes(ascii.begin(), ascii.end())), {0x91}),
+    };
+
+    for (const auto& input : inputs)
+    {
+        CAPTURE(input)
+        std::string from_vector;
+        std::string from_stream;
+        try
+        {
+            from_vector = json::from_bon8(input).dump();
+        }
+        catch (const json::parse_error& e)
+        {
+            from_vector = e.what();
+        }
+        try
+        {
+            std::istringstream stream(str(input));
+            from_stream = json::from_bon8(stream).dump();
+        }
+        catch (const json::parse_error& e)
+        {
+            from_stream = e.what();
+        }
+        CHECK(from_vector == from_stream);
+    }
+
+    json _;
+    CHECK(json::from_bon8(inputs[0]) == ascii + "\xC3\xA4");
+    CHECK(json::from_bon8(inputs[3]) == json({ascii, 45}));
+    CHECK_THROWS_WITH_AS(_ = json::from_bon8(inputs[5]), "[json.exception.parse_error.112] parse error at byte 22: syntax error while parsing BON8 string: invalid UTF-8 byte: 0x80", json::parse_error&);
+    CHECK_THROWS_WITH_AS(_ = json::from_bon8(inputs[6]), "[json.exception.parse_error.112] parse error at byte 23: syntax error while parsing BON8 string: invalid UTF-8 byte: 0x2F", json::parse_error&);
+    CHECK_THROWS_WITH_AS(_ = json::from_bon8(inputs[7]), "[json.exception.parse_error.110] parse error at byte 23: syntax error while parsing BON8 string: unexpected end of input", json::parse_error&);
+    CHECK_THROWS_WITH_AS(_ = json::from_bon8(inputs[9]), "[json.exception.parse_error.110] parse error at byte 22: syntax error while parsing BON8 value: expected end of input; last byte: 0x91", json::parse_error&);
 }
 
 // use this testcase outside [hide] to run it with Valgrind

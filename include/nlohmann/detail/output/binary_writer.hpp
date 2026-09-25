@@ -2178,7 +2178,7 @@ class binary_writer
 
                 if (N > 4)
                 {
-                    oa.write_character(to_char_type(0xFE));
+                    write_bon8_marker(0xFE, string_open);
                 }
                 break;
             }
@@ -2248,20 +2248,10 @@ class binary_writer
     {
         static_cast<void>(context); // only used when exceptions are enabled
         const auto* data = reinterpret_cast<const unsigned char*>(s.data());
-        for (std::size_t i = 0; i < s.size();)
+        const std::size_t valid = valid_utf8_prefix(data, s.size());
+        if (JSON_HEDLEY_UNLIKELY(valid != s.size()))
         {
-            if (data[i] < 0x80)
-            {
-                ++i;
-                continue;
-            }
-
-            const std::size_t length = validate_one_utf8(data + i, s.size() - i);
-            if (JSON_HEDLEY_UNLIKELY(length == 0))
-            {
-                JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(i), ": 0x", hex_byte(data[i])), &context));
-            }
-            i += length;
+            JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(valid), ": 0x", hex_byte(data[valid])), &context));
         }
     }
 

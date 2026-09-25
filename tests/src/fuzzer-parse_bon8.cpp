@@ -15,6 +15,10 @@ array data, it performs the following steps:
 - j2 = from_bon8(vec)
 - assert(j1 == j2)
 
+It also checks that reading the data from a stream, which reads strings byte by
+byte, gives the same value or error as reading it from contiguous memory, which
+copies strings in bulk.
+
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
@@ -31,9 +35,33 @@ drivers.
 
 using json = nlohmann::json;
 
+namespace
+{
+// the serialization of the value read from @a input, or the error message
+template<typename InputType>
+std::string read_bon8(InputType&& input)
+{
+    try
+    {
+        const auto vec = json::to_bon8(json::from_bon8(std::forward<InputType>(input)));
+        return {vec.begin(), vec.end()};
+    }
+    catch (const json::exception& e)
+    {
+        return e.what();
+    }
+}
+} // namespace
+
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
+    // contiguous and stream input must be read alike
+    {
+        std::istringstream stream(std::string(reinterpret_cast<const char*>(data), size));
+        assert(read_bon8(std::vector<uint8_t>(data, data + size)) == read_bon8(stream));
+    }
+
     try
     {
         // step 1: parse input
