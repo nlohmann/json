@@ -1240,9 +1240,9 @@ TEST_CASE("deserialization")
         // the stream is left one byte too far after a number (and only after a
         // number). JSON_PRECISE_STREAM_POSITION changes this; see
         // unit-precise-stream-position.cpp. These checks pin the default.
-        const auto remaining = [](std::istream & is)
+        const auto remaining = [](std::istream & is) -> std::string
         {
-            return std::string(std::istreambuf_iterator<char>(is), std::istreambuf_iterator<char>());
+            return {std::istreambuf_iterator<char>(is), std::istreambuf_iterator<char>()};
         };
 
         SECTION("the character after a number is consumed")
@@ -1266,7 +1266,9 @@ TEST_CASE("deserialization")
         SECTION("comma-separated numbers can be read one by one")
         {
             std::istringstream ss("1,2,3");
-            json j1, j2, j3;
+            json j1;
+            json j2;
+            json j3;
             ss >> j1 >> j2 >> j3;
             CHECK(j1 == 1);
             CHECK(j2 == 2);
