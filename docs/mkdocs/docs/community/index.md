@@ -7,3 +7,4 @@
 - [Quality Assurance](quality_assurance.md) - how the quality of this project is assured
 - [Roadmap](roadmap.md) - what the project will and will not do
 - [Security Policy](security_policy.md) - the security policy of the project
+- [Assurance Case](assurance_case.md) - why the library meets its security requirements
