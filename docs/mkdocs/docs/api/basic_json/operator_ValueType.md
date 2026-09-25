@@ -85,3 +85,8 @@ Linear in the size of the JSON value.
 - Since version 1.0.0.
 - Macros `JSON_EXPLICIT`/[`JSON_USE_IMPLICIT_CONVERSIONS`](../macros/json_use_implicit_conversions.md) added
   in version 3.9.0.
+- The exclusion of `std::any` from this conversion became conditional on
+  [`JSON_HAS_STATIC_RTTI`](../macros/json_has_static_rtti.md) in version 3.11.3.
+- `std::optional<T>` excluded from this conversion in version 3.13.0; use
+  [`get<std::optional<T>>()`](get.md)/[`get_to()`](get_to.md) instead (see
+  [Converting values](../../features/conversions.md)).
