@@ -3215,6 +3215,12 @@ class binary_reader
     */
     void unget_bon8(const char_int_type c)
     {
+        // At most two bytes are ever handed back: a byte is only handed back
+        // right after it was read with get_bon8(), and the only place that
+        // hands back two bytes (a lead byte and the byte after it) read both
+        // of them in a row, which emptied the buffer first. This is an
+        // invariant of the reader rather than a property of the input, so
+        // an assertion suffices (the fuzzers are built with assertions).
         JSON_ASSERT(bon8_pushback_size < bon8_pushback.size());
         bon8_pushback[bon8_pushback_size++] = c;
         --chars_read;

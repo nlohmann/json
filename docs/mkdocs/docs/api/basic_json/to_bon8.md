@@ -32,7 +32,8 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 
 ## Exception safety
 
-Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
+Strong guarantee: if an exception is thrown, there are no changes in the JSON value `j`, which is never modified.
+With (2), the bytes written before the exception remain in the output adapter.
 
 ## Exceptions
 

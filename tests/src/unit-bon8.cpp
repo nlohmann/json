@@ -313,12 +313,12 @@ TEST_CASE("BON8")
                 json _;
                 CHECK_THROWS_WITH_AS(_ = json::to_bon8(str({0x80})), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0x80", json::type_error&);
                 CHECK_THROWS_WITH_AS(_ = json::to_bon8(str({'a', 0xC0, 0x80})), "[json.exception.type_error.316] invalid UTF-8 byte at index 1: 0xC0", json::type_error&);
-                CHECK_THROWS_WITH_AS(_ = json::to_bon8(str({0xE0, 0x80, 0x80})), "[json.exception.type_error.316] invalid UTF-8 byte at index 1: 0x80", json::type_error&);
-                CHECK_THROWS_WITH_AS(_ = json::to_bon8(str({0xED, 0xA0, 0x80})), "[json.exception.type_error.316] invalid UTF-8 byte at index 1: 0xA0", json::type_error&);
-                CHECK_THROWS_WITH_AS(_ = json::to_bon8(str({0xF4, 0x90, 0x80, 0x80})), "[json.exception.type_error.316] invalid UTF-8 byte at index 1: 0x90", json::type_error&);
+                CHECK_THROWS_WITH_AS(_ = json::to_bon8(str({0xE0, 0x80, 0x80})), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xE0", json::type_error&);
+                CHECK_THROWS_WITH_AS(_ = json::to_bon8(str({0xED, 0xA0, 0x80})), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xED", json::type_error&);
+                CHECK_THROWS_WITH_AS(_ = json::to_bon8(str({0xF4, 0x90, 0x80, 0x80})), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xF4", json::type_error&);
                 CHECK_THROWS_WITH_AS(_ = json::to_bon8(str({0xF5, 0x80, 0x80, 0x80})), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xF5", json::type_error&);
-                CHECK_THROWS_WITH_AS(_ = json::to_bon8(str({0xC2, 'a'})), "[json.exception.type_error.316] invalid UTF-8 byte at index 1: 0x61", json::type_error&);
-                CHECK_THROWS_WITH_AS(_ = json::to_bon8(str({'a', 0xE2, 0x82})), "[json.exception.type_error.316] incomplete UTF-8 string; last byte: 0x82", json::type_error&);
+                CHECK_THROWS_WITH_AS(_ = json::to_bon8(str({0xC2, 'a'})), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xC2", json::type_error&);
+                CHECK_THROWS_WITH_AS(_ = json::to_bon8(str({'a', 0xE2, 0x82})), "[json.exception.type_error.316] invalid UTF-8 byte at index 1: 0xE2", json::type_error&);
                 CHECK_THROWS_WITH_AS(_ = json::to_bon8(json::object({{str({0xFF}), 1}})), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
             }
         }

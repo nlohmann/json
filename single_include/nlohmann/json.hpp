@@ -15538,6 +15538,12 @@ class binary_reader
     */
     void unget_bon8(const char_int_type c)
     {
+        // At most two bytes are ever handed back: a byte is only handed back
+        // right after it was read with get_bon8(), and the only place that
+        // hands back two bytes (a lead byte and the byte after it) read both
+        // of them in a row, which emptied the buffer first. This is an
+        // invariant of the reader rather than a property of the input, so
+        // an assertion suffices (the fuzzers are built with assertions).
         JSON_ASSERT(bon8_pushback_size < bon8_pushback.size());
         bon8_pushback[bon8_pushback_size++] = c;
         --chars_read;
@@ -19348,6 +19354,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/input/binary_reader.hpp>
 
+// #include <nlohmann/detail/input/string_scan.hpp>
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/output/output_adapters.hpp>
@@ -21725,8 +21733,9 @@ class binary_writer
     /*!
     @brief write a single byte that is not part of a string
 
-    @param[in] marker           the byte to write
-    @param[in,out] string_open  see @ref write_bon8_value
+    @param[in] marker        the byte to write
+    @param[out] string_open  set to false, because the output no longer ends
+                             with a string; see @ref write_bon8_value
     */
     void write_bon8_marker(const std::uint8_t marker, bool& string_open)
     {
@@ -21773,70 +21782,27 @@ class binary_writer
     @param[in] s        the string to check
     @param[in] context  the value the string belongs to (for diagnostics)
 
-    @throw type_error.316 if @a s is not valid UTF-8
+    @throw type_error.316 if @a s is not valid UTF-8; the message names the
+           first byte of the first invalid or incomplete sequence
     */
     static void check_bon8_utf8(const string_t& s, const BasicJsonType& context)
     {
-        const auto byte_at = [&s](const std::size_t i)
-        {
-            return static_cast<std::uint8_t>(s[i]);
-        };
-
+        const auto* data = reinterpret_cast<const unsigned char*>(s.data());
         for (std::size_t i = 0; i < s.size();)
         {
-            const std::uint8_t lead = byte_at(i);
-            std::size_t continuation_bytes = 0;
-            // valid range of the byte after the lead byte, which excludes
-            // overlong forms, surrogates, and code points above U+10FFFF
-            std::uint8_t lower = 0x80;
-            std::uint8_t upper = 0xBF;
-
-            if (lead <= 0x7F)
+            if (data[i] < 0x80)
             {
                 ++i;
                 continue;
             }
-            if (0xC2 <= lead && lead <= 0xDF)
-            {
-                continuation_bytes = 1;
-            }
-            else if (0xE0 <= lead && lead <= 0xEF)
-            {
-                continuation_bytes = 2;
-                lower = lead == 0xE0 ? 0xA0 : 0x80;
-                upper = lead == 0xED ? 0x9F : 0xBF;
-            }
-            else if (0xF0 <= lead && lead <= 0xF4)
-            {
-                continuation_bytes = 3;
-                lower = lead == 0xF0 ? 0x90 : 0x80;
-                upper = lead == 0xF4 ? 0x8F : 0xBF;
-            }
-            else
-            {
-                throw_bon8_utf8_error(i, lead, context);
-            }
 
-            for (std::size_t k = 1; k <= continuation_bytes; ++k)
+            const std::size_t length = validate_one_utf8(data + i, s.size() - i);
+            if (JSON_HEDLEY_UNLIKELY(length == 0))
             {
-                if (i + k >= s.size())
-                {
-                    JSON_THROW(type_error::create(316, concat("incomplete UTF-8 string; last byte: 0x", hex_byte(byte_at(s.size() - 1))), &context));
-                }
-                const std::uint8_t b = byte_at(i + k);
-                if (b < (k == 1 ? lower : 0x80) || b > (k == 1 ? upper : 0xBF))
-                {
-                    throw_bon8_utf8_error(i + k, b, context);
-                }
+                JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(i), ": 0x", hex_byte(data[i])), &context));
             }
-
-            i += continuation_bytes + 1;
+            i += length;
         }
-    }
-
-    [[noreturn]] static void throw_bon8_utf8_error(const std::size_t index, const std::uint8_t byte, const BasicJsonType& context)
-    {
-        JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(index), ": 0x", hex_byte(byte)), &context));
     }
 
     /// @return a byte as two uppercase hexadecimal digits
