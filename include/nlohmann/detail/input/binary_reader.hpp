@@ -3509,7 +3509,7 @@ class binary_reader
         }
 
         const bool negative = second >= 0xC0;
-        std::int64_t value = static_cast<std::int64_t>(negative ? (second & 0x3F) : second);
+        auto value = static_cast<std::int64_t>(negative ? (second & 0x3F) : second);
         std::int64_t offset = 0;
         int extra_bytes = 0;
 

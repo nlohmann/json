@@ -1454,6 +1454,21 @@ class binary_writer
         return to_char_type(std::is_same<FloatType, float>::value ? 0x8E : 0x8F);
     }
 
+    /// @return the type marker for a FloatType value in @a format (CBOR, MessagePack, or BON8)
+    template<typename FloatType>
+    static CharType get_compact_float_prefix(const detail::input_format_t format)
+    {
+        if (format == detail::input_format_t::cbor)
+        {
+            return get_cbor_float_prefix(FloatType{});
+        }
+        if (format == detail::input_format_t::bon8)
+        {
+            return get_bon8_float_prefix<FloatType>();
+        }
+        return get_msgpack_float_prefix(FloatType{});
+    }
+
     ////////////
     // UBJSON //
     ////////////
@@ -2231,6 +2246,7 @@ class binary_writer
     */
     static void check_bon8_utf8(const string_t& s, const BasicJsonType& context)
     {
+        static_cast<void>(context); // only used when exceptions are enabled
         const auto* data = reinterpret_cast<const unsigned char*>(s.data());
         for (std::size_t i = 0; i < s.size();)
         {
@@ -2346,15 +2362,15 @@ class binary_writer
         JSON_HEDLEY_DIAGNOSTIC_PUSH
         JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
-        if (n == -1.0)
+        if (n == static_cast<number_float_t>(-1))
         {
             oa.write_character(to_char_type(0xFB));
         }
-        else if (n == 0.0 && !std::signbit(n))
+        else if (n == static_cast<number_float_t>(0) && !std::signbit(n))
         {
             oa.write_character(to_char_type(0xFC));
         }
-        else if (n == 1.0)
+        else if (n == static_cast<number_float_t>(1))
         {
             oa.write_character(to_char_type(0xFD));
         }
@@ -2505,20 +2521,12 @@ class binary_writer
                                    static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
                                    static_cast<double>(static_cast<float>(n)) == static_cast<double>(n))))
         {
-            oa.write_character(format == detail::input_format_t::cbor
-                               ? get_cbor_float_prefix(static_cast<float>(n))
-                               : format == detail::input_format_t::bon8
-                               ? get_bon8_float_prefix<float>()
-                               : get_msgpack_float_prefix(static_cast<float>(n)));
+            oa.write_character(get_compact_float_prefix<float>(format));
             write_number(static_cast<float>(n));
         }
         else
         {
-            oa.write_character(format == detail::input_format_t::cbor
-                               ? get_cbor_float_prefix(n)
-                               : format == detail::input_format_t::bon8
-                               ? get_bon8_float_prefix<number_float_t>()
-                               : get_msgpack_float_prefix(n));
+            oa.write_character(get_compact_float_prefix<number_float_t>(format));
             write_number(n);
         }
 #ifdef __GNUC__
