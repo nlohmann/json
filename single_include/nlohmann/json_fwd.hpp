@@ -56,6 +56,10 @@
     #define JSON_BRACE_INIT_COPY_SEMANTICS 0
 #endif
 
+#ifndef JSON_PRECISE_STREAM_POSITION
+    #define JSON_PRECISE_STREAM_POSITION 0
+#endif
+
 #if JSON_DIAGNOSTICS
     #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS _diag
 #else
@@ -80,21 +84,28 @@
     #define NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS
 #endif
 
+#if JSON_PRECISE_STREAM_POSITION
+    #define NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION _psp
+#else
+    #define NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION
+#endif
+
 #ifndef NLOHMANN_JSON_NAMESPACE_NO_VERSION
     #define NLOHMANN_JSON_NAMESPACE_NO_VERSION 0
 #endif
 
 // Construct the namespace ABI tags component
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d) json_abi ## a ## b ## c ## d
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d) \
-    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d)
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e) json_abi ## a ## b ## c ## d ## e
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d, e) \
+    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e)
 
 #define NLOHMANN_JSON_ABI_TAGS                                       \
     NLOHMANN_JSON_ABI_TAGS_CONCAT(                                   \
             NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS,                       \
             NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON, \
             NLOHMANN_JSON_ABI_TAG_DIAGNOSTIC_POSITIONS,              \
-            NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS)
+            NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS,         \
+            NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION)
 
 // Construct the namespace version component
 #define NLOHMANN_JSON_NAMESPACE_VERSION_CONCAT_EX(major, minor, patch) \

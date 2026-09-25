@@ -2,6 +2,7 @@
 
 - [ ] The changes are described in detail, both the what and why.
 - [ ] If applicable, an [existing issue](https://github.com/nlohmann/json/issues) is referenced.
+- [ ] If applicable, a fixed [OSS-Fuzz](https://issues.oss-fuzz.com) issue is referenced as `OSS-Fuzz: <id>` (see [fuzz testing](https://github.com/nlohmann/json/blob/develop/tests/fuzzing.md#handling-oss-fuzz-reports)).
 - [ ] The [Code coverage](https://coveralls.io/github/nlohmann/json) remained at 100%. A test case for every new line of code.
 - [ ] If applicable, the [documentation](https://json.nlohmann.me) is updated.
 - [ ] The source code is amalgamated by running `make amalgamate`.

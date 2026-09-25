@@ -15,6 +15,7 @@ using nlohmann::json;
 #include <fstream>
 #include <set>
 #include "make_test_data_available.hpp"
+#include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
 
 namespace
@@ -2265,7 +2266,9 @@ TEST_CASE("UBJSON optimized arrays of a valueless type are bounded")
 
     SECTION("an excessive count is rejected")
     {
-        // 'l' is a big-endian int32: 0x7FFFFFFF elements, about 34 GB of value
+        // 'l' is a big-endian int32: 0x7FFFFFFF elements, about 34 GB of value;
+        // OSS-Fuzz reported this shape as a parse_ubjson_fuzzer timeout
+        // (testcase 6347769435193344, no issue filed)
         for (const auto marker :
                 {'Z', 'T', 'F'
                 })
@@ -2814,6 +2817,51 @@ TEST_CASE("UBJSON use_type requires use_size")
         CHECK_NOTHROW(json::to_ubjson(j, false, false));
         CHECK_NOTHROW(json::to_ubjson(j, true, false));
         CHECK_NOTHROW(json::to_ubjson(j, true, true));
+    }
+}
+
+TEST_CASE("UBJSON round-trip invariants")
+{
+    // This checks what the parse_ubjson_fuzzer driver checks (see
+    // tests/src/fuzzer-parse_ubjson.cpp), so that a regression shows up in CI
+    // rather than as an OSS-Fuzz report: every value from_ubjson() returns
+    // (j1) can be serialized with any combination of options, the result can
+    // be parsed back (j2), and serializing j2 again with the same options
+    // reproduces the exact bytes. Beyond the driver, this also checks that j2
+    // equals j1. Values are compared with dump() rather than operator==,
+    // because a NaN never compares equal to itself.
+    struct options
+    {
+        bool use_size;
+        bool use_type;
+    };
+    const std::vector<options> all_options =
+    {
+        {false, false},
+        {true, false},
+        {true, true},
+    };
+
+    for (const auto& j0 : utils::round_trip_corpus::values())
+    {
+        // turn the corpus value into a value as from_ubjson() returns it; this
+        // has no binary values, as UBJSON writes them as arrays of integers
+        for (const auto& initial : all_options)
+        {
+            const json j1 = json::from_ubjson(json::to_ubjson(j0, initial.use_size, initial.use_type));
+
+            for (const auto& o : all_options)
+            {
+                INFO("j1 = " << j1.dump() << ", use_size = " << o.use_size << ", use_type = " << o.use_type);
+
+                const std::vector<std::uint8_t> vec = json::to_ubjson(j1, o.use_size, o.use_type);
+                json j2;
+                // anything the library writes must be parsable by the library
+                REQUIRE_NOTHROW(j2 = json::from_ubjson(vec));
+                CHECK(j2.dump() == j1.dump());
+                CHECK(json::to_ubjson(j2, o.use_size, o.use_type) == vec);
+            }
+        }
     }
 }
 
