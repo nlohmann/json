@@ -208,6 +208,16 @@ The library maps BJData types to JSON value types as follows:
 
     The mapping is **complete** in the sense that any BJData value can be converted to a JSON value.
 
+!!! info "Round trips"
+
+    A value returned by [`from_bjdata`](../../api/basic_json/from_bjdata.md) can be serialized with
+    [`to_bjdata`](../../api/basic_json/to_bjdata.md) using any combination of options and parsed back into an equal
+    value, and serializing that value again with the same options produces the same bytes. The exception is binary
+    values: they are only written as an optimized binary array (`[$B`) if Draft 3 is enabled and both `use_size` and
+    `use_type` are set. Otherwise, they are written as arrays of integers and parsed back as such (see the notes on
+    binary values above), and serializing such an array again may choose different, but equally valid, type markers.
+    The bytes can then differ, but parsing them again yields the same value.
+
 ??? example
 
     ```cpp
