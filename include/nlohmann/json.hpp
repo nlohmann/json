@@ -5994,62 +5994,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static basic_json diff(const basic_json& source, const basic_json& target,
                            const string_t& path = "")
     {
-        // Diffing descends into both values once per nesting level and
-        // compares them with operator== on the way, which recurses as well,
-        // so values nested deeply enough used to exhaust the call stack.
-        // Both only descend as far as the source is nested, so a source
-        // nested no more than detail::recursion_depth_limit() levels deep -
-        // all but a vanishing minority - is diffed recursively as before;
-        // deeper ones are diffed without the call stack.
-        if (JSON_HEDLEY_LIKELY(!nesting_exceeds(source, detail::recursion_depth_limit())))
-        {
-            return diff_recursively(source, target, path);
-        }
-        return diff_iteratively(source, target, path);
+        return diff_recursively(source, target, path, 0);
     }
 
   private:
-    /*!
-    @brief whether @a j is nested more than @a limit levels deep
-
-    A primitive value is not nested at all, an array or object one level more
-    than its most deeply nested element. Recurses at most @a limit levels.
-    */
-    static bool nesting_exceeds(const basic_json& j, const std::size_t limit)
-    {
-        switch (j.m_data.m_type)
-        {
-            case value_t::array:
-            {
-                return limit == 0 || std::any_of(j.m_data.m_value.array->cbegin(), j.m_data.m_value.array->cend(),
-                                                 [limit](const basic_json & element)
-                {
-                    return element.is_structured() && nesting_exceeds(element, limit - 1);
-                });
-            }
-
-            case value_t::object:
-            {
-                return limit == 0 || std::any_of(j.m_data.m_value.object->cbegin(), j.m_data.m_value.object->cend(),
-                                                 [limit](const typename object_t::value_type & element)
-                {
-                    return element.second.is_structured() && nesting_exceeds(element.second, limit - 1);
-                });
-            }
-
-            case value_t::null:
-            case value_t::string:
-            case value_t::boolean:
-            case value_t::number_integer:
-            case value_t::number_unsigned:
-            case value_t::number_float:
-            case value_t::binary:
-            case value_t::discarded:
-            default:
-                return false;
-        }
-    }
-
     /// @brief two arrays or two objects @ref diff_iteratively is diffing
     struct diff_frame
     {
@@ -6084,9 +6032,17 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json added_ops{}; // NOLINT(readability-redundant-member-init)
     };
 
-    /// @ref diff for a @a source nested no more than @ref detail::recursion_depth_limit levels deep
+    /*!
+    @brief @ref diff, for values at nesting level @a depth
+
+    Diffing two arrays or objects calls this function again, once per nesting
+    level, so values nested deeply enough used to exhaust the call stack and
+    terminate the process. The descent is bounded here: once @ref
+    detail::recursion_depth_limit levels have been entered, @ref
+    diff_iteratively diffs what is left without the call stack.
+    */
     static basic_json diff_recursively(const basic_json& source, const basic_json& target,
-                                       const string_t& path)
+                                       const string_t& path, const std::size_t depth)
     {
         // the patch
         basic_json result(value_t::array);
@@ -6095,6 +6051,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         if (source == target)
         {
             return result;
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
+        {
+            return diff_iteratively(source, target, path);
         }
 
         if (source.type() != target.type())
@@ -6116,7 +6077,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 while (i < source.size() && i < target.size())
                 {
                     // recursive call to compare array values at index i
-                    auto temp_diff = diff_recursively(source[i], target[i], detail::concat<string_t>(path, '/', detail::to_string<string_t>(i)));
+                    auto temp_diff = diff_recursively(source[i], target[i], detail::concat<string_t>(path, '/', detail::to_string<string_t>(i)), depth + 1);
                     result.insert(result.end(), temp_diff.begin(), temp_diff.end());
                     ++i;
                 }
@@ -6235,7 +6196,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                         if (common_it != common_keys_source_order.cend() && it.key() == *common_it)
                         {
                             const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
-                            auto temp_diff = diff_recursively(it.value(), target[it.key()], path_key);
+                            auto temp_diff = diff_recursively(it.value(), target[it.key()], path_key, depth + 1);
                             result.insert(result.end(), temp_diff.begin(), temp_diff.end());
                             ++common_it;
                         }
@@ -6323,9 +6284,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /*!
     @brief @ref diff without the call stack
 
-    Produces the same patch as @ref diff_recursively. Only used for a source
-    nested more deeply than @ref detail::recursion_depth_limit; any arrays and objects
-    below it that are not nested that deeply are diffed recursively.
+    Produces the same patch as @ref diff_recursively. Only reached for values
+    nested more deeply than @ref detail::recursion_depth_limit.
     */
     static basic_json diff_iteratively(const basic_json& source, const basic_json& target,
                                        const string_t& path)
@@ -6348,8 +6308,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         const auto enter = [&result, &stack, &current_path](const basic_json & s, const basic_json & t)
         {
             // if the values are the same, there is nothing to do. Arrays and
-            // objects are not compared up front: comparing them recurses into
-            // everything below them - equal ones yield no operations anyway.
+            // objects are not compared up front: comparing them visits
+            // everything below them, so doing that at every level would take
+            // quadratic time in the nesting depth - equal ones yield no
+            // operations anyway.
             if ((!s.is_structured() || !t.is_structured()) && s == t)
             {
                 return;
@@ -6362,15 +6324,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 {
                     {"op", "replace"}, {"path", current_path}, {"value", t}
                 });
-                return;
-            }
-
-            // arrays and objects that are not nested too deeply for the call
-            // stack are diffed recursively, which can skip equal parts
-            if (!nesting_exceeds(s, detail::recursion_depth_limit()))
-            {
-                const basic_json partial = diff_recursively(s, t, current_path);
-                result.insert(result.end(), partial.begin(), partial.end());
                 return;
             }
 
