@@ -11,6 +11,53 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <string>
+
+namespace
+{
+// update(source, true) as documented, written recursively; only usable on
+// values nested a few hundred levels deep
+void reference_update(json& target, const json& source)
+{
+    for (auto it = source.begin(); it != source.end(); ++it)
+    {
+        const auto existing = target.find(it.key());
+        if (it.value().is_object() && existing != target.end() && existing->is_object())
+        {
+            reference_update(*existing, it.value());
+        }
+        else
+        {
+            target[it.key()] = it.value();
+        }
+    }
+}
+
+// objects nested `depth` levels deep under the key "a", with members that
+// differ by `variant` on the way down
+std::string nested_objects(const std::size_t depth, const int variant)
+{
+    std::string text;
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        text += "{";
+        if ((i + static_cast<std::size_t>(variant)) % 3 == 0)
+        {
+            text += "\"s" + std::to_string(variant) + "\":" + std::to_string(i) + ",";
+        }
+        if (variant == 2 && i % 5 == 0)
+        {
+            // an object replacing a primitive, which is not merged
+            text += R"("s0":{"o":1},)";
+        }
+        text += "\"a\":";
+    }
+    text += variant == 1 ? "{\"x\":1}" : "{\"y\":2}";
+    text.append(depth, '}');
+    return text;
+}
+} // namespace
+
 TEST_CASE("modifiers")
 {
     SECTION("clear()")
@@ -641,6 +688,20 @@ TEST_CASE("modifiers")
                 CHECK_THROWS_WITH_AS(j_array.insert(j_array.end(), j_other_array.begin(), j_other_array2.end()), "[json.exception.invalid_iterator.210] iterators do not fit",
                                      json::invalid_iterator&);
             }
+
+            SECTION("iterators not pointing into an array")
+            {
+                json j_object2 = {{"k", 1}, {"l", 2}};
+                json j_primitive = 5;
+                json j_null;
+
+                CHECK_THROWS_WITH_AS(j_array.insert(j_array.begin(), j_object2.begin(), j_object2.end()), "[json.exception.invalid_iterator.202] iterators first and last must point to arrays",
+                                     json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(j_array.insert(j_array.begin(), j_primitive.begin(), j_primitive.end()), "[json.exception.invalid_iterator.202] iterators first and last must point to arrays",
+                                     json::invalid_iterator&);
+                CHECK_THROWS_WITH_AS(j_array.insert(j_array.begin(), j_null.begin(), j_null.end()), "[json.exception.invalid_iterator.202] iterators first and last must point to arrays",
+                                     json::invalid_iterator&);
+            }
         }
 
         SECTION("range for object")
@@ -801,6 +862,30 @@ TEST_CASE("modifiers")
                     j1.update(j2, true);
                     CHECK(j1 == json({{"string", "t"}, {"numbers", 1}}));
                 }
+
+                SECTION("overwrite primitive with object")
+                {
+                    json j1 = {{"k", 1}};
+                    json const j2 = {{"k", {{"x", 2}}}};
+                    j1.update(j2, true);
+                    CHECK(j1 == json({{"k", {{"x", 2}}}}));
+                }
+
+                SECTION("overwrite array with object")
+                {
+                    json j1 = {{"k", {1, 2}}};
+                    json const j2 = {{"k", {{"x", 2}}}};
+                    j1.update(j2, true);
+                    CHECK(j1 == json({{"k", {{"x", 2}}}}));
+                }
+
+                SECTION("overwrite nested primitive with object")
+                {
+                    json j1 = {{"k", {{"inner", 1}}}};
+                    json const j2 = {{"k", {{"inner", {{"x", 2}}}}}};
+                    j1.update(j2, true);
+                    CHECK(j1 == json({{"k", {{"inner", {{"x", 2}}}}}}));
+                }
             }
         }
     }
@@ -948,5 +1033,46 @@ TEST_CASE("modifiers")
                 CHECK_THROWS_WITH_AS(j.swap(s2), "[json.exception.type_error.310] cannot use swap(binary_t::container_type&) with number", json::type_error);
             }
         }
+    }
+}
+
+TEST_CASE("update() on deeply nested values")
+{
+    SECTION("merging past the descent bound gives the same result")
+    {
+        // every depth on either side of where the iterative version takes
+        // over (detail::recursion_depth_limit(), 128)
+        for (std::size_t depth = 0; depth <= 300; ++depth)
+        {
+            CAPTURE(depth);
+            for (int variant = 0; variant < 3; ++variant)
+            {
+                CAPTURE(variant);
+                const json source = json::parse(nested_objects(depth, variant));
+                json result = json::parse(nested_objects(depth, (variant + 1) % 3));
+                json expected = result;
+                result.update(source, true);
+                reference_update(expected, source);
+                CHECK(result == expected);
+            }
+        }
+    }
+
+    SECTION("objects nested too deeply for the call stack (#5545)")
+    {
+        // merging used to recurse once per nesting level. The result is only
+        // walked, never copied or compared, since those recurse too.
+        const std::size_t depth = 100000;
+        json target = json::parse(nested_objects(depth, 0));
+        target.update(json::parse(nested_objects(depth, 1)), true);
+
+        const json* p = &target;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            p = &p->at("a");
+        }
+        CHECK(p->size() == 2);
+        CHECK(p->at("x") == 1);
+        CHECK(p->at("y") == 2);
     }
 }

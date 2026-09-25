@@ -14,6 +14,60 @@ using nlohmann::json;
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 #endif
 
+#include <string>
+
+namespace
+{
+// RFC 7396's MergePatch, written recursively as in the RFC; only usable on
+// values nested a few hundred levels deep
+void reference_merge_patch(json& target, const json& patch)
+{
+    if (!patch.is_object())
+    {
+        target = patch;
+        return;
+    }
+    if (!target.is_object())
+    {
+        target = json::object();
+    }
+    for (auto it = patch.begin(); it != patch.end(); ++it)
+    {
+        if (it.value().is_null())
+        {
+            target.erase(it.key());
+        }
+        else
+        {
+            reference_merge_patch(target[it.key()], it.value());
+        }
+    }
+}
+
+// objects nested `depth` levels deep under the key "a", with members that
+// differ by `variant` on the way down
+std::string nested_objects(const std::size_t depth, const int variant)
+{
+    std::string text;
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        text += "{";
+        if ((i + static_cast<std::size_t>(variant)) % 3 == 0)
+        {
+            text += "\"s" + std::to_string(variant) + "\":" + std::to_string(i) + ",";
+        }
+        if (variant == 2 && i % 5 == 0)
+        {
+            text += "\"s0\":null,";
+        }
+        text += "\"a\":";
+    }
+    text += variant == 1 ? R"({"x":1,"y":null})" : "{\"y\":2}";
+    text.append(depth, '}');
+    return text;
+}
+} // namespace
+
 TEST_CASE("JSON Merge Patch")
 {
     SECTION("examples from RFC 7396")
@@ -240,5 +294,54 @@ TEST_CASE("JSON Merge Patch")
                 CHECK(original == result);
             }
         }
+    }
+}
+
+TEST_CASE("JSON Merge Patch on deeply nested values")
+{
+    SECTION("patching past the descent bound gives the same result")
+    {
+        // every depth on either side of where the iterative version takes
+        // over (detail::recursion_depth_limit(), 128)
+        for (std::size_t depth = 0; depth <= 300; ++depth)
+        {
+            CAPTURE(depth);
+            for (int variant = 0; variant < 3; ++variant)
+            {
+                CAPTURE(variant);
+                const json patch = json::parse(nested_objects(depth, variant));
+
+                json result = json::parse(nested_objects(depth, (variant + 1) % 3));
+                json expected = result;
+                result.merge_patch(patch);
+                reference_merge_patch(expected, patch);
+                CHECK(result == expected);
+
+                // a target that is not an object, and an empty one
+                json from_null;
+                from_null.merge_patch(patch);
+                json expected_from_null;
+                reference_merge_patch(expected_from_null, patch);
+                CHECK(from_null == expected_from_null);
+            }
+        }
+    }
+
+    SECTION("patches nested too deeply for the call stack (#5393)")
+    {
+        // applying a patch used to recurse once per nesting level. The result
+        // is only walked, never copied or compared, since those recurse too.
+        const std::size_t depth = 100000;
+        json target = json::parse(nested_objects(depth, 0));
+        target.merge_patch(json::parse(nested_objects(depth, 1)));
+
+        const json* p = &target;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            p = &p->at("a");
+        }
+        // {"y":2} patched with {"x":1,"y":null}
+        CHECK(p->size() == 1);
+        CHECK(p->at("x") == 1);
     }
 }

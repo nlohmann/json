@@ -98,6 +98,7 @@ nav:
       - Types:
           - features/types/index.md
           - features/types/number_handling.md
+          - features/types/template_parameters.md
   - Integration:
       - integration/index.md
       - integration/migration_guide.md
@@ -291,11 +292,14 @@ nav:
           - 'JSON_HAS_THREE_WAY_COMPARISON': api/macros/json_has_three_way_comparison.md
           - 'JSON_NOEXCEPTION': api/macros/json_noexception.md
           - 'JSON_NO_IO': api/macros/json_no_io.md
+          - 'JSON_NO_THREAD_LOCAL': api/macros/json_no_thread_local.md
           - 'JSON_SKIP_LIBRARY_VERSION_CHECK': api/macros/json_skip_library_version_check.md
           - 'JSON_SKIP_UNSUPPORTED_COMPILER_CHECK': api/macros/json_skip_unsupported_compiler_check.md
+          - 'JSON_STRICT_NUL_HANDLING': api/macros/json_strict_nul_handling.md
           - 'JSON_USE_GLOBAL_UDLS': api/macros/json_use_global_udls.md
           - 'JSON_USE_IMPLICIT_CONVERSIONS': api/macros/json_use_implicit_conversions.md
           - 'JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON': api/macros/json_use_legacy_discarded_value_comparison.md
+          - 'JSON_USE_SIMDUTF': api/macros/json_use_simdutf.md
           - 'NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_derived_type.md
           - 'NLOHMANN_DEFINE_TYPE_INTRUSIVE, NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_type_intrusive.md
           - 'NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE': api/macros/nlohmann_define_type_non_intrusive.md
@@ -313,7 +317,9 @@ nav:
       - community/contribution_guidelines.md
       - community/quality_assurance.md
       - community/governance.md
+      - community/roadmap.md
       - community/security_policy.md
+      - community/assurance_case.md
 
 # Extras
 extra:
@@ -393,7 +399,14 @@ plugins:
         - http://nlohmann.github.io/json/*
         - https://nlohmann.github.io/json/*
         - mailto:*
-  - privacy
+  - privacy:
+      # repology.org refuses requests from GitHub Actions runners, which made
+      # the privacy plugin abort the whole build when it could not download the
+      # package badges (the fetch fails, then reading the missing cache entry
+      # raises FileNotFoundError). Readers' browsers are served normally, so
+      # leave these badges as external references instead of self-hosting them.
+      assets_exclude:
+        - repology.org/*
   - llmstxt:
       markdown_description: >
         JSON for Modern C++ is a C++11 header-only library implementing a JSON

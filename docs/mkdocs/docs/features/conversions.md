@@ -54,6 +54,30 @@ json j = {1.0, "hello", 42};
 auto t = j.get<std::tuple<double, std::string, int>>();  // {1.0, "hello", 42}
 ```
 
+!!! warning "Serializing a `std::pair`/`std::tuple` whose every element is a string-keyed pair"
+
+    When *every* element of a `#!cpp std::pair` or `#!cpp std::tuple` is itself a two-element array whose first
+    element is a string (for example `#!cpp std::pair<std::string, int>`), serializing it produces a JSON **object**
+    instead of the expected array:
+
+    ```cpp
+    using kv = std::pair<std::string, int>;
+    json j = std::pair<kv, kv>{{"a", 1}, {"b", 2}};  // {"a":1,"b":2}, not [["a",1],["b",2]]
+    ```
+
+    This is a consequence of the [brace-initializer object-detection rule](creating_values.md): the same rule that
+    lets `#!cpp json{{"a", 1}, {"b", 2}}` create an object also fires here. The resulting object cannot be read back
+    into the original type (`#!cpp get<std::pair<kv, kv>>()` throws [`type_error.302`](../home/exceptions.md#jsonexceptiontype_error302)),
+    and duplicate keys collapse into one, losing elements. This only affects `#!cpp std::pair`/`#!cpp std::tuple`
+    themselves; a `#!cpp std::vector<std::pair<std::string, int>>`, or a pair/tuple with at least one element that is
+    not a string-keyed pair, serializes to an array as expected. To force an array, build one explicitly from the
+    elements with [`array`](../api/basic_json/array.md):
+
+    ```cpp
+    std::pair<kv, kv> p{{"a", 1}, {"b", 2}};
+    json a = json::array({p.first, p.second});  // [["a",1],["b",2]]
+    ```
+
 !!! info "Extracting references into a tuple"
 
     A tuple type may also hold references (e.g. `#!cpp std::tuple<double&, std::string&>`) to avoid copying: `get`

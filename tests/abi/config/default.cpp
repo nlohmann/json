@@ -24,12 +24,16 @@ TEST_CASE("default namespace")
         expected += "_diag";
 #endif
 
+#if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+        expected += "_ldvcmp";
+#endif
+
 #if JSON_DIAGNOSTIC_POSITIONS
         expected += "_dp";
 #endif
 
-#if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
-        expected += "_ldvcmp";
+#if JSON_BRACE_INIT_COPY_SEMANTICS
+        expected += "_bics";
 #endif
 
         expected += "_v" STRINGIZE(NLOHMANN_JSON_VERSION_MAJOR);

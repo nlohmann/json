@@ -13,6 +13,7 @@
 #include <iterator> // back_inserter
 #include <memory> // shared_ptr, make_shared
 #include <string> // basic_string
+#include <utility> // move
 #include <vector> // vector
 
 #ifndef JSON_NO_IO
@@ -44,28 +45,66 @@ template<typename CharType> struct output_adapter_protocol
 template<typename CharType>
 using output_adapter_t = std::shared_ptr<output_adapter_protocol<CharType>>;
 
-/// output adapter for byte vectors
+/// @brief non-virtual output sink writing into a std::vector
+///
+/// This sink is not part of the virtual output_adapter_protocol hierarchy: it is
+/// passed to binary_writer by value as a template parameter, so
+/// write_character()/write_characters() are ordinary (inlinable) calls with no
+/// vtable lookup and no shared_ptr. It is used for the common
+/// `to_cbor`/`to_msgpack`/... into a std::vector. output_vector_adapter below
+/// wraps this same sink to provide the virtual interface.
 template<typename CharType, typename AllocatorType = std::allocator<CharType>>
-class output_vector_adapter : public output_adapter_protocol<CharType>
+class output_vector_sink
 {
   public:
-    explicit output_vector_adapter(std::vector<CharType, AllocatorType>& vec) noexcept
+    explicit output_vector_sink(std::vector<CharType, AllocatorType>& vec) noexcept
         : v(vec)
     {}
 
-    void write_character(CharType c) override
+    void write_character(CharType c)
     {
         v.push_back(c);
     }
 
-    JSON_HEDLEY_NON_NULL(2)
-    void write_characters(const CharType* s, std::size_t length) override
+    // no JSON_HEDLEY_NON_NULL here: binary_writer legitimately passes a null
+    // pointer with length 0 for empty strings/binary values. Appending an empty
+    // range is a no-op; the type-erased path tolerates this via the (unattributed)
+    // virtual base, and the concrete sink must do the same.
+    void write_characters(const CharType* s, std::size_t length)
     {
         v.insert(v.end(), s, s + length);
     }
 
   private:
     std::vector<CharType, AllocatorType>& v;
+};
+
+/// output adapter for byte vectors
+///
+/// The appending itself lives in output_vector_sink; this class only adds the
+/// virtual output_adapter_protocol interface on top of it, so both the
+/// type-erased and the templated path share one implementation.
+template<typename CharType, typename AllocatorType = std::allocator<CharType>>
+class output_vector_adapter : public output_adapter_protocol<CharType>
+{
+  public:
+    explicit output_vector_adapter(std::vector<CharType, AllocatorType>& vec) noexcept
+        : sink(vec)
+    {}
+
+    void write_character(CharType c) override
+    {
+        sink.write_character(c);
+    }
+
+    JSON_HEDLEY_NON_NULL(2)
+    void write_characters(const CharType* s, std::size_t length) override
+    {
+        sink.write_characters(s, length);
+    }
+
+  private:
+    output_vector_sink<CharType, AllocatorType> sink;
 };
 
 #ifndef JSON_NO_IO
@@ -116,6 +155,39 @@ class output_string_adapter : public output_adapter_protocol<CharType>
 
   private:
     StringType& str;
+};
+
+/// @brief output sink forwarding to a type-erased output adapter
+///
+/// Wraps the polymorphic output_adapter_t so the same binary_writer template can
+/// also target arbitrary adapters (output streams, strings, user-provided
+/// adapters) via the `output_adapter`-based overloads. Each write still goes
+/// through one virtual call, exactly as before; only the concrete sinks above
+/// avoid it.
+template<typename CharType>
+class output_adapter_sink
+{
+  public:
+    explicit output_adapter_sink(output_adapter_t<CharType> adapter)
+        : oa(std::move(adapter))
+    {
+        JSON_ASSERT(oa);
+    }
+
+    void write_character(CharType c)
+    {
+        oa->write_character(c);
+    }
+
+    // no JSON_HEDLEY_NON_NULL: forwards (null, 0) for empty payloads, exactly as
+    // the type-erased path already did before this sink existed
+    void write_characters(const CharType* s, std::size_t length)
+    {
+        oa->write_characters(s, length);
+    }
+
+  private:
+    output_adapter_t<CharType> oa;
 };
 
 template<typename CharType, typename StringType = std::basic_string<CharType>>

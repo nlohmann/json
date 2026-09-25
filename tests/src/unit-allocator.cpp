@@ -216,6 +216,57 @@ TEST_CASE("controlled bad_alloc")
             CHECK_THROWS_AS(my_json(s), std::bad_alloc&);
             next_construct_fails = false;
         }
+
+        SECTION("basic_json(const basic_json&) of a deeply nested value (#5387)")
+        {
+            // Copying a value nested deeper than the descent bound builds the
+            // copy from the top down: every value whose own copy has not been
+            // made yet stays a null value until it is. Failing an allocation
+            // part-way through is what proves such a half-built copy can still
+            // be destroyed.
+            //
+            // Which path the failure lands in depends on the build: the first
+            // allocation of a copy belongs to the outermost level, so here it
+            // is the descending one. Built with JSON_NO_THREAD_LOCAL - as the
+            // ci_test_no_thread_local target builds the whole suite - no
+            // descent is made at all and the very same failure lands in the
+            // iterative path instead, part-way through its worklist.
+            const auto check_deep_copy = [](bool objects)
+            {
+                CAPTURE(objects);
+
+                next_construct_fails = false;
+
+                // deeper than the 128 levels the copy constructor descends into
+                const std::size_t depth = 300;
+
+                my_json j = 1;
+                for (std::size_t i = 0; i < depth; ++i)
+                {
+                    if (objects)
+                    {
+                        my_json wrapper = my_json::object();
+                        wrapper["a"] = std::move(j);
+                        j = std::move(wrapper);
+                    }
+                    else
+                    {
+                        j = my_json::array({std::move(j)});
+                    }
+                }
+
+                // NOLINTNEXTLINE(performance-unnecessary-copy-initialization): the copy is what is tested
+                CHECK_NOTHROW(my_json(j));
+
+                next_construct_fails = true;
+                // NOLINTNEXTLINE(performance-unnecessary-copy-initialization): the copy is what is tested
+                CHECK_THROWS_AS(my_json(j), std::bad_alloc&);
+                next_construct_fails = false;
+            };
+
+            check_deep_copy(false);
+            check_deep_copy(true);
+        }
     }
 }
 

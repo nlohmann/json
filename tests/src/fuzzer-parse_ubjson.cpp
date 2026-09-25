@@ -21,13 +21,22 @@ array data, it performs the following steps:
 - j4 = from_ubjson(vec3)
 - assert(j1 == j4)
 
+The unit tests run the same checks on a fixed corpus (see the "UBJSON round-trip
+invariants" test case), so keep both in sync.
+
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
 
+#include <cassert>
 #include <iostream>
 #include <sstream>
 #include <nlohmann/json.hpp>
+
+// the round-trip checks below are assertions; NDEBUG would compile them away
+#ifdef NDEBUG
+    #error "the fuzzer drivers must be built without NDEBUG"
+#endif
 
 using json = nlohmann::json;
 

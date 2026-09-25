@@ -103,6 +103,10 @@ A UTF-8 byte order mark is silently ignored.
 Invalid Unicode escapes and unpaired surrogates in the input are reported as
 [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) with a detailed message.
 
+By default, a `'\0'` (NUL) byte anywhere in the input is treated as end of input, rather than as an ordinary (and,
+outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-bytes-in-the-input) for details and the
+[`JSON_STRICT_NUL_HANDLING`](../macros/json_strict_nul_handling.md) macro to opt into rejecting it instead.
+
 ## Examples
 
 ??? example "Parsing from a character array"
@@ -236,6 +240,8 @@ Invalid Unicode escapes and unpaired surrogates in the input are reported as
 - [accept](accept.md) - check if the input is valid JSON
 - [sax_parse](sax_parse.md) - parse input using the SAX interface
 - [operator>>](../operator_gtgt.md) - deserialize from stream
+- [`JSON_STRICT_NUL_HANDLING`](../macros/json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input
+  instead of treating it as end of input
 
 ## Version history
 
@@ -246,6 +252,8 @@ Invalid Unicode escapes and unpaired surrogates in the input are reported as
 - Added `ignore_trailing_commas` in version 3.13.0.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
+- `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 to optionally reject a NUL byte in the input instead of treating
+  it as end of input; planned to become the default in version 4.0.0.
 
 !!! warning "Deprecation"
 

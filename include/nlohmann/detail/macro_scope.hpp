@@ -186,6 +186,15 @@
     #define JSON_NO_UNIQUE_ADDRESS
 #endif
 
+// Clang targeting MinGW does not survive the thread_local storage the copy
+// constructor uses to bound its descent: every test that copies a value
+// segfaults with clang 11.0.1 and clang 18.1.8, while the same tests pass with
+// GCC targeting MinGW and with every other toolchain the library is tested on.
+// Copying works the same way without the counter, only more slowly.
+#if !defined(JSON_NO_THREAD_LOCAL) && defined(__clang__) && defined(__MINGW32__)
+    #define JSON_NO_THREAD_LOCAL 1
+#endif
+
 // disable documentation warnings on clang
 #if defined(__clang__)
     #pragma clang diagnostic push
@@ -804,6 +813,6 @@ void templated_json_throw(ExceptionType exception)
     #define JSON_USE_GLOBAL_UDLS 1
 #endif
 
-#ifndef JSON_BRACE_INIT_COPY_SEMANTICS
-    #define JSON_BRACE_INIT_COPY_SEMANTICS 0
+#ifndef JSON_STRICT_NUL_HANDLING
+    #define JSON_STRICT_NUL_HANDLING 0
 #endif
