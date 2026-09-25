@@ -16,6 +16,7 @@ using nlohmann::json;
 
 #include <fstream>
 #include <string>
+#include <vector>
 #include "make_test_data_available.hpp"
 
 namespace
@@ -1812,9 +1813,21 @@ TEST_CASE("JSON patch: diff of deeply nested values")
 {
     SECTION("the diff reproduces the target at every depth")
     {
-        // every depth on either side of the nesting depth up to which diff()
-        // recurses (detail::recursion_depth_limit(), 128)
-        for (std::size_t depth = 0; depth <= 300; ++depth)
+        // depths on either side of the nesting depth up to which diff()
+        // recurses (detail::recursion_depth_limit(), 128); not every depth up
+        // to 300, as the test would then time out under Valgrind
+        std::vector<std::size_t> depths;
+        for (std::size_t depth = 0; depth <= 16; ++depth)
+        {
+            depths.push_back(depth);
+        }
+        for (std::size_t depth = 120; depth <= 136; ++depth)
+        {
+            depths.push_back(depth);
+        }
+        depths.push_back(300);
+
+        for (const auto depth : depths)
         {
             CAPTURE(depth);
             for (int from = 0; from < 3; ++from)
