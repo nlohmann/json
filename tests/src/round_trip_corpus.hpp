@@ -71,27 +71,26 @@ class round_trip_corpus
     std::mt19937 generator{42}; // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
 
     round_trip_corpus()
+        : atoms
     {
-        atoms =
-        {
-            nullptr, true, false,
-            // integers at the boundaries of every UBJSON/BJData integer type
-            0, 1, -1, 127, 128, 255, 256, -128, -129,
-            32767, 32768, 65535, 65536, -32768, -32769,
-            (std::numeric_limits<std::int32_t>::min)(), (std::numeric_limits<std::int32_t>::max)(),
-            (std::numeric_limits<std::uint32_t>::max)(),
-            (std::numeric_limits<std::int64_t>::min)(), (std::numeric_limits<std::int64_t>::max)(),
-            static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()) + 1u,
-            (std::numeric_limits<std::uint64_t>::max)(),
-            // floating-point numbers, including non-finite ones
-            0.0, -0.0, 1.5, -2.25, 3.4e38, (std::numeric_limits<double>::max)(),
-            std::nan(""), std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(),
-            // strings, including a non-ASCII one and one longer than 255 bytes
-            "", "a", "\xC3\xA4", std::string(300, 'x'),
-            // binary values with and without subtype
-            json::binary({}), json::binary({1, 2, 255}), json::binary({0x80, 0x7F}, 42), json::binary({1}, 0)
-        };
+        nullptr, true, false,
+        // integers at the boundaries of every UBJSON/BJData integer type
+        0, 1, -1, 127, 128, 255, 256, -128, -129,
+        32767, 32768, 65535, 65536, -32768, -32769,
+        (std::numeric_limits<std::int32_t>::min)(), (std::numeric_limits<std::int32_t>::max)(),
+        (std::numeric_limits<std::uint32_t>::max)(),
+        (std::numeric_limits<std::int64_t>::min)(), (std::numeric_limits<std::int64_t>::max)(),
+        static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()) + 1u,
+        (std::numeric_limits<std::uint64_t>::max)(),
+        // floating-point numbers, including non-finite ones
+        0.0, -0.0, 1.5, -2.25, 3.4e38, (std::numeric_limits<double>::max)(),
+        std::nan(""), std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(),
+        // strings, including a non-ASCII one and one longer than 255 bytes
+        "", "a", "\xC3\xA4", std::string(300, 'x'),
+        // binary values with and without subtype
+        json::binary({}), json::binary({1, 2, 255}), json::binary({0x80, 0x7F}, 42), json::binary({1}, 0)
     }
+    {}
 
     std::vector<json> build()
     {
@@ -180,7 +179,7 @@ class round_trip_corpus
 
     std::size_t random_below(std::size_t bound)
     {
-        return static_cast<std::size_t>(generator()) % bound;
+        return generator() % bound;
     }
 
     json random_value(int depth)
