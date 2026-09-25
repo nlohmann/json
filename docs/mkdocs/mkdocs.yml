@@ -317,7 +317,9 @@ nav:
       - community/contribution_guidelines.md
       - community/quality_assurance.md
       - community/governance.md
+      - community/roadmap.md
       - community/security_policy.md
+      - community/assurance_case.md
 
 # Extras
 extra:

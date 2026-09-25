@@ -881,8 +881,6 @@ class binary_writer
                         return ubjson_prefix(v, use_bjdata) == first_prefix;
                     });
 
-                    std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'}; // excluded markers in bjdata optimized type
-
                     // an optimized array of a valueless type carries no payload, so a
                     // reader has nothing but the declared count to bound the allocation
                     // by and refuses an excessive one. Write the unoptimized form for
@@ -893,7 +891,7 @@ class binary_writer
                                                      && j.m_data.m_value.array->size() > detail::max_valueless_container_size;
 
                     if (same_prefix && !excessive_valueless
-                            && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
+                            && !(use_bjdata && is_bjdata_excluded_type_marker(first_prefix)))
                     {
                         prefix_required = false;
                         oa.write_character(to_char_type('$'));
@@ -997,9 +995,7 @@ class binary_writer
                         return ubjson_prefix(v, use_bjdata) == first_prefix;
                     });
 
-                    std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'}; // excluded markers in bjdata optimized type
-
-                    if (same_prefix && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
+                    if (same_prefix && !(use_bjdata && is_bjdata_excluded_type_marker(first_prefix)))
                     {
                         prefix_required = false;
                         oa.write_character(to_char_type('$'));
@@ -1726,6 +1722,21 @@ class binary_writer
         }
     }
 
+    /*!
+    @brief whether BJData forbids @a marker as the type of an optimized array
+           or object
+
+    Containers, strings, high-precision numbers, booleans and null cannot be
+    declared as the single type of an optimized container in BJData; such a
+    container is written unoptimized. The reader rejects them with the same
+    list (binary_reader::bjd_optimized_type_markers).
+    */
+    static constexpr bool is_bjdata_excluded_type_marker(const CharType marker) noexcept
+    {
+        return marker == '[' || marker == '{' || marker == 'S' || marker == 'H'
+               || marker == 'T' || marker == 'F' || marker == 'N' || marker == 'Z';
+    }
+
     static constexpr CharType get_ubjson_float_prefix(float /*unused*/)
     {
         return 'd';  // float 32
@@ -1800,8 +1811,19 @@ class binary_writer
             return true;
         }
 
-        std::size_t len = (value.at(key).empty() ? 0 : 1);
-        for (const auto& el : value.at(key))
+        // the reader only restores an annotated object from an ND-array header
+        // with at least two dimensions: an empty dimension vector, a single
+        // dimension, or a 1xN row vector is read back as a plain array, which
+        // would silently drop the annotation, so such an object falls back to
+        // a plain object encoding instead
+        const auto& dims = value.at(key);
+        if (dims.size() < 2 || (dims.size() == 2 && dims.at(0).is_number_integer() && dims.at(0).template get<std::int64_t>() == 1))
+        {
+            return true;
+        }
+
+        std::size_t len = 1;
+        for (const auto& el : dims)
         {
             // a dimension is read as an unsigned value below, so anything that
             // is not a non-negative integer is rejected: a non-integer entry
@@ -1823,15 +1845,26 @@ class binary_writer
                 return true;
             }
             const auto dim_size = static_cast<std::size_t>(dim);
-            if (dim_size != 0 && len > (std::numeric_limits<std::size_t>::max)() / dim_size)
+
+            // the reader turns an ND-array with any zero dimension into an
+            // empty plain array, dropping the annotation, so keep the object
+            if (dim_size == 0)
+            {
+                return true;
+            }
+            if (len > (std::numeric_limits<std::size_t>::max)() / dim_size)
             {
                 return true;
             }
             len *= dim_size;
         }
 
+        // the elements are written from _ArrayData_ as a flat list, so it has
+        // to be an array: size() is 0 for null and 1 for any other scalar, and
+        // iterating an object visits its values, so any of these could match
+        // the dimensions by accident and be encoded as an unrelated ND-array
         key = "_ArrayData_";
-        if (value.at(key).size() != len)
+        if (!value.at(key).is_array() || value.at(key).size() != len)
         {
             return true;
         }

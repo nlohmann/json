@@ -38,6 +38,28 @@ The default value is `0` (disabled — existing behavior is preserved).
 
     This macro must be defined **before** including `<nlohmann/json.hpp>`. Defining it after the include has no effect.
 
+!!! warning "Applies to every single-element list"
+
+    The macro does not only affect a single JSON value in braces. **Any** single-element braced list is treated as its
+    element, so it no longer creates a one-element array:
+
+    ```cpp
+    json j1 = {1};       // 1, not [1]
+    json j2 = {"text"};  // "text", not ["text"]
+    json j3 = {{1, 2}};  // [1,2], not [[1,2]]
+    ```
+
+    Code that relies on these producing arrays must use `json::array()` instead (see below). Lists with more than one
+    element, and a single `[string, value]` pair such as `{{"key", "value"}}`, which still creates an object, are not
+    affected. The library's own conversions are not affected either: for example, `std::tuple<int>{5}` still becomes
+    `[5]`.
+
+!!! note "ABI compatibility"
+
+    The value of this macro is encoded in the [namespace](../../features/namespace.md) (tag `_bics`), resulting in
+    distinct symbol names. Translation units compiled with and without it can therefore be linked into the same program
+    without One Definition Rule (ODR) violations, but they cannot exchange instances of library types.
+
 !!! tip "Workaround without the macro"
 
     To explicitly create a single-element array without enabling this macro, use `json::array()`:
