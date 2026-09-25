@@ -215,6 +215,24 @@ For _derived_ classes and structs, use the following macros
     nlohmann::ordered_json j = p; // keys appear in declaration order: name, address, age
     ```
 
+!!! note "Zero-member types"
+
+    All 12 `NLOHMANN_DEFINE_TYPE_*`/`NLOHMANN_DEFINE_DERIVED_TYPE_*` macros (excluding the `WITH_NAMES` variants)
+    also accept types with no member variables to serialize, producing/accepting an empty JSON object `{}`
+    (or, for the derived-type macros, just the base class's own JSON representation):
+
+    ```cpp
+    namespace ns {
+        struct marker {
+            bool operator==(const marker&) const { return true; }
+            NLOHMANN_DEFINE_TYPE_INTRUSIVE(marker)
+        };
+    }
+
+    ns::marker m{};
+    nlohmann::json j = m; // {}
+    ```
+
 !!! note "No macro for non-default-constructible types"
 
     There is currently no `NLOHMANN_DEFINE_TYPE_*`-style macro for types that are not

@@ -340,7 +340,8 @@ An unexpected byte was read in a [binary format](../features/binary_formats/inde
 ### json.exception.parse_error.113
 
 A string could not be read from a [binary format](../features/binary_formats/index.md): either a value that is not a
-string was read where one was required (for instance as a map key), or the string's length specification is invalid.
+string was read where one was required (for instance as a map key), the string's length specification is invalid, or
+the string's bytes are not valid UTF-8.
 
 !!! failure "Example messages"
 
@@ -355,6 +356,9 @@ string was read where one was required (for instance as a map key), or the strin
     ```
     ```
     [json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData string: string length must not be negative
+    ```
+    ```
+    [json.exception.parse_error.113] parse error at byte 3: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte
     ```
 
 ### json.exception.parse_error.114

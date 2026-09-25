@@ -619,7 +619,7 @@ add_custom_target(ci_single_binaries
 add_custom_target(ci_benchmarks
     COMMAND ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Release -GNinja
-        -S${PROJECT_SOURCE_DIR}/benchmarks -B${PROJECT_BINARY_DIR}/build_benchmarks
+        -S${PROJECT_SOURCE_DIR}/tests/benchmarks -B${PROJECT_BINARY_DIR}/build_benchmarks
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_benchmarks --target json_benchmarks
     COMMAND cd ${PROJECT_BINARY_DIR}/build_benchmarks && ./json_benchmarks
     COMMENT "Run benchmarks"
