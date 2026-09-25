@@ -70,9 +70,15 @@ See [full documentation of `JSON_NO_IO`](https://json.nlohmann.me/api/macros/jso
 
 ## `JSON_NO_THREAD_LOCAL`
 
-When defined, the library does not use `thread_local` storage. Copying a value then always avoids the call stack rather than descending into a bounded number of levels first, which is slower but yields the same values.
+When defined, the library does not use `thread_local` storage. Copying a value and comparing two values then always avoid the call stack rather than descending into a bounded number of levels first, which is slower but yields the same values and the same comparisons.
 
 See [full documentation of `JSON_NO_THREAD_LOCAL`](https://json.nlohmann.me/api/macros/json_no_thread_local/index.md).
+
+## `JSON_PRECISE_STREAM_POSITION`
+
+When defined to `1`, [`operator>>`](https://json.nlohmann.me/api/operator_gtgt/index.md) and non-strict [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) leave an input stream positioned right after the parsed value, instead of also consuming the character that terminates a number. The default value is `0`, which preserves the existing behavior; this is planned to become the default in version 4.0.0.
+
+See [full documentation of `JSON_PRECISE_STREAM_POSITION`](https://json.nlohmann.me/api/macros/json_precise_stream_position/index.md).
 
 ## `JSON_SKIP_LIBRARY_VERSION_CHECK`
 

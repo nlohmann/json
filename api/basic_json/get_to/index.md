@@ -21,6 +21,8 @@ This overload is chosen if:
 - `ValueType` is not `basic_json`,
 - `json_serializer<ValueType>` has a `from_json()` method of the form `void from_json(const basic_json&, ValueType&)`
 
+`v` must not be `const`. Passing a `const` object is a compile-time error. For types such as arithmetic types, enums, and C arrays, the error is a `static_assert` that names the problem. For other types, the overload is not viable, and the compiler reports that no matching `get_to` was found.
+
 ## Template parameters
 
 `ValueType` : the value type to return
@@ -131,3 +133,4 @@ array: [1,2,3,4,5]
 ## Version history
 
 - Since version 3.3.0.
+- Added a `static_assert` with a clear message for `const` arguments in version 3.13.0.

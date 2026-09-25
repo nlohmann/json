@@ -60,7 +60,7 @@ input >> j2;  // j2 == true
 
 Only numbers are affected. Values ending in a self-delimiting character do not read past themselves, so `truefalse`, `[1][2]`, `{"a":1}{"b":2}`, and `"a""b"` can be read back to back without a separator.
 
-This is tracked in [#5340](https://github.com/nlohmann/json/issues/5340).
+Define [`JSON_PRECISE_STREAM_POSITION`](https://json.nlohmann.me/api/macros/json_precise_stream_position/index.md) to `1` to leave the terminating character in the stream instead, so that the stream is positioned right after the value for every value type and no separator is needed. This is tracked in [#5340](https://github.com/nlohmann/json/issues/5340).
 
 Note that reading concatenated values does **not** work for [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md) (newline-delimited JSON) input -- see that page for why and for the recommended alternative.
 
@@ -128,8 +128,10 @@ Output:
 - [accept](https://json.nlohmann.me/api/basic_json/accept/index.md) - check if the input is valid JSON
 - [parse](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
 - [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) - opt in to rejecting a NUL byte in the input instead of treating it as end of input
+- [`JSON_PRECISE_STREAM_POSITION`](https://json.nlohmann.me/api/macros/json_precise_stream_position/index.md) - opt in to leaving the stream positioned right after a number
 
 ## Version history
 
 - Added in version 1.0.0.
 - `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 to optionally reject a NUL byte in the input instead of treating it as end of input; planned to become the default in version 4.0.0.
+- `JSON_PRECISE_STREAM_POSITION` added in version 3.13.0 to optionally leave the character that terminates a number in the stream; planned to become the default in version 4.0.0.

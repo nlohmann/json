@@ -31,7 +31,7 @@ By default, the library rejects comments and trailing commas. Both can be enable
 
 [`operator>>`](https://json.nlohmann.me/api/operator_gtgt/index.md) follows relaxed `std::istream` semantics instead: it parses one JSON value and leaves the stream positioned right after it, without requiring the rest of the stream to be consumed. This is what makes it possible to read several concatenated values from the same stream, but it also means that "a valid document followed by trailing bytes" is accepted rather than rejected. If you are validating conformance, or need to reject any input that is not exactly one JSON document, prefer `parse`.
 
-When using `operator>>` to read several concatenated values this way, a value that is a number must be followed by whitespace, because `operator>>` consumes the character that terminates a number — see the [`operator>>` notes](https://json.nlohmann.me/api/operator_gtgt/#notes) for details and examples.
+When using `operator>>` to read several concatenated values this way, a value that is a number must be followed by whitespace, because `operator>>` consumes the character that terminates a number, unless [`JSON_PRECISE_STREAM_POSITION`](https://json.nlohmann.me/api/macros/json_precise_stream_position/index.md) is defined to `1` — see the [`operator>>` notes](https://json.nlohmann.me/api/operator_gtgt/#notes) for details and examples.
 
 ## SAX vs. DOM parsing
 

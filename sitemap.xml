@@ -725,6 +725,10 @@
          <lastmod>2026-09-25</lastmod>
     </url>
     <url>
+         <loc>https://json.nlohmann.me/api/macros/json_precise_stream_position/</loc>
+         <lastmod>2026-09-25</lastmod>
+    </url>
+    <url>
          <loc>https://json.nlohmann.me/api/macros/json_skip_library_version_check/</loc>
          <lastmod>2026-09-25</lastmod>
     </url>
