@@ -43,8 +43,8 @@ that an attacker controls, passed to [`parse`](../api/basic_json/parse.md), [`ac
   user code. The destructor does not recurse, so destroying a deeply nested value does not exhaust the stack.
 - **Bounded recursion.** The JSON parser and the binary readers keep their state in explicit stacks instead of
   recursing per nesting level. Operations that walk a value, such as [`dump`](../api/basic_json/dump.md), copying,
-  hashing, and [`merge_patch`](../api/basic_json/merge_patch.md), recurse only up to a fixed depth and continue with an
-  explicit stack below it. Some operations, such as comparison, [`diff`](../api/basic_json/diff.md),
+  comparison, hashing, and [`merge_patch`](../api/basic_json/merge_patch.md), recurse only up to a fixed depth and
+  continue with an explicit stack below it. Some operations, such as [`diff`](../api/basic_json/diff.md),
   [`flatten`](../api/basic_json/flatten.md), and the binary writers, still recurse once per nesting level; work on them
   is in progress. Applications that process untrusted input can limit its nesting depth with a
   [parser callback](../features/parsing/parser_callbacks.md).

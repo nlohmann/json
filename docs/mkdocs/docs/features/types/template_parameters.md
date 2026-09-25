@@ -562,7 +562,11 @@ binary32 or binary64 field and have no encoding for `#!cpp long double`.
 ## `AllocatorType`
 
 `AllocatorType` is instantiated with **one** argument, for each of `object_t`, `array_t`, `string_t`, `binary_t`,
-`basic_json`, and `#!cpp std::pair<const StringType, basic_json>`.
+`basic_json`, `#!cpp std::pair<const StringType, basic_json>`, and `#!cpp std::pair<StringType, basic_json>`.
+
+`AllocatorType` is not the only allocator a `basic_json` uses. It allocates the JSON values themselves, but most
+temporary storage is allocated with `#!cpp std::allocator`. This includes the parser's stacks and the stacks that
+process deeply nested values without recursion.
 
 ### Always required
 

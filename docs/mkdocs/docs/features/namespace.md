@@ -19,6 +19,7 @@ The complete default namespace name is derived as follows:
     - [`JSON_BRACE_INIT_COPY_SEMANTICS`](../api/macros/json_brace_init_copy_semantics.md) defined non-zero appends
       `_bics`.
     - [`JSON_PRECISE_STREAM_POSITION`](../api/macros/json_precise_stream_position.md) defined non-zero appends `_psp`.
+    - [`JSON_STRICT_NUL_HANDLING`](../api/macros/json_strict_nul_handling.md) defined non-zero appends `_snul`.
 - The inline namespace ends with the suffix `_v` followed by the 3 components of the version number separated by
   underscores. To omit the version component, see [Disabling the version component](#disabling-the-version-component)
   below.

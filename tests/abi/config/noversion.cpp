@@ -41,6 +41,10 @@ TEST_CASE("default namespace without version component")
         expected += "_psp";
 #endif
 
+#if JSON_STRICT_NUL_HANDLING
+        expected += "_snul";
+#endif
+
         expected += "::basic_json";
 
         // fallback for Clang
