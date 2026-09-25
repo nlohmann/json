@@ -297,6 +297,19 @@ struct scratch_counting_allocator : std::allocator<T>
         return std::allocator<T>::allocate(n);
     }
 
+#ifdef __cpp_lib_allocate_at_least
+    // std::allocator<T>::allocate_at_least would bypass the counting, and
+    // libc++'s containers prefer it over allocate from C++23 on
+    auto allocate_at_least(std::size_t n)
+    {
+        if (is_scratch_pair<T>::value)
+        {
+            ++scratch_pair_allocations;
+        }
+        return std::allocator<T>::allocate_at_least(n);
+    }
+#endif
+
     template <class U>
     struct rebind
     {
