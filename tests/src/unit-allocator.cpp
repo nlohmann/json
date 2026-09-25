@@ -312,3 +312,56 @@ TEST_CASE("bad my_allocator::construct")
         j["test"].push_back("should not leak");
     }
 }
+
+namespace
+{
+std::size_t counting_allocator_allocations = 0;
+
+template<class T>
+struct counting_allocator : std::allocator<T>
+{
+    using std::allocator<T>::allocator;
+
+    T* allocate(std::size_t n)
+    {
+        ++counting_allocator_allocations;
+        return std::allocator<T>::allocate(n);
+    }
+
+    template <class U>
+    struct rebind
+    {
+        using other = counting_allocator<U>;
+    };
+};
+} // namespace
+
+TEST_CASE("destructor uses the provided allocator")
+{
+    // see https://github.com/nlohmann/json/issues/4842
+    using counting_json = nlohmann::basic_json<std::map,
+          std::vector,
+          std::string,
+          bool,
+          std::int64_t,
+          std::uint64_t,
+          double,
+          counting_allocator>;
+
+    SECTION("array")
+    {
+        auto* j = new counting_json({1, {2, {3, 4}}, 5}); // NOLINT(cppcoreguidelines-owning-memory)
+        const auto before = counting_allocator_allocations;
+        delete j; // NOLINT(cppcoreguidelines-owning-memory)
+        // the stack used to destroy the children is allocated with the provided allocator
+        CHECK(counting_allocator_allocations > before);
+    }
+
+    SECTION("object")
+    {
+        auto* j = new counting_json({{"a", {{"b", {1, 2}}}}, {"c", 3}}); // NOLINT(cppcoreguidelines-owning-memory)
+        const auto before = counting_allocator_allocations;
+        delete j; // NOLINT(cppcoreguidelines-owning-memory)
+        CHECK(counting_allocator_allocations > before);
+    }
+}
