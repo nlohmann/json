@@ -65,6 +65,12 @@ The default value is `0` (disabled — existing behavior is preserved).
     for CBOR or MessagePack, are never affected by this trimming; their full extent - including a genuine trailing
     `0x00` - is always preserved, in both states of this macro.
 
+!!! note "ABI compatibility"
+
+    The value of this macro is encoded in the [namespace](../../features/namespace.md) (tag `_snul`), resulting in
+    distinct symbol names. Translation units compiled with and without it can therefore be linked into the same program
+    without One Definition Rule (ODR) violations, but they cannot exchange instances of library types.
+
 !!! tip "Workaround without the macro"
 
     To reject a NUL byte without enabling this macro, trim your input yourself before calling `parse()`:
