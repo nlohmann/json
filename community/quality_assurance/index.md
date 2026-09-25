@@ -547,6 +547,7 @@ The library is compliant to JSON as defined in [RFC 8259](https://datatracker.ie
 - The lexer is tested with all valid Unicode code points and all prefixes of all invalid Unicode code points.
 - The parser is tested against extensive correctness suites for JSON compliance.
 - In addition, the library is continuously fuzz-tested at [OSS-Fuzz](https://google.github.io/oss-fuzz/) where the library is checked against billions of inputs.
+- Every crash reported by OSS-Fuzz is fixed together with a unit test that reproduces it, and the fix references the OSS-Fuzz issue. The round-trip checks of the fuzzer drivers are also part of the unit tests. See the [fuzz testing documentation](https://github.com/nlohmann/json/blob/develop/tests/fuzzing.md#handling-oss-fuzz-reports).
 
 ## Static analysis
 

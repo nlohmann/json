@@ -5,4 +5,6 @@
 - [Contribution Guidelines](https://json.nlohmann.me/community/contribution_guidelines/index.md) - guidelines how to contribute to this project
 - [Governance](https://json.nlohmann.me/community/governance/index.md) - the governance model of this project
 - [Quality Assurance](https://json.nlohmann.me/community/quality_assurance/index.md) - how the quality of this project is assured
+- [Roadmap](https://json.nlohmann.me/community/roadmap/index.md) - what the project will and will not do
 - [Security Policy](https://json.nlohmann.me/community/security_policy/index.md) - the security policy of the project
+- [Assurance Case](https://json.nlohmann.me/community/assurance_case/index.md) - why the library meets its security requirements
