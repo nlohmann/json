@@ -361,6 +361,106 @@ TEST_CASE("Regression tests for extended diagnostics")
             CHECK(p == o);
         }
     }
+
+    SECTION("Regression test - erase() and update() must keep JSON_DIAGNOSTICS parent pointers of ordered_json members")
+    {
+        // ordered_json keeps its members in a vector: erasing a member
+        // re-constructs all members after it in place, and adding a key may
+        // reallocate the vector; both reset the parent pointers of the members
+        // that were moved
+        using nlohmann::ordered_json;
+
+        const auto check_parents = [](const ordered_json & j)
+        {
+            // const access, so operator[] cannot repair the parent pointers
+            CHECK_THROWS_WITH_AS(j["z"]["x"].at(0), "[json.exception.type_error.304] (/z/x) cannot use at() with number", ordered_json::type_error);
+
+            // must not trigger assert_invariant() in a debug/assert-enabled build
+            ordered_json const copy = j; // NOLINT(performance-unnecessary-copy-initialization)
+            CHECK(copy == j);
+        };
+
+        // erase(key)
+        {
+            ordered_json j = {{"a", 1}, {"z", {{"x", 1}}}};
+            CHECK(j.erase("a") == 1);
+            check_parents(j);
+        }
+
+        // erase(iterator)
+        {
+            ordered_json j = {{"a", 1}, {"z", {{"x", 1}}}};
+            j.erase(j.begin());
+            check_parents(j);
+        }
+
+        // erase(iterator, iterator)
+        {
+            ordered_json j = {{"a", 1}, {"b", 2}, {"z", {{"x", 1}}}};
+            j.erase(j.begin(), j.find("z"));
+            check_parents(j);
+        }
+
+        // patch() removes via erase(iterator)
+        {
+            ordered_json j = {{"a", 1}, {"z", {{"x", 1}}}};
+            j.patch_inplace(ordered_json::parse(R"([{"op": "remove", "path": "/a"}])"));
+            check_parents(j);
+        }
+
+        // update(j)
+        {
+            ordered_json j = {{"z", {{"x", 1}}}};
+            j.update({{"a", 1}, {"b", 2}});
+            check_parents(j);
+        }
+
+        // update(j, true), the outer and the nested vector both grow
+        {
+            ordered_json j = {{"z", {{"x", 1}}}};
+            j.update({{"z", {{"y", 2}}}, {"a", 1}}, true);
+            check_parents(j);
+        }
+
+        // update(j, true) around its descent bound, where the nested vectors
+        // grow while the objects are merged without recursing
+        for (const std::size_t depth :
+                {
+                    nlohmann::detail::recursion_depth_limit() - 1, nlohmann::detail::recursion_depth_limit(), nlohmann::detail::recursion_depth_limit() + 2
+                })
+        {
+            ordered_json j = {{"z", {{"x", 1}}}};
+            ordered_json patch = {{"a", 1}, {"b", 2}, {"c", {{"d", 3}}}};
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                j = ordered_json{{"k", 0}, {"n", std::move(j)}};
+                patch = ordered_json{{"n", std::move(patch)}, {"l", 1}, {"m", 2}};
+            }
+            j.update(patch, true);
+
+            // must not trigger assert_invariant() on any level in a
+            // debug/assert-enabled build
+            ordered_json const copy = j; // NOLINT(performance-unnecessary-copy-initialization)
+            CHECK(copy == j);
+        }
+
+        // merge_patch() inserts "c" and removes "d" at /a/c, then inserts "e"
+        // at /a, which copies /a/c
+        {
+            auto j = ordered_json::parse(R"({"a": {"c": {"d": {}}}})");
+            j.merge_patch(ordered_json::parse(R"({"a": {"c": {"c": "s", "d": null}, "e": "s"}})"));
+            CHECK(j.dump() == R"({"a":{"c":{"c":"s"},"e":"s"}})");
+
+            auto const& constJ = j;
+#if JSON_DIAGNOSTIC_POSITIONS
+            CHECK_THROWS_WITH_AS(constJ["a"]["c"]["c"].at(0), "[json.exception.type_error.304] (/a/c/c) (bytes 18-21) cannot use at() with string", ordered_json::type_error);
+#else
+            CHECK_THROWS_WITH_AS(constJ["a"]["c"]["c"].at(0), "[json.exception.type_error.304] (/a/c/c) cannot use at() with string", ordered_json::type_error);
+#endif
+            ordered_json const copy = j;
+            CHECK(copy == j);
+        }
+    }
 }
 
 TEST_CASE("Better diagnostics past the descent bound of update() and merge_patch()")
