@@ -108,10 +108,10 @@ void check_bon8(const json& j, const bytes& expected)
     CAPTURE(j)
     CHECK(json::to_bon8(j) == expected);
 
-    const json read = json::from_bon8(expected);
-    CHECK(read == j);
+    const json decoded = json::from_bon8(expected);
+    CHECK(decoded == j);
     // integers are not read back as floats and vice versa
-    CHECK(read.type() == j.type());
+    CHECK(decoded.type() == j.type());
 }
 
 /// @return the string with the given bytes
@@ -207,11 +207,11 @@ TEST_CASE("BON8")
                     const json j = i;
                     const auto packed = json::to_bon8(j);
                     CHECK(packed.size() == (i >= -10 && i <= 39 ? 1u : i >= -1930 && i <= 3879 ? 2u : i >= -264074 && i <= 528167 ? 3u : 4u));
-                    const json read = json::from_bon8(packed);
-                    if (read != j)
+                    const json decoded = json::from_bon8(packed);
+                    if (decoded != j)
                     {
                         CAPTURE(i)
-                        CHECK(read == j);
+                        CHECK(decoded == j);
                     }
                 }
             }
@@ -259,9 +259,9 @@ TEST_CASE("BON8")
             {
                 const json j = -0.0;
                 CHECK(json::to_bon8(j) == bytes{0x8E, 0x80, 0x00, 0x00, 0x00});
-                const json read = json::from_bon8(json::to_bon8(j));
-                CHECK(read.get<double>() == 0.0);
-                CHECK(std::signbit(read.get<double>()));
+                const json decoded = json::from_bon8(json::to_bon8(j));
+                CHECK(decoded.get<double>() == 0.0);
+                CHECK(std::signbit(decoded.get<double>()));
             }
 
             SECTION("infinity is written as binary32")
