@@ -14,6 +14,7 @@ using nlohmann::json;
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 #endif
 
+#include <cstdint> // SIZE_MAX, UINT32_MAX
 #include <fstream>
 #include <sstream>
 #include <iomanip>
@@ -2150,3 +2151,65 @@ TEST_CASE("MessagePack with std::byte")
     }
 }
 #endif
+
+namespace
+{
+// types that report a size beyond UINT32_MAX without allocating that much
+// memory, so the MessagePack length limit can be tested cheaply; see the
+// similar types in unit-bson.cpp
+std::size_t beyond_uint32_size()
+{
+    return static_cast<std::size_t>((std::numeric_limits<std::uint32_t>::max)()) + 1;
+}
+
+class beyond_uint32_binary_t : public std::vector<std::uint8_t>
+{
+  public:
+    using std::vector<std::uint8_t>::vector;
+
+    size_type size() const noexcept // NOLINT(readability-convert-member-functions-to-static)
+    {
+        return beyond_uint32_size();
+    }
+};
+
+class beyond_uint32_string_t : public std::string
+{
+  public:
+    using std::string::string;
+
+    size_type size() const noexcept // NOLINT(readability-convert-member-functions-to-static)
+    {
+        return beyond_uint32_size();
+    }
+};
+
+using beyond_uint32_binary_json = nlohmann::basic_json <
+                                  std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
+                                  double, std::allocator, nlohmann::adl_serializer, beyond_uint32_binary_t, void >;
+
+using beyond_uint32_string_json = nlohmann::basic_json <
+                                  std::map, std::vector, beyond_uint32_string_t, bool, std::int64_t, std::uint64_t,
+                                  double, std::allocator, nlohmann::adl_serializer, std::vector<std::uint8_t>, void >;
+} // namespace
+
+TEST_CASE("MessagePack lengths beyond UINT32_MAX cannot be serialized")
+{
+    // MessagePack stores the length of a string, binary value, array, or
+    // object in at most 32 bits; a larger one used to be written without any
+    // length at all
+#if SIZE_MAX > UINT32_MAX
+    {
+        const char* const expected = "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295";
+
+        const beyond_uint32_binary_json binary = beyond_uint32_binary_json::binary(beyond_uint32_binary_t{});
+        CHECK_THROWS_WITH_AS(beyond_uint32_binary_json::to_msgpack(binary), expected, beyond_uint32_binary_json::out_of_range&);
+
+        const beyond_uint32_binary_json ext = beyond_uint32_binary_json::binary(beyond_uint32_binary_t{}, 42);
+        CHECK_THROWS_WITH_AS(beyond_uint32_binary_json::to_msgpack(ext), expected, beyond_uint32_binary_json::out_of_range&);
+
+        const beyond_uint32_string_json string = beyond_uint32_string_t("value");
+        CHECK_THROWS_WITH_AS(beyond_uint32_string_json::to_msgpack(string), expected, beyond_uint32_string_json::out_of_range&);
+    }
+#endif
+}

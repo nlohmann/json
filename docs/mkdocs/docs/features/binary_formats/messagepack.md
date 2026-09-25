@@ -65,6 +65,8 @@ specification:
       - arrays with more than 4294967295 elements
       - objects with more than 4294967295 elements
 
+    Serializing such a value throws [`out_of_range.412`](../../home/exceptions.md#jsonexceptionout_of_range412).
+
 !!! info "NaN/infinity handling"
 
     `NaN`, `Infinity`, and `-Infinity` are serialized as a MessagePack float 32 (type 0xCA, 5 bytes total),

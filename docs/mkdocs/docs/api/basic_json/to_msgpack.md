@@ -30,6 +30,15 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 1. MessagePack serialization as a byte vector
 2. (none)
 
+## Exceptions
+
+- Throws [`out_of_range.412`](../../home/exceptions.md#jsonexceptionout_of_range412) if the length of a string, binary
+  value, array, or object exceeds 4294967295, the maximum MessagePack can store; example:
+  `"MessagePack length 4294967296 exceeds maximum of 4294967295"`
+- Throws [`out_of_range.415`](../../home/exceptions.md#jsonexceptionout_of_range415) if the subtype of a binary value
+  exceeds 255, the maximum of the MessagePack ext type; example:
+  `"subtype 70000 is too large for the MessagePack ext type (max 255)"`
+
 ## Exception safety
 
 Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
@@ -65,3 +74,4 @@ Linear in the size of the JSON value `j`.
 ## Version history
 
 - Added in version 2.0.9.
+- Throws `out_of_range.412` and `out_of_range.415` since version 3.13.0.
