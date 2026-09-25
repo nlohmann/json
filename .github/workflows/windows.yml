@@ -124,11 +124,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Run CMake (Release)
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A ARM64 -DJSON_BuildTests=On -DCMAKE_CXX_FLAGS="/W4 /WX"
+        run: cmake -S . -B build -G "Visual Studio 18 2026" -A ARM64 -DJSON_BuildTests=On -DCMAKE_CXX_FLAGS="/W4 /WX"
         if: matrix.build_type == 'Release'
         shell: pwsh
       - name: Run CMake (Debug)
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A ARM64 -DJSON_BuildTests=On -DJSON_FastTests=ON -DCMAKE_CXX_FLAGS="/W4 /WX"
+        run: cmake -S . -B build -G "Visual Studio 18 2026" -A ARM64 -DJSON_BuildTests=On -DJSON_FastTests=ON -DCMAKE_CXX_FLAGS="/W4 /WX"
         if: matrix.build_type == 'Debug'
         shell: pwsh
       - name: Build
