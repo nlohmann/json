@@ -113,6 +113,14 @@ make amalgamate
 
 Running `make amalgamate` will also apply automatic formatting to the source files using [`Artistic Style`](https://astyle.sourceforge.net/). This formatting may modify your source files in-place. Be certain to review and commit any changes to avoid unintended formatting diffs in commits.
 
+If you add, rename, or remove a header in `include/nlohmann`, also regenerate the header list in [`BUILD.bazel`](https://github.com/nlohmann/json/blob/develop/BUILD.bazel) (requires CMake) by executing:
+
+```
+make BUILD.bazel
+```
+
+The amalgamation check in CI fails if any of these generated files is out of date.
+
 ## Recommended documentation
 
 - The library’s [README file](https://github.com/nlohmann/json/blob/master/README.md) is an excellent starting point to understand its functionality.
