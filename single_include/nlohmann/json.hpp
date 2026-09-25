@@ -21000,14 +21000,11 @@ class binary_writer
         return to_char_type(0xCB);  // float 64
     }
 
-    static constexpr CharType get_bon8_float_prefix(float /*unused*/)
+    /// @return the BON8 type marker for binary32 (float) or binary64 (double)
+    template<typename FloatType>
+    static constexpr CharType get_bon8_float_prefix()
     {
-        return to_char_type(0x8E);  // binary32
-    }
-
-    static constexpr CharType get_bon8_float_prefix(double /*unused*/)
-    {
-        return to_char_type(0x8F);  // binary64
+        return to_char_type(std::is_same<FloatType, float>::value ? 0x8E : 0x8F);
     }
 
     ////////////
@@ -22064,7 +22061,7 @@ class binary_writer
             oa.write_character(format == detail::input_format_t::cbor
                                ? get_cbor_float_prefix(static_cast<float>(n))
                                : format == detail::input_format_t::bon8
-                               ? get_bon8_float_prefix(static_cast<float>(n))
+                               ? get_bon8_float_prefix<float>()
                                : get_msgpack_float_prefix(static_cast<float>(n)));
             write_number(static_cast<float>(n));
         }
@@ -22073,7 +22070,7 @@ class binary_writer
             oa.write_character(format == detail::input_format_t::cbor
                                ? get_cbor_float_prefix(n)
                                : format == detail::input_format_t::bon8
-                               ? get_bon8_float_prefix(n)
+                               ? get_bon8_float_prefix<number_float_t>()
                                : get_msgpack_float_prefix(n));
             write_number(n);
         }
