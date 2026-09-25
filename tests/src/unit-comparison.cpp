@@ -16,6 +16,9 @@
 #include "doctest_compatibility.h"
 
 #include <cstdint>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
@@ -735,3 +738,82 @@ TEST_CASE("regression #3868 - heterogeneous comparisons compile under C++20 (P24
     }
 }
 #endif
+
+namespace
+{
+// an object type that enumerates its entries in no fixed order
+template<class Key, class Value, class /*Compare*/, class Allocator>
+using unordered_object_t = std::unordered_map<Key, Value, std::hash<Key>, std::equal_to<Key>, Allocator>;
+using unordered_json = nlohmann::basic_json<unordered_object_t>;
+
+// ten entries; after inserting and erasing many more, the map keeps its
+// larger bucket count and enumerates the same entries in another order
+unordered_json make_unordered_object(const bool rehashed)
+{
+    unordered_json j = unordered_json::object();
+    const int count = rehashed ? 1000 : 10;
+    for (int i = 0; i < count; ++i)
+    {
+        j[std::to_string(i)] = i;
+    }
+    for (int i = 10; i < count; ++i)
+    {
+        j.erase(std::to_string(i));
+    }
+    return j;
+}
+
+template<typename Json>
+Json nest(Json j, const std::size_t depth)
+{
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        Json outer = Json::object();
+        outer["x"] = std::move(j);
+        j = std::move(outer);
+    }
+    return j;
+}
+} // namespace
+
+TEST_CASE("equality of objects whose entries have no fixed order")
+{
+    // Values nested deeper than a bound are compared without the call stack,
+    // entry by entry. That must agree with the object type's own operator==,
+    // which for std::unordered_map does not depend on the order of the
+    // entries, and for ordered_map does.
+    for (const std::size_t depth : std::vector<std::size_t> {0, 200})
+    {
+        CAPTURE(depth);
+
+        const unordered_json rehashed = nest(make_unordered_object(true), depth);
+        const unordered_json fresh = nest(make_unordered_object(false), depth);
+        CHECK(rehashed == fresh);
+        CHECK_FALSE(rehashed != fresh);
+
+        // a copy is equal to its original
+        const unordered_json copy = rehashed; // NOLINT(performance-unnecessary-copy-initialization)
+        CHECK(copy == rehashed);
+
+        // a different value, a different key, or another entry still count
+        unordered_json other_value = make_unordered_object(true);
+        other_value["5"] = 42;
+        CHECK_FALSE(nest(other_value, depth) == fresh);
+
+        unordered_json other_key = make_unordered_object(true);
+        other_key.erase("5");
+        other_key["50"] = 5;
+        CHECK_FALSE(nest(other_key, depth) == fresh);
+
+        unordered_json more_entries = make_unordered_object(true);
+        more_entries["10"] = 10;
+        CHECK_FALSE(nest(more_entries, depth) == fresh);
+        CHECK_FALSE(fresh == nest(more_entries, depth));
+
+        // ordered_json compares its entries in sequence
+        const nlohmann::ordered_json ab = nest(nlohmann::ordered_json({{"a", 1}, {"b", 2}}), depth);
+        const nlohmann::ordered_json ba = nest(nlohmann::ordered_json({{"b", 2}, {"a", 1}}), depth);
+        CHECK_FALSE(ab == ba);
+        CHECK(ab != ba);
+    }
+}

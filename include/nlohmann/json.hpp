@@ -1492,13 +1492,28 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                         compare_keys(current.lhs_object_it->first, current.rhs_object_it->first,
                                      std::integral_constant<bool, Ordered> {});
 
-                    if (key_result != compare_result::equal)
-                    {
-                        return key_result;
-                    }
-
                     left = &(current.lhs_object_it->second);
                     right = &(current.rhs_object_it->second);
+
+                    if (key_result != compare_result::equal)
+                    {
+                        // An object type without a fixed order of its entries -
+                        // std::unordered_map, say - may enumerate two equal
+                        // objects differently, and its operator== does not care.
+                        // Equality then finds the entry by its key; an ordering,
+                        // or an object type that compares its entries in
+                        // sequence (ordered_map), is decided by the key itself.
+                        const auto* rhs_object = current.rhs_value->m_data.m_value.object;
+                        const auto found = (!Ordered && !detail::is_ordered_map<object_t>::value)
+                                           ? rhs_object->find(current.lhs_object_it->first)
+                                           : rhs_object->cend();
+                        if (found == rhs_object->cend())
+                        {
+                            return key_result;
+                        }
+                        right = &(found->second);
+                    }
+
                     ++current.lhs_object_it;
                     ++current.rhs_object_it;
                 }
