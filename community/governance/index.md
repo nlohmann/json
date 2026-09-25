@@ -53,6 +53,23 @@ Users should be encouraged to participate in the life of the project and the com
 
 Users who continue to engage with the project and its community will often find themselves becoming more and more involved. Such users may then go on to become contributors, as described above.
 
+## Access to project resources
+
+The project's resources are the [GitHub repository](https://github.com/nlohmann/json) with its settings, CI workflows and secrets, and the documentation at [json.nlohmann.me](https://json.nlohmann.me), which is built and deployed from the repository. Currently, the project lead is the only person with write or admin access to them.
+
+### Granting access
+
+Write or admin access is only granted by the project lead, and only to a contributor whose track record in the project the project lead has reviewed first. The role is assigned manually and is the lowest one that is needed for the task. Access is removed when it is no longer needed. GitHub requires two-factor authentication for everyone who can modify the repository.
+
+### Secrets
+
+The CI workflows mostly use the token that GitHub creates for each workflow run. It is read-only by default, and each workflow requests only the additional permissions it needs. The few other credentials, such as the token for [Semgrep](https://semgrep.dev), are stored as encrypted GitHub Actions secrets:
+
+- Only people with admin access can create, change, or delete them. Their values cannot be read back, not even by admins.
+- They are not passed to workflows that run for pull requests from forks.
+- They must never be committed to the repository or printed in logs.
+- They are rotated whenever someone with admin access leaves the project, and immediately if a leak is suspected.
+
 ## Support
 
 All participants in the community are encouraged to provide support for new users within the project management infrastructure. This support is provided as a way of growing the community. Those seeking support should recognise that all support activity within the project is voluntary and is therefore provided as and when time allows. A user requiring guaranteed response times or results should therefore seek to purchase a support contract from a vendor. (Of course, that vendor should be an active member of the community.) However, for those willing to engage with the project on its own terms, and willing to help support other users, the community support channels are ideal.
