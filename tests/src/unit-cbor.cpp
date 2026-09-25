@@ -15,6 +15,7 @@ using nlohmann::json;
 #include <sstream>
 #include <iomanip>
 #include <limits>
+#include <list>
 #include <set>
 #include "make_test_data_available.hpp"
 #include "test_utils.hpp"
@@ -2133,6 +2134,13 @@ TEST_CASE("CBOR input that cannot be read is discarded by every overload")
     CHECK(json::from_cbor(input.begin(), input.end(), true, false).is_discarded());
     CHECK(json::from_cbor(input.data(), input.size(), true, false).is_discarded());
     CHECK(json::from_cbor({input.data(), input.size()}, true, false).is_discarded());
+
+    // a string that ends early, read through iterators that are not
+    // contiguous and have to be copied from one element at a time
+    const std::list<std::uint8_t> truncated_string = {0x63, 'a', 'b'};
+    CHECK(json::from_cbor(truncated_string.begin(), truncated_string.end(), true, false).is_discarded());
+    const std::list<std::uint8_t> complete_string = {0x63, 'a', 'b', 'c'};
+    CHECK(json::from_cbor(complete_string.begin(), complete_string.end()) == "abc");
 }
 
 TEST_CASE("CBOR SAX parsing stops at every event")
