@@ -388,3 +388,116 @@ TEST_CASE("bad my_allocator::construct")
         j["test"].push_back("should not leak");
     }
 }
+
+TEST_CASE("a failed allocation leaves the value unchanged")
+{
+    // create JSON type using the throwing allocator
+    using my_json = nlohmann::basic_json<std::map,
+          std::vector,
+          std::string,
+          bool,
+          std::int64_t,
+          std::uint64_t,
+          double,
+          my_allocator>;
+
+    // Each of these creates a string, array, object, or binary value. The
+    // value must be created before the type is changed: otherwise, a failed
+    // creation left a value of the new type without anything behind it (an
+    // assertion in its destructor, a null pointer everywhere else) or, when
+    // an old value was destroyed first, with a pointer to that destroyed one.
+
+    SECTION("creating a binary value")
+    {
+        const std::vector<std::uint8_t> bytes = {1, 2, 3};
+        my_json _;
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(_ = my_json::binary(bytes), std::bad_alloc&);
+        next_construct_fails = true;
+        CHECK_THROWS_AS(_ = my_json::binary(bytes, 42), std::bad_alloc&);
+        next_construct_fails = true;
+        CHECK_THROWS_AS(_ = my_json::binary(std::vector<std::uint8_t>(bytes)), std::bad_alloc&);
+        next_construct_fails = true;
+        CHECK_THROWS_AS(_ = my_json::binary(std::vector<std::uint8_t>(bytes), 42), std::bad_alloc&);
+        next_construct_fails = false;
+    }
+
+    SECTION("turning a null value into an array or object")
+    {
+        my_json j;
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j[0], std::bad_alloc&);
+        CHECK(j.is_null());
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j["key"], std::bad_alloc&);
+        CHECK(j.is_null());
+
+#ifdef JSON_HAS_CPP_17
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j[std::string_view("key")], std::bad_alloc&);
+        CHECK(j.is_null());
+#endif
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j.push_back(my_json(1)), std::bad_alloc&);
+        CHECK(j.is_null());
+
+        const my_json one = 1;
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j.push_back(one), std::bad_alloc&);
+        CHECK(j.is_null());
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j.push_back(my_json::object_t::value_type("key", 1)), std::bad_alloc&);
+        CHECK(j.is_null());
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j.emplace_back(1), std::bad_alloc&);
+        CHECK(j.is_null());
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j.emplace("key", 1), std::bad_alloc&);
+        CHECK(j.is_null());
+
+        const my_json object = {{"key", 1}};
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j.update(object), std::bad_alloc&);
+        CHECK(j.is_null());
+
+        next_construct_fails = false;
+    }
+
+    SECTION("converting into an existing value")
+    {
+        // to_json replaces the value it is given; the old one must survive a
+        // failed creation of the new one
+        my_json j = "old";
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, std::string("new")), std::bad_alloc&);
+        CHECK(j == "old");
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, std::vector<int> {1, 2}), std::bad_alloc&);
+        CHECK(j == "old");
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, std::vector<bool> {true, false}), std::bad_alloc&);
+        CHECK(j == "old");
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, std::map<std::string, int> {{"a", 1}}), std::bad_alloc&);
+        CHECK(j == "old");
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, my_json::binary_t({1, 2})), std::bad_alloc&);
+        CHECK(j == "old");
+
+        next_construct_fails = false;
+        nlohmann::to_json(j, std::vector<int> {1, 2});
+        CHECK(j == my_json({1, 2}));
+    }
+}
