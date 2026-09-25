@@ -869,4 +869,14 @@ TEST_CASE("regression test - excessive binary container size honors allow_except
     CHECK(json::from_cbor(std::vector<std::uint8_t> {0x9b, 0, 0, 0, 0, 0, 0, 0, 0x02}, true, false).is_discarded());
 }
 
+TEST_CASE("issue #5393 - flatten deeply nested values without overflowing the stack")
+{
+    constexpr std::size_t depth = 100000;
+    const auto deep = json::parse(std::string(depth, '[') + "0" + std::string(depth, ']'));
+    const auto flattened = deep.flatten();
+    CHECK(flattened.size() == 1);
+    CHECK(flattened.begin().value() == 0);
+    CHECK(flattened.begin().key().size() == depth * 2);
+}
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
