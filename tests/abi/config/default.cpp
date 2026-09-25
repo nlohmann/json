@@ -36,6 +36,10 @@ TEST_CASE("default namespace")
         expected += "_bics";
 #endif
 
+#if JSON_PRECISE_STREAM_POSITION
+        expected += "_psp";
+#endif
+
         expected += "_v" STRINGIZE(NLOHMANN_JSON_VERSION_MAJOR);
         expected += "_" STRINGIZE(NLOHMANN_JSON_VERSION_MINOR);
         expected += "_" STRINGIZE(NLOHMANN_JSON_VERSION_PATCH) "::basic_json";

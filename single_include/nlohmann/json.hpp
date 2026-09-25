@@ -95,6 +95,10 @@
     #define JSON_BRACE_INIT_COPY_SEMANTICS 0
 #endif
 
+#ifndef JSON_PRECISE_STREAM_POSITION
+    #define JSON_PRECISE_STREAM_POSITION 0
+#endif
+
 #if JSON_DIAGNOSTICS
     #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS _diag
 #else
@@ -119,21 +123,28 @@
     #define NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS
 #endif
 
+#if JSON_PRECISE_STREAM_POSITION
+    #define NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION _psp
+#else
+    #define NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION
+#endif
+
 #ifndef NLOHMANN_JSON_NAMESPACE_NO_VERSION
     #define NLOHMANN_JSON_NAMESPACE_NO_VERSION 0
 #endif
 
 // Construct the namespace ABI tags component
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d) json_abi ## a ## b ## c ## d
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d) \
-    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d)
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e) json_abi ## a ## b ## c ## d ## e
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d, e) \
+    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e)
 
 #define NLOHMANN_JSON_ABI_TAGS                                       \
     NLOHMANN_JSON_ABI_TAGS_CONCAT(                                   \
             NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS,                       \
             NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON, \
             NLOHMANN_JSON_ABI_TAG_DIAGNOSTIC_POSITIONS,              \
-            NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS)
+            NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS,         \
+            NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION)
 
 // Construct the namespace version component
 #define NLOHMANN_JSON_NAMESPACE_VERSION_CONCAT_EX(major, minor, patch) \
@@ -7419,6 +7430,11 @@ class input_stream_adapter
         // maintain ifstream flags, except eof
         if (is != nullptr)
         {
+#if JSON_PRECISE_STREAM_POSITION
+            // consume the character last returned by get_character() unless it
+            // was given back with release_lookahead()
+            commit_lookahead();
+#endif
             is->clear(is->rdstate() & std::ios::eofbit);
         }
     }
@@ -7432,6 +7448,58 @@ class input_stream_adapter
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&&) = delete;
 
+#if JSON_PRECISE_STREAM_POSITION
+    input_stream_adapter(input_stream_adapter&& rhs) noexcept
+        : is(rhs.is), sb(rhs.sb), lookahead(rhs.lookahead)
+    {
+        rhs.is = nullptr;
+        rhs.sb = nullptr;
+        rhs.lookahead = false;
+    }
+
+    // Whether the character last returned by get_character() can be given back
+    // to the input with release_lookahead().
+    static constexpr bool supports_lookahead = true;
+
+    // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
+    // ensure that std::char_traits<char>::eof() and the character 0xFF do not
+    // end up as the same value, e.g., 0xFFFFFFFF.
+    //
+    // The character is peeked rather than consumed: it is only stepped over
+    // once the next character is requested, or when the adapter is destroyed.
+    // Until then, release_lookahead() can leave it in the input.
+    std::char_traits<char>::int_type get_character()
+    {
+        if (lookahead)
+        {
+            // step over the character returned by the previous call
+            sb->sbumpc();
+        }
+
+        auto res = sb->sgetc();
+        // set eof manually, as we don't use the istream interface.
+        if (JSON_HEDLEY_UNLIKELY(res == std::char_traits<char>::eof()))
+        {
+            // there is nothing to step over next time
+            lookahead = false;
+            is->clear(is->rdstate() | std::ios::eofbit);
+        }
+        else
+        {
+            lookahead = true;
+        }
+        return res;
+    }
+
+    // Leave the character last returned by get_character() in the input, so
+    // that the next read from the stream - by this adapter or by the caller
+    // once parsing is done - sees it again. Unlike putting a consumed
+    // character back, this cannot fail.
+    void release_lookahead() noexcept
+    {
+        lookahead = false;
+    }
+#else
     input_stream_adapter(input_stream_adapter&& rhs) noexcept
         : is(rhs.is), sb(rhs.sb)
     {
@@ -7442,6 +7510,9 @@ class input_stream_adapter
     // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
     // ensure that std::char_traits<char>::eof() and the character 0xFF do not
     // end up as the same value, e.g., 0xFFFFFFFF.
+    //
+    // The character is consumed, so the character that terminates a number
+    // stays consumed after parsing; see JSON_PRECISE_STREAM_POSITION.
     std::char_traits<char>::int_type get_character()
     {
         auto res = sb->sbumpc();
@@ -7452,10 +7523,14 @@ class input_stream_adapter
         }
         return res;
     }
+#endif
 
     template<class T>
     std::size_t get_elements(T* dest, std::size_t count = 1)
     {
+#if JSON_PRECISE_STREAM_POSITION
+        commit_lookahead();
+#endif
         auto res = static_cast<std::size_t>(sb->sgetn(reinterpret_cast<char*>(dest), static_cast<std::streamsize>(count * sizeof(T))));
         if (JSON_HEDLEY_UNLIKELY(res < count * sizeof(T)))
         {
@@ -7465,9 +7540,27 @@ class input_stream_adapter
     }
 
   private:
+#if JSON_PRECISE_STREAM_POSITION
+    // Step over the character last returned by get_character(). The character
+    // has already been peeked successfully, so for every streambuf with a get
+    // area this is a pointer increment that cannot fail.
+    void commit_lookahead()
+    {
+        if (lookahead)
+        {
+            lookahead = false;
+            sb->sbumpc();
+        }
+    }
+#endif
+
     /// the associated input stream
     std::istream* is = nullptr;
     std::streambuf* sb = nullptr;
+#if JSON_PRECISE_STREAM_POSITION
+    /// whether get_character() peeked a character that is not consumed yet
+    bool lookahead = false;
+#endif
 };
 #endif  // JSON_NO_IO
 
@@ -8879,6 +8972,25 @@ constexpr bool input_adapter_supports_seek(std::false_type /*detected*/)
     return false;
 }
 
+// Detect whether an input adapter reads with one character of lookahead that
+// can be left in the input (see input_stream_adapter::supports_lookahead,
+// which is only defined with JSON_PRECISE_STREAM_POSITION), detected like
+// supports_seek above.
+template<typename InputAdapterType>
+using detect_supports_lookahead = decltype(InputAdapterType::supports_lookahead);
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_lookahead(std::true_type /*detected*/)
+{
+    return InputAdapterType::supports_lookahead;
+}
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_lookahead(std::false_type /*detected*/)
+{
+    return false;
+}
+
 // Detect whether an input adapter exposes a contiguous byte block that the
 // lexer can scan directly (see iterator_input_adapter::supports_bulk_scan).
 // Adapters without the flag - file, stream, wide-string, user-defined - fall
@@ -8918,6 +9030,12 @@ class lexer : public lexer_base<BasicJsonType>
     /// character; see input_adapter_supports_seek
     static constexpr bool lazy_token_string =
         input_adapter_supports_seek<InputAdapterType>(is_detected<detect_supports_seek, InputAdapterType> {});
+
+    /// whether a simulated unget can be passed on to the input adapter, which
+    /// then leaves the character in the input; see
+    /// input_adapter_supports_lookahead
+    static constexpr bool can_release_lookahead =
+        input_adapter_supports_lookahead<InputAdapterType>(is_detected<detect_supports_lookahead, InputAdapterType> {});
 
     /// whether string scanning may bulk-consume runs of ordinary characters
     /// directly from a contiguous input buffer (SWAR fast path). This requires
@@ -10650,6 +10768,21 @@ scan_number_done:
         uncapture_char(std::integral_constant<bool, lazy_token_string> {});
     }
 
+    /// adapter without lookahead: nothing to do (see release_lookahead)
+    void release_lookahead_impl(std::false_type /*can_release*/) const noexcept {}
+
+    /// adapter with lookahead: leave the character in the input instead
+    void release_lookahead_impl(std::true_type /*can_release*/)
+    {
+        if (next_unget)
+        {
+            // the character is read from the input again rather than replayed
+            // from current, so the adapter must not step over it
+            next_unget = false;
+            ia.release_lookahead();
+        }
+    }
+
     /// seekable adapter: nothing was captured, so nothing to undo
     void uncapture_char(std::true_type /*lazy*/) const noexcept {}
 
@@ -10711,6 +10844,31 @@ scan_number_done:
     constexpr position_t get_position() const noexcept
     {
         return position;
+    }
+
+    /*!
+    @brief pass a pending simulated unget on to the input
+
+    unget() only rewinds the lexer's own bookkeeping, so the character that
+    terminated the last token (e.g. the character after a number) would still
+    be stepped over when the input adapter is done. Callers that hand the
+    input back to the user afterwards - operator>> and non-strict sax_parse -
+    call this once when scanning is done, so that the input is positioned
+    right after the value.
+
+    Adapters without lookahead (see input_adapter_supports_lookahead) are not
+    handed back to the user, so this is a no-op for them. Without
+    JSON_PRECISE_STREAM_POSITION, no adapter has lookahead, so this is always a
+    no-op and the terminating character stays consumed.
+
+    Scanning may continue after this call: @a next_unget is cleared, and the
+    character is read from the input again instead of being replayed from
+    @a current. A pending unget of EOF needs no special case, because reaching
+    EOF leaves no lookahead to release.
+    */
+    void release_lookahead()
+    {
+        release_lookahead_impl(std::integral_constant<bool, can_release_lookahead> {});
     }
 
 #if JSON_DIAGNOSTIC_POSITIONS
@@ -15960,13 +16118,22 @@ class parser
             json_sax_dom_callback_parser<BasicJsonType, InputAdapterType> sdp(result, callback, allow_exceptions, &m_lexer);
             sax_parse_internal(&sdp);
 
-            // in strict mode, input must be completely read
-            if (strict && (get_token() != token_type::end_of_input))
+            if (strict)
             {
-                sdp.parse_error(m_lexer.get_position(),
-                                m_lexer.get_token_string(),
-                                parse_error::create(101, m_lexer.get_position(),
-                                                    exception_message(token_type::end_of_input, "value"), nullptr));
+                // in strict mode, input must be completely read
+                if (get_token() != token_type::end_of_input)
+                {
+                    sdp.parse_error(m_lexer.get_position(),
+                                    m_lexer.get_token_string(),
+                                    parse_error::create(101, m_lexer.get_position(),
+                                                        exception_message(token_type::end_of_input, "value"), nullptr));
+                }
+            }
+            else
+            {
+                // the caller keeps using the input: position it right after
+                // the value by leaving the character that terminated it
+                m_lexer.release_lookahead();
             }
 
             // in case of an error, return a discarded value
@@ -15988,12 +16155,20 @@ class parser
             json_sax_dom_parser<BasicJsonType, InputAdapterType> sdp(result, allow_exceptions, &m_lexer);
             sax_parse_internal(&sdp);
 
-            // in strict mode, input must be completely read
-            if (strict && (get_token() != token_type::end_of_input))
+            if (strict)
             {
-                sdp.parse_error(m_lexer.get_position(),
-                                m_lexer.get_token_string(),
-                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
+                // in strict mode, input must be completely read
+                if (get_token() != token_type::end_of_input)
+                {
+                    sdp.parse_error(m_lexer.get_position(),
+                                    m_lexer.get_token_string(),
+                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
+                }
+            }
+            else
+            {
+                // see above
+                m_lexer.release_lookahead();
             }
 
             // in case of an error, return a discarded value
@@ -16026,12 +16201,24 @@ class parser
         (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
         const bool result = sax_parse_internal(sax);
 
-        // strict mode: next byte must be EOF
-        if (result && strict && (get_token() != token_type::end_of_input))
+        if (result)
         {
-            return sax->parse_error(m_lexer.get_position(),
-                                    m_lexer.get_token_string(),
-                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
+            if (strict)
+            {
+                // strict mode: next byte must be EOF
+                if (get_token() != token_type::end_of_input)
+                {
+                    return sax->parse_error(m_lexer.get_position(),
+                                            m_lexer.get_token_string(),
+                                            parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
+                }
+            }
+            else
+            {
+                // the caller keeps using the input: position it right after
+                // the value by leaving the character that terminated it
+                m_lexer.release_lookahead();
+            }
         }
 
         return result;
@@ -25502,6 +25689,31 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #endif
 
     /*!
+    @brief whether a descent must stop here and finish without the call stack
+
+    @a may_descend says whether the operator descends at all; it is a constant
+    at every call site, and is passed rather than tested by the caller so that
+    the test does not become a constant condition there, which MSVC reports as
+    C4127.
+
+    The comparison operators use this rather than @ref nesting_depth_guard::okay,
+    because they are written as a macro and a macro cannot use the preprocessor
+    the way the guard's constructor does; @ref copy_structured, which can, asks
+    the guard instead and never calls this.
+    */
+    static bool nesting_depth_exhausted(bool may_descend = true) noexcept
+    {
+#ifdef JSON_NO_THREAD_LOCAL
+        // without a count of its own per thread, a descent cannot be bounded
+        // without racing another one, so none is made
+        static_cast<void>(may_descend);
+        return true;
+#else
+        return !may_descend || nesting_depth() >= nesting_depth_limit();
+#endif
+    }
+
+    /*!
     @brief counts one level of a bounded descent for as long as it runs, and
            reports whether the descent was still within the limit when it began
 
@@ -25819,6 +26031,274 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         copy_iteratively(src);
     }
 
+
+    /// the result of comparing two values, including values that cannot be
+    /// ordered at all, such as a discarded value or a NaN
+    enum class compare_result { less, equal, greater, unordered };
+
+#if JSON_HAS_THREE_WAY_COMPARISON
+    /// @brief the ordering that @a result stands for
+    static std::partial_ordering to_partial_ordering(compare_result result) noexcept // *NOPAD*
+    {
+        switch (result)
+        {
+            case compare_result::less:
+                return std::partial_ordering::less;
+            case compare_result::greater:
+                return std::partial_ordering::greater;
+            case compare_result::equal:
+                return std::partial_ordering::equivalent;
+            case compare_result::unordered:
+            default:
+                return std::partial_ordering::unordered;
+        }
+    }
+#endif
+
+    /*!
+    @brief compare two values that are not both an array or both an object
+
+    Such a pair is compared by the operators themselves, which cannot descend
+    into it and therefore cannot recurse.
+
+    That holds for a pair whose types differ as much as for a pair of leaves: an
+    array and an object are told apart by their types alone, because an operator
+    only ever descends into two values of the same type. So `==` reports them as
+    unequal without looking inside either, and an ordering falls back to the
+    order of the types - an object sorts before an array - exactly as it does
+    for a value that is not nested deeply enough to get here.
+    */
+    template<bool Ordered>
+    static compare_result compare_leaves(const_reference lhs, const_reference rhs) noexcept
+    {
+        if (lhs == rhs)
+        {
+            return compare_result::equal;
+        }
+
+        return order_leaves(lhs, rhs, std::integral_constant<bool, Ordered> {});
+    }
+
+    /*!
+    @brief compare two object keys
+
+    An object compares its entries as pairs of a key and a value, so its keys
+    are compared exactly as std::pair compares them: with < where the objects
+    are being ordered, and with == where they are only checked for equality.
+    Note that this is not the object's own comparator, which for a vector-backed
+    object type such as nlohmann::ordered_map tells equality rather than order.
+    */
+    static compare_result compare_keys(const typename object_t::key_type& lhs,
+                                       const typename object_t::key_type& rhs,
+                                       std::true_type /*ordered*/)
+    {
+        if (lhs < rhs)
+        {
+            return compare_result::less;
+        }
+
+        if (rhs < lhs)
+        {
+            return compare_result::greater;
+        }
+
+        return compare_result::equal;
+    }
+
+    /// @brief check two object keys for equality
+    static compare_result compare_keys(const typename object_t::key_type& lhs,
+                                       const typename object_t::key_type& rhs,
+                                       std::false_type /*ordered*/)
+    {
+        return lhs == rhs ? compare_result::equal : compare_result::unordered;
+    }
+
+    /// @brief tell apart two values that are not equal
+    /// @note only instantiated where the values are being ordered, as a key or
+    ///       string type is not required to be ordered to be compared for equality
+    static compare_result order_leaves(const_reference lhs, const_reference rhs, std::true_type /*ordered*/) noexcept
+    {
+        if (lhs < rhs)
+        {
+            return compare_result::less;
+        }
+
+        if (rhs < lhs)
+        {
+            return compare_result::greater;
+        }
+
+        return compare_result::unordered;
+    }
+
+    /// @brief report two values as not equal without ordering them
+    static compare_result order_leaves(const_reference /*lhs*/, const_reference /*rhs*/, std::false_type /*ordered*/) noexcept
+    {
+        return compare_result::unordered;
+    }
+
+    /*!
+    @brief compare @a lhs and @a rhs without descending into them
+
+    Reached once a comparison has descended @ref nesting_depth_limit levels, so
+    that comparing values cannot exhaust the call stack however deeply they are
+    nested. The two values are walked in lockstep on an explicit stack and
+    compared lexicographically, element by element in the order the containers
+    enumerate them - which is how the container types this library ships compare
+    themselves: a std::map enumerates its entries in key order, and
+    nlohmann::ordered_map in insertion order. An object type that enumerates its
+    entries in an unspecified order, such as std::unordered_map, compares them
+    pairwise instead; the difference could only ever show below the bound.
+
+    Note that the stack this walks with is allocated, while the comparison
+    operators are noexcept and the container comparison this replaces allocated
+    nothing. Failing that allocation therefore ends the process rather than
+    throwing. It only arises for values nested past the bound, and only when
+    memory has run out - where the same comparison used to exhaust the call
+    stack instead - but it is a way to fail that the operators did not have.
+    */
+    template<bool Ordered>
+    static compare_result compare_iteratively(const_reference lhs, const_reference rhs,
+            const bool unordered_compares_equal) noexcept
+    {
+        /// a pair of containers being compared in lockstep
+        struct frame
+        {
+            const basic_json* lhs_value{nullptr};
+            const basic_json* rhs_value{nullptr};
+            typename array_t::const_iterator lhs_array_it{};
+            typename array_t::const_iterator rhs_array_it{};
+            typename object_t::const_iterator lhs_object_it{};
+            typename object_t::const_iterator rhs_object_it{};
+        };
+
+        std::vector<frame> stack;
+        const basic_json* left = &lhs;
+        const basic_json* right = &rhs;
+
+        for (;;)
+        {
+            const auto type = left->m_data.m_type;
+
+            if (type == right->m_data.m_type && (type == value_t::array || type == value_t::object))
+            {
+                // descend: the elements decide, and are compared further down
+                stack.emplace_back();
+                frame& pushed = stack.back();
+                pushed.lhs_value = left;
+                pushed.rhs_value = right;
+
+                if (type == value_t::array)
+                {
+                    pushed.lhs_array_it = left->m_data.m_value.array->cbegin();
+                    pushed.rhs_array_it = right->m_data.m_value.array->cbegin();
+                }
+                else
+                {
+                    pushed.lhs_object_it = left->m_data.m_value.object->cbegin();
+                    pushed.rhs_object_it = right->m_data.m_value.object->cbegin();
+                }
+            }
+            else
+            {
+                const compare_result result = compare_leaves<Ordered>(*left, *right);
+
+                // Values that cannot be ordered - a NaN, say - end an ordered
+                // comparison for std::lexicographical_compare_three_way, but
+                // std::lexicographical_compare treats them as equivalent and
+                // carries on with the next element. Both are reproduced here,
+                // so that a value nested too deeply to descend into compares
+                // exactly as one that is not.
+                if (result != compare_result::equal &&
+                        !(unordered_compares_equal && result == compare_result::unordered))
+                {
+                    return result;
+                }
+            }
+
+            // walk back up past the containers that are exhausted, then take the
+            // next pair of elements from the innermost one that is not
+            for (;;)
+            {
+                if (stack.empty())
+                {
+                    return compare_result::equal;
+                }
+
+                frame& current = stack.back();
+                const bool is_object = current.lhs_value->m_data.m_type == value_t::object;
+
+                const bool lhs_done = is_object
+                                      ? current.lhs_object_it == current.lhs_value->m_data.m_value.object->cend()
+                                      : current.lhs_array_it == current.lhs_value->m_data.m_value.array->cend();
+                const bool rhs_done = is_object
+                                      ? current.rhs_object_it == current.rhs_value->m_data.m_value.object->cend()
+                                      : current.rhs_array_it == current.rhs_value->m_data.m_value.array->cend();
+
+                if (lhs_done || rhs_done)
+                {
+                    // whichever ran out first holds the smaller container; if
+                    // both did, they are equal and the container above decides
+                    if (lhs_done != rhs_done)
+                    {
+                        return lhs_done ? compare_result::less : compare_result::greater;
+                    }
+
+                    stack.pop_back();
+                    continue;
+                }
+
+                if (is_object)
+                {
+                    // an entry is a key and a value, and the key decides first
+                    const compare_result key_result =
+                        compare_keys(current.lhs_object_it->first, current.rhs_object_it->first,
+                                     std::integral_constant<bool, Ordered> {});
+
+                    if (key_result != compare_result::equal)
+                    {
+                        return key_result;
+                    }
+
+                    left = &(current.lhs_object_it->second);
+                    right = &(current.rhs_object_it->second);
+                    ++current.lhs_object_it;
+                    ++current.rhs_object_it;
+                }
+                else
+                {
+                    left = &(*current.lhs_array_it);
+                    right = &(*current.rhs_array_it);
+                    ++current.lhs_array_it;
+                    ++current.rhs_array_it;
+                }
+
+                break;
+            }
+        }
+    }
+
+
+    /// @brief restore the parent pointers after erasing from an object
+    /// ordered_json keeps its members in a vector, and erasing a member
+    /// re-constructs every member after it in place, which resets their
+    /// parent pointers
+    void set_parents_after_object_erase()
+    {
+#if JSON_DIAGNOSTICS
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning(push )
+#pragma warning(disable : 4127) // ignore warning to replace if with if constexpr
+#endif
+        if (detail::is_ordered_map<object_t>::value)
+        {
+            set_parents();
+        }
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning( pop )
+#endif
+#endif
+    }
 
   public:
     //////////////////////////
@@ -26837,6 +27317,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     ValueType & get_to(ValueType& v) const noexcept(noexcept(
             JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), v)))
     {
+        static_assert(!std::is_const<ValueType>::value, "get_to() cannot deserialize into a const value");
         JSONSerializer<ValueType>::from_json(*this, v);
         return v;
     }
@@ -26862,6 +27343,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     noexcept(noexcept(JSONSerializer<Array>::from_json(
                           std::declval<const basic_json_t&>(), v)))
     {
+        static_assert(!std::is_const<T>::value, "get_to() cannot deserialize into a const value");
         JSONSerializer<Array>::from_json(*this, v);
         return v;
     }
@@ -27508,6 +27990,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             case value_t::object:
             {
                 result.m_it.object_iterator = erase_from_object(pos.m_it.object_iterator);
+                set_parents_after_object_erase();
                 break;
             }
 
@@ -27580,6 +28063,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             {
                 result.m_it.object_iterator = m_data.m_value.object->erase(first.m_it.object_iterator,
                                               last.m_it.object_iterator);
+                set_parents_after_object_erase();
                 break;
             }
 
@@ -27610,7 +28094,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
         }
 
-        return m_data.m_value.object->erase(std::forward<KeyType>(key));
+        const auto erased = m_data.m_value.object->erase(std::forward<KeyType>(key));
+        set_parents_after_object_erase();
+        return erased;
     }
 
     template < typename KeyType, detail::enable_if_t <
@@ -27627,6 +28113,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         if (it != m_data.m_value.object->end())
         {
             m_data.m_value.object->erase(it);
+            set_parents_after_object_erase();
             return 1;
         }
         return 0;
@@ -28538,16 +29025,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 if (it2 != m_data.m_value.object->end() && it2->second.is_object())
                 {
                     it2->second.update_members(it.value().cbegin(), it.value().cend(), true, depth + 1);
-#if JSON_DIAGNOSTICS
-                    it2->second.set_parents();
-#endif
                     continue;
                 }
             }
-            m_data.m_value.object->operator[](it.key()) = it.value();
-#if JSON_DIAGNOSTICS
-            m_data.m_value.object->operator[](it.key()).m_parent = this;
-#endif
+            // set_parent() also repairs the other members, which ordered_json
+            // relocates when adding a key makes its vector grow
+            set_parent(m_data.m_value.object->operator[](it.key()) = it.value());
         }
     }
 
@@ -28576,9 +29059,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 }
 
                 // a nested object is merged: continue with its parent
-#if JSON_DIAGNOSTICS
-                target->set_parents();
-#endif
                 target = stack.back().target;
                 first = stack.back().position;
                 last = stack.back().last;
@@ -28600,10 +29080,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     continue;
                 }
             }
-            target->m_data.m_value.object->operator[](first.key()) = first.value();
-#if JSON_DIAGNOSTICS
-            target->m_data.m_value.object->operator[](first.key()).m_parent = target;
-#endif
+            // set_parent() also repairs the other members, which ordered_json
+            // relocates when adding a key makes its vector grow
+            target->set_parent(target->m_data.m_value.object->operator[](first.key()) = first.value());
             ++first;
         }
     }
@@ -28742,7 +29221,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // because any negative signed value is smaller than any unsigned value.
     // Otherwise, the non-negative signed value is cast to unsigned before the
     // comparison to avoid wraparound.
-#define JSON_IMPLEMENT_OPERATOR(op, null_result, unordered_result, default_result)                       \
+#define JSON_IMPLEMENT_OPERATOR(op, null_result, unordered_result, default_result, deep_result, may_descend) \
     const auto lhs_type = lhs.type();                                                                    \
     const auto rhs_type = rhs.type();                                                                    \
     \
@@ -28751,11 +29230,25 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         switch (lhs_type)                                                                                \
         {                                                                                                \
             case value_t::array:                                                                         \
+            {                                                                                            \
+                if (JSON_HEDLEY_UNLIKELY(nesting_depth_exhausted(may_descend)))                        \
+                {                                                                                        \
+                    return (deep_result);                                                                \
+                }                                                                                        \
+                const nesting_depth_guard guard;                                                         \
                 return (*lhs.m_data.m_value.array) op (*rhs.m_data.m_value.array);                                     \
-                \
+            }                                                                                            \
+            \
             case value_t::object:                                                                        \
+            {                                                                                            \
+                if (JSON_HEDLEY_UNLIKELY(nesting_depth_exhausted(may_descend)))                        \
+                {                                                                                        \
+                    return (deep_result);                                                                \
+                }                                                                                        \
+                const nesting_depth_guard guard;                                                         \
                 return (*lhs.m_data.m_value.object) op (*rhs.m_data.m_value.object);                                   \
-                \
+            }                                                                                            \
+            \
             case value_t::null:                                                                          \
                 return (null_result);                                                                    \
                 \
@@ -28855,7 +29348,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
         const_reference lhs = *this;
-        JSON_IMPLEMENT_OPERATOR( ==, true, false, false)
+        JSON_IMPLEMENT_OPERATOR( ==, true, false, false,
+                                 compare_iteratively<false>(lhs, rhs, false) == compare_result::equal, true)
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
@@ -28880,7 +29374,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_IMPLEMENT_OPERATOR(<=>, // *NOPAD*
                                 std::partial_ordering::equivalent,
                                 std::partial_ordering::unordered,
-                                lhs_type <=> rhs_type) // *NOPAD*
+                                lhs_type <=> rhs_type, // *NOPAD*
+                                to_partial_ordering(compare_iteratively<true>(lhs, rhs, false)), true)
     }
 
     /// @brief comparison: 3-way
@@ -28947,7 +29442,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_HEDLEY_DIAGNOSTIC_PUSH
         JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
-        JSON_IMPLEMENT_OPERATOR( ==, true, false, false)
+        JSON_IMPLEMENT_OPERATOR( ==, true, false, false,
+                                 compare_iteratively<false>(lhs, rhs, false) == compare_result::equal, true)
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
@@ -29003,7 +29499,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // default_result is used if we cannot compare values. In that case,
         // we compare types. Note we have to call the operator explicitly,
         // because MSVC has problems otherwise.
-        JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type))
+        JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type),
+                                 compare_iteratively<true>(lhs, rhs, true) == compare_result::less, false)
     }
 
     /// @brief comparison: less than
@@ -30866,6 +31363,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
     #undef JSON_HAS_STATIC_RTTI
     #undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
     #undef JSON_BRACE_INIT_COPY_SEMANTICS
+    #undef JSON_PRECISE_STREAM_POSITION
 #endif
 
 // #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>

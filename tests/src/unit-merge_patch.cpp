@@ -62,7 +62,7 @@ std::string nested_objects(const std::size_t depth, const int variant)
         }
         text += "\"a\":";
     }
-    text += variant == 1 ? "{\"x\":1,\"y\":null}" : "{\"y\":2}";
+    text += variant == 1 ? R"({"x":1,"y":null})" : "{\"y\":2}";
     text.append(depth, '}');
     return text;
 }

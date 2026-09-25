@@ -42,7 +42,6 @@ string(APPEND CONTENT [=[
     ],
     includes = ["include"],
     visibility = ["//visibility:public"],
-    alwayslink = True,
 )
 
 cc_library(
