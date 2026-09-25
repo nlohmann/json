@@ -45,6 +45,7 @@
     #undef JSON_HAS_STATIC_RTTI
     #undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
     #undef JSON_BRACE_INIT_COPY_SEMANTICS
+    #undef JSON_PRECISE_STREAM_POSITION
 #endif
 
 #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>

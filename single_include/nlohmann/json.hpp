@@ -95,6 +95,10 @@
     #define JSON_BRACE_INIT_COPY_SEMANTICS 0
 #endif
 
+#ifndef JSON_PRECISE_STREAM_POSITION
+    #define JSON_PRECISE_STREAM_POSITION 0
+#endif
+
 #if JSON_DIAGNOSTICS
     #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS _diag
 #else
@@ -119,21 +123,28 @@
     #define NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS
 #endif
 
+#if JSON_PRECISE_STREAM_POSITION
+    #define NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION _psp
+#else
+    #define NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION
+#endif
+
 #ifndef NLOHMANN_JSON_NAMESPACE_NO_VERSION
     #define NLOHMANN_JSON_NAMESPACE_NO_VERSION 0
 #endif
 
 // Construct the namespace ABI tags component
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d) json_abi ## a ## b ## c ## d
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d) \
-    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d)
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e) json_abi ## a ## b ## c ## d ## e
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d, e) \
+    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e)
 
 #define NLOHMANN_JSON_ABI_TAGS                                       \
     NLOHMANN_JSON_ABI_TAGS_CONCAT(                                   \
             NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS,                       \
             NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON, \
             NLOHMANN_JSON_ABI_TAG_DIAGNOSTIC_POSITIONS,              \
-            NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS)
+            NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS,         \
+            NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION)
 
 // Construct the namespace version component
 #define NLOHMANN_JSON_NAMESPACE_VERSION_CONCAT_EX(major, minor, patch) \
@@ -7419,6 +7430,11 @@ class input_stream_adapter
         // maintain ifstream flags, except eof
         if (is != nullptr)
         {
+#if JSON_PRECISE_STREAM_POSITION
+            // consume the character last returned by get_character() unless it
+            // was given back with release_lookahead()
+            commit_lookahead();
+#endif
             is->clear(is->rdstate() & std::ios::eofbit);
         }
     }
@@ -7432,6 +7448,58 @@ class input_stream_adapter
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&&) = delete;
 
+#if JSON_PRECISE_STREAM_POSITION
+    input_stream_adapter(input_stream_adapter&& rhs) noexcept
+        : is(rhs.is), sb(rhs.sb), lookahead(rhs.lookahead)
+    {
+        rhs.is = nullptr;
+        rhs.sb = nullptr;
+        rhs.lookahead = false;
+    }
+
+    // Whether the character last returned by get_character() can be given back
+    // to the input with release_lookahead().
+    static constexpr bool supports_lookahead = true;
+
+    // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
+    // ensure that std::char_traits<char>::eof() and the character 0xFF do not
+    // end up as the same value, e.g., 0xFFFFFFFF.
+    //
+    // The character is peeked rather than consumed: it is only stepped over
+    // once the next character is requested, or when the adapter is destroyed.
+    // Until then, release_lookahead() can leave it in the input.
+    std::char_traits<char>::int_type get_character()
+    {
+        if (lookahead)
+        {
+            // step over the character returned by the previous call
+            sb->sbumpc();
+        }
+
+        auto res = sb->sgetc();
+        // set eof manually, as we don't use the istream interface.
+        if (JSON_HEDLEY_UNLIKELY(res == std::char_traits<char>::eof()))
+        {
+            // there is nothing to step over next time
+            lookahead = false;
+            is->clear(is->rdstate() | std::ios::eofbit);
+        }
+        else
+        {
+            lookahead = true;
+        }
+        return res;
+    }
+
+    // Leave the character last returned by get_character() in the input, so
+    // that the next read from the stream - by this adapter or by the caller
+    // once parsing is done - sees it again. Unlike putting a consumed
+    // character back, this cannot fail.
+    void release_lookahead() noexcept
+    {
+        lookahead = false;
+    }
+#else
     input_stream_adapter(input_stream_adapter&& rhs) noexcept
         : is(rhs.is), sb(rhs.sb)
     {
@@ -7442,6 +7510,9 @@ class input_stream_adapter
     // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
     // ensure that std::char_traits<char>::eof() and the character 0xFF do not
     // end up as the same value, e.g., 0xFFFFFFFF.
+    //
+    // The character is consumed, so the character that terminates a number
+    // stays consumed after parsing; see JSON_PRECISE_STREAM_POSITION.
     std::char_traits<char>::int_type get_character()
     {
         auto res = sb->sbumpc();
@@ -7452,10 +7523,14 @@ class input_stream_adapter
         }
         return res;
     }
+#endif
 
     template<class T>
     std::size_t get_elements(T* dest, std::size_t count = 1)
     {
+#if JSON_PRECISE_STREAM_POSITION
+        commit_lookahead();
+#endif
         auto res = static_cast<std::size_t>(sb->sgetn(reinterpret_cast<char*>(dest), static_cast<std::streamsize>(count * sizeof(T))));
         if (JSON_HEDLEY_UNLIKELY(res < count * sizeof(T)))
         {
@@ -7465,9 +7540,27 @@ class input_stream_adapter
     }
 
   private:
+#if JSON_PRECISE_STREAM_POSITION
+    // Step over the character last returned by get_character(). The character
+    // has already been peeked successfully, so for every streambuf with a get
+    // area this is a pointer increment that cannot fail.
+    void commit_lookahead()
+    {
+        if (lookahead)
+        {
+            lookahead = false;
+            sb->sbumpc();
+        }
+    }
+#endif
+
     /// the associated input stream
     std::istream* is = nullptr;
     std::streambuf* sb = nullptr;
+#if JSON_PRECISE_STREAM_POSITION
+    /// whether get_character() peeked a character that is not consumed yet
+    bool lookahead = false;
+#endif
 };
 #endif  // JSON_NO_IO
 
@@ -8879,6 +8972,25 @@ constexpr bool input_adapter_supports_seek(std::false_type /*detected*/)
     return false;
 }
 
+// Detect whether an input adapter reads with one character of lookahead that
+// can be left in the input (see input_stream_adapter::supports_lookahead,
+// which is only defined with JSON_PRECISE_STREAM_POSITION), detected like
+// supports_seek above.
+template<typename InputAdapterType>
+using detect_supports_lookahead = decltype(InputAdapterType::supports_lookahead);
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_lookahead(std::true_type /*detected*/)
+{
+    return InputAdapterType::supports_lookahead;
+}
+
+template<typename InputAdapterType>
+constexpr bool input_adapter_supports_lookahead(std::false_type /*detected*/)
+{
+    return false;
+}
+
 // Detect whether an input adapter exposes a contiguous byte block that the
 // lexer can scan directly (see iterator_input_adapter::supports_bulk_scan).
 // Adapters without the flag - file, stream, wide-string, user-defined - fall
@@ -8918,6 +9030,12 @@ class lexer : public lexer_base<BasicJsonType>
     /// character; see input_adapter_supports_seek
     static constexpr bool lazy_token_string =
         input_adapter_supports_seek<InputAdapterType>(is_detected<detect_supports_seek, InputAdapterType> {});
+
+    /// whether a simulated unget can be passed on to the input adapter, which
+    /// then leaves the character in the input; see
+    /// input_adapter_supports_lookahead
+    static constexpr bool can_release_lookahead =
+        input_adapter_supports_lookahead<InputAdapterType>(is_detected<detect_supports_lookahead, InputAdapterType> {});
 
     /// whether string scanning may bulk-consume runs of ordinary characters
     /// directly from a contiguous input buffer (SWAR fast path). This requires
@@ -10650,6 +10768,21 @@ scan_number_done:
         uncapture_char(std::integral_constant<bool, lazy_token_string> {});
     }
 
+    /// adapter without lookahead: nothing to do (see release_lookahead)
+    void release_lookahead_impl(std::false_type /*can_release*/) const noexcept {}
+
+    /// adapter with lookahead: leave the character in the input instead
+    void release_lookahead_impl(std::true_type /*can_release*/)
+    {
+        if (next_unget)
+        {
+            // the character is read from the input again rather than replayed
+            // from current, so the adapter must not step over it
+            next_unget = false;
+            ia.release_lookahead();
+        }
+    }
+
     /// seekable adapter: nothing was captured, so nothing to undo
     void uncapture_char(std::true_type /*lazy*/) const noexcept {}
 
@@ -10711,6 +10844,31 @@ scan_number_done:
     constexpr position_t get_position() const noexcept
     {
         return position;
+    }
+
+    /*!
+    @brief pass a pending simulated unget on to the input
+
+    unget() only rewinds the lexer's own bookkeeping, so the character that
+    terminated the last token (e.g. the character after a number) would still
+    be stepped over when the input adapter is done. Callers that hand the
+    input back to the user afterwards - operator>> and non-strict sax_parse -
+    call this once when scanning is done, so that the input is positioned
+    right after the value.
+
+    Adapters without lookahead (see input_adapter_supports_lookahead) are not
+    handed back to the user, so this is a no-op for them. Without
+    JSON_PRECISE_STREAM_POSITION, no adapter has lookahead, so this is always a
+    no-op and the terminating character stays consumed.
+
+    Scanning may continue after this call: @a next_unget is cleared, and the
+    character is read from the input again instead of being replayed from
+    @a current. A pending unget of EOF needs no special case, because reaching
+    EOF leaves no lookahead to release.
+    */
+    void release_lookahead()
+    {
+        release_lookahead_impl(std::integral_constant<bool, can_release_lookahead> {});
     }
 
 #if JSON_DIAGNOSTIC_POSITIONS
@@ -15960,13 +16118,22 @@ class parser
             json_sax_dom_callback_parser<BasicJsonType, InputAdapterType> sdp(result, callback, allow_exceptions, &m_lexer);
             sax_parse_internal(&sdp);
 
-            // in strict mode, input must be completely read
-            if (strict && (get_token() != token_type::end_of_input))
+            if (strict)
             {
-                sdp.parse_error(m_lexer.get_position(),
-                                m_lexer.get_token_string(),
-                                parse_error::create(101, m_lexer.get_position(),
-                                                    exception_message(token_type::end_of_input, "value"), nullptr));
+                // in strict mode, input must be completely read
+                if (get_token() != token_type::end_of_input)
+                {
+                    sdp.parse_error(m_lexer.get_position(),
+                                    m_lexer.get_token_string(),
+                                    parse_error::create(101, m_lexer.get_position(),
+                                                        exception_message(token_type::end_of_input, "value"), nullptr));
+                }
+            }
+            else
+            {
+                // the caller keeps using the input: position it right after
+                // the value by leaving the character that terminated it
+                m_lexer.release_lookahead();
             }
 
             // in case of an error, return a discarded value
@@ -15988,12 +16155,20 @@ class parser
             json_sax_dom_parser<BasicJsonType, InputAdapterType> sdp(result, allow_exceptions, &m_lexer);
             sax_parse_internal(&sdp);
 
-            // in strict mode, input must be completely read
-            if (strict && (get_token() != token_type::end_of_input))
+            if (strict)
             {
-                sdp.parse_error(m_lexer.get_position(),
-                                m_lexer.get_token_string(),
-                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
+                // in strict mode, input must be completely read
+                if (get_token() != token_type::end_of_input)
+                {
+                    sdp.parse_error(m_lexer.get_position(),
+                                    m_lexer.get_token_string(),
+                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
+                }
+            }
+            else
+            {
+                // see above
+                m_lexer.release_lookahead();
             }
 
             // in case of an error, return a discarded value
@@ -16026,12 +16201,24 @@ class parser
         (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
         const bool result = sax_parse_internal(sax);
 
-        // strict mode: next byte must be EOF
-        if (result && strict && (get_token() != token_type::end_of_input))
+        if (result)
         {
-            return sax->parse_error(m_lexer.get_position(),
-                                    m_lexer.get_token_string(),
-                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
+            if (strict)
+            {
+                // strict mode: next byte must be EOF
+                if (get_token() != token_type::end_of_input)
+                {
+                    return sax->parse_error(m_lexer.get_position(),
+                                            m_lexer.get_token_string(),
+                                            parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
+                }
+            }
+            else
+            {
+                // the caller keeps using the input: position it right after
+                // the value by leaving the character that terminated it
+                m_lexer.release_lookahead();
+            }
         }
 
         return result;
@@ -30765,6 +30952,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
     #undef JSON_HAS_STATIC_RTTI
     #undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
     #undef JSON_BRACE_INIT_COPY_SEMANTICS
+    #undef JSON_PRECISE_STREAM_POSITION
 #endif
 
 // #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>
