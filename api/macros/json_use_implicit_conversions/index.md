@@ -22,6 +22,10 @@ Implicit conversions will be switched off by default in the next major release o
 
 You can prepare existing code by already defining `JSON_USE_IMPLICIT_CONVERSIONS` to `0` and replace any implicit conversions with calls to [`get`](https://json.nlohmann.me/api/basic_json/get/index.md).
 
+Automatic migration
+
+The community-maintained clang-tidy check `modernize-nlohmann-json-explicit-conversions` rewrites implicit conversions into explicit calls to [`get`](https://json.nlohmann.me/api/basic_json/get/index.md); for example, `int i = j;` becomes `int i = j.get<int>();`. The check is not part of clang-tidy itself, and it does not catch every case (for example, constructing a `std::optional` from a JSON value), so review the result. See [discussion #4610](https://github.com/nlohmann/json/discussions/4610) for how to build and use it.
+
 CMake option
 
 Implicit conversions can also be controlled with the CMake option [`JSON_ImplicitConversions`](https://json.nlohmann.me/integration/cmake/#json_implicitconversions) (`ON` by default) which defines `JSON_USE_IMPLICIT_CONVERSIONS` accordingly.

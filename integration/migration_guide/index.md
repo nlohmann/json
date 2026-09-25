@@ -118,6 +118,10 @@ Implicit conversions via [`operator ValueType`](https://json.nlohmann.me/api/bas
 
 You can prepare existing code by already defining [`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md) to `0` and replace any implicit conversions with calls to [`get`](https://json.nlohmann.me/api/basic_json/get/index.md), [`get_to`](https://json.nlohmann.me/api/basic_json/get_to/index.md), [`get_ref`](https://json.nlohmann.me/api/basic_json/get_ref/index.md), or [`get_ptr`](https://json.nlohmann.me/api/basic_json/get_ptr/index.md).
 
+Automatic migration
+
+The community-maintained clang-tidy check `modernize-nlohmann-json-explicit-conversions` rewrites most implicit conversions into calls to [`get`](https://json.nlohmann.me/api/basic_json/get/index.md). It is not part of clang-tidy itself; see [discussion #4610](https://github.com/nlohmann/json/discussions/4610) for how to build and use it.
+
 ```
 nlohmann::json j = "Hello, world!";
 std::string s = j;
