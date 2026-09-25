@@ -48,7 +48,7 @@ std::string nested_objects(const std::size_t depth, const int variant)
         if (variant == 2 && i % 5 == 0)
         {
             // an object replacing a primitive, which is not merged
-            text += "\"s0\":{\"o\":1},";
+            text += R"("s0":{"o":1},)";
         }
         text += "\"a\":";
     }
