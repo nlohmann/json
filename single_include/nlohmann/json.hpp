@@ -95,6 +95,10 @@
     #define JSON_BRACE_INIT_COPY_SEMANTICS 0
 #endif
 
+#ifndef JSON_PRECISE_STREAM_POSITION
+    #define JSON_PRECISE_STREAM_POSITION 0
+#endif
+
 #if JSON_DIAGNOSTICS
     #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS _diag
 #else
@@ -119,21 +123,28 @@
     #define NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS
 #endif
 
+#if JSON_PRECISE_STREAM_POSITION
+    #define NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION _psp
+#else
+    #define NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION
+#endif
+
 #ifndef NLOHMANN_JSON_NAMESPACE_NO_VERSION
     #define NLOHMANN_JSON_NAMESPACE_NO_VERSION 0
 #endif
 
 // Construct the namespace ABI tags component
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d) json_abi ## a ## b ## c ## d
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d) \
-    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d)
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e) json_abi ## a ## b ## c ## d ## e
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d, e) \
+    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e)
 
 #define NLOHMANN_JSON_ABI_TAGS                                       \
     NLOHMANN_JSON_ABI_TAGS_CONCAT(                                   \
             NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS,                       \
             NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON, \
             NLOHMANN_JSON_ABI_TAG_DIAGNOSTIC_POSITIONS,              \
-            NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS)
+            NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS,         \
+            NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION)
 
 // Construct the namespace version component
 #define NLOHMANN_JSON_NAMESPACE_VERSION_CONCAT_EX(major, minor, patch) \
@@ -7419,9 +7430,11 @@ class input_stream_adapter
         // maintain ifstream flags, except eof
         if (is != nullptr)
         {
+#if JSON_PRECISE_STREAM_POSITION
             // consume the character last returned by get_character() unless it
             // was given back with release_lookahead()
             commit_lookahead();
+#endif
             is->clear(is->rdstate() & std::ios::eofbit);
         }
     }
@@ -7435,6 +7448,7 @@ class input_stream_adapter
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&&) = delete;
 
+#if JSON_PRECISE_STREAM_POSITION
     input_stream_adapter(input_stream_adapter&& rhs) noexcept
         : is(rhs.is), sb(rhs.sb), lookahead(rhs.lookahead)
     {
@@ -7485,11 +7499,38 @@ class input_stream_adapter
     {
         lookahead = false;
     }
+#else
+    input_stream_adapter(input_stream_adapter&& rhs) noexcept
+        : is(rhs.is), sb(rhs.sb)
+    {
+        rhs.is = nullptr;
+        rhs.sb = nullptr;
+    }
+
+    // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
+    // ensure that std::char_traits<char>::eof() and the character 0xFF do not
+    // end up as the same value, e.g., 0xFFFFFFFF.
+    //
+    // The character is consumed, so the character that terminates a number
+    // stays consumed after parsing; see JSON_PRECISE_STREAM_POSITION.
+    std::char_traits<char>::int_type get_character()
+    {
+        auto res = sb->sbumpc();
+        // set eof manually, as we don't use the istream interface.
+        if (JSON_HEDLEY_UNLIKELY(res == std::char_traits<char>::eof()))
+        {
+            is->clear(is->rdstate() | std::ios::eofbit);
+        }
+        return res;
+    }
+#endif
 
     template<class T>
     std::size_t get_elements(T* dest, std::size_t count = 1)
     {
+#if JSON_PRECISE_STREAM_POSITION
         commit_lookahead();
+#endif
         auto res = static_cast<std::size_t>(sb->sgetn(reinterpret_cast<char*>(dest), static_cast<std::streamsize>(count * sizeof(T))));
         if (JSON_HEDLEY_UNLIKELY(res < count * sizeof(T)))
         {
@@ -7499,6 +7540,7 @@ class input_stream_adapter
     }
 
   private:
+#if JSON_PRECISE_STREAM_POSITION
     // Step over the character last returned by get_character(). The character
     // has already been peeked successfully, so for every streambuf with a get
     // area this is a pointer increment that cannot fail.
@@ -7510,12 +7552,15 @@ class input_stream_adapter
             sb->sbumpc();
         }
     }
+#endif
 
     /// the associated input stream
     std::istream* is = nullptr;
     std::streambuf* sb = nullptr;
+#if JSON_PRECISE_STREAM_POSITION
     /// whether get_character() peeked a character that is not consumed yet
     bool lookahead = false;
+#endif
 };
 #endif  // JSON_NO_IO
 
@@ -8928,8 +8973,9 @@ constexpr bool input_adapter_supports_seek(std::false_type /*detected*/)
 }
 
 // Detect whether an input adapter reads with one character of lookahead that
-// can be left in the input (see input_stream_adapter::supports_lookahead),
-// detected like supports_seek above.
+// can be left in the input (see input_stream_adapter::supports_lookahead,
+// which is only defined with JSON_PRECISE_STREAM_POSITION), detected like
+// supports_seek above.
 template<typename InputAdapterType>
 using detect_supports_lookahead = decltype(InputAdapterType::supports_lookahead);
 
@@ -10811,7 +10857,9 @@ scan_number_done:
     right after the value.
 
     Adapters without lookahead (see input_adapter_supports_lookahead) are not
-    handed back to the user, so this is a no-op for them.
+    handed back to the user, so this is a no-op for them. Without
+    JSON_PRECISE_STREAM_POSITION, no adapter has lookahead, so this is always a
+    no-op and the terminating character stays consumed.
 
     Scanning may continue after this call: @a next_unget is cleared, and the
     character is read from the input again instead of being replayed from
@@ -30904,6 +30952,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
     #undef JSON_HAS_STATIC_RTTI
     #undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
     #undef JSON_BRACE_INIT_COPY_SEMANTICS
+    #undef JSON_PRECISE_STREAM_POSITION
 #endif
 
 // #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>

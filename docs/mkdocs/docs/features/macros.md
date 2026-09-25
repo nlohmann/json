@@ -98,6 +98,15 @@ rather than descending into a bounded number of levels first, which is slower bu
 
 See [full documentation of `JSON_NO_THREAD_LOCAL`](../api/macros/json_no_thread_local.md).
 
+## `JSON_PRECISE_STREAM_POSITION`
+
+When defined to `1`, [`operator>>`](../api/operator_gtgt.md) and non-strict
+[`sax_parse`](../api/basic_json/sax_parse.md) leave an input stream positioned right after the parsed value, instead of
+also consuming the character that terminates a number. The default value is `0`, which preserves the existing behavior;
+this is planned to become the default in version 4.0.0.
+
+See [full documentation of `JSON_PRECISE_STREAM_POSITION`](../api/macros/json_precise_stream_position.md).
+
 ## `JSON_SKIP_LIBRARY_VERSION_CHECK`
 
 When defined, the library will not create a compiler warning when a different version of the library was already

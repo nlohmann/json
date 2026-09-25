@@ -40,7 +40,9 @@ what makes it possible to read several concatenated values from the same stream,
 document followed by trailing bytes" is accepted rather than rejected. If you are validating conformance, or need to
 reject any input that is not exactly one JSON document, prefer `parse`.
 
-Values read this way do not need to be separated by whitespace; see the
+When using `operator>>` to read several concatenated values this way, a value that is a number must be followed by
+whitespace, because `operator>>` consumes the character that terminates a number, unless
+[`JSON_PRECISE_STREAM_POSITION`](../../api/macros/json_precise_stream_position.md) is defined to `1` — see the
 [`operator>>` notes](../../api/operator_gtgt.md#notes) for details and examples.
 
 ## SAX vs. DOM parsing

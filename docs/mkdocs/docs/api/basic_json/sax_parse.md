@@ -70,7 +70,8 @@ The SAX event lister must follow the interface of [`json_sax`](../json_sax/index
 
 `strict` (in)
 :   whether the input has to be consumed completely (optional, `#!cpp true` by default); when `#!cpp false` and the
-    input is a `#!cpp std::istream`, the stream is left positioned right after the parsed value
+    input is a `#!cpp std::istream`, the character that terminates a number is consumed unless
+    [`JSON_PRECISE_STREAM_POSITION`](../macros/json_precise_stream_position.md) is defined to `1`; see [`operator>>`](../operator_gtgt.md#notes)
 
 `ignore_comments` (in)
 :   whether comments should be ignored and treated like whitespace (`#!cpp true`) or yield a parse error
@@ -137,8 +138,8 @@ A UTF-8 byte order mark is silently ignored.
 - Added `ignore_trailing_commas` in version 3.13.0.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
-- Changed in version 4.0.0 to leave a `#!cpp std::istream` positioned right after the parsed value when `strict` is
-  `#!cpp false`; see [`operator>>`](../operator_gtgt.md#notes).
+- `JSON_PRECISE_STREAM_POSITION` added in version 3.13.0 to optionally leave a `#!cpp std::istream` positioned right
+  after the parsed value when `strict` is `#!cpp false`.
 
 !!! warning "Deprecation"
 

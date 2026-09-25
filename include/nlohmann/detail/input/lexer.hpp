@@ -128,8 +128,9 @@ constexpr bool input_adapter_supports_seek(std::false_type /*detected*/)
 }
 
 // Detect whether an input adapter reads with one character of lookahead that
-// can be left in the input (see input_stream_adapter::supports_lookahead),
-// detected like supports_seek above.
+// can be left in the input (see input_stream_adapter::supports_lookahead,
+// which is only defined with JSON_PRECISE_STREAM_POSITION), detected like
+// supports_seek above.
 template<typename InputAdapterType>
 using detect_supports_lookahead = decltype(InputAdapterType::supports_lookahead);
 
@@ -2011,7 +2012,9 @@ scan_number_done:
     right after the value.
 
     Adapters without lookahead (see input_adapter_supports_lookahead) are not
-    handed back to the user, so this is a no-op for them.
+    handed back to the user, so this is a no-op for them. Without
+    JSON_PRECISE_STREAM_POSITION, no adapter has lookahead, so this is always a
+    no-op and the terminating character stays consumed.
 
     Scanning may continue after this call: @a next_unget is cleared, and the
     character is read from the input again instead of being replayed from
