@@ -101,6 +101,11 @@ class input_stream_adapter
         // maintain ifstream flags, except eof
         if (is != nullptr)
         {
+#if JSON_PRECISE_STREAM_POSITION
+            // consume the character last returned by get_character() unless it
+            // was given back with release_lookahead()
+            commit_lookahead();
+#endif
             is->clear(is->rdstate() & std::ios::eofbit);
         }
     }
@@ -114,6 +119,58 @@ class input_stream_adapter
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&&) = delete;
 
+#if JSON_PRECISE_STREAM_POSITION
+    input_stream_adapter(input_stream_adapter&& rhs) noexcept
+        : is(rhs.is), sb(rhs.sb), lookahead(rhs.lookahead)
+    {
+        rhs.is = nullptr;
+        rhs.sb = nullptr;
+        rhs.lookahead = false;
+    }
+
+    // Whether the character last returned by get_character() can be given back
+    // to the input with release_lookahead().
+    static constexpr bool supports_lookahead = true;
+
+    // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
+    // ensure that std::char_traits<char>::eof() and the character 0xFF do not
+    // end up as the same value, e.g., 0xFFFFFFFF.
+    //
+    // The character is peeked rather than consumed: it is only stepped over
+    // once the next character is requested, or when the adapter is destroyed.
+    // Until then, release_lookahead() can leave it in the input.
+    std::char_traits<char>::int_type get_character()
+    {
+        if (lookahead)
+        {
+            // step over the character returned by the previous call
+            sb->sbumpc();
+        }
+
+        auto res = sb->sgetc();
+        // set eof manually, as we don't use the istream interface.
+        if (JSON_HEDLEY_UNLIKELY(res == std::char_traits<char>::eof()))
+        {
+            // there is nothing to step over next time
+            lookahead = false;
+            is->clear(is->rdstate() | std::ios::eofbit);
+        }
+        else
+        {
+            lookahead = true;
+        }
+        return res;
+    }
+
+    // Leave the character last returned by get_character() in the input, so
+    // that the next read from the stream - by this adapter or by the caller
+    // once parsing is done - sees it again. Unlike putting a consumed
+    // character back, this cannot fail.
+    void release_lookahead() noexcept
+    {
+        lookahead = false;
+    }
+#else
     input_stream_adapter(input_stream_adapter&& rhs) noexcept
         : is(rhs.is), sb(rhs.sb)
     {
@@ -124,6 +181,9 @@ class input_stream_adapter
     // std::istream/std::streambuf use std::char_traits<char>::to_int_type, to
     // ensure that std::char_traits<char>::eof() and the character 0xFF do not
     // end up as the same value, e.g., 0xFFFFFFFF.
+    //
+    // The character is consumed, so the character that terminates a number
+    // stays consumed after parsing; see JSON_PRECISE_STREAM_POSITION.
     std::char_traits<char>::int_type get_character()
     {
         auto res = sb->sbumpc();
@@ -134,10 +194,14 @@ class input_stream_adapter
         }
         return res;
     }
+#endif
 
     template<class T>
     std::size_t get_elements(T* dest, std::size_t count = 1)
     {
+#if JSON_PRECISE_STREAM_POSITION
+        commit_lookahead();
+#endif
         auto res = static_cast<std::size_t>(sb->sgetn(reinterpret_cast<char*>(dest), static_cast<std::streamsize>(count * sizeof(T))));
         if (JSON_HEDLEY_UNLIKELY(res < count * sizeof(T)))
         {
@@ -147,9 +211,27 @@ class input_stream_adapter
     }
 
   private:
+#if JSON_PRECISE_STREAM_POSITION
+    // Step over the character last returned by get_character(). The character
+    // has already been peeked successfully, so for every streambuf with a get
+    // area this is a pointer increment that cannot fail.
+    void commit_lookahead()
+    {
+        if (lookahead)
+        {
+            lookahead = false;
+            sb->sbumpc();
+        }
+    }
+#endif
+
     /// the associated input stream
     std::istream* is = nullptr;
     std::streambuf* sb = nullptr;
+#if JSON_PRECISE_STREAM_POSITION
+    /// whether get_character() peeked a character that is not consumed yet
+    bool lookahead = false;
+#endif
 };
 #endif  // JSON_NO_IO
 

@@ -93,10 +93,20 @@ See [full documentation of `JSON_NO_IO`](../api/macros/json_no_io.md).
 
 ## `JSON_NO_THREAD_LOCAL`
 
-When defined, the library does not use `#!cpp thread_local` storage. Copying a value then always avoids the call stack
-rather than descending into a bounded number of levels first, which is slower but yields the same values.
+When defined, the library does not use `#!cpp thread_local` storage. Copying a value and comparing two values then
+always avoid the call stack rather than descending into a bounded number of levels first, which is slower but yields the
+same values and the same comparisons.
 
 See [full documentation of `JSON_NO_THREAD_LOCAL`](../api/macros/json_no_thread_local.md).
+
+## `JSON_PRECISE_STREAM_POSITION`
+
+When defined to `1`, [`operator>>`](../api/operator_gtgt.md) and non-strict
+[`sax_parse`](../api/basic_json/sax_parse.md) leave an input stream positioned right after the parsed value, instead of
+also consuming the character that terminates a number. The default value is `0`, which preserves the existing behavior;
+this is planned to become the default in version 4.0.0.
+
+See [full documentation of `JSON_PRECISE_STREAM_POSITION`](../api/macros/json_precise_stream_position.md).
 
 ## `JSON_SKIP_LIBRARY_VERSION_CHECK`
 
