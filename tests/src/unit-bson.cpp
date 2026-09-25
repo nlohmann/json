@@ -49,7 +49,7 @@ using huge_binary_json = nlohmann::basic_json <
 // for *object keys* (e.g. "s" or "nested" below). Only the designated test
 // value is meant to lie about its size - if every huge_string_t (including
 // keys) reported a huge size, the running totals computed while walking the
-// BSON document (see calc_bson_object_size & friends in binary_writer.hpp)
+// BSON document (see calc_bson_sizes in binary_writer.hpp)
 // would need more than 32 bits, and on platforms where std::size_t is only
 // 32 bits wide that arithmetic would silently wrap around, producing wrong
 // (or even unguarded) lengths. The fake size is therefore opt-in via
@@ -1694,6 +1694,70 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
                     }
                 }
             }
+        }
+    }
+}
+
+TEST_CASE("BSON: deeply nested values")
+{
+    SECTION("documents and arrays round-trip at every depth")
+    {
+        // nested documents and arrays, with siblings on every level, so
+        // every length prefix covers entries of both kinds
+        json value = "leaf";
+        for (std::size_t depth = 0; depth <= 300; ++depth)
+        {
+            CAPTURE(depth);
+            const json document = {{"value", value}, {"n", depth}};
+            CHECK(json::from_bson(json::to_bson(document)) == document);
+
+value = depth % 2 == 0 ? json{{"a", std::move(value)}, {"b", {1, "x"}}} :
+            json::array({std::move(value), depth, json::object()});
+        }
+    }
+
+    SECTION("a key containing U+0000 is rejected before anything is written")
+    {
+        json value = json::object({{std::string("bad\0key", 7), 1}});
+        for (std::size_t depth = 0; depth < 200; ++depth)
+        {
+            value = json{{"a", {{"b", 1}}}, {"z", std::move(value)}};
+        }
+        std::vector<std::uint8_t> output;
+        CHECK_THROWS_AS(json::to_bson(value, output), json::out_of_range&);
+        CHECK(output.empty());
+    }
+
+    SECTION("values nested too deeply for the call stack (#5392)")
+    {
+        // serializing recursed once per nesting level, and computed every
+        // nested document's length by walking everything below it again.
+        // The values are only parsed, serialized and walked, never copied or
+        // compared, since those recurse too.
+        const std::size_t depth = 100000;
+        for (const bool objects :
+                {
+                    false, true
+                })
+        {
+            CAPTURE(objects);
+            std::string text = "{\"a\":";
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                text += objects ? "{\"a\":" : "[";
+            }
+            text += "1";
+            text.append(depth, objects ? '}' : ']');
+            text += "}";
+
+            const auto bson = json::to_bson(json::parse(text));
+            const auto result = json::from_bson(bson);
+            const json* p = &result.at("a");
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                p = objects ? &p->at("a") : &p->at(0);
+            }
+            CHECK(*p == 1);
         }
     }
 }
