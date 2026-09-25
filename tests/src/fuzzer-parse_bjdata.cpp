@@ -42,6 +42,9 @@ dump() serializes any non-finite double the same deterministic way (as JSON
 `null`, since JSON itself cannot represent NaN/Infinity), so comparing
 dumps is stable under exactly the same values that break operator==.
 
+The unit tests run the same checks on a fixed corpus (see the "BJData round-trip
+invariants" test case), so keep both in sync.
+
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */

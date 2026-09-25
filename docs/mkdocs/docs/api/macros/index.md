@@ -16,6 +16,8 @@ header. See also the [macro overview page](../../features/macros.md).
 
 ## Parsing
 
+- [**JSON_PRECISE_STREAM_POSITION**](json_precise_stream_position.md) - opt in to leaving an input stream positioned
+  right after a parsed number
 - [**JSON_STRICT_NUL_HANDLING**](json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input instead of
   treating it as end of input
 

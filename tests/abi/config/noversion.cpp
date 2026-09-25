@@ -37,6 +37,10 @@ TEST_CASE("default namespace without version component")
         expected += "_bics";
 #endif
 
+#if JSON_PRECISE_STREAM_POSITION
+        expected += "_psp";
+#endif
+
         expected += "::basic_json";
 
         // fallback for Clang

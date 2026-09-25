@@ -79,3 +79,26 @@ the same `fuzzers` target as above and also relies on the `FUZZER_ENGINE` variab
 [build script](https://github.com/google/oss-fuzz/blob/master/projects/json/build.sh) for more information.
 
 In case the build at OSS-Fuzz fails, an issue will be created automatically.
+
+### Handling OSS-Fuzz reports
+
+OSS-Fuzz files the crashes it finds in its own [issue tracker](https://issues.oss-fuzz.com), not on GitHub. So that
+each report can be traced to the change that fixed it, and each fix to the report it answers, fixes follow these
+conventions:
+
+- **Reference the OSS-Fuzz issue in the pull request**, next to any GitHub issue it closes, as `OSS-Fuzz: <id>` (for
+  example, `OSS-Fuzz: 563659413`), and in the commit message. The ID alone does not disclose the crash. If the report
+  was triaged into a GitHub issue, link the OSS-Fuzz issue there too.
+- **Turn the reproducer into a unit test.** Download the testcase from the OSS-Fuzz report, reduce it if possible, and
+  add it as a regression test to the unit test of the affected format (e.g., `tests/src/unit-bjdata.cpp`), with a
+  comment naming the OSS-Fuzz issue. This way the input is checked by every CI run rather than only by OSS-Fuzz, and
+  it stays covered even if OSS-Fuzz later closes the report as not reproducible.
+- **Keep the fuzzer drivers and the unit tests in sync.** The round-trip checks of the UBJSON and BJData drivers are
+  also run on a fixed corpus in the unit tests (see `tests/src/round_trip_corpus.hpp` and the "round-trip invariants"
+  test cases), so a regression shows up in CI first. When a driver's checks change, change the unit tests with them.
+- **Record in the report whether the bug shipped.** OSS-Fuzz asks whether a crash was a short-lived regression or
+  affects a released version; answer it when the fix is merged, as it decides whether the fix needs a release note or
+  a security advisory (see the [security policy](../.github/SECURITY.md)).
+
+After the fix is merged, OSS-Fuzz re-runs the reproducer on its next build and marks the report as verified and
+closed. If it does not, the fix is incomplete.
