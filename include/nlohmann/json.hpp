@@ -5764,13 +5764,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         /// arrays: the next index to diff
         std::size_t index = 0;
         /// objects: the next member of source to look at
-        const_iterator member{};
+        const_iterator member{}; // NOLINT(readability-redundant-member-init)
         /// objects: the keys common to both, in source's order
-        std::vector<typename object_t::key_type> common_keys{};
+        std::vector<typename object_t::key_type> common_keys{}; // NOLINT(readability-redundant-member-init)
         /// objects: the next entry of common_keys
         std::size_t next_common = 0;
         /// objects: the "add" operations for keys only target has
-        basic_json added_ops{};
+        basic_json added_ops{}; // NOLINT(readability-redundant-member-init)
     };
 
     /// @ref diff for a @a source nested no more than @ref detail::recursion_depth_limit levels deep
