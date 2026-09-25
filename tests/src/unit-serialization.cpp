@@ -629,3 +629,153 @@ TEST_CASE("serialization of deeply nested values")
         }
     }
 }
+
+namespace
+{
+// wraps @a inner into @a depth single-element arrays
+json wrap_in_arrays(const json& inner, const std::size_t depth)
+{
+    json j = inner;
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        j = json::array({std::move(j)});
+    }
+    return j;
+}
+
+// what wrap_in_arrays(inner, depth).dump(2) is expected to be: the arrays
+// around inner.dump(2), with inner's own lines indented by the depth
+std::string expected_pretty_in_arrays(const json& inner, const std::size_t depth)
+{
+    std::string expected;
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        expected += std::string(2 * i, ' ') + "[\n";
+    }
+
+    const std::string indent(2 * depth, ' ');
+    expected += indent;
+    for (const char c : inner.dump(2))
+    {
+        expected += c;
+        if (c == '\n')
+        {
+            expected += indent;
+        }
+    }
+
+    for (std::size_t i = depth; i > 0; --i)
+    {
+        expected += '\n' + std::string(2 * (i - 1), ' ') + ']';
+    }
+    return expected;
+}
+} // namespace
+
+TEST_CASE("serialization of every kind of value below the bound of the descent")
+{
+    // Values nested deeper than the bound are written without the call stack,
+    // by code of their own; each kind of value must come out the same there as
+    // it does at the top level, compact and pretty-printed.
+    std::vector<json> values =
+    {
+        json::parse(R"({"a": 1, "b": [1, 2, {"c": "x"}], "d": {}, "e": []})"),
+        json::parse(R"([1, [2, 3], {"k": null}, "s"])"),
+        json::object(),
+        json::array(),
+        json::binary({1, 2, 3}, 42),
+        json::binary({1, 2, 3}),
+        json::binary({}, 7),
+        json::binary({}),
+        "a string with \"escapes\"\n",
+        true,
+        false,
+        -42,
+        42u,
+        1.5,
+        nullptr,
+        json(json::value_t::discarded),
+    };
+    // a pretty-printed object whose members are themselves deep
+    values.push_back({{"x", wrap_in_arrays(1, 5)}, {"y", {{"z", 2}}}});
+
+    for (const std::size_t depth : std::vector<std::size_t> {1, 200})
+    {
+        CAPTURE(depth);
+        for (const auto& inner : values)
+        {
+            CAPTURE(inner.dump());
+            const json j = wrap_in_arrays(inner, depth);
+            CHECK(j.dump() == std::string(depth, '[') + inner.dump() + std::string(depth, ']'));
+            CHECK(j.dump(2) == expected_pretty_in_arrays(inner, depth));
+        }
+    }
+
+    SECTION("pretty-printed objects across the bound")
+    {
+        for (std::size_t d = 120; d <= 140; ++d)
+        {
+            CAPTURE(d);
+
+            // built from the inside out: {"k": <level below>, "n": <level>}
+            json j = 7;
+            std::string expected = "7";
+            for (std::size_t i = d; i > 0; --i)
+            {
+                j = json({{"k", std::move(j)}, {"n", i}});
+
+                const std::string indent(2 * i, ' ');
+                const std::string outer_indent(2 * (i - 1), ' ');
+                expected = "{\n" + indent + "\"k\": " + expected + ",\n"
+                           + indent + "\"n\": " + std::to_string(i) + "\n" + outer_indent + "}";
+            }
+
+            CHECK(j.dump(2) == expected);
+            CHECK(json::parse(j.dump(2)) == j);
+            CHECK(json::parse(j.dump()) == j);
+        }
+    }
+}
+
+TEST_CASE("serializer buffers are flushed mid-string and mid-binary")
+{
+    SECTION("a long run of escaped characters")
+    {
+        // each character is escaped on its own, so the escape buffer fills up
+        const json newlines = std::string(600, '\n');
+        std::string expected = "\"";
+        for (int i = 0; i < 600; ++i)
+        {
+            expected += "\\n";
+        }
+        expected += '"';
+        CHECK(newlines.dump() == expected);
+
+        // every character is \u-escaped under ensure_ascii
+        std::string umlauts;
+        std::string escaped_umlauts = "\"";
+        for (int i = 0; i < 300; ++i)
+        {
+            umlauts += "\xC3\xA4";
+            escaped_umlauts += "\\u00e4";
+        }
+        escaped_umlauts += '"';
+        CHECK(json(umlauts).dump(-1, ' ', true) == escaped_umlauts);
+    }
+
+    SECTION("a large binary value")
+    {
+        std::vector<std::uint8_t> bytes(3000);
+        std::string expected_bytes;
+        std::string expected_pretty_bytes;
+        for (std::size_t i = 0; i < bytes.size(); ++i)
+        {
+            bytes[i] = static_cast<std::uint8_t>(i % 256);
+            expected_bytes += (i == 0 ? "" : ",") + std::to_string(i % 256);
+            expected_pretty_bytes += (i == 0 ? "" : ", ") + std::to_string(i % 256);
+        }
+        const json j = json::binary(bytes);
+        CHECK(j.dump() == "{\"bytes\":[" + expected_bytes + "],\"subtype\":null}");
+        CHECK(j.dump(2) == "{\n  \"bytes\": [" + expected_pretty_bytes + "],\n  \"subtype\": null\n}");
+    }
+}

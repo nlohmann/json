@@ -1759,6 +1759,44 @@ TEST_CASE("MessagePack nesting does not consume the call stack")
     }
 }
 
+TEST_CASE("MessagePack input that cannot be read is discarded by every overload")
+{
+    std::vector<std::uint8_t> input = json::to_msgpack(json({{"a", {1, 2}}}));
+    input.pop_back();
+
+    json _;
+    CHECK_THROWS_AS(_ = json::from_msgpack(input.begin(), input.end()), json::parse_error&);
+    CHECK(json::from_msgpack(input, true, false).is_discarded());
+    CHECK(json::from_msgpack(input.begin(), input.end(), true, false).is_discarded());
+    CHECK(json::from_msgpack(input.data(), input.size(), true, false).is_discarded());
+    CHECK(json::from_msgpack({input.data(), input.size()}, true, false).is_discarded());
+}
+
+TEST_CASE("MessagePack SAX parsing stops at every event")
+{
+    // Containers are opened and closed by the loop that reads them; a SAX
+    // handler that rejects any event - including the end of a nested
+    // container - must stop the parse right there.
+    const auto count_events = [](const std::vector<std::uint8_t>& input)
+    {
+        int events = 0;
+        while (true)
+        {
+            SaxCountdown scp(events);
+            if (json::sax_parse(input, &scp, json::input_format_t::msgpack))
+            {
+                return events;
+            }
+            ++events;
+            REQUIRE(events < 1000);
+        }
+    };
+
+    // 20 events: every container kind closes inside another one
+    const json j = json::parse(R"({"a": [1, {"b": []}], "c": {"d": [[2]]}})");
+    CHECK(count_events(json::to_msgpack(j)) == 20);
+}
+
 TEST_CASE("single MessagePack roundtrip")
 {
     SECTION("sample.json")

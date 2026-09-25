@@ -102,6 +102,29 @@ TEST_CASE("std::formatter<nlohmann::json>")
         CHECK_THROWS_AS(std::vformat("{:{}}", std::make_format_args(j, dynamic_width)), std::format_error); // dynamic width
     }
 
+    SECTION("a format spec may run to the end of the parse context")
+    {
+        // std::format always hands parse() a range that still holds the closing
+        // '}', but a parse context may also end right after the spec
+        const auto parse = [](const char* spec)
+        {
+            std::format_parse_context ctx(spec);
+            std::formatter<json> f;
+            CHECK(f.parse(ctx) == ctx.end());
+            return f;
+        };
+
+        CHECK(parse("").indent == -1);
+        CHECK(parse(">").indent == -1);
+        CHECK(parse("#").indent == 4);
+        CHECK(parse("3").indent == 3);
+        CHECK(parse("#12").indent == 12);
+
+        const auto f = parse(".>");
+        CHECK(f.indent == -1);
+        CHECK(f.indent_char == '.');
+    }
+
     SECTION("std::format_to writes through an arbitrary output iterator")
     {
         const json j = {{"foo", 1}, {"bar", {1, 2, 3}}};

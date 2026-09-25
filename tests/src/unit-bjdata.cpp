@@ -3763,6 +3763,49 @@ TEST_CASE("BJData")
     }
 }
 
+TEST_CASE("BJData input that cannot be read is discarded by every overload")
+{
+    std::vector<std::uint8_t> input = json::to_bjdata(json({{"a", {1, 2}}}));
+    input.pop_back();
+
+    json _;
+    CHECK_THROWS_AS(_ = json::from_bjdata(input.begin(), input.end()), json::parse_error&);
+    CHECK(json::from_bjdata(input, true, false).is_discarded());
+    CHECK(json::from_bjdata(input.begin(), input.end(), true, false).is_discarded());
+}
+
+TEST_CASE("BJData SAX parsing stops at every event")
+{
+    // Containers are opened and closed by the loop that reads them; a SAX
+    // handler that rejects any event - including the end of a nested
+    // container - must stop the parse right there.
+    const auto count_events = [](const std::vector<std::uint8_t>& input)
+    {
+        int events = 0;
+        while (true)
+        {
+            SaxCountdown scp(events);
+            if (json::sax_parse(input, &scp, json::input_format_t::bjdata))
+            {
+                return events;
+            }
+            ++events;
+            REQUIRE(events < 1000);
+        }
+    };
+
+    // 20 events: every container kind closes inside another one
+    const json j = json::parse(R"({"a": [1, {"b": []}], "c": {"d": [[2]]}})");
+    CHECK(count_events(json::to_bjdata(j)) == 20);
+    CHECK(count_events(json::to_bjdata(j, true)) == 20);
+    CHECK(count_events(json::to_bjdata(j, true, true)) == 20);
+
+    // an ND-array is announced as an annotated object: start_object, then
+    // _ArrayType_, _ArraySize_ and _ArrayData_ with its elements
+    const json ndarray = json::parse(R"({"_ArrayType_": "uint8", "_ArraySize_": [2, 2], "_ArrayData_": [1, 2, 3, 4]})");
+    CHECK(count_events(json::to_bjdata(ndarray, true, true)) == 16);
+}
+
 TEST_CASE("issue #5405 - array reserve for definite-length BJData arrays")
 {
 #if !defined(JSON_NOEXCEPTION)
@@ -4247,6 +4290,54 @@ TEST_CASE("all BJData first bytes")
 }
 #endif
 
+TEST_CASE("BJData and UBJSON can be written to a string")
+{
+    const std::vector<json> values =
+    {
+        {{"a", {1, 2.5, "x", nullptr}}, {"b", json::binary({1, 2})}},
+        // an annotated ND-array, and objects that only look like one
+        json::parse(R"({"_ArrayType_": "uint8", "_ArraySize_": [2, 2], "_ArrayData_": [1, 2, 3, 4]})"),
+        json::parse(R"({"_ArrayType_": 1, "_ArraySize_": [2, 2], "_ArrayData_": [1, 2, 3, 4]})"),
+        json::parse(R"({"_ArrayType_": "uint8", "_ArraySize_": 4, "_ArrayData_": [1, 2, 3, 4]})"),
+        json::parse(R"({"_ArrayType_": "uint8", "_ArraySize_": [2, -2], "_ArrayData_": [1, 2, 3, 4]})"),
+        json::parse(R"({"_ArrayType_": "uint8", "_ArraySize_": [2, 2], "_ArrayData_": [1, 2, 3]})"),
+        json::parse(R"({"_ArrayType_": "uint8", "_ArraySize_": [2, 2], "_ArrayData_": 1})"),
+    };
+
+    for (const auto& j : values)
+    {
+        CAPTURE(j.dump());
+        for (const bool use_size :
+                {
+                    false, true
+                })
+        {
+            for (const bool use_type :
+                    {
+                        false, true
+                    })
+            {
+                if (use_type && !use_size)
+                {
+                    continue;
+                }
+                CAPTURE(use_size);
+                CAPTURE(use_type);
+
+                const auto bjdata = json::to_bjdata(j, use_size, use_type);
+                std::string bjdata_string;
+                json::to_bjdata(j, bjdata_string, use_size, use_type);
+                CHECK(bjdata_string == std::string(bjdata.begin(), bjdata.end()));
+
+                const auto ubjson = json::to_ubjson(j, use_size, use_type);
+                std::string ubjson_string;
+                json::to_ubjson(j, ubjson_string, use_size, use_type);
+                CHECK(ubjson_string == std::string(ubjson.begin(), ubjson.end()));
+            }
+        }
+    }
+}
+
 TEST_CASE("BJData use_type requires use_size")
 {
     SECTION("non-empty object throws other_error.502")
@@ -4261,6 +4352,17 @@ TEST_CASE("BJData use_type requires use_size")
     {
         const json j = {1, 2, 3};
         CHECK_THROWS_WITH_AS(json::to_bjdata(j, false, true),
+                             "[json.exception.other_error.502] use_type requires use_size = true",
+                             json::other_error&);
+    }
+
+    SECTION("non-empty binary value throws other_error.502")
+    {
+        const json j = json::binary({1, 2, 3});
+        CHECK_THROWS_WITH_AS(json::to_bjdata(j, false, true),
+                             "[json.exception.other_error.502] use_type requires use_size = true",
+                             json::other_error&);
+        CHECK_THROWS_WITH_AS(json::to_ubjson(j, false, true),
                              "[json.exception.other_error.502] use_type requires use_size = true",
                              json::other_error&);
     }

@@ -345,3 +345,32 @@ TEST_CASE("JSON Merge Patch on deeply nested values")
         CHECK(p->at("x") == 1);
     }
 }
+
+TEST_CASE("JSON Merge Patch and update on ordered_json")
+{
+    using nlohmann::ordered_json;
+
+    SECTION("merge_patch")
+    {
+        ordered_json target = ordered_json::parse(R"({"a": {"b": 1, "c": 2}, "d": 3, "e": [1]})");
+        target.merge_patch(ordered_json::parse(R"({"a": {"b": null, "f": 4}, "d": {"x": {"y": null}}, "e": null, "g": {"h": 5}})"));
+        CHECK(target == ordered_json::parse(R"({"a": {"c": 2, "f": 4}, "d": {"x": {}}, "g": {"h": 5}})"));
+
+        // a patch that is not an object replaces the target
+        target.merge_patch(ordered_json({1, 2}));
+        CHECK(target == ordered_json({1, 2}));
+        // an object patch turns a target that is not an object into one
+        target.merge_patch(ordered_json::parse(R"({"k": {"l": null}})"));
+        CHECK(target == ordered_json::parse(R"({"k": {}})"));
+    }
+
+    SECTION("update with merge_objects")
+    {
+        ordered_json target = ordered_json::parse(R"({"a": {"b": 1, "c": {"d": 2}}, "e": 3})");
+        target.update(ordered_json::parse(R"({"a": {"c": {"x": 1}, "f": 4}, "e": {"y": 5}, "g": 6})"), true);
+        CHECK(target == ordered_json::parse(R"({"a": {"b": 1, "c": {"d": 2, "x": 1}, "f": 4}, "e": {"y": 5}, "g": 6})"));
+
+        target.update(ordered_json::parse(R"({"a": 1})"), false);
+        CHECK(target == ordered_json::parse(R"({"a": 1, "e": {"y": 5}, "g": 6})"));
+    }
+}

@@ -359,6 +359,15 @@ TEST_CASE("lexicographical comparison operators")
             CHECK(json(1) < json(1.5));
             CHECK(json(1.5) < json(2));
             CHECK(json(2) > json(1.5));
+            CHECK(json(-1) > json(-1.5));
+            CHECK(json(-1.5) < json(-1));
+            CHECK(json(-2) < json(-1.5));
+
+            // a float below the range of the integer type
+            CHECK(json(0) > json(-1e30));
+            CHECK(json(-1e30) < json(0));
+            CHECK(json(0u) > json(-0.5));
+            CHECK(json(-0.5) < json(0u));
 
             // a NaN operand stays unordered against either integer kind
             CHECK_FALSE(json(1) == json(nan));
@@ -735,3 +744,84 @@ TEST_CASE("regression #3868 - heterogeneous comparisons compile under C++20 (P24
     }
 }
 #endif
+
+TEST_CASE("containers are compared element by element")
+{
+    // Containers nested deeper than a bound are compared without the call
+    // stack, by code of their own; every relation is checked both at the top
+    // level and below that bound.
+    const auto deep = [](const json & j, const std::size_t depth)
+    {
+        json result = j;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            result = json::array({std::move(result)});
+        }
+        return result;
+    };
+
+    for (const std::size_t depth : std::vector<std::size_t> {0, 200})
+    {
+        CAPTURE(depth);
+
+        // objects with different keys
+        {
+            const json a = deep({{"a", 1}}, depth);
+            const json b = deep({{"b", 1}}, depth);
+            CHECK_FALSE(a == b);
+            CHECK(a != b);
+            CHECK(a < b);
+            CHECK(b > a);
+            CHECK_FALSE(b < a);
+#if JSON_HAS_THREE_WAY_COMPARISON
+            // JSON_HAS_CPP_20 (do not remove; see note at top of file)
+            CHECK((a <=> b) == std::partial_ordering::less); // *NOPAD*
+            CHECK((b <=> a) == std::partial_ordering::greater); // *NOPAD*
+            CHECK((a <=> a) == std::partial_ordering::equivalent); // *NOPAD*
+#endif
+        }
+
+        // a container that is a prefix of the other one
+        {
+            // the one that runs out of elements first is the smaller one
+            const json shorter = deep({1}, depth);
+            const json longer = deep({1, 2}, depth);
+            CHECK(shorter < longer);
+            CHECK(longer > shorter);
+            CHECK_FALSE(longer < shorter);
+            CHECK_FALSE(shorter == longer);
+
+            const json smaller_object = deep({{"a", 1}}, depth);
+            const json larger_object = deep({{"a", 1}, {"b", 2}}, depth);
+            CHECK(smaller_object < larger_object);
+            CHECK(larger_object > smaller_object);
+            CHECK_FALSE(smaller_object == larger_object);
+#if JSON_HAS_THREE_WAY_COMPARISON
+            // JSON_HAS_CPP_20 (do not remove; see note at top of file)
+            CHECK((shorter <=> longer) == std::partial_ordering::less); // *NOPAD*
+            CHECK((longer <=> shorter) == std::partial_ordering::greater); // *NOPAD*
+#endif
+        }
+
+        // elements that cannot be ordered
+        {
+            const double nan = std::numeric_limits<double>::quiet_NaN();
+            const json lhs = deep({nan, 1}, depth);
+            const json rhs = deep({nan, 2}, depth);
+
+            CHECK_FALSE(lhs == lhs);
+            CHECK_FALSE(rhs < lhs);
+#if JSON_HAS_THREE_WAY_COMPARISON
+            // JSON_HAS_CPP_20 (do not remove; see note at top of file)
+            // operator<=> stops there, as std::lexicographical_compare_three_way
+            // does, and operator< is derived from it
+            CHECK((lhs <=> rhs) == std::partial_ordering::unordered); // *NOPAD*
+            CHECK_FALSE(lhs < rhs);
+#else
+            // operator< skips a pair of elements that cannot be ordered, as
+            // std::lexicographical_compare does, and the next pair decides
+            CHECK(lhs < rhs);
+#endif
+        }
+    }
+}
