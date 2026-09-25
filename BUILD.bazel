@@ -30,8 +30,10 @@ cc_library(
         "include/nlohmann/detail/input/input_adapters.hpp",
         "include/nlohmann/detail/input/json_sax.hpp",
         "include/nlohmann/detail/input/lexer.hpp",
+        "include/nlohmann/detail/input/number_parse.hpp",
         "include/nlohmann/detail/input/parser.hpp",
         "include/nlohmann/detail/input/position_t.hpp",
+        "include/nlohmann/detail/input/string_scan.hpp",
         "include/nlohmann/detail/iterators/internal_iterator.hpp",
         "include/nlohmann/detail/iterators/iter_impl.hpp",
         "include/nlohmann/detail/iterators/iteration_proxy.hpp",
@@ -49,12 +51,14 @@ cc_library(
         "include/nlohmann/detail/meta/detected.hpp",
         "include/nlohmann/detail/meta/identity_tag.hpp",
         "include/nlohmann/detail/meta/is_sax.hpp",
+        "include/nlohmann/detail/meta/logic.hpp",
         "include/nlohmann/detail/meta/std_fs.hpp",
         "include/nlohmann/detail/meta/type_traits.hpp",
         "include/nlohmann/detail/meta/void_t.hpp",
         "include/nlohmann/detail/output/binary_writer.hpp",
         "include/nlohmann/detail/output/output_adapters.hpp",
         "include/nlohmann/detail/output/serializer.hpp",
+        "include/nlohmann/detail/recursion_depth_limit.hpp",
         "include/nlohmann/detail/string_concat.hpp",
         "include/nlohmann/detail/string_escape.hpp",
         "include/nlohmann/detail/string_utils.hpp",
@@ -67,7 +71,6 @@ cc_library(
     ],
     includes = ["include"],
     visibility = ["//visibility:public"],
-    alwayslink = True,
 )
 
 cc_library(

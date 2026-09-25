@@ -25,6 +25,7 @@ using nlohmann::json;
 #include <iostream>
 #include <iterator>
 #include <sstream>
+#include <string>
 #include <valarray>
 
 #if defined(_WIN32)
@@ -1230,6 +1231,57 @@ TEST_CASE("deserialization")
             }
 
             CHECK(object_count == 4);
+        }
+    }
+
+    SECTION("stream position after extraction without JSON_PRECISE_STREAM_POSITION (#5340)")
+    {
+        // By default, the character that terminates a number is consumed, so
+        // the stream is left one byte too far after a number (and only after a
+        // number). JSON_PRECISE_STREAM_POSITION changes this; see
+        // unit-precise-stream-position.cpp. These checks pin the default.
+        const auto remaining = [](std::istream & is)
+        {
+            return std::string(std::istreambuf_iterator<char>(is), std::istreambuf_iterator<char>());
+        };
+
+        SECTION("the character after a number is consumed")
+        {
+            std::istringstream ss("1true");
+            json j;
+            ss >> j;
+            CHECK(j == 1);
+            CHECK(remaining(ss) == "rue");
+        }
+
+        SECTION("the character after other values is not consumed")
+        {
+            std::istringstream ss("[1]true");
+            json j;
+            ss >> j;
+            CHECK(j == json::parse("[1]"));
+            CHECK(remaining(ss) == "true");
+        }
+
+        SECTION("comma-separated numbers can be read one by one")
+        {
+            std::istringstream ss("1,2,3");
+            json j1, j2, j3;
+            ss >> j1 >> j2 >> j3;
+            CHECK(j1 == 1);
+            CHECK(j2 == 2);
+            CHECK(j3 == 3);
+        }
+
+        SECTION("std::getline after a number skips the line break")
+        {
+            std::istringstream ss("42\nfoo");
+            json j;
+            std::string line;
+            ss >> j;
+            std::getline(ss, line);
+            CHECK(j == 42);
+            CHECK(line == "foo");
         }
     }
 

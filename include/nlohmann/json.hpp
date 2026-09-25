@@ -68,6 +68,7 @@
 #include <nlohmann/detail/output/binary_writer.hpp>
 #include <nlohmann/detail/output/output_adapters.hpp>
 #include <nlohmann/detail/output/serializer.hpp>
+#include <nlohmann/detail/recursion_depth_limit.hpp>
 #include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <nlohmann/ordered_map.hpp>
@@ -924,6 +925,31 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #endif
 
     /*!
+    @brief whether a descent must stop here and finish without the call stack
+
+    @a may_descend says whether the operator descends at all; it is a constant
+    at every call site, and is passed rather than tested by the caller so that
+    the test does not become a constant condition there, which MSVC reports as
+    C4127.
+
+    The comparison operators use this rather than @ref nesting_depth_guard::okay,
+    because they are written as a macro and a macro cannot use the preprocessor
+    the way the guard's constructor does; @ref copy_structured, which can, asks
+    the guard instead and never calls this.
+    */
+    static bool nesting_depth_exhausted(bool may_descend = true) noexcept
+    {
+#ifdef JSON_NO_THREAD_LOCAL
+        // without a count of its own per thread, a descent cannot be bounded
+        // without racing another one, so none is made
+        static_cast<void>(may_descend);
+        return true;
+#else
+        return !may_descend || nesting_depth() >= nesting_depth_limit();
+#endif
+    }
+
+    /*!
     @brief counts one level of a bounded descent for as long as it runs, and
            reports whether the descent was still within the limit when it began
 
@@ -1241,6 +1267,274 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         copy_iteratively(src);
     }
 
+
+    /// the result of comparing two values, including values that cannot be
+    /// ordered at all, such as a discarded value or a NaN
+    enum class compare_result { less, equal, greater, unordered };
+
+#if JSON_HAS_THREE_WAY_COMPARISON
+    /// @brief the ordering that @a result stands for
+    static std::partial_ordering to_partial_ordering(compare_result result) noexcept // *NOPAD*
+    {
+        switch (result)
+        {
+            case compare_result::less:
+                return std::partial_ordering::less;
+            case compare_result::greater:
+                return std::partial_ordering::greater;
+            case compare_result::equal:
+                return std::partial_ordering::equivalent;
+            case compare_result::unordered:
+            default:
+                return std::partial_ordering::unordered;
+        }
+    }
+#endif
+
+    /*!
+    @brief compare two values that are not both an array or both an object
+
+    Such a pair is compared by the operators themselves, which cannot descend
+    into it and therefore cannot recurse.
+
+    That holds for a pair whose types differ as much as for a pair of leaves: an
+    array and an object are told apart by their types alone, because an operator
+    only ever descends into two values of the same type. So `==` reports them as
+    unequal without looking inside either, and an ordering falls back to the
+    order of the types - an object sorts before an array - exactly as it does
+    for a value that is not nested deeply enough to get here.
+    */
+    template<bool Ordered>
+    static compare_result compare_leaves(const_reference lhs, const_reference rhs) noexcept
+    {
+        if (lhs == rhs)
+        {
+            return compare_result::equal;
+        }
+
+        return order_leaves(lhs, rhs, std::integral_constant<bool, Ordered> {});
+    }
+
+    /*!
+    @brief compare two object keys
+
+    An object compares its entries as pairs of a key and a value, so its keys
+    are compared exactly as std::pair compares them: with < where the objects
+    are being ordered, and with == where they are only checked for equality.
+    Note that this is not the object's own comparator, which for a vector-backed
+    object type such as nlohmann::ordered_map tells equality rather than order.
+    */
+    static compare_result compare_keys(const typename object_t::key_type& lhs,
+                                       const typename object_t::key_type& rhs,
+                                       std::true_type /*ordered*/)
+    {
+        if (lhs < rhs)
+        {
+            return compare_result::less;
+        }
+
+        if (rhs < lhs)
+        {
+            return compare_result::greater;
+        }
+
+        return compare_result::equal;
+    }
+
+    /// @brief check two object keys for equality
+    static compare_result compare_keys(const typename object_t::key_type& lhs,
+                                       const typename object_t::key_type& rhs,
+                                       std::false_type /*ordered*/)
+    {
+        return lhs == rhs ? compare_result::equal : compare_result::unordered;
+    }
+
+    /// @brief tell apart two values that are not equal
+    /// @note only instantiated where the values are being ordered, as a key or
+    ///       string type is not required to be ordered to be compared for equality
+    static compare_result order_leaves(const_reference lhs, const_reference rhs, std::true_type /*ordered*/) noexcept
+    {
+        if (lhs < rhs)
+        {
+            return compare_result::less;
+        }
+
+        if (rhs < lhs)
+        {
+            return compare_result::greater;
+        }
+
+        return compare_result::unordered;
+    }
+
+    /// @brief report two values as not equal without ordering them
+    static compare_result order_leaves(const_reference /*lhs*/, const_reference /*rhs*/, std::false_type /*ordered*/) noexcept
+    {
+        return compare_result::unordered;
+    }
+
+    /*!
+    @brief compare @a lhs and @a rhs without descending into them
+
+    Reached once a comparison has descended @ref nesting_depth_limit levels, so
+    that comparing values cannot exhaust the call stack however deeply they are
+    nested. The two values are walked in lockstep on an explicit stack and
+    compared lexicographically, element by element in the order the containers
+    enumerate them - which is how the container types this library ships compare
+    themselves: a std::map enumerates its entries in key order, and
+    nlohmann::ordered_map in insertion order. An object type that enumerates its
+    entries in an unspecified order, such as std::unordered_map, compares them
+    pairwise instead; the difference could only ever show below the bound.
+
+    Note that the stack this walks with is allocated, while the comparison
+    operators are noexcept and the container comparison this replaces allocated
+    nothing. Failing that allocation therefore ends the process rather than
+    throwing. It only arises for values nested past the bound, and only when
+    memory has run out - where the same comparison used to exhaust the call
+    stack instead - but it is a way to fail that the operators did not have.
+    */
+    template<bool Ordered>
+    static compare_result compare_iteratively(const_reference lhs, const_reference rhs,
+            const bool unordered_compares_equal) noexcept
+    {
+        /// a pair of containers being compared in lockstep
+        struct frame
+        {
+            const basic_json* lhs_value{nullptr};
+            const basic_json* rhs_value{nullptr};
+            typename array_t::const_iterator lhs_array_it{};
+            typename array_t::const_iterator rhs_array_it{};
+            typename object_t::const_iterator lhs_object_it{};
+            typename object_t::const_iterator rhs_object_it{};
+        };
+
+        std::vector<frame> stack;
+        const basic_json* left = &lhs;
+        const basic_json* right = &rhs;
+
+        for (;;)
+        {
+            const auto type = left->m_data.m_type;
+
+            if (type == right->m_data.m_type && (type == value_t::array || type == value_t::object))
+            {
+                // descend: the elements decide, and are compared further down
+                stack.emplace_back();
+                frame& pushed = stack.back();
+                pushed.lhs_value = left;
+                pushed.rhs_value = right;
+
+                if (type == value_t::array)
+                {
+                    pushed.lhs_array_it = left->m_data.m_value.array->cbegin();
+                    pushed.rhs_array_it = right->m_data.m_value.array->cbegin();
+                }
+                else
+                {
+                    pushed.lhs_object_it = left->m_data.m_value.object->cbegin();
+                    pushed.rhs_object_it = right->m_data.m_value.object->cbegin();
+                }
+            }
+            else
+            {
+                const compare_result result = compare_leaves<Ordered>(*left, *right);
+
+                // Values that cannot be ordered - a NaN, say - end an ordered
+                // comparison for std::lexicographical_compare_three_way, but
+                // std::lexicographical_compare treats them as equivalent and
+                // carries on with the next element. Both are reproduced here,
+                // so that a value nested too deeply to descend into compares
+                // exactly as one that is not.
+                if (result != compare_result::equal &&
+                        !(unordered_compares_equal && result == compare_result::unordered))
+                {
+                    return result;
+                }
+            }
+
+            // walk back up past the containers that are exhausted, then take the
+            // next pair of elements from the innermost one that is not
+            for (;;)
+            {
+                if (stack.empty())
+                {
+                    return compare_result::equal;
+                }
+
+                frame& current = stack.back();
+                const bool is_object = current.lhs_value->m_data.m_type == value_t::object;
+
+                const bool lhs_done = is_object
+                                      ? current.lhs_object_it == current.lhs_value->m_data.m_value.object->cend()
+                                      : current.lhs_array_it == current.lhs_value->m_data.m_value.array->cend();
+                const bool rhs_done = is_object
+                                      ? current.rhs_object_it == current.rhs_value->m_data.m_value.object->cend()
+                                      : current.rhs_array_it == current.rhs_value->m_data.m_value.array->cend();
+
+                if (lhs_done || rhs_done)
+                {
+                    // whichever ran out first holds the smaller container; if
+                    // both did, they are equal and the container above decides
+                    if (lhs_done != rhs_done)
+                    {
+                        return lhs_done ? compare_result::less : compare_result::greater;
+                    }
+
+                    stack.pop_back();
+                    continue;
+                }
+
+                if (is_object)
+                {
+                    // an entry is a key and a value, and the key decides first
+                    const compare_result key_result =
+                        compare_keys(current.lhs_object_it->first, current.rhs_object_it->first,
+                                     std::integral_constant<bool, Ordered> {});
+
+                    if (key_result != compare_result::equal)
+                    {
+                        return key_result;
+                    }
+
+                    left = &(current.lhs_object_it->second);
+                    right = &(current.rhs_object_it->second);
+                    ++current.lhs_object_it;
+                    ++current.rhs_object_it;
+                }
+                else
+                {
+                    left = &(*current.lhs_array_it);
+                    right = &(*current.rhs_array_it);
+                    ++current.lhs_array_it;
+                    ++current.rhs_array_it;
+                }
+
+                break;
+            }
+        }
+    }
+
+
+    /// @brief restore the parent pointers after erasing from an object
+    /// ordered_json keeps its members in a vector, and erasing a member
+    /// re-constructs every member after it in place, which resets their
+    /// parent pointers
+    void set_parents_after_object_erase()
+    {
+#if JSON_DIAGNOSTICS
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning(push )
+#pragma warning(disable : 4127) // ignore warning to replace if with if constexpr
+#endif
+        if (detail::is_ordered_map<object_t>::value)
+        {
+            set_parents();
+        }
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning( pop )
+#endif
+#endif
+    }
 
   public:
     //////////////////////////
@@ -2259,6 +2553,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     ValueType & get_to(ValueType& v) const noexcept(noexcept(
                 JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), v)))
     {
+        static_assert(!std::is_const<ValueType>::value, "get_to() cannot deserialize into a const value");
         JSONSerializer<ValueType>::from_json(*this, v);
         return v;
     }
@@ -2284,6 +2579,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     noexcept(noexcept(JSONSerializer<Array>::from_json(
                           std::declval<const basic_json_t&>(), v)))
     {
+        static_assert(!std::is_const<T>::value, "get_to() cannot deserialize into a const value");
         JSONSerializer<Array>::from_json(*this, v);
         return v;
     }
@@ -2930,6 +3226,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             case value_t::object:
             {
                 result.m_it.object_iterator = erase_from_object(pos.m_it.object_iterator);
+                set_parents_after_object_erase();
                 break;
             }
 
@@ -3002,6 +3299,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             {
                 result.m_it.object_iterator = m_data.m_value.object->erase(first.m_it.object_iterator,
                                               last.m_it.object_iterator);
+                set_parents_after_object_erase();
                 break;
             }
 
@@ -3032,7 +3330,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
         }
 
-        return m_data.m_value.object->erase(std::forward<KeyType>(key));
+        const auto erased = m_data.m_value.object->erase(std::forward<KeyType>(key));
+        set_parents_after_object_erase();
+        return erased;
     }
 
     template < typename KeyType, detail::enable_if_t <
@@ -3049,6 +3349,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         if (it != m_data.m_value.object->end())
         {
             m_data.m_value.object->erase(it);
+            set_parents_after_object_erase();
             return 1;
         }
         return 0;
@@ -3912,30 +4213,117 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", first.m_object->type_name()), first.m_object));
         }
 
+        update_members(first, last, merge_objects, 0);
+    }
+
+  private:
+    /// @brief an object @ref update_members_iteratively or @ref
+    /// merge_patch_iteratively is merging into, and the members still to merge
+    struct merge_frame
+    {
+        merge_frame(basic_json* target_, const_iterator position_, const_iterator last_) noexcept
+            : target(target_), position(std::move(position_)), last(std::move(last_))
+        {}
+
+        basic_json* target;
+        const_iterator position;
+        const_iterator last;
+    };
+
+    /*!
+    @brief the members loop of @ref update, for this object and range
+
+    Merging a nested object calls this function again, once per nesting
+    level, so a value nested deeply enough used to exhaust the call stack and
+    terminate the process. The descent is bounded here: once @ref
+    detail::recursion_depth_limit levels have been entered, @ref
+    update_members_iteratively merges what is left without the call stack.
+
+    @param[in] depth  nesting level of this object, counted from the object
+                      @ref update was called on
+    */
+    void update_members(const const_iterator& first, const const_iterator& last, const bool merge_objects, const std::size_t depth)
+    {
+        if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
+        {
+            update_members_iteratively(first, last);
+            return;
+        }
+
         for (auto it = first; it != last; ++it)
         {
             if (merge_objects && it.value().is_object())
             {
-                auto it2 = m_data.m_value.object->find(it.key());
+                const auto it2 = m_data.m_value.object->find(it.key());
                 // Only recurse when the existing value is itself an object.
                 // Otherwise overwrite, matching the documented "all other values
                 // are overwritten as usual" behavior (see #5402).
                 if (it2 != m_data.m_value.object->end() && it2->second.is_object())
                 {
-                    it2->second.update(it.value(), true);
-#if JSON_DIAGNOSTICS
-                    it2->second.set_parents();
-#endif
+                    it2->second.update_members(it.value().cbegin(), it.value().cend(), true, depth + 1);
                     continue;
                 }
             }
-            m_data.m_value.object->operator[](it.key()) = it.value();
-#if JSON_DIAGNOSTICS
-            m_data.m_value.object->operator[](it.key()).m_parent = this;
-#endif
+            // set_parent() also repairs the other members, which ordered_json
+            // relocates when adding a key makes its vector grow
+            set_parent(m_data.m_value.object->operator[](it.key()) = it.value());
         }
     }
 
+    /*!
+    @brief merge @a first to @a last into this object without the call stack
+
+    Does the same as @ref update_members with `merge_objects` set, keeping the
+    objects whose merge was interrupted by a nested one on an explicit stack
+    instead of descending into them. A nested object is still merged
+    completely before the next member, in the same order as the recursive
+    version. Only reached for values nested deeper than @ref
+    detail::recursion_depth_limit.
+    */
+    void update_members_iteratively(const_iterator first, const_iterator last)
+    {
+        std::vector<merge_frame> stack;
+
+        basic_json* target = this;
+        while (true)
+        {
+            if (first == last)
+            {
+                if (stack.empty())
+                {
+                    break;
+                }
+
+                // a nested object is merged: continue with its parent
+                target = stack.back().target;
+                first = stack.back().position;
+                last = stack.back().last;
+                stack.pop_back();
+                continue;
+            }
+
+            if (first.value().is_object())
+            {
+                const auto it2 = target->m_data.m_value.object->find(first.key());
+                if (it2 != target->m_data.m_value.object->end() && it2->second.is_object())
+                {
+                    const basic_json& source = first.value();
+                    ++first;
+                    stack.emplace_back(target, first, last);
+                    target = &it2->second;
+                    first = source.cbegin();
+                    last = source.cend();
+                    continue;
+                }
+            }
+            // set_parent() also repairs the other members, which ordered_json
+            // relocates when adding a key makes its vector grow
+            target->set_parent(target->m_data.m_value.object->operator[](first.key()) = first.value());
+            ++first;
+        }
+    }
+
+  public:
     /// @brief exchanges the values
     /// @sa https://json.nlohmann.me/api/basic_json/swap/
     void swap(reference other) noexcept (
@@ -4069,7 +4457,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // because any negative signed value is smaller than any unsigned value.
     // Otherwise, the non-negative signed value is cast to unsigned before the
     // comparison to avoid wraparound.
-#define JSON_IMPLEMENT_OPERATOR(op, null_result, unordered_result, default_result)                       \
+#define JSON_IMPLEMENT_OPERATOR(op, null_result, unordered_result, default_result, deep_result, may_descend) \
     const auto lhs_type = lhs.type();                                                                    \
     const auto rhs_type = rhs.type();                                                                    \
     \
@@ -4078,11 +4466,25 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         switch (lhs_type)                                                                                \
         {                                                                                                \
             case value_t::array:                                                                         \
+            {                                                                                            \
+                if (JSON_HEDLEY_UNLIKELY(nesting_depth_exhausted(may_descend)))                        \
+                {                                                                                        \
+                    return (deep_result);                                                                \
+                }                                                                                        \
+                const nesting_depth_guard guard;                                                         \
                 return (*lhs.m_data.m_value.array) op (*rhs.m_data.m_value.array);                                     \
-                \
+            }                                                                                            \
+            \
             case value_t::object:                                                                        \
+            {                                                                                            \
+                if (JSON_HEDLEY_UNLIKELY(nesting_depth_exhausted(may_descend)))                        \
+                {                                                                                        \
+                    return (deep_result);                                                                \
+                }                                                                                        \
+                const nesting_depth_guard guard;                                                         \
                 return (*lhs.m_data.m_value.object) op (*rhs.m_data.m_value.object);                                   \
-                \
+            }                                                                                            \
+            \
             case value_t::null:                                                                          \
                 return (null_result);                                                                    \
                 \
@@ -4182,7 +4584,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
         const_reference lhs = *this;
-        JSON_IMPLEMENT_OPERATOR( ==, true, false, false)
+        JSON_IMPLEMENT_OPERATOR( ==, true, false, false,
+                                 compare_iteratively<false>(lhs, rhs, false) == compare_result::equal, true)
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
@@ -4207,7 +4610,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_IMPLEMENT_OPERATOR(<=>, // *NOPAD*
                                 std::partial_ordering::equivalent,
                                 std::partial_ordering::unordered,
-                                lhs_type <=> rhs_type) // *NOPAD*
+                                lhs_type <=> rhs_type, // *NOPAD*
+                                to_partial_ordering(compare_iteratively<true>(lhs, rhs, false)), true)
     }
 
     /// @brief comparison: 3-way
@@ -4274,7 +4678,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_HEDLEY_DIAGNOSTIC_PUSH
         JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
-        JSON_IMPLEMENT_OPERATOR( ==, true, false, false)
+        JSON_IMPLEMENT_OPERATOR( ==, true, false, false,
+                                 compare_iteratively<false>(lhs, rhs, false) == compare_result::equal, true)
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
@@ -4330,7 +4735,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // default_result is used if we cannot compare values. In that case,
         // we compare types. Note we have to call the operator explicitly,
         // because MSVC has problems otherwise.
-        JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type))
+        JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type),
+                                 compare_iteratively<true>(lhs, rhs, true) == compare_result::less, false)
     }
 
     /// @brief comparison: less than
@@ -5831,8 +6237,29 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/merge_patch/
     void merge_patch(const basic_json& apply_patch)
     {
+        apply_merge_patch(apply_patch, 0);
+    }
+
+  private:
+    /*!
+    @brief @ref merge_patch, for a patch at nesting level @a depth
+
+    Applying a nested object calls this function again, once per nesting
+    level, so a patch nested deeply enough used to exhaust the call stack and
+    terminate the process. The descent is bounded here: once @ref
+    detail::recursion_depth_limit levels have been entered, @ref
+    merge_patch_iteratively applies what is left without the call stack.
+    */
+    void apply_merge_patch(const basic_json& apply_patch, const std::size_t depth)
+    {
         if (apply_patch.is_object())
         {
+            if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
+            {
+                merge_patch_iteratively(apply_patch);
+                return;
+            }
+
             if (!is_object())
             {
                 *this = object();
@@ -5845,7 +6272,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 }
                 else
                 {
-                    operator[](it.key()).merge_patch(it.value());
+                    operator[](it.key()).apply_merge_patch(it.value(), depth + 1);
                 }
             }
         }
@@ -5855,6 +6282,62 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
+    /*!
+    @brief apply @a apply_patch to this value without the call stack
+
+    Does the same as @ref merge_patch, keeping the objects being patched on an
+    explicit stack instead of descending into them. A nested object is still
+    patched completely before the next member, in the same order as the
+    recursive version. Only reached for patches nested deeper than @ref
+    detail::recursion_depth_limit.
+    */
+    void merge_patch_iteratively(const basic_json& apply_patch)
+    {
+        std::vector<merge_frame> stack;
+
+        // patch `target` with `patch`, or start patching it member by member
+        const auto apply = [&stack](basic_json & target, const basic_json & patch)
+        {
+            if (patch.is_object())
+            {
+                if (!target.is_object())
+                {
+                    target = basic_json::object();
+                }
+                stack.emplace_back(&target, patch.cbegin(), patch.cend());
+            }
+            else
+            {
+                target = patch;
+            }
+        };
+
+        apply(*this, apply_patch);
+        while (!stack.empty())
+        {
+            // a copy, as applying a member below can reallocate the stack;
+            // the frame itself is only changed through stack.back()
+            const merge_frame frame = stack.back();
+            if (frame.position == frame.last)
+            {
+                stack.pop_back();
+                continue;
+            }
+
+            const const_iterator member = frame.position;
+            ++stack.back().position;
+            if (member.value().is_null())
+            {
+                frame.target->erase(member.key());
+            }
+            else
+            {
+                apply(frame.target->operator[](member.key()), member.value());
+            }
+        }
+    }
+
+  public:
     /// @}
 };
 

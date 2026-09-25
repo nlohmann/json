@@ -36,6 +36,10 @@ TEST_CASE("default namespace")
         expected += "_bics";
 #endif
 
+#if JSON_PRECISE_STREAM_POSITION
+        expected += "_psp";
+#endif
+
 #if JSON_STRICT_NUL_HANDLING
         expected += "_snul";
 #endif

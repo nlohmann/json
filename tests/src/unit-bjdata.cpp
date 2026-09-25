@@ -19,6 +19,7 @@ using nlohmann::json;
 #include <fstream>
 #include <set>
 #include "make_test_data_available.hpp"
+#include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
 
 namespace
@@ -2867,6 +2868,21 @@ TEST_CASE("BJData")
                 const auto out_num = json::to_bjdata(j_num);
                 CHECK(out_num.at(0) == '{');
                 CHECK(json::from_bjdata(out_num) == j_num);
+
+                // OSS-Fuzz issue 474400817: an empty object _ArraySize_ was
+                // written as the ND-array header length, which from_bjdata()
+                // could not read back
+                const std::vector<uint8_t> input =
+                {
+                    '[', '{', 'U', 11, '_', 'A', 'r', 'r', 'a', 'y', 'D', 'a', 't', 'a', '_', 'Z',
+                    'U', 11, '_', 'A', 'r', 'r', 'a', 'y', 'T', 'y', 'p', 'e', '_', 'S', 'i', 5, 'i', 'n', 't', '1', '6',
+                    'U', 11, '_', 'A', 'r', 'r', 'a', 'y', 'S', 'i', 'z', 'e', '_', '{', '}', '}', ']'
+                };
+                const json j1 = json::from_bjdata(input);
+                CHECK(j1 == json::parse(R"([{"_ArrayType_":"int16","_ArraySize_":{},"_ArrayData_":null}])"));
+                json j2;
+                CHECK_NOTHROW(j2 = json::from_bjdata(json::to_bjdata(j1, false, false)));
+                CHECK(j2 == j1);
             }
 
             SECTION("ndarray with out-of-range _ArrayData_ elements stays as object")
@@ -4271,6 +4287,93 @@ TEST_CASE("BJData use_type requires use_size")
         CHECK_NOTHROW(json::to_bjdata(j, true, false));
         CHECK_NOTHROW(json::to_bjdata(j, true, true));
     }
+}
+
+TEST_CASE("BJData round-trip invariants")
+{
+    // This checks what the parse_bjdata_fuzzer driver checks (see
+    // tests/src/fuzzer-parse_bjdata.cpp), so that a regression shows up in CI
+    // rather than as an OSS-Fuzz report: every value from_bjdata() returns
+    // (j1) can be serialized with any combination of options, the result can
+    // be parsed back (j2), and serializing j2 again with the same options
+    // yields a value-equal result.
+    //
+    // Beyond the driver, this also checks that j2 equals j1 and that
+    // serializing j2 reproduces the exact bytes, both except for values that
+    // contain a binary value: a binary value is only written as a binary
+    // value with Draft 3's optimized binary array, and otherwise read back as
+    // an array of integers, for which the writer may choose different (but
+    // equally valid) type markers when it is serialized again (see #5494).
+    //
+    // Values are compared with dump() rather than operator==, because a NaN
+    // never compares equal to itself.
+    struct options
+    {
+        bool use_size;
+        bool use_type;
+        json::bjdata_version_t version;
+    };
+    const std::vector<options> all_options =
+    {
+        {false, false, json::bjdata_version_t::draft2},
+        {true, false, json::bjdata_version_t::draft2},
+        {true, true, json::bjdata_version_t::draft2},
+        {false, false, json::bjdata_version_t::draft3},
+        {true, false, json::bjdata_version_t::draft3},
+        {true, true, json::bjdata_version_t::draft3},
+    };
+
+    for (const auto& j0 : utils::round_trip_corpus::values())
+    {
+        // turn the corpus value into a value as from_bjdata() returns it
+        for (const auto& initial : all_options)
+        {
+            const json j1 = json::from_bjdata(json::to_bjdata(j0, initial.use_size, initial.use_type, initial.version));
+            const bool has_binary = utils::round_trip_corpus::contains_binary(j1);
+
+            for (const auto& o : all_options)
+            {
+                INFO("j1 = " << j1.dump() << ", use_size = " << o.use_size << ", use_type = " << o.use_type
+                     << ", draft3 = " << (o.version == json::bjdata_version_t::draft3));
+
+                const std::vector<std::uint8_t> vec = json::to_bjdata(j1, o.use_size, o.use_type, o.version);
+                json j2;
+                // anything the library writes must be parsable by the library
+                REQUIRE_NOTHROW(j2 = json::from_bjdata(vec));
+                const std::vector<std::uint8_t> vec2 = json::to_bjdata(j2, o.use_size, o.use_type, o.version);
+                CHECK(json::from_bjdata(vec2).dump() == j2.dump());
+
+                if (!has_binary)
+                {
+                    CHECK(j2.dump() == j1.dump());
+                    CHECK(vec2 == vec);
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE("BJData round trip of a binary value is value-stable, not byte-stable")
+{
+    // OSS-Fuzz issue 474480402: a Draft 3 optimized binary array is read as a
+    // binary value, which to_bjdata() writes in the default Draft 2 mode as a
+    // plain array of uint8 numbers. That is read back as an array of numbers,
+    // for which the writer then picks the smallest type marker, int8 ('i'),
+    // so re-serializing changes the bytes, but not the value. This is the
+    // exception described in the "Round trips" note of the BJData
+    // documentation, and why the fuzzer checks value stability (see #5494).
+    const std::vector<uint8_t> input = {'[', '$', 'B', '#', 'U', 1, 0x20};
+    const json j1 = json::from_bjdata(input);
+    CHECK(j1 == json::binary({0x20}));
+
+    const std::vector<uint8_t> vec = json::to_bjdata(j1, false, false);
+    CHECK(vec == std::vector<uint8_t>({'[', 'U', 0x20, ']'}));
+    const json j2 = json::from_bjdata(vec);
+    CHECK(j2 == json::array({0x20}));
+
+    const std::vector<uint8_t> vec2 = json::to_bjdata(j2, false, false);
+    CHECK(vec2 == std::vector<uint8_t>({'[', 'i', 0x20, ']'}));
+    CHECK(json::from_bjdata(vec2) == j2);
 }
 
 TEST_CASE("BJData roundtrips" * doctest::skip())
