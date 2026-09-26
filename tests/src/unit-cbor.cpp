@@ -15,6 +15,7 @@ using nlohmann::json;
 #include <sstream>
 #include <iomanip>
 #include <limits>
+#include <list>
 #include <set>
 #include "make_test_data_available.hpp"
 #include "test_utils.hpp"
@@ -2173,6 +2174,52 @@ TEST_CASE("CBOR nesting does not consume the call stack")
         CHECK(json::from_cbor(std::vector<uint8_t>({0x82, 0xC2, 0x01, 0x02}), true, true, ignore) == json({1, 2}));
         CHECK(json::from_cbor(std::vector<uint8_t>({0xC2, 0x82, 0x01, 0x02}), true, true, ignore) == json({1, 2}));
     }
+}
+
+TEST_CASE("CBOR input that cannot be read is discarded by every overload")
+{
+    std::vector<std::uint8_t> input = json::to_cbor(json({{"a", {1, 2}}}));
+    input.pop_back();
+
+    json _;
+    CHECK_THROWS_AS(_ = json::from_cbor(input.begin(), input.end()), json::parse_error&);
+    CHECK(json::from_cbor(input, true, false).is_discarded());
+    CHECK(json::from_cbor(input.begin(), input.end(), true, false).is_discarded());
+    CHECK(json::from_cbor(input.data(), input.size(), true, false).is_discarded());
+    CHECK(json::from_cbor({input.data(), input.size()}, true, false).is_discarded());
+
+    // a string that ends early, read through iterators that are not
+    // contiguous and have to be copied from one element at a time
+    const std::list<std::uint8_t> truncated_string = {0x63, 'a', 'b'};
+    CHECK(json::from_cbor(truncated_string.begin(), truncated_string.end(), true, false).is_discarded());
+    const std::list<std::uint8_t> complete_string = {0x63, 'a', 'b', 'c'};
+    CHECK(json::from_cbor(complete_string.begin(), complete_string.end()) == "abc");
+}
+
+TEST_CASE("CBOR SAX parsing stops at every event")
+{
+    // Containers are opened and closed by the loop that reads them; a SAX
+    // handler that rejects any event - including the end of a nested
+    // container - must stop the parse right there.
+    const auto count_events = [](const std::vector<std::uint8_t>& input)
+    {
+        int events = 0;
+        while (true)
+        {
+            SaxCountdown scp(events);
+            if (json::sax_parse(input, &scp, json::input_format_t::cbor))
+            {
+                return events;
+            }
+            ++events;
+            REQUIRE(events < 1000);
+        }
+    };
+
+    // 20 events: every container kind closes inside another one
+    const json j = json::parse(R"({"a": [1, {"b": []}], "c": {"d": [[2]]}})");
+    CHECK(count_events(json::to_cbor(j)) == 20);
+    CHECK(count_events(std::vector<std::uint8_t>({0xBF, 0x61, 'a', 0x9F, 0x01, 0xFF, 0xFF})) == 6);
 }
 
 TEST_CASE("CBOR indefinite-length strings do not recurse per chunk")

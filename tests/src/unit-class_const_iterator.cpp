@@ -43,6 +43,13 @@ TEST_CASE("const_iterator class")
             json::const_iterator const it(&j);
             json::const_iterator it2(&j);
             it2 = it;
+
+            // assigning an iterator to itself leaves it unchanged
+            json const a = {1, 2, 3};
+            json::const_iterator it3 = a.cbegin() + 1;
+            const json::const_iterator& same = it3;
+            it3 = same;
+            CHECK(*it3 == 2);
         }
 
         SECTION("copy constructor from non-const iterator")

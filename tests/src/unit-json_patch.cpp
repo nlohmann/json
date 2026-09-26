@@ -1751,3 +1751,98 @@ TEST_CASE("JSON patch - diff emits array removals in descending index order")
         CHECK(source.patch(patch) == target);
     }
 }
+
+TEST_CASE("JSON patch - every operation on ordered_json")
+{
+    using nlohmann::ordered_json;
+
+    const ordered_json doc = {{"foo", "bar"}, {"arr", {1, 2, 3}}, {"obj", {{"a", 1}}}};
+
+    SECTION("successful operations")
+    {
+        const ordered_json patch = ordered_json::parse(R"([
+            {"op": "add", "path": "/obj/b", "value": 2},
+            {"op": "add", "path": "/arr/1", "value": 9},
+            {"op": "add", "path": "/arr/-", "value": 4},
+            {"op": "remove", "path": "/arr/0"},
+            {"op": "remove", "path": "/obj/a"},
+            {"op": "replace", "path": "/foo", "value": "baz"},
+            {"op": "move", "from": "/foo", "path": "/moved"},
+            {"op": "copy", "from": "/obj", "path": "/copied"},
+            {"op": "test", "path": "/copied/b", "value": 2}
+        ])");
+
+        const ordered_json expected = ordered_json::parse(R"({
+            "arr": [9, 2, 3, 4], "obj": {"b": 2}, "moved": "baz", "copied": {"b": 2}
+        })");
+
+        CHECK(doc.patch(patch) == expected);
+
+        // adding to the root replaces the document
+        CHECK(doc.patch(ordered_json::parse(R"([{"op": "add", "path": "", "value": [1]}])")) == ordered_json({1}));
+    }
+
+    SECTION("failing operations")
+    {
+        ordered_json _;
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/arr/4", "value": 1}])")),
+                             "[json.exception.out_of_range.401] (/arr) array index 4 is out of range", ordered_json::out_of_range&);
+#else
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/arr/4", "value": 1}])")),
+                             "[json.exception.out_of_range.401] array index 4 is out of range", ordered_json::out_of_range&);
+#endif
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/nope/x", "value": 1}])")),
+                             "[json.exception.out_of_range.403] key 'nope' not found", ordered_json::out_of_range&);
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "remove", "path": "/obj/nope"}])")),
+                             "[json.exception.out_of_range.403] key 'nope' not found", ordered_json::out_of_range&);
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "remove", "path": "/arr/3"}])")),
+                             "[json.exception.out_of_range.401] (/arr) array index 3 is out of range", ordered_json::out_of_range&);
+#else
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "remove", "path": "/arr/3"}])")),
+                             "[json.exception.out_of_range.401] array index 3 is out of range", ordered_json::out_of_range&);
+#endif
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "test", "path": "/foo", "value": "qux"}])")),
+                             "[json.exception.other_error.501] (/0) unsuccessful: {\"op\":\"test\",\"path\":\"/foo\",\"value\":\"qux\"}", ordered_json::other_error&);
+#elif JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "test", "path": "/foo", "value": "qux"}])")),
+                             "[json.exception.other_error.501] (bytes 1-47) unsuccessful: {\"op\":\"test\",\"path\":\"/foo\",\"value\":\"qux\"}", ordered_json::other_error&);
+#else
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "test", "path": "/foo", "value": "qux"}])")),
+                             "[json.exception.other_error.501] unsuccessful: {\"op\":\"test\",\"path\":\"/foo\",\"value\":\"qux\"}", ordered_json::other_error&);
+#endif
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/foo"}])")),
+                             "[json.exception.parse_error.105] parse error: (/0) operation 'add' must have member 'value'", ordered_json::parse_error&);
+#elif JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/foo"}])")),
+                             "[json.exception.parse_error.105] parse error: (bytes 1-30) operation 'add' must have member 'value'", ordered_json::parse_error&);
+#else
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/foo"}])")),
+                             "[json.exception.parse_error.105] parse error: operation 'add' must have member 'value'", ordered_json::parse_error&);
+#endif
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "move", "from": "/obj", "path": "/obj/a/b"}])")),
+                             "[json.exception.out_of_range.414] cannot move value: 'from' path '/obj' is a proper prefix of 'path' '/obj/a/b'", ordered_json::out_of_range&);
+    }
+
+    SECTION("diff reproduces the target")
+    {
+        const ordered_json source = {{"a", 1}, {"b", 2}, {"c", {{"x", 1}}}, {"l", {1, 2, 3}}};
+        const std::vector<ordered_json> targets =
+        {
+            // a key removed, a key added, a nested change, a shorter array
+            {{"a", 1}, {"c", {{"x", 2}}}, {"l", {1}}, {"d", 4}},
+            // the same keys in another order
+            {{"c", {{"x", 1}}}, {"a", 1}, {"b", 2}, {"l", {1, 2, 3}}},
+            // new keys ahead of the common ones
+            {{"new", true}, {"a", 1}, {"b", 3}, {"c", {{"x", 1}}}, {"l", {1, 2, 3}}},
+        };
+        for (const auto& target : targets)
+        {
+            CAPTURE(target.dump());
+            CHECK(source.patch(ordered_json::diff(source, target)) == target);
+        }
+    }
+}
