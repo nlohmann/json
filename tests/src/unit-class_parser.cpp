@@ -11,10 +11,14 @@
 // capture whether JSON_STRICT_NUL_HANDLING was enabled on the command line
 // (e.g. -DJSON_STRICT_NUL_HANDLING=1) *before* including json.hpp, since the
 // library #undefs JSON_STRICT_NUL_HANDLING itself once the header has been
-// fully processed (see include/nlohmann/detail/macro_unscope.hpp)
+// fully processed unless JSON_TEST_KEEP_MACROS is defined (see
+// include/nlohmann/detail/macro_unscope.hpp)
 #if defined(JSON_STRICT_NUL_HANDLING) && (JSON_STRICT_NUL_HANDLING == 1)
     #define JSON_TEST_STRICT_NUL_HANDLING_ENABLED 1
 #endif
+
+#define JSON_TEST_STRINGIZE_EX(x) #x
+#define JSON_TEST_STRINGIZE(x) JSON_TEST_STRINGIZE_EX(x)
 
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
@@ -566,6 +570,16 @@ TEST_CASE("parser class")
             // left at its default or forced to 1 (e.g. by the dedicated
             // ci_test_strict_nul_handling CI target), so only the section
             // matching the actual, compiled-in behavior can pass.
+            SECTION("the macro is part of the ABI tag")
+            {
+                const std::string ns = JSON_TEST_STRINGIZE(NLOHMANN_JSON_NAMESPACE);
+#if defined(JSON_TEST_STRICT_NUL_HANDLING_ENABLED)
+                CHECK(ns.find("_snul") != std::string::npos);
+#else
+                CHECK(ns.find("_snul") == std::string::npos);
+#endif
+            }
+
 #if !defined(JSON_TEST_STRICT_NUL_HANDLING_ENABLED)
             SECTION("default behavior (macro not enabled)")
             {

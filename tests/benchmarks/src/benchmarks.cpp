@@ -131,7 +131,8 @@ static void Dump(benchmark::State& state, const char* filename, int indent)
 
     while (state.KeepRunning())
     {
-        j.dump(indent);
+        std::string output = j.dump(indent);
+        benchmark::DoNotOptimize(output);
     }
 
     state.SetBytesProcessed(state.iterations() * j.dump(indent).size());

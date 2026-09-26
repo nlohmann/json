@@ -49,7 +49,7 @@ using huge_binary_json = nlohmann::basic_json <
 // for *object keys* (e.g. "s" or "nested" below). Only the designated test
 // value is meant to lie about its size - if every huge_string_t (including
 // keys) reported a huge size, the running totals computed while walking the
-// BSON document (see calc_bson_object_size & friends in binary_writer.hpp)
+// BSON document (see calc_bson_sizes in binary_writer.hpp)
 // would need more than 32 bits, and on platforms where std::size_t is only
 // 32 bits wide that arithmetic would silently wrap around, producing wrong
 // (or even unguarded) lengths. The fake size is therefore opt-in via
@@ -1734,5 +1734,142 @@ TEST_CASE("BSON roundtrips" * doctest::skip())
                 }
             }
         }
+    }
+}
+
+TEST_CASE("BSON: deeply nested values")
+{
+    SECTION("documents and arrays round-trip at every depth")
+    {
+        // nested documents and arrays, with siblings on every level, so
+        // every length prefix covers entries of both kinds
+        json value = "leaf";
+        for (std::size_t depth = 0; depth <= 300; ++depth)
+        {
+            CAPTURE(depth);
+            const json document = {{"value", value}, {"n", depth}};
+            CHECK(json::from_bson(json::to_bson(document)) == document);
+
+value = depth % 2 == 0 ? json{{"a", std::move(value)}, {"b", {1, "x"}}} :
+            json::array({std::move(value), depth, json::object()});
+        }
+    }
+
+    SECTION("a key containing U+0000 is rejected before anything is written")
+    {
+        json value = json::object({{std::string("bad\0key", 7), 1}});
+        for (std::size_t depth = 0; depth < 200; ++depth)
+        {
+            value = json{{"a", {{"b", 1}}}, {"z", std::move(value)}};
+        }
+        std::vector<std::uint8_t> output;
+        CHECK_THROWS_AS(json::to_bson(value, output), json::out_of_range&);
+        CHECK(output.empty());
+    }
+
+    SECTION("values nested too deeply for the call stack (#5392)")
+    {
+        // serializing recursed once per nesting level, and computed every
+        // nested document's length by walking everything below it again.
+        // The values are only parsed, serialized and walked, never copied or
+        // compared, since those recurse too.
+        const std::size_t depth = 100000;
+        for (const bool objects :
+                {
+                    false, true
+                })
+        {
+            CAPTURE(objects);
+            std::string text = "{\"a\":";
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                text += objects ? "{\"a\":" : "[";
+            }
+            text += "1";
+            text.append(depth, objects ? '}' : ']');
+            text += "}";
+
+            const auto bson = json::to_bson(json::parse(text));
+            const auto result = json::from_bson(bson);
+            const json* p = &result.at("a");
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                p = objects ? &p->at("a") : &p->at(0);
+            }
+            CHECK(*p == 1);
+        }
+    }
+}
+
+TEST_CASE("Invalid document size handling")
+{
+    SECTION("document size must be at least 5")
+    {
+        std::vector<std::uint8_t> const v = {0x04, 0x00, 0x00, 0x00, 0x00};
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: document size 4 does not match the number of bytes read (5)", json::parse_error&);
+        CHECK(json::from_bson(v, true, false).is_discarded());
+    }
+
+    SECTION("declared document size must match consumed bytes (extra trailing element)")
+    {
+        // Declares 5-byte empty document but appends an int32 element after the declared end.
+        std::vector<std::uint8_t> const v =
+        {
+            0x05, 0x00, 0x00, 0x00,
+            0x10, 'a', 'd', 'm', 'i', 'n', 0x00,
+            0x01, 0x00, 0x00, 0x00,
+            0x00
+        };
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 16: syntax error while parsing BSON document: document size 5 does not match the number of bytes read (16)", json::parse_error&);
+        CHECK(json::from_bson(v, true, false).is_discarded());
+    }
+
+    SECTION("declared document size must match consumed bytes (premature terminator)")
+    {
+        // Declares 32-byte document but only contains the size field followed by an immediate terminator.
+        std::vector<std::uint8_t> const v =
+        {
+            0x20, 0x00, 0x00, 0x00,
+            0x00
+        };
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: document size 32 does not match the number of bytes read (5)", json::parse_error&);
+        CHECK(json::from_bson(v, true, false).is_discarded());
+    }
+
+    SECTION("array declared size must match consumed bytes")
+    {
+        // Outer object contains an array "a" that declares 5 bytes (empty) but
+        // actually contains an int32 element before its terminator.
+        std::vector<std::uint8_t> const v =
+        {
+            0x14, 0x00, 0x00, 0x00,                         // object size = 20
+            0x04, 'a', 0x00,                                // key "a", array type
+            0x05, 0x00, 0x00, 0x00,                         // array declared size = 5 (empty)
+            0x10, '0', 0x00, 0x01, 0x00, 0x00, 0x00,        // extra int32 element "0" = 1
+            0x00,                                           // array terminator
+            0x00                                            // object terminator
+        };
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 19: syntax error while parsing BSON document: document size 5 does not match the number of bytes read (12)", json::parse_error&);
+        CHECK(json::from_bson(v, true, false).is_discarded());
+    }
+
+    SECTION("BSON string must end with 0x00")
+    {
+        // Length-prefixed string whose terminator byte is 'X' (0x58), not 0x00.
+        std::vector<std::uint8_t> const v =
+        {
+            0x0F, 0x00, 0x00, 0x00,
+            0x02, 's', 0x00,
+            0x02, 0x00, 0x00, 0x00,
+            'A', 'X',
+            0x00
+        };
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.112] parse error at byte 13: syntax error while parsing BSON string: BSON string is not null-terminated", json::parse_error&);
+        CHECK(json::from_bson(v, true, false).is_discarded());
     }
 }

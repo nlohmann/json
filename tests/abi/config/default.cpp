@@ -40,6 +40,10 @@ TEST_CASE("default namespace")
         expected += "_psp";
 #endif
 
+#if JSON_STRICT_NUL_HANDLING
+        expected += "_snul";
+#endif
+
         expected += "_v" STRINGIZE(NLOHMANN_JSON_VERSION_MAJOR);
         expected += "_" STRINGIZE(NLOHMANN_JSON_VERSION_MINOR);
         expected += "_" STRINGIZE(NLOHMANN_JSON_VERSION_PATCH) "::basic_json";

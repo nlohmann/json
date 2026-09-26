@@ -26,7 +26,6 @@
 #undef JSON_NO_UNIQUE_ADDRESS
 #undef JSON_DISABLE_ENUM_SERIALIZATION
 #undef JSON_USE_GLOBAL_UDLS
-#undef JSON_STRICT_NUL_HANDLING
 
 #ifndef JSON_TEST_KEEP_MACROS
     #undef JSON_CATCH
@@ -46,6 +45,7 @@
     #undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
     #undef JSON_BRACE_INIT_COPY_SEMANTICS
     #undef JSON_PRECISE_STREAM_POSITION
+    #undef JSON_STRICT_NUL_HANDLING
 #endif
 
 #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>

@@ -395,6 +395,66 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_snul -->
+    <Type Name="nlohmann::json_abi_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_diag_ldvcmp -->
     <Type Name="nlohmann::json_abi_diag_ldvcmp::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp::detail::value_t::null">null</DisplayString>
@@ -635,6 +695,66 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_diag_snul -->
+    <Type Name="nlohmann::json_abi_diag_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_diag_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_ldvcmp_dp -->
     <Type Name="nlohmann::json_abi_ldvcmp_dp::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp::detail::value_t::null">null</DisplayString>
@@ -815,6 +935,66 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_ldvcmp_snul -->
+    <Type Name="nlohmann::json_abi_ldvcmp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ldvcmp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_ldvcmp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_dp_bics -->
     <Type Name="nlohmann::json_abi_dp_bics::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics::detail::value_t::null">null</DisplayString>
@@ -935,6 +1115,66 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_dp_snul -->
+    <Type Name="nlohmann::json_abi_dp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_dp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_dp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_dp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_dp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_bics_psp -->
     <Type Name="nlohmann::json_abi_bics_psp::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp::detail::value_t::null">null</DisplayString>
@@ -989,6 +1229,126 @@
     <!-- Skip the pair first/second members in the treeview while traversing a map.
          Only works in VS 2015 Update 2 and beyond using the new visualization -->
     <Type Name="std::pair&lt;*, nlohmann::json_abi_bics_psp_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_bics_snul -->
+    <Type Name="nlohmann::json_abi_bics_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_bics_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_bics_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_bics_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_bics_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_psp_snul -->
+    <Type Name="nlohmann::json_abi_psp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_psp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_psp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_psp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_psp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_psp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_psp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_psp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_psp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_psp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
         <DisplayString>{second}</DisplayString>
         <Expand>
             <ExpandedItem>second</ExpandedItem>
@@ -1175,6 +1535,66 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_diag_ldvcmp_snul -->
+    <Type Name="nlohmann::json_abi_diag_ldvcmp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_ldvcmp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_diag_ldvcmp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_diag_dp_bics -->
     <Type Name="nlohmann::json_abi_diag_dp_bics::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics::detail::value_t::null">null</DisplayString>
@@ -1295,6 +1715,66 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_diag_dp_snul -->
+    <Type Name="nlohmann::json_abi_diag_dp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_dp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_dp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_diag_dp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_dp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_dp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_diag_bics_psp -->
     <Type Name="nlohmann::json_abi_diag_bics_psp::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp::detail::value_t::null">null</DisplayString>
@@ -1349,6 +1829,126 @@
     <!-- Skip the pair first/second members in the treeview while traversing a map.
          Only works in VS 2015 Update 2 and beyond using the new visualization -->
     <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_bics_psp_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_bics_snul -->
+    <Type Name="nlohmann::json_abi_diag_bics_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_bics_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_bics_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_diag_bics_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_bics_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_bics_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_psp_snul -->
+    <Type Name="nlohmann::json_abi_diag_psp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_psp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_psp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_diag_psp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_psp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_psp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
         <DisplayString>{second}</DisplayString>
         <Expand>
             <ExpandedItem>second</ExpandedItem>
@@ -1475,6 +2075,66 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_ldvcmp_dp_snul -->
+    <Type Name="nlohmann::json_abi_ldvcmp_dp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_dp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ldvcmp_dp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_ldvcmp_dp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_dp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_ldvcmp_bics_psp -->
     <Type Name="nlohmann::json_abi_ldvcmp_bics_psp::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp::detail::value_t::null">null</DisplayString>
@@ -1535,6 +2195,126 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_ldvcmp_bics_snul -->
+    <Type Name="nlohmann::json_abi_ldvcmp_bics_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_bics_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ldvcmp_bics_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_ldvcmp_bics_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_bics_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ldvcmp_psp_snul -->
+    <Type Name="nlohmann::json_abi_ldvcmp_psp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_psp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ldvcmp_psp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_ldvcmp_psp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_psp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_psp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_dp_bics_psp -->
     <Type Name="nlohmann::json_abi_dp_bics_psp::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp::detail::value_t::null">null</DisplayString>
@@ -1589,6 +2369,186 @@
     <!-- Skip the pair first/second members in the treeview while traversing a map.
          Only works in VS 2015 Update 2 and beyond using the new visualization -->
     <Type Name="std::pair&lt;*, nlohmann::json_abi_dp_bics_psp_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_dp_bics_snul -->
+    <Type Name="nlohmann::json_abi_dp_bics_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_dp_bics_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_dp_bics_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_dp_bics_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_bics_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_dp_bics_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_dp_psp_snul -->
+    <Type Name="nlohmann::json_abi_dp_psp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_dp_psp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_dp_psp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_dp_psp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_psp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_dp_psp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_bics_psp_snul -->
+    <Type Name="nlohmann::json_abi_bics_psp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_bics_psp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_bics_psp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_bics_psp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_bics_psp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_bics_psp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
         <DisplayString>{second}</DisplayString>
         <Expand>
             <ExpandedItem>second</ExpandedItem>
@@ -1715,6 +2675,66 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_diag_ldvcmp_dp_snul -->
+    <Type Name="nlohmann::json_abi_diag_ldvcmp_dp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_dp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_ldvcmp_dp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_diag_ldvcmp_dp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_dp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_diag_ldvcmp_bics_psp -->
     <Type Name="nlohmann::json_abi_diag_ldvcmp_bics_psp::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp::detail::value_t::null">null</DisplayString>
@@ -1769,6 +2789,126 @@
     <!-- Skip the pair first/second members in the treeview while traversing a map.
          Only works in VS 2015 Update 2 and beyond using the new visualization -->
     <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_bics_psp_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_ldvcmp_bics_snul -->
+    <Type Name="nlohmann::json_abi_diag_ldvcmp_bics_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_bics_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_ldvcmp_bics_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_diag_ldvcmp_bics_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_bics_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_ldvcmp_psp_snul -->
+    <Type Name="nlohmann::json_abi_diag_ldvcmp_psp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_psp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_ldvcmp_psp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_diag_ldvcmp_psp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_psp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_psp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
         <DisplayString>{second}</DisplayString>
         <Expand>
             <ExpandedItem>second</ExpandedItem>
@@ -1835,6 +2975,186 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_diag_dp_bics_snul -->
+    <Type Name="nlohmann::json_abi_diag_dp_bics_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_dp_bics_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_dp_bics_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_diag_dp_bics_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_dp_bics_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_dp_psp_snul -->
+    <Type Name="nlohmann::json_abi_diag_dp_psp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_dp_psp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_dp_psp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_diag_dp_psp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_dp_psp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_dp_psp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_bics_psp_snul -->
+    <Type Name="nlohmann::json_abi_diag_bics_psp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_bics_psp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_bics_psp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_diag_bics_psp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_bics_psp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_bics_psp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_ldvcmp_dp_bics_psp -->
     <Type Name="nlohmann::json_abi_ldvcmp_dp_bics_psp::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp::detail::value_t::null">null</DisplayString>
@@ -1895,6 +3215,246 @@
         </Expand>
     </Type>
 
+    <!-- Namespace nlohmann::json_abi_ldvcmp_dp_bics_snul -->
+    <Type Name="nlohmann::json_abi_ldvcmp_dp_bics_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_dp_bics_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ldvcmp_dp_bics_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_ldvcmp_dp_bics_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_dp_bics_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ldvcmp_dp_psp_snul -->
+    <Type Name="nlohmann::json_abi_ldvcmp_dp_psp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_dp_psp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ldvcmp_dp_psp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_ldvcmp_dp_psp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_dp_psp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ldvcmp_bics_psp_snul -->
+    <Type Name="nlohmann::json_abi_ldvcmp_bics_psp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_bics_psp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ldvcmp_bics_psp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_ldvcmp_bics_psp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_bics_psp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_dp_bics_psp_snul -->
+    <Type Name="nlohmann::json_abi_dp_bics_psp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_dp_bics_psp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_dp_bics_psp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_dp_bics_psp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_dp_bics_psp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_dp_bics_psp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
     <!-- Namespace nlohmann::json_abi_diag_ldvcmp_dp_bics_psp -->
     <Type Name="nlohmann::json_abi_diag_ldvcmp_dp_bics_psp::basic_json&lt;*&gt;">
         <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp::detail::value_t::null">null</DisplayString>
@@ -1949,6 +3509,366 @@
     <!-- Skip the pair first/second members in the treeview while traversing a map.
          Only works in VS 2015 Update 2 and beyond using the new visualization -->
     <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_ldvcmp_dp_bics_snul -->
+    <Type Name="nlohmann::json_abi_diag_ldvcmp_dp_bics_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_dp_bics_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_ldvcmp_dp_bics_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_diag_ldvcmp_dp_bics_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_dp_bics_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_ldvcmp_dp_psp_snul -->
+    <Type Name="nlohmann::json_abi_diag_ldvcmp_dp_psp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_dp_psp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_ldvcmp_dp_psp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_diag_ldvcmp_dp_psp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_psp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_dp_psp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_ldvcmp_bics_psp_snul -->
+    <Type Name="nlohmann::json_abi_diag_ldvcmp_bics_psp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_bics_psp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_ldvcmp_bics_psp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_diag_ldvcmp_bics_psp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_bics_psp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_bics_psp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_dp_bics_psp_snul -->
+    <Type Name="nlohmann::json_abi_diag_dp_bics_psp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_dp_bics_psp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_dp_bics_psp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_diag_dp_bics_psp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_dp_bics_psp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_dp_bics_psp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ldvcmp_dp_bics_psp_snul -->
+    <Type Name="nlohmann::json_abi_ldvcmp_dp_bics_psp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_dp_bics_psp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_ldvcmp_dp_bics_psp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_ldvcmp_dp_bics_psp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_ldvcmp_dp_bics_psp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul -->
+    <Type Name="nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
+        <DisplayString>{second}</DisplayString>
+        <Expand>
+            <ExpandedItem>second</ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Namespace nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul_v3_12_0 -->
+    <Type Name="nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul_v3_12_0::basic_json&lt;*&gt;">
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::null">null</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::string">{*(m_data.m_value.string)}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::boolean">{m_data.m_value.boolean}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::number_integer">{m_data.m_value.number_integer}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::number_unsigned">{m_data.m_value.number_unsigned}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::number_float">{m_data.m_value.number_float}</DisplayString>
+        <DisplayString Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::discarded">discarded</DisplayString>
+        <Expand>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::object">
+                *(m_data.m_value.object),view(simple)
+            </ExpandedItem>
+            <ExpandedItem Condition="m_data.m_type == nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul_v3_12_0::detail::value_t::array">
+                *(m_data.m_value.array),view(simple)
+            </ExpandedItem>
+        </Expand>
+    </Type>
+
+    <!-- Skip the pair first/second members in the treeview while traversing a map.
+         Only works in VS 2015 Update 2 and beyond using the new visualization -->
+    <Type Name="std::pair&lt;*, nlohmann::json_abi_diag_ldvcmp_dp_bics_psp_snul_v3_12_0::basic_json&lt;*&gt;&gt;" IncludeView="MapHelper">
         <DisplayString>{second}</DisplayString>
         <Expand>
             <ExpandedItem>second</ExpandedItem>
