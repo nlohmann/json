@@ -2173,6 +2173,14 @@ class beyond_uint32_binary_t : public std::vector<std::uint8_t>
     }
 };
 
+// with clang and libstdc++ 10, the std::filesystem::path conversion that
+// C++17 builds consider for every string type is ambiguous for a class
+// derived from std::string, so the string case is not tested there
+#if !(defined(__clang__) && defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE < 11)
+    #define JSON_TEST_BEYOND_UINT32_STRING 1
+#endif
+
+#ifdef JSON_TEST_BEYOND_UINT32_STRING
 class beyond_uint32_string_t : public std::string
 {
   public:
@@ -2183,14 +2191,17 @@ class beyond_uint32_string_t : public std::string
         return beyond_uint32_size();
     }
 };
+#endif
 
 using beyond_uint32_binary_json = nlohmann::basic_json <
                                   std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
                                   double, std::allocator, nlohmann::adl_serializer, beyond_uint32_binary_t, void >;
 
+#ifdef JSON_TEST_BEYOND_UINT32_STRING
 using beyond_uint32_string_json = nlohmann::basic_json <
                                   std::map, std::vector, beyond_uint32_string_t, bool, std::int64_t, std::uint64_t,
                                   double, std::allocator, nlohmann::adl_serializer, std::vector<std::uint8_t>, void >;
+#endif
 } // namespace
 
 TEST_CASE("MessagePack lengths beyond UINT32_MAX cannot be serialized")
@@ -2208,11 +2219,13 @@ TEST_CASE("MessagePack lengths beyond UINT32_MAX cannot be serialized")
         const beyond_uint32_binary_json ext = beyond_uint32_binary_json::binary(beyond_uint32_binary_t{}, 42);
         CHECK_THROWS_WITH_AS(beyond_uint32_binary_json::to_msgpack(ext), expected, beyond_uint32_binary_json::out_of_range&);
 
+#ifdef JSON_TEST_BEYOND_UINT32_STRING
         // created from its type rather than from a beyond_uint32_string_t:
         // that would consider the std::filesystem::path conversion, which
         // libstdc++ 10 cannot decide for a class derived from std::string
         const beyond_uint32_string_json string(beyond_uint32_string_json::value_t::string);
         CHECK_THROWS_WITH_AS(beyond_uint32_string_json::to_msgpack(string), expected, beyond_uint32_string_json::out_of_range&);
+#endif
     }
 #endif
 }
