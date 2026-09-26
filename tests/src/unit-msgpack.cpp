@@ -2208,7 +2208,10 @@ TEST_CASE("MessagePack lengths beyond UINT32_MAX cannot be serialized")
         const beyond_uint32_binary_json ext = beyond_uint32_binary_json::binary(beyond_uint32_binary_t{}, 42);
         CHECK_THROWS_WITH_AS(beyond_uint32_binary_json::to_msgpack(ext), expected, beyond_uint32_binary_json::out_of_range&);
 
-        const beyond_uint32_string_json string = beyond_uint32_string_t("value");
+        // created from its type rather than from a beyond_uint32_string_t:
+        // that would consider the std::filesystem::path conversion, which
+        // libstdc++ 10 cannot decide for a class derived from std::string
+        const beyond_uint32_string_json string(beyond_uint32_string_json::value_t::string);
         CHECK_THROWS_WITH_AS(beyond_uint32_string_json::to_msgpack(string), expected, beyond_uint32_string_json::out_of_range&);
     }
 #endif

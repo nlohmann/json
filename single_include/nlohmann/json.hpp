@@ -19944,6 +19944,7 @@ class binary_writer
             JSON_THROW(out_of_range::create(412, concat("MessagePack length ", std::to_string(length), " exceeds maximum of ", std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
         }
 
+        static_cast<void>(j);
         return static_cast<std::uint32_t>(length);
     }
 
