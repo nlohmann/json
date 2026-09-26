@@ -15,9 +15,12 @@
 
 #include "doctest_compatibility.h"
 
+#include <algorithm>
+
 #include <cstdint>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #define JSON_TESTS_PRIVATE
@@ -777,19 +780,11 @@ struct unordered_object_t : std::map<Key, Value, directed_less<Key>, Allocator>
 
     friend bool operator==(const unordered_object_t& lhs, const unordered_object_t& rhs)
     {
-        if (lhs.size() != rhs.size())
-        {
-            return false;
-        }
-        for (const auto& entry : lhs)
+        return lhs.size() == rhs.size() && std::all_of(lhs.begin(), lhs.end(), [&rhs](const std::pair<const Key, Value>& entry)
         {
             const auto it = rhs.find(entry.first);
-            if (it == rhs.end() || !(it->second == entry.second))
-            {
-                return false;
-            }
-        }
-        return true;
+            return it != rhs.end() && it->second == entry.second;
+        });
     }
 
     friend bool operator!=(const unordered_object_t& lhs, const unordered_object_t& rhs)
