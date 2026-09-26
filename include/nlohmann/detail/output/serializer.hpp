@@ -48,7 +48,8 @@ enum class error_handler_t
 {
     strict,  ///< throw a type_error exception in case of invalid UTF-8
     replace, ///< replace invalid UTF-8 sequences with U+FFFD
-    ignore   ///< ignore invalid UTF-8 sequences
+    ignore,  ///< ignore invalid UTF-8 sequences
+    keep     ///< keep invalid UTF-8 sequences; their bytes are copied unchanged
 };
 
 template<typename BasicJsonType>
@@ -1019,6 +1020,47 @@ class serializer
                             break;
                         }
 
+                        case error_handler_t::keep:
+                        {
+                            // drop whatever the incomplete sequence left in
+                            // the buffer (only copied if !EnsureAscii) and copy
+                            // the ill-formed bytes from the input instead
+                            bytes = bytes_after_last_accept;
+
+                            if (undumped_chars > 0)
+                            {
+                                // the pending bytes of the incomplete sequence
+                                // are ill-formed; the current byte may be OK for
+                                // itself, so we would like to read it again
+                                for (std::size_t j = i - undumped_chars; j < i; ++j)
+                                {
+                                    string_buffer[bytes++] = s[j];
+                                }
+                                --i;
+                            }
+                            else
+                            {
+                                // the current byte cannot start any sequence
+                                string_buffer[bytes++] = s[i];
+                            }
+
+                            // write buffer and reset index; there must be 13 bytes
+                            // left, as this is the maximal number of bytes to be
+                            // written ("\uxxxx\uxxxx\0") for one code point
+                            if (string_buffer.size() - bytes < 13)
+                            {
+                                put_buffer(string_buffer, bytes);
+                                bytes = 0;
+                            }
+
+                            bytes_after_last_accept = bytes;
+                            undumped_chars = 0;
+
+                            // continue processing the string
+                            state = UTF8_ACCEPT;
+                            break;
+                        }
+
                         default:            // LCOV_EXCL_LINE
                             JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
                     }
@@ -1061,6 +1103,15 @@ class serializer
                 {
                     // write all accepted bytes
                     put_buffer(string_buffer, bytes_after_last_accept);
+                    break;
+                }
+
+                case error_handler_t::keep:
+                {
+                    // write all accepted bytes
+                    put_buffer(string_buffer, bytes_after_last_accept);
+                    // copy the bytes of the incomplete sequence unchanged
+                    put_string(s, s.size() - undumped_chars, s.size());
                     break;
                 }
 

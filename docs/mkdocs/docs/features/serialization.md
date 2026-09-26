@@ -64,6 +64,7 @@ serialization fails by default. The fourth argument of `dump` selects an
 - `strict` (default) — throw a [`type_error.316`](../home/exceptions.md#jsonexceptiontype_error316) exception.
 - `replace` — replace invalid bytes with the Unicode replacement character U+FFFD (`�`).
 - `ignore` — silently drop invalid bytes.
+- `keep` — copy invalid bytes to the output unchanged; the result is not valid UTF-8.
 
 ??? example
 

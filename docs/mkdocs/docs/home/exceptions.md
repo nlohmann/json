@@ -755,6 +755,7 @@ The `dump()` function only works with UTF-8 encoded strings; that is, if you ass
     - Pass an error handler as last parameter to the `dump()` function to avoid this exception:
         - `json::error_handler_t::replace` will replace invalid bytes sequences with `U+FFFD` 
         - `json::error_handler_t::ignore` will silently ignore invalid byte sequences
+        - `json::error_handler_t::keep` will copy invalid byte sequences to the output unchanged
 
 ### json.exception.type_error.317
 
