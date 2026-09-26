@@ -25,7 +25,7 @@ namespace utils
 template<typename T>
 inline void ignore_return_value(T&& /*unused*/) noexcept {}
 
-// Walk [first, last] inclusive with a stride, always visiting last.
+// Advance i toward last (inclusive) by stride, always visiting last.
 // stride 7 is coprime to 256, so every low-byte residue is still hit.
 template<typename T>
 T next_integer_sample(T i, T last, T stride)
