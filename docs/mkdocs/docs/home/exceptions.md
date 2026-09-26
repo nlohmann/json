@@ -932,19 +932,25 @@ A JSON Patch `add` operation cannot be applied because the target location's par
 
 ### json.exception.out_of_range.412
 
-BSON stores the length of documents, arrays, strings, and binary values in a signed 32-bit integer. This exception is thrown when a value is too large to be described by such a length field.
+BSON stores the length of documents, arrays, strings, and binary values in a signed 32-bit integer, and MessagePack
+stores the length of strings, binary values, arrays, and objects in at most an unsigned 32-bit integer. This exception
+is thrown when a value is too large to be described by such a length field.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     BSON length 2147483661 exceeds maximum of 2147483647
     ```
+    ```
+    MessagePack length 4294967296 exceeds maximum of 4294967295
+    ```
 
 !!! note
 
-    This exception was added in version 3.13.0. Before that, the length was silently truncated, and
+    This exception was added in version 3.13.0. Before that, the BSON length was silently truncated, and
     [`to_bson`](../api/basic_json/to_bson.md) produced documents with negative length prefixes that
-    [`from_bson`](../api/basic_json/from_bson.md) rejected.
+    [`from_bson`](../api/basic_json/from_bson.md) rejected; [`to_msgpack`](../api/basic_json/to_msgpack.md) wrote such
+    a value without any length, producing output that could not be read back.
 
 ### json.exception.out_of_range.413
 
