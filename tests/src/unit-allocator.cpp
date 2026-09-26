@@ -389,6 +389,9 @@ TEST_CASE("bad my_allocator::construct")
     }
 }
 
+// the no-exceptions CI job skips every CHECK_THROWS_AS, which would leave
+// next_construct_fails set for the next allocation outside a check
+#if !defined(JSON_NOEXCEPTION)
 TEST_CASE("a failed allocation leaves the value unchanged")
 {
     // create JSON type using the throwing allocator
@@ -501,3 +504,4 @@ TEST_CASE("a failed allocation leaves the value unchanged")
         CHECK(j == my_json({1, 2}));
     }
 }
+#endif
