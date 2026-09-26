@@ -6620,11 +6620,10 @@ struct external_constructor<value_t::string>
                              int > = 0 >
     static void construct(BasicJsonType& j, const CompatibleStringType& str)
     {
-        typename BasicJsonType::json_value value;
-        value.string = j.template create<typename BasicJsonType::string_t>(str);
+        auto* created = j.template create<typename BasicJsonType::string_t>(str);
         j.m_data.m_value.destroy(j.m_data.m_type);
         j.m_data.m_type = value_t::string;
-        j.m_data.m_value = value;
+        j.m_data.m_value.string = created;
         j.assert_invariant();
     }
 };
@@ -6728,11 +6727,10 @@ struct external_constructor<value_t::array>
         using std::begin;
         using std::end;
 
-        typename BasicJsonType::json_value value;
-        value.array = j.template create<typename BasicJsonType::array_t>(begin(arr), end(arr));
+        auto* created = j.template create<typename BasicJsonType::array_t>(begin(arr), end(arr));
         j.m_data.m_value.destroy(j.m_data.m_type);
         j.m_data.m_type = value_t::array;
-        j.m_data.m_value = value;
+        j.m_data.m_value.array = created;
         j.set_parents();
         j.assert_invariant();
     }
@@ -6822,11 +6820,10 @@ struct external_constructor<value_t::object>
         using std::begin;
         using std::end;
 
-        typename BasicJsonType::json_value value;
-        value.object = j.template create<typename BasicJsonType::object_t>(begin(obj), end(obj));
+        auto* created = j.template create<typename BasicJsonType::object_t>(begin(obj), end(obj));
         j.m_data.m_value.destroy(j.m_data.m_type);
         j.m_data.m_type = value_t::object;
-        j.m_data.m_value = value;
+        j.m_data.m_value.object = created;
         j.set_parents();
         j.assert_invariant();
     }
