@@ -2191,17 +2191,15 @@ class beyond_uint32_string_t : public std::string
         return beyond_uint32_size();
     }
 };
+
+using beyond_uint32_string_json = nlohmann::basic_json <
+                                  std::map, std::vector, beyond_uint32_string_t, bool, std::int64_t, std::uint64_t,
+                                  double, std::allocator, nlohmann::adl_serializer, std::vector<std::uint8_t>, void >;
 #endif
 
 using beyond_uint32_binary_json = nlohmann::basic_json <
                                   std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
                                   double, std::allocator, nlohmann::adl_serializer, beyond_uint32_binary_t, void >;
-
-#ifdef JSON_TEST_BEYOND_UINT32_STRING
-using beyond_uint32_string_json = nlohmann::basic_json <
-                                  std::map, std::vector, beyond_uint32_string_t, bool, std::int64_t, std::uint64_t,
-                                  double, std::allocator, nlohmann::adl_serializer, std::vector<std::uint8_t>, void >;
-#endif
 } // namespace
 
 TEST_CASE("MessagePack lengths beyond UINT32_MAX cannot be serialized")
