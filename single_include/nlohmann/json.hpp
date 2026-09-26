@@ -31440,6 +31440,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         enter(source, target);
         while (!stack.empty())
         {
+            // invalidated when enter() pushes a frame and by the pop_back()
+            // at the end, so not used after either
             diff_frame& frame = stack.back();
             const std::size_t path_length = frame.path_length;
             const std::size_t depth = stack.size();
