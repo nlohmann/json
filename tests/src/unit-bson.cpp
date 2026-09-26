@@ -1066,6 +1066,8 @@ TEST_CASE("Incomplete BSON Input")
     }
 }
 
+// the test catches the exceptions of invalid input
+#if !defined(JSON_NOEXCEPTION)
 TEST_CASE("BSON keys from contiguous and stream input")
 {
     // contiguous input reads a key up to its \x00-byte in one step, a stream
@@ -1101,6 +1103,7 @@ TEST_CASE("BSON keys from contiguous and stream input")
         CHECK(from_vector == from_stream);
     }
 }
+#endif
 
 TEST_CASE("Negative size of binary value")
 {

@@ -222,7 +222,7 @@ TEST_CASE("BON8")
 
             SECTION("signed values are read back as unsigned when not negative")
             {
-                const json j = json::from_bon8(json::to_bon8(json(std::int64_t(1000))));
+                const json j = json::from_bon8(json::to_bon8(json(static_cast<std::int64_t>(1000))));
                 CHECK(j.is_number_unsigned());
                 CHECK(j == 1000);
             }
@@ -645,6 +645,8 @@ TEST_CASE("BON8")
     }
 }
 
+// the test catches the exceptions of invalid input
+#if !defined(JSON_NOEXCEPTION)
 TEST_CASE("BON8 strings from contiguous and stream input")
 {
     // contiguous input copies the valid UTF-8 of a string in bulk, a stream
@@ -700,6 +702,7 @@ TEST_CASE("BON8 strings from contiguous and stream input")
     CHECK_THROWS_WITH_AS(_ = json::from_bon8(inputs[7]), "[json.exception.parse_error.110] parse error at byte 23: syntax error while parsing BON8 string: unexpected end of input", json::parse_error&);
     CHECK_THROWS_WITH_AS(_ = json::from_bon8(inputs[9]), "[json.exception.parse_error.110] parse error at byte 22: syntax error while parsing BON8 value: expected end of input; last byte: 0x91", json::parse_error&);
 }
+#endif
 
 // use this testcase outside [hide] to run it with Valgrind
 TEST_CASE("BON8 nesting does not consume the call stack")
