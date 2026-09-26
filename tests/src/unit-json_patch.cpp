@@ -1806,6 +1806,9 @@ TEST_CASE("JSON patch - every operation on ordered_json")
 #if JSON_DIAGNOSTICS
         CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "test", "path": "/foo", "value": "qux"}])")),
                              "[json.exception.other_error.501] (/0) unsuccessful: {\"op\":\"test\",\"path\":\"/foo\",\"value\":\"qux\"}", ordered_json::other_error&);
+#elif JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "test", "path": "/foo", "value": "qux"}])")),
+                             "[json.exception.other_error.501] (bytes 1-47) unsuccessful: {\"op\":\"test\",\"path\":\"/foo\",\"value\":\"qux\"}", ordered_json::other_error&);
 #else
         CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "test", "path": "/foo", "value": "qux"}])")),
                              "[json.exception.other_error.501] unsuccessful: {\"op\":\"test\",\"path\":\"/foo\",\"value\":\"qux\"}", ordered_json::other_error&);
@@ -1813,6 +1816,9 @@ TEST_CASE("JSON patch - every operation on ordered_json")
 #if JSON_DIAGNOSTICS
         CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/foo"}])")),
                              "[json.exception.parse_error.105] parse error: (/0) operation 'add' must have member 'value'", ordered_json::parse_error&);
+#elif JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/foo"}])")),
+                             "[json.exception.parse_error.105] parse error: (bytes 1-30) operation 'add' must have member 'value'", ordered_json::parse_error&);
 #else
         CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/foo"}])")),
                              "[json.exception.parse_error.105] parse error: operation 'add' must have member 'value'", ordered_json::parse_error&);
