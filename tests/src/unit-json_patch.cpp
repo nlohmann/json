@@ -1785,18 +1785,38 @@ TEST_CASE("JSON patch - every operation on ordered_json")
     SECTION("failing operations")
     {
         ordered_json _;
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/arr/4", "value": 1}])")),
+                             "[json.exception.out_of_range.401] (/arr) array index 4 is out of range", ordered_json::out_of_range&);
+#else
         CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/arr/4", "value": 1}])")),
                              "[json.exception.out_of_range.401] array index 4 is out of range", ordered_json::out_of_range&);
+#endif
         CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/nope/x", "value": 1}])")),
                              "[json.exception.out_of_range.403] key 'nope' not found", ordered_json::out_of_range&);
         CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "remove", "path": "/obj/nope"}])")),
                              "[json.exception.out_of_range.403] key 'nope' not found", ordered_json::out_of_range&);
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "remove", "path": "/arr/3"}])")),
+                             "[json.exception.out_of_range.401] (/arr) array index 3 is out of range", ordered_json::out_of_range&);
+#else
         CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "remove", "path": "/arr/3"}])")),
                              "[json.exception.out_of_range.401] array index 3 is out of range", ordered_json::out_of_range&);
+#endif
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "test", "path": "/foo", "value": "qux"}])")),
+                             "[json.exception.other_error.501] (/0) unsuccessful: {\"op\":\"test\",\"path\":\"/foo\",\"value\":\"qux\"}", ordered_json::other_error&);
+#else
         CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "test", "path": "/foo", "value": "qux"}])")),
                              "[json.exception.other_error.501] unsuccessful: {\"op\":\"test\",\"path\":\"/foo\",\"value\":\"qux\"}", ordered_json::other_error&);
+#endif
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/foo"}])")),
+                             "[json.exception.parse_error.105] parse error: (/0) operation 'add' must have member 'value'", ordered_json::parse_error&);
+#else
         CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/foo"}])")),
                              "[json.exception.parse_error.105] parse error: operation 'add' must have member 'value'", ordered_json::parse_error&);
+#endif
         CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "move", "from": "/obj", "path": "/obj/a/b"}])")),
                              "[json.exception.out_of_range.414] cannot move value: 'from' path '/obj' is a proper prefix of 'path' '/obj/a/b'", ordered_json::out_of_range&);
     }

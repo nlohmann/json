@@ -47,7 +47,7 @@ TEST_CASE("const_iterator class")
             // assigning an iterator to itself leaves it unchanged
             json const a = {1, 2, 3};
             json::const_iterator it3 = a.cbegin() + 1;
-            json::const_iterator& same = it3;
+            const json::const_iterator& same = it3;
             it3 = same;
             CHECK(*it3 == 2);
         }
