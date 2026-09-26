@@ -12617,9 +12617,9 @@ class binary_reader
     using char_type = typename InputAdapterType::char_type;
     using char_int_type = typename char_traits<char_type>::int_type;
 
-    /// whether the input is a contiguous block of bytes that BON8 strings can
-    /// be copied from in bulk; see @ref get_bon8_string_bulk
-    static constexpr bool bon8_bulk_scan =
+    /// whether the input is a contiguous block of bytes that can be inspected
+    /// and consumed in bulk (as in the lexer); used by @ref get_bon8_string_bulk
+    static constexpr bool bulk_scan =
         input_adapter_supports_bulk_scan<InputAdapterType>(is_detected<detect_supports_bulk_scan, InputAdapterType> {});
 
   public:
@@ -16166,7 +16166,7 @@ class binary_reader
     {
         while (true)
         {
-            get_bon8_string_bulk(result, std::integral_constant<bool, bon8_bulk_scan> {});
+            get_bon8_string_bulk(result, std::integral_constant<bool, bulk_scan> {});
 
             const auto byte = get_bon8();
 
