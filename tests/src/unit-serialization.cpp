@@ -92,6 +92,8 @@ TEST_CASE("serialization")
             CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == "\"äü\"");
             CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"ä\xEF\xBF\xBDü\"");
             CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == "\"\\u00e4\\ufffd\\u00fc\"");
+            CHECK(j.dump(-1, ' ', false, json::error_handler_t::keep) == "\"ä\xA9ü\"");
+            CHECK(j.dump(-1, ' ', true, json::error_handler_t::keep) == "\"\\u00e4\xA9\\u00fc\"");
         }
 
         SECTION("invalid character (regression guard for shared UTF-8 decoder, see #5529)")
@@ -114,6 +116,8 @@ TEST_CASE("serialization")
             CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == "\"123\"");
             CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"123\xEF\xBF\xBD\"");
             CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == "\"123\\ufffd\"");
+            CHECK(j.dump(-1, ' ', false, json::error_handler_t::keep) == "\"123\xC2\"");
+            CHECK(j.dump(-1, ' ', true, json::error_handler_t::keep) == "\"123\xC2\"");
         }
 
         SECTION("unexpected character")
@@ -126,6 +130,39 @@ TEST_CASE("serialization")
             CHECK(j.dump(-1, ' ', false, json::error_handler_t::ignore) == "\"123456\"");
             CHECK(j.dump(-1, ' ', false, json::error_handler_t::replace) == "\"123\xEF\xBF\xBD\x34\x35\x36\"");
             CHECK(j.dump(-1, ' ', true, json::error_handler_t::replace) == "\"123\\ufffd456\"");
+            CHECK(j.dump(-1, ' ', false, json::error_handler_t::keep) == "\"123\xF1\xB0\x34\x35\x36\"");
+            CHECK(j.dump(-1, ' ', true, json::error_handler_t::keep) == "\"123\xF1\xB0\x34\x35\x36\"");
+        }
+
+        SECTION("keep: valid characters are still escaped")
+        {
+            // an invalid byte followed by characters that must be escaped
+            const json j = "\xC2\"\\\n\xFF\x05";
+            CHECK(j.dump(-1, ' ', false, json::error_handler_t::keep) == "\"\xC2\\\"\\\\\\n\xFF\\u0005\"");
+            CHECK(j.dump(-1, ' ', true, json::error_handler_t::keep) == "\"\xC2\\\"\\\\\\n\xFF\\u0005\"");
+        }
+
+        SECTION("keep: truncated multibyte sequences")
+        {
+            CHECK(json("\xF0\x9F\x98").dump(-1, ' ', false, json::error_handler_t::keep) == "\"\xF0\x9F\x98\"");
+            CHECK(json("\xF0\x9F\x98").dump(-1, ' ', true, json::error_handler_t::keep) == "\"\xF0\x9F\x98\"");
+            CHECK(json("\xF0\x9F\x98" "a").dump(-1, ' ', false, json::error_handler_t::keep) == "\"\xF0\x9F\x98" "a\"");
+            CHECK(json("\xF0\x9F\x98" "a").dump(-1, ' ', true, json::error_handler_t::keep) == "\"\xF0\x9F\x98" "a\"");
+        }
+
+        SECTION("keep: long string with many invalid bytes")
+        {
+            // exceeds the internal string buffer several times
+            std::string input;
+            std::string expected = "\"";
+            for (int i = 0; i < 2000; ++i)
+            {
+                input += "\xFF\xE2\x82\n\xC3\xA4";
+                expected += "\xFF\xE2\x82\\n\xC3\xA4";
+            }
+            expected += "\"";
+            const json j = input;
+            CHECK(j.dump(-1, ' ', false, json::error_handler_t::keep) == expected);
         }
 
         SECTION("U+FFFD Substitution of Maximal Subparts")

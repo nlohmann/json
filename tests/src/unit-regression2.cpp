@@ -765,6 +765,15 @@ TEST_CASE("regression tests 2")
         CHECK(j == k);
     }
 
+    SECTION("issue #4552 - UTF-8 invalid characters are not always ignored when dumping with error_handler_t::ignore")
+    {
+        json node;
+        node["test"] = "test\334\005";
+        CHECK(node.dump(-1, ' ', false, json::error_handler_t::ignore) == "{\"test\":\"test\\u0005\"}");
+        CHECK(node.dump(-1, ' ', false, json::error_handler_t::keep) == "{\"test\":\"test\334\\u0005\"}");
+        CHECK(node.dump(-1, ' ', true, json::error_handler_t::keep) == "{\"test\":\"test\334\\u0005\"}");
+    }
+
 }
 
 TEST_CASE("regression test - parser callback must not lose a duplicate key's prior value")
