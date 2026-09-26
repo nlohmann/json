@@ -95,13 +95,13 @@ jobs:
               issue_number: issue_number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '## 🔴 Amalgamation check failed! 🔴\nThe source code has not been amalgamated and/or formatted correctly.'
+              body: '## 🔴 Amalgamation check failed! 🔴\nThe source code has not been amalgamated and/or formatted correctly, or `BUILD.bazel` is out of date.'
                     + (hasPatch ? '\n\n📎 A ready-to-apply patch is attached to the [failed workflow run](' + runUrl + ') as the `amalgamation-patch` artifact.'
                                   + ' Download it, then apply it locally from the repository root with:'
                                   + '\n\n```shell\ngit apply amalgamation.patch\n```\n\n'
                                   + 'This does not require installing astyle yourself.'
                                 : '')
                     + (first ? '\n\n@' + author + ' Please read and follow the [Contribution Guidelines]'
-                               + '(https://github.com/nlohmann/json/blob/develop/.github/CONTRIBUTING.md#files-to-change).'
+                               + '(https://github.com/nlohmann/json/blob/develop/.github/CONTRIBUTING.md#amalgamate-the-source-code).'
                              : '')
               })

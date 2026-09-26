@@ -91,6 +91,23 @@ security reasons (e.g., Intel Software Guard Extensions (SGX)).
 
 See [full documentation of `JSON_NO_IO`](../api/macros/json_no_io.md).
 
+## `JSON_NO_THREAD_LOCAL`
+
+When defined, the library does not use `#!cpp thread_local` storage. Copying a value and comparing two values then
+always avoid the call stack rather than descending into a bounded number of levels first, which is slower but yields the
+same values and the same comparisons.
+
+See [full documentation of `JSON_NO_THREAD_LOCAL`](../api/macros/json_no_thread_local.md).
+
+## `JSON_PRECISE_STREAM_POSITION`
+
+When defined to `1`, [`operator>>`](../api/operator_gtgt.md) and non-strict
+[`sax_parse`](../api/basic_json/sax_parse.md) leave an input stream positioned right after the parsed value, instead of
+also consuming the character that terminates a number. The default value is `0`, which preserves the existing behavior;
+this is planned to become the default in version 4.0.0.
+
+See [full documentation of `JSON_PRECISE_STREAM_POSITION`](../api/macros/json_precise_stream_position.md).
+
 ## `JSON_SKIP_LIBRARY_VERSION_CHECK`
 
 When defined, the library will not create a compiler warning when a different version of the library was already
@@ -104,6 +121,19 @@ When defined, the library will not create a compile error when a known unsupport
 using the library with compilers that do not fully support C++11 and may only work if unsupported features are not used.
 
 See [full documentation of `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`](../api/macros/json_skip_unsupported_compiler_check.md).
+
+## `JSON_STRICT_NUL_HANDLING`
+
+When defined to `1`, a `'\0'` (NUL) byte anywhere in the input is rejected with `parse_error.101`, like any other
+unexpected byte, instead of being silently treated as end of input (see the
+[FAQ entry](../home/faq.md#nul-bytes-in-the-input) for background). The default value is `0`, which preserves the
+existing behavior; this is planned to become the default in version 4.0.0.
+
+The strict handling can also be enabled with the CMake option
+[`JSON_StrictNulHandling`](../integration/cmake.md#json_strictnulhandling) (`OFF` by default) which sets
+`JSON_STRICT_NUL_HANDLING` accordingly.
+
+See [full documentation of `JSON_STRICT_NUL_HANDLING`](../api/macros/json_strict_nul_handling.md).
 
 ## `JSON_THROW_USER(exception)`
 
@@ -136,6 +166,14 @@ When defined to `1`, the library restores the legacy behavior in which a discard
 behavior is deprecated and switched off (`0`) by default.
 
 See [full documentation of `JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](../api/macros/json_use_legacy_discarded_value_comparison.md).
+
+## `JSON_USE_SIMDUTF`
+
+When defined, UTF-8 validation of JSON strings read from contiguous byte input is delegated to the
+[simdutf](https://github.com/simdutf/simdutf) library instead of the built-in scalar validator. This is an opt-in
+external dependency and is not defined by default.
+
+See [full documentation of `JSON_USE_SIMDUTF`](../api/macros/json_use_simdutf.md).
 
 ## `NLOHMANN_DEFINE_TYPE_*(...)`, `NLOHMANN_DEFINE_DERIVED_TYPE_*(...)`
 

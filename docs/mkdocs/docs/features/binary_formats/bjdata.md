@@ -116,18 +116,22 @@ The library uses the following mapping from JSON values types to BJData types ac
     ```
 
     Likewise, when a JSON object in the above form is serialized using
-    [`to_bjdata`](../../api/basic_json/to_bjdata.md), it is automatically converted into a compact BJData ND-array. When
-    the 1-dimensional vector stored in `"_ArraySize_"` contains a single integer or two integers with one being 1, a
-    regular 1-D optimized array is generated instead.
+    [`to_bjdata`](../../api/basic_json/to_bjdata.md), it is automatically converted into a compact BJData ND-array.
 
-    An object is only converted if the annotation actually describes a packed array; otherwise it is serialized as a
-    regular JSON object. This requires all of the following:
+    When parsing, an ND-array whose dimension vector is empty, contains a single integer, contains two integers with the
+    first being 1, or contains a 0 is returned as a regular (possibly empty) array rather than an annotated object.
+
+    An object is only converted if the annotation describes a packed array that is parsed back into the same annotated
+    object; otherwise it is serialized as a regular JSON object, so the annotation is never lost in a round trip. This requires
+    all of the following:
 
     - `"_ArrayType_"` is one of `uint8`, `int8`, `uint16`, `int16`, `uint32`, `int32`, `uint64`, `int64`, `single`,
       `double`, `char`, or `byte`,
     - `"_ArraySize_"` is an array, since the dimensions are written as the ND-array header's length,
-    - every entry of `"_ArraySize_"` is a non-negative integer, and their product is representable as a `std::size_t`,
-    - `"_ArrayData_"` holds exactly that many elements, and
+    - `"_ArraySize_"` has at least two entries and is not a 1×N row vector (first entry 1), since other shapes are
+      parsed back as a regular array,
+    - every entry of `"_ArraySize_"` is a positive integer, and their product is representable as a `std::size_t`,
+    - `"_ArrayData_"` is an array holding exactly that many elements, and
     - every element of `"_ArrayData_"` is a number of the kind named by `"_ArrayType_"` (a floating-point number for
       `single` and `double`, an integer otherwise).
 
@@ -203,6 +207,16 @@ The library maps BJData types to JSON value types as follows:
 !!! success "Complete mapping"
 
     The mapping is **complete** in the sense that any BJData value can be converted to a JSON value.
+
+!!! info "Round trips"
+
+    A value returned by [`from_bjdata`](../../api/basic_json/from_bjdata.md) can be serialized with
+    [`to_bjdata`](../../api/basic_json/to_bjdata.md) using any combination of options and parsed back into an equal
+    value, and serializing that value again with the same options produces the same bytes. The exception is binary
+    values: they are only written as an optimized binary array (`[$B`) if Draft 3 is enabled and both `use_size` and
+    `use_type` are set. Otherwise, they are written as arrays of integers and parsed back as such (see the notes on
+    binary values above), and serializing such an array again may choose different, but equally valid, type markers.
+    The bytes can then differ, but parsing them again yields the same value.
 
 ??? example
 

@@ -1554,6 +1554,27 @@ TEST_CASE("MessagePack")
             CHECK(json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01}), true, false).is_discarded());
         }
 
+        SECTION("invalid UTF-8 in string (see #5529)")
+        {
+            // a fixstr of length 2 (0xA0 | 2) whose bytes are not valid UTF-8
+            // (0xC0 0xAE is an overlong encoding of '.') must be rejected at
+            // decode time, matching every other kind of malformed binary
+            // input, rather than only failing later when the resulting
+            // value is dumped
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xa2, 0xc0, 0xae})), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing MessagePack string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_msgpack(std::vector<uint8_t>({0xa2, 0xc0, 0xae}), true, false).is_discarded());
+
+            // a MessagePack bin8 blob with the very same bytes is NOT text
+            // and must still be accepted as-is
+            CHECK_NOTHROW(_ = json::from_msgpack(std::vector<uint8_t>({0xc4, 0x02, 0xc0, 0xae})));
+            CHECK(_ == json::binary(std::vector<std::uint8_t>({0xc0, 0xae})));
+
+            // valid UTF-8 must still round-trip
+            const json j = "h\xc3\xa9llo, w\xc3\xb6rld! \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e"; // héllo, wörld! 日本語
+            CHECK(json::from_msgpack(json::to_msgpack(j)) == j);
+        }
+
         SECTION("strict mode")
         {
             std::vector<uint8_t> const vec = {0xc0, 0xc0};
@@ -1597,7 +1618,168 @@ TEST_CASE("MessagePack")
     }
 }
 
+TEST_CASE("issue #5405 - array reserve for definite-length MessagePack arrays")
+{
+#if !defined(JSON_NOEXCEPTION)
+    // this SECTION relies on catching a thrown exception to distinguish
+    // which of two acceptable, bounded rejections a hostile header took;
+    // under JSON_NOEXCEPTION, JSON_THROW never produces a catchable C++
+    // exception (it aborts instead), so this cannot be tested that way here
+    SECTION("a huge claimed length with no element data must not over-allocate")
+    {
+        // 0xdd: array 32 (four-byte length); claims 0xFFFFFFFF (4294967295)
+        // elements but provides none. max_size() for a std::vector is far
+        // larger than this count, so it does not reject the header outright;
+        // the (capped) reservation must not attempt to allocate space for
+        // billions of elements before the missing data is detected.
+        json _;
+        const std::vector<uint8_t> input = {0xdd, 0xFF, 0xFF, 0xFF, 0xFF};
+        // On a platform where std::size_t is narrower than 64 bits (e.g.
+        // 32-bit), the claimed count 0xFFFFFFFF coincides with that
+        // platform's SIZE_MAX, which some size-narrowing checks treat the
+        // same as detail::unknown_size(); it may then be rejected before
+        // the SAX consumer's own max_size() check (out_of_range.408) rather
+        // than being accepted and only found short of data once the
+        // (capped) reservation looks for element bytes that were never
+        // provided (parse_error.110). Either is an acceptable, bounded
+        // rejection of the hostile header -- the property under test is
+        // that no path attempts to allocate space for billions of elements.
+        bool threw = false;
+        try
+        {
+            _ = json::from_msgpack(input);
+        }
+        catch (const json::parse_error& e)
+        {
+            threw = true;
+            CHECK(e.id == 110);
+            CHECK(std::string(e.what()) == "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing MessagePack value: unexpected end of input");
+        }
+        catch (const json::out_of_range& e)
+        {
+            threw = true;
+            CHECK(e.id == 408);
+            CHECK(std::string(e.what()).find("excessive") != std::string::npos);
+        }
+        CHECK(threw);
+        CHECK(json::from_msgpack(input, true, false).is_discarded());
+    }
+#endif
+
+    SECTION("arrays of various sizes decode to the same value as before the reserve optimization")
+    {
+        for (const auto size :
+                {
+                    std::size_t{0}, std::size_t{1}, std::size_t{5}, // small
+                    std::size_t{16384},                             // exactly at the reserve cap
+                    std::size_t{20000}                              // above the reserve cap
+                })
+        {
+            CAPTURE(size)
+            json j = json::array();
+            for (std::size_t i = 0; i < size; ++i)
+            {
+                j.push_back(static_cast<int>(i % 1000));
+            }
+
+            const auto packed = json::to_msgpack(j);
+            CHECK(json::from_msgpack(packed) == j);
+        }
+    }
+
+    SECTION("a user-defined SAX consumer is unaffected by the internal DOM reserve optimization")
+    {
+        // the reserve() call is local to json_sax_dom_parser / json_sax_dom_callback_parser;
+        // a custom SAX consumer that does not touch a DOM array sees identical events
+        json j = json::array();
+        for (int i = 0; i < 100; ++i)
+        {
+            j.push_back(i);
+        }
+        const auto packed = json::to_msgpack(j);
+
+        SaxCountdown scp(1000000); // large enough to never trigger an abort
+        CHECK(json::sax_parse(packed, &scp, json::input_format_t::msgpack));
+    }
+}
+
+TEST_CASE("regression test - MessagePack ext type rejects a subtype that doesn't fit a single byte")
+{
+    // subtype 0-255 must still round-trip correctly (regression guard, pre-existing behavior)
+    CHECK(json::from_msgpack(json::to_msgpack(json::binary({1, 2}, 0))).get_binary().subtype() == 0);
+    CHECK(json::from_msgpack(json::to_msgpack(json::binary({1, 2}, 200))).get_binary().subtype() == 200);
+    CHECK(json::from_msgpack(json::to_msgpack(json::binary({1, 2}, 255))).get_binary().subtype() == 255);
+
+    // a subtype > 255 must throw instead of silently truncating
+    CHECK_THROWS_AS(json::to_msgpack(json::binary({1, 2}, 256)), json::out_of_range);
+    CHECK_THROWS_WITH_AS(json::to_msgpack(json::binary({1, 2}, 70000)), "[json.exception.out_of_range.415] subtype 70000 is too large for the MessagePack ext type (max 255)", json::out_of_range);
+
+    // a binary value with no subtype at all must be unaffected
+    CHECK(json::from_msgpack(json::to_msgpack(json::binary({1, 2}))).get_binary().has_subtype() == false);
+}
+
 // use this testcase outside [hide] to run it with Valgrind
+TEST_CASE("MessagePack nesting does not consume the call stack")
+{
+    // Reading a container used to call back into the value reader once per
+    // element, so the native call stack grew with the nesting depth of the
+    // input: one frame per byte for repeated 0x91 (a one-element array), which
+    // crashes the process long before the input is exhausted (#5104). The
+    // containers are kept on a heap stack now.
+    //
+    // Note that deeply nested values must not be compared, copied or dumped
+    // here: those operations are still recursive, and would reintroduce the
+    // very crash this checks for. Depth is measured by descending instead.
+
+    SECTION("an unterminated chain is reported, not crashed on")
+    {
+        json _;
+        const std::vector<uint8_t> input(300000, 0x91);
+        CHECK_THROWS_WITH_AS(_ = json::from_msgpack(input), "[json.exception.parse_error.110] parse error at byte 300001: syntax error while parsing MessagePack value: unexpected end of input", json::parse_error&);
+        CHECK(json::from_msgpack(input, true, false).is_discarded());
+    }
+
+    SECTION("a well-formed deep value is read through the SAX interface")
+    {
+        std::vector<uint8_t> input(300000, 0x91);
+        input.push_back(0x01); // innermost value
+
+        SaxCountdown accept_all(600001);
+        CHECK(json::sax_parse(input, &accept_all, json::input_format_t::msgpack));
+    }
+
+    SECTION("a well-formed deep value is read into a value")
+    {
+        const std::size_t depth = 10000;
+        std::vector<uint8_t> input(depth, 0x91);
+        input.push_back(0x01);
+
+        json j = json::from_msgpack(input);
+
+        std::size_t measured = 0;
+        const json* p = &j;
+        while (p->is_array() && !p->empty())
+        {
+            p = &p->front();
+            ++measured;
+        }
+        CHECK(measured == depth);
+        CHECK(p->is_number());
+    }
+
+    SECTION("containers are still read the same way")
+    {
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0x90})) == json::array());
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0x80})) == json::object());
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0x92, 0x90, 0x80})) == json({json::array(), json::object()}));
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0x91, 0x91, 0x91, 0x90})) == json({{{json::array()}}}));
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0x81, 0xA1, 'a', 0x81, 0xA1, 'b', 0x92, 0x01, 0x02})) == json({{"a", {{"b", {1, 2}}}}}));
+        // array 16 and map 32, i.e. the counted forms
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0xDC, 0x00, 0x02, 0x01, 0x02})) == json({1, 2}));
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0xDF, 0x00, 0x00, 0x00, 0x01, 0xA1, 'k', 0xC3})) == json({{"k", true}}));
+    }
+}
+
 TEST_CASE("single MessagePack roundtrip")
 {
     SECTION("sample.json")

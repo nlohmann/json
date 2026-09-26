@@ -213,18 +213,38 @@ add_custom_target(ci_test_legacycomparison
 )
 
 ###############################################################################
-# Enable brace-init copy semantics.
+# Validate UTF-8 with simdutf.
 ###############################################################################
 
-add_custom_target(ci_test_brace_init_copy_semantics
+add_custom_target(ci_test_simdutf
     COMMAND ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
-    -DJSON_BuildTests=ON -DJSON_FastTests=ON
-    -DCMAKE_CXX_FLAGS=-DJSON_BRACE_INIT_COPY_SEMANTICS=1
-    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_brace_init_copy_semantics
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_brace_init_copy_semantics
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_brace_init_copy_semantics && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
-    COMMENT "Compile and test with brace-init copy semantics enabled"
+    -DJSON_BuildTests=ON -DJSON_TestSimdutf=ON
+    # simdutf needs C++17, so the library falls back to its scalar validator
+    # below that: build the suite at C++11 to cover the fallback with the macro
+    # defined, and at C++17 to run every test against simdutf itself
+    "-DJSON_TestStandards=11\;17"
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_simdutf
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_simdutf
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_simdutf && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with simdutf UTF-8 validation enabled"
+)
+
+###############################################################################
+# Enable strict NUL-byte handling.
+###############################################################################
+
+add_custom_target(ci_test_strict_nul_handling
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_StrictNulHandling=ON
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_strict_nul_handling
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_strict_nul_handling
+    # unit-testsuites contains a fixture (a "1e308" test value) that relies on the
+    # legacy NUL-as-end-of-input behavior this macro disables; exclude it here, as
+    # it is expected to fail under strict NUL handling and is out of scope for it
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_strict_nul_handling && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure -E "test-testsuites"
+    COMMENT "Compile and test with strict NUL-byte handling enabled"
 )
 
 ###############################################################################
@@ -240,6 +260,59 @@ add_custom_target(ci_test_noglobaludls
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_noglobaludls
     COMMAND cd ${PROJECT_BINARY_DIR}/build_noglobaludls && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
     COMMENT "Compile and test with global UDLs disabled"
+)
+
+###############################################################################
+# Disable enum serialization.
+###############################################################################
+
+add_custom_target(ci_test_disableenumserialization
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_DisableEnumSerialization=ON
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_disableenumserialization
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_disableenumserialization
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_disableenumserialization && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with enum serialization disabled"
+)
+
+###############################################################################
+# Skip the multiple-inclusion library version check.
+###############################################################################
+
+# tests/src/skip_library_version_check.cpp deliberately simulates a scenario
+# (mixing two differently-versioned inclusions of the library in one
+# translation unit) that unavoidably triggers the compiler's own "macro
+# redefined" warning, so -- unlike the ci_test_* targets above -- it is
+# compiled directly here, with a modest warning set, instead of being folded
+# into the library's own -Weverything/-Werror unit test matrix.
+add_custom_target(ci_test_skiplibraryversioncheck
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/skip_library_version_check
+    COMMAND ${CMAKE_CXX_COMPILER} -std=c++11 -Wall -Wextra
+        -I${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/tests/src/skip_library_version_check.cpp
+        -o ${PROJECT_BINARY_DIR}/skip_library_version_check/skip_library_version_check
+    COMMAND ${PROJECT_BINARY_DIR}/skip_library_version_check/skip_library_version_check
+    COMMENT "Compile and run a translation unit simulating a mismatched library version, with JSON_SKIP_LIBRARY_VERSION_CHECK defined"
+)
+
+###############################################################################
+# Disable thread-local storage.
+###############################################################################
+
+# Without thread-local storage, copying and comparing cannot bound their
+# descent and handle every object and array without the call stack. Those paths
+# are otherwise only reached by values nested deeper than the bound, so this
+# target is what runs the whole test suite through them.
+add_custom_target(ci_test_no_thread_local
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON
+    -DCMAKE_CXX_FLAGS=-DJSON_NO_THREAD_LOCAL
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_no_thread_local
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_no_thread_local
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_no_thread_local && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test without thread-local storage"
 )
 
 ###############################################################################
@@ -546,7 +619,7 @@ add_custom_target(ci_single_binaries
 add_custom_target(ci_benchmarks
     COMMAND ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=Release -GNinja
-        -S${PROJECT_SOURCE_DIR}/benchmarks -B${PROJECT_BINARY_DIR}/build_benchmarks
+        -S${PROJECT_SOURCE_DIR}/tests/benchmarks -B${PROJECT_BINARY_DIR}/build_benchmarks
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_benchmarks --target json_benchmarks
     COMMAND cd ${PROJECT_BINARY_DIR}/build_benchmarks && ./json_benchmarks
     COMMENT "Run benchmarks"

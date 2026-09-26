@@ -3,6 +3,10 @@ name: "Check amalgamation"
 on:
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -57,12 +61,15 @@ jobs:
           python3 -mvenv venv
           venv/bin/pip3 install -r $MAIN_DIR/tools/astyle/requirements.txt
 
-      - name: Regenerate amalgamation and formatting
+      - name: Regenerate amalgamation, formatting, and BUILD.bazel
         run: |
           cd $MAIN_DIR
 
           python3 $TOOL_DIR/amalgamate.py -c $TOOL_DIR/config_json.json -s .
           python3 $TOOL_DIR/amalgamate.py -c $TOOL_DIR/config_json_fwd.json -s .
+
+          # the header list of the Bazel "json" target must match the files in include/
+          cmake -P cmake/scripts/gen_bazel_build_file.cmake
 
           ${{ github.workspace }}/venv/bin/astyle --project=tools/astyle/.astylerc --suffix=none --quiet \
             $INCLUDE_DIR/json.hpp $INCLUDE_DIR/json_fwd.hpp
@@ -87,7 +94,7 @@ jobs:
           mkdir -p ${{ github.workspace }}/patch
           git diff --patch --no-color > ${{ github.workspace }}/patch/amalgamation.patch
           if [ -s ${{ github.workspace }}/patch/amalgamation.patch ]; then
-            echo "The source code has not been amalgamated/formatted correctly. Diff:"
+            echo "The source code has not been amalgamated/formatted correctly or BUILD.bazel is out of date. Diff:"
             cat ${{ github.workspace }}/patch/amalgamation.patch
             echo "has_diff=true" >> "$GITHUB_OUTPUT"
           else

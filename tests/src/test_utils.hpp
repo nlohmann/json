@@ -15,6 +15,15 @@
 namespace utils
 {
 
+// Some tests intentionally discard the [[nodiscard]]/JSON_HEDLEY_WARN_UNUSED_RESULT
+// return value of a call they only make to exercise its side effects (e.g. checking
+// that it does not throw). A plain (void) cast on the call expression does not
+// suppress GCC's warning for functions using the GNU __attribute__((warn_unused_result))
+// form (as opposed to the C++17 [[nodiscard]] attribute) -- passing the value into an
+// ordinary function call does.
+template<typename T>
+inline void ignore_return_value(T&& /*unused*/) noexcept {}
+
 inline std::vector<std::uint8_t> read_binary_file(const std::string& filename)
 {
     std::ifstream file(filename, std::ios::binary);
