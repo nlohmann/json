@@ -16,8 +16,8 @@
 #include "doctest_compatibility.h"
 
 #include <cstdint>
+#include <map>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #define JSON_TESTS_PRIVATE
@@ -741,24 +741,71 @@ TEST_CASE("regression #3868 - heterogeneous comparisons compile under C++20 (P24
 
 namespace
 {
-// an object type that enumerates its entries in no fixed order
+// orders keys ascending or descending, as chosen when a map is created
+template<class Key>
+class directed_less
+{
+  public:
+    directed_less() = default;
+
+    explicit directed_less(const bool descending) noexcept
+        : m_descending(descending)
+    {}
+
+    bool operator()(const Key& lhs, const Key& rhs) const
+    {
+        return m_descending ? rhs < lhs : lhs < rhs;
+    }
+
+  private:
+    bool m_descending = false;
+};
+
+// An object type that, like std::unordered_map, enumerates its entries in no
+// fixed order - ascending or descending by key, depending on how the map was
+// created - and whose operator== does not depend on that order.
+// std::unordered_map itself cannot be used here: the standard does not
+// require it to accept an incomplete mapped type such as basic_json, and
+// libstdc++ 6 to 9 as well as the EDG front ends of icpc and nvc++ reject
+// basic_json<std::unordered_map>. std::map, the default object type, works
+// with all supported compilers.
 template<class Key, class Value, class /*Compare*/, class Allocator>
-using unordered_object_t = std::unordered_map<Key, Value, std::hash<Key>, std::equal_to<Key>, Allocator>;
+struct unordered_object_t : std::map<Key, Value, directed_less<Key>, Allocator>
+{
+    using base_type = std::map<Key, Value, directed_less<Key>, Allocator>;
+    using base_type::base_type;
+
+    friend bool operator==(const unordered_object_t& lhs, const unordered_object_t& rhs)
+    {
+        if (lhs.size() != rhs.size())
+        {
+            return false;
+        }
+        for (const auto& entry : lhs)
+        {
+            const auto it = rhs.find(entry.first);
+            if (it == rhs.end() || !(it->second == entry.second))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    friend bool operator!=(const unordered_object_t& lhs, const unordered_object_t& rhs)
+    {
+        return !(lhs == rhs);
+    }
+};
 using unordered_json = nlohmann::basic_json<unordered_object_t>;
 
-// ten entries; after inserting and erasing many more, the map keeps its
-// larger bucket count and enumerates the same entries in another order
-unordered_json make_unordered_object(const bool rehashed)
+// the entries "0" to "9", enumerated in ascending or in descending order
+unordered_json make_unordered_object(const bool descending)
 {
-    unordered_json j = unordered_json::object();
-    const int count = rehashed ? 1000 : 10;
-    for (int i = 0; i < count; ++i)
+    unordered_json j = unordered_json::object_t(directed_less<std::string>(descending));
+    for (int i = 0; i < 10; ++i)
     {
         j[std::to_string(i)] = i;
-    }
-    for (int i = 10; i < count; ++i)
-    {
-        j.erase(std::to_string(i));
     }
     return j;
 }
@@ -780,35 +827,38 @@ TEST_CASE("equality of objects whose entries have no fixed order")
 {
     // Values nested deeper than a bound are compared without the call stack,
     // entry by entry. That must agree with the object type's own operator==,
-    // which for std::unordered_map does not depend on the order of the
-    // entries, and for ordered_map does.
+    // which for unordered_object_t (as for std::unordered_map) does not
+    // depend on the order of the entries, and for ordered_map does.
+    REQUIRE(make_unordered_object(true).begin().key() == "9");
+    REQUIRE(make_unordered_object(false).begin().key() == "0");
+
     for (const std::size_t depth : std::vector<std::size_t> {0, 200})
     {
         CAPTURE(depth);
 
-        const unordered_json rehashed = nest(make_unordered_object(true), depth);
-        const unordered_json fresh = nest(make_unordered_object(false), depth);
-        CHECK(rehashed == fresh);
-        CHECK_FALSE(rehashed != fresh);
+        const unordered_json descending = nest(make_unordered_object(true), depth);
+        const unordered_json ascending = nest(make_unordered_object(false), depth);
+        CHECK(descending == ascending);
+        CHECK_FALSE(descending != ascending);
 
         // a copy is equal to its original
-        const unordered_json copy = rehashed; // NOLINT(performance-unnecessary-copy-initialization)
-        CHECK(copy == rehashed);
+        const unordered_json copy = descending; // NOLINT(performance-unnecessary-copy-initialization)
+        CHECK(copy == descending);
 
         // a different value, a different key, or another entry still count
         unordered_json other_value = make_unordered_object(true);
         other_value["5"] = 42;
-        CHECK_FALSE(nest(other_value, depth) == fresh);
+        CHECK_FALSE(nest(other_value, depth) == ascending);
 
         unordered_json other_key = make_unordered_object(true);
         other_key.erase("5");
         other_key["50"] = 5;
-        CHECK_FALSE(nest(other_key, depth) == fresh);
+        CHECK_FALSE(nest(other_key, depth) == ascending);
 
         unordered_json more_entries = make_unordered_object(true);
         more_entries["10"] = 10;
-        CHECK_FALSE(nest(more_entries, depth) == fresh);
-        CHECK_FALSE(fresh == nest(more_entries, depth));
+        CHECK_FALSE(nest(more_entries, depth) == ascending);
+        CHECK_FALSE(ascending == nest(more_entries, depth));
 
         // ordered_json compares its entries in sequence
         const nlohmann::ordered_json ab = nest(nlohmann::ordered_json({{"a", 1}, {"b", 2}}), depth);
