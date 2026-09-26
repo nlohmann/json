@@ -24,7 +24,7 @@ Summary:
 
 `type` (in) : name of the type (class, struct) to serialize/deserialize
 
-`member` (in) : name of the member variable to serialize/deserialize; up to 63 members can be given as a comma-separated list
+`member` (in) : name of the member variable to serialize/deserialize; up to 63 members can be given as a comma-separated list, which may also be empty
 
 ## Default definition
 
@@ -45,6 +45,19 @@ Prerequisites
 
 1. The type `type` must be default constructible (except (3)). See [How can I use `get()` for non-default constructible/non-copyable types?](https://json.nlohmann.me/features/arbitrary_types/#how-can-i-use-get-for-non-default-constructiblenon-copyable-types) for how to overcome this limitation.
 1. The macro must be used inside the type (class/struct).
+
+Types without members
+
+The member list may be empty. The macro then generates a `to_json` that produces an empty JSON object `{}`, and a `from_json` that reads no members:
+
+```
+struct marker
+{
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(marker)
+};
+```
+
+The `WITH_NAMES` variants do not support this.
 
 Implementation limits
 

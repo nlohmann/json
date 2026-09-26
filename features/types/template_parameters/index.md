@@ -928,7 +928,9 @@ If `std::numeric_limits<NumberFloatType>` describes an IEEE 754 binary32 or bina
 
 ## `AllocatorType`
 
-`AllocatorType` is instantiated with **one** argument, for each of `object_t`, `array_t`, `string_t`, `binary_t`, `basic_json`, and `std::pair<const StringType, basic_json>`.
+`AllocatorType` is instantiated with **one** argument, for each of `object_t`, `array_t`, `string_t`, `binary_t`, `basic_json`, `std::pair<const StringType, basic_json>`, and `std::pair<StringType, basic_json>`.
+
+`AllocatorType` is not the only allocator a `basic_json` uses. It allocates the JSON values themselves, but most temporary storage is allocated with `std::allocator`. This includes the parser's stacks and the stacks that process deeply nested values without recursion.
 
 ### Always required
 

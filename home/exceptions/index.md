@@ -405,7 +405,7 @@ Example messages
 
 ### json.exception.parse_error.113
 
-A string could not be read from a [binary format](https://json.nlohmann.me/features/binary_formats/index.md): either a value that is not a string was read where one was required (for instance as a map key), or the string's length specification is invalid.
+A string could not be read from a [binary format](https://json.nlohmann.me/features/binary_formats/index.md): either a value that is not a string was read where one was required (for instance as a map key), the string's length specification is invalid, or the string's bytes are not valid UTF-8.
 
 Example messages
 
@@ -423,6 +423,10 @@ Example messages
 
 ```
 [json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData string: string length must not be negative
+```
+
+```
+[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte
 ```
 
 ### json.exception.parse_error.114

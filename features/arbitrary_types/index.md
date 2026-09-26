@@ -198,6 +198,22 @@ ns::person p{"Ned Flanders", "744 Evergreen Terrace", 60};
 nlohmann::ordered_json j = p; // keys appear in declaration order: name, address, age
 ```
 
+Zero-member types
+
+All 12 `NLOHMANN_DEFINE_TYPE_*`/`NLOHMANN_DEFINE_DERIVED_TYPE_*` macros (excluding the `WITH_NAMES` variants) also accept types with no member variables to serialize, producing/accepting an empty JSON object `{}` (or, for the derived-type macros, just the base class's own JSON representation):
+
+```
+namespace ns {
+    struct marker {
+        bool operator==(const marker&) const { return true; }
+        NLOHMANN_DEFINE_TYPE_INTRUSIVE(marker)
+    };
+}
+
+ns::marker m{};
+nlohmann::json j = m; // {}
+```
+
 No macro for non-default-constructible types
 
 There is currently no `NLOHMANN_DEFINE_TYPE_*`-style macro for types that are not [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). This is not an intentional omission of documentation -- no such macro exists yet; see [How can I use `get()` for non-default constructible/non-copyable types?](#how-can-i-use-get-for-non-default-constructiblenon-copyable-types) for the manual pattern to use instead.

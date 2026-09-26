@@ -187,6 +187,10 @@ Object keys
 
 CBOR allows map keys of any type, whereas JSON only allows strings as keys in object values. Therefore, CBOR maps with keys other than UTF-8 strings are rejected.
 
+UTF-8 validation of text strings
+
+[RFC 8949, Section 3.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-3.1) requires CBOR text strings (major type 3) to be valid UTF-8. This library validates the bytes of every text string (object keys included) at decode time and rejects ill-formed UTF-8 with a [`parse_error.113`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113) exception (or, with `allow_exceptions` set to `false`, a discarded value), rather than only failing later when the resulting value is dumped. Byte strings (major type 2) are unaffected and are never validated, since they are not required to hold text.
+
 Tagged items
 
 Tagged items (0xC0..0xDB) will throw a parse error by default. They can be ignored by passing `cbor_tag_handler_t::ignore` to function `from_cbor`, in which case the tag is skipped and the enclosed data item is parsed on its own. They can be stored by passing `cbor_tag_handler_t::store` to function `from_cbor`. Note that no tag is ever interpreted: for instance, a text string tagged with tag 0 (date/time) stays a string.

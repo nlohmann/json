@@ -41,6 +41,10 @@ This macro must be defined **before** including `<nlohmann/json.hpp>`. Defining 
 
 Enabling it also changes how a `char` array (including a string literal, e.g. `json::parse("123")`) is read: such an array normally carries a trailing `'\0'` contributed by the compiler, not by the source text. With this macro enabled, that one trailing byte is trimmed if present so that parsing a string literal keeps working; every other byte in the array - including any `'\0'` that is not the very last element - is read as real data and rejected like any other unexpected byte. Arrays of any other element type (`unsigned char`, `std::uint8_t`, ...), as used for CBOR or MessagePack, are never affected by this trimming; their full extent - including a genuine trailing `0x00` - is always preserved, in both states of this macro.
 
+ABI compatibility
+
+The value of this macro is encoded in the [namespace](https://json.nlohmann.me/features/namespace/index.md) (tag `_snul`), resulting in distinct symbol names. Translation units compiled with and without it can therefore be linked into the same program without One Definition Rule (ODR) violations, but they cannot exchange instances of library types.
+
 Workaround without the macro
 
 To reject a NUL byte without enabling this macro, trim your input yourself before calling `parse()`:

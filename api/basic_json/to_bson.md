@@ -46,9 +46,8 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 ## Complexity
 
-Proportional to the size of the JSON value `j` multiplied by its maximum nesting
-depth, `O(n × d)`. BSON length prefixes are computed recursively before nested
-values are written.
+Linear in the size of the JSON value `j`. The length prefixes of all nested documents and arrays are computed in one
+pass before anything is written.
 
 ## Examples
 
@@ -77,3 +76,4 @@ values are written.
 ## Version history
 
 - Added in version 3.4.0.
+- Linear in the size of `j`, and no longer limited by the call stack for deeply nested values, since version 3.13.0.
