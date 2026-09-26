@@ -411,6 +411,11 @@ class binary_reader
     */
     bool get_bson_cstr(string_t& result)
     {
+        if (get_bson_cstr_bulk(result, std::integral_constant<bool, bulk_scan> {}))
+        {
+            return true;
+        }
+
         auto out = std::back_inserter(result);
         while (true)
         {
@@ -425,6 +430,46 @@ class binary_reader
             }
             *out++ = static_cast<typename string_t::value_type>(current);
         }
+    }
+
+    /*!
+    @brief read a C-style string from contiguous input in one step
+
+    @param[in,out] result  the string to append to
+    @return whether the string was read; if the input has no \x00-byte, nothing
+            is read, and @ref get_bson_cstr reports the end of the input
+    */
+    bool get_bson_cstr_bulk(string_t& result, std::true_type /*bulk*/)
+    {
+        const std::size_t remaining = ia.bulk_remaining();
+        if (remaining == 0)
+        {
+            return false;
+        }
+        const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+        // a plain loop rather than std::memchr: most keys are short (array
+        // indices are keys, too), and the call would cost more than it saves
+        std::size_t length = 0;
+        while (length < remaining && data[length] != 0x00)
+        {
+            ++length;
+        }
+        if (length == remaining)
+        {
+            return false;
+        }
+        result.append(reinterpret_cast<const typename string_t::value_type*>(data), length);
+        // consume the string and its \x00-byte, as the byte-wise path does
+        ia.bulk_skip(length + 1);
+        chars_read += length + 1;
+        current = 0x00;
+        return true;
+    }
+
+    /// input that is not contiguous: C-style strings are read byte by byte
+    bool get_bson_cstr_bulk(string_t& /*result*/, std::false_type /*bulk*/) const noexcept
+    {
+        return false;
     }
 
     /*!

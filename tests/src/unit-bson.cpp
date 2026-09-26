@@ -1066,6 +1066,42 @@ TEST_CASE("Incomplete BSON Input")
     }
 }
 
+TEST_CASE("BSON keys from contiguous and stream input")
+{
+    // contiguous input reads a key up to its \x00-byte in one step, a stream
+    // reads it byte by byte; both must give the same value or error for the
+    // complete document and for every truncation of it
+    const json j = {{"", true}, {"k", {1, 2, 3}}, {std::string(40, 'x'), {{"nested key", "value"}}}};
+    const std::vector<std::uint8_t> bson = json::to_bson(j);
+    CHECK(json::from_bson(bson) == j);
+
+    for (std::size_t length = 0; length <= bson.size(); ++length)
+    {
+        CAPTURE(length)
+        const std::vector<std::uint8_t> input(bson.begin(), bson.begin() + static_cast<std::ptrdiff_t>(length));
+        std::string from_vector;
+        std::string from_stream;
+        try
+        {
+            from_vector = json::from_bson(input).dump();
+        }
+        catch (const json::parse_error& e)
+        {
+            from_vector = e.what();
+        }
+        try
+        {
+            std::istringstream stream(std::string(input.begin(), input.end()));
+            from_stream = json::from_bson(stream).dump();
+        }
+        catch (const json::parse_error& e)
+        {
+            from_stream = e.what();
+        }
+        CHECK(from_vector == from_stream);
+    }
+}
+
 TEST_CASE("Negative size of binary value")
 {
     // invalid BSON: the size of the binary value is -1
