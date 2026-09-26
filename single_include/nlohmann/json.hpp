@@ -30954,21 +30954,240 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         // the patch
         basic_json result(value_t::array);
+        diff_recursively(result, source, target, path, 0);
+        return result;
+    }
 
-        // if the values are the same, return an empty patch
+  private:
+    /// @brief two arrays or two objects @ref diff_iteratively is diffing
+    struct diff_frame
+    {
+        diff_frame(const basic_json* source_, const basic_json* target_, const std::size_t path_length_) noexcept
+            : source(source_), target(target_), path_length(path_length_)
+        {}
+
+        // declared for GCC's -Weffc++, which asks for them in a class with
+        // pointer members and a non-trivial destructor; the exception
+        // specifications are left implicit, as GCC 4.8 rejects explicit ones
+        // that differ from them
+        diff_frame(const diff_frame&) = default;
+        diff_frame(diff_frame&&) = default;
+        diff_frame& operator=(const diff_frame&) = default;
+        diff_frame& operator=(diff_frame&&) = default;
+        ~diff_frame() = default;
+
+        /// the values being diffed, both arrays or both objects
+        const basic_json* source;
+        const basic_json* target;
+        /// the length of their path in `current_path`
+        std::size_t path_length;
+        /// arrays: the next index to diff
+        std::size_t index = 0;
+        /// objects: the next member of source to look at
+        const_iterator member{}; // NOLINT(readability-redundant-member-init)
+        /// objects: the keys common to both, in source's order
+        std::vector<typename object_t::key_type> common_keys{}; // NOLINT(readability-redundant-member-init)
+        /// objects: the next entry of common_keys
+        std::size_t next_common = 0;
+        /// objects: the "add" operations for keys only target has
+        basic_json added_ops{}; // NOLINT(readability-redundant-member-init)
+    };
+
+    // The operations of a diff are built by the functions below rather than
+    // where they are needed: building one takes several temporaries, and
+    // unoptimized builds give each temporary a stack slot of its own in the
+    // function it appears in. In diff_recursively, which is on the call stack
+    // once per nesting level, that made every level cost kilobytes of stack.
+
+    /// @brief append a "replace" operation for @a path with @a value to @a result
+    static void diff_replace(basic_json& result, const string_t& path, const basic_json& value)
+    {
+        result.push_back(
+        {
+            {"op", "replace"}, {"path", path}, {"value", value}
+        });
+    }
+
+    /// @brief append a "remove" operation for @a path to @a result
+    static void diff_remove(basic_json& result, const string_t& path)
+    {
+        result.push_back(object(
+        {
+            {"op", "remove"}, {"path", path}
+        }));
+    }
+
+    /// @brief append an "add" operation for @a path with @a value to @a result
+    static void diff_add(basic_json& result, const string_t& path, const basic_json& value)
+    {
+        result.push_back(
+        {
+            {"op", "add"}, {"path", path}, {"value", value}
+        });
+    }
+
+    /// @brief append the "remove" operations for the elements of array
+    ///        @a source from @a index on, and the "add" operations for the
+    ///        elements of array @a target from source's size on, to @a result
+    static void diff_array_tails(basic_json& result, const basic_json& source, const basic_json& target,
+                                 const string_t& path, const std::size_t index)
+    {
+        // remove my remaining elements, highest index first; appending
+        // in that order avoids the quadratic reinsertion done before
+        for (std::size_t j = source.size(); j > index; --j)
+        {
+            diff_remove(result, detail::concat<string_t>(path, '/', detail::to_string<string_t>(j - 1)));
+        }
+
+        // add other remaining elements
+        for (std::size_t i = source.size(); i < target.size(); ++i)
+        {
+            diff_add(result, detail::concat<string_t>(path, "/-"), target[i]);
+        }
+    }
+
+    /*!
+    @brief compare the keys of objects @a source and @a target
+
+    If the keys both objects have are in the same order in both, and the keys
+    only @a target has come after them, stores the keys common to both in
+    source's order in @a common_keys, stores the "add" operations for the keys
+    only @a target has in @a added_ops, and returns true: the caller then diffs
+    the objects member by member. Otherwise, appends operations that remove
+    every member of @a source and add every member of @a target to @a result,
+    and returns false.
+    */
+    static bool diff_object_keys(basic_json& result, const basic_json& source, const basic_json& target,
+                                 const string_t& path, std::vector<typename object_t::key_type>& common_keys,
+                                 basic_json& added_ops)
+    {
+        // first pass: record, for every source key, whether it is
+        // common to both objects (in source's iteration order) or
+        // was deleted (i.e., in source but not in target) -- this is
+        // a by-product of the target.find() call already needed to
+        // tell the two cases apart, so it adds no extra lookups. The
+        // "remove" ops themselves are emitted later, interleaved
+        // with the per-key diffs in the caller's fast path, to match
+        // source's original iteration order (as the original,
+        // pre-reordering-aware implementation did) instead of
+        // grouping all removes before all per-key diffs.
+        std::vector<typename object_t::key_type> common_keys_source_order;
+        for (auto it = source.cbegin(); it != source.cend(); ++it)
+        {
+            if (target.find(it.key()) != target.end())
+            {
+                common_keys_source_order.push_back(it.key());
+            }
+        }
+
+        // second pass: find keys that were added (i.e., in target but
+        // not in source), and record the keys common to both, in
+        // target's iteration order -- again a by-product of the
+        // source.find() call already needed to detect added keys. At
+        // the same time, determine whether every added key comes
+        // after every common key in target's order (a precondition
+        // for the fast path, which only ever appends new keys
+        // at the very end): for an object_t whose iteration order is
+        // a pure function of the key set (e.g. the default std::map,
+        // which always iterates in sorted key order), the order
+        // check further below is always true and this whole
+        // mechanism is effectively a no-op; it only matters for a
+        // reorderable object_t such as the one backing `ordered_json`.
+        // The patch ops for keys that were added (i.e., in target but not
+        // in source) are built here so the fast path can reuse
+        // them without a second source.find() per target key. Only
+        // used by the fast path -- the slow (reordering) path
+        // rebuilds "add" ops for every key itself.
+        std::vector<typename object_t::key_type> common_keys_target_order;
+        bool new_keys_form_suffix = true;
+        bool seen_new_key = false;
+        for (auto it = target.cbegin(); it != target.cend(); ++it)
+        {
+            if (source.find(it.key()) == source.end())
+            {
+                seen_new_key = true;
+                diff_add(added_ops, detail::concat<string_t>(path, '/', detail::escape(it.key())), it.value());
+            }
+            else
+            {
+                common_keys_target_order.push_back(it.key());
+                if (seen_new_key)
+                {
+                    new_keys_form_suffix = false;
+                }
+            }
+        }
+
+        if (common_keys_source_order == common_keys_target_order && new_keys_form_suffix)
+        {
+            // fast path: order of common keys already matches (or the
+            // object_t's iteration order does not depend on
+            // insertion history), so a plain per-key diff is correct
+            // and minimal, as before
+            common_keys = std::move(common_keys_source_order);
+            return true;
+        }
+
+        // slow path: the common keys are in a different relative
+        // order in source and target (only possible for a
+        // reorderable object_t like ordered_map). Building a
+        // minimal reordering patch is a nontrivial (LCS-like)
+        // problem; instead, remove every source key -- both
+        // deleted keys (which must be removed regardless) and
+        // common keys (removed so they can be re-added in
+        // target's order) -- and re-add every key that should
+        // remain, with its final target value, in target's
+        // order. basic_json::patch()'s "add" operation on an
+        // object uses operator[], which appends at the end for a
+        // vector-backed insertion-ordered map when the key does
+        // not already exist -- so removing a key and then adding
+        // it moves it to the end, fixing its position.
+        for (auto it = source.cbegin(); it != source.cend(); ++it)
+        {
+            diff_remove(result, detail::concat<string_t>(path, '/', detail::escape(it.key())));
+        }
+
+        // add every key that is either common (just removed
+        // above) or brand new, in target's iteration order, so
+        // that the final order after applying the patch matches
+        // target exactly
+        for (auto it = target.cbegin(); it != target.cend(); ++it)
+        {
+            diff_add(result, detail::concat<string_t>(path, '/', detail::escape(it.key())), it.value());
+        }
+        return false;
+    }
+
+    /*!
+    @brief @ref diff, for values at nesting level @a depth, appending the
+           operations to @a result
+
+    Diffing two arrays or objects calls this function again, once per nesting
+    level, so values nested deeply enough used to exhaust the call stack and
+    terminate the process. The descent is bounded here: once @ref
+    detail::recursion_depth_limit levels have been entered, @ref
+    diff_iteratively diffs what is left without the call stack.
+    */
+    static void diff_recursively(basic_json& result, const basic_json& source, const basic_json& target,
+                                 const string_t& path, const std::size_t depth)
+    {
+        // if the values are the same, there is nothing to do
         if (source == target)
         {
-            return result;
+            return;
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
+        {
+            diff_iteratively(result, source, target, path);
+            return;
         }
 
         if (source.type() != target.type())
         {
             // different types: replace value
-            result.push_back(
-            {
-                {"op", "replace"}, {"path", path}, {"value", target}
-            });
-            return result;
+            diff_replace(result, path, target);
+            return;
         }
 
         switch (source.type())
@@ -30980,185 +31199,50 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 while (i < source.size() && i < target.size())
                 {
                     // recursive call to compare array values at index i
-                    auto temp_diff = diff(source[i], target[i], detail::concat<string_t>(path, '/', detail::to_string<string_t>(i)));
-                    result.insert(result.end(), temp_diff.begin(), temp_diff.end());
+                    diff_recursively(result, source[i], target[i], detail::concat<string_t>(path, '/', detail::to_string<string_t>(i)), depth + 1);
                     ++i;
                 }
 
                 // We now reached the end of at least one array
                 // in a second pass, traverse the remaining elements
-
-                // remove my remaining elements, highest index first; appending
-                // in that order avoids the quadratic reinsertion done before
-                for (std::size_t j = source.size(); j > i; --j)
-                {
-                    result.push_back(object(
-                    {
-                        {"op", "remove"},
-                        {"path", detail::concat<string_t>(path, '/', detail::to_string<string_t>(j - 1))}
-                    }));
-                }
-                i = source.size();
-
-                // add other remaining elements
-                while (i < target.size())
-                {
-                    result.push_back(
-                    {
-                        {"op", "add"},
-                        {"path", detail::concat<string_t>(path, "/-")},
-                        {"value", target[i]}
-                    });
-                    ++i;
-                }
-
+                diff_array_tails(result, source, target, path, i);
                 break;
             }
 
             case value_t::object:
             {
-                // first pass: record, for every source key, whether it is
-                // common to both objects (in source's iteration order) or
-                // was deleted (i.e., in source but not in target) -- this is
-                // a by-product of the target.find() call already needed to
-                // tell the two cases apart, so it adds no extra lookups. The
-                // "remove" ops themselves are emitted later, interleaved
-                // with the recursive per-key diffs in the fast path below,
-                // to match source's original iteration order (as the
-                // original, pre-reordering-aware implementation did) instead
-                // of grouping all removes before all recursive diffs.
-                std::vector<typename object_t::key_type> common_keys_source_order;
-                for (auto it = source.cbegin(); it != source.cend(); ++it)
-                {
-                    if (target.find(it.key()) != target.end())
-                    {
-                        common_keys_source_order.push_back(it.key());
-                    }
-                }
-
-                // second pass: find keys that were added (i.e., in target but
-                // not in source), and record the keys common to both, in
-                // target's iteration order -- again a by-product of the
-                // source.find() call already needed to detect added keys. At
-                // the same time, determine whether every added key comes
-                // after every common key in target's order (a precondition
-                // for the fast path below, which only ever appends new keys
-                // at the very end): for an object_t whose iteration order is
-                // a pure function of the key set (e.g. the default std::map,
-                // which always iterates in sorted key order), the order
-                // check further below is always true and this whole
-                // mechanism is effectively a no-op; it only matters for a
-                // reorderable object_t such as the one backing `ordered_json`.
-                // patch ops for keys that were added (i.e., in target but not
-                // in source); built here so the fast path below can reuse
-                // them without a second source.find() per target key. Only
-                // used by the fast path -- the slow (reordering) path
-                // rebuilds "add" ops for every key itself.
-                std::vector<typename object_t::key_type> common_keys_target_order;
+                std::vector<typename object_t::key_type> common_keys;
                 basic_json added_ops(value_t::array);
-                bool new_keys_form_suffix = true;
-                bool seen_new_key = false;
-                for (auto it = target.cbegin(); it != target.cend(); ++it)
+                if (diff_object_keys(result, source, target, path, common_keys, added_ops))
                 {
-                    if (source.find(it.key()) == source.end())
-                    {
-                        seen_new_key = true;
-                        const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
-                        added_ops.push_back(
-                        {
-                            {"op", "add"}, {"path", path_key},
-                            {"value", it.value()}
-                        });
-                    }
-                    else
-                    {
-                        common_keys_target_order.push_back(it.key());
-                        if (seen_new_key)
-                        {
-                            new_keys_form_suffix = false;
-                        }
-                    }
-                }
-
-                if (common_keys_source_order == common_keys_target_order && new_keys_form_suffix)
-                {
-                    // fast path: order of common keys already matches (or the
-                    // object_t's iteration order does not depend on
-                    // insertion history), so a plain per-key recursive diff
-                    // is correct and minimal, as before. common_keys_source_order
-                    // is, by construction, the subsequence of source's keys
-                    // that are common to both objects, in source's iteration
-                    // order -- so it can be walked in lockstep with `source`
-                    // using a cheap key comparison instead of another lookup.
-                    // Deleted keys (those source keys not in common_keys_source_order)
-                    // are interleaved here too, in source's original order, to
-                    // match the historical (pre-reordering-aware) output order.
-                    auto common_it = common_keys_source_order.cbegin();
+                    // fast path: common_keys is, by construction, the
+                    // subsequence of source's keys that are common to both
+                    // objects, in source's iteration order -- so it can be
+                    // walked in lockstep with `source` using a cheap key
+                    // comparison instead of another lookup. Deleted keys
+                    // (those source keys not in common_keys) are interleaved
+                    // here too, in source's original order, to match the
+                    // historical (pre-reordering-aware) output order.
+                    auto common_it = common_keys.cbegin();
                     for (auto it = source.cbegin(); it != source.cend(); ++it)
                     {
-                        if (common_it != common_keys_source_order.cend() && it.key() == *common_it)
+                        if (common_it != common_keys.cend() && it.key() == *common_it)
                         {
-                            const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
-                            auto temp_diff = diff(it.value(), target[it.key()], path_key);
-                            result.insert(result.end(), temp_diff.begin(), temp_diff.end());
+                            diff_recursively(result, it.value(), target[it.key()], detail::concat<string_t>(path, '/', detail::escape(it.key())), depth + 1);
                             ++common_it;
                         }
                         else
                         {
                             // found a key that is not in target -> remove it
-                            const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
-                            result.push_back(object(
-                            {
-                                {"op", "remove"}, {"path", path_key}
-                            }));
+                            diff_remove(result, detail::concat<string_t>(path, '/', detail::escape(it.key())));
                         }
                     }
 
-                    // append the "add" ops for brand-new keys collected above
-                    // during the pass over target -- no second source.find()
-                    // per target key needed
+                    // append the "add" ops for brand-new keys collected by
+                    // diff_object_keys -- no second source.find() per target
+                    // key needed
                     result.insert(result.end(), added_ops.begin(), added_ops.end());
                 }
-                else
-                {
-                    // slow path: the common keys are in a different relative
-                    // order in source and target (only possible for a
-                    // reorderable object_t like ordered_map). Building a
-                    // minimal reordering patch is a nontrivial (LCS-like)
-                    // problem; instead, remove every source key -- both
-                    // deleted keys (which must be removed regardless) and
-                    // common keys (removed so they can be re-added in
-                    // target's order) -- and re-add every key that should
-                    // remain, with its final target value, in target's
-                    // order. basic_json::patch()'s "add" operation on an
-                    // object uses operator[], which appends at the end for a
-                    // vector-backed insertion-ordered map when the key does
-                    // not already exist -- so removing a key and then adding
-                    // it moves it to the end, fixing its position.
-                    for (auto it = source.cbegin(); it != source.cend(); ++it)
-                    {
-                        const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
-                        result.push_back(object(
-                        {
-                            {"op", "remove"}, {"path", path_key}
-                        }));
-                    }
-
-                    // add every key that is either common (just removed
-                    // above) or brand new, in target's iteration order, so
-                    // that the final order after applying the patch matches
-                    // target exactly
-                    for (auto it = target.cbegin(); it != target.cend(); ++it)
-                    {
-                        const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
-                        result.push_back(
-                        {
-                            {"op", "add"}, {"path", path_key},
-                            {"value", it.value()}
-                        });
-                    }
-                }
-
                 break;
             }
 
@@ -31173,16 +31257,166 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             default:
             {
                 // both primitive types: replace value
-                result.push_back(
-                {
-                    {"op", "replace"}, {"path", path}, {"value", target}
-                });
+                diff_replace(result, path, target);
                 break;
             }
         }
-
-        return result;
     }
+
+    /*!
+    @brief @ref diff without the call stack, appending the operations to
+           @a result
+
+    Produces the same operations as @ref diff_recursively. Only reached for
+    values nested more deeply than @ref detail::recursion_depth_limit.
+    */
+    static void diff_iteratively(basic_json& result, const basic_json& source, const basic_json& target,
+                                 const string_t& path)
+    {
+        // The arrays and objects being diffed are kept on an explicit stack,
+        // and every pair of elements is still diffed completely before the
+        // next one, so the operations come out in the same order as in
+        // diff_recursively. The path of the values being diffed is kept in
+        // one buffer that grows and shrinks with the stack, rather than in a
+        // new string per level.
+        std::vector<diff_frame> stack;
+        string_t current_path = path;
+
+        // diff `s` against `t`, whose path is current_path: primitives,
+        // values of different types, and objects whose members were reordered
+        // are handled right away; arrays and other objects get a frame
+        const auto enter = [&result, &stack, &current_path](const basic_json & s, const basic_json & t)
+        {
+            // if the values are the same, there is nothing to do. Arrays and
+            // objects are not compared up front: comparing them visits
+            // everything below them, so doing that at every level would take
+            // quadratic time in the nesting depth - equal ones yield no
+            // operations anyway.
+            if ((!s.is_structured() || !t.is_structured()) && s == t)
+            {
+                return;
+            }
+
+            if (s.type() != t.type())
+            {
+                // different types: replace value
+                diff_replace(result, current_path, t);
+                return;
+            }
+
+            switch (s.type())
+            {
+                case value_t::array:
+                {
+                    stack.emplace_back(&s, &t, current_path.size());
+                    return;
+                }
+
+                case value_t::object:
+                {
+                    std::vector<typename object_t::key_type> common_keys;
+                    basic_json added_ops(value_t::array);
+                    if (diff_object_keys(result, s, t, current_path, common_keys, added_ops))
+                    {
+                        // fast path: the frame walks source in lockstep with
+                        // common_keys, as diff_recursively does, and appends
+                        // added_ops once all members are done
+                        stack.emplace_back(&s, &t, current_path.size());
+                        stack.back().member = s.cbegin();
+                        stack.back().common_keys = std::move(common_keys);
+                        stack.back().added_ops = std::move(added_ops);
+                    }
+                    return;
+                }
+
+                case value_t::null:
+                case value_t::string:
+                case value_t::boolean:
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                case value_t::number_float:
+                case value_t::binary:
+                case value_t::discarded:
+                default:
+                {
+                    // both primitive types: replace value
+                    diff_replace(result, current_path, t);
+                    return;
+                }
+            }
+        };
+
+        enter(source, target);
+        while (!stack.empty())
+        {
+            // invalidated when enter() pushes a frame and by the pop_back()
+            // at the end, so not used after either
+            diff_frame& frame = stack.back();
+            const std::size_t path_length = frame.path_length;
+            const std::size_t depth = stack.size();
+
+            if (frame.source->is_array())
+            {
+                const auto& source_array = *frame.source->m_data.m_value.array;
+                const auto& target_array = *frame.target->m_data.m_value.array;
+
+                // first pass: traverse common elements
+                if (frame.index < source_array.size() && frame.index < target_array.size())
+                {
+                    const std::size_t i = frame.index++;
+                    detail::concat_into(current_path, '/', detail::to_string<string_t>(i));
+                    enter(source_array[i], target_array[i]); // may push, which invalidates `frame`
+                    if (stack.size() == depth)
+                    {
+                        current_path.resize(path_length);
+                    }
+                    continue;
+                }
+
+                // We now reached the end of at least one array
+                // in a second pass, traverse the remaining elements
+                diff_array_tails(result, *frame.source, *frame.target, current_path, frame.index);
+            }
+            else
+            {
+                if (frame.member != frame.source->cend())
+                {
+                    const const_iterator it = frame.member;
+                    ++frame.member;
+                    if (frame.next_common < frame.common_keys.size() && it.key() == frame.common_keys[frame.next_common])
+                    {
+                        ++frame.next_common;
+                        const basic_json& target_value = (*frame.target)[it.key()];
+                        detail::concat_into(current_path, '/', detail::escape(it.key()));
+                        enter(it.value(), target_value); // may push, which invalidates `frame`
+                        if (stack.size() == depth)
+                        {
+                            current_path.resize(path_length);
+                        }
+                    }
+                    else
+                    {
+                        // found a key that is not in target -> remove it
+                        diff_remove(result, detail::concat<string_t>(current_path, '/', detail::escape(it.key())));
+                    }
+                    continue;
+                }
+
+                // append the "add" ops for brand-new keys collected when the
+                // object was entered
+                result.insert(result.end(), frame.added_ops.begin(), frame.added_ops.end());
+            }
+
+            // this array or object is done: continue with the one it is in
+            stack.pop_back();
+            if (!stack.empty())
+            {
+                current_path.resize(stack.back().path_length);
+            }
+        }
+    }
+
+  public:
     /// @}
 
     ////////////////////////////////
