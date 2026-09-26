@@ -74,13 +74,7 @@ using ordered_json = nlohmann::ordered_json;
     #endif
 #endif
 
-/////////////////////////////////////////////////////////////////////
-// for #4825 - explicitly instantiating basic_json must compile; this
-// forces instantiation of binary_writer::write_bjdata_ndarray, whose
-// static_cast<string_t> was ambiguous under explicit instantiation on
-// C++17. Merely compiling this translation unit is the regression test.
-/////////////////////////////////////////////////////////////////////
-template class nlohmann::basic_json<>;
+// the explicit instantiation for #4825 is in unit-explicit_instantiation.cpp
 
 /////////////////////////////////////////////////////////////////////
 // for #4440
