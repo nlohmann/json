@@ -37,13 +37,13 @@ labels:
   files:
     - "include/nlohmann/detail/input/binary_reader\\.hpp"
     - "include/nlohmann/detail/output/binary_writer\\.hpp"
-    - "tests/src/unit-(bson|cbor|msgpack|ubjson|bjdata|binary_formats)"
-    - "tests/src/fuzzer-parse_(bson|cbor|msgpack|ubjson|bjdata)"
+    - "tests/src/unit-(bson|cbor|msgpack|ubjson|bjdata|bon8|binary_formats)"
+    - "tests/src/fuzzer-parse_(bson|cbor|msgpack|ubjson|bjdata|bon8)"
     - "docs/mkdocs/docs/features/binary_formats/"
-    - "docs/mkdocs/docs/(api/basic_json|examples)/(to|from)_(bson|cbor|msgpack|ubjson|bjdata)"
+    - "docs/mkdocs/docs/(api/basic_json|examples)/(to|from)_(bson|cbor|msgpack|ubjson|bjdata|bon8)"
 
 - label: "aspect: binary formats"
-  title: "(?i)(bson|cbor|msgpack|messagepack|ubjson|bjdata|binary format)"
+  title: "(?i)(bson|cbor|msgpack|messagepack|ubjson|bjdata|bon8|binary format)"
 
 - label: "python"
   files:

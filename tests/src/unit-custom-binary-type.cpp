@@ -74,6 +74,8 @@ TEST_CASE("binary type whose value type is not std::uint8_t")
 
         // UBJSON has no binary type, so binary values are written as an array
         CHECK(byte_binary_json::from_ubjson(byte_binary_json::to_ubjson(j)) == byte_binary_json({0, 1, 255}));
+        // the same holds for BON8
+        CHECK(byte_binary_json::from_bon8(byte_binary_json::to_bon8(j)) == byte_binary_json({0, 1, 255}));
     }
 #endif
 }

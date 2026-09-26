@@ -35,8 +35,8 @@ C++ types, and finally serialize it again.
 - [Serialization](serialization.md) — turn a value back into JSON text with [`dump`](../api/basic_json/dump.md),
   including pretty-printing and handling of non-ASCII and invalid UTF-8.
 - [Binary formats](binary_formats/index.md) — encode values more compactly as
-  [BJData](binary_formats/bjdata.md), [BSON](binary_formats/bson.md), [CBOR](binary_formats/cbor.md),
-  [MessagePack](binary_formats/messagepack.md), or [UBJSON](binary_formats/ubjson.md).
+  [BJData](binary_formats/bjdata.md), [BON8](binary_formats/bon8.md), [BSON](binary_formats/bson.md),
+  [CBOR](binary_formats/cbor.md), [MessagePack](binary_formats/messagepack.md), or [UBJSON](binary_formats/ubjson.md).
 - [Binary values](binary_values.md) — store and exchange raw byte sequences.
 
 ## How values are stored and configured

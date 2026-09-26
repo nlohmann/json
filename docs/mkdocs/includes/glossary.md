@@ -5,6 +5,7 @@
 *[ASCII]: American Standard Code for Information Interchange
 *[BDFL]: Benevolent Dictator for Life
 *[BJData]: Binary JData
+*[BON8]: Binary Object Notation 8
 *[BSON]: Binary JSON
 *[CBOR]: Concise Binary Object Representation
 *[CC0]: Creative Commons Zero

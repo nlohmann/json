@@ -25,6 +25,7 @@
 #endif
 
 #include <nlohmann/detail/input/binary_reader.hpp>
+#include <nlohmann/detail/input/string_scan.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/output/output_adapters.hpp>
 #include <nlohmann/detail/string_concat.hpp>
@@ -76,7 +77,7 @@ std::size_t binary_reserve_hint(const BasicJsonType& j)
 }
 
 /*!
-@brief serialization to CBOR and MessagePack values
+@brief serialization to BJData, BON8, BSON, CBOR, MessagePack, and UBJSON values
 */
 template<typename BasicJsonType, typename CharType, typename OutputSinkType = output_adapter_sink<CharType>>
 class binary_writer
@@ -1032,6 +1033,21 @@ class binary_writer
         }
     }
 
+    /*!
+    @param[in] j  JSON value to serialize
+    */
+    void write_bon8(const BasicJsonType& j)
+    {
+        bool string_open = false;
+        write_bon8_value(j, string_open);
+
+        // the last string of a message must be terminated
+        if (string_open)
+        {
+            oa.write_character(to_char_type(0xFF));
+        }
+    }
+
   private:
     //////////
     // BSON //
@@ -1548,6 +1564,28 @@ class binary_writer
     static constexpr CharType get_msgpack_float_prefix(double /*unused*/)
     {
         return to_char_type(0xCB);  // float 64
+    }
+
+    /// @return the BON8 type marker for binary32 (float) or binary64 (double)
+    template<typename FloatType>
+    static constexpr CharType get_bon8_float_prefix()
+    {
+        return to_char_type(std::is_same<FloatType, float>::value ? 0x8E : 0x8F);
+    }
+
+    /// @return the type marker for a FloatType value in @a format (CBOR, MessagePack, or BON8)
+    template<typename FloatType>
+    static CharType get_compact_float_prefix(const detail::input_format_t format)
+    {
+        if (format == detail::input_format_t::cbor)
+        {
+            return get_cbor_float_prefix(FloatType{});
+        }
+        if (format == detail::input_format_t::bon8)
+        {
+            return get_bon8_float_prefix<FloatType>();
+        }
+        return get_msgpack_float_prefix(FloatType{});
     }
 
     ////////////
@@ -2142,6 +2180,322 @@ class binary_writer
         return false;
     }
 
+    //////////
+    // BON8 //
+    //////////
+
+    /*!
+    @brief write a BON8 value
+
+    A string is written without length or terminator: it ends at the first
+    byte that cannot continue it, which is the first byte of any non-string
+    value and of the end-of-container marker 0xFE. It only needs an explicit
+    end-of-string marker (0xFF) when it is empty, when another string follows,
+    or when it is the last thing in the message.
+
+    @param[in] j                JSON value to serialize
+    @param[in,out] string_open  whether the output ends with a non-empty
+                                string that has not been terminated with 0xFF
+    */
+    void write_bon8_value(const BasicJsonType& j, bool& string_open)
+    {
+        switch (j.type())
+        {
+            case value_t::null:
+            {
+                write_bon8_marker(0xFA, string_open);
+                break;
+            }
+
+            case value_t::boolean:
+            {
+                write_bon8_marker(j.m_data.m_value.boolean ? 0xF9 : 0xF8, string_open);
+                break;
+            }
+
+            case value_t::number_unsigned:
+            {
+                if (j.m_data.m_value.number_unsigned > static_cast<typename BasicJsonType::number_unsigned_t>((std::numeric_limits<std::int64_t>::max)()))
+                {
+                    JSON_THROW(out_of_range::create(407, concat("integer number ", std::to_string(j.m_data.m_value.number_unsigned), " cannot be represented by BON8 as it does not fit int64"), &j));
+                }
+                write_bon8_integer(static_cast<std::int64_t>(j.m_data.m_value.number_unsigned));
+                string_open = false;
+                break;
+            }
+
+            case value_t::number_integer:
+            {
+                write_bon8_integer(static_cast<std::int64_t>(j.m_data.m_value.number_integer));
+                string_open = false;
+                break;
+            }
+
+            case value_t::number_float:
+            {
+                write_bon8_float(j.m_data.m_value.number_float);
+                string_open = false;
+                break;
+            }
+
+            case value_t::string:
+            {
+                write_bon8_string(*j.m_data.m_value.string, string_open, j);
+                break;
+            }
+
+            case value_t::array:
+            {
+                const auto N = j.m_data.m_value.array->size();
+                // 0x80..0x84: array with 0..4 elements; 0x85: array ended by 0xFE
+                write_bon8_marker(static_cast<std::uint8_t>(N <= 4 ? 0x80 + N : 0x85), string_open);
+
+                for (const auto& el : *j.m_data.m_value.array)
+                {
+                    write_bon8_value(el, string_open);
+                }
+
+                if (N > 4)
+                {
+                    write_bon8_marker(0xFE, string_open);
+                }
+                break;
+            }
+
+            case value_t::object:
+            {
+                const auto N = j.m_data.m_value.object->size();
+                // 0x86..0x8A: object with 0..4 members; 0x8B: object ended by 0xFE
+                write_bon8_marker(static_cast<std::uint8_t>(N <= 4 ? 0x86 + N : 0x8B), string_open);
+
+                for (const auto& el : *j.m_data.m_value.object)
+                {
+                    write_bon8_string(el.first, string_open, j);
+                    write_bon8_value(el.second, string_open);
+                }
+
+                if (N > 4)
+                {
+                    write_bon8_marker(0xFE, string_open);
+                }
+                break;
+            }
+
+            case value_t::binary:
+            {
+                // BON8 has no binary type: write the bytes as an array of
+                // integers, like UBJSON and BJData do
+                const auto N = j.m_data.m_value.binary->size();
+                write_bon8_marker(static_cast<std::uint8_t>(N <= 4 ? 0x80 + N : 0x85), string_open);
+
+                for (std::size_t i = 0; i < N; ++i)
+                {
+                    // the cast is needed for binary types whose value type
+                    // is not an integer (e.g., std::byte)
+                    write_bon8_integer(static_cast<std::uint8_t>(j.m_data.m_value.binary->data()[i]));
+                }
+
+                if (N > 4)
+                {
+                    write_bon8_marker(0xFE, string_open);
+                }
+                break;
+            }
+
+            case value_t::discarded:
+            default:
+                break;
+        }
+    }
+
+    /*!
+    @brief write a single byte that is not part of a string
+
+    @param[in] marker        the byte to write
+    @param[out] string_open  set to false, because the output no longer ends
+                             with a string; see @ref write_bon8_value
+    */
+    void write_bon8_marker(const std::uint8_t marker, bool& string_open)
+    {
+        oa.write_character(to_char_type(marker));
+        string_open = false;
+    }
+
+    /*!
+    @brief write a string
+
+    @param[in] s                the string to write
+    @param[in,out] string_open  see @ref write_bon8_value
+    @param[in] context          the value the string belongs to (for diagnostics)
+
+    @throw type_error.316 if @a s is not valid UTF-8, because the end of a
+           string is determined from its encoding
+    */
+    void write_bon8_string(const string_t& s, bool& string_open, const BasicJsonType& context)
+    {
+        check_bon8_utf8(s, context);
+
+        // a string that follows another string terminates it
+        if (string_open)
+        {
+            oa.write_character(to_char_type(0xFF));
+        }
+
+        if (s.empty())
+        {
+            // the empty string is just the end-of-string marker
+            oa.write_character(to_char_type(0xFF));
+            string_open = false;
+        }
+        else
+        {
+            oa.write_characters(reinterpret_cast<const CharType*>(s.data()), s.size());
+            string_open = true;
+        }
+    }
+
+    /*!
+    @brief check that a string is valid UTF-8 (RFC 3629)
+
+    @param[in] s        the string to check
+    @param[in] context  the value the string belongs to (for diagnostics)
+
+    @throw type_error.316 if @a s is not valid UTF-8; the message names the
+           first byte of the first invalid or incomplete sequence
+    */
+    static void check_bon8_utf8(const string_t& s, const BasicJsonType& context)
+    {
+        static_cast<void>(context); // only used when exceptions are enabled
+        const auto* data = reinterpret_cast<const unsigned char*>(s.data());
+        const std::size_t valid = valid_utf8_prefix(data, s.size());
+        if (JSON_HEDLEY_UNLIKELY(valid != s.size()))
+        {
+            JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(valid), ": 0x", hex_byte(data[valid])), &context));
+        }
+    }
+
+    /// @return a byte as two uppercase hexadecimal digits
+    static std::string hex_byte(const std::uint8_t byte)
+    {
+        std::string result = "00";
+        constexpr const char* nibble_to_hex = "0123456789ABCDEF";
+        result[0] = nibble_to_hex[byte / 16];
+        result[1] = nibble_to_hex[byte % 16];
+        return result;
+    }
+
+    /*!
+    @brief write an integer in the shortest encoding
+
+    Integers from -10 to 39 take one byte. Up to -33818506 and 67637031, an
+    integer takes 2 to 4 bytes that begin with a UTF-8 lead byte (0xC2..0xF7)
+    followed by a byte that is not a continuation byte: 0x00..0x7F for
+    positive and 0xC0..0xFF for negative integers. Each range starts where the
+    shorter one ends. Larger integers are written as int32 (0x8C) or int64
+    (0x8D) in big-endian byte order.
+
+    @param[in] value  the integer to write
+    */
+    void write_bon8_integer(std::int64_t value)
+    {
+        if (value < (std::numeric_limits<std::int32_t>::min)() || value > (std::numeric_limits<std::int32_t>::max)())
+        {
+            oa.write_character(to_char_type(0x8D));
+            write_number(value);
+        }
+        else if (value < -33818506 || value > 67637031)
+        {
+            oa.write_character(to_char_type(0x8C));
+            write_number(static_cast<std::int32_t>(value));
+        }
+        else if (value <= -264075)
+        {
+            value = -(value + 264075);
+            write_bon8_bytes(0xF0 + ((value >> 22) & 0x07), 0xC0 + ((value >> 16) & 0x3F), value >> 8, value);
+        }
+        else if (value <= -1931)
+        {
+            value = -(value + 1931);
+            write_bon8_bytes(0xE0 + ((value >> 14) & 0x0F), 0xC0 + ((value >> 8) & 0x3F), value);
+        }
+        else if (value <= -11)
+        {
+            value = -(value + 11);
+            write_bon8_bytes(0xC2 + ((value >> 6) & 0x1F), 0xC0 + (value & 0x3F));
+        }
+        else if (value <= -1)
+        {
+            write_bon8_bytes(0xB8 - (value + 1));
+        }
+        else if (value <= 39)
+        {
+            write_bon8_bytes(0x90 + value);
+        }
+        else if (value <= 3879)
+        {
+            value -= 40;
+            write_bon8_bytes(0xC2 + ((value >> 7) & 0x1F), value & 0x7F);
+        }
+        else if (value <= 528167)
+        {
+            value -= 3880;
+            write_bon8_bytes(0xE0 + ((value >> 15) & 0x0F), (value >> 8) & 0x7F, value);
+        }
+        else
+        {
+            value -= 528168;
+            write_bon8_bytes(0xF0 + ((value >> 23) & 0x07), (value >> 16) & 0x7F, value >> 8, value);
+        }
+    }
+
+    /// write the low byte of each argument
+    template<typename... Bytes>
+    void write_bon8_bytes(const Bytes... bytes)
+    {
+        const std::array<CharType, sizeof...(Bytes)> buffer{{to_char_type(static_cast<std::uint8_t>(bytes & 0xFF))...}};
+        oa.write_characters(buffer.data(), buffer.size());
+    }
+
+    /*!
+    @brief write a floating-point number
+
+    -1.0, +0.0, and 1.0 take one byte. Other numbers are written as binary32
+    (0x8E) if that loses no precision, and as binary64 (0x8F) otherwise; -0.0,
+    infinities, and NaN are always written as binary32, NaN as 0x7F800001.
+
+    @param[in] n  the number to write
+    */
+    void write_bon8_float(const number_float_t n)
+    {
+#ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
+        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
+#endif
+        if (n == static_cast<number_float_t>(-1))
+        {
+            oa.write_character(to_char_type(0xFB));
+        }
+        else if (n == static_cast<number_float_t>(0) && !std::signbit(n))
+        {
+            oa.write_character(to_char_type(0xFC));
+        }
+        else if (n == static_cast<number_float_t>(1))
+        {
+            oa.write_character(to_char_type(0xFD));
+        }
+        else if (std::isnan(n))
+        {
+            write_bon8_bytes(0x8E, 0x7F, 0x80, 0x00, 0x01);
+        }
+        else
+        {
+            write_compact_float(n, detail::input_format_t::bon8);
+        }
+#ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
+    }
+
     ///////////////////////
     // Utility functions //
     ///////////////////////
@@ -2276,16 +2630,12 @@ class binary_writer
                                    static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
                                    static_cast<double>(static_cast<float>(n)) == static_cast<double>(n))))
         {
-            oa.write_character(format == detail::input_format_t::cbor
-                               ? get_cbor_float_prefix(static_cast<float>(n))
-                               : get_msgpack_float_prefix(static_cast<float>(n)));
+            oa.write_character(get_compact_float_prefix<float>(format));
             write_number(static_cast<float>(n));
         }
         else
         {
-            oa.write_character(format == detail::input_format_t::cbor
-                               ? get_cbor_float_prefix(n)
-                               : get_msgpack_float_prefix(n));
+            oa.write_character(get_compact_float_prefix<number_float_t>(format));
             write_number(n);
         }
 #ifdef __GNUC__

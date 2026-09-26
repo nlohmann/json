@@ -187,6 +187,41 @@ as an array of uint8 values. The library implements this translation.
     }
     ```
 
+### BON8
+
+[BON8](binary_formats/bon8.md) neither supports binary values nor subtypes. The library serializes binary values as an
+array of integers.
+
+??? example
+
+    Code:
+
+    ```cpp
+    // create a binary value of subtype 42 (will be ignored in BON8)
+    json j;
+    j["binary"] = json::binary({0xCA, 0xFE, 0xBA, 0xBE}, 42);
+
+    // convert to BON8
+    auto v = json::to_bon8(j);
+    ```
+
+    `v` is a `std::vector<std::uint8_t>` with the following 16 elements:
+
+    ```c
+    0x87                                     // object with 1 member
+        0x62 0x69 0x6E 0x61 0x72 0x79        // "binary"
+        0x84                                 // array with 4 elements
+            0xC3 0x22 0xC3 0x56 0xC3 0x12 0xC3 0x16  // content (each byte as a 2-byte integer)
+    ```
+
+    Note that the subtype is lost, and deserializing `v` would yield the following value:
+
+    ```json
+    {
+      "binary": [202, 254, 186, 190]
+    }
+    ```
+
 ### BSON
 
 [BSON](binary_formats/bson.md) supports binary values and subtypes. If a subtype is given, it is used and added as an

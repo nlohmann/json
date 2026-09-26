@@ -10,7 +10,7 @@ CXXFLAGS += -std=c++11
 CPPFLAGS += -I ../single_include
 
 FUZZER_ENGINE = src/fuzzer-driver_afl.cpp
-FUZZERS = parse_afl_fuzzer parse_bson_fuzzer parse_cbor_fuzzer parse_msgpack_fuzzer parse_ubjson_fuzzer parse_bjdata_fuzzer
+FUZZERS = parse_afl_fuzzer parse_bson_fuzzer parse_cbor_fuzzer parse_msgpack_fuzzer parse_ubjson_fuzzer parse_bjdata_fuzzer parse_bon8_fuzzer
 fuzzers: $(FUZZERS)
 
 parse_afl_fuzzer:
@@ -30,3 +30,6 @@ parse_ubjson_fuzzer:
 
 parse_bjdata_fuzzer:
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(FUZZER_ENGINE) src/fuzzer-parse_bjdata.cpp -o $@
+
+parse_bon8_fuzzer:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(FUZZER_ENGINE) src/fuzzer-parse_bon8.cpp -o $@

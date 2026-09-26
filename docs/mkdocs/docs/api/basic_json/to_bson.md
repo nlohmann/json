@@ -72,6 +72,7 @@ pass before anything is written.
 - [to_msgpack](to_msgpack.md) create a MessagePack serialization of a JSON value
 - [to_ubjson](to_ubjson.md) create a UBJSON serialization of a JSON value
 - [to_bjdata](to_bjdata.md) create a BJData serialization of a JSON value
+- [to_bon8](to_bon8.md) create a BON8 serialization of a JSON value
 
 ## Version history
 

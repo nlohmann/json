@@ -36,6 +36,7 @@ all:
 	@echo "clean - remove built files"
 	@echo "doctest - compile example files and check their output"
 	@echo "fuzz_testing - prepare fuzz testing of the JSON parser"
+	@echo "fuzz_testing_bon8 - prepare fuzz testing of the BON8 parser"
 	@echo "fuzz_testing_bson - prepare fuzz testing of the BSON parser"
 	@echo "fuzz_testing_cbor - prepare fuzz testing of the CBOR parser"
 	@echo "fuzz_testing_msgpack - prepare fuzz testing of the MessagePack parser"
@@ -69,6 +70,14 @@ fuzz_testing:
 	$(MAKE) parse_afl_fuzzer -C tests CXX=afl-clang++
 	mv tests/parse_afl_fuzzer fuzz-testing/fuzzer
 	find tests/data/json_tests -size -5k -name *json | xargs -I{} cp "{}" fuzz-testing/testcases
+	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
+
+fuzz_testing_bon8:
+	rm -fr fuzz-testing
+	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
+	$(MAKE) parse_bon8_fuzzer -C tests CXX=afl-clang++
+	mv tests/parse_bon8_fuzzer fuzz-testing/fuzzer
+	find tests/data -size -5k -name *.bon8 | xargs -I{} cp "{}" fuzz-testing/testcases
 	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
 fuzz_testing_bson:

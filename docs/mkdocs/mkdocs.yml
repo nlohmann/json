@@ -63,6 +63,7 @@ nav:
       - Binary Formats:
           - features/binary_formats/index.md
           - features/binary_formats/bjdata.md
+          - features/binary_formats/bon8.md
           - features/binary_formats/bson.md
           - features/binary_formats/cbor.md
           - features/binary_formats/messagepack.md
@@ -142,6 +143,7 @@ nav:
           - 'flatten': api/basic_json/flatten.md
           - 'format_as': api/basic_json/format_as.md
           - 'from_bjdata': api/basic_json/from_bjdata.md
+          - 'from_bon8': api/basic_json/from_bon8.md
           - 'from_bson': api/basic_json/from_bson.md
           - 'from_cbor': api/basic_json/from_cbor.md
           - 'from_msgpack': api/basic_json/from_msgpack.md
@@ -213,6 +215,7 @@ nav:
           - 'swap': api/basic_json/swap.md
           - 'std::swap&lt;basic_json&gt;': api/basic_json/std_swap.md
           - 'to_bjdata': api/basic_json/to_bjdata.md
+          - 'to_bon8': api/basic_json/to_bon8.md
           - 'to_bson': api/basic_json/to_bson.md
           - 'to_cbor': api/basic_json/to_cbor.md
           - 'to_msgpack': api/basic_json/to_msgpack.md
@@ -412,7 +415,7 @@ plugins:
       markdown_description: >
         JSON for Modern C++ is a C++11 header-only library implementing a JSON
         value type with an STL-like API, JSON Pointer/Patch, CBOR/MessagePack/
-        BSON/UBJSON/BJData binary format support, and a SAX-style parser interface.
+        BSON/UBJSON/BJData/BON8 binary format support, and a SAX-style parser interface.
       sections:
         Home:
           - index.md

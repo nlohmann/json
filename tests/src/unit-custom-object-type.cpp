@@ -297,6 +297,7 @@ TEST_CASE("object type without key_compare")
         const auto j = no_key_compare_json::parse(R"({"a":[1,2,3],"b":"x"})");
         CHECK(no_key_compare_json::from_cbor(no_key_compare_json::to_cbor(j)) == j);
         CHECK(no_key_compare_json::from_msgpack(no_key_compare_json::to_msgpack(j)) == j);
+        CHECK(no_key_compare_json::from_bon8(no_key_compare_json::to_bon8(j)) == j);
     }
 
     SECTION("flatten and unflatten")

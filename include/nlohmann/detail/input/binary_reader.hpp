@@ -28,6 +28,7 @@
 #include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/json_sax.hpp>
 #include <nlohmann/detail/input/lexer.hpp>
+#include <nlohmann/detail/input/string_scan.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/is_sax.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
@@ -84,7 +85,7 @@ JSON_INLINE_VARIABLE constexpr std::size_t max_valueless_container_size = 1 << 2
 ///////////////////
 
 /*!
-@brief deserialization of CBOR, MessagePack, and UBJSON values
+@brief deserialization of BJData, BON8, BSON, CBOR, MessagePack, and UBJSON values
 */
 template<typename BasicJsonType, typename InputAdapterType, typename SAX = json_sax_dom_parser<BasicJsonType, InputAdapterType>>
 class binary_reader
@@ -97,6 +98,11 @@ class binary_reader
     using json_sax_t = SAX;
     using char_type = typename InputAdapterType::char_type;
     using char_int_type = typename char_traits<char_type>::int_type;
+
+    /// whether the input is a contiguous block of bytes that can be inspected
+    /// and consumed in bulk (as in the lexer); used by @ref get_bon8_string_bulk
+    static constexpr bool bulk_scan =
+        input_adapter_supports_bulk_scan<InputAdapterType>(is_detected<detect_supports_bulk_scan, InputAdapterType> {});
 
   public:
     /*!
@@ -132,6 +138,7 @@ class binary_reader
     {
         sax = sax_;
         container_stack.clear();
+        bon8_pushback_size = 0;
         bool result = false;
 
         switch (format)
@@ -153,6 +160,10 @@ class binary_reader
                 result = parse_ubjson_internal();
                 break;
 
+            case input_format_t::bon8:
+                result = parse_bon8_internal();
+                break;
+
             case input_format_t::json: // LCOV_EXCL_LINE
             default:            // LCOV_EXCL_LINE
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
@@ -164,6 +175,11 @@ class binary_reader
             if (input_format == input_format_t::ubjson || input_format == input_format_t::bjdata)
             {
                 get_ignore_noop();
+            }
+            else if (input_format == input_format_t::bon8)
+            {
+                // a string that ends a container hands back the byte after it
+                get_bon8();
             }
             else
             {
@@ -396,6 +412,11 @@ class binary_reader
     */
     bool get_bson_cstr(string_t& result)
     {
+        if (get_bson_cstr_bulk(result, std::integral_constant<bool, bulk_scan> {}))
+        {
+            return true;
+        }
+
         auto out = std::back_inserter(result);
         while (true)
         {
@@ -410,6 +431,46 @@ class binary_reader
             }
             *out++ = static_cast<typename string_t::value_type>(current);
         }
+    }
+
+    /*!
+    @brief read a C-style string from contiguous input in one step
+
+    @param[in,out] result  the string to append to
+    @return whether the string was read; if the input has no \x00-byte, nothing
+            is read, and @ref get_bson_cstr reports the end of the input
+    */
+    bool get_bson_cstr_bulk(string_t& result, std::true_type /*bulk*/)
+    {
+        const std::size_t remaining = ia.bulk_remaining();
+        if (remaining == 0)
+        {
+            return false;
+        }
+        const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+        // a plain loop rather than std::memchr: most keys are short (array
+        // indices are keys, too), and the call would cost more than it saves
+        std::size_t length = 0;
+        while (length < remaining && data[length] != 0x00)
+        {
+            ++length;
+        }
+        if (length == remaining)
+        {
+            return false;
+        }
+        result.append(reinterpret_cast<const typename string_t::value_type*>(data), length);
+        // consume the string and its \x00-byte, as the byte-wise path does
+        ia.bulk_skip(length + 1);
+        chars_read += length + 1;
+        current = 0x00;
+        return true;
+    }
+
+    /// input that is not contiguous: C-style strings are read byte by byte
+    bool get_bson_cstr_bulk(string_t& /*result*/, std::false_type /*bulk*/) const noexcept
+    {
+        return false;
     }
 
     /*!
@@ -3184,6 +3245,549 @@ class binary_reader
         }
     }
 
+    //////////
+    // BON8 //
+    //////////
+
+    /*!
+    @brief get the next byte of a BON8 value
+
+    A BON8 string has no length prefix and no mandatory terminator: it ends at
+    the first byte that cannot continue it, which is already the first byte (or,
+    for an integer that begins with a UTF-8 lead byte, the first two bytes) of
+    whatever follows. The string reader hands those bytes back with
+    @ref unget_bon8, and every BON8 read goes through this function so that
+    they are seen again.
+
+    @return character read from the input
+    */
+    char_int_type get_bon8()
+    {
+        if (bon8_pushback_size != 0)
+        {
+            ++chars_read;
+            return current = bon8_pushback[--bon8_pushback_size];
+        }
+        return get();
+    }
+
+    /*!
+    @brief hand a byte back so that the next @ref get_bon8 returns it again
+
+    @param[in] c  the byte to hand back; bytes handed back are returned in
+                  reverse order
+    */
+    void unget_bon8(const char_int_type c)
+    {
+        // At most two bytes are ever handed back: a byte is only handed back
+        // right after it was read with get_bon8(), and the only place that
+        // hands back two bytes (a lead byte and the byte after it) read both
+        // of them in a row, which emptied the buffer first. This is an
+        // invariant of the reader rather than a property of the input, so
+        // an assertion suffices (the fuzzers are built with assertions).
+        JSON_ASSERT(bon8_pushback_size < bon8_pushback.size());
+        bon8_pushback[bon8_pushback_size++] = c;
+        --chars_read;
+    }
+
+    /*!
+    @param[in] c  a byte
+    @return whether @a c is a UTF-8 continuation byte (0x80..0xBF)
+    */
+    static constexpr bool is_bon8_continuation(const char_int_type c) noexcept
+    {
+        return 0x80 <= c && c <= 0xBF;
+    }
+
+    /*!
+    @brief report a parse error at the last read byte
+
+    @param[in] detail   a detailed error message
+    @param[in] context  further context information
+    @return false
+    */
+    bool bon8_error(const std::string& detail, const char* context)
+    {
+        auto last_token = get_token_string();
+        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                exception_message(input_format_t::bon8, concat(detail, ": 0x", last_token), context), nullptr));
+    }
+
+    /*!
+    @brief read a BON8 value and everything nested inside it
+
+    Reads values until the one that was begun here is complete, resuming the
+    enclosing container after each element, so that the nesting depth of the
+    input costs heap rather than native stack (see #5104).
+
+    @return whether reading the value succeeded
+    */
+    bool parse_bon8_internal()
+    {
+        // the key currently being read; hoisted out of the loop so that its
+        // capacity is reused across elements and across nesting levels
+        string_t key;
+
+        while (true)
+        {
+            if (!container_stack.empty())
+            {
+                // a copy, not a reference: it must stay valid across the
+                // pop_back() below, which destroys the container_stack element
+                // it would otherwise alias
+                const container_frame top = container_stack.back();
+                bool at_end = false;
+
+                if (top.remaining != npos)
+                {
+                    // counted container (0x80..0x84, 0x86..0x8A): it ends once
+                    // its elements have been read
+                    at_end = (top.remaining == 0);
+                    if (!at_end)
+                    {
+                        // claim the element about to be read
+                        --container_stack.back().remaining;
+                    }
+                }
+                else
+                {
+                    // container 0x85 or 0x8B: it ends at an end-of-container
+                    // marker (0xFE); any other byte begins the next element
+                    at_end = (get_bon8() == 0xFE);
+                    if (!at_end)
+                    {
+                        unget_bon8(current);
+                    }
+                }
+
+                if (at_end)
+                {
+                    container_stack.pop_back();
+                    if (JSON_HEDLEY_UNLIKELY(top.is_object ? !sax->end_object() : !sax->end_array()))
+                    {
+                        return false;
+                    }
+                    // the value begun here is complete once its container is
+                    if (container_stack.empty())
+                    {
+                        return true;
+                    }
+                    continue;
+                }
+
+                if (top.is_object)
+                {
+                    key.clear();
+                    if (JSON_HEDLEY_UNLIKELY(!get_bon8_key(key) || !sax->key(key)))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            if (JSON_HEDLEY_UNLIKELY(!parse_bon8_value()))
+            {
+                return false;
+            }
+
+            // a value that opened a container left it on the stack; one that
+            // did not, and that was not inside a container, was the whole value
+            if (container_stack.empty())
+            {
+                return true;
+            }
+        }
+    }
+
+    /*!
+    @brief read one BON8 value
+
+    Reads a single value and passes it to the SAX parser. A value that begins
+    a container is not read to its end: the container is opened with
+    @ref enter_container and its elements are read by
+    @ref parse_bon8_internal, so that nesting does not consume native stack.
+
+    @return whether reading the value succeeded
+    */
+    bool parse_bon8_value()
+    {
+        const auto byte = get_bon8();
+
+        if (byte == char_traits<char_type>::eof())
+        {
+            return unexpect_eof(input_format_t::bon8, "value");
+        }
+
+        // string: ASCII character
+        if (byte <= 0x7F)
+        {
+            string_t s;
+            unget_bon8(byte);
+            return get_bon8_string(s) && sax->string(s);
+        }
+
+        // array with 0..4 elements
+        if (byte <= 0x84)
+        {
+            return enter_array(static_cast<std::size_t>(byte - 0x80));
+        }
+
+        // array terminated by 0xFE
+        if (byte == 0x85)
+        {
+            return enter_array(npos);
+        }
+
+        // object with 0..4 members
+        if (byte <= 0x8A)
+        {
+            return enter_object(static_cast<std::size_t>(byte - 0x86));
+        }
+
+        switch (byte)
+        {
+            case 0x8B: // object terminated by 0xFE
+                return enter_object(npos);
+
+            case 0x8C: // int32
+            {
+                std::int32_t number{};
+                return get_number(input_format_t::bon8, number) && emit_bon8_integer(number);
+            }
+
+            case 0x8D: // int64
+            {
+                std::int64_t number{};
+                return get_number(input_format_t::bon8, number) && emit_bon8_integer(number);
+            }
+
+            case 0x8E: // binary32
+            {
+                float number{};
+                return get_number(input_format_t::bon8, number) && sax->number_float(static_cast<number_float_t>(number), "");
+            }
+
+            case 0x8F: // binary64
+            {
+                double number{};
+                return get_number(input_format_t::bon8, number) && sax->number_float(static_cast<number_float_t>(number), "");
+            }
+
+            case 0xF8:
+                return sax->boolean(false);
+
+            case 0xF9:
+                return sax->boolean(true);
+
+            case 0xFA:
+                return sax->null();
+
+            case 0xFB:
+                return sax->number_float(static_cast<number_float_t>(-1.0), "");
+
+            case 0xFC:
+                return sax->number_float(static_cast<number_float_t>(0.0), "");
+
+            case 0xFD:
+                return sax->number_float(static_cast<number_float_t>(1.0), "");
+
+            case 0xFF: // empty string
+            {
+                string_t s;
+                return sax->string(s);
+            }
+
+            default:
+                break;
+        }
+
+        // integer 0..39
+        if (byte <= 0xB7)
+        {
+            return sax->number_unsigned(static_cast<number_unsigned_t>(byte - 0x90));
+        }
+
+        // integer -1..-10
+        if (byte <= 0xC1)
+        {
+            return sax->number_integer(-1 - static_cast<number_integer_t>(byte - 0xB8));
+        }
+
+        // 0xC2..0xF7: a UTF-8 lead byte begins a string if a continuation
+        // byte follows and an integer otherwise
+        if (byte <= 0xF7)
+        {
+            const auto second = get_bon8();
+            if (is_bon8_continuation(second))
+            {
+                string_t s;
+                unget_bon8(second);
+                unget_bon8(byte);
+                return get_bon8_string(s) && sax->string(s);
+            }
+            return get_bon8_integer(byte, second);
+        }
+
+        // 0xFE: end of container where a value is expected
+        return bon8_error("invalid byte", "value");
+    }
+
+    /*!
+    @brief pass an integer to the SAX parser
+
+    Non-negative integers are passed as unsigned, negative integers as signed
+    numbers, like the other binary formats do.
+
+    @param[in] number  the integer
+    @return whether the SAX parser accepted the value
+    */
+    bool emit_bon8_integer(const std::int64_t number)
+    {
+        if (number >= 0)
+        {
+            return sax->number_unsigned(static_cast<number_unsigned_t>(number));
+        }
+        return sax->number_integer(static_cast<number_integer_t>(number));
+    }
+
+    /*!
+    @brief read an integer encoded in 2..4 bytes
+
+    The first byte is a UTF-8 lead byte (0xC2..0xF7) that is followed by a
+    byte that is not a continuation byte: 0x00..0x7F for positive and
+    0xC0..0xFF for negative integers. The lead byte's low bits and the second
+    byte's low 7 (positive) or 6 (negative) bits are the most significant bits
+    of the value; 3- and 4-byte integers add one or two full bytes. Each range
+    starts where the shorter one ends, so no value has two encodings of the
+    same length.
+
+    @param[in] lead    the first byte (0xC2..0xF7)
+    @param[in] second  the second byte
+    @return whether reading the integer succeeded
+    */
+    bool get_bon8_integer(const char_int_type lead, const char_int_type second)
+    {
+        if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "number")))
+        {
+            return false;
+        }
+
+        const bool negative = second >= 0xC0;
+        auto value = static_cast<std::int64_t>(negative ? (second & 0x3F) : second);
+        std::int64_t offset = 0;
+        int extra_bytes = 0;
+
+        if (lead <= 0xDF)
+        {
+            value |= static_cast<std::int64_t>(lead - 0xC2) << (negative ? 6 : 7);
+            offset = negative ? 11 : 40;
+        }
+        else if (lead <= 0xEF)
+        {
+            value |= static_cast<std::int64_t>(lead & 0x0F) << (negative ? 6 : 7);
+            offset = negative ? 1931 : 3880;
+            extra_bytes = 1;
+        }
+        else
+        {
+            value |= static_cast<std::int64_t>(lead & 0x07) << (negative ? 6 : 7);
+            offset = negative ? 264075 : 528168;
+            extra_bytes = 2;
+        }
+
+        for (int i = 0; i < extra_bytes; ++i)
+        {
+            if (JSON_HEDLEY_UNLIKELY(get_bon8() == char_traits<char_type>::eof()))
+            {
+                return unexpect_eof(input_format_t::bon8, "number");
+            }
+            value = (value << 8) | static_cast<std::int64_t>(current);
+        }
+
+        return negative ? sax->number_integer(static_cast<number_integer_t>(-(value + offset)))
+               : sax->number_unsigned(static_cast<number_unsigned_t>(value + offset));
+    }
+
+    /*!
+    @brief read an object key
+
+    A key must be a string, so its first byte must be an ASCII character, a
+    UTF-8 lead byte followed by a continuation byte, or 0xFF (empty string).
+
+    @param[out] result  the key
+    @return whether reading the key succeeded
+    */
+    bool get_bon8_key(string_t& result)
+    {
+        const auto byte = get_bon8();
+
+        if (byte == char_traits<char_type>::eof())
+        {
+            return unexpect_eof(input_format_t::bon8, "key");
+        }
+
+        if (byte == 0xFF)
+        {
+            return true;
+        }
+
+        if (byte <= 0x7F)
+        {
+            unget_bon8(byte);
+            return get_bon8_string(result);
+        }
+
+        if (0xC2 <= byte && byte <= 0xF7)
+        {
+            const auto second = get_bon8();
+            unget_bon8(second);
+            if (is_bon8_continuation(second))
+            {
+                unget_bon8(byte);
+                return get_bon8_string(result);
+            }
+            // an integer: report its first byte rather than the one after it
+            current = byte;
+        }
+
+        return bon8_error("expected a string; last byte", "key");
+    }
+
+    /*!
+    @brief append the run of valid UTF-8 at the read position to a string
+
+    For contiguous input, the ASCII characters and complete well-formed UTF-8
+    sequences at the read position are appended to @a result in one step. The
+    byte that stops the run (an end-of-string marker, the first byte of the
+    next value, or an ill-formed byte) is left for @ref get_bon8_string, so
+    that strings end and errors are reported exactly as without this step.
+
+    @param[in,out] result  the string to append to
+    */
+    void get_bon8_string_bulk(string_t& result, std::true_type /*bulk*/)
+    {
+        // bytes handed back must be read through get_bon8() first
+        if (bon8_pushback_size != 0)
+        {
+            return;
+        }
+        const std::size_t remaining = ia.bulk_remaining();
+        if (remaining == 0)
+        {
+            return;
+        }
+        const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+        const std::size_t length = valid_utf8_prefix(data, remaining);
+        if (length != 0)
+        {
+            result.append(reinterpret_cast<const typename string_t::value_type*>(data), length);
+            ia.bulk_skip(length);
+            chars_read += length;
+        }
+    }
+
+    /// input that is not contiguous: strings are read byte by byte
+    void get_bon8_string_bulk(string_t& /*result*/, std::false_type /*bulk*/) const noexcept {}
+
+    /*!
+    @brief read a string
+
+    Reads UTF-8 characters until an end-of-string marker (0xFF), which is
+    consumed, or a byte that cannot continue the string, which is handed back
+    to be read as the start of the next value. The string must be valid UTF-8,
+    and it must not end at the end of the input: the last string of a message
+    is always terminated by 0xFF.
+
+    @param[out] result  the string
+    @return whether reading the string succeeded
+    */
+    bool get_bon8_string(string_t& result)
+    {
+        while (true)
+        {
+            get_bon8_string_bulk(result, std::integral_constant<bool, bulk_scan> {});
+
+            const auto byte = get_bon8();
+
+            if (byte == char_traits<char_type>::eof())
+            {
+                return unexpect_eof(input_format_t::bon8, "string");
+            }
+
+            // end of string
+            if (byte == 0xFF)
+            {
+                return true;
+            }
+
+            // ASCII character
+            if (byte <= 0x7F)
+            {
+                result.push_back(static_cast<typename string_t::value_type>(byte));
+                continue;
+            }
+
+            // a byte that cannot begin a character ends the string and begins
+            // the next value
+            if (byte < 0xC2 || byte > 0xF7)
+            {
+                unget_bon8(byte);
+                return true;
+            }
+
+            // a lead byte ends the string if no continuation byte follows: it
+            // is then the first byte of an integer
+            const auto second = get_bon8();
+            if (!is_bon8_continuation(second))
+            {
+                unget_bon8(second);
+                unget_bon8(byte);
+                return true;
+            }
+
+            // the valid range of the second byte excludes overlong forms,
+            // surrogates, and code points above U+10FFFF
+            // (RFC 3629, section 4)
+            int continuation_bytes = 0;
+            bool valid_second = true;
+            if (byte <= 0xDF)
+            {
+                continuation_bytes = 1;
+            }
+            else if (byte <= 0xEF)
+            {
+                continuation_bytes = 2;
+                valid_second = (byte != 0xE0 || second >= 0xA0) && (byte != 0xED || second <= 0x9F);
+            }
+            else
+            {
+                continuation_bytes = 3;
+                valid_second = byte <= 0xF4 && (byte != 0xF0 || second >= 0x90) && (byte != 0xF4 || second <= 0x8F);
+            }
+
+            if (JSON_HEDLEY_UNLIKELY(!valid_second))
+            {
+                return bon8_error("invalid UTF-8 byte", "string");
+            }
+
+            result.push_back(static_cast<typename string_t::value_type>(byte));
+            result.push_back(static_cast<typename string_t::value_type>(second));
+
+            for (int i = 1; i < continuation_bytes; ++i)
+            {
+                if (JSON_HEDLEY_UNLIKELY(get_bon8() == char_traits<char_type>::eof()))
+                {
+                    return unexpect_eof(input_format_t::bon8, "string");
+                }
+                if (JSON_HEDLEY_UNLIKELY(!is_bon8_continuation(current)))
+                {
+                    return bon8_error("invalid UTF-8 byte", "string");
+                }
+                result.push_back(static_cast<typename string_t::value_type>(current));
+            }
+        }
+    }
+
     ///////////////////////
     // Utility functions //
     ///////////////////////
@@ -3482,6 +4086,10 @@ class binary_reader
                 error_msg += "BJData";
                 break;
 
+            case input_format_t::bon8:
+                error_msg += "BON8";
+                break;
+
             case input_format_t::json: // LCOV_EXCL_LINE
             default:            // LCOV_EXCL_LINE
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
@@ -3513,6 +4121,11 @@ class binary_reader
 
     /// the containers that have been opened and not closed yet; see @ref container_frame
     std::vector<container_frame> container_stack{};
+
+    /// BON8: bytes read past the end of a string, returned again by @ref get_bon8
+    std::array<char_int_type, 2> bon8_pushback{{}};
+    /// BON8: number of bytes in @ref bon8_pushback
+    std::size_t bon8_pushback_size = 0;
 
     // excluded markers in bjdata optimized type
 #define JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_ \

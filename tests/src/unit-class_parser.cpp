@@ -2761,7 +2761,7 @@ TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
 
         SECTION("binary formats have no text positions")
         {
-            // binary formats (CBOR, MessagePack, UBJSON, BSON, BJData) are
+            // binary formats (BJData, BON8, BSON, CBOR, MessagePack, UBJSON) are
             // parsed via detail::binary_reader, which never sets
             // start_position/end_position on the values it produces (they
             // have no notion of a text offset), so every value's position
@@ -2777,6 +2777,10 @@ TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
             const json from_msgpack = json::from_msgpack(json::to_msgpack(src));
             CHECK(from_msgpack.start_pos() == std::string::npos);
             CHECK(from_msgpack.end_pos() == std::string::npos);
+
+            const json from_bon8 = json::from_bon8(json::to_bon8(src));
+            CHECK(from_bon8.start_pos() == std::string::npos);
+            CHECK(from_bon8.end_pos() == std::string::npos);
 
             const json from_ubjson = json::from_ubjson(json::to_ubjson(src));
             CHECK(from_ubjson.start_pos() == std::string::npos);

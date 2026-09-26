@@ -11,9 +11,9 @@ The macro only affects the JSON text parser ([`parse`](../basic_json/parse.md), 
 [`sax_parse`](../basic_json/sax_parse.md), and [`operator>>`](../operator_gtgt.md)). There are three cases where a NUL
 byte is still not rejected:
 
-- The binary formats ([`from_bjdata`](../basic_json/from_bjdata.md), [`from_bson`](../basic_json/from_bson.md),
-  [`from_cbor`](../basic_json/from_cbor.md), [`from_msgpack`](../basic_json/from_msgpack.md),
-  [`from_ubjson`](../basic_json/from_ubjson.md)) are never affected: there, `0x00` is ordinary data.
+- The binary formats ([`from_bjdata`](../basic_json/from_bjdata.md), [`from_bon8`](../basic_json/from_bon8.md),
+  [`from_bson`](../basic_json/from_bson.md), [`from_cbor`](../basic_json/from_cbor.md),
+  [`from_msgpack`](../basic_json/from_msgpack.md), [`from_ubjson`](../basic_json/from_ubjson.md)) are never affected: there, `0x00` is ordinary data.
 - A bare `const char*` pointer has no length of its own, so its length is still determined with `strlen()`. The first
   NUL byte therefore still marks the end of the input, and nothing after it is read.
 - One trailing `'\0'` at the end of a `char` array (e.g., a string literal) is trimmed; see the warning below.
