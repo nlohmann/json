@@ -140,8 +140,8 @@ The library maps MessagePack types to JSON value types as follows:
 
 !!! warning "Object keys"
 
-    MessagePack allows map keys of any type, whereas JSON only allows strings as keys in object values. As
-    [permitted](https://github.com/msgpack/msgpack/blob/master/spec.md#serialization-type-to-format-conversion) by the
+    MessagePack allows map keys of any type, whereas JSON only allows strings as keys in object values. Like the
+    JSON-compatible [profile](https://github.com/msgpack/msgpack/blob/master/spec.md#profile) sketched in the
     MessagePack specification, this library restricts map keys to `str` values. Maps with keys of any other type are
     rejected with a [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) exception (or, with
     `allow_exceptions` set to `false`, a discarded value) naming the type of the key that was found, for instance:
