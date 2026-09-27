@@ -156,3 +156,38 @@ TEST_CASE("Better diagnostics with positions")
 #endif
     }
 }
+
+TEST_CASE("values read from a binary format have no positions")
+{
+    // only the JSON lexer knows where a value started and ended
+    const json source = {{"a", {1, "x", json::binary({1})}}, {"b", {{"c", true}}}, {"d", nullptr}, {"e", 1.5}};
+    const std::vector<std::uint8_t> cbor = json::to_cbor(source);
+
+    const auto check_no_positions = [](const json & j)
+    {
+        CHECK(j.start_pos() == std::string::npos);
+        CHECK(j.end_pos() == std::string::npos);
+        CHECK(j.at("a").start_pos() == std::string::npos);
+        CHECK(j.at("a").at(1).end_pos() == std::string::npos);
+        CHECK(j.at("b").at("c").start_pos() == std::string::npos);
+    };
+
+    SECTION("DOM parser")
+    {
+        const json j = json::from_cbor(cbor);
+        CHECK(j == source);
+        check_no_positions(j);
+    }
+
+    SECTION("DOM parser with a callback")
+    {
+        json j;
+        nlohmann::detail::json_sax_dom_callback_parser<json, decltype(nlohmann::detail::input_adapter(cbor))> sdp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
+        {
+            return true;
+        });
+        CHECK(json::sax_parse(cbor, &sdp, json::input_format_t::cbor));
+        CHECK(j == source);
+        check_no_positions(j);
+    }
+}

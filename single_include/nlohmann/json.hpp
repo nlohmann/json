@@ -7578,7 +7578,7 @@ namespace detail
 {
 
 /// the supported input formats
-enum class input_format_t { json, cbor, msgpack, ubjson, bson, bjdata };
+enum class input_format_t { json, cbor, msgpack, ubjson, bson, bjdata, bon8 };
 
 ////////////////////
 // input adapters //
@@ -8993,6 +8993,43 @@ inline std::size_t validate_one_utf8(const unsigned char* data, std::size_t avai
         }
     }
     return 0; // invalid, incomplete, or must be diagnosed by the byte path
+}
+
+// Return the length of the longest prefix of [data, data+n) that consists of
+// ASCII characters and complete well-formed UTF-8 sequences; n if all of it is
+// valid UTF-8. Unlike scalar_string_bulk_run(), quotes, escapes, and control
+// characters are ordinary characters here. ASCII is skipped 8 bytes at a time.
+inline std::size_t valid_utf8_prefix(const unsigned char* data, std::size_t n) noexcept
+{
+    constexpr std::uint64_t high = 0x8080808080808080ull;
+    std::size_t pos = 0;
+    while (pos < n)
+    {
+        if (pos + 8 <= n)
+        {
+            std::uint64_t word = 0;
+            std::memcpy(&word, data + pos, sizeof(word));
+            if ((word & high) == 0)
+            {
+                pos += 8;
+                continue;
+            }
+        }
+
+        if (data[pos] < 0x80u)
+        {
+            ++pos;
+            continue;
+        }
+
+        const std::size_t seq = validate_one_utf8(data + pos, n - pos);
+        if (seq == 0)
+        {
+            break; // ill-formed or truncated
+        }
+        pos += seq;
+    }
+    return pos;
 }
 
 // Scalar (C++11) computation of the bulk run length: the number of leading
@@ -12557,6 +12594,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/input/lexer.hpp>
 
+// #include <nlohmann/detail/input/string_scan.hpp>
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/meta/is_sax.hpp>
@@ -12741,7 +12780,7 @@ enum class cbor_tag_handler_t
 {
     error,   ///< throw a parse_error exception in case of a tag
     ignore,  ///< ignore tags
-    store    ///< store tags as binary type
+    store    ///< store tagged byte strings (for bytes 0xd8..0xdb) as binary values with the tag as subtype; other tagged values are read as if the tag were ignored
 };
 
 /*!
@@ -12781,7 +12820,7 @@ JSON_INLINE_VARIABLE constexpr std::size_t max_valueless_container_size = 1 << 2
 ///////////////////
 
 /*!
-@brief deserialization of CBOR, MessagePack, and UBJSON values
+@brief deserialization of BJData, BON8, BSON, CBOR, MessagePack, and UBJSON values
 */
 template<typename BasicJsonType, typename InputAdapterType, typename SAX = json_sax_dom_parser<BasicJsonType, InputAdapterType>>
 class binary_reader
@@ -12794,6 +12833,11 @@ class binary_reader
     using json_sax_t = SAX;
     using char_type = typename InputAdapterType::char_type;
     using char_int_type = typename char_traits<char_type>::int_type;
+
+    /// whether the input is a contiguous block of bytes that can be inspected
+    /// and consumed in bulk (as in the lexer); used by @ref get_bon8_string_bulk
+    static constexpr bool bulk_scan =
+        input_adapter_supports_bulk_scan<InputAdapterType>(is_detected<detect_supports_bulk_scan, InputAdapterType> {});
 
   public:
     /*!
@@ -12829,6 +12873,7 @@ class binary_reader
     {
         sax = sax_;
         container_stack.clear();
+        bon8_pushback_size = 0;
         bool result = false;
 
         switch (format)
@@ -12850,6 +12895,10 @@ class binary_reader
                 result = parse_ubjson_internal();
                 break;
 
+            case input_format_t::bon8:
+                result = parse_bon8_internal();
+                break;
+
             case input_format_t::json: // LCOV_EXCL_LINE
             default:            // LCOV_EXCL_LINE
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
@@ -12861,6 +12910,11 @@ class binary_reader
             if (input_format == input_format_t::ubjson || input_format == input_format_t::bjdata)
             {
                 get_ignore_noop();
+            }
+            else if (input_format == input_format_t::bon8)
+            {
+                // a string that ends a container hands back the byte after it
+                get_bon8();
             }
             else
             {
@@ -13093,6 +13147,11 @@ class binary_reader
     */
     bool get_bson_cstr(string_t& result)
     {
+        if (get_bson_cstr_bulk(result, std::integral_constant<bool, bulk_scan> {}))
+        {
+            return true;
+        }
+
         auto out = std::back_inserter(result);
         while (true)
         {
@@ -13107,6 +13166,46 @@ class binary_reader
             }
             *out++ = static_cast<typename string_t::value_type>(current);
         }
+    }
+
+    /*!
+    @brief read a C-style string from contiguous input in one step
+
+    @param[in,out] result  the string to append to
+    @return whether the string was read; if the input has no \x00-byte, nothing
+            is read, and @ref get_bson_cstr reports the end of the input
+    */
+    bool get_bson_cstr_bulk(string_t& result, std::true_type /*bulk*/)
+    {
+        const std::size_t remaining = ia.bulk_remaining();
+        if (remaining == 0)
+        {
+            return false;
+        }
+        const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+        // a plain loop rather than std::memchr: most keys are short (array
+        // indices are keys, too), and the call would cost more than it saves
+        std::size_t length = 0;
+        while (length < remaining && data[length] != 0x00)
+        {
+            ++length;
+        }
+        if (length == remaining)
+        {
+            return false;
+        }
+        result.append(reinterpret_cast<const typename string_t::value_type*>(data), length);
+        // consume the string and its \x00-byte, as the byte-wise path does
+        ia.bulk_skip(length + 1);
+        chars_read += length + 1;
+        current = 0x00;
+        return true;
+    }
+
+    /// input that is not contiguous: C-style strings are read byte by byte
+    bool get_bson_cstr_bulk(string_t& /*result*/, std::false_type /*bulk*/) const noexcept
+    {
+        return false;
     }
 
     /*!
@@ -13289,14 +13388,18 @@ class binary_reader
                          input (true) or whether the last read character should
                          be considered instead (false)
     @param[in] tag_handler how CBOR tags should be treated
+    @param[out] tag_pending whether a tag was parsed and its value follows
+    @param[out] item_read whether the tagged value's initial byte is already in current
 
     @return whether a valid CBOR value was passed to the SAX parser
     */
     bool parse_cbor_value(const bool get_char,
                           const cbor_tag_handler_t tag_handler,
-                          bool& tag_pending)
+                          bool& tag_pending,
+                          bool& item_read)
     {
         tag_pending = false;
+        item_read = false;
 
         switch (get_char ? get() : current)
         {
@@ -13718,7 +13821,17 @@ class binary_reader
                             }
                         }
                         get();
-                        return get_cbor_binary(b) && sax->binary(b);
+                        // a byte string (the heads accepted by get_cbor_binary) keeps the tag as subtype
+                        if ((current >= 0x40 && current <= 0x5B) || current == 0x5F)
+                        {
+                            return get_cbor_binary(b) && sax->binary(b);
+                        }
+
+                        // not a byte string: the tagged value, whose first byte
+                        // was just read, is read by the caller like for ignore
+                        tag_pending = true;
+                        item_read = true;
+                        return true;
                     }
 
                     default:                 // LCOV_EXCL_LINE
@@ -14200,13 +14313,14 @@ class binary_reader
 
             // a tag is not a value of its own: read on until the tagged value
             bool tag_pending = false;
+            bool item_read = false;
             do
             {
-                if (JSON_HEDLEY_UNLIKELY(!parse_cbor_value(fetch, tag_handler, tag_pending)))
+                if (JSON_HEDLEY_UNLIKELY(!parse_cbor_value(fetch, tag_handler, tag_pending, item_read)))
                 {
                     return false;
                 }
-                fetch = true;
+                fetch = !item_read;
             }
             while (tag_pending);
 
@@ -15881,6 +15995,549 @@ class binary_reader
         }
     }
 
+    //////////
+    // BON8 //
+    //////////
+
+    /*!
+    @brief get the next byte of a BON8 value
+
+    A BON8 string has no length prefix and no mandatory terminator: it ends at
+    the first byte that cannot continue it, which is already the first byte (or,
+    for an integer that begins with a UTF-8 lead byte, the first two bytes) of
+    whatever follows. The string reader hands those bytes back with
+    @ref unget_bon8, and every BON8 read goes through this function so that
+    they are seen again.
+
+    @return character read from the input
+    */
+    char_int_type get_bon8()
+    {
+        if (bon8_pushback_size != 0)
+        {
+            ++chars_read;
+            return current = bon8_pushback[--bon8_pushback_size];
+        }
+        return get();
+    }
+
+    /*!
+    @brief hand a byte back so that the next @ref get_bon8 returns it again
+
+    @param[in] c  the byte to hand back; bytes handed back are returned in
+                  reverse order
+    */
+    void unget_bon8(const char_int_type c)
+    {
+        // At most two bytes are ever handed back: a byte is only handed back
+        // right after it was read with get_bon8(), and the only place that
+        // hands back two bytes (a lead byte and the byte after it) read both
+        // of them in a row, which emptied the buffer first. This is an
+        // invariant of the reader rather than a property of the input, so
+        // an assertion suffices (the fuzzers are built with assertions).
+        JSON_ASSERT(bon8_pushback_size < bon8_pushback.size());
+        bon8_pushback[bon8_pushback_size++] = c;
+        --chars_read;
+    }
+
+    /*!
+    @param[in] c  a byte
+    @return whether @a c is a UTF-8 continuation byte (0x80..0xBF)
+    */
+    static constexpr bool is_bon8_continuation(const char_int_type c) noexcept
+    {
+        return 0x80 <= c && c <= 0xBF;
+    }
+
+    /*!
+    @brief report a parse error at the last read byte
+
+    @param[in] detail   a detailed error message
+    @param[in] context  further context information
+    @return false
+    */
+    bool bon8_error(const std::string& detail, const char* context)
+    {
+        auto last_token = get_token_string();
+        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                exception_message(input_format_t::bon8, concat(detail, ": 0x", last_token), context), nullptr));
+    }
+
+    /*!
+    @brief read a BON8 value and everything nested inside it
+
+    Reads values until the one that was begun here is complete, resuming the
+    enclosing container after each element, so that the nesting depth of the
+    input costs heap rather than native stack (see #5104).
+
+    @return whether reading the value succeeded
+    */
+    bool parse_bon8_internal()
+    {
+        // the key currently being read; hoisted out of the loop so that its
+        // capacity is reused across elements and across nesting levels
+        string_t key;
+
+        while (true)
+        {
+            if (!container_stack.empty())
+            {
+                // a copy, not a reference: it must stay valid across the
+                // pop_back() below, which destroys the container_stack element
+                // it would otherwise alias
+                const container_frame top = container_stack.back();
+                bool at_end = false;
+
+                if (top.remaining != npos)
+                {
+                    // counted container (0x80..0x84, 0x86..0x8A): it ends once
+                    // its elements have been read
+                    at_end = (top.remaining == 0);
+                    if (!at_end)
+                    {
+                        // claim the element about to be read
+                        --container_stack.back().remaining;
+                    }
+                }
+                else
+                {
+                    // container 0x85 or 0x8B: it ends at an end-of-container
+                    // marker (0xFE); any other byte begins the next element
+                    at_end = (get_bon8() == 0xFE);
+                    if (!at_end)
+                    {
+                        unget_bon8(current);
+                    }
+                }
+
+                if (at_end)
+                {
+                    container_stack.pop_back();
+                    if (JSON_HEDLEY_UNLIKELY(top.is_object ? !sax->end_object() : !sax->end_array()))
+                    {
+                        return false;
+                    }
+                    // the value begun here is complete once its container is
+                    if (container_stack.empty())
+                    {
+                        return true;
+                    }
+                    continue;
+                }
+
+                if (top.is_object)
+                {
+                    key.clear();
+                    if (JSON_HEDLEY_UNLIKELY(!get_bon8_key(key) || !sax->key(key)))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            if (JSON_HEDLEY_UNLIKELY(!parse_bon8_value()))
+            {
+                return false;
+            }
+
+            // a value that opened a container left it on the stack; one that
+            // did not, and that was not inside a container, was the whole value
+            if (container_stack.empty())
+            {
+                return true;
+            }
+        }
+    }
+
+    /*!
+    @brief read one BON8 value
+
+    Reads a single value and passes it to the SAX parser. A value that begins
+    a container is not read to its end: the container is opened with
+    @ref enter_container and its elements are read by
+    @ref parse_bon8_internal, so that nesting does not consume native stack.
+
+    @return whether reading the value succeeded
+    */
+    bool parse_bon8_value()
+    {
+        const auto byte = get_bon8();
+
+        if (byte == char_traits<char_type>::eof())
+        {
+            return unexpect_eof(input_format_t::bon8, "value");
+        }
+
+        // string: ASCII character
+        if (byte <= 0x7F)
+        {
+            string_t s;
+            unget_bon8(byte);
+            return get_bon8_string(s) && sax->string(s);
+        }
+
+        // array with 0..4 elements
+        if (byte <= 0x84)
+        {
+            return enter_array(static_cast<std::size_t>(byte - 0x80));
+        }
+
+        // array terminated by 0xFE
+        if (byte == 0x85)
+        {
+            return enter_array(npos);
+        }
+
+        // object with 0..4 members
+        if (byte <= 0x8A)
+        {
+            return enter_object(static_cast<std::size_t>(byte - 0x86));
+        }
+
+        switch (byte)
+        {
+            case 0x8B: // object terminated by 0xFE
+                return enter_object(npos);
+
+            case 0x8C: // int32
+            {
+                std::int32_t number{};
+                return get_number(input_format_t::bon8, number) && emit_bon8_integer(number);
+            }
+
+            case 0x8D: // int64
+            {
+                std::int64_t number{};
+                return get_number(input_format_t::bon8, number) && emit_bon8_integer(number);
+            }
+
+            case 0x8E: // binary32
+            {
+                float number{};
+                return get_number(input_format_t::bon8, number) && sax->number_float(static_cast<number_float_t>(number), "");
+            }
+
+            case 0x8F: // binary64
+            {
+                double number{};
+                return get_number(input_format_t::bon8, number) && sax->number_float(static_cast<number_float_t>(number), "");
+            }
+
+            case 0xF8:
+                return sax->boolean(false);
+
+            case 0xF9:
+                return sax->boolean(true);
+
+            case 0xFA:
+                return sax->null();
+
+            case 0xFB:
+                return sax->number_float(static_cast<number_float_t>(-1.0), "");
+
+            case 0xFC:
+                return sax->number_float(static_cast<number_float_t>(0.0), "");
+
+            case 0xFD:
+                return sax->number_float(static_cast<number_float_t>(1.0), "");
+
+            case 0xFF: // empty string
+            {
+                string_t s;
+                return sax->string(s);
+            }
+
+            default:
+                break;
+        }
+
+        // integer 0..39
+        if (byte <= 0xB7)
+        {
+            return sax->number_unsigned(static_cast<number_unsigned_t>(byte - 0x90));
+        }
+
+        // integer -1..-10
+        if (byte <= 0xC1)
+        {
+            return sax->number_integer(-1 - static_cast<number_integer_t>(byte - 0xB8));
+        }
+
+        // 0xC2..0xF7: a UTF-8 lead byte begins a string if a continuation
+        // byte follows and an integer otherwise
+        if (byte <= 0xF7)
+        {
+            const auto second = get_bon8();
+            if (is_bon8_continuation(second))
+            {
+                string_t s;
+                unget_bon8(second);
+                unget_bon8(byte);
+                return get_bon8_string(s) && sax->string(s);
+            }
+            return get_bon8_integer(byte, second);
+        }
+
+        // 0xFE: end of container where a value is expected
+        return bon8_error("invalid byte", "value");
+    }
+
+    /*!
+    @brief pass an integer to the SAX parser
+
+    Non-negative integers are passed as unsigned, negative integers as signed
+    numbers, like the other binary formats do.
+
+    @param[in] number  the integer
+    @return whether the SAX parser accepted the value
+    */
+    bool emit_bon8_integer(const std::int64_t number)
+    {
+        if (number >= 0)
+        {
+            return sax->number_unsigned(static_cast<number_unsigned_t>(number));
+        }
+        return sax->number_integer(static_cast<number_integer_t>(number));
+    }
+
+    /*!
+    @brief read an integer encoded in 2..4 bytes
+
+    The first byte is a UTF-8 lead byte (0xC2..0xF7) that is followed by a
+    byte that is not a continuation byte: 0x00..0x7F for positive and
+    0xC0..0xFF for negative integers. The lead byte's low bits and the second
+    byte's low 7 (positive) or 6 (negative) bits are the most significant bits
+    of the value; 3- and 4-byte integers add one or two full bytes. Each range
+    starts where the shorter one ends, so no value has two encodings of the
+    same length.
+
+    @param[in] lead    the first byte (0xC2..0xF7)
+    @param[in] second  the second byte
+    @return whether reading the integer succeeded
+    */
+    bool get_bon8_integer(const char_int_type lead, const char_int_type second)
+    {
+        if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::bon8, "number")))
+        {
+            return false;
+        }
+
+        const bool negative = second >= 0xC0;
+        auto value = static_cast<std::int64_t>(negative ? (second & 0x3F) : second);
+        std::int64_t offset = 0;
+        int extra_bytes = 0;
+
+        if (lead <= 0xDF)
+        {
+            value |= static_cast<std::int64_t>(lead - 0xC2) << (negative ? 6 : 7);
+            offset = negative ? 11 : 40;
+        }
+        else if (lead <= 0xEF)
+        {
+            value |= static_cast<std::int64_t>(lead & 0x0F) << (negative ? 6 : 7);
+            offset = negative ? 1931 : 3880;
+            extra_bytes = 1;
+        }
+        else
+        {
+            value |= static_cast<std::int64_t>(lead & 0x07) << (negative ? 6 : 7);
+            offset = negative ? 264075 : 528168;
+            extra_bytes = 2;
+        }
+
+        for (int i = 0; i < extra_bytes; ++i)
+        {
+            if (JSON_HEDLEY_UNLIKELY(get_bon8() == char_traits<char_type>::eof()))
+            {
+                return unexpect_eof(input_format_t::bon8, "number");
+            }
+            value = (value << 8) | static_cast<std::int64_t>(current);
+        }
+
+        return negative ? sax->number_integer(static_cast<number_integer_t>(-(value + offset)))
+               : sax->number_unsigned(static_cast<number_unsigned_t>(value + offset));
+    }
+
+    /*!
+    @brief read an object key
+
+    A key must be a string, so its first byte must be an ASCII character, a
+    UTF-8 lead byte followed by a continuation byte, or 0xFF (empty string).
+
+    @param[out] result  the key
+    @return whether reading the key succeeded
+    */
+    bool get_bon8_key(string_t& result)
+    {
+        const auto byte = get_bon8();
+
+        if (byte == char_traits<char_type>::eof())
+        {
+            return unexpect_eof(input_format_t::bon8, "key");
+        }
+
+        if (byte == 0xFF)
+        {
+            return true;
+        }
+
+        if (byte <= 0x7F)
+        {
+            unget_bon8(byte);
+            return get_bon8_string(result);
+        }
+
+        if (0xC2 <= byte && byte <= 0xF7)
+        {
+            const auto second = get_bon8();
+            unget_bon8(second);
+            if (is_bon8_continuation(second))
+            {
+                unget_bon8(byte);
+                return get_bon8_string(result);
+            }
+            // an integer: report its first byte rather than the one after it
+            current = byte;
+        }
+
+        return bon8_error("expected a string; last byte", "key");
+    }
+
+    /*!
+    @brief append the run of valid UTF-8 at the read position to a string
+
+    For contiguous input, the ASCII characters and complete well-formed UTF-8
+    sequences at the read position are appended to @a result in one step. The
+    byte that stops the run (an end-of-string marker, the first byte of the
+    next value, or an ill-formed byte) is left for @ref get_bon8_string, so
+    that strings end and errors are reported exactly as without this step.
+
+    @param[in,out] result  the string to append to
+    */
+    void get_bon8_string_bulk(string_t& result, std::true_type /*bulk*/)
+    {
+        // bytes handed back must be read through get_bon8() first
+        if (bon8_pushback_size != 0)
+        {
+            return;
+        }
+        const std::size_t remaining = ia.bulk_remaining();
+        if (remaining == 0)
+        {
+            return;
+        }
+        const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
+        const std::size_t length = valid_utf8_prefix(data, remaining);
+        if (length != 0)
+        {
+            result.append(reinterpret_cast<const typename string_t::value_type*>(data), length);
+            ia.bulk_skip(length);
+            chars_read += length;
+        }
+    }
+
+    /// input that is not contiguous: strings are read byte by byte
+    void get_bon8_string_bulk(string_t& /*result*/, std::false_type /*bulk*/) const noexcept {}
+
+    /*!
+    @brief read a string
+
+    Reads UTF-8 characters until an end-of-string marker (0xFF), which is
+    consumed, or a byte that cannot continue the string, which is handed back
+    to be read as the start of the next value. The string must be valid UTF-8,
+    and it must not end at the end of the input: the last string of a message
+    is always terminated by 0xFF.
+
+    @param[out] result  the string
+    @return whether reading the string succeeded
+    */
+    bool get_bon8_string(string_t& result)
+    {
+        while (true)
+        {
+            get_bon8_string_bulk(result, std::integral_constant<bool, bulk_scan> {});
+
+            const auto byte = get_bon8();
+
+            if (byte == char_traits<char_type>::eof())
+            {
+                return unexpect_eof(input_format_t::bon8, "string");
+            }
+
+            // end of string
+            if (byte == 0xFF)
+            {
+                return true;
+            }
+
+            // ASCII character
+            if (byte <= 0x7F)
+            {
+                result.push_back(static_cast<typename string_t::value_type>(byte));
+                continue;
+            }
+
+            // a byte that cannot begin a character ends the string and begins
+            // the next value
+            if (byte < 0xC2 || byte > 0xF7)
+            {
+                unget_bon8(byte);
+                return true;
+            }
+
+            // a lead byte ends the string if no continuation byte follows: it
+            // is then the first byte of an integer
+            const auto second = get_bon8();
+            if (!is_bon8_continuation(second))
+            {
+                unget_bon8(second);
+                unget_bon8(byte);
+                return true;
+            }
+
+            // the valid range of the second byte excludes overlong forms,
+            // surrogates, and code points above U+10FFFF
+            // (RFC 3629, section 4)
+            int continuation_bytes = 0;
+            bool valid_second = true;
+            if (byte <= 0xDF)
+            {
+                continuation_bytes = 1;
+            }
+            else if (byte <= 0xEF)
+            {
+                continuation_bytes = 2;
+                valid_second = (byte != 0xE0 || second >= 0xA0) && (byte != 0xED || second <= 0x9F);
+            }
+            else
+            {
+                continuation_bytes = 3;
+                valid_second = byte <= 0xF4 && (byte != 0xF0 || second >= 0x90) && (byte != 0xF4 || second <= 0x8F);
+            }
+
+            if (JSON_HEDLEY_UNLIKELY(!valid_second))
+            {
+                return bon8_error("invalid UTF-8 byte", "string");
+            }
+
+            result.push_back(static_cast<typename string_t::value_type>(byte));
+            result.push_back(static_cast<typename string_t::value_type>(second));
+
+            for (int i = 1; i < continuation_bytes; ++i)
+            {
+                if (JSON_HEDLEY_UNLIKELY(get_bon8() == char_traits<char_type>::eof()))
+                {
+                    return unexpect_eof(input_format_t::bon8, "string");
+                }
+                if (JSON_HEDLEY_UNLIKELY(!is_bon8_continuation(current)))
+                {
+                    return bon8_error("invalid UTF-8 byte", "string");
+                }
+                result.push_back(static_cast<typename string_t::value_type>(current));
+            }
+        }
+    }
+
     ///////////////////////
     // Utility functions //
     ///////////////////////
@@ -16179,6 +16836,10 @@ class binary_reader
                 error_msg += "BJData";
                 break;
 
+            case input_format_t::bon8:
+                error_msg += "BON8";
+                break;
+
             case input_format_t::json: // LCOV_EXCL_LINE
             default:            // LCOV_EXCL_LINE
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
@@ -16210,6 +16871,11 @@ class binary_reader
 
     /// the containers that have been opened and not closed yet; see @ref container_frame
     std::vector<container_frame> container_stack{};
+
+    /// BON8: bytes read past the end of a string, returned again by @ref get_bon8
+    std::array<char_int_type, 2> bon8_pushback{{}};
+    /// BON8: number of bytes in @ref bon8_pushback
+    std::size_t bon8_pushback_size = 0;
 
     // excluded markers in bjdata optimized type
 #define JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_ \
@@ -19267,6 +19933,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/input/binary_reader.hpp>
 
+// #include <nlohmann/detail/input/string_scan.hpp>
+
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/output/output_adapters.hpp>
@@ -19541,7 +20209,7 @@ std::size_t binary_reserve_hint(const BasicJsonType& j)
 }
 
 /*!
-@brief serialization to CBOR and MessagePack values
+@brief serialization to BJData, BON8, BSON, CBOR, MessagePack, and UBJSON values
 */
 template<typename BasicJsonType, typename CharType, typename OutputSinkType = output_adapter_sink<CharType>>
 class binary_writer
@@ -19633,92 +20301,20 @@ class binary_writer
                 if (j.m_data.m_value.number_integer >= 0)
                 {
                     // CBOR does not differentiate between positive signed
-                    // integers and unsigned integers. Therefore, we used the
-                    // code from the value_t::number_unsigned case here.
-                    if (j.m_data.m_value.number_integer <= 0x17)
-                    {
-                        write_number(static_cast<std::uint8_t>(j.m_data.m_value.number_integer));
-                    }
-                    else if (j.m_data.m_value.number_integer <= (std::numeric_limits<std::uint8_t>::max)())
-                    {
-                        oa.write_character(to_char_type(0x18));
-                        write_number(static_cast<std::uint8_t>(j.m_data.m_value.number_integer));
-                    }
-                    else if (j.m_data.m_value.number_integer <= (std::numeric_limits<std::uint16_t>::max)())
-                    {
-                        oa.write_character(to_char_type(0x19));
-                        write_number(static_cast<std::uint16_t>(j.m_data.m_value.number_integer));
-                    }
-                    else if (j.m_data.m_value.number_integer <= (std::numeric_limits<std::uint32_t>::max)())
-                    {
-                        oa.write_character(to_char_type(0x1A));
-                        write_number(static_cast<std::uint32_t>(j.m_data.m_value.number_integer));
-                    }
-                    else
-                    {
-                        oa.write_character(to_char_type(0x1B));
-                        write_number(static_cast<std::uint64_t>(j.m_data.m_value.number_integer));
-                    }
+                    // integers and unsigned integers
+                    write_cbor_head(0x00, static_cast<std::uint64_t>(j.m_data.m_value.number_integer));
                 }
                 else
                 {
-                    // The conversions below encode the sign in the first
-                    // byte, and the value is converted to a positive number.
-                    const auto positive_number = -1 - j.m_data.m_value.number_integer;
-                    if (j.m_data.m_value.number_integer >= -24)
-                    {
-                        write_number(static_cast<std::uint8_t>(0x20 + positive_number));
-                    }
-                    else if (positive_number <= (std::numeric_limits<std::uint8_t>::max)())
-                    {
-                        oa.write_character(to_char_type(0x38));
-                        write_number(static_cast<std::uint8_t>(positive_number));
-                    }
-                    else if (positive_number <= (std::numeric_limits<std::uint16_t>::max)())
-                    {
-                        oa.write_character(to_char_type(0x39));
-                        write_number(static_cast<std::uint16_t>(positive_number));
-                    }
-                    else if (positive_number <= (std::numeric_limits<std::uint32_t>::max)())
-                    {
-                        oa.write_character(to_char_type(0x3A));
-                        write_number(static_cast<std::uint32_t>(positive_number));
-                    }
-                    else
-                    {
-                        oa.write_character(to_char_type(0x3B));
-                        write_number(static_cast<std::uint64_t>(positive_number));
-                    }
+                    // a negative integer n is encoded as -1 - n
+                    write_cbor_head(0x20, static_cast<std::uint64_t>(-1 - j.m_data.m_value.number_integer));
                 }
                 break;
             }
 
             case value_t::number_unsigned:
             {
-                if (j.m_data.m_value.number_unsigned <= 0x17)
-                {
-                    write_number(static_cast<std::uint8_t>(j.m_data.m_value.number_unsigned));
-                }
-                else if (j.m_data.m_value.number_unsigned <= (std::numeric_limits<std::uint8_t>::max)())
-                {
-                    oa.write_character(to_char_type(0x18));
-                    write_number(static_cast<std::uint8_t>(j.m_data.m_value.number_unsigned));
-                }
-                else if (j.m_data.m_value.number_unsigned <= (std::numeric_limits<std::uint16_t>::max)())
-                {
-                    oa.write_character(to_char_type(0x19));
-                    write_number(static_cast<std::uint16_t>(j.m_data.m_value.number_unsigned));
-                }
-                else if (j.m_data.m_value.number_unsigned <= (std::numeric_limits<std::uint32_t>::max)())
-                {
-                    oa.write_character(to_char_type(0x1A));
-                    write_number(static_cast<std::uint32_t>(j.m_data.m_value.number_unsigned));
-                }
-                else
-                {
-                    oa.write_character(to_char_type(0x1B));
-                    write_number(static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
-                }
+                write_cbor_head(0x00, j.m_data.m_value.number_unsigned);
                 break;
             }
 
@@ -19748,33 +20344,7 @@ class binary_writer
             case value_t::string:
             {
                 // step 1: write control byte and the string length
-                const auto N = j.m_data.m_value.string->size();
-                if (N <= 0x17)
-                {
-                    write_number(static_cast<std::uint8_t>(0x60 + N));
-                }
-                else if (N <= (std::numeric_limits<std::uint8_t>::max)())
-                {
-                    oa.write_character(to_char_type(0x78));
-                    write_number(static_cast<std::uint8_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint16_t>::max)())
-                {
-                    oa.write_character(to_char_type(0x79));
-                    write_number(static_cast<std::uint16_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
-                {
-                    oa.write_character(to_char_type(0x7A));
-                    write_number(static_cast<std::uint32_t>(N));
-                }
-                // LCOV_EXCL_START
-                else if (N <= (std::numeric_limits<std::uint64_t>::max)())
-                {
-                    oa.write_character(to_char_type(0x7B));
-                    write_number(static_cast<std::uint64_t>(N));
-                }
-                // LCOV_EXCL_STOP
+                write_cbor_head(0x60, j.m_data.m_value.string->size());
 
                 // step 2: write the string
                 oa.write_characters(
@@ -19786,33 +20356,7 @@ class binary_writer
             case value_t::array:
             {
                 // step 1: write control byte and the array size
-                const auto N = j.m_data.m_value.array->size();
-                if (N <= 0x17)
-                {
-                    write_number(static_cast<std::uint8_t>(0x80 + N));
-                }
-                else if (N <= (std::numeric_limits<std::uint8_t>::max)())
-                {
-                    oa.write_character(to_char_type(0x98));
-                    write_number(static_cast<std::uint8_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint16_t>::max)())
-                {
-                    oa.write_character(to_char_type(0x99));
-                    write_number(static_cast<std::uint16_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
-                {
-                    oa.write_character(to_char_type(0x9A));
-                    write_number(static_cast<std::uint32_t>(N));
-                }
-                // LCOV_EXCL_START
-                else if (N <= (std::numeric_limits<std::uint64_t>::max)())
-                {
-                    oa.write_character(to_char_type(0x9B));
-                    write_number(static_cast<std::uint64_t>(N));
-                }
-                // LCOV_EXCL_STOP
+                write_cbor_head(0x80, j.m_data.m_value.array->size());
 
                 // step 2: write each element
                 for (const auto& el : *j.m_data.m_value.array)
@@ -19841,7 +20385,7 @@ class binary_writer
                         write_number(static_cast<std::uint8_t>(0xda));
                         write_number(static_cast<std::uint32_t>(j.m_data.m_value.binary->subtype()));
                     }
-                    else if (j.m_data.m_value.binary->subtype() <= (std::numeric_limits<std::uint64_t>::max)())
+                    else
                     {
                         write_number(static_cast<std::uint8_t>(0xdb));
                         write_number(static_cast<std::uint64_t>(j.m_data.m_value.binary->subtype()));
@@ -19850,32 +20394,7 @@ class binary_writer
 
                 // step 1: write control byte and the binary array size
                 const auto N = j.m_data.m_value.binary->size();
-                if (N <= 0x17)
-                {
-                    write_number(static_cast<std::uint8_t>(0x40 + N));
-                }
-                else if (N <= (std::numeric_limits<std::uint8_t>::max)())
-                {
-                    oa.write_character(to_char_type(0x58));
-                    write_number(static_cast<std::uint8_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint16_t>::max)())
-                {
-                    oa.write_character(to_char_type(0x59));
-                    write_number(static_cast<std::uint16_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
-                {
-                    oa.write_character(to_char_type(0x5A));
-                    write_number(static_cast<std::uint32_t>(N));
-                }
-                // LCOV_EXCL_START
-                else if (N <= (std::numeric_limits<std::uint64_t>::max)())
-                {
-                    oa.write_character(to_char_type(0x5B));
-                    write_number(static_cast<std::uint64_t>(N));
-                }
-                // LCOV_EXCL_STOP
+                write_cbor_head(0x40, N);
 
                 // step 2: write each element
                 oa.write_characters(
@@ -19888,33 +20407,7 @@ class binary_writer
             case value_t::object:
             {
                 // step 1: write control byte and the object size
-                const auto N = j.m_data.m_value.object->size();
-                if (N <= 0x17)
-                {
-                    write_number(static_cast<std::uint8_t>(0xA0 + N));
-                }
-                else if (N <= (std::numeric_limits<std::uint8_t>::max)())
-                {
-                    oa.write_character(to_char_type(0xB8));
-                    write_number(static_cast<std::uint8_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint16_t>::max)())
-                {
-                    oa.write_character(to_char_type(0xB9));
-                    write_number(static_cast<std::uint16_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
-                {
-                    oa.write_character(to_char_type(0xBA));
-                    write_number(static_cast<std::uint32_t>(N));
-                }
-                // LCOV_EXCL_START
-                else if (N <= (std::numeric_limits<std::uint64_t>::max)())
-                {
-                    oa.write_character(to_char_type(0xBB));
-                    write_number(static_cast<std::uint64_t>(N));
-                }
-                // LCOV_EXCL_STOP
+                write_cbor_head(0xA0, j.m_data.m_value.object->size());
 
                 // step 2: write each element
                 for (const auto& el : *j.m_data.m_value.object)
@@ -19929,6 +20422,23 @@ class binary_writer
             default:
                 break;
         }
+    }
+
+    /*!
+    @brief check that @a length fits into the 32 bits that MessagePack stores
+           the length of a string, binary value, array, or object in
+    @return the length as an unsigned 32-bit integer
+    @throw out_of_range.412 if @a length exceeds the range of std::uint32_t
+    */
+    static std::uint32_t to_msgpack_length(const std::size_t length, const BasicJsonType& j)
+    {
+        if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::uint32_t>(length)))
+        {
+            JSON_THROW(out_of_range::create(412, concat("MessagePack length ", std::to_string(length), " exceeds maximum of ", std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
+        }
+
+        static_cast<void>(j);
+        return static_cast<std::uint32_t>(length);
     }
 
     /*!
@@ -19982,7 +20492,7 @@ class binary_writer
                         oa.write_character(to_char_type(0xCE));
                         write_number(static_cast<std::uint32_t>(j.m_data.m_value.number_integer));
                     }
-                    else if (j.m_data.m_value.number_unsigned <= (std::numeric_limits<std::uint64_t>::max)())
+                    else
                     {
                         // uint 64
                         oa.write_character(to_char_type(0xCF));
@@ -20017,8 +20527,7 @@ class binary_writer
                         oa.write_character(to_char_type(0xD2));
                         write_number(static_cast<std::int32_t>(j.m_data.m_value.number_integer));
                     }
-                    else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int64_t>::min)() &&
-                             j.m_data.m_value.number_integer <= (std::numeric_limits<std::int64_t>::max)())
+                    else
                     {
                         // int 64
                         oa.write_character(to_char_type(0xD3));
@@ -20053,7 +20562,7 @@ class binary_writer
                     oa.write_character(to_char_type(0xCE));
                     write_number(static_cast<std::uint32_t>(j.m_data.m_value.number_integer));
                 }
-                else if (j.m_data.m_value.number_unsigned <= (std::numeric_limits<std::uint64_t>::max)())
+                else
                 {
                     // uint 64
                     oa.write_character(to_char_type(0xCF));
@@ -20071,7 +20580,7 @@ class binary_writer
             case value_t::string:
             {
                 // step 1: write control byte and the string length
-                const auto N = j.m_data.m_value.string->size();
+                const auto N = to_msgpack_length(j.m_data.m_value.string->size(), j);
                 if (N <= 31)
                 {
                     // fixstr
@@ -20089,7 +20598,7 @@ class binary_writer
                     oa.write_character(to_char_type(0xDA));
                     write_number(static_cast<std::uint16_t>(N));
                 }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
+                else
                 {
                     // str 32
                     oa.write_character(to_char_type(0xDB));
@@ -20106,7 +20615,7 @@ class binary_writer
             case value_t::array:
             {
                 // step 1: write control byte and the array size
-                const auto N = j.m_data.m_value.array->size();
+                const auto N = to_msgpack_length(j.m_data.m_value.array->size(), j);
                 if (N <= 15)
                 {
                     // fixarray
@@ -20118,7 +20627,7 @@ class binary_writer
                     oa.write_character(to_char_type(0xDC));
                     write_number(static_cast<std::uint16_t>(N));
                 }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
+                else
                 {
                     // array 32
                     oa.write_character(to_char_type(0xDD));
@@ -20140,7 +20649,7 @@ class binary_writer
                 const bool use_ext = j.m_data.m_value.binary->has_subtype();
 
                 // step 1: write control byte and the byte string length
-                const auto N = j.m_data.m_value.binary->size();
+                const auto N = to_msgpack_length(j.m_data.m_value.binary->size(), j);
                 if (N <= (std::numeric_limits<std::uint8_t>::max)())
                 {
                     std::uint8_t output_type{};
@@ -20192,7 +20701,7 @@ class binary_writer
                     oa.write_character(to_char_type(output_type));
                     write_number(static_cast<std::uint16_t>(N));
                 }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
+                else
                 {
                     const std::uint8_t output_type = use_ext
                                                      ? 0xC9 // ext 32
@@ -20224,7 +20733,7 @@ class binary_writer
             case value_t::object:
             {
                 // step 1: write control byte and the object size
-                const auto N = j.m_data.m_value.object->size();
+                const auto N = to_msgpack_length(j.m_data.m_value.object->size(), j);
                 if (N <= 15)
                 {
                     // fixmap
@@ -20236,7 +20745,7 @@ class binary_writer
                     oa.write_character(to_char_type(0xDE));
                     write_number(static_cast<std::uint16_t>(N));
                 }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
+                else
                 {
                     // map 32
                     oa.write_character(to_char_type(0xDF));
@@ -20494,6 +21003,21 @@ class binary_writer
             case value_t::discarded:
             default:
                 break;
+        }
+    }
+
+    /*!
+    @param[in] j  JSON value to serialize
+    */
+    void write_bon8(const BasicJsonType& j)
+    {
+        bool string_open = false;
+        write_bon8_value(j, string_open);
+
+        // the last string of a message must be terminated
+        if (string_open)
+        {
+            oa.write_character(to_char_type(0xFF));
         }
     }
 
@@ -20991,6 +21515,46 @@ class binary_writer
     // CBOR //
     //////////
 
+    /*!
+    @brief write the head of a CBOR data item
+
+    The head is the major type in the upper three bits of the first byte and
+    an argument - an unsigned integer, the length of a string, the number of
+    elements of a container - in the shortest of its encodings: in the lower
+    five bits of the first byte itself if it is at most 23, otherwise in the
+    1, 2, 4, or 8 bytes that follow (RFC 8949, section 3).
+
+    @param[in] major_type  the major type, shifted into the upper three bits
+    @param[in] argument    the argument of the data item
+    */
+    void write_cbor_head(const std::uint8_t major_type, const std::uint64_t argument)
+    {
+        if (argument <= 0x17)
+        {
+            write_number(static_cast<std::uint8_t>(major_type + argument));
+        }
+        else if (argument <= (std::numeric_limits<std::uint8_t>::max)())
+        {
+            oa.write_character(to_char_type(static_cast<std::uint8_t>(major_type + 0x18)));
+            write_number(static_cast<std::uint8_t>(argument));
+        }
+        else if (argument <= (std::numeric_limits<std::uint16_t>::max)())
+        {
+            oa.write_character(to_char_type(static_cast<std::uint8_t>(major_type + 0x19)));
+            write_number(static_cast<std::uint16_t>(argument));
+        }
+        else if (argument <= (std::numeric_limits<std::uint32_t>::max)())
+        {
+            oa.write_character(to_char_type(static_cast<std::uint8_t>(major_type + 0x1A)));
+            write_number(static_cast<std::uint32_t>(argument));
+        }
+        else
+        {
+            oa.write_character(to_char_type(static_cast<std::uint8_t>(major_type + 0x1B)));
+            write_number(argument);
+        }
+    }
+
     static constexpr CharType get_cbor_float_prefix(float /*unused*/)
     {
         return to_char_type(0xFA);  // Single-Precision Float
@@ -21013,6 +21577,28 @@ class binary_writer
     static constexpr CharType get_msgpack_float_prefix(double /*unused*/)
     {
         return to_char_type(0xCB);  // float 64
+    }
+
+    /// @return the BON8 type marker for binary32 (float) or binary64 (double)
+    template<typename FloatType>
+    static constexpr CharType get_bon8_float_prefix()
+    {
+        return to_char_type(std::is_same<FloatType, float>::value ? 0x8E : 0x8F);
+    }
+
+    /// @return the type marker for a FloatType value in @a format (CBOR, MessagePack, or BON8)
+    template<typename FloatType>
+    static CharType get_compact_float_prefix(const detail::input_format_t format)
+    {
+        if (format == detail::input_format_t::cbor)
+        {
+            return get_cbor_float_prefix(FloatType{});
+        }
+        if (format == detail::input_format_t::bon8)
+        {
+            return get_bon8_float_prefix<FloatType>();
+        }
+        return get_msgpack_float_prefix(FloatType{});
     }
 
     ////////////
@@ -21096,7 +21682,7 @@ class binary_writer
             }
             write_number(static_cast<std::int64_t>(n), use_bjdata);
         }
-        else if (use_bjdata && n <= (std::numeric_limits<uint64_t>::max)())
+        else if (use_bjdata)
         {
             if (add_prefix)
             {
@@ -21176,30 +21762,59 @@ class binary_writer
             }
             write_number(static_cast<uint32_t>(n), use_bjdata);
         }
-        else if ((std::numeric_limits<std::int64_t>::min)() <= n && n <= (std::numeric_limits<std::int64_t>::max)())
-        {
-            if (add_prefix)
-            {
-                oa.write_character(to_char_type('L'));  // int64
-            }
-            write_number(static_cast<std::int64_t>(n), use_bjdata);
-        }
-        // LCOV_EXCL_START
         else
         {
-            if (add_prefix)
-            {
-                oa.write_character(to_char_type('H'));  // high-precision number
-            }
-
-            const auto number = BasicJsonType(n).dump();
-            write_number_with_ubjson_prefix(number.size(), true, use_bjdata);
-            for (std::size_t i = 0; i < number.size(); ++i)
-            {
-                oa.write_character(to_char_type(static_cast<std::uint8_t>(number[i])));
-            }
+            // every value of an integer type of at most 64 bits fits into an
+            // int64; only a wider type needs a range check
+            write_ubjson_int64_or_high_precision(n, add_prefix, use_bjdata,
+                                                 std::integral_constant < bool, std::numeric_limits<NumberType>::digits <= std::numeric_limits<std::int64_t>::digits > {});
         }
-        // LCOV_EXCL_STOP
+    }
+
+    template<typename NumberType>
+    void write_ubjson_int64_or_high_precision(const NumberType n, const bool add_prefix, const bool use_bjdata, std::true_type /*fits_int64*/)
+    {
+        if (add_prefix)
+        {
+            oa.write_character(to_char_type('L'));  // int64
+        }
+        write_number(static_cast<std::int64_t>(n), use_bjdata);
+    }
+
+    template<typename NumberType>
+    void write_ubjson_int64_or_high_precision(const NumberType n, const bool add_prefix, const bool use_bjdata, std::false_type /*fits_int64*/)
+    {
+        if ((std::numeric_limits<std::int64_t>::min)() <= n && n <= (std::numeric_limits<std::int64_t>::max)())
+        {
+            write_ubjson_int64_or_high_precision(n, add_prefix, use_bjdata, std::true_type {});
+            return;
+        }
+
+        if (add_prefix)
+        {
+            oa.write_character(to_char_type('H'));  // high-precision number
+        }
+
+        const auto number = BasicJsonType(n).dump();
+        write_number_with_ubjson_prefix(number.size(), true, use_bjdata);
+        for (std::size_t i = 0; i < number.size(); ++i)
+        {
+            oa.write_character(to_char_type(static_cast<std::uint8_t>(number[i])));
+        }
+    }
+
+    template<typename NumberType>
+    static constexpr CharType ubjson_int64_or_high_precision_prefix(const NumberType /*n*/, std::true_type /*fits_int64*/) noexcept
+    {
+        return 'L';
+    }
+
+    template<typename NumberType>
+    static CharType ubjson_int64_or_high_precision_prefix(const NumberType n, std::false_type /*fits_int64*/) noexcept
+    {
+        // anything outside of the range of an int64 is treated as a
+        // high-precision number
+        return ((std::numeric_limits<std::int64_t>::min)() <= n && n <= (std::numeric_limits<std::int64_t>::max)()) ? 'L' : 'H';
     }
 
     /*!
@@ -21241,12 +21856,10 @@ class binary_writer
                 {
                     return 'm';
                 }
-                if ((std::numeric_limits<std::int64_t>::min)() <= j.m_data.m_value.number_integer && j.m_data.m_value.number_integer <= (std::numeric_limits<std::int64_t>::max)())
-                {
-                    return 'L';
-                }
-                // anything else is treated as a high-precision number
-                return 'H'; // LCOV_EXCL_LINE
+                // every value of an integer type of at most 64 bits fits into
+                // an int64; only a wider type needs a range check
+                return ubjson_int64_or_high_precision_prefix(j.m_data.m_value.number_integer,
+                        std::integral_constant < bool, std::numeric_limits<typename BasicJsonType::number_integer_t>::digits <= std::numeric_limits<std::int64_t>::digits > {});
             }
 
             case value_t::number_unsigned:
@@ -21279,12 +21892,12 @@ class binary_writer
                 {
                     return 'L';
                 }
-                if (use_bjdata && j.m_data.m_value.number_unsigned <= (std::numeric_limits<std::uint64_t>::max)())
+                if (use_bjdata)
                 {
                     return 'M';
                 }
                 // anything else is treated as a high-precision number
-                return 'H'; // LCOV_EXCL_LINE
+                return 'H';
             }
 
             case value_t::number_float:
@@ -21607,6 +22220,322 @@ class binary_writer
         return false;
     }
 
+    //////////
+    // BON8 //
+    //////////
+
+    /*!
+    @brief write a BON8 value
+
+    A string is written without length or terminator: it ends at the first
+    byte that cannot continue it, which is the first byte of any non-string
+    value and of the end-of-container marker 0xFE. It only needs an explicit
+    end-of-string marker (0xFF) when it is empty, when another string follows,
+    or when it is the last thing in the message.
+
+    @param[in] j                JSON value to serialize
+    @param[in,out] string_open  whether the output ends with a non-empty
+                                string that has not been terminated with 0xFF
+    */
+    void write_bon8_value(const BasicJsonType& j, bool& string_open)
+    {
+        switch (j.type())
+        {
+            case value_t::null:
+            {
+                write_bon8_marker(0xFA, string_open);
+                break;
+            }
+
+            case value_t::boolean:
+            {
+                write_bon8_marker(j.m_data.m_value.boolean ? 0xF9 : 0xF8, string_open);
+                break;
+            }
+
+            case value_t::number_unsigned:
+            {
+                if (j.m_data.m_value.number_unsigned > static_cast<typename BasicJsonType::number_unsigned_t>((std::numeric_limits<std::int64_t>::max)()))
+                {
+                    JSON_THROW(out_of_range::create(407, concat("integer number ", std::to_string(j.m_data.m_value.number_unsigned), " cannot be represented by BON8 as it does not fit int64"), &j));
+                }
+                write_bon8_integer(static_cast<std::int64_t>(j.m_data.m_value.number_unsigned));
+                string_open = false;
+                break;
+            }
+
+            case value_t::number_integer:
+            {
+                write_bon8_integer(static_cast<std::int64_t>(j.m_data.m_value.number_integer));
+                string_open = false;
+                break;
+            }
+
+            case value_t::number_float:
+            {
+                write_bon8_float(j.m_data.m_value.number_float);
+                string_open = false;
+                break;
+            }
+
+            case value_t::string:
+            {
+                write_bon8_string(*j.m_data.m_value.string, string_open, j);
+                break;
+            }
+
+            case value_t::array:
+            {
+                const auto N = j.m_data.m_value.array->size();
+                // 0x80..0x84: array with 0..4 elements; 0x85: array ended by 0xFE
+                write_bon8_marker(static_cast<std::uint8_t>(N <= 4 ? 0x80 + N : 0x85), string_open);
+
+                for (const auto& el : *j.m_data.m_value.array)
+                {
+                    write_bon8_value(el, string_open);
+                }
+
+                if (N > 4)
+                {
+                    write_bon8_marker(0xFE, string_open);
+                }
+                break;
+            }
+
+            case value_t::object:
+            {
+                const auto N = j.m_data.m_value.object->size();
+                // 0x86..0x8A: object with 0..4 members; 0x8B: object ended by 0xFE
+                write_bon8_marker(static_cast<std::uint8_t>(N <= 4 ? 0x86 + N : 0x8B), string_open);
+
+                for (const auto& el : *j.m_data.m_value.object)
+                {
+                    write_bon8_string(el.first, string_open, j);
+                    write_bon8_value(el.second, string_open);
+                }
+
+                if (N > 4)
+                {
+                    write_bon8_marker(0xFE, string_open);
+                }
+                break;
+            }
+
+            case value_t::binary:
+            {
+                // BON8 has no binary type: write the bytes as an array of
+                // integers, like UBJSON and BJData do
+                const auto N = j.m_data.m_value.binary->size();
+                write_bon8_marker(static_cast<std::uint8_t>(N <= 4 ? 0x80 + N : 0x85), string_open);
+
+                for (std::size_t i = 0; i < N; ++i)
+                {
+                    // the cast is needed for binary types whose value type
+                    // is not an integer (e.g., std::byte)
+                    write_bon8_integer(static_cast<std::uint8_t>(j.m_data.m_value.binary->data()[i]));
+                }
+
+                if (N > 4)
+                {
+                    write_bon8_marker(0xFE, string_open);
+                }
+                break;
+            }
+
+            case value_t::discarded:
+            default:
+                break;
+        }
+    }
+
+    /*!
+    @brief write a single byte that is not part of a string
+
+    @param[in] marker        the byte to write
+    @param[out] string_open  set to false, because the output no longer ends
+                             with a string; see @ref write_bon8_value
+    */
+    void write_bon8_marker(const std::uint8_t marker, bool& string_open)
+    {
+        oa.write_character(to_char_type(marker));
+        string_open = false;
+    }
+
+    /*!
+    @brief write a string
+
+    @param[in] s                the string to write
+    @param[in,out] string_open  see @ref write_bon8_value
+    @param[in] context          the value the string belongs to (for diagnostics)
+
+    @throw type_error.316 if @a s is not valid UTF-8, because the end of a
+           string is determined from its encoding
+    */
+    void write_bon8_string(const string_t& s, bool& string_open, const BasicJsonType& context)
+    {
+        check_bon8_utf8(s, context);
+
+        // a string that follows another string terminates it
+        if (string_open)
+        {
+            oa.write_character(to_char_type(0xFF));
+        }
+
+        if (s.empty())
+        {
+            // the empty string is just the end-of-string marker
+            oa.write_character(to_char_type(0xFF));
+            string_open = false;
+        }
+        else
+        {
+            oa.write_characters(reinterpret_cast<const CharType*>(s.data()), s.size());
+            string_open = true;
+        }
+    }
+
+    /*!
+    @brief check that a string is valid UTF-8 (RFC 3629)
+
+    @param[in] s        the string to check
+    @param[in] context  the value the string belongs to (for diagnostics)
+
+    @throw type_error.316 if @a s is not valid UTF-8; the message names the
+           first byte of the first invalid or incomplete sequence
+    */
+    static void check_bon8_utf8(const string_t& s, const BasicJsonType& context)
+    {
+        static_cast<void>(context); // only used when exceptions are enabled
+        const auto* data = reinterpret_cast<const unsigned char*>(s.data());
+        const std::size_t valid = valid_utf8_prefix(data, s.size());
+        if (JSON_HEDLEY_UNLIKELY(valid != s.size()))
+        {
+            JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(valid), ": 0x", hex_byte(data[valid])), &context));
+        }
+    }
+
+    /// @return a byte as two uppercase hexadecimal digits
+    static std::string hex_byte(const std::uint8_t byte)
+    {
+        std::string result = "00";
+        constexpr const char* nibble_to_hex = "0123456789ABCDEF";
+        result[0] = nibble_to_hex[byte / 16];
+        result[1] = nibble_to_hex[byte % 16];
+        return result;
+    }
+
+    /*!
+    @brief write an integer in the shortest encoding
+
+    Integers from -10 to 39 take one byte. Up to -33818506 and 67637031, an
+    integer takes 2 to 4 bytes that begin with a UTF-8 lead byte (0xC2..0xF7)
+    followed by a byte that is not a continuation byte: 0x00..0x7F for
+    positive and 0xC0..0xFF for negative integers. Each range starts where the
+    shorter one ends. Larger integers are written as int32 (0x8C) or int64
+    (0x8D) in big-endian byte order.
+
+    @param[in] value  the integer to write
+    */
+    void write_bon8_integer(std::int64_t value)
+    {
+        if (value < (std::numeric_limits<std::int32_t>::min)() || value > (std::numeric_limits<std::int32_t>::max)())
+        {
+            oa.write_character(to_char_type(0x8D));
+            write_number(value);
+        }
+        else if (value < -33818506 || value > 67637031)
+        {
+            oa.write_character(to_char_type(0x8C));
+            write_number(static_cast<std::int32_t>(value));
+        }
+        else if (value <= -264075)
+        {
+            value = -(value + 264075);
+            write_bon8_bytes(0xF0 + ((value >> 22) & 0x07), 0xC0 + ((value >> 16) & 0x3F), value >> 8, value);
+        }
+        else if (value <= -1931)
+        {
+            value = -(value + 1931);
+            write_bon8_bytes(0xE0 + ((value >> 14) & 0x0F), 0xC0 + ((value >> 8) & 0x3F), value);
+        }
+        else if (value <= -11)
+        {
+            value = -(value + 11);
+            write_bon8_bytes(0xC2 + ((value >> 6) & 0x1F), 0xC0 + (value & 0x3F));
+        }
+        else if (value <= -1)
+        {
+            write_bon8_bytes(0xB8 - (value + 1));
+        }
+        else if (value <= 39)
+        {
+            write_bon8_bytes(0x90 + value);
+        }
+        else if (value <= 3879)
+        {
+            value -= 40;
+            write_bon8_bytes(0xC2 + ((value >> 7) & 0x1F), value & 0x7F);
+        }
+        else if (value <= 528167)
+        {
+            value -= 3880;
+            write_bon8_bytes(0xE0 + ((value >> 15) & 0x0F), (value >> 8) & 0x7F, value);
+        }
+        else
+        {
+            value -= 528168;
+            write_bon8_bytes(0xF0 + ((value >> 23) & 0x07), (value >> 16) & 0x7F, value >> 8, value);
+        }
+    }
+
+    /// write the low byte of each argument
+    template<typename... Bytes>
+    void write_bon8_bytes(const Bytes... bytes)
+    {
+        const std::array<CharType, sizeof...(Bytes)> buffer{{to_char_type(static_cast<std::uint8_t>(bytes & 0xFF))...}};
+        oa.write_characters(buffer.data(), buffer.size());
+    }
+
+    /*!
+    @brief write a floating-point number
+
+    -1.0, +0.0, and 1.0 take one byte. Other numbers are written as binary32
+    (0x8E) if that loses no precision, and as binary64 (0x8F) otherwise; -0.0,
+    infinities, and NaN are always written as binary32, NaN as 0x7F800001.
+
+    @param[in] n  the number to write
+    */
+    void write_bon8_float(const number_float_t n)
+    {
+#ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
+        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
+#endif
+        if (n == static_cast<number_float_t>(-1))
+        {
+            oa.write_character(to_char_type(0xFB));
+        }
+        else if (n == static_cast<number_float_t>(0) && !std::signbit(n))
+        {
+            oa.write_character(to_char_type(0xFC));
+        }
+        else if (n == static_cast<number_float_t>(1))
+        {
+            oa.write_character(to_char_type(0xFD));
+        }
+        else if (std::isnan(n))
+        {
+            write_bon8_bytes(0x8E, 0x7F, 0x80, 0x00, 0x01);
+        }
+        else
+        {
+            write_compact_float(n, detail::input_format_t::bon8);
+        }
+#ifdef __GNUC__
+        JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
+    }
+
     ///////////////////////
     // Utility functions //
     ///////////////////////
@@ -21741,16 +22670,12 @@ class binary_writer
                                    static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
                                    static_cast<double>(static_cast<float>(n)) == static_cast<double>(n))))
         {
-            oa.write_character(format == detail::input_format_t::cbor
-                               ? get_cbor_float_prefix(static_cast<float>(n))
-                               : get_msgpack_float_prefix(static_cast<float>(n)));
+            oa.write_character(get_compact_float_prefix<float>(format));
             write_number(static_cast<float>(n));
         }
         else
         {
-            oa.write_character(format == detail::input_format_t::cbor
-                               ? get_cbor_float_prefix(n)
-                               : get_msgpack_float_prefix(n));
+            oa.write_character(get_compact_float_prefix<number_float_t>(format));
             write_number(n);
         }
 #ifdef __GNUC__
@@ -26501,13 +27426,28 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                         compare_keys(current.lhs_object_it->first, current.rhs_object_it->first,
                                      std::integral_constant<bool, Ordered> {});
 
-                    if (key_result != compare_result::equal)
-                    {
-                        return key_result;
-                    }
-
                     left = &(current.lhs_object_it->second);
                     right = &(current.rhs_object_it->second);
+
+                    if (key_result != compare_result::equal)
+                    {
+                        // An object type without a fixed order of its entries -
+                        // std::unordered_map, say - may enumerate two equal
+                        // objects differently, and its operator== does not care.
+                        // Equality then finds the entry by its key; an ordering,
+                        // or an object type that compares its entries in
+                        // sequence (ordered_map), is decided by the key itself.
+                        const auto* rhs_object = current.rhs_value->m_data.m_value.object;
+                        const auto found = (!Ordered && !detail::is_ordered_map<object_t>::value)
+                                           ? rhs_object->find(current.lhs_object_it->first)
+                                           : rhs_object->cend();
+                        if (found == rhs_object->cend())
+                        {
+                            return key_result;
+                        }
+                        right = &(found->second);
+                    }
+
                     ++current.lhs_object_it;
                     ++current.rhs_object_it;
                 }
@@ -27165,17 +28105,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     //////////////////
     // value access //
     //////////////////
-
-    /// get a boolean (explicit)
-    boolean_t get_impl(boolean_t* /*unused*/) const
-    {
-        if (JSON_HEDLEY_LIKELY(is_boolean()))
-        {
-            return m_data.m_value.boolean;
-        }
-
-        JSON_THROW(type_error::create(302, detail::concat("type must be boolean, but is ", type_name()), this));
-    }
 
     /// get a pointer to the value (object)
     object_t* get_impl_ptr(object_t* /*unused*/) noexcept
@@ -30295,6 +31224,30 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         binary_writer<char>(o).write_bson(j);
     }
 
+    /// @brief create a BON8 serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_bon8/
+    static std::vector<std::uint8_t> to_bon8(const basic_json& j)
+    {
+        std::vector<std::uint8_t> result;
+        result.reserve(detail::binary_reserve_hint(j));
+        vector_writer(result).write_bon8(j);
+        return result;
+    }
+
+    /// @brief create a BON8 serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_bon8/
+    static void to_bon8(const basic_json& j, detail::output_adapter<std::uint8_t> o)
+    {
+        binary_writer<std::uint8_t>(o).write_bon8(j);
+    }
+
+    /// @brief create a BON8 serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_bon8/
+    static void to_bon8(const basic_json& j, detail::output_adapter<char> o)
+    {
+        binary_writer<char>(o).write_bon8(j);
+    }
+
     /// @brief create a JSON value from an input in CBOR format
     /// @sa https://json.nlohmann.me/api/basic_json/from_cbor/
     template<typename InputType>
@@ -30522,6 +31475,43 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(input_format_t::bjdata, &sdp, strict)) // cppcheck-suppress[accessMoved]
+        {
+            result = value_t::discarded;
+        }
+        return result;
+    }
+
+    /// @brief create a JSON value from an input in BON8 format
+    /// @sa https://json.nlohmann.me/api/basic_json/from_bon8/
+    template<typename InputType>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_bon8(InputType&& i,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
+    {
+        basic_json result;
+        auto ia = detail::input_adapter(std::forward<InputType>(i));
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bon8).sax_parse(input_format_t::bon8, &sdp, strict)) // cppcheck-suppress[accessMoved]
+        {
+            result = value_t::discarded;
+        }
+        return result;
+    }
+
+    /// @brief create a JSON value from an input in BON8 format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
+    /// @sa https://json.nlohmann.me/api/basic_json/from_bon8/
+    template<typename IteratorType, typename SentinelType = IteratorType,
+             detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_bon8(IteratorType first, SentinelType last,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
+    {
+        basic_json result;
+        auto ia = detail::input_adapter(std::move(first), std::move(last));
+        detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bon8).sax_parse(input_format_t::bon8, &sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }

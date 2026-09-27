@@ -158,6 +158,17 @@ TEST_CASE("locale-dependent test (LC_NUMERIC=de_DE)")
             json::sax_parse("12.34", &sax);
             CHECK(sax.float_string_copy == "12.34");
         }
+
+        SECTION("serializing a long double")
+        {
+            // a floating-point type that is not a float or a double is written
+            // with snprintf, whose locale-specific decimal point and thousands
+            // separator are undone afterwards
+            using long_double_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, long double>;
+            CHECK(long_double_json(12345.5L).dump() == "12345.5");
+            CHECK(long_double_json(1.0L).dump() == "1.0");
+            CHECK(long_double_json(-0.25L).dump() == "-0.25");
+        }
     }
     else
     {

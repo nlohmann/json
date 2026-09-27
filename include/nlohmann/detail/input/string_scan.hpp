@@ -201,6 +201,43 @@ inline std::size_t validate_one_utf8(const unsigned char* data, std::size_t avai
     return 0; // invalid, incomplete, or must be diagnosed by the byte path
 }
 
+// Return the length of the longest prefix of [data, data+n) that consists of
+// ASCII characters and complete well-formed UTF-8 sequences; n if all of it is
+// valid UTF-8. Unlike scalar_string_bulk_run(), quotes, escapes, and control
+// characters are ordinary characters here. ASCII is skipped 8 bytes at a time.
+inline std::size_t valid_utf8_prefix(const unsigned char* data, std::size_t n) noexcept
+{
+    constexpr std::uint64_t high = 0x8080808080808080ull;
+    std::size_t pos = 0;
+    while (pos < n)
+    {
+        if (pos + 8 <= n)
+        {
+            std::uint64_t word = 0;
+            std::memcpy(&word, data + pos, sizeof(word));
+            if ((word & high) == 0)
+            {
+                pos += 8;
+                continue;
+            }
+        }
+
+        if (data[pos] < 0x80u)
+        {
+            ++pos;
+            continue;
+        }
+
+        const std::size_t seq = validate_one_utf8(data + pos, n - pos);
+        if (seq == 0)
+        {
+            break; // ill-formed or truncated
+        }
+        pos += seq;
+    }
+    return pos;
+}
+
 // Scalar (C++11) computation of the bulk run length: the number of leading
 // bytes in [data, data+n) that are ordinary ASCII or complete well-formed UTF-8
 // sequences, stopping before the first byte that needs individual handling (the

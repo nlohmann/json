@@ -332,6 +332,7 @@ TEST_CASE("regression tests 2")
         CHECK(float_json::from_cbor(float_json::to_cbor(j)) == j);
         CHECK(float_json::from_msgpack(float_json::to_msgpack(j)) == j);
         CHECK(float_json::from_ubjson(float_json::to_ubjson(j)) == j);
+        CHECK(float_json::from_bon8(float_json::to_bon8(j)) == j);
 
         float_json j2 = {1000.0, 2000.0, 3000.0};
         CHECK(float_json::from_ubjson(float_json::to_ubjson(j2, true, true)) == j2);
