@@ -104,6 +104,7 @@ Linear in the size of the input.
 - [from_msgpack](from_msgpack.md) create a JSON value from an input in MessagePack format
 - [from_bson](from_bson.md) create a JSON value from an input in BSON format
 - [from_bjdata](from_bjdata.md) create a JSON value from an input in BJData format
+- [from_bon8](from_bon8.md) create a JSON value from an input in BON8 format
 
 ## Version history
 
