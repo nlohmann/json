@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Advisory-only cross-check between documented macros and their #define sites.
+"""
+Advisory-only cross-check between documented macros and their #define sites.
 
 Macros have no C++ access-specifier concept, so the AST-based public/private test that
 extract_api.py uses for classes doesn't transfer -- see tools/api_checker/POLICY.md's "Known
@@ -29,7 +30,8 @@ def report(location: str, description: str):
 
 
 def extract_macro_names(md_path: str) -> list:
-    """Extract macro name(s) from a doc page's H1 heading.
+    """
+    Extract macro name(s) from a doc page's H1 heading.
 
     Most pages use a single-line markdown heading ('# JSON_ASSERT'). A few document a family of
     related macros under one page using a multi-line HTML heading listing comma-separated names
@@ -62,8 +64,10 @@ def extract_macro_names(md_path: str) -> list:
 
 
 def macro_is_referenced(macro_name: str, include_dir: str) -> bool:
-    """Check whether macro_name is defined OR referenced (#ifdef/#ifndef/defined()) anywhere
-    under include_dir.
+    """
+    Check whether macro_name is defined or referenced anywhere under include_dir.
+
+    A reference is any #ifdef, #ifndef, or defined() check.
 
     Some documented macros (e.g. JSON_NOEXCEPTION, JSON_THROW_USER) are user-supplied overrides:
     the library only checks whether they're defined, it never #defines them itself. Requiring a

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Extract the public API surface of nlohmann/json using libclang AST.
+"""
+Extract the public API surface of nlohmann/json using libclang AST.
 
 This tool derives the public API from C++ semantics (class templates, access specifiers,
 namespace scoping) independently of documentation status. The extracted surface is the
@@ -23,7 +24,8 @@ import argparse
 import json
 import os
 import re
-import subprocess
+# subprocess is only called with fixed argument lists, never through a shell.
+import subprocess  # nosec B404
 import sys
 
 try:
@@ -69,10 +71,13 @@ def _read_file_cached(path: str) -> str:
 
 
 def get_signature_text(cursor) -> str:
-    """The normalized source text of a declaration's own signature -- template header, return
-    type, name, full parameter list, and trailing cv/ref/noexcept qualifiers -- stopping before
-    the function body ('{') or at the terminating ';'/'= default;'/'= 0;'. Never includes the
-    body, so implementation-only changes don't affect identity.
+    """
+    Return the normalized source text of a declaration's own signature.
+
+    The signature covers the template header, return type, name, full parameter list, and
+    trailing cv/ref/noexcept qualifiers, stopping before the function body ('{') or at the
+    terminating ';'/'= default;'/'= 0;'. Never includes the body, so implementation-only changes
+    don't affect identity.
 
     Reads raw source text via cursor.extent's byte offsets rather than cursor.get_tokens():
     the latter was found to silently return zero tokens whenever a cursor's extent starts
@@ -150,7 +155,10 @@ def get_signature_text(cursor) -> str:
 
 
 def get_identity_name(cursor, scope: str) -> str:
-    """The name component of a cursor's identity -- usually cursor.spelling, but not for
+    """
+    Return the name component of a cursor's identity.
+
+    This is usually cursor.spelling, but not for
     CONSTRUCTOR/DESTRUCTOR cursors, FUNCTION_TEMPLATE cursors that are themselves templated
     constructors (e.g. `template<typename CompatibleType> basic_json(CompatibleType&& val)`,
     which libclang represents as FUNCTION_TEMPLATE, not CONSTRUCTOR), or CONVERSION_FUNCTION
@@ -203,9 +211,11 @@ def get_identity_name(cursor, scope: str) -> str:
 
 
 def identity_key(cursor, scope: str) -> str:
-    """A stable, overload-disambiguating key, used internally during extraction to prevent two
-    distinct entries from silently colliding in the in-memory api_dict. Two prior approaches were
-    tried and found broken:
+    """
+    Return a stable, overload-disambiguating identity key for a cursor.
+
+    The key is used internally during extraction to prevent two distinct entries from silently
+    colliding in the in-memory api_dict. Two prior approaches were tried and found broken:
 
     1. {scope, name, kind, params} from cursor.get_arguments() alone: silently collided for
        overload sets differentiated only by constness, ref-qualifiers, or SFINAE constraints
@@ -246,7 +256,7 @@ def identity_key(cursor, scope: str) -> str:
 def get_repo_root():
     """Find the repository root via git, so location paths are deterministic regardless of invoking CWD."""
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603 B607
             ['git', 'rev-parse', '--show-toplevel'],
             capture_output=True, text=True, check=True, timeout=10
         )
@@ -278,7 +288,7 @@ def cursor_location(cursor) -> str:
 def get_system_includes(compiler='clang++'):
     """Discover system include paths by parsing clang++ -E -x c++ -v /dev/null output."""
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603
             [compiler, '-E', '-x', 'c++', '-v', '/dev/null'],
             capture_output=True, text=True, check=True, timeout=10
         )
@@ -320,7 +330,8 @@ def setup_libclang():
             try:
                 cindex.conf.set_library_file(path)
                 return True
-            except Exception:
+            except Exception:  # nosec B112
+                # libclang rejected this candidate; try the next one.
                 continue
 
     try:
@@ -328,7 +339,8 @@ def setup_libclang():
         if filename:
             cindex.conf.set_library_file(filename)
             return True
-    except Exception:
+    except Exception:  # nosec B110
+        # No usable default library; the caller reports the failure.
         pass
 
     return False
@@ -358,8 +370,12 @@ def get_qualified_name(cursor) -> str:
 
 
 def walk_class_template(cursor, public_classes: set, api_dict: dict, documented_non_public: list):
-    """Walk a class template's members: extract public callable/type-tier entities, and flag
-    any non-public member that surprisingly carries a real @sa URL (a genuine documentation leak)."""
+    """
+    Walk a class template's members.
+
+    Extract public callable/type-tier entities, and flag any non-public member that surprisingly
+    carries an @sa URL into the documentation site (a genuine documentation leak).
+    """
     if cursor.kind not in (cindex.CursorKind.CLASS_TEMPLATE, cindex.CursorKind.CLASS_DECL, cindex.CursorKind.STRUCT_DECL):
         return
     if cursor.spelling not in public_classes or not cursor.is_definition():
@@ -423,7 +439,8 @@ def walk_class_template(cursor, public_classes: set, api_dict: dict, documented_
                         doc_url = extract_sa_url(underlying_decl.raw_comment)
                         if underlying_decl.location.file:
                             underlying_location = cursor_location(underlying_decl)
-                except Exception:
+                except Exception:  # nosec B110
+                    # Alias without a resolvable declaration: no @sa to follow.
                     pass
 
             key = identity_key(child, scope)
@@ -486,9 +503,12 @@ def walk_ast(cursor, public_classes: set, api_dict: dict, documented_non_public:
 
 
 def write_surface(api_dict: dict, output_path: str, extracted_from: str, extra_meta: dict | None = None):
-    """Write the minimal, location/doc-independent API surface: a format_version-tagged, sorted
-    list of self-describing records (scope, kind, name, identity_name, tier, signature,
-    pretty_signature) -- no opaque joined key, no location, no doc_url.
+    """
+    Write the minimal, location/doc-independent API surface.
+
+    The surface is a format_version-tagged, sorted list of self-describing records (scope, kind,
+    name, identity_name, tier, signature, pretty_signature) -- no opaque joined key, no location,
+    no doc_url.
 
     This is the file meant to be committed and diffed release-to-release (see
     tools/api_checker/README.md and POLICY.md): 'signature'/'identity_name' are the same values

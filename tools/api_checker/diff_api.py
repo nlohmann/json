@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Diff the public API surface between two refs to flag breaking vs. feature changes.
+"""
+Diff the public API surface between two refs to flag breaking vs. feature changes.
 
 A "ref" for --old/--new is resolved in this order:
 1. A stored, committed historical record at tools/api_checker/history/<ref>.json, if one exists
@@ -24,7 +25,8 @@ refinements verified, by testing against real historical releases -- not by insp
 import argparse
 import json
 import os
-import subprocess
+# subprocess is only called with fixed argument lists, never through a shell.
+import subprocess  # nosec B404
 import sys
 import tempfile
 from collections import defaultdict
@@ -43,7 +45,7 @@ from extract_api import SURFACE_FORMAT_VERSION  # noqa: E402
 def resolve_commit_sha(ref: str) -> str | None:
     """Resolve a ref to its full commit sha, or None if that fails."""
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603 B607
             ['git', 'rev-parse', ref],
             capture_output=True, text=True, check=True, timeout=10
         )
@@ -54,7 +56,8 @@ def resolve_commit_sha(ref: str) -> str | None:
 
 def extract_surface_for_ref(ref: str, header: str = 'include/nlohmann/json.hpp',
                             include: str = 'include') -> dict:
-    """Check out the full include/ tree at `ref` into a temp dir and extract its API surface.
+    """
+    Check out the full include/ tree at `ref` into a temp dir and extract its API surface.
 
     A single-file checkout of json.hpp is not enough: json.hpp #includes dozens of other
     headers under nlohmann/detail/ that must exist at the same ref for parsing to succeed.
@@ -64,11 +67,11 @@ def extract_surface_for_ref(ref: str, header: str = 'include/nlohmann/json.hpp',
     these; snapshot_release.py uses them as a historical record's provenance.
     """
     with tempfile.TemporaryDirectory(prefix='api_checker_') as tmpdir:
-        archive = subprocess.run(
+        archive = subprocess.run(  # nosec B603 B607
             ['git', 'archive', ref, '--', 'include'],
             capture_output=True, check=True
         )
-        subprocess.run(['tar', '-x', '-C', tmpdir], input=archive.stdout, check=True)
+        subprocess.run(['tar', '-x', '-C', tmpdir], input=archive.stdout, check=True)  # nosec B603 B607
 
         ref_include = os.path.join(tmpdir, include)
         ref_header = os.path.join(tmpdir, header)
@@ -77,7 +80,7 @@ def extract_surface_for_ref(ref: str, header: str = 'include/nlohmann/json.hpp',
             sys.exit(1)
 
         surface_output = os.path.join(tmpdir, 'surface.json')
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603
             [sys.executable, os.path.join(SCRIPT_DIR, 'extract_api.py'),
              '--header', ref_header,
              '--include', ref_include,
@@ -127,7 +130,8 @@ def resolve_surface(ref: str | None, explicit_file: str | None, header: str, inc
 
 
 def build_identity_dict(public_api: list) -> dict:
-    """Group a surface's public_api list by identity for diffing.
+    """
+    Group a surface's public_api list by identity for diffing.
 
     Identity is (scope, identity_name, kind, signature) -- the same four components
     extract_api.py's identity_key() joins into one opaque string internally, exposed here as

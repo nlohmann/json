@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Verify that public API entries have documentation links.
+"""
+Verify that public API entries have documentation links.
 
 Consumes an API snapshot from extract_api.py and checks:
 1. Every public callable/type-tier entry has an @sa comment (with exceptions)
@@ -11,7 +12,8 @@ import argparse
 import json
 import os
 import re
-import subprocess
+# subprocess is only called with fixed argument lists, never through a shell.
+import subprocess  # nosec B404
 import sys
 from urllib.parse import unquote
 
@@ -26,7 +28,7 @@ STL_EXEMPT = {'value_type', 'reference', 'const_reference', 'pointer', 'const_po
 def get_repo_root():
     """Find the repository root via git, so this script works regardless of invoking CWD."""
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603 B607
             ['git', 'rev-parse', '--show-toplevel'],
             capture_output=True, text=True, check=True, timeout=10
         )
@@ -40,7 +42,8 @@ MKDOCS_YML = os.path.join(REPO_ROOT, 'docs', 'mkdocs', 'mkdocs.yml')
 
 
 def load_redirect_map() -> dict:
-    """Parse the redirect_maps block of docs/mkdocs/mkdocs.yml: {old_relative_path: new_relative_path}.
+    """
+    Parse the redirect_maps block of docs/mkdocs/mkdocs.yml: {old_relative_path: new_relative_path}.
 
     mkdocs' redirect plugin lets a doc page move without breaking existing @sa URLs -- e.g.
     'api/basic_json/operator_ltlt.md' redirects to the real file at 'api/operator_ltlt.md'.

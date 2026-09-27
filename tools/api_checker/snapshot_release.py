@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Capture immutable, per-release API surface records into tools/api_checker/history/.
+"""
+Capture immutable, per-release API surface records into tools/api_checker/history/.
 
 These are the durable, committed counterpart to diff_api.py's live git-archive-and-extract path:
 once a release is tagged, run this once to capture tools/api_checker/history/<tag>.json, commit
@@ -13,7 +14,8 @@ import argparse
 import datetime
 import json
 import os
-import subprocess
+# subprocess is only called with fixed argument lists, never through a shell.
+import subprocess  # nosec B404
 import sys
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -24,9 +26,12 @@ from diff_api import extract_surface_for_ref  # noqa: E402
 
 
 def discover_v3_tags() -> list:
-    """List every v3.* git tag, sorted by dotted version (not lexicographically -- v3.9.0 must
-    sort before v3.10.0)."""
-    result = subprocess.run(['git', 'tag', '--list', 'v3.*'], capture_output=True, text=True, check=True)
+    """
+    List every v3.* git tag, sorted by dotted version.
+
+    Sorting is numeric, not lexicographic: v3.9.0 must sort before v3.10.0.
+    """
+    result = subprocess.run(['git', 'tag', '--list', 'v3.*'], capture_output=True, text=True, check=True)  # nosec B603 B607
     tags = [t for t in result.stdout.splitlines() if t.strip()]
 
     def version_key(tag):
