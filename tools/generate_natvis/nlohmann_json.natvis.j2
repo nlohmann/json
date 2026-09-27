@@ -38,8 +38,10 @@
 
     <!-- Fallback for when the basic_json entry above does not match: json_default_base is the (empty) default
          base class of basic_json, and base class visualizers are inherited by derived types and evaluated
-         against the derived object, so m_data is accessible here. -->
-    <Type Name="{{ ns }}::detail::json_default_base">
+         against the derived object, so m_data is accessible here. The class lives in {{ ns }} after
+         3.12.0 (#5238) and in {{ ns }}::detail up to 3.12.0, so both names are listed. -->
+{% for default_base in ['json_default_base', 'detail::json_default_base'] %}
+    <Type Name="{{ ns }}::{{ default_base }}">
         <DisplayString Condition="m_data.m_type == {{ ns }}::detail::value_t::null">null</DisplayString>
         <DisplayString Condition="m_data.m_type == {{ ns }}::detail::value_t::object">{*(m_data.m_value.object)}</DisplayString>
         <DisplayString Condition="m_data.m_type == {{ ns }}::detail::value_t::array">{*(m_data.m_value.array)}</DisplayString>
@@ -59,5 +61,6 @@
         </Expand>
     </Type>
 
+{% endfor %}
 {% endfor %}
 </AutoVisualizer>
