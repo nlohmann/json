@@ -765,6 +765,20 @@ TEST_CASE("regression tests 2")
         CHECK(j == k);
     }
 
+#ifdef JSON_HAS_CPP_17
+    SECTION("issue #5066 - MSVC converts json to std::variant<json> via the conversion operator")
+    {
+        // std::variant<json> must not be retrievable via get<>(), because otherwise the
+        // implicit conversion operator becomes a candidate that MSVC picks over the variant's
+        // converting constructor, routing a number through the string from_json overload
+        static_assert(!nlohmann::detail::is_detected<nlohmann::detail::get_template_function, const json&, std::variant<json>>::value,
+                      "std::variant<json> must not be retrievable via get<>()");
+
+        std::vector<std::variant<json>> v;
+        v.push_back(json(1));
+        CHECK(std::get<0>(v[0]) == 1);
+    }
+#endif
 }
 
 TEST_CASE("regression test - parser callback must not lose a duplicate key's prior value")
