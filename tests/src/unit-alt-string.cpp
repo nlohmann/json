@@ -403,5 +403,10 @@ TEST_CASE("alternative string type")
         // (only a number is converted here, as objects and strings are affected by #3425)
         CHECK(nlohmann::json(42).get<alt_json>() == 42);
         CHECK(alt_json(nlohmann::json(42)) == 42);
+
+        // get_to() also works in either case
+        alt_json a;
+        nlohmann::json(42).get_to(a);
+        CHECK(a == 42);
     }
 }

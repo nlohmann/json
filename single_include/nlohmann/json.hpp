@@ -6820,7 +6820,9 @@ void to_json(BasicJsonType& j, const std::optional<T>& opt) noexcept
 {
     if (opt.has_value())
     {
-        j = *opt;
+        // explicit construction, as the conversion from a basic_json with a different
+        // string type is explicit if JSON_USE_IMPLICIT_CONVERSIONS is 0 (#2649)
+        j = BasicJsonType(*opt);
     }
     else
     {
@@ -26492,7 +26494,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// the same string type (see https://github.com/nlohmann/json/issues/2649)
     template<typename BasicJsonType>
     using is_implicitly_convertible_basic_json = std::integral_constant < bool,
-        static_cast<bool>(JSON_USE_IMPLICIT_CONVERSIONS)
+        (JSON_USE_IMPLICIT_CONVERSIONS != 0)
         || std::is_same<typename BasicJsonType::string_t, string_t>::value >;
 
     /// tag to select the constructor that performs the conversion from another basic_json specialization
@@ -27483,7 +27485,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                  int> = 0>
     ValueType & get_to(ValueType& v) const
     {
-        v = *this;
+        v = ValueType(*this);
         return v;
     }
 
