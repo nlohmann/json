@@ -1066,6 +1066,45 @@ TEST_CASE("Incomplete BSON Input")
     }
 }
 
+// the test catches the exceptions of invalid input
+#if !defined(JSON_NOEXCEPTION)
+TEST_CASE("BSON keys from contiguous and stream input")
+{
+    // contiguous input reads a key up to its \x00-byte in one step, a stream
+    // reads it byte by byte; both must give the same value or error for the
+    // complete document and for every truncation of it
+    const json j = {{"", true}, {"k", {1, 2, 3}}, {std::string(40, 'x'), {{"nested key", "value"}}}};
+    const std::vector<std::uint8_t> bson = json::to_bson(j);
+    CHECK(json::from_bson(bson) == j);
+
+    for (std::size_t length = 0; length <= bson.size(); ++length)
+    {
+        CAPTURE(length)
+        const std::vector<std::uint8_t> input(bson.begin(), bson.begin() + static_cast<std::ptrdiff_t>(length));
+        std::string from_vector;
+        std::string from_stream;
+        try
+        {
+            from_vector = json::from_bson(input).dump();
+        }
+        catch (const json::parse_error& e)
+        {
+            from_vector = e.what();
+        }
+        try
+        {
+            std::istringstream stream(std::string(input.begin(), input.end()));
+            from_stream = json::from_bson(stream).dump();
+        }
+        catch (const json::parse_error& e)
+        {
+            from_stream = e.what();
+        }
+        CHECK(from_vector == from_stream);
+    }
+}
+#endif
+
 TEST_CASE("Negative size of binary value")
 {
     // invalid BSON: the size of the binary value is -1
@@ -1242,6 +1281,44 @@ TEST_CASE("BSON nesting does not consume the call stack")
         CHECK_THROWS_AS(_ = json::from_bson(bad), json::parse_error&);
         CHECK(json::from_bson(bad, true, false).is_discarded());
     }
+}
+
+TEST_CASE("BSON input that cannot be read is discarded by every overload")
+{
+    std::vector<std::uint8_t> input = json::to_bson(json({{"a", {1, 2}}}));
+    input.pop_back();
+
+    json _;
+    CHECK_THROWS_AS(_ = json::from_bson(input.begin(), input.end()), json::parse_error&);
+    CHECK(json::from_bson(input, true, false).is_discarded());
+    CHECK(json::from_bson(input.begin(), input.end(), true, false).is_discarded());
+    CHECK(json::from_bson(input.data(), input.size(), true, false).is_discarded());
+    CHECK(json::from_bson({input.data(), input.size()}, true, false).is_discarded());
+}
+
+TEST_CASE("BSON SAX parsing stops at every event")
+{
+    // Containers are opened and closed by the loop that reads them; a SAX
+    // handler that rejects any event - including the end of a nested
+    // container - must stop the parse right there.
+    const auto count_events = [](const std::vector<std::uint8_t>& input)
+    {
+        int events = 0;
+        while (true)
+        {
+            SaxCountdown scp(events);
+            if (json::sax_parse(input, &scp, json::input_format_t::bson))
+            {
+                return events;
+            }
+            ++events;
+            REQUIRE(events < 1000);
+        }
+    };
+
+    // 20 events: every container kind closes inside another one
+    const json j = json::parse(R"({"a": [1, {"b": []}], "c": {"d": [[2]]}})");
+    CHECK(count_events(json::to_bson(j)) == 20);
 }
 
 TEST_CASE("BSON numerical data")

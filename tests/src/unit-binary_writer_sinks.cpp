@@ -12,6 +12,7 @@
 using nlohmann::json;
 
 #include <cstdint>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -47,6 +48,12 @@ std::vector<json> test_values()
         json({{"nested", {{"deep", json::array({1, "two", 3.0, nullptr})}}}}),
         big_array, big_object
     };
+}
+
+// BON8 has no integers above the int64 range, so to_bon8() rejects them
+bool bon8_representable(const json& j)
+{
+    return !j.is_number_unsigned() || j.get<std::uint64_t>() <= static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)());
 }
 
 // values to_bson() accepts: the document must be an object
@@ -91,6 +98,13 @@ TEST_CASE("binary writer output sinks")
             std::vector<std::uint8_t> msgpack;
             json::to_msgpack(j, msgpack);
             CHECK(json::to_msgpack(j) == msgpack);
+
+            if (bon8_representable(j))
+            {
+                std::vector<std::uint8_t> bon8;
+                json::to_bon8(j, bon8);
+                CHECK(json::to_bon8(j) == bon8);
+            }
 
             for (const bool use_size :
                     {
@@ -172,6 +186,10 @@ TEST_CASE("binary_reserve_hint never over-reserves")
         CHECK(hint <= json::to_ubjson(j).size());
         CHECK(hint <= json::to_ubjson(j, true, true).size());
         CHECK(hint <= json::to_bjdata(j).size());
+        if (bon8_representable(j))
+        {
+            CHECK(hint <= json::to_bon8(j).size());
+        }
     }
 
     for (const auto& j : bson_values())
