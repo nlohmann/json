@@ -12741,7 +12741,7 @@ enum class cbor_tag_handler_t
 {
     error,   ///< throw a parse_error exception in case of a tag
     ignore,  ///< ignore tags
-    store    ///< store tags as binary type
+    store    ///< store tagged byte strings (for bytes 0xd8..0xdb) as binary values with the tag as subtype; other tagged values are read as if the tag were ignored
 };
 
 /*!
@@ -13289,14 +13289,18 @@ class binary_reader
                          input (true) or whether the last read character should
                          be considered instead (false)
     @param[in] tag_handler how CBOR tags should be treated
+    @param[out] tag_pending whether a tag was parsed and its value follows
+    @param[out] item_read whether the tagged value's initial byte is already in current
 
     @return whether a valid CBOR value was passed to the SAX parser
     */
     bool parse_cbor_value(const bool get_char,
                           const cbor_tag_handler_t tag_handler,
-                          bool& tag_pending)
+                          bool& tag_pending,
+                          bool& item_read)
     {
         tag_pending = false;
+        item_read = false;
 
         switch (get_char ? get() : current)
         {
@@ -13718,7 +13722,17 @@ class binary_reader
                             }
                         }
                         get();
-                        return get_cbor_binary(b) && sax->binary(b);
+                        // a byte string (the heads accepted by get_cbor_binary) keeps the tag as subtype
+                        if ((current >= 0x40 && current <= 0x5B) || current == 0x5F)
+                        {
+                            return get_cbor_binary(b) && sax->binary(b);
+                        }
+
+                        // not a byte string: the tagged value, whose first byte
+                        // was just read, is read by the caller like for ignore
+                        tag_pending = true;
+                        item_read = true;
+                        return true;
                     }
 
                     default:                 // LCOV_EXCL_LINE
@@ -14200,13 +14214,14 @@ class binary_reader
 
             // a tag is not a value of its own: read on until the tagged value
             bool tag_pending = false;
+            bool item_read = false;
             do
             {
-                if (JSON_HEDLEY_UNLIKELY(!parse_cbor_value(fetch, tag_handler, tag_pending)))
+                if (JSON_HEDLEY_UNLIKELY(!parse_cbor_value(fetch, tag_handler, tag_pending, item_read)))
                 {
                     return false;
                 }
-                fetch = true;
+                fetch = !item_read;
             }
             while (tag_pending);
 
@@ -19757,6 +19772,23 @@ class binary_writer
     }
 
     /*!
+    @brief check that @a length fits into the 32 bits that MessagePack stores
+           the length of a string, binary value, array, or object in
+    @return the length as an unsigned 32-bit integer
+    @throw out_of_range.412 if @a length exceeds the range of std::uint32_t
+    */
+    static std::uint32_t to_msgpack_length(const std::size_t length, const BasicJsonType& j)
+    {
+        if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::uint32_t>(length)))
+        {
+            JSON_THROW(out_of_range::create(412, concat("MessagePack length ", std::to_string(length), " exceeds maximum of ", std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
+        }
+
+        static_cast<void>(j);
+        return static_cast<std::uint32_t>(length);
+    }
+
+    /*!
     @param[in] j  JSON value to serialize
     */
     void write_msgpack(const BasicJsonType& j)
@@ -19895,7 +19927,7 @@ class binary_writer
             case value_t::string:
             {
                 // step 1: write control byte and the string length
-                const auto N = j.m_data.m_value.string->size();
+                const auto N = to_msgpack_length(j.m_data.m_value.string->size(), j);
                 if (N <= 31)
                 {
                     // fixstr
@@ -19913,16 +19945,11 @@ class binary_writer
                     oa.write_character(to_char_type(0xDA));
                     write_number(static_cast<std::uint16_t>(N));
                 }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
+                else
                 {
                     // str 32
                     oa.write_character(to_char_type(0xDB));
                     write_number(static_cast<std::uint32_t>(N));
-                }
-                else
-                {
-                    JSON_THROW(out_of_range::create(412, concat("MessagePack size ", std::to_string(N), " exceeds maximum of ",
-                                                    std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
                 }
 
                 // step 2: write the string
@@ -19935,7 +19962,7 @@ class binary_writer
             case value_t::array:
             {
                 // step 1: write control byte and the array size
-                const auto N = j.m_data.m_value.array->size();
+                const auto N = to_msgpack_length(j.m_data.m_value.array->size(), j);
                 if (N <= 15)
                 {
                     // fixarray
@@ -19947,16 +19974,11 @@ class binary_writer
                     oa.write_character(to_char_type(0xDC));
                     write_number(static_cast<std::uint16_t>(N));
                 }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
+                else
                 {
                     // array 32
                     oa.write_character(to_char_type(0xDD));
                     write_number(static_cast<std::uint32_t>(N));
-                }
-                else
-                {
-                    JSON_THROW(out_of_range::create(412, concat("MessagePack size ", std::to_string(N), " exceeds maximum of ",
-                                                    std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
                 }
 
                 // step 2: write each element
@@ -19974,7 +19996,7 @@ class binary_writer
                 const bool use_ext = j.m_data.m_value.binary->has_subtype();
 
                 // step 1: write control byte and the byte string length
-                const auto N = j.m_data.m_value.binary->size();
+                const auto N = to_msgpack_length(j.m_data.m_value.binary->size(), j);
                 if (N <= (std::numeric_limits<std::uint8_t>::max)())
                 {
                     std::uint8_t output_type{};
@@ -20026,7 +20048,7 @@ class binary_writer
                     oa.write_character(to_char_type(output_type));
                     write_number(static_cast<std::uint16_t>(N));
                 }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
+                else
                 {
                     const std::uint8_t output_type = use_ext
                                                      ? 0xC9 // ext 32
@@ -20034,11 +20056,6 @@ class binary_writer
 
                     oa.write_character(to_char_type(output_type));
                     write_number(static_cast<std::uint32_t>(N));
-                }
-                else
-                {
-                    JSON_THROW(out_of_range::create(412, concat("MessagePack size ", std::to_string(N), " exceeds maximum of ",
-                                                    std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
                 }
 
                 // step 1.5: if this is an ext type, write the subtype
@@ -20063,7 +20080,7 @@ class binary_writer
             case value_t::object:
             {
                 // step 1: write control byte and the object size
-                const auto N = j.m_data.m_value.object->size();
+                const auto N = to_msgpack_length(j.m_data.m_value.object->size(), j);
                 if (N <= 15)
                 {
                     // fixmap
@@ -20075,16 +20092,11 @@ class binary_writer
                     oa.write_character(to_char_type(0xDE));
                     write_number(static_cast<std::uint16_t>(N));
                 }
-                else if (N <= (std::numeric_limits<std::uint32_t>::max)())
+                else
                 {
                     // map 32
                     oa.write_character(to_char_type(0xDF));
                     write_number(static_cast<std::uint32_t>(N));
-                }
-                else
-                {
-                    JSON_THROW(out_of_range::create(412, concat("MessagePack size ", std::to_string(N), " exceeds maximum of ",
-                                                    std::to_string((std::numeric_limits<std::uint32_t>::max)())), &j));
                 }
 
                 // step 2: write each element
@@ -26361,13 +26373,28 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                         compare_keys(current.lhs_object_it->first, current.rhs_object_it->first,
                                      std::integral_constant<bool, Ordered> {});
 
-                    if (key_result != compare_result::equal)
-                    {
-                        return key_result;
-                    }
-
                     left = &(current.lhs_object_it->second);
                     right = &(current.rhs_object_it->second);
+
+                    if (key_result != compare_result::equal)
+                    {
+                        // An object type without a fixed order of its entries -
+                        // std::unordered_map, say - may enumerate two equal
+                        // objects differently, and its operator== does not care.
+                        // Equality then finds the entry by its key; an ordering,
+                        // or an object type that compares its entries in
+                        // sequence (ordered_map), is decided by the key itself.
+                        const auto* rhs_object = current.rhs_value->m_data.m_value.object;
+                        const auto found = (!Ordered && !detail::is_ordered_map<object_t>::value)
+                                           ? rhs_object->find(current.lhs_object_it->first)
+                                           : rhs_object->cend();
+                        if (found == rhs_object->cend())
+                        {
+                            return key_result;
+                        }
+                        right = &(found->second);
+                    }
+
                     ++current.lhs_object_it;
                     ++current.rhs_object_it;
                 }
