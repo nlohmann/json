@@ -1,5 +1,5 @@
 set(JSON_TEST_DATA_URL     https://github.com/nlohmann/json_test_data)
-set(JSON_TEST_DATA_VERSION 3.1.0)
+set(JSON_TEST_DATA_VERSION 3.2.0)
 
 include(ExternalProject)
 
@@ -77,7 +77,7 @@ if(CMAKE_CROSSCOMPILING)
 endif()
 if(NOT DEFINED LIBCPP_VERSION_OUTPUT_CACHED)
     try_run(RUN_RESULT_VAR COMPILE_RESULT_VAR
-        "${CMAKE_BINARY_DIR}" SOURCES "${CMAKE_SOURCE_DIR}/cmake/detect_libcpp_version.cpp"
+        "${CMAKE_BINARY_DIR}" SOURCES "${CMAKE_CURRENT_LIST_DIR}/detect_libcpp_version.cpp"
         RUN_OUTPUT_VARIABLE LIBCPP_VERSION_OUTPUT
         COMPILE_OUTPUT_VARIABLE LIBCPP_VERSION_COMPILE_OUTPUT
     )

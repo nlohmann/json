@@ -9,11 +9,38 @@
 #pragma once
 
 #include <cstdint> // uint8_t
+#include <cstddef> // size_t
 #include <fstream> // ifstream, istreambuf_iterator, ios
 #include <vector> // vector
 
 namespace utils
 {
+
+// Some tests intentionally discard the [[nodiscard]]/JSON_HEDLEY_WARN_UNUSED_RESULT
+// return value of a call they only make to exercise its side effects (e.g. checking
+// that it does not throw). A plain (void) cast on the call expression does not
+// suppress GCC's warning for functions using the GNU __attribute__((warn_unused_result))
+// form (as opposed to the C++17 [[nodiscard]] attribute) -- passing the value into an
+// ordinary function call does.
+template<typename T>
+inline void ignore_return_value(T&& /*unused*/) noexcept {}
+
+// Advance i toward last (inclusive) by stride, always visiting last.
+// stride 7 is coprime to 256, so every low-byte residue is still hit.
+template<typename T>
+T next_integer_sample(T i, T last, T stride)
+{
+    if (i >= last)
+    {
+        return static_cast<T>(last + 1);
+    }
+    if (stride > 0 && i > static_cast<T>(last - stride))
+    {
+        return last;
+    }
+    const T n = static_cast<T>(i + stride);
+    return n < last ? n : last;
+}
 
 inline std::vector<std::uint8_t> read_binary_file(const std::string& filename)
 {

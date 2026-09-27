@@ -34,10 +34,14 @@ void swap(typename binary_t::container_type& other);
 ```
 
 1. Exchanges the contents of the JSON value with those of `other`. Does not invoke any move, copy, or swap operations on
-   individual elements. All iterators and references remain valid. The past-the-end iterator is invalidated. 
+   individual elements. All iterators and references remain valid. The past-the-end iterator is invalidated. If macro
+   [`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) is defined to `#!cpp 1`, the
+   [`start_pos()`](start_pos.md)/[`end_pos()`](end_pos.md) diagnostic positions are exchanged along with the value.
 2. Exchanges the contents of the JSON value from `left` with those of `right`. Does not invoke any move, copy, or swap
    operations on individual elements. All iterators and references remain valid. The past-the-end iterator is
-   invalidated. Implemented as a friend function callable via ADL.
+   invalidated. Implemented as a friend function callable via ADL. If macro
+   [`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) is defined to `#!cpp 1`, the
+   [`start_pos()`](start_pos.md)/[`end_pos()`](end_pos.md) diagnostic positions are exchanged along with the value.
 3. Exchanges the contents of a JSON array with those of `other`. Does not invoke any move, copy, or swap operations on
    individual elements. All iterators and references remain valid. The past-the-end iterator is invalidated. 
 4. Exchanges the contents of a JSON object with those of `other`. Does not invoke any move, copy, or swap operations on

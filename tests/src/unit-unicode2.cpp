@@ -19,6 +19,7 @@ using nlohmann::json;
 #include <iostream>
 #include <iomanip>
 #include "make_test_data_available.hpp"
+#include "test_utils.hpp"
 
 // this test suite uses static variables with non-trivial destructors
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
@@ -97,7 +98,8 @@ void check_utf8dump(bool success_expected, int byte1, int byte2 = -1, int byte3 
     else
     {
         // strict mode must throw if success is not expected
-        CHECK_THROWS_AS(j.dump(), json::type_error&);
+        // dump() is nodiscard; the exception is thrown by dump() itself before it would return
+        CHECK_THROWS_AS(utils::ignore_return_value(j.dump()), json::type_error&);
         // ignore and replace must create different dumps
         CHECK(s_ignored != s_replaced);
 

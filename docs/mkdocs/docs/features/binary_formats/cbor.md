@@ -160,13 +160,10 @@ The library maps CBOR types to JSON value types as follows:
 
     The mapping is **incomplete** in the sense that not all CBOR types can be converted to a JSON value. The following CBOR types are not supported and will yield parse errors:
 
-     - date/time (0xC0..0xC1)
-     - bignum (0xC2..0xC3)
-     - decimal fraction (0xC4)
-     - bigfloat (0xC5)
-     - expected conversions (0xD5..0xD7)
      - simple values (0xE0..0xF3, 0xF8)
      - undefined (0xF7)
+
+    Tagged items (0xC0..0xDB) are not interpreted either; see the note on tagged items below.
 
 !!! warning "Negative integer overflow"
 
@@ -179,9 +176,19 @@ The library maps CBOR types to JSON value types as follows:
 
     CBOR allows map keys of any type, whereas JSON only allows strings as keys in object values. Therefore, CBOR maps with keys other than UTF-8 strings are rejected.
 
+!!! warning "UTF-8 validation of text strings"
+
+    [RFC 8949, Section 3.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-3.1) requires CBOR text strings
+    (major type 3) to be valid UTF-8. This library validates the bytes of every text string (object keys included) at
+    decode time and rejects ill-formed UTF-8 with a
+    [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) exception (or, with
+    `allow_exceptions` set to `false`, a discarded value), rather than only failing later when the resulting value is
+    dumped. Byte strings (major type 2) are unaffected and are never validated, since they are not required to hold
+    text.
+
 !!! warning "Tagged items"
 
-    Tagged items will throw a parse error by default. They can be ignored by passing `cbor_tag_handler_t::ignore` to function `from_cbor`. They can be stored by passing `cbor_tag_handler_t::store` to function `from_cbor`.
+    Tagged items (0xC0..0xDB) will throw a parse error by default. They can be ignored by passing `cbor_tag_handler_t::ignore` to function `from_cbor`, in which case the tag is skipped and the enclosed data item is parsed on its own. Passing `cbor_tag_handler_t::store` to function `from_cbor` stores tagged byte strings (for bytes 0xd8..0xdb) as binary values with the tag as subtype; other tagged values are read as if the tag were ignored. If several tags precede a byte string, only the innermost one is stored. Note that no tag is ever interpreted: for instance, a text string tagged with tag 0 (date/time) stays a string.
 
 ??? example
 

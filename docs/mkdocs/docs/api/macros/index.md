@@ -14,6 +14,13 @@ header. See also the [macro overview page](../../features/macros.md).
 - [**JSON_DIAGNOSTIC_POSITIONS**](json_diagnostic_positions.md) - access positions of elements
 - [**JSON_NOEXCEPTION**](json_noexception.md) - switch off exceptions
 
+## Parsing
+
+- [**JSON_PRECISE_STREAM_POSITION**](json_precise_stream_position.md) - opt in to leaving an input stream positioned
+  right after a parsed number
+- [**JSON_STRICT_NUL_HANDLING**](json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input instead of
+  treating it as end of input
+
 ## Language support
 
 - [**JSON_HAS_CPP_11**<br>**JSON_HAS_CPP_14**<br>**JSON_HAS_CPP_17**<br>**JSON_HAS_CPP_20**](json_has_cpp_11.md) - set supported C++ standard
@@ -22,8 +29,10 @@ header. See also the [macro overview page](../../features/macros.md).
 - [**JSON_HAS_STD_FORMAT**](json_has_std_format.md) - control `std::format`/`std::formatter` support
 - [**JSON_HAS_THREE_WAY_COMPARISON**](json_has_three_way_comparison.md) - control 3-way comparison support
 - [**JSON_NO_IO**](json_no_io.md) - switch off functions relying on certain C++ I/O headers
+- [**JSON_NO_THREAD_LOCAL**](json_no_thread_local.md) - switch off the use of `thread_local` storage
 - [**JSON_SKIP_UNSUPPORTED_COMPILER_CHECK**](json_skip_unsupported_compiler_check.md) - do not warn about unsupported compilers
 - [**JSON_USE_GLOBAL_UDLS**](json_use_global_udls.md) - place user-defined string literals (UDLs) into the global namespace
+- [**JSON_USE_SIMDUTF**](json_use_simdutf.md) - use the simdutf library to accelerate UTF-8 validation
 
 ## Library version
 

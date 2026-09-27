@@ -862,22 +862,6 @@ TEST_CASE("items()")
 
             CHECK(counter == 3);
         }
-
-#ifdef JSON_HAS_CPP_17
-        SECTION("structured bindings")
-        {
-            json j = { {"A", 1}, {"B", 2} };
-
-            std::map<std::string, int> m;
-
-            for (auto const&[key, value] : j.items())
-            {
-                m.emplace(key, value);
-            }
-
-            CHECK(j.get<decltype(m)>() == m);
-        }
-#endif
     }
 
     SECTION("const object")

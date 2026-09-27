@@ -45,6 +45,11 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 
 Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
 
+## Exceptions
+
+- Throws [`other_error.502`](../../home/exceptions.md#jsonexceptionother_error502) if `use_type` is true and `use_size`
+  is false.
+
 ## Complexity
 
 Linear in the size of the JSON value `j`.
@@ -72,6 +77,7 @@ Linear in the size of the JSON value `j`.
 - [to_msgpack](to_msgpack.md) create a MessagePack serialization of a JSON value
 - [to_bson](to_bson.md) create a BSON serialization of a JSON value
 - [to_bjdata](to_bjdata.md) create a BJData serialization of a JSON value
+- [to_bon8](to_bon8.md) create a BON8 serialization of a JSON value
 
 ## Version history
 

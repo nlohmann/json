@@ -98,6 +98,26 @@ The library maps BSON record types to JSON value types as follows:
     This library deserializes BSON type `0x11` (Timestamp) as a `number_unsigned` value. The 64-bit value is preserved,
     but the Timestamp type information is not.
 
+!!! warning "Lenient BSON input handling"
+
+    The BSON reader is lenient in a few areas where the BSON specification is more restrictive:
+
+    - array element keys are not checked against the required decimal sequence (`0`, `1`, `2`, ...),
+    - any non-zero byte is accepted as `true` for the boolean type, and
+    - the payload for binary subtype `0x02` is returned as-is, including its inner length prefix.
+
+    If BSON input must be validated for strict specification compliance, validate it separately before passing it to
+    `from_bson()`.
+
+!!! warning "UTF-8 validation of string values"
+
+    The BSON specification requires `string` values (type `0x02`) to be valid UTF-8. This library validates the
+    bytes of every such string at decode time and rejects ill-formed UTF-8 with a
+    [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) exception (or, with `allow_exceptions`
+    set to `false`, a discarded value), rather than only failing later when the resulting value is dumped. Element
+    (key) names and `binary` values (type `0x05`) are unaffected and are never validated, since they are read
+    byte-by-byte as a C string, or are not required to hold text, respectively.
+
 ??? example
 
     ```cpp

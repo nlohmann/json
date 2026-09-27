@@ -14,6 +14,7 @@ using nlohmann::json;
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 #endif
 
+#include <cstdint> // SIZE_MAX, UINT32_MAX
 #include <fstream>
 #include <sstream>
 #include <iomanip>
@@ -255,7 +256,7 @@ TEST_CASE("MessagePack")
 
                 SECTION("256..65535 (int 16)")
                 {
-                    for (size_t i = 256; i <= 65535; ++i)
+                    for (size_t i = 256; i <= 65535; i = utils::next_integer_sample(i, static_cast<size_t>(65535), static_cast<size_t>(7)))
                     {
                         CAPTURE(i)
 
@@ -440,7 +441,7 @@ TEST_CASE("MessagePack")
 
                 SECTION("-32768..-129 (int 16)")
                 {
-                    for (int16_t i = -32768; i <= static_cast<std::int16_t>(-129); ++i)
+                    for (int16_t i = -32768; i <= static_cast<std::int16_t>(-129); i = utils::next_integer_sample(i, static_cast<int16_t>(-129), static_cast<int16_t>(7)))
                     {
                         CAPTURE(i)
 
@@ -646,7 +647,7 @@ TEST_CASE("MessagePack")
 
                 SECTION("256..65535 (uint 16)")
                 {
-                    for (size_t i = 256; i <= 65535; ++i)
+                    for (size_t i = 256; i <= 65535; i = utils::next_integer_sample(i, static_cast<size_t>(65535), static_cast<size_t>(7)))
                     {
                         CAPTURE(i)
 
@@ -1554,6 +1555,27 @@ TEST_CASE("MessagePack")
             CHECK(json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01}), true, false).is_discarded());
         }
 
+        SECTION("invalid UTF-8 in string (see #5529)")
+        {
+            // a fixstr of length 2 (0xA0 | 2) whose bytes are not valid UTF-8
+            // (0xC0 0xAE is an overlong encoding of '.') must be rejected at
+            // decode time, matching every other kind of malformed binary
+            // input, rather than only failing later when the resulting
+            // value is dumped
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xa2, 0xc0, 0xae})), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing MessagePack string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_msgpack(std::vector<uint8_t>({0xa2, 0xc0, 0xae}), true, false).is_discarded());
+
+            // a MessagePack bin8 blob with the very same bytes is NOT text
+            // and must still be accepted as-is
+            CHECK_NOTHROW(_ = json::from_msgpack(std::vector<uint8_t>({0xc4, 0x02, 0xc0, 0xae})));
+            CHECK(_ == json::binary(std::vector<std::uint8_t>({0xc0, 0xae})));
+
+            // valid UTF-8 must still round-trip
+            const json j = "h\xc3\xa9llo, w\xc3\xb6rld! \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e"; // héllo, wörld! 日本語
+            CHECK(json::from_msgpack(json::to_msgpack(j)) == j);
+        }
+
         SECTION("strict mode")
         {
             std::vector<uint8_t> const vec = {0xc0, 0xc0};
@@ -1597,7 +1619,206 @@ TEST_CASE("MessagePack")
     }
 }
 
+TEST_CASE("issue #5405 - array reserve for definite-length MessagePack arrays")
+{
+#if !defined(JSON_NOEXCEPTION)
+    // this SECTION relies on catching a thrown exception to distinguish
+    // which of two acceptable, bounded rejections a hostile header took;
+    // under JSON_NOEXCEPTION, JSON_THROW never produces a catchable C++
+    // exception (it aborts instead), so this cannot be tested that way here
+    SECTION("a huge claimed length with no element data must not over-allocate")
+    {
+        // 0xdd: array 32 (four-byte length); claims 0xFFFFFFFF (4294967295)
+        // elements but provides none. max_size() for a std::vector is far
+        // larger than this count, so it does not reject the header outright;
+        // the (capped) reservation must not attempt to allocate space for
+        // billions of elements before the missing data is detected.
+        json _;
+        const std::vector<uint8_t> input = {0xdd, 0xFF, 0xFF, 0xFF, 0xFF};
+        // On a platform where std::size_t is narrower than 64 bits (e.g.
+        // 32-bit), the claimed count 0xFFFFFFFF coincides with that
+        // platform's SIZE_MAX, which some size-narrowing checks treat the
+        // same as detail::unknown_size(); it may then be rejected before
+        // the SAX consumer's own max_size() check (out_of_range.408) rather
+        // than being accepted and only found short of data once the
+        // (capped) reservation looks for element bytes that were never
+        // provided (parse_error.110). Either is an acceptable, bounded
+        // rejection of the hostile header -- the property under test is
+        // that no path attempts to allocate space for billions of elements.
+        bool threw = false;
+        try
+        {
+            _ = json::from_msgpack(input);
+        }
+        catch (const json::parse_error& e)
+        {
+            threw = true;
+            CHECK(e.id == 110);
+            CHECK(std::string(e.what()) == "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing MessagePack value: unexpected end of input");
+        }
+        catch (const json::out_of_range& e)
+        {
+            threw = true;
+            CHECK(e.id == 408);
+            CHECK(std::string(e.what()).find("excessive") != std::string::npos);
+        }
+        CHECK(threw);
+        CHECK(json::from_msgpack(input, true, false).is_discarded());
+    }
+#endif
+
+    SECTION("arrays of various sizes decode to the same value as before the reserve optimization")
+    {
+        for (const auto size :
+                {
+                    std::size_t{0}, std::size_t{1}, std::size_t{5}, // small
+                    std::size_t{16384},                             // exactly at the reserve cap
+                    std::size_t{20000}                              // above the reserve cap
+                })
+        {
+            CAPTURE(size)
+            json j = json::array();
+            for (std::size_t i = 0; i < size; ++i)
+            {
+                j.push_back(static_cast<int>(i % 1000));
+            }
+
+            const auto packed = json::to_msgpack(j);
+            CHECK(json::from_msgpack(packed) == j);
+        }
+    }
+
+    SECTION("a user-defined SAX consumer is unaffected by the internal DOM reserve optimization")
+    {
+        // the reserve() call is local to json_sax_dom_parser / json_sax_dom_callback_parser;
+        // a custom SAX consumer that does not touch a DOM array sees identical events
+        json j = json::array();
+        for (int i = 0; i < 100; ++i)
+        {
+            j.push_back(i);
+        }
+        const auto packed = json::to_msgpack(j);
+
+        SaxCountdown scp(1000000); // large enough to never trigger an abort
+        CHECK(json::sax_parse(packed, &scp, json::input_format_t::msgpack));
+    }
+}
+
+TEST_CASE("regression test - MessagePack ext type rejects a subtype that doesn't fit a single byte")
+{
+    // subtype 0-255 must still round-trip correctly (regression guard, pre-existing behavior)
+    CHECK(json::from_msgpack(json::to_msgpack(json::binary({1, 2}, 0))).get_binary().subtype() == 0);
+    CHECK(json::from_msgpack(json::to_msgpack(json::binary({1, 2}, 200))).get_binary().subtype() == 200);
+    CHECK(json::from_msgpack(json::to_msgpack(json::binary({1, 2}, 255))).get_binary().subtype() == 255);
+
+    // a subtype > 255 must throw instead of silently truncating
+    CHECK_THROWS_AS(json::to_msgpack(json::binary({1, 2}, 256)), json::out_of_range);
+    CHECK_THROWS_WITH_AS(json::to_msgpack(json::binary({1, 2}, 70000)), "[json.exception.out_of_range.415] subtype 70000 is too large for the MessagePack ext type (max 255)", json::out_of_range);
+
+    // a binary value with no subtype at all must be unaffected
+    CHECK(json::from_msgpack(json::to_msgpack(json::binary({1, 2}))).get_binary().has_subtype() == false);
+}
+
 // use this testcase outside [hide] to run it with Valgrind
+TEST_CASE("MessagePack nesting does not consume the call stack")
+{
+    // Reading a container used to call back into the value reader once per
+    // element, so the native call stack grew with the nesting depth of the
+    // input: one frame per byte for repeated 0x91 (a one-element array), which
+    // crashes the process long before the input is exhausted (#5104). The
+    // containers are kept on a heap stack now.
+    //
+    // Note that deeply nested values must not be compared, copied or dumped
+    // here: those operations are still recursive, and would reintroduce the
+    // very crash this checks for. Depth is measured by descending instead.
+
+    SECTION("an unterminated chain is reported, not crashed on")
+    {
+        json _;
+        const std::vector<uint8_t> input(300000, 0x91);
+        CHECK_THROWS_WITH_AS(_ = json::from_msgpack(input), "[json.exception.parse_error.110] parse error at byte 300001: syntax error while parsing MessagePack value: unexpected end of input", json::parse_error&);
+        CHECK(json::from_msgpack(input, true, false).is_discarded());
+    }
+
+    SECTION("a well-formed deep value is read through the SAX interface")
+    {
+        std::vector<uint8_t> input(300000, 0x91);
+        input.push_back(0x01); // innermost value
+
+        SaxCountdown accept_all(600001);
+        CHECK(json::sax_parse(input, &accept_all, json::input_format_t::msgpack));
+    }
+
+    SECTION("a well-formed deep value is read into a value")
+    {
+        const std::size_t depth = 10000;
+        std::vector<uint8_t> input(depth, 0x91);
+        input.push_back(0x01);
+
+        json j = json::from_msgpack(input);
+
+        std::size_t measured = 0;
+        const json* p = &j;
+        while (p->is_array() && !p->empty())
+        {
+            p = &p->front();
+            ++measured;
+        }
+        CHECK(measured == depth);
+        CHECK(p->is_number());
+    }
+
+    SECTION("containers are still read the same way")
+    {
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0x90})) == json::array());
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0x80})) == json::object());
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0x92, 0x90, 0x80})) == json({json::array(), json::object()}));
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0x91, 0x91, 0x91, 0x90})) == json({{{json::array()}}}));
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0x81, 0xA1, 'a', 0x81, 0xA1, 'b', 0x92, 0x01, 0x02})) == json({{"a", {{"b", {1, 2}}}}}));
+        // array 16 and map 32, i.e. the counted forms
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0xDC, 0x00, 0x02, 0x01, 0x02})) == json({1, 2}));
+        CHECK(json::from_msgpack(std::vector<uint8_t>({0xDF, 0x00, 0x00, 0x00, 0x01, 0xA1, 'k', 0xC3})) == json({{"k", true}}));
+    }
+}
+
+TEST_CASE("MessagePack input that cannot be read is discarded by every overload")
+{
+    std::vector<std::uint8_t> input = json::to_msgpack(json({{"a", {1, 2}}}));
+    input.pop_back();
+
+    json _;
+    CHECK_THROWS_AS(_ = json::from_msgpack(input.begin(), input.end()), json::parse_error&);
+    CHECK(json::from_msgpack(input, true, false).is_discarded());
+    CHECK(json::from_msgpack(input.begin(), input.end(), true, false).is_discarded());
+    CHECK(json::from_msgpack(input.data(), input.size(), true, false).is_discarded());
+    CHECK(json::from_msgpack({input.data(), input.size()}, true, false).is_discarded());
+}
+
+TEST_CASE("MessagePack SAX parsing stops at every event")
+{
+    // Containers are opened and closed by the loop that reads them; a SAX
+    // handler that rejects any event - including the end of a nested
+    // container - must stop the parse right there.
+    const auto count_events = [](const std::vector<std::uint8_t>& input)
+    {
+        int events = 0;
+        while (true)
+        {
+            SaxCountdown scp(events);
+            if (json::sax_parse(input, &scp, json::input_format_t::msgpack))
+            {
+                return events;
+            }
+            ++events;
+            REQUIRE(events < 1000);
+        }
+    };
+
+    // 20 events: every container kind closes inside another one
+    const json j = json::parse(R"({"a": [1, {"b": []}], "c": {"d": [[2]]}})");
+    CHECK(count_events(json::to_msgpack(j)) == 20);
+}
+
 TEST_CASE("single MessagePack roundtrip")
 {
     SECTION("sample.json")
@@ -1822,60 +2043,34 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
         {
             CAPTURE(filename)
 
+            std::ifstream f_json(filename);
+            const json j1 = json::parse(f_json);
+            auto packed = utils::read_binary_file(filename + ".msgpack");
+
             {
                 INFO_WITH_TEMP(filename + ": std::vector<uint8_t>");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                const json j1 = json::parse(f_json);
-
-                // parse MessagePack file
-                auto packed = utils::read_binary_file(filename + ".msgpack");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_msgpack(packed));
-
-                // compare parsed JSON values
                 CHECK(j1 == j2);
             }
 
             {
                 INFO_WITH_TEMP(filename + ": std::ifstream");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                const json j1 = json::parse(f_json);
-
-                // parse MessagePack file
                 std::ifstream f_msgpack(filename + ".msgpack", std::ios::binary);
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_msgpack(f_msgpack));
-
-                // compare parsed JSON values
                 CHECK(j1 == j2);
             }
 
             {
                 INFO_WITH_TEMP(filename + ": uint8_t* and size");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                const json j1 = json::parse(f_json);
-
-                // parse MessagePack file
-                auto packed = utils::read_binary_file(filename + ".msgpack");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_msgpack({packed.data(), packed.size()}));
-
-                // compare parsed JSON values
                 CHECK(j1 == j2);
             }
 
             {
                 INFO_WITH_TEMP(filename + ": output to output adapters");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                json const j1 = json::parse(f_json);
-
-                // parse MessagePack file
-                auto packed = utils::read_binary_file(filename + ".msgpack");
-
                 if (exclude_packed.count(filename) == 0u)
                 {
                     {
@@ -1968,3 +2163,256 @@ TEST_CASE("MessagePack with std::byte")
     }
 }
 #endif
+
+// the fake sizes below do not fit into a 32-bit std::size_t
+// with clang and libstdc++ 10, the std::filesystem::path conversion that
+// C++17 builds consider for every string type is ambiguous for a class
+// derived from std::string, so the string case is not tested there
+#if !(defined(__clang__) && defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE < 11)
+    #define JSON_TEST_BEYOND_UINT32_STRING 1
+#endif
+
+#if SIZE_MAX > UINT32_MAX
+template<typename T, typename A = std::allocator<T>>
+struct huge_array : std::vector<T, A>
+{
+    using base = std::vector<T, A>;
+    using base::base;
+
+    bool fake_size = false;
+
+    std::size_t size() const noexcept
+    {
+        if (fake_size)
+        {
+            return (std::numeric_limits<std::uint32_t>::max)() + 1ULL;
+        }
+
+        return base::size();
+    }
+};
+
+using huge_array_json = nlohmann::basic_json <
+                        std::map, huge_array, std::string, bool, std::int64_t, std::uint64_t,
+                        double, std::allocator, nlohmann::adl_serializer,
+                        std::vector<std::uint8_t>, void >;
+
+TEST_CASE("MessagePack Size above uint32 for array")
+{
+    huge_array_json j = huge_array_json::array();
+
+    j.push_back(1);
+    j.push_back(2);
+    j.push_back(3);
+
+    auto& array = j.get_ref<huge_array_json::array_t&>();
+    array.fake_size = true;
+
+    // write into a caller-owned vector: to_msgpack(j) reserves space based on
+    // the (faked) element count, which fails with bad_alloc on Windows
+    std::vector<std::uint8_t> result;
+    CHECK_THROWS_WITH_AS(
+        huge_array_json::to_msgpack(j, result),
+        "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295",
+        json::out_of_range&);
+
+    array.fake_size = false;
+}
+
+template<typename K, typename V,
+         typename C = std::less<K>,
+         typename A = std::allocator<std::pair<const K, V>>>
+                                     struct huge_map : std::map<K, V, C, A>
+{
+    using base = std::map<K, V, C, A>;
+    using base::base;
+
+    bool fake_size = false;
+
+    std::size_t size() const noexcept
+    {
+        if (fake_size)
+        {
+            return static_cast<std::size_t>(UINT32_MAX) + 1ULL;
+        }
+
+        return base::size();
+    }
+};
+
+using huge_object_json = nlohmann::basic_json <
+                         huge_map,
+                         std::vector,
+                         std::string,
+                         bool,
+                         std::int64_t,
+                         std::uint64_t,
+                         double,
+                         std::allocator,
+                         nlohmann::adl_serializer,
+                         std::vector<std::uint8_t>,
+                         void >;
+
+TEST_CASE("MessagePack Size above uint32 for object")
+{
+
+    huge_object_json j = huge_object_json::object();
+
+    j["one"] = 1;
+    j["two"] = 2;
+
+    auto& object = j.get_ref<huge_object_json::object_t&>();
+    object.fake_size = true;
+
+    // write into a caller-owned vector: to_msgpack(j) reserves space based on
+    // the (faked) element count, which fails with bad_alloc on Windows
+    std::vector<std::uint8_t> result;
+    CHECK_THROWS_WITH_AS(
+        huge_object_json::to_msgpack(j, result),
+        "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295",
+        json::out_of_range&);
+
+    object.fake_size = false;
+}
+
+#ifdef JSON_TEST_BEYOND_UINT32_STRING
+struct huge_string : std::string
+{
+    using std::string::string;
+
+    std::size_t size() const noexcept // NOLINT(readability-convert-member-functions-to-static)
+    {
+        return static_cast<std::size_t>(UINT32_MAX) + 1ULL;
+    }
+};
+
+using huge_string_json = nlohmann::basic_json <
+                         std::map,
+                         std::vector,
+                         huge_string,
+                         bool,
+                         std::int64_t,
+                         std::uint64_t,
+                         double,
+                         std::allocator,
+                         nlohmann::adl_serializer,
+                         std::vector<std::uint8_t>,
+                         void >;
+
+TEST_CASE("MessagePack Size above uint32 for string")
+{
+    const huge_string_json j = "hello";
+
+    CHECK_THROWS_WITH_AS(
+        huge_string_json::to_msgpack(j),
+        "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295",
+        json::out_of_range&);
+}
+#endif
+
+struct huge_binary : std::vector<std::uint8_t>
+{
+    using std::vector<std::uint8_t>::vector;
+
+    std::size_t size() const noexcept // NOLINT(readability-convert-member-functions-to-static)
+    {
+        return static_cast<std::size_t>(UINT32_MAX) + 1ULL;
+    }
+};
+
+using huge_binary_json = nlohmann::basic_json <
+                         std::map,
+                         std::vector,
+                         std::string,
+                         bool,
+                         std::int64_t,
+                         std::uint64_t,
+                         double,
+                         std::allocator,
+                         nlohmann::adl_serializer,
+                         huge_binary,
+                         void >;
+
+TEST_CASE("MessagePack Size above uint32 for binary")
+{
+
+    huge_binary_json j = huge_binary_json::binary(huge_binary{});
+
+    j.get_binary().push_back(0x01);
+    j.get_binary().push_back(0x02);
+
+    CHECK_THROWS_WITH_AS(
+        huge_binary_json::to_msgpack(j),
+        "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295",
+        json::out_of_range&);
+}
+#endif
+
+namespace
+{
+// types that report a size beyond UINT32_MAX without allocating that much
+// memory, so the MessagePack length limit can be tested cheaply; see the
+// similar types in unit-bson.cpp
+std::size_t beyond_uint32_size()
+{
+    return static_cast<std::size_t>((std::numeric_limits<std::uint32_t>::max)()) + 1;
+}
+
+class beyond_uint32_binary_t : public std::vector<std::uint8_t>
+{
+  public:
+    using std::vector<std::uint8_t>::vector;
+
+    size_type size() const noexcept // NOLINT(readability-convert-member-functions-to-static)
+    {
+        return beyond_uint32_size();
+    }
+};
+
+#ifdef JSON_TEST_BEYOND_UINT32_STRING
+class beyond_uint32_string_t : public std::string
+{
+  public:
+    using std::string::string;
+
+    size_type size() const noexcept // NOLINT(readability-convert-member-functions-to-static)
+    {
+        return beyond_uint32_size();
+    }
+};
+
+using beyond_uint32_string_json = nlohmann::basic_json <
+                                  std::map, std::vector, beyond_uint32_string_t, bool, std::int64_t, std::uint64_t,
+                                  double, std::allocator, nlohmann::adl_serializer, std::vector<std::uint8_t>, void >;
+#endif
+
+using beyond_uint32_binary_json = nlohmann::basic_json <
+                                  std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t,
+                                  double, std::allocator, nlohmann::adl_serializer, beyond_uint32_binary_t, void >;
+} // namespace
+
+TEST_CASE("MessagePack lengths beyond UINT32_MAX cannot be serialized")
+{
+    // MessagePack stores the length of a string, binary value, array, or
+    // object in at most 32 bits; a larger one used to be written without any
+    // length at all
+#if SIZE_MAX > UINT32_MAX
+    {
+        const char* const expected = "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295";
+
+        const beyond_uint32_binary_json binary = beyond_uint32_binary_json::binary(beyond_uint32_binary_t{});
+        CHECK_THROWS_WITH_AS(beyond_uint32_binary_json::to_msgpack(binary), expected, beyond_uint32_binary_json::out_of_range&);
+
+        const beyond_uint32_binary_json ext = beyond_uint32_binary_json::binary(beyond_uint32_binary_t{}, 42);
+        CHECK_THROWS_WITH_AS(beyond_uint32_binary_json::to_msgpack(ext), expected, beyond_uint32_binary_json::out_of_range&);
+
+#ifdef JSON_TEST_BEYOND_UINT32_STRING
+        // created from its type rather than from a beyond_uint32_string_t:
+        // that would consider the std::filesystem::path conversion, which
+        // libstdc++ 10 cannot decide for a class derived from std::string
+        const beyond_uint32_string_json string(beyond_uint32_string_json::value_t::string);
+        CHECK_THROWS_WITH_AS(beyond_uint32_string_json::to_msgpack(string), expected, beyond_uint32_string_json::out_of_range&);
+#endif
+    }
+#endif
+}

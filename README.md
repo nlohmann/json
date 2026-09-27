@@ -17,7 +17,7 @@
 [![GitHub Downloads](https://img.shields.io/github/downloads/nlohmann/json/total)](https://github.com/nlohmann/json/releases)
 [![GitHub Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](https://github.com/nlohmann/json/issues)
 [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/nlohmann/json.svg)](https://isitmaintained.com/project/nlohmann/json "Average time to resolve an issue")
-[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/289/badge)](https://bestpractices.coreinfrastructure.org/projects/289)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/289/badge)](https://www.bestpractices.dev/projects/289)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nlohmann/json/badge)](https://scorecard.dev/viewer/?uri=github.com/nlohmann/json)
 [![Backup Status](https://app.cloudback.it/badge/nlohmann/json)](https://cloudback.it)
 [![GitHub Sponsors](https://img.shields.io/badge/GitHub-Sponsors-ff69b4)](https://github.com/sponsors/nlohmann)
@@ -40,8 +40,9 @@
   - [Implicit conversions](#implicit-conversions)
   - [Conversions to/from arbitrary types](#arbitrary-types-conversions)
   - [Specializing enum conversion](#specializing-enum-conversion)
-  - [Binary formats (BSON, CBOR, MessagePack, UBJSON, and BJData)](#binary-formats-bson-cbor-messagepack-ubjson-and-bjdata)
+  - [Binary formats (BSON, CBOR, MessagePack, UBJSON, BJData, and BON8)](#binary-formats-bson-cbor-messagepack-ubjson-bjdata-and-bon8)
 - [Customers](#customers)
+- [Ecosystem](#ecosystem)
 - [Supported compilers](#supported-compilers)
 - [Integration](#integration)
   - [CMake](#cmake)
@@ -62,7 +63,7 @@ There are myriads of [JSON](https://json.org) libraries out there, and each may 
 
 - **Trivial integration**. Our whole code consists of a single header file [`json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings. The library is also included in all popular [package managers](https://json.nlohmann.me/integration/package_managers/).
 
-- **Serious testing**. Our code is heavily [unit-tested](https://github.com/nlohmann/json/tree/develop/tests/src) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](https://valgrind.org) and the [Clang Sanitizers](https://clang.llvm.org/docs/index.html) that there are no memory leaks. [Google OSS-Fuzz](https://github.com/google/oss-fuzz/tree/master/projects/json) additionally runs fuzz tests against all parsers 24/7, effectively executing billions of tests so far. To maintain high quality, the project is following the [Core Infrastructure Initiative (CII) best practices](https://bestpractices.coreinfrastructure.org/projects/289). See the [quality assurance](https://json.nlohmann.me/community/quality_assurance) overview documentation.
+- **Serious testing**. Our code is heavily [unit-tested](https://github.com/nlohmann/json/tree/develop/tests/src) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](https://valgrind.org) and the [Clang Sanitizers](https://clang.llvm.org/docs/index.html) that there are no memory leaks. [Google OSS-Fuzz](https://github.com/google/oss-fuzz/tree/master/projects/json) additionally runs fuzz tests against all parsers 24/7, effectively executing billions of tests so far. To maintain high quality, the project is following the [OpenSSF Best Practices](https://www.bestpractices.dev/projects/289). See the [quality assurance](https://json.nlohmann.me/community/quality_assurance) overview documentation.
 
 Other aspects were not so important to us:
 
@@ -127,7 +128,7 @@ There is also a [**docset**](https://github.com/Kapeli/Dash-User-Contributions/t
 - **JSON Pointer functions**: [flatten](https://json.nlohmann.me/api/basic_json/flatten), [unflatten](https://json.nlohmann.me/api/basic_json/unflatten)
 - **JSON Patch functions**: [patch](https://json.nlohmann.me/api/basic_json/patch), [patch_inplace](https://json.nlohmann.me/api/basic_json/patch_inplace), [diff](https://json.nlohmann.me/api/basic_json/diff), [merge_patch](https://json.nlohmann.me/api/basic_json/merge_patch)
 - **Static functions**: [meta](https://json.nlohmann.me/api/basic_json/meta), [get_allocator](https://json.nlohmann.me/api/basic_json/get_allocator)
-- **Binary formats**: [from_bjdata](https://json.nlohmann.me/api/basic_json/from_bjdata), [from_bson](https://json.nlohmann.me/api/basic_json/from_bson), [from_cbor](https://json.nlohmann.me/api/basic_json/from_cbor), [from_msgpack](https://json.nlohmann.me/api/basic_json/from_msgpack), [from_ubjson](https://json.nlohmann.me/api/basic_json/from_ubjson), [to_bjdata](https://json.nlohmann.me/api/basic_json/to_bjdata), [to_bson](https://json.nlohmann.me/api/basic_json/to_bson), [to_cbor](https://json.nlohmann.me/api/basic_json/to_cbor), [to_msgpack](https://json.nlohmann.me/api/basic_json/to_msgpack), [to_ubjson](https://json.nlohmann.me/api/basic_json/to_ubjson)
+- **Binary formats**: [from_bjdata](https://json.nlohmann.me/api/basic_json/from_bjdata), [from_bon8](https://json.nlohmann.me/api/basic_json/from_bon8), [from_bson](https://json.nlohmann.me/api/basic_json/from_bson), [from_cbor](https://json.nlohmann.me/api/basic_json/from_cbor), [from_msgpack](https://json.nlohmann.me/api/basic_json/from_msgpack), [from_ubjson](https://json.nlohmann.me/api/basic_json/from_ubjson), [to_bjdata](https://json.nlohmann.me/api/basic_json/to_bjdata), [to_bon8](https://json.nlohmann.me/api/basic_json/to_bon8), [to_bson](https://json.nlohmann.me/api/basic_json/to_bson), [to_cbor](https://json.nlohmann.me/api/basic_json/to_cbor), [to_msgpack](https://json.nlohmann.me/api/basic_json/to_msgpack), [to_ubjson](https://json.nlohmann.me/api/basic_json/to_ubjson)
 - **Non-member functions**: [operator<<](https://json.nlohmann.me/api/operator_ltlt/), [operator>>](https://json.nlohmann.me/api/operator_gtgt/), [to_string](https://json.nlohmann.me/api/basic_json/to_string)
 - **Literals**: [operator""_json](https://json.nlohmann.me/api/operator_literal_json)
 - **Helper classes**: [std::hash&lt;basic_json&gt;](https://json.nlohmann.me/api/basic_json/std_hash), [std::swap&lt;basic_json&gt;](https://json.nlohmann.me/api/basic_json/std_swap)
@@ -1109,9 +1110,9 @@ Other Important points:
 - When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this default pair carefully. If you desire an exception in this circumstance use `NLOHMANN_JSON_SERIALIZE_ENUM_STRICT()` which behaves identically except for throwing an exception on unrecognized values.
 - If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the map will be returned when converting to or from JSON.
 
-### Binary formats (BSON, CBOR, MessagePack, UBJSON, and BJData)
+### Binary formats (BSON, CBOR, MessagePack, UBJSON, BJData, and BON8)
 
-Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [BSON](https://bsonspec.org) (Binary JSON), [CBOR](https://cbor.io) (Concise Binary Object Representation), [MessagePack](https://msgpack.org), [UBJSON](https://ubjson.org) (Universal Binary JSON Specification) and [BJData](https://neurojson.org/bjdata) (Binary JData) to efficiently encode JSON values to byte vectors and to decode such vectors.
+Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance over a network. Hence, the library supports [BSON](https://bsonspec.org) (Binary JSON), [CBOR](https://cbor.io) (Concise Binary Object Representation), [MessagePack](https://msgpack.org), [UBJSON](https://ubjson.org) (Universal Binary JSON Specification), [BJData](https://neurojson.org/bjdata) (Binary JData), and [BON8](https://github.com/hikoworks/hikogui/blob/main/docs/BON8.md) (Binary Object Notation 8) to efficiently encode JSON values to byte vectors and to decode such vectors.
 
 ```cpp
 // create a JSON value
@@ -1148,6 +1149,14 @@ std::vector<std::uint8_t> v_ubjson = json::to_ubjson(j);
 
 // roundtrip
 json j_from_ubjson = json::from_ubjson(v_ubjson);
+
+// serialize to BON8
+std::vector<std::uint8_t> v_bon8 = json::to_bon8(j);
+
+// 0x88, 0x63, 0x6F, 0x6D, 0x70, 0x61, 0x63, 0x74, 0xF9, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x61, 0x90
+
+// roundtrip
+json j_from_bon8 = json::from_bon8(v_bon8);
 ```
 
 The library also supports binary types from BSON, CBOR (byte strings), and MessagePack (bin, ext, fixext). They are stored by default as `std::vector<std::uint8_t>` to be processed outside the library.
@@ -1185,6 +1194,11 @@ auto cbor = json::to_msgpack(j); // 0xD5 (fixext2), 0x10, 0xCA, 0xFE
 The library is used in multiple projects, applications, operating systems, etc. The list below is not exhaustive, but the result of an internet search. If you know further customers of the library, please let me know, see [contact](#contact).
 
 [![logos of customers using the library](docs/mkdocs/docs/images/customers.png)](https://json.nlohmann.me/home/customers/)
+
+## Ecosystem
+
+Beyond projects that use the library, there are third-party projects that build on top of it - schema validators,
+language bindings, format converters, and the like. See the curated [Ecosystem](https://json.nlohmann.me/community/ecosystem/) page.
 
 ## Supported compilers
 
@@ -1415,7 +1429,7 @@ I deeply appreciate the help of the following people.
 6. [Joshua C. Randall](https://github.com/jrandall) fixed a bug in the floating-point serialization.
 7. [Aaron Burghardt](https://github.com/aburgh) implemented code to parse streams incrementally. Furthermore, he greatly improved the parser class by allowing the definition of a filter function to discard undesired elements while parsing.
 8. [Daniel Kopeček](https://github.com/dkopecek) fixed a bug in the compilation with GCC 5.0.
-9. [Florian Weber](https://github.com/Florianjw) fixed a bug in and improved the performance of the comparison operators.
+9. [Fiona Johanna Weber](https://github.com/Fiona-J-W) fixed a bug in and improved the performance of the comparison operators.
 10. [Eric Cornelius](https://github.com/EricMCornelius) pointed out a bug in the handling with NaN and infinity values. He also improved the performance of the string escaping.
 11. [易思龙](https://github.com/likebeta) implemented a conversion from anonymous enums.
 12. [kepkin](https://github.com/kepkin) patiently pushed forward the support for Microsoft Visual Studio.
@@ -1517,14 +1531,14 @@ I deeply appreciate the help of the following people.
 108. [Kevin Tonon](https://github.com/ktonon) overworked the C++11 compiler checks in CMake.
 109. [Axel Huebl](https://github.com/ax3l) simplified a CMake check and added support for the [Spack package manager](https://spack.io).
 110. [Carlos O'Ryan](https://github.com/coryan) fixed a typo.
-111. [James Upjohn](https://github.com/jammehcow) fixed a version number in the compilers section.
+111. [James Upjohn](https://github.com/jupjohn) fixed a version number in the compilers section.
 112. [Chuck Atkins](https://github.com/chuckatkins) adjusted the CMake files to the CMake packaging guidelines and provided documentation for the CMake integration.
 113. [Jan Schöppach](https://github.com/dns13) fixed a typo.
 114. [martin-mfg](https://github.com/martin-mfg) fixed a typo.
 115. [Matthias Möller](https://github.com/TinyTinni) removed the dependency from `std::stringstream`.
 116. [agrianius](https://github.com/agrianius) added code to use alternative string implementations.
 117. [Daniel599](https://github.com/Daniel599) allowed to use more algorithms with the `items()` function.
-118. [Julius Rakow](https://github.com/jrakow) fixed the Meson include directory and fixed the links to [cppreference.com](https://cppreference.com).
+118. [Julius Rakow](https://github.com/juliusrakow) fixed the Meson include directory and fixed the links to [cppreference.com](https://cppreference.com).
 119. [Sonu Lohani](https://github.com/sonulohani) fixed the compilation with MSVC 2015 in debug mode.
 120. [grembo](https://github.com/grembo) fixed the test suite and re-enabled several test cases.
 121. [Hyeon Kim](https://github.com/simnalamburt) introduced the macro `JSON_INTERNAL_CATCH` to control the exception handling inside the library.
@@ -1575,7 +1589,7 @@ I deeply appreciate the help of the following people.
 166. [Mark Beckwith](https://github.com/wythe) fixed a typo.
 167. [yann-morin-1998](https://github.com/yann-morin-1998) helped to reduce the CMake requirement to version 3.1.
 168. [Konstantin Podsvirov](https://github.com/podsvirov) maintains a package for the MSYS2 software distro.
-169. [remyabel](https://github.com/remyabel) added GNUInstallDirs to the CMake files.
+169. [remyabel](https://github.com/remyabel2) added GNUInstallDirs to the CMake files.
 170. [Taylor Howard](https://github.com/taylorhoward92) fixed a unit test.
 171. [Gabe Ron](https://github.com/Macr0Nerd) implemented the `to_string` method.
 172. [Watal M. Iwasaki](https://github.com/heavywatal) fixed a Clang warning.
@@ -1602,7 +1616,7 @@ I deeply appreciate the help of the following people.
 193. [Hubert Chathi](https://github.com/uhoreg) made CMake's version config file architecture-independent.
 194. [OmnipotentEntity](https://github.com/OmnipotentEntity) implemented the binary values for CBOR, MessagePack, BSON, and UBJSON.
 195. [ArtemSarmini](https://github.com/ArtemSarmini) fixed a compilation issue with GCC 10 and fixed a leak.
-196. [Evgenii Sopov](https://github.com/sea-kg) integrated the library to the wsjcpp package manager.
+196. [Evgenii Sopov](https://github.com/sea5kg) integrated the library to the wsjcpp package manager.
 197. [Sergey Linev](https://github.com/linev) fixed a compiler warning.
 198. [Miguel Magalhães](https://github.com/magamig) fixed the year in the copyright.
 199. [Gareth Sylvester-Bradley](https://github.com/garethsb-sony) fixed a compilation issue with MSVC.
@@ -1696,7 +1710,7 @@ I deeply appreciate the help of the following people.
 287. [NN](https://github.com/NN---) added the Visual Studio output directory to `.gitignore`.
 288. [Romain Reignier](https://github.com/romainreignier) improved the performance of the vector output adapter.
 289. [Mike](https://github.com/Mike-Leo-Smith) fixed the `std::iterator_traits`.
-290. [Richard Hozák](https://github.com/zxey) added macro `JSON_NO_ENUM` to disable default enum conversions.
+290. [Richard Hozák](https://github.com/richardhozak) added macro `JSON_NO_ENUM` to disable default enum conversions.
 291. [vakokako](https://github.com/vakokako) fixed tests when compiling with C++20.
 292. [Alexander “weej” Jones](https://github.com/alexweej) fixed an example in the README.
 293. [Eli Schwartz](https://github.com/eli-schwartz) added more files to the `include.zip` archive.
@@ -1721,7 +1735,7 @@ I deeply appreciate the help of the following people.
 312. [Gareth Sylvester-Bradley](https://github.com/garethsb) added `operator/=` and `operator/` to construct JSON pointers.
 313. [Michael Macnair](https://github.com/mykter) added support for afl-fuzz testing.
 314. [Berkus Decker](https://github.com/berkus) fixed a typo in the README.
-315. [Illia Polishchuk](https://github.com/effolkronium) improved the CMake testing.
+315. [Illia Polishchuk](https://github.com/ilqvya) improved the CMake testing.
 316. [Ikko Ashimine](https://github.com/eltociear) fixed a typo.
 317. [Raphael Grimm](https://github.com/barcode) added the possibility to define a custom base class.
 318. [tocic](https://github.com/tocic) fixed typos in the documentation.
@@ -1791,6 +1805,66 @@ I deeply appreciate the help of the following people.
 382. [bitFiedler](https://github.com/bitFiedler) made GDB pretty printer work with Python 3.8.
 383. [Gianfranco Costamagna](https://github.com/LocutusOfBorg) fixed a compiler warning.
 384. [risa2000](https://github.com/risa2000) made `std::filesystem::path` conversion to/from UTF-8 encoded string explicit.
+385. [AM](https://github.com/maqnouch) fixed typos in the README.
+386. [dmenendez-gruposantander](https://github.com/dmenendez-gruposantander) fixed typos in the comments of the examples.
+387. [Mihai Stan](https://github.com/mstan-xx) fixed comparisons against the literal `0`.
+388. [Matt Gumbel](https://github.com/intelmatt) fixed some `-Weffc++` warnings.
+389. [vimpunk](https://github.com/vimpunk) moved a lambda out of an unevaluated context to support older compilers.
+390. [Chris Harris](https://github.com/cjh1) fixed the compilation with GCC 4.8.
+391. [Palmer Dabbelt](https://github.com/palmer-dabbelt) generated and installed a pkg-config file.
+392. [Gus Pozuelo](https://github.com/ap-viavi) made `ordered_map` compatible with GCC 5.5, Clang 3.6, and Xcode 9.
+393. [AK](https://github.com/Lioncky) fixed an MSVC build error caused by the `min`/`max` macros from `windows.h`.
+394. [Sergiu Deitsch](https://github.com/sergiud) provided a fallback for missing `char8_t` support.
+395. [Xiaochuan Ye](https://github.com/XueSongTap) fixed `from_msgpack` for `std::byte` input by specializing `std::char_traits`.
+396. [Ville Vesilehto](https://github.com/thevilledev) fixed an overflow in the BJData size calculation and rejected overflowing negative integers in CBOR.
+397. [NmPassTHFan](https://github.com/nmpassthf) replaced the deprecated `std::is_trivial` for C++26.
+398. [Chris Ever](https://github.com/chirsz-ever) added the `ignore_trailing_commas` parser option.
+399. [Kuan-Fu Wu](https://github.com/kfwu1999) fixed the example code for `json_pointer` initialization.
+400. [David Kilzer](https://github.com/ddkilzer) added a missing header to the input adapters.
+401. [Miko](https://github.com/mikomikotaishi) added proper C++20 module support, simplified the module API, and fixed missing exports.
+402. [hitgirl](https://github.com/hitgil) fixed the CMake configuration when cross-compiling.
+403. [Devon Thomas](https://github.com/ThomaDevOSU) mentioned the Artistic Style formatting in the contribution guidelines.
+404. [Erik Hu](https://github.com/Erikhu1) made Coveralls upload errors non-fatal in the CI.
+405. [co63oc](https://github.com/co63oc) fixed typos.
+406. [DmitriBogdanov](https://github.com/DmitriBogdanov) fixed broken package manager links in the documentation.
+407. [Bander](https://github.com/banderzhm) improved the MSVC compatibility of the C++ modules.
+408. [Andy Choi](https://github.com/ccpong) removed an unnecessary `template` keyword before `get` in the README and the documentation.
+409. [SamareshSingh](https://github.com/ssam18) fixed single-element brace initialization to copy/move instead of wrapping in an array, fixed the `WITH_DEFAULT` macros for `ordered_map`, and handled moved events in `serve_header.py`.
+410. [Aditya](https://github.com/Lumowhisp) improved the documentation of the documentation generation.
+411. [cheese1](https://github.com/cheese1) clarified the README.
+412. [KhloodElhossiny](https://github.com/khloodelhossiny) enabled `std::string_view` keys in `operator[]`.
+413. [Charles Cabergs](https://github.com/cacharle) fixed a `-Wtautological-constant-out-of-range-compare` warning.
+414. [EALePain](https://github.com/EALePain) made the `std::tuple` conversion work with reference types such as `std::tie`.
+415. [koala_oishi](https://github.com/chibi-dogs) fixed grammatical wording in the README.
+416. [riccardoori11](https://github.com/riccardoori11) fixed a typo in the documentation.
+417. [Swastik Bose](https://github.com/VasuBhakt) fixed the parent pointers after `update()` with `JSON_DIAGNOSTICS` and fixed the Doxygen autolinking of requirements.
+418. [trdesilva](https://github.com/trdesilva) added `front`, `pop_front`, and `push_front` to `json_pointer`.
+419. [Akhilesh Arora](https://github.com/akhilesharora) fixed an incomplete-type error with `ordered_json`.
+420. [Hariom Phulre](https://github.com/hariomphulre) fixed the C++20 modules compilation with GCC.
+421. [Kirill Lokotkov](https://github.com/RUSLoker) fixed printing `long double` values.
+422. [George Sedov](https://github.com/radistmorse) added the `NLOHMANN_DEFINE_TYPE_*_WITH_NAMES` macros.
+423. [Caillin Nugent](https://github.com/nugentcaillin) added the `NLOHMANN_JSON_SERIALIZE_ENUM_STRICT` macro.
+424. [Cosmin D.](https://github.com/drcosmin) fixed `std::filesystem::path` conversions and added an MSVC workaround for `std::unique_ptr`.
+425. [Paul Dreik](https://github.com/pauldreik) fixed a test relying on implementation-specific behavior.
+426. [Daniel Falk](https://github.com/daniel-falk) added missing copyright notices to the SBOM.
+427. [Federico Sfriso](https://github.com/federicosfriso05-dotcom) added support for constructing JSON values from C++20 range views.
+428. [Luke Banicevic](https://github.com/banaboi) fixed corrupt BSON output for lengths exceeding `INT32_MAX`, cleaned up the BSON writer, and improved the documentation.
+429. [Patrick Armstrong](https://github.com/Patrick10199) updated the CBOR references and the half-precision float assertions.
+430. [Yash Bavadiya](https://github.com/xevrion) added checks to all BSON reads.
+431. [hum4nBeing](https://github.com/hum4nBeing) fixed the overflow handling of high-precision numbers in UBJSON.
+432. [tomatotomata](https://github.com/tomatotomata) added checks for reading CBOR tagged subtypes.
+433. [YingqiDuan](https://github.com/YingqiDuan) documented the BSON interoperability.
+434. [KBS](https://github.com/youdie006) documented the standards compliance and the strictness of `parse()` and `operator>>`.
+435. [Petr Bělohlávek](https://github.com/petrbel) added Clang 21 and 22 to the CI.
+436. [Dmitry Rantovov](https://github.com/darkdi) fixed the placement of a CBOR documentation block.
+437. [ljcjclljc](https://github.com/ljcjclljc) fixed the comparison of large unsigned integers with signed integers.
+438. [Sahil Kamate](https://github.com/sahilkamate03) fixed the handling of CBOR tags 0-5 and 21-23.
+439. [Krishnanand G](https://github.com/Krishnanand-G) made the UBJSON writer reject `use_type` without `use_size`.
+440. [whn](https://github.com/Whning0513) documented the lenient BSON input handling and corrected the complexity of `to_bson`.
+441. [elix3r](https://github.com/22elix3r) fixed `update()` with `merge_objects` when merging a primitive into an object.
+442. [Avionic Harshit](https://github.com/avionicharshit-byte) made `diff()` linear when an array shrinks.
+443. [Qatadaha Bin Matloob](https://github.com/qatcod) fixed comparisons between integers and floats and fixed unparsable BJData output.
+444. [Wu Shuwen](https://github.com/dajiaohuang) removed an unused include.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 

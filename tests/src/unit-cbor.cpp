@@ -15,6 +15,7 @@ using nlohmann::json;
 #include <sstream>
 #include <iomanip>
 #include <limits>
+#include <list>
 #include <set>
 #include "make_test_data_available.hpp"
 #include "test_utils.hpp"
@@ -290,7 +291,7 @@ TEST_CASE("CBOR")
 
                 SECTION("-65536..-257")
                 {
-                    for (int32_t i = -65536; i <= -257; ++i)
+                    for (int32_t i = -65536; i <= -257; i = utils::next_integer_sample(i, -257, 7))
                     {
                         CAPTURE(i)
 
@@ -478,7 +479,7 @@ TEST_CASE("CBOR")
 
                 SECTION("256..65535")
                 {
-                    for (size_t i = 256; i <= 65535; ++i)
+                    for (size_t i = 256; i <= 65535; i = utils::next_integer_sample(i, static_cast<size_t>(65535), static_cast<size_t>(7)))
                     {
                         CAPTURE(i)
 
@@ -613,7 +614,7 @@ TEST_CASE("CBOR")
 
                 SECTION("-32768..-129 (int 16)")
                 {
-                    for (int16_t i = -32768; i <= static_cast<std::int16_t>(-129); ++i)
+                    for (int16_t i = -32768; i <= static_cast<std::int16_t>(-129); i = utils::next_integer_sample(i, static_cast<int16_t>(-129), static_cast<int16_t>(7)))
                     {
                         CAPTURE(i)
 
@@ -718,7 +719,7 @@ TEST_CASE("CBOR")
 
                 SECTION("256..65535 (two-byte uint16_t)")
                 {
-                    for (size_t i = 256; i <= 65535; ++i)
+                    for (size_t i = 256; i <= 65535; i = utils::next_integer_sample(i, static_cast<size_t>(65535), static_cast<size_t>(7)))
                     {
                         CAPTURE(i)
 
@@ -1833,6 +1834,59 @@ TEST_CASE("CBOR")
             CHECK(json::from_cbor(std::vector<uint8_t>({0xa1, 0xff, 0x01}), true, false).is_discarded());
         }
 
+        SECTION("invalid UTF-8 in string (see #5529)")
+        {
+            // a two-character text string (major type 3) whose bytes are not
+            // valid UTF-8 (0xC0 0xAE is an overlong encoding of '.') must be
+            // rejected at decode time, matching every other kind of
+            // malformed binary input, rather than only failing later when
+            // the resulting value is dumped
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x62, 0xc0, 0xae})), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x62, 0xc0, 0xae}), true, false).is_discarded());
+
+            // a CBOR byte string (major type 2) with the very same bytes is
+            // NOT text and must still be accepted as-is
+            CHECK_NOTHROW(_ = json::from_cbor(std::vector<uint8_t>({0x42, 0xc0, 0xae})));
+            CHECK(_ == json::binary(std::vector<std::uint8_t>({0xc0, 0xae})));
+
+            // valid UTF-8 must still round-trip
+            const json j = "h\xc3\xa9llo, w\xc3\xb6rld! \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e"; // héllo, wörld! 日本語
+            CHECK(json::from_cbor(json::to_cbor(j)) == j);
+        }
+
+        SECTION("invalid UTF-8 in indefinite-length string")
+        {
+            json _;
+
+            // every chunk must be valid UTF-8 on its own (RFC 8949, Section
+            // 3.2.3), so a code point split across two chunks is rejected
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x7f, 0x61, 0xc3, 0x61, 0xa9, 0xff})), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x7f, 0x61, 0xc3, 0x61, 0xa9, 0xff}), true, false).is_discarded());
+
+            // an ill-formed later chunk is rejected after valid ones
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x7f, 0x62, 0xc3, 0xa9, 0x62, 0xc0, 0xae, 0xff})), "[json.exception.parse_error.113] parse error at byte 7: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+
+            // valid multi-byte chunks are accepted
+            CHECK(json::from_cbor(std::vector<uint8_t>({0x7f, 0x62, 0xc3, 0xa9, 0x62, 0xc3, 0xb6, 0xff})) == "\xc3\xa9\xc3\xb6");
+        }
+
+        SECTION("many chunks in indefinite-length string")
+        {
+            // only the newly read chunk is validated, not the whole string
+            // collected so far; validating the latter made this input take
+            // quadratic time (about ten seconds for 100000 chunks)
+            constexpr std::size_t chunks = 100000;
+            std::vector<uint8_t> v{0x7f};
+            for (std::size_t i = 0; i < chunks; ++i)
+            {
+                v.push_back(0x61);
+                v.push_back('a');
+            }
+            v.push_back(0xff);
+            CHECK(json::from_cbor(v) == std::string(chunks, 'a'));
+        }
+
         SECTION("strict mode")
         {
             std::vector<uint8_t> const vec = {0xf6, 0xf6};
@@ -2035,6 +2089,291 @@ TEST_CASE("CBOR definite length equal to the indefinite-length sentinel")
     }
 }
 
+TEST_CASE("CBOR nesting does not consume the call stack")
+{
+    // Containers used to be read by calling back into the value reader once
+    // per element, and a tag by calling it for the tagged value, so the native
+    // call stack grew with the nesting depth of the input. Each of the three
+    // costs a single byte to encode -- 0x9F, 0x81 and 0xC2 -- so a payload of
+    // repeated bytes crashed the process (#5104). The containers are kept on a
+    // heap stack now, and a tag is read in a loop.
+    //
+    // Deeply nested values must not be compared, copied or dumped here: those
+    // operations are still recursive and would reintroduce the crash.
+    json _;
+
+    SECTION("indefinite-length containers")
+    {
+        const std::vector<uint8_t> input(500000, 0x9F);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.parse_error.110] parse error at byte 500001: syntax error while parsing CBOR value: unexpected end of input", json::parse_error&);
+        CHECK(json::from_cbor(input, true, false).is_discarded());
+    }
+
+    SECTION("definite-length containers")
+    {
+        const std::vector<uint8_t> input(500000, 0x81);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.parse_error.110] parse error at byte 500001: syntax error while parsing CBOR value: unexpected end of input", json::parse_error&);
+        CHECK(json::from_cbor(input, true, false).is_discarded());
+    }
+
+    SECTION("tags")
+    {
+        // a tag is not a value of its own, so a chain of them used to recurse
+        const std::vector<uint8_t> input(500000, 0xC2);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(input, true, true, json::cbor_tag_handler_t::ignore), "[json.exception.parse_error.110] parse error at byte 500001: syntax error while parsing CBOR value: unexpected end of input", json::parse_error&);
+        CHECK(json::from_cbor(input, true, false, json::cbor_tag_handler_t::ignore).is_discarded());
+    }
+
+    SECTION("stored tags")
+    {
+        // a tag over something other than a byte string is read like for
+        // ignore, so a chain of them must not recurse either (#5316)
+        std::vector<uint8_t> input;
+        for (std::size_t i = 0; i < 500000; ++i)
+        {
+            input.push_back(0xD8);
+            input.push_back(0x18);
+        }
+        input.push_back(0x01);
+        CHECK(json::from_cbor(input, true, true, json::cbor_tag_handler_t::store) == 1);
+    }
+
+    SECTION("a well-formed deep value is read through the SAX interface")
+    {
+        std::vector<uint8_t> input(200000, 0x9F);
+        input.insert(input.end(), 200000, 0xFF);
+
+        SaxCountdown accept_all(1000000);
+        CHECK(json::sax_parse(input, &accept_all, json::input_format_t::cbor));
+    }
+
+    SECTION("a well-formed deep value is read into a value")
+    {
+        const std::size_t depth = 10000;
+        std::vector<uint8_t> input(depth, 0x81);
+        input.push_back(0x00);
+
+        json j = json::from_cbor(input);
+
+        std::size_t measured = 0;
+        const json* p = &j;
+        while (p->is_array() && !p->empty())
+        {
+            p = &p->front();
+            ++measured;
+        }
+        CHECK(measured == depth);
+        CHECK(p->is_number());
+    }
+
+    SECTION("containers are still read the same way")
+    {
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x80})) == json::array());
+        CHECK(json::from_cbor(std::vector<uint8_t>({0xA0})) == json::object());
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x9F, 0xFF})) == json::array());
+        CHECK(json::from_cbor(std::vector<uint8_t>({0xBF, 0xFF})) == json::object());
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x9F, 0x01, 0x02, 0xFF})) == json({1, 2}));
+        CHECK(json::from_cbor(std::vector<uint8_t>({0xBF, 0x61, 'a', 0x01, 0xFF})) == json({{"a", 1}}));
+        // definite and indefinite forms nested inside each other
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x9F, 0x82, 0x01, 0x02, 0xA1, 0x61, 'k', 0xBF, 0xFF, 0xFF})) == json({{1, 2}, {{"k", json::object()}}}));
+    }
+
+    SECTION("tagged values are still read the same way")
+    {
+        const auto ignore = json::cbor_tag_handler_t::ignore;
+        CHECK(json::from_cbor(std::vector<uint8_t>({0xC2, 0x01}), true, true, ignore) == json(1));
+        // a chain of tags resolves to the value that follows it
+        CHECK(json::from_cbor(std::vector<uint8_t>({0xC2, 0xC2, 0xC2, 0x01}), true, true, ignore) == json(1));
+        // a tag inside a container, and one in front of a container
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x82, 0xC2, 0x01, 0x02}), true, true, ignore) == json({1, 2}));
+        CHECK(json::from_cbor(std::vector<uint8_t>({0xC2, 0x82, 0x01, 0x02}), true, true, ignore) == json({1, 2}));
+    }
+}
+
+TEST_CASE("CBOR input that cannot be read is discarded by every overload")
+{
+    std::vector<std::uint8_t> input = json::to_cbor(json({{"a", {1, 2}}}));
+    input.pop_back();
+
+    json _;
+    CHECK_THROWS_AS(_ = json::from_cbor(input.begin(), input.end()), json::parse_error&);
+    CHECK(json::from_cbor(input, true, false).is_discarded());
+    CHECK(json::from_cbor(input.begin(), input.end(), true, false).is_discarded());
+    CHECK(json::from_cbor(input.data(), input.size(), true, false).is_discarded());
+    CHECK(json::from_cbor({input.data(), input.size()}, true, false).is_discarded());
+
+    // a string that ends early, read through iterators that are not
+    // contiguous and have to be copied from one element at a time
+    const std::list<std::uint8_t> truncated_string = {0x63, 'a', 'b'};
+    CHECK(json::from_cbor(truncated_string.begin(), truncated_string.end(), true, false).is_discarded());
+    const std::list<std::uint8_t> complete_string = {0x63, 'a', 'b', 'c'};
+    CHECK(json::from_cbor(complete_string.begin(), complete_string.end()) == "abc");
+}
+
+TEST_CASE("CBOR SAX parsing stops at every event")
+{
+    // Containers are opened and closed by the loop that reads them; a SAX
+    // handler that rejects any event - including the end of a nested
+    // container - must stop the parse right there.
+    const auto count_events = [](const std::vector<std::uint8_t>& input)
+    {
+        int events = 0;
+        while (true)
+        {
+            SaxCountdown scp(events);
+            if (json::sax_parse(input, &scp, json::input_format_t::cbor))
+            {
+                return events;
+            }
+            ++events;
+            REQUIRE(events < 1000);
+        }
+    };
+
+    // 20 events: every container kind closes inside another one
+    const json j = json::parse(R"({"a": [1, {"b": []}], "c": {"d": [[2]]}})");
+    CHECK(count_events(json::to_cbor(j)) == 20);
+    CHECK(count_events(std::vector<std::uint8_t>({0xBF, 0x61, 'a', 0x9F, 0x01, 0xFF, 0xFF})) == 6);
+}
+
+TEST_CASE("CBOR indefinite-length strings do not recurse per chunk")
+{
+    // Reading an indefinite-length string or byte array used to call itself
+    // once per chunk, so a payload of repeated 0x7F (or 0x5F) bytes exhausted
+    // the call stack before any of the input was rejected. The open levels are
+    // counted now, and the levels below prove the reader still reads the same
+    // values and reports the same errors at the same byte offsets.
+    json _;
+
+    SECTION("many open levels are reported, not crashed on")
+    {
+        const std::vector<uint8_t> input(200000, 0x7F);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.parse_error.110] parse error at byte 200001: syntax error while parsing CBOR string: unexpected end of input", json::parse_error&);
+        CHECK(json::from_cbor(input, true, false).is_discarded());
+    }
+
+    SECTION("many open levels are reported, not crashed on (binary)")
+    {
+        const std::vector<uint8_t> input(200000, 0x5F);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.parse_error.110] parse error at byte 200001: syntax error while parsing CBOR binary: unexpected end of input", json::parse_error&);
+        CHECK(json::from_cbor(input, true, false).is_discarded());
+    }
+
+    SECTION("chunks are still concatenated")
+    {
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x7F, 0xFF})) == json(""));
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x7F, 0x61, 0x61, 0xFF})) == json("a"));
+        // nested indefinite-length strings are concatenated across levels
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x7F, 0x7F, 0x61, 0x61, 0xFF, 0x61, 0x62, 0xFF})) == json("ab"));
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x7F, 0x7F, 0x7F, 0x61, 0x7A, 0xFF, 0xFF, 0xFF})) == json("z"));
+        CHECK(json::from_cbor(std::vector<uint8_t>({0xA1, 0x7F, 0x61, 0x61, 0xFF, 0x01})) == json({{"a", 1}}));
+    }
+
+    SECTION("chunks are still concatenated (binary)")
+    {
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x5F, 0x41, 0x61, 0xFF})) == json::binary({0x61}));
+        CHECK(json::from_cbor(std::vector<uint8_t>({0x5F, 0x5F, 0x41, 0x61, 0xFF, 0x41, 0x62, 0xFF})) == json::binary({0x61, 0x62}));
+    }
+
+    SECTION("a chunk that is not a string is still rejected")
+    {
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x7F, 0x7F, 0x00})), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x00", json::parse_error&);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x5F, 0x5F, 0x00})), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing CBOR binary: expected length specification (0x40-0x5B) or indefinite binary array type (0x5F); last byte: 0x00", json::parse_error&);
+    }
+
+    SECTION("a break marker outside an indefinite-length string is not a string")
+    {
+        // 0xFF only closes a string that was opened; on its own it is not one
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xA1, 0xFF, 0x01})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0xFF", json::parse_error&);
+    }
+}
+
+TEST_CASE("issue #5405 - array reserve for definite-length CBOR arrays")
+{
+#if !defined(JSON_NOEXCEPTION)
+    // this SECTION relies on catching a thrown exception to distinguish
+    // which of two acceptable, bounded rejections a hostile header took;
+    // under JSON_NOEXCEPTION, JSON_THROW never produces a catchable C++
+    // exception (it aborts instead), so this cannot be tested that way here
+    SECTION("a huge claimed length with no element data must not over-allocate")
+    {
+        // 0x9A: array with a four-byte length; claims 0xFFFFFFFF (4294967295)
+        // elements but provides none. max_size() for a std::vector is far
+        // larger than this count, so it does not reject the header outright;
+        // the (capped) reservation must not attempt to allocate space for
+        // billions of elements before the missing data is detected.
+        json _;
+        const std::vector<uint8_t> input = {0x9A, 0xFF, 0xFF, 0xFF, 0xFF};
+        // On a platform where std::size_t is narrower than 64 bits (e.g.
+        // 32-bit), the claimed count 0xFFFFFFFF coincides with that
+        // platform's detail::unknown_size() sentinel (SIZE_MAX), so the
+        // format-level size check rejects it outright (out_of_range.408,
+        // "excessive ... size") before the SAX consumer's own max_size()
+        // check would even run; on a 64-bit platform it passes both of
+        // those checks and is only found short of data once the (capped)
+        // reservation looks for element bytes that were never provided
+        // (parse_error.110). Either is an acceptable, bounded rejection of
+        // the hostile header -- the property under test is that no path
+        // attempts to allocate space for billions of elements.
+        bool threw = false;
+        try
+        {
+            _ = json::from_cbor(input);
+        }
+        catch (const json::parse_error& e)
+        {
+            threw = true;
+            CHECK(e.id == 110);
+            CHECK(std::string(e.what()) == "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing CBOR value: unexpected end of input");
+        }
+        catch (const json::out_of_range& e)
+        {
+            threw = true;
+            CHECK(e.id == 408);
+            CHECK(std::string(e.what()).find("excessive") != std::string::npos);
+        }
+        CHECK(threw);
+        CHECK(json::from_cbor(input, true, false).is_discarded());
+    }
+#endif
+
+    SECTION("arrays of various sizes decode to the same value as before the reserve optimization")
+    {
+        for (const auto size :
+                {
+                    std::size_t{0}, std::size_t{1}, std::size_t{5}, // small
+                    std::size_t{16384},                             // exactly at the reserve cap
+                    std::size_t{20000}                              // above the reserve cap
+                })
+        {
+            CAPTURE(size)
+            json j = json::array();
+            for (std::size_t i = 0; i < size; ++i)
+            {
+                j.push_back(static_cast<int>(i % 1000));
+            }
+
+            const auto packed = json::to_cbor(j);
+            CHECK(json::from_cbor(packed) == j);
+        }
+    }
+
+    SECTION("a user-defined SAX consumer is unaffected by the internal DOM reserve optimization")
+    {
+        // the reserve() call is local to json_sax_dom_parser / json_sax_dom_callback_parser;
+        // a custom SAX consumer that does not touch a DOM array sees identical events
+        json j = json::array();
+        for (int i = 0; i < 100; ++i)
+        {
+            j.push_back(i);
+        }
+        const auto packed = json::to_cbor(j);
+
+        SaxCountdown scp(1000000); // large enough to never trigger an abort
+        CHECK(json::sax_parse(packed, &scp, json::input_format_t::cbor));
+    }
+}
+
 TEST_CASE("CBOR roundtrips" * doctest::skip())
 {
     SECTION("input from flynn")
@@ -2204,60 +2543,34 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
         {
             CAPTURE(filename)
 
+            std::ifstream f_json(filename);
+            const json j1 = json::parse(f_json);
+            const auto packed = utils::read_binary_file(filename + ".cbor");
+
             {
                 INFO_WITH_TEMP(filename + ": std::vector<uint8_t>");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                const json j1 = json::parse(f_json);
-
-                // parse CBOR file
-                const auto packed = utils::read_binary_file(filename + ".cbor");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_cbor(packed));
-
-                // compare parsed JSON values
                 CHECK(j1 == j2);
             }
 
             {
                 INFO_WITH_TEMP(filename + ": std::ifstream");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                const json j1 = json::parse(f_json);
-
-                // parse CBOR file
                 std::ifstream f_cbor(filename + ".cbor", std::ios::binary);
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_cbor(f_cbor));
-
-                // compare parsed JSON values
                 CHECK(j1 == j2);
             }
 
             {
                 INFO_WITH_TEMP(filename + ": uint8_t* and size");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                const json j1 = json::parse(f_json);
-
-                // parse CBOR file
-                const auto packed = utils::read_binary_file(filename + ".cbor");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_cbor({packed.data(), packed.size()}));
-
-                // compare parsed JSON values
                 CHECK(j1 == j2);
             }
 
             {
                 INFO_WITH_TEMP(filename + ": output to output adapters");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                json const j1 = json::parse(f_json);
-
-                // parse CBOR file
-                const auto packed = utils::read_binary_file(filename + ".cbor");
-
                 if (exclude_packed.count(filename) == 0u)
                 {
                     {
@@ -2565,11 +2878,16 @@ TEST_CASE("Tagged values")
     const json j = "s";
     auto v = json::to_cbor(j);
 
-    SECTION("0xC6..0xD4")
+    const json j_bin_payload = json::binary(std::vector<std::uint8_t> {0x01, 0x02, 0x03});
+    auto v_bin_payload = json::to_cbor(j_bin_payload);
+
+    SECTION("0xC0..0xD7")
     {
         for (const auto b : std::vector<std::uint8_t>
     {
-        0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4
+        0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5,
+        0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4,
+        0xD5, 0xD6, 0xD7
     })
         {
             CAPTURE(b);
@@ -2589,6 +2907,12 @@ TEST_CASE("Tagged values")
 
             auto j_tagged_stored = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::store);
             CHECK(j_tagged_stored == j);
+
+            auto v_binary_tagged = v_bin_payload;
+            v_binary_tagged.insert(v_binary_tagged.begin(), b);
+            auto j_binary_tagged_stored = json::from_cbor(v_binary_tagged, true, true, json::cbor_tag_handler_t::store);
+            CHECK(j_binary_tagged_stored == j_bin_payload);
+            CHECK(!j_binary_tagged_stored.get_binary().has_subtype());
         }
     }
 
@@ -2743,6 +3067,77 @@ TEST_CASE("Tagged values")
             CHECK_THROWS_AS(_ = json::from_cbor(v_tagged), json::parse_error);
             CHECK_THROWS_AS(_ = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::error), json::parse_error);
             CHECK_THROWS_AS(_ = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::ignore), json::parse_error);
+        }
+
+        SECTION("issue #5316 - cbor_tag_handler_t::store on non-binary tagged items")
+        {
+            // 55799({"a": 1}) -- CBOR self-describe magic followed by a map
+            const std::vector<std::uint8_t> v_map{0xD9, 0xD9, 0xF7, 0xA1, 0x61, 0x61, 0x01};
+            CHECK(json::from_cbor(v_map, true, true, json::cbor_tag_handler_t::ignore) == json({{"a", 1}}));
+            CHECK(json::from_cbor(v_map, true, true, json::cbor_tag_handler_t::store) == json({{"a", 1}}));
+
+            // Tag 24 over unsigned integer 5
+            const std::vector<std::uint8_t> v_int{0xD8, 0x18, 0x05};
+            CHECK(json::from_cbor(v_int, true, true, json::cbor_tag_handler_t::ignore) == 5);
+            CHECK(json::from_cbor(v_int, true, true, json::cbor_tag_handler_t::store) == 5);
+
+            // Tag 24 over text string "foo"
+            const std::vector<std::uint8_t> v_str{0xD8, 0x18, 0x63, 'f', 'o', 'o'};
+            CHECK(json::from_cbor(v_str, true, true, json::cbor_tag_handler_t::ignore) == "foo");
+            CHECK(json::from_cbor(v_str, true, true, json::cbor_tag_handler_t::store) == "foo");
+
+            // Tag 24 over array [1, 2]
+            const std::vector<std::uint8_t> v_arr{0xD8, 0x18, 0x82, 0x01, 0x02};
+            CHECK(json::from_cbor(v_arr, true, true, json::cbor_tag_handler_t::ignore) == json({1, 2}));
+            CHECK(json::from_cbor(v_arr, true, true, json::cbor_tag_handler_t::store) == json({1, 2}));
+
+            // Tag 24 over boolean true
+            const std::vector<std::uint8_t> v_bool{0xD8, 0x18, 0xF5};
+            CHECK(json::from_cbor(v_bool, true, true, json::cbor_tag_handler_t::ignore) == true);
+            CHECK(json::from_cbor(v_bool, true, true, json::cbor_tag_handler_t::store) == true);
+
+            // Tag 24 over null
+            const std::vector<std::uint8_t> v_null{0xD8, 0x18, 0xF6};
+            CHECK(json::from_cbor(v_null, true, true, json::cbor_tag_handler_t::ignore) == nullptr);
+            CHECK(json::from_cbor(v_null, true, true, json::cbor_tag_handler_t::store) == nullptr);
+
+            // Nested tags: tag 55799 over tag 24 over integer 42
+            const std::vector<std::uint8_t> v_nested{0xD9, 0xD9, 0xF7, 0xD8, 0x18, 0x18, 0x2A};
+            CHECK(json::from_cbor(v_nested, true, true, json::cbor_tag_handler_t::ignore) == 42);
+            CHECK(json::from_cbor(v_nested, true, true, json::cbor_tag_handler_t::store) == 42);
+
+            // Tag 24 over byte string continues to store subtype as before
+            const std::vector<std::uint8_t> v_bin{0xD8, 0x18, 0x42, 0xCA, 0xFE};
+            auto j_bin_store = json::from_cbor(v_bin, true, true, json::cbor_tag_handler_t::store);
+            CHECK(j_bin_store.is_binary());
+            CHECK(j_bin_store.get_binary().has_subtype());
+            CHECK(j_bin_store.get_binary().subtype() == 24);
+            CHECK(j_bin_store.get_binary() == json::binary({0xCA, 0xFE}, 24).get_binary());
+
+            // Tagged values inside a container under store: [24(1), 25(h'0001')]
+            const std::vector<std::uint8_t> v_container{0x82, 0xD8, 0x18, 0x01, 0xD8, 0x19, 0x42, 0x00, 0x01};
+            auto j_container_store = json::from_cbor(v_container, true, true, json::cbor_tag_handler_t::store);
+            CHECK(j_container_store.is_array());
+            CHECK(j_container_store.size() == 2);
+            CHECK(j_container_store[0] == 1);
+            CHECK(j_container_store[1].is_binary());
+            CHECK(j_container_store[1].get_binary().has_subtype());
+            CHECK(j_container_store[1].get_binary().subtype() == 25);
+            CHECK(j_container_store[1].get_binary() == json::binary({0x00, 0x01}, 25).get_binary());
+
+            // Tagged values as object values under store: {"a": 55799(1), "b": 24(h'01')}
+            const std::vector<std::uint8_t> v_object{0xA2, 0x61, 'a', 0xD9, 0xD9, 0xF7, 0x01, 0x61, 'b', 0xD8, 0x18, 0x41, 0x01};
+            CHECK(json::from_cbor(v_object, true, true, json::cbor_tag_handler_t::store) == json({{"a", 1}, {"b", json::binary({0x01}, 24)}}));
+
+            // two tags in a row before a byte string: the inner tag is stored
+            // (this uses item_read and then the byte-string path)
+            const std::vector<std::uint8_t> v_nested_byte_string{0xD8, 0x18, 0xD8, 0x19, 0x42, 0x00, 0x01};
+            CHECK(json::from_cbor(v_nested_byte_string, true, true, json::cbor_tag_handler_t::store) == json::binary({0x00, 0x01}, 25));
+
+            // errors after a stored tag are now the same as with ignore
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<std::uint8_t> {0xD8, 0x18}, true, true, json::cbor_tag_handler_t::store), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing CBOR value: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<std::uint8_t> {0xD8, 0x18, 0x1C}, true, true, json::cbor_tag_handler_t::store), "[json.exception.parse_error.112] parse error at byte 3: syntax error while parsing CBOR value: invalid byte: 0x1C", json::parse_error&);
         }
     }
 

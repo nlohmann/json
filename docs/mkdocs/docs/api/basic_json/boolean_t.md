@@ -11,6 +11,14 @@ literals `#!json true` and `#!json false`.
 
 To store boolean values in C++, a type is defined by the template parameter  `BooleanType` which chooses the type to use.
 
+## Template parameters
+
+`BooleanType`
+:   the type to store booleans. As it is stored directly inside a `basic_json` value (in a union), it must be a
+    trivially default-constructible, trivially copyable, and trivially destructible type that is convertible to and
+    from `#!cpp bool`. See
+    [Template Parameter Requirements](../../features/types/template_parameters.md#booleantype).
+
 ## Notes
 
 #### Default type

@@ -17,6 +17,7 @@ using nlohmann::json;
 #include <sstream>
 #include <iomanip>
 #include "make_test_data_available.hpp"
+#include "test_utils.hpp"
 
 TEST_CASE("Unicode (1/5)" * doctest::skip())
 {
@@ -240,7 +241,8 @@ void roundtrip(bool success_expected, const std::string& s)
     if (success_expected)
     {
         // serialization succeeds
-        CHECK_NOTHROW(j.dump());
+        // dump() is nodiscard; this only checks that dumping does not throw
+        CHECK_NOTHROW(utils::ignore_return_value(j.dump()));
 
         // exclude parse test for U+0000
         if (s[0] != '\0')
@@ -259,7 +261,8 @@ void roundtrip(bool success_expected, const std::string& s)
     else
     {
         // serialization fails
-        CHECK_THROWS_AS(j.dump(), json::type_error&);
+        // dump() is nodiscard; the exception is thrown by dump() itself before it would return
+        CHECK_THROWS_AS(utils::ignore_return_value(j.dump()), json::type_error&);
 
         // parsing JSON text fails
         CHECK_THROWS_AS(_ = json::parse(ps), json::parse_error&);
