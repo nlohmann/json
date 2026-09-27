@@ -1244,6 +1244,44 @@ TEST_CASE("BSON nesting does not consume the call stack")
     }
 }
 
+TEST_CASE("BSON input that cannot be read is discarded by every overload")
+{
+    std::vector<std::uint8_t> input = json::to_bson(json({{"a", {1, 2}}}));
+    input.pop_back();
+
+    json _;
+    CHECK_THROWS_AS(_ = json::from_bson(input.begin(), input.end()), json::parse_error&);
+    CHECK(json::from_bson(input, true, false).is_discarded());
+    CHECK(json::from_bson(input.begin(), input.end(), true, false).is_discarded());
+    CHECK(json::from_bson(input.data(), input.size(), true, false).is_discarded());
+    CHECK(json::from_bson({input.data(), input.size()}, true, false).is_discarded());
+}
+
+TEST_CASE("BSON SAX parsing stops at every event")
+{
+    // Containers are opened and closed by the loop that reads them; a SAX
+    // handler that rejects any event - including the end of a nested
+    // container - must stop the parse right there.
+    const auto count_events = [](const std::vector<std::uint8_t>& input)
+    {
+        int events = 0;
+        while (true)
+        {
+            SaxCountdown scp(events);
+            if (json::sax_parse(input, &scp, json::input_format_t::bson))
+            {
+                return events;
+            }
+            ++events;
+            REQUIRE(events < 1000);
+        }
+    };
+
+    // 20 events: every container kind closes inside another one
+    const json j = json::parse(R"({"a": [1, {"b": []}], "c": {"d": [[2]]}})");
+    CHECK(count_events(json::to_bson(j)) == 20);
+}
+
 TEST_CASE("BSON numerical data")
 {
     SECTION("number")

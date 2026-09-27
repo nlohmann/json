@@ -1517,6 +1517,16 @@ TEST_CASE_TEMPLATE("element access 2 (throwing tests)", Json, nlohmann::json, nl
                     CHECK(j.value("/not/existing"_json_pointer, Json({{"foo", "bar"}})) == Json({{"foo", "bar"}}));
                     CHECK(j.value("/not/existing"_json_pointer, Json({10, 100})) == Json({10, 100}));
 
+                    // an array index that is out of range, too large to be
+                    // represented, or "-", and a token below a scalar
+                    CHECK(j.value("/array/3"_json_pointer, 2) == 2);
+                    CHECK(j.value("/array/-"_json_pointer, 2) == 2);
+                    CHECK(j.value("/array/99999999999999999999999999"_json_pointer, 2) == 2);
+                    CHECK(j.value("/integer/0"_json_pointer, 2) == 2);
+                    CHECK(j.value("/string/x"_json_pointer, 2) == 2);
+                    CHECK(j.value("/null/x"_json_pointer, 2) == 2);
+                    CHECK(j.value("/array/0"_json_pointer, 2) == 1);
+
                     CHECK(j_const.value("/not/existing"_json_pointer, 2) == 2);
                     CHECK(j_const.value("/not/existing"_json_pointer, 2u) == 2u);
                     CHECK(j_const.value("/not/existing"_json_pointer, false) == false);

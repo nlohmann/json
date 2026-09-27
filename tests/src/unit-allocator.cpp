@@ -37,6 +37,12 @@ struct bad_allocator : std::allocator<T>
 };
 } // namespace
 
+TEST_CASE("get_allocator")
+{
+    const auto alloc = nlohmann::json::get_allocator();
+    CHECK(alloc == std::allocator<nlohmann::json>());
+}
+
 TEST_CASE("bad_alloc")
 {
     SECTION("bad_alloc")

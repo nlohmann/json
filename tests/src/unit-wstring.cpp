@@ -70,6 +70,8 @@ TEST_CASE("wide strings")
             CHECK_THROWS_WITH_AS(_ = json::parse(std::wstring{L'"', static_cast<wchar_t>(0xDC00), L'"'}), error_low_surrogate, json::parse_error&);
             // a high surrogate followed by a non-low-surrogate unit is invalid
             CHECK_THROWS_WITH_AS(_ = json::parse(std::wstring{L'"', static_cast<wchar_t>(0xD800), L'a', L'"'}), error_high_surrogate, json::parse_error&);
+            // ... also when the unit is above the low surrogates
+            CHECK_THROWS_WITH_AS(_ = json::parse(std::wstring{L'"', static_cast<wchar_t>(0xD800), static_cast<wchar_t>(0xE000), L'"'}), error_high_surrogate, json::parse_error&);
             // a lone low surrogate must not swallow the following unit: pairing
             // it with any second unit would produce valid UTF-8, so the error
             // has to report an ill-formed byte at the surrogate's own position
@@ -99,6 +101,8 @@ TEST_CASE("wide strings")
             CHECK_THROWS_WITH_AS(_ = json::parse(std::u16string{u'"', 0xDC00, u'"'}), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '\"<U+0000>'", json::parse_error&);
             // a high surrogate followed by a non-low-surrogate unit is invalid
             CHECK_THROWS_WITH_AS(_ = json::parse(std::u16string{u'"', 0xD800, u'a', u'"'}), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '\"<U+0000>'", json::parse_error&);
+            // ... also when the unit is above the low surrogates
+            CHECK_THROWS_WITH_AS(_ = json::parse(std::u16string{u'"', 0xD800, 0xE000, u'"'}), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '\"<U+0000>'", json::parse_error&);
             // a lone low surrogate must not swallow the following unit: pairing
             // it with any second unit would produce valid UTF-8, so the error
             // has to report an ill-formed byte at the surrogate's own position

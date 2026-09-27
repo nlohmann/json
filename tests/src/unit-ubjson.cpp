@@ -1640,6 +1640,29 @@ TEST_CASE("UBJSON")
                 });
                 CHECK_THROWS_AS(_ = json::sax_parse(v_ubjson, &scp, json::input_format_t::ubjson), json::out_of_range&);
             }
+
+            SECTION("array with a known size, read with a callback")
+            {
+                // a sized array announces its length to start_array()
+                std::vector<uint8_t> const v_ubjson = {'[', '#', 'i', 2, 'i', 1, 'i', 2};
+                json j;
+                nlohmann::detail::json_sax_dom_callback_parser<json, decltype(nlohmann::detail::input_adapter(v_ubjson))> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
+                {
+                    return true;
+                });
+                CHECK(json::sax_parse(v_ubjson, &scp, json::input_format_t::ubjson));
+                CHECK(j == json({1, 2}));
+
+                // the readers reject a size this large before they announce
+                // it, so it can only reach start_array() directly (the largest
+                // value stands for an unknown size and is never checked)
+                json k;
+                nlohmann::detail::json_sax_dom_callback_parser<json, decltype(nlohmann::detail::input_adapter(v_ubjson))> scp2(k, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
+                {
+                    return true;
+                });
+                CHECK_THROWS_AS(scp2.start_array((std::numeric_limits<std::size_t>::max)() - 1), json::out_of_range&);
+            }
         }
     }
 
@@ -2253,6 +2276,46 @@ TEST_CASE("UBJSON nesting does not consume the call stack")
         CHECK(json::from_bjdata(std::vector<uint8_t>({'[', '$', 'i', '#', 'i', 2, 1, 2})) == json({1, 2}));
         CHECK(json::from_bjdata(std::vector<uint8_t>({'[', '[', 'i', 1, ']', ']'})) == json({{1}}));
     }
+}
+
+TEST_CASE("UBJSON input that cannot be read is discarded by every overload")
+{
+    std::vector<std::uint8_t> input = json::to_ubjson(json({{"a", {1, 2}}}));
+    input.pop_back();
+
+    json _;
+    CHECK_THROWS_AS(_ = json::from_ubjson(input.begin(), input.end()), json::parse_error&);
+    CHECK(json::from_ubjson(input, true, false).is_discarded());
+    CHECK(json::from_ubjson(input.begin(), input.end(), true, false).is_discarded());
+    CHECK(json::from_ubjson(input.data(), input.size(), true, false).is_discarded());
+    CHECK(json::from_ubjson({input.data(), input.size()}, true, false).is_discarded());
+}
+
+TEST_CASE("UBJSON SAX parsing stops at every event")
+{
+    // Containers are opened and closed by the loop that reads them; a SAX
+    // handler that rejects any event - including the end of a nested
+    // container - must stop the parse right there.
+    const auto count_events = [](const std::vector<std::uint8_t>& input)
+    {
+        int events = 0;
+        while (true)
+        {
+            SaxCountdown scp(events);
+            if (json::sax_parse(input, &scp, json::input_format_t::ubjson))
+            {
+                return events;
+            }
+            ++events;
+            REQUIRE(events < 1000);
+        }
+    };
+
+    // 20 events: every container kind closes inside another one
+    const json j = json::parse(R"({"a": [1, {"b": []}], "c": {"d": [[2]]}})");
+    CHECK(count_events(json::to_ubjson(j)) == 20);
+    CHECK(count_events(json::to_ubjson(j, true)) == 20);
+    CHECK(count_events(json::to_ubjson(j, true, true)) == 20);
 }
 
 TEST_CASE("UBJSON optimized arrays of a valueless type are bounded")
