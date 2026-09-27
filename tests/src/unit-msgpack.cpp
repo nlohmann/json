@@ -2208,8 +2208,11 @@ TEST_CASE("MessagePack Size above uint32 for array")
     auto& array = j.get_ref<huge_array_json::array_t&>();
     array.fake_size = true;
 
+    // write into a caller-owned vector: to_msgpack(j) reserves space based on
+    // the (faked) element count, which fails with bad_alloc on Windows
+    std::vector<std::uint8_t> result;
     CHECK_THROWS_WITH_AS(
-        huge_array_json::to_msgpack(j),
+        huge_array_json::to_msgpack(j, result),
         "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295",
         json::out_of_range&);
 
@@ -2261,8 +2264,11 @@ TEST_CASE("MessagePack Size above uint32 for object")
     auto& object = j.get_ref<huge_object_json::object_t&>();
     object.fake_size = true;
 
+    // write into a caller-owned vector: to_msgpack(j) reserves space based on
+    // the (faked) element count, which fails with bad_alloc on Windows
+    std::vector<std::uint8_t> result;
     CHECK_THROWS_WITH_AS(
-        huge_object_json::to_msgpack(j),
+        huge_object_json::to_msgpack(j, result),
         "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295",
         json::out_of_range&);
 
