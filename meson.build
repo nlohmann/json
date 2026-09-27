@@ -12,18 +12,47 @@ else
     incdir = 'single_include'
 endif
 
-cpp_args = [
-    '-DJSON_USE_GLOBAL_UDLS=@0@'.format(
-        (not get_option('GlobalUDLs')).to_int()),
-    '-DJSON_USE_IMPLICIT_CONVERSIONS=@0@'.format(
-        (not get_option('ImplicitConversions')).to_int()),
-]
+# The same compile definitions as the CMake target (see target_compile_definitions
+# in CMakeLists.txt): only an option that differs from its default adds one.
+json_defines = []
+if not get_option('GlobalUDLs')
+    json_defines += 'JSON_USE_GLOBAL_UDLS=0'
+endif
+if not get_option('ImplicitConversions')
+    json_defines += 'JSON_USE_IMPLICIT_CONVERSIONS=0'
+endif
+if get_option('DisableEnumSerialization')
+    json_defines += 'JSON_DISABLE_ENUM_SERIALIZATION=1'
+endif
+if get_option('Diagnostics')
+    json_defines += 'JSON_DIAGNOSTICS=1'
+endif
+if get_option('Diagnostic_Positions')
+    json_defines += 'JSON_DIAGNOSTIC_POSITIONS=1'
+endif
+if get_option('LegacyDiscardedValueComparison')
+    json_defines += 'JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1'
+endif
+if get_option('StrictNulHandling')
+    json_defines += 'JSON_STRICT_NUL_HANDLING=1'
+endif
+
+cpp_args = []
+foreach define : json_defines
+    cpp_args += '-D' + define
+endforeach
 
 nlohmann_json_dep = declare_dependency(
     compile_args: cpp_args,
     include_directories: include_directories(incdir)
 )
 meson.override_dependency('nlohmann_json', nlohmann_json_dep)
+
+# The multi-header version under the name earlier versions of this file used
+nlohmann_json_multiple_headers = declare_dependency(
+    compile_args: cpp_args,
+    include_directories: include_directories('include')
+)
 
 if not meson.is_subproject()
     install_subdir(
@@ -35,7 +64,9 @@ if not meson.is_subproject()
     pkgc = import('pkgconfig')
     pkgc.generate(name: 'nlohmann_json',
         version: meson.project_version(),
-        description: 'JSON for Modern C++'
+        description: 'JSON for Modern C++',
+        extra_cflags: cpp_args,
+        install_dir: get_option('datadir') / 'pkgconfig',
     )
 
     # CMake package config files, so that find_package(nlohmann_json) works
@@ -53,6 +84,7 @@ if not meson.is_subproject()
     cmake_conf.set('NLOHMANN_JSON_TARGETS_EXPORT_NAME', meson.project_name() + 'Targets')
     cmake_conf.set('NLOHMANN_JSON_INCLUDE_INSTALL_DIR', get_option('includedir'))
     cmake_conf.set('NLOHMANN_JSON_CONFIG_TO_PREFIX', '/'.join(cmake_to_prefix))
+    cmake_conf.set('NLOHMANN_JSON_COMPILE_DEFINITIONS', ';'.join(json_defines))
 
     foreach cmake_file : [
         ['cmake/config.cmake.in', 'nlohmann_jsonConfig.cmake'],

@@ -2,8 +2,9 @@
 #
 # CMake installations generate this file with install(EXPORT ...). Meson cannot
 # do that, but as the library is header-only, the target only needs an include
-# directory and the C++ standard. Paths are computed relative to this file so
-# that the installation can be relocated (e.g., into a sysroot).
+# directory, the C++ standard, and the compile definitions of the options that
+# differ from their defaults. Paths are computed relative to this file so that
+# the installation can be relocated (e.g., into a sysroot).
 
 if(TARGET @PROJECT_NAME@::@NLOHMANN_JSON_TARGET_NAME@)
     return()
@@ -25,4 +26,12 @@ else()
     )
 endif()
 
+set(_NLOHMANN_JSON_COMPILE_DEFINITIONS "@NLOHMANN_JSON_COMPILE_DEFINITIONS@")
+if(_NLOHMANN_JSON_COMPILE_DEFINITIONS)
+    set_target_properties(@PROJECT_NAME@::@NLOHMANN_JSON_TARGET_NAME@ PROPERTIES
+        INTERFACE_COMPILE_DEFINITIONS "${_NLOHMANN_JSON_COMPILE_DEFINITIONS}"
+    )
+endif()
+
+unset(_NLOHMANN_JSON_COMPILE_DEFINITIONS)
 unset(_IMPORT_PREFIX)
