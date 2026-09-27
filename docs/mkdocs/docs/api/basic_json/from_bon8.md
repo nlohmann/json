@@ -1,24 +1,24 @@
-# <small>nlohmann::basic_json::</small>from_bjdata
+# <small>nlohmann::basic_json::</small>from_bon8
 
 ```cpp
 // (1)
 template<typename InputType>
-static basic_json from_bjdata(InputType&& i,
-                              const bool strict = true,
-                              const bool allow_exceptions = true);
+static basic_json from_bon8(InputType&& i,
+                            const bool strict = true,
+                            const bool allow_exceptions = true);
 // (2)
 template<typename IteratorType, typename SentinelType = IteratorType>
-static basic_json from_bjdata(IteratorType first, SentinelType last,
-                              const bool strict = true,
-                              const bool allow_exceptions = true);
+static basic_json from_bon8(IteratorType first, SentinelType last,
+                            const bool strict = true,
+                            const bool allow_exceptions = true);
 ```
 
-Deserializes a given input to a JSON value using the BJData (Binary JData) serialization format.
+Deserializes a given input to a JSON value using the BON8 (Binary Object Notation 8) serialization format.
 
 1. Reads from a compatible input.
 2. Reads from an iterator range, or an iterator and a sentinel of a different type (C++20 ranges support).
 
-The exact mapping and its limitations are described on a [dedicated page](../../features/binary_formats/bjdata.md).
+The exact mapping and its limitations are described on a [dedicated page](../../features/binary_formats/bon8.md).
 
 ## Template parameters
 
@@ -44,7 +44,7 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 ## Parameters
 
 `i` (in)
-:   an input in BJData format convertible to an input adapter
+:   an input in BON8 format convertible to an input adapter
 
 `first` (in)
 :   iterator to the start of the input
@@ -71,11 +71,8 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 - Throws [parse_error.110](../../home/exceptions.md#jsonexceptionparse_error110) if the given input ends prematurely or
   the end of the file was not reached when `strict` was set to true
-- Throws [parse_error.112](../../home/exceptions.md#jsonexceptionparse_error112) if a parse error occurs
-- Throws [parse_error.113](../../home/exceptions.md#jsonexceptionparse_error113) if a string could not be parsed
-  successfully
-- Throws [out_of_range.408](../../home/exceptions.md#jsonexceptionout_of_range408) if the size of an optimized container
-  or n-dimensional array cannot be represented by `std::size_t`
+- Throws [parse_error.112](../../home/exceptions.md#jsonexceptionparse_error112) if a parse error occurs, for instance
+  an invalid byte, a string that is not valid UTF-8, or an object key that is not a string
 
 ## Complexity
 
@@ -85,29 +82,27 @@ Linear in the size of the input.
 
 ??? example
 
-    The example shows the deserialization of a byte vector in BJData format to a JSON value.
+    The example shows the deserialization of a byte vector in BON8 format to a JSON value.
      
     ```cpp
-    --8<-- "examples/from_bjdata.cpp"
+    --8<-- "examples/from_bon8.cpp"
     ```
     
     Output:
     
     ```json
-    --8<-- "examples/from_bjdata.output"
+    --8<-- "examples/from_bon8.output"
     ```
 
 ## See also
 
-- [to_bjdata](to_bjdata.md) create a BJData serialization of a JSON value
+- [to_bon8](to_bon8.md) create a BON8 serialization of a JSON value
 - [from_cbor](from_cbor.md) create a JSON value from an input in CBOR format
 - [from_msgpack](from_msgpack.md) create a JSON value from an input in MessagePack format
 - [from_bson](from_bson.md) create a JSON value from an input in BSON format
 - [from_ubjson](from_ubjson.md) create a JSON value from an input in UBJSON format
-- [from_bon8](from_bon8.md) create a JSON value from an input in BON8 format
+- [from_bjdata](from_bjdata.md) create a JSON value from an input in BJData format
 
 ## Version history
 
-- Added in version 3.11.0.
-- Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
-- Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
+- Added in version 3.13.0.

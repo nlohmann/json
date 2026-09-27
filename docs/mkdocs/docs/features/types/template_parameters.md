@@ -547,7 +547,7 @@ Grisu2 algorithm, which produces the shortest representation that round-trips. O
 ### Required for the binary formats
 
 `NumberFloatType` must be `#!cpp float` or `#!cpp double`. The writers for
-[CBOR, MessagePack, UBJSON, BJData, and BSON](../binary_formats/index.md) map a floating-point value onto an IEEE 754
+[CBOR, MessagePack, UBJSON, BJData, BON8, and BSON](../binary_formats/index.md) map a floating-point value onto an IEEE 754
 binary32 or binary64 field and have no encoding for `#!cpp long double`.
 
 ### Compatible types

@@ -185,6 +185,7 @@ TEST_CASE("alternative string type")
 
         CHECK(alt_json::from_cbor(alt_json::to_cbor(doc)) == doc);
         CHECK(alt_json::from_msgpack(alt_json::to_msgpack(doc)) == doc);
+        CHECK(alt_json::from_bon8(alt_json::to_bon8(doc)) == doc);
         // BSON is not covered: it additionally needs string_t::find(value_type),
         // which alt_string does not provide
         CHECK(alt_json::from_ubjson(alt_json::to_ubjson(doc)) == doc);
