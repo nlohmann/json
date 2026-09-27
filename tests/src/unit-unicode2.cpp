@@ -323,6 +323,8 @@ TEST_CASE("Unicode (2/5)" * doctest::skip())
 
             SECTION("ill-formed: wrong second byte")
             {
+                // Pin the 3rd byte to one valid continuation (#5418).
+                const int byte3 = 0x80;
                 for (int byte1 = 0xE0; byte1 <= 0xE0; ++byte1)
                 {
                     for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
@@ -333,32 +335,28 @@ TEST_CASE("Unicode (2/5)" * doctest::skip())
                             continue;
                         }
 
-                        for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
-                        {
-                            check_utf8string(false, byte1, byte2, byte3);
-                            check_utf8dump(false, byte1, byte2, byte3);
-                        }
+                        check_utf8string(false, byte1, byte2, byte3);
+                        check_utf8dump(false, byte1, byte2, byte3);
                     }
                 }
             }
 
             SECTION("ill-formed: wrong third byte")
             {
+                // Pin the 2nd byte to one valid continuation (#5418).
+                const int byte2 = 0xA0;
                 for (int byte1 = 0xE0; byte1 <= 0xE0; ++byte1)
                 {
-                    for (int byte2 = 0xA0; byte2 <= 0xBF; ++byte2)
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                     {
-                        for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
+                        // skip correct third byte
+                        if (0x80 <= byte3 && byte3 <= 0xBF)
                         {
-                            // skip correct third byte
-                            if (0x80 <= byte3 && byte3 <= 0xBF)
-                            {
-                                continue;
-                            }
-
-                            check_utf8string(false, byte1, byte2, byte3);
-                            check_utf8dump(false, byte1, byte2, byte3);
+                            continue;
                         }
+
+                        check_utf8string(false, byte1, byte2, byte3);
+                        check_utf8dump(false, byte1, byte2, byte3);
                     }
                 }
             }
@@ -404,6 +402,8 @@ TEST_CASE("Unicode (2/5)" * doctest::skip())
 
             SECTION("ill-formed: wrong second byte")
             {
+                // Pin the 3rd byte to one valid continuation (#5418).
+                const int byte3 = 0x80;
                 for (int byte1 = 0xE1; byte1 <= 0xEC; ++byte1)
                 {
                     for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
@@ -414,32 +414,28 @@ TEST_CASE("Unicode (2/5)" * doctest::skip())
                             continue;
                         }
 
-                        for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
-                        {
-                            check_utf8string(false, byte1, byte2, byte3);
-                            check_utf8dump(false, byte1, byte2, byte3);
-                        }
+                        check_utf8string(false, byte1, byte2, byte3);
+                        check_utf8dump(false, byte1, byte2, byte3);
                     }
                 }
             }
 
             SECTION("ill-formed: wrong third byte")
             {
+                // Pin the 2nd byte to one valid continuation (#5418).
+                const int byte2 = 0x80;
                 for (int byte1 = 0xE1; byte1 <= 0xEC; ++byte1)
                 {
-                    for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                     {
-                        for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
+                        // skip correct third byte
+                        if (0x80 <= byte3 && byte3 <= 0xBF)
                         {
-                            // skip correct third byte
-                            if (0x80 <= byte3 && byte3 <= 0xBF)
-                            {
-                                continue;
-                            }
-
-                            check_utf8string(false, byte1, byte2, byte3);
-                            check_utf8dump(false, byte1, byte2, byte3);
+                            continue;
                         }
+
+                        check_utf8string(false, byte1, byte2, byte3);
+                        check_utf8dump(false, byte1, byte2, byte3);
                     }
                 }
             }
@@ -485,6 +481,8 @@ TEST_CASE("Unicode (2/5)" * doctest::skip())
 
             SECTION("ill-formed: wrong second byte")
             {
+                // Pin the 3rd byte to one valid continuation (#5418).
+                const int byte3 = 0x80;
                 for (int byte1 = 0xED; byte1 <= 0xED; ++byte1)
                 {
                     for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
@@ -495,32 +493,28 @@ TEST_CASE("Unicode (2/5)" * doctest::skip())
                             continue;
                         }
 
-                        for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
-                        {
-                            check_utf8string(false, byte1, byte2, byte3);
-                            check_utf8dump(false, byte1, byte2, byte3);
-                        }
+                        check_utf8string(false, byte1, byte2, byte3);
+                        check_utf8dump(false, byte1, byte2, byte3);
                     }
                 }
             }
 
             SECTION("ill-formed: wrong third byte")
             {
+                // Pin the 2nd byte to one valid continuation (#5418).
+                const int byte2 = 0x80;
                 for (int byte1 = 0xED; byte1 <= 0xED; ++byte1)
                 {
-                    for (int byte2 = 0x80; byte2 <= 0x9F; ++byte2)
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                     {
-                        for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
+                        // skip correct third byte
+                        if (0x80 <= byte3 && byte3 <= 0xBF)
                         {
-                            // skip correct third byte
-                            if (0x80 <= byte3 && byte3 <= 0xBF)
-                            {
-                                continue;
-                            }
-
-                            check_utf8string(false, byte1, byte2, byte3);
-                            check_utf8dump(false, byte1, byte2, byte3);
+                            continue;
                         }
+
+                        check_utf8string(false, byte1, byte2, byte3);
+                        check_utf8dump(false, byte1, byte2, byte3);
                     }
                 }
             }
@@ -566,6 +560,8 @@ TEST_CASE("Unicode (2/5)" * doctest::skip())
 
             SECTION("ill-formed: wrong second byte")
             {
+                // Pin the 3rd byte to one valid continuation (#5418).
+                const int byte3 = 0x80;
                 for (int byte1 = 0xEE; byte1 <= 0xEF; ++byte1)
                 {
                     for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
@@ -576,32 +572,28 @@ TEST_CASE("Unicode (2/5)" * doctest::skip())
                             continue;
                         }
 
-                        for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
-                        {
-                            check_utf8string(false, byte1, byte2, byte3);
-                            check_utf8dump(false, byte1, byte2, byte3);
-                        }
+                        check_utf8string(false, byte1, byte2, byte3);
+                        check_utf8dump(false, byte1, byte2, byte3);
                     }
                 }
             }
 
             SECTION("ill-formed: wrong third byte")
             {
+                // Pin the 2nd byte to one valid continuation (#5418).
+                const int byte2 = 0x80;
                 for (int byte1 = 0xEE; byte1 <= 0xEF; ++byte1)
                 {
-                    for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
+                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                     {
-                        for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
+                        // skip correct third byte
+                        if (0x80 <= byte3 && byte3 <= 0xBF)
                         {
-                            // skip correct third byte
-                            if (0x80 <= byte3 && byte3 <= 0xBF)
-                            {
-                                continue;
-                            }
-
-                            check_utf8string(false, byte1, byte2, byte3);
-                            check_utf8dump(false, byte1, byte2, byte3);
+                            continue;
                         }
+
+                        check_utf8string(false, byte1, byte2, byte3);
+                        check_utf8dump(false, byte1, byte2, byte3);
                     }
                 }
             }

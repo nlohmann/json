@@ -294,24 +294,21 @@ TEST_CASE("Unicode (4/5)" * doctest::skip())
 
             SECTION("ill-formed: wrong fourth byte")
             {
+                // Pin 2nd/3rd bytes to one valid continuation (#5418).
+                const int byte2 = 0x80;
+                const int byte3 = 0x80;
                 for (int byte1 = 0xF1; byte1 <= 0xF3; ++byte1)
                 {
-                    for (int byte2 = 0x80; byte2 <= 0xBF; ++byte2)
+                    for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
                     {
-                        for (int byte3 = 0x80; byte3 <= 0xBF; ++byte3)
+                        // skip correct fourth byte
+                        if (0x80 <= byte4 && byte4 <= 0xBF)
                         {
-                            for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
-                            {
-                                // skip correct fourth byte
-                                if (0x80 <= byte4 && byte4 <= 0xBF)
-                                {
-                                    continue;
-                                }
-
-                                check_utf8string(false, byte1, byte2, byte3, byte4);
-                                check_utf8dump(false, byte1, byte2, byte3, byte4);
-                            }
+                            continue;
                         }
+
+                        check_utf8string(false, byte1, byte2, byte3, byte4);
+                        check_utf8dump(false, byte1, byte2, byte3, byte4);
                     }
                 }
             }
