@@ -12,6 +12,11 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <valarray>
+#if JSON_HAS_RANGES
+    #include <ranges>
+#endif
+
 namespace
 {
 // special test case to check if memory is leaked if constructor throws
@@ -503,6 +508,54 @@ TEST_CASE("a failed allocation leaves the value unchanged")
         next_construct_fails = true;
         CHECK_THROWS_AS(nlohmann::to_json(j, my_json::binary_t({1, 2})), std::bad_alloc&);
         CHECK(j == "old");
+
+        // the overloads for lvalues of the value types, for the value types
+        // themselves, and for the remaining compatible types
+        const std::string string = "new";
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, string), std::bad_alloc&);
+        CHECK(j == "old");
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, "new"), std::bad_alloc&);
+        CHECK(j == "old");
+
+        // to_json only moves a binary value that it converted from another
+        // container type, which my_json's std::vector<std::uint8_t> is not
+        using binary_constructor = nlohmann::detail::external_constructor<nlohmann::detail::value_t::binary>;
+        next_construct_fails = true;
+        CHECK_THROWS_AS(binary_constructor::construct(j, my_json::binary_t({1, 2})), std::bad_alloc&);
+        CHECK(j == "old");
+
+        my_json::array_t array = {1, 2};
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, array), std::bad_alloc&);
+        CHECK(j == "old");
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, std::move(array)), std::bad_alloc&);
+        CHECK(j == "old");
+
+        my_json::object_t object = {{"a", 1}};
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, object), std::bad_alloc&);
+        CHECK(j == "old");
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, std::move(object)), std::bad_alloc&);
+        CHECK(j == "old");
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, std::valarray<int> {1, 2}), std::bad_alloc&);
+        CHECK(j == "old");
+
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+        const std::vector<int> numbers = {1, 2};
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, numbers | std::views::filter([](int /*unused*/)
+        {
+            return true;
+        })), std::bad_alloc&);
+        CHECK(j == "old");
+#endif
 
         next_construct_fails = false;
         nlohmann::to_json(j, std::vector<int> {1, 2});
