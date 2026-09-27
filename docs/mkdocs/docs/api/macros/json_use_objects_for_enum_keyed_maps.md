@@ -35,6 +35,11 @@ The default value is `0` (disabled — existing behavior is preserved).
     {"completed": "bb", "stopped": "aa"}
     ```
 
+!!! note "Maps with non-unique keys"
+
+    Maps that allow duplicate keys, such as `std::multimap<E, T>` or `std::unordered_multimap<E, T>`, are not affected
+    by the macro and are still stored as arrays of `[key, value]` pairs, as an object cannot hold duplicate keys.
+
 !!! note "Reading"
 
     Reading is not affected by the macro: a map with enum keys can always be read from both an array of pairs and an

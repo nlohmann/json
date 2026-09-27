@@ -198,6 +198,14 @@ TEST_CASE("JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS")
         CHECK(json(int_keys) == json::parse("[[1,2]]"));
     }
 
+    SECTION("maps with non-unique keys are still stored as arrays of pairs")
+    {
+        const std::multimap<TaskState, int> mm = {{TS_STOPPED, 1}, {TS_STOPPED, 2}};
+        const std::unordered_multimap<TaskState, int, enum_hash> umm = {{TS_RUNNING, 3}, {TS_RUNNING, 3}};
+        CHECK(json(mm) == json::parse(R"([["stopped",1],["stopped",2]])"));
+        CHECK(json(umm) == json::parse(R"([["running",3],["running",3]])"));
+    }
+
     SECTION("keys that do not serialize to strings")
     {
         const std::map<TaskState, int> null_key = {{TS_INVALID, 1}};
