@@ -121,10 +121,15 @@ meson wrap install nlohmann_json
 Please see the Meson project for any issues regarding the packaging.
 
 The provided `meson.build` can also be used as an alternative to CMake for installing `nlohmann_json` system-wide in
-which case a pkg-config file is installed. To use it, have your build system require the `nlohmann_json`
-pkg-config dependency. In Meson, it is preferred to use the
-[`dependency()`](https://mesonbuild.com/Reference-manual.html#dependency) object with a subproject fallback, rather than
-using the subproject directly.
+which case a pkg-config file and the CMake package config files are installed. To use it, have your build system require
+the `nlohmann_json` pkg-config dependency, or use [`find_package(nlohmann_json)`](cmake.md#external) in CMake. In Meson,
+it is preferred to use the [`dependency()`](https://mesonbuild.com/Reference-manual.html#dependency) object with a
+subproject fallback, rather than using the subproject directly.
+
+!!! note
+
+    The `meson.build` does not expose the library's [CMake options](cmake.md#cmake-options), so a Meson installation
+    always uses the library's default configuration.
 
 ??? example "Example: Wrap"
 

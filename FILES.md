@@ -262,7 +262,9 @@ The "Check amalgamation" workflow fails if the file is out of date.
 
 ### `meson.build`
 
-The build definition for the [Meson](https://mesonbuild.com) build system.
+The build definition for the [Meson](https://mesonbuild.com) build system. When installing, it also installs the CMake package config
+files so that `find_package(nlohmann_json)` works. As Meson cannot generate `nlohmann_jsonTargets.cmake` itself, it is
+created from the template `cmake/nlohmann_jsonTargets.cmake.in`, which is only used by Meson.
 
 ### `Package.swift`
 

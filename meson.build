@@ -21,4 +21,34 @@ pkgc.generate(name: 'nlohmann_json',
     version: meson.project_version(),
     description: 'JSON for Modern C++'
 )
+
+# CMake package config files, so that find_package(nlohmann_json) works
+cmake_install_dir = get_option('datadir') / 'cmake' / meson.project_name()
+cmake_to_prefix = []
+foreach component : cmake_install_dir.split('/')
+    cmake_to_prefix += '..'
+endforeach
+
+cmake_conf = configuration_data()
+cmake_conf.set('PROJECT_NAME', meson.project_name())
+cmake_conf.set('PROJECT_VERSION', meson.project_version())
+cmake_conf.set('PROJECT_VERSION_MAJOR', meson.project_version().split('.')[0])
+cmake_conf.set('NLOHMANN_JSON_TARGET_NAME', meson.project_name())
+cmake_conf.set('NLOHMANN_JSON_TARGETS_EXPORT_NAME', meson.project_name() + 'Targets')
+cmake_conf.set('NLOHMANN_JSON_INCLUDE_INSTALL_DIR', get_option('includedir'))
+cmake_conf.set('NLOHMANN_JSON_CONFIG_TO_PREFIX', '/'.join(cmake_to_prefix))
+
+foreach cmake_file : [
+    ['cmake/config.cmake.in', 'nlohmann_jsonConfig.cmake'],
+    ['cmake/nlohmann_jsonConfigVersion.cmake.in', 'nlohmann_jsonConfigVersion.cmake'],
+    ['cmake/nlohmann_jsonTargets.cmake.in', 'nlohmann_jsonTargets.cmake'],
+]
+    configure_file(
+        input: cmake_file[0],
+        output: cmake_file[1],
+        configuration: cmake_conf,
+        format: 'cmake@',
+        install_dir: cmake_install_dir,
+    )
+endforeach
 endif
