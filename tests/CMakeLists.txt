@@ -75,7 +75,15 @@ target_compile_options(test_main PUBLIC
     #                              is annotated JSON_HEDLEY_NO_RETURN (it always throws), which
     #                              makes MSVC flag the code following its call in binary_reader.hpp
     #                              as unreachable for that instantiation, in both Debug and Release
-    $<$<CXX_COMPILER_ID:MSVC>:/W4;/wd4566;/wd4996;/wd4702>
+    #       Disable warning C4503: decorated name length exceeded, name was truncated; the deep
+    #                              copy support added for #5387 pushes the mangled name of
+    #                              std::allocator_traits<...>::construct for the custom-base-class
+    #                              test's map type past VS2015's limit. The name is only used for
+    #                              debug info, so truncation does not affect the build.
+    #       Disable warning C5285: cannot declare a specialization for 'std::tuple'; MSVC 19.51
+    #                              reports the forward declarations of standard library
+    #                              templates in the vendored doctest.h
+    $<$<CXX_COMPILER_ID:MSVC>:/W4;/wd4566;/wd4996;/wd4702;/wd4503;/wd5285>
     # https://github.com/nlohmann/json/issues/1114
     $<$<CXX_COMPILER_ID:MSVC>:/bigobj> $<$<BOOL:${MINGW}>:-Wa,-mbig-obj>
 
@@ -104,7 +112,7 @@ endif()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # avoid stack overflow, see https://github.com/nlohmann/json/issues/2955
-    json_test_set_test_options("test-cbor;test-msgpack;test-ubjson;test-bjdata;test-binary_formats" LINK_OPTIONS /STACK:4000000)
+    json_test_set_test_options("test-bon8;test-cbor;test-msgpack;test-ubjson;test-bjdata;test-binary_formats" LINK_OPTIONS /STACK:4000000)
 endif()
 
 # disable exceptions for test-disabled_exceptions

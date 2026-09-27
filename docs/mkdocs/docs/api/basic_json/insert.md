@@ -88,6 +88,8 @@ Strong exception safety: if an exception occurs, the original value stays intact
       do not belong to the same JSON value; example: `"iterators do not fit"`
     - Throws [`invalid_iterator.211`](../../home/exceptions.md#jsonexceptioninvalid_iterator211) if `first` or `last`
       are iterators into container for which insert is called; example: `"passed iterators may not belong to container"`
+    - Throws [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) if `first` or `last`
+      do not point to an array; example: `"iterators first and last must point to arrays"`
 4. The function can throw the following exceptions:
     - Throws [`type_error.309`](../../home/exceptions.md#jsonexceptiontype_error309) if called on JSON values other than
       arrays; example: `"cannot use insert() with string"`

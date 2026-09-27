@@ -46,7 +46,7 @@
       "name": "operator<",
       "pretty_signature": "nlohmann::operator<",
       "scope": "nlohmann",
-      "signature": "friend bool operator<(const_reference lhs, const_reference rhs) noexcept { JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type)) }",
+      "signature": "friend bool operator<(const_reference lhs, const_reference rhs) noexcept { JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type), compare_iteratively<true>(lhs, rhs, true) == compare_result::less, false) }",
       "tier": "callable"
     },
     {
@@ -848,6 +848,24 @@
       "pretty_signature": "nlohmann::basic_json::from_bjdata",
       "scope": "nlohmann::basic_json",
       "signature": "template<typename IteratorType, typename SentinelType = IteratorType, detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_bjdata(IteratorType first, SentinelType last, const bool strict = true, const bool allow_exceptions = true)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_bon8",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_bon8",
+      "pretty_signature": "nlohmann::basic_json::from_bon8",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename InputType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_bon8(InputType&& i, const bool strict = true, const bool allow_exceptions = true)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "from_bon8",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "from_bon8",
+      "pretty_signature": "nlohmann::basic_json::from_bon8",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename IteratorType, typename SentinelType = IteratorType, detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_bon8(IteratorType first, SentinelType last, const bool strict = true, const bool allow_exceptions = true)",
       "tier": "callable"
     },
     {
@@ -1967,6 +1985,33 @@
       "tier": "callable"
     },
     {
+      "identity_name": "to_bon8",
+      "kind": "CXX_METHOD",
+      "name": "to_bon8",
+      "pretty_signature": "nlohmann::basic_json::to_bon8",
+      "scope": "nlohmann::basic_json",
+      "signature": "static std::vector<std::uint8_t> to_bon8(const basic_json& j)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "to_bon8",
+      "kind": "CXX_METHOD",
+      "name": "to_bon8",
+      "pretty_signature": "nlohmann::basic_json::to_bon8",
+      "scope": "nlohmann::basic_json",
+      "signature": "static void to_bon8(const basic_json& j, detail::output_adapter<char> o)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "to_bon8",
+      "kind": "CXX_METHOD",
+      "name": "to_bon8",
+      "pretty_signature": "nlohmann::basic_json::to_bon8",
+      "scope": "nlohmann::basic_json",
+      "signature": "static void to_bon8(const basic_json& j, detail::output_adapter<std::uint8_t> o)",
+      "tier": "callable"
+    },
+    {
       "identity_name": "to_bson",
       "kind": "CXX_METHOD",
       "name": "to_bson",
@@ -2383,8 +2428,8 @@
     {
       "identity_name": "operator string_t",
       "kind": "CONVERSION_FUNCTION",
-      "name": "operator typename string_t_helper<type-parameter-0-0>::type",
-      "pretty_signature": "nlohmann::json_pointer::operator typename string_t_helper<type-parameter-0-0>::type",
+      "name": "operator nlohmann::json_pointer::string_t_helper<type-parameter-0-0>::type",
+      "pretty_signature": "nlohmann::json_pointer::operator nlohmann::json_pointer::string_t_helper<type-parameter-0-0>::type",
       "scope": "nlohmann::json_pointer",
       "signature": "JSON_HEDLEY_DEPRECATED_FOR(3.11.0, to_string()) operator string_t() const",
       "tier": "callable"

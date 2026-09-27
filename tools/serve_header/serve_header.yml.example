@@ -10,6 +10,13 @@
 #  cert_file: localhost.pem
 #  key_file: localhost-key.pem
 
-# address and port for the server to listen on
-# bind: null
+# address and port for the server to listen on; by default, only this machine
+# can connect. Binding to a network address, or to null for all interfaces,
+# lets other machines connect, and every request runs make in a working tree.
+# bind: localhost
 # port: 8443
+
+# origins whose web pages may read the header (CORS)
+# cors_origins:
+#   - https://godbolt.org
+#   - https://compiler-explorer.com

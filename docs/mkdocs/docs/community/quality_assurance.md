@@ -164,6 +164,9 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
 - [x] The parser is tested against extensive correctness suites for JSON compliance.
 - [x] In addition, the library is continuously fuzz-tested at [OSS-Fuzz](https://google.github.io/oss-fuzz/) where the
   library is checked against billions of inputs.
+- [x] Every crash reported by OSS-Fuzz is fixed together with a unit test that reproduces it, and the fix references
+  the OSS-Fuzz issue. The round-trip checks of the fuzzer drivers are also part of the unit tests. See the
+  [fuzz testing documentation](https://github.com/nlohmann/json/blob/develop/tests/fuzzing.md#handling-oss-fuzz-reports).
 
 ## Static analysis
 
@@ -196,6 +199,25 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
 - [x] The test suite is executed with [Valgrind](https://valgrind.org) (Memcheck) to detect memory leaks.
 - [x] The test suite is executed with [Sanitizers](https://github.com/google/sanitizers) (address sanitizer, undefined
   behavior sanitizer, integer overflow detection, nullability violations).
+
+## Dependencies
+
+!!! success "Requirement: No vulnerable dependencies"
+
+    The library has no dependencies besides the C++ standard library. The tools used to build, test, and document it
+    are kept free of known vulnerabilities.
+
+- [x] GitHub Actions are pinned to a commit hash, and the Python packages used by the documentation and the tools are
+  pinned to exact versions.
+- [x] [Dependabot](https://docs.github.com/en/code-security/dependabot) checks these dependencies daily and proposes
+  updates as pull requests.
+- [x] Every pull request is checked with the
+  [dependency review action](https://github.com/actions/dependency-review-action). A pull request that adds a
+  dependency with a known vulnerability of any severity fails this check and is not merged.
+- [x] Vulnerability alerts for dependencies are fixed or dismissed with a documented reason before the next release.
+  No release is made while such an alert is open.
+- [x] Third-party code included in the repository for testing, such as [doctest](https://github.com/doctest/doctest),
+  is updated manually.
 
 ## Style check
 

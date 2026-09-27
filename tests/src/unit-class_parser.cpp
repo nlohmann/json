@@ -8,6 +8,18 @@
 
 #include "doctest_compatibility.h"
 
+// capture whether JSON_STRICT_NUL_HANDLING was enabled on the command line
+// (e.g. -DJSON_STRICT_NUL_HANDLING=1) *before* including json.hpp, since the
+// library #undefs JSON_STRICT_NUL_HANDLING itself once the header has been
+// fully processed unless JSON_TEST_KEEP_MACROS is defined (see
+// include/nlohmann/detail/macro_unscope.hpp)
+#if defined(JSON_STRICT_NUL_HANDLING) && (JSON_STRICT_NUL_HANDLING == 1)
+    #define JSON_TEST_STRICT_NUL_HANDLING_ENABLED 1
+#endif
+
+#define JSON_TEST_STRINGIZE_EX(x) #x
+#define JSON_TEST_STRINGIZE(x) JSON_TEST_STRINGIZE_EX(x)
+
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -17,6 +29,8 @@ using nlohmann::json;
 
 #include <valarray>
 #include <algorithm>
+#include <cstdio>
+#include <fstream>
 #include <list>
 #include <sstream>
 #include <string>
@@ -541,6 +555,98 @@ TEST_CASE("parser class")
                 CHECK(parser_helper("\"\\ud80c\\udc60\"").get<json::string_t>() == "\xf0\x93\x81\xa0");
                 CHECK(parser_helper("\"\\ud83c\\udf1e\"").get<json::string_t>() == "🌞");
             }
+        }
+
+        SECTION("NUL byte handling (issue #5530, JSON_STRICT_NUL_HANDLING)")
+        {
+            // by default, a NUL byte anywhere in the input (not inside a quoted
+            // string, which is covered above) is silently treated the same as
+            // real end of input; JSON_STRICT_NUL_HANDLING (off by default, see
+            // docs/mkdocs/docs/api/macros/json_strict_nul_handling.md) makes a
+            // NUL byte an error like any other unexpected byte instead.
+            //
+            // The two sections below are mutually exclusive: this whole test
+            // binary is compiled once, with JSON_STRICT_NUL_HANDLING either
+            // left at its default or forced to 1 (e.g. by the dedicated
+            // ci_test_strict_nul_handling CI target), so only the section
+            // matching the actual, compiled-in behavior can pass.
+            SECTION("the macro is part of the ABI tag")
+            {
+                const std::string ns = JSON_TEST_STRINGIZE(NLOHMANN_JSON_NAMESPACE);
+#if defined(JSON_TEST_STRICT_NUL_HANDLING_ENABLED)
+                CHECK(ns.find("_snul") != std::string::npos);
+#else
+                CHECK(ns.find("_snul") == std::string::npos);
+#endif
+            }
+
+#if !defined(JSON_TEST_STRICT_NUL_HANDLING_ENABLED)
+            SECTION("default behavior (macro not enabled)")
+            {
+                // a NUL byte after a complete value silently truncates the input
+                std::string s = "123";
+                s.push_back('\0');
+                s += "4";
+                CHECK(json::parse(s) == json(123));
+                CHECK(json::accept(s));
+
+                // parsing from a string literal is unaffected either way
+                CHECK(json::parse("123") == json(123));
+            }
+#endif
+
+#if defined(JSON_TEST_STRICT_NUL_HANDLING_ENABLED)
+            SECTION("opt-in strict behavior (JSON_STRICT_NUL_HANDLING == 1)")
+            {
+                // a NUL byte after a complete value is now a parse error,
+                // instead of silently truncating the input
+                {
+                    std::string s = "123";
+                    s.push_back('\0');
+                    json _; // NOLINT(readability-identifier-naming)
+                    CHECK_THROWS_WITH_AS(_ = json::parse(s),
+                                         "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - invalid literal; last read: '123<U+0000>'; expected end of input",
+                                         json::parse_error&);
+                    CHECK_FALSE(json::accept(s));
+                }
+
+                // a NUL byte where a value is expected is now a parse error,
+                // instead of being treated the same as an empty input
+                {
+                    const std::string s(1, '\0');
+                    json _; // NOLINT(readability-identifier-naming)
+                    CHECK_THROWS_WITH_AS(_ = json::parse(s),
+                                         "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: '<U+0000>'",
+                                         json::parse_error&);
+                    CHECK_FALSE(json::accept(s));
+                }
+
+                // a NUL byte inside a // comment no longer stops the comment
+                // scan early; scanning continues correctly past it
+                {
+                    std::string s = "1 // a";
+                    s.push_back('\0');
+                    s += "b\n";
+                    CHECK(json::parse(s, nullptr, true, true) == json(1));
+                    CHECK(json::accept(s, true, true));
+                }
+
+                // a NUL byte inside a /* */ comment no longer stops the
+                // comment scan early either
+                {
+                    std::string s = "1 /* a";
+                    s.push_back('\0');
+                    s += "b */ ";
+                    CHECK(json::parse(s, nullptr, true, true) == json(1));
+                    CHECK(json::accept(s, true, true));
+                }
+
+                // regression guard: parsing from a string literal (which
+                // carries a compiler-appended trailing '\0') still works,
+                // even though a NUL byte is now rejected everywhere else
+                CHECK(json::parse("123") == json(123));
+            }
+#endif
         }
 
         SECTION("number")
@@ -1892,7 +1998,13 @@ TEST_CASE("parser class")
 
         SECTION("from std::array")
         {
-            std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
+            // NOTE: this array is sized to exactly the length of "true" (unlike
+            // the trailing-NUL-tolerant default behavior elsewhere in this file,
+            // see the "NUL byte handling" section above); a size of 5 here would
+            // leave a value-initialized trailing 0x00 element that is only
+            // silently accepted as end-of-input by default and would fail under
+            // JSON_STRICT_NUL_HANDLING
+            std::array<uint8_t, 4> v { {'t', 'r', 'u', 'e'} };
             json j;
             json::parser(nlohmann::detail::input_adapter(std::begin(v), std::end(v))).parse(true, j);
             CHECK(j == json(true));
@@ -2033,7 +2145,17 @@ TEST_CASE("parser class")
     {
         json _;
         CHECK_THROWS_WITH_AS(_ = json::parse("/a", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 2: syntax error while parsing value - invalid comment; expecting '/' or '*' after '/'; last read: '/a'", json::parse_error);
+        // "/*" is a string literal, so it carries a compiler-appended trailing
+        // '\0'; by default that NUL is read like any other byte and shows up
+        // in "last read", but JSON_STRICT_NUL_HANDLING trims exactly that one
+        // trailing byte from a char array (see
+        // docs/mkdocs/docs/api/macros/json_strict_nul_handling.md), so it no
+        // longer appears in the message in that state
+#if defined(JSON_TEST_STRICT_NUL_HANDLING_ENABLED)
+        CHECK_THROWS_WITH_AS(_ = json::parse("/*", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid comment; missing closing '*/'; last read: '/*'", json::parse_error);
+#else
         CHECK_THROWS_WITH_AS(_ = json::parse("/*", nullptr, true, true), "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing value - invalid comment; missing closing '*/'; last read: '/*<U+0000>'", json::parse_error);
+#endif
     }
 
 #if JSON_DIAGNOSTIC_POSITIONS
@@ -2259,86 +2381,6 @@ TEST_CASE("parser class")
 #endif
 }
 
-#if JSON_DIAGNOSTIC_POSITIONS
-
-TEST_CASE("diagnostic positions: value lifetime")
-{
-    SECTION("copy constructor copies positions, recursively")
-    {
-        const std::string s = R"({"a":1,"b":[1,2,3]})";
-        const json a = json::parse(s);
-        const json b = a; // NOLINT(performance-unnecessary-copy-initialization)
-
-        CHECK(b.start_pos() == a.start_pos());
-        CHECK(b.end_pos() == a.end_pos());
-        CHECK(b["b"].start_pos() == a["b"].start_pos());
-        CHECK(b["b"].end_pos() == a["b"].end_pos());
-    }
-
-    SECTION("move constructor resets the moved-from value to npos")
-    {
-        const std::string s = R"({"a":1,"b":[1,2,3]})";
-        json a = json::parse(s);
-        const auto a_start = a.start_pos();
-        const auto a_end = a.end_pos();
-
-        const json b(std::move(a));
-
-        CHECK(b.start_pos() == a_start);
-        CHECK(b.end_pos() == a_end);
-
-        CHECK(a.start_pos() == std::string::npos); // NOLINT(bugprone-use-after-move,clang-analyzer-cplusplus.Move)
-        CHECK(a.end_pos() == std::string::npos); // NOLINT(bugprone-use-after-move,clang-analyzer-cplusplus.Move)
-    }
-
-    SECTION("swap() exchanges positions along with the values")
-    {
-        // basic_json::swap() (and the friend swap() that forwards to it) used
-        // to swap only m_data.m_type/m_data.m_value, leaving
-        // start_position/end_position untouched -- unlike copy-assignment's
-        // operator=(basic_json), which swaps positions as part of its
-        // copy-and-swap implementation. After swap(a, b), each value ended up
-        // with the *other* value's content but its *own* original position.
-        // This is now fixed so that swap() is consistent with copy-assignment.
-        json a = json::parse(R"({"a":1})");
-        json b = json::parse(R"([1,2,3,4,5])");
-        const auto a_start = a.start_pos();
-        const auto a_end = a.end_pos();
-        const auto b_start = b.start_pos();
-        const auto b_end = b.end_pos();
-        // lengths (and thus end positions) differ, which is enough to tell
-        // after the swap whether positions actually moved with the values
-        CHECK(a_end != b_end);
-
-        using std::swap;
-        swap(a, b);
-
-        CHECK(a == json::parse(R"([1,2,3,4,5])"));
-        CHECK(b == json::parse(R"({"a":1})"));
-
-        CHECK(a.start_pos() == b_start);
-        CHECK(a.end_pos() == b_end);
-        CHECK(b.start_pos() == a_start);
-        CHECK(b.end_pos() == a_end);
-
-        // member swap() behaves the same as the free function
-        json c = json::parse(R"({"a":1})");
-        json d = json::parse(R"([1,2,3,4,5])");
-        const auto c_start = c.start_pos();
-        const auto c_end = c.end_pos();
-        const auto d_start = d.start_pos();
-        const auto d_end = d.end_pos();
-
-        c.swap(d);
-
-        CHECK(c.start_pos() == d_start);
-        CHECK(c.end_pos() == d_end);
-        CHECK(d.start_pos() == c_start);
-        CHECK(d.end_pos() == c_end);
-    }
-}
-#endif
-
 // this test relies on parse errors being thrown, so it is skipped when
 // exceptions are disabled (json::parse aborts instead of throwing there)
 #if !defined(JSON_NOEXCEPTION)
@@ -2445,3 +2487,333 @@ TEST_CASE("last-read diagnostics are identical across input adapters")
     }
 }
 #endif // !defined(JSON_NOEXCEPTION)
+
+// this test characterizes the current (documented-by-example, not otherwise
+// specified) behavior of JSON_DIAGNOSTIC_POSITIONS positions with respect to
+// value lifetime (copy/move/swap/mutation), the various input adapters, and
+// user-driven SAX usage. It is regression protection, not a behavior
+// specification: if any of these checks fail after a change to json.hpp,
+// that change deliberately altered observable behavior and the test (and
+// this comment) should be updated accordingly, rather than "fixed" blindly.
+#if JSON_DIAGNOSTIC_POSITIONS
+TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
+{
+    SECTION("value lifetime")
+    {
+        SECTION("copy constructor copies positions, recursively")
+        {
+            // basic_json(const basic_json&) (json.hpp, around line 1192) copies
+            // start_position/end_position for the value itself; nested values
+            // are copied via their own copy constructor (through the copied
+            // object/array container), so positions are preserved throughout
+            // the whole tree.
+            const std::string s = R"({"a":1,"b":[1,2,3]})";
+            const json a = json::parse(s);
+            const json b = a; // NOLINT(performance-unnecessary-copy-initialization)
+
+            CHECK(b.start_pos() == a.start_pos());
+            CHECK(b.end_pos() == a.end_pos());
+            CHECK(b["b"].start_pos() == a["b"].start_pos());
+            CHECK(b["b"].end_pos() == a["b"].end_pos());
+            CHECK(b["b"][0].start_pos() == a["b"][0].start_pos());
+            CHECK(b["b"][0].end_pos() == a["b"][0].end_pos());
+
+            // sanity: the positions are meaningful (not all npos)
+            CHECK(b.start_pos() == 0);
+            CHECK(b.end_pos() == s.size());
+        }
+
+        SECTION("move constructor resets the moved-from value to npos")
+        {
+            // basic_json(basic_json&&) (json.hpp, around line 1265) copies
+            // other's start_position/end_position into *this and then resets
+            // other's to npos (see the cppcheck-suppress[accessForwarded]
+            // annotation there, which flags this reset as worth a second
+            // look). Only the top-level moved-from value is affected; its
+            // (moved-away) children are gone along with it.
+            const std::string s = R"({"a":1,"b":[1,2,3]})";
+            json a = json::parse(s);
+            const auto a_start = a.start_pos();
+            const auto a_end = a.end_pos();
+            const auto nested_start = a["b"].start_pos();
+            const auto nested_end = a["b"].end_pos();
+
+            const json b(std::move(a));
+
+            // the destination retains the original positions, recursively
+            CHECK(b.start_pos() == a_start);
+            CHECK(b.end_pos() == a_end);
+            CHECK(b["b"].start_pos() == nested_start);
+            CHECK(b["b"].end_pos() == nested_end);
+
+            // the moved-from value is reset to a null and reports npos
+            CHECK(a.is_null()); // NOLINT(bugprone-use-after-move,clang-analyzer-cplusplus.Move)
+            CHECK(a.start_pos() == std::string::npos); // NOLINT(bugprone-use-after-move,clang-analyzer-cplusplus.Move)
+            CHECK(a.end_pos() == std::string::npos); // NOLINT(bugprone-use-after-move,clang-analyzer-cplusplus.Move)
+        }
+
+        SECTION("swap() exchanges positions along with values")
+        {
+            // basic_json::swap() (json.hpp, around line 3626, and the friend
+            // swap() that forwards to it) swaps start_position/end_position
+            // together with m_data.m_type and m_data.m_value, so after
+            // swap(a, b) each variable's position describes its own new
+            // content, consistent with copy-assignment's
+            // operator=(basic_json) (json.hpp, around line 1291), which also
+            // swaps positions as part of its copy-and-swap implementation.
+            json a = json::parse(R"({"a":1})");
+            json b = json::parse(R"([1,2,3,4,5])");
+            const auto a_start = a.start_pos();
+            const auto a_end = a.end_pos();
+            const auto b_start = b.start_pos();
+            const auto b_end = b.end_pos();
+            // both start at 0 (root values start right away), but their
+            // lengths (and thus end positions) differ, which is enough to
+            // tell after the swap whether positions actually moved with
+            // the values
+            CHECK(a_end != b_end);
+
+            using std::swap;
+            swap(a, b);
+
+            // values were exchanged as expected ...
+            CHECK(a == json::parse(R"([1,2,3,4,5])"));
+            CHECK(b == json::parse(R"({"a":1})"));
+
+            // ... and so were positions: each variable now carries the
+            // other's original position, describing its own new content
+            CHECK(a.start_pos() == b_start);
+            CHECK(a.end_pos() == b_end);
+            CHECK(b.start_pos() == a_start);
+            CHECK(b.end_pos() == a_end);
+
+            // member swap() behaves the same as the free function
+            json c = json::parse(R"({"a":1})");
+            json d = json::parse(R"([1,2,3,4,5])");
+            const auto c_start = c.start_pos();
+            const auto c_end = c.end_pos();
+            const auto d_start = d.start_pos();
+            const auto d_end = d.end_pos();
+
+            c.swap(d);
+
+            CHECK(c.start_pos() == d_start);
+            CHECK(c.end_pos() == d_end);
+            CHECK(d.start_pos() == c_start);
+            CHECK(d.end_pos() == c_end);
+        }
+
+        SECTION("mutating a parsed document leaves positions of unrelated values untouched")
+        {
+            // Positions are recorded once, during parsing, and are not
+            // recomputed on mutation. As a consequence, after a mutation the
+            // parent's own recorded span may no longer describe its current
+            // (serialized) content -- it still describes what was originally
+            // parsed. This is characterized here as current behavior, not
+            // asserted to be desirable or specified.
+            SECTION("operator[] adding a new object key")
+            {
+                const std::string s = R"({"a":1})";
+                json j = json::parse(s);
+                const auto root_start = j.start_pos();
+                const auto root_end = j.end_pos();
+                const auto a_start = j["a"].start_pos();
+                const auto a_end = j["a"].end_pos();
+
+                j["c"] = 42;
+
+                // the newly-added value was never parsed, so it has no position
+                CHECK(j["c"].start_pos() == std::string::npos);
+                CHECK(j["c"].end_pos() == std::string::npos);
+
+                // the existing sibling's position is unaffected
+                CHECK(j["a"].start_pos() == a_start);
+                CHECK(j["a"].end_pos() == a_end);
+
+                // the parent's own recorded span is left as-is (now stale:
+                // it still reflects the original, shorter `{"a":1}` string)
+                CHECK(j.start_pos() == root_start);
+                CHECK(j.end_pos() == root_end);
+            }
+
+            SECTION("push_back on a parsed array")
+            {
+                const std::string s = R"([1,2,3])";
+                json j = json::parse(s);
+                const auto root_start = j.start_pos();
+                const auto root_end = j.end_pos();
+                const auto first_start = j[0].start_pos();
+
+                j.push_back(4);
+
+                CHECK(j.back().start_pos() == std::string::npos);
+                CHECK(j.back().end_pos() == std::string::npos);
+                CHECK(j[0].start_pos() == first_start);
+                CHECK(j.start_pos() == root_start);
+                CHECK(j.end_pos() == root_end);
+            }
+
+            SECTION("erase on a parsed array shifts elements but keeps their own positions")
+            {
+                const std::string s = R"([1,2,3])";
+                json j = json::parse(s);
+                const auto second_start = j[1].start_pos();
+                const auto third_start = j[2].start_pos();
+                const auto root_start = j.start_pos();
+                const auto root_end = j.end_pos();
+
+                j.erase(0);
+
+                // remaining elements moved down an index, but each one still
+                // reports the position it had *before* the erase (i.e. its
+                // position in the original source string, not a
+                // recalculated one)
+                CHECK(j[0].start_pos() == second_start);
+                CHECK(j[1].start_pos() == third_start);
+
+                // the parent's own recorded span is again left as-is
+                CHECK(j.start_pos() == root_start);
+                CHECK(j.end_pos() == root_end);
+            }
+        }
+    }
+
+    SECTION("input adapters")
+    {
+        SECTION("wide string input: positions count transcoded UTF-8 bytes, not wide characters")
+        {
+            // 'é' (U+00E9) is a single code unit in a wchar_t/UTF-16 string, but
+            // transcodes to 2 bytes in UTF-8; the lexer only ever sees the
+            // transcoded UTF-8 byte stream, so reported positions are byte
+            // offsets into that UTF-8 stream, not indices into the original
+            // std::wstring.
+            // é (rather than a literal 'é' byte sequence in this source
+            // file) so the wide-string literal's meaning does not depend on
+            // the compiler's assumed source character set (MSVC, without
+            // /utf-8, would otherwise decode the raw UTF-8 bytes using the
+            // system code page instead of as UTF-8)
+            const std::wstring ws = L"{\"a\":\"\u00e9\u00e9\"}";
+            CHECK(ws.size() == 10); // 10 wide characters
+
+            const json j = json::parse(ws);
+            CHECK(j.start_pos() == 0);
+            // the transcoded UTF-8 form is 2 bytes longer than the wide string,
+            // because each of the two 'é' characters becomes 2 UTF-8 bytes
+            CHECK(j.end_pos() == 12);
+            CHECK(j.end_pos() != ws.size());
+
+            const json& a = j["a"];
+            CHECK(a.start_pos() == 5);
+            CHECK(a.end_pos() == 11);
+        }
+
+        SECTION("BOM-prefixed input: start_pos() reflects the skipped 3-byte BOM")
+        {
+            const std::string s = "\xEF\xBB\xBF{\"a\":1}";
+            const json j = json::parse(s);
+
+            // the lexer silently skips the BOM before parsing the value, so
+            // the root value's recorded span starts right after it
+            CHECK(j.start_pos() == 3);
+            CHECK(j.end_pos() == s.size());
+        }
+
+        SECTION("std::istringstream: positions are consistent, not npos")
+        {
+            const std::string s = R"({"a":1,"b":2})";
+            std::istringstream ss(s);
+            const json j = json::parse(ss);
+
+            CHECK(j.start_pos() == 0);
+            CHECK(j.end_pos() == s.size());
+            CHECK(j["a"].start_pos() == 5);
+        }
+
+        SECTION("std::ifstream: positions are consistent, not npos")
+        {
+            const std::string s = R"({"a":1,"b":2})";
+            {
+                std::ofstream file("unit-class_parser_diagnostic_positions.tmp");
+                file << s;
+            }
+
+            {
+                std::ifstream f("unit-class_parser_diagnostic_positions.tmp");
+                const json j = json::parse(f);
+
+                CHECK(j.start_pos() == 0);
+                CHECK(j.end_pos() == s.size());
+                CHECK(j["a"].start_pos() == 5);
+            }
+
+            static_cast<void>(std::remove("unit-class_parser_diagnostic_positions.tmp"));
+        }
+
+        SECTION("iterator-pair input: positions are consistent, not npos")
+        {
+            const std::string s = R"({"a":1,"b":2})";
+            const json j = json::parse(s.begin(), s.end());
+
+            CHECK(j.start_pos() == 0);
+            CHECK(j.end_pos() == s.size());
+            CHECK(j["a"].start_pos() == 5);
+        }
+
+        SECTION("binary formats have no text positions")
+        {
+            // binary formats (BJData, BON8, BSON, CBOR, MessagePack, UBJSON) are
+            // parsed via detail::binary_reader, which never sets
+            // start_position/end_position on the values it produces (they
+            // have no notion of a text offset), so every value's position
+            // stays at its default of npos.
+            const json src = json::parse(R"({"a":1,"b":[1,2]})");
+
+            const json from_cbor = json::from_cbor(json::to_cbor(src));
+            CHECK(from_cbor.start_pos() == std::string::npos);
+            CHECK(from_cbor.end_pos() == std::string::npos);
+            CHECK(from_cbor["a"].start_pos() == std::string::npos);
+            CHECK(from_cbor["b"][0].start_pos() == std::string::npos);
+
+            const json from_msgpack = json::from_msgpack(json::to_msgpack(src));
+            CHECK(from_msgpack.start_pos() == std::string::npos);
+            CHECK(from_msgpack.end_pos() == std::string::npos);
+
+            const json from_bon8 = json::from_bon8(json::to_bon8(src));
+            CHECK(from_bon8.start_pos() == std::string::npos);
+            CHECK(from_bon8.end_pos() == std::string::npos);
+
+            const json from_ubjson = json::from_ubjson(json::to_ubjson(src));
+            CHECK(from_ubjson.start_pos() == std::string::npos);
+            CHECK(from_ubjson.end_pos() == std::string::npos);
+
+            const json from_bson_val = json::from_bson(json::to_bson(src));
+            CHECK(from_bson_val.start_pos() == std::string::npos);
+            CHECK(from_bson_val.end_pos() == std::string::npos);
+        }
+    }
+
+    SECTION("user-driven SAX consumers with no lexer report npos")
+    {
+        // json::parse() internally wires up its json_sax_dom_parser with a
+        // pointer to its own lexer (see parser.hpp), which is how positions
+        // get set at all. A user who constructs a json_sax_dom_parser
+        // directly (e.g. to drive it via json::sax_parse()) and does not
+        // supply a lexer pointer gets a consumer with m_lexer_ref == nullptr;
+        // every "if (m_lexer_ref)" guard in json_sax.hpp is then skipped, so
+        // every value it produces keeps its default, unset position (npos).
+        // This was previously true but silently unasserted (operator==
+        // ignores positions), see #5420.
+        json result;
+        nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type> sdp(result);
+        const std::string s = R"({"a":1,"b":[1,2,3]})";
+        CHECK(json::sax_parse(s, &sdp));
+
+        CHECK(result.start_pos() == std::string::npos);
+        CHECK(result.end_pos() == std::string::npos);
+        CHECK(result["a"].start_pos() == std::string::npos);
+        CHECK(result["a"].end_pos() == std::string::npos);
+        CHECK(result["b"][0].start_pos() == std::string::npos);
+        CHECK(result["b"][0].end_pos() == std::string::npos);
+    }
+}
+#endif

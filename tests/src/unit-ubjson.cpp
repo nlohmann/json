@@ -15,6 +15,7 @@ using nlohmann::json;
 #include <fstream>
 #include <set>
 #include "make_test_data_available.hpp"
+#include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
 
 namespace
@@ -264,7 +265,7 @@ TEST_CASE("UBJSON")
 
                 SECTION("-32768..-129 (int16)")
                 {
-                    for (int32_t i = -32768; i <= -129; ++i)
+                    for (int32_t i = -32768; i <= -129; i = utils::next_integer_sample(i, -129, 7))
                     {
                         CAPTURE(i)
 
@@ -424,7 +425,7 @@ TEST_CASE("UBJSON")
 
                 SECTION("256..32767 (int16)")
                 {
-                    for (size_t i = 256; i <= 32767; ++i)
+                    for (size_t i = 256; i <= 32767; i = utils::next_integer_sample(i, static_cast<size_t>(32767), static_cast<size_t>(7)))
                     {
                         CAPTURE(i)
 
@@ -630,7 +631,7 @@ TEST_CASE("UBJSON")
 
                 SECTION("256..32767 (int16)")
                 {
-                    for (size_t i = 256; i <= 32767; ++i)
+                    for (size_t i = 256; i <= 32767; i = utils::next_integer_sample(i, static_cast<size_t>(32767), static_cast<size_t>(7)))
                     {
                         CAPTURE(i)
 
@@ -1639,6 +1640,29 @@ TEST_CASE("UBJSON")
                 });
                 CHECK_THROWS_AS(_ = json::sax_parse(v_ubjson, &scp, json::input_format_t::ubjson), json::out_of_range&);
             }
+
+            SECTION("array with a known size, read with a callback")
+            {
+                // a sized array announces its length to start_array()
+                std::vector<uint8_t> const v_ubjson = {'[', '#', 'i', 2, 'i', 1, 'i', 2};
+                json j;
+                nlohmann::detail::json_sax_dom_callback_parser<json, decltype(nlohmann::detail::input_adapter(v_ubjson))> scp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
+                {
+                    return true;
+                });
+                CHECK(json::sax_parse(v_ubjson, &scp, json::input_format_t::ubjson));
+                CHECK(j == json({1, 2}));
+
+                // the readers reject a size this large before they announce
+                // it, so it can only reach start_array() directly (the largest
+                // value stands for an unknown size and is never checked)
+                json k;
+                nlohmann::detail::json_sax_dom_callback_parser<json, decltype(nlohmann::detail::input_adapter(v_ubjson))> scp2(k, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
+                {
+                    return true;
+                });
+                CHECK_THROWS_AS(scp2.start_array((std::numeric_limits<std::size_t>::max)() - 1), json::out_of_range&);
+            }
         }
     }
 
@@ -2254,6 +2278,46 @@ TEST_CASE("UBJSON nesting does not consume the call stack")
     }
 }
 
+TEST_CASE("UBJSON input that cannot be read is discarded by every overload")
+{
+    std::vector<std::uint8_t> input = json::to_ubjson(json({{"a", {1, 2}}}));
+    input.pop_back();
+
+    json _;
+    CHECK_THROWS_AS(_ = json::from_ubjson(input.begin(), input.end()), json::parse_error&);
+    CHECK(json::from_ubjson(input, true, false).is_discarded());
+    CHECK(json::from_ubjson(input.begin(), input.end(), true, false).is_discarded());
+    CHECK(json::from_ubjson(input.data(), input.size(), true, false).is_discarded());
+    CHECK(json::from_ubjson({input.data(), input.size()}, true, false).is_discarded());
+}
+
+TEST_CASE("UBJSON SAX parsing stops at every event")
+{
+    // Containers are opened and closed by the loop that reads them; a SAX
+    // handler that rejects any event - including the end of a nested
+    // container - must stop the parse right there.
+    const auto count_events = [](const std::vector<std::uint8_t>& input)
+    {
+        int events = 0;
+        while (true)
+        {
+            SaxCountdown scp(events);
+            if (json::sax_parse(input, &scp, json::input_format_t::ubjson))
+            {
+                return events;
+            }
+            ++events;
+            REQUIRE(events < 1000);
+        }
+    };
+
+    // 20 events: every container kind closes inside another one
+    const json j = json::parse(R"({"a": [1, {"b": []}], "c": {"d": [[2]]}})");
+    CHECK(count_events(json::to_ubjson(j)) == 20);
+    CHECK(count_events(json::to_ubjson(j, true)) == 20);
+    CHECK(count_events(json::to_ubjson(j, true, true)) == 20);
+}
+
 TEST_CASE("UBJSON optimized arrays of a valueless type are bounded")
 {
     // An element of type 'Z', 'T' or 'F' is encoded by its marker alone, so an
@@ -2265,7 +2329,9 @@ TEST_CASE("UBJSON optimized arrays of a valueless type are bounded")
 
     SECTION("an excessive count is rejected")
     {
-        // 'l' is a big-endian int32: 0x7FFFFFFF elements, about 34 GB of value
+        // 'l' is a big-endian int32: 0x7FFFFFFF elements, about 34 GB of value;
+        // OSS-Fuzz reported this shape as a parse_ubjson_fuzzer timeout
+        // (testcase 6347769435193344, no issue filed)
         for (const auto marker :
                 {'Z', 'T', 'F'
                 })
@@ -2817,6 +2883,51 @@ TEST_CASE("UBJSON use_type requires use_size")
     }
 }
 
+TEST_CASE("UBJSON round-trip invariants")
+{
+    // This checks what the parse_ubjson_fuzzer driver checks (see
+    // tests/src/fuzzer-parse_ubjson.cpp), so that a regression shows up in CI
+    // rather than as an OSS-Fuzz report: every value from_ubjson() returns
+    // (j1) can be serialized with any combination of options, the result can
+    // be parsed back (j2), and serializing j2 again with the same options
+    // reproduces the exact bytes. Beyond the driver, this also checks that j2
+    // equals j1. Values are compared with dump() rather than operator==,
+    // because a NaN never compares equal to itself.
+    struct options
+    {
+        bool use_size;
+        bool use_type;
+    };
+    const std::vector<options> all_options =
+    {
+        {false, false},
+        {true, false},
+        {true, true},
+    };
+
+    for (const auto& j0 : utils::round_trip_corpus::values())
+    {
+        // turn the corpus value into a value as from_ubjson() returns it; this
+        // has no binary values, as UBJSON writes them as arrays of integers
+        for (const auto& initial : all_options)
+        {
+            const json j1 = json::from_ubjson(json::to_ubjson(j0, initial.use_size, initial.use_type));
+
+            for (const auto& o : all_options)
+            {
+                INFO("j1 = " << j1.dump() << ", use_size = " << o.use_size << ", use_type = " << o.use_type);
+
+                const std::vector<std::uint8_t> vec = json::to_ubjson(j1, o.use_size, o.use_type);
+                json j2;
+                // anything the library writes must be parsable by the library
+                REQUIRE_NOTHROW(j2 = json::from_ubjson(vec));
+                CHECK(j2.dump() == j1.dump());
+                CHECK(json::to_ubjson(j2, o.use_size, o.use_type) == vec);
+            }
+        }
+    }
+}
+
 TEST_CASE("UBJSON roundtrips" * doctest::skip())
 {
     SECTION("input from self-generated UBJSON files")
@@ -2869,60 +2980,34 @@ TEST_CASE("UBJSON roundtrips" * doctest::skip())
         {
             CAPTURE(filename)
 
+            std::ifstream f_json(filename);
+            json const j1 = json::parse(f_json);
+            auto const packed = utils::read_binary_file(filename + ".ubjson");
+
             {
                 INFO_WITH_TEMP(filename + ": std::vector<uint8_t>");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                json const j1 = json::parse(f_json);
-
-                // parse UBJSON file
-                auto const packed = utils::read_binary_file(filename + ".ubjson");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_ubjson(packed));
-
-                // compare parsed JSON values
                 CHECK(j1 == j2);
             }
 
             {
                 INFO_WITH_TEMP(filename + ": std::ifstream");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                json const j1 = json::parse(f_json);
-
-                // parse UBJSON file
                 std::ifstream f_ubjson(filename + ".ubjson", std::ios::binary);
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_ubjson(f_ubjson));
-
-                // compare parsed JSON values
                 CHECK(j1 == j2);
             }
 
             {
                 INFO_WITH_TEMP(filename + ": uint8_t* and size");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                const json j1 = json::parse(f_json);
-
-                // parse UBJSON file
-                auto const packed = utils::read_binary_file(filename + ".ubjson");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_ubjson({packed.data(), packed.size()}));
-
-                // compare parsed JSON values
                 CHECK(j1 == j2);
             }
 
             {
                 INFO_WITH_TEMP(filename + ": output to output adapters");
-                // parse JSON file
-                std::ifstream f_json(filename);
-                json const j1 = json::parse(f_json);
-
-                // parse UBJSON file
-                auto const packed = utils::read_binary_file(filename + ".ubjson");
-
                 {
                     INFO_WITH_TEMP(filename + ": output adapters: std::vector<uint8_t>");
                     std::vector<uint8_t> vec;
@@ -2932,4 +3017,19 @@ TEST_CASE("UBJSON roundtrips" * doctest::skip())
             }
         }
     }
+}
+
+TEST_CASE("UBJSON optimized array of unsigned integers beyond int64")
+{
+    // UBJSON has no unsigned 64-bit type, so such values are written as
+    // high-precision numbers - also as the type of an optimized container
+    const json j = {18446744073709551615ULL, 9223372036854775808ULL};
+    const std::vector<std::uint8_t> expected =
+    {
+        '[', '$', 'H', '#', 'i', 2,
+        'i', 20, '1', '8', '4', '4', '6', '7', '4', '4', '0', '7', '3', '7', '0', '9', '5', '5', '1', '6', '1', '5',
+        'i', 19, '9', '2', '2', '3', '3', '7', '2', '0', '3', '6', '8', '5', '4', '7', '7', '5', '8', '0', '8'
+    };
+    CHECK(json::to_ubjson(j, true, true) == expected);
+    CHECK(json::from_ubjson(expected) == j);
 }

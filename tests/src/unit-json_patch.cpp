@@ -672,6 +672,102 @@ TEST_CASE("JSON patch")
         }
     }
 
+    SECTION("patch_inplace")
+    {
+        SECTION("happy path: patch_inplace mirrors patch() on success")
+        {
+            // mirrors "A.5. Replacing a Value" above, but applies the patch with
+            // patch_inplace() to a mutable copy instead of using patch()'s
+            // returned copy
+            json doc = R"(
+                    {
+                        "baz": "qux",
+                        "foo": "bar"
+                    }
+                )"_json;
+
+            json const patch = R"(
+                    [
+                        { "op": "replace", "path": "/baz", "value": "boo" }
+                    ]
+                )"_json;
+
+            json const expected = R"(
+                    {
+                        "baz": "boo",
+                        "foo": "bar"
+                    }
+                )"_json;
+
+            doc.patch_inplace(patch);
+            CHECK(doc == expected);
+        }
+
+        // this test relies on the "test" operation actually throwing so the
+        // partial-application state can be observed right after the throw
+        // point; under JSON_NOEXCEPTION, JSON_THROW() calls std::abort()
+        // instead (there is no C++ exception to throw), and doctest's
+        // CHECK_THROWS_AS() is compiled out to a no-op that never even
+        // invokes the given expression (see doctest's "--no-throw" test
+        // filter, which ci_test_noexceptions passes) -- so patch()/
+        // patch_inplace() would never be called at all and the follow-up
+        // state assertions below would fail against the untouched original
+#if !defined(JSON_NOEXCEPTION)
+        SECTION("distinguishing contract vs patch(): partial application on failure")
+        {
+            // Unlike patch(), which is all-or-nothing because it applies the
+            // patch to an internal copy that is simply discarded when an
+            // exception is thrown (leaving the original untouched no matter
+            // what), patch_inplace() mutates the document it is called on
+            // directly and immediately, operation by operation. So if a JSON
+            // Patch fails partway through, whatever operations already
+            // succeeded remain applied -- the document is left in a partially
+            // patched state. This is empirically verified current behavior,
+            // not just documented intent, and is pinned here as such.
+            json const original = R"(
+                    {
+                        "baz": "qux",
+                        "foo": "bar"
+                    }
+                )"_json;
+
+            // the first operation ("replace") succeeds; the second ("test")
+            // fails because the value at "/baz" no longer (and never did)
+            // equal "not boo"
+            json const patch = R"(
+                    [
+                        { "op": "replace", "path": "/baz", "value": "boo" },
+                        { "op": "test", "path": "/baz", "value": "not boo" }
+                    ]
+                )"_json;
+
+            // patch() never modifies the object it is called on -- it always
+            // operates on (and returns) a separate copy, so the original is
+            // left completely untouched, regardless of success or failure.
+            // copy_for_patch is intentionally a real copy, not a reference
+            // to `original`: the whole point of this check is to catch a
+            // hypothetical future regression where patch() *does* mutate its
+            // receiver. Using a reference here would make the assertion
+            // below compare `original` to itself -- trivially true even if
+            // such a bug existed -- which is exactly what a static analyzer
+            // can't see when it suggests "this copy is never modified, use
+            // a reference instead".
+            json copy_for_patch = original; // NOLINT(performance-unnecessary-copy-initialization)
+            CHECK_THROWS_AS(copy_for_patch.patch(patch), json::other_error&);
+            CHECK(copy_for_patch == original);
+
+            // patch_inplace(), in contrast, already applied the successful
+            // "replace" operation to the document before the "test" operation
+            // threw -- that change is not rolled back
+            json doc = original;
+            CHECK_THROWS_AS(doc.patch_inplace(patch), json::other_error&);
+            CHECK(doc != original);
+            CHECK(doc.at("baz") == "boo");
+            CHECK(doc.at("foo") == "bar");
+        }
+#endif // !defined(JSON_NOEXCEPTION)
+    }
+
     SECTION("errors")
     {
         SECTION("unknown operation")
@@ -1653,5 +1749,100 @@ TEST_CASE("JSON patch - diff emits array removals in descending index order")
         CHECK(patch.front().at("path") == "/999");
         CHECK(patch.back().at("path") == "/0");
         CHECK(source.patch(patch) == target);
+    }
+}
+
+TEST_CASE("JSON patch - every operation on ordered_json")
+{
+    using nlohmann::ordered_json;
+
+    const ordered_json doc = {{"foo", "bar"}, {"arr", {1, 2, 3}}, {"obj", {{"a", 1}}}};
+
+    SECTION("successful operations")
+    {
+        const ordered_json patch = ordered_json::parse(R"([
+            {"op": "add", "path": "/obj/b", "value": 2},
+            {"op": "add", "path": "/arr/1", "value": 9},
+            {"op": "add", "path": "/arr/-", "value": 4},
+            {"op": "remove", "path": "/arr/0"},
+            {"op": "remove", "path": "/obj/a"},
+            {"op": "replace", "path": "/foo", "value": "baz"},
+            {"op": "move", "from": "/foo", "path": "/moved"},
+            {"op": "copy", "from": "/obj", "path": "/copied"},
+            {"op": "test", "path": "/copied/b", "value": 2}
+        ])");
+
+        const ordered_json expected = ordered_json::parse(R"({
+            "arr": [9, 2, 3, 4], "obj": {"b": 2}, "moved": "baz", "copied": {"b": 2}
+        })");
+
+        CHECK(doc.patch(patch) == expected);
+
+        // adding to the root replaces the document
+        CHECK(doc.patch(ordered_json::parse(R"([{"op": "add", "path": "", "value": [1]}])")) == ordered_json({1}));
+    }
+
+    SECTION("failing operations")
+    {
+        ordered_json _;
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/arr/4", "value": 1}])")),
+                             "[json.exception.out_of_range.401] (/arr) array index 4 is out of range", ordered_json::out_of_range&);
+#else
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/arr/4", "value": 1}])")),
+                             "[json.exception.out_of_range.401] array index 4 is out of range", ordered_json::out_of_range&);
+#endif
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/nope/x", "value": 1}])")),
+                             "[json.exception.out_of_range.403] key 'nope' not found", ordered_json::out_of_range&);
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "remove", "path": "/obj/nope"}])")),
+                             "[json.exception.out_of_range.403] key 'nope' not found", ordered_json::out_of_range&);
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "remove", "path": "/arr/3"}])")),
+                             "[json.exception.out_of_range.401] (/arr) array index 3 is out of range", ordered_json::out_of_range&);
+#else
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "remove", "path": "/arr/3"}])")),
+                             "[json.exception.out_of_range.401] array index 3 is out of range", ordered_json::out_of_range&);
+#endif
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "test", "path": "/foo", "value": "qux"}])")),
+                             "[json.exception.other_error.501] (/0) unsuccessful: {\"op\":\"test\",\"path\":\"/foo\",\"value\":\"qux\"}", ordered_json::other_error&);
+#elif JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "test", "path": "/foo", "value": "qux"}])")),
+                             "[json.exception.other_error.501] (bytes 1-47) unsuccessful: {\"op\":\"test\",\"path\":\"/foo\",\"value\":\"qux\"}", ordered_json::other_error&);
+#else
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "test", "path": "/foo", "value": "qux"}])")),
+                             "[json.exception.other_error.501] unsuccessful: {\"op\":\"test\",\"path\":\"/foo\",\"value\":\"qux\"}", ordered_json::other_error&);
+#endif
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/foo"}])")),
+                             "[json.exception.parse_error.105] parse error: (/0) operation 'add' must have member 'value'", ordered_json::parse_error&);
+#elif JSON_DIAGNOSTIC_POSITIONS
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/foo"}])")),
+                             "[json.exception.parse_error.105] parse error: (bytes 1-30) operation 'add' must have member 'value'", ordered_json::parse_error&);
+#else
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "add", "path": "/foo"}])")),
+                             "[json.exception.parse_error.105] parse error: operation 'add' must have member 'value'", ordered_json::parse_error&);
+#endif
+        CHECK_THROWS_WITH_AS(_ = doc.patch(ordered_json::parse(R"([{"op": "move", "from": "/obj", "path": "/obj/a/b"}])")),
+                             "[json.exception.out_of_range.414] cannot move value: 'from' path '/obj' is a proper prefix of 'path' '/obj/a/b'", ordered_json::out_of_range&);
+    }
+
+    SECTION("diff reproduces the target")
+    {
+        const ordered_json source = {{"a", 1}, {"b", 2}, {"c", {{"x", 1}}}, {"l", {1, 2, 3}}};
+        const std::vector<ordered_json> targets =
+        {
+            // a key removed, a key added, a nested change, a shorter array
+            {{"a", 1}, {"c", {{"x", 2}}}, {"l", {1}}, {"d", 4}},
+            // the same keys in another order
+            {{"c", {{"x", 1}}}, {"a", 1}, {"b", 2}, {"l", {1, 2, 3}}},
+            // new keys ahead of the common ones
+            {{"new", true}, {"a", 1}, {"b", 3}, {"c", {{"x", 1}}}, {"l", {1, 2, 3}}},
+        };
+        for (const auto& target : targets)
+        {
+            CAPTURE(target.dump());
+            CHECK(source.patch(ordered_json::diff(source, target)) == target);
+        }
     }
 }

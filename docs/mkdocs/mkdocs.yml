@@ -64,6 +64,7 @@ nav:
       - Binary Formats:
           - features/binary_formats/index.md
           - features/binary_formats/bjdata.md
+          - features/binary_formats/bon8.md
           - features/binary_formats/bson.md
           - features/binary_formats/cbor.md
           - features/binary_formats/messagepack.md
@@ -99,6 +100,7 @@ nav:
       - Types:
           - features/types/index.md
           - features/types/number_handling.md
+          - features/types/template_parameters.md
   - Integration:
       - integration/index.md
       - integration/migration_guide.md
@@ -143,6 +145,7 @@ nav:
           - 'flatten': api/basic_json/flatten.md
           - 'format_as': api/basic_json/format_as.md
           - 'from_bjdata': api/basic_json/from_bjdata.md
+          - 'from_bon8': api/basic_json/from_bon8.md
           - 'from_bson': api/basic_json/from_bson.md
           - 'from_cbor': api/basic_json/from_cbor.md
           - 'from_msgpack': api/basic_json/from_msgpack.md
@@ -216,6 +219,7 @@ nav:
           - 'swap': api/basic_json/swap.md
           - 'std::swap&lt;basic_json&gt;': api/basic_json/std_swap.md
           - 'to_bjdata': api/basic_json/to_bjdata.md
+          - 'to_bon8': api/basic_json/to_bon8.md
           - 'to_bson': api/basic_json/to_bson.md
           - 'to_cbor': api/basic_json/to_cbor.md
           - 'to_msgpack': api/basic_json/to_msgpack.md
@@ -320,8 +324,11 @@ nav:
           - 'JSON_HAS_THREE_WAY_COMPARISON': api/macros/json_has_three_way_comparison.md
           - 'JSON_NOEXCEPTION': api/macros/json_noexception.md
           - 'JSON_NO_IO': api/macros/json_no_io.md
+          - 'JSON_NO_THREAD_LOCAL': api/macros/json_no_thread_local.md
+          - 'JSON_PRECISE_STREAM_POSITION': api/macros/json_precise_stream_position.md
           - 'JSON_SKIP_LIBRARY_VERSION_CHECK': api/macros/json_skip_library_version_check.md
           - 'JSON_SKIP_UNSUPPORTED_COMPILER_CHECK': api/macros/json_skip_unsupported_compiler_check.md
+          - 'JSON_STRICT_NUL_HANDLING': api/macros/json_strict_nul_handling.md
           - 'JSON_USE_GLOBAL_UDLS': api/macros/json_use_global_udls.md
           - 'JSON_USE_IMPLICIT_CONVERSIONS': api/macros/json_use_implicit_conversions.md
           - 'JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON': api/macros/json_use_legacy_discarded_value_comparison.md
@@ -343,7 +350,9 @@ nav:
       - community/contribution_guidelines.md
       - community/quality_assurance.md
       - community/governance.md
+      - community/roadmap.md
       - community/security_policy.md
+      - community/assurance_case.md
 
 # Extras
 extra:
@@ -435,7 +444,7 @@ plugins:
       markdown_description: >
         JSON for Modern C++ is a C++11 header-only library implementing a JSON
         value type with an STL-like API, JSON Pointer/Patch, CBOR/MessagePack/
-        BSON/UBJSON/BJData binary format support, and a SAX-style parser interface.
+        BSON/UBJSON/BJData/BON8 binary format support, and a SAX-style parser interface.
       sections:
         Home:
           - index.md

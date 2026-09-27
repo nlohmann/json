@@ -332,6 +332,7 @@ TEST_CASE("regression tests 2")
         CHECK(float_json::from_cbor(float_json::to_cbor(j)) == j);
         CHECK(float_json::from_msgpack(float_json::to_msgpack(j)) == j);
         CHECK(float_json::from_ubjson(float_json::to_ubjson(j)) == j);
+        CHECK(float_json::from_bon8(float_json::to_bon8(j)) == j);
 
         float_json j2 = {1000.0, 2000.0, 3000.0};
         CHECK(float_json::from_ubjson(float_json::to_ubjson(j2, true, true)) == j2);
@@ -606,7 +607,11 @@ TEST_CASE("regression tests 2")
     SECTION("issue #2546 - parsing containers of std::byte")
     {
         const char DATA[] = R"("Hello, world!")"; // NOLINT(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-        const auto s = std::as_bytes(std::span(DATA));
+        // exclude the trailing '\0' that string-literal initialization adds to
+        // DATA: std::span(DATA) would span the full array extent (including
+        // that NUL), which is only silently accepted as end-of-input by default
+        // and would fail under JSON_STRICT_NUL_HANDLING
+        const auto s = std::as_bytes(std::span(DATA, sizeof(DATA) - 1));
         const json j = json::parse(s);
         CHECK(j.dump() == "\"Hello, world!\"");
     }
@@ -761,6 +766,108 @@ TEST_CASE("regression tests 2")
         CHECK(j == k);
     }
 
+}
+
+TEST_CASE("regression test - parser callback must not lose a duplicate key's prior value")
+{
+    // a callback that rejects only the scalar value 2
+    const json::parser_callback_t drop_value_2 = [](int /*depth*/, json::parse_event_t ev, json & v) noexcept
+    {
+        return !(ev == json::parse_event_t::value && v == 2);
+    };
+
+    SECTION("duplicate key, second (scalar) value rejected - prior value is restored")
+    {
+        const json j = json::parse(R"({"a":1,"a":2})", drop_value_2);
+        CHECK(j.dump() == "{\"a\":1}");
+    }
+
+    SECTION("duplicate key, second value is an object rejected at object_end - prior value is restored")
+    {
+        const json j = json::parse(R"({"a":1,"a":{"x":2}})",
+                                   [](int depth, json::parse_event_t ev, json& /*parsed*/) noexcept
+        {
+            return !(ev == json::parse_event_t::object_end && depth == 1);
+        });
+        CHECK(j.dump() == "{\"a\":1}");
+    }
+
+    SECTION("duplicate key, second value is an array rejected at array_end - prior value is restored")
+    {
+        const json j = json::parse(R"({"a":1,"a":[9,9]})",
+                                   [](int depth, json::parse_event_t ev, json& /*parsed*/) noexcept
+        {
+            return !(ev == json::parse_event_t::array_end && depth == 1);
+        });
+        CHECK(j.dump() == "{\"a\":1}");
+    }
+
+    SECTION("duplicate key, second value accepted (scalar) - last value wins")
+    {
+        const json j = json::parse(R"({"a":1,"a":2})", [](int, json::parse_event_t, json&) noexcept
+        {
+            return true;
+        });
+        CHECK(j.dump() == "{\"a\":2}");
+    }
+
+    SECTION("duplicate key, second value accepted (object) - last value wins")
+    {
+        const json j = json::parse(R"({"a":1,"a":{"x":2}})", [](int, json::parse_event_t, json&) noexcept
+        {
+            return true;
+        });
+        CHECK(j.dump() == "{\"a\":{\"x\":2}}");
+    }
+
+    SECTION("brand new (non-duplicate) key, value rejected - member is fully absent")
+    {
+        const json j = json::parse(R"({"a":1,"b":2})", drop_value_2);
+        CHECK(j.dump() == "{\"a\":1}");
+    }
+
+    SECTION("duplicate key nested two levels deep")
+    {
+        const json j = json::parse(R"({"outer":{"a":1,"a":2}})", drop_value_2);
+        CHECK(j.dump() == "{\"outer\":{\"a\":1}}");
+    }
+
+    SECTION("three occurrences of the same key - middle rejected, last accepted")
+    {
+        const json j = json::parse(R"({"k":1,"k":2,"k":3})", drop_value_2);
+        CHECK(j.dump() == "{\"k\":3}");
+    }
+}
+
+TEST_CASE("regression test - excessive binary container size honors allow_exceptions=false")
+{
+    // CBOR array with declared length 2^63
+    const std::vector<std::uint8_t> cbor = {0x9b, 0x80, 0, 0, 0, 0, 0, 0, 0};
+    // CBOR map with declared length 2^63
+    const std::vector<std::uint8_t> cbor_m = {0xbb, 0x80, 0, 0, 0, 0, 0, 0, 0};
+    // UBJSON array with declared length 2^63-1
+    const std::vector<std::uint8_t> ubj = {'[', '#', 'L', 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    // BJData array with declared length 2^63-1 (little endian)
+    const std::vector<std::uint8_t> bjd = {'[', '#', 'L', 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f};
+
+    // allow_exceptions=false must report failure instead of throwing/aborting
+    CHECK(json::from_cbor(cbor, true, false).is_discarded());
+    CHECK(json::from_cbor(cbor_m, true, false).is_discarded());
+    CHECK(json::from_ubjson(ubj, true, false).is_discarded());
+    CHECK(json::from_bjdata(bjd, true, false).is_discarded());
+
+    // allow_exceptions=true (the default) must still throw exactly as before.
+    // The exact message text is not checked here: on platforms where
+    // std::size_t is 32-bit, the CBOR reader's own length-narrowing check
+    // (get_cbor_container_size(), unrelated to this fix) intercepts a
+    // declared length of 2^63 before it ever reaches the check this test
+    // targets, with different (but equally valid, and already correct)
+    // wording -- see unit-cbor.cpp for coverage of that message.
+    json _;
+    CHECK_THROWS_AS(_ = json::from_cbor(cbor), json::out_of_range);
+
+    // regression guard: a genuinely truncated CBOR input must remain discarded
+    CHECK(json::from_cbor(std::vector<std::uint8_t> {0x9b, 0, 0, 0, 0, 0, 0, 0, 0x02}, true, false).is_discarded());
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP

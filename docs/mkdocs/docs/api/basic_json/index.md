@@ -35,6 +35,10 @@ class basic_json;
 | `BinaryType`         | type for binary arrays                                                    | [`binary_t`](binary_t.md)                   |
 | `CustomBaseClass`    | extension point for user code                                             | [`json_base_class_t`](json_base_class_t.md) |
 
+The library imposes a number of requirements on these types that are not expressed as C++ concepts, such as the
+container operations `object_t` and `array_t` must provide, or the fact that `StringType` must be `char`-based. They
+are collected in [Template Parameter Requirements](../../features/types/template_parameters.md).
+
 ## Specializations
 
 - [**json**](../json.md) - default specialization
@@ -286,11 +290,13 @@ Access to the JSON value
 ### Binary formats
 
 - [**from_bjdata**](from_bjdata.md) (_static_) - create a JSON value from an input in BJData format
+- [**from_bon8**](from_bon8.md) (_static_) - create a JSON value from an input in BON8 format
 - [**from_bson**](from_bson.md) (_static_) - create a JSON value from an input in BSON format
 - [**from_cbor**](from_cbor.md) (_static_) - create a JSON value from an input in CBOR format
 - [**from_msgpack**](from_msgpack.md) (_static_) - create a JSON value from an input in MessagePack format
 - [**from_ubjson**](from_ubjson.md) (_static_) - create a JSON value from an input in UBJSON format
 - [**to_bjdata**](to_bjdata.md) (_static_) - create a BJData serialization of a given JSON value
+- [**to_bon8**](to_bon8.md) (_static_) - create a BON8 serialization of a given JSON value
 - [**to_bson**](to_bson.md) (_static_) - create a BSON serialization of a given JSON value
 - [**to_cbor**](to_cbor.md) (_static_) - create a CBOR serialization of a given JSON value
 - [**to_msgpack**](to_msgpack.md) (_static_) - create a MessagePack serialization of a given JSON value

@@ -126,8 +126,9 @@ includes via `clang++ -E -x c++ -v /dev/null`, and walks the AST:
 ```
 
 `documented_non_public` lists entities **not** part of the public surface (private/protected members of
-the six tracked classes) that surprisingly carry a real `@sa` URL — a genuine documentation leak. It does
-not list public entries that merely lack `@sa`; that's `check_docs.py`'s job.
+the six tracked classes) that surprisingly carry an `@sa` URL into the documentation site
+(`https://json.nlohmann.me/`) — a genuine documentation leak. `@sa` links to anything else, such as GitHub
+issues, are ignored. It does not list public entries that merely lack `@sa`; that's `check_docs.py`'s job.
 
 **Output (surface, from `--surface-output`):**
 ```json

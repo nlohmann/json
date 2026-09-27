@@ -15,9 +15,9 @@ reference after the insertion point will point to the same index, which is now a
 
 ## Complexity
 
-[`ordered_map`](ordered_map.md) has no lookup index: every key-based object operation is a linear scan, so building or
+[`ordered_map`](ordered_map/index.md) has no lookup index: every key-based object operation is a linear scan, so building or
 parsing an object of `n` keys costs O(n²) rather than O(n log n). See
-[`ordered_map` complexity](ordered_map.md#complexity) for the per-operation table and for measured numbers.
+[`ordered_map` complexity](ordered_map/index.md#complexity) for the per-operation table and for measured numbers.
 
 ## Examples
 

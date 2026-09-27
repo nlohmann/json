@@ -35,6 +35,10 @@ except ImportError:
 
 ABI_TAG_PATTERN = re.compile(r'::json(?:_abi)?[a-z_]*_v\d+_\d+_\d+(?=::|$)')
 
+# Only @sa URLs into the documentation site are doc links; internal code also uses @sa to point at
+# GitHub issues (e.g. the recursion-limit rationale), which is not a documentation leak.
+DOCS_SITE_URL = 'https://json.nlohmann.me/'
+
 # Bump whenever a change to this schema, or to the identity-computing algorithm
 # (get_signature_text()/get_identity_name()/identity_key()), could alter the 'signature' or
 # 'identity_name' text for otherwise-unchanged source. diff_api.py refuses by default to compare
@@ -377,7 +381,7 @@ def walk_class_template(cursor, public_classes: set, api_dict: dict, documented_
             # nonetheless carry a real @sa URL -- a genuine documentation leak, not "any
             # public member missing @sa" (that's what check_docs.py's missing-@sa check is for).
             leaked_url = extract_sa_url(child.raw_comment)
-            if leaked_url:
+            if leaked_url and leaked_url.startswith(DOCS_SITE_URL):
                 documented_non_public.append({
                     'location': cursor_location(child),
                     'raw_comment_excerpt': (child.raw_comment or '')[:100],

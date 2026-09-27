@@ -18,6 +18,14 @@
 // for some reason including this after the json header leads to linker errors with VS 2017...
 #include <locale>
 
+// skip tests if JSON_DisableEnumSerialization=ON (#4384): std::byte is a
+// scoped enum, so get<std::byte>() (needed below to get<std::vector<std::byte>>()
+// from a plain JSON array, not just from an already-binary value) relies on
+// enum serialization being enabled
+#if defined(JSON_DISABLE_ENUM_SERIALIZATION) && (JSON_DISABLE_ENUM_SERIALIZATION == 1)
+    #define SKIP_TESTS_FOR_ENUM_SERIALIZATION
+#endif
+
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -66,13 +74,7 @@ using ordered_json = nlohmann::ordered_json;
     #endif
 #endif
 
-/////////////////////////////////////////////////////////////////////
-// for #4825 - explicitly instantiating basic_json must compile; this
-// forces instantiation of binary_writer::write_bjdata_ndarray, whose
-// static_cast<string_t> was ambiguous under explicit instantiation on
-// C++17. Merely compiling this translation unit is the regression test.
-/////////////////////////////////////////////////////////////////////
-template class nlohmann::basic_json<>;
+// the explicit instantiation for #4825 is in unit-explicit_instantiation.cpp
 
 /////////////////////////////////////////////////////////////////////
 // for #4440
@@ -466,6 +468,7 @@ TEST_CASE("regression tests 3")
         CHECK((decoded == json_4804::array()));
     }
 
+#ifndef SKIP_TESTS_FOR_ENUM_SERIALIZATION
     SECTION("discussion #4209 - custom BinaryType direct assignment and round-tripping")
     {
         // Test that assigning a custom BinaryType directly creates a binary value, not an array
@@ -499,6 +502,7 @@ TEST_CASE("regression tests 3")
         CHECK(extracted[1] == std::byte{2});
         CHECK(extracted[2] == std::byte{3});
     }
+#endif
 
     SECTION("issue #5046 - implicit conversion of return json to std::optional no longer implicit")
     {
@@ -647,33 +651,6 @@ TEST_CASE("regression test #5074 - portable workaround for single-element brace 
     CHECK(j.size() == 1);
     CHECK(j[0] == j_obj);
 }
-
-#if defined(JSON_BRACE_INIT_COPY_SEMANTICS) && (JSON_BRACE_INIT_COPY_SEMANTICS == 1)
-TEST_CASE("regression test #5074 - single-element brace init with JSON_BRACE_INIT_COPY_SEMANTICS")
-{
-    // with JSON_BRACE_INIT_COPY_SEMANTICS: single-element brace init copies/moves
-    json const j_obj = {{"key", "value"}, {"num", 42}};
-    json const j_arr = {1, 2, 3};
-
-    // object: brace init copies instead of wrapping
-    json const j1{j_obj};
-    CHECK(j1.is_object());
-    CHECK(j1 == j_obj);
-
-    // array: brace init copies instead of wrapping
-    json const j2{j_arr};
-    CHECK(j2.is_array());
-    CHECK(j2.size() == 3);
-    CHECK(j2 == j_arr);
-
-    // primitives still work as initializer lists
-    json const j3{true};
-    CHECK(j3.is_boolean());
-
-    json const j4{42};
-    CHECK(j4.is_number_integer());
-}
-#endif
 
 struct Example_5122
 {
@@ -911,6 +888,7 @@ TEST_CASE("regression test #5476 - array type without reserve()")
         // the binary formats pass a definite length to start_array()
         CHECK(deque_json::from_cbor(deque_json::to_cbor(j)) == j);
         CHECK(deque_json::from_msgpack(deque_json::to_msgpack(j)) == j);
+        CHECK(deque_json::from_bon8(deque_json::to_bon8(j)) == j);
 
         // parse() instantiates the callback parser as well, which reserves too
         const auto with_callback = deque_json::parse(R"([1,2,3])", [](int /*depth*/, deque_json::parse_event_t /*event*/, deque_json& /*parsed*/) noexcept
