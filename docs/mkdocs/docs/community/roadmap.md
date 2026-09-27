@@ -76,9 +76,25 @@ For example, the following makes a 3.x release behave like version 4.0 with resp
 ```
 
 The macros must be defined before the library header is included; setting them once in the build system is the easiest
-way to achieve this. In addition,
-version 4.0 will remove all [deprecated functions](../integration/migration_guide.md#replace-deprecated-functions).
-Compiling with deprecation warnings enabled shows which of them your code still uses. The
-[migration guide](../integration/migration_guide.md) describes how to replace them.
+way to achieve this.
 
-New breaking changes will follow the same path: they are added to this table when they land in a 3.x release.
+### Removal of deprecated functions
+
+Version 4.0 will remove all deprecated functions. Compiling with deprecation warnings enabled shows which of them your
+code still uses. The [migration guide](../integration/migration_guide.md#replace-deprecated-functions) shows how to
+replace each of them.
+
+| Deprecated                                                                                                                                                                                                                                         | Since  | Migration                                                                        |
+|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------|----------------------------------------------------------------------------------|
+| `#!cpp operator<<(basic_json&, std::istream&)`                                                                                                                                                                                                     | 3.0.0  | [Parsing](../integration/migration_guide.md#parsing)                             |
+| `#!cpp operator>>(const basic_json&, std::ostream&)`                                                                                                                                                                                               | 3.0.0  | [Miscellaneous functions](../integration/migration_guide.md#miscellaneous-functions) |
+| `iterator_wrapper`                                                                                                                                                                                                                                 | 3.1.0  | [Miscellaneous functions](../integration/migration_guide.md#miscellaneous-functions) |
+| [`parse`](../api/basic_json/parse.md), [`accept`](../api/basic_json/accept.md), and [`sax_parse`](../api/basic_json/sax_parse.md) with an initializer list `{ptr, len}` or `{first, last}`                                                         | 3.8.0  | [Parsing](../integration/migration_guide.md#parsing)                             |
+| [`from_bson`](../api/basic_json/from_bson.md), [`from_cbor`](../api/basic_json/from_cbor.md), [`from_msgpack`](../api/basic_json/from_msgpack.md), and [`from_ubjson`](../api/basic_json/from_ubjson.md) with `(ptr, len)` or an initializer list | 3.8.0  | [Parsing](../integration/migration_guide.md#parsing)                             |
+| [`json_pointer::operator string_t`](../api/json_pointer/operator_string_t.md)                                                                                                                                                                      | 3.11.0 | [JSON Pointers](../integration/migration_guide.md#json-pointers)                 |
+| [`json_pointer`](../api/json_pointer/index.md) with a `basic_json` type as template argument, and the overloads of `value`, `contains`, `operator[]`, and `at` accepting such a pointer                                                           | 3.11.0 | [JSON Pointers](../integration/migration_guide.md#json-pointers)                 |
+| Comparing a [`json_pointer`](../api/json_pointer/index.md) with a string via [`operator==`](../api/json_pointer/operator_eq.md) or [`operator!=`](../api/json_pointer/operator_ne.md)                                                              | 3.11.2 | [JSON Pointers](../integration/migration_guide.md#json-pointers)                 |
+
+The deprecated legacy comparison of discarded values is controlled by a macro and therefore listed in the table above.
+
+New breaking changes will follow the same path: they are added to these tables when they land in a 3.x release.

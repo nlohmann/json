@@ -1,12 +1,13 @@
 # Migration Guide
 
 This page collects some guidelines on how to future-proof your code for future versions of this library.
-The [roadmap](../community/roadmap.md#trying-out-40-today) lists all macros that let you try the behavior of version
-4.0 with a 3.x release.
+The [roadmap](../community/roadmap.md#version-40) lists what will change in version 4.0, including the macros that let
+you try its behavior with a 3.x release; this page describes how to adjust your code.
 
 ## Replace deprecated functions
 
-The following functions have been deprecated and will be removed in the next major version (i.e., 4.0.0). All
+The following functions have been deprecated and will be removed in the next major version (i.e., 4.0.0), see the
+[roadmap](../community/roadmap.md#removal-of-deprecated-functions) for an overview. All
 deprecations are annotated with
 [`HEDLEY_DEPRECATED_FOR`](https://nemequ.github.io/hedley/api-reference.html#HEDLEY_DEPRECATED_FOR) to report which
 function to use instead.
@@ -36,8 +37,9 @@ function to use instead.
   [`accept`](../api/basic_json/accept.md), [`sax_parse`](../api/basic_json/sax_parse.md),
   [`from_cbor`](../api/basic_json/from_cbor.md), [`from_msgpack`](../api/basic_json/from_msgpack.md),
   [`from_ubjson`](../api/basic_json/from_ubjson.md), and [`from_bson`](../api/basic_json/from_bson.md) via initializer
-  lists is deprecated since 3.8.0. Instead, pass two iterators; for instance, call `from_cbor(ptr, ptr+len)` instead of
-  `from_cbor({ptr, len})`.
+  lists is deprecated since 3.8.0. The same holds for passing a pointer and a length as two arguments to the `from_*`
+  functions. Instead, pass two iterators; for instance, call `from_cbor(ptr, ptr+len)` instead of
+  `from_cbor({ptr, len})` or `from_cbor(ptr, len)`.
 
     === "Deprecated"
   
