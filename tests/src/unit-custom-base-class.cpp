@@ -9,6 +9,8 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <type_traits>
+#include <utility>
 
 #include "doctest_compatibility.h"
 
@@ -332,4 +334,72 @@ TEST_CASE("JSON Visit Node")
     }
         );
     CHECK(expected.empty());
+}
+
+// Test accessing members of a custom base class that are hidden by members of nlohmann::basic_json
+class base_class_with_hidden_members
+{
+  public:
+    const char* type_name() const noexcept
+    {
+        return "custom type_name";
+    }
+
+    std::size_t size() const noexcept
+    {
+        return m_size;
+    }
+
+    std::size_t m_size = 42;
+};
+
+using json_with_hidden_base_members =
+    nlohmann::basic_json <
+    std::map,
+    std::vector,
+    std::string,
+    bool,
+    std::int64_t,
+    std::uint64_t,
+    double,
+    std::allocator,
+    nlohmann::adl_serializer,
+    std::vector<std::uint8_t>,
+    base_class_with_hidden_members
+    >;
+
+TEST_CASE("JSON Node as_base_class")
+{
+    using json = json_with_hidden_base_members;
+
+    static_assert(std::is_same<decltype(std::declval<json&>().as_base_class()), json::json_base_class_t&>::value, "");
+    static_assert(std::is_same<decltype(std::declval<const json&>().as_base_class()), const json::json_base_class_t&>::value, "");
+    static_assert(noexcept(std::declval<json&>().as_base_class()), "");
+    static_assert(noexcept(std::declval<const json&>().as_base_class()), "");
+
+    SECTION("non-const")
+    {
+        json j = {1, 2, 3};
+
+        CHECK(std::string(j.type_name()) == "array");
+        CHECK(j.size() == 3);
+        CHECK(std::string(j.as_base_class().type_name()) == "custom type_name");
+        CHECK(j.as_base_class().size() == 42);
+        CHECK(&j.as_base_class() == &static_cast<json::json_base_class_t&>(j));
+
+        j.as_base_class().m_size = 7;
+        CHECK(j.as_base_class().size() == 7);
+        CHECK(j.size() == 3);
+    }
+
+    SECTION("const")
+    {
+        const json j = {1, 2, 3};
+
+        CHECK(std::string(j.type_name()) == "array");
+        CHECK(j.size() == 3);
+        CHECK(std::string(j.as_base_class().type_name()) == "custom type_name");
+        CHECK(j.as_base_class().size() == 42);
+        CHECK(&j.as_base_class() == &static_cast<const json::json_base_class_t&>(j));
+    }
 }
