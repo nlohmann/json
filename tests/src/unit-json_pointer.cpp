@@ -872,3 +872,16 @@ TEST_CASE("JSON pointers")
     }
 #endif
 }
+
+TEST_CASE("unescaping keeps a '~' that does not start an escape sequence")
+{
+    // the parser of a JSON pointer rejects such reference tokens before it
+    // unescapes them, so this is only reachable by calling unescape directly
+    std::string s = "a~2b~";
+    nlohmann::detail::unescape(s);
+    CHECK(s == "a~2b~");
+
+    s = "~0~1~";
+    nlohmann::detail::unescape(s);
+    CHECK(s == "~/~");
+}

@@ -188,7 +188,7 @@ The library maps CBOR types to JSON value types as follows:
 
 !!! warning "Tagged items"
 
-    Tagged items (0xC0..0xDB) will throw a parse error by default. They can be ignored by passing `cbor_tag_handler_t::ignore` to function `from_cbor`, in which case the tag is skipped and the enclosed data item is parsed on its own. They can be stored by passing `cbor_tag_handler_t::store` to function `from_cbor`. Note that no tag is ever interpreted: for instance, a text string tagged with tag 0 (date/time) stays a string.
+    Tagged items (0xC0..0xDB) will throw a parse error by default. They can be ignored by passing `cbor_tag_handler_t::ignore` to function `from_cbor`, in which case the tag is skipped and the enclosed data item is parsed on its own. Passing `cbor_tag_handler_t::store` to function `from_cbor` stores tagged byte strings (for bytes 0xd8..0xdb) as binary values with the tag as subtype; other tagged values are read as if the tag were ignored. If several tags precede a byte string, only the innermost one is stored. Note that no tag is ever interpreted: for instance, a text string tagged with tag 0 (date/time) stays a string.
 
 ??? example
 

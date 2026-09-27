@@ -12,6 +12,7 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <cfloat> // FLT_EVAL_METHOD
 #include <cstdlib> // strtod
 #include <sstream> // stringstream
 #include <string> // string
@@ -656,4 +657,46 @@ TEST_CASE("lexer string fast path")
             }
         }
     }
+}
+
+TEST_CASE("parse_float_fast declines what it cannot convert exactly")
+{
+    // The lexer only hands well-formed numbers to parse_float_fast, so the
+    // malformed ones below can only be passed to it directly. Declining is
+    // always safe: the caller then falls back to a slower, exact conversion.
+    const auto fast = [](const std::string & s, double & out)
+    {
+        return nlohmann::detail::parse_float_fast(s.data(), s.data() + s.size(), '.', out);
+    };
+    double out = 0;
+
+#if defined(FLT_EVAL_METHOD) && FLT_EVAL_METHOD != 0
+    // without true double precision, the fast path declines everything
+    CHECK_FALSE(fast("1.5", out));
+#else
+    CHECK(fast("1.5", out));
+    CHECK(out == 1.5);
+    CHECK(fast("+2.5e1", out));
+    CHECK(out == 25.0);
+    CHECK(fast("-25E-1", out));
+    CHECK(out == -2.5);
+    CHECK(fast("1e", out));
+    CHECK(out == 1.0);
+#endif
+
+    // not a number
+    CHECK_FALSE(fast("", out));
+    CHECK_FALSE(fast("-", out));
+    CHECK_FALSE(fast(".", out));
+    CHECK_FALSE(fast("1.2.3", out));
+    CHECK_FALSE(fast("1x", out));
+    CHECK_FALSE(fast("1e+", out));
+    CHECK_FALSE(fast("1e1x", out));
+
+    // numbers that are not represented exactly on the fast path
+    CHECK_FALSE(fast("12345678901234567890", out));
+    CHECK_FALSE(fast("1e10000", out));
+    CHECK_FALSE(fast("9007199254740993", out));
+    CHECK_FALSE(fast("1e23", out));
+    CHECK_FALSE(fast("1e-23", out));
 }

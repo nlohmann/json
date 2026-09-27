@@ -49,6 +49,16 @@ TEST_CASE("binary type whose value type is not std::uint8_t")
         CHECK(char_binary_json::binary({}).dump() == R"({"bytes":[],"subtype":null})");
     }
 
+    SECTION("a value is converted to the binary type if it is binary or an array")
+    {
+        const std::vector<char> chars{'\0', '\x01', '\x7F'};
+        CHECK(char_binary_json::binary(chars).get<std::vector<char>>() == chars);
+        CHECK(char_binary_json({0, 1, 127}).get<std::vector<char>>() == chars);
+        CHECK_THROWS_WITH_AS(char_binary_json(1).get<std::vector<char>>(),
+                             "[json.exception.type_error.302] type must be binary or array, but is number",
+                             char_binary_json::type_error&);
+    }
+
     SECTION("the default binary type is unchanged")
     {
         CHECK(nlohmann::json::binary({0, 1, 255}, 42).dump() == R"({"bytes":[0,1,255],"subtype":42})");
@@ -74,6 +84,8 @@ TEST_CASE("binary type whose value type is not std::uint8_t")
 
         // UBJSON has no binary type, so binary values are written as an array
         CHECK(byte_binary_json::from_ubjson(byte_binary_json::to_ubjson(j)) == byte_binary_json({0, 1, 255}));
+        // the same holds for BON8
+        CHECK(byte_binary_json::from_bon8(byte_binary_json::to_bon8(j)) == byte_binary_json({0, 1, 255}));
     }
 #endif
 }
