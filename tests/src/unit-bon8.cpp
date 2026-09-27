@@ -105,7 +105,15 @@ using bytes = std::vector<std::uint8_t>;
 /// @return the string with the given bytes
 std::string str(const bytes& b)
 {
-    return {b.begin(), b.end()};
+    // converted one by one: constructing the string from the byte range
+    // converts implicitly, which -fsanitize=integer reports for bytes >= 0x80
+    std::string result;
+    result.reserve(b.size());
+    for (const auto c : b)
+    {
+        result.push_back(static_cast<char>(c));
+    }
+    return result;
 }
 
 /// check that @a j is serialized to @a expected and that @a expected is read back as @a j
