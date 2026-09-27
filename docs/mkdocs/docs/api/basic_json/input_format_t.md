@@ -7,7 +7,8 @@ enum class input_format_t {
     msgpack,
     ubjson,
     bson,
-    bjdata
+    bjdata,
+    bon8
 };
 ```
 
@@ -30,6 +31,9 @@ bson
 
 bjdata
 :   BJData (Binary JData)
+
+bon8
+:   BON8 (Binary Object Notation 8)
 
 ## Examples
 
