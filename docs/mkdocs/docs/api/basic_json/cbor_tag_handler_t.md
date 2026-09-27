@@ -18,7 +18,8 @@ ignore
 :   ignore tags
 
 store
-:   store tagged byte strings (for bytes 0xd8..0xdb) as binary values with the tag as subtype; other tagged values are read as if the tag were ignored. If several tags precede a byte string, only the innermost one is stored.
+:   store tagged byte strings (for bytes 0xd8..0xdb) as binary values with the tag as subtype; other tagged values are
+    read as if the tag were ignored. If several tags precede a byte string, only the innermost one is stored.
 
 ## Examples
 

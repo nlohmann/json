@@ -326,6 +326,15 @@ TEST_CASE("ordered_json across binary formats")
         CHECK(collect_keys(restored) == original_keys);
         CHECK(collect_keys(restored["mango"]) == original_mango_keys);
     }
+
+    SECTION("BON8")
+    {
+        const auto bytes = ordered_json::to_bon8(original);
+        const auto restored = ordered_json::from_bon8(bytes);
+        CHECK(restored == original);
+        CHECK(collect_keys(restored) == original_keys);
+        CHECK(collect_keys(restored["mango"]) == original_mango_keys);
+    }
 }
 
 TEST_CASE("alt_json (custom string_t) across binary formats")
@@ -350,6 +359,13 @@ TEST_CASE("alt_json (custom string_t) across binary formats")
     {
         const auto bytes = alt_json::to_ubjson(original);
         const auto restored = alt_json::from_ubjson(bytes);
+        CHECK(restored == original);
+    }
+
+    SECTION("BON8")
+    {
+        const auto bytes = alt_json::to_bon8(original);
+        const auto restored = alt_json::from_bon8(bytes);
         CHECK(restored == original);
     }
 
