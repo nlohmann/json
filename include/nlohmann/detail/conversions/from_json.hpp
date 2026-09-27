@@ -550,11 +550,40 @@ auto from_json(BasicJsonType&& j, TupleRelated&& t)
     return from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), priority_tag<3> {});
 }
 
+// read a map with enum keys from an object, using the enum's own from_json for
+// the keys (e.g., from NLOHMANN_JSON_SERIALIZE_ENUM); this is the form written
+// with JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+template<typename BasicJsonType, typename Map>
+inline bool from_json_enum_keyed_object(const BasicJsonType& j, Map& m, std::true_type /*key is enum*/)
+{
+    if (!j.is_object())
+    {
+        return false;
+    }
+    m.clear();
+    for (const auto& p : *j.template get_ptr<const typename BasicJsonType::object_t*>())
+    {
+        m.emplace(BasicJsonType(p.first).template get<typename Map::key_type>(), p.second.template get<typename Map::mapped_type>());
+    }
+    return true;
+}
+
+template<typename BasicJsonType, typename Map>
+inline bool from_json_enum_keyed_object(const BasicJsonType& /*j*/, Map& /*m*/, std::false_type /*key is enum*/)
+{
+    return false;
+}
+
 template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
            typename = enable_if_t < !std::is_constructible <
                                         typename BasicJsonType::string_t, Key >::value >>
 inline void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
 {
+    // NOLINTNEXTLINE(modernize-type-traits) we use C++11
+    if (from_json_enum_keyed_object(j, m, std::is_enum<Key> {}))
+    {
+        return;
+    }
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
         JSON_THROW(type_error::create(302, concat("type must be array, but is ", j.type_name()), &j));
@@ -575,6 +604,11 @@ template < typename BasicJsonType, typename Key, typename Value, typename Hash, 
                                         typename BasicJsonType::string_t, Key >::value >>
 inline void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
 {
+    // NOLINTNEXTLINE(modernize-type-traits) we use C++11
+    if (from_json_enum_keyed_object(j, m, std::is_enum<Key> {}))
+    {
+        return;
+    }
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
         JSON_THROW(type_error::create(302, concat("type must be array, but is ", j.type_name()), &j));

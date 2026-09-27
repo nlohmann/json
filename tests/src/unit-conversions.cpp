@@ -26,6 +26,7 @@ using nlohmann::json;
 
 #include <deque>
 #include <forward_list>
+#include <functional>
 #include <list>
 #include <set>
 #include <unordered_map>
@@ -1762,6 +1763,78 @@ TEST_CASE("Strict JSON to enum mapping")
 
         // conversion of unmapped enum -> exception thrown
         CHECK_THROWS_WITH_AS(json(STRICT_TS_OTHER), "[json.exception.out_of_range.410] enum value out of range for StrictTaskState", json::out_of_range&);
+    }
+}
+
+namespace
+{
+// std::hash is only required for enums since C++14
+struct enum_hash
+{
+    template<typename T>
+    std::size_t operator()(T t) const noexcept
+    {
+        return static_cast<std::size_t>(t);
+    }
+};
+} // namespace
+
+// see unit-enum_keyed_maps.cpp for JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS=1
+TEST_CASE("maps with enum keys")
+{
+    using task_map = std::map<TaskState, std::string>;
+    using task_umap = std::unordered_map<TaskState, std::string, enum_hash>;
+    using task_gmap = std::map<TaskState, std::string, std::greater<TaskState>>;
+    using nested_map = std::map<cards, std::map<TaskState, int>>;
+    using strict_map = std::map<strict_cards, int>;
+    using int_map = std::map<int, int>;
+    using int_umap = std::unordered_map<int, int>;
+
+    const task_map m = {{TS_STOPPED, "aa"}, {TS_COMPLETED, "bb"}};
+
+#if !JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+    SECTION("stored as array of pairs")
+    {
+        CHECK(json(m) == json::parse(R"([["stopped","aa"],["completed","bb"]])"));
+        CHECK(json(task_umap {{TS_RUNNING, "cc"}}) == json::parse(R"([["running","cc"]])"));
+    }
+#endif
+
+    SECTION("read from array of pairs")
+    {
+        CHECK(json::parse(R"([["stopped","aa"],["completed","bb"]])").get<task_map>() == m);
+    }
+
+    SECTION("read from object (#4378)")
+    {
+        const json j = json::parse(R"({"stopped":"aa","completed":"bb"})");
+        CHECK(j.get<task_map>() == m);
+        CHECK(j.get<task_umap>() == task_umap(m.begin(), m.end()));
+        CHECK(j.get<task_gmap>() == task_gmap(m.begin(), m.end()));
+        CHECK(json::parse(R"({"kreuz":{"stopped":1}})").get<nested_map>() == nested_map {{cards::kreuz, {{TS_STOPPED, 1}}}});
+        CHECK(nlohmann::ordered_json::parse(R"({"stopped":"aa","completed":"bb"})").get<task_map>() == m);
+
+        // object keys go through the enum's from_json
+        strict_map sm;
+        CHECK_THROWS_WITH_AS(json::parse(R"({"what?":1})").get_to(sm),
+                             "[json.exception.out_of_range.410] enum value out of range for strict_cards: \"what?\"", json::out_of_range&);
+    }
+
+    SECTION("objects are only read for enum keys")
+    {
+        int_map im;
+        int_umap ium;
+        CHECK_THROWS_WITH_AS(json::parse(R"({"1":2})").get_to(im),
+                             "[json.exception.type_error.302] type must be array, but is object", json::type_error&);
+        CHECK_THROWS_WITH_AS(json::parse(R"({"1":2})").get_to(ium),
+                             "[json.exception.type_error.302] type must be array, but is object", json::type_error&);
+    }
+
+    SECTION("other types are rejected")
+    {
+        task_map tm;
+        CHECK_THROWS_WITH_AS(json("stopped").get_to(tm),
+                             "[json.exception.type_error.302] type must be array, but is string", json::type_error&);
     }
 }
 

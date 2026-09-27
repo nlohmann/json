@@ -400,6 +400,20 @@ template<typename BasicJsonType, typename CompatibleObjectType>
 struct is_compatible_object_type
     : is_compatible_object_type_impl<BasicJsonType, CompatibleObjectType> {};
 
+// a map-like type (std::map, std::unordered_map, ...) whose keys are enums; see
+// JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+template<typename T, typename = void>
+struct is_enum_keyed_map : std::false_type {};
+
+template<typename T>
+struct is_enum_keyed_map <
+    T, enable_if_t < is_detected<mapped_type_t, T>::value&&
+    is_detected<key_type_t, T>::value >>
+{
+    // NOLINTNEXTLINE(modernize-type-traits) we use C++11
+    static constexpr bool value = std::is_enum<typename T::key_type>::value;
+};
+
 template<typename BasicJsonType, typename ConstructibleObjectType,
          typename = void>
 struct is_constructible_object_type_impl : std::false_type {};
