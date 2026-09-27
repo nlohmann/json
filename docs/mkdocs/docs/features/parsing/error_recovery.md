@@ -65,11 +65,36 @@ The input after the top-level value is not repaired: as without recovery, it is 
 
 The binary formats ([BJData](../binary_formats/bjdata.md), [BON8](../binary_formats/bon8.md),
 [BSON](../binary_formats/bson.md), [CBOR](../binary_formats/cbor.md), [MessagePack](../binary_formats/messagepack.md),
-and [UBJSON](../binary_formats/ubjson.md)) cannot be repaired: a value's size is stored before its content, and every
-byte is a valid type marker, so after an error there is no way to tell where the next value begins. Parsing therefore
-always stops at the first error. If `parse_error` returns `#!cpp true`, the value read so far is completed before
-parsing stops: a key that waits for its value gets `#!json null`, and all open arrays and objects are closed. This keeps
-everything before the error of an input that was cut off.
+and [UBJSON](../binary_formats/ubjson.md)) have no delimiters to find the next value by. So what can be repaired depends
+on whether the end of the item with the error is known, a distinction that
+[RFC 8949, Section 5.3](https://www.rfc-editor.org/rfc/rfc8949.html#section-5.3) makes for CBOR, too.
+
+If the item is complete, but cannot be passed on as it is, it is replaced, and parsing continues after it:
+
+| Mistake                                                             | Formats                                 | Repair                                                                  |
+|---------------------------------------------------------------------|-----------------------------------------|-------------------------------------------------------------------------|
+| tag                                                                 | CBOR                                    | ignored                                                                 |
+| simple value other than `false`, `true`, and `null`, like undefined | CBOR                                    | `#!json null`                                                           |
+| negative integer below the range of `number_integer_t`              | CBOR                                    | the nearest floating-point number                                       |
+| string that is not valid UTF-8                                      | BJData, BSON, CBOR, MessagePack, UBJSON | each ill-formed sequence becomes U+FFFD                                 |
+| character (`C`) that is not ASCII                                   | BJData, UBJSON                          | U+FFFD                                                                  |
+| invalid high-precision number (`H`)                                 | BJData, UBJSON                          | the longest valid beginning is kept, as for JSON text, or `#!json null` |
+| high-precision number too large                                     | BJData, UBJSON                          | passed as infinity, together with its text                              |
+| object key that is not a string                                     | BON8, CBOR, MessagePack                 | the member is skipped                                                   |
+| element of a type the library does not read, like ObjectId or date  | BSON                                    | `#!json null`                                                           |
+| string without its terminator                                       | BSON                                    | kept                                                                    |
+| document whose size does not match its content                      | BSON                                    | kept                                                                    |
+
+CBOR tags and simple values are repaired as [RFC 8949, Section 6.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-6.1)
+suggests for converting CBOR to JSON. Note that [`sax_parse`](../../api/basic_json/sax_parse.md) has no parameter for
+CBOR tags, so every tag is an error there; when recovering, tags are ignored like with
+[`cbor_tag_handler_t::ignore`](../../api/basic_json/cbor_tag_handler_t.md).
+
+After any other error, the end of the item is unknown: the input ended, a byte is not a valid type marker, or a size
+cannot be right. Parsing then stops, and the value read so far is completed: a key that waits for its value gets
+`#!json null`, and all open arrays and objects are closed. This keeps everything before the error of an input that was
+cut off. The exception is BSON, which stores the size of every document: an element whose end is unknown gets
+`#!json null`, the rest of its document is skipped, and parsing continues after the document.
 
 ## Limitations
 
@@ -80,6 +105,8 @@ everything before the error of an input that was cut off.
   repair differs from the intention: `#!json {"a": {"b": [1, 2}, "c": 3}` is repaired to
   `#!json {"a": {"b": [1, 2], "c": 3}}`, although `#!json {"a": {"b": [1, 2]}, "c": 3}` may have been meant.
 - Keys without quotes, and strings in single quotes, are not supported; such members are skipped.
+- In the binary formats, a member that is skipped because its key is not a string is lost, and so are the elements of a
+  BSON document after one whose end is unknown.
 - A number that is too large for `number_float_t` is passed as positive or negative infinity. The SAX parser's
   `number_float` also gets the number's text, but a JSON value cannot store it, and
   [`dump`](../../api/basic_json/dump.md) serializes infinity as `#!json null`.

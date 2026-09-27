@@ -143,7 +143,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     friend class ::nlohmann::detail::iter_impl;
     template<typename BasicJsonType, typename CharType, typename OutputSinkType>
     friend class ::nlohmann::detail::binary_writer;
-    template<typename BasicJsonType, typename InputType, typename SAX>
+    template<typename BasicJsonType, typename InputType, typename SAX, bool AllowRecovery>
     friend class ::nlohmann::detail::binary_reader;
     template<typename BasicJsonType, typename InputAdapterType>
     friend class ::nlohmann::detail::json_sax_dom_parser;
@@ -4979,26 +4979,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return parser(i.get(), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
     }
 
-  private:
-    /// read a binary format and pass it to a SAX parser; if the SAX parser
-    /// asks to recover from an error, the value read so far is completed
-    /// (see detail::json_sax_salvager and #3989)
-    template<typename InputAdapterType, typename SAX>
-    static bool sax_parse_binary(InputAdapterType ia, SAX* sax,
-                                 const input_format_t format, const bool strict)
-    {
-        (void)detail::is_sax_static_asserts<SAX, basic_json> {};
-        using salvager_t = detail::json_sax_salvager<basic_json, SAX>;
-        salvager_t salvager(sax);
-        const bool result = detail::binary_reader<basic_json, InputAdapterType, salvager_t>(std::move(ia), format).sax_parse(format, &salvager, strict);
-        if (!result)
-        {
-            salvager.close_open_containers();
-        }
-        return result;
-    }
-
-  public:
     /// @brief generate SAX events
     /// @sa https://json.nlohmann.me/api/basic_json/sax_parse/
     template <typename InputType, typename SAX>
@@ -5012,7 +4992,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         return format == input_format_t::json
                ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
-               : sax_parse_binary(std::move(ia), sax, format, strict);
+               : detail::binary_reader<basic_json, decltype(ia), SAX, true>(std::move(ia), format).sax_parse(format, sax, strict);
     }
 
     /// @brief generate SAX events (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -5029,7 +5009,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         return format == input_format_t::json
                ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
-               : sax_parse_binary(std::move(ia), sax, format, strict);
+               : detail::binary_reader<basic_json, decltype(ia), SAX, true>(std::move(ia), format).sax_parse(format, sax, strict);
     }
 
     /// @brief generate SAX events
@@ -5051,7 +5031,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
                ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-               : sax_parse_binary(std::move(ia), sax, format, strict);
+               : detail::binary_reader<basic_json, decltype(ia), SAX, true>(std::move(ia), format).sax_parse(format, sax, strict);
     }
 #ifndef JSON_NO_IO
     /// @brief deserialize from stream

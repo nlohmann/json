@@ -28,7 +28,6 @@ drivers.
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <vector>
 #include <nlohmann/json.hpp>
 
 // the round-trip checks below are assertions; NDEBUG would compile them away
@@ -36,143 +35,18 @@ drivers.
     #error "the fuzzer drivers must be built without NDEBUG"
 #endif
 
+#include "fuzzer-recovering_checker.hpp"
+
 using json = nlohmann::json;
-
-namespace
-{
-// a SAX parser that recovers from every error and checks that the events are
-// balanced and that every key is followed by exactly one value
-class recovering_checker : public nlohmann::json_sax<json>
-{
-  public:
-    bool null() override
-    {
-        return value();
-    }
-
-    bool boolean(bool /*val*/) override
-    {
-        return value();
-    }
-
-    bool number_integer(number_integer_t /*val*/) override
-    {
-        return value();
-    }
-
-    bool number_unsigned(number_unsigned_t /*val*/) override
-    {
-        return value();
-    }
-
-    bool number_float(number_float_t /*val*/, const string_t& /*s*/) override
-    {
-        return value();
-    }
-
-    bool string(string_t& /*val*/) override
-    {
-        return value();
-    }
-
-    bool binary(binary_t& /*val*/) override
-    {
-        return value();
-    }
-
-    bool start_object(std::size_t /*elements*/) override
-    {
-        value();
-        stack.push_back('o');
-        return true;
-    }
-
-    bool key(string_t& /*val*/) override
-    {
-        ++events;
-        assert(!stack.empty() && stack.back() == 'o');
-        stack.back() = 'v';
-        return true;
-    }
-
-    bool end_object() override
-    {
-        ++events;
-        assert(!stack.empty() && stack.back() == 'o');
-        stack.pop_back();
-        return true;
-    }
-
-    bool start_array(std::size_t /*elements*/) override
-    {
-        value();
-        stack.push_back('a');
-        return true;
-    }
-
-    bool end_array() override
-    {
-        ++events;
-        assert(!stack.empty() && stack.back() == 'a');
-        stack.pop_back();
-        return true;
-    }
-
-    bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const nlohmann::detail::exception& /*ex*/) override
-    {
-        ++errors;
-        return true;
-    }
-
-    bool complete() const
-    {
-        return stack.empty();
-    }
-
-    std::size_t events = 0;
-    std::size_t errors = 0;
-
-  private:
-    bool value()
-    {
-        ++events;
-        if (!stack.empty())
-        {
-            // an array element, or the value of a key
-            assert(stack.back() != 'o');
-            if (stack.back() == 'v')
-            {
-                stack.back() = 'o';
-            }
-        }
-        return true;
-    }
-
-    // 'a' for an array, 'o' for an object that expects a key, 'v' for an
-    // object that expects the value of a key
-    std::vector<char> stack;
-};
-} // namespace
 
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     // step 0: recover from all errors, reading from memory and from a stream
     {
-        recovering_checker checker;
-        const bool ok = json::sax_parse(data, data + size, &checker);
-        assert(checker.complete());
-        assert(checker.errors <= size + 1);
+        const auto checker = check_recovering_parse(data, size, json::input_format_t::json);
         assert(checker.events <= (4 * size) + 4);
-        assert(ok == json::accept(data, data + size));
-        assert(ok == (checker.errors == 0));
-
-        std::istringstream stream(std::string(reinterpret_cast<const char*>(data), size));
-        recovering_checker stream_checker;
-        assert(json::sax_parse(stream, &stream_checker) == ok);
-        assert(stream_checker.complete());
-        assert(stream_checker.events == checker.events);
-        assert(stream_checker.errors == checker.errors);
+        assert((checker.errors == 0) == json::accept(data, data + size));
     }
 
     try

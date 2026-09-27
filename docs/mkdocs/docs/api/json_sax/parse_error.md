@@ -24,9 +24,9 @@ A parse error occurred.
 Whether to recover from the error:
 
 - `#!cpp false` stops parsing.
-- `#!cpp true` recovers from the error: JSON text is repaired and parsing continues; for the binary formats, the value
-  read so far is completed and parsing stops. See [error recovery](../../features/parsing/error_recovery.md) for how
-  errors are repaired.
+- `#!cpp true` recovers from the error: the error is repaired and parsing continues. If that is not possible, which
+  happens in the binary formats when the end of the item with the error is unknown, the value read so far is completed
+  and parsing stops. See [error recovery](../../features/parsing/error_recovery.md) for how errors are repaired.
 
 Either way, [`sax_parse`](../basic_json/sax_parse.md) returns `#!cpp false`.
 

@@ -972,8 +972,9 @@ class RecoveringParser : public nlohmann::detail::json_sax_dom_parser<json>
         return base::end_array();
     }
 
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/)
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& ex)
     {
+        messages.emplace_back(ex.what());
         // a limit, so that a reader that does not stop fails the test
         // instead of making it hang
         return ++errors < 100;
@@ -986,6 +987,7 @@ class RecoveringParser : public nlohmann::detail::json_sax_dom_parser<json>
     }
 
     std::size_t errors = 0;
+    std::vector<std::string> messages {}; // NOLINT(readability-redundant-member-init)
     std::vector<char> stack {}; // NOLINT(readability-redundant-member-init)
     bool well_formed = true;
 
@@ -1011,6 +1013,7 @@ struct BinaryParseResult
 {
     json value;
     std::size_t errors;
+    std::vector<std::string> messages;
     bool ok;
     bool balanced;
 };
@@ -1020,13 +1023,117 @@ BinaryParseResult parse_binary_recovering(const std::vector<std::uint8_t>& input
     json j;
     RecoveringParser sax(j);
     const bool ok = json::sax_parse(input, &sax, format);
-    return {j, sax.errors, ok, sax.balanced()};
+    return {j, sax.errors, sax.messages, ok, sax.balanced()};
 }
+
+/// the message of the exception that reading @a input into a JSON value
+/// throws, or an empty string if reading succeeds
+std::string binary_error_message(const std::vector<std::uint8_t>& input, const json::input_format_t format)
+{
+    try
+    {
+        json _;
+        switch (format)
+        {
+            case json::input_format_t::cbor:
+                _ = json::from_cbor(input);
+                break;
+            case json::input_format_t::msgpack:
+                _ = json::from_msgpack(input);
+                break;
+            case json::input_format_t::ubjson:
+                _ = json::from_ubjson(input);
+                break;
+            case json::input_format_t::bjdata:
+                _ = json::from_bjdata(input);
+                break;
+            case json::input_format_t::bson:
+                _ = json::from_bson(input);
+                break;
+            case json::input_format_t::bon8:
+                _ = json::from_bon8(input);
+                break;
+            case json::input_format_t::json:
+            default:
+                break;
+        }
+    }
+    catch (const json::exception& e)
+    {
+        return e.what();
+    }
+    return "";
+}
+
+/// a BSON element: its type, its name, and its value
+std::vector<std::uint8_t> bson_element(const std::uint8_t type, const std::string& name, const std::vector<std::uint8_t>& value)
+{
+    std::vector<std::uint8_t> result = {type};
+    result.insert(result.end(), name.begin(), name.end());
+    result.push_back(0x00);
+    result.insert(result.end(), value.begin(), value.end());
+    return result;
+}
+
+/// a BSON document of the given elements; @a size_offset is added to the
+/// size it declares
+std::vector<std::uint8_t> bson_document(const std::vector<std::vector<std::uint8_t>>& elements, const int size_offset = 0)
+{
+    std::vector<std::uint8_t> body;
+    for (const auto& element : elements)
+    {
+        body.insert(body.end(), element.begin(), element.end());
+    }
+    const auto size = static_cast<std::uint32_t>(static_cast<int>(body.size()) + 5 + size_offset);
+    std::vector<std::uint8_t> result = {static_cast<std::uint8_t>(size & 0xFFu), static_cast<std::uint8_t>((size >> 8u) & 0xFFu),
+                                        static_cast<std::uint8_t>((size >> 16u) & 0xFFu), static_cast<std::uint8_t>((size >> 24u) & 0xFFu)
+                                       };
+    result.insert(result.end(), body.begin(), body.end());
+    result.push_back(0x00);
+    return result;
+}
+
+/// a BSON int32 value
+std::vector<std::uint8_t> bson_int32(const std::int32_t value)
+{
+    const auto u = static_cast<std::uint32_t>(value);
+    return {static_cast<std::uint8_t>(u & 0xFFu), static_cast<std::uint8_t>((u >> 8u) & 0xFFu),
+            static_cast<std::uint8_t>((u >> 16u) & 0xFFu), static_cast<std::uint8_t>((u >> 24u) & 0xFFu)};
+}
+
+/// a BSON string value, whose length is @a length_offset off
+std::vector<std::uint8_t> bson_string(const std::string& value, const std::int32_t length_offset = 0)
+{
+    auto result = bson_int32(static_cast<std::int32_t>(value.size() + 1) + length_offset);
+    result.insert(result.end(), value.begin(), value.end());
+    result.push_back(0x00);
+    return result;
+}
+
+/// @a count bytes of value 0xAB
+std::vector<std::uint8_t> bytes(const std::size_t count)
+{
+    return std::vector<std::uint8_t>(count, 0xAB);
+}
+
+template<typename... Parts>
+std::vector<std::uint8_t> concatenated(const std::vector<std::uint8_t>& first, const Parts& ... rest)
+{
+    std::vector<std::uint8_t> result = first;
+    for (const auto& part : std::initializer_list<std::vector<std::uint8_t>> {rest...})
+    {
+        result.insert(result.end(), part.begin(), part.end());
+    }
+    return result;
+}
+
+/// U+FFFD REPLACEMENT CHARACTER
+const std::string replacement_character = "\xEF\xBF\xBD";
 }  // namespace
 
 TEST_CASE("regression test - #3989 SAX parse_error() returning true")
 {
-    SECTION("binary formats stop after an error and complete what was read")
+    SECTION("binary formats complete what was read before the input ends")
     {
         const json j = {{"a", {1, -2, {{"b", "c"}}, json::array()}}, {"d", {{"e", nullptr}, {"f", true}}}, {"g", 1.5}, {"h", json::binary({1, 2, 3})}};
 
@@ -1106,6 +1213,210 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
         CHECK(result.errors == 1);
         CHECK(result.balanced);
         CHECK(result.value == json({{"_ArrayType_", "int8"}, {"_ArraySize_", {2, 3}}, {"_ArrayData_", {1, 2}}}));
+    }
+
+    SECTION("binary formats repair items whose end is known")
+    {
+        struct Repair
+        {
+            json::input_format_t format;
+            std::vector<std::uint8_t> input;
+            json expected;
+            std::size_t errors;
+        };
+
+        const std::vector<Repair> repairs =
+        {
+            // CBOR: tags are ignored (here tag 1 and the self-describe tag 55799)
+            {json::input_format_t::cbor, {0x82, 0xC1, 0x05, 0xD9, 0xD9, 0xF7, 0x06}, {5, 6}, 2},
+            // CBOR: undefined and other simple values become null
+            {json::input_format_t::cbor, {0x84, 0xF7, 0xE0, 0xF8, 0x20, 0x01}, {nullptr, nullptr, nullptr, 1}, 3},
+            // CBOR: ill-formed UTF-8 becomes U+FFFD, also in keys
+            {json::input_format_t::cbor, {0xA1, 0x61, 0xFF, 0x62, 0xC3, 0x28}, {{replacement_character, replacement_character + "("}}, 2},
+            // CBOR: members whose key is not a string are skipped, whatever their key and value
+            {json::input_format_t::cbor, {0xA4, 0x01, 0x02, 0x82, 0x01, 0x02, 0xA1, 0x61, 'x', 0x9F, 0xFF, 0xC1, 0x01, 0x5F, 0x41, 0x00, 0xFF, 0x61, 'a', 0x03}, {{"a", 3}}, 3},
+            {json::input_format_t::cbor, {0xBF, 0xF5, 0xBF, 0x61, 'x', 0x7F, 0x61, 'y', 0xFF, 0xFF, 0x61, 'a', 0x03, 0xFF}, {{"a", 3}}, 1},
+            // MessagePack: members whose key is not a string are skipped
+            {json::input_format_t::msgpack, {0x84, 0x01, 0x02, 0x81, 0xA1, 'x', 0x01, 0x92, 0x01, 0x02, 0xD4, 0x01, 0x02, 0xC0, 0xA1, 'a', 0x04}, {{"a", 4}}, 3},
+            // MessagePack: ill-formed UTF-8 becomes U+FFFD
+            {json::input_format_t::msgpack, {0x92, 0xA2, 0xC3, 0x28, 0xA3, 0xE2, 0x82, 'x'}, {replacement_character + "(", replacement_character + "x"}, 2},
+            // UBJSON: a char that is not ASCII becomes U+FFFD
+            {json::input_format_t::ubjson, {'[', 'C', 0x80, 'C', 'A', ']'}, {replacement_character, "A"}, 1},
+            // UBJSON: the longest beginning of a high-precision number is kept
+            {json::input_format_t::ubjson, {'[', 'H', 'i', 5, '1', '2', 'a', 'b', 'c', 'H', 'i', 2, '1', '.', 'H', 'i', 3, 'a', 'b', 'c', 'H', 'i', 3, '4', '.', '5', ']'}, {12, 1, nullptr, 4.5}, 3},
+            // BJData, too
+            {json::input_format_t::bjdata, {'[', 'C', 0xFF, 'H', 'i', 2, '-', '1', 'H', 'i', 2, '-', 'x', ']'}, {replacement_character, -1, nullptr}, 2},
+            // BON8: members whose key is not a string are skipped
+            {json::input_format_t::bon8, {0x89, 0x91, 0x92, 0xC9, 0x40, 0x82, 0x91, 0x92, 0x61, 0x93}, {{"a", 3}}, 2},
+            {json::input_format_t::bon8, {0x8B, 0x91, 0x85, 0x91, 0xFE, 0xFA, 0x8B, 'x', 0x91, 0xFE, 0x61, 0x93, 0xFE}, {{"a", 3}}, 2},
+            // BSON: elements of types the library does not read become null
+            {
+                json::input_format_t::bson, bson_document(
+                {
+                    bson_element(0x07, "_id", bytes(12)),                         // ObjectId
+                    bson_element(0x09, "date", bytes(8)),                         // UTC datetime
+                    bson_element(0x13, "decimal", bytes(16)),                     // 128-bit decimal
+                    bson_element(0x0B, "regex", {'a', '+', 0, 'i', 0}),           // regular expression
+                    bson_element(0x0D, "code", bson_string("f()")),               // JavaScript code
+                    bson_element(0x0E, "symbol", bson_string("s")),               // symbol
+                    bson_element(0x0C, "pointer", concatenated(bson_string("c"), bytes(12))), // DBPointer
+                    bson_element(0x0F, "scope", concatenated(bson_int32(15), bson_string("g"), bson_document({}))), // code with scope
+                    bson_element(0x06, "undefined", {}),                          // undefined
+                    bson_element(0xFF, "min", {}),                                // min key
+                    bson_element(0x7F, "max", {}),                                // max key
+                    bson_element(0x10, "z", bson_int32(7)),
+                }),
+                {{"_id", nullptr}, {"date", nullptr}, {"decimal", nullptr}, {"regex", nullptr}, {"code", nullptr}, {"symbol", nullptr}, {"pointer", nullptr}, {"scope", nullptr}, {"undefined", nullptr}, {"min", nullptr}, {"max", nullptr}, {"z", 7}},
+                11
+            },
+            // BSON: an element of an unknown type becomes null, and the rest of its document is skipped
+            {
+                json::input_format_t::bson, bson_document(
+                {
+                    bson_element(0x03, "inner", bson_document({bson_element(0x10, "a", bson_int32(1)), bson_element(0x42, "x", bytes(3)), bson_element(0x10, "b", bson_int32(2))})),
+                    bson_element(0x04, "array", bson_document({bson_element(0x10, "0", bson_int32(1)), bson_element(0x42, "1", bytes(3))})),
+                    bson_element(0x10, "after", bson_int32(3)),
+                }),
+                {{"inner", {{"a", 1}, {"x", nullptr}}}, {"array", {1, nullptr}}, {"after", 3}},
+                2
+            },
+            // BSON: so does a string or byte array whose length cannot be right
+            {
+                json::input_format_t::bson, bson_document(
+                {
+                    bson_element(0x03, "inner", bson_document({bson_element(0x02, "s", bson_string("abc", -10)), bson_element(0x10, "b", bson_int32(2))})),
+                    bson_element(0x03, "bin", bson_document({bson_element(0x05, "b", concatenated(bson_int32(-1), bytes(1))), bson_element(0x10, "b", bson_int32(2))})),
+                    bson_element(0x10, "after", bson_int32(3)),
+                }),
+                {{"inner", {{"s", nullptr}}}, {"bin", {{"b", nullptr}}}, {"after", 3}},
+                2
+            },
+            // BSON: a string without its terminator, and a document whose size does not match, are kept
+            {
+                json::input_format_t::bson, bson_document(
+                {
+                    bson_element(0x02, "s", {2, 0, 0, 0, 'a', 'X'}),
+                    bson_element(0x03, "inner", bson_document({bson_element(0x10, "a", bson_int32(1))}, 1)),
+                }),
+                {{"s", "a"}, {"inner", {{"a", 1}}}},
+                2
+            },
+        };
+
+        for (const auto& repair : repairs)
+        {
+            CAPTURE(repair.format);
+            CAPTURE(repair.input);
+            const auto result = parse_binary_recovering(repair.input, repair.format);
+            CHECK(!result.ok);
+            CHECK(result.balanced);
+            CHECK(result.errors == repair.errors);
+            CHECK(result.value == repair.expected);
+            // the first error is the one reported without recovering
+            REQUIRE(!result.messages.empty());
+            CHECK(result.messages.front() == binary_error_message(repair.input, repair.format));
+        }
+    }
+
+    SECTION("binary formats repair numbers that are out of range")
+    {
+        // CBOR: a negative integer below the range of number_integer_t
+        const auto cbor = parse_binary_recovering({0x3B, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, json::input_format_t::cbor);
+        CHECK(cbor.errors == 1);
+        CHECK(cbor.value.is_number_float());
+        CHECK(cbor.value.get<double>() == -18446744073709551616.0);
+
+        // UBJSON: a high-precision number too large for number_float_t
+        const auto ubjson = parse_binary_recovering({'H', 'i', 5, '1', 'e', '9', '9', '9'}, json::input_format_t::ubjson);
+        CHECK(ubjson.errors == 1);
+        CHECK(ubjson.value.is_number_float());
+        CHECK(std::isinf(ubjson.value.get<double>()));
+    }
+
+    SECTION("binary formats stop where the end of an item is not known")
+    {
+        // a byte that begins no item
+        const auto cbor = parse_binary_recovering({0x82, 0x01, 0x1C, 0x02}, json::input_format_t::cbor);
+        CHECK(cbor.errors == 1);
+        CHECK(cbor.value == json({1}));
+
+        // a key that is no item: the unused MessagePack byte, a CBOR break
+        // in a map of known size, and the end of a BON8 container
+        const auto msgpack = parse_binary_recovering({0x82, 0xA1, 'a', 0x01, 0xC1, 0x02}, json::input_format_t::msgpack);
+        CHECK(msgpack.errors == 1);
+        CHECK(msgpack.value == json({{"a", 1}}));
+        const auto cbor_break = parse_binary_recovering({0xA2, 0x61, 'a', 0x01, 0xFF, 0x02}, json::input_format_t::cbor);
+        CHECK(cbor_break.errors == 1);
+        CHECK(cbor_break.value == json({{"a", 1}}));
+        const auto bon8 = parse_binary_recovering({0x88, 0x61, 0x91, 0xFE}, json::input_format_t::bon8);
+        CHECK(bon8.errors == 1);
+        CHECK(bon8.value == json({{"a", 1}}));
+
+        // a skipped member that the input ends in
+        const auto truncated = parse_binary_recovering({0xA2, 0x01, 0x82, 0x01}, json::input_format_t::cbor);
+        CHECK(truncated.errors == 2);
+        CHECK(truncated.balanced);
+        CHECK(truncated.value == json::object());
+
+        // a BSON element of an unknown type in a document whose size cannot be right
+        const auto bson = parse_binary_recovering(bson_document({bson_element(0x10, "a", bson_int32(1)), bson_element(0x42, "x", bytes(3))}, -10), json::input_format_t::bson);
+        CHECK(bson.errors == 1);
+        CHECK(bson.value == json({{"a", 1}, {"x", nullptr}}));
+    }
+
+    SECTION("changed bytes in binary input")
+    {
+        const json j = {{"a", {1, -2, {{"b", "c"}}, json::array()}}, {"d", {{"e", nullptr}, {"f", true}}}, {"g", 1.5}, {"h", json::binary({1, 2, 3})}, {"i", "\xC3\xA4"}};
+
+        const std::vector<std::pair<json::input_format_t, std::vector<std::uint8_t>>> encodings =
+        {
+            {json::input_format_t::cbor, json::to_cbor(j)},
+            {json::input_format_t::msgpack, json::to_msgpack(j)},
+            {json::input_format_t::ubjson, json::to_ubjson(j)},
+            {json::input_format_t::ubjson, json::to_ubjson(j, true, true)},
+            {json::input_format_t::bjdata, json::to_bjdata(j)},
+            {json::input_format_t::bjdata, json::to_bjdata(j, true, true)},
+            {json::input_format_t::bson, json::to_bson(j)},
+            {json::input_format_t::bon8, json::to_bon8(j)},
+        };
+        const std::vector<std::uint8_t> replacements = {0x00, 0x01, 0x7F, 0x80, 0xC1, 0xD9, 0xE0, 0xF7, 0xFE, 0xFF};
+
+        for (const auto& encoding : encodings)
+        {
+            const auto format = encoding.first;
+            const auto& original = encoding.second;
+            CAPTURE(format);
+
+            std::vector<std::vector<std::uint8_t>> inputs;
+            for (std::size_t position = 0; position < original.size(); ++position)
+            {
+                for (const auto replacement : replacements)
+                {
+                    auto changed = original;
+                    changed[position] = replacement;
+                    inputs.push_back(changed);
+                }
+                auto removed = original;
+                removed.erase(removed.begin() + static_cast<std::ptrdiff_t>(position));
+                inputs.push_back(removed);
+            }
+
+            for (const auto& input : inputs)
+            {
+                CAPTURE(input);
+                const auto result = parse_binary_recovering(input, format);
+                CHECK(result.balanced);
+                CHECK(result.errors <= input.size() + 1);
+                // an error is reported exactly if reading into a JSON value
+                // fails, and the first one is the same
+                const auto message = binary_error_message(input, format);
+                CHECK(result.ok == message.empty());
+                if (!result.ok && result.errors < 100)
+                {
+                    CHECK(result.messages.front() == message);
+                }
+            }
+        }
     }
 
     SECTION("JSON text")
