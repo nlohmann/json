@@ -170,9 +170,6 @@ TEST_CASE("Unicode (1/5)" * doctest::skip())
 
         SECTION("check JSON Pointers")
         {
-            // escaping only treats '~' and '/' specially, so every 64th
-            // element plus those two characters suffices (#5418)
-            std::size_t index = 0;
             for (const auto& s : j)
             {
                 // skip non-string JSON values
@@ -182,11 +179,6 @@ TEST_CASE("Unicode (1/5)" * doctest::skip())
                 }
 
                 auto ptr = s.get<std::string>();
-
-                if (index++ % 64 != 0 && ptr != "~" && ptr != "/")
-                {
-                    continue;
-                }
 
                 // tilde must be followed by 0 or 1
                 if (ptr == "~")
