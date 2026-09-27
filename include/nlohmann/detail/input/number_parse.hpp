@@ -118,14 +118,12 @@ std::strtod. The parser only activates for number_float_t == double; float and
 long double keep the std::strtof/std::strtold paths (see the templated overload
 below).
 
-@param[in]  first          pointer to the first character of the number
-@param[in]  last           pointer past the last character
-@param[in]  decimal_point  the (locale-dependent) decimal point character
-@param[out] out            the parsed value on success
+@param[in]  first  pointer to the first character of the number
+@param[in]  last   pointer past the last character
+@param[out] out    the parsed value on success
 @return true if the value was parsed exactly; false to fall back to strtod
 */
-template<typename DecimalPointType>
-bool parse_float_fast(const char* first, const char* last, DecimalPointType decimal_point, double& out) noexcept
+inline bool parse_float_fast(const char* first, const char* last, double& out) noexcept
 {
 #if defined(FLT_EVAL_METHOD) && FLT_EVAL_METHOD != 0
     // Clinger's fast path is only exact when double operations are evaluated in
@@ -136,7 +134,6 @@ bool parse_float_fast(const char* first, const char* last, DecimalPointType deci
     // std::from_chars / std::strtod path.
     static_cast<void>(first);
     static_cast<void>(last);
-    static_cast<void>(decimal_point);
     static_cast<void>(out);
     return false;
 #else
@@ -175,7 +172,7 @@ bool parse_float_fast(const char* first, const char* last, DecimalPointType deci
             ++num_digits;
             fractional_digits += static_cast<int>(seen_dot);
         }
-        else if (static_cast<DecimalPointType>(c) == decimal_point)
+        else if (c == '.')
         {
             if (JSON_HEDLEY_UNLIKELY(seen_dot))
             {
@@ -260,8 +257,8 @@ bool parse_float_fast(const char* first, const char* last, DecimalPointType deci
 }
 
 /// fast float path is only exact for `double`; decline for float/long double
-template<typename DecimalPointType, typename FloatType>
-bool parse_float_fast(const char* /*first*/, const char* /*last*/, DecimalPointType /*decimal_point*/, FloatType& /*out*/) noexcept
+template<typename FloatType>
+bool parse_float_fast(const char* /*first*/, const char* /*last*/, FloatType& /*out*/) noexcept
 {
     return false;
 }
@@ -273,9 +270,7 @@ std::from_chars is locale-independent, correctly rounded, and - via the
 Eisel-Lemire algorithm in modern standard libraries - much faster than strtod
 over the whole value range (not just the Clinger subset). It is used only when
 __cpp_lib_to_chars indicates full floating-point support and only when it
-consumes the entire token ([first, last)); a partial parse means the buffer
-uses a non-'.' locale decimal point, in which case the caller falls back to the
-locale-aware path. An under-/overflow (result_out_of_range) also declines, so
+consumes the entire token ([first, last)). An under-/overflow (result_out_of_range) also declines, so
 the caller's strtod fallback supplies the well-defined ±inf/0 result the parser
 expects (side-stepping the P4168 divergence between implementations).
 

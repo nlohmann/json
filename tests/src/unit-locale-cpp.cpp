@@ -12,7 +12,12 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <array>
 #include <clocale>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
 
 struct ParserImpl final: public nlohmann::json_sax<json>
 {
@@ -174,4 +179,169 @@ TEST_CASE("locale-dependent test (LC_NUMERIC=de_DE)")
     {
         MESSAGE("locale de_DE is not usable");
     }
+}
+
+namespace
+{
+// records the numbers of a flat array and switches LC_NUMERIC to the given
+// locale once the array opens - after the lexer was constructed, but before
+// any number in the array is lexed
+struct LocaleSwitchingSax final: public nlohmann::json_sax<json>
+{
+    explicit LocaleSwitchingSax(const char* switch_to)
+        : locale_after_open(switch_to)
+    {}
+
+    bool null() override
+    {
+        return true;
+    }
+    bool boolean(bool /*val*/) override
+    {
+        return true;
+    }
+    bool number_integer(json::number_integer_t /*val*/) override
+    {
+        return true;
+    }
+    bool number_unsigned(json::number_unsigned_t /*val*/) override
+    {
+        return true;
+    }
+    bool number_float(json::number_float_t val, const json::string_t& s) override
+    {
+        values.push_back(val);
+        strings.push_back(s);
+        return true;
+    }
+    bool string(json::string_t& /*val*/) override
+    {
+        return true;
+    }
+    bool binary(json::binary_t& /*val*/) override
+    {
+        return true;
+    }
+    bool start_object(std::size_t /*val*/) override
+    {
+        return true;
+    }
+    bool key(json::string_t& /*val*/) override
+    {
+        return true;
+    }
+    bool end_object() override
+    {
+        return true;
+    }
+    bool start_array(std::size_t /*val*/) override
+    {
+        switched = std::setlocale(LC_NUMERIC, locale_after_open) != nullptr;
+        return true;
+    }
+    bool end_array() override
+    {
+        return true;
+    }
+    bool parse_error(std::size_t /*val*/, const std::string& /*val*/, const nlohmann::detail::exception& /*val*/) override
+    {
+        return false;
+    }
+
+    const char* locale_after_open;
+    bool switched = false;
+    std::vector<json::number_float_t> values;
+    std::vector<json::string_t> strings;
+};
+} // namespace
+
+TEST_CASE("locale changes between lexer construction and number conversion (#5198)")
+{
+    // The numbers are chosen so that the conversion also takes the strtod
+    // fallback, which honors the locale that is current at conversion time:
+    // too many significant digits for Clinger's fast path, an underflow that
+    // std::from_chars rejects, and a plain value.
+    const std::vector<std::string> numbers = {"3.14159265358979323846", "1.5e-400", "12.34", "-0.000123456789012345678"};
+    std::string text = "[";
+    for (const auto& n : numbers)
+    {
+        text += (text.size() == 1 ? "" : ",") + n;
+    }
+    text += "]";
+
+    using long_double_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, long double>;
+
+    // reference values, parsed without a locale switch
+    REQUIRE(std::setlocale(LC_NUMERIC, "C") != nullptr);
+    const json expected = json::parse(text);
+    const long_double_json expected_ld = long_double_json::parse(text);
+
+    const std::array<std::pair<const char*, const char*>, 2> transitions =
+    {
+        {
+            {"C", "de_DE"},
+            {"de_DE", "C"}
+        }
+    };
+
+    for (const auto& transition : transitions)
+    {
+        CAPTURE(transition.first);
+        CAPTURE(transition.second);
+
+        if (std::setlocale(LC_NUMERIC, transition.first) == nullptr)
+        {
+            MESSAGE("locale is not usable");
+            continue;
+        }
+
+        // SAX parsing
+        {
+            LocaleSwitchingSax sax(transition.second);
+            CHECK(json::sax_parse(text, &sax));
+            if (sax.switched)
+            {
+                CHECK(sax.values == expected.get<std::vector<json::number_float_t>>());
+                CHECK(sax.strings == numbers);
+            }
+        }
+
+        // DOM parsing with a callback
+        {
+            bool switched = false;
+            const auto cb = [&](int /*depth*/, json::parse_event_t event, json& /*parsed*/)
+            {
+                if (event == json::parse_event_t::array_start)
+                {
+                    switched = std::setlocale(LC_NUMERIC, transition.second) != nullptr;
+                }
+                return true;
+            };
+            const json j = json::parse(text, cb);
+            if (switched)
+            {
+                CHECK(j == expected);
+            }
+        }
+
+        // a long double goes through std::strtold unless std::from_chars supports it
+        {
+            bool switched = false;
+            const auto cb = [&](int /*depth*/, long_double_json::parse_event_t event, long_double_json& /*parsed*/)
+            {
+                if (event == long_double_json::parse_event_t::array_start)
+                {
+                    switched = std::setlocale(LC_NUMERIC, transition.second) != nullptr;
+                }
+                return true;
+            };
+            const long_double_json j = long_double_json::parse(text, cb);
+            if (switched)
+            {
+                CHECK(j == expected_ld);
+            }
+        }
+    }
+
+    std::setlocale(LC_NUMERIC, "C");
 }
