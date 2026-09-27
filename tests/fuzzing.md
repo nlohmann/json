@@ -1,6 +1,6 @@
 # Fuzz testing
 
-Each parser of the library (JSON, BJData, BSON, CBOR, MessagePack, and UBJSON) can be fuzz tested. Currently,
+Each parser of the library (JSON, BJData, BON8, BSON, CBOR, MessagePack, and UBJSON) can be fuzz tested. Currently,
 [libFuzzer](https://llvm.org/docs/LibFuzzer.html) and [afl++](https://github.com/AFLplusplus/AFLplusplus) are supported.
 
 ## Corpus creation
@@ -10,11 +10,11 @@ directory with some simple input files that cover several features of the parser
 for mutations.
 
 ```shell
-TEST_DATA_VERSION=3.1.0
+TEST_DATA_VERSION=3.2.0
 wget https://github.com/nlohmann/json_test_data/archive/refs/tags/v$TEST_DATA_VERSION.zip
 unzip v$TEST_DATA_VERSION.zip
 rm v$TEST_DATA_VERSION.zip
-for FORMAT in json bjdata bson cbor msgpack ubjson
+for FORMAT in json bjdata bon8 bson cbor msgpack ubjson
 do
   rm -fr corpus_$FORMAT
   mkdir corpus_$FORMAT

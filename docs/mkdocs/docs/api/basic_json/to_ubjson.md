@@ -77,6 +77,7 @@ Linear in the size of the JSON value `j`.
 - [to_msgpack](to_msgpack.md) create a MessagePack serialization of a JSON value
 - [to_bson](to_bson.md) create a BSON serialization of a JSON value
 - [to_bjdata](to_bjdata.md) create a BJData serialization of a JSON value
+- [to_bon8](to_bon8.md) create a BON8 serialization of a JSON value
 
 ## Version history
 
