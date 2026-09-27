@@ -31,6 +31,11 @@ The exact mapping and its limitations are described on a [dedicated page](https:
 
 Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
 
+## Exceptions
+
+- Throws [`out_of_range.412`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range412) if the length of a string, binary value, array, or object exceeds 4294967295, the maximum MessagePack can store; example: `"MessagePack length 4294967296 exceeds maximum of 4294967295"`
+- Throws [`out_of_range.415`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range415) if the subtype of a binary value exceeds 255, the maximum of the MessagePack ext type; example: `"subtype 70000 is too large for the MessagePack ext type (max 255)"`
+
 ## Complexity
 
 Linear in the size of the JSON value `j`.
@@ -83,3 +88,4 @@ Output:
 ## Version history
 
 - Added in version 2.0.9.
+- Throws `out_of_range.412` and `out_of_range.415` since version 3.13.0.

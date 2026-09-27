@@ -1063,17 +1063,21 @@ This exception was added in version 3.13.0. Before that, this situation hit an i
 
 ### json.exception.out_of_range.412
 
-BSON stores the length of documents, arrays, strings, and binary values in a signed 32-bit integer. This exception is thrown when a value is too large to be described by such a length field.
+BSON stores the length of documents, arrays, strings, and binary values in a signed 32-bit integer, and MessagePack stores the length of strings, binary values, arrays, and objects in at most an unsigned 32-bit integer. This exception is thrown when a value is too large to be described by such a length field.
 
-Example message
+Example messages
 
 ```
 BSON length 2147483661 exceeds maximum of 2147483647
 ```
 
+```
+MessagePack length 4294967296 exceeds maximum of 4294967295
+```
+
 Note
 
-This exception was added in version 3.13.0. Before that, the length was silently truncated, and [`to_bson`](https://json.nlohmann.me/api/basic_json/to_bson/index.md) produced documents with negative length prefixes that [`from_bson`](https://json.nlohmann.me/api/basic_json/from_bson/index.md) rejected.
+This exception was added in version 3.13.0. Before that, the BSON length was silently truncated, and [`to_bson`](https://json.nlohmann.me/api/basic_json/to_bson/index.md) produced documents with negative length prefixes that [`from_bson`](https://json.nlohmann.me/api/basic_json/from_bson/index.md) rejected; [`to_msgpack`](https://json.nlohmann.me/api/basic_json/to_msgpack/index.md) wrote such a value without any length, producing output that could not be read back.
 
 ### json.exception.out_of_range.413
 

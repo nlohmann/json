@@ -62,6 +62,8 @@ The following values can **not** be converted to a MessagePack value:
 - arrays with more than 4294967295 elements
 - objects with more than 4294967295 elements
 
+Serializing such a value throws [`out_of_range.412`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range412).
+
 NaN/infinity handling
 
 `NaN`, `Infinity`, and `-Infinity` are serialized as a MessagePack float 32 (type 0xCA, 5 bytes total), regardless of magnitude, in contrast to the [dump](https://json.nlohmann.me/api/basic_json/dump/index.md) function which serializes NaN or Infinity to `null`.
