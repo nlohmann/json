@@ -2165,6 +2165,13 @@ TEST_CASE("MessagePack with std::byte")
 #endif
 
 // the fake sizes below do not fit into a 32-bit std::size_t
+// with clang and libstdc++ 10, the std::filesystem::path conversion that
+// C++17 builds consider for every string type is ambiguous for a class
+// derived from std::string, so the string case is not tested there
+#if !(defined(__clang__) && defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE < 11)
+    #define JSON_TEST_BEYOND_UINT32_STRING 1
+#endif
+
 #if SIZE_MAX > UINT32_MAX
 template<typename T, typename A = std::allocator<T>>
 struct huge_array : std::vector<T, A>
@@ -2201,8 +2208,11 @@ TEST_CASE("MessagePack Size above uint32 for array")
     auto& array = j.get_ref<huge_array_json::array_t&>();
     array.fake_size = true;
 
+    // write into a caller-owned vector: to_msgpack(j) reserves space based on
+    // the (faked) element count, which fails with bad_alloc on Windows
+    std::vector<std::uint8_t> result;
     CHECK_THROWS_WITH_AS(
-        huge_array_json::to_msgpack(j),
+        huge_array_json::to_msgpack(j, result),
         "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295",
         json::out_of_range&);
 
@@ -2254,19 +2264,23 @@ TEST_CASE("MessagePack Size above uint32 for object")
     auto& object = j.get_ref<huge_object_json::object_t&>();
     object.fake_size = true;
 
+    // write into a caller-owned vector: to_msgpack(j) reserves space based on
+    // the (faked) element count, which fails with bad_alloc on Windows
+    std::vector<std::uint8_t> result;
     CHECK_THROWS_WITH_AS(
-        huge_object_json::to_msgpack(j),
+        huge_object_json::to_msgpack(j, result),
         "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295",
         json::out_of_range&);
 
     object.fake_size = false;
 }
 
+#ifdef JSON_TEST_BEYOND_UINT32_STRING
 struct huge_string : std::string
 {
     using std::string::string;
 
-    std::size_t size() const noexcept
+    std::size_t size() const noexcept // NOLINT(readability-convert-member-functions-to-static)
     {
         return static_cast<std::size_t>(UINT32_MAX) + 1ULL;
     }
@@ -2287,20 +2301,20 @@ using huge_string_json = nlohmann::basic_json <
 
 TEST_CASE("MessagePack Size above uint32 for string")
 {
-
-    huge_string_json j = "hello";
+    const huge_string_json j = "hello";
 
     CHECK_THROWS_WITH_AS(
         huge_string_json::to_msgpack(j),
         "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295",
         json::out_of_range&);
 }
+#endif
 
 struct huge_binary : std::vector<std::uint8_t>
 {
     using std::vector<std::uint8_t>::vector;
 
-    std::size_t size() const noexcept
+    std::size_t size() const noexcept // NOLINT(readability-convert-member-functions-to-static)
     {
         return static_cast<std::size_t>(UINT32_MAX) + 1ULL;
     }
@@ -2354,13 +2368,6 @@ class beyond_uint32_binary_t : public std::vector<std::uint8_t>
         return beyond_uint32_size();
     }
 };
-
-// with clang and libstdc++ 10, the std::filesystem::path conversion that
-// C++17 builds consider for every string type is ambiguous for a class
-// derived from std::string, so the string case is not tested there
-#if !(defined(__clang__) && defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE < 11)
-    #define JSON_TEST_BEYOND_UINT32_STRING 1
-#endif
 
 #ifdef JSON_TEST_BEYOND_UINT32_STRING
 class beyond_uint32_string_t : public std::string
