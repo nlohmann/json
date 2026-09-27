@@ -2198,6 +2198,37 @@ scan_number_done:
         // read the next character and ignore whitespace
         skip_whitespace();
 
+        return scan_after_whitespace();
+    }
+
+    /*!
+    @brief scan the next token when the caller expects one particular
+           single-character token most of the time
+
+    After an object key the next token is almost always ':', after a value
+    inside an object or array almost always ','. Testing for that character
+    first is a compare and a well-predicted branch, where the switch in
+    scan_after_whitespace() is an indirect jump through a table. Anything else
+    goes through the switch, so the result is the same as scan()'s.
+
+    May only be called after scan() has run once (the BOM check is skipped).
+    */
+    token_type scan_expecting(char expected_char, token_type expected_type)
+    {
+        JSON_ASSERT(position.chars_read_total > 0);
+        skip_whitespace();
+        if (JSON_HEDLEY_LIKELY(current == static_cast<char_int_type>(expected_char)))
+        {
+            return expected_type;
+        }
+        return scan_after_whitespace();
+    }
+
+  private:
+    /// the part of scan() after the leading whitespace: skip comments and
+    /// scan the token that starts with current
+    token_type scan_after_whitespace()
+    {
         // ignore comments
         while (ignore_comments && current == '/')
         {
