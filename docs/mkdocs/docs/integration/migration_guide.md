@@ -1,6 +1,8 @@
 # Migration Guide
 
 This page collects some guidelines on how to future-proof your code for future versions of this library.
+The [roadmap](../community/roadmap.md#trying-out-40-today) lists all macros that let you try the behavior of version
+4.0 with a 3.x release.
 
 ## Replace deprecated functions
 
