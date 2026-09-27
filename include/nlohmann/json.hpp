@@ -2866,6 +2866,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // const operator[] only works for arrays
         if (JSON_HEDLEY_LIKELY(is_array()))
         {
+            JSON_ASSERT(idx < m_data.m_value.array->size());
             return m_data.m_value.array->operator[](idx);
         }
 
