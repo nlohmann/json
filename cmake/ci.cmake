@@ -277,6 +277,20 @@ add_custom_target(ci_test_disableenumserialization
 )
 
 ###############################################################################
+# Disable conversion from a one-element tuple of a JSON reference.
+###############################################################################
+
+add_custom_target(ci_test_disabletuplereferenceconversion
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_DisableTupleReferenceConversion=ON
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_disabletuplereferenceconversion
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_disabletuplereferenceconversion
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_disabletuplereferenceconversion && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with tuple reference conversion disabled"
+)
+
+###############################################################################
 # Skip the multiple-inclusion library version check.
 ###############################################################################
 

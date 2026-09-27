@@ -18,6 +18,11 @@
 // for some reason including this after the json header leads to linker errors with VS 2017...
 #include <locale>
 
+// skip tests if JSON_DISABLE_TUPLE_REFERENCE_CONVERSION=1 (#2226)
+#if defined(JSON_DISABLE_TUPLE_REFERENCE_CONVERSION) && (JSON_DISABLE_TUPLE_REFERENCE_CONVERSION == 1)
+    #define SKIP_TESTS_FOR_TUPLE_REFERENCE_CONVERSION
+#endif
+
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -28,6 +33,7 @@ using ordered_json = nlohmann::ordered_json;
 
 #include <cstdio>
 #include <list>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 
@@ -540,6 +546,18 @@ TEST_CASE("regression tests 2")
                        json::error_handler_t::strict  // Error
                       )));
     }
+
+#ifndef SKIP_TESTS_FOR_TUPLE_REFERENCE_CONVERSION
+    SECTION("issue #2226 - std::tuple dangling reference - implicit conversion")
+    {
+        // by default, a one-element tuple holding a json reference converts to
+        // a one-element array; JSON_DISABLE_TUPLE_REFERENCE_CONVERSION removes
+        // this conversion (see unit-disable-tuple-reference-conversion.cpp)
+        const json j = true;
+        CHECK(std::is_constructible<json, std::tuple<const json&>>::value);
+        CHECK(json(std::forward_as_tuple(j)) == json::array({true}));
+    }
+#endif
 
     SECTION("PR #2181 - regression bug with lvalue")
     {
