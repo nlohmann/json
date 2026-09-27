@@ -69,12 +69,22 @@ if not meson.is_subproject()
         install_dir: get_option('datadir') / 'pkgconfig',
     )
 
-    # CMake package config files, so that find_package(nlohmann_json) works
+    # CMake package config files, so that find_package(nlohmann_json) works. The
+    # include directory is given relative to the config files, so that the
+    # installation can be relocated. This is not possible if includedir or datadir
+    # is an absolute path outside the prefix (e.g., with the separate outputs of
+    # Nix); then the absolute include directory is used, as CMake does.
+    fs = import('fs')
     cmake_install_dir = get_option('datadir') / 'cmake' / meson.project_name()
     cmake_to_prefix = []
-    foreach component : cmake_install_dir.split('/')
-        cmake_to_prefix += '..'
-    endforeach
+    if fs.is_absolute(get_option('includedir')) or fs.is_absolute(cmake_install_dir)
+        cmake_include_dir = (get_option('prefix') / get_option('includedir')).replace('\\', '/')
+    else
+        foreach component : cmake_install_dir.split('/')
+            cmake_to_prefix += '..'
+        endforeach
+        cmake_include_dir = '${_IMPORT_PREFIX}/' + get_option('includedir')
+    endif
 
     cmake_conf = configuration_data()
     cmake_conf.set('PROJECT_NAME', meson.project_name())
@@ -82,7 +92,7 @@ if not meson.is_subproject()
     cmake_conf.set('PROJECT_VERSION_MAJOR', meson.project_version().split('.')[0])
     cmake_conf.set('NLOHMANN_JSON_TARGET_NAME', meson.project_name())
     cmake_conf.set('NLOHMANN_JSON_TARGETS_EXPORT_NAME', meson.project_name() + 'Targets')
-    cmake_conf.set('NLOHMANN_JSON_INCLUDE_INSTALL_DIR', get_option('includedir'))
+    cmake_conf.set('NLOHMANN_JSON_INCLUDE_DIR', cmake_include_dir)
     cmake_conf.set('NLOHMANN_JSON_CONFIG_TO_PREFIX', '/'.join(cmake_to_prefix))
     cmake_conf.set('NLOHMANN_JSON_COMPILE_DEFINITIONS', ';'.join(json_defines))
 

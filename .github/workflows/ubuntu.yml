@@ -63,6 +63,12 @@ jobs:
           grep -q 'JSON_USE_GLOBAL_UDLS=0;JSON_DIAGNOSTICS=1' install-options/share/cmake/nlohmann_json/nlohmann_jsonTargets.cmake
           cmake -S tests/cmake_import/project -B build-import-options -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install-options
           cmake --build build-import-options
+      - name: Install with Meson and the include directory outside the prefix
+        run: |
+          meson setup build-meson-split --prefix=${{ github.workspace }}/install-split --includedir=${{ github.workspace }}/install-split-dev/include
+          meson install -C build-meson-split
+          cmake -S tests/cmake_import/project -B build-import-split -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install-split
+          cmake --build build-import-split
 
   ci_infer:
     runs-on: ubuntu-latest
