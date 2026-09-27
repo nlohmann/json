@@ -323,8 +323,7 @@ TEST_CASE("Unicode (2/5)" * doctest::skip())
 
             SECTION("ill-formed: wrong second byte")
             {
-                // Pin the 3rd byte to one valid continuation (#5418).
-                const int byte3 = 0x80;
+                // the other bytes take the ends of each byte class, see utils::utf8_continuation_bytes (#5418)
                 for (int byte1 = 0xE0; byte1 <= 0xE0; ++byte1)
                 {
                     for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
@@ -335,28 +334,33 @@ TEST_CASE("Unicode (2/5)" * doctest::skip())
                             continue;
                         }
 
-                        check_utf8string(false, byte1, byte2, byte3);
-                        check_utf8dump(false, byte1, byte2, byte3);
+                        for (const int byte3 : utils::utf8_continuation_bytes(0x80, 0xBF))
+                        {
+                            check_utf8string(false, byte1, byte2, byte3);
+                            check_utf8dump(false, byte1, byte2, byte3);
+                        }
                     }
                 }
             }
 
             SECTION("ill-formed: wrong third byte")
             {
-                // Pin the 2nd byte to one valid continuation (#5418).
-                const int byte2 = 0xA0;
+                // the other bytes take the ends of each byte class, see utils::utf8_continuation_bytes (#5418)
                 for (int byte1 = 0xE0; byte1 <= 0xE0; ++byte1)
                 {
-                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
+                    for (const int byte2 : utils::utf8_continuation_bytes(0xA0, 0xBF))
                     {
-                        // skip correct third byte
-                        if (0x80 <= byte3 && byte3 <= 0xBF)
+                        for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                         {
-                            continue;
-                        }
+                            // skip correct third byte
+                            if (0x80 <= byte3 && byte3 <= 0xBF)
+                            {
+                                continue;
+                            }
 
-                        check_utf8string(false, byte1, byte2, byte3);
-                        check_utf8dump(false, byte1, byte2, byte3);
+                            check_utf8string(false, byte1, byte2, byte3);
+                            check_utf8dump(false, byte1, byte2, byte3);
+                        }
                     }
                 }
             }
@@ -402,8 +406,7 @@ TEST_CASE("Unicode (2/5)" * doctest::skip())
 
             SECTION("ill-formed: wrong second byte")
             {
-                // Pin the 3rd byte to one valid continuation (#5418).
-                const int byte3 = 0x80;
+                // the other bytes take the ends of each byte class, see utils::utf8_continuation_bytes (#5418)
                 for (int byte1 = 0xE1; byte1 <= 0xEC; ++byte1)
                 {
                     for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
@@ -414,28 +417,33 @@ TEST_CASE("Unicode (2/5)" * doctest::skip())
                             continue;
                         }
 
-                        check_utf8string(false, byte1, byte2, byte3);
-                        check_utf8dump(false, byte1, byte2, byte3);
+                        for (const int byte3 : utils::utf8_continuation_bytes(0x80, 0xBF))
+                        {
+                            check_utf8string(false, byte1, byte2, byte3);
+                            check_utf8dump(false, byte1, byte2, byte3);
+                        }
                     }
                 }
             }
 
             SECTION("ill-formed: wrong third byte")
             {
-                // Pin the 2nd byte to one valid continuation (#5418).
-                const int byte2 = 0x80;
+                // the other bytes take the ends of each byte class, see utils::utf8_continuation_bytes (#5418)
                 for (int byte1 = 0xE1; byte1 <= 0xEC; ++byte1)
                 {
-                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
+                    for (const int byte2 : utils::utf8_continuation_bytes(0x80, 0xBF))
                     {
-                        // skip correct third byte
-                        if (0x80 <= byte3 && byte3 <= 0xBF)
+                        for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                         {
-                            continue;
-                        }
+                            // skip correct third byte
+                            if (0x80 <= byte3 && byte3 <= 0xBF)
+                            {
+                                continue;
+                            }
 
-                        check_utf8string(false, byte1, byte2, byte3);
-                        check_utf8dump(false, byte1, byte2, byte3);
+                            check_utf8string(false, byte1, byte2, byte3);
+                            check_utf8dump(false, byte1, byte2, byte3);
+                        }
                     }
                 }
             }
@@ -481,8 +489,7 @@ TEST_CASE("Unicode (2/5)" * doctest::skip())
 
             SECTION("ill-formed: wrong second byte")
             {
-                // Pin the 3rd byte to one valid continuation (#5418).
-                const int byte3 = 0x80;
+                // the other bytes take the ends of each byte class, see utils::utf8_continuation_bytes (#5418)
                 for (int byte1 = 0xED; byte1 <= 0xED; ++byte1)
                 {
                     for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
@@ -493,28 +500,33 @@ TEST_CASE("Unicode (2/5)" * doctest::skip())
                             continue;
                         }
 
-                        check_utf8string(false, byte1, byte2, byte3);
-                        check_utf8dump(false, byte1, byte2, byte3);
+                        for (const int byte3 : utils::utf8_continuation_bytes(0x80, 0xBF))
+                        {
+                            check_utf8string(false, byte1, byte2, byte3);
+                            check_utf8dump(false, byte1, byte2, byte3);
+                        }
                     }
                 }
             }
 
             SECTION("ill-formed: wrong third byte")
             {
-                // Pin the 2nd byte to one valid continuation (#5418).
-                const int byte2 = 0x80;
+                // the other bytes take the ends of each byte class, see utils::utf8_continuation_bytes (#5418)
                 for (int byte1 = 0xED; byte1 <= 0xED; ++byte1)
                 {
-                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
+                    for (const int byte2 : utils::utf8_continuation_bytes(0x80, 0x9F))
                     {
-                        // skip correct third byte
-                        if (0x80 <= byte3 && byte3 <= 0xBF)
+                        for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                         {
-                            continue;
-                        }
+                            // skip correct third byte
+                            if (0x80 <= byte3 && byte3 <= 0xBF)
+                            {
+                                continue;
+                            }
 
-                        check_utf8string(false, byte1, byte2, byte3);
-                        check_utf8dump(false, byte1, byte2, byte3);
+                            check_utf8string(false, byte1, byte2, byte3);
+                            check_utf8dump(false, byte1, byte2, byte3);
+                        }
                     }
                 }
             }
@@ -560,8 +572,7 @@ TEST_CASE("Unicode (2/5)" * doctest::skip())
 
             SECTION("ill-formed: wrong second byte")
             {
-                // Pin the 3rd byte to one valid continuation (#5418).
-                const int byte3 = 0x80;
+                // the other bytes take the ends of each byte class, see utils::utf8_continuation_bytes (#5418)
                 for (int byte1 = 0xEE; byte1 <= 0xEF; ++byte1)
                 {
                     for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
@@ -572,28 +583,33 @@ TEST_CASE("Unicode (2/5)" * doctest::skip())
                             continue;
                         }
 
-                        check_utf8string(false, byte1, byte2, byte3);
-                        check_utf8dump(false, byte1, byte2, byte3);
+                        for (const int byte3 : utils::utf8_continuation_bytes(0x80, 0xBF))
+                        {
+                            check_utf8string(false, byte1, byte2, byte3);
+                            check_utf8dump(false, byte1, byte2, byte3);
+                        }
                     }
                 }
             }
 
             SECTION("ill-formed: wrong third byte")
             {
-                // Pin the 2nd byte to one valid continuation (#5418).
-                const int byte2 = 0x80;
+                // the other bytes take the ends of each byte class, see utils::utf8_continuation_bytes (#5418)
                 for (int byte1 = 0xEE; byte1 <= 0xEF; ++byte1)
                 {
-                    for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
+                    for (const int byte2 : utils::utf8_continuation_bytes(0x80, 0xBF))
                     {
-                        // skip correct third byte
-                        if (0x80 <= byte3 && byte3 <= 0xBF)
+                        for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
                         {
-                            continue;
-                        }
+                            // skip correct third byte
+                            if (0x80 <= byte3 && byte3 <= 0xBF)
+                            {
+                                continue;
+                            }
 
-                        check_utf8string(false, byte1, byte2, byte3);
-                        check_utf8dump(false, byte1, byte2, byte3);
+                            check_utf8string(false, byte1, byte2, byte3);
+                            check_utf8dump(false, byte1, byte2, byte3);
+                        }
                     }
                 }
             }

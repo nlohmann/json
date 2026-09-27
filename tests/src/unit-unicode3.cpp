@@ -250,61 +250,76 @@ TEST_CASE("Unicode (3/5)" * doctest::skip())
 
             SECTION("ill-formed: wrong second byte")
             {
-                // Property: an out-of-range 2nd byte is rejected regardless of
-                // later continuation bytes. Pin those to one valid value so
-                // this section does not sweep 192*64*64 combinations (#5418).
-                const int byte1 = 0xF0;
-                const int byte3 = 0x80;
-                const int byte4 = 0x80;
-                for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
+                // the other bytes take the ends of each byte class, see utils::utf8_continuation_bytes (#5418)
+                for (int byte1 = 0xF0; byte1 <= 0xF0; ++byte1)
                 {
-                    // skip correct second byte
-                    if (0x90 <= byte2 && byte2 <= 0xBF)
+                    for (int byte2 = 0x00; byte2 <= 0xFF; ++byte2)
                     {
-                        continue;
-                    }
+                        // skip correct second byte
+                        if (0x90 <= byte2 && byte2 <= 0xBF)
+                        {
+                            continue;
+                        }
 
-                    check_utf8string(false, byte1, byte2, byte3, byte4);
-                    check_utf8dump(false, byte1, byte2, byte3, byte4);
+                        for (const int byte3 : utils::utf8_continuation_bytes(0x80, 0xBF))
+                        {
+                            for (const int byte4 : utils::utf8_continuation_bytes(0x80, 0xBF))
+                            {
+                                check_utf8string(false, byte1, byte2, byte3, byte4);
+                                check_utf8dump(false, byte1, byte2, byte3, byte4);
+                            }
+                        }
+                    }
                 }
             }
 
             SECTION("ill-formed: wrong third byte")
             {
-                // Property: an out-of-range 3rd byte is rejected regardless of
-                // the 2nd/4th bytes. Pin those to one valid value (#5418).
-                const int byte1 = 0xF0;
-                const int byte2 = 0x90;
-                const int byte4 = 0x80;
-                for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
+                // the other bytes take the ends of each byte class, see utils::utf8_continuation_bytes (#5418)
+                for (int byte1 = 0xF0; byte1 <= 0xF0; ++byte1)
                 {
-                    // skip correct third byte
-                    if (0x80 <= byte3 && byte3 <= 0xBF)
+                    for (const int byte2 : utils::utf8_continuation_bytes(0x90, 0xBF))
                     {
-                        continue;
-                    }
+                        for (int byte3 = 0x00; byte3 <= 0xFF; ++byte3)
+                        {
+                            // skip correct third byte
+                            if (0x80 <= byte3 && byte3 <= 0xBF)
+                            {
+                                continue;
+                            }
 
-                    check_utf8string(false, byte1, byte2, byte3, byte4);
-                    check_utf8dump(false, byte1, byte2, byte3, byte4);
+                            for (const int byte4 : utils::utf8_continuation_bytes(0x80, 0xBF))
+                            {
+                                check_utf8string(false, byte1, byte2, byte3, byte4);
+                                check_utf8dump(false, byte1, byte2, byte3, byte4);
+                            }
+                        }
+                    }
                 }
             }
 
             SECTION("ill-formed: wrong fourth byte")
             {
-                // Pin 2nd/3rd bytes to one valid continuation (#5418).
-                const int byte1 = 0xF0;
-                const int byte2 = 0x90;
-                const int byte3 = 0x80;
-                for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
+                // the other bytes take the ends of each byte class, see utils::utf8_continuation_bytes (#5418)
+                for (int byte1 = 0xF0; byte1 <= 0xF0; ++byte1)
                 {
-                    // skip correct fourth byte
-                    if (0x80 <= byte4 && byte4 <= 0xBF)
+                    for (const int byte2 : utils::utf8_continuation_bytes(0x90, 0xBF))
                     {
-                        continue;
-                    }
+                        for (const int byte3 : utils::utf8_continuation_bytes(0x80, 0xBF))
+                        {
+                            for (int byte4 = 0x00; byte4 <= 0xFF; ++byte4)
+                            {
+                                // skip correct fourth byte
+                                if (0x80 <= byte4 && byte4 <= 0xBF)
+                                {
+                                    continue;
+                                }
 
-                    check_utf8string(false, byte1, byte2, byte3, byte4);
-                    check_utf8dump(false, byte1, byte2, byte3, byte4);
+                                check_utf8string(false, byte1, byte2, byte3, byte4);
+                                check_utf8dump(false, byte1, byte2, byte3, byte4);
+                            }
+                        }
+                    }
                 }
             }
         }
