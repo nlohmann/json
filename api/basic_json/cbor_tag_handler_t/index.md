@@ -15,7 +15,7 @@ error : throw a `parse_error` exception in case of a tag
 
 ignore : ignore tags
 
-store : store tagged values as binary container with subtype (for bytes 0xd8..0xdb)
+store : store tagged byte strings (for bytes 0xd8..0xdb) as binary values with the tag as subtype; other tagged values are read as if the tag were ignored. If several tags precede a byte string, only the innermost one is stored.
 
 ## Examples
 

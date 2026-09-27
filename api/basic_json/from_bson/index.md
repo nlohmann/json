@@ -119,6 +119,7 @@ Output:
 - [from_msgpack](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md) for the related MessagePack format
 - [from_ubjson](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md) for the related UBJSON format
 - [from_bjdata](https://json.nlohmann.me/api/basic_json/from_bjdata/index.md) for the related BJData format
+- [from_bon8](https://json.nlohmann.me/api/basic_json/from_bon8/index.md) for the related BON8 format
 
 ## Version history
 

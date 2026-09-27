@@ -118,6 +118,7 @@ Output:
 - [from_msgpack](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md) create a JSON value from an input in MessagePack format
 - [from_bson](https://json.nlohmann.me/api/basic_json/from_bson/index.md) create a JSON value from an input in BSON format
 - [from_ubjson](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md) create a JSON value from an input in UBJSON format
+- [from_bon8](https://json.nlohmann.me/api/basic_json/from_bon8/index.md) create a JSON value from an input in BON8 format
 
 ## Version history
 

@@ -915,7 +915,7 @@ If `std::numeric_limits<NumberFloatType>` describes an IEEE 754 binary32 or bina
 
 ### Required for the binary formats
 
-`NumberFloatType` must be `float` or `double`. The writers for [CBOR, MessagePack, UBJSON, BJData, and BSON](https://json.nlohmann.me/features/binary_formats/index.md) map a floating-point value onto an IEEE 754 binary32 or binary64 field and have no encoding for `long double`.
+`NumberFloatType` must be `float` or `double`. The writers for [CBOR, MessagePack, UBJSON, BJData, BON8, and BSON](https://json.nlohmann.me/features/binary_formats/index.md) map a floating-point value onto an IEEE 754 binary32 or binary64 field and have no encoding for `long double`.
 
 ### Compatible types
 

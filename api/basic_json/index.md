@@ -269,11 +269,13 @@ Access to the JSON value
 ### Binary formats
 
 - [**from_bjdata**](https://json.nlohmann.me/api/basic_json/from_bjdata/index.md) (*static*) - create a JSON value from an input in BJData format
+- [**from_bon8**](https://json.nlohmann.me/api/basic_json/from_bon8/index.md) (*static*) - create a JSON value from an input in BON8 format
 - [**from_bson**](https://json.nlohmann.me/api/basic_json/from_bson/index.md) (*static*) - create a JSON value from an input in BSON format
 - [**from_cbor**](https://json.nlohmann.me/api/basic_json/from_cbor/index.md) (*static*) - create a JSON value from an input in CBOR format
 - [**from_msgpack**](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md) (*static*) - create a JSON value from an input in MessagePack format
 - [**from_ubjson**](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md) (*static*) - create a JSON value from an input in UBJSON format
 - [**to_bjdata**](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md) (*static*) - create a BJData serialization of a given JSON value
+- [**to_bon8**](https://json.nlohmann.me/api/basic_json/to_bon8/index.md) (*static*) - create a BON8 serialization of a given JSON value
 - [**to_bson**](https://json.nlohmann.me/api/basic_json/to_bson/index.md) (*static*) - create a BSON serialization of a given JSON value
 - [**to_cbor**](https://json.nlohmann.me/api/basic_json/to_cbor/index.md) (*static*) - create a CBOR serialization of a given JSON value
 - [**to_msgpack**](https://json.nlohmann.me/api/basic_json/to_msgpack/index.md) (*static*) - create a MessagePack serialization of a given JSON value

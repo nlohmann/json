@@ -84,6 +84,7 @@ Output:
 - [to_bson](https://json.nlohmann.me/api/basic_json/to_bson/index.md) create a BSON serialization of a JSON value
 - [to_ubjson](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) create a UBJSON serialization of a JSON value
 - [to_bjdata](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md) create a BJData serialization of a JSON value
+- [to_bon8](https://json.nlohmann.me/api/basic_json/to_bon8/index.md) create a BON8 serialization of a JSON value
 
 ## Version history
 

@@ -25,7 +25,7 @@ This section describes the features of the library in detail. If you are new to 
 ## Serializing values
 
 - [Serialization](https://json.nlohmann.me/features/serialization/index.md) — turn a value back into JSON text with [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md), including pretty-printing and handling of non-ASCII and invalid UTF-8.
-- [Binary formats](https://json.nlohmann.me/features/binary_formats/index.md) — encode values more compactly as [BJData](https://json.nlohmann.me/features/binary_formats/bjdata/index.md), [BSON](https://json.nlohmann.me/features/binary_formats/bson/index.md), [CBOR](https://json.nlohmann.me/features/binary_formats/cbor/index.md), [MessagePack](https://json.nlohmann.me/features/binary_formats/messagepack/index.md), or [UBJSON](https://json.nlohmann.me/features/binary_formats/ubjson/index.md).
+- [Binary formats](https://json.nlohmann.me/features/binary_formats/index.md) — encode values more compactly as [BJData](https://json.nlohmann.me/features/binary_formats/bjdata/index.md), [BON8](https://json.nlohmann.me/features/binary_formats/bon8/index.md), [BSON](https://json.nlohmann.me/features/binary_formats/bson/index.md), [CBOR](https://json.nlohmann.me/features/binary_formats/cbor/index.md), [MessagePack](https://json.nlohmann.me/features/binary_formats/messagepack/index.md), or [UBJSON](https://json.nlohmann.me/features/binary_formats/ubjson/index.md).
 - [Binary values](https://json.nlohmann.me/features/binary_values/index.md) — store and exchange raw byte sequences.
 
 ## How values are stored and configured

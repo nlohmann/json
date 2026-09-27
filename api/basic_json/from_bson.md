@@ -104,6 +104,7 @@ Linear in the size of the input.
 - [from_msgpack](from_msgpack.md) for the related MessagePack format
 - [from_ubjson](from_ubjson.md) for the related UBJSON format
 - [from_bjdata](from_bjdata.md) for the related BJData format
+- [from_bon8](from_bon8.md) for the related BON8 format
 
 ## Version history
 

@@ -181,6 +181,10 @@
          <lastmod>2026-09-27</lastmod>
     </url>
     <url>
+         <loc>https://json.nlohmann.me/api/basic_json/from_bon8/</loc>
+         <lastmod>2026-09-27</lastmod>
+    </url>
+    <url>
          <loc>https://json.nlohmann.me/api/basic_json/from_bson/</loc>
          <lastmod>2026-09-27</lastmod>
     </url>
@@ -462,6 +466,10 @@
     </url>
     <url>
          <loc>https://json.nlohmann.me/api/basic_json/to_bjdata/</loc>
+         <lastmod>2026-09-27</lastmod>
+    </url>
+    <url>
+         <loc>https://json.nlohmann.me/api/basic_json/to_bon8/</loc>
          <lastmod>2026-09-27</lastmod>
     </url>
     <url>
@@ -918,6 +926,10 @@
     </url>
     <url>
          <loc>https://json.nlohmann.me/features/binary_formats/bjdata/</loc>
+         <lastmod>2026-09-27</lastmod>
+    </url>
+    <url>
+         <loc>https://json.nlohmann.me/features/binary_formats/bon8/</loc>
          <lastmod>2026-09-27</lastmod>
     </url>
     <url>

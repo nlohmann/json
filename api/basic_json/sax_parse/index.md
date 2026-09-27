@@ -60,7 +60,7 @@ The SAX event lister must follow the interface of [`json_sax`](https://json.nloh
 
 `sax` (in) : SAX event listener (must not be null)
 
-`format` (in) : the format to parse (JSON, CBOR, MessagePack, or UBJSON) (optional, `input_format_t::json` by default), see [`input_format_t`](https://json.nlohmann.me/api/basic_json/input_format_t/index.md) for more information
+`format` (in) : the format to parse (JSON, BJData, BON8, BSON, CBOR, MessagePack, or UBJSON) (optional, `input_format_t::json` by default), see [`input_format_t`](https://json.nlohmann.me/api/basic_json/input_format_t/index.md) for more information
 
 `strict` (in) : whether the input has to be consumed completely (optional, `true` by default); when `false` and the input is a `std::istream`, the character that terminates a number is consumed unless [`JSON_PRECISE_STREAM_POSITION`](https://json.nlohmann.me/api/macros/json_precise_stream_position/index.md) is defined to `1`; see [`operator>>`](https://json.nlohmann.me/api/operator_gtgt/#notes)
 

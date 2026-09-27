@@ -218,7 +218,7 @@ For the [{fmt}](https://github.com/fmtlib/fmt) library, the library ships a [`fo
 
 ## Serializing to other formats
 
-Besides JSON text, a value can also be serialized to the more compact [binary formats](https://json.nlohmann.me/features/binary_formats/index.md) (BJData, BSON, CBOR, MessagePack, UBJSON).
+Besides JSON text, a value can also be serialized to the more compact [binary formats](https://json.nlohmann.me/features/binary_formats/index.md) (BJData, BON8, BSON, CBOR, MessagePack, UBJSON).
 
 ## See also
 

@@ -3,6 +3,7 @@
 Though JSON is a ubiquitous data format, it is not a very compact format suitable for data exchange, for instance, over a network. Hence, the library supports
 
 - [BJData](https://json.nlohmann.me/features/binary_formats/bjdata/index.md) (Binary JData),
+- [BON8](https://json.nlohmann.me/features/binary_formats/bon8/index.md) (Binary Object Notation 8),
 - [BSON](https://json.nlohmann.me/features/binary_formats/bson/index.md) (Binary JSON),
 - [CBOR](https://json.nlohmann.me/features/binary_formats/cbor/index.md) (Concise Binary Object Representation),
 - [MessagePack](https://json.nlohmann.me/features/binary_formats/messagepack/index.md), and
@@ -17,6 +18,7 @@ to efficiently encode JSON values to byte vectors and to decode such vectors.
 | Format      | Serialization                                 | Deserialization                              |
 | ----------- | --------------------------------------------- | -------------------------------------------- |
 | BJData      | complete                                      | complete                                     |
+| BON8        | incomplete: no unsigned integers above int64  | complete                                     |
 | BSON        | incomplete: top-level value must be an object | incomplete, but all JSON types are supported |
 | CBOR        | complete                                      | incomplete, but all JSON types are supported |
 | MessagePack | complete                                      | complete                                     |
@@ -27,6 +29,7 @@ to efficiently encode JSON values to byte vectors and to decode such vectors.
 | Format      | Binary values | Binary subtypes |
 | ----------- | ------------- | --------------- |
 | BJData      | not supported | not supported   |
+| BON8        | not supported | not supported   |
 | BSON        | supported     | supported       |
 | CBOR        | supported     | supported       |
 | MessagePack | supported     | supported       |
@@ -41,6 +44,7 @@ See [binary values](https://json.nlohmann.me/features/binary_values/index.md) fo
 | BJData             | 53.2 %      | 91.1 %       | 78.1 %            | 96.6 %        |
 | BJData (size)      | 58.6 %      | 92.1 %       | 86.7 %            | 97.4 %        |
 | BJData (size+type) | 58.6 %      | 92.1 %       | 86.5 %            | 97.4 %        |
+| BON8               | 50.5 %      | 83.8 %       | 63.5 %            | 87.5 %        |
 | BSON               | 85.8 %      | 95.2 %       | 95.8 %            | 106.7 %       |
 | CBOR               | 50.5 %      | 86.3 %       | 68.4 %            | 88.0 %        |
 | MessagePack        | 50.5 %      | 86.0 %       | 68.5 %            | 87.9 %        |

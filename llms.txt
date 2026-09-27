@@ -1,6 +1,6 @@
 # JSON for Modern C++
 
-JSON for Modern C++ is a C++11 header-only library implementing a JSON value type with an STL-like API, JSON Pointer/Patch, CBOR/MessagePack/ BSON/UBJSON/BJData binary format support, and a SAX-style parser interface.
+JSON for Modern C++ is a C++11 header-only library implementing a JSON value type with an STL-like API, JSON Pointer/Patch, CBOR/MessagePack/ BSON/UBJSON/BJData/BON8 binary format support, and a SAX-style parser interface.
 
 
 ## Home
@@ -39,6 +39,7 @@ JSON for Modern C++ is a C++11 header-only library implementing a JSON value typ
 - [Trailing Commas](https://json.nlohmann.me/features/trailing_commas/index.md)
 - [Binary Formats](https://json.nlohmann.me/features/binary_formats/index.md)
 - [BJData](https://json.nlohmann.me/features/binary_formats/bjdata/index.md)
+- [BON8](https://json.nlohmann.me/features/binary_formats/bon8/index.md)
 - [BSON](https://json.nlohmann.me/features/binary_formats/bson/index.md)
 - [CBOR](https://json.nlohmann.me/features/binary_formats/cbor/index.md)
 - [MessagePack](https://json.nlohmann.me/features/binary_formats/messagepack/index.md)
@@ -110,6 +111,7 @@ JSON for Modern C++ is a C++11 header-only library implementing a JSON value typ
 - [flatten](https://json.nlohmann.me/api/basic_json/flatten/index.md)
 - [format_as](https://json.nlohmann.me/api/basic_json/format_as/index.md)
 - [from_bjdata](https://json.nlohmann.me/api/basic_json/from_bjdata/index.md)
+- [from_bon8](https://json.nlohmann.me/api/basic_json/from_bon8/index.md)
 - [from_bson](https://json.nlohmann.me/api/basic_json/from_bson/index.md)
 - [from_cbor](https://json.nlohmann.me/api/basic_json/from_cbor/index.md)
 - [from_msgpack](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md)
@@ -181,6 +183,7 @@ JSON for Modern C++ is a C++11 header-only library implementing a JSON value typ
 - [string_t](https://json.nlohmann.me/api/basic_json/string_t/index.md)
 - [swap](https://json.nlohmann.me/api/basic_json/swap/index.md)
 - [to_bjdata](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md)
+- [to_bon8](https://json.nlohmann.me/api/basic_json/to_bon8/index.md)
 - [to_bson](https://json.nlohmann.me/api/basic_json/to_bson/index.md)
 - [to_cbor](https://json.nlohmann.me/api/basic_json/to_cbor/index.md)
 - [to_msgpack](https://json.nlohmann.me/api/basic_json/to_msgpack/index.md)
