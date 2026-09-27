@@ -10679,9 +10679,13 @@ scan_number_done:
     looked up right before the conversion instead of once when the lexer is
     constructed: a locale change in between (by a parser callback, a SAX
     handler, or another thread) must not truncate the value (#5198). The
-    token has been validated before, so if the conversion still stops early,
-    the locale changed between the lookup and the call, and the conversion is
-    repeated with the new decimal point.
+    token has been validated before, so if the conversion stops early and the
+    decimal point changed in the meantime, the locale changed between the
+    lookup and the call, and the conversion is repeated with the new decimal
+    point. If the decimal point did not change, a retry cannot succeed: the
+    locale's decimal point is not a single character (e.g., the two-byte
+    U+066B of ar_EG.UTF-8 or fa_IR.UTF-8) and cannot be substituted in place.
+    The value strtod parsed up to that point is kept, as before this change.
 
     Note that changing the locale in another thread *while* strtod runs is
     undefined behavior of the C library, which this function cannot prevent.
@@ -10689,9 +10693,9 @@ scan_number_done:
     void convert_float_locale_aware()
     {
         const bool has_dot = decimal_point_position != std::string::npos;
+        char decimal_point = get_decimal_point();
         for (;;)
         {
-            const char decimal_point = get_decimal_point();
             const bool substitute = has_dot && decimal_point != '.';
             if (substitute)
             {
@@ -10711,6 +10715,14 @@ scan_number_done:
             {
                 return;
             }
+
+            // retry only if the locale changed; otherwise, this would loop forever
+            const char current_decimal_point = get_decimal_point();
+            if (current_decimal_point == decimal_point)
+            {
+                return;
+            }
+            decimal_point = current_decimal_point;
         }
     }
 

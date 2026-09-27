@@ -345,3 +345,43 @@ TEST_CASE("locale changes between lexer construction and number conversion (#519
 
     std::setlocale(LC_NUMERIC, "C");
 }
+
+TEST_CASE("locale with a multi-byte decimal point")
+{
+    // Some locales use a decimal point that is not a single character, e.g.
+    // U+066B ARABIC DECIMAL SEPARATOR (two bytes in UTF-8). It cannot be
+    // substituted in place for '.', so the strtod fallback stops early. The
+    // conversion must still terminate rather than retry forever.
+    const std::array<const char*, 6> names = {{"ar_EG.UTF-8", "ar_SA.UTF-8", "fa_IR.UTF-8", "ps_AF.UTF-8", "ar_EG", "fa_IR"}};
+    bool tested = false;
+    for (const char* name : names)
+    {
+        if (std::setlocale(LC_NUMERIC, name) == nullptr)
+        {
+            continue;
+        }
+        const std::string decimal_point = std::localeconv()->decimal_point;
+        if (decimal_point.size() < 2)
+        {
+            continue;
+        }
+        CAPTURE(name);
+        tested = true;
+
+        // too many significant digits for Clinger's fast path, and an underflow
+        // that std::from_chars rejects: both reach the strtod fallback
+        json j;
+        CHECK_NOTHROW(j = json::parse("[3.14159265358979323846, 1.5e-400, -0.000123456789012345678]"));
+        CHECK(j.is_array());
+        CHECK(json::accept("3.14159265358979323846"));
+
+        // a value the locale-independent paths convert is not affected
+        CHECK(json::parse("12.5") == 12.5);
+    }
+    if (!tested)
+    {
+        MESSAGE("no locale with a multi-byte decimal point is usable");
+    }
+
+    std::setlocale(LC_NUMERIC, "C");
+}
