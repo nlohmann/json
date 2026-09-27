@@ -726,8 +726,18 @@ TEST_CASE("serialization of every kind of value below the bound of the descent")
 
                 const std::string indent(2 * i, ' ');
                 const std::string outer_indent(2 * (i - 1), ' ');
-                expected = "{\n" + indent + "\"k\": " + expected + ",\n"
-                           + indent + "\"n\": " + std::to_string(i) + "\n" + outer_indent + "}";
+                std::string next = "{\n";
+                next += indent;
+                next += "\"k\": ";
+                next += expected;
+                next += ",\n";
+                next += indent;
+                next += "\"n\": ";
+                next += std::to_string(i);
+                next += '\n';
+                next += outer_indent;
+                next += '}';
+                expected = std::move(next);
             }
 
             CHECK(j.dump(2) == expected);
