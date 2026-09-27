@@ -129,9 +129,6 @@ json_test_set_test_options(test-disabled_exceptions
         #$<$<CXX_COMPILER_ID:MSVC>:/EH>
 )
 
-# raise timeout of expensive Unicode test
-json_test_set_test_options(test-unicode4 TEST_PROPERTIES TIMEOUT 3000)
-
 #############################################################################
 # add unit tests
 #############################################################################
