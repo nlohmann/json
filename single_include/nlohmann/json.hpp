@@ -31349,23 +31349,26 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         enter(source, target);
         while (!stack.empty())
         {
-            // invalidated when enter() pushes a frame and by the pop_back()
-            // at the end, so not used after either
-            diff_frame& frame = stack.back();
-            const std::size_t path_length = frame.path_length;
+            // the frame is copied out member by member and changed through
+            // stack.back(): enter() may push a frame and the end of the loop
+            // pops it, either of which would invalidate a reference to it
+            const basic_json* const s = stack.back().source;
+            const basic_json* const t = stack.back().target;
+            const std::size_t path_length = stack.back().path_length;
             const std::size_t depth = stack.size();
 
-            if (frame.source->is_array())
+            if (s->is_array())
             {
-                const auto& source_array = *frame.source->m_data.m_value.array;
-                const auto& target_array = *frame.target->m_data.m_value.array;
+                const auto& source_array = *s->m_data.m_value.array;
+                const auto& target_array = *t->m_data.m_value.array;
 
                 // first pass: traverse common elements
-                if (frame.index < source_array.size() && frame.index < target_array.size())
+                const std::size_t i = stack.back().index;
+                if (i < source_array.size() && i < target_array.size())
                 {
-                    const std::size_t i = frame.index++;
+                    ++stack.back().index;
                     detail::concat_into(current_path, '/', detail::to_string<string_t>(i));
-                    enter(source_array[i], target_array[i]); // may push, which invalidates `frame`
+                    enter(source_array[i], target_array[i]);
                     if (stack.size() == depth)
                     {
                         current_path.resize(path_length);
@@ -31375,20 +31378,21 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
                 // We now reached the end of at least one array
                 // in a second pass, traverse the remaining elements
-                diff_array_tails(result, *frame.source, *frame.target, current_path, frame.index);
+                diff_array_tails(result, *s, *t, current_path, i);
             }
             else
             {
-                if (frame.member != frame.source->cend())
+                const const_iterator it = stack.back().member;
+                if (it != s->cend())
                 {
-                    const const_iterator it = frame.member;
-                    ++frame.member;
-                    if (frame.next_common < frame.common_keys.size() && it.key() == frame.common_keys[frame.next_common])
+                    ++stack.back().member;
+                    const std::size_t next_common = stack.back().next_common;
+                    if (next_common < stack.back().common_keys.size() && it.key() == stack.back().common_keys[next_common])
                     {
-                        ++frame.next_common;
-                        const basic_json& target_value = (*frame.target)[it.key()];
+                        ++stack.back().next_common;
+                        const basic_json& target_value = (*t)[it.key()];
                         detail::concat_into(current_path, '/', detail::escape(it.key()));
-                        enter(it.value(), target_value); // may push, which invalidates `frame`
+                        enter(it.value(), target_value);
                         if (stack.size() == depth)
                         {
                             current_path.resize(path_length);
@@ -31404,7 +31408,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
                 // append the "add" ops for brand-new keys collected when the
                 // object was entered
-                result.insert(result.end(), frame.added_ops.begin(), frame.added_ops.end());
+                result.insert(result.end(), stack.back().added_ops.begin(), stack.back().added_ops.end());
             }
 
             // this array or object is done: continue with the one it is in
