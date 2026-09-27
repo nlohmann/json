@@ -65,7 +65,8 @@ The SAX event lister must follow the interface of [`json_sax`](../json_sax/index
 :   SAX event listener (must not be null)
 
 `format` (in)
-:    the format to parse (JSON, CBOR, MessagePack, or UBJSON) (optional, `input_format_t::json` by default), see
+:    the format to parse (JSON, BJData, BON8, BSON, CBOR, MessagePack, or UBJSON) (optional, `input_format_t::json` by
+     default), see
      [`input_format_t`](input_format_t.md) for more information
 
 `strict` (in)
