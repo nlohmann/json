@@ -188,8 +188,8 @@ class binary_reader
 
             if (JSON_HEDLEY_UNLIKELY(current != char_traits<char_type>::eof()))
             {
-                return sax->parse_error(chars_read, get_token_string(), parse_error::create(110, chars_read,
-                                        exception_message(input_format, concat("expected end of input; last byte: 0x", get_token_string()), "value"), nullptr));
+                return report_error(chars_read, get_token_string(), parse_error::create(110, chars_read,
+                                    exception_message(input_format, concat("expected end of input; last byte: 0x", get_token_string()), "value"), nullptr));
             }
         }
 
@@ -295,8 +295,8 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(document_size < 0 || static_cast<std::size_t>(document_size) != chars_read - document_start))
         {
-            return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
-                                    exception_message(input_format_t::bson, concat("document size ", std::to_string(document_size), " does not match the number of bytes read (", std::to_string(chars_read - document_start), ")"), "document"), nullptr));
+            return report_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
+                                exception_message(input_format_t::bson, concat("document size ", std::to_string(document_size), " does not match the number of bytes read (", std::to_string(chars_read - document_start), ")"), "document"), nullptr));
         }
         return true;
     }
@@ -490,8 +490,8 @@ class binary_reader
         if (JSON_HEDLEY_UNLIKELY(len < 1))
         {
             auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                    exception_message(input_format_t::bson, concat("string length must be at least 1, is ", std::to_string(len)), "string"), nullptr));
+            return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                exception_message(input_format_t::bson, concat("string length must be at least 1, is ", std::to_string(len)), "string"), nullptr));
         }
 
         if (JSON_HEDLEY_UNLIKELY(!get_string(input_format_t::bson, len - static_cast<NumberType>(1), result)))
@@ -502,10 +502,10 @@ class binary_reader
         if (JSON_HEDLEY_UNLIKELY(get() != 0x00))
         {
             auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                    exception_message(input_format_t::bson,
-                                            "BSON string is not null-terminated",
-                                            "string"), nullptr));
+            return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                exception_message(input_format_t::bson,
+                                                  "BSON string is not null-terminated",
+                                                  "string"), nullptr));
         }
 
         return true;
@@ -526,8 +526,8 @@ class binary_reader
         if (JSON_HEDLEY_UNLIKELY(len < 0))
         {
             auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                    exception_message(input_format_t::bson, concat("byte array length cannot be negative, is ", std::to_string(len)), "binary"), nullptr));
+            return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                exception_message(input_format_t::bson, concat("byte array length cannot be negative, is ", std::to_string(len)), "binary"), nullptr));
         }
 
         // All BSON binary values have a subtype
@@ -620,8 +620,8 @@ class binary_reader
                 std::array<char, 3> cr{{}};
                 static_cast<void>((std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(element_type))); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                 const std::string cr_str{cr.data()};
-                return sax->parse_error(element_type_parse_position, cr_str,
-                                        parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr));
+                return report_error(element_type_parse_position, cr_str,
+                                    parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr));
             }
         }
     }
@@ -641,9 +641,9 @@ class binary_reader
         const auto max_val = static_cast<NumberType>((std::numeric_limits<number_integer_t>::max)());
         if (number > max_val)
         {
-            return sax->parse_error(chars_read, get_token_string(),
-                                    parse_error::create(112, chars_read,
-                                            exception_message(input_format_t::cbor, "negative integer overflow", "value"), nullptr));
+            return report_error(chars_read, get_token_string(),
+                                parse_error::create(112, chars_read,
+                                                    exception_message(input_format_t::cbor, "negative integer overflow", "value"), nullptr));
         }
         return sax->number_integer(static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(number));
     }
@@ -978,8 +978,8 @@ class binary_reader
                     case cbor_tag_handler_t::error:
                     {
                         auto last_token = get_token_string();
-                        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                                exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr));
+                        return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                            exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr));
                     }
 
                     case cbor_tag_handler_t::ignore:
@@ -1177,8 +1177,8 @@ class binary_reader
             default: // anything else (0xFF is handled inside the other types)
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr));
             }
         }
     }
@@ -1257,8 +1257,8 @@ class binary_reader
             default:
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(input_format_t::cbor, concat("expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x", last_token), "string"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                    exception_message(input_format_t::cbor, concat("expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x", last_token), "string"), nullptr));
             }
         }
     }
@@ -1402,8 +1402,8 @@ class binary_reader
             default:
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(input_format_t::cbor, concat("expected length specification (0x40-0x5B) or indefinite binary array type (0x5F); last byte: 0x", last_token), "binary"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                    exception_message(input_format_t::cbor, concat("expected length specification (0x40-0x5B) or indefinite binary array type (0x5F); last byte: 0x", last_token), "binary"), nullptr));
             }
         }
     }
@@ -1483,8 +1483,8 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::size_t>(len) || len == detail::unknown_size()))
         {
-            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
-                                    exception_message(input_format_t::cbor, concat("excessive ", context, " size"), "size"), nullptr));
+            return report_error(chars_read, get_token_string(), out_of_range::create(408,
+                                exception_message(input_format_t::cbor, concat("excessive ", context, " size"), "size"), nullptr));
         }
         result = conditional_static_cast<std::size_t>(len);
         return true;
@@ -1980,8 +1980,8 @@ class binary_reader
             default: // anything else
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(input_format_t::msgpack, concat("invalid byte: 0x", last_token), "value"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format_t::msgpack, concat("invalid byte: 0x", last_token), "value"), nullptr));
             }
         }
     }
@@ -2063,8 +2063,8 @@ class binary_reader
             default:
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(input_format_t::msgpack, concat("expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0x", last_token), "string"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                    exception_message(input_format_t::msgpack, concat("expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0x", last_token), "string"), nullptr));
             }
         }
     }
@@ -2381,8 +2381,8 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(len < 0))
         {
-            return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                    exception_message(input_format, "string length must not be negative", "string"), nullptr));
+            return report_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                exception_message(input_format, "string length must not be negative", "string"), nullptr));
         }
         return true;
     }
@@ -2493,7 +2493,7 @@ class binary_reader
         {
             message = "expected length type specification (U, i, u, I, m, l, M, L); last byte: 0x" + last_token;
         }
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "string"), nullptr));
+        return report_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "string"), nullptr));
     }
 
     /*!
@@ -2594,8 +2594,8 @@ class binary_reader
                 }
                 if (number < 0)
                 {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                            exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
+                    return report_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                        exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
                 }
                 result = static_cast<std::size_t>(number); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): number is not a char
                 return true;
@@ -2610,8 +2610,8 @@ class binary_reader
                 }
                 if (number < 0)
                 {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                            exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
+                    return report_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                        exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
                 }
                 result = static_cast<std::size_t>(number);
                 return true;
@@ -2626,8 +2626,8 @@ class binary_reader
                 }
                 if (number < 0)
                 {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                            exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
+                    return report_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                        exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
                 }
                 result = static_cast<std::size_t>(number);
                 return true;
@@ -2642,13 +2642,13 @@ class binary_reader
                 }
                 if (number < 0)
                 {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                            exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
+                    return report_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                        exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
                 }
                 if (!value_in_range_of<std::size_t>(number))
                 {
-                    return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
-                                            exception_message(input_format, "integer value overflow", "size"), nullptr));
+                    return report_error(chars_read, get_token_string(), out_of_range::create(408,
+                                        exception_message(input_format, "integer value overflow", "size"), nullptr));
                 }
                 result = static_cast<std::size_t>(number);
                 return true;
@@ -2697,8 +2697,8 @@ class binary_reader
                 }
                 if (!value_in_range_of<std::size_t>(number))
                 {
-                    return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
-                                            exception_message(input_format, "integer value overflow", "size"), nullptr));
+                    return report_error(chars_read, get_token_string(), out_of_range::create(408,
+                                        exception_message(input_format, "integer value overflow", "size"), nullptr));
                 }
                 result = detail::conditional_static_cast<std::size_t>(number);
                 return true;
@@ -2712,7 +2712,7 @@ class binary_reader
                 }
                 if (is_ndarray) // ndarray dimensional vector can only contain integers and cannot embed another array
                 {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read, exception_message(input_format, "ndarray dimensional vector is not allowed", "size"), nullptr));
+                    return report_error(chars_read, get_token_string(), parse_error::create(113, chars_read, exception_message(input_format, "ndarray dimensional vector is not allowed", "size"), nullptr));
                 }
                 std::vector<size_t> dim;
                 if (JSON_HEDLEY_UNLIKELY(!get_ubjson_ndarray_size(dim)))
@@ -2748,13 +2748,13 @@ class binary_reader
                         // as modular arithmetic can produce any value, not just 0 or SIZE_MAX.
                         if (JSON_HEDLEY_UNLIKELY(i > 0 && result > (std::numeric_limits<std::size_t>::max)() / i))
                         {
-                            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
+                            return report_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
                         }
                         result *= i;
                         // Additional post-multiplication check to catch any edge cases the pre-check might miss
                         if (result == 0 || result == npos)
                         {
-                            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
+                            return report_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
                         }
                         if (JSON_HEDLEY_UNLIKELY(!sax->number_unsigned(static_cast<number_unsigned_t>(i))))
                         {
@@ -2782,7 +2782,7 @@ class binary_reader
         {
             message = "expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x" + last_token;
         }
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "size"), nullptr));
+        return report_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "size"), nullptr));
     }
 
     /*!
@@ -2816,8 +2816,8 @@ class binary_reader
                     && JSON_HEDLEY_UNLIKELY(std::binary_search(bjd_optimized_type_markers.begin(), bjd_optimized_type_markers.end(), result.second)))
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(input_format, concat("marker 0x", last_token, " is not a permitted optimized array type"), "type"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format, concat("marker 0x", last_token, " is not a permitted optimized array type"), "type"), nullptr));
             }
 
             if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "type")))
@@ -2833,8 +2833,8 @@ class binary_reader
                     return false;
                 }
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(input_format, concat("expected '#' after type information; last byte: 0x", last_token), "size"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format, concat("expected '#' after type information; last byte: 0x", last_token), "size"), nullptr));
             }
 
             const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
@@ -2853,8 +2853,8 @@ class binary_reader
             const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
             if (input_format == input_format_t::bjdata && is_ndarray && !inside_ndarray)
             {
-                return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
-                                        exception_message(input_format, "ndarray requires both type and size", "size"), nullptr));
+                return report_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
+                                    exception_message(input_format, "ndarray requires both type and size", "size"), nullptr));
             }
             return is_error;
         }
@@ -3030,8 +3030,8 @@ class binary_reader
                 if (JSON_HEDLEY_UNLIKELY(current > 127))
                 {
                     auto last_token = get_token_string();
-                    return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                            exception_message(input_format, concat("byte after 'C' must be in range 0x00..0x7F; last byte: 0x", last_token), "char"), nullptr));
+                    return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                        exception_message(input_format, concat("byte after 'C' must be in range 0x00..0x7F; last byte: 0x", last_token), "char"), nullptr));
                 }
                 string_t s(1, static_cast<typename string_t::value_type>(current));
                 return sax->string(s);
@@ -3053,7 +3053,7 @@ class binary_reader
                 break;
         }
         auto last_token = get_token_string();
-        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format, "invalid byte: 0x" + last_token, "value"), nullptr));
+        return report_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format, "invalid byte: 0x" + last_token, "value"), nullptr));
     }
 
     /*!
@@ -3081,8 +3081,8 @@ class binary_reader
             if (JSON_HEDLEY_UNLIKELY(it == bjd_types_map.end() || it->first != size_and_type.second))
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(input_format, "invalid byte: 0x" + last_token, "type"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format, "invalid byte: 0x" + last_token, "type"), nullptr));
             }
 
             string_t type = it->second; // sax->string() takes a reference
@@ -3129,8 +3129,8 @@ class binary_reader
             if (JSON_HEDLEY_UNLIKELY((size_and_type.second == 'Z' || size_and_type.second == 'T' || size_and_type.second == 'F')
                                      && size_and_type.first > max_valueless_container_size))
             {
-                return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
-                                        exception_message(input_format, "excessive array size", "size"), nullptr));
+                return report_error(chars_read, get_token_string(), out_of_range::create(408,
+                                    exception_message(input_format, "excessive array size", "size"), nullptr));
             }
 
             if (JSON_HEDLEY_UNLIKELY(!enter_array(size_and_type.first, size_and_type.second)))
@@ -3166,8 +3166,8 @@ class binary_reader
         if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
         {
             auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                    exception_message(input_format, "BJData object does not support ND-array size in optimized format", "object"), nullptr));
+            return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                exception_message(input_format, "BJData object does not support ND-array size in optimized format", "object"), nullptr));
         }
 
         if (size_and_type.first != npos)
@@ -3215,8 +3215,8 @@ class binary_reader
 
         if (JSON_HEDLEY_UNLIKELY(result_remainder != token_type::end_of_input))
         {
-            return sax->parse_error(chars_read, number_string, parse_error::create(115, chars_read,
-                                    exception_message(input_format, concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));
+            return report_error(chars_read, number_string, parse_error::create(115, chars_read,
+                                exception_message(input_format, concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));
         }
 
         switch (result_number)
@@ -3230,7 +3230,7 @@ class binary_reader
                 const auto parsed_float = number_lexer.get_number_float();
                 if (JSON_HEDLEY_UNLIKELY(!std::isfinite(parsed_float)))
                 {
-                    return sax->parse_error(
+                    return report_error(
                                chars_read,
                                number_string,
                                out_of_range::create(406, concat("number overflow parsing '", number_string, '\''), nullptr));
@@ -3255,8 +3255,8 @@ class binary_reader
             case token_type::end_of_input:
             case token_type::literal_or_value:
             default:
-                return sax->parse_error(chars_read, number_string, parse_error::create(115, chars_read,
-                                        exception_message(input_format, concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));
+                return report_error(chars_read, number_string, parse_error::create(115, chars_read,
+                                    exception_message(input_format, concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));
         }
     }
 
@@ -3324,8 +3324,8 @@ class binary_reader
     bool bon8_error(const std::string& detail, const char* context)
     {
         auto last_token = get_token_string();
-        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                exception_message(input_format_t::bon8, concat(detail, ": 0x", last_token), context), nullptr));
+        return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                            exception_message(input_format_t::bon8, concat(detail, ": 0x", last_token), context), nullptr));
     }
 
     /*!
@@ -3839,8 +3839,7 @@ class binary_reader
         {
             // in case of failure, advance position by 1 to report the failing location
             ++chars_read;
-            sax->parse_error(chars_read, "<end of file>", parse_error::create(110, chars_read, exception_message(format, "unexpected end of input", context), nullptr));
-            return false;
+            return report_error(chars_read, "<end of file>", parse_error::create(110, chars_read, exception_message(format, "unexpected end of input", context), nullptr));
         }
         return true;
     }
@@ -3952,9 +3951,9 @@ class binary_reader
         // (which would defeat allow_exceptions=false / strict discarding).
         if (JSON_HEDLEY_UNLIKELY(!is_valid_utf8(result, old_size)))
         {
-            return sax->parse_error(chars_read, get_token_string(),
-                                    parse_error::create(113, chars_read,
-                                            exception_message(format, "invalid string: ill-formed UTF-8 byte", "string"), nullptr));
+            return report_error(chars_read, get_token_string(),
+                                parse_error::create(113, chars_read,
+                                                    exception_message(format, "invalid string: ill-formed UTF-8 byte", "string"), nullptr));
         }
 
         return true;
@@ -4042,6 +4041,25 @@ class binary_reader
     }
 
     /*!
+    @brief report an error to the SAX parser
+
+    The binary formats cannot recover from an error: a value's size is given
+    before its payload, and every byte value is a valid type marker, so after
+    an error there is no way to find where the next value begins. Reading
+    therefore stops, whatever the SAX parser's parse_error() returns. That the
+    SAX parser may ask for the containers read so far to be closed is handled
+    by @ref json_sax_salvager, not here (see #3989).
+
+    @return false, so that the caller stops reading
+    */
+    template<typename Exception>
+    bool report_error(const std::size_t position, const std::string& last_token, const Exception& ex) const
+    {
+        static_cast<void>(sax->parse_error(position, last_token, ex));
+        return false;
+    }
+
+    /*!
     @param[in] format   the current format (for diagnostics)
     @param[in] context  further context information (for diagnostics)
     @return whether the last read character is not EOF
@@ -4051,8 +4069,8 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(current == char_traits<char_type>::eof()))
         {
-            return sax->parse_error(chars_read, "<end of file>",
-                                    parse_error::create(110, chars_read, exception_message(format, "unexpected end of input", context), nullptr));
+            return report_error(chars_read, "<end of file>",
+                                parse_error::create(110, chars_read, exception_message(format, "unexpected end of input", context), nullptr));
         }
         return true;
     }

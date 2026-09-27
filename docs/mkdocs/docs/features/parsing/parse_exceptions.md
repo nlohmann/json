@@ -64,7 +64,8 @@ bool parse_error(std::size_t position,
                  const json::exception& ex);
 ```
 
-The return value indicates whether the parsing should continue, so the function should usually return `#!cpp false`.
+The return value decides whether to stop parsing (`#!cpp false`) or to repair the error and continue
+(`#!cpp true`); see [error recovery](error_recovery.md) for the latter.
 
 ??? example
 

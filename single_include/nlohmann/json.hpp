@@ -8474,6 +8474,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <array> // array
 #include <clocale> // localeconv
 #include <cstddef> // size_t
+#include <cstdint> // uint8_t
 #include <cstdio> // snprintf
 #include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
 #include <initializer_list> // initializer_list
@@ -9550,8 +9551,16 @@ class lexer : public lexer_base<BasicJsonType>
                             if (0xD800 <= codepoint1 && codepoint1 <= 0xDBFF)
                             {
                                 // expect next \uxxxx entry
-                                if (JSON_HEDLEY_LIKELY(get() == '\\' && get() == 'u'))
+                                if (JSON_HEDLEY_LIKELY(get() == '\\'))
                                 {
+                                    if (JSON_HEDLEY_UNLIKELY(get() != 'u'))
+                                    {
+                                        // current is the character escaped by the backslash
+                                        error_message = "invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF";
+                                        string_error_resume = resume_kind::escaped_character;
+                                        return token_type::parse_error;
+                                    }
+
                                     const int codepoint2 = get_codepoint();
 
                                     if (JSON_HEDLEY_UNLIKELY(codepoint2 == -1))
@@ -9576,7 +9585,11 @@ class lexer : public lexer_base<BasicJsonType>
                                     }
                                     else
                                     {
+                                        // the second escape was read completely and is a
+                                        // code point of its own
                                         error_message = "invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF";
+                                        string_error_resume = resume_kind::after_escape;
+                                        string_error_codepoint = codepoint2;
                                         return token_type::parse_error;
                                     }
                                 }
@@ -9590,7 +9603,9 @@ class lexer : public lexer_base<BasicJsonType>
                             {
                                 if (JSON_HEDLEY_UNLIKELY(0xDC00 <= codepoint1 && codepoint1 <= 0xDFFF))
                                 {
+                                    // the escape was read completely
                                     error_message = "invalid string: surrogate U+DC00..U+DFFF must follow U+D800..U+DBFF";
+                                    string_error_resume = resume_kind::after_escape;
                                     return token_type::parse_error;
                                 }
                             }
@@ -11335,6 +11350,552 @@ scan_number_done:
         }
     }
 
+    /////////////////////
+    // error recovery
+    /////////////////////
+
+    /*!
+    @brief make the best of the token that scan() rejected
+
+    Called by the parser after scan() returned token_type::parse_error and the
+    SAX parser asked to recover from the error (see #3989). Keeps what can be
+    read of the token and skips the rest:
+
+    - A string keeps its characters. An unknown escape stands for the escaped
+      character itself (as in JavaScript), an invalid `\u` escape and ill-formed
+      UTF-8 become U+FFFD, and a control character is kept. A line break or the
+      end of the input ends a string that lacks its closing quote.
+    - A number keeps its longest valid prefix, e.g. `1` for `1.` or `1e+`.
+    - A block comment that is not closed runs to the end of the input.
+    - Anything else is skipped.
+
+    The rest of an invalid token is skipped up to the next delimiter
+    (whitespace, a structural character, or a quote). A delimiter that the
+    invalid token consumed is returned to the input, so that the next scan()
+    reads it.
+
+    @return token_type::value_string or a number token type if a string or a
+            number could be read, token_type::end_of_input for a block comment
+            that is not closed, token_type::uninitialized otherwise
+    */
+    token_type recover_token()
+    {
+        const resume_kind resume = string_error_resume;
+        const int codepoint = string_error_codepoint;
+        string_error_resume = resume_kind::character;
+        string_error_codepoint = -1;
+
+        if (error_message_starts_with("invalid string"))
+        {
+            return recover_string(resume, codepoint);
+        }
+
+        if (error_message_starts_with("invalid number"))
+        {
+            return recover_number();
+        }
+
+        if (error_message_starts_with("invalid comment; missing"))
+        {
+            // the comment runs to the end of the input
+            return token_type::end_of_input;
+        }
+
+        skip_to_delimiter();
+        return token_type::uninitialized;
+    }
+
+    /*!
+    @brief return the token that scan() read last to the input, so that the
+           next scan() reads it again
+
+    Called by the parser when recovering from an error. The token must be a
+    single character (',', ':', '[', ']', '{', or '}') or the end of the
+    input, and scan() must have read it last.
+    */
+    void unget_token()
+    {
+        JSON_ASSERT(!next_unget);
+        unget();
+    }
+
+    /*!
+    @brief let the token string for the next error begin at the current character
+
+    The token string of an error reaches back to the beginning of the last
+    string or number. After an error, the parser calls this function so that
+    the next error does not report (and, with many errors, copy) everything
+    read since then.
+    */
+    void restart_token_string()
+    {
+        restart_token_string_impl(std::integral_constant<bool, lazy_token_string> {});
+    }
+
+  private:
+    /// how recover_string() continues after the error scan_string() reported
+    enum class resume_kind : std::uint8_t
+    {
+        /// current is the next character of the string (or the end of input)
+        character,
+        /// current is the character escaped by the preceding backslash
+        escaped_character,
+        /// current is the last character of a complete escape
+        after_escape
+    };
+
+    /// whether error_message begins with @a prefix
+    bool error_message_starts_with(const char* prefix) const noexcept
+    {
+        const char* message = error_message;
+        while (*prefix != '\0')
+        {
+            if (*message++ != *prefix++)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /// whether current ends an invalid token (see recover_token())
+    bool current_is_delimiter() const noexcept
+    {
+        switch (current)
+        {
+            case ' ':
+            case '\t':
+            case '\n':
+            case '\r':
+            case '[':
+            case ']':
+            case '{':
+            case '}':
+            case ',':
+            case ':':
+            case '\"':
+#if !JSON_STRICT_NUL_HANDLING
+            case '\0':
+#endif
+            case char_traits<char_type>::eof():
+                return true;
+
+            case '/':
+                return ignore_comments;
+
+            default:
+                return false;
+        }
+    }
+
+    /// skip the rest of an invalid token and return its delimiter to the input
+    void skip_to_delimiter()
+    {
+        while (!current_is_delimiter())
+        {
+            get();
+        }
+
+        if (current != char_traits<char_type>::eof())
+        {
+            unget();
+        }
+    }
+
+    /// append U+FFFD REPLACEMENT CHARACTER to token_buffer
+    void add_replacement_character()
+    {
+        add(0xEF);
+        add(0xBF);
+        add(0xBD);
+    }
+
+    /// append the UTF-8 encoding of @a codepoint (not a surrogate) to token_buffer
+    void add_codepoint(const int codepoint)
+    {
+        JSON_ASSERT(0x00 <= codepoint && codepoint <= 0x10FFFF);
+        const auto cp = static_cast<unsigned int>(codepoint);
+        if (cp < 0x80)
+        {
+            add(static_cast<char_int_type>(cp));
+        }
+        else if (cp <= 0x7FF)
+        {
+            add(static_cast<char_int_type>(0xC0u | (cp >> 6u)));
+            add(static_cast<char_int_type>(0x80u | (cp & 0x3Fu)));
+        }
+        else if (cp <= 0xFFFF)
+        {
+            add(static_cast<char_int_type>(0xE0u | (cp >> 12u)));
+            add(static_cast<char_int_type>(0x80u | ((cp >> 6u) & 0x3Fu)));
+            add(static_cast<char_int_type>(0x80u | (cp & 0x3Fu)));
+        }
+        else
+        {
+            add(static_cast<char_int_type>(0xF0u | (cp >> 18u)));
+            add(static_cast<char_int_type>(0x80u | ((cp >> 12u) & 0x3Fu)));
+            add(static_cast<char_int_type>(0x80u | ((cp >> 6u) & 0x3Fu)));
+            add(static_cast<char_int_type>(0x80u | (cp & 0x3Fu)));
+        }
+    }
+
+    /// append a code point read from a `\u` escape; a surrogate becomes U+FFFD
+    void add_escaped_codepoint(const int codepoint)
+    {
+        if (0xD800 <= codepoint && codepoint <= 0xDFFF)
+        {
+            add_replacement_character();
+        }
+        else
+        {
+            add_codepoint(codepoint);
+        }
+    }
+
+    /*!
+    @brief remove an incomplete UTF-8 sequence from the end of token_buffer
+
+    next_byte_in_range() adds the bytes of a sequence as it checks them, so
+    when it rejects a byte, the beginning of the sequence is already in
+    token_buffer, which otherwise holds only complete sequences.
+
+    @return whether an incomplete sequence was removed
+    */
+    bool remove_incomplete_utf8_sequence()
+    {
+        std::size_t lead = token_buffer.size();
+        std::size_t continuation_bytes = 0;
+        while (lead > 0 && continuation_bytes < 3
+                && (static_cast<unsigned char>(token_buffer[lead - 1]) & 0xC0u) == 0x80u)
+        {
+            --lead;
+            ++continuation_bytes;
+        }
+        if (lead == 0)
+        {
+            return false;
+        }
+
+        const auto lead_byte = static_cast<unsigned char>(token_buffer[lead - 1]);
+        const std::size_t expected = (lead_byte >= 0xF0) ? 3 : (lead_byte >= 0xE0) ? 2 : (lead_byte >= 0xC0) ? 1 : 0;
+        if (continuation_bytes >= expected)
+        {
+            return false;
+        }
+
+        token_buffer.resize(lead - 1);
+        return true;
+    }
+
+    /*!
+    @brief read the UTF-8 sequence that begins with current, which is not ASCII
+    @return whether the next character must be read; false if current still
+            needs to be handled, because it does not belong to the sequence
+    */
+    bool recover_utf8_sequence()
+    {
+        // the number of continuation bytes and the range of the first one;
+        // see the ranges in scan_string()
+        std::size_t count = 0;
+        char_int_type low = 0x80;
+        char_int_type high = 0xBF;
+        if (current >= 0xC2 && current <= 0xDF)
+        {
+            count = 1;
+        }
+        else if (current >= 0xE0 && current <= 0xEF)
+        {
+            count = 2;
+            low = (current == 0xE0) ? 0xA0 : 0x80;
+            high = (current == 0xED) ? 0x9F : 0xBF;
+        }
+        else if (current >= 0xF0 && current <= 0xF4)
+        {
+            count = 3;
+            low = (current == 0xF0) ? 0x90 : 0x80;
+            high = (current == 0xF4) ? 0x8F : 0xBF;
+        }
+        else
+        {
+            // an ill-formed byte
+            add_replacement_character();
+            return true;
+        }
+
+        const std::size_t start = token_buffer.size();
+        add(current);
+        for (std::size_t i = 0; i < count; ++i)
+        {
+            get();
+            if (current < low || current > high)
+            {
+                token_buffer.resize(start);
+                add_replacement_character();
+                return false;
+            }
+            add(current);
+            low = 0x80;
+            high = 0xBF;
+        }
+        return true;
+    }
+
+    /*!
+    @brief read the low surrogate that must follow the high surrogate @a high
+    @return whether the next character must be read; false if current still
+            needs to be handled
+    */
+    bool recover_low_surrogate(int high)
+    {
+        while (true)
+        {
+            if (get() != '\\')
+            {
+                add_replacement_character();
+                return false;
+            }
+            if (get() != 'u')
+            {
+                add_replacement_character();
+                // not 'u', so this does not come back here
+                return recover_escape();
+            }
+
+            const int low = get_codepoint();
+            if (low == -1)
+            {
+                add_replacement_character();
+                return false;
+            }
+            if (0xDC00 <= low && low <= 0xDFFF)
+            {
+                add_codepoint(static_cast<int>((static_cast<unsigned int>(high) << 10u)
+                                               + static_cast<unsigned int>(low) - 0x35FDC00u));
+                return true;
+            }
+
+            // high has no low surrogate
+            add_replacement_character();
+            if (low < 0xD800 || low > 0xDBFF)
+            {
+                add_codepoint(low);
+                return true;
+            }
+            // another high surrogate
+            high = low;
+        }
+    }
+
+    /*!
+    @brief read the escape whose backslash was read; current is the escaped character
+    @return whether the next character must be read; false if current still
+            needs to be handled
+    */
+    bool recover_escape()
+    {
+        switch (current)
+        {
+            case '\"':
+                add('\"');
+                return true;
+            case '\\':
+                add('\\');
+                return true;
+            case '/':
+                add('/');
+                return true;
+            case 'b':
+                add('\b');
+                return true;
+            case 'f':
+                add('\f');
+                return true;
+            case 'n':
+                add('\n');
+                return true;
+            case 'r':
+                add('\r');
+                return true;
+            case 't':
+                add('\t');
+                return true;
+
+            case 'u':
+            {
+                const int codepoint = get_codepoint();
+                if (codepoint == -1)
+                {
+                    add_replacement_character();
+                    return false;
+                }
+                if (0xD800 <= codepoint && codepoint <= 0xDBFF)
+                {
+                    return recover_low_surrogate(codepoint);
+                }
+                add_escaped_codepoint(codepoint);
+                return true;
+            }
+
+            // an unknown escape stands for the escaped character
+            default:
+                return false;
+        }
+    }
+
+    /*!
+    @brief read the rest of a string after scan_string() rejected it
+
+    token_buffer holds what scan_string() read before the error. See
+    recover_token() for how errors are repaired.
+
+    @param[in] resume     how to continue, see resume_kind
+    @param[in] codepoint  for a high surrogate followed by an escape of another
+                          code point: that code point; -1 otherwise
+    */
+    token_type recover_string(const resume_kind resume, const int codepoint)
+    {
+        // whether the next character must be read before it can be handled
+        bool fetch = false;
+
+        if (error_message_starts_with("invalid string: surrogate")
+                || error_message_starts_with("invalid string: '\\u'"))
+        {
+            add_replacement_character();
+        }
+        else if (error_message_starts_with("invalid string: ill-formed UTF-8")
+                 && remove_incomplete_utf8_sequence())
+        {
+            add_replacement_character();
+        }
+
+        switch (resume)
+        {
+            case resume_kind::escaped_character:
+                fetch = recover_escape();
+                break;
+            case resume_kind::after_escape:
+                if (0xD800 <= codepoint && codepoint <= 0xDBFF)
+                {
+                    fetch = recover_low_surrogate(codepoint);
+                }
+                else
+                {
+                    if (codepoint != -1)
+                    {
+                        add_escaped_codepoint(codepoint);
+                    }
+                    fetch = true;
+                }
+                break;
+            case resume_kind::character:
+            default:
+                break;
+        }
+
+        while (true)
+        {
+            if (fetch)
+            {
+                get();
+            }
+            fetch = true;
+
+            switch (current)
+            {
+                case '\"':
+                // a line break or the end of the input ends a string that
+                // lacks its closing quote
+                case '\n':
+                case '\r':
+                case char_traits<char_type>::eof():
+                    return token_type::value_string;
+
+#if !JSON_STRICT_NUL_HANDLING
+                case '\0':
+                    // the end of the input, see scan()
+                    unget();
+                    return token_type::value_string;
+#endif
+
+                case '\\':
+                    get();
+                    fetch = recover_escape();
+                    break;
+
+                default:
+                    if (current < 0x80)
+                    {
+                        // including control characters
+                        add(current);
+                    }
+                    else
+                    {
+                        fetch = recover_utf8_sequence();
+                    }
+                    break;
+            }
+        }
+    }
+
+    /*!
+    @brief keep the longest valid prefix of a number that scan_number() rejected
+
+    token_buffer holds the characters scan_number() accepted before the error,
+    so the prefix ends at its last digit.
+    */
+    token_type recover_number()
+    {
+        while (!token_buffer.empty() && (token_buffer.back() < '0' || token_buffer.back() > '9'))
+        {
+            token_buffer.pop_back();
+        }
+
+        if (token_buffer.empty())
+        {
+            skip_to_delimiter();
+            return token_type::uninitialized;
+        }
+
+        if (decimal_point_position >= token_buffer.size())
+        {
+            decimal_point_position = std::string::npos;
+        }
+
+        const std::size_t exponent = token_buffer.find_first_of("eE");
+        const std::size_t mantissa_end = (exponent == std::string::npos) ? token_buffer.size() : exponent;
+        token_type number_type = token_type::value_unsigned;
+        if (decimal_point_position != std::string::npos || exponent != std::string::npos)
+        {
+            number_type = token_type::value_float;
+        }
+        else if (token_buffer.front() == '-')
+        {
+            number_type = token_type::value_integer;
+        }
+
+        const token_type result = convert_number(number_type, mantissa_end);
+        skip_to_delimiter();
+        return result;
+    }
+
+    /// seekable adapter: the token string begins at current, which was consumed
+    void restart_token_string_impl(std::true_type /*lazy*/) noexcept
+    {
+        const std::size_t consumed = ia.get_consumed_count();
+        token_string_start = (consumed > 0 && current != char_traits<char_type>::eof()) ? consumed - 1 : consumed;
+    }
+
+    /// streaming adapter: the token string begins at current; a character
+    /// that was put back is copied again when it is read again
+    void restart_token_string_impl(std::false_type /*lazy*/)
+    {
+        token_string.clear();
+        if (!next_unget && current != char_traits<char_type>::eof())
+        {
+            token_string.push_back(char_traits<char_type>::to_char_type(current));
+        }
+    }
+
   private:
     /// input adapter
     InputAdapterType ia;
@@ -11374,6 +11935,13 @@ scan_number_done:
 
     /// a description of occurred lexer errors
     const char* error_message = "";
+
+    /// how recover_token() continues a string that scan_string() rejected;
+    /// set only on the error paths that need more than error_message
+    resume_kind string_error_resume = resume_kind::character;
+    /// the code point of the second escape when a high surrogate is followed
+    /// by an escape that is not a low surrogate; -1 otherwise
+    int string_error_codepoint = -1;
 
     // number values
     number_integer_t value_integer = 0;
@@ -11513,7 +12081,9 @@ struct json_sax
     @param[in] position    the position in the input where the error occurs
     @param[in] last_token  the last read token
     @param[in] ex          an exception object describing the error
-    @return whether parsing should proceed (must return false)
+    @return whether to recover from the error: false stops parsing; true
+            repairs JSON text and continues, or, for the binary formats, stops
+            after closing the containers read so far
     */
     virtual bool parse_error(std::size_t position,
                              const std::string& last_token,
@@ -11568,9 +12138,12 @@ a pointer to the respective array or object for each recursion depth.
 After successful parsing, the value that is passed by reference to the
 constructor contains the parsed value.
 
-@tparam BasicJsonType  the JSON type
+@tparam BasicJsonType     the JSON type
+@tparam InputAdapterType  the input adapter of the lexer that can be passed to
+                          the constructor to record diagnostic positions; it
+                          does not matter if no lexer is passed
 */
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType = string_input_adapter_type>
 class json_sax_dom_parser
 {
   public:
@@ -11887,7 +12460,7 @@ class json_sax_dom_parser
     lexer_t* m_lexer_ref = nullptr;
 };
 
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType = string_input_adapter_type>
 class json_sax_dom_callback_parser
 {
   public:
@@ -12589,6 +13162,177 @@ class json_sax_acceptor
     }
 };
 
+/*!
+@brief SAX proxy that lets the binary readers keep what was read before an error
+
+The binary formats cannot continue after an error: a value's size is given
+before its payload, and every byte value is a valid type marker, so there is no
+way to find where the next value begins. When the SAX parser's parse_error()
+returns true to ask for error recovery, the best the binary readers can offer is
+the value read up to the error.
+
+This proxy forwards every event to the SAX parser and records which containers
+are open and whether a key still waits for its value. After an error the SAX
+parser asked to recover from, @ref close_open_containers then completes the
+value with null for a pending key and the missing end events, so the SAX parser
+sees balanced events (see #3989).
+
+@tparam BasicJsonType  the JSON type
+@tparam SAX            the SAX parser to forward the events to
+*/
+template<typename BasicJsonType, typename SAX>
+class json_sax_salvager
+{
+  public:
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
+
+    explicit json_sax_salvager(SAX* sax_) noexcept
+        : sax(sax_)
+    {}
+
+    bool null()
+    {
+        key_pending = false;
+        return sax->null();
+    }
+
+    bool boolean(bool val)
+    {
+        key_pending = false;
+        return sax->boolean(val);
+    }
+
+    bool number_integer(number_integer_t val)
+    {
+        key_pending = false;
+        return sax->number_integer(val);
+    }
+
+    bool number_unsigned(number_unsigned_t val)
+    {
+        key_pending = false;
+        return sax->number_unsigned(val);
+    }
+
+    bool number_float(number_float_t val, const string_t& s)
+    {
+        key_pending = false;
+        return sax->number_float(val, s);
+    }
+
+    bool string(string_t& val)
+    {
+        key_pending = false;
+        return sax->string(val);
+    }
+
+    bool binary(binary_t& val)
+    {
+        key_pending = false;
+        return sax->binary(val);
+    }
+
+    bool start_object(std::size_t len)
+    {
+        key_pending = false;
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(len)))
+        {
+            return false;
+        }
+        open_containers.push_back(true);
+        return true;
+    }
+
+    bool key(string_t& val)
+    {
+        key_pending = true;
+        return sax->key(val);
+    }
+
+    bool end_object()
+    {
+        JSON_ASSERT(!open_containers.empty() && open_containers.back());
+        open_containers.pop_back();
+        return sax->end_object();
+    }
+
+    bool start_array(std::size_t len)
+    {
+        key_pending = false;
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(len)))
+        {
+            return false;
+        }
+        open_containers.push_back(false);
+        return true;
+    }
+
+    bool end_array()
+    {
+        JSON_ASSERT(!open_containers.empty() && !open_containers.back());
+        open_containers.pop_back();
+        return sax->end_array();
+    }
+
+    template<class Exception>
+    bool parse_error(std::size_t position, const std::string& last_token,
+                     const Exception& ex)
+    {
+        recovery_requested = sax->parse_error(position, last_token, ex);
+        // the binary readers stop after an error anyway
+        return false;
+    }
+
+    /*!
+    @brief complete the value read before an error
+
+    Does nothing unless the SAX parser's parse_error() returned true. Otherwise
+    passes null for a key that waits for its value and closes the containers
+    that are still open, innermost first, until an event returns false.
+    */
+    void close_open_containers()
+    {
+        if (!recovery_requested)
+        {
+            return;
+        }
+        recovery_requested = false;
+
+        if (key_pending)
+        {
+            key_pending = false;
+            if (JSON_HEDLEY_UNLIKELY(!sax->null()))
+            {
+                return;
+            }
+        }
+
+        while (!open_containers.empty())
+        {
+            const bool is_object = open_containers.back();
+            open_containers.pop_back();
+            if (JSON_HEDLEY_UNLIKELY(is_object ? !sax->end_object() : !sax->end_array()))
+            {
+                return;
+            }
+        }
+    }
+
+  private:
+    /// the SAX parser the events are forwarded to
+    SAX* sax = nullptr;
+    /// the containers that are open, innermost last; true for an object
+    std::vector<bool> open_containers {}; // NOLINT(readability-redundant-member-init)
+    /// whether a key was passed whose value has not been passed yet
+    bool key_pending = false;
+    /// whether the SAX parser's parse_error() asked to recover from the error
+    bool recovery_requested = false;
+};
+
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
@@ -12923,8 +13667,8 @@ class binary_reader
 
             if (JSON_HEDLEY_UNLIKELY(current != char_traits<char_type>::eof()))
             {
-                return sax->parse_error(chars_read, get_token_string(), parse_error::create(110, chars_read,
-                                        exception_message(input_format, concat("expected end of input; last byte: 0x", get_token_string()), "value"), nullptr));
+                return report_error(chars_read, get_token_string(), parse_error::create(110, chars_read,
+                                    exception_message(input_format, concat("expected end of input; last byte: 0x", get_token_string()), "value"), nullptr));
             }
         }
 
@@ -13030,8 +13774,8 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(document_size < 0 || static_cast<std::size_t>(document_size) != chars_read - document_start))
         {
-            return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
-                                    exception_message(input_format_t::bson, concat("document size ", std::to_string(document_size), " does not match the number of bytes read (", std::to_string(chars_read - document_start), ")"), "document"), nullptr));
+            return report_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
+                                exception_message(input_format_t::bson, concat("document size ", std::to_string(document_size), " does not match the number of bytes read (", std::to_string(chars_read - document_start), ")"), "document"), nullptr));
         }
         return true;
     }
@@ -13225,8 +13969,8 @@ class binary_reader
         if (JSON_HEDLEY_UNLIKELY(len < 1))
         {
             auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                    exception_message(input_format_t::bson, concat("string length must be at least 1, is ", std::to_string(len)), "string"), nullptr));
+            return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                exception_message(input_format_t::bson, concat("string length must be at least 1, is ", std::to_string(len)), "string"), nullptr));
         }
 
         if (JSON_HEDLEY_UNLIKELY(!get_string(input_format_t::bson, len - static_cast<NumberType>(1), result)))
@@ -13237,10 +13981,10 @@ class binary_reader
         if (JSON_HEDLEY_UNLIKELY(get() != 0x00))
         {
             auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                    exception_message(input_format_t::bson,
-                                            "BSON string is not null-terminated",
-                                            "string"), nullptr));
+            return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                exception_message(input_format_t::bson,
+                                                  "BSON string is not null-terminated",
+                                                  "string"), nullptr));
         }
 
         return true;
@@ -13261,8 +14005,8 @@ class binary_reader
         if (JSON_HEDLEY_UNLIKELY(len < 0))
         {
             auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                    exception_message(input_format_t::bson, concat("byte array length cannot be negative, is ", std::to_string(len)), "binary"), nullptr));
+            return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                exception_message(input_format_t::bson, concat("byte array length cannot be negative, is ", std::to_string(len)), "binary"), nullptr));
         }
 
         // All BSON binary values have a subtype
@@ -13355,8 +14099,8 @@ class binary_reader
                 std::array<char, 3> cr{{}};
                 static_cast<void>((std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(element_type))); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
                 const std::string cr_str{cr.data()};
-                return sax->parse_error(element_type_parse_position, cr_str,
-                                        parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr));
+                return report_error(element_type_parse_position, cr_str,
+                                    parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr));
             }
         }
     }
@@ -13376,9 +14120,9 @@ class binary_reader
         const auto max_val = static_cast<NumberType>((std::numeric_limits<number_integer_t>::max)());
         if (number > max_val)
         {
-            return sax->parse_error(chars_read, get_token_string(),
-                                    parse_error::create(112, chars_read,
-                                            exception_message(input_format_t::cbor, "negative integer overflow", "value"), nullptr));
+            return report_error(chars_read, get_token_string(),
+                                parse_error::create(112, chars_read,
+                                                    exception_message(input_format_t::cbor, "negative integer overflow", "value"), nullptr));
         }
         return sax->number_integer(static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(number));
     }
@@ -13713,8 +14457,8 @@ class binary_reader
                     case cbor_tag_handler_t::error:
                     {
                         auto last_token = get_token_string();
-                        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                                exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr));
+                        return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                            exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr));
                     }
 
                     case cbor_tag_handler_t::ignore:
@@ -13912,8 +14656,8 @@ class binary_reader
             default: // anything else (0xFF is handled inside the other types)
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr));
             }
         }
     }
@@ -13992,8 +14736,8 @@ class binary_reader
             default:
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(input_format_t::cbor, concat("expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x", last_token), "string"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                    exception_message(input_format_t::cbor, concat("expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x", last_token), "string"), nullptr));
             }
         }
     }
@@ -14137,8 +14881,8 @@ class binary_reader
             default:
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(input_format_t::cbor, concat("expected length specification (0x40-0x5B) or indefinite binary array type (0x5F); last byte: 0x", last_token), "binary"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                    exception_message(input_format_t::cbor, concat("expected length specification (0x40-0x5B) or indefinite binary array type (0x5F); last byte: 0x", last_token), "binary"), nullptr));
             }
         }
     }
@@ -14218,8 +14962,8 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::size_t>(len) || len == detail::unknown_size()))
         {
-            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
-                                    exception_message(input_format_t::cbor, concat("excessive ", context, " size"), "size"), nullptr));
+            return report_error(chars_read, get_token_string(), out_of_range::create(408,
+                                exception_message(input_format_t::cbor, concat("excessive ", context, " size"), "size"), nullptr));
         }
         result = conditional_static_cast<std::size_t>(len);
         return true;
@@ -14715,8 +15459,8 @@ class binary_reader
             default: // anything else
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(input_format_t::msgpack, concat("invalid byte: 0x", last_token), "value"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format_t::msgpack, concat("invalid byte: 0x", last_token), "value"), nullptr));
             }
         }
     }
@@ -14798,8 +15542,8 @@ class binary_reader
             default:
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(input_format_t::msgpack, concat("expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0x", last_token), "string"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                    exception_message(input_format_t::msgpack, concat("expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0x", last_token), "string"), nullptr));
             }
         }
     }
@@ -15116,8 +15860,8 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(len < 0))
         {
-            return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                    exception_message(input_format, "string length must not be negative", "string"), nullptr));
+            return report_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                exception_message(input_format, "string length must not be negative", "string"), nullptr));
         }
         return true;
     }
@@ -15228,7 +15972,7 @@ class binary_reader
         {
             message = "expected length type specification (U, i, u, I, m, l, M, L); last byte: 0x" + last_token;
         }
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "string"), nullptr));
+        return report_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "string"), nullptr));
     }
 
     /*!
@@ -15329,8 +16073,8 @@ class binary_reader
                 }
                 if (number < 0)
                 {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                            exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
+                    return report_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                        exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
                 }
                 result = static_cast<std::size_t>(number); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): number is not a char
                 return true;
@@ -15345,8 +16089,8 @@ class binary_reader
                 }
                 if (number < 0)
                 {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                            exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
+                    return report_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                        exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
                 }
                 result = static_cast<std::size_t>(number);
                 return true;
@@ -15361,8 +16105,8 @@ class binary_reader
                 }
                 if (number < 0)
                 {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                            exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
+                    return report_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                        exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
                 }
                 result = static_cast<std::size_t>(number);
                 return true;
@@ -15377,13 +16121,13 @@ class binary_reader
                 }
                 if (number < 0)
                 {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                            exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
+                    return report_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                        exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
                 }
                 if (!value_in_range_of<std::size_t>(number))
                 {
-                    return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
-                                            exception_message(input_format, "integer value overflow", "size"), nullptr));
+                    return report_error(chars_read, get_token_string(), out_of_range::create(408,
+                                        exception_message(input_format, "integer value overflow", "size"), nullptr));
                 }
                 result = static_cast<std::size_t>(number);
                 return true;
@@ -15432,8 +16176,8 @@ class binary_reader
                 }
                 if (!value_in_range_of<std::size_t>(number))
                 {
-                    return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
-                                            exception_message(input_format, "integer value overflow", "size"), nullptr));
+                    return report_error(chars_read, get_token_string(), out_of_range::create(408,
+                                        exception_message(input_format, "integer value overflow", "size"), nullptr));
                 }
                 result = detail::conditional_static_cast<std::size_t>(number);
                 return true;
@@ -15447,7 +16191,7 @@ class binary_reader
                 }
                 if (is_ndarray) // ndarray dimensional vector can only contain integers and cannot embed another array
                 {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read, exception_message(input_format, "ndarray dimensional vector is not allowed", "size"), nullptr));
+                    return report_error(chars_read, get_token_string(), parse_error::create(113, chars_read, exception_message(input_format, "ndarray dimensional vector is not allowed", "size"), nullptr));
                 }
                 std::vector<size_t> dim;
                 if (JSON_HEDLEY_UNLIKELY(!get_ubjson_ndarray_size(dim)))
@@ -15483,13 +16227,13 @@ class binary_reader
                         // as modular arithmetic can produce any value, not just 0 or SIZE_MAX.
                         if (JSON_HEDLEY_UNLIKELY(i > 0 && result > (std::numeric_limits<std::size_t>::max)() / i))
                         {
-                            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
+                            return report_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
                         }
                         result *= i;
                         // Additional post-multiplication check to catch any edge cases the pre-check might miss
                         if (result == 0 || result == npos)
                         {
-                            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
+                            return report_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
                         }
                         if (JSON_HEDLEY_UNLIKELY(!sax->number_unsigned(static_cast<number_unsigned_t>(i))))
                         {
@@ -15517,7 +16261,7 @@ class binary_reader
         {
             message = "expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x" + last_token;
         }
-        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "size"), nullptr));
+        return report_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "size"), nullptr));
     }
 
     /*!
@@ -15551,8 +16295,8 @@ class binary_reader
                     && JSON_HEDLEY_UNLIKELY(std::binary_search(bjd_optimized_type_markers.begin(), bjd_optimized_type_markers.end(), result.second)))
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(input_format, concat("marker 0x", last_token, " is not a permitted optimized array type"), "type"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format, concat("marker 0x", last_token, " is not a permitted optimized array type"), "type"), nullptr));
             }
 
             if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "type")))
@@ -15568,8 +16312,8 @@ class binary_reader
                     return false;
                 }
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(input_format, concat("expected '#' after type information; last byte: 0x", last_token), "size"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format, concat("expected '#' after type information; last byte: 0x", last_token), "size"), nullptr));
             }
 
             const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
@@ -15588,8 +16332,8 @@ class binary_reader
             const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
             if (input_format == input_format_t::bjdata && is_ndarray && !inside_ndarray)
             {
-                return sax->parse_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
-                                        exception_message(input_format, "ndarray requires both type and size", "size"), nullptr));
+                return report_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
+                                    exception_message(input_format, "ndarray requires both type and size", "size"), nullptr));
             }
             return is_error;
         }
@@ -15765,8 +16509,8 @@ class binary_reader
                 if (JSON_HEDLEY_UNLIKELY(current > 127))
                 {
                     auto last_token = get_token_string();
-                    return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                            exception_message(input_format, concat("byte after 'C' must be in range 0x00..0x7F; last byte: 0x", last_token), "char"), nullptr));
+                    return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                        exception_message(input_format, concat("byte after 'C' must be in range 0x00..0x7F; last byte: 0x", last_token), "char"), nullptr));
                 }
                 string_t s(1, static_cast<typename string_t::value_type>(current));
                 return sax->string(s);
@@ -15788,7 +16532,7 @@ class binary_reader
                 break;
         }
         auto last_token = get_token_string();
-        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format, "invalid byte: 0x" + last_token, "value"), nullptr));
+        return report_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format, "invalid byte: 0x" + last_token, "value"), nullptr));
     }
 
     /*!
@@ -15816,8 +16560,8 @@ class binary_reader
             if (JSON_HEDLEY_UNLIKELY(it == bjd_types_map.end() || it->first != size_and_type.second))
             {
                 auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(input_format, "invalid byte: 0x" + last_token, "type"), nullptr));
+                return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                    exception_message(input_format, "invalid byte: 0x" + last_token, "type"), nullptr));
             }
 
             string_t type = it->second; // sax->string() takes a reference
@@ -15864,8 +16608,8 @@ class binary_reader
             if (JSON_HEDLEY_UNLIKELY((size_and_type.second == 'Z' || size_and_type.second == 'T' || size_and_type.second == 'F')
                                      && size_and_type.first > max_valueless_container_size))
             {
-                return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
-                                        exception_message(input_format, "excessive array size", "size"), nullptr));
+                return report_error(chars_read, get_token_string(), out_of_range::create(408,
+                                    exception_message(input_format, "excessive array size", "size"), nullptr));
             }
 
             if (JSON_HEDLEY_UNLIKELY(!enter_array(size_and_type.first, size_and_type.second)))
@@ -15901,8 +16645,8 @@ class binary_reader
         if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
         {
             auto last_token = get_token_string();
-            return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                    exception_message(input_format, "BJData object does not support ND-array size in optimized format", "object"), nullptr));
+            return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                exception_message(input_format, "BJData object does not support ND-array size in optimized format", "object"), nullptr));
         }
 
         if (size_and_type.first != npos)
@@ -15950,8 +16694,8 @@ class binary_reader
 
         if (JSON_HEDLEY_UNLIKELY(result_remainder != token_type::end_of_input))
         {
-            return sax->parse_error(chars_read, number_string, parse_error::create(115, chars_read,
-                                    exception_message(input_format, concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));
+            return report_error(chars_read, number_string, parse_error::create(115, chars_read,
+                                exception_message(input_format, concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));
         }
 
         switch (result_number)
@@ -15965,7 +16709,7 @@ class binary_reader
                 const auto parsed_float = number_lexer.get_number_float();
                 if (JSON_HEDLEY_UNLIKELY(!std::isfinite(parsed_float)))
                 {
-                    return sax->parse_error(
+                    return report_error(
                                chars_read,
                                number_string,
                                out_of_range::create(406, concat("number overflow parsing '", number_string, '\''), nullptr));
@@ -15990,8 +16734,8 @@ class binary_reader
             case token_type::end_of_input:
             case token_type::literal_or_value:
             default:
-                return sax->parse_error(chars_read, number_string, parse_error::create(115, chars_read,
-                                        exception_message(input_format, concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));
+                return report_error(chars_read, number_string, parse_error::create(115, chars_read,
+                                    exception_message(input_format, concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));
         }
     }
 
@@ -16059,8 +16803,8 @@ class binary_reader
     bool bon8_error(const std::string& detail, const char* context)
     {
         auto last_token = get_token_string();
-        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                exception_message(input_format_t::bon8, concat(detail, ": 0x", last_token), context), nullptr));
+        return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                            exception_message(input_format_t::bon8, concat(detail, ": 0x", last_token), context), nullptr));
     }
 
     /*!
@@ -16574,8 +17318,7 @@ class binary_reader
         {
             // in case of failure, advance position by 1 to report the failing location
             ++chars_read;
-            sax->parse_error(chars_read, "<end of file>", parse_error::create(110, chars_read, exception_message(format, "unexpected end of input", context), nullptr));
-            return false;
+            return report_error(chars_read, "<end of file>", parse_error::create(110, chars_read, exception_message(format, "unexpected end of input", context), nullptr));
         }
         return true;
     }
@@ -16687,9 +17430,9 @@ class binary_reader
         // (which would defeat allow_exceptions=false / strict discarding).
         if (JSON_HEDLEY_UNLIKELY(!is_valid_utf8(result, old_size)))
         {
-            return sax->parse_error(chars_read, get_token_string(),
-                                    parse_error::create(113, chars_read,
-                                            exception_message(format, "invalid string: ill-formed UTF-8 byte", "string"), nullptr));
+            return report_error(chars_read, get_token_string(),
+                                parse_error::create(113, chars_read,
+                                                    exception_message(format, "invalid string: ill-formed UTF-8 byte", "string"), nullptr));
         }
 
         return true;
@@ -16777,6 +17520,25 @@ class binary_reader
     }
 
     /*!
+    @brief report an error to the SAX parser
+
+    The binary formats cannot recover from an error: a value's size is given
+    before its payload, and every byte value is a valid type marker, so after
+    an error there is no way to find where the next value begins. Reading
+    therefore stops, whatever the SAX parser's parse_error() returns. That the
+    SAX parser may ask for the containers read so far to be closed is handled
+    by @ref json_sax_salvager, not here (see #3989).
+
+    @return false, so that the caller stops reading
+    */
+    template<typename Exception>
+    bool report_error(const std::size_t position, const std::string& last_token, const Exception& ex) const
+    {
+        static_cast<void>(sax->parse_error(position, last_token, ex));
+        return false;
+    }
+
+    /*!
     @param[in] format   the current format (for diagnostics)
     @param[in] context  further context information (for diagnostics)
     @return whether the last read character is not EOF
@@ -16786,8 +17548,8 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(current == char_traits<char_type>::eof()))
         {
-            return sax->parse_error(chars_read, "<end of file>",
-                                    parse_error::create(110, chars_read, exception_message(format, "unexpected end of input", context), nullptr));
+            return report_error(chars_read, "<end of file>",
+                                parse_error::create(110, chars_read, exception_message(format, "unexpected end of input", context), nullptr));
         }
         return true;
     }
@@ -17032,7 +17794,7 @@ class parser
         if (callback)
         {
             json_sax_dom_callback_parser<BasicJsonType, InputAdapterType> sdp(result, callback, allow_exceptions, &m_lexer);
-            sax_parse_internal(&sdp);
+            sax_parse_internal<false>(&sdp);
 
             if (strict)
             {
@@ -17069,7 +17831,7 @@ class parser
         else
         {
             json_sax_dom_parser<BasicJsonType, InputAdapterType> sdp(result, allow_exceptions, &m_lexer);
-            sax_parse_internal(&sdp);
+            sax_parse_internal<false>(&sdp);
 
             if (strict)
             {
@@ -17107,26 +17869,59 @@ class parser
     bool accept(const bool strict = true)
     {
         json_sax_acceptor<BasicJsonType> sax_acceptor;
-        return sax_parse(&sax_acceptor, strict);
+        return sax_parse_impl<false>(&sax_acceptor, strict);
     }
 
+    /*!
+    @brief public SAX interface
+
+    If the SAX parser's parse_error() returns true, the parser recovers from
+    the error: it repairs the input and continues (see #3989).
+
+    @param[in] sax     the SAX parser
+    @param[in] strict  whether to expect the last token to be EOF
+    @return whether the input was parsed without errors and no SAX event
+            returned false
+    */
     template<typename SAX>
     JSON_HEDLEY_NON_NULL(2)
     bool sax_parse(SAX* sax, const bool strict = true)
     {
+        return sax_parse_impl<true>(sax, strict);
+    }
+
+  private:
+    /// what sax_parse_internal() does after an object key was expected
+    enum class next_step : std::uint8_t
+    {
+        /// stop parsing
+        stop,
+        /// parse a value that begins with last_token
+        parse_value,
+        /// evaluate the state of the innermost container, which reads
+        /// last_token again
+        evaluate_state
+    };
+
+    template<bool AllowRecovery, typename SAX>
+    JSON_HEDLEY_NON_NULL(2)
+    bool sax_parse_impl(SAX* sax, const bool strict)
+    {
         (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
-        const bool result = sax_parse_internal(sax);
+        const bool result = sax_parse_internal<AllowRecovery>(sax);
 
         if (result)
         {
             if (strict)
             {
-                // strict mode: next byte must be EOF
-                if (get_token() != token_type::end_of_input)
+                // strict mode: next byte must be EOF; after recovering from an
+                // error, the end of the input may already have been read
+                if (last_token != token_type::end_of_input && get_token() != token_type::end_of_input)
                 {
-                    return sax->parse_error(m_lexer.get_position(),
-                                            m_lexer.get_token_string(),
-                                            parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
+                    // the value is complete, so there is nothing to recover
+                    static_cast<void>(report_error(sax, parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr),
+                                                   std::integral_constant<bool, AllowRecovery> {}));
+                    return false;
                 }
             }
             else
@@ -17137,14 +17932,23 @@ class parser
             }
         }
 
-        return result;
+        return result && !error_reported;
     }
 
-  private:
-    template<typename SAX>
+    /*!
+    @brief parse a JSON value and pass it to a SAX parser
+
+    @tparam AllowRecovery  whether to recover from an error if the SAX parser's
+                           parse_error() returns true; false for the SAX parsers
+                           of parse() and accept(), which never do, so that no
+                           code for recovering is generated for them
+    */
+    template<bool AllowRecovery, typename SAX>
     JSON_HEDLEY_NON_NULL(2)
     bool sax_parse_internal(SAX* sax)
     {
+        const std::integral_constant<bool, AllowRecovery> allow_recovery{};
+
         // stack to remember the hierarchy of structured values we are parsing
         // true = array; false = object
         std::vector<bool> states;
@@ -17175,12 +17979,18 @@ class parser
                             break;
                         }
 
-                        // parse key
+                        // remember we are now inside an object
+                        states.push_back(false);
+
+                        // parse key (the steps of parse_key(), which are
+                        // repeated here and below for speed)
                         if (JSON_HEDLEY_UNLIKELY(last_token != token_type::value_string))
                         {
-                            return sax->parse_error(m_lexer.get_position(),
-                                                    m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string, "object key"), nullptr));
+                            if (!continue_after(key_error(sax, allow_recovery, false), skip_to_state_evaluation))
+                            {
+                                return false;
+                            }
+                            continue;
                         }
                         if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
                         {
@@ -17190,13 +18000,12 @@ class parser
                         // parse separator (:)
                         if (JSON_HEDLEY_UNLIKELY(get_token() != token_type::name_separator))
                         {
-                            return sax->parse_error(m_lexer.get_position(),
-                                                    m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator, "object separator"), nullptr));
+                            if (!continue_after(key_error(sax, allow_recovery, true), skip_to_state_evaluation))
+                            {
+                                return false;
+                            }
+                            continue;
                         }
-
-                        // remember we are now inside an object
-                        states.push_back(false);
 
                         // parse values
                         get_token();
@@ -17233,9 +18042,11 @@ class parser
 
                         if (JSON_HEDLEY_UNLIKELY(!std::isfinite(res)))
                         {
-                            return sax->parse_error(m_lexer.get_position(),
-                                                    m_lexer.get_token_string(),
-                                                    out_of_range::create(406, concat("number overflow parsing '", m_lexer.get_token_string(), '\''), nullptr));
+                            if (!overflow_error(sax, res, allow_recovery))
+                            {
+                                return false;
+                            }
+                            break;
                         }
 
                         if (JSON_HEDLEY_UNLIKELY(!sax->number_float(res, m_lexer.get_string())))
@@ -17303,23 +18114,63 @@ class parser
                     case token_type::parse_error:
                     {
                         // using "uninitialized" to avoid an "expected" message
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::uninitialized, "value"), nullptr));
+                        if (!report_error(sax, parse_error::create(101, m_lexer.get_position(), exception_message(token_type::uninitialized, "value"), nullptr), allow_recovery))
+                        {
+                            return false;
+                        }
+
+                        // recover: keep what can be read of the token
+                        recover_token();
+                        if (last_token != token_type::uninitialized)
+                        {
+                            // a string or a number
+                            continue;
+                        }
+                        if (states.empty())
+                        {
+                            // look for the value after the garbage
+                            if (!skip_to_value())
+                            {
+                                return false;
+                            }
+                            continue;
+                        }
+                        // nothing could be read
+                        if (JSON_HEDLEY_UNLIKELY(!sax->null()))
+                        {
+                            return false;
+                        }
+                        break;
                     }
                     case token_type::end_of_input:
                     {
                         if (JSON_HEDLEY_UNLIKELY(m_lexer.get_position().chars_read_total == 1))
                         {
-                            return sax->parse_error(m_lexer.get_position(),
-                                                    m_lexer.get_token_string(),
-                                                    parse_error::create(101, m_lexer.get_position(),
-                                                            "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
+                            // there is nothing to recover
+                            static_cast<void>(report_error(sax, parse_error::create(101, m_lexer.get_position(),
+                                                           "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr), allow_recovery));
+                            return false;
                         }
 
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value, "value"), nullptr));
+                        if (!report_error(sax, parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value, "value"), nullptr), allow_recovery))
+                        {
+                            return false;
+                        }
+
+                        // recover: the input ends where a value is missing
+                        if (states.empty())
+                        {
+                            // there is no value
+                            return false;
+                        }
+                        if (!recover_missing_value(sax, states))
+                        {
+                            return false;
+                        }
+                        // the state evaluation reads the token again
+                        m_lexer.unget_token();
+                        skip_to_state_evaluation = true;
+                        continue;
                     }
                     case token_type::uninitialized:
                     case token_type::end_array:
@@ -17329,9 +18180,35 @@ class parser
                     case token_type::literal_or_value:
                     default: // the last token was unexpected
                     {
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value, "value"), nullptr));
+                        if (!report_error(sax, parse_error::create(101, m_lexer.get_position(), exception_message(token_type::literal_or_value, "value"), nullptr), allow_recovery))
+                        {
+                            return false;
+                        }
+
+                        // recover
+                        if (states.empty())
+                        {
+                            // look for the value after the garbage
+                            if (!skip_to_value())
+                            {
+                                return false;
+                            }
+                            continue;
+                        }
+                        if (last_token == token_type::name_separator)
+                        {
+                            // a stray ':'; the value may follow
+                            get_token();
+                            continue;
+                        }
+                        if (!recover_missing_value(sax, states))
+                        {
+                            return false;
+                        }
+                        // the state evaluation reads the token again
+                        m_lexer.unget_token();
+                        skip_to_state_evaluation = true;
+                        continue;
                     }
                 }
             }
@@ -17381,9 +18258,30 @@ class parser
                     continue;
                 }
 
-                return sax->parse_error(m_lexer.get_position(),
-                                        m_lexer.get_token_string(),
-                                        parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_array, "array"), nullptr));
+                if (!report_error(sax, parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_array, "array"), nullptr), allow_recovery))
+                {
+                    return false;
+                }
+
+                // recover
+                if (last_token == token_type::end_of_input)
+                {
+                    // the input ends inside the array
+                    return close_containers(sax, states);
+                }
+                if (last_token == token_type::end_object)
+                {
+                    // a wrong closing bracket closes the innermost container
+                    if (JSON_HEDLEY_UNLIKELY(!sax->end_array()))
+                    {
+                        return false;
+                    }
+                    states.pop_back();
+                    skip_to_state_evaluation = true;
+                }
+                // otherwise, a missing ',' (or a stray ':', which value
+                // parsing drops): the next value begins here
+                continue;
             }
 
             // states.back() is false -> object
@@ -17400,11 +18298,12 @@ class parser
                     // parse key
                     if (JSON_HEDLEY_UNLIKELY(last_token != token_type::value_string))
                     {
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string, "object key"), nullptr));
+                        if (!continue_after(key_error(sax, allow_recovery, false), skip_to_state_evaluation))
+                        {
+                            return false;
+                        }
+                        continue;
                     }
-
                     if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
                     {
                         return false;
@@ -17413,9 +18312,11 @@ class parser
                     // parse separator (:)
                     if (JSON_HEDLEY_UNLIKELY(get_token() != token_type::name_separator))
                     {
-                        return sax->parse_error(m_lexer.get_position(),
-                                                m_lexer.get_token_string(),
-                                                parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator, "object separator"), nullptr));
+                        if (!continue_after(key_error(sax, allow_recovery, true), skip_to_state_evaluation))
+                        {
+                            return false;
+                        }
+                        continue;
                     }
 
                     // parse values
@@ -17442,10 +18343,477 @@ class parser
                 continue;
             }
 
-            return sax->parse_error(m_lexer.get_position(),
-                                    m_lexer.get_token_string(),
-                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_object, "object"), nullptr));
+            if (!report_error(sax, parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_object, "object"), nullptr), allow_recovery))
+            {
+                return false;
+            }
+
+            // recover
+            if (last_token == token_type::end_of_input)
+            {
+                // the input ends inside the object
+                return close_containers(sax, states);
+            }
+            if (last_token == token_type::end_array)
+            {
+                // a wrong closing bracket closes the innermost container
+                if (JSON_HEDLEY_UNLIKELY(!sax->end_object()))
+                {
+                    return false;
+                }
+                states.pop_back();
+                skip_to_state_evaluation = true;
+                continue;
+            }
+            if (!continue_after(recover_member(sax, allow_recovery), skip_to_state_evaluation))
+            {
+                return false;
+            }
         }
+    }
+
+    /*!
+    @brief continue sax_parse_internal() after a recovery
+    @return whether to continue parsing
+    */
+    bool continue_after(const next_step step, bool& skip_to_state_evaluation)
+    {
+        if (step == next_step::evaluate_state)
+        {
+            // the state evaluation reads the token again
+            m_lexer.unget_token();
+            skip_to_state_evaluation = true;
+        }
+        return step != next_step::stop;
+    }
+
+    /// the parser for parse() and accept() never recovers: stop parsing
+    static std::false_type continue_after(std::false_type /*step*/, bool& /*skip_to_state_evaluation*/) noexcept
+    {
+        return {};
+    }
+
+    /*!
+    @brief parse an object key and the name separator (:) after it
+
+    last_token is the token where the key is expected. sax_parse_internal()
+    repeats these steps rather than calling this function, which is used
+    when recovering from an error.
+
+    @return next_step::parse_value if the value follows, with last_token its
+            first token; next_step::evaluate_state if the object's state is
+            to be evaluated after recovering from an error; next_step::stop
+            to stop parsing
+    */
+    template<typename SAX>
+    next_step parse_key(SAX* sax)
+    {
+        const std::true_type allow_recovery{};
+
+        if (JSON_HEDLEY_UNLIKELY(last_token != token_type::value_string))
+        {
+            return key_error(sax, allow_recovery, false);
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(!sax->key(m_lexer.get_string())))
+        {
+            return next_step::stop;
+        }
+
+        // parse separator (:)
+        if (JSON_HEDLEY_UNLIKELY(get_token() != token_type::name_separator))
+        {
+            return key_error(sax, allow_recovery, true);
+        }
+
+        // the value begins with the next token
+        get_token();
+        return next_step::parse_value;
+    }
+
+    /*!
+    @brief report a number that is too large for number_float_t, and recover
+           from the error by passing the value on; the SAX parser gets the
+           number's text as well
+
+    This is a separate function, as reading other numbers is measurably
+    slower if the error is handled where they are read.
+
+    @param[in] sax    the SAX parser
+    @param[in] value  the value that is not finite
+    @return whether to continue parsing
+    */
+    template<typename SAX, typename AllowRecovery>
+    bool overflow_error(SAX* sax, const number_float_t value, AllowRecovery allow_recovery)
+    {
+        if (!report_error(sax, out_of_range::create(406, concat("number overflow parsing '", m_lexer.get_token_string(), '\''), nullptr), allow_recovery))
+        {
+            return false;
+        }
+        return sax->number_float(value, m_lexer.get_string());
+    }
+
+    /*!
+    @brief report a missing key, or a missing name separator (:) after the
+           key; the parser for parse() and accept() never recovers
+
+    @param[in] key_read  whether the key was read, so that the name separator
+                         is missing
+    @return std::false_type, see report_error()
+    */
+    template<typename SAX>
+    std::false_type key_error(SAX* sax, std::false_type allow_recovery, const bool key_read)
+    {
+        return report_error(sax, parse_error::create(101, m_lexer.get_position(), key_read
+                            ? exception_message(token_type::name_separator, "object separator")
+                            : exception_message(token_type::value_string, "object key"), nullptr), allow_recovery);
+    }
+
+    /*!
+    @brief report a missing key, or a missing name separator (:) after the
+           key, and recover from it
+
+    @param[in] key_read  whether the key was read, so that the name separator
+                         is missing
+    */
+    template<typename SAX>
+    next_step key_error(SAX* sax, std::true_type allow_recovery, const bool key_read)
+    {
+        if (!key_read)
+        {
+            if (!report_error(sax, parse_error::create(101, m_lexer.get_position(), exception_message(token_type::value_string, "object key"), nullptr), allow_recovery))
+            {
+                return next_step::stop;
+            }
+            return recover_key(sax);
+        }
+
+        if (!report_error(sax, parse_error::create(101, m_lexer.get_position(), exception_message(token_type::name_separator, "object separator"), nullptr), allow_recovery))
+        {
+            return next_step::stop;
+        }
+        return recover_name_separator(sax);
+    }
+
+    /////////////////////
+    // error recovery
+    /////////////////////
+
+    /*
+    The functions below repair an error after the SAX parser's parse_error()
+    returned true (see #3989). Each mistake is repaired by the smallest local
+    edit: a missing ',' or ':' is inserted, a stray token is removed, what can
+    be read of an invalid string or number is kept (see
+    lexer::recover_token()), a missing value becomes null, a wrong closing
+    bracket closes the innermost container, and the end of the input closes
+    all of them. The events stay balanced, and every key() is followed by
+    exactly one value.
+
+    A repair hands a token to the state evaluation, by returning it to the
+    lexer (lexer::unget_token()) so that the state evaluation reads it again,
+    only if it is ',', ']', '}', or the end of the input. The state evaluation
+    hands a token to value or key parsing only if it is none of them, so a
+    token is never handed back and forth. Every other step reads a token or
+    closes a container, so parsing always ends.
+    */
+
+    /*!
+    @brief report an error to the SAX parser; the parser for parse() and
+           accept() never recovers
+
+    @return std::false_type rather than false: its value is known where the
+            function is called even if the call is not inlined, so the code
+            for recovering is not generated
+    */
+    template<typename SAX, typename Exception>
+    std::false_type report_error(SAX* sax, const Exception& ex, std::false_type /*allow_recovery*/)
+    {
+        error_reported = true;
+        static_cast<void>(sax->parse_error(m_lexer.get_position(), m_lexer.get_token_string(), ex));
+        return {};
+    }
+
+    /*!
+    @brief report an error to the SAX parser
+    @return whether to recover from the error
+    */
+    template<typename SAX, typename Exception>
+    bool report_error(SAX* sax, const Exception& ex, std::true_type /*allow_recovery*/)
+    {
+        const std::size_t position = m_lexer.get_position().chars_read_total;
+        if (error_reported && position == last_error_position && last_token == last_error_token)
+        {
+            // a repair handed on the token of the error it repaired; the
+            // token was reported already, and the SAX parser asked to recover
+            return true;
+        }
+
+        error_reported = true;
+        last_error_position = position;
+        last_error_token = last_token;
+
+        if (!sax->parse_error(m_lexer.get_position(), m_lexer.get_token_string(), ex))
+        {
+            return false;
+        }
+
+        // the token string of the next error begins here
+        m_lexer.restart_token_string();
+        return true;
+    }
+
+    /*!
+    @brief keep what can be read of the token that the lexer rejected
+
+    The error was reported for the rejected token, so it is not reported again
+    for the token it is repaired to (see lexer::recover_token()).
+    */
+    token_type recover_token()
+    {
+        last_token = m_lexer.recover_token();
+        last_error_position = m_lexer.get_position().chars_read_total;
+        last_error_token = last_token;
+        return last_token;
+    }
+
+    /// pass the end events of all open containers
+    template<typename SAX>
+    bool close_containers(SAX* sax, std::vector<bool>& states)
+    {
+        while (!states.empty())
+        {
+            const bool is_array = states.back();
+            states.pop_back();
+            if (JSON_HEDLEY_UNLIKELY(is_array ? !sax->end_array() : !sax->end_object()))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /*!
+    @brief read tokens until one begins a value, skipping everything before
+           the top-level value
+    @return whether a value begins with last_token
+    */
+    bool skip_to_value()
+    {
+        while (true)
+        {
+            switch (get_token())
+            {
+                case token_type::begin_array:
+                case token_type::begin_object:
+                case token_type::literal_false:
+                case token_type::literal_null:
+                case token_type::literal_true:
+                case token_type::value_float:
+                case token_type::value_integer:
+                case token_type::value_string:
+                case token_type::value_unsigned:
+                    return true;
+
+                case token_type::end_of_input:
+                    return false;
+
+                case token_type::parse_error:
+                    recover_token();
+                    if (last_token != token_type::uninitialized)
+                    {
+                        return true;
+                    }
+                    break;
+
+                case token_type::uninitialized:
+                case token_type::end_array:
+                case token_type::end_object:
+                case token_type::name_separator:
+                case token_type::value_separator:
+                case token_type::literal_or_value:
+                default:
+                    break;
+            }
+        }
+    }
+
+    /*!
+    @brief skip the rest of an object member that cannot be read
+
+    Reads tokens, beginning with last_token, until a ',', '}', or ']' that is
+    not inside a container that begins in the skipped tokens, or the end of
+    the input.
+    */
+    void skip_member()
+    {
+        std::size_t depth = 0;
+        while (true)
+        {
+            switch (last_token)
+            {
+                case token_type::begin_array:
+                case token_type::begin_object:
+                    ++depth;
+                    break;
+
+                case token_type::end_array:
+                case token_type::end_object:
+                    if (depth == 0)
+                    {
+                        return;
+                    }
+                    --depth;
+                    break;
+
+                case token_type::value_separator:
+                    if (depth == 0)
+                    {
+                        return;
+                    }
+                    break;
+
+                case token_type::end_of_input:
+                    return;
+
+                case token_type::parse_error:
+                    recover_token();
+                    break;
+
+                case token_type::uninitialized:
+                case token_type::literal_true:
+                case token_type::literal_false:
+                case token_type::literal_null:
+                case token_type::value_string:
+                case token_type::value_unsigned:
+                case token_type::value_integer:
+                case token_type::value_float:
+                case token_type::name_separator:
+                case token_type::literal_or_value:
+                default:
+                    break;
+            }
+            get_token();
+        }
+    }
+
+    /*!
+    @brief pass a value where it is missing
+
+    last_token is ',', ']', '}', or the end of the input, where a value was
+    expected. In an object, the key gets null; in an array, a ',' where a
+    value is missing stands for null (as in JavaScript), while an array that
+    ends there just ends.
+    */
+    template<typename SAX>
+    bool recover_missing_value(SAX* sax, const std::vector<bool>& states)
+    {
+        JSON_ASSERT(!states.empty());
+        if (!states.back() || last_token == token_type::value_separator)
+        {
+            return sax->null();
+        }
+        return true;
+    }
+
+    /// recover from a missing key; last_token is where it was expected
+    template<typename SAX>
+    next_step recover_key(SAX* sax)
+    {
+        switch (last_token)
+        {
+            case token_type::value_separator:
+            case token_type::end_object:
+            case token_type::end_array:
+            case token_type::end_of_input:
+                // no member: the object's state handles the token
+                return next_step::evaluate_state;
+
+            case token_type::parse_error:
+                recover_token();
+                if (last_token == token_type::value_string)
+                {
+                    // a key that could be repaired
+                    return parse_key(sax);
+                }
+                skip_member();
+                return next_step::evaluate_state;
+
+            case token_type::uninitialized:
+            case token_type::literal_true:
+            case token_type::literal_false:
+            case token_type::literal_null:
+            case token_type::value_string:
+            case token_type::value_unsigned:
+            case token_type::value_integer:
+            case token_type::value_float:
+            case token_type::begin_array:
+            case token_type::begin_object:
+            case token_type::name_separator:
+            case token_type::literal_or_value:
+            default:
+                // a member without a key
+                skip_member();
+                return next_step::evaluate_state;
+        }
+    }
+
+    /// recover from a missing name separator (:) after the key; last_token
+    /// is where it was expected
+    template<typename SAX>
+    next_step recover_name_separator(SAX* sax)
+    {
+        switch (last_token)
+        {
+            case token_type::value_separator:
+            case token_type::end_object:
+            case token_type::end_array:
+            case token_type::end_of_input:
+                // the value is missing as well
+                return sax->null() ? next_step::evaluate_state : next_step::stop;
+
+            case token_type::uninitialized:
+            case token_type::literal_true:
+            case token_type::literal_false:
+            case token_type::literal_null:
+            case token_type::value_string:
+            case token_type::value_unsigned:
+            case token_type::value_integer:
+            case token_type::value_float:
+            case token_type::begin_array:
+            case token_type::begin_object:
+            case token_type::name_separator:
+            case token_type::parse_error:
+            case token_type::literal_or_value:
+            default:
+                // a missing ':'; the value begins here
+                return next_step::parse_value;
+        }
+    }
+
+    /// recover from a token after an object member that is neither ',' nor
+    /// '}' (nor ']' or the end of the input, which the caller handles)
+    template<typename SAX>
+    next_step recover_member(SAX* sax, std::true_type /*allow_recovery*/)
+    {
+        if (last_token == token_type::parse_error)
+        {
+            recover_token();
+        }
+        if (last_token == token_type::value_string)
+        {
+            // a missing ','; the next key begins here
+            return parse_key(sax);
+        }
+        skip_member();
+        return next_step::evaluate_state;
+    }
+
+    /// the parser for parse() and accept() never recovers (and does not come
+    /// here, as report_error() returned false)
+    template<typename SAX>
+    std::false_type recover_member(SAX* /*sax*/, std::false_type /*allow_recovery*/) const noexcept
+    {
+        return {};
     }
 
     /// get next token from lexer
@@ -17494,6 +18862,12 @@ class parser
     const bool allow_exceptions = true;
     /// whether trailing commas in objects and arrays should be ignored (true) or signaled as errors (false)
     const bool ignore_trailing_commas = false;
+    /// whether an error was reported to the SAX parser
+    bool error_reported = false;
+    /// the position of the last reported error
+    std::size_t last_error_position = 0;
+    /// the token of the last reported error
+    token_type last_error_token = token_type::uninitialized;
 };
 
 }  // namespace detail
@@ -30862,6 +32236,26 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return parser(i.get(), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
     }
 
+  private:
+    /// read a binary format and pass it to a SAX parser; if the SAX parser
+    /// asks to recover from an error, the value read so far is completed
+    /// (see detail::json_sax_salvager and #3989)
+    template<typename InputAdapterType, typename SAX>
+    static bool sax_parse_binary(InputAdapterType ia, SAX* sax,
+                                 const input_format_t format, const bool strict)
+    {
+        (void)detail::is_sax_static_asserts<SAX, basic_json> {};
+        using salvager_t = detail::json_sax_salvager<basic_json, SAX>;
+        salvager_t salvager(sax);
+        const bool result = detail::binary_reader<basic_json, InputAdapterType, salvager_t>(std::move(ia), format).sax_parse(format, &salvager, strict);
+        if (!result)
+        {
+            salvager.close_open_containers();
+        }
+        return result;
+    }
+
+  public:
     /// @brief generate SAX events
     /// @sa https://json.nlohmann.me/api/basic_json/sax_parse/
     template <typename InputType, typename SAX>
@@ -30875,7 +32269,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         return format == input_format_t::json
                ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(format, sax, strict);
+               : sax_parse_binary(std::move(ia), sax, format, strict);
     }
 
     /// @brief generate SAX events (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -30892,7 +32286,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         return format == input_format_t::json
                ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(format, sax, strict);
+               : sax_parse_binary(std::move(ia), sax, format, strict);
     }
 
     /// @brief generate SAX events
@@ -30914,7 +32308,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
                ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(format, sax, strict);
+               : sax_parse_binary(std::move(ia), sax, format, strict);
     }
 #ifndef JSON_NO_IO
     /// @brief deserialize from stream

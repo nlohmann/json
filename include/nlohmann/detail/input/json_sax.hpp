@@ -131,7 +131,9 @@ struct json_sax
     @param[in] position    the position in the input where the error occurs
     @param[in] last_token  the last read token
     @param[in] ex          an exception object describing the error
-    @return whether parsing should proceed (must return false)
+    @return whether to recover from the error: false stops parsing; true
+            repairs JSON text and continues, or, for the binary formats, stops
+            after closing the containers read so far
     */
     virtual bool parse_error(std::size_t position,
                              const std::string& last_token,
@@ -186,9 +188,12 @@ a pointer to the respective array or object for each recursion depth.
 After successful parsing, the value that is passed by reference to the
 constructor contains the parsed value.
 
-@tparam BasicJsonType  the JSON type
+@tparam BasicJsonType     the JSON type
+@tparam InputAdapterType  the input adapter of the lexer that can be passed to
+                          the constructor to record diagnostic positions; it
+                          does not matter if no lexer is passed
 */
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType = string_input_adapter_type>
 class json_sax_dom_parser
 {
   public:
@@ -505,7 +510,7 @@ class json_sax_dom_parser
     lexer_t* m_lexer_ref = nullptr;
 };
 
-template<typename BasicJsonType, typename InputAdapterType>
+template<typename BasicJsonType, typename InputAdapterType = string_input_adapter_type>
 class json_sax_dom_callback_parser
 {
   public:
@@ -1205,6 +1210,177 @@ class json_sax_acceptor
     {
         return false;
     }
+};
+
+/*!
+@brief SAX proxy that lets the binary readers keep what was read before an error
+
+The binary formats cannot continue after an error: a value's size is given
+before its payload, and every byte value is a valid type marker, so there is no
+way to find where the next value begins. When the SAX parser's parse_error()
+returns true to ask for error recovery, the best the binary readers can offer is
+the value read up to the error.
+
+This proxy forwards every event to the SAX parser and records which containers
+are open and whether a key still waits for its value. After an error the SAX
+parser asked to recover from, @ref close_open_containers then completes the
+value with null for a pending key and the missing end events, so the SAX parser
+sees balanced events (see #3989).
+
+@tparam BasicJsonType  the JSON type
+@tparam SAX            the SAX parser to forward the events to
+*/
+template<typename BasicJsonType, typename SAX>
+class json_sax_salvager
+{
+  public:
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+    using string_t = typename BasicJsonType::string_t;
+    using binary_t = typename BasicJsonType::binary_t;
+
+    explicit json_sax_salvager(SAX* sax_) noexcept
+        : sax(sax_)
+    {}
+
+    bool null()
+    {
+        key_pending = false;
+        return sax->null();
+    }
+
+    bool boolean(bool val)
+    {
+        key_pending = false;
+        return sax->boolean(val);
+    }
+
+    bool number_integer(number_integer_t val)
+    {
+        key_pending = false;
+        return sax->number_integer(val);
+    }
+
+    bool number_unsigned(number_unsigned_t val)
+    {
+        key_pending = false;
+        return sax->number_unsigned(val);
+    }
+
+    bool number_float(number_float_t val, const string_t& s)
+    {
+        key_pending = false;
+        return sax->number_float(val, s);
+    }
+
+    bool string(string_t& val)
+    {
+        key_pending = false;
+        return sax->string(val);
+    }
+
+    bool binary(binary_t& val)
+    {
+        key_pending = false;
+        return sax->binary(val);
+    }
+
+    bool start_object(std::size_t len)
+    {
+        key_pending = false;
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_object(len)))
+        {
+            return false;
+        }
+        open_containers.push_back(true);
+        return true;
+    }
+
+    bool key(string_t& val)
+    {
+        key_pending = true;
+        return sax->key(val);
+    }
+
+    bool end_object()
+    {
+        JSON_ASSERT(!open_containers.empty() && open_containers.back());
+        open_containers.pop_back();
+        return sax->end_object();
+    }
+
+    bool start_array(std::size_t len)
+    {
+        key_pending = false;
+        if (JSON_HEDLEY_UNLIKELY(!sax->start_array(len)))
+        {
+            return false;
+        }
+        open_containers.push_back(false);
+        return true;
+    }
+
+    bool end_array()
+    {
+        JSON_ASSERT(!open_containers.empty() && !open_containers.back());
+        open_containers.pop_back();
+        return sax->end_array();
+    }
+
+    template<class Exception>
+    bool parse_error(std::size_t position, const std::string& last_token,
+                     const Exception& ex)
+    {
+        recovery_requested = sax->parse_error(position, last_token, ex);
+        // the binary readers stop after an error anyway
+        return false;
+    }
+
+    /*!
+    @brief complete the value read before an error
+
+    Does nothing unless the SAX parser's parse_error() returned true. Otherwise
+    passes null for a key that waits for its value and closes the containers
+    that are still open, innermost first, until an event returns false.
+    */
+    void close_open_containers()
+    {
+        if (!recovery_requested)
+        {
+            return;
+        }
+        recovery_requested = false;
+
+        if (key_pending)
+        {
+            key_pending = false;
+            if (JSON_HEDLEY_UNLIKELY(!sax->null()))
+            {
+                return;
+            }
+        }
+
+        while (!open_containers.empty())
+        {
+            const bool is_object = open_containers.back();
+            open_containers.pop_back();
+            if (JSON_HEDLEY_UNLIKELY(is_object ? !sax->end_object() : !sax->end_array()))
+            {
+                return;
+            }
+        }
+    }
+
+  private:
+    /// the SAX parser the events are forwarded to
+    SAX* sax = nullptr;
+    /// the containers that are open, innermost last; true for an object
+    std::vector<bool> open_containers {}; // NOLINT(readability-redundant-member-init)
+    /// whether a key was passed whose value has not been passed yet
+    bool key_pending = false;
+    /// whether the SAX parser's parse_error() asked to recover from the error
+    bool recovery_requested = false;
 };
 
 }  // namespace detail

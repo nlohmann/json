@@ -90,7 +90,9 @@ The SAX event lister must follow the interface of [`json_sax`](../json_sax/index
 
 ## Return value
 
-return value of the last processed SAX event
+`#!cpp true` if the input was parsed without errors and no SAX event returned `#!cpp false`; `#!cpp false` otherwise.
+In particular, the result is `#!cpp false` for input with errors, even if the SAX parser recovered from all of them
+(see [error recovery](../../features/parsing/error_recovery.md)).
 
 ## Exception safety
 
@@ -138,6 +140,7 @@ A UTF-8 byte order mark is silently ignored.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
 - Added `ignore_trailing_commas` in version 3.13.0.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
+- Recovering from parse errors (see [`parse_error`](../json_sax/parse_error.md)) added in version 3.13.0.
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
 - `JSON_PRECISE_STREAM_POSITION` added in version 3.13.0 to optionally leave a `#!cpp std::istream` positioned right
   after the parsed value when `strict` is `#!cpp false`.

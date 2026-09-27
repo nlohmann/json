@@ -496,7 +496,7 @@ bool key(string_t& val);
 bool parse_error(std::size_t position, const std::string& last_token, const detail::exception& ex);
 ```
 
-The return value of each function determines whether parsing should proceed.
+The return value of each function determines whether parsing should proceed. For `parse_error`, returning `true` [recovers from the error](https://json.nlohmann.me/features/parsing/error_recovery/): the parser repairs the input and continues.
 
 To implement your own SAX handler, proceed as follows:
 
@@ -504,7 +504,7 @@ To implement your own SAX handler, proceed as follows:
 2. Create an object of your SAX interface class, e.g. `my_sax`.
 3. Call `bool json::sax_parse(input, &my_sax)`; where the first parameter can be any input like a string or an input stream and the second parameter is a pointer to your SAX interface.
 
-Note the `sax_parse` function only returns a `bool` indicating the result of the last executed SAX event. It does not return a  `json` value - it is up to you to decide what to do with the SAX events. Furthermore, no exceptions are thrown in case of a parse error -- it is up to you what to do with the exception object passed to your `parse_error` implementation. Internally, the SAX interface is used for the DOM parser (class `json_sax_dom_parser`) as well as the acceptor (`json_sax_acceptor`), see file [`json_sax.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/input/json_sax.hpp).
+Note the `sax_parse` function only returns a `bool` indicating whether the input was parsed without errors and no SAX event returned `false`. It does not return a  `json` value - it is up to you to decide what to do with the SAX events. Furthermore, no exceptions are thrown in case of a parse error -- it is up to you what to do with the exception object passed to your `parse_error` implementation. Internally, the SAX interface is used for the DOM parser (class `json_sax_dom_parser`) as well as the acceptor (`json_sax_acceptor`), see file [`json_sax.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/input/json_sax.hpp).
 
 ### STL-like access
 

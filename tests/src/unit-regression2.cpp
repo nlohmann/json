@@ -870,4 +870,262 @@ TEST_CASE("regression test - excessive binary container size honors allow_except
     CHECK(json::from_cbor(std::vector<std::uint8_t> {0x9b, 0, 0, 0, 0, 0, 0, 0, 0x02}, true, false).is_discarded());
 }
 
+namespace
+{
+/// builds a value from SAX events, asks the parser to recover from its first
+/// 100 errors, and checks that the events are balanced (see #3989)
+class RecoveringParser : public nlohmann::detail::json_sax_dom_parser<json>
+{
+    using base = nlohmann::detail::json_sax_dom_parser<json>;
+
+  public:
+    explicit RecoveringParser(json& j)
+        : base(j, false)
+    {}
+
+    bool null()
+    {
+        value();
+        return base::null();
+    }
+
+    bool boolean(bool val)
+    {
+        value();
+        return base::boolean(val);
+    }
+
+    bool number_integer(json::number_integer_t val)
+    {
+        value();
+        return base::number_integer(val);
+    }
+
+    bool number_unsigned(json::number_unsigned_t val)
+    {
+        value();
+        return base::number_unsigned(val);
+    }
+
+    bool number_float(json::number_float_t val, const std::string& s)
+    {
+        value();
+        return base::number_float(val, s);
+    }
+
+    bool string(std::string& val)
+    {
+        value();
+        return base::string(val);
+    }
+
+    bool binary(json::binary_t& val)
+    {
+        value();
+        return base::binary(val);
+    }
+
+    bool start_object(std::size_t elements)
+    {
+        value();
+        stack.push_back('o');
+        return base::start_object(elements);
+    }
+
+    bool key(std::string& val)
+    {
+        if (stack.empty() || stack.back() != 'o')
+        {
+            well_formed = false;
+            return false;
+        }
+        stack.back() = 'v';
+        return base::key(val);
+    }
+
+    bool end_object()
+    {
+        if (stack.empty() || stack.back() != 'o')
+        {
+            well_formed = false;
+            return false;
+        }
+        stack.pop_back();
+        return base::end_object();
+    }
+
+    bool start_array(std::size_t elements)
+    {
+        value();
+        stack.push_back('a');
+        return base::start_array(elements);
+    }
+
+    bool end_array()
+    {
+        if (stack.empty() || stack.back() != 'a')
+        {
+            well_formed = false;
+            return false;
+        }
+        stack.pop_back();
+        return base::end_array();
+    }
+
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/)
+    {
+        // a limit, so that a reader that does not stop fails the test
+        // instead of making it hang
+        return ++errors < 100;
+    }
+
+    /// whether the events were balanced and every key was followed by a value
+    bool balanced() const
+    {
+        return well_formed && stack.empty();
+    }
+
+    std::size_t errors = 0;
+    std::vector<char> stack {}; // NOLINT(readability-redundant-member-init)
+    bool well_formed = true;
+
+  private:
+    void value()
+    {
+        if (!stack.empty())
+        {
+            if (stack.back() == 'v')
+            {
+                stack.back() = 'o';
+            }
+            else if (stack.back() == 'o')
+            {
+                well_formed = false;
+            }
+        }
+    }
+
+};
+
+struct BinaryParseResult
+{
+    json value;
+    std::size_t errors;
+    bool ok;
+    bool balanced;
+};
+
+BinaryParseResult parse_binary_recovering(const std::vector<std::uint8_t>& input, const json::input_format_t format)
+{
+    json j;
+    RecoveringParser sax(j);
+    const bool ok = json::sax_parse(input, &sax, format);
+    return {j, sax.errors, ok, sax.balanced()};
+}
+}  // namespace
+
+TEST_CASE("regression test - #3989 SAX parse_error() returning true")
+{
+    SECTION("binary formats stop after an error and complete what was read")
+    {
+        const json j = {{"a", {1, -2, {{"b", "c"}}, json::array()}}, {"d", {{"e", nullptr}, {"f", true}}}, {"g", 1.5}, {"h", json::binary({1, 2, 3})}};
+
+        const std::vector<std::pair<json::input_format_t, std::vector<std::uint8_t>>> encodings =
+        {
+            {json::input_format_t::cbor, json::to_cbor(j)},
+            {json::input_format_t::msgpack, json::to_msgpack(j)},
+            {json::input_format_t::ubjson, json::to_ubjson(j)},
+            {json::input_format_t::ubjson, json::to_ubjson(j, true, true)},
+            {json::input_format_t::bjdata, json::to_bjdata(j)},
+            {json::input_format_t::bjdata, json::to_bjdata(j, true, true)},
+            {json::input_format_t::bson, json::to_bson(j)},
+            {json::input_format_t::bon8, json::to_bon8(j)},
+        };
+
+        for (const auto& encoding : encodings)
+        {
+            const auto format = encoding.first;
+            const auto& bytes = encoding.second;
+            CAPTURE(format);
+
+            // every prefix is truncated input
+            for (std::size_t length = 0; length < bytes.size(); ++length)
+            {
+                CAPTURE(length);
+                const auto result = parse_binary_recovering(std::vector<std::uint8_t>(bytes.begin(), bytes.begin() + static_cast<std::ptrdiff_t>(length)), format);
+                CHECK(!result.ok);
+                CHECK(result.errors == 1);
+                CHECK(result.balanced);
+            }
+
+            // the complete input is read as usual (binary values do not
+            // round-trip through every format, so compare with a plain parse)
+            json expected;
+            nlohmann::detail::json_sax_dom_parser<json> dom(expected);
+            CHECK(json::sax_parse(bytes, &dom, format));
+            const auto complete = parse_binary_recovering(bytes, format);
+            CHECK(complete.ok);
+            CHECK(complete.errors == 0);
+            CHECK(complete.value == expected);
+
+            // a byte after the value
+            auto trailing_bytes = bytes;
+            trailing_bytes.push_back(0x01);
+            const auto trailing = parse_binary_recovering(trailing_bytes, format);
+            CHECK(!trailing.ok);
+            CHECK(trailing.errors == 1);
+            CHECK(trailing.value == expected);
+        }
+    }
+
+    SECTION("containers without an end")
+    {
+        // these made the readers loop, or read on, after the error
+        const auto cbor_array = parse_binary_recovering({0x9F}, json::input_format_t::cbor);
+        CHECK(cbor_array.errors == 1);
+        CHECK(cbor_array.value == json::array());
+
+        const auto cbor_map = parse_binary_recovering({0xBF, 0x61, 'a'}, json::input_format_t::cbor);
+        CHECK(cbor_map.errors == 1);
+        CHECK(cbor_map.value == json({{"a", nullptr}}));
+
+        const auto msgpack_array = parse_binary_recovering({0xDD, 0xFF, 0xFF, 0xFF, 0xFF}, json::input_format_t::msgpack);
+        CHECK(msgpack_array.errors == 1);
+        CHECK(msgpack_array.value == json::array());
+
+        const auto msgpack_map = parse_binary_recovering({0x81, 0xA1, 'a', 0x92, 0x01}, json::input_format_t::msgpack);
+        CHECK(msgpack_map.errors == 1);
+        CHECK(msgpack_map.value == json({{"a", {1}}}));
+    }
+
+    SECTION("BJData ndarray")
+    {
+        // a 2x3 int8 array with two of its six elements; the annotated array
+        // format opens an object and two arrays of its own
+        const auto result = parse_binary_recovering({'[', '$', 'i', '#', '[', '$', 'i', '#', 'i', 2, 2, 3, 1, 2}, json::input_format_t::bjdata);
+        CHECK(result.errors == 1);
+        CHECK(result.balanced);
+        CHECK(result.value == json({{"_ArrayType_", "int8"}, {"_ArraySize_", {2, 3}}, {"_ArrayData_", {1, 2}}}));
+    }
+
+    SECTION("JSON text")
+    {
+        // the parser stopped, but reported success
+        json j;
+        RecoveringParser sax(j);
+        CHECK(!json::sax_parse("[1,2,3,]", &sax));
+        CHECK(sax.errors == 1);
+        CHECK(j == json({1, 2, 3}));
+    }
+
+    SECTION("the SAX parsers of the library stop")
+    {
+        json _;
+        CHECK(json::from_cbor(std::vector<std::uint8_t> {0x9F}, true, false).is_discarded());
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<std::uint8_t> {0x9F}), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR value: unexpected end of input", json::parse_error&);
+        CHECK(json::parse("[1,2,3,]", nullptr, false).is_discarded());
+        CHECK(!json::accept("[1,2,3,]"));
+    }
+}
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
