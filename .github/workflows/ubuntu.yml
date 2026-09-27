@@ -49,6 +49,20 @@ jobs:
         run: |
           cmake -S tests/cmake_import/project -B build-import -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install
           cmake --build build-import
+      - name: Install with Meson and non-default options
+        run: |
+          meson setup build-meson-options --prefix=${{ github.workspace }}/install-options -DMultipleHeaders=true -DDiagnostics=true -DGlobalUDLs=false
+          meson install -C build-meson-options
+      - name: Check that the options reach the installed files
+        run: |
+          test -d install-options/include/nlohmann/detail
+          cflags=$(PKG_CONFIG_PATH=${{ github.workspace }}/install-options/share/pkgconfig pkg-config --cflags nlohmann_json)
+          echo "$cflags"
+          echo "$cflags" | grep -q -- '-DJSON_DIAGNOSTICS=1'
+          echo "$cflags" | grep -q -- '-DJSON_USE_GLOBAL_UDLS=0'
+          grep -q 'JSON_USE_GLOBAL_UDLS=0;JSON_DIAGNOSTICS=1' install-options/share/cmake/nlohmann_json/nlohmann_jsonTargets.cmake
+          cmake -S tests/cmake_import/project -B build-import-options -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install-options
+          cmake --build build-import-options
 
   ci_infer:
     runs-on: ubuntu-latest

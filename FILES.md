@@ -277,9 +277,12 @@ meson setup builddir
 ninja -C builddir
 ```
 
-The build definition for the [Meson](https://mesonbuild.com) build system. When installing, it also installs the CMake package config
-files so that `find_package(nlohmann_json)` works. As Meson cannot generate `nlohmann_jsonTargets.cmake` itself, it is
-created from the template `cmake/nlohmann_jsonTargets.cmake.in`, which is only used by Meson.
+`meson_options.txt` defines the options, which mirror the CMake options that change the library's target (for example,
+`-DDiagnostics=true`). Meson requires this file next to `meson.build`, so it is also part of `include.zip`.
+
+When installing, `meson.build` installs the headers, a pkg-config file, and the CMake package config files, so that
+`find_package(nlohmann_json)` works. As Meson cannot generate `nlohmann_jsonTargets.cmake` itself, it is created from
+the template `cmake/nlohmann_jsonTargets.cmake.in`, which is only used by Meson.
 
 ### `Package.swift`
 
