@@ -2981,3 +2981,18 @@ TEST_CASE("UBJSON roundtrips" * doctest::skip())
         }
     }
 }
+
+TEST_CASE("UBJSON optimized array of unsigned integers beyond int64")
+{
+    // UBJSON has no unsigned 64-bit type, so such values are written as
+    // high-precision numbers - also as the type of an optimized container
+    const json j = {18446744073709551615ULL, 9223372036854775808ULL};
+    const std::vector<std::uint8_t> expected =
+    {
+        '[', '$', 'H', '#', 'i', 2,
+        'i', 20, '1', '8', '4', '4', '6', '7', '4', '4', '0', '7', '3', '7', '0', '9', '5', '5', '1', '6', '1', '5',
+        'i', 19, '9', '2', '2', '3', '3', '7', '2', '0', '3', '6', '8', '5', '4', '7', '7', '5', '8', '0', '8'
+    };
+    CHECK(json::to_ubjson(j, true, true) == expected);
+    CHECK(json::from_ubjson(expected) == j);
+}
