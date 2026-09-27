@@ -168,7 +168,30 @@ if (MSVC)
     )
 endif()
 
-# Install a pkg-config file, so other tools can find this.
+# Install a pkg-config file, so other tools can find this. It carries the same
+# compile definitions as the target above.
+set(NLOHMANN_JSON_PKGCONFIG_CFLAGS "")
+if (NOT JSON_GlobalUDLs)
+    string(APPEND NLOHMANN_JSON_PKGCONFIG_CFLAGS " -DJSON_USE_GLOBAL_UDLS=0")
+endif()
+if (NOT JSON_ImplicitConversions)
+    string(APPEND NLOHMANN_JSON_PKGCONFIG_CFLAGS " -DJSON_USE_IMPLICIT_CONVERSIONS=0")
+endif()
+if (JSON_DisableEnumSerialization)
+    string(APPEND NLOHMANN_JSON_PKGCONFIG_CFLAGS " -DJSON_DISABLE_ENUM_SERIALIZATION=1")
+endif()
+if (JSON_Diagnostics)
+    string(APPEND NLOHMANN_JSON_PKGCONFIG_CFLAGS " -DJSON_DIAGNOSTICS=1")
+endif()
+if (JSON_Diagnostic_Positions)
+    string(APPEND NLOHMANN_JSON_PKGCONFIG_CFLAGS " -DJSON_DIAGNOSTIC_POSITIONS=1")
+endif()
+if (JSON_LegacyDiscardedValueComparison)
+    string(APPEND NLOHMANN_JSON_PKGCONFIG_CFLAGS " -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1")
+endif()
+if (JSON_StrictNulHandling)
+    string(APPEND NLOHMANN_JSON_PKGCONFIG_CFLAGS " -DJSON_STRICT_NUL_HANDLING=1")
+endif()
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/pkg-config.pc.in"
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
