@@ -2202,8 +2202,8 @@ scan_number_done:
     }
 
     /*!
-    @brief scan the next token when the caller expects one particular
-           single-character token most of the time
+    @brief scan the next token when the caller expects a separator (':' or
+           ',') most of the time
 
     After an object key the next token is almost always ':', after a value
     inside an object or array almost always ','. Testing for that character
@@ -2215,6 +2215,7 @@ scan_number_done:
     */
     token_type scan_expecting(char expected_char, token_type expected_type)
     {
+        JSON_ASSERT((expected_char == ':' && expected_type == token_type::name_separator) || (expected_char == ',' && expected_type == token_type::value_separator));
         JSON_ASSERT(position.chars_read_total > 0);
         skip_whitespace();
         if (JSON_HEDLEY_LIKELY(current == static_cast<char_int_type>(expected_char)))
@@ -2308,7 +2309,6 @@ scan_number_done:
         }
     }
 
-  private:
     /// input adapter
     InputAdapterType ia;
 
