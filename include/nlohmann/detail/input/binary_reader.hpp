@@ -559,7 +559,7 @@ class binary_reader
             case 0x01: // double
             {
                 double number{};
-                return get_number<double, true>(input_format_t::bson, number) && sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number<double, true>(input_format_t::bson, number) && emit_float(input_format_t::bson, number);
             }
 
             case 0x02: // string
@@ -600,19 +600,19 @@ class binary_reader
             case 0x10: // int32
             {
                 std::int32_t value{};
-                return get_number<std::int32_t, true>(input_format_t::bson, value) && sax->number_integer(value);
+                return get_number<std::int32_t, true>(input_format_t::bson, value) && emit_signed(value);
             }
 
             case 0x12: // int64
             {
                 std::int64_t value{};
-                return get_number<std::int64_t, true>(input_format_t::bson, value) && sax->number_integer(value);
+                return get_number<std::int64_t, true>(input_format_t::bson, value) && emit_signed(value);
             }
 
             case 0x11: // uint64
             {
                 std::uint64_t value{};
-                return get_number<std::uint64_t, true>(input_format_t::bson, value) && sax->number_unsigned(value);
+                return get_number<std::uint64_t, true>(input_format_t::bson, value) && emit_unsigned(value);
             }
 
             default: // anything else is not supported (yet)
@@ -638,14 +638,17 @@ class binary_reader
         {
             return false;
         }
-        const auto max_val = static_cast<NumberType>((std::numeric_limits<number_integer_t>::max)());
-        if (number > max_val)
+
+        // the value is -1 - number, which fits into number_integer_t
+        // whenever number does
+        if (JSON_HEDLEY_LIKELY(value_in_range_of<number_integer_t>(number)))
         {
-            return sax->parse_error(chars_read, get_token_string(),
-                                    parse_error::create(112, chars_read,
-                                            exception_message(input_format_t::cbor, "negative integer overflow", "value"), nullptr));
+            return sax->number_integer(static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(number));
         }
-        return sax->number_integer(static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(number));
+
+        // like the lexer does for JSON text, store a value too small for
+        // number_integer_t as number_float_t
+        return sax->number_float(static_cast<number_float_t>(-1) - static_cast<number_float_t>(number), "");
     }
 
     /*!
@@ -702,25 +705,25 @@ class binary_reader
             case 0x18: // Unsigned integer (one-byte uint8_t follows)
             {
                 std::uint8_t number{};
-                return get_number(input_format_t::cbor, number) && sax->number_unsigned(number);
+                return get_number(input_format_t::cbor, number) && emit_unsigned(number);
             }
 
             case 0x19: // Unsigned integer (two-byte uint16_t follows)
             {
                 std::uint16_t number{};
-                return get_number(input_format_t::cbor, number) && sax->number_unsigned(number);
+                return get_number(input_format_t::cbor, number) && emit_unsigned(number);
             }
 
             case 0x1A: // Unsigned integer (four-byte uint32_t follows)
             {
                 std::uint32_t number{};
-                return get_number(input_format_t::cbor, number) && sax->number_unsigned(number);
+                return get_number(input_format_t::cbor, number) && emit_unsigned(number);
             }
 
             case 0x1B: // Unsigned integer (eight-byte uint64_t follows)
             {
                 std::uint64_t number{};
-                return get_number(input_format_t::cbor, number) && sax->number_unsigned(number);
+                return get_number(input_format_t::cbor, number) && emit_unsigned(number);
             }
 
             // Negative integer -1-0x00..-1-0x17 (-1..-24)
@@ -1165,13 +1168,13 @@ class binary_reader
             case 0xFA: // Single-Precision Float (four-byte IEEE 754)
             {
                 float number{};
-                return get_number(input_format_t::cbor, number) && sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number(input_format_t::cbor, number) && emit_float(input_format_t::cbor, number);
             }
 
             case 0xFB: // Double-Precision Float (eight-byte IEEE 754)
             {
                 double number{};
-                return get_number(input_format_t::cbor, number) && sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number(input_format_t::cbor, number) && emit_float(input_format_t::cbor, number);
             }
 
             default: // anything else (0xFF is handled inside the other types)
@@ -1861,61 +1864,61 @@ class binary_reader
             case 0xCA: // float 32
             {
                 float number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number(input_format_t::msgpack, number) && emit_float(input_format_t::msgpack, number);
             }
 
             case 0xCB: // float 64
             {
                 double number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number(input_format_t::msgpack, number) && emit_float(input_format_t::msgpack, number);
             }
 
             case 0xCC: // uint 8
             {
                 std::uint8_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
+                return get_number(input_format_t::msgpack, number) && emit_unsigned(number);
             }
 
             case 0xCD: // uint 16
             {
                 std::uint16_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
+                return get_number(input_format_t::msgpack, number) && emit_unsigned(number);
             }
 
             case 0xCE: // uint 32
             {
                 std::uint32_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
+                return get_number(input_format_t::msgpack, number) && emit_unsigned(number);
             }
 
             case 0xCF: // uint 64
             {
                 std::uint64_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_unsigned(number);
+                return get_number(input_format_t::msgpack, number) && emit_unsigned(number);
             }
 
             case 0xD0: // int 8
             {
                 std::int8_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
+                return get_number(input_format_t::msgpack, number) && emit_signed(number);
             }
 
             case 0xD1: // int 16
             {
                 std::int16_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
+                return get_number(input_format_t::msgpack, number) && emit_signed(number);
             }
 
             case 0xD2: // int 32
             {
                 std::int32_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
+                return get_number(input_format_t::msgpack, number) && emit_signed(number);
             }
 
             case 0xD3: // int 64
             {
                 std::int64_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
+                return get_number(input_format_t::msgpack, number) && emit_signed(number);
             }
 
             case 0xDC: // array 16
@@ -2756,7 +2759,7 @@ class binary_reader
                         {
                             return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
                         }
-                        if (JSON_HEDLEY_UNLIKELY(!sax->number_unsigned(static_cast<number_unsigned_t>(i))))
+                        if (JSON_HEDLEY_UNLIKELY(!emit_unsigned(i)))
                         {
                             return false;
                         }
@@ -2888,37 +2891,37 @@ class binary_reader
                     break;
                 }
                 std::uint8_t number{};
-                return get_number(input_format, number) && sax->number_unsigned(number);
+                return get_number(input_format, number) && emit_unsigned(number);
             }
 
             case 'U':
             {
                 std::uint8_t number{};
-                return get_number(input_format, number) && sax->number_unsigned(number);
+                return get_number(input_format, number) && emit_unsigned(number);
             }
 
             case 'i':
             {
                 std::int8_t number{};
-                return get_number(input_format, number) && sax->number_integer(number);
+                return get_number(input_format, number) && emit_signed(number);
             }
 
             case 'I':
             {
                 std::int16_t number{};
-                return get_number(input_format, number) && sax->number_integer(number);
+                return get_number(input_format, number) && emit_signed(number);
             }
 
             case 'l':
             {
                 std::int32_t number{};
-                return get_number(input_format, number) && sax->number_integer(number);
+                return get_number(input_format, number) && emit_signed(number);
             }
 
             case 'L':
             {
                 std::int64_t number{};
-                return get_number(input_format, number) && sax->number_integer(number);
+                return get_number(input_format, number) && emit_signed(number);
             }
 
             case 'u':
@@ -2928,7 +2931,7 @@ class binary_reader
                     break;
                 }
                 std::uint16_t number{};
-                return get_number(input_format, number) && sax->number_unsigned(number);
+                return get_number(input_format, number) && emit_unsigned(number);
             }
 
             case 'm':
@@ -2938,7 +2941,7 @@ class binary_reader
                     break;
                 }
                 std::uint32_t number{};
-                return get_number(input_format, number) && sax->number_unsigned(number);
+                return get_number(input_format, number) && emit_unsigned(number);
             }
 
             case 'M':
@@ -2948,7 +2951,7 @@ class binary_reader
                     break;
                 }
                 std::uint64_t number{};
-                return get_number(input_format, number) && sax->number_unsigned(number);
+                return get_number(input_format, number) && emit_unsigned(number);
             }
 
             case 'h':
@@ -3006,13 +3009,13 @@ class binary_reader
             case 'd':
             {
                 float number{};
-                return get_number(input_format, number) && sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number(input_format, number) && emit_float(input_format, number);
             }
 
             case 'D':
             {
                 double number{};
-                return get_number(input_format, number) && sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number(input_format, number) && emit_float(input_format, number);
             }
 
             case 'H':
@@ -3479,13 +3482,13 @@ class binary_reader
             case 0x8E: // binary32
             {
                 float number{};
-                return get_number(input_format_t::bon8, number) && sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number(input_format_t::bon8, number) && emit_float(input_format_t::bon8, number);
             }
 
             case 0x8F: // binary64
             {
                 double number{};
-                return get_number(input_format_t::bon8, number) && sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number(input_format_t::bon8, number) && emit_float(input_format_t::bon8, number);
             }
 
             case 0xF8:
@@ -3551,7 +3554,9 @@ class binary_reader
     @brief pass an integer to the SAX parser
 
     Non-negative integers are passed as unsigned, negative integers as signed
-    numbers, like the other binary formats do.
+    numbers, like the other binary formats do. A value that does not fit the
+    number type is passed as described for @ref emit_unsigned and
+    @ref emit_signed.
 
     @param[in] number  the integer
     @return whether the SAX parser accepted the value
@@ -3560,9 +3565,9 @@ class binary_reader
     {
         if (number >= 0)
         {
-            return sax->number_unsigned(static_cast<number_unsigned_t>(number));
+            return emit_unsigned(static_cast<std::uint64_t>(number));
         }
-        return sax->number_integer(static_cast<number_integer_t>(number));
+        return emit_signed(number);
     }
 
     /*!
@@ -3619,8 +3624,7 @@ class binary_reader
             value = (value << 8) | static_cast<std::int64_t>(current);
         }
 
-        return negative ? sax->number_integer(static_cast<number_integer_t>(-(value + offset)))
-               : sax->number_unsigned(static_cast<number_unsigned_t>(value + offset));
+        return emit_bon8_integer(negative ? -(value + offset) : value + offset);
     }
 
     /*!
@@ -3915,6 +3919,79 @@ class binary_reader
             byte_swap(result);
         }
         return true;
+    }
+
+    /*!
+    @brief pass a signed integer read from the input to the SAX parser
+
+    Like the lexer does for JSON text, a value that does not fit into
+    number_integer_t is passed as number_unsigned_t if it is non-negative and
+    fits there, and as number_float_t otherwise. With the default number
+    types, every integer the binary formats can encode fits, so this only
+    matters for narrower custom number types.
+
+    @tparam NumberType a signed integer type
+    @param[in] number  the integer
+    @return whether the SAX parser accepted the value
+    */
+    template<typename NumberType>
+    bool emit_signed(const NumberType number)
+    {
+        if (JSON_HEDLEY_LIKELY(value_in_range_of<number_integer_t>(number)))
+        {
+            return sax->number_integer(static_cast<number_integer_t>(number));
+        }
+        if (value_in_range_of<number_unsigned_t>(number))
+        {
+            return sax->number_unsigned(static_cast<number_unsigned_t>(number));
+        }
+        return sax->number_float(static_cast<number_float_t>(number), "");
+    }
+
+    /*!
+    @brief pass an unsigned integer read from the input to the SAX parser
+
+    Like the lexer does for JSON text, a value that does not fit into
+    number_unsigned_t is passed as number_float_t.
+
+    @tparam NumberType an unsigned integer type
+    @param[in] number  the integer
+    @return whether the SAX parser accepted the value
+    */
+    template<typename NumberType>
+    bool emit_unsigned(const NumberType number)
+    {
+        if (JSON_HEDLEY_LIKELY(value_in_range_of<number_unsigned_t>(number)))
+        {
+            return sax->number_unsigned(static_cast<number_unsigned_t>(number));
+        }
+        return sax->number_float(static_cast<number_float_t>(number), "");
+    }
+
+    /*!
+    @brief pass a floating-point number read from the input to the SAX parser
+
+    Like the lexer does for JSON text, a finite value that overflows
+    number_float_t is rejected instead of silently becoming infinity. Infinity
+    and NaN in the input are passed on unchanged.
+
+    @tparam NumberType a floating-point type
+    @param[in] format  the current format (for diagnostics)
+    @param[in] number  the number
+    @return whether the SAX parser accepted the value
+
+    @throw out_of_range.406 if a finite @a number overflows number_float_t
+    */
+    template<typename NumberType>
+    bool emit_float(const input_format_t format, const NumberType number)
+    {
+        const auto result = static_cast<number_float_t>(number);
+        if (JSON_HEDLEY_UNLIKELY(std::isfinite(number) && !std::isfinite(result)))
+        {
+            return sax->parse_error(chars_read, get_token_string(),
+                                    out_of_range::create(406, exception_message(format, "number overflow", "value"), nullptr));
+        }
+        return sax->number_float(result, "");
     }
 
     /*!
