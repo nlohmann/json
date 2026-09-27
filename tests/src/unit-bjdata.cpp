@@ -4304,6 +4304,17 @@ TEST_CASE("BJData and UBJSON can be written to a string")
         json::parse(R"({"_ArrayType_": "uint8", "_ArraySize_": [2, 2], "_ArrayData_": 1})"),
     };
 
+    // compared byte by byte: building a std::string from the bytes would
+    // convert them implicitly, which -fsanitize=integer reports for bytes of
+    // 0x80 and above
+    const auto same_bytes = [](const std::vector<std::uint8_t>& bytes, const std::string & text)
+    {
+        return bytes.size() == text.size() && std::equal(bytes.begin(), bytes.end(), text.begin(), [](std::uint8_t byte, char c)
+        {
+            return byte == static_cast<std::uint8_t>(c);
+        });
+    };
+
     for (const auto& j : values)
     {
         CAPTURE(j.dump());
@@ -4327,12 +4338,12 @@ TEST_CASE("BJData and UBJSON can be written to a string")
                 const auto bjdata = json::to_bjdata(j, use_size, use_type);
                 std::string bjdata_string;
                 json::to_bjdata(j, bjdata_string, use_size, use_type);
-                CHECK(bjdata_string == std::string(bjdata.begin(), bjdata.end()));
+                CHECK(same_bytes(bjdata, bjdata_string));
 
                 const auto ubjson = json::to_ubjson(j, use_size, use_type);
                 std::string ubjson_string;
                 json::to_ubjson(j, ubjson_string, use_size, use_type);
-                CHECK(ubjson_string == std::string(ubjson.begin(), ubjson.end()));
+                CHECK(same_bytes(ubjson, ubjson_string));
             }
         }
     }
