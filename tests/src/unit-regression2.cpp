@@ -280,8 +280,9 @@ class Issue3669Holder
     // GCC < 11 (C++11/14) rejects a free to_json(json&, const Issue3669Holder&)
     // here, because ADL for Issue3669Dummy finds it and closes an instantiation
     // cycle; a hidden friend is only visible to ADL for Issue3669Holder
-    friend void to_json(json& j, const Issue3669Holder& /*unused*/)
+    friend void to_json(json& j, const Issue3669Holder& h)
     {
+        static_cast<void>(h.d); // silence -Wunused-private-field
         j = "holder";
     }
 };
