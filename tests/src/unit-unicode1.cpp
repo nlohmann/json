@@ -14,8 +14,6 @@
 using nlohmann::json;
 
 #include <fstream>
-#include <sstream>
-#include <iomanip>
 #include "make_test_data_available.hpp"
 #include "test_utils.hpp"
 
@@ -29,10 +27,13 @@ TEST_CASE("Unicode (1/5)" * doctest::skip())
             // code points are represented as a six-character sequence: a
             // reverse solidus, followed by the lowercase letter u, followed
             // by four hexadecimal digits that encode the character's code
-            // point
-            std::stringstream ss;
-            ss << "\\u" << std::setw(4) << std::setfill('0') << std::hex << cp;
-            return ss.str();
+            // point; formatted by hand as this is called ~1.1M times (#5418)
+            std::string result = "\\u";
+            for (int shift = 12; shift >= 0; shift -= 4)
+            {
+                result += "0123456789abcdef"[(cp >> shift) & 0xFu];
+            }
+            return result;
         };
 
         SECTION("correct sequences")
@@ -169,6 +170,9 @@ TEST_CASE("Unicode (1/5)" * doctest::skip())
 
         SECTION("check JSON Pointers")
         {
+            // escaping only treats '~' and '/' specially, so every 64th
+            // element plus those two characters suffices (#5418)
+            std::size_t index = 0;
             for (const auto& s : j)
             {
                 // skip non-string JSON values
@@ -178,6 +182,11 @@ TEST_CASE("Unicode (1/5)" * doctest::skip())
                 }
 
                 auto ptr = s.get<std::string>();
+
+                if (index++ % 64 != 0 && ptr != "~" && ptr != "/")
+                {
+                    continue;
+                }
 
                 // tilde must be followed by 0 or 1
                 if (ptr == "~")
