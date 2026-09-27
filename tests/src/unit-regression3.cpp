@@ -74,13 +74,7 @@ using ordered_json = nlohmann::ordered_json;
     #endif
 #endif
 
-/////////////////////////////////////////////////////////////////////
-// for #4825 - explicitly instantiating basic_json must compile; this
-// forces instantiation of binary_writer::write_bjdata_ndarray, whose
-// static_cast<string_t> was ambiguous under explicit instantiation on
-// C++17. Merely compiling this translation unit is the regression test.
-/////////////////////////////////////////////////////////////////////
-template class nlohmann::basic_json<>;
+// the explicit instantiation for #4825 is in unit-explicit_instantiation.cpp
 
 /////////////////////////////////////////////////////////////////////
 // for #4440
@@ -894,6 +888,7 @@ TEST_CASE("regression test #5476 - array type without reserve()")
         // the binary formats pass a definite length to start_array()
         CHECK(deque_json::from_cbor(deque_json::to_cbor(j)) == j);
         CHECK(deque_json::from_msgpack(deque_json::to_msgpack(j)) == j);
+        CHECK(deque_json::from_bon8(deque_json::to_bon8(j)) == j);
 
         // parse() instantiates the callback parser as well, which reserves too
         const auto with_callback = deque_json::parse(R"([1,2,3])", [](int /*depth*/, deque_json::parse_event_t /*event*/, deque_json& /*parsed*/) noexcept
