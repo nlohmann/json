@@ -2428,8 +2428,8 @@
     {
       "identity_name": "operator string_t",
       "kind": "CONVERSION_FUNCTION",
-      "name": "operator nlohmann::json_pointer::string_t_helper<type-parameter-0-0>::type",
-      "pretty_signature": "nlohmann::json_pointer::operator nlohmann::json_pointer::string_t_helper<type-parameter-0-0>::type",
+      "name": "operator typename string_t_helper<type-parameter-0-0>::type",
+      "pretty_signature": "nlohmann::json_pointer::operator typename string_t_helper<type-parameter-0-0>::type",
       "scope": "nlohmann::json_pointer",
       "signature": "JSON_HEDLEY_DEPRECATED_FOR(3.11.0, to_string()) operator string_t() const",
       "tier": "callable"
