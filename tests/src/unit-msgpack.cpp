@@ -2164,6 +2164,8 @@ TEST_CASE("MessagePack with std::byte")
 }
 #endif
 
+// the fake sizes below do not fit into a 32-bit std::size_t
+#if SIZE_MAX > UINT32_MAX
 template<typename T, typename A = std::allocator<T>>
 struct huge_array : std::vector<T, A>
 {
@@ -2330,6 +2332,7 @@ TEST_CASE("MessagePack Size above uint32 for binary")
         "[json.exception.out_of_range.412] MessagePack length 4294967296 exceeds maximum of 4294967295",
         json::out_of_range&);
 }
+#endif
 
 namespace
 {
