@@ -9,7 +9,7 @@
 
 """Compare json_view with yyjson, simdjson, Boost.JSON, and json::parse.
 
-Builds bench_view.cpp and bench_corpus.cpp against the include/ directory of
+Builds bench_view.cpp, bench_corpus.cpp, and bench_edit.cpp against the include/ directory of
 this checkout, runs them, and writes the results with everything needed to
 reproduce them (date, commit, CPU, OS, compiler, library versions, flags) to
 results/<date>-<host>.md and .csv next to this script.
@@ -245,7 +245,7 @@ def main():
             objects.append(obj)
 
     binaries = {}
-    for bench in ['bench_view', 'bench_corpus']:
+    for bench in ['bench_view', 'bench_corpus', 'bench_edit']:
         exe = os.path.join(args.build_dir, bench)
         run([cxx] + flags + include + [os.path.join(HERE, bench + '.cpp')] + objects + link + ['-o', exe])
         binaries[bench] = exe
@@ -257,6 +257,8 @@ def main():
                                 capture_output=True, text=True).stdout
     outputs['bench_corpus'] = run([binaries['bench_corpus']] + corpus, cwd=args.build_dir,
                                   capture_output=True, text=True).stdout
+    outputs['bench_edit'] = run([binaries['bench_edit'], args.data, str(max(1, args.rounds // 2))], cwd=args.build_dir,
+                                capture_output=True, text=True).stdout
     for name, text in outputs.items():
         print(text)
 
@@ -288,7 +290,7 @@ def main():
             f.write(f'\n## {name}\n\n```\n{text.rstrip()}\n```\n')
     with open(stem + '.csv', 'w', encoding='utf-8') as out:
         out.write(''.join(f'# {key}: {value}\n' for key, value in meta))
-        for name in ['bench_view', 'bench_corpus']:
+        for name in ['bench_view', 'bench_corpus', 'bench_edit']:
             path = os.path.join(args.build_dir, name + '.csv')
             if os.path.isfile(path):
                 with open(path, encoding='utf-8') as f:
