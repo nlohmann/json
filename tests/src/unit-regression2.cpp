@@ -23,6 +23,14 @@
     #define SKIP_TESTS_FOR_TUPLE_REFERENCE_CONVERSION
 #endif
 
+// clang before 4 and GCC before 5 cannot create a std::tuple of basic_json
+// references at all, with or without JSON_DISABLE_TUPLE_REFERENCE_CONVERSION:
+// the tuple constructors make them instantiate basic_json's conversion operator
+// for libstdc++'s internal tuple bases, which fails hard
+#if (defined(__clang__) && __clang_major__ < 4) || (!defined(__clang__) && defined(__GNUC__) && __GNUC__ < 5)
+    #define SKIP_TESTS_FOR_JSON_REFERENCE_TUPLES
+#endif
+
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -556,7 +564,9 @@ TEST_CASE("regression tests 2")
         // this conversion (see unit-disable-tuple-reference-conversion.cpp)
         const json j = true;
         CHECK(std::is_constructible<json, std::tuple<const json&>>::value);
+#ifndef SKIP_TESTS_FOR_JSON_REFERENCE_TUPLES
         CHECK(json(std::forward_as_tuple(j)) == json::array({true}));
+#endif
     }
 #endif
 
