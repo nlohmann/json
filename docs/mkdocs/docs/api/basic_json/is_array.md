@@ -34,6 +34,10 @@ Constant.
     --8<-- "examples/is_array.output"
     ```
 
+## See also
+
+- [basic_json_view::is_array](../basic_json_view/is_array.md) - the same check on a zero-copy view
+
 ## Version history
 
 - Added in version 1.0.0.

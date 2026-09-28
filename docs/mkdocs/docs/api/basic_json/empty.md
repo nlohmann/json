@@ -60,6 +60,10 @@ itself is empty which is `#!cpp false` in the case of a string.
     --8<-- "examples/empty.output"
     ```
 
+## See also
+
+- [basic_json_view::empty](../basic_json_view/empty.md) - the same check on a zero-copy view
+
 ## Version history
 
 - Added in version 1.0.0.

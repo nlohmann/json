@@ -47,6 +47,10 @@ Constant.
     --8<-- "examples/type.output"
     ```
 
+## See also
+
+- [basic_json_view::type](../basic_json_view/type.md) - the same function on a zero-copy view
+
 ## Version history
 
 - Added in version 1.0.0.

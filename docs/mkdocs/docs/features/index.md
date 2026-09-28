@@ -11,6 +11,8 @@ C++ types, and finally serialize it again.
 - [Parsing](parsing/index.md) — read a JSON value from a string, file, or stream, including
   [JSON Lines](parsing/json_lines.md), [callbacks](parsing/parser_callbacks.md), the
   [SAX interface](parsing/sax_interface.md), and [error handling](parsing/parse_exceptions.md).
+- [Zero-copy JSON views](json_view.md) — read a JSON text through a flat index instead of building a `json` tree;
+  strings and numbers stay in the input and are only decoded when needed.
 - [Comments](comments.md) and [trailing commas](trailing_commas.md) — opt-in relaxations of the JSON grammar.
 
 ## Accessing and modifying values

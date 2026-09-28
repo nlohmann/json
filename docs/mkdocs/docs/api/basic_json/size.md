@@ -51,6 +51,10 @@ JSON value which is `1` in the case of a string.
     --8<-- "examples/size.output"
     ```
 
+## See also
+
+- [basic_json_view::size](../basic_json_view/size.md) - the same function on a zero-copy view
+
 ## Version history
 
 - Added in version 1.0.0.

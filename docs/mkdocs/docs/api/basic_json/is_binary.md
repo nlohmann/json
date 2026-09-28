@@ -34,6 +34,10 @@ Constant.
     --8<-- "examples/is_binary.output"
     ```
 
+## See also
+
+- [basic_json_view::is_binary](../basic_json_view/is_binary.md) - the same check on a zero-copy view
+
 ## Version history
 
 - Added in version 3.8.0.

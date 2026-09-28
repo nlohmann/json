@@ -34,6 +34,10 @@ Constant.
     --8<-- "examples/is_string.output"
     ```
 
+## See also
+
+- [basic_json_view::is_string](../basic_json_view/is_string.md) - the same check on a zero-copy view
+
 ## Version history
 
 - Added in version 1.0.0.

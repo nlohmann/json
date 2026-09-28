@@ -34,6 +34,10 @@ Constant.
     --8<-- "examples/is_null.output"
     ```
 
+## See also
+
+- [basic_json_view::is_null](../basic_json_view/is_null.md) - the same check on a zero-copy view
+
 ## Version history
 
 - Added in version 1.0.0.

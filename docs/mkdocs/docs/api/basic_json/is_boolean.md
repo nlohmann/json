@@ -34,6 +34,10 @@ Constant.
     --8<-- "examples/is_boolean.output"
     ```
 
+## See also
+
+- [basic_json_view::is_boolean](../basic_json_view/is_boolean.md) - the same check on a zero-copy view
+
 ## Version history
 
 - Added in version 1.0.0.

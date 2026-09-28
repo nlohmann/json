@@ -51,6 +51,11 @@ The public headers are in [`include/nlohmann`](https://github.com/nlohmann/json/
   [`adl_serializer`](../api/adl_serializer/index.md),
   [`byte_container_with_subtype`](../api/byte_container_with_subtype/index.md), and
   [`ordered_map`](../api/ordered_map.md).
+- [`json_view.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/json_view.hpp) is a separate,
+  optional header that defines [`basic_json_document`](../api/basic_json_document/index.md) and
+  [`basic_json_view`](../api/basic_json_view/index.md), a flat-index, read-only, non-owning way to look at a parsed
+  JSON text; see [Zero-copy JSON views](../features/json_view.md). It builds on `json.hpp` internals (it requires the
+  same library version) and has its own `detail/view/` subdirectory.
 
 Everything else lives in [`detail/`](https://github.com/nlohmann/json/tree/develop/include/nlohmann/detail) and namespace `nlohmann::detail`, which is not part of the public API. Paths
 below are relative to `include/nlohmann`.
@@ -74,7 +79,9 @@ below are relative to `include/nlohmann`.
 | Macros | [`detail/macro_scope.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/macro_scope.hpp), [`detail/macro_unscope.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/macro_unscope.hpp), [`detail/abi_macros.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/abi_macros.hpp) |
 
 The single-header version [`single_include/nlohmann/json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp)
-is generated from these files with `make amalgamate` and must not be edited by hand.
+is generated from these files with `make amalgamate` and must not be edited by hand. The same command also generates
+[`single_include/nlohmann/json_view.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_view.hpp)
+from `json_view.hpp` and `detail/view/`.
 
 ## Template parameters
 

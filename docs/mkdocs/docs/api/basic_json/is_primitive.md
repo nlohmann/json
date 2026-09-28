@@ -62,6 +62,7 @@ This library extends primitive types to binary types, because binary types are r
 - [is_boolean()](is_boolean.md) returns whether the JSON value is a boolean
 - [is_number()](is_number.md) returns whether the JSON value is a number
 - [is_binary()](is_binary.md) returns whether the JSON value is a binary array
+- [basic_json_view::is_primitive](../basic_json_view/is_primitive.md) - the same check on a zero-copy view
 
 ## Version history
 
