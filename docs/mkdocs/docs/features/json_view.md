@@ -139,7 +139,11 @@ whenever any of the other conditions above was not met.
   element access and lookup functions never carry the JSON Pointer path `JSON_DIAGNOSTICS` would otherwise add: the
   view has no `basic_json` value to point at, so the exception is created without one, regardless of how
   `BasicJsonType` was built.
-- **Comparison is not (yet) provided** by `basic_json_view`. For now,
+- **Ordering comparisons are not provided** by `basic_json_view` -- there is no `#!cpp operator<`.
+  [`operator==`](../api/basic_json_view/operator_eq.md) and [`operator!=`](../api/basic_json_view/operator_ne.md) are
+  provided, though: two views, or a view and a `BasicJsonType` value, compare equal exactly when
+  [`materialize()`](../api/basic_json_view/materialize.md) or [`parse()`](../api/basic_json/parse.md) would produce
+  equal values for them, without ever building a tree to do it. For ordering, too,
   [`materialize()`](../api/basic_json_view/materialize.md) is the way to get a value you can compare.
 
 ## Getting values out without copying

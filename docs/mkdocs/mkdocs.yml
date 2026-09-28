@@ -281,6 +281,8 @@ nav:
           - 'operator bool': api/basic_json_view/operator_bool.md
           - 'operator<<': api/basic_json_view/operator_ltlt.md
           - 'operator[]': api/basic_json_view/operator[].md
+          - 'operator==': api/basic_json_view/operator_eq.md
+          - 'operator!=': api/basic_json_view/operator_ne.md
           - 'size': api/basic_json_view/size.md
           - 'source_offset': api/basic_json_view/source_offset.md
           - 'type': api/basic_json_view/type.md

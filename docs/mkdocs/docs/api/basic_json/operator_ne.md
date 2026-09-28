@@ -89,6 +89,12 @@ Linear.
     --8<-- "examples/operator__notequal__nullptr_t.output"
     ```
 
+## See also
+
+- [operator==](operator_eq.md) compare for equality
+- [basic_json_view::operator!=](../basic_json_view/operator_ne.md) - the same comparison on a zero-copy view, without
+  building a `basic_json` value for it
+
 ## Version history
 
 1. Added in version 1.0.0. Added C++20 member functions in version 3.11.0. Changed in version 3.13.0 to remove 
