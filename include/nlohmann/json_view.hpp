@@ -532,7 +532,7 @@ class basic_json_view
         {
             detail::view::throw_type_error(302, "type must be string, but is ", type_name());
         }
-        return string_view_t(m_doc->str(*m_node), m_node->len);
+        return {m_doc->str(*m_node), m_node->len};
     }
 
     /// the text of a number as it appears in the source (e.g. "1.50", "1E2",
@@ -544,7 +544,7 @@ class basic_json_view
         {
             detail::view::throw_type_error(302, "type must be number, but is ", type_name());
         }
-        return string_view_t(m_doc->str(*m_node), detail::view::number_length(*m_node));
+        return {m_doc->str(*m_node), detail::view::number_length(*m_node)};
     }
 
     /////////////////

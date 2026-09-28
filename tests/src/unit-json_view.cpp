@@ -719,20 +719,31 @@ std::string without_path(std::string msg)
     return msg;
 }
 
+// the bits of a float, to compare values bit for bit
+std::uint64_t bits(double x)
+{
+    std::uint64_t r = 0;
+    std::memcpy(&r, &x, sizeof(r));
+    return r;
+}
+
+std::uint32_t bits(float x)
+{
+    std::uint32_t r = 0;
+    std::memcpy(&r, &x, sizeof(r));
+    return r;
+}
+
 bool has_duplicate_keys(const ordered_json_view& v)
 {
     if (v.is_object() && v.size() != v.materialize().size())
     {
         return true;
     }
-    for (const ordered_json_view e : v)
+    return std::any_of(v.begin(), v.end(), [](const ordered_json_view e)
     {
-        if (e.is_structured() && has_duplicate_keys(e))
-        {
-            return true;
-        }
-    }
-    return false;
+        return e.is_structured() && has_duplicate_keys(e);
+    });
 }
 
 // compares the conversions of a view with those of ordered_json
@@ -754,10 +765,8 @@ void check_values(const ordered_json_view& v, const ordered_json& j, const std::
             {
                 CHECK(v.get<std::int64_t>() == j.get<std::int64_t>());
             }
-            const double a = v.get<double>();
-            const double b = j.get<double>();
-            CHECK(std::memcmp(&a, &b, sizeof(double)) == 0);
-            if (std::abs(b) < 1e9)
+            CHECK(bits(v.get<double>()) == bits(j.get<double>()));
+            if (std::abs(j.get<double>()) < 1e9)
             {
                 CHECK(v.get<int>() == j.get<int>());
             }
@@ -828,7 +837,7 @@ void check_values(const ordered_json_view& v, const ordered_json& j, const std::
 
 struct record
 {
-    std::string name{};
+    std::string name{}; // NOLINT(readability-redundant-member-init)
     int count = 0;
 };
 
@@ -856,7 +865,7 @@ TEST_CASE("json_view values")
 
     SECTION("floats are converted as parse() converts them")
     {
-        std::mt19937_64 rng(5295);
+        std::mt19937_64 rng(5295); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
         std::vector<std::string> tokens = {"0.1", "-0.0", "1e308", "1.7976931348623157e308", "2.2250738585072011e-308", "4.9e-324", "5e-324",
                                            "0.1000000000000000055511151231257827021181583404541015625", "123456789012345678901234567890",
                                            "9007199254740993", "1.00000000000000011102230246251565404236316680908203125", "7.2057594037927933e16"
@@ -896,14 +905,11 @@ TEST_CASE("json_view values")
         {
             CAPTURE(token);
             const std::string text = "[" + token + "]";
-            const double a = json_document::parse(text).root()[0].get<double>();
             const double b = json::parse(text)[0].get<double>();
-            CHECK(std::memcmp(&a, &b, sizeof(double)) == 0);
+            CHECK(bits(json_document::parse(text).root()[0].get<double>()) == bits(b));
             if (std::abs(b) < 1e38)
             {
-                const float fa = nlohmann::basic_json_document<json_float>::parse(text).root()[0].get<float>();
-                const float fb = json_float::parse(text)[0].get<float>();
-                CHECK(std::memcmp(&fa, &fb, sizeof(float)) == 0);
+                CHECK(bits(nlohmann::basic_json_document<json_float>::parse(text).root()[0].get<float>()) == bits(json_float::parse(text)[0].get<float>()));
             }
         }
     }
@@ -1045,7 +1051,7 @@ TEST_CASE("json_view JSON pointers")
                 CHECK(v.at(p).materialize() == j.at(p));
                 CHECK(v[p].materialize() == j[p]);
             }
-            else if (at_error.find("out_of_range.401") != std::string::npos || at_error.find("out_of_range.403") != std::string::npos)
+            else if (at_error.find("out_of_range.401") != std::string::npos || at_error.find("out_of_range.403") != std::string::npos) // NOLINT(abseil-string-find-str-contains)
             {
                 // undefined behavior for const basic_json::operator[]
                 CHECK(!v[p]);
