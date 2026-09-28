@@ -6946,6 +6946,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
   public:
     /// @brief creates a diff as a JSON Merge Patch
+    /// @sa https://json.nlohmann.me/api/basic_json/merge_diff/
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json merge_diff(const basic_json& source, const basic_json& target)
     {
@@ -6963,12 +6964,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 auto itf = target.find(it.key());
                 if (itf != target.end())
                 {
-                    if (!it.value().is_null() && itf.value().is_null())
-                    {
-                        JSON_THROW(other_error::create(503, detail::concat("cannot set \"", it.key(), "\" to null"), &source));
-                    }
-
-                    if (it.value().is_object())
+                    if (it.value().is_object() && itf.value().is_object())
                     {
                         auto diff = merge_diff(it.value(), itf.value());
                         if (!diff.empty())
@@ -6993,10 +6989,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             auto itf = source.find(it.key());
             if (itf == source.end())
             {
-                if (it.value().is_null())
-                {
-                    JSON_THROW(other_error::create(503, detail::concat("cannot set \"", it.key(), "\" to null"), &target));
-                }
                 result[it.key()] = it.value();
             }
         }
