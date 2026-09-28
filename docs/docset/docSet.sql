@@ -131,6 +131,8 @@ INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::~basic_json', 'Me
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document', 'Class', 'api/basic_json_document/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::basic_json_document', 'Constructor', 'api/basic_json_document/basic_json_document/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::accept', 'Function', 'api/basic_json_document/accept/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::erase', 'Method', 'api/basic_json_document/erase/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::insert', 'Method', 'api/basic_json_document/insert/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::is_discarded', 'Method', 'api/basic_json_document/is_discarded/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::memory_usage', 'Method', 'api/basic_json_document/memory_usage/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::node_count', 'Method', 'api/basic_json_document/node_count/index.html');

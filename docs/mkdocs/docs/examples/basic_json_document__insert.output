@@ -1,0 +1,23 @@
+"deploy"
+{
+  "release": "2026.09",
+  "steps": [
+    "build",
+    "test",
+    "smoke-test",
+    "deploy"
+  ],
+  "budget": 19.90
+}
+
+"smoke-test"
+{
+  "budget": 19.9,
+  "release": "2026.09",
+  "steps": [
+    "build",
+    "test",
+    "smoke-test",
+    "deploy"
+  ]
+}

@@ -19,10 +19,10 @@ it (a copy, or an rvalue `#!cpp std::string` that was moved in); see [`owns_sour
 is move-only: copying a document would either duplicate a potentially large index and text, or leave two documents
 claiming to borrow the same buffer, so it is disabled.
 
-With `#!cpp Editable == true`, the document also offers [`set`](set.md) and [`push_back`](push_back.md) to change
-values in place, see [Edits](#edits) below. The source text itself is never written; a read-only document
-(`#!cpp Editable == false`, the default) does not carry any of the bookkeeping edits need, and calling `set` or
-`push_back` on one fails to compile (`#!cpp static_assert`).
+With `#!cpp Editable == true`, the document also offers [`set`](set.md), [`push_back`](push_back.md),
+[`insert`](insert.md), and [`erase`](erase.md) to change values in place, see [Edits](#edits) below. The source text
+itself is never written; a read-only document (`#!cpp Editable == false`, the default) does not carry any of the
+bookkeeping edits need, and calling any of them on one fails to compile (`#!cpp static_assert`).
 
 ## Template parameters
 
@@ -32,8 +32,8 @@ values in place, see [Edits](#edits) below. The source text itself is never writ
     is checked with a `static_assert`.
 
 `Editable`
-:   whether the document supports [`set`](set.md) and [`push_back`](push_back.md) (optional, `#!cpp false` by
-    default). See [Edits](#edits) below.
+:   whether the document supports [`set`](set.md), [`push_back`](push_back.md), [`insert`](insert.md), and
+    [`erase`](erase.md) (optional, `#!cpp false` by default). See [Edits](#edits) below.
 
 ## Specializations
 
@@ -66,11 +66,15 @@ values in place, see [Edits](#edits) below. The source text itself is never writ
 - [**set**](set.md) - replace a value, or set an object member, an array element, or the value a JSON pointer refers
   to (`#!cpp Editable` documents only)
 - [**push_back**](push_back.md) - append to an array (`#!cpp Editable` documents only)
+- [**insert**](insert.md) - insert an element into an array before a given position (`#!cpp Editable` documents only)
+- [**erase**](erase.md) - remove an object member, an array element, or the value a JSON pointer refers to
+  (`#!cpp Editable` documents only)
 
 ## Edits
 
-An editable document (`#!cpp Editable == true`) can be changed after parsing, with [`set`](set.md) and
-[`push_back`](push_back.md); [`json_editable_document`](../json_editable_document.md) and
+An editable document (`#!cpp Editable == true`) can be changed after parsing, with [`set`](set.md),
+[`push_back`](push_back.md), [`insert`](insert.md), and [`erase`](erase.md);
+[`json_editable_document`](../json_editable_document.md) and
 [`ordered_json_editable_document`](../ordered_json_editable_document.md) are the corresponding specializations. A few
 points apply to every edit:
 
