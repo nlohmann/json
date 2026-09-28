@@ -775,9 +775,14 @@ TEST_CASE("regression tests 2")
         static_assert(!nlohmann::detail::is_detected<nlohmann::detail::get_template_function, const json&, std::variant<json>>::value,
                       "std::variant<json> must not be retrievable via get<>()");
 
+        // clang before 7 cannot instantiate libstdc++'s std::variant<json>
+#if !(defined(__clang__) && __clang_major__ < 7)
+        // push_back, not emplace_back: #5066 needs the implicit conversion
+        // from json to the vector's value type
         std::vector<std::variant<json>> v;
-        v.push_back(json(1));
+        v.push_back(json(1)); // NOLINT(hicpp-use-emplace,modernize-use-emplace)
         CHECK(std::get<0>(v[0]) == 1);
+#endif
     }
 #endif
 }
