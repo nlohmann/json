@@ -1185,3 +1185,87 @@ TEST_CASE("json_view dump")
         CHECK(json_view().dump() == json(json::value_t::discarded).dump());
     }
 }
+
+TEST_CASE("json_view comparison")
+{
+    SECTION("equality of the values parse() produces")
+    {
+        generator g;
+        std::vector<std::string> texts;
+        for (int i = 0; i < 600; ++i)
+        {
+            std::string text;
+            g.value(text, 0);
+            texts.push_back(text);
+            // the same value written differently: sorted keys, canonical numbers
+            texts.push_back(json::parse(text).dump(1));
+        }
+        for (std::size_t i = 0; i + 2 < texts.size(); ++i)
+        {
+            for (std::size_t k = i; k < i + 3; ++k)
+            {
+                CAPTURE(texts[i]);
+                CAPTURE(texts[k]);
+                const json_document a = json_document::parse(texts[i]);
+                const json_document b = json_document::parse(texts[k]);
+                const json ja = json::parse(texts[i]);
+                const json jb = json::parse(texts[k]);
+                CHECK((a.root() == b.root()) == (ja == jb));
+                CHECK((a.root() != b.root()) == (ja != jb));
+                CHECK((a.root() == jb) == (ja == jb));
+                CHECK((jb == a.root()) == (ja == jb));
+                CHECK((a.root() != jb) == (ja != jb));
+                CHECK((jb != a.root()) == (ja != jb));
+
+                // ordered_json compares members in order
+                const ordered_json_document oa = ordered_json_document::parse(texts[i]);
+                const ordered_json_document ob = ordered_json_document::parse(texts[k]);
+                const ordered_json oja = ordered_json::parse(texts[i]);
+                const ordered_json ojb = ordered_json::parse(texts[k]);
+                CHECK((oa.root() == ob.root()) == (oja == ojb));
+                CHECK((oa.root() == ojb) == (oja == ojb));
+            }
+        }
+    }
+
+    SECTION("numbers, duplicate keys, member order")
+    {
+        const auto same = [](const char* x, const char* y)
+        {
+            return json_document::parse(x).root() == json_document::parse(y).root();
+        };
+        CHECK(same("1", "1.0"));
+        CHECK(same("[1, -1, 2.5]", "[1.0, -1.0, 25e-1]"));
+        CHECK(!same("1", "1.5"));
+        CHECK(same("18446744073709551615", "18446744073709551615"));
+        CHECK(same(R"({"a": 1, "a": 2})", R"({"a": 2})"));
+        CHECK(!same(R"({"a": 1, "a": 2})", R"({"a": 1})"));
+        CHECK(same(R"({"a": 1, "b": 2})", R"({"b": 2, "a": 1})"));
+        CHECK(!same(R"({"a": 1})", R"({"a": 1, "b": 2})"));
+        CHECK(!same("[1, 2]", "[2, 1]"));
+        CHECK(!same("\"a\"", "\"b\""));
+        CHECK(same("\"\\u00e9\"", "\"\xc3\xa9\""));
+        CHECK(!same("null", "false"));
+        CHECK(!same("[]", "{}"));
+        CHECK(ordered_json_document::parse(R"({"a": 1, "b": 2, "a": 3})").root() == ordered_json_document::parse(R"({"a": 3, "b": 2})").root());
+        CHECK(ordered_json_document::parse(R"({"a": 1, "b": 2})").root() != ordered_json_document::parse(R"({"b": 2, "a": 1})").root());
+
+        // discarded values compare as basic_json's do
+        const json discarded(json::value_t::discarded);
+        CHECK((json_view() == json_view()) == (discarded == discarded));
+        CHECK((json_view() == discarded) == (discarded == discarded));
+        CHECK(!(json_view() == json_document::parse("null").root()));
+        CHECK(!(json_document::parse("null").root() == discarded));
+    }
+
+    SECTION("deep nesting")
+    {
+        const std::string deep = std::string(100000, '[') + std::string(100000, ']');
+        const json_document a = json_document::parse(deep);
+        const json_document b = json_document::parse(deep);
+        CHECK(a.root() == b.root());
+        CHECK(a.root() == json::parse(deep));
+        const std::string other = std::string(100000, '[') + "1" + std::string(100000, ']');
+        CHECK(a.root() != json_document::parse(other).root());
+    }
+}
