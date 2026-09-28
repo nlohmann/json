@@ -23,6 +23,7 @@ AMALGAMATED_FILE=single_include/nlohmann/json.hpp
 AMALGAMATED_FWD_FILE=single_include/nlohmann/json_fwd.hpp
 # json_literals.hpp only includes <nlohmann/json.hpp>, so it is copied verbatim
 AMALGAMATED_LITERALS_FILE=single_include/nlohmann/json_literals.hpp
+AMALGAMATED_VIEW_FILE=single_include/nlohmann/json_view.hpp
 
 
 ##########################################################################
@@ -31,7 +32,7 @@ AMALGAMATED_LITERALS_FILE=single_include/nlohmann/json_literals.hpp
 
 # main target
 all:
-	@echo "amalgamate - amalgamate files single_include/nlohmann/json{,_fwd,_literals}.hpp from the include/nlohmann sources"
+	@echo "amalgamate - amalgamate files single_include/nlohmann/json{,_fwd,_literals,_view}.hpp from the include/nlohmann sources"
 	@echo "BUILD.bazel - regenerate the Bazel BUILD file from the include/nlohmann sources"
 	@echo "ChangeLog.md - generate ChangeLog file"
 	@echo "check-amalgamation - check whether sources have been amalgamated and BUILD.bazel is up to date"
@@ -156,14 +157,14 @@ install_astyle:
 
 # call the Artistic Style pretty printer on all source files
 pretty: install_astyle
-	$(ASTYLE) --project=tools/astyle/.astylerc $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_LITERALS_FILE) docs/mkdocs/docs/examples/*.cpp
+	$(ASTYLE) --project=tools/astyle/.astylerc $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_LITERALS_FILE) $(AMALGAMATED_VIEW_FILE) docs/mkdocs/docs/examples/*.cpp
 
 # call the Clang-Format on all source files
 pretty_format:
 	for FILE in $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) docs/mkdocs/docs/examples/*.cpp; do echo $$FILE; clang-format -i $$FILE; done
 
 # create single header files and pretty print
-amalgamate: $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_LITERALS_FILE)
+amalgamate: $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_LITERALS_FILE) $(AMALGAMATED_VIEW_FILE)
 	$(MAKE) pretty
 
 # call the amalgamation tool for json.hpp
@@ -178,19 +179,26 @@ $(AMALGAMATED_FWD_FILE): $(SRCS)
 $(AMALGAMATED_LITERALS_FILE): include/nlohmann/json_literals.hpp
 	cp include/nlohmann/json_literals.hpp $(AMALGAMATED_LITERALS_FILE)
 
+# call the amalgamation tool for json_view.hpp (keeps including json.hpp)
+$(AMALGAMATED_VIEW_FILE): $(SRCS)
+	tools/amalgamate/amalgamate.py -c tools/amalgamate/config_json_view.json -s . --verbose=yes
+
 # check if file single_include/nlohmann/json.hpp has been amalgamated from the nlohmann sources
 # Note: this target is called by Travis
 check-amalgamation:
 	@mv $(AMALGAMATED_FILE) $(AMALGAMATED_FILE)~
 	@mv $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_FWD_FILE)~
 	@mv $(AMALGAMATED_LITERALS_FILE) $(AMALGAMATED_LITERALS_FILE)~
+	@mv $(AMALGAMATED_VIEW_FILE) $(AMALGAMATED_VIEW_FILE)~
 	@$(MAKE) amalgamate
 	@diff $(AMALGAMATED_FILE) $(AMALGAMATED_FILE)~ || (echo "===================================================================\n  Amalgamation required! Please read the contribution guidelines\n  in file .github/CONTRIBUTING.md.\n===================================================================" ; mv $(AMALGAMATED_FILE)~ $(AMALGAMATED_FILE) ; false)
 	@diff $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_FWD_FILE)~ || (echo "===================================================================\n  Amalgamation required! Please read the contribution guidelines\n  in file .github/CONTRIBUTING.md.\n===================================================================" ; mv $(AMALGAMATED_FWD_FILE)~ $(AMALGAMATED_FWD_FILE) ; false)
 	@diff $(AMALGAMATED_LITERALS_FILE) $(AMALGAMATED_LITERALS_FILE)~ || (echo "===================================================================\n  Amalgamation required! Please read the contribution guidelines\n  in file .github/CONTRIBUTING.md.\n===================================================================" ; mv $(AMALGAMATED_LITERALS_FILE)~ $(AMALGAMATED_LITERALS_FILE) ; false)
+	@diff $(AMALGAMATED_VIEW_FILE) $(AMALGAMATED_VIEW_FILE)~ || (echo "===================================================================\n  Amalgamation required! Please read the contribution guidelines\n  in file .github/CONTRIBUTING.md.\n===================================================================" ; mv $(AMALGAMATED_VIEW_FILE)~ $(AMALGAMATED_VIEW_FILE) ; false)
 	@mv $(AMALGAMATED_FILE)~ $(AMALGAMATED_FILE)
 	@mv $(AMALGAMATED_FWD_FILE)~ $(AMALGAMATED_FWD_FILE)
 	@mv $(AMALGAMATED_LITERALS_FILE)~ $(AMALGAMATED_LITERALS_FILE)
+	@mv $(AMALGAMATED_VIEW_FILE)~ $(AMALGAMATED_VIEW_FILE)
 	@mv BUILD.bazel BUILD.bazel~
 	@$(MAKE) BUILD.bazel
 	@diff BUILD.bazel BUILD.bazel~ || (echo "===================================================================\n  BUILD.bazel is out of date! Please run 'make BUILD.bazel'.\n===================================================================" ; mv BUILD.bazel~ BUILD.bazel ; false)
@@ -231,7 +239,7 @@ json.tar.xz:
 # We use `-X` to make the resulting ZIP file reproducible, see
 # <https://content.pivotal.io/blog/barriers-to-deterministic-reproducible-zip-files>.
 include.zip: BUILD.bazel
-	zip -9 --recurse-paths -X include.zip $(SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_LITERALS_FILE) BUILD.bazel MODULE.bazel meson.build LICENSE.MIT
+	zip -9 --recurse-paths -X include.zip $(SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_LITERALS_FILE) $(AMALGAMATED_VIEW_FILE) BUILD.bazel MODULE.bazel meson.build LICENSE.MIT
 
 # Create the files for a release and add signatures and hashes.
 release: include.zip json.tar.xz
@@ -241,12 +249,14 @@ release: include.zip json.tar.xz
 	gpg --armor --detach-sig $(AMALGAMATED_FILE)
 	gpg --armor --detach-sig $(AMALGAMATED_FWD_FILE)
 	gpg --armor --detach-sig $(AMALGAMATED_LITERALS_FILE)
+	gpg --armor --detach-sig $(AMALGAMATED_VIEW_FILE)
 	gpg --armor --detach-sig json.tar.xz
 	cp $(AMALGAMATED_FILE) release_files
 	cp $(AMALGAMATED_FWD_FILE) release_files
 	cp $(AMALGAMATED_LITERALS_FILE) release_files
-	mv $(AMALGAMATED_FILE).asc $(AMALGAMATED_FWD_FILE).asc $(AMALGAMATED_LITERALS_FILE).asc json.tar.xz json.tar.xz.asc include.zip include.zip.asc release_files
-	cd release_files ; shasum -a 256 json.hpp include.zip json.tar.xz > hashes.txt
+	cp $(AMALGAMATED_VIEW_FILE) release_files
+	mv $(AMALGAMATED_FILE).asc $(AMALGAMATED_FWD_FILE).asc $(AMALGAMATED_LITERALS_FILE).asc $(AMALGAMATED_VIEW_FILE).asc json.tar.xz json.tar.xz.asc include.zip include.zip.asc release_files
+	cd release_files ; shasum -a 256 json.hpp json_view.hpp include.zip json.tar.xz > hashes.txt
 
 
 ##########################################################################
