@@ -10,6 +10,12 @@ produces, and that a rejected input makes both parsers throw with an identical `
 reuses the `corpus_json` corpus (or, for the `make fuzz_testing_json_view` target below, `tests/data/json_tests`) rather
 than a format of its own.
 
+`json_view_image_fuzzer` (`tests/src/fuzzer-json_view_image.cpp`) tests the images of `json_document` (`save()` and
+`load()`). It uses each input twice: as an image, which `load()` must either reject with `parse_error.116` or read
+safely (with `image_check::full`, the document must also serialize to the JSON it reads as), and as a JSON text, whose
+image must load and serialize to the same text. A corpus of images can be made from JSON files with a small program
+that calls `json_document::parse(text).save()`; plain JSON files work as well.
+
 ## Corpus creation
 
 For most effective fuzzing, a [corpus](https://llvm.org/docs/LibFuzzer.html#corpus) should be provided. A corpus is a

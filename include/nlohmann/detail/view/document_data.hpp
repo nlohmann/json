@@ -10,7 +10,7 @@
 
 #include <array> // array
 #include <cstddef> // size_t
-#include <cstdint> // uint32_t
+#include <cstdint> // uint8_t, uint32_t
 #include <cstring> // memcpy
 #include <functional> // less
 #include <map> // map
@@ -41,7 +41,9 @@ struct document_data
     node* inline_tape = nullptr; ///< node array allocated together with this header
     std::size_t inline_cap = 0;
     std::string arena{}; ///< decoded strings that contained escapes // NOLINT(readability-redundant-member-init)
+    std::size_t arena_size = 0; ///< bytes of decoded strings at base[1] (the arena, or those of a loaded image)
     std::string owned{}; ///< owned copy of the input, if any // NOLINT(readability-redundant-member-init)
+    std::vector<std::uint8_t> owned_image{}; ///< a loaded image the document owns (the text and the decoded strings point into it) // NOLINT(readability-redundant-member-init)
 
     // hash indexes of large objects (see object_index.hpp)
     static constexpr std::uint32_t index_min_members = 128;
