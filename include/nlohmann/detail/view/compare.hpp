@@ -234,51 +234,47 @@ bool equal(const A& a0, const B& b0)
                 return false;
             }
         }
-        else if (numbers)
+        else
         {
-            if (!(a.scalar() == b.scalar()))
+            if (!numbers && ta != tb)
             {
                 return false;
             }
-        }
-        else if (ta != tb)
-        {
-            return false;
-        }
-        else if (ta == value_t::string)
-        {
-            if (!(a.string() == b.string()))
+            if (ta == value_t::string)
             {
-                return false;
-            }
-        }
-        else if (ta == value_t::array || ta == value_t::object)
-        {
-            if (a.size() != b.size() && ta == value_t::array)
-            {
-                return false;
-            }
-            frame f;
-            f.object = ta == value_t::object;
-            if (f.object)
-            {
-                a.members(f.members_a, ordered);
-                b.members(f.members_b, ordered);
-                if (f.members_a.size() != f.members_b.size())
+                if (!(a.string() == b.string()))
                 {
                     return false;
                 }
             }
-            else
+            else if (ta == value_t::array || ta == value_t::object)
             {
-                a.elements(f.elements_a);
-                b.elements(f.elements_b);
+                if (a.size() != b.size() && ta == value_t::array)
+                {
+                    return false;
+                }
+                frame f;
+                f.object = ta == value_t::object;
+                if (f.object)
+                {
+                    a.members(f.members_a, ordered);
+                    b.members(f.members_b, ordered);
+                    if (f.members_a.size() != f.members_b.size())
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    a.elements(f.elements_a);
+                    b.elements(f.elements_b);
+                }
+                stack.push_back(std::move(f));
             }
-            stack.push_back(std::move(f));
-        }
-        else if (!(a.scalar() == b.scalar())) // null, boolean
-        {
-            return false;
+            else if (!(a.scalar() == b.scalar())) // numbers (also of different types), null, boolean
+            {
+                return false;
+            }
         }
 
         // the next pair of values

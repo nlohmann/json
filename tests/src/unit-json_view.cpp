@@ -1252,9 +1252,9 @@ TEST_CASE("json_view comparison")
 
         // discarded values compare as basic_json's do
         const json discarded(json::value_t::discarded);
-        CHECK((json_view() == json_view()) == (discarded == discarded));
+        CHECK((json_view() == json_view()) == (discarded == discarded)); // NOLINT(readability-container-size-empty): operator== is tested
         CHECK((json_view() == discarded) == (discarded == discarded));
-        CHECK(!(json_view() == json_document::parse("null").root()));
+        CHECK(!(json_view() == json_document::parse("null").root())); // NOLINT(readability-container-size-empty)
         CHECK(!(json_document::parse("null").root() == discarded));
     }
 
