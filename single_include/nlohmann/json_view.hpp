@@ -25,6 +25,7 @@
 #define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstring> // memcpy, strlen
 #include <iterator> // distance, input_iterator_tag, iterator_traits
 #include <map> // map
@@ -81,9 +82,11 @@
 
 #include <array> // array
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstring> // memcpy
 #include <new> // operator new, placement new
 #include <string> // string
+#include <vector> // vector
 
 // #include <nlohmann/json.hpp>
 // #include <nlohmann/detail/view/macro_scope.hpp>
@@ -279,6 +282,17 @@ struct document_data
     std::size_t inline_cap = 0;
     std::string arena{}; ///< decoded strings that contained escapes // NOLINT(readability-redundant-member-init)
     std::string owned{}; ///< owned copy of the input, if any // NOLINT(readability-redundant-member-init)
+
+    // hash indexes of large objects (see object_index.hpp)
+    static constexpr std::uint32_t index_min_members = 128;
+    struct object_index
+    {
+        std::size_t start;  ///< first slot in index_slots
+        std::uint32_t mask; ///< slot count - 1 (a power of two minus one)
+    };
+    std::vector<object_index> indexes{}; // NOLINT(readability-redundant-member-init)
+    std::vector<std::uint32_t> index_slots{}; // NOLINT(readability-redundant-member-init)
+    std::vector<std::uint32_t> large_objects{}; ///< positions of the objects to index (noted while parsing) // NOLINT(readability-redundant-member-init)
     std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena (indexed by flags & node_flags::storage)
     bool discarded = true;
 
@@ -967,6 +981,13 @@ class builder
     frame shallow[64]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): not initialized on purpose; filled as containers open
     std::vector<frame> deep{};
 
+    /// remember an object to index after parsing (out of line, so that the
+    /// parse loop only has a call for it)
+    NLOHMANN_VIEW_NOINLINE void note_large_object(std::uint32_t idx)
+    {
+        doc.large_objects.push_back(idx);
+    }
+
     NLOHMANN_VIEW_NOINLINE bool fail(error_code c, const unsigned char* at) noexcept
     {
         m_failure.code = c;
@@ -1479,18 +1500,26 @@ obj_next:
                 if (enabled(TrailingCommas) && cur() == '}')
                 {
                     ++p;
-                    goto close_container;
+                    goto close_object;
                 }
                 goto obj_key;
             }
             if (cur() == '}')
             {
                 ++p;
-                goto close_container;
+                goto close_object;
             }
             return fail(error_code::expected_object_end);
 
 #undef NLOHMANN_VIEW_VALUE
+
+close_object:
+            // a large object gets a hash index (objects only, so that closing
+            // an array pays nothing for this)
+            if (NLOHMANN_VIEW_UNLIKELY(cur_count >= document_data::index_min_members))
+            {
+                cold.note_large_object(cur_idx);
+            }
 
 close_container:
             close();
@@ -2687,6 +2716,140 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/view/node.hpp>
 
+// #include <nlohmann/detail/view/object_index.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <cstddef> // size_t
+#include <cstdint> // uint32_t, uint64_t
+#include <cstring> // memcmp
+
+// #include <nlohmann/json.hpp>
+// #include <nlohmann/detail/view/document_data.hpp>
+
+// #include <nlohmann/detail/view/macro_scope.hpp>
+
+// #include <nlohmann/detail/view/node.hpp>
+
+
+// Hash indexes of large objects, so that a lookup does not compare thousands
+// of keys (as Boost.JSON switches from a linear search to a hash table for
+// large objects). An object with document_data::index_min_members members or
+// more gets an open-addressing table after parsing; its node stores the
+// number of the table (1-based) in `extra`. A slot holds the offset of a key
+// node from its object node (0: empty). Of duplicate keys, the first is kept,
+// as for the linear search.
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+namespace view
+{
+
+/// hash of a key: its bytes, eight at a time, in a fixed byte order
+inline std::uint64_t key_hash(const char* s, std::size_t n) noexcept
+{
+    std::uint64_t h = 0x9E3779B97F4A7C15u * (n + 1);
+    const auto* p = reinterpret_cast<const unsigned char*>(s); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    while (n >= 8)
+    {
+        h = (h ^ read_eight_bytes(p)) * 0xBF58476D1CE4E5B9u;
+        h ^= h >> 29u;
+        p += 8;
+        n -= 8;
+    }
+    std::uint64_t w = 0;
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        w |= static_cast<std::uint64_t>(p[i]) << (8u * i);
+    }
+    h = (h ^ w) * 0x94D049BB133111EBu;
+    return h ^ (h >> 31u);
+}
+
+/// build the table of a large object
+inline void build_object_index(document_data& d, node* obj)
+{
+    if (d.indexes.size() >= 0xFFFFu)
+    {
+        return; // LCOV_EXCL_LINE (the number must fit `extra`; more large objects are searched linearly)
+    }
+    std::size_t cap = 16;
+    while (cap < 2 * static_cast<std::size_t>(obj->len))
+    {
+        cap *= 2;
+    }
+    const std::size_t start = d.index_slots.size();
+    d.index_slots.resize(start + cap, 0);
+    std::uint32_t* const slots = d.index_slots.data() + start;
+    const std::size_t mask = cap - 1;
+    for (const node* k = document_data::first_child(obj), *end = document_data::child_end(obj); k != end; k = document_data::after(k + 1))
+    {
+        const char* const key = d.str(*k);
+        std::size_t i = static_cast<std::size_t>(key_hash(key, k->len)) & mask;
+        bool duplicate = false;
+        while (slots[i] != 0)
+        {
+            const node* const other = obj + slots[i];
+            if (other->len == k->len && (k->len == 0 || std::memcmp(d.str(*other), key, k->len) == 0))
+            {
+                duplicate = true; // keep the first
+                break;
+            }
+            i = (i + 1) & mask;
+        }
+        if (!duplicate)
+        {
+            slots[i] = static_cast<std::uint32_t>(k - obj);
+        }
+    }
+    d.indexes.push_back(document_data::object_index{start, static_cast<std::uint32_t>(mask)});
+    obj->extra = static_cast<std::uint16_t>(d.indexes.size());
+}
+
+/// build the tables of the large objects the parser noted
+inline void build_object_indexes(document_data& d)
+{
+    for (const std::uint32_t i : d.large_objects)
+    {
+        build_object_index(d, d.tape + i);
+    }
+}
+
+/// the key node of the first member with this key of an indexed object, or
+/// nullptr
+inline const node* find_indexed(const document_data& d, const node* obj, const char* key, std::size_t n) noexcept
+{
+    const document_data::object_index& ix = d.indexes[obj->extra - 1u];
+    const std::uint32_t* const slots = d.index_slots.data() + ix.start;
+    std::size_t i = static_cast<std::size_t>(key_hash(key, n)) & ix.mask;
+    for (;;)
+    {
+        const std::uint32_t s = slots[i];
+        if (s == 0)
+        {
+            return nullptr;
+        }
+        const node* const k = obj + s;
+        if (k->len == n && (n == 0 || std::memcmp(d.str(*k), key, n) == 0))
+        {
+            return k;
+        }
+        i = (i + 1) & ix.mask;
+    }
+}
+
+}  // namespace view
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -2756,6 +2919,10 @@ class short_key
 /// nullptr; most keys are rejected by their length, from the index alone
 inline const node* find_member(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
 {
+    if (NLOHMANN_VIEW_UNLIKELY(object->extra != 0))
+    {
+        return find_indexed(d, object, key, n); // a large object
+    }
     const node* const end = document_data::child_end(object);
     const auto* const k = reinterpret_cast<const unsigned char*>(key); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     if (NLOHMANN_VIEW_LIKELY(n <= 16))
@@ -3114,6 +3281,8 @@ BasicJsonType materialize(const document_data& d, const node* n)
 NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/view/node.hpp>
+
+// #include <nlohmann/detail/view/object_index.hpp>
 
 // #include <nlohmann/detail/view/pointer.hpp>
 //     __ _____ _____ _____
@@ -4809,7 +4978,9 @@ class basic_json_document
         }
         return sizeof(document_data) + (m_data->inline_cap * sizeof(detail::view::node))
                + (m_data->tape != m_data->inline_tape ? m_data->tape_cap * sizeof(detail::view::node) : 0)
-               + m_data->arena.capacity() + m_data->owned.capacity();
+               + m_data->arena.capacity() + m_data->owned.capacity()
+               + (m_data->indexes.capacity() * sizeof(document_data::object_index)) + (m_data->index_slots.capacity() * sizeof(std::uint32_t))
+               + (m_data->large_objects.capacity() * sizeof(std::uint32_t));
     }
 
     /// release unused capacity of the index and the decoded strings; like
@@ -4879,6 +5050,9 @@ class basic_json_document
         d.size = size;
         d.tape_size = 0;
         d.arena.clear();
+        d.indexes.clear();
+        d.index_slots.clear();
+        d.large_objects.clear();
         d.discarded = true;
         detail::view::parse_failure failure;
         bool ok = false;
@@ -4894,6 +5068,7 @@ class basic_json_document
         {
             d.base[0] = d.src;
             d.base[1] = d.arena.data();
+            detail::view::build_object_indexes(d);
             d.discarded = false;
             return;
         }
