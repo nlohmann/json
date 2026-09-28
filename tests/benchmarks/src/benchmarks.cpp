@@ -82,6 +82,31 @@ BENCHMARK_CAPTURE(ParseString, unsigned_ints,     TEST_DATA_DIRECTORY "/regressi
 BENCHMARK_CAPTURE(ParseString, small_signed_ints, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json");
 
 //////////////////////////////////////////////////////////////////////////////
+// validate JSON from string
+//////////////////////////////////////////////////////////////////////////////
+
+static void Accept(benchmark::State& state, const char* filename)
+{
+    std::ifstream f(filename);
+    std::string str((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+
+    while (state.KeepRunning())
+    {
+        benchmark::DoNotOptimize(json::accept(str));
+    }
+
+    state.SetBytesProcessed(state.iterations() * str.size());
+}
+BENCHMARK_CAPTURE(Accept, jeopardy,          TEST_DATA_DIRECTORY "/jeopardy/jeopardy.json");
+BENCHMARK_CAPTURE(Accept, canada,            TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(Accept, citm_catalog,      TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(Accept, twitter,           TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+BENCHMARK_CAPTURE(Accept, floats,            TEST_DATA_DIRECTORY "/regression/floats.json");
+BENCHMARK_CAPTURE(Accept, signed_ints,       TEST_DATA_DIRECTORY "/regression/signed_ints.json");
+BENCHMARK_CAPTURE(Accept, unsigned_ints,     TEST_DATA_DIRECTORY "/regression/unsigned_ints.json");
+BENCHMARK_CAPTURE(Accept, small_signed_ints, TEST_DATA_DIRECTORY "/regression/small_signed_ints.json");
+
+//////////////////////////////////////////////////////////////////////////////
 // parse pretty-printed JSON from string
 //
 // Every file in the corpus above is minified or only lightly spaced, so none of
