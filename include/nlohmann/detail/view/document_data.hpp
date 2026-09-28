@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <array> // array
 #include <cstddef> // size_t
 #include <cstring> // memcpy
 #include <new> // operator new, placement new
@@ -34,9 +35,9 @@ struct document_data
     std::size_t tape_cap = 0;
     node* inline_tape = nullptr; ///< node array allocated together with this header
     std::size_t inline_cap = 0;
-    std::string arena{}; ///< decoded strings that contained escapes
-    std::string owned{}; ///< owned copy of the input, if any
-    const char* base[4] = {nullptr, nullptr, nullptr, nullptr}; ///< string bases: source, arena (indexed by flags & node_flags::storage)
+    std::string arena{}; ///< decoded strings that contained escapes // NOLINT(readability-redundant-member-init)
+    std::string owned{}; ///< owned copy of the input, if any // NOLINT(readability-redundant-member-init)
+    std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena (indexed by flags & node_flags::storage)
     bool discarded = true;
 
     /// one allocation for the header and room for `nodes` nodes; large
@@ -45,8 +46,9 @@ struct document_data
     {
         nodes = nodes <= 256 ? nodes : 0;
         void* mem = ::operator new (sizeof(document_data) + (nodes * sizeof(node)));
-        auto* d = new (mem) document_data();
-        d->inline_tape = static_cast<node*>(static_cast<void*>(static_cast<char*>(mem) + sizeof(document_data))); // (aligned: sizeof is a multiple of the alignment)
+        auto* d = new (mem) document_data(); // NOLINT(cppcoreguidelines-owning-memory): owned by the returned pointer, freed by deleter
+        // (aligned: sizeof is a multiple of the alignment; through void*, as GCC's -Wcast-align wants)
+        d->inline_tape = static_cast<node*>(static_cast<void*>(static_cast<char*>(mem) + sizeof(document_data))); // NOLINT(bugprone-casting-through-void)
         d->inline_cap = nodes;
         d->tape = d->inline_tape;
         d->tape_cap = nodes;

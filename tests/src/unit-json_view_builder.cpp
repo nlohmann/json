@@ -139,7 +139,7 @@ void check_same(const std::string& text)
 // a small deterministic generator of documents
 struct generator
 {
-    std::mt19937 rng{5295};
+    std::mt19937 rng{5295}; // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
 
     int r(int n)
     {
@@ -156,7 +156,7 @@ struct generator
 
     void str(std::string& o)
     {
-        static const char* const pieces[] = {"a", "Z", " ", "~", "\\n", "\\\"", "\\\\", "\\/", "\\u00e9", "\\ud83d\\ude00", "\xc3\xa9", "\xe3\x81\x82", "\xf0\x9f\x98\x80", "\x7f", "\\u001f", "long enough text to leave the first 16 bytes"};
+        static const char* const pieces[] = {"a", "Z", " ", "~", "\\n", "\\\"", "\\\\", "\\/", "\\u00e9", "\\ud83d\\ude00", "\xc3\xa9", "\xe3\x81\x82", "\xf0\x9f\x98\x80", "\x7f", "\\u001f", "long enough text to leave the first 16 bytes"}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         o += '"';
         for (int n = r(3) == 0 ? r(20) : r(6); n > 0; --n)
         {
@@ -167,7 +167,7 @@ struct generator
 
     void num(std::string& o)
     {
-        static const char* const numbers[] = {"0", "-0", "1", "-1", "12", "123456789", "1234567890123456789", "9223372036854775807", "-9223372036854775808",
+        static const char* const numbers[] = {"0", "-0", "1", "-1", "12", "123456789", "1234567890123456789", "9223372036854775807", "-9223372036854775808", // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
                                               "9223372036854775808", "18446744073709551615", "18446744073709551616", "-9223372036854775809",
                                               "1.5", "-2.25e-3", "1e10", "1E+2", "0.000001", "3.141592653589793238462643", "1e308", "-1e-400", "123.456e7"
                                              };
@@ -207,7 +207,7 @@ struct generator
         }
         else
         {
-            static const char* const literals[] = {"true", "false", "null"};
+            static const char* const literals[] = {"true", "false", "null"}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
             o += literals[r(3)];
         }
         ws(o);
@@ -221,8 +221,8 @@ TEST_CASE("json_view builder")
     {
         for (const char* text :
                 {
-                    "null", "true", "false", "0", "-0", "42", "-42", "1.5", "\"\"", "\"abc\"", "[]", "{}", "[1,2,3]", "{\"a\":1,\"b\":[true,null]}",
-                    " [ 1 , 2 ] ", "{\"a\" : {\"b\" : {}}}", "[[[]]]", "\"\\u00e4\\n\\ud83d\\ude00\"", "{\"a\":1,\"a\":2}", "18446744073709551616",
+                    "null", "true", "false", "0", "-0", "42", "-42", "1.5", "\"\"", "\"abc\"", "[]", "{}", "[1,2,3]", "{\"a\":1,\"b\":[true,null]}", // NOLINT(modernize-raw-string-literal)
+                    " [ 1 , 2 ] ", "{\"a\" : {\"b\" : {}}}", "[[[]]]", "\"\\u00e4\\n\\ud83d\\ude00\"", "{\"a\":1,\"a\":2}", "18446744073709551616", // NOLINT(modernize-raw-string-literal)
                     "-9223372036854775809", "123456789012345678901234567890", "1e400", "-1e400", "1.7976931348623157e308"
                 })
         {
@@ -235,7 +235,7 @@ TEST_CASE("json_view builder")
         for (const char* text :
                 {
                     "", " ", "[", "]", "{", "}", "[1,]", "{\"a\":1,}", "[1 2]", "{\"a\" 1}", "{1:2}", "tru", "nul", "fals", "truex", "-", "01", "1.", ".5", "1e", "1e+",
-                    "\"", "\"abc", "\"\\x\"", "\"\\u12\"", "\"\\u12G4\"", "\"\\ud800\"", "\"\\udc00\"", "\"\\ud800\\u0041\"", "\"\x01\"", "\"\xff\"", "\"\xc3\"",
+                    "\"", "\"abc", "\"\\x\"", "\"\\u12\"", "\"\\u12G4\"", "\"\\ud800\"", "\"\\udc00\"", "\"\\ud800\\u0041\"", "\"\x01\"", "\"\xff\"", "\"\xc3\"", // NOLINT(modernize-raw-string-literal)
                     "\"\xe0\x80\x80\"", "\"\xed\xa0\x80\"", "[1]x", "[1] [2]", "/", "/*", "/* */ 1", "// c\n1", "1 // c", "[1,/*c*/2]", "[1,2,]"
                 })
         {
@@ -297,7 +297,7 @@ TEST_CASE("json_view builder")
             // damage: flip one byte, or cut the text
             std::string damaged = text;
             const auto at = static_cast<std::size_t>(g.r(static_cast<int>(damaged.size())));
-            static const char replacements[] = {'x', '"', '\\', ',', ':', ']', '}', '[', '{', '1', '-', '.', 'e', '\0', '\n', '/'};
+            static const char replacements[] = {'x', '"', '\\', ',', ':', ']', '}', '[', '{', '1', '-', '.', 'e', '\0', '\n', '/'}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
             damaged[at] = replacements[g.r(16)];
             check_same(damaged);
             check_same(text.substr(0, at));

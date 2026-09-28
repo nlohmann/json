@@ -10,6 +10,7 @@
 #pragma once
 
 #include <algorithm> // find, find_if, max
+#include <array> // array
 #include <cstddef> // size_t, ptrdiff_t
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
 #include <cstring> // memcmp, memcpy
@@ -87,8 +88,15 @@ class builder
 
     builder(const builder&) = delete;
     builder& operator=(const builder&) = delete;
+    builder(builder&&) = delete;
+    builder& operator=(builder&&) = delete;
+    ~builder() = default;
 
-    parse_failure failure{};
+    /// where and why the parse failed (after run() returned false)
+    const parse_failure& failure() const noexcept
+    {
+        return m_failure;
+    }
 
   private:
     struct frame
@@ -101,16 +109,17 @@ class builder
     document_data& doc;
     const unsigned char* const b;
     const unsigned char* const e;
+    parse_failure m_failure{};
 
     // the open array/object is in the cursor; enclosing ones on a stack that is
     // inline for the first 64 levels
-    frame shallow[64];
+    frame shallow[64]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): not initialized on purpose; filled as containers open
     std::vector<frame> deep{};
 
     NLOHMANN_VIEW_NOINLINE bool fail(error_code c, const unsigned char* at) noexcept
     {
-        failure.code = c;
-        failure.offset = static_cast<std::size_t>(at - b);
+        m_failure.code = c;
+        m_failure.offset = static_cast<std::size_t>(at - b);
         doc.tape_size = 0;
         return false;
     }
@@ -188,34 +197,23 @@ class builder
         const std::uint64_t done = static_cast<std::uint64_t>(at - b) + 1;
         const std::uint64_t guess = static_cast<std::uint64_t>(n) * static_cast<std::uint64_t>(e - b + 1) / done;
         doc.tape_size = n;
-        doc.reserve((std::max)(static_cast<std::size_t>(guess + guess / 4 + 64), n + n / 2 + 64));
+        doc.reserve((std::max)(static_cast<std::size_t>(guess + (guess / 4) + 64), n + (n / 2) + 64));
         return doc.tape;
     }
 
     /// four hex digits at p as a code unit (p moves past them), or -1 (p at
     /// the first bad digit); one table lookup per digit and a single check,
-    /// as in yyjson's read_hex_u16
+    /// the four hex digits of a unicode escape (the library's table, after
+    /// yyjson's read_hex_u16), or -1
     NLOHMANN_VIEW_ALWAYS_INLINE int hex4(const unsigned char*& p) noexcept
     {
-        // digit values; 0xF0: not a hex digit
-        static const std::uint8_t hex[256] =
-        {
-            0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0,
-            0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0,
-            0xF0, 10, 11, 12, 13, 14, 15, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0,
-            0xF0, 10, 11, 12, 13, 14, 15, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0,
-            0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0,
-            0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0,
-            0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0,
-            0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0,
-        };
         if (NLOHMANN_VIEW_LIKELY(e - p >= 4))
         {
-            const unsigned d0 = hex[p[0]], d1 = hex[p[1]], d2 = hex[p[2]], d3 = hex[p[3]];
-            if (NLOHMANN_VIEW_LIKELY(((d0 | d1 | d2 | d3) & 0xF0u) == 0))
+            const int cp = hex_codepoint(p);
+            if (NLOHMANN_VIEW_LIKELY(cp >= 0))
             {
                 p += 4;
-                return static_cast<int>((d0 << 12) | (d1 << 8) | (d2 << 4) | d3);
+                return cp;
             }
         }
         p = hex4_error(p);
@@ -240,12 +238,14 @@ class builder
     NLOHMANN_VIEW_NOINLINE decoded slow_string(const unsigned char* s, const unsigned char* p)
     {
         // single-character escapes; 0: invalid (and 'u', handled separately)
-        static const char simple_escape[128] =
+        static const std::array<char, 128> simple_escape =
         {
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, '"', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '/', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '\\', 0, 0, 0,
-            0, 0, '\b', 0, 0, 0, '\f', 0, 0, 0, 0, 0, 0, 0, '\n', 0, 0, 0, '\r', 0, '\t', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            {
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, '"', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '/', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '\\', 0, 0, 0,
+                0, 0, '\b', 0, 0, 0, '\f', 0, 0, 0, 0, 0, 0, 0, '\n', 0, 0, 0, '\r', 0, '\t', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            }
         };
         const std::size_t start = arena_used();
         arena_run(s, static_cast<std::size_t>(p - s));
@@ -374,8 +374,8 @@ class builder
     {
         const std::size_t used = arena_used();
         doc.arena.resize((std::max)(doc.arena.size() * 2, used + n + 256));
-        aw = &doc.arena[0] + used;
-        aend = &doc.arena[0] + doc.arena.size();
+        aw = &doc.arena[0] + used; // NOLINT(readability-container-data-pointer): data() is const before C++17
+        aend = &doc.arena[0] + doc.arena.size(); // NOLINT(readability-container-data-pointer)
     }
 
     /// append the run [r, r + n) to the arena; short runs as one fixed-size
@@ -670,7 +670,11 @@ root_done:
         /// never matches a JSON token, so the error paths tell the end apart.
         NLOHMANN_VIEW_ALWAYS_INLINE unsigned char cur() const noexcept
         {
-            return Sentinel ? *p : (p != e ? *p : 0);
+            if (Sentinel)
+            {
+                return *p;
+            }
+            return p != e ? *p : 0;
         }
 
         /// root scalar
@@ -733,11 +737,7 @@ root_done:
                 {
                     // (a branch, not an add of the comparison: p must not
                     // wait for the byte after the line break)
-                    if (NLOHMANN_VIEW_LIKELY(cur() == '\n'))
-                    {
-                        ++p;
-                    }
-                    else if ((Sentinel || e - p >= 2) && p[1] == '\n')
+                    if (NLOHMANN_VIEW_UNLIKELY(cur() == '\r') && (Sentinel || e - p >= 2) && p[1] == '\n')
                     {
                         p += 2;
                     }
@@ -748,7 +748,7 @@ root_done:
                     // indentation: two spaces per step, fixed offsets (after yyjson)
                     while (e - p >= 32)
                     {
-#define NLOHMANN_VIEW_STEP(i) if (NLOHMANN_VIEW_LIKELY(load16(p + 2 * (i)) == 0x2020)) {} else { p += 2 * (i); goto indent_done; }
+#define NLOHMANN_VIEW_STEP(i) if (NLOHMANN_VIEW_LIKELY(load16(p + (std::ptrdiff_t{2} * (i))) == 0x2020)) {} else { p += std::ptrdiff_t{2} * (i); goto indent_done; }
                         NLOHMANN_VIEW_REPEAT16(NLOHMANN_VIEW_STEP)
 #undef NLOHMANN_VIEW_STEP
                         p += 32;
@@ -780,7 +780,7 @@ indent_done:
         {
             if (NLOHMANN_VIEW_UNLIKELY(out == cap))
             {
-                const std::size_t n = static_cast<std::size_t>(out - base);
+                const auto n = static_cast<std::size_t>(out - base);
                 base = cold.grow(n, p);
                 out = base + n;
                 cap = base + cold.doc.tape_cap;
@@ -829,7 +829,7 @@ indent_done:
             n.next = static_cast<std::uint32_t>(out - base) - cur_idx;
             if (--depth != 0)
             {
-                frame f;
+                frame f{};
                 if (NLOHMANN_VIEW_LIKELY(depth <= 64))
                 {
                     f = cold.shallow[depth - 1];
@@ -879,7 +879,7 @@ indent_done:
             {
                 return fail(error_code::number_after_minus);
             }
-            const std::size_t int_digits = static_cast<std::size_t>(p - int_start);
+            const auto int_digits = static_cast<std::size_t>(p - int_start);
             std::size_t frac_digits = 0;
             bool is_float = false;
             if (p != e && *p == '.')
@@ -912,7 +912,7 @@ indent_done:
                 {
                     if (exponent < 100000)
                     {
-                        exponent = exponent * 10 + (*p - '0');
+                        exponent = (exponent * 10) + (*p - '0');
                     }
                     ++p;
                 }
@@ -923,7 +923,11 @@ indent_done:
                 is_float = true;
             }
 
-            value_t kind = is_float ? value_t::number_float : (negative ? value_t::number_integer : value_t::number_unsigned);
+            value_t kind = value_t::number_float;
+            if (!is_float)
+            {
+                kind = negative ? value_t::number_integer : value_t::number_unsigned;
+            }
             if (!is_float)
             {
                 // integers that do not fit become floats, as in parse()
@@ -947,19 +951,19 @@ indent_done:
             // float) need the conversion
             if (NLOHMANN_VIEW_UNLIKELY(static_cast<long>(int_digits) + exponent > std::numeric_limits<FloatType>::max_exponent10 - 8 && kind == value_t::number_float))
             {
-                if (cold.float_overflows(s, p))
+                if (builder::float_overflows(s, p))
                 {
                     p = s;
                     return fail(error_code::number_overflow);
                 }
             }
             const auto layout = static_cast<std::uint16_t>((int_digits < 255 ? int_digits : 255) | ((frac_digits < 255 ? frac_digits : 255) << 8));
-            std::uint64_t second = static_cast<std::uint64_t>(p - s);
+            auto second = static_cast<std::uint64_t>(p - s);
             if (kind != value_t::number_float)
             {
                 // integers are converted now, while their digits are in cache
                 const std::uint64_t m = int_digits <= 19 ? parse_upto19(int_start, static_cast<unsigned>(int_digits), e)
-                                        : parse_upto19(int_start, 19, e) * 10 + static_cast<std::uint64_t>(int_start[19] - '0');
+                                        : (parse_upto19(int_start, 19, e) * 10) + static_cast<std::uint64_t>(int_start[19] - '0');
                 second = negative ? 0 - m : m;
             }
             emit(kind, 0, layout, static_cast<std::size_t>(s - b), second);
@@ -998,12 +1002,12 @@ inline bool build_with(document_data& d, const char* src, std::size_t size, bool
     {
         builder<FloatType, Comments, TrailingCommas, NulIsEnd, true> bld(d, src, size);
         const bool ok = bld.run();
-        failure = bld.failure;
+        failure = bld.failure();
         return ok;
     }
     builder<FloatType, Comments, TrailingCommas, NulIsEnd, false> bld(d, src, size);
     const bool ok = bld.run();
-    failure = bld.failure;
+    failure = bld.failure();
     return ok;
 }
 
