@@ -340,7 +340,7 @@ TEST_CASE("JSON Visit Node")
 class base_class_with_hidden_members
 {
   public:
-    const char* type_name() const noexcept
+    const char* type_name() const noexcept // NOLINT(readability-convert-member-functions-to-static)
     {
         return "custom type_name";
     }
