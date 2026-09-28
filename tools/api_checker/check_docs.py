@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-"""
-Verify that public API entries have documentation links.
+"""Verify that public API entries have documentation links."""
 
-Consumes an API snapshot from extract_api.py and checks:
-1. Every public callable/type-tier entry has an @sa comment (with exceptions)
-2. Every @sa URL resolves to an existing documentation file
-3. No @sa comments appear on non-public entities
-"""
+# Consumes an API snapshot from extract_api.py and checks:
+# 1. Every public callable/type-tier entry has an @sa comment (with exceptions)
+# 2. Every @sa URL resolves to an existing documentation file
+# 3. No @sa comments appear on non-public entities
 
 import argparse
 import json

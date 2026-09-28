@@ -1,24 +1,22 @@
 #!/usr/bin/env python3
-"""
-Extract the public API surface of nlohmann/json using libclang AST.
+"""Extract the public API surface of nlohmann/json using libclang AST."""
 
-This tool derives the public API from C++ semantics (class templates, access specifiers,
-namespace scoping) independently of documentation status. The extracted surface is the
-source of truth for what is considered "public API" — doc-checking and API diffing are
-downstream consumers of this snapshot.
-
-Strategy:
-1. Parse include/nlohmann/json.hpp with libclang (with proper system includes)
-2. Walk the primary class-template definitions of the 6 known public classes
-3. Extract callable members (methods, constructors, destructors, conversion ops) and type aliases
-4. Extract free functions/operators in nlohmann:: (excluding detail::)
-5. Handle alias-exposed exception types by following the alias to the detail:: definition
-6. Normalize away the ABI inline-namespace (json_abi_v3_12_0, json_abi_diag_v3_12_0, etc.)
-7. Emit a snapshot with an overload-disambiguating identity key and documentation status
-
-Output includes both public_api (all tracked public entities) and documented_non_public
-(entities with @sa comments that are NOT in the public surface — used for validation).
-"""
+# This tool derives the public API from C++ semantics (class templates, access specifiers,
+# namespace scoping) independently of documentation status. The extracted surface is the
+# source of truth for what is considered "public API" — doc-checking and API diffing are
+# downstream consumers of this snapshot.
+#
+# Strategy:
+# 1. Parse include/nlohmann/json.hpp with libclang (with proper system includes)
+# 2. Walk the primary class-template definitions of the 6 known public classes
+# 3. Extract callable members (methods, constructors, destructors, conversion ops) and type aliases
+# 4. Extract free functions/operators in nlohmann:: (excluding detail::)
+# 5. Handle alias-exposed exception types by following the alias to the detail:: definition
+# 6. Normalize away the ABI inline-namespace (json_abi_v3_12_0, json_abi_diag_v3_12_0, etc.)
+# 7. Emit a snapshot with an overload-disambiguating identity key and documentation status
+#
+# Output includes both public_api (all tracked public entities) and documented_non_public
+# (entities with @sa comments that are NOT in the public surface — used for validation).
 
 import argparse
 import json

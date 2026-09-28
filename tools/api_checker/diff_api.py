@@ -1,26 +1,24 @@
 #!/usr/bin/env python3
-"""
-Diff the public API surface between two refs to flag breaking vs. feature changes.
+"""Diff the public API surface between two refs to flag breaking vs. feature changes."""
 
-A "ref" for --old/--new is resolved in this order:
-1. A stored, committed historical record at tools/api_checker/history/<ref>.json, if one exists
-   and --no-history wasn't passed (fast path -- no libclang/git-archive needed).
-2. Live extraction: check the ref out via `git archive` into a temp dir and run extract_api.py
-   against it (needed for HEAD, branches, or any tag not yet backfilled into history/).
---old-file/--new-file bypass both and load an arbitrary surface JSON file directly.
-
-Uses extract_api.py's --surface-output (identity-only: scope, kind, name, identity_name, tier,
-signature, pretty_signature -- no location, no doc_url) for both sides, so the diff reflects only
-genuine API changes, never unrelated code motion or documentation-site restructuring. Identity is
-(scope, identity_name, kind, signature) -- see extract_api.py's identity_key()/get_signature_text()
-docstrings for the full history of why this is what it is: a naive {scope,name,kind,params} key
-silently collided on overloads differing only by constness/SFINAE; switching to libclang's USR
-fixed that but encoded the *enclosing class template's own arity* into every member's identity, so
-a single backward-compatible template-parameter addition (confirmed via real release tags
-v3.11.2->v3.11.3) made ~228 of 330 entries look "changed" for a release with no real breaking
-changes. The current raw-source-text-signature approach was arrived at, and each of several further
-refinements verified, by testing against real historical releases -- not by inspecting code alone.
-"""
+# A "ref" for --old/--new is resolved in this order:
+# 1. A stored, committed historical record at tools/api_checker/history/<ref>.json, if one exists
+#    and --no-history wasn't passed (fast path -- no libclang/git-archive needed).
+# 2. Live extraction: check the ref out via `git archive` into a temp dir and run extract_api.py
+#    against it (needed for HEAD, branches, or any tag not yet backfilled into history/).
+# --old-file/--new-file bypass both and load an arbitrary surface JSON file directly.
+#
+# Uses extract_api.py's --surface-output (identity-only: scope, kind, name, identity_name, tier,
+# signature, pretty_signature -- no location, no doc_url) for both sides, so the diff reflects only
+# genuine API changes, never unrelated code motion or documentation-site restructuring. Identity is
+# (scope, identity_name, kind, signature) -- see extract_api.py's identity_key()/get_signature_text()
+# docstrings for the full history of why this is what it is: a naive {scope,name,kind,params} key
+# silently collided on overloads differing only by constness/SFINAE; switching to libclang's USR
+# fixed that but encoded the *enclosing class template's own arity* into every member's identity, so
+# a single backward-compatible template-parameter addition (confirmed via real release tags
+# v3.11.2->v3.11.3) made ~228 of 330 entries look "changed" for a release with no real breaking
+# changes. The current raw-source-text-signature approach was arrived at, and each of several further
+# refinements verified, by testing against real historical releases -- not by inspecting code alone.
 
 import argparse
 import json

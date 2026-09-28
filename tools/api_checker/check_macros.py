@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
-"""
-Advisory-only cross-check between documented macros and their #define sites.
+"""Advisory-only cross-check between documented macros and their #define sites."""
 
-Macros have no C++ access-specifier concept, so the AST-based public/private test that
-extract_api.py uses for classes doesn't transfer -- see tools/api_checker/POLICY.md's "Known
-limitations" section. This script only checks one direction: that every macro documented under
-docs/mkdocs/docs/api/macros/ still has a matching #define somewhere under include/nlohmann/,
-catching stale or renamed doc pages. It does NOT check the converse (undocumented macros) --
-no reliable signal exists for that direction given this codebase's conventions.
-
-Never blocks CI -- always exits 0, even when it reports findings.
-"""
+# Macros have no C++ access-specifier concept, so the AST-based public/private test that
+# extract_api.py uses for classes doesn't transfer -- see tools/api_checker/POLICY.md's "Known
+# limitations" section. This script only checks one direction: that every macro documented under
+# docs/mkdocs/docs/api/macros/ still has a matching #define somewhere under include/nlohmann/,
+# catching stale or renamed doc pages. It does NOT check the converse (undocumented macros) --
+# no reliable signal exists for that direction given this codebase's conventions.
+#
+# Never blocks CI -- always exits 0, even when it reports findings.
 
 import argparse
 import glob

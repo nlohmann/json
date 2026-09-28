@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-"""
-Capture immutable, per-release API surface records into tools/api_checker/history/.
+"""Capture immutable, per-release API surface records into tools/api_checker/history/."""
 
-These are the durable, committed counterpart to diff_api.py's live git-archive-and-extract path:
-once a release is tagged, run this once to capture tools/api_checker/history/<tag>.json, commit
-it, and future diffs against that tag hit the fast, no-libclang-needed stored-file path in
-diff_api.py automatically. See tools/api_checker/README.md's "Workflow: Release Checklist" and
-POLICY.md for the full policy (manual step, not CI-automated; files are immutable once committed
--- regenerate only via --force, and only as a deliberate, reviewed choice).
-"""
+# These are the durable, committed counterpart to diff_api.py's live git-archive-and-extract path:
+# once a release is tagged, run this once to capture tools/api_checker/history/<tag>.json, commit
+# it, and future diffs against that tag hit the fast, no-libclang-needed stored-file path in
+# diff_api.py automatically. See tools/api_checker/README.md's "Workflow: Release Checklist" and
+# POLICY.md for the full policy (manual step, not CI-automated; files are immutable once committed
+# -- regenerate only via --force, and only as a deliberate, reviewed choice).
 
 import argparse
 import datetime
