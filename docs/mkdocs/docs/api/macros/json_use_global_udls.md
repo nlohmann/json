@@ -32,6 +32,10 @@ When the macro is not defined, the library will define it to its default value.
     [`JSON_GlobalUDLs`](../../integration/cmake.md#json_globaludls) (`ON` by default) which defines
     `JSON_USE_GLOBAL_UDLS` accordingly.
 
+!!! info "Leaving out the literals"
+
+    If [`JSON_NO_UDLS`](json_no_udls.md) is defined, the literals are not defined at all and this macro has no effect.
+
 ## Examples
 
 ??? example "Example 1: Default behavior"
@@ -92,6 +96,7 @@ When the macro is not defined, the library will define it to its default value.
 
 - [`operator""_json`](../operator_literal_json.md)
 - [`operator""_json_pointer`](../operator_literal_json_pointer.md)
+- [`JSON_NO_UDLS`](json_no_udls.md) - leave out the user-defined string literals entirely
 - [:simple-cmake: JSON_GlobalUDLs](../../integration/cmake.md#json_globaludls) - CMake option to control the macro
 
 ## Version history

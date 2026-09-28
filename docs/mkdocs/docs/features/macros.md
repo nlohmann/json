@@ -99,6 +99,14 @@ same values and the same comparisons.
 
 See [full documentation of `JSON_NO_THREAD_LOCAL`](../api/macros/json_no_thread_local.md).
 
+## `JSON_NO_UDLS`
+
+When defined, the user-defined string literals `operator""_json` and `operator""_json_pointer` are left out entirely. This
+reduces the compile time of translation units that do not use them, because the literals would otherwise instantiate
+the parser in every translation unit that includes the library.
+
+See [full documentation of `JSON_NO_UDLS`](../api/macros/json_no_udls.md).
+
 ## `JSON_PRECISE_STREAM_POSITION`
 
 When defined to `1`, [`operator>>`](../api/operator_gtgt.md) and non-strict

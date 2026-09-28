@@ -18,7 +18,8 @@ using namespace nlohmann;
 ```
 
 This is suggested to ease migration to the next major version release of the library. See
-[`JSON_USE_GLOBAL_UDLS`](macros/json_use_global_udls.md#notes) for details.
+[`JSON_USE_GLOBAL_UDLS`](macros/json_use_global_udls.md#notes) for details. The operator is not defined if
+[`JSON_NO_UDLS`](macros/json_no_udls.md) is defined.
 
 ## Parameters
 
@@ -59,6 +60,7 @@ Linear.
 ## See also
 
 - [Creating JSON values](../features/creating_values.md) - the article on creating JSON values
+- [JSON_NO_UDLS](macros/json_no_udls.md) - leave out the user-defined string literals
 
 ## Version history
 

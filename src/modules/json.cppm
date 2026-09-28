@@ -32,6 +32,7 @@ using NLOHMANN_JSON_NAMESPACE::ordered_json;
 using NLOHMANN_JSON_NAMESPACE::ordered_map;
 using NLOHMANN_JSON_NAMESPACE::to_string;
 
+#ifndef JSON_NO_UDLS
 inline namespace literals
 {
 inline namespace json_literals
@@ -40,6 +41,7 @@ inline namespace json_literals
     using NLOHMANN_JSON_NAMESPACE::literals::json_literals::operator""_json_pointer;
 } // namespace json_literals
 } // namespace literals
+#endif
 
 // Note: the following nlohmann::detail symbols must be exported due to
 // an MSVC bug failing to compile without these symbols visible (ticket #3970)

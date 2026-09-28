@@ -32504,6 +32504,7 @@ std::string format_as(const NLOHMANN_BASIC_JSON_TPL& j)
     return j.dump();
 }
 
+#ifndef JSON_NO_UDLS
 inline namespace literals
 {
 inline namespace json_literals
@@ -32553,6 +32554,7 @@ inline nlohmann::json::json_pointer operator""_json_pointer(const char8_t* s, st
 
 }  // namespace json_literals
 }  // namespace literals
+#endif  // JSON_NO_UDLS
 NLOHMANN_JSON_NAMESPACE_END
 
 ///////////////////////
@@ -32687,7 +32689,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 
 }  // namespace std
 
-#if JSON_USE_GLOBAL_UDLS
+#if JSON_USE_GLOBAL_UDLS && !defined(JSON_NO_UDLS)
     #if !defined(JSON_HEDLEY_GCC_VERSION) || JSON_HEDLEY_GCC_VERSION_CHECK(4,9,0)
         using nlohmann::literals::json_literals::operator""_json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
         using nlohmann::literals::json_literals::operator""_json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
