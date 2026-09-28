@@ -52,6 +52,11 @@ Constant.
     --8<-- "examples/type_name.output"
     ```
 
+## See also
+
+- [type](type.md) - return the type of the JSON value
+- [basic_json_view::type_name](../basic_json_view/type_name.md) - the same function on a zero-copy view
+
 ## Version history
 
 - Added in version 1.0.0.

@@ -37,6 +37,12 @@ Constant.
     --8<-- "examples/begin.output"
     ```
 
+## See also
+
+- [end](end.md) - returns an iterator to one past the last element
+- [basic_json_view::begin](../basic_json_view/begin.md) - the same iteration on a zero-copy view (in document order,
+  not sorted by key)
+
 ## Version history
 
 - Added in version 1.0.0.

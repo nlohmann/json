@@ -8,8 +8,9 @@ Creates an invalid (discarded) view: [`type()`](type.md) is `#!cpp value_t::disc
 [`is_discarded()`](is_discarded.md) is `#!cpp true`, and `#!cpp explicit operator bool()` is `#!cpp false`.
 
 This is the only constructor a caller can use directly. Every other view is obtained from a
-[`basic_json_document`](../basic_json_document/index.md), via [`root()`](../basic_json_document/root.md) or (once
-element access is added) from navigating into a container.
+[`basic_json_document`](../basic_json_document/index.md), via [`root()`](../basic_json_document/root.md) or by
+navigating into a container with [`operator[]`](operator[].md), [`at`](at.md), [`front`](front.md), [`back`](back.md),
+[`find`](find.md), or iteration.
 
 ## Exception safety
 
