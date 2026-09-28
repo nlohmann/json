@@ -2213,12 +2213,13 @@ scan_number_done:
 
     May only be called after scan() has run once (the BOM check is skipped).
     */
-    token_type scan_expecting(char expected_char, token_type expected_type)
+    token_type scan_expecting(token_type expected_type)
     {
-        JSON_ASSERT((expected_char == ':' && expected_type == token_type::name_separator) || (expected_char == ',' && expected_type == token_type::value_separator));
+        JSON_ASSERT(expected_type == token_type::name_separator || expected_type == token_type::value_separator);
         JSON_ASSERT(position.chars_read_total > 0);
+        const char_int_type expected_char = (expected_type == token_type::name_separator) ? ':' : ',';
         skip_whitespace();
-        if (JSON_HEDLEY_LIKELY(current == static_cast<char_int_type>(expected_char)))
+        if (JSON_HEDLEY_LIKELY(current == expected_char))
         {
             return expected_type;
         }
