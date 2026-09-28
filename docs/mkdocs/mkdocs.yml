@@ -253,6 +253,7 @@ nav:
           - 'cend': api/basic_json_view/cend.md
           - 'contains': api/basic_json_view/contains.md
           - 'count': api/basic_json_view/count.md
+          - 'dump': api/basic_json_view/dump.md
           - 'empty': api/basic_json_view/empty.md
           - 'end': api/basic_json_view/end.md
           - 'find': api/basic_json_view/find.md
@@ -275,8 +276,10 @@ nav:
           - 'is_structured': api/basic_json_view/is_structured.md
           - 'items': api/basic_json_view/items.md
           - 'materialize': api/basic_json_view/materialize.md
+          - 'number_format': api/basic_json_view/number_format.md
           - 'number_token': api/basic_json_view/number_token.md
           - 'operator bool': api/basic_json_view/operator_bool.md
+          - 'operator<<': api/basic_json_view/operator_ltlt.md
           - 'operator[]': api/basic_json_view/operator[].md
           - 'size': api/basic_json_view/size.md
           - 'source_offset': api/basic_json_view/source_offset.md
