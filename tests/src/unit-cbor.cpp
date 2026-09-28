@@ -1830,8 +1830,49 @@ TEST_CASE("CBOR")
         SECTION("invalid string in map")
         {
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xa1, 0xff, 0x01})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0xFF", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xa1, 0xff, 0x01})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR object key: only string keys are supported, but found a break stop code; last byte: 0xFF", json::parse_error&);
             CHECK(json::from_cbor(std::vector<uint8_t>({0xa1, 0xff, 0x01}), true, false).is_discarded());
+        }
+
+        SECTION("non-string key (see #2766 and #3381)")
+        {
+            // only text strings map to JSON object keys; any other key is
+            // rejected with a message naming its type
+            const std::vector<std::pair<std::vector<std::uint8_t>, std::string>> cases =
+            {
+                {{0xA1, 0x01, 0x01}, "an unsigned integer; last byte: 0x01"},
+                {{0xA1, 0x20, 0x01}, "a negative integer; last byte: 0x20"},
+                {{0xA1, 0x41, 0x61, 0x01}, "a byte string; last byte: 0x41"},
+                {{0xA1, 0x80, 0x01}, "an array; last byte: 0x80"},
+                {{0xA1, 0xA0, 0x01}, "a map; last byte: 0xA0"},
+                {{0xA1, 0xC0, 0x61, 0x61, 0x01}, "a tag; last byte: 0xC0"},
+                {{0xA1, 0xF4, 0x01}, "a boolean; last byte: 0xF4"},
+                {{0xA1, 0xF5, 0x01}, "a boolean; last byte: 0xF5"},
+                {{0xA1, 0xF6, 0x01}, "null; last byte: 0xF6"},
+                {{0xA1, 0xF7, 0x01}, "undefined; last byte: 0xF7"},
+                {{0xA1, 0xF9, 0x3C, 0x00, 0x01}, "a floating-point number; last byte: 0xF9"},
+                {{0xA1, 0xFA, 0x3F, 0x80, 0x00, 0x00, 0x01}, "a floating-point number; last byte: 0xFA"},
+                {{0xA1, 0xFB, 0x3F, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}, "a floating-point number; last byte: 0xFB"},
+                {{0xA1, 0xE0, 0x01}, "a simple value; last byte: 0xE0"},
+                {{0xA1, 0xF8, 0x20, 0x01}, "a simple value; last byte: 0xF8"},
+                // indefinite-length map
+                {{0xBF, 0x01, 0x01, 0xFF}, "an unsigned integer; last byte: 0x01"},
+            };
+
+            for (const auto& c : cases)
+            {
+                CAPTURE(c.first)
+                const std::string expected = "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR object key: only string keys are supported, but found " + c.second;
+                json _;
+                CHECK_THROWS_WITH_AS(_ = json::from_cbor(c.first), expected.c_str(), json::parse_error&);
+                CHECK(json::from_cbor(c.first, true, false).is_discarded());
+            }
+
+            // a key of major type 3 with a reserved length is still reported as
+            // a malformed string, and a missing key as the end of input
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xA1})), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing CBOR string: unexpected end of input", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xA1, 0x7C, 0x01})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x7C", json::parse_error&);
         }
 
         SECTION("invalid UTF-8 in string (see #5529)")
@@ -2284,7 +2325,7 @@ TEST_CASE("CBOR indefinite-length strings do not recurse per chunk")
     SECTION("a break marker outside an indefinite-length string is not a string")
     {
         // 0xFF only closes a string that was opened; on its own it is not one
-        CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xA1, 0xFF, 0x01})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0xFF", json::parse_error&);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xA1, 0xFF, 0x01})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR object key: only string keys are supported, but found a break stop code; last byte: 0xFF", json::parse_error&);
     }
 }
 
