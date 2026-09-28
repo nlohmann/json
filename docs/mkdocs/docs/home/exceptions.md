@@ -340,13 +340,20 @@ A string could not be read from a [binary format](../features/binary_formats/ind
 string was read where one was required (for instance as a map key), the string's length specification is invalid, or
 the string's bytes are not valid UTF-8.
 
+CBOR and MessagePack allow map keys of any type, but JSON object keys are always strings. Maps with keys of any other
+type (for instance integers or `null`) are therefore not supported; see the notes on
+[CBOR](../features/binary_formats/cbor.md) and [MessagePack](../features/binary_formats/messagepack.md).
+
 !!! failure "Example messages"
 
     ```
-    [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0xFF
+    [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR object key: only string keys are supported, but found an unsigned integer; last byte: 0x01
     ```
     ```
-    [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack string: expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0xFF
+    [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack object key: only string keys are supported, but found nil; last byte: 0xC0
+    ```
+    ```
+    [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x7C
     ```
     ```
     [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON char: byte after 'C' must be in range 0x00..0x7F; last byte: 0x82
