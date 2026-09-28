@@ -309,7 +309,7 @@ TEST_CASE("locale changes between lexer construction and number conversion (#519
         // DOM parsing with a callback
         {
             bool switched = false;
-            const auto cb = [&](int /*depth*/, json::parse_event_t event, json& /*parsed*/)
+            const auto cb = [&](int /*depth*/, json::parse_event_t event, json& /*parsed*/) noexcept
             {
                 if (event == json::parse_event_t::array_start)
                 {
@@ -327,7 +327,7 @@ TEST_CASE("locale changes between lexer construction and number conversion (#519
         // a long double goes through std::strtold unless std::from_chars supports it
         {
             bool switched = false;
-            const auto cb = [&](int /*depth*/, long_double_json::parse_event_t event, long_double_json& /*parsed*/)
+            const auto cb = [&](int /*depth*/, long_double_json::parse_event_t event, long_double_json& /*parsed*/) noexcept
             {
                 if (event == long_double_json::parse_event_t::array_start)
                 {
@@ -343,7 +343,7 @@ TEST_CASE("locale changes between lexer construction and number conversion (#519
         }
     }
 
-    std::setlocale(LC_NUMERIC, "C");
+    CHECK(std::setlocale(LC_NUMERIC, "C") != nullptr);
 }
 
 TEST_CASE("locale with a multi-byte decimal point")
@@ -383,5 +383,5 @@ TEST_CASE("locale with a multi-byte decimal point")
         MESSAGE("no locale with a multi-byte decimal point is usable");
     }
 
-    std::setlocale(LC_NUMERIC, "C");
+    CHECK(std::setlocale(LC_NUMERIC, "C") != nullptr);
 }
