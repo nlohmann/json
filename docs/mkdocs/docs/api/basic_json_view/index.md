@@ -20,8 +20,11 @@ Moving the document itself does not invalidate its views: the index is heap-allo
 `basic_json_document` object.
 
 `basic_json_view` provides the read-only part of the `BasicJsonType` interface: the type-inspection functions, element
-access, lookup, iteration, and [`materialize()`](materialize.md) to build the `BasicJsonType` value of a subtree on
-demand. It does not (yet) provide `get<T>()`, JSON Pointer support, `dump()`, or comparison.
+access, lookup, iteration, and conversion -- [`get<T>()`](get.md), [`get_string()`](get_string.md),
+[`number_token()`](number_token.md), and [`materialize()`](materialize.md) to build the `BasicJsonType` value of a
+subtree on demand. [`operator[]`](operator%5B%5D.md), [`at`](at.md), [`contains`](contains.md), and
+[`value`](value.md) also accept a [`json_pointer`](../json_pointer/index.md). It does not (yet) provide `dump()` or
+comparison.
 
 ## Template parameters
 
@@ -72,6 +75,7 @@ demand. It does not (yet) provide `get<T>()`, JSON Pointer support, `dump()`, or
 
 - [**at**](at.md) - access specified element with bounds checking
 - [**operator[]**](operator[].md) - access specified element
+- [**value**](value.md) - access specified element with default value
 - [**front**](front.md) - access the first element
 - [**back**](back.md) - access the last element
 
@@ -96,6 +100,10 @@ demand. It does not (yet) provide `get<T>()`, JSON Pointer support, `dump()`, or
 
 ### Conversion
 
+- [**get**](get.md) - get a value
+- [**get_to**](get_to.md) - get a value and write it to a destination
+- [**get_string**](get_string.md) - get a string value without a copy
+- [**number_token**](number_token.md) - get a number's token text without a copy
 - [**materialize**](materialize.md) - build the `BasicJsonType` value of this subtree
 
 ### Source access
