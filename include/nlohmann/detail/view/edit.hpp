@@ -36,6 +36,13 @@ namespace detail
 namespace view
 {
 
+/// the index of the first true condition (the number of conditions if none is)
+template<bool... Conditions>
+struct first_true : std::integral_constant<int, 0> {};
+
+template<bool... Conditions>
+struct first_true<false, Conditions...> : std::integral_constant < int, 1 + first_true<Conditions...>::value > {};
+
 /// Checks a string the way basic_json's serializer does when it writes it
 /// (type_error.316 with the same message), so that an editable document
 /// only holds valid UTF-8: the error is at the first byte that no
@@ -354,12 +361,12 @@ class editor
     encoded encode(V&& v)
     {
         using D = typename std::decay<V>::type;
-        return encode_impl(std::forward<V>(v), encode_tag < is_view<D>::value ? 0
-                           : std::is_same<D, BasicJsonType>::value ? 1
-                           : std::is_same<D, std::nullptr_t>::value ? 2
-                           : std::is_same<D, bool>::value ? 3
-                           : std::is_arithmetic<D>::value ? 4
-                           : std::is_convertible<const D&, string_view_t>::value ? 5 : 6 > {});
+        return encode_impl(std::forward<V>(v), encode_tag<first_true<is_view<D>::value,
+                           std::is_same<D, BasicJsonType>::value,
+                           std::is_same<D, std::nullptr_t>::value,
+                           std::is_same<D, bool>::value,
+                           std::is_arithmetic<D>::value,
+                           std::is_convertible<const D&, string_view_t>::value>::value> {});
     }
 
     /// a view of any document (copied; nothing is shared with it)
@@ -415,7 +422,7 @@ class editor
     encoded encode_impl(T x, encode_tag<4> /*number*/)
     {
         encoded r;
-        r.scalar = number_node(x, std::integral_constant < int, std::is_floating_point<T>::value ? 0 : (std::is_signed<T>::value ? 1 : 2) > {});
+        r.scalar = number_node(x, std::integral_constant<int, first_true<std::is_floating_point<T>::value, std::is_signed<T>::value>::value> {});
         return r;
     }
 

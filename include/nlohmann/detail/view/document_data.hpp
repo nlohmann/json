@@ -63,19 +63,19 @@ struct document_data
     /// entries), whose entries link to the values.
     struct edit_state
     {
-        std::vector<node*> moved{};                    ///< element sequences of moved arrays/objects (header node first)
-        std::vector<std::size_t> moved_cap{};          ///< capacity in nodes of a growable block; 0: a fixed sequence (a new value)
-        std::vector<std::unique_ptr<node[]>> chunks{}; ///< storage of new values and blocks; never moved
-        std::map<const node*, node*, std::less<const node*>> regions{}; ///< new arrays/objects: root -> container that uses it as its element sequence (nullptr: linked from a block)
+        std::vector<node*> moved{};                    ///< element sequences of moved arrays/objects (header node first) // NOLINT(readability-redundant-member-init)
+        std::vector<std::size_t> moved_cap{};          ///< capacity in nodes of a growable block; 0: a fixed sequence (a new value) // NOLINT(readability-redundant-member-init)
+        std::vector<std::unique_ptr<node[]>> chunks{}; ///< storage of new values and blocks; never moved // NOLINT(readability-redundant-member-init,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        std::map<const node*, node*, std::less<const node*>> regions{}; ///< new arrays/objects: root -> container that uses it as its element sequence (nullptr: linked from a block) // NOLINT(readability-redundant-member-init)
         node* chunk_cur = nullptr;
         node* chunk_end = nullptr;
         std::size_t chunk_next = 64;
-        std::vector<std::unique_ptr<char[]>> texts{}; ///< edit arena, the current buffer last; earlier ones stay alive for string views
+        std::vector<std::unique_ptr<char[]>> texts{}; ///< edit arena, the current buffer last; earlier ones stay alive for string views // NOLINT(readability-redundant-member-init,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         std::size_t text_used = 0;
         std::size_t text_cap = 0;
         std::size_t bytes = 0; ///< memory held by edits
     };
-    std::unique_ptr<edit_state> edits{}; ///< created by the first edit
+    std::unique_ptr<edit_state> edits{}; ///< created by the first edit // NOLINT(readability-redundant-member-init)
 
     /// one allocation for the header and room for `nodes` nodes; large
     /// documents get a separate node array instead (so it can be trimmed)

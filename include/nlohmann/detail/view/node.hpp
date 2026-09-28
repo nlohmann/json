@@ -68,7 +68,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE bool is_container(const node& n) noexcept
 NLOHMANN_VIEW_ALWAYS_INLINE const node* link_target(const node& n) noexcept
 {
     const node* t = nullptr;
-    std::memcpy(&t, reinterpret_cast<const unsigned char*>(&n) + 8, sizeof(t)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    std::memcpy(static_cast<void*>(&t), reinterpret_cast<const unsigned char*>(&n) + 8, sizeof(const node*)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     return t;
 }
 
@@ -76,7 +76,7 @@ inline void make_link(node& n, const node* target) noexcept
 {
     n = node{};
     n.kind = kind_link;
-    std::memcpy(reinterpret_cast<unsigned char*>(&n) + 8, &target, sizeof(target)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    std::memcpy(reinterpret_cast<unsigned char*>(&n) + 8, static_cast<const void*>(&target), sizeof(const node*)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 }
 
 /// the converted value of an integer node (stored in len/next)

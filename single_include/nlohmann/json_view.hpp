@@ -237,7 +237,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE bool is_container(const node& n) noexcept
 NLOHMANN_VIEW_ALWAYS_INLINE const node* link_target(const node& n) noexcept
 {
     const node* t = nullptr;
-    std::memcpy(&t, reinterpret_cast<const unsigned char*>(&n) + 8, sizeof(t)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    std::memcpy(static_cast<void*>(&t), reinterpret_cast<const unsigned char*>(&n) + 8, sizeof(const node*)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     return t;
 }
 
@@ -245,7 +245,7 @@ inline void make_link(node& n, const node* target) noexcept
 {
     n = node{};
     n.kind = kind_link;
-    std::memcpy(reinterpret_cast<unsigned char*>(&n) + 8, &target, sizeof(target)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    std::memcpy(reinterpret_cast<unsigned char*>(&n) + 8, static_cast<const void*>(&target), sizeof(const node*)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 }
 
 /// the converted value of an integer node (stored in len/next)
@@ -328,19 +328,19 @@ struct document_data
     /// entries), whose entries link to the values.
     struct edit_state
     {
-        std::vector<node*> moved{};                    ///< element sequences of moved arrays/objects (header node first)
-        std::vector<std::size_t> moved_cap{};          ///< capacity in nodes of a growable block; 0: a fixed sequence (a new value)
-        std::vector<std::unique_ptr<node[]>> chunks{}; ///< storage of new values and blocks; never moved
-        std::map<const node*, node*, std::less<const node*>> regions{}; ///< new arrays/objects: root -> container that uses it as its element sequence (nullptr: linked from a block)
+        std::vector<node*> moved{};                    ///< element sequences of moved arrays/objects (header node first) // NOLINT(readability-redundant-member-init)
+        std::vector<std::size_t> moved_cap{};          ///< capacity in nodes of a growable block; 0: a fixed sequence (a new value) // NOLINT(readability-redundant-member-init)
+        std::vector<std::unique_ptr<node[]>> chunks{}; ///< storage of new values and blocks; never moved // NOLINT(readability-redundant-member-init,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        std::map<const node*, node*, std::less<const node*>> regions{}; ///< new arrays/objects: root -> container that uses it as its element sequence (nullptr: linked from a block) // NOLINT(readability-redundant-member-init)
         node* chunk_cur = nullptr;
         node* chunk_end = nullptr;
         std::size_t chunk_next = 64;
-        std::vector<std::unique_ptr<char[]>> texts{}; ///< edit arena, the current buffer last; earlier ones stay alive for string views
+        std::vector<std::unique_ptr<char[]>> texts{}; ///< edit arena, the current buffer last; earlier ones stay alive for string views // NOLINT(readability-redundant-member-init,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         std::size_t text_used = 0;
         std::size_t text_cap = 0;
         std::size_t bytes = 0; ///< memory held by edits
     };
-    std::unique_ptr<edit_state> edits{}; ///< created by the first edit
+    std::unique_ptr<edit_state> edits{}; ///< created by the first edit // NOLINT(readability-redundant-member-init)
 
     /// one allocation for the header and room for `nodes` nodes; large
     /// documents get a separate node array instead (so it can be trimmed)
@@ -2525,7 +2525,7 @@ inline document_data::edit_state& edit_state_of(document_data& d)
 {
     if (!d.edits)
     {
-        d.edits.reset(new document_data::edit_state());
+        d.edits.reset(new document_data::edit_state()); // NOLINT(cppcoreguidelines-owning-memory): owned by the unique_ptr
     }
     return *d.edits;
 }
@@ -2537,7 +2537,7 @@ inline node* alloc_nodes(document_data& d, std::size_t k)
     if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(e.chunk_end - e.chunk_cur) < k))
     {
         const std::size_t count = (std::max)(k, e.chunk_next);
-        std::unique_ptr<node[]> fresh(new node[count]());
+        std::unique_ptr<node[]> fresh(new node[count]()); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         e.chunks.push_back(std::move(fresh));
         e.chunk_cur = e.chunks.back().get();
         e.chunk_end = e.chunk_cur + count;
@@ -2561,7 +2561,7 @@ inline std::uint32_t append_text(document_data& d, const char* s, std::size_t n)
         {
             throw_out_of_range(416, "edits of 4 GiB or more are not supported by json_document");
         }
-        std::unique_ptr<char[]> fresh(new char[cap]);
+        std::unique_ptr<char[]> fresh(new char[cap]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         if (e.text_used != 0)
         {
             std::memcpy(fresh.get(), e.texts.back().get(), e.text_used);
@@ -3044,6 +3044,13 @@ namespace detail
 namespace view
 {
 
+/// the index of the first true condition (the number of conditions if none is)
+template<bool... Conditions>
+struct first_true : std::integral_constant<int, 0> {};
+
+template<bool... Conditions>
+struct first_true<false, Conditions...> : std::integral_constant < int, 1 + first_true<Conditions...>::value > {};
+
 /// Checks a string the way basic_json's serializer does when it writes it
 /// (type_error.316 with the same message), so that an editable document
 /// only holds valid UTF-8: the error is at the first byte that no
@@ -3362,12 +3369,12 @@ class editor
     encoded encode(V&& v)
     {
         using D = typename std::decay<V>::type;
-        return encode_impl(std::forward<V>(v), encode_tag < is_view<D>::value ? 0
-                           : std::is_same<D, BasicJsonType>::value ? 1
-                           : std::is_same<D, std::nullptr_t>::value ? 2
-                           : std::is_same<D, bool>::value ? 3
-                           : std::is_arithmetic<D>::value ? 4
-                           : std::is_convertible<const D&, string_view_t>::value ? 5 : 6 > {});
+        return encode_impl(std::forward<V>(v), encode_tag<first_true<is_view<D>::value,
+                           std::is_same<D, BasicJsonType>::value,
+                           std::is_same<D, std::nullptr_t>::value,
+                           std::is_same<D, bool>::value,
+                           std::is_arithmetic<D>::value,
+                           std::is_convertible<const D&, string_view_t>::value>::value> {});
     }
 
     /// a view of any document (copied; nothing is shared with it)
@@ -3423,7 +3430,7 @@ class editor
     encoded encode_impl(T x, encode_tag<4> /*number*/)
     {
         encoded r;
-        r.scalar = number_node(x, std::integral_constant < int, std::is_floating_point<T>::value ? 0 : (std::is_signed<T>::value ? 1 : 2) > {});
+        r.scalar = number_node(x, std::integral_constant<int, first_true<std::is_floating_point<T>::value, std::is_signed<T>::value>::value> {});
         return r;
     }
 

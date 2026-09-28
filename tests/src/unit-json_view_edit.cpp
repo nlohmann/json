@@ -19,6 +19,7 @@ using nlohmann::ordered_json_editable_document;
 using nlohmann::ordered_json_editable_view;
 using ptr_t = ordered_json::json_pointer;
 
+#include <array>
 #include <cmath>
 #include <cstring>
 #include <cstdint>
@@ -33,7 +34,7 @@ namespace
 {
 std::uint32_t rng()
 {
-    static std::mt19937 generator(5295);
+    static std::mt19937 generator(5295); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
     return generator();
 }
 
@@ -44,13 +45,20 @@ int r(int n)
 
 int counter = 0;
 
+std::uint64_t bits(double x)
+{
+    std::uint64_t b = 0;
+    std::memcpy(&b, &x, sizeof(b));
+    return b;
+}
+
 std::string random_string()
 {
-    static const char* const pieces[] = {"a", "Z", " ", "~", "\n", "\"", "\\", "/", "\xc3\xa9", "\xe3\x81\x82", "\xf0\x9f\x98\x80", "\x7f", "\x1f", "0", "key"};
+    static const std::array<const char*, 15> pieces = {{"a", "Z", " ", "~", "\n", "\"", "\\", "/", "\xc3\xa9", "\xe3\x81\x82", "\xf0\x9f\x98\x80", "\x7f", "\x1f", "0", "key"}};
     std::string s;
     for (int i = r(3) == 0 ? r(30) : r(6); i > 0; --i)
     {
-        s += pieces[r(15)];
+        s += pieces[static_cast<std::size_t>(r(15))];
     }
     return s;
 }
@@ -66,7 +74,7 @@ ordered_json random_scalar()
         case 2:
             return static_cast<std::int64_t>(rng()) - 2147483648LL;
         case 3:
-            return static_cast<std::uint64_t>(rng()) * 4294967296ULL + rng();
+            return (static_cast<std::uint64_t>(rng()) * 4294967296ULL) + rng();
         case 4:
             return static_cast<double>(static_cast<std::int32_t>(rng())) / (1 + r(1000));
         case 5:
@@ -161,9 +169,7 @@ void compare(const ordered_json_editable_view& v, const ordered_json& j)
     }
     else if (j.is_number_float())
     {
-        const double a = v.get<double>();
-        const double b = j.get<double>();
-        CHECK(std::memcmp(&a, &b, sizeof(double)) == 0);
+        CHECK(bits(v.get<double>()) == bits(j.get<double>()));
     }
     else if (j.is_number_integer())
     {
@@ -249,7 +255,7 @@ TEST_CASE("json_view edits: differential")
                 }
                 else if (op == 2) // copy a value of the same document
                 {
-                    const ptr_t q = paths[static_cast<std::size_t>(r(static_cast<int>(paths.size())))];
+                    const ptr_t& q = paths[static_cast<std::size_t>(r(static_cast<int>(paths.size())))];
                     const ordered_json v = j[q];
                     d.set(tv, d.root().at(q));
                     j[p] = v;
@@ -278,7 +284,7 @@ TEST_CASE("json_view edits: differential")
                 }
                 else if (op == 10 && target.is_array() && !target.empty()) // assign an element
                 {
-                    const std::size_t i = static_cast<std::size_t>(r(static_cast<int>(target.size())));
+                    const auto i = static_cast<std::size_t>(r(static_cast<int>(target.size())));
                     const ordered_json v = random_value(2);
                     d.set(tv, i, v);
                     j[p][i] = v;
@@ -436,7 +442,7 @@ TEST_CASE("json_view edits: views and values")
         {
             text += (i != 0 ? ",\"k" : "\"k") + std::to_string(i) + "\":" + std::to_string(i);
         }
-        text += "}";
+        text += '}';
         json_editable_document d = json_editable_document::parse(text);
         d.set(d.root(), "k7", "seven"); // assigned in place: the index stays in use
         CHECK(d.root()["k7"].get_string() == "seven");

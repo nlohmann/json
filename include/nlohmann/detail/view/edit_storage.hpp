@@ -39,7 +39,7 @@ inline document_data::edit_state& edit_state_of(document_data& d)
 {
     if (!d.edits)
     {
-        d.edits.reset(new document_data::edit_state());
+        d.edits.reset(new document_data::edit_state()); // NOLINT(cppcoreguidelines-owning-memory): owned by the unique_ptr
     }
     return *d.edits;
 }
@@ -51,7 +51,7 @@ inline node* alloc_nodes(document_data& d, std::size_t k)
     if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(e.chunk_end - e.chunk_cur) < k))
     {
         const std::size_t count = (std::max)(k, e.chunk_next);
-        std::unique_ptr<node[]> fresh(new node[count]());
+        std::unique_ptr<node[]> fresh(new node[count]()); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         e.chunks.push_back(std::move(fresh));
         e.chunk_cur = e.chunks.back().get();
         e.chunk_end = e.chunk_cur + count;
@@ -75,7 +75,7 @@ inline std::uint32_t append_text(document_data& d, const char* s, std::size_t n)
         {
             throw_out_of_range(416, "edits of 4 GiB or more are not supported by json_document");
         }
-        std::unique_ptr<char[]> fresh(new char[cap]);
+        std::unique_ptr<char[]> fresh(new char[cap]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         if (e.text_used != 0)
         {
             std::memcpy(fresh.get(), e.texts.back().get(), e.text_used);
