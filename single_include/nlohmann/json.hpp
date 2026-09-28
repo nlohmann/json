@@ -8472,10 +8472,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 #include <array> // array
-#include <clocale> // localeconv
 #include <cstddef> // size_t
 #include <cstdio> // snprintf
-#include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
 #include <initializer_list> // initializer_list
 #include <string> // char_traits, string
 #include <utility> // move
@@ -8496,9 +8494,12 @@ NLOHMANN_JSON_NAMESPACE_END
 
 #include <array> // array
 #include <cfloat> // FLT_EVAL_METHOD
+#include <clocale> // localeconv
 #include <cstddef> // size_t
 #include <cstdint> // int64_t, uint64_t
+#include <cstdlib> // strtof, strtod, strtold
 #include <limits> // numeric_limits
+#include <string> // string
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
@@ -8516,8 +8517,9 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // This file contains the value-conversion helpers used by the lexer to turn an
 // already-validated number token into a value, without the locale/errno
-// overhead of std::strtoull/std::strtod. They are free functions so the lexer
-// stays focused on scanning; see lexer::convert_number().
+// overhead of std::strtoull/std::strtod where possible. They are free functions
+// so the lexer stays focused on scanning (see lexer::convert_number()) and so
+// that other parsers of JSON text can convert tokens exactly like it does.
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -8778,6 +8780,184 @@ bool parse_float_from_chars(const char* first, const char* last, FloatType& out)
     static_cast<void>(out);
     return false;
 #endif
+}
+
+/*!
+@brief check whether Clinger's fast path can still succeed for a float token
+
+parse_float_fast() needs a significand below 2^53. A mantissa with 17 or
+more significant digits is at least 10^16 and therefore always exceeds it,
+so calling the fast path would walk the token one extra time only to
+decline before strtod has to run anyway.
+
+Significant digits are the mantissa's digits from the first nonzero one on;
+the sign, the decimal point, leading zeros, and the exponent do not count.
+The answer is derived from indices - the digits are not scanned again - so
+this stays off the hot path of the number scanners.
+
+@param[in] token                   the validated number token ('.' as decimal point)
+@param[in] decimal_point_position  index of the '.' in @a token, or
+                                   std::string::npos if there is none
+@param[in] mantissa_end            offset just past the last mantissa byte
+@return false if parse_float_fast() is guaranteed to decline
+*/
+inline bool mantissa_fits_clinger(const char* token, std::size_t decimal_point_position, std::size_t mantissa_end) noexcept
+{
+    // 10^16 already exceeds 2^53, so 17 digits can never fit
+    constexpr std::size_t limit = 17;
+
+    const std::size_t neg = (token[0] == '-') ? 1u : 0u;
+    const std::size_t has_dot = (decimal_point_position != std::string::npos) ? 1u : 0u;
+    // the JSON grammar restricts the integer part to "0" or [1-9][0-9]*, so
+    // a leading zero can only be a lone "0", which is not significant
+    const std::size_t lead_zero = (token[neg] == '0') ? 1u : 0u;
+    JSON_ASSERT(mantissa_end >= neg + has_dot + lead_zero);
+    std::size_t digits = mantissa_end - neg - has_dot - lead_zero;
+
+    if (JSON_HEDLEY_LIKELY(digits < limit))
+    {
+        return true;
+    }
+
+    // Only a number below 1 can carry further insignificant zeros, and only
+    // while the count stays at the limit does removing them change the
+    // answer - so this loop is skipped for all but a few tokens. The
+    // fraction is located through decimal_point_position rather than by
+    // searching '.'.
+    if (lead_zero != 0)
+    {
+        JSON_ASSERT(has_dot != 0); // an integer "0" cannot reach the limit
+        for (std::size_t i = decimal_point_position + 1;
+                digits >= limit && i < mantissa_end && token[i] == '0'; ++i)
+        {
+            --digits;
+        }
+    }
+
+    return digits < limit;
+}
+
+/*!
+@brief convert a validated float token without the C library, if possible
+
+Tries std::from_chars (when available) and then Clinger's exact fast path
+(double only), skipping the latter when it cannot succeed.
+
+@param[in]  first                   pointer to the first character of the token
+@param[in]  last                    pointer past the last character
+@param[in]  decimal_point_position  index of the '.' in the token, or
+                                    std::string::npos if there is none
+@param[in]  mantissa_end            offset just past the last mantissa byte (the
+                                    index of 'e'/'E', or the token length)
+@param[out] value                   the converted value on success
+@return true if the value was converted; false if convert_float_locale_aware()
+        must convert it
+*/
+template<typename FloatType>
+bool convert_float_fast(const char* first, const char* last, std::size_t decimal_point_position,
+                        std::size_t mantissa_end, FloatType& value) noexcept
+{
+    if (parse_float_from_chars(first, last, value))
+    {
+        return true;
+    }
+    // Skipping a fast path that cannot succeed is lossless and saves a full
+    // extra pass over the token's bytes, which otherwise shows up on
+    // high-precision inputs such as canada.json
+    return mantissa_fits_clinger(first, decimal_point_position, mantissa_end)
+           && parse_float_fast(first, last, value);
+}
+
+/// std::strtof, std::strtod, or std::strtold, chosen by the type of @a f
+JSON_HEDLEY_NON_NULL(2)
+inline void strtof_by_type(float& f, const char* str, char** endptr) noexcept
+{
+    f = std::strtof(str, endptr);
+}
+
+/// std::strtof, std::strtod, or std::strtold, chosen by the type of @a f
+JSON_HEDLEY_NON_NULL(2)
+inline void strtof_by_type(double& f, const char* str, char** endptr) noexcept
+{
+    f = std::strtod(str, endptr);
+}
+
+/// std::strtof, std::strtod, or std::strtold, chosen by the type of @a f
+JSON_HEDLEY_NON_NULL(2)
+inline void strtof_by_type(long double& f, const char* str, char** endptr) noexcept
+{
+    f = std::strtold(str, endptr);
+}
+
+/// return the decimal point of the current locale
+inline char get_decimal_point() noexcept
+{
+    const auto* loc = localeconv();
+    JSON_ASSERT(loc != nullptr);
+    return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
+}
+
+/*!
+@brief convert a validated float token with strtof/strtod/strtold
+
+These functions expect the decimal point of the *current* locale, so it is
+looked up right before the conversion instead of once when the lexer is
+constructed: a locale change in between (by a parser callback, a SAX
+handler, or another thread) must not truncate the value (#5198). The
+token has been validated before, so if the conversion stops early and the
+decimal point changed in the meantime, the locale changed between the
+lookup and the call, and the conversion is repeated with the new decimal
+point. If the decimal point did not change, a retry cannot succeed: the
+locale's decimal point is not a single character (e.g., the two-byte
+U+066B of ar_EG.UTF-8 or fa_IR.UTF-8) and cannot be substituted in place.
+The value strtod parsed up to that point is kept, as before this change.
+
+Note that changing the locale in another thread *while* strtod runs is
+undefined behavior of the C library, which this function cannot prevent.
+
+@param[in,out] token                   the token with '.' as decimal point; its
+                                       decimal point is replaced during the
+                                       conversion and restored afterwards
+                                       (data() must be NUL-terminated)
+@param[in]     decimal_point_position  index of the '.' in @a token, or
+                                       std::string::npos if there is none
+@param[out]    value                   the converted value
+*/
+template<typename StringType, typename FloatType>
+void convert_float_locale_aware(StringType& token, std::size_t decimal_point_position, FloatType& value)
+{
+    const bool has_dot = decimal_point_position != std::string::npos;
+    char decimal_point = get_decimal_point();
+    for (;;)
+    {
+        const bool substitute = has_dot && decimal_point != '.';
+        if (substitute)
+        {
+            token[decimal_point_position] = static_cast<typename StringType::value_type>(decimal_point);
+        }
+
+        char* endptr = nullptr; // NOLINT(misc-const-correctness,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+        strtof_by_type(value, token.data(), &endptr);
+
+        if (substitute)
+        {
+            // the caller hands the token on (e.g. to the SAX interface) with '.'
+            token[decimal_point_position] = '.';
+        }
+
+        if (JSON_HEDLEY_LIKELY(endptr == token.data() + token.size()))
+        {
+            return;
+        }
+
+        // retry only if the locale changed; otherwise, this would loop forever
+        const char current_decimal_point = get_decimal_point();
+        if (current_decimal_point == decimal_point)
+        {
+            return;
+        }
+        decimal_point = current_decimal_point;
+    }
 }
 
 }  // namespace detail
@@ -9309,18 +9489,6 @@ class lexer : public lexer_base<BasicJsonType>
     ~lexer() = default;
 
   private:
-    /////////////////////
-    // locales
-    /////////////////////
-
-    /// return the decimal point of the current locale
-    static char get_decimal_point() noexcept
-    {
-        const auto* loc = localeconv();
-        JSON_ASSERT(loc != nullptr);
-        return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
-    }
-
     /////////////////////
     // scan functions
     /////////////////////
@@ -10128,24 +10296,6 @@ class lexer : public lexer_base<BasicJsonType>
         }
     }
 
-    JSON_HEDLEY_NON_NULL(2)
-    static void strtof(float& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtof(str, endptr);
-    }
-
-    JSON_HEDLEY_NON_NULL(2)
-    static void strtof(double& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtod(str, endptr);
-    }
-
-    JSON_HEDLEY_NON_NULL(2)
-    static void strtof(long double& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtold(str, endptr);
-    }
-
     /*!
     @brief scan a number literal
 
@@ -10185,7 +10335,7 @@ class lexer : public lexer_base<BasicJsonType>
     @note The scanner is independent of the current locale: token_buffer
           always holds `.`. Only the std::strtod fallback of convert_number()
           depends on the locale, and it looks up the decimal point right
-          before converting (see convert_float_locale_aware()).
+          before converting (see detail::convert_float_locale_aware()).
     */
     token_type scan_number()  // lgtm [cpp/use-of-goto] `goto` is used in this function to implement the number-parsing state machine described above. By design, any finite input will eventually reach the "done" state or return token_type::parse_error. In each intermediate state, 1 byte of the input is appended to the token_buffer vector, and only the already initialized variables token_buffer, number_type, and error_message are manipulated.
     {
@@ -10517,59 +10667,6 @@ scan_number_done:
     }
 
     /*!
-    @brief check whether Clinger's fast path can still succeed for this token
-
-    parse_float_fast() needs a significand below 2^53. A mantissa with 17 or
-    more significant digits is at least 10^16 and therefore always exceeds it,
-    so calling the fast path would walk the token one extra time only to
-    decline before strtod has to run anyway.
-
-    Significant digits are the mantissa's digits from the first nonzero one on;
-    the sign, the decimal point, leading zeros, and the exponent do not count.
-    The answer is derived from indices - the digits are not scanned again - so
-    this stays off the hot path of the number scanners.
-
-    @param[in] mantissa_end  offset just past the last mantissa byte in
-                             token_buffer
-    @return false if parse_float_fast() is guaranteed to decline
-    */
-    bool mantissa_fits_clinger(std::size_t mantissa_end) const
-    {
-        // 10^16 already exceeds 2^53, so 17 digits can never fit
-        constexpr std::size_t limit = 17;
-
-        const std::size_t neg = (!token_buffer.empty() && token_buffer[0] == '-') ? 1u : 0u;
-        const std::size_t has_dot = (decimal_point_position != std::string::npos) ? 1u : 0u;
-        // the JSON grammar restricts the integer part to "0" or [1-9][0-9]*, so
-        // a leading zero can only be a lone "0", which is not significant
-        const std::size_t lead_zero = (token_buffer[neg] == '0') ? 1u : 0u;
-        JSON_ASSERT(mantissa_end >= neg + has_dot + lead_zero);
-        std::size_t digits = mantissa_end - neg - has_dot - lead_zero;
-
-        if (JSON_HEDLEY_LIKELY(digits < limit))
-        {
-            return true;
-        }
-
-        // Only a number below 1 can carry further insignificant zeros, and only
-        // while the count stays at the limit does removing them change the
-        // answer - so this loop is skipped for all but a few tokens. The
-        // fraction is located through decimal_point_position rather than by
-        // searching '.'.
-        if (lead_zero != 0)
-        {
-            JSON_ASSERT(has_dot != 0); // an integer "0" cannot reach the limit
-            for (std::size_t i = decimal_point_position + 1;
-                    digits >= limit && i < mantissa_end && token_buffer[i] == '0'; ++i)
-            {
-                --digits;
-            }
-        }
-
-        return digits < limit;
-    }
-
-    /*!
     @brief convert the number text in token_buffer to its value and token type
 
     The digit sequence in token_buffer has already been validated (by the
@@ -10582,7 +10679,7 @@ scan_number_done:
                              token_buffer (the index of 'e'/'E', or
                              token_buffer.size() when there is no exponent);
                              used to skip Clinger's fast path when it cannot
-                             possibly succeed - see mantissa_fits_clinger()
+                             possibly succeed - see detail::mantissa_fits_clinger()
     */
     token_type convert_number(token_type number_type, std::size_t mantissa_end)
     {
@@ -10655,75 +10752,13 @@ scan_number_done:
         // (Eisel-Lemire, locale-independent, correctly rounded) when available;
         // otherwise the exact Clinger fast path (double only); otherwise the
         // locale-aware strtof/strtod/strtold.
-        if (parse_float_from_chars(num_begin, num_end, value_float))
-        {
-            return token_type::value_float;
-        }
-        // Skipping a fast path that cannot succeed is lossless and saves a full
-        // extra pass over the token's bytes, which otherwise shows up on
-        // high-precision inputs such as canada.json
-        if (mantissa_fits_clinger(mantissa_end)
-                && parse_float_fast(num_begin, num_end, value_float))
+        if (convert_float_fast(num_begin, num_end, decimal_point_position, mantissa_end, value_float))
         {
             return token_type::value_float;
         }
 
-        convert_float_locale_aware();
+        convert_float_locale_aware(token_buffer, decimal_point_position, value_float);
         return token_type::value_float;
-    }
-
-    /*!
-    @brief convert the float in token_buffer with strtof/strtod/strtold
-
-    These functions expect the decimal point of the *current* locale, so it is
-    looked up right before the conversion instead of once when the lexer is
-    constructed: a locale change in between (by a parser callback, a SAX
-    handler, or another thread) must not truncate the value (#5198). The
-    token has been validated before, so if the conversion stops early and the
-    decimal point changed in the meantime, the locale changed between the
-    lookup and the call, and the conversion is repeated with the new decimal
-    point. If the decimal point did not change, a retry cannot succeed: the
-    locale's decimal point is not a single character (e.g., the two-byte
-    U+066B of ar_EG.UTF-8 or fa_IR.UTF-8) and cannot be substituted in place.
-    The value strtod parsed up to that point is kept, as before this change.
-
-    Note that changing the locale in another thread *while* strtod runs is
-    undefined behavior of the C library, which this function cannot prevent.
-    */
-    void convert_float_locale_aware()
-    {
-        const bool has_dot = decimal_point_position != std::string::npos;
-        char decimal_point = get_decimal_point();
-        for (;;)
-        {
-            const bool substitute = has_dot && decimal_point != '.';
-            if (substitute)
-            {
-                token_buffer[decimal_point_position] = static_cast<typename string_t::value_type>(decimal_point);
-            }
-
-            char* endptr = nullptr; // NOLINT(misc-const-correctness,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-            strtof(value_float, token_buffer.data(), &endptr);
-
-            if (substitute)
-            {
-                // get_string() hands the token to the SAX interface with '.'
-                token_buffer[decimal_point_position] = '.';
-            }
-
-            if (JSON_HEDLEY_LIKELY(endptr == token_buffer.data() + token_buffer.size()))
-            {
-                return;
-            }
-
-            // retry only if the locale changed; otherwise, this would loop forever
-            const char current_decimal_point = get_decimal_point();
-            if (current_decimal_point == decimal_point)
-            {
-                return;
-            }
-            decimal_point = current_decimal_point;
-        }
     }
 
     /*!
