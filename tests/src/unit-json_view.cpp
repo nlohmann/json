@@ -545,7 +545,7 @@ TEST_CASE("json_view element access and iteration")
         std::vector<std::string> keys = {"", "x"};
         for (std::size_t n = 1; n <= 40; ++n)
         {
-            keys.push_back(std::string(n, 'k'));
+            keys.emplace_back(n, 'k');
             keys.push_back(std::string(n, 'k') + "x");
             keys.push_back("x" + std::string(n, 'k'));
         }
@@ -553,7 +553,7 @@ TEST_CASE("json_view element access and iteration")
         {
             text += (i != 0 ? ",\"" : "\"") + keys[i] + "\":" + std::to_string(i);
         }
-        text += ",\"esc\\u0061ped\":\"escaped key\"}";
+        text += ",\"esc\\u0061ped\":\"escaped key\"}"; // NOLINT(modernize-raw-string-literal)
         const json_document d = json_document::parse(text);
         const json_view root = d.root();
         for (std::size_t i = 0; i < keys.size(); ++i)
@@ -623,7 +623,7 @@ TEST_CASE("json_view element access and iteration")
             }
             CHECK(v.contains("a") == j.contains("a"));
             CHECK(v.count("a") == j.count("a"));
-            CHECK((v.find("a") == v.end()) == (j.find("a") == j.end()));
+            CHECK((v.find("a") == v.end()) == (j.find("a") == j.end())); // NOLINT(readability-container-contains): find() is what is tested
         }
 
         // where basic_json has undefined behavior, the view answers safely

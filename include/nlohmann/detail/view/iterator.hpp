@@ -183,7 +183,7 @@ class view_item
 
   private:
     iterator m_it;
-    std::string m_index{};
+    std::string m_index{}; // NOLINT(readability-redundant-member-init)
 };
 
 /// the range returned by basic_json_view::items()
