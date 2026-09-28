@@ -15,7 +15,7 @@
 
 // This file tests the opt-in JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS, so it defines
 // the macro itself rather than relying on a -D flag, and runs in every build.
-// The default behavior is tested in unit-conversions.cpp.
+// The default behavior is tested in unit-enum_keyed_maps_default.cpp.
 #ifdef JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
     #undef JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
 #endif
