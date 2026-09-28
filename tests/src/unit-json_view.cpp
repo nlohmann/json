@@ -17,13 +17,18 @@ using nlohmann::ordered_json_document;
 using nlohmann::ordered_json_view;
 
 #include <algorithm>
+#include <array>
+#include <cmath>
 #include <cstdint>
+#include <cstdio>
+#include <cstring>
 #include <iterator>
 #include <list>
 #include <map>
 #include <random>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -691,5 +696,370 @@ TEST_CASE("json_view element access and iteration")
         static_assert(std::tuple_size<json_view::item>::value == 2, "");
         static_assert(std::is_same<std::tuple_element<1, json_view::item>::type, json_view>::value, "");
 #endif
+    }
+}
+
+namespace
+{
+// an exception message without the context that basic_json adds with
+// JSON_DIAGNOSTICS ("(/path) ") and JSON_DIAGNOSTIC_POSITIONS ("(bytes 1-2) ");
+// the view's exceptions have no such context
+std::string without_path(std::string msg)
+{
+    for (const char* prefix :
+            {"] (/", "] (bytes "
+            })
+    {
+        const std::size_t open = msg.find(prefix);
+        if (open != std::string::npos)
+        {
+            msg.erase(open + 2, msg.find(") ", open) + 2 - (open + 2));
+        }
+    }
+    return msg;
+}
+
+bool has_duplicate_keys(const ordered_json_view& v)
+{
+    if (v.is_object() && v.size() != v.materialize().size())
+    {
+        return true;
+    }
+    for (const ordered_json_view e : v)
+    {
+        if (e.is_structured() && has_duplicate_keys(e))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+// compares the conversions of a view with those of ordered_json
+void check_values(const ordered_json_view& v, const ordered_json& j, const std::string& text)
+{
+    CHECK(v.get<ordered_json>() == j);
+    switch (j.type())
+    {
+        case json::value_t::number_integer:
+        case json::value_t::number_unsigned:
+        case json::value_t::number_float:
+        {
+            // (converting a float out of range of the target type is undefined)
+            if (j.is_number_unsigned())
+            {
+                CHECK(v.get<std::uint64_t>() == j.get<std::uint64_t>());
+            }
+            else if (j.is_number_integer())
+            {
+                CHECK(v.get<std::int64_t>() == j.get<std::int64_t>());
+            }
+            const double a = v.get<double>();
+            const double b = j.get<double>();
+            CHECK(std::memcmp(&a, &b, sizeof(double)) == 0);
+            if (std::abs(b) < 1e9)
+            {
+                CHECK(v.get<int>() == j.get<int>());
+            }
+            const auto token = v.number_token();
+            CHECK(text.compare(v.source_offset(), token.size(), token.data(), token.size()) == 0);
+            break;
+        }
+        case json::value_t::string:
+            CHECK(v.get<std::string>() == j.get<std::string>());
+            CHECK(std::string(v.get_string().data(), v.get_string().size()) == j.get<std::string>());
+            break;
+        case json::value_t::boolean:
+            CHECK(v.get<bool>() == j.get<bool>());
+            CHECK(v.get<int>() == j.get<int>());
+            break;
+        case json::value_t::null:
+            CHECK(v.get<std::nullptr_t>() == nullptr);
+            break;
+        case json::value_t::array:
+            CHECK(v.get<std::vector<ordered_json>>() == j.get<std::vector<ordered_json>>());
+            break;
+        case json::value_t::object:
+            CHECK((v.get<std::map<std::string, ordered_json>>() == j.get<std::map<std::string, ordered_json>>()));
+            break;
+        case json::value_t::binary:
+        case json::value_t::discarded:
+        default:
+            break;
+    }
+
+    // conversions to the wrong type throw what basic_json throws
+    if (!j.is_number())
+    {
+        CHECK(exception_of([&] { static_cast<void>(v.get<int>()); }) == without_path(exception_of([&] { static_cast<void>(j.get<int>()); })));
+    }
+    CHECK(exception_of([&] { static_cast<void>(v.get<bool>()); }) == without_path(exception_of([&] { static_cast<void>(j.get<bool>()); })));
+    CHECK(exception_of([&] { static_cast<void>(v.get<std::string>()); }) == without_path(exception_of([&] { static_cast<void>(j.get<std::string>()); })));
+    CHECK(exception_of([&] { static_cast<void>(v.get<std::nullptr_t>()); }) == without_path(exception_of([&] { static_cast<void>(j.get<std::nullptr_t>()); })));
+    if (!j.is_array())
+    {
+        CHECK(exception_of([&] { static_cast<void>(v.get<std::vector<int>>()); }) == without_path(exception_of([&] { static_cast<void>(j.get<std::vector<int>>()); })));
+    }
+    if (!j.is_object())
+    {
+        CHECK(exception_of([&] { static_cast<void>(v.get<std::map<std::string, int>>()); }) == without_path(exception_of([&] { static_cast<void>(j.get<std::map<std::string, int>>()); })));
+    }
+
+    if (v.is_array())
+    {
+        std::size_t i = 0;
+        for (const ordered_json_view e : v)
+        {
+            check_values(e, j[i++], text);
+        }
+    }
+    else if (v.is_object())
+    {
+        for (auto it = v.begin(); it != v.end(); ++it)
+        {
+            const std::string key(it.key().data(), it.key().size());
+            if (v.size() == j.size()) // (no duplicate keys)
+            {
+                check_values(it.value(), j[key], text);
+            }
+        }
+    }
+}
+
+struct record
+{
+    std::string name{};
+    int count = 0;
+};
+
+void from_json(const json& j, record& r)
+{
+    j.at("name").get_to(r.name);
+    j.at("count").get_to(r.count);
+}
+} // namespace
+
+TEST_CASE("json_view values")
+{
+    SECTION("generated documents")
+    {
+        generator g;
+        for (int i = 0; i < 2000; ++i)
+        {
+            std::string text;
+            g.value(text, 0);
+            CAPTURE(text);
+            const ordered_json_document d = ordered_json_document::parse(text);
+            check_values(d.root(), ordered_json::parse(text), text);
+        }
+    }
+
+    SECTION("floats are converted as parse() converts them")
+    {
+        std::mt19937_64 rng(5295);
+        std::vector<std::string> tokens = {"0.1", "-0.0", "1e308", "1.7976931348623157e308", "2.2250738585072011e-308", "4.9e-324", "5e-324",
+                                           "0.1000000000000000055511151231257827021181583404541015625", "123456789012345678901234567890",
+                                           "9007199254740993", "1.00000000000000011102230246251565404236316680908203125", "7.2057594037927933e16"
+                                          };
+        for (int i = 0; i < 20000; ++i)
+        {
+            const std::uint64_t bits = rng();
+            double d = 0;
+            std::memcpy(&d, &bits, sizeof(d));
+            if (!std::isfinite(d))
+            {
+                continue;
+            }
+            std::array<char, 400> buf{};
+            switch (i % 5) // NOLINT(hicpp-multiway-paths-covered)
+            {
+                case 0:
+                    std::snprintf(buf.data(), buf.size(), "%.17g", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    break;
+                case 1:
+                    std::snprintf(buf.data(), buf.size(), "%.15g", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    break;
+                case 2:
+                    std::snprintf(buf.data(), buf.size(), "%.3e", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    break;
+                case 3:
+                    std::snprintf(buf.data(), buf.size(), "%.25g", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    break;
+                default:
+                    std::snprintf(buf.data(), buf.size(), "%.0f", d); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                    break;
+            }
+            tokens.emplace_back(buf.data());
+        }
+        using json_float = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+        for (const auto& token : tokens)
+        {
+            CAPTURE(token);
+            const std::string text = "[" + token + "]";
+            const double a = json_document::parse(text).root()[0].get<double>();
+            const double b = json::parse(text)[0].get<double>();
+            CHECK(std::memcmp(&a, &b, sizeof(double)) == 0);
+            if (std::abs(b) < 1e38)
+            {
+                const float fa = nlohmann::basic_json_document<json_float>::parse(text).root()[0].get<float>();
+                const float fb = json_float::parse(text)[0].get<float>();
+                CHECK(std::memcmp(&fa, &fb, sizeof(float)) == 0);
+            }
+        }
+    }
+
+    SECTION("number tokens")
+    {
+        const json_document d = json_document::parse(R"([1.50, 1E2, -0, 123456789012345678901234567890, -12, 7, "x"])");
+        const json_view v = d.root();
+        CHECK(v[0].number_token() == "1.50");
+        CHECK(v[1].number_token() == "1E2");
+        CHECK(v[2].number_token() == "-0");
+        CHECK(v[3].number_token() == "123456789012345678901234567890");
+        CHECK(v[4].number_token() == "-12");
+        CHECK(v[5].number_token() == "7");
+        CHECK_THROWS_WITH_AS(v[6].number_token(), "[json.exception.type_error.302] type must be number, but is string", json::type_error&);
+        CHECK_THROWS_WITH_AS(v.get_string(), "[json.exception.type_error.302] type must be string, but is array", json::type_error&);
+    }
+
+    SECTION("conversions")
+    {
+        const std::string text = R"({"name": "widget", "count": 3, "tags": ["a", "b\n"], "sizes": {"s": 1, "m": 2}, "pair": [1, "x"]})";
+        const json_document d = json_document::parse(text);
+        const json_view v = d.root();
+        const json j = json::parse(text);
+
+        // user types with from_json, and other types, through basic_json
+        const record r = v.get<record>();
+        CHECK(r.name == "widget");
+        CHECK(r.count == 3);
+        CHECK((v["pair"].get<std::pair<int, std::string>>() == j["pair"].get<std::pair<int, std::string>>()));
+        CHECK(v["tags"].get<std::list<std::string>>() == j["tags"].get<std::list<std::string>>());
+        CHECK((v["sizes"].get<std::unordered_map<std::string, int>>() == j["sizes"].get<std::unordered_map<std::string, int>>()));
+        CHECK(v["tags"].get<std::vector<std::string>>() == std::vector<std::string> {"a", "b\n"});
+
+        // views of the elements
+        const auto views = v["tags"].get<std::vector<json_view>>();
+        CHECK(views.size() == 2);
+        CHECK(views[1].get_string() == "b\n");
+        const auto members = v.get<std::map<std::string, json_view>>();
+        CHECK(members.at("count").get<int>() == 3);
+        CHECK(v.get<json_view>()["name"].get_string() == "widget");
+
+        // strings without a copy point into the source text
+        CHECK(v["name"].get_string().data() == text.data() + text.find("widget"));
+#ifdef JSON_HAS_CPP_17
+        CHECK(v["name"].get<std::string_view>() == "widget");
+#endif
+
+        std::string name;
+        int count = 0;
+        CHECK(&v["name"].get_to(name) == &name);
+        v["count"].get_to(count);
+        CHECK(name == "widget");
+        CHECK(count == 3);
+
+        // a duplicate key: the last value, as parse()
+        CHECK((json_document::parse(R"({"a":1,"a":2})").root().get<std::map<std::string, int>>() == std::map<std::string, int> {{"a", 2}}));
+
+        const json_view invalid;
+        CHECK_THROWS_WITH_AS(invalid.get<int>(), "[json.exception.type_error.302] type must be number, but is discarded", json::type_error&);
+        CHECK(invalid.get<json>().is_discarded());
+    }
+
+    SECTION("value")
+    {
+        const json_document d = json_document::parse(R"({"n": 1, "s": "text", "o": {"x": [10, 20]}})");
+        const json_view v = d.root();
+        const json j = v.materialize();
+        CHECK(v.value("n", 0) == j.value("n", 0));
+        CHECK(v.value("missing", 42) == j.value("missing", 42));
+        CHECK(v.value("s", "default") == j.value("s", "default"));
+        CHECK(v.value("missing", "default") == j.value("missing", "default"));
+        CHECK(v.value(std::string("n"), 2.5) == j.value(std::string("n"), 2.5));
+        CHECK(v.value(json::json_pointer("/o/x/1"), 0) == j.value(json::json_pointer("/o/x/1"), 0));
+        CHECK(v.value(json::json_pointer("/o/x/5"), 0) == j.value(json::json_pointer("/o/x/5"), 0));
+        CHECK(v.value(json::json_pointer("/o/y"), "none") == j.value(json::json_pointer("/o/y"), "none"));
+        // with a JSON pointer, arrays can be asked as well
+        CHECK(v["o"]["x"].value(json::json_pointer("/1"), 0) == j["o"]["x"].value(json::json_pointer("/1"), 0));
+        CHECK(v["o"]["x"].value(json::json_pointer("/7"), 3) == j["o"]["x"].value(json::json_pointer("/7"), 3));
+        CHECK(exception_of([&] { static_cast<void>(v["o"]["x"].value("k", 0)); }) == without_path(exception_of([&] { static_cast<void>(j["o"]["x"].value("k", 0)); })));
+        CHECK(exception_of([&] { static_cast<void>(v.value("s", 0)); }) == without_path(exception_of([&] { static_cast<void>(j.value("s", 0)); })));
+        CHECK(exception_of([&] { static_cast<void>(v["n"].value("x", 0)); }) == without_path(exception_of([&] { static_cast<void>(j["n"].value("x", 0)); })));
+        CHECK(exception_of([&] { static_cast<void>(v["n"].value(json::json_pointer("/x"), 0)); }) == without_path(exception_of([&] { static_cast<void>(j["n"].value(json::json_pointer("/x"), 0)); })));
+    }
+}
+
+TEST_CASE("json_view JSON pointers")
+{
+    SECTION("every value of generated documents")
+    {
+        generator g;
+        for (int i = 0; i < 1000; ++i)
+        {
+            std::string text;
+            g.value(text, 0);
+            const ordered_json_document d = ordered_json_document::parse(text);
+            if (has_duplicate_keys(d.root()))
+            {
+                continue;
+            }
+            CAPTURE(text);
+            const ordered_json j = ordered_json::parse(text);
+            const ordered_json flat = j.flatten();
+            for (const auto& leaf : flat.items())
+            {
+                // the leaf and each of its parents
+                for (ordered_json::json_pointer p(leaf.key());; p = p.parent_pointer())
+                {
+                    CAPTURE(p.to_string());
+                    CHECK(d.root()[p].materialize() == j[p]);
+                    CHECK(d.root().at(p).materialize() == j.at(p));
+                    CHECK(d.root().contains(p));
+                    if (p.empty())
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    SECTION("errors are those of basic_json")
+    {
+        const std::string text = R"({"a": [1, {"b": null}], "c": "s", "": {"": 0}, "a~b": 1, "c/d": 2})";
+        const json_document d = json_document::parse(text);
+        const json_view v = d.root();
+        const json j = v.materialize();
+        for (const char* pointer :
+                {"", "/", "//", "/a", "/a/0", "/a/1/b", "/a/-", "/a/01", "/a/00", "/a/1a", "/a/a", "/a/", "/a/2", "/a/99", "/a/99999999999999999999",
+                 "/a/18446744073709551615", "/a/-1", "/a/+1", "/a/ 1", "/x", "/c/x", "/a/0/x", "/a/1/b/c", "/a~0b", "/c~1d", "/c~1d/x", "/a/1/-"
+                })
+        {
+            CAPTURE(pointer);
+            const json::json_pointer p(pointer);
+            const std::string at_error = without_path(exception_of([&] { static_cast<void>(j.at(p)); }));
+            CHECK(exception_of([&] { static_cast<void>(v.at(p)); }) == at_error);
+            if (at_error.empty())
+            {
+                CHECK(v.at(p).materialize() == j.at(p));
+                CHECK(v[p].materialize() == j[p]);
+            }
+            else if (at_error.find("out_of_range.401") != std::string::npos || at_error.find("out_of_range.403") != std::string::npos)
+            {
+                // undefined behavior for const basic_json::operator[]
+                CHECK(!v[p]);
+            }
+            else
+            {
+                CHECK(exception_of([&] { static_cast<void>(v[p]); }) == without_path(exception_of([&] { static_cast<void>(j[p]); })));
+            }
+            // (basic_json::contains() throws out_of_range.404 for an empty
+            // array index token, although it is not meant to throw; the view
+            // answers false)
+            const std::string contains_error = exception_of([&] { static_cast<void>(j.contains(p)); });
+            CHECK(v.contains(p) == (contains_error.empty() && j.contains(p)));
+            CHECK(exception_of([&] { static_cast<void>(v.value(p, 5)); }) == without_path(exception_of([&] { static_cast<void>(j.value(p, 5)); })));
+        }
     }
 }
