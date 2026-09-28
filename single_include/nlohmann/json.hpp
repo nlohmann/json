@@ -8605,14 +8605,12 @@ std::strtod. The parser only activates for number_float_t == double; float and
 long double keep the std::strtof/std::strtold paths (see the templated overload
 below).
 
-@param[in]  first          pointer to the first character of the number
-@param[in]  last           pointer past the last character
-@param[in]  decimal_point  the (locale-dependent) decimal point character
-@param[out] out            the parsed value on success
+@param[in]  first  pointer to the first character of the number
+@param[in]  last   pointer past the last character
+@param[out] out    the parsed value on success
 @return true if the value was parsed exactly; false to fall back to strtod
 */
-template<typename DecimalPointType>
-bool parse_float_fast(const char* first, const char* last, DecimalPointType decimal_point, double& out) noexcept
+inline bool parse_float_fast(const char* first, const char* last, double& out) noexcept
 {
 #if defined(FLT_EVAL_METHOD) && FLT_EVAL_METHOD != 0
     // Clinger's fast path is only exact when double operations are evaluated in
@@ -8623,7 +8621,6 @@ bool parse_float_fast(const char* first, const char* last, DecimalPointType deci
     // std::from_chars / std::strtod path.
     static_cast<void>(first);
     static_cast<void>(last);
-    static_cast<void>(decimal_point);
     static_cast<void>(out);
     return false;
 #else
@@ -8662,7 +8659,7 @@ bool parse_float_fast(const char* first, const char* last, DecimalPointType deci
             ++num_digits;
             fractional_digits += static_cast<int>(seen_dot);
         }
-        else if (static_cast<DecimalPointType>(c) == decimal_point)
+        else if (c == '.')
         {
             if (JSON_HEDLEY_UNLIKELY(seen_dot))
             {
@@ -8747,8 +8744,8 @@ bool parse_float_fast(const char* first, const char* last, DecimalPointType deci
 }
 
 /// fast float path is only exact for `double`; decline for float/long double
-template<typename DecimalPointType, typename FloatType>
-bool parse_float_fast(const char* /*first*/, const char* /*last*/, DecimalPointType /*decimal_point*/, FloatType& /*out*/) noexcept
+template<typename FloatType>
+bool parse_float_fast(const char* /*first*/, const char* /*last*/, FloatType& /*out*/) noexcept
 {
     return false;
 }
@@ -8760,9 +8757,7 @@ std::from_chars is locale-independent, correctly rounded, and - via the
 Eisel-Lemire algorithm in modern standard libraries - much faster than strtod
 over the whole value range (not just the Clinger subset). It is used only when
 __cpp_lib_to_chars indicates full floating-point support and only when it
-consumes the entire token ([first, last)); a partial parse means the buffer
-uses a non-'.' locale decimal point, in which case the caller falls back to the
-locale-aware path. An under-/overflow (result_out_of_range) also declines, so
+consumes the entire token ([first, last)). An under-/overflow (result_out_of_range) also declines, so
 the caller's strtod fallback supplies the well-defined ±inf/0 result the parser
 expects (side-stepping the P4168 divergence between implementations).
 
@@ -9303,7 +9298,6 @@ class lexer : public lexer_base<BasicJsonType>
     explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false, bool discard_number_values_ = false) noexcept
         : ia(std::move(adapter))
         , ignore_comments(ignore_comments_)
-        , decimal_point_char(static_cast<char_int_type>(get_decimal_point()))
         , discard_number_values(discard_number_values_)
     {}
 
@@ -9319,8 +9313,7 @@ class lexer : public lexer_base<BasicJsonType>
     // locales
     /////////////////////
 
-    /// return the locale-dependent decimal point
-    JSON_HEDLEY_PURE
+    /// return the decimal point of the current locale
     static char get_decimal_point() noexcept
     {
         const auto* loc = localeconv();
@@ -10189,9 +10182,10 @@ class lexer : public lexer_base<BasicJsonType>
             token_type::value_float if number could be successfully scanned,
             token_type::parse_error otherwise
 
-    @note The scanner is independent of the current locale. Internally, the
-          locale's decimal point is used instead of `.` to work with the
-          locale-dependent converters.
+    @note The scanner is independent of the current locale: token_buffer
+          always holds `.`. Only the std::strtod fallback of convert_number()
+          depends on the locale, and it looks up the decimal point right
+          before converting (see convert_float_locale_aware()).
     */
     token_type scan_number()  // lgtm [cpp/use-of-goto] `goto` is used in this function to implement the number-parsing state machine described above. By design, any finite input will eventually reach the "done" state or return token_type::parse_error. In each intermediate state, 1 byte of the input is appended to the token_buffer vector, and only the already initialized variables token_buffer, number_type, and error_message are manipulated.
     {
@@ -10280,7 +10274,7 @@ scan_number_zero:
         {
             case '.':
             {
-                add(decimal_point_char);
+                add(current);
                 decimal_point_position = token_buffer.size() - 1;
                 goto scan_number_decimal1;
             }
@@ -10317,7 +10311,7 @@ scan_number_any1:
 
             case '.':
             {
-                add(decimal_point_char);
+                add(current);
                 decimal_point_position = token_buffer.size() - 1;
                 goto scan_number_decimal1;
             }
@@ -10559,9 +10553,9 @@ scan_number_done:
 
         // Only a number below 1 can carry further insignificant zeros, and only
         // while the count stays at the limit does removing them change the
-        // answer - so this loop is skipped for all but a few tokens. Note
-        // token_buffer holds the locale's decimal point, so the fraction is
-        // located through decimal_point_position rather than by searching '.'.
+        // answer - so this loop is skipped for all but a few tokens. The
+        // fraction is located through decimal_point_position rather than by
+        // searching '.'.
         if (lead_zero != 0)
         {
             JSON_ASSERT(has_dot != 0); // an integer "0" cannot reach the limit
@@ -10579,8 +10573,8 @@ scan_number_done:
     @brief convert the number text in token_buffer to its value and token type
 
     The digit sequence in token_buffer has already been validated (by the
-    scan_number() state machine or by the contiguous fast path) and holds the
-    locale decimal point in place of '.'. Integers are parsed first and fall
+    scan_number() state machine or by the contiguous fast path) and holds '.'
+    as decimal point, independent of the locale. Integers are parsed first and fall
     back to floating point on overflow. This is shared so both scanners produce
     identical results.
 
@@ -10660,7 +10654,7 @@ scan_number_done:
         // integer conversion above overflowed. Prefer std::from_chars
         // (Eisel-Lemire, locale-independent, correctly rounded) when available;
         // otherwise the exact Clinger fast path (double only); otherwise the
-        // locale-aware strtof/strtod.
+        // locale-aware strtof/strtod/strtold.
         if (parse_float_from_chars(num_begin, num_end, value_float))
         {
             return token_type::value_float;
@@ -10669,18 +10663,67 @@ scan_number_done:
         // extra pass over the token's bytes, which otherwise shows up on
         // high-precision inputs such as canada.json
         if (mantissa_fits_clinger(mantissa_end)
-                && parse_float_fast(num_begin, num_end, decimal_point_char, value_float))
+                && parse_float_fast(num_begin, num_end, value_float))
         {
             return token_type::value_float;
         }
 
-        char* endptr = nullptr; // NOLINT(misc-const-correctness,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        strtof(value_float, token_buffer.data(), &endptr);
-
-        // we checked the number format before
-        JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
-
+        convert_float_locale_aware();
         return token_type::value_float;
+    }
+
+    /*!
+    @brief convert the float in token_buffer with strtof/strtod/strtold
+
+    These functions expect the decimal point of the *current* locale, so it is
+    looked up right before the conversion instead of once when the lexer is
+    constructed: a locale change in between (by a parser callback, a SAX
+    handler, or another thread) must not truncate the value (#5198). The
+    token has been validated before, so if the conversion stops early and the
+    decimal point changed in the meantime, the locale changed between the
+    lookup and the call, and the conversion is repeated with the new decimal
+    point. If the decimal point did not change, a retry cannot succeed: the
+    locale's decimal point is not a single character (e.g., the two-byte
+    U+066B of ar_EG.UTF-8 or fa_IR.UTF-8) and cannot be substituted in place.
+    The value strtod parsed up to that point is kept, as before this change.
+
+    Note that changing the locale in another thread *while* strtod runs is
+    undefined behavior of the C library, which this function cannot prevent.
+    */
+    void convert_float_locale_aware()
+    {
+        const bool has_dot = decimal_point_position != std::string::npos;
+        char decimal_point = get_decimal_point();
+        for (;;)
+        {
+            const bool substitute = has_dot && decimal_point != '.';
+            if (substitute)
+            {
+                token_buffer[decimal_point_position] = static_cast<typename string_t::value_type>(decimal_point);
+            }
+
+            char* endptr = nullptr; // NOLINT(misc-const-correctness,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+            strtof(value_float, token_buffer.data(), &endptr);
+
+            if (substitute)
+            {
+                // get_string() hands the token to the SAX interface with '.'
+                token_buffer[decimal_point_position] = '.';
+            }
+
+            if (JSON_HEDLEY_LIKELY(endptr == token_buffer.data() + token_buffer.size()))
+            {
+                return;
+            }
+
+            // retry only if the locale changed; otherwise, this would loop forever
+            const char current_decimal_point = get_decimal_point();
+            if (current_decimal_point == decimal_point)
+            {
+                return;
+            }
+            decimal_point = current_decimal_point;
+        }
     }
 
     /*!
@@ -10688,7 +10731,7 @@ scan_number_done:
 
     Parses the whole number token straight from the input buffer, avoiding the
     per-character get()/add() of scan_number(). On success it fills token_buffer
-    (with the locale decimal point substituted, as scan_number() does) and
+    (as scan_number() does) and
     returns the token type. On anything it does not fully recognize as a
     well-formed number it makes no state change and returns
     token_type::uninitialized, so the caller falls back to scan_number(), which
@@ -10804,16 +10847,11 @@ scan_number_done:
         }
 #endif
 
-        // materialize the token exactly as scan_number() would, substituting the
-        // locale decimal point so convert_number()'s strtof fallback stays valid.
-        // reset() already cleared token_buffer, so append() fills it (assign() is
-        // avoided because custom string_t types need not provide it)
+        // materialize the token exactly as scan_number() would. reset() already
+        // cleared token_buffer, so append() fills it (assign() is avoided
+        // because custom string_t types need not provide it)
         token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), len);
-        if (dot_index != std::string::npos)
-        {
-            token_buffer[dot_index] = static_cast<typename string_t::value_type>(decimal_point_char);
-            decimal_point_position = dot_index;
-        }
+        decimal_point_position = dot_index;
 
         ia.bulk_skip(len - 1);
         position.chars_read_total += (len - 1);
@@ -11080,11 +11118,7 @@ scan_number_done:
     /// return current string value (implicitly resets the token; useful only once)
     string_t& get_string()
     {
-        // translate decimal points from locale back to '.' (#4084)
-        if (decimal_point_char != '.' && decimal_point_position != std::string::npos)
-        {
-            token_buffer[decimal_point_position] = '.';
-        }
+        // a number token holds '.' regardless of the locale (#4084)
         return token_buffer;
     }
 
@@ -11380,9 +11414,7 @@ scan_number_done:
     number_unsigned_t value_unsigned = 0;
     number_float_t value_float = 0;
 
-    /// the decimal point
-    const char_int_type decimal_point_char = '.';
-    /// the position of the decimal point in the input
+    /// the position of the decimal point in token_buffer
     std::size_t decimal_point_position = std::string::npos;
 
     /// whether the caller (e.g. accept()/json_sax_acceptor) only needs the
