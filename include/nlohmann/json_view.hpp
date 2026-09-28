@@ -1061,6 +1061,45 @@ class basic_json_document
         return editor().push_back(array, std::forward<V>(value));
     }
 
+    /// insert into an array before position idx (idx <= size()); returns a
+    /// view of the new element
+    template < typename I, typename V, typename std::enable_if < std::is_integral<I>::value && !std::is_same<I, bool>::value, int >::type = 0 >
+    view_type insert(view_type array, I idx, V && value)
+    {
+        return editor().insert(array, index(idx), std::forward<V>(value));
+    }
+
+    /// remove all members with this key; returns their number
+    std::size_t erase(view_type object, string_view_t key)
+    {
+        return editor().erase(object, key);
+    }
+
+    /// remove an array element
+    template < typename I, typename std::enable_if < std::is_integral<I>::value && !std::is_same<I, bool>::value, int >::type = 0 >
+    void erase(view_type array, I idx)
+    {
+        editor().erase(array, index(idx));
+    }
+
+    /// remove the value at a JSON pointer; returns the number of removed
+    /// values
+    std::size_t erase(const json_pointer& ptr)
+    {
+        if (ptr.empty())
+        {
+            detail::view::throw_out_of_range(405, "JSON pointer has no parent");
+        }
+        const view_type parent = root().at(ptr.parent_pointer());
+        const auto& token = ptr.back();
+        if (parent.is_array())
+        {
+            erase(parent, pointer_index(token));
+            return 1;
+        }
+        return erase(parent, string_view_t(token.data(), token.size()));
+    }
+
   private:
     using input_kind = detail::view::input_kind;
 

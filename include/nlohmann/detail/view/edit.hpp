@@ -227,6 +227,62 @@ class editor
         return View(&m_doc, slot);
     }
 
+    /// insert into an array before position idx (idx <= size()); returns a
+    /// view of the new element
+    template<typename V>
+    View insert(const View& array, std::size_t idx, V&& value)
+    {
+        node* const a = own(array);
+        if (a->kind != static_cast<std::uint8_t>(value_t::array))
+        {
+            throw_type_error(309, "cannot use insert() with ", array.type_name());
+        }
+        check_index(idx, a->len + 1);
+        const encoded e = encode(std::forward<V>(value));
+        node* const slot = new_slot(e);
+        node* const h = block_of(m_doc, a, 1);
+        std::memmove(h + 2 + idx, h + 1 + idx, (h->next - 1 - idx) * sizeof(node));
+        make_link(h[1 + idx], slot);
+        ++h->next;
+        ++h->len;
+        ++a->len;
+        return View(&m_doc, slot);
+    }
+
+    /// remove all members with this key; returns their number
+    std::size_t erase(const View& object, string_view_t key)
+    {
+        node* const o = own(object);
+        if (o->kind != static_cast<std::uint8_t>(value_t::object))
+        {
+            throw_type_error(307, "cannot use erase() with ", object.type_name());
+        }
+        for (const node* k = nav::first(m_doc, o), *end = nav::end(m_doc, o); k != end; k = document_data::after(k + 1))
+        {
+            if (key_equals(*k, key))
+            {
+                return erase_members(o, key, false);
+            }
+        }
+        return 0;
+    }
+
+    /// remove an array element
+    void erase(const View& array, std::size_t idx)
+    {
+        node* const a = own(array);
+        if (a->kind != static_cast<std::uint8_t>(value_t::array))
+        {
+            throw_type_error(307, "cannot use erase() with ", array.type_name());
+        }
+        check_index(idx, a->len);
+        node* const h = block_of(m_doc, a, 0);
+        std::memmove(h + 1 + idx, h + 2 + idx, (h->next - 2 - idx) * sizeof(node));
+        --h->next;
+        --h->len;
+        --a->len;
+    }
+
   private:
     /// an encoded value: a scalar node, or the root of a new array/object
     struct encoded
