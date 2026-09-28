@@ -219,6 +219,44 @@ class lexer : public lexer_base<BasicJsonType>
     // scan functions
     /////////////////////
 
+    /// contiguous input: try to decode the 4 hex digits following `\u`
+    /// directly from the input buffer via hex_codepoint(), instead of 4 calls
+    /// to get(). On success, advances the adapter and the position counters
+    /// exactly as those 4 get() calls would (a hex digit is never '\n', so
+    /// only the flat counters move) and leaves @a current holding the last of
+    /// the 4 digits, just as the last such get() would; the codepoint is
+    /// written to @a out. Makes no state change and returns false - for a
+    /// pending unget, fewer than 4 remaining bytes, or any of the 4 bytes not
+    /// being a hex digit - so the caller falls back unchanged to the
+    /// per-character loop, which then reports the same diagnostic (stopping
+    /// at the first invalid digit) as before this optimization.
+    bool get_codepoint_bulk(std::true_type /*bulk*/, int& out)
+    {
+        if (next_unget || ia.bulk_remaining() < 4)
+        {
+            return false;
+        }
+        const char_type* const raw = ia.bulk_data();
+        const int codepoint = hex_codepoint(reinterpret_cast<const unsigned char*>(raw));
+        if (codepoint < 0)
+        {
+            return false;
+        }
+        ia.bulk_skip(4);
+        // a hex digit is never a newline, so only the flat counters advance
+        position.chars_read_total += 4;
+        position.chars_read_current_line += 4;
+        current = char_traits<char_type>::to_int_type(raw[3]);
+        out = codepoint;
+        return true;
+    }
+
+    /// streaming input: no bulk fast path
+    bool get_codepoint_bulk(std::false_type /*bulk*/, int& /*out*/) const noexcept
+    {
+        return false;
+    }
+
     /*!
     @brief get codepoint from 4 hex characters following `\u`
 
@@ -238,6 +276,14 @@ class lexer : public lexer_base<BasicJsonType>
     {
         // this function only makes sense after reading `\u`
         JSON_ASSERT(current == 'u');
+
+        // contiguous input: decode all 4 hex digits directly from the buffer
+        int fast_codepoint = 0;
+        if (get_codepoint_bulk(std::integral_constant<bool, bulk_scan> {}, fast_codepoint))
+        {
+            return fast_codepoint;
+        }
+
         int codepoint = 0;
 
         const auto factors = { 12u, 8u, 4u, 0u };
