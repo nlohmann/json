@@ -65,7 +65,7 @@
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
-template<typename BasicJsonType>
+template<typename BasicJsonType, bool Editable>
 class basic_json_document;
 
 /*!
@@ -74,11 +74,13 @@ class basic_json_document;
 Trivially copyable (two pointers). Valid as long as the document is alive and
 has not been re-parsed, and as long as a borrowed source text is alive.
 */
-template<typename BasicJsonType>
+template<typename BasicJsonType, bool Editable = false>
 class basic_json_view
 {
     using node = detail::view::node;
     using document_data = detail::view::document_data;
+    /// how the index is walked (with edits only for editable documents)
+    using navigation = detail::view::navigation<Editable>;
 
   public:
     using value_t = detail::value_t;
@@ -271,7 +273,7 @@ class basic_json_view
         {
             detail::view::throw_type_error(305, "cannot use operator[] with a numeric argument with ", type_name());
         }
-        return idx < m_node->len ? basic_json_view(m_doc, detail::view::element_at(m_node, idx)) : basic_json_view();
+        return idx < m_node->len ? basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx))) : basic_json_view();
     }
 
     /// (an int argument would be ambiguous between size_type and const char*)
@@ -327,7 +329,7 @@ class basic_json_view
         {
             detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
         }
-        return basic_json_view(m_doc, detail::view::element_at(m_node, idx));
+        return basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx)));
     }
 
     basic_json_view at(int idx) const
@@ -399,7 +401,7 @@ class basic_json_view
     {
         if (is_structured() && m_node->len != 0)
         {
-            return basic_json_view(m_doc, detail::view::last_child(m_node) + (is_object() ? 1 : 0));
+            return basic_json_view(m_doc, navigation::value(detail::view::last_child<Editable>(*m_doc, m_node) + (is_object() ? 1 : 0)));
         }
         return front();
     }
@@ -416,7 +418,7 @@ class basic_json_view
         {
             return end();
         }
-        const node* const k = detail::view::find_member(*m_doc, m_node, key.data(), key.size());
+        const node* const k = detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size());
         return k != nullptr ? iterator(m_doc, k, true) : end();
     }
 
@@ -433,7 +435,7 @@ class basic_json_view
     /// whether this is an object with a member with this key
     bool contains(string_view_t key) const
     {
-        return is_object() && detail::view::find_member(*m_doc, m_node, key.data(), key.size()) != nullptr;
+        return is_object() && detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size()) != nullptr;
     }
 
     bool contains(const char* key) const
@@ -480,7 +482,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_LIKELY(is_structured()))
         {
-            return iterator(m_doc, document_data::first_child(m_node), is_object());
+            return iterator(m_doc, navigation::first(*m_doc, m_node), is_object());
         }
         return iterator(m_doc, m_node, false);
     }
@@ -489,7 +491,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_LIKELY(is_structured()))
         {
-            return iterator(m_doc, document_data::child_end(m_node), is_object());
+            return iterator(m_doc, navigation::end(*m_doc, m_node), is_object());
         }
         return iterator(m_doc, (is_null() || is_discarded()) ? m_node : m_node + 1, false);
     }
@@ -589,7 +591,7 @@ class basic_json_view
         style.source_numbers = numbers == number_format::source;
         // the compact text is about as long as the source text of the value
         const std::size_t estimate = source_extent() + (style.pretty ? source_extent() / 2 : 0) + 64;
-        detail::view::view_serializer<BasicJsonType>(*m_doc, out, estimate, style).dump(m_node);
+        detail::view::view_serializer<BasicJsonType, Editable>(*m_doc, out, estimate, style).dump(m_node);
         return out;
     }
 
@@ -656,7 +658,7 @@ class basic_json_view
         {
             return BasicJsonType(value_t::discarded);
         }
-        return detail::view::materialize<BasicJsonType>(*m_doc, m_node);
+        return detail::view::materialize<BasicJsonType, Editable>(*m_doc, m_node);
     }
 
     /// byte offset of this value in the source text (for strings: of the
@@ -664,12 +666,13 @@ class basic_json_view
     /// a discarded view and for strings with escapes, which are decoded
     std::size_t source_offset() const noexcept
     {
-        return m_node != nullptr && (m_node->flags & detail::view::node_flags::storage) == 0
+        return m_node != nullptr && (m_node->flags & (detail::view::node_flags::storage | detail::view::node_flags::moved | detail::view::node_flags::is_new)) == 0
                ? m_node->off : static_cast<std::size_t>(-1);
     }
 
   private:
-    template<typename> friend class basic_json_document;
+    template<typename, bool> friend class basic_json_document;
+    template<typename, bool> friend class basic_json_view;
     friend iterator;
 
     basic_json_view(const document_data* d, const node* n) noexcept
@@ -687,6 +690,11 @@ class basic_json_view
     /// decoded strings)
     std::size_t source_extent() const noexcept
     {
+        if (Editable && m_doc->edits != nullptr)
+        {
+            // positions of moved and new values are not source offsets
+            return m_node == m_doc->tape ? m_doc->size + m_doc->edits->text_used : 64;
+        }
         const node* const next = document_data::after(m_node);
         const bool in_source = (m_node->flags & detail::view::node_flags::storage) == 0;
         if (!in_source)
@@ -704,8 +712,8 @@ class basic_json_view
     /// (object required)
     NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view lookup(string_view_t key) const noexcept
     {
-        const node* const k = detail::view::find_member(*m_doc, m_node, key.data(), key.size());
-        return k != nullptr ? basic_json_view(m_doc, k + 1) : basic_json_view();
+        const node* const k = detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size());
+        return k != nullptr ? basic_json_view(m_doc, navigation::value(k + 1)) : basic_json_view();
     }
 
     // --- get() dispatch ---
@@ -796,7 +804,7 @@ Borrowed parses keep a pointer to the caller's text, which must outlive the
 document. Owned parses (parse_copy, rvalue std::string, streams, and inputs
 that are not contiguous byte ranges) keep their own copy.
 */
-template<typename BasicJsonType>
+template<typename BasicJsonType, bool Editable = false>
 class basic_json_document
 {
     using document_data = detail::view::document_data;
@@ -805,7 +813,7 @@ class basic_json_document
                   "json_view supports 64-bit integer types only");
 
   public:
-    using view_type = basic_json_view<BasicJsonType>;
+    using view_type = basic_json_view<BasicJsonType, Editable>;
     using value_t = detail::value_t;
 
     /// an empty (discarded) document
@@ -929,7 +937,8 @@ class basic_json_document
                + (m_data->tape != m_data->inline_tape ? m_data->tape_cap * sizeof(detail::view::node) : 0)
                + m_data->arena.capacity() + m_data->owned.capacity()
                + (m_data->indexes.capacity() * sizeof(document_data::object_index)) + (m_data->index_slots.capacity() * sizeof(std::uint32_t))
-               + (m_data->large_objects.capacity() * sizeof(std::uint32_t));
+               + (m_data->large_objects.capacity() * sizeof(std::uint32_t))
+               + (m_data->edits != nullptr ? m_data->edits->bytes : 0);
     }
 
     /// release unused capacity of the index and the decoded strings; like
@@ -948,7 +957,8 @@ class basic_json_document
         // unchanged
         const bool shrink_arena = d.arena.capacity() > d.arena.size();
         std::string arena(shrink_arena ? d.arena : std::string());
-        const bool shrink_tape = d.tape != d.inline_tape && d.tape_size != d.tape_cap;
+        // (edits link to the nodes of the index, which then stays in place)
+        const bool shrink_tape = d.tape != d.inline_tape && d.tape_size != d.tape_cap && d.edits == nullptr;
         const bool into_header = d.tape_size <= d.inline_cap;
         node* fresh = (shrink_tape && !into_header) ? static_cast<node*>(::operator new (d.tape_size * sizeof(node))) : d.inline_tape;
 
@@ -998,6 +1008,8 @@ class basic_json_document
         d.src = src;
         d.size = size;
         d.tape_size = 0;
+        d.edits.reset(); // (views of the previous text end here anyway)
+        d.base[2] = nullptr;
         d.arena.clear();
         d.indexes.clear();
         d.index_slots.clear();
@@ -1133,7 +1145,6 @@ using json_view = basic_json_view<json>;
 using ordered_json_document = basic_json_document<ordered_json>;
 /// a value of an ordered_json_document
 using ordered_json_view = basic_json_view<ordered_json>;
-
 NLOHMANN_JSON_NAMESPACE_END
 
 // tuple protocol for the items of basic_json_view::items() (structured bindings)

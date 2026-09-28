@@ -84,18 +84,20 @@ class short_key
 
 /// the key node of the first member of an object with the given key, or
 /// nullptr; most keys are rejected by their length, from the index alone
-inline const node* find_member(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
+template<bool Editable>
+const node* find_member(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
 {
-    if (NLOHMANN_VIEW_UNLIKELY(object->extra != 0))
+    using nav = navigation<Editable>;
+    if (NLOHMANN_VIEW_UNLIKELY(object->extra != 0) && (!Editable || (object->flags & node_flags::moved) == 0))
     {
-        return find_indexed(d, object, key, n); // a large object
+        return find_indexed(d, object, key, n); // a large object (whose members have not been edited)
     }
-    const node* const end = document_data::child_end(object);
+    const node* const end = nav::end(d, object);
     const auto* const k = reinterpret_cast<const unsigned char*>(key); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     if (NLOHMANN_VIEW_LIKELY(n <= 16))
     {
         const short_key probe(k, n);
-        for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
+        for (const node* m = nav::first(d, object); m != end; m = document_data::after(m + 1))
         {
             if (m->len == n && probe.matches(reinterpret_cast<const unsigned char*>(d.str(*m)))) // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
             {
@@ -104,7 +106,7 @@ inline const node* find_member(const document_data& d, const node* object, const
         }
         return nullptr;
     }
-    for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
+    for (const node* m = nav::first(d, object); m != end; m = document_data::after(m + 1))
     {
         if (m->len == n && std::memcmp(d.str(*m), key, n) == 0)
         {
@@ -114,10 +116,16 @@ inline const node* find_member(const document_data& d, const node* object, const
     return nullptr;
 }
 
-/// the element of an array at an index below its size
-inline const node* element_at(const node* array, std::size_t idx) noexcept
+/// the entry of the element of an array at an index below its size (a link
+/// in the moved sequences of editable documents)
+template<bool Editable>
+const node* element_at(const document_data& d, const node* array, std::size_t idx) noexcept
 {
-    const node* e = document_data::first_child(array);
+    const node* e = navigation<Editable>::first(d, array);
+    if (Editable && (array->flags & node_flags::moved) != 0 && d.edits->moved_cap[array->off] != 0)
+    {
+        return e + idx; // a growable block: one link per element
+    }
     for (std::size_t i = 0; i < idx; ++i)
     {
         e = document_data::after(e);
@@ -125,13 +133,14 @@ inline const node* element_at(const node* array, std::size_t idx) noexcept
     return e;
 }
 
-/// the last element of a non-empty array, or the key of the last member of a
-/// non-empty object
-inline const node* last_child(const node* container) noexcept
+/// the entry of the last element of a non-empty array, or the key of the
+/// last member of a non-empty object
+template<bool Editable>
+const node* last_child(const document_data& d, const node* container) noexcept
 {
     const std::size_t value_offset = container->kind == static_cast<std::uint8_t>(value_t::object) ? 1 : 0;
-    const node* const end = document_data::child_end(container);
-    const node* last = document_data::first_child(container);
+    const node* const end = navigation<Editable>::end(d, container);
+    const node* last = navigation<Editable>::first(d, container);
     for (const node* c = document_data::after(last + value_offset); c != end; c = document_data::after(c + value_offset))
     {
         last = c;

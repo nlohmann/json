@@ -73,7 +73,7 @@ class view_iterator
 
     NLOHMANN_VIEW_ALWAYS_INLINE View operator*() const noexcept
     {
-        return View(m_doc, m_pos + m_value_offset);
+        return View(m_doc, View::navigation::value(m_pos + m_value_offset));
     }
 
     pointer operator->() const noexcept

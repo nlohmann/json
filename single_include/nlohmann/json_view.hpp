@@ -84,6 +84,9 @@
 #include <cstddef> // size_t
 #include <cstdint> // uint32_t
 #include <cstring> // memcpy
+#include <functional> // less
+#include <map> // map
+#include <memory> // unique_ptr
 #include <new> // operator new, placement new
 #include <string> // string
 #include <vector> // vector
@@ -199,9 +202,16 @@ static_assert(static_cast<std::uint8_t>(value_t::null) == 0 && static_cast<std::
 struct node_flags
 {
     static constexpr std::uint8_t escaped = 1; ///< string payload lives in the decode arena, not the source
+    static constexpr std::uint8_t edited = 2;  ///< string or number token lives in the edit arena (editable documents)
     static constexpr std::uint8_t storage = 3; ///< mask: where a string or number token lives (index into document_data::base)
     static constexpr std::uint8_t is_true = 4; ///< boolean value
+    static constexpr std::uint8_t moved = 8;   ///< array/object: the elements live in a separate sequence (editable documents)
+    static constexpr std::uint8_t is_new = 16; ///< written by an edit: no source position
 };
+
+/// kind of an entry of an edited sequence that stands for a value stored
+/// elsewhere (the address of the value's node is kept in the len/next bytes)
+constexpr std::uint8_t kind_link = 10;
 
 /// One entry of the flat index, in document order. An object's members are
 /// stored as key node followed by the value's subtree. Integers keep their
@@ -209,10 +219,10 @@ struct node_flags
 /// always the next one, and the token length follows from `extra`).
 struct node
 {
-    std::uint8_t kind;   ///< value_t
+    std::uint8_t kind;   ///< value_t, or kind_link
     std::uint8_t flags;  ///< node_flags
-    std::uint16_t extra; ///< numbers: integer digits (low byte) and fraction digits (high byte), 255 = "many"; otherwise 0
-    std::uint32_t off;   ///< source offset (string content, number token, literal, bracket); arena offset if node_flags::escaped
+    std::uint16_t extra; ///< numbers: integer digits (low byte) and fraction digits (high byte), 255 = "many"; objects: number of the hash index; otherwise 0
+    std::uint32_t off;   ///< source offset (string content, number token, literal, bracket); arena offset if escaped/edited; number of the element sequence if moved
     std::uint32_t len;   ///< string: decoded bytes; float: token bytes; array/object: element count
     std::uint32_t next;  ///< array/object: number of nodes of the subtree (its extent in the enclosing sequence)
 };
@@ -221,6 +231,21 @@ static_assert(sizeof(node) == 16, "node must stay 16 bytes");
 NLOHMANN_VIEW_ALWAYS_INLINE bool is_container(const node& n) noexcept
 {
     return static_cast<unsigned>(n.kind) - 1u <= 1u;
+}
+
+/// the value a link node stands for
+NLOHMANN_VIEW_ALWAYS_INLINE const node* link_target(const node& n) noexcept
+{
+    const node* t = nullptr;
+    std::memcpy(&t, reinterpret_cast<const unsigned char*>(&n) + 8, sizeof(t)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    return t;
+}
+
+inline void make_link(node& n, const node* target) noexcept
+{
+    n = node{};
+    n.kind = kind_link;
+    std::memcpy(reinterpret_cast<unsigned char*>(&n) + 8, &target, sizeof(target)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 }
 
 /// the converted value of an integer node (stored in len/next)
@@ -293,8 +318,29 @@ struct document_data
     std::vector<object_index> indexes{}; // NOLINT(readability-redundant-member-init)
     std::vector<std::uint32_t> index_slots{}; // NOLINT(readability-redundant-member-init)
     std::vector<std::uint32_t> large_objects{}; ///< positions of the objects to index (noted while parsing) // NOLINT(readability-redundant-member-init)
-    std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena (indexed by flags & node_flags::storage)
+    std::array<const char*, 4> base = {{nullptr, nullptr, nullptr, nullptr}}; ///< string bases: source, arena, edit arena (indexed by flags & node_flags::storage)
     bool discarded = true;
+
+    /// The storage of edits (editable documents only; see edit_storage.hpp).
+    /// Edits never move or resize the parsed index, so views stay valid: an
+    /// array/object whose elements change gets node_flags::moved, and its
+    /// elements then live in a separate sequence (a header node, then the
+    /// entries), whose entries link to the values.
+    struct edit_state
+    {
+        std::vector<node*> moved{};                    ///< element sequences of moved arrays/objects (header node first)
+        std::vector<std::size_t> moved_cap{};          ///< capacity in nodes of a growable block; 0: a fixed sequence (a new value)
+        std::vector<std::unique_ptr<node[]>> chunks{}; ///< storage of new values and blocks; never moved
+        std::map<const node*, node*, std::less<const node*>> regions{}; ///< new arrays/objects: root -> container that uses it as its element sequence (nullptr: linked from a block)
+        node* chunk_cur = nullptr;
+        node* chunk_end = nullptr;
+        std::size_t chunk_next = 64;
+        std::vector<std::unique_ptr<char[]>> texts{}; ///< edit arena, the current buffer last; earlier ones stay alive for string views
+        std::size_t text_used = 0;
+        std::size_t text_cap = 0;
+        std::size_t bytes = 0; ///< memory held by edits
+    };
+    std::unique_ptr<edit_state> edits{}; ///< created by the first edit
 
     /// one allocation for the header and room for `nodes` nodes; large
     /// documents get a separate node array instead (so it can be trimmed)
@@ -378,6 +424,78 @@ struct document_data
     static NLOHMANN_VIEW_ALWAYS_INLINE const node* child_end(const node* n) noexcept
     {
         return n + n->next;
+    }
+
+    /// (editable documents) first element or key, also of a moved container
+    NLOHMANN_VIEW_ALWAYS_INLINE const node* first_child_edited(const node* n) const noexcept
+    {
+        return NLOHMANN_VIEW_LIKELY((n->flags & node_flags::moved) == 0) ? n + 1 : edits->moved[n->off] + 1;
+    }
+
+    /// (editable documents) end of the elements, also of a moved container
+    NLOHMANN_VIEW_ALWAYS_INLINE const node* child_end_edited(const node* n) const noexcept
+    {
+        if (NLOHMANN_VIEW_LIKELY((n->flags & node_flags::moved) == 0))
+        {
+            return n + n->next;
+        }
+        const node* const h = edits->moved[n->off];
+        return h + h->next;
+    }
+
+    /// (editable documents) the value at an element position: entries of
+    /// moved sequences are links. The link case is out of line, so that this
+    /// compiles to a predicted branch rather than a select that delays the
+    /// following loads.
+    static NLOHMANN_VIEW_ALWAYS_INLINE const node* deref(const node* n) noexcept
+    {
+        return NLOHMANN_VIEW_LIKELY(n->kind != kind_link) ? n : follow_link(n);
+    }
+
+    static NLOHMANN_VIEW_NOINLINE const node* follow_link(const node* n) noexcept
+    {
+        return link_target(*n);
+    }
+};
+
+/// How the index is walked: views of read-only documents follow the node
+/// array alone and compile without any of the edit handling; views of
+/// editable documents also follow moved element sequences and links.
+template<bool Editable>
+struct navigation
+{
+    static NLOHMANN_VIEW_ALWAYS_INLINE const node* first(const document_data& /*d*/, const node* n) noexcept
+    {
+        return n + 1;
+    }
+
+    static NLOHMANN_VIEW_ALWAYS_INLINE const node* end(const document_data& /*d*/, const node* n) noexcept
+    {
+        return n + n->next;
+    }
+
+    static NLOHMANN_VIEW_ALWAYS_INLINE const node* value(const node* n) noexcept
+    {
+        return n;
+    }
+};
+
+template<>
+struct navigation<true>
+{
+    static NLOHMANN_VIEW_ALWAYS_INLINE const node* first(const document_data& d, const node* n) noexcept
+    {
+        return d.first_child_edited(n);
+    }
+
+    static NLOHMANN_VIEW_ALWAYS_INLINE const node* end(const document_data& d, const node* n) noexcept
+    {
+        return d.child_end_edited(n);
+    }
+
+    static NLOHMANN_VIEW_ALWAYS_INLINE const node* value(const node* n) noexcept
+    {
+        return document_data::deref(n);
     }
 };
 
@@ -2505,7 +2623,7 @@ class view_iterator
 
     NLOHMANN_VIEW_ALWAYS_INLINE View operator*() const noexcept
     {
-        return View(m_doc, m_pos + m_value_offset);
+        return View(m_doc, View::navigation::value(m_pos + m_value_offset));
     }
 
     pointer operator->() const noexcept
@@ -2919,18 +3037,20 @@ class short_key
 
 /// the key node of the first member of an object with the given key, or
 /// nullptr; most keys are rejected by their length, from the index alone
-inline const node* find_member(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
+template<bool Editable>
+const node* find_member(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
 {
-    if (NLOHMANN_VIEW_UNLIKELY(object->extra != 0))
+    using nav = navigation<Editable>;
+    if (NLOHMANN_VIEW_UNLIKELY(object->extra != 0) && (!Editable || (object->flags & node_flags::moved) == 0))
     {
-        return find_indexed(d, object, key, n); // a large object
+        return find_indexed(d, object, key, n); // a large object (whose members have not been edited)
     }
-    const node* const end = document_data::child_end(object);
+    const node* const end = nav::end(d, object);
     const auto* const k = reinterpret_cast<const unsigned char*>(key); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     if (NLOHMANN_VIEW_LIKELY(n <= 16))
     {
         const short_key probe(k, n);
-        for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
+        for (const node* m = nav::first(d, object); m != end; m = document_data::after(m + 1))
         {
             if (m->len == n && probe.matches(reinterpret_cast<const unsigned char*>(d.str(*m)))) // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
             {
@@ -2939,7 +3059,7 @@ inline const node* find_member(const document_data& d, const node* object, const
         }
         return nullptr;
     }
-    for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
+    for (const node* m = nav::first(d, object); m != end; m = document_data::after(m + 1))
     {
         if (m->len == n && std::memcmp(d.str(*m), key, n) == 0)
         {
@@ -2949,10 +3069,16 @@ inline const node* find_member(const document_data& d, const node* object, const
     return nullptr;
 }
 
-/// the element of an array at an index below its size
-inline const node* element_at(const node* array, std::size_t idx) noexcept
+/// the entry of the element of an array at an index below its size (a link
+/// in the moved sequences of editable documents)
+template<bool Editable>
+const node* element_at(const document_data& d, const node* array, std::size_t idx) noexcept
 {
-    const node* e = document_data::first_child(array);
+    const node* e = navigation<Editable>::first(d, array);
+    if (Editable && (array->flags & node_flags::moved) != 0 && d.edits->moved_cap[array->off] != 0)
+    {
+        return e + idx; // a growable block: one link per element
+    }
     for (std::size_t i = 0; i < idx; ++i)
     {
         e = document_data::after(e);
@@ -2960,13 +3086,14 @@ inline const node* element_at(const node* array, std::size_t idx) noexcept
     return e;
 }
 
-/// the last element of a non-empty array, or the key of the last member of a
-/// non-empty object
-inline const node* last_child(const node* container) noexcept
+/// the entry of the last element of a non-empty array, or the key of the
+/// last member of a non-empty object
+template<bool Editable>
+const node* last_child(const document_data& d, const node* container) noexcept
 {
     const std::size_t value_offset = container->kind == static_cast<std::uint8_t>(value_t::object) ? 1 : 0;
-    const node* const end = document_data::child_end(container);
-    const node* last = document_data::first_child(container);
+    const node* const end = navigation<Editable>::end(d, container);
+    const node* last = navigation<Editable>::first(d, container);
     for (const node* c = document_data::after(last + value_offset); c != end; c = document_data::after(c + value_offset))
     {
         last = c;
@@ -3015,6 +3142,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 #include <cstddef> // size_t
 #include <cstdint> // int64_t, uint64_t
+#include <limits> // numeric_limits
 #include <string> // string
 #include <type_traits> // integral_constant
 
@@ -3137,11 +3265,31 @@ NLOHMANN_VIEW_ALWAYS_INLINE FloatType layout_float(const unsigned char* p, const
     return decimal_to_float<FloatType>(layout_decimal(p, e, int_digits, frac_digits, limit));
 }
 
+/// the value of a float set by an edit: its token (the shortest round-trip
+/// text, or "nan", "inf", "-inf") in the edit arena
+template<typename FloatType>
+NLOHMANN_VIEW_NOINLINE FloatType edited_float(const char* token, const node& n)
+{
+    if (token[0] == 'n')
+    {
+        return std::numeric_limits<FloatType>::quiet_NaN();
+    }
+    if (token[0] == 'i' || (token[0] == '-' && token[1] == 'i'))
+    {
+        return token[0] == 'i' ? std::numeric_limits<FloatType>::infinity() : -std::numeric_limits<FloatType>::infinity();
+    }
+    return float_value<FloatType>(token, n);
+}
+
 /// the value of the float token of a node, as parse() converts it; floats and
 /// doubles with at most 19 digits are converted from the digit layout
 template<typename FloatType>
 FloatType float_value(const document_data& d, const node& n)
 {
+    if (NLOHMANN_VIEW_UNLIKELY((n.flags & node_flags::storage) == node_flags::edited))
+    {
+        return edited_float<FloatType>(d.str(n), n);
+    }
     return float_value<FloatType>(d, n, std::integral_constant<bool, has_native_float_format<FloatType>::value> {});
 }
 
@@ -3186,17 +3334,24 @@ iterative, so the nesting depth is limited by memory only, as for parse().
 Without a lexer the handler records no source positions
 (JSON_DIAGNOSTIC_POSITIONS).
 */
-template<typename BasicJsonType>
+template<typename BasicJsonType, bool Editable>
 BasicJsonType materialize(const document_data& d, const node* n)
 {
     using string_t = typename BasicJsonType::string_t;
     using sax_t = json_sax_dom_parser<BasicJsonType, iterator_input_adapter<const char*>>;
+    using nav = navigation<Editable>;
+
+    struct frame
+    {
+        const node* pos; ///< next element, or key of the next member
+        const node* end;
+        bool object;
+    };
 
     BasicJsonType result;
     sax_t sax(result, true);
     const string_t no_token{};
-    // the ends of the open containers, and whether they are objects
-    std::vector<std::pair<const node*, bool>> open;
+    std::vector<frame> open;
     for (;;)
     {
         switch (static_cast<value_t>(n->kind))
@@ -3213,67 +3368,66 @@ BasicJsonType materialize(const document_data& d, const node* n)
                 {
                     sax.start_array(n->len);
                 }
-                open.emplace_back(document_data::child_end(n), object);
-                n = document_data::first_child(n);
+                open.push_back(frame{nav::first(d, n), nav::end(d, n), object});
                 break;
             }
             case value_t::string:
             {
                 string_t s(d.str(*n), n->len);
                 sax.string(s);
-                ++n;
                 break;
             }
             case value_t::number_integer:
                 sax.number_integer(static_cast<typename BasicJsonType::number_integer_t>(static_cast<std::int64_t>(integer_bits(*n))));
-                ++n;
                 break;
             case value_t::number_unsigned:
                 sax.number_unsigned(static_cast<typename BasicJsonType::number_unsigned_t>(integer_bits(*n)));
-                ++n;
                 break;
             case value_t::number_float:
                 sax.number_float(float_value<typename BasicJsonType::number_float_t>(d, *n), no_token);
-                ++n;
                 break;
             case value_t::boolean:
                 sax.boolean((n->flags & node_flags::is_true) != 0);
-                ++n;
                 break;
             case value_t::null:
             case value_t::binary:
             case value_t::discarded:
             default:
                 sax.null();
-                ++n;
                 break;
         }
+
+        // the next value: close finished containers, then read the key
         for (;;)
         {
             if (open.empty())
             {
                 return result;
             }
-            if (n != open.back().first)
+            frame& f = open.back();
+            if (f.pos == f.end)
             {
-                break;
+                if (f.object)
+                {
+                    sax.end_object();
+                }
+                else
+                {
+                    sax.end_array();
+                }
+                open.pop_back();
+                continue;
             }
-            if (open.back().second)
+            const node* entry = f.pos;
+            if (f.object)
             {
-                sax.end_object();
+                string_t key(d.str(*entry), entry->len);
+                sax.key(key);
+                ++entry;
             }
-            else
-            {
-                sax.end_array();
-            }
-            open.pop_back();
-        }
-        if (open.back().second)
-        {
-            // the key of the next member
-            string_t key(d.str(*n), n->len);
-            sax.key(key);
-            ++n;
+            n = nav::value(entry);
+            f.pos = document_data::after(entry);
+            break;
         }
     }
 }
@@ -3583,9 +3737,10 @@ the library's conversion; integers are copied from the source, where they
 are canonical (except "-0", which parse() reads as 0). The walk is
 iterative, so the nesting depth is limited by memory only.
 */
-template<typename BasicJsonType>
+template<typename BasicJsonType, bool Editable>
 class view_serializer
 {
+    using nav = navigation<Editable>;
     using string_t = typename BasicJsonType::string_t;
     using number_float_t = typename BasicJsonType::number_float_t;
 
@@ -3618,7 +3773,7 @@ class view_serializer
                 else
                 {
                     m_out.put(object ? '{' : '[');
-                    stack.push_back(frame{document_data::first_child(n), document_data::child_end(n), object, true});
+                    stack.push_back(frame{nav::first(m_doc, n), nav::end(m_doc, n), object, true});
                 }
             }
             else
@@ -3660,13 +3815,14 @@ class view_serializer
                     {
                         m_out.put(':');
                     }
-                    n = f.pos + 1;
+                    n = nav::value(f.pos + 1);
+                    f.pos = document_data::after(f.pos + 1);
                 }
                 else
                 {
-                    n = f.pos;
+                    n = nav::value(f.pos);
+                    f.pos = document_data::after(f.pos);
                 }
-                f.pos = document_data::after(n);
                 break;
             }
         }
@@ -3718,9 +3874,9 @@ class view_serializer
                 break;
             }
             case value_t::number_float:
-                if (m_style.source_numbers)
+                if (m_style.source_numbers && (n.flags & node_flags::storage) != node_flags::edited)
                 {
-                    m_out.put(m_doc.str(n), n.len);
+                    m_out.put(m_doc.str(n), n.len); // (a float set by an edit is written as with shortest)
                 }
                 else
                 {
@@ -3767,9 +3923,9 @@ class view_serializer
     {
         const char* const s = m_doc.str(n);
         m_out.put('"');
-        if ((n.flags & node_flags::escaped) == 0 && !m_style.ensure_ascii)
+        if ((n.flags & node_flags::storage) == 0 && !m_style.ensure_ascii)
         {
-            // a string without escape sequences has nothing to escape
+            // a string of the source without escape sequences has nothing to escape
             m_out.put(s, n.len);
         }
         else if (m_style.ensure_ascii)
@@ -4118,7 +4274,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
-template<typename BasicJsonType>
+template<typename BasicJsonType, bool Editable>
 class basic_json_document;
 
 /*!
@@ -4127,11 +4283,13 @@ class basic_json_document;
 Trivially copyable (two pointers). Valid as long as the document is alive and
 has not been re-parsed, and as long as a borrowed source text is alive.
 */
-template<typename BasicJsonType>
+template<typename BasicJsonType, bool Editable = false>
 class basic_json_view
 {
     using node = detail::view::node;
     using document_data = detail::view::document_data;
+    /// how the index is walked (with edits only for editable documents)
+    using navigation = detail::view::navigation<Editable>;
 
   public:
     using value_t = detail::value_t;
@@ -4324,7 +4482,7 @@ class basic_json_view
         {
             detail::view::throw_type_error(305, "cannot use operator[] with a numeric argument with ", type_name());
         }
-        return idx < m_node->len ? basic_json_view(m_doc, detail::view::element_at(m_node, idx)) : basic_json_view();
+        return idx < m_node->len ? basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx))) : basic_json_view();
     }
 
     /// (an int argument would be ambiguous between size_type and const char*)
@@ -4380,7 +4538,7 @@ class basic_json_view
         {
             detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
         }
-        return basic_json_view(m_doc, detail::view::element_at(m_node, idx));
+        return basic_json_view(m_doc, navigation::value(detail::view::element_at<Editable>(*m_doc, m_node, idx)));
     }
 
     basic_json_view at(int idx) const
@@ -4452,7 +4610,7 @@ class basic_json_view
     {
         if (is_structured() && m_node->len != 0)
         {
-            return basic_json_view(m_doc, detail::view::last_child(m_node) + (is_object() ? 1 : 0));
+            return basic_json_view(m_doc, navigation::value(detail::view::last_child<Editable>(*m_doc, m_node) + (is_object() ? 1 : 0)));
         }
         return front();
     }
@@ -4469,7 +4627,7 @@ class basic_json_view
         {
             return end();
         }
-        const node* const k = detail::view::find_member(*m_doc, m_node, key.data(), key.size());
+        const node* const k = detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size());
         return k != nullptr ? iterator(m_doc, k, true) : end();
     }
 
@@ -4486,7 +4644,7 @@ class basic_json_view
     /// whether this is an object with a member with this key
     bool contains(string_view_t key) const
     {
-        return is_object() && detail::view::find_member(*m_doc, m_node, key.data(), key.size()) != nullptr;
+        return is_object() && detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size()) != nullptr;
     }
 
     bool contains(const char* key) const
@@ -4533,7 +4691,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_LIKELY(is_structured()))
         {
-            return iterator(m_doc, document_data::first_child(m_node), is_object());
+            return iterator(m_doc, navigation::first(*m_doc, m_node), is_object());
         }
         return iterator(m_doc, m_node, false);
     }
@@ -4542,7 +4700,7 @@ class basic_json_view
     {
         if (NLOHMANN_VIEW_LIKELY(is_structured()))
         {
-            return iterator(m_doc, document_data::child_end(m_node), is_object());
+            return iterator(m_doc, navigation::end(*m_doc, m_node), is_object());
         }
         return iterator(m_doc, (is_null() || is_discarded()) ? m_node : m_node + 1, false);
     }
@@ -4642,7 +4800,7 @@ class basic_json_view
         style.source_numbers = numbers == number_format::source;
         // the compact text is about as long as the source text of the value
         const std::size_t estimate = source_extent() + (style.pretty ? source_extent() / 2 : 0) + 64;
-        detail::view::view_serializer<BasicJsonType>(*m_doc, out, estimate, style).dump(m_node);
+        detail::view::view_serializer<BasicJsonType, Editable>(*m_doc, out, estimate, style).dump(m_node);
         return out;
     }
 
@@ -4709,7 +4867,7 @@ class basic_json_view
         {
             return BasicJsonType(value_t::discarded);
         }
-        return detail::view::materialize<BasicJsonType>(*m_doc, m_node);
+        return detail::view::materialize<BasicJsonType, Editable>(*m_doc, m_node);
     }
 
     /// byte offset of this value in the source text (for strings: of the
@@ -4717,12 +4875,13 @@ class basic_json_view
     /// a discarded view and for strings with escapes, which are decoded
     std::size_t source_offset() const noexcept
     {
-        return m_node != nullptr && (m_node->flags & detail::view::node_flags::storage) == 0
+        return m_node != nullptr && (m_node->flags & (detail::view::node_flags::storage | detail::view::node_flags::moved | detail::view::node_flags::is_new)) == 0
                ? m_node->off : static_cast<std::size_t>(-1);
     }
 
   private:
-    template<typename> friend class basic_json_document;
+    template<typename, bool> friend class basic_json_document;
+    template<typename, bool> friend class basic_json_view;
     friend iterator;
 
     basic_json_view(const document_data* d, const node* n) noexcept
@@ -4740,6 +4899,11 @@ class basic_json_view
     /// decoded strings)
     std::size_t source_extent() const noexcept
     {
+        if (Editable && m_doc->edits != nullptr)
+        {
+            // positions of moved and new values are not source offsets
+            return m_node == m_doc->tape ? m_doc->size + m_doc->edits->text_used : 64;
+        }
         const node* const next = document_data::after(m_node);
         const bool in_source = (m_node->flags & detail::view::node_flags::storage) == 0;
         if (!in_source)
@@ -4757,8 +4921,8 @@ class basic_json_view
     /// (object required)
     NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view lookup(string_view_t key) const noexcept
     {
-        const node* const k = detail::view::find_member(*m_doc, m_node, key.data(), key.size());
-        return k != nullptr ? basic_json_view(m_doc, k + 1) : basic_json_view();
+        const node* const k = detail::view::find_member<Editable>(*m_doc, m_node, key.data(), key.size());
+        return k != nullptr ? basic_json_view(m_doc, navigation::value(k + 1)) : basic_json_view();
     }
 
     // --- get() dispatch ---
@@ -4849,7 +5013,7 @@ Borrowed parses keep a pointer to the caller's text, which must outlive the
 document. Owned parses (parse_copy, rvalue std::string, streams, and inputs
 that are not contiguous byte ranges) keep their own copy.
 */
-template<typename BasicJsonType>
+template<typename BasicJsonType, bool Editable = false>
 class basic_json_document
 {
     using document_data = detail::view::document_data;
@@ -4858,7 +5022,7 @@ class basic_json_document
                   "json_view supports 64-bit integer types only");
 
   public:
-    using view_type = basic_json_view<BasicJsonType>;
+    using view_type = basic_json_view<BasicJsonType, Editable>;
     using value_t = detail::value_t;
 
     /// an empty (discarded) document
@@ -4982,7 +5146,8 @@ class basic_json_document
                + (m_data->tape != m_data->inline_tape ? m_data->tape_cap * sizeof(detail::view::node) : 0)
                + m_data->arena.capacity() + m_data->owned.capacity()
                + (m_data->indexes.capacity() * sizeof(document_data::object_index)) + (m_data->index_slots.capacity() * sizeof(std::uint32_t))
-               + (m_data->large_objects.capacity() * sizeof(std::uint32_t));
+               + (m_data->large_objects.capacity() * sizeof(std::uint32_t))
+               + (m_data->edits != nullptr ? m_data->edits->bytes : 0);
     }
 
     /// release unused capacity of the index and the decoded strings; like
@@ -5001,7 +5166,8 @@ class basic_json_document
         // unchanged
         const bool shrink_arena = d.arena.capacity() > d.arena.size();
         std::string arena(shrink_arena ? d.arena : std::string());
-        const bool shrink_tape = d.tape != d.inline_tape && d.tape_size != d.tape_cap;
+        // (edits link to the nodes of the index, which then stays in place)
+        const bool shrink_tape = d.tape != d.inline_tape && d.tape_size != d.tape_cap && d.edits == nullptr;
         const bool into_header = d.tape_size <= d.inline_cap;
         node* fresh = (shrink_tape && !into_header) ? static_cast<node*>(::operator new (d.tape_size * sizeof(node))) : d.inline_tape;
 
@@ -5051,6 +5217,8 @@ class basic_json_document
         d.src = src;
         d.size = size;
         d.tape_size = 0;
+        d.edits.reset(); // (views of the previous text end here anyway)
+        d.base[2] = nullptr;
         d.arena.clear();
         d.indexes.clear();
         d.index_slots.clear();
@@ -5186,7 +5354,6 @@ using json_view = basic_json_view<json>;
 using ordered_json_document = basic_json_document<ordered_json>;
 /// a value of an ordered_json_document
 using ordered_json_view = basic_json_view<ordered_json>;
-
 NLOHMANN_JSON_NAMESPACE_END
 
 // tuple protocol for the items of basic_json_view::items() (structured bindings)
