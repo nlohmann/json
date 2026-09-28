@@ -1018,7 +1018,7 @@ TEST_CASE("regression tests 1")
         };
 
         json _;
-        CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x98", json::parse_error&);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR object key: only string keys are supported, but found an array; last byte: 0x98", json::parse_error&);
 
         // related test case: nonempty UTF-8 string (indefinite length)
         std::vector<uint8_t> const vec1 {0x7f, 0x61, 0x61};
@@ -1065,7 +1065,7 @@ TEST_CASE("regression tests 1")
         };
 
         json _;
-        CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec1), "[json.exception.parse_error.113] parse error at byte 13: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0xB4", json::parse_error&);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec1), "[json.exception.parse_error.113] parse error at byte 13: syntax error while parsing CBOR object key: only string keys are supported, but found a map; last byte: 0xB4", json::parse_error&);
 
         // related test case: double-precision
         std::vector<uint8_t> const vec2
@@ -1077,7 +1077,7 @@ TEST_CASE("regression tests 1")
             0x96, 0x96, 0xb4, 0xb4, 0xfa, 0x94, 0x94, 0x61,
             0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0x61, 0xfb
         };
-        CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec2), "[json.exception.parse_error.113] parse error at byte 13: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0xB4", json::parse_error&);
+        CHECK_THROWS_WITH_AS(_ = json::from_cbor(vec2), "[json.exception.parse_error.113] parse error at byte 13: syntax error while parsing CBOR object key: only string keys are supported, but found a map; last byte: 0xB4", json::parse_error&);
     }
 
     SECTION("issue #452 - Heap-buffer-overflow (OSS-Fuzz issue 585)")

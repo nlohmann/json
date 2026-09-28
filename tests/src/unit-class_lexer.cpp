@@ -666,7 +666,7 @@ TEST_CASE("parse_float_fast declines what it cannot convert exactly")
     // always safe: the caller then falls back to a slower, exact conversion.
     const auto fast = [](const std::string & s, double & out)
     {
-        return nlohmann::detail::parse_float_fast(s.data(), s.data() + s.size(), '.', out);
+        return nlohmann::detail::parse_float_fast(s.data(), s.data() + s.size(), out);
     };
     double out = 0;
 
