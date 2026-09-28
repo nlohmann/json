@@ -1292,7 +1292,7 @@ TEST_CASE("json_view large objects")
         {
             text += (i != 0 ? ",\"" : "\"") + std::string(i % 23, 'k') + std::to_string(i) + (i % 7 == 0 ? "\\n" : "") + "\":" + std::to_string(i);
         }
-        text += ",\"\":\"empty key\",\"k1\":\"a duplicate of an earlier key\"}";
+        text += R"(,"":"empty key","k1":"a duplicate of an earlier key"})";
         const json_document d = json_document::parse(text);
         const json_view v = d.root();
         const json j = json::parse(text);
@@ -1320,7 +1320,7 @@ TEST_CASE("json_view large objects")
         {
             inner += (i != 0 ? ",\"m" : "\"m") + std::to_string(i) + "\":" + std::to_string(i);
         }
-        inner += "}";
+        inner += '}';
         const std::string text = "[" + inner + ",{\"x\":" + inner + "}," + inner + "]";
         json_document d = json_document::parse(text);
         CHECK(d.root()[0]["m299"].get<int>() == 299);
