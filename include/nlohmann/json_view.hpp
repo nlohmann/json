@@ -396,7 +396,7 @@ class basic_json_document
         {
             return;
         }
-        using node = detail::view::node;
+        using detail::view::node;
         document_data& d = *m_data;
 
         // allocate everything first, so that an exception leaves the document
@@ -511,15 +511,16 @@ class basic_json_document
     }
 
     template<typename T>
-    void read_kind(T&& s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::borrow_range> /*unused*/)
+    void read_kind(const T& s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::borrow_range> /*unused*/)
     {
         // std::basic_string guarantees data()[size()] == 0: use it as sentinel
-        build(s.size() == 0 ? "" : reinterpret_cast<const char*>(s.data()), static_cast<std::size_t>(s.size()), ae, c, tc, false, // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-              detail::view::is_std_string<typename std::decay<T>::type>::value || s.size() == 0);
+        const auto size = static_cast<std::size_t>(s.size());
+        build(size == 0 ? "" : reinterpret_cast<const char*>(s.data()), size, ae, c, tc, false, // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+              detail::view::is_std_string<T>::value || size == 0);
     }
 
     template<typename T>
-    void read_kind(T&& s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::copy_range> /*unused*/)
+    void read_kind(const T& s, bool ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::copy_range> /*unused*/)
     {
         build_owned(std::string(reinterpret_cast<const char*>(s.data()), static_cast<std::size_t>(s.size())), ae, c, tc); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     }
@@ -561,9 +562,9 @@ class basic_json_document
     }
 
     template<typename T>
-    static std::string collect_impl(T&& s, std::true_type /*contiguous*/)
+    static std::string collect_impl(const T& s, std::true_type /*contiguous*/)
     {
-        return std::string(reinterpret_cast<const char*>(s.data()), static_cast<std::size_t>(s.size())); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        return {reinterpret_cast<const char*>(s.data()), static_cast<std::size_t>(s.size())}; // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     }
 
     template<typename T>
@@ -572,7 +573,7 @@ class basic_json_document
         return detail::view::collect_adapter(detail::input_adapter(std::forward<T>(s)));
     }
 
-    std::unique_ptr<document_data, document_data::deleter> m_data{};
+    std::unique_ptr<document_data, document_data::deleter> m_data{}; // NOLINT(readability-redundant-member-init)
 };
 
 /// a parsed JSON text for json

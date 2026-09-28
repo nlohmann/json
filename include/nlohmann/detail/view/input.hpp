@@ -48,6 +48,7 @@ struct classify_input
 #else
     static constexpr bool is_string_view = false;
 #endif
+    // NOLINTBEGIN(readability-avoid-nested-conditional-operator): a constant expression of C++11
     static constexpr input_kind value =
         std::is_array<R>::value ? input_kind::char_array
         : std::is_pointer<D>::value ? input_kind::c_string
@@ -55,6 +56,7 @@ struct classify_input
         : (is_bytes && (!is_rvalue || is_string_view)) ? input_kind::borrow_range
         : is_bytes ? input_kind::copy_range
         : input_kind::adapter;
+    // NOLINTEND(readability-avoid-nested-conditional-operator)
 };
 
 /// std::basic_string guarantees a NUL at data()[size()] (the parser's sentinel)
@@ -66,7 +68,7 @@ struct is_std_string<std::basic_string<char, Traits, Alloc>> : std::true_type {}
 
 /// drain a json input adapter (UTF-16/32 inputs arrive as UTF-8)
 template<typename Adapter>
-std::string collect_adapter(Adapter&& ia)
+std::string collect_adapter(Adapter ia)
 {
     std::string buf;
     for (;;)

@@ -62,7 +62,7 @@ std::string view_exception(const std::string& text, bool comments = false, bool 
 // a small deterministic generator of documents
 struct generator
 {
-    std::mt19937 rng{5295};
+    std::mt19937 rng{5295}; // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
 
     int r(int n)
     {
@@ -71,7 +71,7 @@ struct generator
 
     void str(std::string& o)
     {
-        static const char* const pieces[] = {"a", "Z", " ", "\\n", "\\\"", "\\u00e9", "\\ud83d\\ude00", "\xc3\xa9", "\xe3\x81\x82", "long text beyond the first sixteen bytes"};
+        static const char* const pieces[] = {"a", "Z", " ", "\\n", "\\\"", "\\u00e9", "\\ud83d\\ude00", "\xc3\xa9", "\xe3\x81\x82", "long text beyond the first sixteen bytes"}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         o += '"';
         for (int n = r(5); n > 0; --n)
         {
@@ -82,7 +82,7 @@ struct generator
 
     void value(std::string& o, int depth)
     {
-        static const char* const scalars[] = {"0", "-1", "123456789012", "18446744073709551615", "18446744073709551616", "-9223372036854775809",
+        static const char* const scalars[] = {"0", "-1", "123456789012", "18446744073709551615", "18446744073709551616", "-9223372036854775809", // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
                                               "1.5", "-2.25e-3", "1E2", "0.1", "true", "false", "null"
                                              };
         const int k = depth > 5 ? 2 + r(4) : r(6);
@@ -120,7 +120,7 @@ TEST_CASE("json_view")
     {
         for (const char* text :
                 {"null", "true", "false", "0", "-1", "18446744073709551615", "-9223372036854775808", "18446744073709551616", "1.5",
-                 "\"\"", "\"text\"", "[]", "[1,2,3]", "{}", "{\"a\":1,\"b\":2}"
+                 "\"\"", "\"text\"", "[]", "[1,2,3]", "{}", "{\"a\":1,\"b\":2}" // NOLINT(modernize-raw-string-literal)
                 })
         {
             CAPTURE(text);
@@ -187,7 +187,7 @@ TEST_CASE("json_view")
         for (const char* text :
                 {
                     "", " ", "[", "]", "{", "[1,]", "{\"a\":1,}", "[1 2]", "{\"a\" 1}", "{1:2}", "tru", "nul", "fals", "truex", "-", "01", "1.", ".5", "1e",
-                    "\"", "\"abc", "\"\\x\"", "\"\\u12\"", "\"\\ud800\"", "\"\\udc00\"", "\"\x01\"", "\"\xff\"", "\"\xc3\"", "[1]x", "/", "/*", "[\n  1,\n  x\n]",
+                    "\"", "\"abc", "\"\\x\"", "\"\\u12\"", "\"\\ud800\"", "\"\\udc00\"", "\"\x01\"", "\"\xff\"", "\"\xc3\"", "[1]x", "/", "/*", "[\n  1,\n  x\n]", // NOLINT(modernize-raw-string-literal)
                     "1e400", "-1e400", "[1.7976931348623159e308]", "{\"a\":\n{\"b\": [1, 2,\n 3 x]}}"
                 })
         {
@@ -355,7 +355,7 @@ TEST_CASE("json_view")
         {
             big += (i != 0 ? ",\"" : "\"") + std::to_string(i) + "\"";
         }
-        big += "]";
+        big += ']';
         json_document d = json_document::parse(big);
         CHECK(d.node_count() == 10001);
         const std::size_t before = d.memory_usage();
@@ -373,9 +373,9 @@ TEST_CASE("json_view")
         {
             escaped += (i != 0 ? ",\"a\\n" : "\"a\\n") + std::to_string(i) + "\"";
         }
-        escaped += "]";
+        escaped += ']';
         json_document reused = json_document::parse(escaped);
-        const std::string smaller = "[\"x\\ty\", [true, \"\\u00e4\"]]";
+        const std::string smaller = "[\"x\\ty\", [true, \"\\u00e4\"]]"; // NOLINT(modernize-raw-string-literal)
         reused.read(smaller);
         const std::size_t grown = reused.memory_usage();
         reused.shrink_to_fit();
@@ -383,7 +383,7 @@ TEST_CASE("json_view")
         CHECK(reused.root().materialize() == json::parse(smaller));
 
         // a small document stays in the storage block of the header
-        json_document small = json_document::parse("[1,[2,3],{\"a\":\"b\\n\"}]");
+        json_document small = json_document::parse("[1,[2,3],{\"a\":\"b\\n\"}]"); // NOLINT(modernize-raw-string-literal)
         small.shrink_to_fit();
         CHECK(small.root().materialize() == json::parse("[1,[2,3],{\"a\":\"b\\n\"}]"));
     }
