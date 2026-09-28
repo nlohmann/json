@@ -42,6 +42,7 @@ all:
 	@echo "fuzz_testing_bon8 - prepare fuzz testing of the BON8 parser"
 	@echo "fuzz_testing_bson - prepare fuzz testing of the BSON parser"
 	@echo "fuzz_testing_cbor - prepare fuzz testing of the CBOR parser"
+	@echo "fuzz_testing_json_view - prepare fuzz testing of the json_document/json_view parser"
 	@echo "fuzz_testing_msgpack - prepare fuzz testing of the MessagePack parser"
 	@echo "fuzz_testing_ubjson - prepare fuzz testing of the UBJSON parser"
 	@echo "pretty - beautify code with Artistic Style"
@@ -97,6 +98,14 @@ fuzz_testing_cbor:
 	$(MAKE) parse_cbor_fuzzer -C tests CXX=afl-clang++
 	mv tests/parse_cbor_fuzzer fuzz-testing/fuzzer
 	find tests/data -size -5k -name *.cbor | xargs -I{} cp "{}" fuzz-testing/testcases
+	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
+
+fuzz_testing_json_view:
+	rm -fr fuzz-testing
+	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
+	$(MAKE) parse_json_view_fuzzer -C tests CXX=afl-clang++
+	mv tests/parse_json_view_fuzzer fuzz-testing/fuzzer
+	find tests/data/json_tests -size -5k -name *json | xargs -I{} cp "{}" fuzz-testing/testcases
 	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
 
 fuzz_testing_msgpack:
