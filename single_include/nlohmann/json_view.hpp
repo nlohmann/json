@@ -2610,12 +2610,10 @@ class output_buffer
 {
   public:
     output_buffer(StringType& out, std::size_t estimate)
-        : m_out(out)
-    {
-        m_out.resize((std::max)(estimate, static_cast<std::size_t>(64)));
-        m_pos = &m_out[0];
-        m_end = m_pos + m_out.size();
-    }
+        : m_out(sized(out, estimate))
+        , m_pos(&m_out[0])
+        , m_end(m_pos + m_out.size())
+    {}
 
     void finish()
     {
@@ -2651,17 +2649,23 @@ class output_buffer
     }
 
   private:
+    static StringType& sized(StringType& out, std::size_t estimate)
+    {
+        out.resize((std::max)(estimate, static_cast<std::size_t>(64)));
+        return out;
+    }
+
     NLOHMANN_VIEW_NOINLINE void grow(std::size_t n)
     {
-        const std::size_t used = static_cast<std::size_t>(m_pos - m_out.data());
+        const auto used = static_cast<std::size_t>(m_pos - m_out.data());
         m_out.resize((std::max)(m_out.size() * 2, used + n + 256));
         m_pos = &m_out[0] + used;
         m_end = &m_out[0] + m_out.size();
     }
 
     StringType& m_out;
-    char* m_pos = nullptr;
-    char* m_end = nullptr;
+    char* m_pos;
+    char* m_end;
 };
 
 /// how the view's dump() writes a value
@@ -2891,8 +2895,15 @@ class view_serializer
         std::size_t i = 0;
         while (i < n)
         {
-            const std::size_t run = EnsureAscii ? (is_ascii_copyable(s[i]) ? find_ascii_copyable_run(s + i, n - i) : 0)
-                                    : string_bulk_run(s + i, n - i);
+            std::size_t run = 0;
+            if (!EnsureAscii)
+            {
+                run = string_bulk_run(s + i, n - i);
+            }
+            else if (is_ascii_copyable(s[i]))
+            {
+                run = find_ascii_copyable_run(s + i, n - i);
+            }
             if (run != 0)
             {
                 m_out.put(reinterpret_cast<const char*>(s + i), run); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -2903,7 +2914,11 @@ class view_serializer
             std::size_t len = 1;
             if (codepoint >= 0xC0)
             {
-                len = codepoint >= 0xF0 ? 4 : (codepoint >= 0xE0 ? 3 : 2);
+                len = 2;
+                if (codepoint >= 0xE0)
+                {
+                    len = codepoint >= 0xF0 ? 4 : 3;
+                }
                 codepoint &= 0xFFu >> (len + 1);
                 for (std::size_t k = 1; k < len; ++k)
                 {

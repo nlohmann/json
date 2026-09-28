@@ -1141,7 +1141,7 @@ TEST_CASE("json_view dump")
         CHECK(d.root().dump(-1, ' ', false, json_view::number_format::source) == "[1.50,1E2,-0,-0.0,123456789012345678901234567890,18446744073709551615,-9223372036854775808,0.1,1e-7,5e-324]");
 
         // random doubles, written as parse() and dump() would
-        std::mt19937_64 rng(1170);
+        std::mt19937_64 rng(1170); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
         std::string many = "[";
         for (int i = 0; i < 5000; ++i)
         {
@@ -1153,7 +1153,7 @@ TEST_CASE("json_view dump")
                 many += (many.size() > 1 ? "," : "") + json(x).dump();
             }
         }
-        many += "]";
+        many += ']';
         CHECK(json_document::parse(many).root().dump() == json::parse(many).dump());
 
         using json_float = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
