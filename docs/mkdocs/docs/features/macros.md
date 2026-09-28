@@ -83,6 +83,15 @@ When defined, default parse and serialize functions for enums are excluded and h
 
 See [full documentation of `JSON_DISABLE_ENUM_SERIALIZATION`](../api/macros/json_disable_enum_serialization.md).
 
+## `JSON_NO_AUTOMATIC_UDLS`
+
+When defined, `<nlohmann/json.hpp>` does not include `<nlohmann/json_literals.hpp>` with the user-defined string literals
+`operator""_json` and `operator""_json_pointer`. This reduces the compile time of translation units that do not use
+them, because the literals instantiate the parser in every translation unit that includes them. Include
+`<nlohmann/json_literals.hpp>` where the literals are needed.
+
+See [full documentation of `JSON_NO_AUTOMATIC_UDLS`](../api/macros/json_no_automatic_udls.md).
+
 ## `JSON_NO_IO`
 
 When defined, headers `<cstdio>`, `<ios>`, `<iosfwd>`, `<istream>`, and `<ostream>` are not included and parse functions
@@ -98,14 +107,6 @@ always avoid the call stack rather than descending into a bounded number of leve
 same values and the same comparisons.
 
 See [full documentation of `JSON_NO_THREAD_LOCAL`](../api/macros/json_no_thread_local.md).
-
-## `JSON_NO_UDLS`
-
-When defined, the user-defined string literals `operator""_json` and `operator""_json_pointer` are left out entirely. This
-reduces the compile time of translation units that do not use them, because the literals would otherwise instantiate
-the parser in every translation unit that includes the library.
-
-See [full documentation of `JSON_NO_UDLS`](../api/macros/json_no_udls.md).
 
 ## `JSON_PRECISE_STREAM_POSITION`
 

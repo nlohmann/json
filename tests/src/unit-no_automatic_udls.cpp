@@ -6,10 +6,12 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
-// This translation unit checks JSON_NO_UDLS, which leaves out the user-defined
-// string literals operator""_json and operator""_json_pointer entirely (see
-// #5294), while the rest of the library keeps working.
-#define JSON_NO_UDLS 1
+// This translation unit checks JSON_NO_AUTOMATIC_UDLS, which keeps
+// <nlohmann/json.hpp> from including <nlohmann/json_literals.hpp> and thereby
+// leaves out the user-defined string literals operator""_json and
+// operator""_json_pointer (see #5294), and that including
+// <nlohmann/json_literals.hpp> afterwards brings them back.
+#define JSON_NO_AUTOMATIC_UDLS 1
 
 #include "doctest_compatibility.h"
 
@@ -23,7 +25,7 @@ using json = nlohmann::json;
 // argument-dependent lookup of a literal operator called by its function name
 // also searches the inline namespaces nlohmann::literals::json_literals.
 NLOHMANN_JSON_NAMESPACE_BEGIN
-struct no_udls_probe
+struct no_automatic_udls_probe
 {
     operator const char* () const // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
     {
@@ -52,7 +54,7 @@ template<typename T>
 using has_json_pointer_udl = nlohmann::detail::is_detected<json_pointer_udl_t, T>;
 } // namespace
 
-TEST_CASE("JSON_NO_UDLS")
+TEST_CASE("JSON_NO_AUTOMATIC_UDLS")
 {
     SECTION("literals are not declared")
     {
@@ -61,8 +63,8 @@ TEST_CASE("JSON_NO_UDLS")
         CHECK_FALSE(has_json_pointer_udl<const char*>::value);
 
         // nlohmann::literals::json_literals
-        CHECK_FALSE(has_json_udl<nlohmann::no_udls_probe>::value);
-        CHECK_FALSE(has_json_pointer_udl<nlohmann::no_udls_probe>::value);
+        CHECK_FALSE(has_json_udl<nlohmann::no_automatic_udls_probe>::value);
+        CHECK_FALSE(has_json_pointer_udl<nlohmann::no_automatic_udls_probe>::value);
     }
 
     SECTION("the rest of the library keeps working")
@@ -73,5 +75,23 @@ TEST_CASE("JSON_NO_UDLS")
         const json::json_pointer ptr("/foo/bar");
         CHECK(j.at(ptr) == 42);
         CHECK(j.contains(ptr));
+    }
+}
+
+// the literals can still be added where they are needed
+#include <nlohmann/json_literals.hpp>
+
+TEST_CASE("JSON_NO_AUTOMATIC_UDLS with <nlohmann/json_literals.hpp>")
+{
+    SECTION("global namespace")
+    {
+        CHECK("[1,2]"_json == json({1, 2}));
+        CHECK("/a/0"_json_pointer == json::json_pointer("/a/0"));
+    }
+
+    SECTION("nlohmann::literals::json_literals")
+    {
+        using namespace nlohmann::literals::json_literals; // NOLINT(google-build-using-namespace)
+        CHECK(R"({"a":[42]})"_json.at("/a/0"_json_pointer) == 42);
     }
 }
