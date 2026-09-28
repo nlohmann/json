@@ -1482,3 +1482,97 @@ TEST_CASE("float overflow and underflow in the parser")
         check_parse<float_json>("-7.006492321624086e-46", std::uint32_t{0x80000001u}, std::uint32_t{0x7F800000u});
     }
 }
+
+TEST_CASE("string scanning kernels")
+{
+    // the word-at-a-time kernels must stop exactly where a byte-by-byte scan
+    // stops, for any content, length, and alignment
+    const auto reference_special = [](const unsigned char* data, std::size_t n)
+    {
+        std::size_t i = 0;
+        while (i < n && !nlohmann::detail::is_string_special(data[i]))
+        {
+            ++i;
+        }
+        return i;
+    };
+    const auto reference_copyable = [](const unsigned char* data, std::size_t n)
+    {
+        std::size_t i = 0;
+        while (i < n && nlohmann::detail::is_ascii_copyable(data[i]))
+        {
+            ++i;
+        }
+        return i;
+    };
+    const auto reference_bulk_run = [](const unsigned char* data, std::size_t n)
+    {
+        std::size_t i = 0;
+        while (i < n)
+        {
+            if (data[i] < 0x80u)
+            {
+                if (nlohmann::detail::is_string_special(data[i]))
+                {
+                    break;
+                }
+                ++i;
+                continue;
+            }
+            const std::size_t seq = nlohmann::detail::validate_one_utf8(data + i, n - i);
+            if (seq == 0)
+            {
+                break;
+            }
+            i += seq;
+        }
+        return i;
+    };
+
+    // pieces: ordinary ASCII, stops, DEL, well-formed sequences of every
+    // length, and ill-formed or truncated ones
+    const std::vector<std::string> pieces =
+    {
+        "a", "Z", " ", "~", "0123456789", "\"", "\\", std::string(1, '\0'), "\n", "\x1F", "\x7F",
+        "\xC3\xA4", "\xE2\x82\xAC", "\xE6\x97\xA5\xE6\x9C\xAC", "\xF0\x9F\x98\x80", "\xED\x9F\xBF",
+        "\x80", "\xC0\x80", "\xC3", "\xE2\x82", "\xED\xA0\x80", "\xF4\x90\x80\x80", "\xFF",
+    };
+    std::uint64_t state = 5295;
+    const auto next = [&state]()
+    {
+        state ^= state << 13u;
+        state ^= state >> 7u;
+        state ^= state << 17u;
+        return state;
+    };
+    for (int round = 0; round < 100000; ++round)
+    {
+        // mostly ordinary text, so that runs span several words
+        std::string text(static_cast<std::size_t>(next() % 8), '.');
+        const auto count = static_cast<std::size_t>(next() % 12);
+        for (std::size_t k = 0; k < count; ++k)
+        {
+            const std::size_t p = (next() % 4 == 0) ? static_cast<std::size_t>(next() % pieces.size()) : 0;
+            text += pieces[p];
+            text += std::string(static_cast<std::size_t>(next() % 10), 'x');
+        }
+        const auto* data = reinterpret_cast<const unsigned char*>(text.data()); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        for (std::size_t offset = 0; offset < 3 && offset <= text.size(); ++offset)
+        {
+            const std::size_t n = text.size() - offset;
+            CAPTURE(text);
+            CAPTURE(offset);
+            CHECK(nlohmann::detail::find_string_special(data + offset, n) == reference_special(data + offset, n));
+            CHECK(nlohmann::detail::find_ascii_copyable_run(data + offset, n) == reference_copyable(data + offset, n));
+            CHECK(nlohmann::detail::scalar_string_bulk_run(data + offset, n) == reference_bulk_run(data + offset, n));
+        }
+    }
+
+    // the trailing-zero count, whichever implementation the compiler gets
+    for (int k = 0; k < 64; ++k)
+    {
+        const std::uint64_t bit = std::uint64_t{1} << k;
+        CHECK(nlohmann::detail::count_trailing_zeros(bit) == k);
+        CHECK(nlohmann::detail::count_trailing_zeros(bit | (bit << 1u) | 0x8000000000000000u) == k);
+    }
+}
