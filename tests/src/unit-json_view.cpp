@@ -14,8 +14,11 @@ using nlohmann::ordered_json;
 using nlohmann::json_document;
 using nlohmann::json_view;
 using nlohmann::ordered_json_document;
+using nlohmann::ordered_json_view;
 
+#include <algorithm>
 #include <cstdint>
+#include <iterator>
 #include <list>
 #include <map>
 #include <random>
@@ -407,7 +410,282 @@ TEST_CASE("json_view")
         const std::string text = R"(  {"key": "value", "escaped": "a\nb", "n": 42})";
         const json_document d = json_document::parse(text);
         CHECK(d.root().source_offset() == 2);
-        // (element access comes with a later change; the offsets of the
-        // string nodes are checked through materialize() above)
+        CHECK(d.root()["key"].source_offset() == text.find("value"));
+        CHECK(d.root()["escaped"].source_offset() == static_cast<std::size_t>(-1));
+        CHECK(d.root()["n"].source_offset() == text.find("42"));
+    }
+}
+
+namespace
+{
+// the exception a call throws, or "" if it throws none
+template<typename F>
+std::string exception_of(F f)
+{
+    try
+    {
+        f();
+    }
+    catch (const json::exception& e)
+    {
+        return e.what();
+    }
+    return "";
+}
+
+// compares a view with the ordered_json value materialize() gives for it:
+// types, sizes, elements and members (by index, key, and iteration), in
+// document order; duplicate keys are found as their first occurrence
+void check_access(const ordered_json_view& v, const ordered_json& j)
+{
+    REQUIRE(v.type() == j.type());
+    CHECK(std::string(v.type_name()) == j.type_name());
+    if (v.is_array())
+    {
+        REQUIRE(v.size() == j.size());
+        std::size_t i = 0;
+        for (const ordered_json_view e : v)
+        {
+            CHECK(v[i].materialize() == e.materialize());
+            CHECK(v.at(i).materialize() == e.materialize());
+            check_access(e, j[i]);
+            ++i;
+        }
+        CHECK(i == v.size());
+        CHECK(!v[v.size()]);
+        std::size_t index = 0;
+        for (const auto& item : v.items())
+        {
+            CHECK(item.key() == std::to_string(index));
+            CHECK(item.value().materialize() == j[index]);
+            ++index;
+        }
+        if (!v.empty())
+        {
+            CHECK(v.front().materialize() == j.front());
+            CHECK(v.back().materialize() == j.back());
+        }
+    }
+    else if (v.is_object())
+    {
+        std::vector<std::string> keys; // first occurrences, in order
+        std::size_t members = 0;
+        for (auto it = v.begin(); it != v.end(); ++it)
+        {
+            ++members;
+            const std::string key(it.key().data(), it.key().size());
+            CHECK(v.contains(key));
+            CHECK(v.count(key) == 1);
+            if (std::find(keys.begin(), keys.end(), key) != keys.end())
+            {
+                continue; // a duplicate: lookups find the first one
+            }
+            keys.push_back(key);
+            CHECK(v.find(key) == it);
+            CHECK(v[key].materialize() == it->materialize());
+            CHECK(v.at(key).materialize() == it.value().materialize());
+            CHECK(v[key.c_str()].materialize() == (*it).materialize());
+        }
+        CHECK(members == v.size());
+        REQUIRE(keys.size() == j.size());
+        std::size_t k = 0;
+        for (const auto& member : j.items())
+        {
+            CHECK(keys[k++] == member.key());
+        }
+        if (keys.size() == members)
+        {
+            // no duplicates: the values are those of the object
+            for (const auto& key : keys)
+            {
+                check_access(v[key], j[key]);
+            }
+            if (!v.empty())
+            {
+                CHECK(v.front().materialize() == j.front());
+                CHECK(v.back().materialize() == j.back());
+            }
+        }
+        CHECK(!v["not a key in the generated documents"]);
+        CHECK(v.find("not a key in the generated documents") == v.end());
+    }
+    else
+    {
+        // a primitive is a range of one element; null is empty
+        CHECK(static_cast<std::size_t>(std::distance(v.begin(), v.end())) == (v.is_null() ? 0u : 1u));
+        if (!v.is_null())
+        {
+            CHECK((*v.begin()).materialize() == j);
+            CHECK(v.front().materialize() == j);
+            CHECK(v.back().materialize() == j);
+        }
+    }
+}
+} // namespace
+
+TEST_CASE("json_view element access and iteration")
+{
+    SECTION("generated documents")
+    {
+        generator g;
+        for (int i = 0; i < 2000; ++i)
+        {
+            std::string text;
+            g.value(text, 0);
+            CAPTURE(text);
+            const ordered_json_document d = ordered_json_document::parse(text);
+            check_access(d.root(), ordered_json::parse(text));
+        }
+    }
+
+    SECTION("keys")
+    {
+        // keys of every length around the 2/4/8/16-byte loads, with escapes
+        std::string text = "{";
+        std::vector<std::string> keys = {"", "x"};
+        for (std::size_t n = 1; n <= 40; ++n)
+        {
+            keys.push_back(std::string(n, 'k'));
+            keys.push_back(std::string(n, 'k') + "x");
+            keys.push_back("x" + std::string(n, 'k'));
+        }
+        for (std::size_t i = 0; i < keys.size(); ++i)
+        {
+            text += (i != 0 ? ",\"" : "\"") + keys[i] + "\":" + std::to_string(i);
+        }
+        text += ",\"esc\\u0061ped\":\"escaped key\"}";
+        const json_document d = json_document::parse(text);
+        const json_view root = d.root();
+        for (std::size_t i = 0; i < keys.size(); ++i)
+        {
+            CAPTURE(keys[i]);
+            CHECK(root[keys[i]].materialize() == i);
+            CHECK(root.at(keys[i]).materialize() == i);
+            CHECK(root.find(keys[i]).key() == keys[i]);
+            CHECK(!root.contains(keys[i] + "y"));
+        }
+        CHECK(root["escaped"].materialize() == "escaped key");
+        CHECK(!root.contains("esc\\u0061ped"));
+#ifdef JSON_HAS_CPP_17
+        CHECK(root[std::string_view("kkk")].materialize() == root["kkk"].materialize());
+#endif
+    }
+
+    SECTION("duplicate keys: lookups find the first member, iteration all")
+    {
+        const json_document d = json_document::parse(R"({"a":1,"b":2,"a":3})");
+        const json_view v = d.root();
+        CHECK(v.size() == 3);
+        CHECK(v["a"].materialize() == 1);
+        CHECK(v.at("a").materialize() == 1);
+        CHECK(v.find("a") == v.begin());
+        CHECK(v.count("a") == 1);
+        std::string order;
+        for (auto it = v.begin(); it != v.end(); ++it)
+        {
+            order += std::string(it.key().data(), it.key().size()) + it->materialize().dump();
+        }
+        CHECK(order == "a1b2a3");
+        CHECK(v.back().materialize() == 3);
+        CHECK(v.materialize() == json::parse(R"({"a":1,"b":2,"a":3})")); // the last value, as parse()
+    }
+
+    SECTION("errors are those of const basic_json")
+    {
+        for (const char* text :
+                {"null", "true", "42", "-1", "1.5", "\"s\"", "[]", "[1,2]", "{}", "{\"a\":1}"
+                })
+        {
+            CAPTURE(text);
+            const json_document d = json_document::parse(text);
+            const json_view v = d.root();
+            const json j = v.materialize();
+            if (!j.is_object())
+            {
+                CHECK(exception_of([&] { static_cast<void>(v["a"]); }) == exception_of([&] { static_cast<void>(j["a"]); }));
+            }
+            if (!j.is_array())
+            {
+                CHECK(exception_of([&] { static_cast<void>(v[0]); }) == exception_of([&] { static_cast<void>(j[0]); }));
+            }
+            CHECK(exception_of([&] { static_cast<void>(v.at("a")); }) == exception_of([&] { static_cast<void>(j.at("a")); }));
+            CHECK(exception_of([&] { static_cast<void>(v.at("missing")); }) == exception_of([&] { static_cast<void>(j.at("missing")); }));
+            CHECK(exception_of([&] { static_cast<void>(v.at(0)); }) == exception_of([&] { static_cast<void>(j.at(0)); }));
+            CHECK(exception_of([&] { static_cast<void>(v.at(5)); }) == exception_of([&] { static_cast<void>(j.at(5)); }));
+            if (!(j.is_object() && j.empty())) // (key() of an end iterator)
+            {
+                CHECK(exception_of([&] { static_cast<void>(v.begin().key()); }) == exception_of([&] { static_cast<void>(j.begin().key()); }));
+            }
+            if (!j.empty() || j.is_null())
+            {
+                CHECK(exception_of([&] { static_cast<void>(v.front()); }) == exception_of([&] { static_cast<void>(j.front()); }));
+                CHECK(exception_of([&] { static_cast<void>(v.back()); }) == exception_of([&] { static_cast<void>(j.back()); }));
+            }
+            CHECK(v.contains("a") == j.contains("a"));
+            CHECK(v.count("a") == j.count("a"));
+            CHECK((v.find("a") == v.end()) == (j.find("a") == j.end()));
+        }
+
+        // where basic_json has undefined behavior, the view answers safely
+        const json_document d = json_document::parse(R"({"a":[]})");
+        CHECK(!d.root()["b"]);
+        CHECK(!d.root()["a"][0]);
+        CHECK_THROWS_WITH_AS(d.root()["a"].front(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
+        CHECK_THROWS_WITH_AS(d.root()["a"].back(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
+        const json_view invalid;
+        CHECK(invalid.begin() == invalid.end());
+        CHECK(std::string(invalid.type_name()) == "discarded");
+        CHECK_THROWS_WITH_AS(invalid["a"], "[json.exception.type_error.305] cannot use operator[] with a string argument with discarded", json::type_error&);
+    }
+
+    SECTION("iterators")
+    {
+        const json_document d = json_document::parse(R"({"x":[1,{"y":2}],"z":null})");
+        const json_view v = d.root();
+        json_view::iterator it = v.begin();
+        CHECK(it.is_object_iterator());
+        CHECK(it->is_array());
+        CHECK(it->size() == 2);
+        const json_view::iterator previous = it++;
+        CHECK(previous.key() == "x");
+        CHECK(it.key() == "z");
+        CHECK(it.value().is_null());
+        CHECK(++it == v.end());
+        CHECK(v.cbegin() == v.begin());
+        CHECK(v.cend() == v.end());
+        CHECK(!v["x"].begin().is_object_iterator());
+        CHECK(json_view::iterator() == json_view::iterator());
+        // standard algorithms
+        CHECK(std::count_if(v["x"].begin(), v["x"].end(), [](const json_view & e)
+        {
+            return e.is_object();
+        }) == 1);
+    }
+
+    SECTION("items")
+    {
+        const json_document d = json_document::parse(R"({"a":1,"b":[true,false]})");
+        std::string keys;
+        for (const auto& item : d.root().items())
+        {
+            keys += std::string(item.key().data(), item.key().size());
+            CHECK(item.value().materialize() == d.root()[item.key()].materialize());
+        }
+        CHECK(keys == "ab");
+        auto items = d.root()["b"].items();
+        auto first = items.begin();
+        CHECK((*first++).key() == "0");
+        CHECK((*first).key() == "1");
+        CHECK(++first == items.end());
+#ifdef JSON_HAS_CPP_17
+        std::string pairs;
+        for (const auto [key, value] : d.root().items())
+        {
+            pairs += std::string(key) + "=" + value.materialize().dump() + ";";
+        }
+        CHECK(pairs == "a=1;b=[true,false];");
+        static_assert(std::tuple_size<json_view::item>::value == 2, "");
+        static_assert(std::is_same<std::tuple_element<1, json_view::item>::type, json_view>::value, "");
+#endif
     }
 }
