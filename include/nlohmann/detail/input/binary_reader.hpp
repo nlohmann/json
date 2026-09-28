@@ -401,9 +401,13 @@ class binary_reader
     */
     bool skip_unsupported_bson_element(const char_int_type element_type, const std::size_t element_type_parse_position)
     {
-        std::array<char, 3> cr{{}};
-        static_cast<void>((std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(element_type))); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        const std::string cr_str{cr.data()};
+        // the type as two uppercase hexadecimal digits, without a format string
+        const auto type_byte = static_cast<unsigned int>(static_cast<unsigned char>(element_type));
+        const auto hex_digit = [](const unsigned int digit)
+        {
+            return static_cast<char>(digit < 10 ? '0' + digit : 'A' + (digit - 10));
+        };
+        const std::string cr_str{hex_digit(type_byte >> 4u), hex_digit(type_byte & 0x0Fu)};
         const auto error = parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr);
 
         // the number of bytes to skip, -1 if the value is read differently, or
