@@ -1,0 +1,22 @@
+{
+    "author": {
+        "familyName": null
+    },
+    "phoneNumber": "+01-123-456-7890",
+    "tags": [
+        "example"
+    ],
+    "title": "Hello!"
+}
+
+{
+    "author": {
+        "givenName": "John"
+    },
+    "content": "This will be unchanged",
+    "phoneNumber": "+01-123-456-7890",
+    "tags": [
+        "example"
+    ],
+    "title": "Hello!"
+}

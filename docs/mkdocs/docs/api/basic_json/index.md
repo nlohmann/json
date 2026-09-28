@@ -282,6 +282,7 @@ Access to the JSON value
 ### JSON Merge Patch functions
 
 - [**merge_patch**](merge_patch.md) - applies a JSON Merge Patch
+- [**merge_diff**](merge_diff.md) (_static_) - creates a diff as a JSON Merge Patch
 
 ## Static functions
 
