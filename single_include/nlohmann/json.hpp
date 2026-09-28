@@ -11919,30 +11919,42 @@ scan_number_done:
     */
     token_type recover_number()
     {
-        while (!token_buffer.empty() && (token_buffer.back() < '0' || token_buffer.back() > '9'))
+        // only size(), operator[], and resize() are used, which every string
+        // type the library supports provides
+        std::size_t length = token_buffer.size();
+        while (length != 0 && (token_buffer[length - 1] < '0' || token_buffer[length - 1] > '9'))
         {
-            token_buffer.pop_back();
+            --length;
         }
+        token_buffer.resize(length);
 
-        if (token_buffer.empty())
+        if (length == 0)
         {
             skip_to_delimiter();
             return token_type::uninitialized;
         }
 
-        if (decimal_point_position >= token_buffer.size())
+        if (decimal_point_position >= length)
         {
             decimal_point_position = std::string::npos;
         }
 
-        const std::size_t exponent = token_buffer.find_first_of("eE");
-        const std::size_t mantissa_end = (exponent == std::string::npos) ? token_buffer.size() : exponent;
+        std::size_t exponent = std::string::npos;
+        for (std::size_t i = 0; i < length; ++i)
+        {
+            if (token_buffer[i] == 'e' || token_buffer[i] == 'E')
+            {
+                exponent = i;
+                break;
+            }
+        }
+        const std::size_t mantissa_end = (exponent == std::string::npos) ? length : exponent;
         token_type number_type = token_type::value_unsigned;
         if (decimal_point_position != std::string::npos || exponent != std::string::npos)
         {
             number_type = token_type::value_float;
         }
-        else if (token_buffer.front() == '-')
+        else if (token_buffer[0] == '-')
         {
             number_type = token_type::value_integer;
         }
