@@ -782,6 +782,24 @@ The dynamic type of the object cannot be represented in the requested serializat
 
     Encapsulate the JSON value in an object. That is, instead of serializing `#!json true`, serialize `#!json {"value": true}`
 
+### json.exception.type_error.319
+
+[`basic_json_document::set`](../api/basic_json_document/set.md) and
+[`basic_json_document::push_back`](../api/basic_json_document/push_back.md) can store any `basic_json` value except
+a binary one: a `json_document` has no representation for [binary values](../features/binary_values.md), which only
+ever arise from parsing a binary format or from an explicit [`json::binary`](../api/basic_json/binary.md) value, not
+from JSON text.
+
+!!! failure "Example message"
+
+    ```
+    [json.exception.type_error.319] cannot store a binary value in a json_document
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0, together with editable [`json_document`s](../features/json_view.md).
+
 ## Out of range
 
 This exception is thrown in case a library function is called on an input parameter that exceeds the expected range, for instance, in the case of array indices or nonexisting object keys.
@@ -1006,12 +1024,18 @@ MessagePack's ext type and BSON's binary subtype are each stored in a single byt
 
 [`basic_json_document::parse()`](../api/basic_json_document/parse.md) and the other parsing functions of
 [`basic_json_document`](../api/basic_json_document/index.md) index a value's position in the source text in 32 bits,
-so they do not support an input of 4 GiB or more.
+so they do not support an input of 4 GiB or more. The same 32-bit limit applies to an **editable** document's own
+storage: [`set`](../api/basic_json_document/set.md) and [`push_back`](../api/basic_json_document/push_back.md) throw
+this exception once the strings and number tokens written by edits reach 4 GiB in total, or once more than
+4294967295 arrays/objects have had an element set or appended to them.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     [json.exception.out_of_range.416] input of 4 GiB or more is not supported by json_document
+    ```
+    ```
+    [json.exception.out_of_range.416] edits of 4 GiB or more are not supported by json_document
     ```
 
 !!! note

@@ -239,8 +239,10 @@ nav:
           - 'owns_source': api/basic_json_document/owns_source.md
           - 'parse': api/basic_json_document/parse.md
           - 'parse_copy': api/basic_json_document/parse_copy.md
+          - 'push_back': api/basic_json_document/push_back.md
           - 'read': api/basic_json_document/read.md
           - 'root': api/basic_json_document/root.md
+          - 'set': api/basic_json_document/set.md
           - 'shrink_to_fit': api/basic_json_document/shrink_to_fit.md
           - 'source': api/basic_json_document/source.md
       - basic_json_view:
@@ -301,6 +303,8 @@ nav:
           - 'to_json': api/adl_serializer/to_json.md
       - 'json': api/json.md
       - 'json_document': api/json_document.md
+      - 'json_editable_document': api/json_editable_document.md
+      - 'json_editable_view': api/json_editable_view.md
       - json_pointer:
           - 'Overview': api/json_pointer/index.md
           - '(Constructor)': api/json_pointer/json_pointer.md
@@ -341,6 +345,8 @@ nav:
       - 'operator""_json_pointer': api/operator_literal_json_pointer.md
       - 'ordered_json': api/ordered_json.md
       - 'ordered_json_document': api/ordered_json_document.md
+      - 'ordered_json_editable_document': api/ordered_json_editable_document.md
+      - 'ordered_json_editable_view': api/ordered_json_editable_view.md
       - 'ordered_json_view': api/ordered_json_view.md
       - 'ordered_map': api/ordered_map.md
       - macros:
