@@ -122,11 +122,14 @@ TEST_CASE("maps with enum keys")
 
     SECTION("objects are only read for enum keys")
     {
+        // built rather than parsed, so that the messages do not gain a byte
+        // range with JSON_DIAGNOSTIC_POSITIONS
+        const json j = {{"1", 2}};
         int_map im;
         int_umap ium;
-        CHECK_THROWS_WITH_AS(json::parse(R"({"1":2})").get_to(im),
+        CHECK_THROWS_WITH_AS(j.get_to(im),
                              "[json.exception.type_error.302] type must be array, but is object", json::type_error&);
-        CHECK_THROWS_WITH_AS(json::parse(R"({"1":2})").get_to(ium),
+        CHECK_THROWS_WITH_AS(j.get_to(ium),
                              "[json.exception.type_error.302] type must be array, but is object", json::type_error&);
     }
 
