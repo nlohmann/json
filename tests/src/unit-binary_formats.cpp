@@ -230,15 +230,78 @@ TEST_CASE("Binary Formats" * doctest::skip())
     }
 }
 
+namespace
+{
+// the binary formats as function pointers for "Binary formats with narrow number types";
+// named functions rather than lambdas, because clang 3.5 cannot convert a lambda
+// to a function pointer in the braced initializer of the format table
+using narrow_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int32_t, std::uint32_t, float>;
+using bytes = std::vector<std::uint8_t>;
+
+bytes encode_cbor(const json& j)
+{
+    return json::to_cbor(j);
+}
+narrow_json decode_cbor(const bytes& v, bool allow_exceptions)
+{
+    return narrow_json::from_cbor(v, true, allow_exceptions);
+}
+
+bytes encode_msgpack(const json& j)
+{
+    return json::to_msgpack(j);
+}
+narrow_json decode_msgpack(const bytes& v, bool allow_exceptions)
+{
+    return narrow_json::from_msgpack(v, true, allow_exceptions);
+}
+
+bytes encode_ubjson(const json& j)
+{
+    return json::to_ubjson(j);
+}
+narrow_json decode_ubjson(const bytes& v, bool allow_exceptions)
+{
+    return narrow_json::from_ubjson(v, true, allow_exceptions);
+}
+
+bytes encode_bjdata(const json& j)
+{
+    return json::to_bjdata(j);
+}
+narrow_json decode_bjdata(const bytes& v, bool allow_exceptions)
+{
+    return narrow_json::from_bjdata(v, true, allow_exceptions);
+}
+
+// BSON can only store numbers as object members
+bytes encode_bson(const json& j)
+{
+    return json::to_bson(json{{"a", j}});
+}
+narrow_json decode_bson(const bytes& v, bool allow_exceptions)
+{
+    const auto result = narrow_json::from_bson(v, true, allow_exceptions);
+    return result.is_discarded() ? result : result.at("a");
+}
+
+bytes encode_bon8(const json& j)
+{
+    return json::to_bon8(j);
+}
+narrow_json decode_bon8(const bytes& v, bool allow_exceptions)
+{
+    return narrow_json::from_bon8(v, true, allow_exceptions);
+}
+
+} // namespace
+
 TEST_CASE("Binary formats with narrow number types")
 {
     // Numbers that do not fit the number types are handled like the lexer
     // handles them in JSON text: an integer that fits neither integer type is
     // stored as a floating-point number, and a finite floating-point number
     // that overflows number_float_t is rejected with out_of_range.406.
-    using narrow_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int32_t, std::uint32_t, float>;
-    using bytes = std::vector<std::uint8_t>;
-
     struct binary_format
     {
         const char* name;
@@ -248,50 +311,12 @@ TEST_CASE("Binary formats with narrow number types")
 
     const std::vector<binary_format> formats =
     {
-        {
-            "CBOR", [](const json & j) { return json::to_cbor(j); },
-            [](const bytes & v, bool allow_exceptions)
-            {
-                return narrow_json::from_cbor(v, true, allow_exceptions);
-            }
-        },
-        {
-            "MessagePack", [](const json & j) { return json::to_msgpack(j); },
-            [](const bytes & v, bool allow_exceptions)
-            {
-                return narrow_json::from_msgpack(v, true, allow_exceptions);
-            }
-        },
-        {
-            "UBJSON", [](const json & j) { return json::to_ubjson(j); },
-            [](const bytes & v, bool allow_exceptions)
-            {
-                return narrow_json::from_ubjson(v, true, allow_exceptions);
-            }
-        },
-        {
-            "BJData", [](const json & j) { return json::to_bjdata(j); },
-            [](const bytes & v, bool allow_exceptions)
-            {
-                return narrow_json::from_bjdata(v, true, allow_exceptions);
-            }
-        },
-        {
-            // BSON can only store numbers as object members
-            "BSON", [](const json & j) { return json::to_bson(json{{"a", j}}); },
-            [](const bytes & v, bool allow_exceptions)
-            {
-                const auto result = narrow_json::from_bson(v, true, allow_exceptions);
-                return result.is_discarded() ? result : result.at("a");
-            }
-        },
-        {
-            "BON8", [](const json & j) { return json::to_bon8(j); },
-            [](const bytes & v, bool allow_exceptions)
-            {
-                return narrow_json::from_bon8(v, true, allow_exceptions);
-            }
-        },
+        {"CBOR", encode_cbor, decode_cbor},
+        {"MessagePack", encode_msgpack, decode_msgpack},
+        {"UBJSON", encode_ubjson, decode_ubjson},
+        {"BJData", encode_bjdata, decode_bjdata},
+        {"BSON", encode_bson, decode_bson},
+        {"BON8", encode_bon8, decode_bon8},
     };
 
     for (const auto& format : formats)
@@ -317,10 +342,10 @@ TEST_CASE("Binary formats with narrow number types")
             CHECK(roundtrip(json(10000000000000000000u)).is_number_float());
             CHECK(roundtrip(json(10000000000000000000u)).get<float>() == 10000000000000000000.0f);
         }
-        CHECK(roundtrip(json(-3000000000)).is_number_float());
-        CHECK(roundtrip(json(-3000000000)).get<float>() == -3000000000.0f);
-        CHECK(roundtrip(json(-5000000000)).is_number_float());
-        CHECK(roundtrip(json(-5000000000)).get<float>() == -5000000000.0f);
+        CHECK(roundtrip(json(-3000000000LL)).is_number_float());
+        CHECK(roundtrip(json(-3000000000LL)).get<float>() == -3000000000.0f);
+        CHECK(roundtrip(json(-5000000000LL)).is_number_float());
+        CHECK(roundtrip(json(-5000000000LL)).get<float>() == -5000000000.0f);
 
         // floating-point numbers that fit
         CHECK(roundtrip(json(1.5)).get<float>() == 1.5f);
