@@ -69,6 +69,7 @@ For example, the following makes a 3.x release behave like version 4.0 with resp
 ```cpp
 #define JSON_USE_IMPLICIT_CONVERSIONS 0
 #define JSON_USE_GLOBAL_UDLS 0
+#define JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON 0
 #define JSON_BRACE_INIT_COPY_SEMANTICS 1
 #define JSON_PRECISE_STREAM_POSITION 1
 #define JSON_STRICT_NUL_HANDLING 1
