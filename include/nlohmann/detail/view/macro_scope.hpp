@@ -42,7 +42,9 @@
     #define NLOHMANN_VIEW_THROW(exception) throw exception
 #else
     #include <cstdlib>
-    #define NLOHMANN_VIEW_THROW(exception) std::abort()
+    // (the exception is built first, so that the arguments of the throwing
+    // helpers count as used; the program ends anyway)
+    #define NLOHMANN_VIEW_THROW(exception) (static_cast<void>(exception), std::abort())
 #endif
 #if defined(JSON_THROW_USER)
     #undef NLOHMANN_VIEW_THROW
