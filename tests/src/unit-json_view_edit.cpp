@@ -299,14 +299,14 @@ TEST_CASE("json_view edits: differential")
                 }
                 else if (op == 8 && target.is_array()) // insert
                 {
-                    const std::size_t i = static_cast<std::size_t>(r(static_cast<int>(target.size()) + 1));
+                    const auto i = static_cast<std::size_t>(r(static_cast<int>(target.size()) + 1));
                     const ordered_json v = random_value(2);
                     d.insert(tv, i, v);
                     j[p].insert(j[p].begin() + static_cast<std::ptrdiff_t>(i), v);
                 }
                 else if (op == 9 && target.is_array() && !target.empty()) // erase an element
                 {
-                    const std::size_t i = static_cast<std::size_t>(r(static_cast<int>(target.size())));
+                    const auto i = static_cast<std::size_t>(r(static_cast<int>(target.size())));
                     if (r(2) == 0)
                     {
                         d.erase(tv, i);
