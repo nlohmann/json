@@ -1401,14 +1401,12 @@ class binary_reader
     into the same string.
 
     @param[out] result  string the bytes are appended to
-    @param[in] whole_string  whether the chunk is a string of its own rather
-                             than a chunk of an indefinite-length string
 
     @return whether string creation completed
 
     @pre @a current is not EOF
     */
-    bool get_cbor_string_chunk(string_t& result, const bool whole_string)
+    bool get_cbor_string_chunk(string_t& result)
     {
         switch (current)
         {
@@ -1468,15 +1466,8 @@ class binary_reader
             default:
             {
                 auto last_token = get_token_string();
-                // a string value begins with one of the bytes above, so only an
-                // object key can begin with another one; if it begins an item,
-                // the member is skipped when recovering (see skip_member)
-                if (report_error_repairable_if(whole_string && is_cbor_item_head(current), chars_read, last_token, parse_error::create(113, chars_read,
-                                               exception_message(input_format_t::cbor, concat("expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x", last_token), "string"), nullptr)))
-                {
-                    skip_requested = true;
-                }
-                return false;
+                return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                    exception_message(input_format_t::cbor, concat("expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x", last_token), "string"), nullptr));
             }
         }
     }
@@ -1528,7 +1519,7 @@ class binary_reader
                 continue;
             }
 
-            if (JSON_HEDLEY_UNLIKELY(!get_cbor_string_chunk(result, open == 0)))
+            if (JSON_HEDLEY_UNLIKELY(!get_cbor_string_chunk(result)))
             {
                 return false;
             }
@@ -1540,6 +1531,87 @@ class binary_reader
 
             get();
         }
+    }
+
+    /*!
+    @brief reads a CBOR object key
+
+    RFC 8949 allows any data item as a map key, but only strings have a
+    counterpart in JSON. A key of any other type is rejected with a message
+    naming that type, rather than the one @ref get_cbor_string gives for a
+    malformed string. When recovering, a key that is a complete item is
+    skipped with its value (see @ref skip_member).
+
+    @param[out] result  created key
+
+    @return whether key creation completed
+    */
+    bool get_cbor_object_key(string_t& result)
+    {
+        // EOF and major type 3 (text string) are left to get_cbor_string
+        if (current == char_traits<char_type>::eof() || (static_cast<unsigned int>(current) & 0xE0u) == 0x60u)
+        {
+            return get_cbor_string(result);
+        }
+
+        const char* found = nullptr;
+        switch (static_cast<unsigned int>(current) >> 5u)
+        {
+            case 0:
+                found = "an unsigned integer";
+                break;
+            case 1:
+                found = "a negative integer";
+                break;
+            case 2:
+                found = "a byte string";
+                break;
+            case 4:
+                found = "an array";
+                break;
+            case 5:
+                found = "a map";
+                break;
+            case 6:
+                found = "a tag";
+                break;
+            default: // major type 7
+                switch (current)
+                {
+                    case 0xF4:
+                    case 0xF5:
+                        found = "a boolean";
+                        break;
+                    case 0xF6:
+                        found = "null";
+                        break;
+                    case 0xF7:
+                        found = "undefined";
+                        break;
+                    case 0xF9:
+                    case 0xFA:
+                    case 0xFB:
+                        found = "a floating-point number";
+                        break;
+                    case 0xFF:
+                        found = "a break stop code";
+                        break;
+                    default:
+                        found = "a simple value";
+                        break;
+                }
+                break;
+        }
+
+        // a break stop code or a reserved byte begins no item that could be
+        // skipped
+        auto last_token = get_token_string();
+        if (report_error_repairable_if(is_cbor_item_head(current), chars_read, last_token, parse_error::create(113, chars_read,
+                                       exception_message(input_format_t::cbor, concat("only string keys are supported, but found ", found, "; last byte: 0x", last_token), "object key"), nullptr)))
+        {
+            skip_requested = true;
+        }
+        return false;
     }
 
     /*!
@@ -1786,7 +1858,7 @@ class binary_reader
                 if (top.is_object)
                 {
                     key.clear();
-                    if (JSON_HEDLEY_UNLIKELY(!get_cbor_string(key)))
+                    if (JSON_HEDLEY_UNLIKELY(!get_cbor_object_key(key)))
                     {
                         if (!skip_member(std::integral_constant<bool, AllowRecovery> {}))
                         {
@@ -2420,18 +2492,107 @@ class binary_reader
             default:
             {
                 auto last_token = get_token_string();
-                // a string value begins with one of the bytes above, so only an
-                // object key can begin with another one; unless it is the
-                // unused byte 0xC1, it begins an item, and the member is
-                // skipped when recovering (see skip_member)
-                if (report_error_repairable_if(current != 0xC1, chars_read, last_token, parse_error::create(113, chars_read,
-                                               exception_message(input_format_t::msgpack, concat("expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0x", last_token), "string"), nullptr)))
-                {
-                    skip_requested = true;
-                }
-                return false;
+                return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                    exception_message(input_format_t::msgpack, concat("expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0x", last_token), "string"), nullptr));
             }
         }
+    }
+
+    /*!
+    @brief reads a MessagePack object key
+
+    The MessagePack specification allows any type as a map key, but only
+    strings have a counterpart in JSON. A key of any other type is rejected
+    with a message naming that type, rather than the one @ref
+    get_msgpack_string gives for a malformed string. When recovering, the key
+    is skipped with its value (see @ref skip_member).
+
+    @param[out] result  created key
+
+    @return whether key creation completed
+    */
+    bool get_msgpack_object_key(string_t& result)
+    {
+        const char* found = nullptr;
+        switch (current)
+        {
+            case 0xC0:
+                found = "nil";
+                break;
+            case 0xC2:
+            case 0xC3:
+                found = "a boolean";
+                break;
+            case 0xCA:
+            case 0xCB:
+                found = "a float";
+                break;
+            case 0xC4:
+            case 0xC5:
+            case 0xC6:
+                found = "a bin";
+                break;
+            case 0xC7:
+            case 0xC8:
+            case 0xC9:
+            case 0xD4:
+            case 0xD5:
+            case 0xD6:
+            case 0xD7:
+            case 0xD8:
+                found = "an ext";
+                break;
+            case 0xCC:
+            case 0xCD:
+            case 0xCE:
+            case 0xCF:
+            case 0xD0:
+            case 0xD1:
+            case 0xD2:
+            case 0xD3:
+                found = "an integer";
+                break;
+            case 0xDC:
+            case 0xDD:
+                found = "an array";
+                break;
+            case 0xDE:
+            case 0xDF:
+                found = "a map";
+                break;
+            default:
+                // fixint, fixmap, and fixarray; strings, EOF, and the unused
+                // byte 0xC1 are left to get_msgpack_string
+                if (current == char_traits<char_type>::eof())
+                {
+                    return get_msgpack_string(result);
+                }
+                if (current <= 0x7F || current >= 0xE0)
+                {
+                    found = "an integer";
+                }
+                else if (current <= 0x8F)
+                {
+                    found = "a map";
+                }
+                else if (current <= 0x9F)
+                {
+                    found = "an array";
+                }
+                else
+                {
+                    return get_msgpack_string(result);
+                }
+                break;
+        }
+
+        auto last_token = get_token_string();
+        if (report_repairable_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                    exception_message(input_format_t::msgpack, concat("only string keys are supported, but found ", found, "; last byte: 0x", last_token), "object key"), nullptr)))
+        {
+            skip_requested = true;
+        }
+        return false;
     }
 
     /*!
@@ -2596,7 +2757,7 @@ class binary_reader
                 {
                     get();
                     key.clear();
-                    if (JSON_HEDLEY_UNLIKELY(!get_msgpack_string(key)))
+                    if (JSON_HEDLEY_UNLIKELY(!get_msgpack_object_key(key)))
                     {
                         if (!skip_member(std::integral_constant<bool, AllowRecovery> {}))
                         {

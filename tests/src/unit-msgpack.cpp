@@ -1551,8 +1551,67 @@ TEST_CASE("MessagePack")
         SECTION("invalid string in map")
         {
             json _;
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack string: expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0xFF", json::parse_error&);
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack object key: only string keys are supported, but found an integer; last byte: 0xFF", json::parse_error&);
             CHECK(json::from_msgpack(std::vector<uint8_t>({0x81, 0xff, 0x01}), true, false).is_discarded());
+        }
+
+        SECTION("non-string key (see #3381)")
+        {
+            // only strings map to JSON object keys; any other key is rejected
+            // with a message naming its type
+            const std::vector<std::pair<std::vector<std::uint8_t>, std::string>> cases =
+            {
+                {{0x81, 0xC0, 0x01}, "nil; last byte: 0xC0"},
+                {{0x81, 0xC2, 0x01}, "a boolean; last byte: 0xC2"},
+                {{0x81, 0xC3, 0x01}, "a boolean; last byte: 0xC3"},
+                {{0x81, 0xCA, 0x3F, 0x80, 0x00, 0x00, 0x01}, "a float; last byte: 0xCA"},
+                {{0x81, 0xCB, 0x3F, 0xF0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}, "a float; last byte: 0xCB"},
+                {{0x81, 0xC4, 0x00, 0x01}, "a bin; last byte: 0xC4"},
+                {{0x81, 0xC5, 0x00, 0x00, 0x01}, "a bin; last byte: 0xC5"},
+                {{0x81, 0xC6, 0x00, 0x00, 0x00, 0x00, 0x01}, "a bin; last byte: 0xC6"},
+                {{0x81, 0xC7, 0x00, 0x01, 0x01}, "an ext; last byte: 0xC7"},
+                {{0x81, 0xC8, 0x00, 0x00, 0x01, 0x01}, "an ext; last byte: 0xC8"},
+                {{0x81, 0xC9, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01}, "an ext; last byte: 0xC9"},
+                {{0x81, 0xD4, 0x01, 0x00, 0x01}, "an ext; last byte: 0xD4"},
+                {{0x81, 0xD5, 0x01, 0x00, 0x00, 0x01}, "an ext; last byte: 0xD5"},
+                {{0x81, 0xD6, 0x01, 0x00, 0x00, 0x00, 0x00, 0x01}, "an ext; last byte: 0xD6"},
+                {{0x81, 0xD7, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}, "an ext; last byte: 0xD7"},
+                {{0x81, 0xD8, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}, "an ext; last byte: 0xD8"},
+                {{0x81, 0xCC, 0x01, 0x01}, "an integer; last byte: 0xCC"},
+                {{0x81, 0xCD, 0x00, 0x01, 0x01}, "an integer; last byte: 0xCD"},
+                {{0x81, 0xCE, 0x00, 0x00, 0x00, 0x01, 0x01}, "an integer; last byte: 0xCE"},
+                {{0x81, 0xCF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01}, "an integer; last byte: 0xCF"},
+                {{0x81, 0xD0, 0x01, 0x01}, "an integer; last byte: 0xD0"},
+                {{0x81, 0xD1, 0x00, 0x01, 0x01}, "an integer; last byte: 0xD1"},
+                {{0x81, 0xD2, 0x00, 0x00, 0x00, 0x01, 0x01}, "an integer; last byte: 0xD2"},
+                {{0x81, 0xD3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01}, "an integer; last byte: 0xD3"},
+                {{0x81, 0x00, 0x01}, "an integer; last byte: 0x00"},
+                {{0x81, 0x7F, 0x01}, "an integer; last byte: 0x7F"},
+                {{0x81, 0xE0, 0x01}, "an integer; last byte: 0xE0"},
+                {{0x81, 0x80, 0x01}, "a map; last byte: 0x80"},
+                {{0x81, 0x8F, 0x01}, "a map; last byte: 0x8F"},
+                {{0x81, 0xDE, 0x00, 0x00, 0x01}, "a map; last byte: 0xDE"},
+                {{0x81, 0xDF, 0x00, 0x00, 0x00, 0x00, 0x01}, "a map; last byte: 0xDF"},
+                {{0x81, 0x90, 0x01}, "an array; last byte: 0x90"},
+                {{0x81, 0x9F, 0x01}, "an array; last byte: 0x9F"},
+                {{0x81, 0xDC, 0x00, 0x00, 0x01}, "an array; last byte: 0xDC"},
+                {{0x81, 0xDD, 0x00, 0x00, 0x00, 0x00, 0x01}, "an array; last byte: 0xDD"},
+            };
+
+            for (const auto& c : cases)
+            {
+                CAPTURE(c.first)
+                const std::string expected = "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack object key: only string keys are supported, but found " + c.second;
+                json _;
+                CHECK_THROWS_WITH_AS(_ = json::from_msgpack(c.first), expected.c_str(), json::parse_error&);
+                CHECK(json::from_msgpack(c.first, true, false).is_discarded());
+            }
+
+            json _;
+            // the unused byte 0xC1 is still reported as a malformed string
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0x81, 0xC1, 0x01})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack string: expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0xC1", json::parse_error&);
+            // a missing key is still reported as the end of input
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0x81})), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack string: unexpected end of input", json::parse_error&);
         }
 
         SECTION("invalid UTF-8 in string (see #5529)")
