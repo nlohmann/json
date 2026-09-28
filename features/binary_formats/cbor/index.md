@@ -185,7 +185,13 @@ CBOR negative integers (major type 1) are decoded as `-1 - n`. If the encoded ma
 
 Object keys
 
-CBOR allows map keys of any type, whereas JSON only allows strings as keys in object values. Therefore, CBOR maps with keys other than UTF-8 strings are rejected.
+CBOR allows map keys of any type, whereas JSON only allows strings as keys in object values. Therefore, CBOR maps with keys other than text strings (major type 3) are rejected with a [`parse_error.113`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113) exception (or, with `allow_exceptions` set to `false`, a discarded value) naming the type of the key that was found, for instance:
+
+```
+[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR object key: only string keys are supported, but found an unsigned integer; last byte: 0x01
+```
+
+This applies to the [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) as well, as the key is read before it is passed on. This is a deliberate restriction of the library's JSON value model, not an oversight: formats built on CBOR maps with integer keys, such as COSE ([RFC 9052](https://www.rfc-editor.org/rfc/rfc9052.html)) or CWT ([RFC 8392](https://www.rfc-editor.org/rfc/rfc8392.html)), cannot be read with this library and need a general-purpose CBOR library instead.
 
 UTF-8 validation of text strings
 

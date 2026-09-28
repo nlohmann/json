@@ -152,6 +152,16 @@ Info
 
 Any MessagePack output created by `to_msgpack` can be successfully parsed by `from_msgpack`.
 
+Object keys
+
+MessagePack allows map keys of any type, whereas JSON only allows strings as keys in object values. Like the JSON-compatible [profile](https://github.com/msgpack/msgpack/blob/master/spec.md#profile) sketched in the MessagePack specification, this library restricts map keys to `str` values. Maps with keys of any other type are rejected with a [`parse_error.113`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113) exception (or, with `allow_exceptions` set to `false`, a discarded value) naming the type of the key that was found, for instance:
+
+```
+[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack object key: only string keys are supported, but found nil; last byte: 0xC0
+```
+
+This applies to the [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) as well, as the key is read before it is passed on. Such input needs a general-purpose MessagePack library instead.
+
 UTF-8 validation of string values
 
 The MessagePack specification requires `str` values (`fixstr`, `str 8`, `str 16`, `str 32`) to be valid UTF-8. This library validates the bytes of every such string (object keys included) at decode time and rejects ill-formed UTF-8 with a [`parse_error.113`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113) exception (or, with `allow_exceptions` set to `false`, a discarded value), rather than only failing later when the resulting value is dumped. `bin`/`ext`/`fixext` values are unaffected and are never validated, since they are not required to hold text.

@@ -407,14 +407,20 @@ Example messages
 
 A string could not be read from a [binary format](https://json.nlohmann.me/features/binary_formats/index.md): either a value that is not a string was read where one was required (for instance as a map key), the string's length specification is invalid, or the string's bytes are not valid UTF-8.
 
+CBOR and MessagePack allow map keys of any type, but JSON object keys are always strings. Maps with keys of any other type (for instance integers or `null`) are therefore not supported; see the notes on [CBOR](https://json.nlohmann.me/features/binary_formats/cbor/index.md) and [MessagePack](https://json.nlohmann.me/features/binary_formats/messagepack/index.md).
+
 Example messages
 
 ```
-[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0xFF
+[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR object key: only string keys are supported, but found an unsigned integer; last byte: 0x01
 ```
 
 ```
-[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack string: expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0xFF
+[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack object key: only string keys are supported, but found nil; last byte: 0xC0
+```
+
+```
+[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x7C
 ```
 
 ```

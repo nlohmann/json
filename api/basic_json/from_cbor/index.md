@@ -71,7 +71,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 - Throws [parse_error.110](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error110) if the given input ends prematurely or the end of the file was not reached when `strict` was set to true
 - Throws [parse_error.112](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error112) if unsupported features from CBOR were used in the given input or if the input is not valid CBOR
-- Throws [parse_error.113](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113) if a string was expected as a map key, but not found
+- Throws [parse_error.113](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113) if a map key is not a string (keys of other types are not supported, as JSON object keys are always strings) or a string is malformed
 
 ## Complexity
 
