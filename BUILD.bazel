@@ -66,6 +66,7 @@ cc_library(
         "include/nlohmann/detail/string_escape.hpp",
         "include/nlohmann/detail/string_utils.hpp",
         "include/nlohmann/detail/value_t.hpp",
+        "include/nlohmann/detail/view/builder.hpp",
         "include/nlohmann/detail/view/document_data.hpp",
         "include/nlohmann/detail/view/macro_scope.hpp",
         "include/nlohmann/detail/view/macro_unscope.hpp",
