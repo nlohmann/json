@@ -236,7 +236,7 @@ struct LocaleSwitchingSax final: public nlohmann::json_sax<json>
     }
     bool start_array(std::size_t /*val*/) override
     {
-        switched = std::setlocale(LC_NUMERIC, locale_after_open) != nullptr;
+        switched = std::setlocale(LC_NUMERIC, locale_after_open.c_str()) != nullptr;
         return true;
     }
     bool end_array() override
@@ -248,10 +248,10 @@ struct LocaleSwitchingSax final: public nlohmann::json_sax<json>
         return false;
     }
 
-    const char* locale_after_open;
+    std::string locale_after_open;
     bool switched = false;
-    std::vector<json::number_float_t> values;
-    std::vector<json::string_t> strings;
+    std::vector<json::number_float_t> values {}; // NOLINT(readability-redundant-member-init)
+    std::vector<json::string_t> strings {}; // NOLINT(readability-redundant-member-init)
 };
 } // namespace
 
