@@ -81,7 +81,7 @@ BasicJsonType materialize(const document_data& d, const node* n)
                 ++n;
                 break;
             case value_t::number_float:
-                sax.number_float(float_value<typename BasicJsonType::number_float_t>(d.str(*n), *n), no_token);
+                sax.number_float(float_value<typename BasicJsonType::number_float_t>(d, *n), no_token);
                 ++n;
                 break;
             case value_t::boolean:

@@ -49,7 +49,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE T arithmetic_value(const document_data& d, const nod
         case value_t::number_integer:
             return static_cast<T>(static_cast<typename BasicJsonType::number_integer_t>(static_cast<std::int64_t>(integer_bits(n))));
         case value_t::number_float:
-            return static_cast<T>(float_value<typename BasicJsonType::number_float_t>(d.str(n), n));
+            return static_cast<T>(float_value<typename BasicJsonType::number_float_t>(d, n));
         case value_t::boolean:
             return static_cast<T>((n.flags & node_flags::is_true) != 0);
         case value_t::null:
