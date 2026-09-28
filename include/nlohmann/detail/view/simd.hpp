@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <array> // array
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint64_t
 
@@ -36,9 +37,9 @@
 #endif
 #if NLOHMANN_VIEW_SSE2 && defined(JSON_VIEW_USE_SSSE3)
     #include <tmmintrin.h>
-    #define NLOHMANN_VIEW_SSSE3 1
+    #define NLOHMANN_VIEW_SSSE3 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 #else
-    #define NLOHMANN_VIEW_SSSE3 0
+    #define NLOHMANN_VIEW_SSSE3 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 #endif
 #define NLOHMANN_VIEW_VECTOR (NLOHMANN_VIEW_NEON || NLOHMANN_VIEW_SSE2)
 #define NLOHMANN_VIEW_VECTOR_UTF8 (NLOHMANN_VIEW_NEON || NLOHMANN_VIEW_SSSE3)
@@ -101,37 +102,43 @@ struct utf8_lookup4
     static constexpr std::uint8_t too_short = 1u << 0u, too_long = 1u << 1u, overlong_3 = 1u << 2u, too_large = 1u << 3u;
     static constexpr std::uint8_t surrogate = 1u << 4u, overlong_2 = 1u << 5u, too_large_1000 = 1u << 6u, overlong_4 = 1u << 6u;
     static constexpr std::uint8_t two_conts = 1u << 7u, carry = too_short | too_long | two_conts;
-    static const std::uint8_t byte_1_high[16];
-    static const std::uint8_t byte_1_low[16];
-    static const std::uint8_t byte_2_high[16];
+    static const std::array<std::uint8_t, 16> byte_1_high;
+    static const std::array<std::uint8_t, 16> byte_1_low;
+    static const std::array<std::uint8_t, 16> byte_2_high;
 };
 
 template<typename Dummy>
-const std::uint8_t utf8_lookup4<Dummy>::byte_1_high[16] =
+const std::array<std::uint8_t, 16> utf8_lookup4<Dummy>::byte_1_high =
 {
-    too_long, too_long, too_long, too_long, too_long, too_long, too_long, too_long,
-    two_conts, two_conts, two_conts, two_conts,
-    too_short | overlong_2, too_short, too_short | overlong_3 | surrogate, too_short | too_large | too_large_1000 | overlong_4
+    {
+        too_long, too_long, too_long, too_long, too_long, too_long, too_long, too_long,
+        two_conts, two_conts, two_conts, two_conts,
+        too_short | overlong_2, too_short, too_short | overlong_3 | surrogate, too_short | too_large | too_large_1000 | overlong_4
+    }
 };
 
 template<typename Dummy>
-const std::uint8_t utf8_lookup4<Dummy>::byte_1_low[16] =
+const std::array<std::uint8_t, 16> utf8_lookup4<Dummy>::byte_1_low =
 {
-    carry | overlong_3 | overlong_2 | overlong_4, carry | overlong_2, carry, carry,
-    carry | too_large, carry | too_large | too_large_1000, carry | too_large | too_large_1000, carry | too_large | too_large_1000,
-    carry | too_large | too_large_1000, carry | too_large | too_large_1000, carry | too_large | too_large_1000, carry | too_large | too_large_1000,
-    carry | too_large | too_large_1000, carry | too_large | too_large_1000 | surrogate, carry | too_large | too_large_1000, carry | too_large | too_large_1000
+    {
+        carry | overlong_3 | overlong_2 | overlong_4, carry | overlong_2, carry, carry,
+        carry | too_large, carry | too_large | too_large_1000, carry | too_large | too_large_1000, carry | too_large | too_large_1000,
+        carry | too_large | too_large_1000, carry | too_large | too_large_1000, carry | too_large | too_large_1000, carry | too_large | too_large_1000,
+        carry | too_large | too_large_1000, carry | too_large | too_large_1000 | surrogate, carry | too_large | too_large_1000, carry | too_large | too_large_1000
+    }
 };
 
 template<typename Dummy>
-const std::uint8_t utf8_lookup4<Dummy>::byte_2_high[16] =
+const std::array<std::uint8_t, 16> utf8_lookup4<Dummy>::byte_2_high =
 {
-    too_short, too_short, too_short, too_short, too_short, too_short, too_short, too_short,
-    static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | overlong_3 | too_large_1000 | overlong_4),
-    static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | overlong_3 | too_large),
-    static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | surrogate | too_large),
-    static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | surrogate | too_large),
-    too_short, too_short, too_short, too_short
+    {
+        too_short, too_short, too_short, too_short, too_short, too_short, too_short, too_short,
+        static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | overlong_3 | too_large_1000 | overlong_4),
+        static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | overlong_3 | too_large),
+        static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | surrogate | too_large),
+        static_cast<std::uint8_t>(too_long | overlong_2 | two_conts | surrogate | too_large),
+        too_short, too_short, too_short, too_short
+    }
 };
 
 /// the end of scan_string_vector from block, where the vector loop stopped
@@ -148,7 +155,7 @@ inline const unsigned char* scan_string_finish(const unsigned char* p, const uns
         }
         if (c >= 0xC0)
         {
-            const int len = c >= 0xF0 ? 4 : (c >= 0xE0 ? 3 : 2);
+            const int len = 2 + static_cast<int>(c >= 0xE0) + static_cast<int>(c >= 0xF0);
             if (len > i)
             {
                 block -= i;
@@ -191,9 +198,9 @@ NLOHMANN_VIEW_NOINLINE inline const unsigned char* scan_string_vector(const unsi
     using lookup = utf8_lookup4<>;
     const unsigned char* block = p;
 #if NLOHMANN_VIEW_NEON
-    const uint8x16_t t1h = vld1q_u8(lookup::byte_1_high);
-    const uint8x16_t t1l = vld1q_u8(lookup::byte_1_low);
-    const uint8x16_t t2h = vld1q_u8(lookup::byte_2_high);
+    const uint8x16_t t1h = vld1q_u8(lookup::byte_1_high.data());
+    const uint8x16_t t1l = vld1q_u8(lookup::byte_1_low.data());
+    const uint8x16_t t2h = vld1q_u8(lookup::byte_2_high.data());
     uint8x16_t prev = vdupq_n_u8(0);
     while (e - block >= 16)
     {
@@ -228,9 +235,9 @@ NLOHMANN_VIEW_NOINLINE inline const unsigned char* scan_string_vector(const unsi
 #else
     // the same with SSSE3 (pshufb for the table lookups; nibbles from 16-bit
     // shifts, as there are no byte shifts)
-    const __m128i t1h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_high)));
-    const __m128i t1l = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_low)));
-    const __m128i t2h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_2_high)));
+    const __m128i t1h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_high.data())));
+    const __m128i t1l = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_low.data())));
+    const __m128i t2h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_2_high.data())));
     const __m128i nibble = _mm_set1_epi8(0x0F);
     const __m128i zero = _mm_setzero_si128();
     __m128i prev = zero;
