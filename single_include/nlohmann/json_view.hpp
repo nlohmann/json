@@ -2832,12 +2832,12 @@ class view_serializer
                     write_float(float_value<number_float_t>(m_doc.str(n), n));
                 }
                 break;
-            case value_t::object:
-            case value_t::array:
-            case value_t::binary:
-            case value_t::discarded:
-            default:
-                break;
+            case value_t::object:    // LCOV_EXCL_LINE (containers are written by dump())
+            case value_t::array:     // LCOV_EXCL_LINE
+            case value_t::binary:    // LCOV_EXCL_LINE (not in a document)
+            case value_t::discarded: // LCOV_EXCL_LINE
+            default:                 // LCOV_EXCL_LINE
+                break;               // LCOV_EXCL_LINE
         }
     }
 
@@ -2972,7 +2972,7 @@ class view_serializer
             }
             return;
         }
-        m_out.put(reinterpret_cast<const char*>(bytes), len); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        m_out.put(reinterpret_cast<const char*>(bytes), len); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast) LCOV_EXCL_LINE (printable characters are copied in runs)
     }
 
     void write_u_escape(std::uint32_t u)
