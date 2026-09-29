@@ -37,6 +37,22 @@ Thereby, `Target` is the current object; that is, the patch is applied to the cu
 
 Linear in the lengths of `apply_patch`.
 
+## Notes
+
+!!! danger "Undefined behavior"
+
+    `merge_patch()` reads `apply_patch` while it modifies `#!cpp *this`. `apply_patch` must not be `#!cpp *this`
+    itself and must not refer to a value contained in `#!cpp *this` (for example, a subobject returned by
+    `#!cpp (*this)[key]`). Calling `merge_patch()` with such an argument reads the argument after it has been
+    invalidated by the modification, which is undefined behavior. If the patch may alias `#!cpp *this`, pass a copy
+    instead:
+
+    ```cpp
+    j.merge_patch(json(j));  // instead of j.merge_patch(j)
+    ```
+
+    See [GitHub issue #5641](https://github.com/nlohmann/json/issues/5641) for more information.
+
 ## Examples
 
 ??? example
@@ -61,3 +77,5 @@ Linear in the lengths of `apply_patch`.
 ## Version history
 
 - Added in version 3.0.0.
+- Documented that `apply_patch` must not be `#!cpp *this` or refer to a value contained in `#!cpp *this`, in version
+  3.13.0.

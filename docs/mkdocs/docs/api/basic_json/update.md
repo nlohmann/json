@@ -59,6 +59,22 @@ Basic guarantee: if an exception is thrown during the operation, the JSON value 
 1. O(N*log(size() + N)), where N is the number of elements to insert.
 2. O(N*log(size() + N)), where N is the number of elements to insert.
 
+## Notes
+
+!!! danger "Undefined behavior"
+
+    Both overloads read the argument while they modify `#!cpp *this`. The argument `j` (or, for overload (2), the
+    range `[first, last)`) must not be `#!cpp *this` itself and must not refer to a value contained in
+    `#!cpp *this` (for example, a subobject returned by `#!cpp (*this)[key]`). Calling `update()` with such an
+    argument reads the argument after it has been invalidated by the modification, which is undefined behavior. If
+    the argument may alias `#!cpp *this`, pass a copy instead:
+
+    ```cpp
+    j.update(json(j["defaults"]));  // instead of j.update(j["defaults"])
+    ```
+
+    See [GitHub issue #5641](https://github.com/nlohmann/json/issues/5641) for more information.
+
 ## Examples
 
 ??? example
@@ -155,3 +171,5 @@ Basic guarantee: if an exception is thrown during the operation, the JSON value 
 
 - Added in version 3.0.0.
 - Added `merge_objects` parameter in 3.10.5.
+- Documented that the argument must not be `#!cpp *this` or refer to a value contained in `#!cpp *this`, in version
+  3.13.0.
