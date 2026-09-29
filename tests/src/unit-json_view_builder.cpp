@@ -9,8 +9,12 @@
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
-#include <nlohmann/detail/view/builder.hpp>
-#include <nlohmann/detail/view/string_ref.hpp>
+#if JSON_TEST_USING_MULTIPLE_HEADERS
+    #include <nlohmann/detail/view/builder.hpp>
+    #include <nlohmann/detail/view/string_ref.hpp>
+#else
+    #include <nlohmann/json_view.hpp> // the single header contains the internal headers
+#endif
 using nlohmann::json;
 
 #include <cstdint>
