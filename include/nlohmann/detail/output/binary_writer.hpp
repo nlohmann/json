@@ -1991,9 +1991,21 @@ class binary_writer
                 case 'd':
                 {
                     const auto dval = el.template get<double>();
-                    in_range = !std::isfinite(dval) ||
+#ifdef __GNUC__
+                    JSON_HEDLEY_DIAGNOSTIC_PUSH
+                    JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
+#endif
+                    // a value that would be rounded (rather than exactly represented) by the
+                    // narrowing to float is treated like an out-of-range integer element above;
+                    // this is the same criterion write_compact_float() uses for CBOR/MessagePack
+                    in_range = std::isnan(dval) ||
                                (dval >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
-                                dval <= static_cast<double>((std::numeric_limits<float>::max)()));
+                                dval <= static_cast<double>((std::numeric_limits<float>::max)()) &&
+                                static_cast<double>(static_cast<float>(dval)) == dval) ||
+                               std::isinf(dval);
+#ifdef __GNUC__
+                    JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
                     break;
                 }
                 default:
