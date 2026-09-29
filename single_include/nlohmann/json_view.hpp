@@ -1769,6 +1769,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 #include <cstdint> // int64_t, uint8_t
+#include <string> // string
 #include <vector> // vector
 
 // #include <nlohmann/json.hpp>

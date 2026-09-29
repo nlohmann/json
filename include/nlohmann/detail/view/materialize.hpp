@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstdint> // int64_t, uint8_t
+#include <string> // string
 #include <vector> // vector
 
 #include <nlohmann/json.hpp>
