@@ -1966,6 +1966,102 @@ TEST_CASE("parser class")
             }
         }
 
+        SECTION("no callback for the content of a discarded container (#5643)")
+        {
+            // discarding a container at its start event must also hide
+            // everything inside it from the callback: none of the nested
+            // keys, values, or nested containers' own start/end events may
+            // be reported
+            std::vector<std::string> log;
+            bool first = true;
+            const json j = json::parse(R"({"skip": {"k1": 1, "k2": [2, {"k3": 3}]}, "keep": 1})",
+                                       [&](int depth, json::parse_event_t event, json & parsed)
+            {
+                static const char* const names[] = {"object_start", "object_end", "array_start", "array_end", "key", "value"};
+                log.push_back(std::to_string(depth) + " " + names[static_cast<int>(event)] + " " + parsed.dump());
+
+                if (depth == 1 && event == json::parse_event_t::object_start && first)
+                {
+                    // discard "skip" right at its object_start event
+                    first = false;
+                    return false;
+                }
+                return true;
+            });
+
+            CHECK(log == std::vector<std::string>
+            {
+                "0 object_start <discarded>",
+                "1 key \"skip\"",
+                "1 object_start <discarded>",
+                "1 key \"keep\"",
+                "1 value 1",
+                "0 object_end {\"keep\":1}"
+            });
+            CHECK(j == json({{"keep", 1}}));
+        }
+
+        SECTION("callback still called inside a container whose key was rejected (#5643)")
+        {
+            // rejecting a key does not discard its value's container at the
+            // container's own start event, so the callback is still called
+            // for that container's content; only storing the container
+            // under the rejected key is skipped
+            // (documented for parser_callback_t: "the callback is still
+            // called for the associated value, but its return value has no
+            // further effect")
+            const auto record = [](std::vector<std::string>& log, int depth, json::parse_event_t event, const json & parsed)
+            {
+                static const char* const names[] = {"object_start", "object_end", "array_start", "array_end", "key", "value"};
+                log.push_back(std::to_string(depth) + " " + names[static_cast<int>(event)] + " " + parsed.dump());
+            };
+
+            std::vector<std::string> log_object;
+            const json j_object = json::parse(R"({"skip": {"k1": 1}, "keep": 2})",
+                                              [&](int depth, json::parse_event_t event, json & parsed)
+            {
+                record(log_object, depth, event, parsed);
+                return !(event == json::parse_event_t::key && parsed == json("skip"));
+            });
+
+            CHECK(log_object == std::vector<std::string>
+            {
+                "0 object_start <discarded>",
+                "1 key \"skip\"",
+                "1 object_start <discarded>",
+                "2 key \"k1\"",
+                "2 value 1",
+                "1 key \"keep\"",
+                "1 value 2",
+                "0 object_end {\"keep\":2}"
+            });
+            CHECK(j_object == json({{"keep", 2}}));
+
+            // same for a rejected key whose value is an array rather than an object
+            std::vector<std::string> log_array;
+            const json j_array = json::parse(R"({"skip": [1, {"k1": 2}], "keep": 2})",
+                                             [&](int depth, json::parse_event_t event, json & parsed)
+            {
+                record(log_array, depth, event, parsed);
+                return !(event == json::parse_event_t::key && parsed == json("skip"));
+            });
+
+            CHECK(log_array == std::vector<std::string>
+            {
+                "0 object_start <discarded>",
+                "1 key \"skip\"",
+                "1 array_start <discarded>",
+                "2 value 1",
+                "2 object_start <discarded>",
+                "3 key \"k1\"",
+                "3 value 2",
+                "1 key \"keep\"",
+                "1 value 2",
+                "0 object_end {\"keep\":2}"
+            });
+            CHECK(j_array == json({{"keep", 2}}));
+        }
+
         SECTION("special cases")
         {
             // the following test cases cover the situation in which an empty
