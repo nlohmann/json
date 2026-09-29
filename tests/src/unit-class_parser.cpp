@@ -645,6 +645,30 @@ TEST_CASE("parser class")
                 // carries a compiler-appended trailing '\0') still works,
                 // even though a NUL byte is now rejected everywhere else
                 CHECK(json::parse("123") == json(123));
+
+                // regression test for issue #5658: the same holds for wide,
+                // UTF-16, UTF-32, and (C++20) UTF-8 string literals, whose
+                // compiler-appended trailing '\0' is not of type `char`
+                CHECK(json::parse(L"[1]") == json({1}));
+                CHECK(json::accept(L"[1]"));
+                CHECK(json::parse(u"[1]") == json({1}));
+                CHECK(json::accept(u"[1]"));
+                CHECK(json::parse(U"[1]") == json({1}));
+                CHECK(json::accept(U"[1]"));
+#if defined(__cpp_char8_t)
+                CHECK(json::parse(u8"[1]") == json({1}));
+                CHECK(json::accept(u8"[1]"));
+#endif
+
+                // a NUL byte inside such a literal, as opposed to the single
+                // compiler-appended trailing one, is still rejected
+                {
+                    json _; // NOLINT(readability-identifier-naming)
+                    CHECK_THROWS_WITH_AS(_ = json::parse(L"[1\0]"),
+                                         "[json.exception.parse_error.101] parse error at line 1, column 3: syntax error while parsing array - invalid literal; last read: '1<U+0000>'; expected ']'",
+                                         json::parse_error&);
+                    CHECK_FALSE(json::accept(L"[1\0]"));
+                }
             }
 #endif
         }
