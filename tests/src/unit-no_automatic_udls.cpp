@@ -41,11 +41,20 @@ namespace
 // deferred to the point of instantiation, where it considers the declarations
 // visible from here (the global using-declarations of JSON_USE_GLOBAL_UDLS) plus
 // argument-dependent lookup (the literals in the library namespace).
-template<typename T>
-using json_udl_t = decltype(operator""_json(std::declval<T>(), std::size_t()));
+#if !defined(__GNUC__) || defined(__clang__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)
+    template<typename T>
+    using json_udl_t = decltype(operator""_json(std::declval<T>(), std::size_t()));
 
-template<typename T>
-using json_pointer_udl_t = decltype(operator""_json_pointer(std::declval<T>(), std::size_t()));
+    template<typename T>
+    using json_pointer_udl_t = decltype(operator""_json_pointer(std::declval<T>(), std::size_t()));
+#else
+    // GCC 4.8 requires a space between "" and suffix
+    template<typename T>
+    using json_udl_t = decltype(operator"" _json(std::declval<T>(), std::size_t()));
+
+    template<typename T>
+    using json_pointer_udl_t = decltype(operator"" _json_pointer(std::declval<T>(), std::size_t()));
+#endif
 
 template<typename T>
 using has_json_udl = nlohmann::detail::is_detected<json_udl_t, T>;
@@ -83,11 +92,13 @@ TEST_CASE("JSON_NO_AUTOMATIC_UDLS")
 
 TEST_CASE("JSON_NO_AUTOMATIC_UDLS with <nlohmann/json_literals.hpp>")
 {
+#if !defined(JSON_USE_GLOBAL_UDLS) || JSON_USE_GLOBAL_UDLS
     SECTION("global namespace")
     {
         CHECK("[1,2]"_json == json({1, 2}));
         CHECK("/a/0"_json_pointer == json::json_pointer("/a/0"));
     }
+#endif
 
     SECTION("nlohmann::literals::json_literals")
     {

@@ -6569,6 +6569,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 // Define JSON_NO_AUTOMATIC_UDLS to include <nlohmann/json_literals.hpp> only
 // where needed.
 #ifndef JSON_NO_AUTOMATIC_UDLS
+    // NOLINTNEXTLINE(misc-header-include-cycle): json_literals.hpp includes this header
     #include <nlohmann/json_literals.hpp>
 #endif
 

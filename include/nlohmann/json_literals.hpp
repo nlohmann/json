@@ -12,6 +12,7 @@
 #include <cstddef> // size_t
 #include <string> // string
 
+// NOLINTNEXTLINE(misc-header-include-cycle): json.hpp includes this header at its end
 #include <nlohmann/json.hpp>
 
 // This header is included at the end of <nlohmann/json.hpp> unless
