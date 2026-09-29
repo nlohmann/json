@@ -17,6 +17,14 @@ using nlohmann::ordered_map;
 #include <utility>
 #include <vector>
 
+// The EDG front end (Intel icpc, NVIDIA nvc++) considers the defaulted move
+// constructor of std::pair<const Key, T> noexcept even if copying Key can
+// throw. std::vector then moves such elements itself when it grows (and calls
+// std::terminate if a key copy throws), so ordered_map leaves growing to it.
+#if defined(__EDG__)
+    #define JSON_TEST_PAIR_MOVE_IS_NOEXCEPT
+#endif
+
 namespace
 {
 // number of copies made of counted values
@@ -46,7 +54,7 @@ struct counted // NOLINT(cppcoreguidelines-special-member-functions,hicpp-specia
     }
 };
 
-#if !defined(JSON_NOEXCEPTION)
+#if !defined(JSON_NOEXCEPTION) && !defined(JSON_TEST_PAIR_MOVE_IS_NOEXCEPT)
 // number of throwing_key copies that still succeed; the next one throws
 // (a negative value means that copies never throw)
 int key_copies_until_throw = -1;
@@ -86,7 +94,9 @@ struct no_default
 
 // ordered_json must keep moving its values when an object grows
 using ordered_object_t = nlohmann::ordered_json::object_t;
-static_assert(!std::is_nothrow_move_constructible<ordered_object_t::value_type>::value, "std::vector would move the elements itself");
+#if !defined(JSON_TEST_PAIR_MOVE_IS_NOEXCEPT)
+    static_assert(!std::is_nothrow_move_constructible<ordered_object_t::value_type>::value, "std::vector would move the elements itself");
+#endif
 static_assert(std::is_copy_constructible<ordered_object_t::key_type>::value, "keys must be copyable");
 static_assert(std::is_default_constructible<ordered_object_t::mapped_type>::value, "values must be default-constructible");
 static_assert(std::is_nothrow_move_assignable<ordered_object_t::mapped_type>::value, "values must be nothrow move-assignable");
@@ -566,7 +576,7 @@ TEST_CASE("ordered_map growth")
         }
     }
 
-#if !defined(JSON_NOEXCEPTION)
+#if !defined(JSON_NOEXCEPTION) && !defined(JSON_TEST_PAIR_MOVE_IS_NOEXCEPT)
     SECTION("the container is unchanged if growing it throws")
     {
         ordered_map<throwing_key, counted> om;
