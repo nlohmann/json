@@ -459,7 +459,7 @@ class basic_json_document
         bool ok = false;
         if (NLOHMANN_VIEW_UNLIKELY(size >= 0xFFFFFFF0u))
         {
-            failure.code = detail::view::error_code::input_too_large;
+            failure.code = detail::view::error_code::input_too_large; // LCOV_EXCL_LINE (4 GiB)
         }
         else
         {

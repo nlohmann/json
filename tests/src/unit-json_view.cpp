@@ -382,6 +382,11 @@ TEST_CASE("json_view")
         CHECK(reused.memory_usage() < grown);
         CHECK(reused.root().materialize() == json::parse(smaller));
 
+        // an empty document has nothing to release
+        json_document empty;
+        empty.shrink_to_fit();
+        CHECK(empty.memory_usage() == 0);
+
         // a small document stays in the storage block of the header
         json_document small = json_document::parse("[1,[2,3],{\"a\":\"b\\n\"}]"); // NOLINT(modernize-raw-string-literal)
         small.shrink_to_fit();

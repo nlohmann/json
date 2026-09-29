@@ -55,9 +55,12 @@ template<typename BasicJsonType>
 {
     if (f.code == error_code::input_too_large)
     {
+        // LCOV_EXCL_START (4 GiB)
         NLOHMANN_VIEW_THROW(out_of_range::create(416, "input of 4 GiB or more is not supported by json_document", nullptr));
+        // LCOV_EXCL_STOP
     }
     const BasicJsonType accepted = BasicJsonType::parse(src, src + size, nullptr, true, ignore_comments, ignore_trailing_commas);
+    // LCOV_EXCL_START (only if parse() accepts what the view rejects: a bug)
     static_cast<void>(accepted);
 
     position_t pos;
@@ -74,6 +77,7 @@ template<typename BasicJsonType>
     }
     pos.chars_read_current_line = off + 1 - line_start;
     NLOHMANN_VIEW_THROW(parse_error::create(101, pos, "syntax error while parsing value", nullptr));
+    // LCOV_EXCL_STOP
 }
 
 }  // namespace view
