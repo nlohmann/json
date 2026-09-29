@@ -18,6 +18,10 @@ Deserializes an input stream to a JSON value.
 
 the stream `i`
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes in `j`.
+
 ## Exceptions
 
 - Throws [`parse_error.101`](../home/exceptions.md#jsonexceptionparse_error101) in case of an unexpected token.
@@ -118,3 +122,5 @@ being read.
   it as end of input; planned to become the default in version 4.0.0.
 - `JSON_PRECISE_STREAM_POSITION` added in version 3.13.0 to optionally leave the character that terminates a number in
   the stream; planned to become the default in version 4.0.0.
+- Changed to the strong exception safety guarantee in version 3.13.0: `j` is no longer left with a partially parsed
+  value if parsing throws.

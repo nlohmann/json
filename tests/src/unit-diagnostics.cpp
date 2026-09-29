@@ -17,6 +17,8 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <sstream>
+
 TEST_CASE("Better diagnostics")
 {
     SECTION("empty JSON Pointer")
@@ -460,6 +462,21 @@ TEST_CASE("Regression tests for extended diagnostics")
             ordered_json const copy = j;
             CHECK(copy == j);
         }
+    }
+
+    SECTION("Regression test for issue #5652 - operator>> leaves a partial value in its target on a parse error")
+    {
+        json j = "old value";
+        std::istringstream is("[1, x");
+        CHECK_THROWS_WITH_AS(is >> j, "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid literal; last read: '1, x'", json::parse_error);
+
+        // j must be left unchanged, as json::parse() guarantees for its result
+        CHECK(j == "old value");
+
+        // copying j must not trigger assert_invariant(): a failed parse must
+        // not leave array/object elements without a parent pointer
+        json const copy = j; // NOLINT(performance-unnecessary-copy-initialization)
+        CHECK(copy == j);
     }
 }
 
