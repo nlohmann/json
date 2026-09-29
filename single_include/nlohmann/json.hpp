@@ -25832,7 +25832,9 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return *this;
     }
 
-    std::pair<iterator, bool> emplace(const key_type& key, T&& t)
+    template < class V, detail::enable_if_t <
+                   detail::is_constructible < T, V&& >::value, int > = 0 >
+    std::pair<iterator, bool> emplace(const key_type& key, V && t)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -25841,13 +25843,14 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
                 return {it, false};
             }
         }
-        Container::emplace_back(key, std::forward<T>(t));
+        Container::emplace_back(key, std::forward<V>(t));
         return {std::prev(this->end()), true};
     }
 
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
-    std::pair<iterator, bool> emplace(KeyType && key, T && t)
+    template < class KeyType, class V, detail::enable_if_t <
+                   detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value&&
+                   detail::is_constructible < T, V&& >::value, int > = 0 >
+    std::pair<iterator, bool> emplace(KeyType && key, V && t)
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
@@ -25856,7 +25859,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
                 return {it, false};
             }
         }
-        Container::emplace_back(std::forward<KeyType>(key), std::forward<T>(t));
+        Container::emplace_back(std::forward<KeyType>(key), std::forward<V>(t));
         return {std::prev(this->end()), true};
     }
 

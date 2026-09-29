@@ -312,4 +312,77 @@ TEST_CASE("ordered_map")
             CHECK(om.size() == 4);
         }
     }
+
+    SECTION("emplace")
+    {
+        // regression test for issue #5673: the mapped-value parameter must
+        // accept lvalues and const lvalues, not just rvalues
+        ordered_map<std::string, std::string> om;
+        om["eins"] = "one";
+        om["zwei"] = "two";
+        om["drei"] = "three";
+
+        SECTION("with T&& (rvalue)")
+        {
+            auto res1 = om.emplace("eins", std::string("1"));
+            CHECK(res1.first == om.begin());
+            CHECK(res1.second == false);
+            CHECK(om.size() == 3);
+            CHECK(om.at("eins") == "one"); // existing key is not overwritten
+
+            auto res4 = om.emplace("vier", std::string("four"));
+            CHECK(res4.first == om.begin() + 3);
+            CHECK(res4.second == true);
+            CHECK(om.size() == 4);
+            CHECK(om.at("vier") == "four");
+        }
+
+        SECTION("with T& (lvalue)")
+        {
+            std::string one = "1";
+            std::string four = "four";
+
+            auto res1 = om.emplace("eins", one);
+            CHECK(res1.first == om.begin());
+            CHECK(res1.second == false);
+            CHECK(om.size() == 3);
+            CHECK(om.at("eins") == "one"); // existing key is not overwritten
+
+            auto res4 = om.emplace("vier", four);
+            CHECK(res4.first == om.begin() + 3);
+            CHECK(res4.second == true);
+            CHECK(om.size() == 4);
+            CHECK(om.at("vier") == "four");
+            CHECK(four == "four"); // source was copied, not moved from
+        }
+
+        SECTION("with const T&")
+        {
+            const std::string one = "1";
+            const std::string four = "four";
+
+            auto res1 = om.emplace("eins", one);
+            CHECK(res1.first == om.begin());
+            CHECK(res1.second == false);
+            CHECK(om.size() == 3);
+
+            auto res4 = om.emplace("vier", four);
+            CHECK(res4.first == om.begin() + 3);
+            CHECK(res4.second == true);
+            CHECK(om.size() == 4);
+            CHECK(om.at("vier") == "four");
+        }
+
+        SECTION("with key of key_type (non-template overload)")
+        {
+            const std::string key_vier{"vier"};
+            std::string four = "four";
+
+            auto res4 = om.emplace(key_vier, four);
+            CHECK(res4.first == om.begin() + 3);
+            CHECK(res4.second == true);
+            CHECK(om.size() == 4);
+            CHECK(om.at("vier") == "four");
+        }
+    }
 }

@@ -69,3 +69,5 @@ Logarithmic in the size of the container, O(log(`size()`)).
 ## Version history
 
 - Since version 2.0.8.
+- Fixed in version 3.13.0: for [`ordered_json`](../ordered_json.md), the value could previously only be passed as an
+  rvalue; it can now also be passed as an lvalue or a `#!cpp const` lvalue, matching the behavior of `json`.
