@@ -975,10 +975,15 @@ class lexer : public lexer_base<BasicJsonType>
                         case '\n':
                         case '\r':
                         case char_traits<char_type>::eof():
+                            return true;
+
 #if !JSON_STRICT_NUL_HANDLING
                         case '\0':
-#endif
+                            // a NUL byte is the end of the input (see scan()),
+                            // so leave it for scan() to see
+                            unget();
                             return true;
+#endif
 
                         default:
                             break;
