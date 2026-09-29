@@ -121,6 +121,10 @@ That is, `-0` is stored as a signed integer, but the serialization does not repr
 - Floating-point numbers are serialized as specified by the `#!c %g` printf modifier with 
   [`std::numeric_limits<double>::max_digits10`](https://en.cppreference.com/w/cpp/types/numeric_limits/max_digits10)
   significant digits. The rationale is to use the shortest representation while still allowing round-tripping.
+- A precision can be chosen with [`std::format`](../../api/basic_json/std_formatter.md), e.g.
+  `#!cpp std::format("{:.3}", j)`. Floating-point numbers are then written with that many significant digits, with
+  the digits of `#!c printf("%.*g")` and `std::format`: π becomes `#!json 3.14` and `#!json 1.9999` becomes
+  `#!json 2.0`. The output no longer round-trips. Integers are always written exactly.
 
 !!! hint "Notes regarding precision of floating-point numbers"
 

@@ -6537,6 +6537,10 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
     // output with that many spaces (or indent_char) per level (dump(indent, indent_char)).
     int indent = -1;
     char indent_char = ' ';
+    // -1 means the shortest round-trip representation for floating-point
+    // numbers; any value >= 0 is a number of significant digits, as for
+    // std::format("{:.N}") on a floating-point number
+    int precision = -1;
 
     constexpr auto parse(format_parse_context& ctx) -> format_parse_context::iterator
     {
@@ -6580,7 +6584,26 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
             }
         }
 
-        // sign, the '0' flag, precision, locale-specific formatting ('L'), dynamic
+        // ['.' precision] - the number of significant digits for floating-point
+        // numbers, e.g. "{:.3}" or "{:#.3}"; integers are always written exactly.
+        // The value is saturated rather than overflowing, at the serializer's
+        // maximum of 1000, which covers every significant digit of a double.
+        if (it != end && *it == '.')
+        {
+            ++it;
+            if (it == end || *it < '0' || *it > '9')
+            {
+                JSON_THROW(format_error("missing precision for nlohmann::json"));
+            }
+            precision = 0;
+            while (it != end && *it >= '0' && *it <= '9')
+            {
+                precision = (std::min)((precision * 10) + (*it - '0'), 1000);
+                ++it;
+            }
+        }
+
+        // sign, the '0' flag, locale-specific formatting ('L'), dynamic
         // width/precision ("{...}"), and type characters all have no meaning for
         // JSON values; none of them are consumed above, so they all end up rejected
         // by this single check along with any other unrecognized trailing spec.
@@ -6595,9 +6618,23 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
     template<typename FormatContext>
     auto format(const nlohmann::NLOHMANN_BASIC_JSON_TPL& j, FormatContext& ctx) const -> decltype(ctx.out())
     {
+        using json_t = nlohmann::NLOHMANN_BASIC_JSON_TPL;
+
         // dump()'s own default (indent = -1) already means compact output, so this
         // covers both the compact and pretty-printed cases without a branch.
-        const auto dumped = j.dump(indent, indent_char);
+        if (precision < 0)
+        {
+            const auto dumped = j.dump(indent, indent_char);
+            return std::copy(dumped.begin(), dumped.end(), ctx.out());
+        }
+
+        // dump() has no precision parameter, so the serializer is used directly
+        typename json_t::string_t dumped;
+        ::nlohmann::detail::output_string_adapter<char, typename json_t::string_t> adapter(dumped);
+        ::nlohmann::detail::serializer<json_t> s(adapter, indent_char, indent >= 0, false,
+                indent >= 0 ? static_cast<std::size_t>(indent) : 0,
+                ::nlohmann::detail::error_handler_t::strict, precision);
+        s.dump(j);
         return std::copy(dumped.begin(), dumped.end(), ctx.out());
     }
 };

@@ -18,5 +18,9 @@ int main()
     std::cout << std::format("{:2}", j) << "\n\n";
 
     // fill-and-align sets the indent character, like dump(4, '.')
-    std::cout << std::format("{:.>#}", j) << std::endl;
+    std::cout << std::format("{:.>#}", j) << "\n\n";
+
+    // a precision sets the significant digits of floating-point numbers
+    json k = {{"pi", 3.141592653589793}, {"answer", 42}};
+    std::cout << std::format("{:.3}", k) << std::endl;
 }

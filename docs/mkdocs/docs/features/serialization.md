@@ -107,7 +107,9 @@ std::println("{:#}", j);  // pretty-printed with the default indent
 ```
 
 The format spec mirrors the `dump` parameters: `#!cpp "{:#}"` pretty-prints, a width such as `#!cpp "{:2}"` sets the
-indent, and a fill-and-align prefix such as `#!cpp "{:.>#}"` sets the indent character.
+indent, and a fill-and-align prefix such as `#!cpp "{:.>#}"` sets the indent character. A precision such as
+`#!cpp "{:.3}"` writes floating-point numbers with that many significant digits, like `std::format` writes a number,
+which gives up round-tripping; see [number serialization](types/number_handling.md#number-serialization).
 
 For the [{fmt}](https://github.com/fmtlib/fmt) library, the library ships a
 [`format_as`](../api/basic_json/format_as.md) helper. Note its behavior depends on the `fmt` version; see the
