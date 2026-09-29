@@ -10,6 +10,7 @@ they were documented for users. The check is heuristic and meant to be run by ha
 usage: python3 check_version_history.py   (from docs/mkdocs/docs, needs the git tags)
 """
 
+import functools
 import glob
 import re
 # the script only runs git with fixed arguments and without a shell
@@ -32,16 +33,14 @@ def release_tags():
     return sorted(versions)
 
 
-def header(tag, cache={}):
-    if tag not in cache:
-        cache[tag] = ""
-        for path in HEADER_PATHS:
-            # fixed git command without a shell; the tag names come from "git tag"
-            result = subprocess.run(["git", "show", f"{tag}:{path}"], capture_output=True, text=True)  # nosec B603, B607
-            if result.returncode == 0:
-                cache[tag] = result.stdout
-                break
-    return cache[tag]
+@functools.lru_cache(maxsize=None)
+def header(tag):
+    for path in HEADER_PATHS:
+        # fixed git command without a shell; the tag names come from "git tag"
+        result = subprocess.run(["git", "show", f"{tag}:{path}"], capture_output=True, text=True)  # nosec B603, B607
+        if result.returncode == 0:
+            return result.stdout
+    return ""
 
 
 def macros_and_versions(page):
