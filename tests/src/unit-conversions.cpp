@@ -1358,6 +1358,14 @@ TEST_CASE("value conversion")
         CHECK(json(value_1).get<c_enum>() == value_1);
         CHECK(json(cpp_enum::value_1).get<cpp_enum>() == cpp_enum::value_1);
     }
+
+    SECTION("get an enum with underlying type bool (#5671)")
+    {
+        enum class bool_enum : bool { off, on };
+
+        CHECK(json(bool_enum::off).get<bool_enum>() == bool_enum::off);
+        CHECK(json(bool_enum::on).get<bool_enum>() == bool_enum::on);
+    }
 #endif
 
     SECTION("more involved conversions")
