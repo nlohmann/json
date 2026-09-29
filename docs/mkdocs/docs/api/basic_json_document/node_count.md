@@ -21,8 +21,9 @@ Constant.
 
 ## Notes
 
-Each index entry is 16 bytes, so `#!cpp node_count() * 16` is the size of the index itself (part, but not all, of
-[`memory_usage()`](memory_usage.md), which also counts decoded strings and, for an owned document, the text).
+Each index entry is [16 bytes](../../home/architecture.md#node-index-of-json-views), so `#!cpp node_count() * 16` is
+the size of the index itself (part, but not all, of [`memory_usage()`](memory_usage.md), which also counts decoded
+strings and, for an owned document, the text).
 
 ## Examples
 

@@ -14,10 +14,10 @@ most of the resulting tree is thrown away almost immediately.
 ## The idea
 
 [`basic_json_document::parse()`](../api/basic_json_document/parse.md) parses the same JSON grammar, with the same
-options, but instead of a tree it builds a flat index of the values it found: one 16-byte entry per value (and one
-per object key), in document order. Strings and numbers are not copied out of the input; they stay in the source
-text, and are only decoded when actually needed (for a string, only if it contains escape sequences, into one shared
-buffer owned by the document).
+options, but instead of a tree it builds a flat index of the values it found: one
+[16-byte entry](../home/architecture.md#node-index-of-json-views) per value (and one per object key), in document
+order. Strings and numbers are not copied out of the input; they stay in the source text, and are only decoded when
+actually needed (for a string, only if it contains escape sequences, into one shared buffer owned by the document).
 
 [`basic_json_view`](../api/basic_json_view/index.md) is a small, trivially copyable handle (two pointers) into that
 index. It gives you the read-only, type-inspection part of the `basic_json` interface --

@@ -7,9 +7,10 @@ template<typename BasicJsonType>
 class basic_json_document;
 ```
 
-A parsed JSON text, held as a flat index of its values (16 bytes per value) instead of a tree of `BasicJsonType`
-values. Strings and numbers stay in the source text; only strings that contain escapes are decoded, into one buffer
-owned by the document. [`basic_json_view`](../basic_json_view/index.md) is a read-only handle to one value of a
+A parsed JSON text, held as a flat index of its values
+([16 bytes per value](../../home/architecture.md#node-index-of-json-views)) instead of a tree of `BasicJsonType` values.
+Strings and numbers stay in the source text; only strings that contain escapes are decoded, into one buffer owned by
+the document. [`basic_json_view`](../basic_json_view/index.md) is a read-only handle to one value of a
 `basic_json_document`; [`materialize()`](../basic_json_view/materialize.md) turns a subtree back into the
 `BasicJsonType` value that [`BasicJsonType::parse()`](../basic_json/parse.md) would have produced for it.
 
