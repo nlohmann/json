@@ -43,17 +43,20 @@ PINNED = {
     'yyjson': {
         'version': '0.13.0',
         'url': 'https://github.com/ibireme/yyjson/archive/refs/tags/0.13.0.tar.gz',
-        'sha256': None,  # TODO: pin before the first published comparison
+        'sha256': '34e0f62a2bc11ab20d601e8ca1cc2b2079503aa45119a19133d89d19b94a0fae',
+        'dir': 'yyjson-0.13.0',
     },
     'simdjson': {
         'version': '4.6.11',
         'url': 'https://github.com/simdjson/simdjson/archive/refs/tags/v4.6.11.tar.gz',
-        'sha256': None,  # TODO: pin before the first published comparison
+        'sha256': '61d948fc24f0d793829ad658058e7597d064988a89b4607ea02e401a82df98ff',
+        'dir': 'simdjson-4.6.11',
     },
     'boost': {
         'version': '1.92.0',
         'url': 'https://archives.boost.io/release/1.92.0/source/boost_1_92_0.tar.gz',
-        'sha256': None,  # TODO: pin before the first published comparison
+        'sha256': 'c4a3b310ddd2472416e091067166b0713be97c63f38c212c484ada022fd296ce',
+        'dir': 'boost_1_92_0',
     },
 }
 
@@ -143,8 +146,6 @@ def system_library(name):
 def download_library(name, work):
     """a pinned release, downloaded and checked, or an error"""
     pin = PINNED[name]
-    if not pin['sha256']:
-        sys.exit(f'error: no SHA-256 pinned for {name} {pin["version"]} yet; use --system')
     archive = os.path.join(work, 'download', os.path.basename(pin['url']))
     os.makedirs(os.path.dirname(archive), exist_ok=True)
     if not os.path.isfile(archive):
@@ -154,12 +155,12 @@ def download_library(name, work):
         digest = hashlib.sha256(f.read()).hexdigest()
     if digest != pin['sha256']:
         sys.exit(f'error: SHA-256 of {archive} is {digest}, expected {pin["sha256"]}')
-    target = os.path.join(work, 'download', f'{name}-{pin["version"]}')
-    if not os.path.isdir(target):
+    src = os.path.join(work, 'download', pin['dir'])
+    if not os.path.isdir(src):
         with tarfile.open(archive) as t:
-            t.extractall(os.path.join(work, 'download'))  # noqa: S202 (checked archive)
-    src = [os.path.join(work, 'download', d) for d in os.listdir(os.path.join(work, 'download'))
-           if d.lower().startswith(name) and os.path.isdir(os.path.join(work, 'download', d))][0]
+            # (the 'data' filter rejects links and paths outside the target where Python has it)
+            kwargs = {'filter': 'data'} if hasattr(tarfile, 'data_filter') else {}
+            t.extractall(os.path.join(work, 'download'), **kwargs)  # noqa: S202 (checked archive)
     if name == 'yyjson':
         return Library(name, [os.path.join(src, 'src')], [os.path.join(src, 'src', 'yyjson.c')], [], pin['version'])
     if name == 'simdjson':
