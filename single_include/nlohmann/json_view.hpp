@@ -2559,7 +2559,7 @@ inline std::uint32_t append_text(document_data& d, const char* s, std::size_t n)
         const std::size_t cap = (std::max)(e.text_cap * 2, e.text_used + n + 256);
         if (cap > 0xFFFFFFFFu)
         {
-            throw_out_of_range(416, "edits of 4 GiB or more are not supported by json_document");
+            throw_out_of_range(416, "edits of 4 GiB or more are not supported by json_document"); // LCOV_EXCL_LINE (4 GiB)
         }
         std::unique_ptr<char[]> fresh(new char[cap]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         if (e.text_used != 0)
@@ -2647,14 +2647,7 @@ inline node* block_of(document_data& d, node* n, std::size_t extra)
         {
             *o++ = *c++; // the key
         }
-        if (c->kind == kind_link)
-        {
-            *o = *c;
-        }
-        else
-        {
-            make_link(*o, c);
-        }
+        make_link(*o, document_data::deref(c));
         ++o;
         c = document_data::after(c);
     }
@@ -2683,14 +2676,14 @@ inline node* find_parent(const document_data& d, const node* target)
         auto it = d.edits->regions.upper_bound(target);
         if (it == d.edits->regions.begin())
         {
-            return nullptr;
+            return nullptr; // LCOV_EXCL_LINE (an array/object with elements is in the index or a new value)
         }
         --it;
         lo = it->first;
         hi = lo + lo->next;
         if (!lt(target, hi))
         {
-            return nullptr; // a single-node value, reached through a link
+            return nullptr; // LCOV_EXCL_LINE (a single-node value, reached through a link)
         }
         // the root of a new value is the element sequence of its owner, or a linked value
         c = it->second != nullptr ? it->second : lo;
@@ -2703,7 +2696,7 @@ inline node* find_parent(const document_data& d, const node* target)
     {
         if (!is_container(*c))
         {
-            return nullptr;
+            return nullptr; // LCOV_EXCL_LINE (the value is inside c)
         }
         const bool object = c->kind == static_cast<std::uint8_t>(value_t::object);
         const node* down = nullptr;

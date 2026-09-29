@@ -327,6 +327,12 @@ std::string exception_of_call(const std::function<void()>& f)
 
 TEST_CASE("json_view edits: errors")
 {
+    SECTION("an empty document")
+    {
+        json_editable_document d;
+        CHECK_THROWS_WITH_AS(d.set(d.root(), 1), "[json.exception.invalid_iterator.202] view does not belong to this document", json::invalid_iterator&);
+    }
+
     json_editable_document d = json_editable_document::parse(R"({"o": {"a": 1}, "a": [1, 2], "n": 1, "z": null})");
     const json_editable_view root = d.root();
     const json_document other = json_document::parse("[1]");
@@ -367,6 +373,16 @@ TEST_CASE("json_view edits: errors")
 
 TEST_CASE("json_view edits: views and values")
 {
+    SECTION("a value that is no longer part of the document")
+    {
+        json_editable_document d = json_editable_document::parse("[[[1,2]]]");
+        const json_editable_view inner = d.root()[0][0];
+        d.set(d.root()[0], json::array({7}));
+        d.set(inner, 5);
+        CHECK(d.root().dump() == "[[7]]");
+        CHECK(inner.get<int>() == 5);
+    }
+
     SECTION("strings stay valid while more edits come")
     {
         json_editable_document d = json_editable_document::parse("[]");
