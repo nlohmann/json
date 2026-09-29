@@ -19,7 +19,7 @@ int main()
     // the source text; a json value's object_t is std::map, so
     // materialize().dump() of the very same view sorts the keys instead
     const json_document config = json_document::parse(
-        R"({"name": "cache", "host": "db1", "port": 6379, "timeout": 30})");
+                                     R"({"name": "cache", "host": "db1", "port": 6379, "timeout": 30})");
     std::cout << config.root().dump(2) << "\n\n";
     std::cout << config.root().materialize().dump(2) << '\n';
 }
