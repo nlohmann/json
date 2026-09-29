@@ -134,6 +134,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::accept',
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::erase', 'Method', 'api/basic_json_document/erase/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::insert', 'Method', 'api/basic_json_document/insert/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::is_discarded', 'Method', 'api/basic_json_document/is_discarded/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::load', 'Function', 'api/basic_json_document/load/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::memory_usage', 'Method', 'api/basic_json_document/memory_usage/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::node_count', 'Method', 'api/basic_json_document/node_count/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::owns_source', 'Method', 'api/basic_json_document/owns_source/index.html');
@@ -142,6 +143,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::parse_co
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::push_back', 'Method', 'api/basic_json_document/push_back/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::read', 'Method', 'api/basic_json_document/read/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::root', 'Method', 'api/basic_json_document/root/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::save', 'Method', 'api/basic_json_document/save/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::set', 'Method', 'api/basic_json_document/set/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::shrink_to_fit', 'Method', 'api/basic_json_document/shrink_to_fit/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::source', 'Method', 'api/basic_json_document/source/index.html');

@@ -236,6 +236,7 @@ nav:
           - 'erase': api/basic_json_document/erase.md
           - 'insert': api/basic_json_document/insert.md
           - 'is_discarded': api/basic_json_document/is_discarded.md
+          - 'load': api/basic_json_document/load.md
           - 'memory_usage': api/basic_json_document/memory_usage.md
           - 'node_count': api/basic_json_document/node_count.md
           - 'owns_source': api/basic_json_document/owns_source.md
@@ -244,6 +245,7 @@ nav:
           - 'push_back': api/basic_json_document/push_back.md
           - 'read': api/basic_json_document/read.md
           - 'root': api/basic_json_document/root.md
+          - 'save': api/basic_json_document/save.md
           - 'set': api/basic_json_document/set.md
           - 'shrink_to_fit': api/basic_json_document/shrink_to_fit.md
           - 'source': api/basic_json_document/source.md
