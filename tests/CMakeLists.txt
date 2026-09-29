@@ -279,6 +279,10 @@ if(json_32bit_test_only)
 elseif(NOT json_32bit_test)
     list(FILTER files EXCLUDE REGEX src/unit-32bit.cpp)
 endif()
+if(NOT JSON_MultipleHeaders)
+    # the internal headers of json_view are not part of a single header yet
+    list(FILTER files EXCLUDE REGEX src/unit-json_view_builder.cpp)
+endif()
 
 foreach(file ${files})
     json_test_add_test_for(${file} MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force})
