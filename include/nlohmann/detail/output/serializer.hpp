@@ -71,6 +71,9 @@ class serializer
     result consists of ASCII characters only.
     @param[in] indent_step_  the indent level
     @param[in] error_handler_  how to react on decoding errors
+    @param[in] float_precision_  number of significant digits for
+    floating-point numbers, as for std::format("{:.N}"); a negative value (the
+    default) writes the shortest representation that round-trips
 
     None of @a pretty_print_, @a ensure_ascii_ and @a indent_step_ change over
     the life of the serializer, so they are captured once here instead of
@@ -81,7 +84,8 @@ class serializer
                const bool pretty_print_ = false,
                const bool ensure_ascii_ = false,
                const std::size_t indent_step_ = 0,
-               error_handler_t error_handler_ = error_handler_t::strict)
+               error_handler_t error_handler_ = error_handler_t::strict,
+               const int float_precision_ = -1)
         : o(&s)
         , locale(std::localeconv())
         , indent_char(ichar)
@@ -89,6 +93,7 @@ class serializer
         , ensure_ascii(ensure_ascii_)
         , indent_step(indent_step_)
         , error_handler(error_handler_)
+        , float_precision(float_precision_)
     {}
 
     // deleted because of pointer members
@@ -1507,6 +1512,12 @@ class serializer
             return;
         }
 
+        if (JSON_HEDLEY_UNLIKELY(float_precision >= 0))
+        {
+            dump_float_with_precision(x);
+            return;
+        }
+
         // If number_float_t is an IEEE-754 single or double precision number,
         // use the Grisu2 algorithm to produce short numbers which are
         // guaranteed to round-trip, using strtof and strtod, resp.
@@ -1544,42 +1555,103 @@ class serializer
     void dump_float(number_float_t x, std::false_type /*is_ieee_single_or_double*/)
     {
         // get the number of digits for a float -> text -> float round-trip
-        static constexpr auto d = std::numeric_limits<number_float_t>::max_digits10;
+        dump_float_snprintf(number_buffer, std::numeric_limits<number_float_t>::max_digits10, x, false);
+    }
 
+    /// the largest float precision; it exceeds the significant digits of any
+    /// double (at most 767), so only very long long doubles are cut short
+    static constexpr int max_float_precision = 1000;
+
+    /*!
+    @brief dump a floating-point number with @ref float_precision significant digits
+
+    This is the same snprintf("%.*g") path as for types that are not IEEE-754
+    float or double, only with the given number of digits, so the digits are
+    those of printf and std::format("{:.N}", x).
+    */
+    // not inlined, so that its large buffer does not grow the stack frame of
+    // the default path
+    JSON_HEDLEY_NEVER_INLINE
+    void dump_float_with_precision(number_float_t x)
+    {
+        // precision + sign, decimal point, "0.000" prefix, and exponent
+        std::array < char, max_float_precision + 32 > buffer{{}};
+        // no std::min: it would odr-use max_float_precision, which C++11 does not define
+        const int d = float_precision < max_float_precision ? float_precision : max_float_precision;
+        dump_float_snprintf(buffer, d, x, true);
+    }
+
+    /*!
+    @brief dump a floating-point number with @a d significant digits via snprintf
+
+    The output is made locale-independent, and ".0" is appended to values that
+    would otherwise read back as integers.
+
+    With @a trim_zeros, trailing zeros of the fraction are removed, as "%g"
+    requires anyway. macOS's printf keeps them on exact ties in exponent
+    notation, e.g. "%.3g" of 5405000 gives "5.40e+06" instead of "5.4e+06",
+    which std::format does not. It is only set for an explicit precision, so
+    the default output is unchanged.
+    */
+    template<std::size_t N>
+    void dump_float_snprintf(std::array<char, N>& buffer, const int d, number_float_t x, const bool trim_zeros)
+    {
         // the actual conversion
-        std::ptrdiff_t len = snprintf_float(number_buffer.data(), number_buffer.size(), d, x);
+        std::ptrdiff_t len = snprintf_float(buffer.data(), buffer.size(), d, x);
 
         // negative value indicates an error
         JSON_ASSERT(len > 0);
         // check if the buffer was large enough
-        JSON_ASSERT(static_cast<std::size_t>(len) < number_buffer.size());
+        JSON_ASSERT(static_cast<std::size_t>(len) < buffer.size());
 
         // erase thousands separators
         if (locale.thousands_sep != '\0')
         {
             // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::remove returns an iterator, see https://github.com/nlohmann/json/issues/3081
-            const auto end = std::remove(number_buffer.begin(), number_buffer.begin() + len, locale.thousands_sep);
-            std::fill(end, number_buffer.end(), '\0');
-            JSON_ASSERT((end - number_buffer.begin()) <= len);
-            len = (end - number_buffer.begin());
+            const auto end = std::remove(buffer.begin(), buffer.begin() + len, locale.thousands_sep);
+            std::fill(end, buffer.end(), '\0');
+            JSON_ASSERT((end - buffer.begin()) <= len);
+            len = (end - buffer.begin());
         }
 
         // convert decimal point to '.'
         if (locale.decimal_point != '\0' && locale.decimal_point != '.')
         {
             // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::find returns an iterator, see https://github.com/nlohmann/json/issues/3081
-            const auto dec_pos = std::find(number_buffer.begin(), number_buffer.end(), locale.decimal_point);
-            if (dec_pos != number_buffer.end())
+            const auto dec_pos = std::find(buffer.begin(), buffer.end(), locale.decimal_point);
+            if (dec_pos != buffer.end())
             {
                 *dec_pos = '.';
             }
         }
 
-        put_buffer(number_buffer, static_cast<std::size_t>(len));
+        if (trim_zeros)
+        {
+            char* const begin = buffer.data();
+            char* const end = begin + len;
+            const char* const dot = std::find(begin, end, '.');
+            if (dot != end)
+            {
+                char* const exp = std::find(begin, end, 'e');
+                char* last = exp;
+                while (*(last - 1) == '0')
+                {
+                    --last;
+                }
+                if (last - 1 == dot)
+                {
+                    --last;
+                }
+                // move the exponent (and the terminating '\0') behind the digits
+                len = (std::copy(exp, end + 1, last) - 1) - begin;
+            }
+        }
+
+        put_buffer(buffer, static_cast<std::size_t>(len));
 
         // determine if we need to append ".0"
         const bool value_is_int_like =
-            std::none_of(number_buffer.begin(), number_buffer.begin() + len + 1,
+            std::none_of(buffer.begin(), buffer.begin() + len + 1,
                          [](char c)
         {
             return c == '.' || c == 'e';
@@ -1658,6 +1730,10 @@ class serializer
 
     /// error_handler how to react on decoding errors
     const error_handler_t error_handler;
+
+    /// significant digits for floating-point numbers; negative for the
+    /// shortest round-trip representation
+    const int float_precision;
 
     /// buffer collecting output before it is flushed to the output adapter, so
     /// that the many small structural writes become few bulk writes

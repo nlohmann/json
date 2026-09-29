@@ -15,6 +15,7 @@ using nlohmann::json;
 #include <array>
 #include <clocale>
 #include <map>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -173,6 +174,17 @@ TEST_CASE("locale-dependent test (LC_NUMERIC=de_DE)")
             CHECK(long_double_json(12345.5L).dump() == "12345.5");
             CHECK(long_double_json(1.0L).dump() == "1.0");
             CHECK(long_double_json(-0.25L).dump() == "-0.25");
+        }
+
+        SECTION("serializing with a float precision")
+        {
+            // a float precision is written with snprintf, whose locale-specific
+            // decimal point is undone afterwards
+            std::stringstream ss;
+            nlohmann::detail::output_stream_adapter<char> adapter(ss);
+            json::serializer s(adapter, ' ', false, false, 0, nlohmann::detail::error_handler_t::strict, 3);
+            s.dump(json::array({3.141592653589793, 1.9999, 12345.678, 5405000.0}));
+            CHECK(ss.str() == "[3.14,2.0,1.23e+04,5.4e+06]");
         }
     }
     else
