@@ -564,7 +564,7 @@ inline void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allo
     {
         if (JSON_HEDLEY_UNLIKELY(!p.is_array()))
         {
-            JSON_THROW(type_error::create(302, concat("type must be array, but is ", p.type_name()), &j));
+            JSON_THROW(type_error::create(302, concat("type must be array, but is ", p.type_name()), &p));
         }
         m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
     }
@@ -584,7 +584,7 @@ inline void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Has
     {
         if (JSON_HEDLEY_UNLIKELY(!p.is_array()))
         {
-            JSON_THROW(type_error::create(302, concat("type must be array, but is ", p.type_name()), &j));
+            JSON_THROW(type_error::create(302, concat("type must be array, but is ", p.type_name()), &p));
         }
         m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
     }

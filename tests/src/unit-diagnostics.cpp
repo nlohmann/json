@@ -17,6 +17,9 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <map>
+#include <unordered_map>
+
 TEST_CASE("Better diagnostics")
 {
     SECTION("empty JSON Pointer")
@@ -328,6 +331,28 @@ TEST_CASE("Regression tests for extended diagnostics")
             int i = 0;
             CHECK_THROWS_WITH_AS(i = inner->get<int>(), expected.c_str(), json::type_error);
             CHECK(i == 0);
+        }
+    }
+
+    SECTION("Regression test for issue #5668 - wrong path for std::map/unordered_map with non-string keys")
+    {
+        // a map with non-string keys is read from an array of [key, value] arrays;
+        // element 2 of "m" is not an array, so the path must point at "m/2", not "m"
+        json j;
+        j["outer"]["m"] = json::array({json::array({1, 2}), json::array({3, 4}), 5});
+
+        SECTION("std::map")
+        {
+            CHECK_THROWS_WITH_AS((j["outer"]["m"].get<std::map<int, int>>()),
+                                 "[json.exception.type_error.302] (/outer/m/2) type must be array, "
+                                 "but is number", json::type_error);
+        }
+
+        SECTION("std::unordered_map")
+        {
+            CHECK_THROWS_WITH_AS((j["outer"]["m"].get<std::unordered_map<int, int>>()),
+                                 "[json.exception.type_error.302] (/outer/m/2) type must be array, "
+                                 "but is number", json::type_error);
         }
     }
 
