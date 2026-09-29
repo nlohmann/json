@@ -5547,6 +5547,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
+    template<typename T>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    JSON_HEDLEY_DEPRECATED_FOR(3.13.0, from_bjdata(ptr, ptr + len))
+    static basic_json from_bjdata(const T* ptr, std::size_t len,
+                                  const bool strict = true,
+                                  const bool allow_exceptions = true)
+    {
+        return from_bjdata(ptr, ptr + len, strict, allow_exceptions);
+    }
+
     /// @brief create a JSON value from an input in BON8 format
     /// @sa https://json.nlohmann.me/api/basic_json/from_bon8/
     template<typename InputType>
@@ -5582,6 +5592,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             result = value_t::discarded;
         }
         return result;
+    }
+
+    template<typename T>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    JSON_HEDLEY_DEPRECATED_FOR(3.13.0, from_bon8(ptr, ptr + len))
+    static basic_json from_bon8(const T* ptr, std::size_t len,
+                                const bool strict = true,
+                                const bool allow_exceptions = true)
+    {
+        return from_bon8(ptr, ptr + len, strict, allow_exceptions);
     }
 
     /// @brief create a JSON value from an input in BSON format
