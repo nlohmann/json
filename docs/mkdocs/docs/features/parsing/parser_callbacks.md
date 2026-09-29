@@ -111,16 +111,18 @@ can detect them while the object is still being read, before that ambiguity ever
     --8<-- "examples/reject_duplicate_keys.output"
     ```
 
-This approach has two limitations:
+This approach has three limitations:
 
 - The depth-indexed bookkeeping must account for the fact that `object_start` reports the depth of the *parent* of
   the object, while the `key` events inside that object are reported one depth deeper (see the event table above);
   it is easy to get this off by one for nested objects.
 - The thrown exception cannot carry a `parse_error`-style byte offset, because position tracking only exists inside
   the parser and lexer, not at the callback layer.
+- The exception only names the repeated key, not where it occurs in the document. Reporting its full path requires
+  maintaining a stack of the enclosing keys and array indices in the callback as well.
 
-For strict validation with precise error positions, implementing a [SAX interface](sax_interface.md) instead gives
-access to the parser's position information directly.
+A [SAX interface](sax_interface.md) does not lift the position limitation: its `key` function receives no position
+either -- only `parse_error` is passed the byte position.
 
 ## Recipe: streaming a large homogeneous array
 
