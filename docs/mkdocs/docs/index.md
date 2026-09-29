@@ -2,11 +2,13 @@
 
 ![JSON for Modern C++](images/json.gif)
 
-JSON for Modern C++ is a header-only C++11 library that turns JSON into a first-class C++ data type, using the
-operator magic of modern C++ so that creating, reading, and modifying JSON values feels as natural as it does in
-languages like Python. The whole library is a single header, `json.hpp`, with no dependencies, no subproject, and no
-complex build system to set up. It is heavily unit-tested with 100% code coverage, checked with Valgrind and the
-Clang Sanitizers for memory leaks, and continuously fuzz-tested by Google OSS-Fuzz.
+JSON for Modern C++ is a header-only C++11 library that turns JSON into a first-class C++ data type, using the operator
+magic of modern C++ so that creating, reading, and modifying JSON values feels as natural as it does in languages like
+Python. The whole library is available as a single header, `json.hpp`, with no dependencies, no subproject, and no
+complex build system to set up; a companion header, `json_fwd.hpp`, provides forward declarations to keep compile times
+down. See [header-only integration](integration/index.md) for details. It is heavily unit-tested with 100% code
+coverage, checked with Valgrind and the Clang Sanitizers for memory leaks, and continuously fuzz-tested by Google
+OSS-Fuzz.
 
 ## Quick start
 
