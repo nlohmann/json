@@ -3786,7 +3786,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 #include <array> // array
 #include <cstddef> // size_t
-#include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
+#include <cstdint> // int64_t, uint8_t, uint16_t, uint32_t, uint64_t
 #include <cstring> // memcmp, memcpy
 #include <limits> // numeric_limits
 #include <string> // string
@@ -4305,7 +4305,7 @@ inline bool check_number(const node& n, const unsigned char* text)
         frac_digits = static_cast<std::size_t>(p - f0);
         is_float = true;
     }
-    long exponent = 0;
+    std::int64_t exponent = 0;
     if (p != e && (*p | 0x20u) == 'e')
     {
         ++p;
@@ -4338,7 +4338,7 @@ inline bool check_number(const node& n, const unsigned char* text)
         }
         // parse() rejects floats that overflow; as there, only a number whose
         // magnitude could reach 1e308 needs the conversion
-        if (static_cast<long>(int_digits) + exponent > 300)
+        if (static_cast<std::int64_t>(int_digits) + exponent > 300)
         {
             const auto v = float_value<double>(reinterpret_cast<const char*>(s), n); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
             return v <= (std::numeric_limits<double>::max)() && v >= -(std::numeric_limits<double>::max)();
