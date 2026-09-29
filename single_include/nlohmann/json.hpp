@@ -19588,6 +19588,12 @@ class json_pointer
                         // "-" always fails the range check
                         return false;
                     }
+                    if (JSON_HEDLEY_UNLIKELY(reference_token.empty()))
+                    {
+                        // an empty reference token is not an array index; array_index()
+                        // would throw out_of_range.404 -- contains() must not throw (see #5395)
+                        return false;
+                    }
                     if (JSON_HEDLEY_UNLIKELY(reference_token.size() == 1 && !("0" <= reference_token && reference_token <= "9")))
                     {
                         // invalid char
