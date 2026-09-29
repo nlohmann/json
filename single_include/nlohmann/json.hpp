@@ -4735,7 +4735,7 @@ std::is_constructible <decltype(std::declval<Compare>()(std::declval<A>(), std::
 // avoid their instantiation on all compilers, even when the first operand
 // is false. The dispatch on is_json_pointer_of can be removed once the
 // deprecated json_pointer comparison operators have been removed.
-template<typename Compare, typename A, typename B, bool = is_json_pointer_of<A, B>::value>
+template<typename Compare, typename A, typename B, bool = is_json_pointer_of<uncvref_t<A>, uncvref_t<B>>::value>
 struct is_comparable : std::false_type {};
 
 template<typename Compare, typename A, typename B>
