@@ -16588,6 +16588,11 @@ class binary_reader
         if (0xC2 <= byte && byte <= 0xF7)
         {
             const auto second = get_bon8();
+            if (second == char_traits<char_type>::eof())
+            {
+                // the input ends inside a character or an integer
+                return unexpect_eof(input_format_t::bon8, "key");
+            }
             unget_bon8(second);
             if (is_bon8_continuation(second))
             {
@@ -16686,6 +16691,12 @@ class binary_reader
             // a lead byte ends the string if no continuation byte follows: it
             // is then the first byte of an integer
             const auto second = get_bon8();
+            if (second == char_traits<char_type>::eof())
+            {
+                // the input ends inside a character or an integer: either
+                // way, the message is incomplete
+                return unexpect_eof(input_format_t::bon8, "string");
+            }
             if (!is_bon8_continuation(second))
             {
                 unget_bon8(second);
