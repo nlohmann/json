@@ -243,7 +243,8 @@ elements are not touched, but an iterator that was walking the old layout no lon
 [`get_string()`](../api/basic_json_view/get_string.md) is unaffected either way and stays valid across further
 edits. See [`basic_json_document`'s Edits](../api/basic_json_document/index.md#edits) for the details, and
 [`set`'s Exception safety](../api/basic_json_document/set.md#exception-safety) for what an edit guarantees if it
-throws (the *basic* guarantee, not the strong one `dump()` and the read-only functions provide).
+throws (the *basic* guarantee, not the strong one `dump()` and the read-only functions provide). How edits are kept in
+the index is described in the [architecture overview](../home/architecture.md#node-index-of-json-views).
 
 ## Choosing between `json`, `ordered_json`, the SAX interface, and `json_view`
 
