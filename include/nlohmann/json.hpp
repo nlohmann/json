@@ -4152,8 +4152,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", this));
         }
 
+        // copy the values first: ilist may refer to elements of this array
+        array_t values;
+        values.reserve(ilist.size());
+        for (const auto& element : ilist)
+        {
+            values.push_back(element.moved_or_copied());
+        }
+
         // insert to array and return iterator
-        return insert_iterator(pos, ilist.begin(), ilist.end());
+        return insert_iterator(pos, std::make_move_iterator(values.begin()), std::make_move_iterator(values.end()));
     }
 
     /// @brief inserts range of elements into object

@@ -761,6 +761,34 @@ TEST_CASE("modifiers")
             }
         }
 
+        SECTION("initializer list referring to the array's own elements (#5656)")
+        {
+            SECTION("sufficient capacity (no reallocation)")
+            {
+                json j_own = json::array();
+                j_own.get_ref<json::array_t&>().reserve(8);
+                j_own.push_back("a");
+                j_own.push_back("b");
+                j_own.push_back("c");
+
+                const json& j_own_cref = j_own;
+                auto it = j_own.insert(j_own.begin(), {j_own_cref[0], j_own_cref[1]});
+                CHECK(*it == json("a"));
+                CHECK(j_own == json({"a", "b", "a", "b", "c"}));
+            }
+
+            SECTION("insufficient capacity (reallocation)")
+            {
+                json j_own = {"a", "b", "c"};
+                j_own.get_ref<json::array_t&>().shrink_to_fit();
+
+                const json& j_own_cref = j_own;
+                auto it = j_own.insert(j_own.begin(), {j_own_cref[2]});
+                CHECK(*it == json("c"));
+                CHECK(j_own == json({"c", "a", "b", "c"}));
+            }
+        }
+
         SECTION("invalid iterator")
         {
             // pass iterator to a different array
