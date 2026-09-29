@@ -10,6 +10,7 @@
 
 #include <nlohmann/json.hpp>
 #include <nlohmann/detail/view/builder.hpp>
+#include <nlohmann/detail/view/string_ref.hpp>
 using nlohmann::json;
 
 #include <cstdint>
@@ -215,6 +216,22 @@ struct generator
     }
 };
 } // namespace
+
+TEST_CASE("json_view string_ref")
+{
+    // std::string_view in C++17, a stand-in with the same members before
+    using nlohmann::detail::view::string_ref;
+    const std::string text = "abc";
+    const string_ref r(text);
+    CHECK(r.length() == 3);
+    CHECK(std::string(r.begin(), r.end()) == "abc");
+    CHECK(r[1] == 'b');
+    CHECK(r != string_ref("abd"));
+    CHECK_FALSE(r != string_ref("abcd", 3));
+    std::ostringstream o;
+    o << r;
+    CHECK(o.str() == "abc");
+}
 
 TEST_CASE("json_view builder")
 {
