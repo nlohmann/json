@@ -183,7 +183,11 @@ def cpu_model():
                     return line.split(':', 1)[1].strip()
     except OSError:
         pass
-    return platform.processor()
+    # (AArch64 Linux: /proc/cpuinfo has no model name, lscpu knows it)
+    for line in output(['lscpu']).splitlines():
+        if line.startswith('Model name:'):
+            return line.split(':', 1)[1].strip()
+    return platform.processor() or platform.machine()
 
 
 def git_commit():

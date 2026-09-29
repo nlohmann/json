@@ -29,6 +29,14 @@ python3 tests/benchmarks/json_view/compare.py --data <json_test_data directory> 
 For numbers worth publishing, use a quiet machine (see [Getting stable numbers](../README.md#getting-stable-numbers)),
 the default 30 rounds or more, and `--native` only if the other libraries were built for the same CPU.
 
+### On GitHub-hosted runners
+
+The workflow [json_view benchmarks](../../../.github/workflows/json_view_benchmarks.yml) runs `compare.py --download`
+on demand: by hand (Actions → "json_view benchmarks" → "Run workflow"), on an x86-64 or AArch64 Ubuntu runner with GCC
+or Clang, or when a pull request gets the label `benchmark`, on both architectures with GCC. The results appear as the
+job summary and as an artifact. Shared runners are noisy, so these numbers show
+where `json_view` stands on another architecture; they are not meant for publication.
+
 ## What is measured
 
 `bench_view.cpp` runs four workloads on twitter, citm_catalog, canada, jeopardy, a single tweet (`status`), and a
