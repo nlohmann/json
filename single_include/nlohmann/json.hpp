@@ -21749,16 +21749,7 @@ class binary_writer
 
             case value_t::string:
             {
-                string_t storage;
-                const string_t& value = sanitize_utf8_for_write(*j.m_data.m_value.string, j, storage);
-
-                // step 1: write control byte and the string length
-                write_cbor_head(0x60, value.size());
-
-                // step 2: write the string
-                oa.write_characters(
-                      reinterpret_cast<const CharType*>(value.data()),
-                      value.size());
+                write_cbor_string(*j.m_data.m_value.string, j);
                 break;
             }
 
@@ -21821,23 +21812,20 @@ class binary_writer
 
             case value_t::object:
             {
+                static_assert(
+                    std::is_convertible <
+                    typename BasicJsonType::object_t::key_type,
+                    string_t >::value,
+                    "object_t::key_type must be implicitly convertible to string_t");
+
                 // step 1: write control byte and the object size
                 write_cbor_head(0xA0, j.m_data.m_value.object->size());
 
                 for (const auto& el : *j.m_data.m_value.object)
                 {
-                    // el.first is checked here, against the object as
-                    // diagnostics context, because write_cbor(el.first)
-                    // converts it to a temporary basic_json that would be
-                    // used as the context instead; for error_handler_t::keep
-                    // and ::replace/::ignore the recursive write_cbor(el.first)
-                    // call below handles the key like any other string, so no
-                    // separate check is needed here for those
-                    if (error_handler == error_handler_t::strict)
-                    {
-                        check_utf8(el.first, j);
-                    }
-                    write_cbor(el.first);
+                    // el.first is written directly (not via a temporary
+                    // basic_json), with the object as diagnostics context
+                    write_cbor_string(el.first, j);
                     write_cbor(el.second, depth + 1);
                 }
                 break;
@@ -21996,39 +21984,7 @@ class binary_writer
 
             case value_t::string:
             {
-                string_t storage;
-                const string_t& value = sanitize_utf8_for_write(*j.m_data.m_value.string, j, storage);
-
-                // step 1: write control byte and the string length
-                const auto N = to_msgpack_length(value.size(), j);
-                if (N <= 31)
-                {
-                    // fixstr
-                    write_number(static_cast<std::uint8_t>(0xA0 | N));
-                }
-                else if (N <= (std::numeric_limits<std::uint8_t>::max)())
-                {
-                    // str 8
-                    oa.write_character(to_char_type(0xD9));
-                    write_number(static_cast<std::uint8_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint16_t>::max)())
-                {
-                    // str 16
-                    oa.write_character(to_char_type(0xDA));
-                    write_number(static_cast<std::uint16_t>(N));
-                }
-                else
-                {
-                    // str 32
-                    oa.write_character(to_char_type(0xDB));
-                    write_number(static_cast<std::uint32_t>(N));
-                }
-
-                // step 2: write the string
-                oa.write_characters(
-                      reinterpret_cast<const CharType*>(value.data()),
-                      value.size());
+                write_msgpack_string(*j.m_data.m_value.string, j);
                 break;
             }
 
@@ -22134,19 +22090,20 @@ class binary_writer
 
             case value_t::object:
             {
+                static_assert(
+                    std::is_convertible <
+                    typename BasicJsonType::object_t::key_type,
+                    string_t >::value,
+                    "object_t::key_type must be implicitly convertible to string_t");
+
                 // step 1: write control byte and the object size
                 write_msgpack_object_prefix(j.m_data.m_value.object->size(), j);
 
                 for (const auto& el : *j.m_data.m_value.object)
                 {
-                    // as in write_cbor, el.first is checked here against the
-                    // object as diagnostics context; the recursive call below
-                    // handles keep/replace/ignore like any other string
-                    if (error_handler == error_handler_t::strict)
-                    {
-                        check_utf8(el.first, j);
-                    }
-                    write_msgpack(el.first);
+                    // as in write_cbor, el.first is written directly with the
+                    // object as diagnostics context
+                    write_msgpack_string(el.first, j);
                     write_msgpack(el.second, depth + 1);
                 }
                 break;
@@ -22530,13 +22487,9 @@ class binary_writer
                     continue;
                 }
 
-                // el.first is checked here, against the object as diagnostics
-                // context, like the matching check in write_cbor's object case
-                if (error_handler == error_handler_t::strict)
-                {
-                    check_utf8(current.object_it->first, *current.value);
-                }
-                write_cbor(current.object_it->first);
+                // the key is written directly (not via a temporary basic_json),
+                // with the object as diagnostics context, as in write_cbor
+                write_cbor_string(current.object_it->first, *current.value);
                 const BasicJsonType* child = &(current.object_it->second);
                 ++stack.back().object_it;
                 write_cbor_value_or_push(*child, stack);
@@ -22611,11 +22564,9 @@ class binary_writer
                     continue;
                 }
 
-                if (error_handler == error_handler_t::strict)
-                {
-                    check_utf8(current.object_it->first, *current.value);
-                }
-                write_msgpack(current.object_it->first);
+                // as in write_cbor_iterative, the key is written directly with
+                // the object as diagnostics context
+                write_msgpack_string(current.object_it->first, *current.value);
                 const BasicJsonType* child = &(current.object_it->second);
                 ++stack.back().object_it;
                 write_msgpack_value_or_push(*child, stack);
@@ -23491,6 +23442,85 @@ class binary_writer
             oa.write_character(to_char_type(static_cast<std::uint8_t>(major_type + 0x1B)));
             write_number(argument);
         }
+    }
+
+    /*!
+    @brief write a CBOR text string
+
+    @a value is checked or sanitized according to @ref error_handler, with
+    @a context (the string value itself, or the object a key belongs to) used
+    as diagnostics context; this avoids converting object keys to a temporary
+    basic_json just to write them
+
+    @note When object_t::key_type is not string_t, @a value is a temporary
+          string_t converted from the key, which lives only until the end of
+          the caller's statement. The reference returned by
+          @ref sanitize_utf8_for_write may refer to it, so it must not escape
+          this function.
+    */
+    void write_cbor_string(const string_t& value, const BasicJsonType& context)
+    {
+        string_t storage;
+        const string_t& sanitized = sanitize_utf8_for_write(value, context, storage);
+
+        // step 1: write control byte and the string length
+        write_cbor_head(0x60, sanitized.size());
+
+        // step 2: write the string
+        oa.write_characters(
+              reinterpret_cast<const CharType*>(sanitized.data()),
+              sanitized.size());
+    }
+
+    /////////////
+    // MsgPack //
+    /////////////
+
+    /*!
+    @brief write a MessagePack str
+
+    @a value is checked or sanitized according to @ref error_handler, with
+    @a context used as diagnostics context, as in @ref write_cbor_string
+
+    @note As in @ref write_cbor_string, @a value may be a temporary string_t
+          converted from a key, so the reference returned by
+          @ref sanitize_utf8_for_write must not escape this function.
+    */
+    void write_msgpack_string(const string_t& value, const BasicJsonType& context)
+    {
+        string_t storage;
+        const string_t& sanitized = sanitize_utf8_for_write(value, context, storage);
+
+        // step 1: write control byte and the string length
+        const auto N = to_msgpack_length(sanitized.size(), context);
+        if (N <= 31)
+        {
+            // fixstr
+            write_number(static_cast<std::uint8_t>(0xA0 | N));
+        }
+        else if (N <= (std::numeric_limits<std::uint8_t>::max)())
+        {
+            // str 8
+            oa.write_character(to_char_type(0xD9));
+            write_number(static_cast<std::uint8_t>(N));
+        }
+        else if (N <= (std::numeric_limits<std::uint16_t>::max)())
+        {
+            // str 16
+            oa.write_character(to_char_type(0xDA));
+            write_number(static_cast<std::uint16_t>(N));
+        }
+        else
+        {
+            // str 32
+            oa.write_character(to_char_type(0xDB));
+            write_number(static_cast<std::uint32_t>(N));
+        }
+
+        // step 2: write the string
+        oa.write_characters(
+              reinterpret_cast<const CharType*>(sanitized.data()),
+              sanitized.size());
     }
 
     ////////////
