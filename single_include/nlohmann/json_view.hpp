@@ -5375,6 +5375,23 @@ class output_buffer
         m_pos += n;
     }
 
+    /// the write position and the end of the writable space, for a writer
+    /// that keeps the position in a local variable (set_cursor() hands it back)
+    char* cursor() const noexcept
+    {
+        return m_pos;
+    }
+
+    char* limit() const noexcept
+    {
+        return m_end;
+    }
+
+    void set_cursor(char* p) noexcept
+    {
+        m_pos = p;
+    }
+
   private:
     static StringType& sized(StringType& out, std::size_t estimate)
     {
@@ -5393,6 +5410,105 @@ class output_buffer
     StringType& m_out;
     char* m_pos;
     char* m_end;
+};
+
+/// The length of the run at s that dump() writes unchanged without
+/// ensure_ascii: all bytes but quotes, backslashes, and control characters.
+/// Unlike detail::string_bulk_run(), non-ASCII bytes are not validated: the
+/// strings of a document are valid UTF-8 (a damaged image loaded with
+/// image_check::bounds can have others, which are then written unchanged).
+inline std::size_t plain_output_run(const unsigned char* s, std::size_t n) noexcept
+{
+    constexpr std::uint64_t ones = 0x0101010101010101ull;
+    constexpr std::uint64_t high = 0x8080808080808080ull;
+    std::size_t i = 0;
+    for (; i + 8 <= n; i += 8)
+    {
+        const std::uint64_t v = read_eight_bytes(s + i);
+        const std::uint64_t q = v ^ 0x2222222222222222ull; // '"'
+        const std::uint64_t b = v ^ 0x5C5C5C5C5C5C5C5Cull; // '\\'
+        const std::uint64_t stop = (((q - ones) & ~q) | ((b - ones) & ~b) | ((v - 0x2020202020202020ull) & ~v)) & high;
+        if (stop != 0)
+        {
+            // the lowest flagged byte is the first stop: borrows only flag bytes above a true one
+            return i + (static_cast<std::size_t>(count_trailing_zeros(stop)) / 8);
+        }
+    }
+    for (; i < n; ++i)
+    {
+        if (s[i] == '"' || s[i] == '\\' || s[i] < 0x20)
+        {
+            return i;
+        }
+    }
+    return n;
+}
+
+/// A stack that starts in a buffer of the caller (a local array) and moves to
+/// the heap (a vector of the caller) only when that is full, so that dumps of
+/// shallow documents need no allocation. The top is a pointer, as in
+/// std::vector. The address of the stack never escapes (the growth gets the
+/// vector and returns the new storage), so its pointers stay in registers.
+template<typename T>
+class small_stack
+{
+  public:
+    small_stack(T* buffer, std::size_t capacity, std::vector<T>& heap) noexcept
+        : m_begin(buffer), m_top(buffer), m_end(buffer + capacity), m_heap(&heap)
+    {}
+    small_stack(const small_stack&) = delete;
+    small_stack(small_stack&&) = delete;
+    small_stack& operator=(const small_stack&) = delete;
+    small_stack& operator=(small_stack&&) = delete;
+    ~small_stack() = default;
+
+    NLOHMANN_VIEW_ALWAYS_INLINE void push_back(const T& x)
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(m_top == m_end))
+        {
+            const std::size_t used = size();
+            const std::size_t capacity = 2 * static_cast<std::size_t>(m_end - m_begin);
+            m_begin = grow(*m_heap, m_begin, used, capacity);
+            m_top = m_begin + used;
+            m_end = m_begin + capacity;
+        }
+        *m_top++ = x;
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE T& back() noexcept
+    {
+        return m_top[-1];
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE void pop_back() noexcept
+    {
+        --m_top;
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE bool empty() const noexcept
+    {
+        return m_top == m_begin;
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE std::size_t size() const noexcept
+    {
+        return static_cast<std::size_t>(m_top - m_begin);
+    }
+
+  private:
+    /// the used entries moved to heap storage of the given capacity
+    NLOHMANN_VIEW_NOINLINE static T* grow(std::vector<T>& heap, const T* begin, std::size_t used, std::size_t capacity)
+    {
+        std::vector<T> bigger(capacity);
+        std::copy(begin, begin + used, bigger.begin());
+        heap.swap(bigger);
+        return heap.data();
+    }
+
+    T* m_begin;
+    T* m_top;
+    T* m_end;
+    std::vector<T>* m_heap;
 };
 
 /// how the view's dump() writes a value
@@ -5429,6 +5545,18 @@ class view_serializer
 
     void dump(const node* root)
     {
+        if (!m_style.pretty && !m_style.ensure_ascii)
+        {
+            if (m_style.source_numbers)
+            {
+                dump_compact<true>(root);
+            }
+            else
+            {
+                dump_compact<false>(root);
+            }
+            return;
+        }
         struct frame
         {
             const node* pos; ///< next element, or key of the next member
@@ -5436,7 +5564,9 @@ class view_serializer
             bool object;
             bool first;  ///< nothing written yet
         };
-        std::vector<frame> stack;
+        std::array<frame, 32> buffer; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::vector<frame> heap;
+        small_stack<frame> stack(buffer.data(), buffer.size(), heap);
         const node* n = root;
         for (;;)
         {
@@ -5507,6 +5637,284 @@ class view_serializer
     }
 
   private:
+    /*!
+    @brief the compact output without ensure_ascii (the default dump())
+
+    The same walk as dump(), with the write position in a local variable
+    (stores through char pointers would otherwise force a reload of the
+    buffer's members after each one), and with strings and number tokens of
+    the source copied by fixed-size moves of 32 bytes where the source has
+    that many bytes left, instead of a library call per token. The buffer
+    keeps 64 bytes of slack for the overshoot.
+    */
+    /// a string that is not a plain string of the source (decoded, or written
+    /// by an edit), without ensure_ascii: runs without characters to escape
+    /// are copied
+    NLOHMANN_VIEW_NOINLINE void write_decoded(const node& n)
+    {
+        const auto* const s = reinterpret_cast<const unsigned char*>(m_doc.str(n)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        m_out.put('"');
+        for (std::size_t i = 0; i < n.len;)
+        {
+            const std::size_t run = plain_output_run(s + i, n.len - i);
+            if (run != 0)
+            {
+                m_out.put(reinterpret_cast<const char*>(s + i), run); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                i += run;
+                continue;
+            }
+            write_codepoint<false>(s[i], s + i, 1); // a quote, a backslash, or a control character
+            ++i;
+        }
+        m_out.put('"');
+    }
+
+    /// the copies of dump_compact() that are not fixed-size moves (long
+    /// strings, or near the end of the source); out of line, so that the
+    /// compiler does not merge the fixed-size moves into this call
+    NLOHMANN_VIEW_NOINLINE static void copy_long(char* to, const char* from, std::size_t n) noexcept
+    {
+        std::memcpy(to, from, n);
+    }
+
+    template<bool SourceNumbers>
+    void dump_compact(const node* root)
+    {
+        struct frame
+        {
+            const node* pos; ///< (editable documents) next element, or key of the next member
+            const node* end;
+            bool object;
+        };
+        std::array<frame, 32> buffer; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::vector<frame> heap;
+        small_stack<frame> stack(buffer.data(), buffer.size(), heap);
+        const char* const src = m_doc.src;
+        const char* const src_end = src + m_doc.size;
+        char* w = m_out.cursor();
+        char* lim = m_out.limit();
+        // room for n bytes and the slack
+        const auto room = [&](std::size_t n)
+        {
+            if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::size_t>(lim - w) < n + 64))
+            {
+                m_out.set_cursor(w);
+                m_out.reserve(n + 64);
+                w = m_out.cursor();
+                lim = m_out.limit();
+            }
+        };
+        // copy n bytes of the source (after room(n))
+        const auto copy = [&](const char* from, std::size_t n)
+        {
+            if (n <= 32 && src_end - from >= 32)
+            {
+                std::memcpy(w, from, 32);
+            }
+            else if (n <= 256 && src_end - from >= static_cast<std::ptrdiff_t>(n) + 32)
+            {
+                for (std::size_t i = 0; i < n; i += 32)
+                {
+                    std::memcpy(w + i, from + i, 32);
+                }
+            }
+            else
+            {
+                copy_long(w, from, n);
+            }
+            w += n;
+        };
+        // a literal of n bytes (after room(n))
+        const auto literal = [&](const char* text, std::size_t n)
+        {
+            std::memcpy(w, text, n);
+            w += n;
+        };
+        // a string that is not a plain string of the source (out of line, so
+        // that the cursor stays in a register here)
+        const auto escaped = [&](const node & n)
+        {
+            m_out.set_cursor(w);
+            write_decoded(n);
+            w = m_out.cursor();
+            lim = m_out.limit();
+        };
+
+        // Read-only documents: the elements of a container follow it in the
+        // node array, so the walk goes through the array in order, and a
+        // frame only needs the end of its container. Editable documents: the
+        // elements of a moved container live elsewhere, so a frame keeps the
+        // position of the next element (see navigation).
+        // The innermost open container is kept in registers (cur; end ==
+        // nullptr: none), the stack holds the ones around it.
+        frame cur{nullptr, nullptr, false};
+        const node* n = root;
+        for (;;)
+        {
+            // write the value at n (read-only documents: and advance n)
+            bool opened = false;
+            switch (static_cast<value_t>(n->kind))
+            {
+                case value_t::string:
+                    if ((n->flags & node_flags::storage) == 0)
+                    {
+                        room(n->len + 2);
+                        *w++ = '"';
+                        copy(src + n->off, n->len);
+                        *w++ = '"';
+                    }
+                    else
+                    {
+                        escaped(*n);
+                    }
+                    break;
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                {
+                    const std::uint32_t len = number_length(*n);
+                    room(len);
+                    if (Editable && (n->flags & node_flags::storage) != 0)
+                    {
+                        copy_long(w, m_doc.str(*n), len); // a canonical token written by an edit
+                        w += len;
+                        break;
+                    }
+                    const char* const token = src + n->off;
+                    if (!SourceNumbers && NLOHMANN_VIEW_UNLIKELY(len == 2 && token[0] == '-' && token[1] == '0'))
+                    {
+                        *w++ = '0'; // parse() reads -0 as the integer 0
+                    }
+                    else
+                    {
+                        copy(token, len);
+                    }
+                    break;
+                }
+                case value_t::number_float:
+                    if (SourceNumbers && (n->flags & node_flags::storage) != node_flags::edited)
+                    {
+                        room(n->len);
+                        copy(src + n->off, n->len);
+                    }
+                    else
+                    {
+                        m_out.set_cursor(w);
+                        write_float(float_value<number_float_t>(m_doc, *n));
+                        w = m_out.cursor();
+                        lim = m_out.limit();
+                    }
+                    break;
+                case value_t::boolean:
+                    room(8);
+                    if ((n->flags & node_flags::is_true) != 0)
+                    {
+                        literal("true", 4);
+                    }
+                    else
+                    {
+                        literal("false", 5);
+                    }
+                    break;
+                case value_t::object:
+                case value_t::array:
+                {
+                    const bool object = n->kind == static_cast<std::uint8_t>(value_t::object);
+                    room(8);
+                    if (n->len == 0)
+                    {
+                        literal(object ? "{}" : "[]", 2);
+                    }
+                    else
+                    {
+                        *w++ = object ? '{' : '[';
+                        stack.push_back(cur);
+                        if (Editable)
+                        {
+                            cur = frame{nav::first(m_doc, n), nav::end(m_doc, n), object};
+                        }
+                        else
+                        {
+                            cur = frame{nullptr, n + n->next, object};
+                        }
+                        opened = true;
+                    }
+                    break;
+                }
+                case value_t::null:
+                    room(8);
+                    literal("null", 4);
+                    break;
+                case value_t::binary:    // LCOV_EXCL_LINE (not in a document)
+                case value_t::discarded: // LCOV_EXCL_LINE
+                default:                 // LCOV_EXCL_LINE
+                    break;               // LCOV_EXCL_LINE
+            }
+            if (!Editable)
+            {
+                ++n; // the next node: the first element of an opened container, or the node after a scalar
+            }
+
+            // go to the next value: close finished containers, then separate
+            // (a container just opened has an element)
+            if (!opened)
+            {
+                for (;;)
+                {
+                    if (cur.end == nullptr)
+                    {
+                        m_out.set_cursor(w);
+                        m_out.finish();
+                        return;
+                    }
+                    if ((Editable ? cur.pos : n) != cur.end)
+                    {
+                        break;
+                    }
+                    room(1);
+                    *w++ = cur.object ? '}' : ']';
+                    cur = stack.back();
+                    stack.pop_back();
+                }
+                room(1);
+                *w++ = ',';
+            }
+            const node* const at = Editable ? cur.pos : n;
+            if (cur.object)
+            {
+                const node& key = *at;
+                if ((key.flags & node_flags::storage) == 0)
+                {
+                    room(key.len + 3);
+                    *w++ = '"';
+                    copy(src + key.off, key.len);
+                    w[0] = '"';
+                    w[1] = ':';
+                    w += 2;
+                }
+                else
+                {
+                    escaped(key);
+                    room(1);
+                    *w++ = ':';
+                }
+                if (Editable)
+                {
+                    n = nav::value(at + 1);
+                    cur.pos = document_data::after(at + 1);
+                }
+                else
+                {
+                    ++n;
+                }
+            }
+            else if (Editable)
+            {
+                n = nav::value(at);
+                cur.pos = document_data::after(at);
+            }
+        }
+    }
+
     void newline(std::size_t level)
     {
         if (m_style.pretty)
@@ -6486,8 +6894,10 @@ class basic_json_view
         style.indent_char = indent_char;
         style.ensure_ascii = ensure_ascii;
         style.source_numbers = numbers == number_format::source;
-        // the compact text is about as long as the source text of the value
-        const std::size_t estimate = source_extent() + (style.pretty ? source_extent() / 2 : 0) + 64;
+        // the compact text is about as long as the source text of the value;
+        // the compact writer keeps 64 bytes of slack, so that it does not grow
+        // the buffer just before the end
+        const std::size_t estimate = source_extent() + (style.pretty ? source_extent() / 2 : 0) + 160;
         detail::view::view_serializer<BasicJsonType, Editable>(*m_doc, out, estimate, style).dump(m_node);
         return out;
     }

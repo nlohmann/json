@@ -592,8 +592,10 @@ class basic_json_view
         style.indent_char = indent_char;
         style.ensure_ascii = ensure_ascii;
         style.source_numbers = numbers == number_format::source;
-        // the compact text is about as long as the source text of the value
-        const std::size_t estimate = source_extent() + (style.pretty ? source_extent() / 2 : 0) + 64;
+        // the compact text is about as long as the source text of the value;
+        // the compact writer keeps 64 bytes of slack, so that it does not grow
+        // the buffer just before the end
+        const std::size_t estimate = source_extent() + (style.pretty ? source_extent() / 2 : 0) + 160;
         detail::view::view_serializer<BasicJsonType, Editable>(*m_doc, out, estimate, style).dump(m_node);
         return out;
     }
