@@ -54,7 +54,7 @@ the result of an internet search. If you know further customers of the library, 
 - [**Madden NFL 25**](https://www.mobygames.com/person/1195889/niels-lohmann/credits/), a sports simulation game capturing the excitement of American football with realistic gameplay and team management features
 - [**Madden NFL 26**](https://www.mobygames.com/person/1195889/niels-lohmann/credits/), an American football simulation with franchise and team management modes
 - [**Madden NFL 27**](https://www.mobygames.com/person/1195889/niels-lohmann/credits/), the latest installment of the American football simulation series
-- **Marne**, an unofficial private server platform for hosting custom Battlefield 1 game experiences
+- [**Marne**](https://marne.io/licenses), an unofficial private server platform for hosting custom Battlefield 1 game experiences
 - [**Minecraft**](https://www.minecraft.net/zh-hant/attribution), a popular sandbox video game
 - [**Mumble**](https://github.com/mumble-voip/mumble), a low-latency, open-source voice chat application widely used by gaming communities
 - [**NHL 22**](https://www.mobygames.com/person/1195889/niels-lohmann/credits/), a hockey simulation game offering realistic gameplay, team management, and various modes to enhance the hockey experience
@@ -80,14 +80,14 @@ the result of an internet search. If you know further customers of the library, 
 - [**Audinate**](https://www.audinate.com/legal/software-licensing/dante-av-h-open-source-licenses/), a provider of networked audio solutions specializing in Dante technology, which facilitates high-quality digital audio transport over IP networks
 - [**Canon CanoScan LIDE**](https://carolburo.com/wp-content/uploads/2024/06/LiDE400_OnlineManual_Win_FR_V02.pdf), a series of flatbed scanners offering high-resolution image scanning for home and office use
 - [**Canon PIXMA Printers**](https://www.mediaexpert.pl/products/files/73/7338196/Instrukcja-obslugi-CANON-Pixma-TS7450i.pdf), a line of all-in-one inkjet printers known for high-quality printing and wireless connectivity
-- **Cisco Webex Desk Camera**, a video camera designed for professional-quality video conferencing and remote collaboration
+- [**Cisco Webex Desk Camera**](https://www.cisco.com/c/dam/en_us/about/doing_business/open_source/docs/CiscoWebexDeskCamera-23-1622100417.pdf), a video camera designed for professional-quality video conferencing and remote collaboration
 - [**DJI Edge SDK**](https://github.com/dji-sdk/Edge-SDK-V2-Demo), the reference applications for DJI's Edge SDK, used to build edge computing services on DJI drone docks
 - [**Elgato Stream Deck**](https://github.com/elgatosf/streamdeck-obs-plugin2), a family of programmable control surfaces for content creators and their plugin ecosystem
 - [**Instagrid**](https://instagrid.co/intellectual-property/foss), a manufacturer of portable, high-performance battery systems for professional mobile power supply
 - [**iRobot**](https://iot-content.irobot.com/iw/sfsites/c/cms/delivery/media/MCKRLTPDJSSJBNJKDA5SG5UVVIIQ), a manufacturer of autonomous home robots including the Roomba vacuum cleaner range
 - [**Logitech Logi Bolt**](https://opensource.logitech.com/wiki/Logi_BoltApp/), the management application for Logitech's secure wireless connectivity technology
 - [**Novitus**](https://novitus.pl/licencjepensource), a manufacturer of fiscal cash registers and point-of-sale devices
-- **Philips Hue Personal Wireless Lighting**, a smart lighting system for customizable and wireless home illumination
+- [**Philips Hue Personal Wireless Lighting**](http://2ak5ape.257.cz/), a smart lighting system for customizable and wireless home illumination
 - [**Ray-Ban Meta Smart glasses**](https://www.meta.com/de/en/legal/smart-glasses/third-party-notices-android/03/), a pair of smart glasses designed for capturing photos and videos with integrated connectivity and social features
 - [**Razer Synapse**](https://mysupport.razer.com/app/answers/detail/a_id/14146/~/open-source-software-for-razer-software), a unified configuration software enabling hardware customization for Razer devices
 - [**Sharp Professional Displays**](https://jp.sharp/restricted/business/lcd-display/cms/images/source_pnla862/PN-LA652_752_862_LicenseInformation.pdf), a range of large-format interactive displays for business and education
@@ -281,7 +281,7 @@ the result of an internet search. If you know further customers of the library, 
 - [**Cisco MLS++**](https://github.com/cisco/mlspp), an implementation of the Messaging Layer Security protocol for end-to-end encrypted group messaging
 - [**Citrix Provisioning**](https://docs.citrix.com/en-us/provisioning/2203-ltsr/downloads/pvs-third-party-notices-2203.pdf), a solution that streamlines the delivery of virtual desktops and applications by allowing administrators to manage and provision resources efficiently across multiple environments
 - [**Citrix Virtual Apps and Desktops**](https://docs.citrix.com/en-us/citrix-virtual-apps-desktops/2305/downloads/third-party-notices-apps-and-desktops.pdf), a solution from Citrix that delivers virtual apps and desktops
-- **CyberArk**, a security solution that specializes in privileged access management, enabling organizations to control and monitor access to critical systems and data, thereby enhancing overall cybersecurity posture
+- [**CyberArk**](https://docs.cyberark.com/Downloads/Legal/Privileged%20Session%20Manager%20for%20SSH%20Third-Party%20Notices.pdf), a security solution that specializes in privileged access management, enabling organizations to control and monitor access to critical systems and data, thereby enhancing overall cybersecurity posture
 - [**Deutsche Telekom sysrepo-plugins**](https://github.com/telekom/sysrepo-plugins), a collection of YANG datastore plugins used to manage network devices
 - [**Egnyte Desktop**](https://helpdesk.egnyte.com/hc/en-us/articles/360007071732-Third-Party-Software-Acknowledgements), a secure cloud storage solution designed for businesses, enabling file sharing, collaboration, and data management across teams while ensuring compliance and data protection
 - [**Elster**](https://www.secunet.com/en/about-us/press/article/elstersecure-bietet-komfortablen-login-ohne-passwort-dank-secunet-protect4use), a digital platform developed by German tax authorities for secure and efficient electronic tax filing and management using secunet protect4use

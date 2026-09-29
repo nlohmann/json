@@ -426,9 +426,16 @@ plugins:
         502: ['*']
         503: ['*']
         504: ['*']                     # timeouts are reported as 504
-        -1: ['https://repology.org/*'] # connection errors; repology.org is suspended since 2026-09
-        401: ['https://fossies.org/*']        # answers the plugin's user agent with 401, browsers and curl with 200
-        404: ['https://gitlab.b-data.ch/*']   # answers the plugin's user agent with 404, browsers with 200
+        -1:                            # connection errors
+          - 'https://repology.org/*'   # repology.org is suspended since 2026-09
+          - 'http://2ak5ape.257.cz/'   # customers.md: kept although unreachable
+        401: ['https://fossies.org/*'] # answers the plugin's user agent with 401, browsers and curl with 200
+        404:
+          - 'https://gitlab.b-data.ch/*' # answers the plugin's user agent with 404, browsers with 200
+          # customers.md: kept although dead
+          - 'https://www.cisco.com/c/dam/en_us/about/doing_business/open_source/docs/CiscoWebexDeskCamera-23-1622100417.pdf'
+          - 'https://docs.cyberark.com/Downloads/Legal/Privileged%20Session%20Manager%20for%20SSH%20Third-Party%20Notices.pdf'
+        500: ['https://marne.io/licenses'] # customers.md: kept although dead
       ignore_urls:
         - mailto:*
   - privacy:
