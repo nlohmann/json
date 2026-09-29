@@ -53,8 +53,9 @@ The library uses the following mapping from JSON values types to BON8 types acco
 
 An integer that takes 2 to 4 bytes starts with a UTF-8 lead byte (0xC2..0xF7) that is followed by a byte that cannot
 continue a UTF-8 character: 0x00..0x7F for positive and 0xC0..0xFF for negative integers. A string is terminated by
-0xFF only if it is empty, if another string follows it, or if it is the last value of the message; otherwise, the first
-byte of the next value ends it.
+0xFF only if it is empty, if another string follows it, or if nothing follows it in the message; otherwise, the byte
+after it ends it: the first byte of the next value, or the 0xFE that ends an array or object. For example, `["e"]` is
+serialized as 0x81 0x65 0xFF, but `[1,2,3,4,"e"]` as 0x85 0x91 0x92 0x93 0x94 0x65 0xFE.
 
 !!! success "Complete mapping"
 
@@ -140,7 +141,7 @@ Non-negative integers are read as number_unsigned, negative integers as number_i
     arrays and objects with up to four elements that are terminated by 0xFE, unsorted object keys, or a 0xFF after a
     string that would also end without it, are accepted. A second 0xFF is not a terminator but an empty string.
 
-    Strings must be valid UTF-8, and the last string of a message must be terminated by 0xFF.
+    Strings must be valid UTF-8, and a string at the very end of a message must be terminated by 0xFF.
 
 !!! info
 
