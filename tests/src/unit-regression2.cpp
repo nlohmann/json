@@ -1128,7 +1128,10 @@ std::vector<std::uint8_t> concatenated(const std::vector<std::uint8_t>& first, c
 }
 
 /// U+FFFD REPLACEMENT CHARACTER
-const std::string replacement_character = "\xEF\xBF\xBD";
+std::string replacement_character()
+{
+    return "\xEF\xBF\xBD";
+}
 }  // namespace
 
 TEST_CASE("regression test - #3989 SAX parse_error() returning true")
@@ -1232,20 +1235,20 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
             // CBOR: undefined and other simple values become null
             {json::input_format_t::cbor, {0x84, 0xF7, 0xE0, 0xF8, 0x20, 0x01}, {nullptr, nullptr, nullptr, 1}, 3},
             // CBOR: ill-formed UTF-8 becomes U+FFFD, also in keys
-            {json::input_format_t::cbor, {0xA1, 0x61, 0xFF, 0x62, 0xC3, 0x28}, {{replacement_character, replacement_character + "("}}, 2},
+            {json::input_format_t::cbor, {0xA1, 0x61, 0xFF, 0x62, 0xC3, 0x28}, {{replacement_character(), replacement_character() + "("}}, 2},
             // CBOR: members whose key is not a string are skipped, whatever their key and value
             {json::input_format_t::cbor, {0xA4, 0x01, 0x02, 0x82, 0x01, 0x02, 0xA1, 0x61, 'x', 0x9F, 0xFF, 0xC1, 0x01, 0x5F, 0x41, 0x00, 0xFF, 0x61, 'a', 0x03}, {{"a", 3}}, 3},
             {json::input_format_t::cbor, {0xBF, 0xF5, 0xBF, 0x61, 'x', 0x7F, 0x61, 'y', 0xFF, 0xFF, 0x61, 'a', 0x03, 0xFF}, {{"a", 3}}, 1},
             // MessagePack: members whose key is not a string are skipped
             {json::input_format_t::msgpack, {0x84, 0x01, 0x02, 0x81, 0xA1, 'x', 0x01, 0x92, 0x01, 0x02, 0xD4, 0x01, 0x02, 0xC0, 0xA1, 'a', 0x04}, {{"a", 4}}, 3},
             // MessagePack: ill-formed UTF-8 becomes U+FFFD
-            {json::input_format_t::msgpack, {0x92, 0xA2, 0xC3, 0x28, 0xA3, 0xE2, 0x82, 'x'}, {replacement_character + "(", replacement_character + "x"}, 2},
+            {json::input_format_t::msgpack, {0x92, 0xA2, 0xC3, 0x28, 0xA3, 0xE2, 0x82, 'x'}, {replacement_character() + "(", replacement_character() + "x"}, 2},
             // UBJSON: a char that is not ASCII becomes U+FFFD
-            {json::input_format_t::ubjson, {'[', 'C', 0x80, 'C', 'A', ']'}, {replacement_character, "A"}, 1},
+            {json::input_format_t::ubjson, {'[', 'C', 0x80, 'C', 'A', ']'}, {replacement_character(), "A"}, 1},
             // UBJSON: the longest beginning of a high-precision number is kept
             {json::input_format_t::ubjson, {'[', 'H', 'i', 5, '1', '2', 'a', 'b', 'c', 'H', 'i', 2, '1', '.', 'H', 'i', 3, 'a', 'b', 'c', 'H', 'i', 3, '4', '.', '5', ']'}, {12, 1, nullptr, 4.5}, 3},
             // BJData, too
-            {json::input_format_t::bjdata, {'[', 'C', 0xFF, 'H', 'i', 2, '-', '1', 'H', 'i', 2, '-', 'x', ']'}, {replacement_character, -1, nullptr}, 2},
+            {json::input_format_t::bjdata, {'[', 'C', 0xFF, 'H', 'i', 2, '-', '1', 'H', 'i', 2, '-', 'x', ']'}, {replacement_character(), -1, nullptr}, 2},
             // BON8: members whose key is not a string are skipped
             {json::input_format_t::bon8, {0x89, 0x91, 0x92, 0xC9, 0x40, 0x82, 0x91, 0x92, 0x61, 0x93}, {{"a", 3}}, 2},
             {json::input_format_t::bon8, {0x8B, 0x91, 0x85, 0x91, 0xFE, 0xFA, 0x8B, 'x', 0x91, 0xFE, 0x61, 0x93, 0xFE}, {{"a", 3}}, 2},
