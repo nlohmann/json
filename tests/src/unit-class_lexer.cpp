@@ -1545,16 +1545,23 @@ TEST_CASE("string scanning kernels")
         state ^= state << 17u;
         return state;
     };
+    // the upper half as a 32-bit value: converts to std::size_t implicitly on
+    // every platform (a cast of std::uint64_t is useless where both are the
+    // same type, and required where std::size_t is 32 bits wide)
+    const auto next_small = [&next]()
+    {
+        return static_cast<std::uint32_t>(next() >> 32u);
+    };
     for (int round = 0; round < 100000; ++round)
     {
         // mostly ordinary text, so that runs span several words
-        std::string text(static_cast<std::size_t>(next() % 8), '.');
-        const auto count = static_cast<std::size_t>(next() % 12);
+        std::string text(next_small() % 8u, '.');
+        const std::size_t count = next_small() % 12u;
         for (std::size_t k = 0; k < count; ++k)
         {
-            const std::size_t p = (next() % 4 == 0) ? static_cast<std::size_t>(next() % pieces.size()) : 0;
+            const std::size_t p = (next() % 4 == 0) ? next_small() % pieces.size() : 0;
             text += pieces[p];
-            text += std::string(static_cast<std::size_t>(next() % 10), 'x');
+            text += std::string(next_small() % 10u, 'x');
         }
         const auto* data = reinterpret_cast<const unsigned char*>(text.data()); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         for (std::size_t offset = 0; offset < 3 && offset <= text.size(); ++offset)
