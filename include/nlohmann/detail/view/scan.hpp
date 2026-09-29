@@ -175,7 +175,8 @@ NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t parse_upto19(const unsigned char* p, u
     std::uint64_t w = 0;
     while (k >= 8)
     {
-        w = (w * 100000000u) + parse_upto8(p, 8, limit);
+        // (eight digits of the token: they lie below limit)
+        w = (w * 100000000u) + parse_eight_digits(read_eight_bytes(p));
         p += 8;
         k -= 8;
     }
