@@ -6187,7 +6187,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     }
                 }
 
-                if (common_keys_source_order == common_keys_target_order && new_keys_form_suffix)
+                // Only an object type that keeps its members in insertion
+                // order, such as nlohmann::ordered_map, can need reordering:
+                // patch() appends a new member at the end of such an object.
+                // Any other object type places its members itself - std::map
+                // in key order, a hash map in an order its operator== ignores -
+                // so a member-by-member diff always reproduces target there.
+                if (!detail::is_ordered_map<object_t>::value
+                        || (common_keys_source_order == common_keys_target_order && new_keys_form_suffix))
                 {
                     // fast path: order of common keys already matches (or the
                     // object_t's iteration order does not depend on
