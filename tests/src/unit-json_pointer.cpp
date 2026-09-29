@@ -384,7 +384,7 @@ TEST_CASE("JSON pointers")
                 // contains() must not throw for an empty reference token if the current
                 // value is an array (cf. #5395) -- at() still reports out_of_range.404
                 json j_nested = {{"a", {1, 2}}};
-                const json j_nested_const = j_nested;
+                const json& j_nested_const = j_nested;
                 json::json_pointer const jp("/a/");
                 std::string const throw_msg = "[json.exception.out_of_range.404] unresolved reference token ''";
 
