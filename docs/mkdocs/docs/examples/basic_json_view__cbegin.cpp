@@ -15,7 +15,7 @@ int main()
     const auto values = measurements.root();
 
     const int sum = std::accumulate(values.cbegin(), values.cend(), 0,
-                                     [](int total, const json_view & v)
+                                    [](int total, const json_view & v)
     {
         return total + v.materialize().get<int>();
     });

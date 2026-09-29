@@ -13,7 +13,10 @@ int main()
     json_document bad = json_document::parse("[1, 2, 3]");
     json_document failed = json_document::parse("not json", /* allow_exceptions */ false);
 
-    for (const json_view v : { good.root(), bad.root(), failed.root() })
+    for (const json_view v :
+            {
+                good.root(), bad.root(), failed.root()
+            })
     {
         if (v.is_object())
         {

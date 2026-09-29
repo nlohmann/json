@@ -15,7 +15,7 @@ int main()
     const auto records = batch.root();
 
     const bool all_objects = std::all_of(records.cbegin(), records.cend(),
-                                          [](const json_view & v)
+                                         [](const json_view & v)
     {
         return v.is_object();
     });

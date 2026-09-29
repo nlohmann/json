@@ -418,6 +418,7 @@ TEST_CASE("json_view")
 
 namespace
 {
+#if !defined(JSON_NOEXCEPTION)
 // the exception a call throws, or "" if it throws none
 template<typename F>
 std::string exception_of(F f)
@@ -432,6 +433,7 @@ std::string exception_of(F f)
     }
     return "";
 }
+#endif
 
 // compares a view with the ordered_json value materialize() gives for it:
 // types, sizes, elements and members (by index, key, and iteration), in
@@ -600,6 +602,7 @@ TEST_CASE("json_view element access and iteration")
             const json_document d = json_document::parse(text);
             const json_view v = d.root();
             const json j = v.materialize();
+#if !defined(JSON_NOEXCEPTION)
             if (!j.is_object())
             {
                 CHECK(exception_of([&] { static_cast<void>(v["a"]); }) == exception_of([&] { static_cast<void>(j["a"]); }));
@@ -621,6 +624,7 @@ TEST_CASE("json_view element access and iteration")
                 CHECK(exception_of([&] { static_cast<void>(v.front()); }) == exception_of([&] { static_cast<void>(j.front()); }));
                 CHECK(exception_of([&] { static_cast<void>(v.back()); }) == exception_of([&] { static_cast<void>(j.back()); }));
             }
+#endif
             CHECK(v.contains("a") == j.contains("a"));
             CHECK(v.count("a") == j.count("a"));
             CHECK((v.find("a") == v.end()) == (j.find("a") == j.end())); // NOLINT(readability-container-contains): find() is what is tested
@@ -632,7 +636,7 @@ TEST_CASE("json_view element access and iteration")
         CHECK(!d.root()["a"][0]);
         CHECK_THROWS_WITH_AS(d.root()["a"].front(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
         CHECK_THROWS_WITH_AS(d.root()["a"].back(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
-        const json_view invalid;
+        const json_view invalid{};
         CHECK(invalid.begin() == invalid.end());
         CHECK(std::string(invalid.type_name()) == "discarded");
         CHECK_THROWS_WITH_AS(invalid["a"], "[json.exception.type_error.305] cannot use operator[] with a string argument with discarded", json::type_error&);
