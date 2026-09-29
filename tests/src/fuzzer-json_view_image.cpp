@@ -41,7 +41,10 @@ using image_check = json_document::image_check;
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     // the input as an image
-    for (const image_check check : {image_check::full, image_check::bounds})
+    for (const image_check check :
+            {
+                image_check::full, image_check::bounds
+            })
     {
         json_document d;
         try
@@ -79,7 +82,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     if (!parsed.is_discarded())
     {
         const std::vector<std::uint8_t> image = parsed.save();
-        for (const image_check check : {image_check::full, image_check::bounds, image_check::none})
+        for (const image_check check :
+                {
+                    image_check::full, image_check::bounds, image_check::none
+                })
         {
             const json_document loaded = json_document::load(image, check);
             assert(loaded.root().dump() == parsed.root().dump());

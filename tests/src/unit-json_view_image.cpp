@@ -36,6 +36,7 @@ using nlohmann::detail::view::node;
 
 namespace
 {
+#if !defined(JSON_NOEXCEPTION)
 std::string exception_of(const std::function<void()>& f)
 {
     try
@@ -50,6 +51,7 @@ std::string exception_of(const std::function<void()>& f)
 }
 
 const char* const check_failed = "[json.exception.parse_error.116] parse error: invalid json_document image: the check failed";
+#endif
 
 std::string read_file(const std::string& name)
 {
@@ -76,7 +78,8 @@ void set_header_field(std::vector<std::uint8_t>& image, std::size_t offset, std:
 
 std::size_t node_count(const std::vector<std::uint8_t>& image)
 {
-    return static_cast<std::size_t>(header_field(image, 8));
+    const std::uint64_t count = header_field(image, 8);
+    return static_cast<std::size_t>(count);
 }
 
 std::size_t text_at(const std::vector<std::uint8_t>& image)
@@ -96,6 +99,7 @@ void set_node(std::vector<std::uint8_t>& image, std::size_t i, const node& n)
     std::memcpy(image.data() + header_size + (i * sizeof(node)), &n, sizeof(node));
 }
 
+#if !defined(JSON_NOEXCEPTION)
 /// the result of loading an image with a check: "" or the exception message
 std::string load_result(const std::vector<std::uint8_t>& image, image_check check)
 {
@@ -116,6 +120,7 @@ std::vector<std::uint8_t> corrupted(const std::vector<std::uint8_t>& image, std:
     set_node(b, i, n);
     return b;
 }
+#endif
 
 /// a document and the documents loaded from its image must be equal
 template<typename Document>
@@ -142,7 +147,9 @@ void check_round_trip(const Document& d)
 std::uint32_t rng()
 {
     static std::mt19937 generator(5295); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
-    return generator();
+    // result_type is std::uint_fast32_t, which may be wider than 32 bits
+    const std::mt19937::result_type value = generator();
+    return static_cast<std::uint32_t>(value);
 }
 } // namespace
 
@@ -353,6 +360,8 @@ TEST_CASE("json_view images: ownership")
     }
 }
 
+// the remaining tests are about the exceptions of load() and save()
+#if !defined(JSON_NOEXCEPTION)
 TEST_CASE("json_view images: errors")
 {
     SECTION("a literal as the root: dump() after loading")
@@ -373,7 +382,7 @@ TEST_CASE("json_view images: errors")
 
     SECTION("saving a discarded document")
     {
-        const json_document empty;
+        const json_document empty{};
         CHECK(exception_of([&] { static_cast<void>(empty.save()); }) == "[json.exception.type_error.320] cannot save a discarded json_document");
         const json_document failed = json_document::parse("[1,", false);
         CHECK(exception_of([&] { static_cast<void>(failed.save()); }) == "[json.exception.type_error.320] cannot save a discarded json_document");
@@ -779,6 +788,7 @@ TEST_CASE("json_view images: damaged images")
         }
     }
 }
+#endif
 
 #else
 
