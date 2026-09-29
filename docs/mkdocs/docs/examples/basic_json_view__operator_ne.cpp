@@ -11,7 +11,7 @@ int main()
     // unwanted shape -- without ever materializing it into a json value just
     // to compare
     const json_document received = json_document::parse(
-                                        R"({"status": "ok", "code": 200})");
+                                       R"({"status": "ok", "code": 200})");
     const json unwanted = {{"status", "error"}, {"code", 500}};
     std::cout << std::boolalpha << (received.root() != unwanted) << '\n';
 
