@@ -69,7 +69,7 @@ index_status array_index(const StringType& s, std::size_t& idx) noexcept
         }
         v = (v * 10) + d;
     }
-    if (v >= static_cast<std::uint64_t>((std::numeric_limits<std::size_t>::max)()))
+    if (v >= (std::numeric_limits<std::size_t>::max)()) // (std::size_t converts to std::uint64_t implicitly)
     {
         return index_status::too_large;
     }
