@@ -35,7 +35,9 @@ namespace
 std::uint32_t rng()
 {
     static std::mt19937 generator(5295); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
-    return generator();
+    // result_type is std::uint_fast32_t, which may be wider than 32 bits
+    const std::mt19937::result_type value = generator();
+    return static_cast<std::uint32_t>(value);
 }
 
 int r(int n)
@@ -311,6 +313,8 @@ TEST_CASE("json_view edits: differential")
 
 namespace
 {
+#if !defined(JSON_NOEXCEPTION)
+// the exception a call throws, or "" if it throws none
 std::string exception_of_call(const std::function<void()>& f)
 {
     try
@@ -323,6 +327,7 @@ std::string exception_of_call(const std::function<void()>& f)
     }
     return "";
 }
+#endif
 } // namespace
 
 TEST_CASE("json_view edits: errors")
@@ -349,6 +354,7 @@ TEST_CASE("json_view edits: errors")
     CHECK_THROWS_WITH_AS(d.set(root, json_editable_view()), "[json.exception.type_error.302] type must be a value, but is discarded", json::type_error&);
     CHECK_THROWS_WITH_AS(d.set(root, json::binary({1, 2})), "[json.exception.type_error.319] cannot store a binary value in a json_document", json::type_error&);
 
+#if !defined(JSON_NOEXCEPTION)
     // invalid UTF-8 is rejected when it enters the document, with the error
     // basic_json::dump() reports for the same string
     for (const std::string bad :
@@ -366,6 +372,7 @@ TEST_CASE("json_view edits: errors")
         CHECK(exception_of_call([&] { d.set(root["o"], bad, 1); }) == expected);
         CHECK(exception_of_call([&] { d.set(root["z"], json{{"k", bad}}); }) == expected);
     }
+#endif
     // nothing of the failed edits is visible
     CHECK(root.dump() == R"({"o":{"a":1},"a":[1,2],"n":1,"z":null})");
     static_cast<void>(other);
@@ -401,8 +408,8 @@ TEST_CASE("json_view edits: views and values")
         d.set(d.root(), 2, 0.1);
         d.push_back(d.root(), std::numeric_limits<double>::quiet_NaN());
         d.push_back(d.root(), -std::numeric_limits<double>::infinity());
-        d.push_back(d.root(), static_cast<std::uint64_t>(18446744073709551615u));
-        d.push_back(d.root(), static_cast<std::int64_t>(-9223372036854775807 - 1));
+        d.push_back(d.root(), (std::numeric_limits<std::uint64_t>::max)());
+        d.push_back(d.root(), (std::numeric_limits<std::int64_t>::min)());
         CHECK(d.root().dump() == "[1.5,100.0,0.1,null,null,18446744073709551615,-9223372036854775808]");
         CHECK(d.root().dump(-1, ' ', false, json_editable_view::number_format::source) == "[1.50,1E2,0.1,null,null,18446744073709551615,-9223372036854775808]");
         CHECK(std::isnan(d.root()[3].get<double>()));
