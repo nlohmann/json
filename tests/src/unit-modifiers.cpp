@@ -155,6 +155,18 @@ TEST_CASE("modifiers")
                 CHECK(j == json(json::value_t::binary));
                 CHECK(j == json(k.type()));
             }
+
+            SECTION("filled binary with subtype")
+            {
+                json j = json::binary({1, 2, 3, 4, 5}, 42);
+                json const k = j;
+
+                j.clear();
+                CHECK(!j.empty());
+                CHECK(!j.get_binary().has_subtype());
+                CHECK(j == json(json::value_t::binary));
+                CHECK(j == json(k.type()));
+            }
         }
 
         SECTION("number (integer)")
