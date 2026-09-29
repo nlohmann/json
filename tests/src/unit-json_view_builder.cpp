@@ -288,6 +288,18 @@ TEST_CASE("json_view builder")
 
     SECTION("NUL, BOM, and whitespace")
     {
+        // a NUL inside a string is a control character, as for json::parse
+        // (where a NUL ends the input, it does so only between values)
+        for (const bool sentinel :
+                {
+                    true, false
+                })
+        {
+            const built b = build(std::string("[\"ab\0cd\"]", 9), false, false, sentinel);
+            CHECK(!b.ok);
+            CHECK(b.failure.code == nlohmann::detail::view::error_code::string_control_character);
+            CHECK(b.failure.offset == 4);
+        }
         check_same(std::string("[1]\0garbage", 11));
         check_same(std::string("[1\0]", 4));
         check_same(std::string("[1, // c\0\n2]", 12));

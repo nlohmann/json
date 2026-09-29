@@ -263,10 +263,8 @@ class builder
             }
             if (c != '\\')
             {
-                if (NulIsEnd && c == 0)
-                {
-                    return failed(error_code::string_missing_quote, p);
-                }
+                // (a NUL before the end of the input is a control character, as
+                // for json::parse, also where a NUL ends the input between values)
                 return failed(c < 0x20 ? error_code::string_control_character : error_code::string_utf8, p);
             }
             ++p;
