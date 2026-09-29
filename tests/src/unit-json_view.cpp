@@ -972,7 +972,7 @@ TEST_CASE("json_view values")
         // a duplicate key: the last value, as parse()
         CHECK((json_document::parse(R"({"a":1,"a":2})").root().get<std::map<std::string, int>>() == std::map<std::string, int> {{"a", 2}}));
 
-        const json_view invalid;
+        const json_view invalid{};
         CHECK_THROWS_WITH_AS(invalid.get<int>(), "[json.exception.type_error.302] type must be number, but is discarded", json::type_error&);
         CHECK(invalid.get<json>().is_discarded());
     }
