@@ -2,8 +2,9 @@
 
 ## Overview
 
-With a parser callback function, the result of parsing a JSON text can be influenced. When passed to `parse`, it is
-called on certain events (passed as `parse_event_t` via parameter `event`) with a set recursion depth `depth` and
+With a parser callback function, the result of parsing a JSON text can be influenced. When passed to
+[`parse`](../../api/basic_json/parse.md), it is called on certain events (passed as
+[`parse_event_t`](../../api/basic_json/parse_event_t.md) via parameter `event`) with a set recursion depth `depth` and
 context JSON value `parsed`. The return value of the callback function is a boolean indicating whether the element that
 emitted the callback shall be kept or not.
 
@@ -30,7 +31,7 @@ table describes the values of the parameters `depth`, `event`, and `parsed`.
 | `parse_event_t::array_end`    | the parser read `]` and finished processing a JSON array  | depth of the parent of the JSON array     | the parsed JSON array            |
 | `parse_event_t::value`        | the parser finished reading a JSON value                  | depth of the value                        | the parsed JSON value            |
 
-??? example
+??? example "Example: sequence of callback events"
 
     When parsing the following JSON text,
     
@@ -76,7 +77,7 @@ was called:
 - In case a value outside a structured type is skipped, it is replaced with `#!json null`. This case happens if the
   top-level element is skipped.
 
-??? example
+??? example "Example: skip an object key while parsing"
 
     The example below demonstrates the `parse()` function with and without callback function.
 
@@ -98,7 +99,7 @@ the resulting `#!c json` value -- once parsing has produced that value, the dupl
 storage maps each key to a single value. If duplicate keys should instead be treated as an error, a parser callback
 can detect them while the object is still being read, before that ambiguity ever applies.
 
-??? example
+??? example "Example: reject duplicate object keys"
 
     ```cpp
     --8<-- "examples/reject_duplicate_keys.cpp"
@@ -129,7 +130,7 @@ discard it, so memory usage stays bounded by a single element (plus the not-yet-
 than the whole document. Since the top-level array's `array_start`/`array_end` are reported at `depth == 0` (its
 parent is the document root), the object elements it contains are reported at `depth == 1`:
 
-??? example
+??? example "Example: stream a large top-level array"
 
     ```cpp
     std::ifstream input("large_array.json");
@@ -154,7 +155,7 @@ homogeneous values by checking `object_end`/`value` events at `depth == 1` there
 Since there is no built-in nesting-depth limit (see the note above), a callback can enforce one manually by
 tracking the maximum `depth` seen and throwing once it is exceeded:
 
-??? example
+??? example "Example: limit the nesting depth"
 
     ```cpp
     constexpr int max_depth = 32;

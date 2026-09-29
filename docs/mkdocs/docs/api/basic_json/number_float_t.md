@@ -32,18 +32,18 @@ type to use.
 
 ## Notes
 
-#### Default type
+### Default type
 
 With the default values for `NumberFloatType` (`double`), the default value for `number_float_t` is `#!cpp double`.
 
-#### Default behavior
+### Default behavior
 
 - The restrictions about leading zeros are not enforced in C++. Instead, leading zeros in floating-point literals will
   be ignored. Internally, the value will be stored as a decimal number. For instance, the C++ floating-point literal
   `01.2` will be serialized to `1.2`. During deserialization, leading zeros yield an error.
 - Not-a-number (NaN) values will be serialized to `null`.
 
-#### Limits
+### Limits
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) states:
 > This specification allows implementations to set limits on the range and precision of numbers accepted. Since software
@@ -55,7 +55,7 @@ This implementation does exactly follow this approach, as it uses double precisi
 smaller than `-1.79769313486232e+308` and values greater than `1.79769313486232e+308` will be stored as NaN internally
 and be serialized to `null`.
 
-#### Storage
+### Storage
 
 Floating-point number values are stored directly inside a `basic_json` type.
 
@@ -74,6 +74,13 @@ Floating-point number values are stored directly inside a `basic_json` type.
     ```json
     --8<-- "examples/number_float_t.output"
     ```
+
+## See also
+
+- [number_integer_t](number_integer_t.md) the type used to store JSON integer numbers
+- [number_unsigned_t](number_unsigned_t.md) the type used to store JSON unsigned integer numbers
+- [is_number_float](is_number_float.md) checks whether the JSON value is a floating-point number
+- [Number Handling](../../features/types/number_handling.md) - the article on number handling
 
 ## Version history
 

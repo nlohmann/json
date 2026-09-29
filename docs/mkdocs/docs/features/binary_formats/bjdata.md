@@ -73,7 +73,7 @@ The library uses the following mapping from JSON values types to BJData types ac
 !!! info "NaN/infinity handling"
 
     If NaN or Infinity are stored inside a JSON number, they are serialized properly. This behavior differs from the
-    `dump()` function which serializes NaN or Infinity to `#!json null`.
+    [`dump()`](../../api/basic_json/dump.md) function which serializes NaN or Infinity to `#!json null`.
 
 !!! info "Endianness"
 
@@ -163,7 +163,7 @@ The library uses the following mapping from JSON values types to BJData types ac
 
     [BJDataBinArr]: https://github.com/NeuroJSON/bjdata/blob/master/Binary_JData_Specification.md#optimized-binary-array
 
-??? example
+??? example "Example: serialize JSON values to BJData, with and without size/type optimization"
 
     ```cpp
     --8<-- "examples/to_bjdata.cpp"
@@ -218,7 +218,7 @@ The library maps BJData types to JSON value types as follows:
     binary values above), and serializing such an array again may choose different, but equally valid, type markers.
     The bytes can then differ, but parsing them again yields the same value.
 
-??? example
+??? example "Example: deserialize a JSON value from BJData"
 
     ```cpp
     --8<-- "examples/from_bjdata.cpp"

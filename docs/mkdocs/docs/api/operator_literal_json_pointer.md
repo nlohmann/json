@@ -17,7 +17,8 @@ using namespace nlohmann::literals::json_literals;
 using namespace nlohmann;
 ```
 This is suggested to ease migration to the next major version release of the library. See
-[`JSON_USE_GLOBAL_UDLS`](macros/json_use_global_udls.md#notes) for details.
+[`JSON_USE_GLOBAL_UDLS`](macros/json_use_global_udls.md#notes) and the
+[migration guide](../integration/migration_guide.md#import-namespace-literals-for-udls) for details.
 
 ## Parameters
 
@@ -63,4 +64,4 @@ Linear.
 
 - Added in version 2.0.0.
 - Moved to namespace `nlohmann::literals::json_literals` in 3.11.0.
-- Added `char8_t*` overload in 3.13.0.
+- Added `char8_t*` overload in version 3.13.0.

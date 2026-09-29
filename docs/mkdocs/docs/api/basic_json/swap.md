@@ -65,6 +65,16 @@ void swap(typename binary_t::container_type& other);
 `right` (in, out)
 :   value to exchange the contents with
 
+## Exception safety
+
+1. No-throw guarantee: this function never throws exceptions.
+2. No-throw guarantee: this function never throws exceptions.
+3. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+4. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+5. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+6. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+7. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+
 ## Exceptions
 
 1. No-throw guarantee: this function never throws exceptions.
@@ -86,7 +96,7 @@ Constant.
 
 ## Examples
 
-??? example "Example: Swap JSON value (1, 2)"
+??? example "Example: (1, 2) swap JSON values"
 
     The example below shows how JSON values can be swapped with `swap()`.
     
@@ -100,7 +110,7 @@ Constant.
     --8<-- "examples/swap__reference.output"
     ```
 
-??? example "Example: Swap array (3)"
+??? example "Example: (3) swap array"
 
     The example below shows how arrays can be swapped with `swap()`.
     
@@ -114,7 +124,7 @@ Constant.
     --8<-- "examples/swap__array_t.output"
     ```
 
-??? example "Example: Swap object (4)"
+??? example "Example: (4) swap object"
 
     The example below shows how objects can be swapped with `swap()`.
     
@@ -128,7 +138,7 @@ Constant.
     --8<-- "examples/swap__object_t.output"
     ```
 
-??? example "Example: Swap string (5)"
+??? example "Example: (5) swap string"
 
     The example below shows how strings can be swapped with `swap()`.
     
@@ -142,7 +152,7 @@ Constant.
     --8<-- "examples/swap__string_t.output"
     ```
 
-??? example "Example: Swap binary (6)"
+??? example "Example: (6) swap binary"
 
     The example below shows how binary values can be swapped with `swap()`.
     

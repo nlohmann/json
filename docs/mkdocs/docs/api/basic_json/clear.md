@@ -52,6 +52,11 @@ All iterators, pointers, and references related to this container are invalidate
     --8<-- "examples/clear.output"
     ```
 
+## See also
+
+- [erase](erase.md) removes elements from a JSON value
+- [empty](empty.md) checks whether the JSON value has no elements
+
 ## Version history
 
 - Added in version 1.0.0.

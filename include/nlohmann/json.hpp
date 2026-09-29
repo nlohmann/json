@@ -4863,7 +4863,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @{
 #ifndef JSON_NO_IO
     /// @brief serialize to stream
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_ltlt/
+    /// @sa https://json.nlohmann.me/api/operator_ltlt/
     friend std::ostream& operator<<(std::ostream& o, const basic_json& j)
     {
         // read width member and use it as the indentation parameter if nonzero
@@ -4882,7 +4882,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     /// @brief serialize to stream
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_ltlt/
+    /// @sa https://json.nlohmann.me/api/operator_ltlt/
     /// @deprecated This function is deprecated since 3.0.0 and will be removed in
     ///             version 4.0.0 of the library. Please use
     ///             operator<<(std::ostream&, const basic_json&) instead; that is,
@@ -5035,7 +5035,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 #ifndef JSON_NO_IO
     /// @brief deserialize from stream
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_gtgt/
+    /// @sa https://json.nlohmann.me/api/operator_gtgt/
     /// @deprecated This stream operator is deprecated since 3.0.0 and will be removed in
     ///             version 4.0.0 of the library. Please use
     ///             operator>>(std::istream&, basic_json&) instead; that is,
@@ -5047,7 +5047,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     /// @brief deserialize from stream
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_gtgt/
+    /// @sa https://json.nlohmann.me/api/operator_gtgt/
     friend std::istream& operator>>(std::istream& i, basic_json& j)
     {
         parser(detail::input_adapter(i)).parse(false, j);
@@ -6429,7 +6429,7 @@ inline namespace json_literals
 {
 
 /// @brief user-defined string literal for JSON values
-/// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json/
+/// @sa https://json.nlohmann.me/api/operator_literal_json/
 JSON_HEDLEY_NON_NULL(1)
 #if !defined(JSON_HEDLEY_GCC_VERSION) || JSON_HEDLEY_GCC_VERSION_CHECK(4,9,0)
     inline nlohmann::json operator""_json(const char* s, std::size_t n)
@@ -6451,7 +6451,7 @@ inline nlohmann::json operator""_json(const char8_t* s, std::size_t n)
 #endif
 
 /// @brief user-defined string literal for JSON pointer
-/// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json_pointer/
+/// @sa https://json.nlohmann.me/api/operator_literal_json_pointer/
 JSON_HEDLEY_NON_NULL(1)
 #if !defined(JSON_HEDLEY_GCC_VERSION) || JSON_HEDLEY_GCC_VERSION_CHECK(4,9,0)
     inline nlohmann::json::json_pointer operator""_json_pointer(const char* s, std::size_t n)

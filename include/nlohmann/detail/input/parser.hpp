@@ -54,7 +54,8 @@ using parser_callback_t =
 /*!
 @brief syntax analysis
 
-This class implements a recursive descent parser.
+This class implements a parser for JSON text. Nested arrays and objects are tracked with an explicit
+stack instead of recursion, so deeply nested input does not exhaust the call stack.
 */
 template<typename BasicJsonType, typename InputAdapterType>
 class parser

@@ -133,6 +133,18 @@ Strong exception safety: if an exception occurs, the original value stays intact
         while `/foo/one/one/one` creates nested objects. This is not specified by the JSON Pointer RFC; it is
         this library's own, intentional disambiguation rule. See also [JSON Pointer](../../features/json_pointer.md).
 
+!!! warning "Deprecation"
+
+    Overload (4) also accepts a [`json_pointer`](../json_pointer/index.md) whose template argument is a `basic_json`
+    specialization (e.g., `nlohmann::json_pointer<nlohmann::json>`) instead of a string type. This is deprecated since
+    version 3.11.0 and will be removed in a future major version; use `basic_json::json_pointer` (for `json`,
+    `nlohmann::json_pointer<std::string>`) instead.
+
+    You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated
+    function.
+
+    See the [migration guide](../../integration/migration_guide.md#json-pointers) for how to update existing code.
+
 ## Examples
 
 ??? example "Example: (1) access specified array element"

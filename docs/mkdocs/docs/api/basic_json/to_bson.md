@@ -51,7 +51,7 @@ pass before anything is written.
 
 ## Examples
 
-??? example
+??? example "Example: serialize a JSON value to BSON"
 
     The example shows the serialization of a JSON value to a byte vector in BSON format.
      
@@ -63,6 +63,21 @@ pass before anything is written.
     
     ```json
     --8<-- "examples/to_bson.output"
+    ```
+
+??? example "Example: out_of_range.409 exception"
+
+    The example shows how serializing a JSON object whose key contains a null byte (U+0000) throws an exception, because
+    BSON keys are null-terminated C strings and cannot contain U+0000 themselves.
+
+    ```cpp
+    --8<-- "examples/to_bson__exception.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/to_bson__exception.output"
     ```
 
 ## See also

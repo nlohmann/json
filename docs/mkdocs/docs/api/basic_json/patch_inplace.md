@@ -50,7 +50,7 @@ function throws an exception.
 
 ## Examples
 
-??? example
+??? example "Example: apply a JSON patch in place"
 
     The following code shows how a JSON patch is applied to a value.
      
@@ -62,6 +62,22 @@ function throws an exception.
     
     ```json
     --8<-- "examples/patch_inplace.output"
+    ```
+
+??? example "Example: out_of_range.403 exception with a partially applied patch"
+
+    The following code shows a patch whose first operation succeeds and whose second operation fails. Because
+    `patch_inplace` applies each operation directly to the value, the first operation's effect is still visible after
+    the exception is caught, unlike [`patch`](patch.md).
+
+    ```cpp
+    --8<-- "examples/patch_inplace__exception.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/patch_inplace__exception.output"
     ```
 
 ## See also

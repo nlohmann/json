@@ -3,7 +3,7 @@
 The library is used in multiple projects, applications, operating systems, etc. The list below is not exhaustive, but
 the result of an internet search. If you know further customers of the library, [please let me know](mailto:mail@nlohmann.me).
 
-[![](../images/customers.png)](../images/customers.png)
+[![logos of customers using the library](../images/customers.png)](../images/customers.png)
 
 ## Space Exploration
 
@@ -54,7 +54,7 @@ the result of an internet search. If you know further customers of the library, 
 - [**Madden NFL 25**](https://www.mobygames.com/person/1195889/niels-lohmann/credits/), a sports simulation game capturing the excitement of American football with realistic gameplay and team management features
 - [**Madden NFL 26**](https://www.mobygames.com/person/1195889/niels-lohmann/credits/), an American football simulation with franchise and team management modes
 - [**Madden NFL 27**](https://www.mobygames.com/person/1195889/niels-lohmann/credits/), the latest installment of the American football simulation series
-- [**Marne**](https://marne.io/licenses), an unofficial private server platform for hosting custom Battlefield 1 game experiences
+- **Marne**, an unofficial private server platform for hosting custom Battlefield 1 game experiences
 - [**Minecraft**](https://www.minecraft.net/zh-hant/attribution), a popular sandbox video game
 - [**Mumble**](https://github.com/mumble-voip/mumble), a low-latency, open-source voice chat application widely used by gaming communities
 - [**NHL 22**](https://www.mobygames.com/person/1195889/niels-lohmann/credits/), a hockey simulation game offering realistic gameplay, team management, and various modes to enhance the hockey experience
@@ -80,14 +80,14 @@ the result of an internet search. If you know further customers of the library, 
 - [**Audinate**](https://www.audinate.com/legal/software-licensing/dante-av-h-open-source-licenses/), a provider of networked audio solutions specializing in Dante technology, which facilitates high-quality digital audio transport over IP networks
 - [**Canon CanoScan LIDE**](https://carolburo.com/wp-content/uploads/2024/06/LiDE400_OnlineManual_Win_FR_V02.pdf), a series of flatbed scanners offering high-resolution image scanning for home and office use
 - [**Canon PIXMA Printers**](https://www.mediaexpert.pl/products/files/73/7338196/Instrukcja-obslugi-CANON-Pixma-TS7450i.pdf), a line of all-in-one inkjet printers known for high-quality printing and wireless connectivity
-- [**Cisco Webex Desk Camera**](https://www.cisco.com/c/dam/en_us/about/doing_business/open_source/docs/CiscoWebexDeskCamera-23-1622100417.pdf), a video camera designed for professional-quality video conferencing and remote collaboration
+- **Cisco Webex Desk Camera**, a video camera designed for professional-quality video conferencing and remote collaboration
 - [**DJI Edge SDK**](https://github.com/dji-sdk/Edge-SDK-V2-Demo), the reference applications for DJI's Edge SDK, used to build edge computing services on DJI drone docks
 - [**Elgato Stream Deck**](https://github.com/elgatosf/streamdeck-obs-plugin2), a family of programmable control surfaces for content creators and their plugin ecosystem
 - [**Instagrid**](https://instagrid.co/intellectual-property/foss), a manufacturer of portable, high-performance battery systems for professional mobile power supply
 - [**iRobot**](https://iot-content.irobot.com/iw/sfsites/c/cms/delivery/media/MCKRLTPDJSSJBNJKDA5SG5UVVIIQ), a manufacturer of autonomous home robots including the Roomba vacuum cleaner range
 - [**Logitech Logi Bolt**](https://opensource.logitech.com/wiki/Logi_BoltApp/), the management application for Logitech's secure wireless connectivity technology
 - [**Novitus**](https://novitus.pl/licencjepensource), a manufacturer of fiscal cash registers and point-of-sale devices
-- [**Philips Hue Personal Wireless Lighting**](http://2ak5ape.257.cz/), a smart lighting system for customizable and wireless home illumination
+- **Philips Hue Personal Wireless Lighting**, a smart lighting system for customizable and wireless home illumination
 - [**Ray-Ban Meta Smart glasses**](https://www.meta.com/de/en/legal/smart-glasses/third-party-notices-android/03/), a pair of smart glasses designed for capturing photos and videos with integrated connectivity and social features
 - [**Razer Synapse**](https://mysupport.razer.com/app/answers/detail/a_id/14146/~/open-source-software-for-razer-software), a unified configuration software enabling hardware customization for Razer devices
 - [**Sharp Professional Displays**](https://jp.sharp/restricted/business/lcd-display/cms/images/source_pnla862/PN-LA652_752_862_LicenseInformation.pdf), a range of large-format interactive displays for business and education
@@ -125,7 +125,7 @@ the result of an internet search. If you know further customers of the library, 
 - [**GitHub CodeQL**](https://github.com/github/codeql/blob/main/shared/cpp/Diagnostics.h), a code analysis tool used for identifying security vulnerabilities and bugs in software through semantic queries
 - [**GoPro ngfx**](https://github.com/gopro/ngfx), a low-level graphics abstraction and profiling framework developed by GoPro
 - [**gRPC**](https://github.com/grpc/grpc/blob/master/tools/artifact_gen/utils.h), a high-performance universal remote procedure call framework
-- [**Hex-Rays**](https://docs.hex-rays.com/user-guide/user-interface/licenses), a reverse engineering toolset for analyzing and decompiling binaries, primarily used for security research and vulnerability analysis
+- [**Hex-Rays**](https://docs.hex-rays.com/core/user-interface/concepts/licenses), a reverse engineering toolset for analyzing and decompiling binaries, primarily used for security research and vulnerability analysis
 - [**ImHex**](https://github.com/WerWolv/ImHex), a hex editor designed for reverse engineering, providing advanced features for data analysis and manipulation
 - [**Intel GITS**](https://github.com/intel/gits), a tool for capturing and replaying graphics API calls for debugging and performance analysis
 - [**Intel GPA Framework**](https://intel.github.io/gpasdk-doc/src/licenses.html), a suite of cross-platform tools for capturing, analyzing, and optimizing graphics applications across different APIs
@@ -240,9 +240,9 @@ the result of an internet search. If you know further customers of the library, 
 - [**Manticore Search**](https://github.com/manticoresoftware/manticoresearch/blob/main/src/searchdhttpcompat.cpp), a database for search, offering full-text and vector queries
 - [**Milvus**](https://github.com/milvus-io/milvus/blob/master/internal/core/src/query/PlanImpl.h), a cloud-native vector database built for embedding similarity search
 - [**MongoDB**](https://github.com/mongodb/mongo/blob/master/src/mongo/replay/config_handler.cpp), a general-purpose document database
-- [**MySQL Connector/C++**](https://docs.oracle.com/cd/E17952_01/connector-cpp-9.1-license-com-en/license-opentelemetry-cpp-com.html), a C++ library for connecting and interacting with MySQL databases
-- [**MySQL NDB Cluster**](https://downloads.mysql.com/docs/licenses/cluster-9.0-com-en.pdf), a distributed database system that provides high availability and scalability for MySQL databases
-- [**MySQL Shell**](https://downloads.mysql.com/docs/licenses/mysql-shell-8.0-gpl-en.pdf), an advanced client and code editor for interacting with MySQL servers, supporting SQL, Python, and JavaScript
+- [**MySQL Connector/C++**](https://downloads.mysql.com/docs/licenses/connector-cpp-26.7-com-en.pdf), a C++ library for connecting and interacting with MySQL databases
+- [**MySQL NDB Cluster**](https://downloads.mysql.com/docs/licenses/cluster-26.7-com-en.pdf), a distributed database system that provides high availability and scalability for MySQL databases
+- [**MySQL Shell**](https://downloads.mysql.com/docs/licenses/mysql-shell-26.7-gpl-en.pdf), an advanced client and code editor for interacting with MySQL servers, supporting SQL, Python, and JavaScript
 - [**PrestoDB**](https://github.com/prestodb/presto/blob/master/presto-native-execution/presto_cpp/main/Announcer.cpp), a distributed SQL query engine designed for large-scale data analytics, originally developed by Facebook
 - [**ROOT Data Analysis Framework**](https://root.cern/doc/v614/classnlohmann_1_1basic__json.html), an open-source data analysis framework widely used in high-energy physics and other fields for data processing and visualization
 - [**Typesense**](https://github.com/typesense/typesense/blob/v31/include/join.h), an open source typo-tolerant search engine
@@ -277,11 +277,11 @@ the result of an internet search. If you know further customers of the library, 
 
 - [**Acronis Cyber Protect Cloud**](https://care.acronis.com/s/article/59533-Third-party-software-used-in-Acronis-Cyber-Protect-Cloud?language=en_US), an all-in-one data protection solution that combines backup, disaster recovery, and cybersecurity to safeguard business data from threats like ransomware
 - [**Baereos**](https://gitlab.tiger-computing.co.uk/packages/bareos/-/blob/tiger/bullseye/third-party/CLI11/examples/json.cpp), a backup solution that provides data protection and recovery options for various environments, including physical and virtual systems
-- [**Bitdefender Home Scanner**](https://www.bitdefender.de/site/Main/view/home-scanner-open-source.html), a tool from Bitdefender that scans devices for malware and security threats, providing a safeguard against potential online dangers
+- [**Bitdefender Home Scanner**](https://www.bitdefender.com/site/Main/view/home-scanner-open-source.html), a tool from Bitdefender that scans devices for malware and security threats, providing a safeguard against potential online dangers
 - [**Cisco MLS++**](https://github.com/cisco/mlspp), an implementation of the Messaging Layer Security protocol for end-to-end encrypted group messaging
 - [**Citrix Provisioning**](https://docs.citrix.com/en-us/provisioning/2203-ltsr/downloads/pvs-third-party-notices-2203.pdf), a solution that streamlines the delivery of virtual desktops and applications by allowing administrators to manage and provision resources efficiently across multiple environments
 - [**Citrix Virtual Apps and Desktops**](https://docs.citrix.com/en-us/citrix-virtual-apps-desktops/2305/downloads/third-party-notices-apps-and-desktops.pdf), a solution from Citrix that delivers virtual apps and desktops
-- [**Cyberarc**](https://docs.cyberark.com/Downloads/Legal/Privileged%20Session%20Manager%20for%20SSH%20Third-Party%20Notices.pdf), a security solution that specializes in privileged access management, enabling organizations to control and monitor access to critical systems and data, thereby enhancing overall cybersecurity posture
+- **CyberArk**, a security solution that specializes in privileged access management, enabling organizations to control and monitor access to critical systems and data, thereby enhancing overall cybersecurity posture
 - [**Deutsche Telekom sysrepo-plugins**](https://github.com/telekom/sysrepo-plugins), a collection of YANG datastore plugins used to manage network devices
 - [**Egnyte Desktop**](https://helpdesk.egnyte.com/hc/en-us/articles/360007071732-Third-Party-Software-Acknowledgements), a secure cloud storage solution designed for businesses, enabling file sharing, collaboration, and data management across teams while ensuring compliance and data protection
 - [**Elster**](https://www.secunet.com/en/about-us/press/article/elstersecure-bietet-komfortablen-login-ohne-passwort-dank-secunet-protect4use), a digital platform developed by German tax authorities for secure and efficient electronic tax filing and management using secunet protect4use

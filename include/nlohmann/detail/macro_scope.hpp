@@ -305,7 +305,7 @@ void templated_json_throw(ExceptionType exception)
 @brief macro to briefly define a mapping between an enum and JSON with exception
        on invalid input
 @def NLOHMANN_JSON_SERIALIZE_ENUM_STRICT
-@since version 3.12.0
+@since version 3.13.0
 */
 #define NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(ENUM_TYPE, ...)                                     \
     template<typename BasicJsonType>                                                            \

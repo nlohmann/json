@@ -48,7 +48,7 @@ Linear in the size of the JSON value `j`.
 
 ## Examples
 
-??? example
+??? example "Example: serialize a JSON value to BON8"
 
     The example shows the serialization of a JSON value to a byte vector in BON8 format.
      
@@ -60,6 +60,21 @@ Linear in the size of the JSON value `j`.
     
     ```json
     --8<-- "examples/to_bon8.output"
+    ```
+
+??? example "Example: type_error.316 exception"
+
+    The example shows how serializing a string that is not valid UTF-8 throws an exception, because BON8 stores strings
+    as UTF-8.
+
+    ```cpp
+    --8<-- "examples/to_bon8__exception.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/to_bon8__exception.output"
     ```
 
 ## See also

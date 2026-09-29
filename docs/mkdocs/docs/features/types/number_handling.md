@@ -67,14 +67,29 @@ Positive integers are stored as `#!c std::uint64_t`, while negative integers are
 distinction is determined at parse time: if the JSON number has a leading minus sign, it uses signed integer storage;
 otherwise, it uses unsigned integer storage.
 
+```mermaid
+flowchart TD
+    A["number literal"] --> B{"has a fraction (.) or exponent (e/E)?"}
+    B -->|"yes"| F["number_float_t"]
+    B -->|"no"| C{"has a leading minus sign?"}
+    C -->|"yes"| D["try number_integer_t"]
+    C -->|"no"| E["try number_unsigned_t"]
+    D -->|"overflow"| F
+    E -->|"overflow"| F
+```
+
 !!! info "Notes"
 
     - Numbers with a decimal digit or scientific notation are always stored as `#!c double`.
     - The number types can be changed, see [Template number types](#template-number-types). 
-    - As of version 3.9.1, the conversion is realized by
+    - Integers are converted by the library's own digit parser. Floating-point numbers are converted with
+      [`std::from_chars`](https://en.cppreference.com/w/cpp/utility/from_chars) if the library is compiled with C++17
+      and the standard library supports it, then with an exact fast path for `#!c double` values with few significant
+      digits, and otherwise with the locale-aware
+      [`std::strtod`](https://en.cppreference.com/w/cpp/string/byte/strtof) (`std::strtof`/`std::strtold` for the
+      other floating-point types). Before version 3.13.0, the conversion was realized by
       [`std::strtoull`](https://en.cppreference.com/w/cpp/string/byte/strtoul),
-      [`std::strtoll`](https://en.cppreference.com/w/cpp/string/byte/strtol), and
-      [`std::strtod`](https://en.cppreference.com/w/cpp/string/byte/strtof), respectively.
+      [`std::strtoll`](https://en.cppreference.com/w/cpp/string/byte/strtol), and `std::strtod`, respectively.
 
 !!! example "Examples"
 

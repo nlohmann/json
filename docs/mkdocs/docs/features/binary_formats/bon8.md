@@ -92,7 +92,7 @@ byte of the next value ends it.
     - Object keys are written in the order of the object type, which is sorted for `json`, but not for
       [`ordered_json`](../../api/ordered_json.md).
 
-??? example
+??? example "Example: serialize a JSON value to BON8"
 
     ```cpp
     --8<-- "examples/to_bon8.cpp"
@@ -146,7 +146,7 @@ Non-negative integers are read as number_unsigned, negative integers as number_i
 
     Any BON8 output created by `to_bon8` can be successfully parsed by `from_bon8`.
 
-??? example
+??? example "Example: deserialize a JSON value from BON8"
 
     ```cpp
     --8<-- "examples/from_bon8.cpp"

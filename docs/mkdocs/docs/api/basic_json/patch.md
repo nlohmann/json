@@ -53,7 +53,7 @@ is thrown. In any case, the original value is not changed: the patch is applied 
 
 ## Examples
 
-??? example
+??? example "Example: apply a JSON patch"
 
     The following code shows how a JSON patch is applied to a value.
      
@@ -65,6 +65,21 @@ is thrown. In any case, the original value is not changed: the patch is applied 
     
     ```json
     --8<-- "examples/patch.output"
+    ```
+
+??? example "Example: out_of_range.414 exception"
+
+    The following code shows how a "move" operation whose "from" location is a proper prefix of its "path" location is
+    rejected, and how the original document is left unchanged because the patch is applied to a copy.
+
+    ```cpp
+    --8<-- "examples/patch__exception.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/patch__exception.output"
     ```
 
 ## See also
