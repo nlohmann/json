@@ -77,7 +77,7 @@ struct document_data
         }
     };
 
-    document_data() noexcept = default;
+    document_data() = default;
     document_data(const document_data&) = delete;
     document_data(document_data&&) = delete;
     document_data& operator=(const document_data&) = delete;
