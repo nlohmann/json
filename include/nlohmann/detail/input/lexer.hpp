@@ -2217,7 +2217,7 @@ scan_number_done:
     {
         JSON_ASSERT(expected_type == token_type::name_separator || expected_type == token_type::value_separator);
         JSON_ASSERT(position.chars_read_total > 0);
-        const char_int_type expected_char = (expected_type == token_type::name_separator) ? ':' : ',';
+        const char_int_type expected_char = static_cast<unsigned char>((expected_type == token_type::name_separator) ? ':' : ',');
         skip_whitespace();
         if (JSON_HEDLEY_LIKELY(current == expected_char))
         {
