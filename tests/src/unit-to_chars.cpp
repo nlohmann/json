@@ -20,8 +20,11 @@ using nlohmann::detail::dtoa_impl::reinterpret_bits;
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <iomanip>
 #include <limits>
+#include <locale>
 #include <random>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -664,9 +667,11 @@ void check_shortest(double v)
     if (digits.size() > 1)
     {
         // the decimals of one digit fewer next to the value
-        std::array<char, 64> shorter{};
-        const int n = std::snprintf(shorter.data(), shorter.size(), "%.*e", static_cast<int>(digits.size()) - 2, v); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        const auto near = digits_and_exponent(std::string(shorter.data(), static_cast<std::size_t>(n)));
+        // (a stream rather than snprintf("%.*e"), whose output GCC cannot bound)
+        std::ostringstream shorter;
+        shorter.imbue(std::locale::classic());
+        shorter << std::scientific << std::setprecision(static_cast<int>(digits.size()) - 2) << v;
+        const auto near = digits_and_exponent(shorter.str());
         // as an integer with digits.size() - 1 digits
         std::string m = near.first;
         int e = near.second;

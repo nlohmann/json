@@ -983,7 +983,8 @@ inline void shortest_digits(char* buf, int& len, int& decimal_exponent, double v
     std::size_t n = digits.size();
     while (d.significand >= 100)
     {
-        const auto i = static_cast<std::size_t>(d.significand % 100) * 2;
+        const std::uint64_t two_digits = d.significand % 100; // a variable: GCC calls a cast of the remainder useless where std::uint64_t is std::size_t
+        const auto i = static_cast<std::size_t>(two_digits) * 2;
         d.significand /= 100;
         n -= 2;
         digits[n] = pairs[i];
