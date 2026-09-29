@@ -58,9 +58,10 @@ up in the image.
 ## Notes
 
 **Format.** The image begins with a 64-byte header (the magic bytes `#!cpp "NJVI"`, a version number, the node count,
-and the sizes of the text and the decoded strings, all little-endian), followed by the nodes (16 bytes each), the
-text and a `#!cpp '\0'`, and the decoded strings and a `#!cpp '\0'`. [`load`](load.md) checks the header, and the
-sizes it describes, before reading anything else -- see [`load`'s Exceptions](load.md#exceptions).
+and the sizes of the text and the decoded strings, all little-endian), followed by the nodes
+([16 bytes each](../../home/architecture.md#node-index-of-json-views)), the text and a `#!cpp '\0'`, and the decoded
+strings and a `#!cpp '\0'`. [`load`](load.md) checks the header, and the sizes it describes, before reading anything
+else -- see [`load`'s Exceptions](load.md#exceptions).
 
 !!! warning "Experimental"
 
