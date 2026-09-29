@@ -395,7 +395,9 @@ TEST_CASE("alternative string type")
 
         alt_json j;
         recovering_parser sax(j);
-        CHECK(!alt_json::sax_parse(R"([1., "a\qb", tru, {"k" 2}])", &sax));
+        // not inside CHECK(): MSVC reads the escape in a stringized raw string
+        const std::string input = R"([1., "a\qb", tru, {"k" 2}])";
+        CHECK(!alt_json::sax_parse(input, &sax));
         CHECK(sax.errors == 4);
         CHECK(j.dump() == R"([1,"aqb",null,{"k":2}])");
 

@@ -3268,7 +3268,7 @@ TEST_CASE("parser error recovery (#3989)")
         const auto in_string = parse_recovering(std::string("[\"a\0b\"]", 7));
         CHECK(in_string.balanced);
 #ifdef JSON_TEST_STRICT_NUL_HANDLING_ENABLED
-        CHECK(in_string.value == json::parse(R"(["a\u0000b"])"));
+        CHECK(in_string.value == json::array({std::string("a\0b", 3)}));
 #else
         CHECK(in_string.value == json::parse(R"(["a"])"));
 #endif
