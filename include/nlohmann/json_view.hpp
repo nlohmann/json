@@ -512,7 +512,7 @@ class basic_json_view
     /// maps with string keys, and views are converted directly; other types
     /// through materialize().get<T>()
     template<typename T>
-    T get() const
+    NLOHMANN_VIEW_ALWAYS_INLINE T get() const
     {
         return get_impl(detail::view::value_tag<T> {}, detail::priority_tag<2> {});
     }
@@ -599,7 +599,7 @@ class basic_json_view
     }
 
     template < typename T, typename std::enable_if < std::is_arithmetic<T>::value && !std::is_same<T, bool>::value, int >::type = 0 >
-    T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    NLOHMANN_VIEW_ALWAYS_INLINE T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<2> /*unused*/) const
     {
         if (NLOHMANN_VIEW_UNLIKELY(m_node == nullptr))
         {

@@ -40,7 +40,7 @@ converted with static_cast, booleans give 0 or 1, and other types throw
 type_error.302.
 */
 template<typename T, typename BasicJsonType>
-T arithmetic_value(const document_data& d, const node& n)
+NLOHMANN_VIEW_ALWAYS_INLINE T arithmetic_value(const document_data& d, const node& n)
 {
     switch (static_cast<value_t>(n.kind))
     {

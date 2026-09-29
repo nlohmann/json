@@ -2725,7 +2725,7 @@ converted with static_cast, booleans give 0 or 1, and other types throw
 type_error.302.
 */
 template<typename T, typename BasicJsonType>
-T arithmetic_value(const document_data& d, const node& n)
+NLOHMANN_VIEW_ALWAYS_INLINE T arithmetic_value(const document_data& d, const node& n)
 {
     switch (static_cast<value_t>(n.kind))
     {
@@ -3249,7 +3249,7 @@ class basic_json_view
     /// maps with string keys, and views are converted directly; other types
     /// through materialize().get<T>()
     template<typename T>
-    T get() const
+    NLOHMANN_VIEW_ALWAYS_INLINE T get() const
     {
         return get_impl(detail::view::value_tag<T> {}, detail::priority_tag<2> {});
     }
@@ -3336,7 +3336,7 @@ class basic_json_view
     }
 
     template < typename T, typename std::enable_if < std::is_arithmetic<T>::value && !std::is_same<T, bool>::value, int >::type = 0 >
-    T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    NLOHMANN_VIEW_ALWAYS_INLINE T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<2> /*unused*/) const
     {
         if (NLOHMANN_VIEW_UNLIKELY(m_node == nullptr))
         {
