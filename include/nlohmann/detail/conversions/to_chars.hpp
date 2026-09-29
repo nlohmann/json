@@ -11,11 +11,17 @@
 
 #include <array> // array
 #include <cmath>   // signbit, isfinite
+#include <cstddef> // size_t
 #include <cstdint> // intN_t, uintN_t
 #include <cstring> // memcpy, memmove
 #include <limits> // numeric_limits
 #include <type_traits> // conditional
 
+#ifdef _MSC_VER
+    #include <cstdlib> // _byteswap_uint64
+#endif
+
+#include <nlohmann/detail/conversions/zmij.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -919,6 +925,87 @@ void grisu2(char* buf, int& len, int& decimal_exponent, FloatType value)
 }
 
 /*!
+@brief the shortest digits of a positive finite float (other than double): Grisu2
+*/
+template<typename FloatType>
+JSON_HEDLEY_NON_NULL(1)
+void shortest_digits(char* buf, int& len, int& decimal_exponent, FloatType value)
+{
+    grisu2(buf, len, decimal_exponent, value);
+}
+
+/*!
+@brief the shortest digits of a positive finite double: the conversion of
+Zmij (see zmij.hpp), which always finds the shortest digits that read back as
+the same value (Grisu2 does not for about one double in a thousand), and the
+closest of them if there are several
+
+v = buf * 10^decimal_exponent, as for grisu2()
+*/
+JSON_HEDLEY_NON_NULL(1)
+inline void shortest_digits(char* buf, int& len, int& decimal_exponent, double value)
+{
+    static_assert(std::numeric_limits<double>::is_iec559 && std::numeric_limits<double>::digits == 53,
+                  "internal error: the conversion of Zmij needs IEEE 754 binary64 doubles");
+    JSON_ASSERT(std::isfinite(value));
+    JSON_ASSERT(value > 0);
+
+    std::uint64_t bits = 0;
+    std::memcpy(&bits, &value, sizeof(bits));
+    zmij::decimal d = zmij::to_decimal(bits);
+    // without trailing zeros (up to 16): 8, 4, 2, 1 at a time
+    while (d.significand % 100000000 == 0)
+    {
+        d.significand /= 100000000;
+        d.exponent += 8;
+    }
+    if (d.significand % 10000 == 0)
+    {
+        d.significand /= 10000;
+        d.exponent += 4;
+    }
+    if (d.significand % 100 == 0)
+    {
+        d.significand /= 100;
+        d.exponent += 2;
+    }
+    if (d.significand % 10 == 0)
+    {
+        d.significand /= 10;
+        d.exponent += 1;
+    }
+    // at most 17 digits, written from the back two at a time
+    static constexpr const char* pairs =
+        "00010203040506070809101112131415161718192021222324252627282930313233343536373839"
+        "40414243444546474849505152535455565758596061626364656667686970717273747576777879"
+        "8081828384858687888990919293949596979899";
+    std::array<char, 20> digits{};
+    std::size_t n = digits.size();
+    while (d.significand >= 100)
+    {
+        const auto i = static_cast<std::size_t>(d.significand % 100) * 2;
+        d.significand /= 100;
+        n -= 2;
+        digits[n] = pairs[i];
+        digits[n + 1] = pairs[i + 1];
+    }
+    if (d.significand >= 10)
+    {
+        const auto i = static_cast<std::size_t>(d.significand) * 2;
+        n -= 2;
+        digits[n] = pairs[i];
+        digits[n + 1] = pairs[i + 1];
+    }
+    else
+    {
+        digits[--n] = static_cast<char>('0' + d.significand);
+    }
+    len = static_cast<int>(digits.size() - n);
+    std::memcpy(buf, digits.data() + n, static_cast<std::size_t>(len));
+    decimal_exponent = d.exponent;
+}
+
+/*!
 @brief appends a decimal representation of e to buf
 @return a pointer to the element following the exponent.
 @pre -1000 < e < 1000
@@ -1047,6 +1134,177 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
     return append_exponent(buf, n - 1);
 }
 
+/// eight decimal digits (a value below 10^8) as bytes 0..9, the first digit
+/// in the most significant byte: three steps that divide all lanes at once
+/// by a multiplication (the conversion of Xiang JunBo, as in Zmij)
+inline std::uint64_t eight_digit_bytes(std::uint64_t abcdefgh) noexcept
+{
+    const std::uint64_t abcd_efgh = abcdefgh + (((std::uint64_t{1} << 32u) - 10000u) * ((abcdefgh * (((std::uint64_t{1} << 40u) / 10000u) + 1u)) >> 40u));
+    const std::uint64_t ab_cd_ef_gh = abcd_efgh + (((std::uint64_t{1} << 16u) - 100u) * (((abcd_efgh * (((std::uint64_t{1} << 19u) / 100u) + 1u)) >> 19u) & 0x7F0000007Fu));
+    return ab_cd_ef_gh + (((std::uint64_t{1} << 8u) - 10u) * (((ab_cd_ef_gh * (((std::uint64_t{1} << 10u) / 10u) + 1u)) >> 10u) & 0x000F000F000F000Fu));
+}
+
+/// store the bytes of v, the most significant one first (one byte swap and
+/// one store where the byte order is known: compilers do not reliably merge
+/// the byte stores once this is inlined)
+inline void store_msb_first(char* p, std::uint64_t v) noexcept
+{
+#if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    v = __builtin_bswap64(v);
+    std::memcpy(p, &v, sizeof(v));
+#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    std::memcpy(p, &v, sizeof(v));
+#elif defined(_MSC_VER) // (little-endian on all its targets)
+    v = _byteswap_uint64(v);
+    std::memcpy(p, &v, sizeof(v));
+#else
+    for (unsigned i = 0; i < 8; ++i)
+    {
+        p[i] = static_cast<char>(v >> (56u - (8u * i)));
+    }
+#endif
+}
+
+/*!
+@brief digits * 10^exp for a double, in the layout of format_buffer()
+
+The layout is that of format_buffer() with min_exp -4 and max_exp 15 (the
+digits10 of double). The digits are converted eight at a time and placed
+with fixed-size moves instead of per-digit loops and moves of the buffer.
+
+@param[in] digits  the digits (not 0, at most 17 digits; trailing zeros allowed)
+@param[in] exp     the decimal exponent of the last digit
+@return a pointer past the text; up to 41 bytes at @a first are written
+        (some beyond the returned end)
+*/
+JSON_HEDLEY_NON_NULL(1)
+JSON_HEDLEY_RETURNS_NON_NULL
+inline char* write_decimal(char* first, std::uint64_t digits, int exp) noexcept
+{
+    JSON_ASSERT(digits != 0 && digits < 100000000000000000u);
+    const std::uint64_t upper = digits / 100000000u;
+    const std::uint64_t b0 = upper / 100000000u; // (one digit: it is its own byte)
+    const std::uint64_t b1 = eight_digit_bytes(upper % 100000000u);
+    const std::uint64_t b2 = eight_digit_bytes(digits % 100000000u);
+    // leading and trailing zero digits: zero bytes, counted without division
+    int leading = 16;
+    int zeros = 16;
+    if (b0 != 0)
+    {
+        leading = count_leading_zeros(b0) / 8;
+    }
+    else if (b1 != 0)
+    {
+        leading = 8 + (count_leading_zeros(b1) / 8);
+    }
+    else
+    {
+        leading += count_leading_zeros(b2) / 8;
+    }
+    if (b2 != 0)
+    {
+        zeros = count_trailing_zeros(b2) / 8;
+    }
+    else if (b1 != 0)
+    {
+        zeros = 8 + (count_trailing_zeros(b1) / 8);
+    }
+    // (else: 16, b0 is the one digit that is not 0)
+    // the digits as text at text + leading, then '0's, so that fixed-size
+    // moves need not check how many digits there are
+    std::array<char, 64> text; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+    store_msb_first(text.data(), b0 + 0x3030303030303030u);
+    store_msb_first(text.data() + 8, b1 + 0x3030303030303030u);
+    store_msb_first(text.data() + 16, b2 + 0x3030303030303030u);
+    std::memset(text.data() + 24, '0', 40);
+    const int k = 24 - leading - zeros; // significant digits
+    const int n = k + exp + zeros;      // position of the decimal point after the first digit
+    const char* const s0 = text.data() + leading;
+
+    if (-4 < n && n <= 15)
+    {
+        // "0.[000]digits" (n <= 0) is the digits after 1 - n leading '0's
+        // with the point after the first; "digits[000].0" (n >= k) and
+        // "dig.its" put the point after n characters
+        const int pad = n <= 0 ? 1 - n : 0;
+        const char* const s = s0 - pad;
+        const int len = k + pad;
+        const int point = n + pad;
+        std::memcpy(first, s, 16);
+        std::memcpy(first + point + 1, s + point, 24);
+        first[point] = '.';
+        return first + (point >= len ? point + 2 : len + 1);
+    }
+
+    // d.igitse+XX, with at least two exponent digits (as append_exponent())
+    std::memcpy(first, s0, 16);
+    std::memcpy(first + 2, s0 + 1, 16);
+    first[1] = '.';
+    char* const end = first + (k == 1 ? 1 : k + 1);
+    const int e = n - 1;
+    const auto ea = static_cast<unsigned>(e < 0 ? -e : e);
+    const bool three = ea >= 100;
+    end[0] = 'e';
+    end[1] = e < 0 ? '-' : '+';
+    end[2] = static_cast<char>('0' + (three ? ea / 100 : (ea / 10) % 10));
+    end[3] = static_cast<char>('0' + (three ? (ea / 10) % 10 : ea % 10));
+    end[4] = static_cast<char>('0' + (ea % 10));
+    return end + (three ? 5 : 4);
+}
+
+/// a positive finite float (other than double): Grisu2 and format_buffer()
+template<typename FloatType>
+JSON_HEDLEY_NON_NULL(1, 2)
+JSON_HEDLEY_RETURNS_NON_NULL
+char* write_positive(char* first, const char* last, FloatType value)
+{
+    JSON_ASSERT(last - first >= std::numeric_limits<FloatType>::max_digits10);
+
+    // Compute v = buffer * 10^decimal_exponent.
+    // The decimal digits are stored in the buffer, which needs to be interpreted
+    // as an unsigned decimal integer.
+    // len is the length of the buffer, i.e., the number of decimal digits.
+    int len = 0;
+    int decimal_exponent = 0;
+    shortest_digits(first, len, decimal_exponent, value);
+
+    JSON_ASSERT(len <= std::numeric_limits<FloatType>::max_digits10);
+
+    // Format the buffer like printf("%.*g", prec, value)
+    constexpr int kMinExp = -4;
+    // Use digits10 here to increase compatibility with version 2.
+    constexpr int kMaxExp = std::numeric_limits<FloatType>::digits10;
+
+    JSON_ASSERT(last - first >= kMaxExp + 2);
+    JSON_ASSERT(last - first >= 2 + (-kMinExp - 1) + std::numeric_limits<FloatType>::max_digits10);
+    JSON_ASSERT(last - first >= std::numeric_limits<FloatType>::max_digits10 + 6);
+
+    return format_buffer(first, len, decimal_exponent, kMinExp, kMaxExp);
+}
+
+/// a positive finite double: the shortest digits (Zmij), laid out by
+/// write_decimal() (through a local buffer if [first, last) is shorter than
+/// the 41 bytes it may write)
+JSON_HEDLEY_NON_NULL(1, 2)
+JSON_HEDLEY_RETURNS_NON_NULL
+inline char* write_positive(char* first, const char* last, double value)
+{
+    static_assert(std::numeric_limits<double>::is_iec559 && std::numeric_limits<double>::digits == 53,
+                  "internal error: the conversion of Zmij needs IEEE 754 binary64 doubles");
+    std::uint64_t bits = 0;
+    std::memcpy(&bits, &value, sizeof(bits));
+    const zmij::decimal d = zmij::to_decimal(bits);
+    if (JSON_HEDLEY_LIKELY(last - first >= 41))
+    {
+        return write_decimal(first, d.significand, d.exponent);
+    }
+    std::array<char, 64> buf; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+    const auto len = static_cast<std::size_t>(write_decimal(buf.data(), d.significand, d.exponent) - buf.data());
+    JSON_ASSERT(static_cast<std::size_t>(last - first) >= len);
+    std::memcpy(first, buf.data(), len);
+    return first + len;
+}
+
 }  // namespace dtoa_impl
 
 /*!
@@ -1064,7 +1322,6 @@ JSON_HEDLEY_NON_NULL(1, 2)
 JSON_HEDLEY_RETURNS_NON_NULL
 char* to_chars(char* first, const char* last, FloatType value)
 {
-    static_cast<void>(last); // maybe unused - fix warning
     JSON_ASSERT(std::isfinite(value));
 
     // Use signbit(value) instead of (value < 0) since signbit works for -0.
@@ -1090,28 +1347,7 @@ char* to_chars(char* first, const char* last, FloatType value)
     JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
 
-    JSON_ASSERT(last - first >= std::numeric_limits<FloatType>::max_digits10);
-
-    // Compute v = buffer * 10^decimal_exponent.
-    // The decimal digits are stored in the buffer, which needs to be interpreted
-    // as an unsigned decimal integer.
-    // len is the length of the buffer, i.e., the number of decimal digits.
-    int len = 0;
-    int decimal_exponent = 0;
-    dtoa_impl::grisu2(first, len, decimal_exponent, value);
-
-    JSON_ASSERT(len <= std::numeric_limits<FloatType>::max_digits10);
-
-    // Format the buffer like printf("%.*g", prec, value)
-    constexpr int kMinExp = -4;
-    // Use digits10 here to increase compatibility with version 2.
-    constexpr int kMaxExp = std::numeric_limits<FloatType>::digits10;
-
-    JSON_ASSERT(last - first >= kMaxExp + 2);
-    JSON_ASSERT(last - first >= 2 + (-kMinExp - 1) + std::numeric_limits<FloatType>::max_digits10);
-    JSON_ASSERT(last - first >= std::numeric_limits<FloatType>::max_digits10 + 6);
-
-    return dtoa_impl::format_buffer(first, len, decimal_exponent, kMinExp, kMaxExp);
+    return dtoa_impl::write_positive(first, last, value);
 }
 
 }  // namespace detail
