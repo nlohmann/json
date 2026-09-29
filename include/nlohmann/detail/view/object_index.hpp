@@ -71,7 +71,8 @@ inline void build_object_index(document_data& d, node* obj)
     for (const node* k = document_data::first_child(obj), *end = document_data::child_end(obj); k != end; k = document_data::after(k + 1))
     {
         const char* const key = d.str(*k);
-        std::size_t i = static_cast<std::size_t>(key_hash(key, k->len)) & mask;
+        const std::uint64_t hash = key_hash(key, k->len); // (a cast of the call would be useless where std::uint64_t is std::size_t)
+        std::size_t i = static_cast<std::size_t>(hash) & mask;
         bool duplicate = false;
         while (slots[i] != 0)
         {
@@ -107,7 +108,8 @@ inline const node* find_indexed(const document_data& d, const node* obj, const c
 {
     const document_data::object_index& ix = d.indexes[obj->extra - 1u];
     const std::uint32_t* const slots = d.index_slots.data() + ix.start;
-    std::size_t i = static_cast<std::size_t>(key_hash(key, n)) & ix.mask;
+    const std::uint64_t hash = key_hash(key, n); // (a cast of the call would be useless where std::uint64_t is std::size_t)
+    std::size_t i = static_cast<std::size_t>(hash) & ix.mask;
     for (;;)
     {
         const std::uint32_t s = slots[i];
