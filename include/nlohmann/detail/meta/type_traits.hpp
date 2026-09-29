@@ -748,6 +748,30 @@ using is_usable_as_key_type = typename std::conditional <
                               std::true_type,
                               std::false_type >::type;
 
+#ifdef JSON_HAS_CPP_17
+// type trait to check if KeyType can only be used as an object key after
+// converting it to std::string_view: it is convertible to std::string_view, the
+// object's comparator cannot compare it with object_t::key_type directly, but
+// can compare a std::string_view. JSON pointers and JSON iterators are ruled out
+// first, so that the conversion checks are never instantiated for them (a JSON
+// pointer's deprecated conversion to string_t would be named otherwise).
+template < typename BasicJsonType, typename KeyTypeCVRef, typename KeyType = uncvref_t<KeyTypeCVRef>,
+           bool = is_json_pointer<KeyType>::value || is_json_iterator_of<BasicJsonType, KeyType>::value >
+struct is_string_view_convertible_key_type : std::false_type {};
+
+template<typename BasicJsonType, typename KeyTypeCVRef, typename KeyType>
+struct is_string_view_convertible_key_type<BasicJsonType, KeyTypeCVRef, KeyType, false>
+    : std::integral_constant < bool,
+      std::is_convertible<KeyTypeCVRef, std::string_view>::value
+      && !is_usable_as_key_type<typename BasicJsonType::object_comparator_t,
+      typename BasicJsonType::object_t::key_type, KeyTypeCVRef, true, false>::value
+      && is_usable_as_key_type<typename BasicJsonType::object_comparator_t,
+      typename BasicJsonType::object_t::key_type, std::string_view, true, false>::value > {};
+#else
+template<typename BasicJsonType, typename KeyTypeCVRef>
+struct is_string_view_convertible_key_type : std::false_type {};
+#endif
+
 // type trait to check if KeyType can be used as an object key
 // true if:
 //   - KeyType is comparable with BasicJsonType::object_t::key_type
@@ -761,9 +785,7 @@ using is_usable_as_basic_json_key_type = typename std::conditional <
      typename BasicJsonType::object_t::key_type, KeyTypeCVRef,
      RequireTransparentComparator, ExcludeObjectKeyType>::value
      && !is_json_iterator_of<BasicJsonType, KeyType>::value)
-#ifdef JSON_HAS_CPP_17
-    || std::is_convertible<KeyType, std::string_view>::value
-#endif
+    || is_string_view_convertible_key_type<BasicJsonType, KeyTypeCVRef>::value
     , std::true_type,
     std::false_type >::type;
 

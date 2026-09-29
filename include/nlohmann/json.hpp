@@ -805,6 +805,24 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return it;
     }
 
+    /// @brief the key to look up an object member with: the key itself, or its
+    ///        std::string_view if the object can only be searched with that
+    template < typename KeyType, detail::enable_if_t <
+                   !detail::is_string_view_convertible_key_type<basic_json_t, KeyType>::value, int > = 0 >
+    static KeyType && lookup_key(KeyType && key) noexcept
+    {
+        return std::forward<KeyType>(key);
+    }
+
+#ifdef JSON_HAS_CPP_17
+    template < typename KeyType, detail::enable_if_t <
+                   detail::is_string_view_convertible_key_type<basic_json_t, KeyType>::value, int > = 0 >
+    static std::string_view lookup_key(KeyType && key)
+    {
+        return std::forward<KeyType>(key);
+    }
+#endif
+
     /// @brief erase an element from the object and return the following one
     /// Not every map returns an iterator from erase(iterator): some containers
     /// (e.g., Abseil's hash maps) return void to avoid computing a successor
@@ -2766,7 +2784,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
         }
 
-        auto it = m_data.m_value.object->find(std::forward<KeyType>(key));
+        auto it = m_data.m_value.object->find(lookup_key(std::forward<KeyType>(key)));
         if (it == m_data.m_value.object->end())
         {
             JSON_THROW(out_of_range::create(403, detail::concat("key '", string_t(std::forward<KeyType>(key)), "' not found"), this));
@@ -2804,7 +2822,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
         }
 
-        auto it = m_data.m_value.object->find(std::forward<KeyType>(key));
+        auto it = m_data.m_value.object->find(lookup_key(std::forward<KeyType>(key)));
         if (it == m_data.m_value.object->end())
         {
             JSON_THROW(out_of_range::create(403, detail::concat("key '", string_t(std::forward<KeyType>(key)), "' not found"), this));
@@ -2940,7 +2958,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            auto result = m_data.m_value.object->emplace(std::forward<KeyType>(key), nullptr);
+            auto result = m_data.m_value.object->emplace(lookup_key(std::forward<KeyType>(key)), nullptr);
             return set_parent(result.first->second);
         }
 
@@ -2956,7 +2974,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // const operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            auto it = m_data.m_value.object->find(std::forward<KeyType>(key));
+            auto it = m_data.m_value.object->find(lookup_key(std::forward<KeyType>(key)));
             JSON_ASSERT(it != m_data.m_value.object->end());
             return it->second;
         }
@@ -2966,8 +2984,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
   private:
     template<typename KeyType>
-    using is_comparable_with_object_key = detail::is_comparable <
-        object_comparator_t, const typename object_t::key_type&, KeyType >;
+    using is_comparable_with_object_key = std::integral_constant < bool,
+        detail::is_comparable <
+            object_comparator_t, const typename object_t::key_type&, KeyType >::value
+        || detail::is_string_view_convertible_key_type<basic_json_t, KeyType>::value >;
 
     template<typename ValueType>
     using value_return_type = std::conditional <
@@ -3350,7 +3370,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
         }
 
-        const auto it = m_data.m_value.object->find(std::forward<KeyType>(key));
+        const auto it = m_data.m_value.object->find(lookup_key(std::forward<KeyType>(key)));
         if (it != m_data.m_value.object->end())
         {
             m_data.m_value.object->erase(it);
@@ -3377,7 +3397,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                  detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     size_type erase(KeyType && key)
     {
-        return erase_internal(std::forward<KeyType>(key));
+        return erase_internal(lookup_key(std::forward<KeyType>(key)));
     }
 
     /// @brief remove element from a JSON array given an index
@@ -3447,7 +3467,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_data.m_value.object->find(std::forward<KeyType>(key));
+            result.m_it.object_iterator = m_data.m_value.object->find(lookup_key(std::forward<KeyType>(key)));
         }
 
         return result;
@@ -3463,7 +3483,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_data.m_value.object->find(std::forward<KeyType>(key));
+            result.m_it.object_iterator = m_data.m_value.object->find(lookup_key(std::forward<KeyType>(key)));
         }
 
         return result;
@@ -3486,7 +3506,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     size_type count(KeyType && key) const
     {
         // return 0 for all nonobject types
-        return is_object() ? m_data.m_value.object->count(std::forward<KeyType>(key)) : 0;
+        return is_object() ? m_data.m_value.object->count(lookup_key(std::forward<KeyType>(key))) : 0;
     }
 
     /// @brief check the existence of an element in a JSON object
@@ -3504,7 +3524,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     bool contains(KeyType && key) const
     {
-        return is_object() && m_data.m_value.object->find(std::forward<KeyType>(key)) != m_data.m_value.object->end();
+        return is_object() && m_data.m_value.object->find(lookup_key(std::forward<KeyType>(key))) != m_data.m_value.object->end();
     }
 
     /// @brief check the existence of an element in a JSON object given a JSON pointer
