@@ -12,7 +12,7 @@
 #include <algorithm> // find, find_if, max
 #include <array> // array
 #include <cstddef> // size_t, ptrdiff_t
-#include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
+#include <cstdint> // int64_t, uint8_t, uint16_t, uint32_t, uint64_t
 #include <cstring> // memcmp, memcpy
 #include <limits> // numeric_limits
 #include <string> // string
@@ -892,7 +892,7 @@ indent_done:
                 frac_digits = static_cast<std::size_t>(p - f0);
                 is_float = true;
             }
-            long exponent = 0;
+            std::int64_t exponent = 0;
             if (p != e && (*p | 0x20) == 'e')
             {
                 ++p;
@@ -947,7 +947,7 @@ indent_done:
             // parse() rejects floats that overflow; only numbers whose magnitude
             // could reach the largest FloatType (1e308 for double, 1e38 for
             // float) need the conversion
-            if (NLOHMANN_VIEW_UNLIKELY(static_cast<long>(int_digits) + exponent > std::numeric_limits<FloatType>::max_exponent10 - 8 && kind == value_t::number_float))
+            if (NLOHMANN_VIEW_UNLIKELY(static_cast<std::int64_t>(int_digits) + exponent > std::numeric_limits<FloatType>::max_exponent10 - 8 && kind == value_t::number_float))
             {
                 if (builder::float_overflows(s, p))
                 {
