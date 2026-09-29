@@ -1026,6 +1026,7 @@ BinaryParseResult parse_binary_recovering(const std::vector<std::uint8_t>& input
     return {j, sax.errors, sax.messages, ok, sax.balanced()};
 }
 
+#if !defined(JSON_NOEXCEPTION)
 /// the message of the exception that reading @a input into a JSON value
 /// throws, or an empty string if reading succeeds
 std::string binary_error_message(const std::vector<std::uint8_t>& input, const json::input_format_t format)
@@ -1064,6 +1065,7 @@ std::string binary_error_message(const std::vector<std::uint8_t>& input, const j
     }
     return "";
 }
+#endif
 
 /// a BSON element: its type, its name, and its value
 std::vector<std::uint8_t> bson_element(const std::uint8_t type, const std::string& name, const std::vector<std::uint8_t>& value)
@@ -1315,9 +1317,13 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
             CHECK(result.balanced);
             CHECK(result.errors == repair.errors);
             CHECK(result.value == repair.expected);
-            // the first error is the one reported without recovering
             REQUIRE(!result.messages.empty());
+#if !defined(JSON_NOEXCEPTION)
+            // the first error is the one reported without recovering; under
+            // JSON_NOEXCEPTION, reading without recovering aborts instead of
+            // throwing, so there is no message to compare with
             CHECK(result.messages.front() == binary_error_message(repair.input, repair.format));
+#endif
         }
     }
 
@@ -1410,14 +1416,17 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
                 const auto result = parse_binary_recovering(input, format);
                 CHECK(result.balanced);
                 CHECK(result.errors <= input.size() + 1);
+#if !defined(JSON_NOEXCEPTION)
                 // an error is reported exactly if reading into a JSON value
-                // fails, and the first one is the same
+                // fails, and the first one is the same (under JSON_NOEXCEPTION,
+                // that reading aborts instead of throwing)
                 const auto message = binary_error_message(input, format);
                 CHECK(result.ok == message.empty());
                 if (!result.ok && result.errors < 100)
                 {
                     CHECK(result.messages.front() == message);
                 }
+#endif
             }
         }
     }

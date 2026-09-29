@@ -4537,7 +4537,11 @@ class binary_reader
         {
             return false;
         }
-        return skip_bon8_bytes((byte <= 0xDF) ? 0 : ((byte <= 0xEF) ? 1 : 2));
+        if (byte <= 0xDF)
+        {
+            return skip_bon8_bytes(0);
+        }
+        return skip_bon8_bytes((byte <= 0xEF) ? 1 : 2);
     }
 
     /*!

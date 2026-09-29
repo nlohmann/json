@@ -2519,7 +2519,19 @@ scan_number_done:
         }
 
         const auto lead_byte = static_cast<unsigned char>(token_buffer[lead - 1]);
-        const std::size_t expected = (lead_byte >= 0xF0) ? 3 : (lead_byte >= 0xE0) ? 2 : (lead_byte >= 0xC0) ? 1 : 0;
+        std::size_t expected = 0;
+        if (lead_byte >= 0xF0)
+        {
+            expected = 3;
+        }
+        else if (lead_byte >= 0xE0)
+        {
+            expected = 2;
+        }
+        else if (lead_byte >= 0xC0)
+        {
+            expected = 1;
+        }
         if (continuation_bytes >= expected)
         {
             return false;
@@ -2700,12 +2712,9 @@ scan_number_done:
         bool fetch = false;
 
         if (error_message_starts_with("invalid string: surrogate")
-                || error_message_starts_with("invalid string: '\\u'"))
-        {
-            add_replacement_character();
-        }
-        else if (error_message_starts_with("invalid string: ill-formed UTF-8")
-                 && remove_incomplete_utf8_sequence())
+                || error_message_starts_with("invalid string: '\\u'")
+                || (error_message_starts_with("invalid string: ill-formed UTF-8")
+                    && remove_incomplete_utf8_sequence()))
         {
             add_replacement_character();
         }
