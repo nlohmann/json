@@ -1286,7 +1286,8 @@ TEST_CASE("Eisel-Lemire float conversion")
             // than the distance to the rounding boundary, so it must not change
             std::string longer = token;
             const std::size_t e = longer.find('e');
-            const std::string extra = longer.find('.') == std::string::npos ? ".000000000000000000001" : "000000000000000000001";
+            const std::size_t dot = longer.find('.');
+            const std::string extra = dot == std::string::npos ? ".000000000000000000001" : "000000000000000000001";
             longer.insert(e == std::string::npos ? longer.size() : e, extra);
             CAPTURE(longer);
             if (eisel_lemire(longer, out))
@@ -1309,7 +1310,8 @@ TEST_CASE("Eisel-Lemire float conversion")
         CHECK(bits_of(json::parse("-65.613616999999977").get<double>()) == bits_of(-65.613616999999977));
         CHECK(bits_of(json::parse("2.2250738585072011e-308").get<double>()) == 0x000FFFFFFFFFFFFFu);
         CHECK(bits_of(json::parse("4.9406564584124654e-324").get<double>()) == 1u);
-        CHECK_THROWS_WITH_AS(json::parse("1.7976931348623159e308"),
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::parse("1.7976931348623159e308"),
                              "[json.exception.out_of_range.406] number overflow parsing '1.7976931348623159e308'", json::out_of_range&);
     }
 }
