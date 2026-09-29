@@ -32885,6 +32885,14 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 // amalgamation inlines macro_scope.hpp only once), so only standard and public
 // macros may be used below.
 
+// declares the literal operator for the given suffix; GCC 4.8 requires a space
+// between "" and the suffix, which newer compilers deprecate (CWG 2521)
+#if !defined(__GNUC__) || defined(__clang__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)
+    #define NLOHMANN_JSON_LITERAL_OPERATOR(suffix) operator""##suffix
+#else
+    #define NLOHMANN_JSON_LITERAL_OPERATOR(suffix) operator"" suffix
+#endif
+
 NLOHMANN_JSON_NAMESPACE_BEGIN
 inline namespace literals
 {
@@ -32893,12 +32901,7 @@ inline namespace json_literals
 
 /// @brief user-defined string literal for JSON values
 /// @sa https://json.nlohmann.me/api/operator_literal_json/
-#if !defined(__GNUC__) || defined(__clang__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)
-    inline nlohmann::json operator""_json(const char* s, std::size_t n)
-#else
-    // GCC 4.8 requires a space between "" and suffix
-    inline nlohmann::json operator"" _json(const char* s, std::size_t n)
-#endif
+inline nlohmann::json NLOHMANN_JSON_LITERAL_OPERATOR(_json)(const char* s, std::size_t n)
 {
     return nlohmann::json::parse(s, s + n);
 }
@@ -32913,12 +32916,7 @@ inline nlohmann::json operator""_json(const char8_t* s, std::size_t n)
 
 /// @brief user-defined string literal for JSON pointer
 /// @sa https://json.nlohmann.me/api/operator_literal_json_pointer/
-#if !defined(__GNUC__) || defined(__clang__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)
-    inline nlohmann::json::json_pointer operator""_json_pointer(const char* s, std::size_t n)
-#else
-    // GCC 4.8 requires a space between "" and suffix
-    inline nlohmann::json::json_pointer operator"" _json_pointer(const char* s, std::size_t n)
-#endif
+inline nlohmann::json::json_pointer NLOHMANN_JSON_LITERAL_OPERATOR(_json_pointer)(const char* s, std::size_t n)
 {
     return nlohmann::json::json_pointer(std::string(s, n));
 }
@@ -32935,15 +32933,11 @@ inline nlohmann::json::json_pointer operator""_json_pointer(const char8_t* s, st
 NLOHMANN_JSON_NAMESPACE_END
 
 #if !defined(JSON_USE_GLOBAL_UDLS) || JSON_USE_GLOBAL_UDLS
-    #if !defined(__GNUC__) || defined(__clang__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)
-        using nlohmann::literals::json_literals::operator""_json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
-        using nlohmann::literals::json_literals::operator""_json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
-    #else
-        // GCC 4.8 requires a space between "" and suffix
-        using nlohmann::literals::json_literals::operator"" _json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
-        using nlohmann::literals::json_literals::operator"" _json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
-    #endif
+    using nlohmann::literals::json_literals::NLOHMANN_JSON_LITERAL_OPERATOR(_json); // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
+    using nlohmann::literals::json_literals::NLOHMANN_JSON_LITERAL_OPERATOR(_json_pointer); //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
 #endif
+
+#undef NLOHMANN_JSON_LITERAL_OPERATOR
 
 #endif  // INCLUDE_NLOHMANN_JSON_LITERALS_HPP_
 
