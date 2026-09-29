@@ -4154,7 +4154,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         // copy the values first: ilist may refer to elements of this array
         array_t values;
-        values.reserve(ilist.size());
+        detail::reserve_array(values, ilist.size(), detail::priority_tag<1> {});
         for (const auto& element : ilist)
         {
             values.push_back(element.moved_or_copied());
