@@ -7,6 +7,9 @@
 # find GNU sed to use `-i` parameter
 SED:=$(shell command -v gsed || which sed)
 
+# find GNU tar to use `--sort` and `--pax-option` parameters
+TAR:=$(shell command -v gtar || which tar)
+
 
 ##########################################################################
 # source files
@@ -215,8 +218,8 @@ ChangeLog.md:
 # archive is created according to the advices of <https://reproducible-builds.org/docs/archives/>.
 json.tar.xz:
 	mkdir json
-	rsync -R $(shell find LICENSE.MIT nlohmann_json.natvis CMakeLists.txt cmake/*.in include single_include -type f) json
-	gtar --sort=name --mtime="@$(shell git log -1 --pretty=%ct)" --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime --create --file - json | xz --compress -9e --threads=2 - > json.tar.xz
+	rsync -R $(shell find LICENSE.MIT nlohmann_json.natvis CMakeLists.txt cmake/*.in include single_include src/modules -type f) json
+	$(TAR) --sort=name --mtime="@$(shell git log -1 --pretty=%ct)" --owner=0 --group=0 --numeric-owner --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime --create --file - json | xz --compress -9e --threads=2 - > json.tar.xz
 	rm -fr json
 
 # We use `-X` to make the resulting ZIP file reproducible, see
