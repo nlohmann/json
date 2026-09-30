@@ -149,6 +149,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     friend class ::nlohmann::detail::json_sax_dom_parser;
     template<typename BasicJsonType, typename InputAdapterType>
     friend class ::nlohmann::detail::json_sax_dom_callback_parser;
+#if JSON_DIAGNOSTIC_POSITIONS
+    friend struct ::nlohmann::detail::diagnostic_positions;
+#endif
     friend class ::nlohmann::detail::exception;
 
     /// workaround type for MSVC
