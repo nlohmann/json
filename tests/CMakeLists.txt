@@ -10,7 +10,6 @@ set(JSON_32bitTest     AUTO CACHE STRING "Enable the 32bit unit test (ON/OFF/AUT
 set(JSON_TestStandards "" CACHE STRING "The list of standards to test explicitly.")
 
 # using an env var, since this will also affect targets executing cmake (such as "ci_test_compiler_default")
-set(JSON_FORCED_GLOBAL_COMPILE_OPTIONS $ENV{JSON_FORCED_GLOBAL_COMPILE_OPTIONS})
 if (NOT "" STREQUAL "$ENV{JSON_FORCED_GLOBAL_COMPILE_OPTIONS}")
     add_compile_options($ENV{JSON_FORCED_GLOBAL_COMPILE_OPTIONS})
 endif()

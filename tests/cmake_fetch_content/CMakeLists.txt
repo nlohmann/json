@@ -1,9 +1,10 @@
 add_test(NAME cmake_fetch_content_configure
   COMMAND ${CMAKE_COMMAND}
     -G "${CMAKE_GENERATOR}"
+    -A "${CMAKE_GENERATOR_PLATFORM}"
+    -T "${CMAKE_GENERATOR_TOOLSET}"
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
-    -Dnlohmann_json_source=${PROJECT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/project
 )
 add_test(NAME cmake_fetch_content_build
