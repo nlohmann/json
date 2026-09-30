@@ -135,32 +135,12 @@ class binary_reader
                    const bool strict = true,
                    const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
-        return sax_parse(input_format, sax_, strict, tag_handler);
-    }
-
-    /*!
-    @param[in] format  the binary format to parse; must equal the format the
-                        constructor was given, since that format is what
-                        every reader function below actually dispatches on
-    @param[in] sax_    a SAX event processor
-    @param[in] strict  whether to expect the input to be consumed completed
-    @param[in] tag_handler  how to treat CBOR tags
-
-    @return whether parsing was successful
-    */
-    JSON_HEDLEY_NON_NULL(3)
-    bool sax_parse(const input_format_t format,
-                   json_sax_t* sax_,
-                   const bool strict = true,
-                   const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
-    {
-        JSON_ASSERT(format == input_format);
         sax = sax_;
         container_stack.clear();
         bon8_pushback_size = 0;
         bool result = false;
 
-        switch (format)
+        switch (input_format)
         {
             case input_format_t::bson:
                 result = parse_bson_internal();

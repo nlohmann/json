@@ -13664,32 +13664,12 @@ class binary_reader
                    const bool strict = true,
                    const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
-        return sax_parse(input_format, sax_, strict, tag_handler);
-    }
-
-    /*!
-    @param[in] format  the binary format to parse; must equal the format the
-                        constructor was given, since that format is what
-                        every reader function below actually dispatches on
-    @param[in] sax_    a SAX event processor
-    @param[in] strict  whether to expect the input to be consumed completed
-    @param[in] tag_handler  how to treat CBOR tags
-
-    @return whether parsing was successful
-    */
-    JSON_HEDLEY_NON_NULL(3)
-    bool sax_parse(const input_format_t format,
-                   json_sax_t* sax_,
-                   const bool strict = true,
-                   const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
-    {
-        JSON_ASSERT(format == input_format);
         sax = sax_;
         container_stack.clear();
         bon8_pushback_size = 0;
         bool result = false;
 
-        switch (format)
+        switch (input_format)
         {
             case input_format_t::bson:
                 result = parse_bson_internal();
@@ -22512,7 +22492,7 @@ class binary_writer
     {
         if (add_prefix)
         {
-            oa.write_character(get_ubjson_float_prefix(n));
+            oa.write_character(get_ubjson_float_prefix<NumberType>());
         }
         write_number(n, use_bjdata);
     }
@@ -22655,7 +22635,7 @@ class binary_writer
                 return ubjson_integer_prefix(j.m_data.m_value.number_unsigned, use_bjdata);
 
             case value_t::number_float:
-                return get_ubjson_float_prefix(j.m_data.m_value.number_float);
+                return get_ubjson_float_prefix<number_float_t>();
 
             case value_t::string:
                 return 'S';
@@ -22693,7 +22673,7 @@ class binary_writer
     /// number_float_t must be float or double; a static_assert (rather than
     /// an ambiguous overload) reports an unsupported number_float_t clearly.
     template<typename FloatType>
-    static constexpr CharType get_ubjson_float_prefix(FloatType /*unused*/)
+    static constexpr CharType get_ubjson_float_prefix()
     {
         static_assert(std::is_same<FloatType, float>::value || std::is_same<FloatType, double>::value,
                       "number_float_t must be float or double for the UBJSON/BJData writer");
