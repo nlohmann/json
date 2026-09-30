@@ -115,8 +115,12 @@ The library maps BSON record types to JSON value types as follows:
     bytes of every such string at decode time and rejects ill-formed UTF-8 with a
     [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) exception (or, with `allow_exceptions`
     set to `false`, a discarded value), rather than only failing later when the resulting value is dumped. Element
-    (key) names and `binary` values (type `0x05`) are unaffected and are never validated, since they are read
-    byte-by-byte as a C string, or are not required to hold text, respectively.
+    (key) names and `binary` values (type `0x05`) are unaffected and are never validated on read, since they are read
+    byte-by-byte as a C string, or are not required to hold text, respectively. `to_bson()` validates both string
+    values and element names and throws
+    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for ill-formed UTF-8 in either, so an
+    object with such a key or value cannot be produced in the first place, even though `from_bson()` would accept it
+    from another source.
 
 ??? example
 

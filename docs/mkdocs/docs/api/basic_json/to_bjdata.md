@@ -56,6 +56,8 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 - Throws [`other_error.502`](../../home/exceptions.md#jsonexceptionother_error502) if `use_type` is true and `use_size`
   is false.
+- Throws [type_error.316](../../home/exceptions.md#jsonexceptiontype_error316) if a string or object key in `j` is
+  not valid UTF-8
 
 ## Complexity
 
@@ -90,3 +92,4 @@ Linear in the size of the JSON value `j`.
 
 - Added in version 3.11.0.
 - BJData version parameter (for draft3 binary encoding) added in version 3.12.0.
+- Throwing `type_error.316` for a string or object key that is not valid UTF-8 added in version 3.13.0.

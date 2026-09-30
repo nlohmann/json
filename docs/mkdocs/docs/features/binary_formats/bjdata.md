@@ -63,6 +63,12 @@ The library uses the following mapping from JSON values types to BJData types ac
 
       - strings with more than 18446744073709551615 bytes, i.e., $2^{64}-1$ bytes (theoretical)
 
+!!! warning "UTF-8 validation of string values and object keys"
+
+    BJData strings must use UTF-8 encoding. `to_bjdata()` validates the bytes of every string value and object key
+    and throws [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for ill-formed UTF-8, so a
+    value with such a string cannot be serialized in the first place.
+
 !!! info "Unused BJData markers"
 
     The following markers are not used in the conversion:
@@ -207,6 +213,13 @@ The library maps BJData types to JSON value types as follows:
 !!! success "Complete mapping"
 
     The mapping is **complete** in the sense that any BJData value can be converted to a JSON value.
+
+!!! warning "UTF-8 validation of string values and object keys"
+
+    This library validates the bytes of every string value and object key at decode time and rejects ill-formed
+    UTF-8 with a [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) exception (or, with
+    `allow_exceptions` set to `false`, a discarded value), rather than only failing later when the resulting value
+    is dumped.
 
 !!! info "Round trips"
 

@@ -153,14 +153,15 @@ The library maps MessagePack types to JSON value types as follows:
     This applies to the [SAX interface](../parsing/sax_interface.md) as well, as the key is read before it is passed
     on. Such input needs a general-purpose MessagePack library instead.
 
-!!! warning "UTF-8 validation of string values"
+!!! warning "Ill-formed UTF-8 in string values"
 
-    The MessagePack specification requires `str` values (`fixstr`, `str 8`, `str 16`, `str 32`) to be valid UTF-8.
-    This library validates the bytes of every such string (object keys included) at decode time and rejects
-    ill-formed UTF-8 with a [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) exception (or,
-    with `allow_exceptions` set to `false`, a discarded value), rather than only failing later when the resulting
-    value is dumped. `bin`/`ext`/`fixext` values are unaffected and are never validated, since they are not required
-    to hold text.
+    The MessagePack specification explicitly allows a `str` value (`fixstr`, `str 8`, `str 16`, `str 32`) to contain
+    a byte sequence that is not valid UTF-8, and expects a deserializer to hand the original bytes back unchanged.
+    This library follows that: `from_msgpack()` reads `str` bytes (object keys included) as-is, without validating
+    them, and `to_msgpack()` writes them back as-is, so such a value round-trips through `from_msgpack(to_msgpack(j))`
+    byte for byte. However, [`dump()`](../../api/basic_json/dump.md) still requires valid UTF-8 and throws
+    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for a value read this way, unless an
+    error handler is passed that replaces or ignores the ill-formed bytes.
 
 ??? example
 

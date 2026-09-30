@@ -151,6 +151,44 @@ TEST_CASE("BSON")
 #endif
     }
 
+    SECTION("ill-formed UTF-8 (see #5651)")
+    {
+        // a BSON document {"s": "\xC0\xAE"} (0xC0 0xAE is an overlong
+        // encoding of '.'); the reader rejects an ill-formed string value at
+        // decode time
+        const std::vector<uint8_t> v =
+        {
+            0x0F, 0x00, 0x00, 0x00, // document length
+            0x02, 's', 0x00,        // type 0x02 (string), key "s"
+            0x03, 0x00, 0x00, 0x00, // string length (including null)
+            0xc0, 0xae, 0x00,       // string content and its null terminator
+            0x00                    // document terminator
+        };
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.113] parse error at byte 13: syntax error while parsing BSON string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+        CHECK(json::from_bson(v, true, false).is_discarded());
+
+        // to_bson() rejects the same kind of ill-formed string value, before
+        // any bytes reach the output adapter (the BSON document length
+        // prefix must be known up front, so nothing is written incrementally)
+        std::vector<std::uint8_t> out{0x42}; // a sentinel byte the writer must not touch
+        CHECK_THROWS_WITH_AS(json::to_bson(json{{"s", "\xFF"}}, nlohmann::detail::output_adapter<std::uint8_t>(out)), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+        CHECK(out == std::vector<std::uint8_t> {0x42});
+
+        CHECK_THROWS_WITH_AS(json::to_bson(json{{"s", "\xFF"}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+        // a truncated multi-byte sequence
+        CHECK_THROWS_WITH_AS(json::to_bson(json{{"s", "\xC3"}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xC3", json::type_error&);
+        // an encoded surrogate half (U+D800)
+        CHECK_THROWS_WITH_AS(json::to_bson(json{{"s", "\xED\xA0\x80"}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xED", json::type_error&);
+        // an overlong encoding of '.'
+        CHECK_THROWS_WITH_AS(json::to_bson(json{{"s", "\xC0\xAF"}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xC0", json::type_error&);
+
+        // an object key with ill-formed UTF-8 is rejected as well; unlike
+        // the reader (which never validates element names), the writer
+        // checks both string values and object keys
+        CHECK_THROWS_WITH_AS(json::to_bson(json{{"\xFF", 1}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+    }
+
     SECTION("lengths exceeding INT32_MAX cannot be serialized to BSON")
     {
         // out_of_range.412 is thrown from a single shared helper

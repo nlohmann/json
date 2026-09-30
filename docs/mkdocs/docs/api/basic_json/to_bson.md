@@ -46,6 +46,8 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [`out_of_range.415`](../../home/exceptions.md#jsonexceptionout_of_range415) if the subtype of a binary value
   exceeds 255, the maximum of the BSON binary subtype; example:
   `"subtype 70000 is too large for the BSON binary subtype (max 255)"`
+- Throws [type_error.316](../../home/exceptions.md#jsonexceptiontype_error316) if a string or object key is
+  not valid UTF-8
 
 ## Complexity
 
@@ -82,3 +84,5 @@ pass before anything is written.
 - Added in version 3.4.0.
 - Linear in the size of `j`, and no longer limited by the call stack for deeply nested values, since version 3.13.0.
 - `out_of_range.415` is now detected before anything is written, like the other exceptions above, since version 3.13.0.
+- Throwing `type_error.316` for a string value or object key that is not valid UTF-8, detected before anything is
+  written, added in version 3.13.0.

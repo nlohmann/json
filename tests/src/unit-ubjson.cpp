@@ -2580,6 +2580,30 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             CHECK(json::to_ubjson(j) == v);
             CHECK(json::from_ubjson(v) == j);
         }
+
+        SECTION("ill-formed UTF-8 (see #5651)")
+        {
+            // a string value whose bytes are not valid UTF-8 (0xC0 0xAE is an
+            // overlong encoding of '.') is rejected at decode time, matching
+            // every other kind of malformed binary input, and to_ubjson()
+            // rejects it as well, so a value it accepts can always be read
+            // back
+            const std::vector<uint8_t> v = {'S', 'i', 2, 0xc0, 0xae};
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(v), "[json.exception.parse_error.113] parse error at byte 5: syntax error while parsing UBJSON string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            CHECK(json::from_ubjson(v, true, false).is_discarded());
+
+            CHECK_THROWS_WITH_AS(json::to_ubjson(json("\xFF")), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+            // a truncated multi-byte sequence
+            CHECK_THROWS_WITH_AS(json::to_ubjson(json("\xC3")), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xC3", json::type_error&);
+            // an encoded surrogate half (U+D800)
+            CHECK_THROWS_WITH_AS(json::to_ubjson(json("\xED\xA0\x80")), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xED", json::type_error&);
+            // an overlong encoding of '.'
+            CHECK_THROWS_WITH_AS(json::to_ubjson(json("\xC0\xAF")), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xC0", json::type_error&);
+
+            // an object key with ill-formed UTF-8 is rejected the same way
+            CHECK_THROWS_WITH_AS(json::to_ubjson(json{{"\xFF", 1}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+        }
     }
 
     SECTION("Array Type")

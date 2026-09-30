@@ -4111,12 +4111,16 @@ class binary_reader
             return false;
         }
 
-        // RFC 8949 (CBOR) §3.1 and the MessagePack/BSON/UBJSON specifications
-        // all require text strings to be valid UTF-8; reject anything else
-        // right here so malformed input is caught at decode time instead of
-        // only surfacing later as a type_error.316 when the value is dumped
-        // (which would defeat allow_exceptions=false / strict discarding).
-        if (JSON_HEDLEY_UNLIKELY(!is_valid_utf8(result, old_size)))
+        // RFC 8949 (CBOR) §3.1 and the BSON/UBJSON specifications require
+        // text strings to be valid UTF-8; reject anything else right here so
+        // malformed input is caught at decode time instead of only surfacing
+        // later as a type_error.316 when the value is dumped (which would
+        // defeat allow_exceptions=false / strict discarding). The MessagePack
+        // specification explicitly allows a str object to contain an invalid
+        // byte sequence and expects deserializers to hand back the original
+        // bytes, so msgpack strings (and map keys, which go through this
+        // function as well) are exempt.
+        if (format != input_format_t::msgpack && JSON_HEDLEY_UNLIKELY(!is_valid_utf8(result, old_size)))
         {
             return sax->parse_error(chars_read, get_token_string(),
                                     parse_error::create(113, chars_read,

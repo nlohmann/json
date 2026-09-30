@@ -197,7 +197,9 @@ The library maps CBOR types to JSON value types as follows:
     [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) exception (or, with
     `allow_exceptions` set to `false`, a discarded value), rather than only failing later when the resulting value is
     dumped. Byte strings (major type 2) are unaffected and are never validated, since they are not required to hold
-    text.
+    text. `to_cbor()` validates string values and object keys the same way and throws
+    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for ill-formed UTF-8, so a value with
+    such a string cannot be serialized in the first place.
 
 !!! warning "Tagged items"
 

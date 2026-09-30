@@ -35,6 +35,11 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 
 Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
 
+## Exceptions
+
+- Throws [type_error.316](../../home/exceptions.md#jsonexceptiontype_error316) if a string or object key in `j` is
+  not valid UTF-8
+
 ## Complexity
 
 Linear in the size of the JSON value `j`.
@@ -68,3 +73,4 @@ Linear in the size of the JSON value `j`.
 
 - Added in version 2.0.9.
 - Compact representation of floating-point numbers added in version 3.8.0.
+- Throwing `type_error.316` for a string or object key that is not valid UTF-8 added in version 3.13.0.

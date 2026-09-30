@@ -1614,19 +1614,39 @@ TEST_CASE("MessagePack")
             CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0x81})), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing MessagePack string: unexpected end of input", json::parse_error&);
         }
 
-        SECTION("invalid UTF-8 in string (see #5529)")
+        SECTION("ill-formed UTF-8 in string (see #5529, #5651)")
         {
+            // the MessagePack specification explicitly allows a str object to
+            // contain a byte sequence that is not valid UTF-8 and expects a
+            // deserializer to hand the original bytes back unchanged; this
+            // library follows that, unlike CBOR/UBJSON/BJData/BSON, whose
+            // specifications require text strings to be valid UTF-8
+
             // a fixstr of length 2 (0xA0 | 2) whose bytes are not valid UTF-8
-            // (0xC0 0xAE is an overlong encoding of '.') must be rejected at
-            // decode time, matching every other kind of malformed binary
-            // input, rather than only failing later when the resulting
-            // value is dumped
-            json _;
-            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::vector<uint8_t>({0xa2, 0xc0, 0xae})), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing MessagePack string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
-            CHECK(json::from_msgpack(std::vector<uint8_t>({0xa2, 0xc0, 0xae}), true, false).is_discarded());
+            // (0xC0 0xAE is an overlong encoding of '.') round-trips byte for
+            // byte as a string value
+            const std::vector<uint8_t> ill_formed_value = {0xa2, 0xc0, 0xae};
+            json j_value;
+            CHECK_NOTHROW(j_value = json::from_msgpack(ill_formed_value));
+            REQUIRE(j_value.is_string());
+            CHECK(j_value.get_ref<const json::string_t&>() == std::string("\xc0\xae"));
+            CHECK(json::from_msgpack(json::to_msgpack(j_value)) == j_value);
+            // dump() still requires valid UTF-8 and throws for such a value,
+            // unless an error handler that replaces or ignores the bytes is
+            // passed
+            CHECK_THROWS_AS(j_value.dump(), json::type_error&);
+
+            // the same bytes as an object key round-trip as well
+            const std::vector<uint8_t> ill_formed_key = {0x81, 0xa2, 0xc0, 0xae, 0x01};
+            json j_key;
+            CHECK_NOTHROW(j_key = json::from_msgpack(ill_formed_key));
+            REQUIRE(j_key.is_object());
+            CHECK(j_key.contains(std::string("\xc0\xae")));
+            CHECK(json::from_msgpack(json::to_msgpack(j_key)) == j_key);
 
             // a MessagePack bin8 blob with the very same bytes is NOT text
             // and must still be accepted as-is
+            json _;
             CHECK_NOTHROW(_ = json::from_msgpack(std::vector<uint8_t>({0xc4, 0x02, 0xc0, 0xae})));
             CHECK(_ == json::binary(std::vector<std::uint8_t>({0xc0, 0xae})));
 
