@@ -13,7 +13,7 @@ array data, it performs the following steps:
 - j1 = from_bon8(data)
 - vec = to_bon8(j1)
 - j2 = from_bon8(vec)
-- assert(j1 == j2)
+- assert(to_bon8(j2) == vec)
 
 It also checks that reading the data from a stream, which reads strings byte by
 byte, gives the same value or error as reading it from contiguous memory, which
@@ -24,7 +24,6 @@ drivers.
 */
 
 #include <cassert>
-#include <iostream>
 #include <sstream>
 #include <nlohmann/json.hpp>
 
