@@ -29,6 +29,7 @@
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/output/output_adapters.hpp>
 #include <nlohmann/detail/string_concat.hpp>
+#include <nlohmann/detail/string_utils.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -2278,18 +2279,8 @@ class binary_writer
         const std::size_t valid = valid_utf8_prefix(data, s.size());
         if (JSON_HEDLEY_UNLIKELY(valid != s.size()))
         {
-            JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(valid), ": 0x", hex_byte(data[valid])), &context));
+            JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(valid), ": 0x", detail::hex_byte(data[valid])), &context));
         }
-    }
-
-    /// @return a byte as two uppercase hexadecimal digits
-    static std::string hex_byte(const std::uint8_t byte)
-    {
-        std::string result = "00";
-        constexpr const char* nibble_to_hex = "0123456789ABCDEF";
-        result[0] = nibble_to_hex[byte / 16];
-        result[1] = nibble_to_hex[byte % 16];
-        return result;
     }
 
     /*!

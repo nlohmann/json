@@ -6234,6 +6234,16 @@ StringType to_string(std::size_t value)
     return result;
 }
 
+/// @return a byte as two uppercase hexadecimal digits
+inline std::string hex_byte(const std::uint8_t byte)
+{
+    std::string result = "00";
+    constexpr const char* nibble_to_hex = "0123456789ABCDEF";
+    result[0] = nibble_to_hex[byte / 16];
+    result[1] = nibble_to_hex[byte % 16];
+    return result;
+}
+
 ///////////////////
 // UTF-8 decoding //
 ///////////////////
@@ -20358,6 +20368,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/string_concat.hpp>
 
+// #include <nlohmann/detail/string_utils.hpp>
+
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -22607,18 +22619,8 @@ class binary_writer
         const std::size_t valid = valid_utf8_prefix(data, s.size());
         if (JSON_HEDLEY_UNLIKELY(valid != s.size()))
         {
-            JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(valid), ": 0x", hex_byte(data[valid])), &context));
+            JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(valid), ": 0x", detail::hex_byte(data[valid])), &context));
         }
-    }
-
-    /// @return a byte as two uppercase hexadecimal digits
-    static std::string hex_byte(const std::uint8_t byte)
-    {
-        std::string result = "00";
-        constexpr const char* nibble_to_hex = "0123456789ABCDEF";
-        result[0] = nibble_to_hex[byte / 16];
-        result[1] = nibble_to_hex[byte % 16];
-        return result;
     }
 
     /*!
@@ -24961,7 +24963,7 @@ class serializer
                     {
                         case error_handler_t::strict:
                         {
-                            JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(i), ": 0x", hex_bytes(byte | 0)), nullptr));
+                            JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(i), ": 0x", detail::hex_byte(byte)), nullptr));
                         }
 
                         case error_handler_t::ignore:
@@ -25053,7 +25055,7 @@ class serializer
             {
                 case error_handler_t::strict:
                 {
-                    JSON_THROW(type_error::create(316, concat("incomplete UTF-8 string; last byte: 0x", hex_bytes(static_cast<std::uint8_t>(s[s.size() - 1] | 0))), nullptr));
+                    JSON_THROW(type_error::create(316, concat("incomplete UTF-8 string; last byte: 0x", detail::hex_byte(static_cast<std::uint8_t>(s[s.size() - 1]))), nullptr));
                 }
 
                 case error_handler_t::ignore:
@@ -25272,20 +25274,6 @@ class serializer
             x = x / 10000u;
             n_digits += 4;
         }
-    }
-
-    /*!
-     * @brief convert a byte to a uppercase hex representation
-     * @param[in] byte byte to represent
-     * @return representation ("00".."FF")
-     */
-    static std::string hex_bytes(std::uint8_t byte)
-    {
-        std::string result = "FF";
-        constexpr const char* nibble_to_hex = "0123456789ABCDEF";
-        result[0] = nibble_to_hex[byte / 16];
-        result[1] = nibble_to_hex[byte % 16];
-        return result;
     }
 
     /*!
