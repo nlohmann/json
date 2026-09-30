@@ -132,7 +132,8 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
   [libstdc++](https://gcc.gnu.org/onlinedocs/libstdc++/) to detect subtle differences or incompatibilities.
 - [x] The code checked with [Include What You Use (IWYU)](https://include-what-you-use.org) that all required standard
   headers are included.
-- [x] On Windows, the library is compiled with `<Windows.h>` being included to detect and avoid common bugs.
+- [x] On Windows, the library is compiled with `<Windows.h>` being included to detect and avoid common bugs (see
+  [`unit-windows_h.cpp`](https://github.com/nlohmann/json/blob/develop/tests/src/unit-windows_h.cpp)).
 - [x] The library is compiled with exceptions disabled to support alternative means of error handling.
 
 ## Stable public API
