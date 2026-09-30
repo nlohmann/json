@@ -7560,12 +7560,11 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
+#include <algorithm> // min
 #include <array> // array
 #include <cstddef> // size_t
 #include <cstring> // strlen
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
-#include <memory> // shared_ptr, make_shared, addressof
-#include <numeric> // accumulate
 #include <streambuf> // streambuf
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
@@ -7638,8 +7637,9 @@ class file_input_adapter
 };
 
 /*!
-Input adapter for a (caching) istream. Ignores a UFT Byte Order Mark at
-beginning of input. Does not support changing the underlying std::streambuf
+Input adapter for a (caching) istream. Does not skip a UTF Byte Order Mark
+itself; that is done by the lexer's skip_bom(). Does not support changing
+the underlying std::streambuf
 in mid-input. Maintains underlying std::istream and std::streambuf to support
 subsequent use of standard std::istream operations to process any input
 characters following those used in parsing the JSON input.  Clears the
@@ -8418,9 +8418,9 @@ auto input_adapter(T (&array)[N]) -> decltype(input_adapter(array, array + N)) /
     return input_adapter(array, array + N);
 }
 
-// This class only handles inputs of input_buffer_adapter type.
-// It's required so that expressions like {ptr, len} can be implicitly cast
-// to the correct adapter.
+// This class only handles inputs that construct a contiguous_bytes_input_adapter
+// (e.g. span_input_adapter). It's required so that expressions like {ptr, len}
+// can be implicitly cast to the correct adapter.
 class span_input_adapter
 {
   public:
@@ -8465,6 +8465,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 #include <algorithm> // find_if, min
 #include <cstddef>
+#include <limits> // numeric_limits
 #include <string> // string
 #include <type_traits> // enable_if_t
 #include <utility> // move, pair
@@ -11112,7 +11113,7 @@ scan_number_done:
         return value_float;
     }
 
-    /// return current string value (implicitly resets the token; useful only once)
+    /// return current string value
     string_t& get_string()
     {
         // a number token holds '.' regardless of the locale (#4084)
@@ -16054,8 +16055,8 @@ class binary_reader
         return enter_object(detail::unknown_size());
     }
 
-    // Note, no reader for UBJSON binary types is implemented because they do
-    // not exist
+    // Note, UBJSON has no binary type of its own; BJData, which shares this
+    // reader, decodes optimized 'B' arrays as binary in get_ubjson_array().
 
     bool get_ubjson_high_precision_number()
     {
@@ -16762,7 +16763,7 @@ class binary_reader
 #endif
     }
 
-    /*
+    /*!
     @brief read a number from the input
 
     @tparam NumberType the type of the number
@@ -16772,10 +16773,10 @@ class binary_reader
     @return whether conversion completed
 
     @note This function needs to respect the system's endianness, because
-          bytes in CBOR, MessagePack, and UBJSON are stored in network order
-          (big endian) and therefore need reordering on little endian systems.
-          On the other hand, BSON and BJData use little endian and should reorder
-          on big endian systems.
+          bytes in CBOR, MessagePack, UBJSON, and BON8 are stored in network
+          order (big endian) and therefore need reordering on little endian
+          systems. On the other hand, BSON and BJData use little endian and
+          should reorder on big endian systems.
     */
     template<typename NumberType, bool InputIsLittleEndian = false>
     bool get_number(const input_format_t format, NumberType& result)

@@ -2008,7 +2008,7 @@ scan_number_done:
         return value_float;
     }
 
-    /// return current string value (implicitly resets the token; useful only once)
+    /// return current string value
     string_t& get_string()
     {
         // a number token holds '.' regardless of the locale (#4084)
