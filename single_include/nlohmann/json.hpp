@@ -2473,6 +2473,18 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #endif
 #endif
 
+// std::ranges view conversion (to_json/is_compatible_array_type_impl) additionally
+// needs to be disabled on MinGW, whose std::ranges support is incomplete
+// (issue #4916); this macro combines both conditions so the check and its
+// reason are not duplicated at every use site.
+#ifndef JSON_HAS_RANGE_VIEW_CONVERSION
+    #if JSON_HAS_RANGES && !defined(__MINGW32__)
+        #define JSON_HAS_RANGE_VIEW_CONVERSION 1
+    #else
+        #define JSON_HAS_RANGE_VIEW_CONVERSION 0
+    #endif
+#endif
+
 #ifndef JSON_HAS_STD_FORMAT
     #if defined(JSON_HAS_CPP_20) && defined(__cpp_lib_format)
         #define JSON_HAS_STD_FORMAT 1
@@ -4451,9 +4463,7 @@ template<typename T> struct is_range_view_optional_type<std::optional<T>> : std:
 template<typename T> struct is_range_view_optional_type : std::false_type {};
 #endif
 
-// std::ranges does not work properly on MinGW due to incomplete C++20 support
-// see https://github.com/nlohmann/json/issues/4916
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 
 // SafeToCheck guards against types that trigger circular constraints when
 // std::ranges::view<T> is evaluated on GCC 12 / libstdc++ 12:
@@ -4492,7 +4502,7 @@ struct is_compatible_array_type_impl <
 // filter_view) can match BOTH this iterator-based specialization AND the view-based one
 // below, causing ambiguity. Exclude views here so the two specializations are mutually
 // exclusive: this one handles plain iterable containers, the other handles views.
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 && !is_compatible_range_view<CompatibleArrayType>::value
 #endif
             >>
@@ -4502,7 +4512,7 @@ struct is_compatible_array_type_impl <
         range_value_t<CompatibleArrayType>>::value;
 };
 
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type_impl <
     BasicJsonType, CompatibleArrayType,
@@ -6584,7 +6594,7 @@ struct external_constructor<value_t::array>
 
     template < typename BasicJsonType, typename CompatibleArrayType,
                enable_if_t < !std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
                              && !is_compatible_range_view<CompatibleArrayType>::value
 #endif
                              , int > = 0 >
@@ -6628,9 +6638,7 @@ struct external_constructor<value_t::array>
         j.assert_invariant();
     }
 
-    // std::ranges does not work properly on MinGW due to incomplete C++20 support
-    // see https://github.com/nlohmann/json/issues/4916
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
     template<typename BasicJsonType, typename CompatibleArrayType,
              enable_if_t<is_compatible_range_view<std::remove_cvref_t<CompatibleArrayType>>::value, int> = 0>
     static void construct(BasicJsonType& j, CompatibleArrayType && arr)
@@ -6785,7 +6793,7 @@ template < typename BasicJsonType, typename CompatibleArrayType,
                          !std::is_same<typename BasicJsonType::binary_t, CompatibleArrayType>::value&&
                          !is_compatible_binary_type<BasicJsonType, CompatibleArrayType>::value&&
                          !is_basic_json<CompatibleArrayType>::value
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
     && !is_compatible_range_view<CompatibleArrayType>::value
 #endif
                          ,
@@ -6795,7 +6803,7 @@ inline void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
     external_constructor<value_t::array>::construct(j, arr);
 }
 
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 template < typename BasicJsonType, typename T,
            enable_if_t < is_compatible_range_view<std::remove_cvref_t<T>>::value
                          && !is_compatible_string_type<BasicJsonType, std::remove_cvref_t<T>>::value
@@ -32530,6 +32538,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
     #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
     #undef JSON_HAS_THREE_WAY_COMPARISON
     #undef JSON_HAS_RANGES
+    #undef JSON_HAS_RANGE_VIEW_CONVERSION
     #undef JSON_HAS_STD_FORMAT
     #undef JSON_HAS_STATIC_RTTI
     #undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON

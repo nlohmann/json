@@ -159,6 +159,18 @@
     #endif
 #endif
 
+// std::ranges view conversion (to_json/is_compatible_array_type_impl) additionally
+// needs to be disabled on MinGW, whose std::ranges support is incomplete
+// (issue #4916); this macro combines both conditions so the check and its
+// reason are not duplicated at every use site.
+#ifndef JSON_HAS_RANGE_VIEW_CONVERSION
+    #if JSON_HAS_RANGES && !defined(__MINGW32__)
+        #define JSON_HAS_RANGE_VIEW_CONVERSION 1
+    #else
+        #define JSON_HAS_RANGE_VIEW_CONVERSION 0
+    #endif
+#endif
+
 #ifndef JSON_HAS_STD_FORMAT
     #if defined(JSON_HAS_CPP_20) && defined(__cpp_lib_format)
         #define JSON_HAS_STD_FORMAT 1

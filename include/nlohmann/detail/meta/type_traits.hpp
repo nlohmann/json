@@ -484,9 +484,7 @@ template<typename T> struct is_range_view_optional_type<std::optional<T>> : std:
 template<typename T> struct is_range_view_optional_type : std::false_type {};
 #endif
 
-// std::ranges does not work properly on MinGW due to incomplete C++20 support
-// see https://github.com/nlohmann/json/issues/4916
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 
 // SafeToCheck guards against types that trigger circular constraints when
 // std::ranges::view<T> is evaluated on GCC 12 / libstdc++ 12:
@@ -525,7 +523,7 @@ struct is_compatible_array_type_impl <
 // filter_view) can match BOTH this iterator-based specialization AND the view-based one
 // below, causing ambiguity. Exclude views here so the two specializations are mutually
 // exclusive: this one handles plain iterable containers, the other handles views.
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 && !is_compatible_range_view<CompatibleArrayType>::value
 #endif
             >>
@@ -535,7 +533,7 @@ struct is_compatible_array_type_impl <
         range_value_t<CompatibleArrayType>>::value;
 };
 
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type_impl <
     BasicJsonType, CompatibleArrayType,
