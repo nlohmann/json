@@ -148,7 +148,7 @@ class binary_reader
                 break;
 
             case input_format_t::cbor:
-                result = parse_cbor_internal(true, tag_handler);
+                result = parse_cbor_internal(tag_handler);
                 break;
 
             case input_format_t::msgpack:
@@ -1571,19 +1571,15 @@ class binary_reader
     enclosing container after each element, so that the nesting depth of the
     input costs heap rather than native stack (see #5104).
 
-    @param[in] get_char  whether a new character should be retrieved from the
-                         input (true) or whether the last read character
-                         @a current should be considered instead
     @param[in] tag_handler how CBOR tags should be treated
 
     @return whether reading the value succeeded
     */
-    bool parse_cbor_internal(const bool get_char,
-                             const cbor_tag_handler_t tag_handler)
+    bool parse_cbor_internal(const cbor_tag_handler_t tag_handler)
     {
         // whether the next value starts at a fresh byte or at the one already
         // read into `current`
-        bool fetch = get_char;
+        bool fetch = true;
 
         // the key currently being read; hoisted out of the loop so that its
         // capacity is reused across elements and across nesting levels
@@ -1676,9 +1672,6 @@ class binary_reader
     // MsgPack //
     /////////////
 
-    /*!
-    @return whether a valid MessagePack value was passed to the SAX parser
-    */
     /*!
     @brief read one MessagePack value
 
@@ -2423,20 +2416,16 @@ class binary_reader
     ////////////
 
     /*!
-    @param[in] get_char  whether a new character should be retrieved from the
-                         input (true, default) or whether the last read
-                         character should be considered instead
-
     @return whether a valid UBJSON value was passed to the SAX parser
     */
-    bool parse_ubjson_internal(const bool get_char = true)
+    bool parse_ubjson_internal()
     {
         // the key currently being read; hoisted out of the loop so that its
         // capacity is reused across elements and across nesting levels
         string_t key;
 
         // the type marker of the value to read next
-        char_int_type prefix = get_char ? get_ignore_noop() : current;
+        char_int_type prefix = get_ignore_noop();
 
         while (true)
         {
