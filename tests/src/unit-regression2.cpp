@@ -18,6 +18,19 @@
 // for some reason including this after the json header leads to linker errors with VS 2017...
 #include <locale>
 
+// skip tests if JSON_DISABLE_TUPLE_REFERENCE_CONVERSION=1 (#2226)
+#if defined(JSON_DISABLE_TUPLE_REFERENCE_CONVERSION) && (JSON_DISABLE_TUPLE_REFERENCE_CONVERSION == 1)
+    #define SKIP_TESTS_FOR_TUPLE_REFERENCE_CONVERSION
+#endif
+
+// clang before 4 and GCC before 5 cannot create a std::tuple of basic_json
+// references at all, with or without JSON_DISABLE_TUPLE_REFERENCE_CONVERSION:
+// the tuple constructors make them instantiate basic_json's conversion operator
+// for libstdc++'s internal tuple bases, which fails hard
+#if (defined(__clang__) && __clang_major__ < 4) || (!defined(__clang__) && defined(__GNUC__) && __GNUC__ < 5)
+    #define SKIP_TESTS_FOR_JSON_REFERENCE_TUPLES
+#endif
+
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -28,6 +41,7 @@ using ordered_json = nlohmann::ordered_json;
 
 #include <cstdio>
 #include <list>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 
@@ -541,6 +555,20 @@ TEST_CASE("regression tests 2")
                        json::error_handler_t::strict  // Error
                       )));
     }
+
+#ifndef SKIP_TESTS_FOR_TUPLE_REFERENCE_CONVERSION
+    SECTION("issue #2226 - std::tuple dangling reference - implicit conversion")
+    {
+        // by default, a one-element tuple holding a json reference converts to
+        // a one-element array; JSON_DISABLE_TUPLE_REFERENCE_CONVERSION removes
+        // this conversion (see unit-disable-tuple-reference-conversion.cpp)
+        const json j = true;
+        CHECK(std::is_constructible<json, std::tuple<const json&>>::value);
+#ifndef SKIP_TESTS_FOR_JSON_REFERENCE_TUPLES
+        CHECK(json(std::forward_as_tuple(j)) == json::array({true}));
+#endif
+    }
+#endif
 
     SECTION("PR #2181 - regression bug with lvalue")
     {

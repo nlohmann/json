@@ -3329,6 +3329,10 @@ void templated_json_throw(ExceptionType exception)
     #define JSON_DISABLE_ENUM_SERIALIZATION 0
 #endif
 
+#ifndef JSON_DISABLE_TUPLE_REFERENCE_CONVERSION
+    #define JSON_DISABLE_TUPLE_REFERENCE_CONVERSION 0
+#endif
+
 #if JSON_HAS_THREE_WAY_COMPARISON
     #include <compare> // partial_ordering
 #endif
@@ -4643,6 +4647,18 @@ struct is_compatible_type_impl <
 template<typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
     : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
+
+// a one-element std::tuple holding a reference to BasicJsonType, as created by
+// std::forward_as_tuple(j); see JSON_DISABLE_TUPLE_REFERENCE_CONVERSION
+template<typename BasicJsonType, typename T>
+struct is_basic_json_reference_tuple : std::false_type {};
+
+template<typename BasicJsonType, typename T>
+struct is_basic_json_reference_tuple<BasicJsonType, std::tuple<T>>
+{
+    static constexpr bool value =
+        std::is_reference<T>::value && std::is_same<uncvref_t<T>, BasicJsonType>::value;
+};
 
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_binary_type
@@ -7002,11 +7018,13 @@ inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<
     j = { std::get<Idx>(t)... };
 }
 
-#if JSON_BRACE_INIT_COPY_SEMANTICS
-// JSON_BRACE_INIT_COPY_SEMANTICS makes a one-element braced list copy its
-// element instead of wrapping it, which would serialize std::tuple<int>{5} as 5
-// rather than [5]. Build what the default deduction builds instead: an object
-// if the element is a [string, value] pair, a one-element array otherwise.
+// A one-element braced list does not reliably wrap its element: with
+// JSON_BRACE_INIT_COPY_SEMANTICS it copies it, which would serialize
+// std::tuple<int>{5} as 5 rather than [5], and some compilers (e.g., Apple clang
+// 15 and 16) copy an element that is itself a basic_json even without it, so
+// std::tuple<json>{true} became true rather than [true]. Build what the default
+// deduction builds instead: an object if the element is a [string, value] pair,
+// a one-element array otherwise.
 template<typename BasicJsonType, typename Tuple>
 inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<0> /*unused*/)
 {
@@ -7024,7 +7042,6 @@ inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<
         j = BasicJsonType::array({std::move(element)});
     }
 }
-#endif
 
 template<typename BasicJsonType, typename Tuple>
 inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& /*unused*/, index_sequence<> /*unused*/)
@@ -28523,7 +28540,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template < typename CompatibleType,
                typename U = detail::uncvref_t<CompatibleType>,
                detail::enable_if_t <
-                   !detail::is_basic_json<U>::value && detail::is_compatible_type<basic_json_t, U>::value, int > = 0 >
+                   !detail::is_basic_json<U>::value && detail::is_compatible_type<basic_json_t, U>::value
+#if JSON_DISABLE_TUPLE_REFERENCE_CONVERSION
+                   // see https://github.com/nlohmann/json/issues/2226
+                   && !detail::is_basic_json_reference_tuple<basic_json_t, U>::value
+#endif
+                   , int > = 0 >
     basic_json(CompatibleType && val) noexcept(noexcept( // NOLINT(bugprone-forwarding-reference-overload,bugprone-exception-escape)
             JSONSerializer<U>::to_json(std::declval<basic_json_t&>(),
                                        std::forward<CompatibleType>(val))))
@@ -33572,6 +33594,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 #undef JSON_INLINE_VARIABLE
 #undef JSON_NO_UNIQUE_ADDRESS
 #undef JSON_DISABLE_ENUM_SERIALIZATION
+#undef JSON_DISABLE_TUPLE_REFERENCE_CONVERSION
 
 #ifndef JSON_TEST_KEEP_MACROS
     #undef JSON_CATCH
