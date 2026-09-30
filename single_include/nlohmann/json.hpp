@@ -7662,7 +7662,13 @@ class input_stream_adapter
             // was given back with release_lookahead()
             commit_lookahead();
 #endif
-            is->clear(is->rdstate() & std::ios::eofbit);
+            // only call clear() if there is something to clear: it throws
+            // std::ios_base::failure if the stream has exceptions() enabled
+            // for a state bit that remains set, and a destructor must not throw
+            if ((is->rdstate() & ~std::ios::eofbit) != 0)
+            {
+                is->clear(is->rdstate() & std::ios::eofbit);
+            }
         }
     }
 
@@ -8367,12 +8373,16 @@ inline file_input_adapter input_adapter(std::FILE* file)
 
 inline input_stream_adapter input_adapter(std::istream& stream)
 {
+    if (stream.rdbuf() == nullptr)
+    {
+        JSON_THROW(parse_error::create(101, 0, "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
+    }
     return input_stream_adapter(stream);
 }
 
 inline input_stream_adapter input_adapter(std::istream&& stream)
 {
-    return input_stream_adapter(stream);
+    return input_adapter(stream);
 }
 #endif  // JSON_NO_IO
 
