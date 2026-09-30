@@ -763,6 +763,7 @@ struct container_input_adapter_factory< ContainerType,
 
            static adapter_type create(ContainerType&& container)
 {
+    // NOLINTNEXTLINE(bugprone-use-after-move,hicpp-invalid-access-moved) forwarded twice on purpose, so begin() and end() see the same value category and yield matching iterator types
     return input_adapter(begin(std::forward<ContainerType>(container)), end(std::forward<ContainerType>(container)));
 }
        };

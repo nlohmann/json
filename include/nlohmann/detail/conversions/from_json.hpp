@@ -353,7 +353,7 @@ template < typename BasicJsonType, typename T, std::size_t... Idx >
 std::array<T, sizeof...(Idx)> from_json_inplace_array_impl(BasicJsonType&& j,
                      identity_tag<std::array<T, sizeof...(Idx)>> /*unused*/, index_sequence<Idx...> /*unused*/)
 {
-    return { { std::forward<BasicJsonType>(j).at(Idx).template get<T>()... } };
+    return { { j.at(Idx).template get<T>()... } };
 }
 
 template < typename BasicJsonType, typename T, std::size_t N >
@@ -502,7 +502,7 @@ using tuple_type = std::tuple < decltype(from_json_tuple_get_impl(std::declval<B
 template<std::size_t PTagValue, typename... Args, typename BasicJsonType, std::size_t... Idx>
 tuple_type<PTagValue, BasicJsonType, Args...> from_json_tuple_impl_base(BasicJsonType&& j, index_sequence<Idx...> /*unused*/)
 {
-    return tuple_type<PTagValue, BasicJsonType, Args...>(from_json_tuple_get_impl(std::forward<BasicJsonType>(j).at(Idx), detail::identity_tag<Args> {}, detail::priority_tag<PTagValue> {})...);
+    return tuple_type<PTagValue, BasicJsonType, Args...>(from_json_tuple_get_impl(j.at(Idx), detail::identity_tag<Args> {}, detail::priority_tag<PTagValue> {})...);
 }
 
 template<std::size_t PTagValue, typename BasicJsonType>
@@ -514,8 +514,8 @@ std::tuple<> from_json_tuple_impl_base(BasicJsonType& /*unused*/, index_sequence
 template < typename BasicJsonType, class A1, class A2 >
 std::pair<A1, A2> from_json_tuple_impl(BasicJsonType&& j, identity_tag<std::pair<A1, A2>> /*unused*/, priority_tag<0> /*unused*/)
 {
-    return {std::forward<BasicJsonType>(j).at(0).template get<A1>(),
-            std::forward<BasicJsonType>(j).at(1).template get<A2>()};
+    return {j.at(0).template get<A1>(),
+            j.at(1).template get<A2>()};
 }
 
 template<typename BasicJsonType, typename A1, typename A2>
