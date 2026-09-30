@@ -76,6 +76,7 @@ Checks: '*,
          -readability-magic-numbers,
          -readability-redundant-access-specifiers,
          -readability-redundant-parentheses,
+         -readability-redundant-typename,
          -readability-simplify-boolean-expr,
          -readability-uppercase-literal-suffix,
          -readability-use-concise-preprocessor-directives'

@@ -78,7 +78,7 @@ jobs:
 
   ci_static_analysis_clang:
     runs-on: ubuntu-latest
-    container: silkeh/clang:dev
+    container: silkeh/clang:22
     strategy:
       matrix:
         target: [ci_test_clang, ci_clang_tidy, ci_test_clang_sanitizer, ci_single_binaries]
