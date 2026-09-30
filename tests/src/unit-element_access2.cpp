@@ -16,6 +16,40 @@
 // build test with C++14
 // JSON_HAS_CPP_14
 
+// used to check at compile time (via is_detected) whether a call is well-formed; see
+// https://github.com/nlohmann/json/issues/5657
+//
+// note: an integer *literal* (rather than a std::declval<T>() of integral type T) is required to
+// reproduce the bug, because only a null pointer constant--an integer literal with value zero, not
+// merely a runtime value that happens to be zero--implicitly converts to a null const char*; that is
+// why can_call_*_with_0 below hard-code the literal 0 instead of taking it as a template argument
+template<typename BasicJsonType, typename T>
+using can_call_find = decltype(std::declval<BasicJsonType>().find(std::declval<T>()));
+
+template<typename BasicJsonType, typename T>
+using can_call_count = decltype(std::declval<BasicJsonType>().count(std::declval<T>()));
+
+template<typename BasicJsonType, typename T>
+using can_call_contains = decltype(std::declval<BasicJsonType>().contains(std::declval<T>()));
+
+template<typename BasicJsonType, typename KeyType, typename ValueType>
+using can_call_value = decltype(std::declval<BasicJsonType>().value(std::declval<KeyType>(), std::declval<ValueType>()));
+
+template<typename BasicJsonType>
+using can_call_find_with_0 = decltype(std::declval<BasicJsonType>().find(0));
+
+template<typename BasicJsonType>
+using can_call_count_with_0 = decltype(std::declval<BasicJsonType>().count(0));
+
+template<typename BasicJsonType>
+using can_call_contains_with_0 = decltype(std::declval<BasicJsonType>().contains(0));
+
+template<typename BasicJsonType>
+using can_call_contains_with_0L = decltype(std::declval<BasicJsonType>().contains(0L));
+
+template<typename BasicJsonType>
+using can_call_value_with_0 = decltype(std::declval<BasicJsonType>().value(0, 1));
+
 TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_json) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
 {
     SECTION("object")
@@ -1507,6 +1541,53 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                 }
             }
         }
+    }
+
+    SECTION("integral keys for object lookup are rejected at compile time")
+    {
+        // https://github.com/nlohmann/json/issues/5657: an integer literal like 0 is a null pointer
+        // constant, which used to convert to a null const char* and from there--via undefined
+        // behavior in the std::string constructor--to key_type, so contains(0), find(0), and
+        // count(0) used to compile and then crash instead of failing to compile
+        using nlohmann::detail::is_detected;
+
+        CHECK_FALSE(is_detected<can_call_find_with_0, Json&>::value);
+        CHECK_FALSE(is_detected<can_call_find_with_0, const Json&>::value);
+        CHECK_FALSE(is_detected<can_call_count_with_0, Json&>::value);
+        CHECK_FALSE(is_detected<can_call_contains_with_0, Json&>::value);
+        // value(0, ...) is only affected in C++11, where the comparator is not transparent; with a
+        // transparent comparator (C++14 and later), int is already rejected for lacking a
+        // comparison with the key type, independently of this fix
+        CHECK_FALSE(is_detected<can_call_value_with_0, const Json&>::value);
+
+        // another integral literal type must be rejected as well, not just int
+        CHECK_FALSE(is_detected<can_call_contains_with_0L, Json&>::value);
+
+        // the valid overloads must remain callable
+        CHECK(is_detected<can_call_find, Json&, const char*>::value);
+        CHECK(is_detected<can_call_find, Json&, std::string>::value);
+        CHECK(is_detected<can_call_count, Json&, const char*>::value);
+        CHECK(is_detected<can_call_contains, Json&, const char*>::value);
+        CHECK(is_detected<can_call_contains, Json&, typename Json::json_pointer>::value);
+        CHECK(is_detected<can_call_value, const Json&, const char*, int>::value);
+        CHECK(is_detected<can_call_value, const Json&, typename Json::json_pointer, int>::value);
+
+#ifdef JSON_HAS_CPP_17
+        CHECK(is_detected<can_call_find, Json&, std::string_view>::value);
+        CHECK(is_detected<can_call_count, Json&, std::string_view>::value);
+        CHECK(is_detected<can_call_contains, Json&, std::string_view>::value);
+#endif
+
+        // the neighboring size_type overloads for array access are unaffected by the new
+        // integral-key overloads above (at(), operator[](), and erase() take a size_type)
+        Json arr = {10, 20, 30};
+        const Json arr_const = arr;
+        CHECK(arr.at(0) == 10);
+        CHECK(arr_const.at(0) == 10);
+        CHECK(arr[0] == 10);
+        CHECK(arr_const[0] == 10);
+        arr.erase(0);
+        CHECK(arr.size() == 2);
     }
 }
 

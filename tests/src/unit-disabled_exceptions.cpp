@@ -61,6 +61,24 @@ TEST_CASE("Tests with disabled exceptions")
         CHECK(j.value("/99999999999999999999999"_json_pointer, 42) == 42);
         CHECK(j.value("/18446744073709551615"_json_pointer, 42) == 42);
     }
+
+    SECTION("growing an ordered_json object")
+    {
+        auto j = nlohmann::ordered_json::object();
+        for (int i = 0; i < 100; ++i)
+        {
+            j[std::to_string(i)] = {{"nested", i}};
+        }
+
+        CHECK(j.size() == 100);
+        int i = 0;
+        for (const auto& element : j.items())
+        {
+            CHECK(element.key() == std::to_string(i));
+            CHECK(element.value()["nested"] == i);
+            ++i;
+        }
+    }
 }
 
 DOCTEST_GCC_SUPPRESS_WARNING_POP
