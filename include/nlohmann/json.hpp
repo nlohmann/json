@@ -36,7 +36,9 @@
     #include <iosfwd> // istream, ostream
 #endif  // JSON_NO_IO
 #include <iterator> // make_move_iterator, random_access_iterator_tag
+#include <limits> // numeric_limits
 #include <memory> // unique_ptr
+#include <stdexcept> // length_error
 #include <string> // string, stoi, to_string
 #include <utility> // declval, forward, move, pair, swap
 #include <vector> // vector
@@ -898,12 +900,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
 #ifndef JSON_NO_THREAD_LOCAL
-    /// the number of levels an operation descends into before it finishes the
-    /// value below it without the call stack
-    static constexpr std::uint8_t nesting_depth_limit()
-    {
-        return 128;
-    }
+    // nesting_depth() is a byte and may exceed the limit by one level
+    static_assert(detail::recursion_depth_limit() < 255, "the nesting depth count must fit in a byte");
 
     /*!
     @brief how many levels the operation going on in this thread has descended into
@@ -945,7 +943,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         static_cast<void>(may_descend);
         return true;
 #else
-        return !may_descend || nesting_depth() >= nesting_depth_limit();
+        return !may_descend || nesting_depth() >= detail::recursion_depth_limit();
 #endif
     }
 
@@ -969,7 +967,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #ifdef JSON_NO_THREAD_LOCAL
             : m_okay(false)
 #else
-            : m_okay(nesting_depth() < nesting_depth_limit())
+            : m_okay(nesting_depth() < detail::recursion_depth_limit())
 #endif
         {
 #ifndef JSON_NO_THREAD_LOCAL
@@ -1118,6 +1116,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // provides the latter (e.g., ones without a matching allocator-aware
         // fill constructor)
         dst.m_data.m_value.array = create<array_t>();
+        // only now that the array exists may dst stop being a null value
+        dst.m_data.m_type = value_t::array;
         dst.m_data.m_value.array->resize(src_array.size());
 
         auto dst_it = dst.m_data.m_value.array->begin();
@@ -1146,6 +1146,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         dst.m_data.m_value.object = create<object_t>(std::make_move_iterator(scratch.begin()),
                                     std::make_move_iterator(scratch.end()));
+        // only now that the object exists may dst stop being a null value
+        dst.m_data.m_type = value_t::object;
         scratch.clear();
 
         // pair every value of the copy with its counterpart in the original;
@@ -1173,7 +1175,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     The values whose copy has not been created yet are kept on an explicit
     worklist rather than on the call stack. This is only reached for values
-    nested deeper than @ref nesting_depth_limit levels, which is why it copies
+    nested deeper than @ref detail::recursion_depth_limit levels, which is why it copies
     every container by hand instead of letting the container do it: the fast
     ways of doing so would descend into the elements and defeat the purpose.
     */
@@ -1208,9 +1210,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             src_value = next.first;
             dst_value = next.second;
             worklist.pop_back();
-
-            // the value stops being a null value exactly here
-            dst_value->m_data.m_type = src_value->m_data.m_type;
         }
     }
 
@@ -1239,7 +1238,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     Copying a container copies its elements, so a value nested deeply enough
     used to exhaust the call stack. The descent is bounded here: the first
-    @ref nesting_depth_limit levels are copied by the containers themselves, just
+    @ref detail::recursion_depth_limit levels are copied by the containers themselves, just
     as they always were, and anything below that is copied without the call
     stack by @ref copy_iteratively. Copying a value can therefore no longer
     exhaust the stack, however deeply it is nested, just like destroying one
@@ -1377,7 +1376,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /*!
     @brief compare @a lhs and @a rhs without descending into them
 
-    Reached once a comparison has descended @ref nesting_depth_limit levels, so
+    Reached once a comparison has descended @ref detail::recursion_depth_limit levels, so
     that comparing values cannot exhaust the call stack however deeply they are
     nested. The two values are walked in lockstep on an explicit stack and
     compared lexicographically, element by element in the order the containers
@@ -1507,7 +1506,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                         const auto found = (!Ordered && !detail::is_ordered_map<object_t>::value)
                                            ? rhs_object->find(current.lhs_object_it->first)
                                            : rhs_object->cend();
-                        if (found == rhs_object->cend())
+                        // the object's comparator may find an entry whose
+                        // key is only equivalent, not equal, to this one
+                        if (found == rhs_object->cend() || !(found->first == current.lhs_object_it->first))
                         {
                             return key_result;
                         }
@@ -1829,6 +1830,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             case value_t::number_integer:
             case value_t::number_unsigned:
             case value_t::string:
+            case value_t::binary:
             {
                 if (JSON_HEDLEY_UNLIKELY(!first.m_it.primitive_iterator.is_begin()
                                          || !last.m_it.primitive_iterator.is_end()))
@@ -1841,7 +1843,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             case value_t::null:
             case value_t::object:
             case value_t::array:
-            case value_t::binary:
             case value_t::discarded:
             default:
                 break;
@@ -2830,6 +2831,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             // fill up the array with null values if given idx is outside the range
             if (idx >= m_data.m_value.array->size())
             {
+                // idx + 1 would overflow size_type and wrap to 0, which would empty
+                // the array instead of growing it; reject such an idx the same way
+                // resize() rejects other indices that are too large to represent
+                if (JSON_HEDLEY_UNLIKELY(idx == (std::numeric_limits<size_type>::max)()))
+                {
+                    JSON_THROW(std::length_error(detail::concat("array index ", std::to_string(idx), " exceeds size_type")));
+                }
 #if JSON_DIAGNOSTICS
                 // remember array size & capacity before resizing
                 const auto old_size = m_data.m_value.array->size();
@@ -2975,6 +2983,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         string_t, typename std::decay<ValueType>::type >;
 
   public:
+    // an integer literal 0 would otherwise convert to a null const char* and from there to key_type
+    template<typename T, typename ValueType, detail::enable_if_t<std::is_integral<T>::value, int> = 0>
+    ValueType value(T, ValueType&&) const = delete;
+
     /// @brief access specified object element with default value
     /// @sa https://json.nlohmann.me/api/basic_json/value/
     template < class ValueType, detail::enable_if_t <
@@ -3409,6 +3421,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @name lookup
     /// @{
 
+    // an integer literal 0 would otherwise convert to a null const char* and from there to key_type
+    template<typename T, detail::enable_if_t<std::is_integral<T>::value, int> = 0>
+    iterator find(T) = delete;
+    template<typename T, detail::enable_if_t<std::is_integral<T>::value, int> = 0>
+    const_iterator find(T) const = delete;
+    template<typename T, detail::enable_if_t<std::is_integral<T>::value, int> = 0>
+    size_type count(T) const = delete;
+    template<typename T, detail::enable_if_t<std::is_integral<T>::value, int> = 0>
+    bool contains(T) const = delete;
+
     /// @brief find an element in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/find/
     iterator find(const typename object_t::key_type& key)
@@ -3833,6 +3855,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             case value_t::binary:
             {
                 m_data.m_value.binary->clear();
+                m_data.m_value.binary->clear_subtype();
                 break;
             }
 
@@ -4152,8 +4175,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_THROW(invalid_iterator::create(202, "iterator does not fit current value", this));
         }
 
+        // copy the values first: ilist may refer to elements of this array
+        array_t values;
+        detail::reserve_array(values, ilist.size(), detail::priority_tag<1> {});
+        for (const auto& element : ilist)
+        {
+            values.push_back(element.moved_or_copied());
+        }
+
         // insert to array and return iterator
-        return insert_iterator(pos, ilist.begin(), ilist.end());
+        return insert_iterator(pos, std::make_move_iterator(values.begin()), std::make_move_iterator(values.end()));
     }
 
     /// @brief inserts range of elements into object
@@ -4335,11 +4366,20 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         std::is_nothrow_move_constructible<value_t>::value&&
         std::is_nothrow_move_assignable<value_t>::value&&
         std::is_nothrow_move_constructible<json_value>::value&& // NOLINT(cppcoreguidelines-noexcept-swap,performance-noexcept-swap)
-        std::is_nothrow_move_assignable<json_value>::value
+        std::is_nothrow_move_assignable<json_value>::value&&
+        std::is_nothrow_move_constructible<json_base_class_t>::value&&
+        std::is_nothrow_move_assignable<json_base_class_t>::value
     )
     {
         std::swap(m_data.m_type, other.m_data.m_type);
         std::swap(m_data.m_value, other.m_data.m_value);
+
+        // the custom base class travels with the value when it is copied or
+        // moved, so it is exchanged along with it
+        {
+            using std::swap;
+            swap(static_cast<json_base_class_t&>(*this), static_cast<json_base_class_t&>(other));
+        }
 
 #if JSON_DIAGNOSTIC_POSITIONS
         std::swap(start_position, other.start_position);
@@ -4357,7 +4397,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         std::is_nothrow_move_constructible<value_t>::value&&
         std::is_nothrow_move_assignable<value_t>::value&&
         std::is_nothrow_move_constructible<json_value>::value&& // NOLINT(cppcoreguidelines-noexcept-swap,performance-noexcept-swap)
-        std::is_nothrow_move_assignable<json_value>::value
+        std::is_nothrow_move_assignable<json_value>::value&&
+        std::is_nothrow_move_constructible<json_base_class_t>::value&&
+        std::is_nothrow_move_assignable<json_base_class_t>::value
     )
     {
         left.swap(right);
@@ -5050,7 +5092,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/operator_gtgt/
     friend std::istream& operator>>(std::istream& i, basic_json& j)
     {
-        parser(detail::input_adapter(i)).parse(false, j);
+        // parse into a temporary so that j is left unchanged if parsing fails
+        basic_json result;
+        parser(detail::input_adapter(i)).parse(false, result);
+        j = std::move(result);
         return i;
     }
 #endif  // JSON_NO_IO
@@ -6150,12 +6195,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 // the same time, determine whether every added key comes
                 // after every common key in target's order (a precondition
                 // for the fast path below, which only ever appends new keys
-                // at the very end): for an object_t whose iteration order is
-                // a pure function of the key set (e.g. the default std::map,
-                // which always iterates in sorted key order), the order
-                // check further below is always true and this whole
-                // mechanism is effectively a no-op; it only matters for a
-                // reorderable object_t such as the one backing `ordered_json`.
+                // at the very end). Both are only needed for an object_t that
+                // keeps its members in insertion order, such as the one
+                // backing `ordered_json`; for any other object_t, the fast
+                // path is always taken and they are not computed.
                 // patch ops for keys that were added (i.e., in target but not
                 // in source); built here so the fast path below can reuse
                 // them without a second source.find() per target key. Only
@@ -6179,15 +6222,32 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     }
                     else
                     {
-                        common_keys_target_order.push_back(it.key());
-                        if (seen_new_key)
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning(push )
+#pragma warning(disable : 4127) // ignore warning to replace if with if constexpr
+#endif
+                        if (detail::is_ordered_map<object_t>::value)
                         {
-                            new_keys_form_suffix = false;
+                            common_keys_target_order.push_back(it.key());
+                            if (seen_new_key)
+                            {
+                                new_keys_form_suffix = false;
+                            }
                         }
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning( pop )
+#endif
                     }
                 }
 
-                if (common_keys_source_order == common_keys_target_order && new_keys_form_suffix)
+                // Only an object type that keeps its members in insertion
+                // order, such as nlohmann::ordered_map, can need reordering:
+                // patch() appends a new member at the end of such an object.
+                // Any other object type places its members itself - std::map
+                // in key order, a hash map in an order its operator== ignores -
+                // so a member-by-member diff always reproduces target there.
+                if (!detail::is_ordered_map<object_t>::value
+                        || (common_keys_source_order == common_keys_target_order && new_keys_form_suffix))
                 {
                     // fast path: order of common keys already matches (or the
                     // object_t's iteration order does not depend on
@@ -6423,55 +6483,6 @@ std::string format_as(const NLOHMANN_BASIC_JSON_TPL& j)
     return j.dump();
 }
 
-inline namespace literals
-{
-inline namespace json_literals
-{
-
-/// @brief user-defined string literal for JSON values
-/// @sa https://json.nlohmann.me/api/operator_literal_json/
-JSON_HEDLEY_NON_NULL(1)
-#if !defined(JSON_HEDLEY_GCC_VERSION) || JSON_HEDLEY_GCC_VERSION_CHECK(4,9,0)
-    inline nlohmann::json operator""_json(const char* s, std::size_t n)
-#else
-    // GCC 4.8 requires a space between "" and suffix
-    inline nlohmann::json operator"" _json(const char* s, std::size_t n)
-#endif
-{
-    return nlohmann::json::parse(s, s + n);
-}
-
-#if defined(__cpp_char8_t)
-JSON_HEDLEY_NON_NULL(1)
-inline nlohmann::json operator""_json(const char8_t* s, std::size_t n)
-{
-    return nlohmann::json::parse(reinterpret_cast<const char*>(s),
-                                 reinterpret_cast<const char*>(s) + n);
-}
-#endif
-
-/// @brief user-defined string literal for JSON pointer
-/// @sa https://json.nlohmann.me/api/operator_literal_json_pointer/
-JSON_HEDLEY_NON_NULL(1)
-#if !defined(JSON_HEDLEY_GCC_VERSION) || JSON_HEDLEY_GCC_VERSION_CHECK(4,9,0)
-    inline nlohmann::json::json_pointer operator""_json_pointer(const char* s, std::size_t n)
-#else
-    // GCC 4.8 requires a space between "" and suffix
-    inline nlohmann::json::json_pointer operator"" _json_pointer(const char* s, std::size_t n)
-#endif
-{
-    return nlohmann::json::json_pointer(std::string(s, n));
-}
-
-#if defined(__cpp_char8_t)
-inline nlohmann::json::json_pointer operator""_json_pointer(const char8_t* s, std::size_t n)
-{
-    return nlohmann::json::json_pointer(std::string(reinterpret_cast<const char*>(s), n));
-}
-#endif
-
-}  // namespace json_literals
-}  // namespace literals
 NLOHMANN_JSON_NAMESPACE_END
 
 ///////////////////////
@@ -6606,22 +6617,20 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 
 }  // namespace std
 
-#if JSON_USE_GLOBAL_UDLS
-    #if !defined(JSON_HEDLEY_GCC_VERSION) || JSON_HEDLEY_GCC_VERSION_CHECK(4,9,0)
-        using nlohmann::literals::json_literals::operator""_json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
-        using nlohmann::literals::json_literals::operator""_json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
-    #else
-        // GCC 4.8 requires a space between "" and suffix
-        using nlohmann::literals::json_literals::operator"" _json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
-        using nlohmann::literals::json_literals::operator"" _json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
-    #endif
-#endif
-
 #include <nlohmann/detail/macro_unscope.hpp>
 
 // End of GCC diagnostic pragmas for C++ modules support
 #if defined(__GNUC__) && !defined(__clang__) && __cplusplus >= 202002L
     #pragma GCC diagnostic pop
+#endif
+
+// The user-defined string literals are in a separate header, because their
+// bodies instantiate the parser in every translation unit that includes them.
+// Define JSON_NO_AUTOMATIC_UDLS to include <nlohmann/json_literals.hpp> only
+// where needed.
+#ifndef JSON_NO_AUTOMATIC_UDLS
+    // NOLINTNEXTLINE(misc-header-include-cycle): json_literals.hpp includes this header
+    #include <nlohmann/json_literals.hpp>
 #endif
 
 #endif  // INCLUDE_NLOHMANN_JSON_HPP_

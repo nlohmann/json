@@ -28,6 +28,11 @@ A minimal map-like container that preserves insertion order for use within [`nlo
 The type uses a `std::vector` to store object elements. Therefore, adding elements can yield a reallocation in which
 case all iterators (including the `end()` iterator) and all references to the elements are invalidated.
 
+When the storage grows, the keys are copied and the mapped values are moved to the new storage. A plain `std::vector`
+would copy the whole elements instead, because their `#!cpp const` keys make them not nothrow move constructible; for
+[`ordered_json`](ordered_json.md), this would be a deep copy of every nested value. The values are only copied if
+`T` is not default constructible or not nothrow move assignable.
+
 ## Member types
 
 - **key_type** - key type (`Key`)
@@ -55,6 +60,11 @@ std::equal_to<>     // since C++14
 - **count**
 - **find**
 - **insert**
+
+## Exception safety
+
+**emplace**, **operator\[\]**, and **insert(value)** have the strong exception guarantee: if an exception is thrown (for
+instance, because copying a key or allocating memory fails), the contents of the container are unchanged.
 
 ## Complexity
 
@@ -122,3 +132,4 @@ This differs from `#!cpp std::map`, where the same operations are O(log n).
 
 - Added in version 3.9.0 to implement [`nlohmann::ordered_json`](ordered_json.md).
 - Added **key_compare** member in version 3.11.0.
+- Changed in version 3.13.0: growing the storage moves the mapped values instead of copying them.

@@ -45,7 +45,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
   `"BSON length 2147483661 exceeds maximum of 2147483647"`
 - Throws [`out_of_range.415`](../../home/exceptions.md#jsonexceptionout_of_range415) if the subtype of a binary value
   exceeds 255, the maximum of the BSON binary subtype; example:
-  `"subtype 300 is too large for the BSON binary subtype (max 255)"`
+  `"subtype 70000 is too large for the BSON binary subtype (max 255)"`
 
 ## Complexity
 
@@ -97,3 +97,4 @@ pass before anything is written.
 - Added in version 3.4.0.
 - Throws `out_of_range.412` and `out_of_range.415` since version 3.13.0.
 - Linear in the size of `j`, and no longer limited by the call stack for deeply nested values, since version 3.13.0.
+- `out_of_range.415` is now detected before anything is written, like the other exceptions above, since version 3.13.0.

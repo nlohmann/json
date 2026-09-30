@@ -234,6 +234,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('JSON_HAS_STATIC_RTTI', 'Macro
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_HAS_STD_FORMAT', 'Macro', 'api/macros/json_has_std_format/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_HAS_THREE_WAY_COMPARISON', 'Macro', 'api/macros/json_has_three_way_comparison/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_NOEXCEPTION', 'Macro', 'api/macros/json_noexception/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_NO_AUTOMATIC_UDLS', 'Macro', 'api/macros/json_no_automatic_udls/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_NO_IO', 'Macro', 'api/macros/json_no_io/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_NO_THREAD_LOCAL', 'Macro', 'api/macros/json_no_thread_local/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_PRECISE_STREAM_POSITION', 'Macro', 'api/macros/json_precise_stream_position/index.html');

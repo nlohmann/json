@@ -158,8 +158,8 @@ basic_json(basic_json&& other) noexcept;
 
     - In case of a `#!json null` type, [invalid_iterator.206](../../home/exceptions.md#jsonexceptioninvalid_iterator206)
       is thrown.
-    - In case of other primitive types (number, boolean, or string), `first` must be `begin()` and `last` must be
-      `end()`. In this case, the value is copied. Otherwise,
+    - In case of other primitive types (number, boolean, string, or binary), `first` must be `begin()` and `last`
+      must be `end()`. In this case, the value is copied. Otherwise,
       [`invalid_iterator.204`](../../home/exceptions.md#jsonexceptioninvalid_iterator204) is thrown.
     - In case of structured types (array, object), the constructor behaves as similar versions for `std::vector` or
       `std::map`; that is, a JSON array or object is constructed from the values in the range.
@@ -261,8 +261,8 @@ basic_json(basic_json&& other) noexcept;
       and `last` are not compatible (i.e., do not belong to the same JSON value). In this case, the range
       `[first, last)` is undefined.
     - Throws [`invalid_iterator.204`](../../home/exceptions.md#jsonexceptioninvalid_iterator204) if iterators `first`
-      and `last` belong to a primitive type (number, boolean, or string), but `first` does not point to the first
-      element anymore. In this case, the range `[first, last)` is undefined. See the example code below.
+      and `last` belong to a primitive type (number, boolean, string, or binary), but `first` does not point to the
+      first element anymore. In this case, the range `[first, last)` is undefined. See the example code below.
     - Throws [`invalid_iterator.206`](../../home/exceptions.md#jsonexceptioninvalid_iterator206) if iterators `first`
       and `last` belong to a `#!json null` value. In this case, the range `[first, last)` is undefined.
 8. (none)
@@ -467,6 +467,8 @@ basic_json(basic_json&& other) noexcept;
 4. Since version 3.2.0.
 5. Since version 1.0.0.
 6. Since version 1.0.0.
-7. Since version 1.0.0.
+7. Since version 1.0.0. Fixed in version 3.13.0 to also check the iterator range for binary values; before, a range
+   that did not cover the whole value (such as `(end(), end())`) was accepted and the whole binary value was copied,
+   unlike the other primitive types.
 8. Since version 1.0.0.
 9. Since version 1.0.0.

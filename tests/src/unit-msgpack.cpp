@@ -2475,3 +2475,60 @@ TEST_CASE("MessagePack lengths beyond UINT32_MAX cannot be serialized")
     }
 #endif
 }
+
+TEST_CASE("MessagePack numbers use the active union member (see #5644)")
+{
+    // when number_integer_t is narrower than number_unsigned_t, to_msgpack()
+    // used to read the union member that was not the active one, writing
+    // wrong bytes for some values; std::int64_t/std::uint64_t (the default
+    // types, where both members have the same width) were not affected
+    using int32_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int32_t, std::uint64_t, double>;
+    using int16_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int16_t, std::uint64_t, double>;
+
+    SECTION("number_integer_t = std::int32_t")
+    {
+        SECTION("6442450944 (uint 64; the low 32 bits used to be sign-extended)")
+        {
+            const int32_json j = 6442450944ULL;
+            CHECK(j.is_number_unsigned());
+
+            std::vector<uint8_t> const expected{0xcf, 0x00, 0x00, 0x00, 0x01, 0x80, 0x00, 0x00, 0x00};
+            const auto result = int32_json::to_msgpack(j);
+            CHECK(result == expected);
+            CHECK(int32_json::from_msgpack(result) == j);
+        }
+
+        SECTION("4294967496 (uint 64; the low 32 bits used to be the whole value)")
+        {
+            const int32_json j = 4294967496ULL;
+            CHECK(j.is_number_unsigned());
+
+            std::vector<uint8_t> const expected{0xcf, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0xc8};
+            const auto result = int32_json::to_msgpack(j);
+            CHECK(result == expected);
+            CHECK(int32_json::from_msgpack(result) == j);
+        }
+    }
+
+    SECTION("number_integer_t = std::int16_t, 98304 (uint 32)")
+    {
+        const int16_json j = 98304ULL;
+        CHECK(j.is_number_unsigned());
+
+        std::vector<uint8_t> const expected{0xce, 0x00, 0x01, 0x80, 0x00};
+        const auto result = int16_json::to_msgpack(j);
+        CHECK(result == expected);
+        CHECK(int16_json::from_msgpack(result) == j);
+    }
+
+    SECTION("default types (std::int64_t/std::uint64_t) are unaffected")
+    {
+        const json j = 4294967496ULL;
+        CHECK(j.is_number_unsigned());
+
+        std::vector<uint8_t> const expected{0xcf, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0xc8};
+        const auto result = json::to_msgpack(j);
+        CHECK(result == expected);
+        CHECK(json::from_msgpack(result) == j);
+    }
+}
