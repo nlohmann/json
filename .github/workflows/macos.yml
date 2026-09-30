@@ -71,3 +71,38 @@ jobs:
         run: cmake --build build --parallel 10
       - name: Test
         run: cd build ; ctest -j 10 --output-on-failure
+
+  swiftpm:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check that Package.swift resolves without a deprecation warning
+        run: swift package dump-package
+      - name: Build the SwiftPM documentation example against this checkout
+        run: |
+          mkdir -p /tmp/json-swiftpm-consumer/Sources/MyLibrary
+          cp docs/mkdocs/docs/integration/swift/example.cpp /tmp/json-swiftpm-consumer/Sources/MyLibrary/example.cpp
+          cat > /tmp/json-swiftpm-consumer/Package.swift << EOF
+          // swift-tools-version: 5.9
+          import PackageDescription
+
+          let package = Package(
+              name: "MyPackage",
+              dependencies: [
+                  .package(path: "${{ github.workspace }}")
+              ],
+              targets: [
+                  .target(
+                      name: "MyLibrary",
+                      dependencies: [
+                          .product(name: "json", package: "json")
+                      ],
+                      publicHeadersPath: "."
+                  )
+              ]
+          )
+          EOF
+          cd /tmp/json-swiftpm-consumer
+          swift build
