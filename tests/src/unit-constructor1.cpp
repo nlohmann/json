@@ -1648,6 +1648,20 @@ TEST_CASE("constructors")
                         CHECK_THROWS_WITH_AS(json(j.cbegin(), j.cbegin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
                     }
                 }
+
+                SECTION("binary")
+                {
+                    {
+                        json j = json::binary({1, 2, 3});
+                        CHECK_THROWS_WITH_AS(json(j.end(), j.end()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                        CHECK_THROWS_WITH_AS(json(j.begin(), j.begin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                    }
+                    {
+                        json const j = json::binary({1, 2, 3});
+                        CHECK_THROWS_WITH_AS(json(j.cend(), j.cend()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                        CHECK_THROWS_WITH_AS(json(j.cbegin(), j.cbegin()), "[json.exception.invalid_iterator.204] iterators out of range", json::invalid_iterator&);
+                    }
+                }
             }
         }
     }
