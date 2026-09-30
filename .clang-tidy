@@ -43,7 +43,6 @@ Checks: '*,
          -google-readability-function-size,
          -google-runtime-float,
          -google-runtime-int,
-         -google-runtime-references,
          -hicpp-avoid-goto,
          -hicpp-explicit-conversions,
          -hicpp-function-size,
@@ -87,5 +86,4 @@ CheckOptions:
 
 WarningsAsErrors: '*'
 
-#HeaderFilterRegex: '.*nlohmann.*'
 HeaderFilterRegex: '.*hpp$'
