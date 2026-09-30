@@ -52,6 +52,13 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
         run: cmake --build build --target ci_infer
+      - name: Archive Infer report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: infer-report
+          path: ${{ github.workspace }}/build/build_infer/infer-out/report.txt
+          if-no-files-found: ignore
 
   ci_static_analysis_ubuntu:
     runs-on: ubuntu-latest
@@ -97,13 +104,13 @@ jobs:
 
   ci_cmake_options:
     runs-on: ubuntu-latest
-    container: ubuntu:focal
+    container: ubuntu:24.04
     strategy:
       matrix:
         target: [ci_cmake_flags, ci_test_diagnostics, ci_test_diagnostic_positions, ci_test_noexceptions, ci_test_noimplicitconversions, ci_test_legacycomparison, ci_test_noglobaludls, ci_test_disableenumserialization, ci_test_disabletuplereferenceconversion, ci_test_skiplibraryversioncheck, ci_test_simdutf, ci_test_strict_nul_handling, ci_test_no_thread_local]
     steps:
       - name: Install build-essential
-        run: apt-get update ; apt-get install -y build-essential unzip wget git libssl-dev
+        run: apt-get update ; apt-get install -y build-essential unzip wget git
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -407,3 +414,21 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
         run: cmake --build build --target ${{ matrix.target }}
+
+  # Native Linux ARM64 runner with the latest GCC. The ubuntu-24.04-arm label is
+  # only available for public repositories.
+  ci_test_arm64:
+    runs-on: ubuntu-24.04-arm
+    container: gcc:latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
+      - name: Check that the job runs natively on arm64
+        run: uname -m && test "$(uname -m)" = aarch64
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ci_test_compiler_default

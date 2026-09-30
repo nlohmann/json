@@ -29,7 +29,9 @@
 #endif
 
 #include <algorithm> // all_of, find, for_each, none_of
+#include <cmath> // isnan
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
+#include <cstdint> // uint8_t
 #include <functional> // hash, less
 #include <initializer_list> // initializer_list
 #ifndef JSON_NO_IO
@@ -38,19 +40,28 @@
 #include <iterator> // make_move_iterator, random_access_iterator_tag
 #include <limits> // numeric_limits
 #include <memory> // unique_ptr
+#include <set> // swap, operator!=
 #include <stdexcept> // length_error
 #include <string> // string, stoi, to_string
+#include <type_traits> // enable_if_t, is_same, is_scalar, ...
+#include <unordered_map> // swap (for the from_json(..., std::unordered_map&) overload)
 #include <utility> // declval, forward, move, pair, swap
 #include <vector> // vector
 
-#include <nlohmann/adl_serializer.hpp>
+// keep: json.hpp's own basic_json<> default template arguments need the complete definition of
+// each of these, not only the forward declarations from json_fwd.hpp, so IWYU's suggestion to
+// drop them (nothing in this file otherwise names the type) would break every downstream
+// translation unit that relies on basic_json<>'s defaults actually being usable.
+#include <nlohmann/adl_serializer.hpp> // IWYU pragma: keep
 #include <nlohmann/byte_container_with_subtype.hpp>
-#include <nlohmann/detail/conversions/from_json.hpp>
-#include <nlohmann/detail/conversions/to_json.hpp>
+#include <nlohmann/detail/abi_macros.hpp>
+#include <nlohmann/detail/conversions/from_json.hpp> // IWYU pragma: keep
+#include <nlohmann/detail/conversions/to_json.hpp> // IWYU pragma: keep
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/hash.hpp>
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
+#include <nlohmann/detail/input/json_sax.hpp>
 #include <nlohmann/detail/input/lexer.hpp>
 #include <nlohmann/detail/input/parser.hpp>
 #include <nlohmann/detail/iterators/internal_iterator.hpp>
@@ -62,6 +73,7 @@
 #include <nlohmann/detail/json_pointer.hpp>
 #include <nlohmann/detail/json_ref.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/meta/detected.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/string_escape.hpp>
 #include <nlohmann/detail/string_utils.hpp>
@@ -73,7 +85,8 @@
 #include <nlohmann/detail/recursion_depth_limit.hpp>
 #include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/json_fwd.hpp>
-#include <nlohmann/ordered_map.hpp>
+#include <nlohmann/ordered_map.hpp> // IWYU pragma: keep
+#include <nlohmann/thirdparty/hedley/hedley.hpp>
 
 #if defined(JSON_HAS_CPP_17)
     #if JSON_HAS_STATIC_RTTI
@@ -6802,7 +6815,10 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 
 }  // namespace std
 
-#include <nlohmann/detail/macro_unscope.hpp>
+// keep: undoes the macros defined via detail/macro_scope.hpp at the top of this file; removing it
+// (nothing in this file *uses* a symbol from it) would leak JSON_* macros into every translation
+// unit that includes this header.
+#include <nlohmann/detail/macro_unscope.hpp> // IWYU pragma: keep
 
 // End of GCC diagnostic pragmas for C++ modules support
 #if defined(__GNUC__) && !defined(__clang__) && __cplusplus >= 202002L

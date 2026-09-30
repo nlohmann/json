@@ -29,7 +29,9 @@
 #endif
 
 #include <algorithm> // all_of, find, for_each, none_of
+#include <cmath> // isnan
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
+#include <cstdint> // uint8_t
 #include <functional> // hash, less
 #include <initializer_list> // initializer_list
 #ifndef JSON_NO_IO
@@ -38,11 +40,18 @@
 #include <iterator> // make_move_iterator, random_access_iterator_tag
 #include <limits> // numeric_limits
 #include <memory> // unique_ptr
+#include <set> // swap, operator!=
 #include <stdexcept> // length_error
 #include <string> // string, stoi, to_string
+#include <type_traits> // enable_if_t, is_same, is_scalar, ...
+#include <unordered_map> // swap (for the from_json(..., std::unordered_map&) overload)
 #include <utility> // declval, forward, move, pair, swap
 #include <vector> // vector
 
+// keep: json.hpp's own basic_json<> default template arguments need the complete definition of
+// each of these, not only the forward declarations from json_fwd.hpp, so IWYU's suggestion to
+// drop them (nothing in this file otherwise names the type) would break every downstream
+// translation unit that relies on basic_json<>'s defaults actually being usable.
 // #include <nlohmann/adl_serializer.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -3973,8 +3982,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
     #include <cstdint> // int64_t, uint64_t
     #include <map> // map
-    #include <memory> // allocator
-    #include <string> // string
+    #include <string> // allocator, string
     #include <vector> // vector
 
     // #include <nlohmann/detail/abi_macros.hpp>
@@ -3995,7 +4003,7 @@ NLOHMANN_JSON_NAMESPACE_END
     for serialization.
     */
     template<typename T = void, typename SFINAE = void>
-    struct adl_serializer;
+    struct adl_serializer; // IWYU pragma: keep
 
     /// a class to store JSON values
     /// @sa https://json.nlohmann.me/api/basic_json/
@@ -4011,12 +4019,12 @@ NLOHMANN_JSON_NAMESPACE_END
     adl_serializer,
     class BinaryType = std::vector<std::uint8_t>, // cppcheck-suppress syntaxError
     class CustomBaseClass = void>
-    class basic_json;
+    class basic_json; // IWYU pragma: keep
 
     /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
     /// @sa https://json.nlohmann.me/api/json_pointer/
     template<typename RefStringType>
-    class json_pointer;
+    class json_pointer; // IWYU pragma: keep
 
     /*!
     @brief default specialization
@@ -4027,7 +4035,7 @@ NLOHMANN_JSON_NAMESPACE_END
     /// @brief a minimal map-like container that preserves insertion order
     /// @sa https://json.nlohmann.me/api/ordered_map/
     template<class Key, class T, class IgnoredLess, class Allocator>
-    struct ordered_map;
+    struct ordered_map; // IWYU pragma: keep
 
     /// @brief specialization that maintains the insertion order of object keys
     /// @sa https://json.nlohmann.me/api/ordered_json/
@@ -7144,7 +7152,7 @@ struct adl_serializer
 };
 
 NLOHMANN_JSON_NAMESPACE_END
-
+// IWYU pragma: keep
 // #include <nlohmann/byte_container_with_subtype.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -7251,10 +7259,12 @@ class byte_container_with_subtype : public BinaryType
 
 NLOHMANN_JSON_NAMESPACE_END
 
+// #include <nlohmann/detail/abi_macros.hpp>
+
 // #include <nlohmann/detail/conversions/from_json.hpp>
-
+// IWYU pragma: keep
 // #include <nlohmann/detail/conversions/to_json.hpp>
-
+// IWYU pragma: keep
 // #include <nlohmann/detail/exceptions.hpp>
 
 // #include <nlohmann/detail/hash.hpp>
@@ -17855,6 +17865,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/input/input_adapters.hpp>
 
+// #include <nlohmann/detail/input/json_sax.hpp>
+
 // #include <nlohmann/detail/input/lexer.hpp>
 
 // #include <nlohmann/detail/input/parser.hpp>
@@ -20835,6 +20847,8 @@ class json_ref
 NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/macro_scope.hpp>
+
+// #include <nlohmann/detail/meta/detected.hpp>
 
 // #include <nlohmann/detail/string_concat.hpp>
 
@@ -26375,12 +26389,14 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <functional> // equal_to, less
 #include <initializer_list> // initializer_list
 #include <iterator> // input_iterator_tag, iterator_traits
-#include <memory> // allocator
+#include <new> // for operator new (placement new)
 #include <stdexcept> // for out_of_range
 #include <tuple> // forward_as_tuple
 #include <type_traits> // enable_if, integral_constant, is_convertible, is_nothrow_move_constructible
 #include <utility> // forward, move, pair, piecewise_construct
-#include <vector> // vector
+#include <vector> // vector, allocator
+
+// #include <nlohmann/detail/abi_macros.hpp>
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
@@ -26815,6 +26831,8 @@ private:
 };
 
 NLOHMANN_JSON_NAMESPACE_END
+// IWYU pragma: keep
+// #include <nlohmann/thirdparty/hedley/hedley.hpp>
 
 
 #if defined(JSON_HAS_CPP_17)
@@ -33544,6 +33562,9 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 
 }  // namespace std
 
+// keep: undoes the macros defined via detail/macro_scope.hpp at the top of this file; removing it
+// (nothing in this file *uses* a symbol from it) would leak JSON_* macros into every translation
+// unit that includes this header.
 // #include <nlohmann/detail/macro_unscope.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -33758,7 +33779,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 #undef JSON_HEDLEY_WARN_UNUSED_RESULT_MSG
 #undef JSON_HEDLEY_FALL_THROUGH
 
-
+// IWYU pragma: keep
 
 // End of GCC diagnostic pragmas for C++ modules support
 #if defined(__GNUC__) && !defined(__clang__) && __cplusplus >= 202002L
