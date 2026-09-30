@@ -36,7 +36,9 @@
     #include <iosfwd> // istream, ostream
 #endif  // JSON_NO_IO
 #include <iterator> // make_move_iterator, random_access_iterator_tag
+#include <limits> // numeric_limits
 #include <memory> // unique_ptr
+#include <stdexcept> // length_error
 #include <string> // string, stoi, to_string
 #include <utility> // declval, forward, move, pair, swap
 #include <vector> // vector
@@ -29710,6 +29712,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             // fill up the array with null values if given idx is outside the range
             if (idx >= m_data.m_value.array->size())
             {
+                // idx + 1 would overflow size_type and wrap to 0, which would empty
+                // the array instead of growing it; reject such an idx the same way
+                // resize() rejects other indices that are too large to represent
+                if (JSON_HEDLEY_UNLIKELY(idx == (std::numeric_limits<size_type>::max)()))
+                {
+                    JSON_THROW(std::length_error(detail::concat("array index ", std::to_string(idx), " exceeds size_type")));
+                }
 #if JSON_DIAGNOSTICS
                 // remember array size & capacity before resizing
                 const auto old_size = m_data.m_value.array->size();
