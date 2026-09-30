@@ -34,12 +34,7 @@ all:
 	@echo "ChangeLog.md - generate ChangeLog file"
 	@echo "check-amalgamation - check whether sources have been amalgamated and BUILD.bazel is up to date"
 	@echo "clean - remove built files"
-	@echo "fuzz_testing - prepare fuzz testing of the JSON parser"
-	@echo "fuzz_testing_bon8 - prepare fuzz testing of the BON8 parser"
-	@echo "fuzz_testing_bson - prepare fuzz testing of the BSON parser"
-	@echo "fuzz_testing_cbor - prepare fuzz testing of the CBOR parser"
-	@echo "fuzz_testing_msgpack - prepare fuzz testing of the MessagePack parser"
-	@echo "fuzz_testing_ubjson - prepare fuzz testing of the UBJSON parser"
+	@echo "fuzzing - see tests/fuzzing.md for how to build and run the fuzzers"
 	@echo "pretty - beautify code with Artistic Style"
 	@echo "run_benchmarks - build and run benchmarks"
 	@echo "update_hedley - download Hedley and regenerate hedley.hpp / hedley_undef.hpp"
@@ -56,74 +51,6 @@ run_benchmarks:
 	cd cmake-build-benchmarks ; cmake ../tests/benchmarks -GNinja -DCMAKE_BUILD_TYPE=Release
 	cd cmake-build-benchmarks ; ninja
 	cd cmake-build-benchmarks ; ./json_benchmarks
-
-
-##########################################################################
-# fuzzing
-##########################################################################
-
-# the overall fuzz testing target
-fuzz_testing:
-	rm -fr fuzz-testing
-	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) parse_afl_fuzzer -C tests CXX=afl-clang++
-	mv tests/parse_afl_fuzzer fuzz-testing/fuzzer
-	find tests/data/json_tests -size -5k -name *json | xargs -I{} cp "{}" fuzz-testing/testcases
-	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
-
-fuzz_testing_bon8:
-	rm -fr fuzz-testing
-	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) parse_bon8_fuzzer -C tests CXX=afl-clang++
-	mv tests/parse_bon8_fuzzer fuzz-testing/fuzzer
-	find tests/data -size -5k -name *.bon8 | xargs -I{} cp "{}" fuzz-testing/testcases
-	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
-
-fuzz_testing_bson:
-	rm -fr fuzz-testing
-	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) parse_bson_fuzzer -C tests CXX=afl-clang++
-	mv tests/parse_bson_fuzzer fuzz-testing/fuzzer
-	find tests/data -size -5k -name *.bson | xargs -I{} cp "{}" fuzz-testing/testcases
-	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
-
-fuzz_testing_cbor:
-	rm -fr fuzz-testing
-	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) parse_cbor_fuzzer -C tests CXX=afl-clang++
-	mv tests/parse_cbor_fuzzer fuzz-testing/fuzzer
-	find tests/data -size -5k -name *.cbor | xargs -I{} cp "{}" fuzz-testing/testcases
-	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
-
-fuzz_testing_msgpack:
-	rm -fr fuzz-testing
-	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) parse_msgpack_fuzzer -C tests CXX=afl-clang++
-	mv tests/parse_msgpack_fuzzer fuzz-testing/fuzzer
-	find tests/data -size -5k -name *.msgpack | xargs -I{} cp "{}" fuzz-testing/testcases
-	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
-
-fuzz_testing_ubjson:
-	rm -fr fuzz-testing
-	mkdir -p fuzz-testing fuzz-testing/testcases fuzz-testing/out
-	$(MAKE) parse_ubjson_fuzzer -C tests CXX=afl-clang++
-	mv tests/parse_ubjson_fuzzer fuzz-testing/fuzzer
-	find tests/data -size -5k -name *.ubjson | xargs -I{} cp "{}" fuzz-testing/testcases
-	@echo "Execute: afl-fuzz -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer"
-
-fuzzing-start:
-	afl-fuzz -S fuzzer1 -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer > /dev/null &
-	afl-fuzz -S fuzzer2 -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer > /dev/null &
-	afl-fuzz -S fuzzer3 -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer > /dev/null &
-	afl-fuzz -S fuzzer4 -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer > /dev/null &
-	afl-fuzz -S fuzzer5 -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer > /dev/null &
-	afl-fuzz -S fuzzer6 -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer > /dev/null &
-	afl-fuzz -S fuzzer7 -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer > /dev/null &
-	afl-fuzz -M fuzzer0 -i fuzz-testing/testcases -o fuzz-testing/out fuzz-testing/fuzzer
-
-fuzzing-stop:
-	-killall fuzzer
-	-killall afl-fuzz
 
 
 ##########################################################################
