@@ -805,20 +805,7 @@ struct has_capacity : std::integral_constant<bool, is_detected<detect_capacity, 
 // a naive helper to check if a type is an ordered_map (exploits the fact that
 // ordered_map inherits capacity() from std::vector)
 template <typename T>
-struct is_ordered_map
-{
-    using one = char;
-
-    struct two
-    {
-        char x[2]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-    };
-
-    template <typename C> static one test( decltype(&C::capacity) ) ;
-    template <typename C> static two test(...);
-
-    enum { value = sizeof(test<T>(nullptr)) == sizeof(char) }; // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg,cppcoreguidelines-use-enum-class)
-};
+struct is_ordered_map : has_capacity<T> {};
 
 // to avoid useless casts (see https://github.com/nlohmann/json/issues/2893#issuecomment-889152324)
 template < typename T, typename U, enable_if_t < !std::is_same<T, U>::value, int > = 0 >
