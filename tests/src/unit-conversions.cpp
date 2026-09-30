@@ -1749,6 +1749,34 @@ NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(StrictTaskState,
     {STRICT_TS_COMPLETED, "completed"},
 })
 
+// regression test for #5708 item 2: NLOHMANN_JSON_SERIALIZE_ENUM_STRICT must not rely on
+// unqualified lookup of a helper name that a user's own namespace may also declare
+namespace ns_with_colliding_name
+{
+// NOLINTNEXTLINE(misc-use-internal-linkage) - used to shadow the library's internal helper name
+inline void templated_json_throw(int /*unused*/) {}
+
+enum class colliding_enum { a, b };
+
+// NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(colliding_enum,
+{
+    {colliding_enum::a, "a"},
+    {colliding_enum::b, "b"}
+})
+} // namespace ns_with_colliding_name
+
+TEST_CASE("NLOHMANN_JSON_SERIALIZE_ENUM_STRICT in a namespace with a colliding name")
+{
+    using ns_with_colliding_name::colliding_enum;
+
+    CHECK(json(colliding_enum::a) == "a");
+    CHECK(colliding_enum::b == json("b"));
+
+    json _;
+    CHECK_THROWS_WITH_AS(_ = json("nope").get<colliding_enum>(), "[json.exception.out_of_range.410] enum value out of range for colliding_enum: \"nope\"", json::out_of_range&);
+}
+
 TEST_CASE("Strict JSON to enum mapping")
 {
     SECTION("enum class")
