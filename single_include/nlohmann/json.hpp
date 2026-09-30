@@ -24184,9 +24184,10 @@ class serializer
     additional parameter. Arrays and objects are serialized without recursion,
     however deeply they are nested.
 
-    - strings and object keys are escaped using `escape_string()`
-    - integer numbers are converted implicitly via `operator<<`
-    - floating-point numbers are converted to a string using `"%g"` format
+    - strings and object keys are escaped using @ref dump_escaped
+    - integer numbers are converted using a digit-pair lookup table (@ref dump_integer)
+    - floating-point numbers are converted to a string using @ref dump_float, which
+      uses `to_chars` for IEEE-754 types and `snprintf` otherwise
     - binary values are serialized as objects containing the subtype and the
       byte array
 
@@ -24527,7 +24528,7 @@ class serializer
     @brief serialize the value @a val, but not the elements of a container
 
     An object or array with elements is opened and pushed onto @a stack for
-    @ref dump_internal to walk; everything else - including a binary value,
+    @ref dump_iteratively to walk; everything else - including a binary value,
     which looks like an object but has no elements to descend into - is written
     out in full by @ref dump_scalar.
     */
@@ -24766,7 +24767,7 @@ class serializer
     Escape a string by replacing certain special characters by a sequence of an
     escape character (backslash) and another character and other control
     characters by a sequence of "\u" followed by a four-digit hex
-    representation. The escaped string is written to output stream @a o.
+    representation. The escaped string is appended to @ref write_buffer.
 
     @param[in] s  the string to escape
 
@@ -25400,7 +25401,7 @@ class serializer
     /*!
     @brief dump an integer
 
-    Dump a given integer to output stream @a o. Works internally with
+    Dump a given integer, appending it to @ref write_buffer. Works internally with
     @a number_buffer.
 
     @param[in] x  integer number (signed or unsigned) to dump
@@ -25491,7 +25492,7 @@ class serializer
     /*!
     @brief dump a floating-point number
 
-    Dump a given floating-point number to output stream @a o. Works internally
+    Dump a given floating-point number, appending it to @ref write_buffer. Works internally
     with @a number_buffer.
 
     @param[in] x  floating-point number to dump
