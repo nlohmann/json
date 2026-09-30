@@ -3662,7 +3662,6 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-#include <array> // array
 #include <cstddef> // size_t
 #include <type_traits> // conditional, enable_if, false_type, integral_constant, is_constructible, is_integral, is_same, remove_cv, remove_reference, true_type
 #include <utility> // index_sequence, make_index_sequence, index_sequence_for
@@ -3814,12 +3813,6 @@ struct static_const
     template<typename T>
     constexpr T static_const<T>::value;
 #endif
-
-template<typename T, typename... Args>
-constexpr std::array<T, sizeof...(Args)> make_array(Args&& ... args)
-{
-    return std::array<T, sizeof...(Args)> {{static_cast<T>(std::forward<Args>(args))...}};
-}
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
@@ -7519,7 +7512,6 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-#include <algorithm> // generate_n
 #include <array> // array
 #include <cmath> // ldexp
 #include <cstddef> // size_t
@@ -15690,7 +15682,7 @@ class binary_reader
         {
             result.second = get();  // must not ignore 'N', because 'N' maybe the type
             if (input_format == input_format_t::bjdata
-                    && JSON_HEDLEY_UNLIKELY(std::binary_search(bjd_optimized_type_markers.begin(), bjd_optimized_type_markers.end(), result.second)))
+                    && JSON_HEDLEY_UNLIKELY(is_bjd_excluded_optimized_type(result.second)))
             {
                 auto last_token = get_token_string();
                 return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
@@ -15907,19 +15899,16 @@ class binary_reader
         if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
         {
             size_and_type.second &= ~(static_cast<char_int_type>(1) << 8);  // use bit 8 to indicate ndarray, here we remove the bit to restore the type marker
-            auto it = std::lower_bound(bjd_types_map.begin(), bjd_types_map.end(), size_and_type.second, [](const bjd_type & p, char_int_type t)
-            {
-                return p.first < t;
-            });
+            const char* type_name = bjd_type_name(size_and_type.second);
             string_t key = "_ArrayType_";
-            if (JSON_HEDLEY_UNLIKELY(it == bjd_types_map.end() || it->first != size_and_type.second))
+            if (JSON_HEDLEY_UNLIKELY(type_name == nullptr))
             {
                 auto last_token = get_token_string();
                 return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
                                         exception_message(input_format, "invalid byte: 0x" + last_token, "type"), nullptr));
             }
 
-            string_t type = it->second; // sax->string() takes a reference
+            string_t type = type_name; // sax->string() takes a reference
             if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->string(type)))
             {
                 return false;
@@ -17038,38 +17027,61 @@ class binary_reader
     /// BON8: number of bytes in @ref bon8_pushback
     std::size_t bon8_pushback_size = 0;
 
-    // excluded markers in bjdata optimized type
-#define JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_ \
-    make_array<char_int_type>('F', 'H', 'N', 'S', 'T', 'Z', '[', '{')
-
-#define JSON_BINARY_READER_MAKE_BJD_TYPES_MAP_ \
-    make_array<bjd_type>(                      \
-    bjd_type{'B', "byte"},                     \
-    bjd_type{'C', "char"},                     \
-    bjd_type{'D', "double"},                   \
-    bjd_type{'I', "int16"},                    \
-    bjd_type{'L', "int64"},                    \
-    bjd_type{'M', "uint64"},                   \
-    bjd_type{'U', "uint8"},                    \
-    bjd_type{'d', "single"},                   \
-    bjd_type{'i', "int8"},                     \
-    bjd_type{'l', "int32"},                    \
-    bjd_type{'m', "uint32"},                   \
-    bjd_type{'u', "uint16"})
-
   JSON_PRIVATE_UNLESS_TESTED:
-    // lookup tables
-    // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
-    const decltype(JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_) bjd_optimized_type_markers =
-        JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_;
+    /*!
+    @brief whether @a marker is excluded from BJData's optimized ND-array types
+    @return whether @a marker is one of 'F', 'H', 'N', 'S', 'T', 'Z', '[', '{'
 
-    using bjd_type = std::pair<char_int_type, string_t>;
-    // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
-    const decltype(JSON_BINARY_READER_MAKE_BJD_TYPES_MAP_) bjd_types_map =
-        JSON_BINARY_READER_MAKE_BJD_TYPES_MAP_;
+    Mirrors binary_writer's @ref binary_writer::is_bjdata_excluded_type_marker
+    "is_bjdata_excluded_type_marker()`, which encodes the same list the other
+    way; keep the two in sync.
+    */
+    static constexpr bool is_bjd_excluded_optimized_type(const char_int_type marker) noexcept
+    {
+        return marker == '[' || marker == '{' || marker == 'S' || marker == 'H'
+               || marker == 'T' || marker == 'F' || marker == 'N' || marker == 'Z';
+    }
 
-#undef JSON_BINARY_READER_MAKE_BJD_OPTIMIZED_TYPE_MARKERS_
-#undef JSON_BINARY_READER_MAKE_BJD_TYPES_MAP_
+    /*!
+    @brief look up the ND-array element type name for a BJData dtype marker
+    @return the type name ("uint8", "int8", ...), or nullptr if @a marker does
+            not name a known dtype
+
+    A C++11 `constexpr` function cannot contain a `switch`, so this is a
+    plain (non-constexpr) switch instead.
+    */
+    static const char* bjd_type_name(const char_int_type marker)
+    {
+        switch (marker)
+        {
+            case 'B':
+                return "byte";
+            case 'C':
+                return "char";
+            case 'D':
+                return "double";
+            case 'I':
+                return "int16";
+            case 'L':
+                return "int64";
+            case 'M':
+                return "uint64";
+            case 'U':
+                return "uint8";
+            case 'd':
+                return "single";
+            case 'i':
+                return "int8";
+            case 'l':
+                return "int32";
+            case 'm':
+                return "uint32";
+            case 'u':
+                return "uint16";
+            default:
+                return nullptr;
+        }
+    }
 };
 
 #ifndef JSON_HAS_CPP_17
@@ -21891,7 +21903,7 @@ class binary_writer
     Containers, strings, high-precision numbers, booleans and null cannot be
     declared as the single type of an optimized container in BJData; such a
     container is written unoptimized. The reader rejects them with the same
-    list (binary_reader::bjd_optimized_type_markers).
+    list (binary_reader::is_bjd_excluded_optimized_type()).
     */
     static constexpr bool is_bjdata_excluded_type_marker(const CharType marker) noexcept
     {
