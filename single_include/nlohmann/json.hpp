@@ -31162,25 +31162,26 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/update/
     void update(const_reference j, bool merge_objects = false)
     {
-        update(j.begin(), j.end(), merge_objects);
+        prepare_update();
+
+        // passed value must be an object (checked here so a type_error names
+        // j, not the copy made below)
+        if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
+        {
+            JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", j.type_name()), &j));
+        }
+
+        // copy first: j may be *this or one of its descendants, and is
+        // iterated (and moved from) below to update *this
+        basic_json source = j;
+        update_from(source, merge_objects);
     }
 
     /// @brief updates a JSON object from another object, overwriting existing keys
     /// @sa https://json.nlohmann.me/api/basic_json/update/
     void update(const_iterator first, const_iterator last, bool merge_objects = false) // NOLINT(performance-unnecessary-value-param)
     {
-        // implicitly convert a null value to an empty object
-        if (is_null())
-        {
-            m_data.m_type = value_t::object;
-            m_data.m_value.object = create<object_t>();
-            assert_invariant();
-        }
-
-        if (JSON_HEDLEY_UNLIKELY(!is_object()))
-        {
-            JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", type_name()), this));
-        }
+        prepare_update();
 
         // check if range iterators belong to the same JSON object
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
@@ -31194,7 +31195,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", first.m_object->type_name()), first.m_object));
         }
 
-        update_members(first, last, merge_objects, 0);
+        // copy first: the range may belong to *this or one of its
+        // descendants, and is iterated (and moved from) below to update
+        // *this
+        basic_json source(first, last);
+        update_from(source, merge_objects);
     }
 
   private:
@@ -31202,14 +31207,41 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// merge_patch_iteratively is merging into, and the members still to merge
     struct merge_frame
     {
-        merge_frame(basic_json* target_, const_iterator position_, const_iterator last_) noexcept
+        merge_frame(basic_json* target_, iterator position_, iterator last_) noexcept
             : target(target_), position(std::move(position_)), last(std::move(last_))
         {}
 
         basic_json* target;
-        const_iterator position;
-        const_iterator last;
+        iterator position;
+        iterator last;
     };
+
+    /// @brief converts a null value to an empty object and checks that this
+    /// value is an object; called first by both @ref update overloads
+    void prepare_update()
+    {
+        // implicitly convert a null value to an empty object; create the
+        // object before setting the type, so a throwing allocation leaves
+        // this value null
+        if (is_null())
+        {
+            m_data.m_value.object = create<object_t>();
+            m_data.m_type = value_t::object;
+            assert_invariant();
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(!is_object()))
+        {
+            JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", type_name()), this));
+        }
+    }
+
+    /// @brief starts the @ref update_members loop over an already-copied @a
+    /// source; called by both @ref update overloads
+    void update_from(basic_json& source, const bool merge_objects)
+    {
+        update_members(source.begin(), source.end(), merge_objects, 0);
+    }
 
     /*!
     @brief the members loop of @ref update, for this object and range
@@ -31223,7 +31255,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @param[in] depth  nesting level of this object, counted from the object
                       @ref update was called on
     */
-    void update_members(const const_iterator& first, const const_iterator& last, const bool merge_objects, const std::size_t depth)
+    void update_members(const iterator& first, const iterator& last, const bool merge_objects, const std::size_t depth)
     {
         if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
         {
@@ -31241,13 +31273,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 // are overwritten as usual" behavior (see #5402).
                 if (it2 != m_data.m_value.object->end() && it2->second.is_object())
                 {
-                    it2->second.update_members(it.value().cbegin(), it.value().cend(), true, depth + 1);
+                    it2->second.update_members(it.value().begin(), it.value().end(), true, depth + 1);
                     continue;
                 }
             }
             // set_parent() also repairs the other members, which ordered_json
             // relocates when adding a key makes its vector grow
-            set_parent(m_data.m_value.object->operator[](it.key()) = it.value());
+            set_parent(m_data.m_value.object->operator[](it.key()) = std::move(it.value()));
         }
     }
 
@@ -31261,7 +31293,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     version. Only reached for values nested deeper than @ref
     detail::recursion_depth_limit.
     */
-    void update_members_iteratively(const_iterator first, const_iterator last)
+    void update_members_iteratively(iterator first, iterator last)
     {
         std::vector<merge_frame> stack;
 
@@ -31288,18 +31320,18 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 const auto it2 = target->m_data.m_value.object->find(first.key());
                 if (it2 != target->m_data.m_value.object->end() && it2->second.is_object())
                 {
-                    const basic_json& source = first.value();
+                    basic_json& source = first.value();
                     ++first;
                     stack.emplace_back(target, first, last);
                     target = &it2->second;
-                    first = source.cbegin();
-                    last = source.cend();
+                    first = source.begin();
+                    last = source.end();
                     continue;
                 }
             }
             // set_parent() also repairs the other members, which ordered_json
             // relocates when adding a key makes its vector grow
-            target->set_parent(target->m_data.m_value.object->operator[](first.key()) = first.value());
+            target->set_parent(target->m_data.m_value.object->operator[](first.key()) = std::move(first.value()));
             ++first;
         }
     }
@@ -33308,7 +33340,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/merge_patch/
     void merge_patch(const basic_json& apply_patch)
     {
-        apply_merge_patch(apply_patch, 0);
+        // copy first: apply_patch may be *this or one of its descendants,
+        // and is iterated (and moved from) below to patch *this
+        basic_json patch = apply_patch;
+        apply_merge_patch(patch, 0);
     }
 
   private:
@@ -33321,7 +33356,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     detail::recursion_depth_limit levels have been entered, @ref
     merge_patch_iteratively applies what is left without the call stack.
     */
-    void apply_merge_patch(const basic_json& apply_patch, const std::size_t depth)
+    void apply_merge_patch(basic_json& apply_patch, const std::size_t depth)
     {
         if (apply_patch.is_object())
         {
@@ -33349,7 +33384,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
         else
         {
-            *this = apply_patch;
+            *this = std::move(apply_patch);
         }
     }
 
@@ -33362,12 +33397,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     recursive version. Only reached for patches nested deeper than @ref
     detail::recursion_depth_limit.
     */
-    void merge_patch_iteratively(const basic_json& apply_patch)
+    void merge_patch_iteratively(basic_json& apply_patch)
     {
         std::vector<merge_frame> stack;
 
         // patch `target` with `patch`, or start patching it member by member
-        const auto apply = [&stack](basic_json & target, const basic_json & patch)
+        const auto apply = [&stack](basic_json & target, basic_json & patch)
         {
             if (patch.is_object())
             {
@@ -33375,11 +33410,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 {
                     target = basic_json::object();
                 }
-                stack.emplace_back(&target, patch.cbegin(), patch.cend());
+                stack.emplace_back(&target, patch.begin(), patch.end());
             }
             else
             {
-                target = patch;
+                target = std::move(patch);
             }
         };
 
@@ -33395,7 +33430,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 continue;
             }
 
-            const const_iterator member = frame.position;
+            const iterator member = frame.position;
             ++stack.back().position;
             if (member.value().is_null())
             {
