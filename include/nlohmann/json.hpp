@@ -4218,6 +4218,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", first.m_object->type_name()), first.m_object));
         }
 
+        // the range must not be *this; a range inside *this is not detected
+        JSON_ASSERT(first.m_object != this);
+
         update_members(first, last, merge_objects, 0);
     }
 
@@ -6303,6 +6306,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/merge_patch/
     void merge_patch(const basic_json& apply_patch)
     {
+        // the patch must not be *this; a patch inside *this is not detected
+        JSON_ASSERT(&apply_patch != this);
+
         apply_merge_patch(apply_patch, 0);
     }
 

@@ -39,7 +39,7 @@ Linear in the lengths of `apply_patch`.
 
 ## Notes
 
-!!! danger "Undefined behavior"
+!!! danger "Undefined behavior and runtime assertions"
 
     `merge_patch()` reads `apply_patch` while it modifies `#!cpp *this`. `apply_patch` must not be `#!cpp *this`
     itself and must not refer to a value contained in `#!cpp *this` (for example, a subobject returned by
@@ -50,6 +50,9 @@ Linear in the lengths of `apply_patch`.
     ```cpp
     j.merge_patch(json(j));  // instead of j.merge_patch(j)
     ```
+
+    Passing `#!cpp *this` itself is **guarded by a [runtime assertion](../../features/assertions.md)**; a value
+    contained in `#!cpp *this` is not detected.
 
     See [GitHub issue #5641](https://github.com/nlohmann/json/issues/5641) for more information.
 

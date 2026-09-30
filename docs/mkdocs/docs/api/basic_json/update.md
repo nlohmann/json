@@ -61,7 +61,7 @@ Basic guarantee: if an exception is thrown during the operation, the JSON value 
 
 ## Notes
 
-!!! danger "Undefined behavior"
+!!! danger "Undefined behavior and runtime assertions"
 
     Both overloads read the argument while they modify `#!cpp *this`. The argument `j` (or, for overload (2), the
     range `[first, last)`) must not be `#!cpp *this` itself and must not refer to a value contained in
@@ -72,6 +72,9 @@ Basic guarantee: if an exception is thrown during the operation, the JSON value 
     ```cpp
     j.update(json(j["defaults"]));  // instead of j.update(j["defaults"])
     ```
+
+    Passing `#!cpp *this` itself is **guarded by a [runtime assertion](../../features/assertions.md)**; a value
+    contained in `#!cpp *this` is not detected.
 
     See [GitHub issue #5641](https://github.com/nlohmann/json/issues/5641) for more information.
 

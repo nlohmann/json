@@ -41,6 +41,33 @@ TEST_CASE("JSON_ASSERT(x)")
         // check that assertion actually happened
         CHECK(assert_counter == 1);
     }
+
+    SECTION("update() and merge_patch() with *this")
+    {
+        // update() and merge_patch() must not be called with *this (#5641);
+        // the values are chosen so the calls still happen to work without
+        // aborting, and only the assertion counter is checked
+        json j = {{"a", 1}};
+
+        assert_counter = 0;
+        j.update(j);
+        CHECK(assert_counter == 1);
+
+        assert_counter = 0;
+        j.update(j.cbegin(), j.cend());
+        CHECK(assert_counter == 1);
+
+        assert_counter = 0;
+        j.merge_patch(j);
+        CHECK(assert_counter == 1);
+
+        // a copy is fine
+        assert_counter = 0;
+        j.update(json(j));
+        j.merge_patch(json(j));
+        CHECK(assert_counter == 0);
+        CHECK(j == json({{"a", 1}}));
+    }
 }
 #endif
 
