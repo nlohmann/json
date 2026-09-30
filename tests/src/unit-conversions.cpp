@@ -430,6 +430,37 @@ TEST_CASE("value conversion")
             CHECK(std::equal(std::begin(nbs[0][0][0]), std::end(nbs[1][1][1]), std::begin(nbs2[0][0][0])));
         }
 
+        SECTION("built-in arrays: 5D")
+        {
+            // NOLINTBEGIN(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            const int nbs[1][1][1][2][2] = {{{{{0, 1}, {2, 3}}}}};
+            int nbs2[1][1][1][2][2] = {{{{{0, 0}, {0, 0}}}}};
+            // NOLINTEND(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+
+            const json j2 = nbs;
+            j2.get_to(nbs2);
+            CHECK(std::equal(std::begin(nbs[0][0][0][0]), std::end(nbs[0][0][0][1]), std::begin(nbs2[0][0][0][0])));
+        }
+
+        SECTION("built-in arrays: mismatched shape")
+        {
+            // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            int nbs2[2][3] = {{0, 0, 0}, {0, 0, 0}};
+            // NOLINTEND(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+
+            SECTION("not an array")
+            {
+                const json j2 = 42;
+                CHECK_THROWS_WITH_AS(j2.get_to(nbs2), "[json.exception.type_error.304] cannot use at() with number", json::type_error&);
+            }
+
+            SECTION("too few elements")
+            {
+                const json j2 = {{0, 1, 2}};
+                CHECK_THROWS_WITH_AS(j2.get_to(nbs2), "[json.exception.out_of_range.401] array index 1 is out of range", json::out_of_range&);
+            }
+        }
+
         SECTION("std::deque<json>")
         {
             std::deque<json> a{"previous", "value"};
