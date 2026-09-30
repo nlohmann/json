@@ -17,6 +17,8 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <map>
+#include <unordered_map>
 #include <sstream>
 
 TEST_CASE("Better diagnostics")
@@ -101,6 +103,12 @@ TEST_CASE("Regression tests for extended diagnostics")
         json j;
         j["/foo"] = {1, 2, 3};
         CHECK_THROWS_WITH_AS(j.unflatten(), "[json.exception.type_error.315] (/~1foo) values in object must be primitive", json::type_error);
+    }
+
+    SECTION("Regression test for issue #5675 - to_bson: out_of_range.415 has no diagnostics context")
+    {
+        json const j = {{"a", {{"b", json::binary({1, 2}, 300)}}}};
+        CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.out_of_range.415] (/a/b) subtype 300 is too large for the BSON binary subtype (max 255)", json::out_of_range);
     }
 
     SECTION("Regression test for issue #2838 - Assertion failure when inserting into arrays with JSON_DIAGNOSTICS set")
@@ -330,6 +338,28 @@ TEST_CASE("Regression tests for extended diagnostics")
             int i = 0;
             CHECK_THROWS_WITH_AS(i = inner->get<int>(), expected.c_str(), json::type_error);
             CHECK(i == 0);
+        }
+    }
+
+    SECTION("Regression test for issue #5668 - wrong path for std::map/unordered_map with non-string keys")
+    {
+        // a map with non-string keys is read from an array of [key, value] arrays;
+        // element 2 of "m" is not an array, so the path must point at "m/2", not "m"
+        json j;
+        j["outer"]["m"] = json::array({json::array({1, 2}), json::array({3, 4}), 5});
+
+        SECTION("std::map")
+        {
+            CHECK_THROWS_WITH_AS((j["outer"]["m"].get<std::map<int, int>>()),
+                                 "[json.exception.type_error.302] (/outer/m/2) type must be array, "
+                                 "but is number", json::type_error);
+        }
+
+        SECTION("std::unordered_map")
+        {
+            CHECK_THROWS_WITH_AS((j["outer"]["m"].get<std::unordered_map<int, int>>()),
+                                 "[json.exception.type_error.302] (/outer/m/2) type must be array, "
+                                 "but is number", json::type_error);
         }
     }
 

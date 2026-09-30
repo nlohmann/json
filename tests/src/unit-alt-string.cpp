@@ -174,6 +174,15 @@ bool operator<(const char* op1, const alt_string& op2) noexcept
     return op1 < op2.str_impl;
 }
 
+enum class alt_color { red, green };
+
+// NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(alt_color,
+{
+    {alt_color::red, "red"},
+    {alt_color::green, "green"},
+})
+
 TEST_CASE("alternative string type")
 {
     SECTION("binary formats")
@@ -373,5 +382,20 @@ TEST_CASE("alternative string type")
         const alt_json j = alt_json::parse(R"({"foo": ["bar", "baz"]})");
         const auto j2 = j.flatten();
         CHECK(j2.dump() == R"({"/foo/0":"bar","/foo/1":"baz"})");
+    }
+
+    SECTION("strict enum")
+    {
+        // regression test for #5667: NLOHMANN_JSON_SERIALIZE_ENUM_STRICT's from_json
+        // built its exception message with "..." + j.dump(), which does not compile
+        // when j.dump() returns a custom string_t (here alt_string) instead of
+        // std::string
+        alt_json doc;
+        doc = "red";
+        CHECK(doc.get<alt_color>() == alt_color::red);
+
+        alt_json _;
+        doc = "blue";
+        CHECK_THROWS_WITH_AS(_ = doc.get<alt_color>(), "[json.exception.out_of_range.410] enum value out of range for alt_color: \"blue\"", alt_json::out_of_range&);
     }
 }
