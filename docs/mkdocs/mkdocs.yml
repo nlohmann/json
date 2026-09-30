@@ -287,12 +287,14 @@ nav:
           - 'JSON_DIAGNOSTICS': api/macros/json_diagnostics.md
           - 'JSON_DIAGNOSTIC_POSITIONS': api/macros/json_diagnostic_positions.md
           - 'JSON_DISABLE_ENUM_SERIALIZATION': api/macros/json_disable_enum_serialization.md
+          - 'JSON_DISABLE_TUPLE_REFERENCE_CONVERSION': api/macros/json_disable_tuple_reference_conversion.md
           - 'JSON_HAS_CPP_11, JSON_HAS_CPP_14, JSON_HAS_CPP_17, JSON_HAS_CPP_20': api/macros/json_has_cpp_11.md
           - 'JSON_HAS_EXPERIMENTAL_FILESYSTEM, JSON_HAS_FILESYSTEM': api/macros/json_has_filesystem.md
           - 'JSON_HAS_RANGES': api/macros/json_has_ranges.md
           - 'JSON_HAS_STATIC_RTTI': api/macros/json_has_static_rtti.md
           - 'JSON_HAS_STD_FORMAT': api/macros/json_has_std_format.md
           - 'JSON_HAS_THREE_WAY_COMPARISON': api/macros/json_has_three_way_comparison.md
+          - 'JSON_NO_AUTOMATIC_UDLS': api/macros/json_no_automatic_udls.md
           - 'JSON_NOEXCEPTION': api/macros/json_noexception.md
           - 'JSON_NO_IO': api/macros/json_no_io.md
           - 'JSON_NO_THREAD_LOCAL': api/macros/json_no_thread_local.md

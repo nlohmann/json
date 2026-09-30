@@ -57,6 +57,11 @@ Python v.2.7.0 or higher is required.
    amalgamation. Have a look at `test/source.c.json` and `test/include.h.json`
    to see two examples.
 
+   The optional `external` list names include paths that are kept as `#include`
+   directives instead of being inlined, e.g. `["nlohmann/json.hpp"]` for a header
+   that includes another amalgamated header. Only the first directive for each
+   of these paths is kept; the repeated ones are commented out.
+
  * The `-s, --source` option should specify the path to the source directory.
    This is useful for supporting separate source and build directories.
 
