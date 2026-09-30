@@ -17,6 +17,10 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <map>
+#include <unordered_map>
+#include <sstream>
+
 TEST_CASE("Better diagnostics")
 {
     SECTION("empty JSON Pointer")
@@ -99,6 +103,12 @@ TEST_CASE("Regression tests for extended diagnostics")
         json j;
         j["/foo"] = {1, 2, 3};
         CHECK_THROWS_WITH_AS(j.unflatten(), "[json.exception.type_error.315] (/~1foo) values in object must be primitive", json::type_error);
+    }
+
+    SECTION("Regression test for issue #5675 - to_bson: out_of_range.415 has no diagnostics context")
+    {
+        json const j = {{"a", {{"b", json::binary({1, 2}, 300)}}}};
+        CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.out_of_range.415] (/a/b) subtype 300 is too large for the BSON binary subtype (max 255)", json::out_of_range);
     }
 
     SECTION("Regression test for issue #2838 - Assertion failure when inserting into arrays with JSON_DIAGNOSTICS set")
@@ -331,6 +341,28 @@ TEST_CASE("Regression tests for extended diagnostics")
         }
     }
 
+    SECTION("Regression test for issue #5668 - wrong path for std::map/unordered_map with non-string keys")
+    {
+        // a map with non-string keys is read from an array of [key, value] arrays;
+        // element 2 of "m" is not an array, so the path must point at "m/2", not "m"
+        json j;
+        j["outer"]["m"] = json::array({json::array({1, 2}), json::array({3, 4}), 5});
+
+        SECTION("std::map")
+        {
+            CHECK_THROWS_WITH_AS((j["outer"]["m"].get<std::map<int, int>>()),
+                                 "[json.exception.type_error.302] (/outer/m/2) type must be array, "
+                                 "but is number", json::type_error);
+        }
+
+        SECTION("std::unordered_map")
+        {
+            CHECK_THROWS_WITH_AS((j["outer"]["m"].get<std::unordered_map<int, int>>()),
+                                 "[json.exception.type_error.302] (/outer/m/2) type must be array, "
+                                 "but is number", json::type_error);
+        }
+    }
+
     SECTION("Regression test - swap(array_t&)/swap(object_t&) must update JSON_DIAGNOSTICS parent pointers")
     {
         // swap(array_t&)
@@ -460,6 +492,21 @@ TEST_CASE("Regression tests for extended diagnostics")
             ordered_json const copy = j;
             CHECK(copy == j);
         }
+    }
+
+    SECTION("Regression test for issue #5652 - operator>> leaves a partial value in its target on a parse error")
+    {
+        json j = "old value";
+        std::istringstream is("[1, x");
+        CHECK_THROWS_WITH_AS(is >> j, "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid literal; last read: '1, x'", json::parse_error);
+
+        // j must be left unchanged, as json::parse() guarantees for its result
+        CHECK(j == "old value");
+
+        // copying j must not trigger assert_invariant(): a failed parse must
+        // not leave array/object elements without a parent pointer
+        json const copy = j; // NOLINT(performance-unnecessary-copy-initialization)
+        CHECK(copy == j);
     }
 }
 

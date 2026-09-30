@@ -175,6 +175,15 @@ bool operator<(const char* op1, const alt_string& op2) noexcept
     return op1 < op2.str_impl;
 }
 
+enum class alt_color { red, green };
+
+// NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(alt_color,
+{
+    {alt_color::red, "red"},
+    {alt_color::green, "green"},
+})
+
 TEST_CASE("alternative string type")
 {
     SECTION("binary formats")
@@ -344,6 +353,41 @@ TEST_CASE("alternative string type")
         CHECK(j2.flatten().unflatten() == j2);
     }
 
+    SECTION("contains(json_pointer)")
+    {
+        // contains(json_pointer) must compile and work with a string_t that has
+        // no c_str() and no comparison with const char* (see #5666)
+        auto j = alt_json::parse(R"({"foo": ["bar", "baz"]})");
+
+        // present: object key and array indices
+        CHECK(j.contains(alt_json::json_pointer("/foo")));
+        CHECK(j.contains(alt_json::json_pointer("/foo/0")));
+        CHECK(j.contains(alt_json::json_pointer("/foo/1")));
+
+        // missing: absent object key and out-of-range array index
+        CHECK_FALSE(j.contains(alt_json::json_pointer("/bar")));
+        CHECK_FALSE(j.contains(alt_json::json_pointer("/foo/2")));
+
+        // "-" always fails the range check
+        CHECK_FALSE(j.contains(alt_json::json_pointer("/foo/-")));
+
+        // an array index must not have a leading zero
+        CHECK_FALSE(j.contains(alt_json::json_pointer("/foo/01")));
+
+        // a reference token that is not a number
+        CHECK_FALSE(j.contains(alt_json::json_pointer("/foo/bar")));
+    }
+
+    SECTION("operator/(std::size_t)")
+    {
+        // json_pointer::operator/=(std::size_t) must compile without string_t
+        // being constructible from std::string (see #5666)
+        auto j = alt_json::parse(R"({"foo": ["bar", "baz"]})");
+
+        CHECK(j.at(alt_json::json_pointer("/foo") / std::size_t(0)) == j["foo"][0]);
+        CHECK(j.at(alt_json::json_pointer("/foo") / std::size_t(1)) == j["foo"][1]);
+    }
+
     SECTION("patch")
     {
         alt_json const patch1 = alt_json::parse(R"([{ "op": "add", "path": "/a/b", "value": [ "foo", "bar" ] }])");
@@ -409,5 +453,20 @@ TEST_CASE("alternative string type")
         alt_json a;
         nlohmann::json(42).get_to(a);
         CHECK(a == 42);
+    }
+
+    SECTION("strict enum")
+    {
+        // regression test for #5667: NLOHMANN_JSON_SERIALIZE_ENUM_STRICT's from_json
+        // built its exception message with "..." + j.dump(), which does not compile
+        // when j.dump() returns a custom string_t (here alt_string) instead of
+        // std::string
+        alt_json doc;
+        doc = "red";
+        CHECK(doc.get<alt_color>() == alt_color::red);
+
+        alt_json _;
+        doc = "blue";
+        CHECK_THROWS_WITH_AS(_ = doc.get<alt_color>(), "[json.exception.out_of_range.410] enum value out of range for alt_color: \"blue\"", alt_json::out_of_range&);
     }
 }

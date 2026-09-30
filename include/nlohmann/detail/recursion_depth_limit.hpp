@@ -19,10 +19,16 @@ namespace detail
 /*!
 @brief the number of nesting levels an operation recurses into
 
-Operations that walk a value (serializing, hashing, merging, ...) recurse once
+Operations that walk a value (copying, comparing, serializing, hashing, merging,
+...) recurse once
 per nesting level, which is fastest, but a value nested deeply enough would
 exhaust the call stack. So they recurse only this many levels deep and finish
 whatever lies below with an explicit stack. All of them share this limit.
+
+Most of them pass the depth down as an argument. The copy constructor and the
+comparison operators cannot, as their signatures are fixed, so they count it
+in basic_json::nesting_depth() instead, a byte per thread; the limit must
+therefore stay below 255.
 
 @sa https://github.com/nlohmann/json/issues/5387
 */
