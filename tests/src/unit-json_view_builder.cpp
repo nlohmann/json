@@ -14,6 +14,7 @@ using nlohmann::json;
 
 #include <cstdint>
 #include <fstream>
+#include <map>
 #include <memory>
 #include <random>
 #include <sstream>
@@ -227,6 +228,48 @@ TEST_CASE("json_view builder")
                 })
         {
             check_same(text);
+        }
+
+        // the midpoint between the largest double and 2^1024 rounds to
+        // infinity (an overflow), one less to the largest double: with more
+        // than 19 digits, Eisel-Lemire cannot decide these, and the overflow
+        // check needs the exact comparison with the midpoint
+        const std::string midpoint = "179769313486231580793728971405303415079934132710037826936173778980444968292764750946649017977587207096330286416692887910946555547851940402630657488671505820681908902000708383676273854845817711531764475730270069855571366959622842914819860834936475292719074168444365510704342711559699508093042880177904174497792";
+        const std::string below = "179769313486231580793728971405303415079934132710037826936173778980444968292764750946649017977587207096330286416692887910946555547851940402630657488671505820681908902000708383676273854845817711531764475730270069855571366959622842914819860834936475292719074168444365510704342711559699508093042880177904174497791";
+        check_same(midpoint);
+        check_same("-" + midpoint);
+        check_same(below);
+        check_same("[" + below + "," + midpoint + "]");
+
+        // the check uses the floating-point type of the document: with float,
+        // the view rejects what parse() rejects (out_of_range.406), and a
+        // double document is not affected
+        using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+        CHECK_FALSE(float_json::accept("1e39"));
+        CHECK(float_json::accept("3.4028235e38"));
+        CHECK_FALSE(float_json::accept("3.4028236e38"));
+        for (const char* text :
+                {
+                    "1e39", "-1e39", "3.4028235e38", "-3.4028235e38", "3.4028236e38", "-3.4028236e38", "3.4028234663852886e38", "1e38",
+                    "340282356779733661637539395458142568448", "340282356779733661637539395458142568447.99", "0.00034028236e42",
+                    "[1.5e38, 3.5e38]", "{\"a\": 1e-50, \"b\": 1e39}"
+                })
+        {
+            CAPTURE(text);
+            const bool float_accepted = float_json::accept(text);
+            for (const bool sentinel :
+                    {
+                        true, false
+                    })
+            {
+                const built f = build<float>(text, false, false, sentinel);
+                CHECK(f.ok == float_accepted);
+                if (!f.ok)
+                {
+                    CHECK(f.failure.code == nlohmann::detail::view::error_code::number_overflow);
+                }
+                CHECK(build<double>(text, false, false, sentinel).ok == json::accept(text));
+            }
         }
     }
 
