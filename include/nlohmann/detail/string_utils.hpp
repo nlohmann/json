@@ -51,11 +51,23 @@ This is a single-byte step of a "shift-based" UTF-8 decoder originally
 written by Björn Hoehrmann. See
 http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
 
-This decoder is the single source of truth for UTF-8 validation in this
-library: it is used both by the serializer (to escape and, in strict mode,
-reject ill-formed UTF-8 when dumping a string) and by the binary readers
-(to reject ill-formed UTF-8 in CBOR/MessagePack/BSON/UBJSON text strings at
-decode time; see @ref is_valid_utf8 below).
+The library checks UTF-8 well-formedness (RFC 3629, section 4) in four
+places, which differ in speed, diagnostics, and how they read the input:
+
+- decode() and @ref is_valid_utf8 below: the serializer (to escape and, in
+  strict mode, reject ill-formed UTF-8 when dumping a string) and the CBOR,
+  MessagePack, BSON, UBJSON and BJData readers (to reject ill-formed UTF-8 in
+  text strings at decode time).
+- the per-lead-byte switch in lexer::scan_string(): JSON text, with a
+  diagnostic for each kind of error.
+- validate_one_utf8() and valid_utf8_prefix() in string_scan.hpp: the lexer's
+  bulk string scan, the bulk path of the BON8 reader, and the BON8 writer.
+  They must accept exactly what the lexer's switch accepts.
+- the byte path of binary_reader::get_bon8_string(): BON8 input without bulk
+  access, and the bytes the bulk path leaves to it.
+
+All four must accept the same set of sequences, so a change to one needs a
+matching change to the others.
 
 @param[in,out] state  the current decoder state
 @param[in,out] codep  codepoint (valid only if resulting state is UTF8_ACCEPT)
