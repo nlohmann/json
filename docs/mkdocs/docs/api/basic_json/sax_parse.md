@@ -18,16 +18,32 @@ static bool sax_parse(IteratorType first, SentinelType last,
                       const bool strict = true,
                       const bool ignore_comments = false,
                       const bool ignore_trailing_commas = false);
+
+// (3)
+template <typename InputType, typename SAX>
+static bool sax_parse(InputType&& i, SAX* sax,
+                      input_format_t format, const bool strict,
+                      const bool ignore_comments, const bool ignore_trailing_commas,
+                      const cbor_tag_handler_t tag_handler);
+
+// (4)
+template<class IteratorType, class SAX, class SentinelType = IteratorType>
+static bool sax_parse(IteratorType first, SentinelType last, SAX* sax,
+                      input_format_t format, const bool strict,
+                      const bool ignore_comments, const bool ignore_trailing_commas,
+                      const cbor_tag_handler_t tag_handler);
 ```
 
 Read from input and generate SAX events
 
 1. Read from a compatible input.
-2. Read from a pair of character iterators, or an iterator and a sentinel of a different type (C++20 ranges support)
+2. Read from a pair of character iterators, or an iterator and a sentinel of a different type (C++20 ranges support).
     
     The value_type of the iterator must be an integral type with a size of 1, 2, or 4 bytes, which will be interpreted
     respectively as UTF-8, UTF-16, and UTF-32. If `SentinelType` differs from `IteratorType`, it must be comparable to
     the iterator type with `operator!=`.
+3. Like (1), with explicit handling for CBOR tags.
+4. Like (2), with explicit handling for CBOR tags.
 
 The SAX event lister must follow the interface of [`json_sax`](../json_sax/index.md).
 
@@ -81,6 +97,10 @@ The SAX event lister must follow the interface of [`json_sax`](../json_sax/index
 `ignore_trailing_commas` (in)
 :   whether trailing commas in arrays or objects should be ignored and treated like whitespace (`#!cpp true`) or yield a parse error
     (`#!cpp false`); (optional, `#!cpp false` by default)
+
+`tag_handler` (in)
+:   how to handle CBOR tags; see [`cbor_tag_handler_t`](cbor_tag_handler_t.md). Required for overloads (3) and (4),
+    and ignored for formats other than CBOR. Overloads (1) and (2) use `cbor_tag_handler_t::error`.
 
 `first` (in)
 :   iterator to the start of a character range
