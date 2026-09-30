@@ -1405,7 +1405,7 @@ The library is compliant to version 3.3 of the [**REUSE specification**](https:/
 
 - Every source file contains an SPDX copyright header.
 - The full text of all licenses used in the repository can be found in the `LICENSES` folder.
-- File `.reuse/dep5` contains an overview of all files' copyrights and licenses.
+- File `REUSE.toml` contains an overview of all files' copyrights and licenses.
 - Run `pipx run reuse lint` to verify the project's REUSE compliance and `pipx run reuse spdx` to generate a SPDX SBOM.
 
 ## Contact
