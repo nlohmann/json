@@ -2741,6 +2741,26 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return (*j.m_data.m_value.array)[idx];
     }
 
+    /// @brief convert a null value to an empty container of type @a t (array or object)
+    void convert_null_to(value_t t)
+    {
+        JSON_ASSERT(is_null());
+        JSON_ASSERT(t == value_t::array || t == value_t::object);
+        // create the container before touching the type, so a throwing
+        // allocation leaves this value as a valid null rather than a type
+        // tag with a dangling/null pointer behind it
+        if (t == value_t::array)
+        {
+            m_data.m_value.array = create<array_t>();
+        }
+        else
+        {
+            m_data.m_value.object = create<object_t>();
+        }
+        m_data.m_type = t;
+        assert_invariant();
+    }
+
   public:
     ////////////////////
     // element access //
@@ -2803,9 +2823,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // implicitly convert a null value to an empty array
         if (is_null())
         {
-            m_data.m_type = value_t::array;
-            m_data.m_value.array = create<array_t>();
-            assert_invariant();
+            convert_null_to(value_t::array);
         }
 
         // operator[] only works for arrays
@@ -2863,9 +2881,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // implicitly convert a null value to an empty object
         if (is_null())
         {
-            m_data.m_type = value_t::object;
-            m_data.m_value.object = create<object_t>();
-            assert_invariant();
+            convert_null_to(value_t::object);
         }
 
         // operator[] only works for objects
@@ -2916,9 +2932,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // implicitly convert a null value to an empty object
         if (is_null())
         {
-            m_data.m_type = value_t::object;
-            m_data.m_value.object = create<object_t>();
-            assert_invariant();
+            convert_null_to(value_t::object);
         }
 
         // operator[] only works for objects
@@ -3790,9 +3804,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // transform a null object into an array
         if (is_null())
         {
-            m_data.m_type = value_t::array;
-            m_data.m_value = value_t::array;
-            assert_invariant();
+            convert_null_to(value_t::array);
         }
 
         // add the element to the array (move semantics)
@@ -3823,9 +3835,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // transform a null object into an array
         if (is_null())
         {
-            m_data.m_type = value_t::array;
-            m_data.m_value = value_t::array;
-            assert_invariant();
+            convert_null_to(value_t::array);
         }
 
         // add the element to the array
@@ -3855,9 +3865,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // transform a null object into an object
         if (is_null())
         {
-            m_data.m_type = value_t::object;
-            m_data.m_value = value_t::object;
-            assert_invariant();
+            convert_null_to(value_t::object);
         }
 
         // add the element to the object
@@ -3911,9 +3919,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // transform a null object into an array
         if (is_null())
         {
-            m_data.m_type = value_t::array;
-            m_data.m_value = value_t::array;
-            assert_invariant();
+            convert_null_to(value_t::array);
         }
 
         // add the element to the array (perfect forwarding)
@@ -3936,9 +3942,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // transform a null object into an object
         if (is_null())
         {
-            m_data.m_type = value_t::object;
-            m_data.m_value = value_t::object;
-            assert_invariant();
+            convert_null_to(value_t::object);
         }
 
         // add the element to the array (perfect forwarding)
@@ -4133,9 +4137,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // implicitly convert a null value to an empty object
         if (is_null())
         {
-            m_data.m_type = value_t::object;
-            m_data.m_value.object = create<object_t>();
-            assert_invariant();
+            convert_null_to(value_t::object);
         }
 
         if (JSON_HEDLEY_UNLIKELY(!is_object()))
