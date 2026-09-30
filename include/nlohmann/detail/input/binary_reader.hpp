@@ -2669,6 +2669,42 @@ class binary_reader
     }
 
     /*!
+    @brief read a UBJSON/BJData optimized-container count of a signed marker
+           type ('i', 'I', 'l', 'L') and narrow it to std::size_t
+
+    Every signed count marker rejects a negative value the same way (error
+    113); the value_in_range_of check additionally needed for 'L' is only
+    ever live when @a SignedType is std::int64_t on a target where
+    std::size_t is narrower (e.g. 32-bit), since 'i'/'I'/'l' can never exceed
+    std::size_t there.
+
+    @tparam SignedType  std::int8_t, std::int16_t, std::int32_t or std::int64_t
+    @param[out] result  the count narrowed to std::size_t
+    @return whether reading and validating succeeded
+    */
+    template<typename SignedType>
+    bool get_ubjson_signed_count(std::size_t& result)
+    {
+        SignedType number{};
+        if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
+        {
+            return false;
+        }
+        if (JSON_HEDLEY_UNLIKELY(number < 0))
+        {
+            return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
+                                    exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
+        }
+        if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::size_t>(number)))
+        {
+            return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
+                                    exception_message(input_format, "integer value overflow", "size"), nullptr));
+        }
+        result = static_cast<std::size_t>(number); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): number is not a char
+        return true;
+    }
+
+    /*!
     @param[out] result  determined size
     @param[in,out] is_ndarray  for input, `true` means already inside an ndarray vector
                                or ndarray dimension is not allowed; `false` means ndarray
@@ -2700,73 +2736,16 @@ class binary_reader
             }
 
             case 'i':
-            {
-                std::int8_t number{};
-                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
-                {
-                    return false;
-                }
-                if (number < 0)
-                {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                            exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
-                }
-                result = static_cast<std::size_t>(number); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): number is not a char
-                return true;
-            }
+                return get_ubjson_signed_count<std::int8_t>(result);
 
             case 'I':
-            {
-                std::int16_t number{};
-                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
-                {
-                    return false;
-                }
-                if (number < 0)
-                {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                            exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
-                }
-                result = static_cast<std::size_t>(number);
-                return true;
-            }
+                return get_ubjson_signed_count<std::int16_t>(result);
 
             case 'l':
-            {
-                std::int32_t number{};
-                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
-                {
-                    return false;
-                }
-                if (number < 0)
-                {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                            exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
-                }
-                result = static_cast<std::size_t>(number);
-                return true;
-            }
+                return get_ubjson_signed_count<std::int32_t>(result);
 
             case 'L':
-            {
-                std::int64_t number{};
-                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
-                {
-                    return false;
-                }
-                if (number < 0)
-                {
-                    return sax->parse_error(chars_read, get_token_string(), parse_error::create(113, chars_read,
-                                            exception_message(input_format, "count in an optimized container must be positive", "size"), nullptr));
-                }
-                if (!value_in_range_of<std::size_t>(number))
-                {
-                    return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408,
-                                            exception_message(input_format, "integer value overflow", "size"), nullptr));
-                }
-                result = static_cast<std::size_t>(number);
-                return true;
-            }
+                return get_ubjson_signed_count<std::int64_t>(result);
 
             case 'u':
             {
@@ -2857,16 +2836,23 @@ class binary_reader
                     result = 1;
                     for (auto i : dim)
                     {
-                        // Pre-multiplication overflow check: if i > 0 and result > SIZE_MAX/i, then result*i would overflow.
-                        // This check must happen before multiplication since overflow detection after the fact is unreliable
-                        // as modular arithmetic can produce any value, not just 0 or SIZE_MAX.
-                        if (JSON_HEDLEY_UNLIKELY(i > 0 && result > (std::numeric_limits<std::size_t>::max)() / i))
+                        // Pre-multiplication overflow check: since the loop above
+                        // already rejected any zero dimension, i is always > 0
+                        // here, so result > SIZE_MAX/i means result*i would
+                        // overflow. This check must happen before multiplication
+                        // since overflow detection after the fact is unreliable,
+                        // as modular arithmetic can produce any value, not just 0
+                        // or SIZE_MAX.
+                        if (JSON_HEDLEY_UNLIKELY(result > (std::numeric_limits<std::size_t>::max)() / i))
                         {
                             return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
                         }
                         result *= i;
-                        // Additional post-multiplication check to catch any edge cases the pre-check might miss
-                        if (result == 0 || result == npos)
+                        // the pre-check above already rules out result becoming 0
+                        // by overflow; the only value it cannot rule out is an
+                        // exact match with npos, the sentinel reserved for an
+                        // unknown-size container (see get_ubjson_size_type())
+                        if (result == npos)
                         {
                             return sax->parse_error(chars_read, get_token_string(), out_of_range::create(408, exception_message(input_format, "excessive ndarray size caused overflow", "size"), nullptr));
                         }
