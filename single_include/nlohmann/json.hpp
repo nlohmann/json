@@ -31346,6 +31346,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/update/
     void update(const_reference j, bool merge_objects = false)
     {
+        prepare_update();
+
         // passed value must be an object (checked here so a type_error names
         // j, not the copy made below)
         if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
@@ -31363,6 +31365,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/update/
     void update(const_iterator first, const_iterator last, bool merge_objects = false) // NOLINT(performance-unnecessary-value-param)
     {
+        prepare_update();
+
         // check if range iterators belong to the same JSON object
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
         {
@@ -31396,9 +31400,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         iterator last;
     };
 
-    /// @brief starts the @ref update_members loop over an already-copied @a
-    /// source; called by both @ref update overloads
-    void update_from(basic_json& source, const bool merge_objects)
+    /// @brief converts a null value to an empty object and checks that this
+    /// value is an object; called first by both @ref update overloads
+    void prepare_update()
     {
         // implicitly convert a null value to an empty object
         if (is_null())
@@ -31412,7 +31416,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         {
             JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", type_name()), this));
         }
+    }
 
+    /// @brief starts the @ref update_members loop over an already-copied @a
+    /// source; called by both @ref update overloads
+    void update_from(basic_json& source, const bool merge_objects)
+    {
         update_members(source.begin(), source.end(), merge_objects, 0);
     }
 

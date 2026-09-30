@@ -1119,6 +1119,17 @@ TEST_CASE("update() on deeply nested values")
 
 TEST_CASE("update() with an argument that aliases *this (#5641)")
 {
+    SECTION("the target is checked before the argument, as before the copy")
+    {
+        json j = 1;
+        CHECK_THROWS_WITH_AS(j.update(json::array()), "[json.exception.type_error.312] cannot use update() with number", json::type_error&);
+        CHECK_THROWS_WITH_AS(j.update(j.cbegin(), j.cend()), "[json.exception.type_error.312] cannot use update() with number", json::type_error&);
+
+        json k;
+        CHECK_THROWS_WITH_AS(k.update(json::array()), "[json.exception.type_error.312] cannot use update() with array", json::type_error&);
+        CHECK(k == json::object());
+    }
+
     SECTION("const reference")
     {
         SECTION("j.update(j[\"a\"]): assigning into the argument's parent destroys it mid-iteration")
