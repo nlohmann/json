@@ -28045,6 +28045,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // provides the latter (e.g., ones without a matching allocator-aware
         // fill constructor)
         dst.m_data.m_value.array = create<array_t>();
+        // only now that the array exists may dst stop being a null value
+        dst.m_data.m_type = value_t::array;
         dst.m_data.m_value.array->resize(src_array.size());
 
         auto dst_it = dst.m_data.m_value.array->begin();
@@ -28073,6 +28075,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         dst.m_data.m_value.object = create<object_t>(std::make_move_iterator(scratch.begin()),
                                     std::make_move_iterator(scratch.end()));
+        // only now that the object exists may dst stop being a null value
+        dst.m_data.m_type = value_t::object;
         scratch.clear();
 
         // pair every value of the copy with its counterpart in the original;
@@ -28135,9 +28139,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             src_value = next.first;
             dst_value = next.second;
             worklist.pop_back();
-
-            // the value stops being a null value exactly here
-            dst_value->m_data.m_type = src_value->m_data.m_type;
         }
     }
 
