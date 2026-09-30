@@ -1395,6 +1395,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 - The class contains a slightly modified version of the Grisu2 algorithm from Florian Loitsch which is licensed under the [MIT License](https://opensource.org/licenses/MIT) (see above). Copyright &copy; 2009 [Florian Loitsch](https://florian.loitsch.com/)
 - The class contains a copy of [Hedley](https://nemequ.github.io/hedley/) from Evan Nemerson which is licensed as [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/).
 - The class contains parts of [Google Abseil](https://github.com/abseil/abseil-cpp) which is licensed under the [Apache 2.0 License](https://opensource.org/licenses/Apache-2.0).
+- The class contains an adapted version of the Eisel-Lemire algorithm and its table of powers of five from [fast_float](https://github.com/fastfloat/fast_float) by Daniel Lemire and contributors, which is available under the [MIT License](https://opensource.org/licenses/MIT) (used here), the Apache 2.0 License, and the Boost Software License. Copyright &copy; 2021 The fast_float authors
 
 <img align="right" src="https://git.fsfe.org/reuse/reuse-ci/raw/branch/master/reuse-horizontal.png" alt="REUSE Software">
 

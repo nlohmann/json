@@ -136,7 +136,7 @@
       "name": "swap",
       "pretty_signature": "nlohmann::swap",
       "scope": "nlohmann",
-      "signature": "friend void swap(reference left, reference right) noexcept ( std::is_nothrow_move_constructible<value_t>::value&& std::is_nothrow_move_assignable<value_t>::value&& std::is_nothrow_move_constructible<json_value>::value&& std::is_nothrow_move_assignable<json_value>::value )",
+      "signature": "friend void swap(reference left, reference right) noexcept ( std::is_nothrow_move_constructible<value_t>::value&& std::is_nothrow_move_assignable<value_t>::value&& std::is_nothrow_move_constructible<json_value>::value&& std::is_nothrow_move_assignable<json_value>::value&& std::is_nothrow_move_constructible<json_base_class_t>::value&& std::is_nothrow_move_assignable<json_base_class_t>::value )",
       "tier": "callable"
     },
     {
@@ -608,6 +608,15 @@
       "tier": "callable"
     },
     {
+      "identity_name": "contains",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "contains",
+      "pretty_signature": "nlohmann::basic_json::contains",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename T, detail::enable_if_t<std::is_integral<T>::value, int> = 0> bool contains(T) const",
+      "tier": "callable"
+    },
+    {
       "identity_name": "count",
       "kind": "CXX_METHOD",
       "name": "count",
@@ -623,6 +632,15 @@
       "pretty_signature": "nlohmann::basic_json::count",
       "scope": "nlohmann::basic_json",
       "signature": "template<class KeyType, detail::enable_if_t< detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT size_type count(KeyType && key) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "count",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "count",
+      "pretty_signature": "nlohmann::basic_json::count",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename T, detail::enable_if_t<std::is_integral<T>::value, int> = 0> size_type count(T) const",
       "tier": "callable"
     },
     {
@@ -821,6 +839,24 @@
       "pretty_signature": "nlohmann::basic_json::find",
       "scope": "nlohmann::basic_json",
       "signature": "template<class KeyType, detail::enable_if_t< detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0> iterator find(KeyType && key)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "find",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "find",
+      "pretty_signature": "nlohmann::basic_json::find",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename T, detail::enable_if_t<std::is_integral<T>::value, int> = 0> const_iterator find(T) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "find",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "find",
+      "pretty_signature": "nlohmann::basic_json::find",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename T, detail::enable_if_t<std::is_integral<T>::value, int> = 0> iterator find(T)",
       "tier": "callable"
     },
     {
@@ -1936,7 +1972,7 @@
       "name": "swap",
       "pretty_signature": "nlohmann::basic_json::swap",
       "scope": "nlohmann::basic_json",
-      "signature": "void swap(reference other) noexcept ( std::is_nothrow_move_constructible<value_t>::value&& std::is_nothrow_move_assignable<value_t>::value&& std::is_nothrow_move_constructible<json_value>::value&& std::is_nothrow_move_assignable<json_value>::value )",
+      "signature": "void swap(reference other) noexcept ( std::is_nothrow_move_constructible<value_t>::value&& std::is_nothrow_move_assignable<value_t>::value&& std::is_nothrow_move_constructible<json_value>::value&& std::is_nothrow_move_assignable<json_value>::value&& std::is_nothrow_move_constructible<json_base_class_t>::value&& std::is_nothrow_move_assignable<json_base_class_t>::value )",
       "tier": "callable"
     },
     {
@@ -2243,6 +2279,15 @@
       "pretty_signature": "nlohmann::basic_json::value",
       "scope": "nlohmann::basic_json",
       "signature": "template < class ValueType, detail::enable_if_t < detail::is_getable<basic_json_t, ValueType>::value && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 > ValueType value(const json_pointer& ptr, const ValueType& default_value) const",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "value",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "value",
+      "pretty_signature": "nlohmann::basic_json::value",
+      "scope": "nlohmann::basic_json",
+      "signature": "template<typename T, typename ValueType, detail::enable_if_t<std::is_integral<T>::value, int> = 0> ValueType value(T, ValueType&&) const",
       "tier": "callable"
     },
     {

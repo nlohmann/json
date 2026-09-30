@@ -380,6 +380,26 @@ TEST_CASE("JSON pointers")
 
             DOCTEST_MSVC_SUPPRESS_WARNING_POP
 
+            {
+                // contains() must not throw for an empty reference token if the current
+                // value is an array (cf. #5395) -- at() still reports out_of_range.404
+                json j_nested = {{"a", {1, 2}}};
+                const json& j_nested_const = j_nested;
+                json::json_pointer const jp("/a/");
+                std::string const throw_msg = "[json.exception.out_of_range.404] unresolved reference token ''";
+
+                CHECK_THROWS_WITH_AS(j_nested.at(jp), throw_msg.c_str(), json::out_of_range&);
+                CHECK_THROWS_WITH_AS(j_nested_const.at(jp), throw_msg.c_str(), json::out_of_range&);
+
+                CHECK(j_nested.contains(json::json_pointer("/a/1")));
+                CHECK(!j_nested.contains(jp));
+                CHECK(!j_nested_const.contains(jp));
+
+                // same for an empty reference token on a top-level array
+                CHECK(!j.contains(json::json_pointer("/")));
+                CHECK(!j_const.contains(json::json_pointer("/")));
+            }
+
             CHECK_THROWS_WITH_AS(j.at("/one"_json_pointer) = 1,
                                  "[json.exception.parse_error.109] parse error: array index 'one' is not a number", json::parse_error&);
             CHECK_THROWS_WITH_AS(j_const.at("/one"_json_pointer) == 1,
@@ -856,6 +876,25 @@ TEST_CASE("JSON pointers")
             CHECK_FALSE(ptr_oj != ptr_j);
             CHECK_FALSE(ptr_oj != ptr);
         }
+    }
+
+    SECTION("value(json_pointer, default) with ordered_json #5664")
+    {
+        // ordered_json's transparent object comparator made value()'s
+        // is_comparable_with_object_key check (which passes the pointer as
+        // a reference) instantiate the deprecated json_pointer/string
+        // comparison; this must compile without relying on it. The
+        // deprecation warning itself is not observable here, since the
+        // unit test build disables -Wdeprecated-declarations (see
+        // cmake/clang_flags.cmake); it was checked manually instead.
+        const nlohmann::ordered_json j = {{"n", 1}, {"s", "text"}};
+        const nlohmann::ordered_json::json_pointer ptr_n("/n");
+        const nlohmann::ordered_json::json_pointer ptr_s("/s");
+        const nlohmann::ordered_json::json_pointer ptr_missing("/missing");
+
+        CHECK(j.value(ptr_n, 0) == 1);
+        CHECK(j.value(ptr_s, std::string("x")) == "text");
+        CHECK(j.value(ptr_missing, 42) == 42);
     }
 
     // build with C++20
