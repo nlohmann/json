@@ -3552,8 +3552,7 @@ inline StringType escape(const StringType& s)
 
 /*!
  * @brief string unescaping as described in RFC 6901 (Sect. 4)
- * @param[in] s string to unescape
- * @return    unescaped string
+ * @param[in,out] s string to unescape in place
  *
  * Note the order of escaping "~1" to "/" and "~0" to "~" is important.
  *
@@ -28567,7 +28566,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @tparam ValueTypeCV the provided value type
     @tparam ValueType the returned value type
 
-    @return copy of the JSON value, converted to @tparam ValueType if necessary
+    @return copy of the JSON value, converted to @a ValueType if necessary
 
     @throw what @ref json_serializer<ValueType> `from_json()` method throws if conversion is required
 
