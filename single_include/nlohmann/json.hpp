@@ -13030,6 +13030,22 @@ class binary_reader
         return enter_container(/*is_object*/true, len, type_marker);
     }
 
+    /*!
+    @brief close the innermost open array or object
+
+    Pops the container opened by the matching @ref enter_container call and
+    emits the SAX end event. Every format-specific driver otherwise repeated
+    the same pop-then-dispatch sequence at its own close site.
+
+    @return whether the SAX parser accepted the end event
+    */
+    bool leave_container()
+    {
+        const bool is_object = container_stack.back().is_object;
+        container_stack.pop_back();
+        return is_object ? sax->end_object() : sax->end_array();
+    }
+
     //////////
     // BSON //
     //////////
@@ -13114,8 +13130,8 @@ class binary_reader
             if (element_type == 0) // end of the innermost document
             {
                 // a copy, not a reference: it must stay valid across the
-                // pop_back() below, which destroys the container_stack
-                // element it would otherwise alias
+                // pop_back() inside leave_container() below, which destroys
+                // the container_stack element it would otherwise alias
                 const container_frame top = container_stack.back();
 
                 if (JSON_HEDLEY_UNLIKELY(!check_bson_document_size(top.start_position, top.declared_size)))
@@ -13123,8 +13139,7 @@ class binary_reader
                     return false;
                 }
 
-                container_stack.pop_back();
-                if (JSON_HEDLEY_UNLIKELY(top.is_object ? !sax->end_object() : !sax->end_array()))
+                if (JSON_HEDLEY_UNLIKELY(!leave_container()))
                 {
                     return false;
                 }
@@ -14309,8 +14324,7 @@ class binary_reader
 
                 if (at_end)
                 {
-                    container_stack.pop_back();
-                    if (JSON_HEDLEY_UNLIKELY(top.is_object ? !sax->end_object() : !sax->end_array()))
+                    if (JSON_HEDLEY_UNLIKELY(!leave_container()))
                     {
                         return false;
                     }
@@ -15057,8 +15071,7 @@ class binary_reader
 
                 if (container_stack.back().remaining == 0)
                 {
-                    container_stack.pop_back();
-                    if (JSON_HEDLEY_UNLIKELY(is_object ? !sax->end_object() : !sax->end_array()))
+                    if (JSON_HEDLEY_UNLIKELY(!leave_container()))
                     {
                         return false;
                     }
@@ -15187,8 +15200,7 @@ class binary_reader
                     break;
                 }
 
-                container_stack.pop_back();
-                if (JSON_HEDLEY_UNLIKELY(top.is_object ? !sax->end_object() : !sax->end_array()))
+                if (JSON_HEDLEY_UNLIKELY(!leave_container()))
                 {
                     return false;
                 }
@@ -16173,8 +16185,7 @@ class binary_reader
 
                 if (at_end)
                 {
-                    container_stack.pop_back();
-                    if (JSON_HEDLEY_UNLIKELY(top.is_object ? !sax->end_object() : !sax->end_array()))
+                    if (JSON_HEDLEY_UNLIKELY(!leave_container()))
                     {
                         return false;
                     }
