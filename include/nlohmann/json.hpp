@@ -1578,8 +1578,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @brief create a null object
     /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
-    basic_json(std::nullptr_t = nullptr) noexcept // NOLINT(bugprone-exception-escape)
-        : basic_json(value_t::null)
+    basic_json(std::nullptr_t = nullptr) noexcept
     {
         assert_invariant();
     }
