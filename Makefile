@@ -34,7 +34,6 @@ all:
 	@echo "ChangeLog.md - generate ChangeLog file"
 	@echo "check-amalgamation - check whether sources have been amalgamated and BUILD.bazel is up to date"
 	@echo "clean - remove built files"
-	@echo "doctest - compile example files and check their output"
 	@echo "fuzz_testing - prepare fuzz testing of the JSON parser"
 	@echo "fuzz_testing_bon8 - prepare fuzz testing of the BON8 parser"
 	@echo "fuzz_testing_bson - prepare fuzz testing of the BSON parser"
@@ -156,10 +155,6 @@ install_astyle:
 pretty: install_astyle
 	$(ASTYLE) --project=tools/astyle/.astylerc $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) docs/mkdocs/docs/examples/*.cpp
 
-# call the Clang-Format on all source files
-pretty_format:
-	for FILE in $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) docs/mkdocs/docs/examples/*.cpp; do echo $$FILE; clang-format -i $$FILE; done
-
 # create single header files and pretty print
 amalgamate: $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE)
 	$(MAKE) pretty
@@ -245,7 +240,6 @@ release: include.zip json.tar.xz
 # clean up
 clean:
 	rm -fr fuzz fuzz-testing *.dSYM tests/*.dSYM
-	rm -fr benchmarks/files/numbers/*.json
 	rm -fr cmake-build-benchmarks fuzz-testing cmake-build-pvs-studio release_files
 	$(MAKE) clean -Cdocs
 
