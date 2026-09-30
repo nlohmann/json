@@ -210,15 +210,42 @@ TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test, \
 
 TEST_CASE("BJData")
 {
-    SECTION("binary_reader BJData LUT arrays are sorted")
+    SECTION("binary_reader BJData lookup tables")
     {
         std::vector<std::uint8_t> const data;
         auto ia = nlohmann::detail::input_adapter(data);
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
         nlohmann::detail::binary_reader<json, decltype(ia)> const br{std::move(ia), json::input_format_t::bjdata};
 
-        CHECK(std::is_sorted(br.bjd_optimized_type_markers.begin(), br.bjd_optimized_type_markers.end()));
-        CHECK(std::is_sorted(br.bjd_types_map.begin(), br.bjd_types_map.end()));
+        // the excluded optimized-type markers must match binary_writer's
+        // is_bjdata_excluded_type_marker(), which encodes the same 8 markers
+        for (const char marker :
+                {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'
+                })
+        {
+            CHECK(br.is_bjd_excluded_optimized_type(marker));
+        }
+        for (const char marker :
+                {'U', 'i', 'u', 'I', 'm', 'l', 'M', 'L', 'd', 'D', 'C', 'B', 'x'
+                })
+        {
+            CHECK(!br.is_bjd_excluded_optimized_type(marker));
+        }
+
+        // every dtype marker must round-trip to its ND-array type name
+        const std::vector<std::pair<char, std::string>> types
+        {
+            {'B', "byte"}, {'C', "char"}, {'D', "double"}, {'I', "int16"},
+            {'L', "int64"}, {'M', "uint64"}, {'U', "uint8"}, {'d', "single"},
+            {'i', "int8"}, {'l', "int32"}, {'m', "uint32"}, {'u', "uint16"}
+        };
+        for (const auto& type : types)
+        {
+            const char* name = br.bjd_type_name(type.first);
+            REQUIRE(name != nullptr);
+            CHECK(std::string(name) == type.second);
+        }
+        CHECK(br.bjd_type_name('x') == nullptr);
     }
 
     SECTION("individual values")

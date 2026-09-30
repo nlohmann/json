@@ -19,6 +19,7 @@ using nlohmann::json;
 
 #include <map>
 #include <unordered_map>
+#include <sstream>
 
 TEST_CASE("Better diagnostics")
 {
@@ -340,6 +341,36 @@ TEST_CASE("Regression tests for extended diagnostics")
         }
     }
 
+    SECTION("Regression test for issue #5650 - converting keeps the parents of nested values")
+    {
+        // A value nested deeper than the converting constructor's descent bound
+        // is converted without the call stack. Every container that path creates
+        // has to have the parents of its children set, or the JSON Pointer in the
+        // diagnostic is cut short. Objects and arrays take turns.
+        const std::size_t pairs = 150;
+
+        json j = "not a number";
+        std::string pointer;
+        for (std::size_t i = 0; i < pairs; ++i)
+        {
+            j = json{{"a", json::array({j})}};
+            pointer += "/a/0";
+        }
+
+        const nlohmann::ordered_json converted = j;
+
+        const nlohmann::ordered_json* inner = &converted;
+        for (std::size_t i = 0; i < pairs; ++i)
+        {
+            inner = &inner->at("a").at(0);
+        }
+
+        std::string const expected = "[json.exception.type_error.302] (" + pointer + ") type must be number, but is string";
+        int i = 0;
+        CHECK_THROWS_WITH_AS(i = inner->get<int>(), expected.c_str(), nlohmann::ordered_json::type_error);
+        CHECK(i == 0);
+    }
+
     SECTION("Regression test for issue #5668 - wrong path for std::map/unordered_map with non-string keys")
     {
         // a map with non-string keys is read from an array of [key, value] arrays;
@@ -491,6 +522,21 @@ TEST_CASE("Regression tests for extended diagnostics")
             ordered_json const copy = j;
             CHECK(copy == j);
         }
+    }
+
+    SECTION("Regression test for issue #5652 - operator>> leaves a partial value in its target on a parse error")
+    {
+        json j = "old value";
+        std::istringstream is("[1, x");
+        CHECK_THROWS_WITH_AS(is >> j, "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid literal; last read: '1, x'", json::parse_error);
+
+        // j must be left unchanged, as json::parse() guarantees for its result
+        CHECK(j == "old value");
+
+        // copying j must not trigger assert_invariant(): a failed parse must
+        // not leave array/object elements without a parent pointer
+        json const copy = j; // NOLINT(performance-unnecessary-copy-initialization)
+        CHECK(copy == j);
     }
 }
 

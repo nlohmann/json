@@ -18,6 +18,10 @@ Deserializes an input stream to a JSON value.
 
 the stream `i`
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes in `j`.
+
 ## Exceptions
 
 - Throws [`parse_error.101`](../home/exceptions.md#jsonexceptionparse_error101) in case of an unexpected token, or if
@@ -125,3 +129,5 @@ being read.
   the stream; planned to become the default in version 4.0.0.
 - Fixed a null pointer dereference for an `std::istream` without a stream buffer (now throws `parse_error.101`), and a
   crash (`std::terminate`) when `i` has `eofbit` in its exception mask, in version 3.13.0.
+- Changed to the strong exception safety guarantee in version 3.13.0: `j` is no longer left with a partially parsed
+  value if parsing throws.
