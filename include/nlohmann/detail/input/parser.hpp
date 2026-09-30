@@ -54,7 +54,8 @@ using parser_callback_t =
 /*!
 @brief syntax analysis
 
-This class implements a recursive descent parser.
+This class implements an iterative parser that keeps the open containers on
+an explicit stack and reports what it reads as SAX events.
 */
 template<typename BasicJsonType, typename InputAdapterType>
 class parser
@@ -439,8 +440,9 @@ class parser
 
                     // We are done with this array. Before we can parse a
                     // new value, we need to evaluate the new state first.
-                    // By setting skip_to_state_evaluation to false, we
-                    // are effectively jumping to the beginning of this if.
+                    // By setting skip_to_state_evaluation to true, the next
+                    // iteration skips parsing a value and evaluates the
+                    // enclosing state directly.
                     JSON_ASSERT(!states.empty());
                     states.pop_back();
                     skip_to_state_evaluation = true;
@@ -500,8 +502,9 @@ class parser
 
                 // We are done with this object. Before we can parse a
                 // new value, we need to evaluate the new state first.
-                // By setting skip_to_state_evaluation to false, we
-                // are effectively jumping to the beginning of this if.
+                // By setting skip_to_state_evaluation to true, the next
+                // iteration skips parsing a value and evaluates the
+                // enclosing state directly.
                 JSON_ASSERT(!states.empty());
                 states.pop_back();
                 skip_to_state_evaluation = true;
