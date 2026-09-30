@@ -28765,6 +28765,63 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @}
 
+  private:
+    /// @brief look up @a key in the object held by @a j, for either constness of @a j
+    /// @note the single place that performs a (possibly transparent) object key lookup
+    template<typename Self, typename KeyType>
+    static auto object_lookup(Self& j, KeyType&& key)
+    -> decltype(j.m_data.m_value.object->find(std::forward<KeyType>(key)))
+    {
+        return j.m_data.m_value.object->find(std::forward<KeyType>(key));
+    }
+
+    /// @brief checked object element access used by the at() overloads taking a key
+    /// @throw type_error.304 if @a j is not an object
+    /// @throw out_of_range.403 if @a key is not found
+    template<typename Self, typename KeyType>
+    static auto object_at(Self& j, KeyType&& key)
+    -> decltype((object_lookup(j, std::forward<KeyType>(key))->second))
+    {
+        // at only works for objects
+        if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
+        {
+            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", j.type_name()), &j));
+        }
+
+        auto it = object_lookup(j, std::forward<KeyType>(key));
+        if (it == j.m_data.m_value.object->end())
+        {
+            // key is only forwarded into the lookup above: object_t::find() (a plain
+            // std::map or ordered_map) never moves from its argument, so key is still
+            // valid here regardless of whether KeyType was deduced as an rvalue reference
+            // NOLINTNEXTLINE(bugprone-use-after-move,hicpp-invalid-access-moved)
+            JSON_THROW(out_of_range::create(403, detail::concat("key '", string_t(key), "' not found"), &j));
+        }
+        return it->second;
+    }
+
+    /// @brief checked array element access used by the at() overloads taking an index
+    /// @throw type_error.304 if @a j is not an array
+    /// @throw out_of_range.401 if @a idx is out of range
+    template<typename Self>
+    static auto array_at(Self& j, size_type idx)
+    -> decltype((*j.m_data.m_value.array)[idx])
+    {
+        // at only works for arrays
+        if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
+        {
+            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", j.type_name()), &j));
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(idx >= j.m_data.m_value.array->size()))
+        {
+            JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), &j));
+        }
+
+        return (*j.m_data.m_value.array)[idx];
+    }
+
+  public:
     ////////////////////
     // element access //
     ////////////////////
@@ -28777,54 +28834,21 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/at/
     reference at(size_type idx)
     {
-        // at only works for arrays
-        if (JSON_HEDLEY_UNLIKELY(!is_array()))
-        {
-            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
-        }
-
-        if (JSON_HEDLEY_UNLIKELY(idx >= m_data.m_value.array->size()))
-        {
-            JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), this));
-        }
-
-        return set_parent((*m_data.m_value.array)[idx]);
+        return set_parent(array_at(*this, idx));
     }
 
     /// @brief access specified array element with bounds checking
     /// @sa https://json.nlohmann.me/api/basic_json/at/
     const_reference at(size_type idx) const
     {
-        // at only works for arrays
-        if (JSON_HEDLEY_UNLIKELY(!is_array()))
-        {
-            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
-        }
-
-        if (JSON_HEDLEY_UNLIKELY(idx >= m_data.m_value.array->size()))
-        {
-            JSON_THROW(out_of_range::create(401, detail::concat("array index ", std::to_string(idx), " is out of range"), this));
-        }
-
-        return (*m_data.m_value.array)[idx];
+        return array_at(*this, idx);
     }
 
     /// @brief access specified object element with bounds checking
     /// @sa https://json.nlohmann.me/api/basic_json/at/
     reference at(const typename object_t::key_type& key)
     {
-        // at only works for objects
-        if (JSON_HEDLEY_UNLIKELY(!is_object()))
-        {
-            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
-        }
-
-        auto it = m_data.m_value.object->find(key);
-        if (it == m_data.m_value.object->end())
-        {
-            JSON_THROW(out_of_range::create(403, detail::concat("key '", key, "' not found"), this));
-        }
-        return set_parent(it->second);
+        return set_parent(object_at(*this, key));
     }
 
     /// @brief access specified object element with bounds checking
@@ -28833,36 +28857,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                  detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     reference at(KeyType && key)
     {
-        // at only works for objects
-        if (JSON_HEDLEY_UNLIKELY(!is_object()))
-        {
-            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
-        }
-
-        auto it = m_data.m_value.object->find(std::forward<KeyType>(key));
-        if (it == m_data.m_value.object->end())
-        {
-            JSON_THROW(out_of_range::create(403, detail::concat("key '", string_t(std::forward<KeyType>(key)), "' not found"), this));
-        }
-        return set_parent(it->second);
+        return set_parent(object_at(*this, std::forward<KeyType>(key)));
     }
 
     /// @brief access specified object element with bounds checking
     /// @sa https://json.nlohmann.me/api/basic_json/at/
     const_reference at(const typename object_t::key_type& key) const
     {
-        // at only works for objects
-        if (JSON_HEDLEY_UNLIKELY(!is_object()))
-        {
-            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
-        }
-
-        auto it = m_data.m_value.object->find(key);
-        if (it == m_data.m_value.object->end())
-        {
-            JSON_THROW(out_of_range::create(403, detail::concat("key '", key, "' not found"), this));
-        }
-        return it->second;
+        return object_at(*this, key);
     }
 
     /// @brief access specified object element with bounds checking
@@ -28871,18 +28873,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                  detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int> = 0>
     const_reference at(KeyType && key) const
     {
-        // at only works for objects
-        if (JSON_HEDLEY_UNLIKELY(!is_object()))
-        {
-            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
-        }
-
-        auto it = m_data.m_value.object->find(std::forward<KeyType>(key));
-        if (it == m_data.m_value.object->end())
-        {
-            JSON_THROW(out_of_range::create(403, detail::concat("key '", string_t(std::forward<KeyType>(key)), "' not found"), this));
-        }
-        return it->second;
+        return object_at(*this, std::forward<KeyType>(key));
     }
 
     /// @brief access specified array element
@@ -28974,7 +28965,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // const operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            auto it = m_data.m_value.object->find(key);
+            auto it = object_lookup(*this, key);
             JSON_ASSERT(it != m_data.m_value.object->end());
             return it->second;
         }
@@ -29029,7 +29020,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // const operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            auto it = m_data.m_value.object->find(std::forward<KeyType>(key));
+            auto it = object_lookup(*this, std::forward<KeyType>(key));
             JSON_ASSERT(it != m_data.m_value.object->end());
             return it->second;
         }
@@ -29397,7 +29388,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
         }
 
-        const auto it = m_data.m_value.object->find(std::forward<KeyType>(key));
+        const auto it = object_lookup(*this, std::forward<KeyType>(key));
         if (it != m_data.m_value.object->end())
         {
             m_data.m_value.object->erase(it);
@@ -29464,7 +29455,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_data.m_value.object->find(key);
+            result.m_it.object_iterator = object_lookup(*this, key);
         }
 
         return result;
@@ -29478,7 +29469,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_data.m_value.object->find(key);
+            result.m_it.object_iterator = object_lookup(*this, key);
         }
 
         return result;
@@ -29494,7 +29485,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_data.m_value.object->find(std::forward<KeyType>(key));
+            result.m_it.object_iterator = object_lookup(*this, std::forward<KeyType>(key));
         }
 
         return result;
@@ -29510,7 +29501,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_data.m_value.object->find(std::forward<KeyType>(key));
+            result.m_it.object_iterator = object_lookup(*this, std::forward<KeyType>(key));
         }
 
         return result;
@@ -29541,7 +29532,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     bool contains(const typename object_t::key_type& key) const
     {
-        return is_object() && m_data.m_value.object->find(key) != m_data.m_value.object->end();
+        return is_object() && object_lookup(*this, key) != m_data.m_value.object->end();
     }
 
     /// @brief check the existence of an element in a JSON object
@@ -29551,7 +29542,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     bool contains(KeyType && key) const
     {
-        return is_object() && m_data.m_value.object->find(std::forward<KeyType>(key)) != m_data.m_value.object->end();
+        return is_object() && object_lookup(*this, std::forward<KeyType>(key)) != m_data.m_value.object->end();
     }
 
     /// @brief check the existence of an element in a JSON object given a JSON pointer
