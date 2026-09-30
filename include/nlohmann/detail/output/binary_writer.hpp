@@ -1041,15 +1041,26 @@ class binary_writer
     }
 
     /*!
-    @return The size of the BSON-encoded binary array @a value
+    @return The size of the BSON-encoded binary array in @a j
+    @throw out_of_range.415 if the subtype of @a j does not fit into a byte,
+           before anything is written
     */
-    static std::size_t calc_bson_binary_size(const typename BasicJsonType::binary_t& value)
+    static std::size_t calc_bson_binary_size(const BasicJsonType& j)
     {
+        const auto& value = *j.m_data.m_value.binary;
+
+        if (value.has_subtype() && JSON_HEDLEY_UNLIKELY(value.subtype() > (std::numeric_limits<std::uint8_t>::max)()))
+        {
+            JSON_THROW(out_of_range::create(415, concat("subtype ", std::to_string(value.subtype()), " is too large for the BSON binary subtype (max 255)"), &j));
+        }
+
         return sizeof(std::int32_t) + value.size() + 1ul;
     }
 
     /*!
     @brief Writes a BSON element with key @a name and binary value @a value
+    @pre    @a value's subtype, if any, fits into a byte; @ref calc_bson_sizes
+            checks this for every binary value in the document beforehand.
     */
     void write_bson_binary(const string_t& name,
                            const binary_t& value)
@@ -1057,11 +1068,6 @@ class binary_writer
         write_bson_entry_header(name, 0x05);
 
         write_number<std::int32_t>(to_bson_length(value.size()), true);
-
-        if (value.has_subtype() && JSON_HEDLEY_UNLIKELY(value.subtype() > (std::numeric_limits<std::uint8_t>::max)()))
-        {
-            JSON_THROW(out_of_range::create(415, concat("subtype ", std::to_string(value.subtype()), " is too large for the BSON binary subtype (max 255)"), nullptr));
-        }
 
         write_number(value.has_subtype() ? static_cast<std::uint8_t>(value.subtype()) : static_cast<std::uint8_t>(0x00));
 
@@ -1071,13 +1077,15 @@ class binary_writer
     /*!
     @return The size of the value of the BSON document entry for @a j, which
             is neither an object nor an array
+    @throw out_of_range.415 if @a j is binary with a subtype that does not fit
+           into a byte, before anything is written
     */
     static std::size_t calc_bson_value_size(const BasicJsonType& j)
     {
         switch (j.type())
         {
             case value_t::binary:
-                return calc_bson_binary_size(*j.m_data.m_value.binary);
+                return calc_bson_binary_size(j);
 
             case value_t::boolean:
                 return 1ul;
@@ -1203,6 +1211,8 @@ class binary_writer
     @return the size of @a document
     @throw out_of_range.409 if a key contains U+0000, before anything is
            written
+    @throw out_of_range.415 if a binary value's subtype does not fit into a
+           byte, before anything is written
     */
     static std::size_t calc_bson_sizes(const BasicJsonType& document, std::vector<std::size_t>& nested_sizes)
     {
