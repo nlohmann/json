@@ -317,6 +317,43 @@ class binary_writer
     }
 
     /*!
+    @brief write a non-negative integer using the MessagePack fixint/uint ladder
+    @param[in] n  the value to write, already known to be non-negative
+    */
+    void write_msgpack_unsigned(const std::uint64_t n)
+    {
+        if (n < 128)
+        {
+            // positive fixnum
+            write_number(static_cast<std::uint8_t>(n));
+        }
+        else if (n <= (std::numeric_limits<std::uint8_t>::max)())
+        {
+            // uint 8
+            oa.write_character(to_char_type(0xCC));
+            write_number(static_cast<std::uint8_t>(n));
+        }
+        else if (n <= (std::numeric_limits<std::uint16_t>::max)())
+        {
+            // uint 16
+            oa.write_character(to_char_type(0xCD));
+            write_number(static_cast<std::uint16_t>(n));
+        }
+        else if (n <= (std::numeric_limits<std::uint32_t>::max)())
+        {
+            // uint 32
+            oa.write_character(to_char_type(0xCE));
+            write_number(static_cast<std::uint32_t>(n));
+        }
+        else
+        {
+            // uint 64
+            oa.write_character(to_char_type(0xCF));
+            write_number(n);
+        }
+    }
+
+    /*!
     @param[in] j  JSON value to serialize
     */
     void write_msgpack(const BasicJsonType& j)
@@ -342,37 +379,8 @@ class binary_writer
                 if (j.m_data.m_value.number_integer >= 0)
                 {
                     // MessagePack does not differentiate between positive
-                    // signed integers and unsigned integers. Therefore, we used
-                    // the code from the value_t::number_unsigned case here.
-                    if (j.m_data.m_value.number_unsigned < 128)
-                    {
-                        // positive fixnum
-                        write_number(static_cast<std::uint8_t>(j.m_data.m_value.number_integer));
-                    }
-                    else if (j.m_data.m_value.number_unsigned <= (std::numeric_limits<std::uint8_t>::max)())
-                    {
-                        // uint 8
-                        oa.write_character(to_char_type(0xCC));
-                        write_number(static_cast<std::uint8_t>(j.m_data.m_value.number_integer));
-                    }
-                    else if (j.m_data.m_value.number_unsigned <= (std::numeric_limits<std::uint16_t>::max)())
-                    {
-                        // uint 16
-                        oa.write_character(to_char_type(0xCD));
-                        write_number(static_cast<std::uint16_t>(j.m_data.m_value.number_integer));
-                    }
-                    else if (j.m_data.m_value.number_unsigned <= (std::numeric_limits<std::uint32_t>::max)())
-                    {
-                        // uint 32
-                        oa.write_character(to_char_type(0xCE));
-                        write_number(static_cast<std::uint32_t>(j.m_data.m_value.number_integer));
-                    }
-                    else
-                    {
-                        // uint 64
-                        oa.write_character(to_char_type(0xCF));
-                        write_number(static_cast<std::uint64_t>(j.m_data.m_value.number_integer));
-                    }
+                    // signed integers and unsigned integers.
+                    write_msgpack_unsigned(static_cast<std::uint64_t>(j.m_data.m_value.number_integer));
                 }
                 else
                 {
@@ -414,35 +422,7 @@ class binary_writer
 
             case value_t::number_unsigned:
             {
-                if (j.m_data.m_value.number_unsigned < 128)
-                {
-                    // positive fixnum
-                    write_number(static_cast<std::uint8_t>(j.m_data.m_value.number_integer));
-                }
-                else if (j.m_data.m_value.number_unsigned <= (std::numeric_limits<std::uint8_t>::max)())
-                {
-                    // uint 8
-                    oa.write_character(to_char_type(0xCC));
-                    write_number(static_cast<std::uint8_t>(j.m_data.m_value.number_integer));
-                }
-                else if (j.m_data.m_value.number_unsigned <= (std::numeric_limits<std::uint16_t>::max)())
-                {
-                    // uint 16
-                    oa.write_character(to_char_type(0xCD));
-                    write_number(static_cast<std::uint16_t>(j.m_data.m_value.number_integer));
-                }
-                else if (j.m_data.m_value.number_unsigned <= (std::numeric_limits<std::uint32_t>::max)())
-                {
-                    // uint 32
-                    oa.write_character(to_char_type(0xCE));
-                    write_number(static_cast<std::uint32_t>(j.m_data.m_value.number_integer));
-                }
-                else
-                {
-                    // uint 64
-                    oa.write_character(to_char_type(0xCF));
-                    write_number(static_cast<std::uint64_t>(j.m_data.m_value.number_integer));
-                }
+                write_msgpack_unsigned(static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned));
                 break;
             }
 
