@@ -100,3 +100,6 @@ the latter case, it is skipped completely, or replaced by `null` if it is the to
 - Added in version 1.0.0.
 - Fixed in version 3.13.0 to also remove discarded values from a parent object; before, discarding an array or a value
   stored under an object key left a discarded member behind, which made the parse result serialize to invalid JSON.
+- Fixed in version 3.13.0 so that discarding an array or object at its start event also hides its content from the
+  callback, as documented above; before, the callback was still called for the content, and the key of every member of
+  a discarded object was kept in memory until the parse ended.

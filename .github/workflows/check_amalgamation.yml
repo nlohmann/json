@@ -67,6 +67,7 @@ jobs:
 
           python3 $TOOL_DIR/amalgamate.py -c $TOOL_DIR/config_json.json -s .
           python3 $TOOL_DIR/amalgamate.py -c $TOOL_DIR/config_json_fwd.json -s .
+          cp include/nlohmann/json_literals.hpp $INCLUDE_DIR/json_literals.hpp
 
           # the header list of the Bazel "json" target must match the files in include/
           cmake -P cmake/scripts/gen_bazel_build_file.cmake

@@ -6,11 +6,13 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
+#include <algorithm>
 #include <set>
 #include <sstream>
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "doctest_compatibility.h"
 
@@ -180,6 +182,76 @@ TEST_CASE("JSON Node Metadata")
             CHECK(val.metadata().size() == 2);
             CHECK(val.metadata().at(0)  == 1);
             CHECK(val.metadata().at(1)  == 2);
+        }
+    }
+    SECTION("member swap")
+    {
+        using json = json_with_metadata<int>;
+        json a = 1;
+        a.metadata() = 100;
+        json b = 2;
+        b.metadata() = 200;
+
+        a.swap(b);
+
+        CHECK(a.get<int>()  == 2);
+        CHECK(b.get<int>()  == 1);
+        CHECK(a.metadata()  == 200);
+        CHECK(b.metadata()  == 100);
+    }
+    SECTION("nonmember swap")
+    {
+        using json = json_with_metadata<int>;
+        json a = 1;
+        a.metadata() = 100;
+        json b = 2;
+        b.metadata() = 200;
+
+        using std::swap;
+        swap(a, b);
+
+        CHECK(a.get<int>()  == 2);
+        CHECK(b.get<int>()  == 1);
+        CHECK(a.metadata()  == 200);
+        CHECK(b.metadata()  == 100);
+    }
+    SECTION("std::swap")
+    {
+        using json = json_with_metadata<int>;
+        json a = 1;
+        a.metadata() = 100;
+        json b = 2;
+        b.metadata() = 200;
+
+        std::swap(a, b);
+
+        CHECK(a.get<int>()  == 2);
+        CHECK(b.get<int>()  == 1);
+        CHECK(a.metadata()  == 200);
+        CHECK(b.metadata()  == 100);
+    }
+    SECTION("std::sort keeps metadata attached to its value")
+    {
+        // std::sort mixes swap() with moves; each value's metadata must
+        // travel with it, just as it does for copy, move, and assignment
+        using json = json_with_metadata<int>;
+        std::vector<json> values;
+        for (int v :
+                {
+                    5, 3, 9, 1, 7, 2, 8, 4, 6, 0, 15, 13, 19, 11, 17, 12, 18, 14, 16, 10,
+                    25, 23, 29, 21, 27, 22, 28, 24, 26, 20, 35, 33
+                })
+        {
+            json value = v;
+            value.metadata() = v;
+            values.push_back(value);
+        }
+
+        std::sort(values.begin(), values.end());
+
+        for (const auto& value : values)
+        {
+            CHECK(value.metadata() == value.get<int>());
         }
     }
 }
