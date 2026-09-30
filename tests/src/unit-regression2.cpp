@@ -112,7 +112,7 @@ enum class for_1647
     two
 };
 
-// NOLINTNEXTLINE(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): this is a false positive
+// NOLINTNEXTLINE(misc-const-correctness): this is a false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(for_1647,
 {
     {for_1647::one, "one"},

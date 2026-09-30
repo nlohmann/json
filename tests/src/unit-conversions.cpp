@@ -1622,7 +1622,7 @@ TEST_CASE("value conversion")
 
 enum class cards {kreuz, pik, herz, karo};
 
-// NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+// NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness) - false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(cards,
 {
     {cards::kreuz, "kreuz"},
@@ -1640,7 +1640,7 @@ enum TaskState // NOLINT(cert-int09-c,readability-enum-initial-value,cppcoreguid
     TS_INVALID = -1,
 };
 
-// NOLINTNEXTLINE(misc-const-correctness,misc-use-internal-linkage,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+// NOLINTNEXTLINE(misc-const-correctness,misc-use-internal-linkage) - false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(TaskState,
 {
     {TS_INVALID, nullptr},
@@ -1690,7 +1690,7 @@ TEST_CASE("JSON to enum mapping")
 
 enum class strict_cards {kreuz, pik, herz, karo, andere}; // andere not included in mapping
 
-// NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+// NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness) - false positive
 NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(strict_cards,
 {
     {strict_cards::kreuz, "kreuz"},
@@ -1709,7 +1709,7 @@ enum StrictTaskState // NOLINT(cert-int09-c,readability-enum-initial-value,cppco
     STRICT_TS_INVALID = -1,
 };
 
-// NOLINTNEXTLINE(misc-const-correctness,misc-use-internal-linkage,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+// NOLINTNEXTLINE(misc-const-correctness,misc-use-internal-linkage) - false positive
 NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(StrictTaskState,
 {
     {STRICT_TS_INVALID, nullptr},
