@@ -5029,7 +5029,6 @@ inline std::size_t concat_length(const char /*c*/, const Args& ... rest)
 template<typename... Args>
 inline std::size_t concat_length(const char* cstr, const Args& ... rest)
 {
-    // cppcheck-suppress ignoredReturnValue
     return ::strlen(cstr) + concat_length(rest...);
 }
 
@@ -26819,7 +26818,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #if JSON_DIAGNOSTICS
         JSON_TRY
         {
-            // cppcheck-suppress assertWithSideEffect
             JSON_ASSERT(!check_parents || !is_structured() || std::all_of(begin(), end(), [this](const basic_json & j)
             {
                 return j.m_parent == this;
@@ -30987,7 +30985,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                             const bool ignore_trailing_commas = false)
     {
         basic_json result;
-        parser(detail::input_adapter(std::forward<InputType>(i)), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas).parse(true, result); // cppcheck-suppress[accessMoved,accessForwarded]
+        auto p = parser(detail::input_adapter(std::forward<InputType>(i)), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
+        p.parse(true, result);
         return result;
     }
 
@@ -31004,7 +31003,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                             const bool ignore_trailing_commas = false)
     {
         basic_json result;
-        parser(detail::input_adapter(std::move(first), std::move(last)), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas).parse(true, result); // cppcheck-suppress[accessMoved]
+        auto p = parser(detail::input_adapter(std::move(first), std::move(last)), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
+        p.parse(true, result);
         return result;
     }
 
@@ -31017,7 +31017,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                             const bool ignore_trailing_commas = false)
     {
         basic_json result;
-        parser(i.get(), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas).parse(true, result); // cppcheck-suppress[accessMoved]
+        auto p = parser(i.get(), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
+        p.parse(true, result);
         return result;
     }
 
