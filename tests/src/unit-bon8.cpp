@@ -21,6 +21,7 @@ using nlohmann::json;
 #include <string>
 #include <vector>
 #include "make_test_data_available.hpp"
+#include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
 #include "sax_countdown.hpp"
 using utils::SaxCountdown;
@@ -742,6 +743,39 @@ TEST_CASE("Parse BON8 directly from a file using iterator and sentinel")
     const std::istreambuf_iterator<char> first(file);
     const json parsed = json::from_bon8(first, utils::istreambuf_sentinel{});
     CHECK((parsed.is_object() || parsed.is_array()));
+}
+
+TEST_CASE("BON8 round-trip invariants")
+{
+    // This checks what the parse_bon8_fuzzer driver checks (see
+    // tests/src/fuzzer-parse_bon8.cpp), so that a regression shows up in CI
+    // rather than as an OSS-Fuzz report: anything from_bon8() returns (j1)
+    // can be serialized, parsed back (j2), and serialized again to reproduce
+    // the exact bytes. The stream-versus-contiguous input check the driver
+    // also performs is not covered here (see #5601).
+    for (const auto& j0 : utils::round_trip_corpus::values())
+    {
+        json j1;
+        try
+        {
+            // turn the corpus value into a value as from_bon8() returns it
+            j1 = json::from_bon8(json::to_bon8(j0));
+        }
+        catch (const json::exception&)
+        {
+            // BON8 cannot represent an unsigned integer above INT64_MAX, and
+            // the fuzzer driver only ever sees values from_bon8() actually
+            // produced, so skip such corpus values here, too
+            continue;
+        }
+
+        INFO("j1 = " << j1.dump());
+        const std::vector<std::uint8_t> vec = json::to_bon8(j1);
+        json j2;
+        // anything the library writes must be parsable by the library
+        REQUIRE_NOTHROW(j2 = json::from_bon8(vec));
+        CHECK(json::to_bon8(j2) == vec);
+    }
 }
 
 TEST_CASE("BON8 roundtrips" * doctest::skip())

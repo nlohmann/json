@@ -18,6 +18,7 @@ using nlohmann::json;
 #include <list>
 #include <set>
 #include "make_test_data_available.hpp"
+#include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
 #include "sax_countdown.hpp"
 using utils::SaxCountdown;
@@ -2337,6 +2338,39 @@ TEST_CASE("issue #5405 - array reserve for definite-length CBOR arrays")
 
         SaxCountdown scp(1000000); // large enough to never trigger an abort
         CHECK(json::sax_parse(packed, &scp, json::input_format_t::cbor));
+    }
+}
+
+TEST_CASE("CBOR round-trip invariants")
+{
+    // This checks what the parse_cbor_fuzzer driver checks (see
+    // tests/src/fuzzer-parse_cbor.cpp), so that a regression shows up in CI
+    // rather than as an OSS-Fuzz report: anything from_cbor() returns (j1)
+    // can be serialized, parsed back (j2), and serialized again to reproduce
+    // the exact bytes.
+    for (const auto& j0 : utils::round_trip_corpus::values())
+    {
+        json j1;
+        try
+        {
+            // turn the corpus value into a value as from_cbor() returns it
+            j1 = json::from_cbor(json::to_cbor(j0));
+        }
+        catch (const json::exception&)
+        {
+            // not every corpus value survives a CBOR round trip (e.g., a
+            // binary subtype is written with a tag the default tag handler
+            // then rejects); the fuzzer driver only ever sees values
+            // from_cbor() actually produced, so skip those here, too
+            continue;
+        }
+
+        INFO("j1 = " << j1.dump());
+        const std::vector<std::uint8_t> vec = json::to_cbor(j1);
+        json j2;
+        // anything the library writes must be parsable by the library
+        REQUIRE_NOTHROW(j2 = json::from_cbor(vec));
+        CHECK(json::to_cbor(j2) == vec);
     }
 }
 
