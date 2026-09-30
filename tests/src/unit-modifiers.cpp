@@ -1116,3 +1116,61 @@ TEST_CASE("update() on deeply nested values")
         CHECK(p->at("y") == 2);
     }
 }
+
+TEST_CASE("update() with an argument that aliases *this (#5641)")
+{
+    SECTION("const reference")
+    {
+        SECTION("j.update(j[\"a\"]): assigning into the argument's parent destroys it mid-iteration")
+        {
+            // reproduces issue #5641, case 3
+            json j = {{"a", {{"a", 1}, {"b", 2}}}};
+            j.update(j["a"]);
+            CHECK(j == json({{"a", 1}, {"b", 2}}));
+        }
+
+        SECTION("merge_objects with an argument that is a member of *this")
+        {
+            json j = {{"defaults", {{"opts", {{"a", 1}}}}}, {"opts", {{"b", 2}}}};
+            j.update(j["defaults"], true);
+            CHECK(j == json({{"defaults", {{"opts", {{"a", 1}}}}}, {"opts", {{"a", 1}, {"b", 2}}}}));
+        }
+
+        SECTION("ordered_json: inserting a new key relocates the vector behind the argument")
+        {
+            // reproduces issue #5641, case 4
+            using nlohmann::ordered_json;
+            ordered_json j = {{"a", {{"x", 1}, {"y", 2}, {"z", 3}}}};
+            j.update(j["a"]);
+            CHECK(j == ordered_json({{"a", {{"x", 1}, {"y", 2}, {"z", 3}}}, {"x", 1}, {"y", 2}, {"z", 3}}));
+        }
+    }
+
+    SECTION("iterator range")
+    {
+        SECTION("range that is a member of *this")
+        {
+            json j = {{"a", {{"a", 1}, {"b", 2}}}};
+            j.update(j["a"].begin(), j["a"].end());
+            CHECK(j == json({{"a", 1}, {"b", 2}}));
+        }
+    }
+
+    SECTION("nested past the iterative descent bound aliases *this")
+    {
+        // every depth on either side of where the iterative version takes
+        // over (detail::recursion_depth_limit(), 128); merging *this into
+        // itself is idempotent, aliased or not
+        for (const std::size_t depth :
+                {
+                    std::size_t{0}, std::size_t{127}, std::size_t{128}, std::size_t{300}
+                })
+        {
+            CAPTURE(depth);
+            json j = json::parse(nested_objects(depth, 0));
+            const json expected = j;
+            j.update(j, true);
+            CHECK(j == expected);
+        }
+    }
+}

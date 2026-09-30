@@ -39,22 +39,9 @@ Linear in the lengths of `apply_patch`.
 
 ## Notes
 
-!!! danger "Undefined behavior and runtime assertions"
-
-    `merge_patch()` reads `apply_patch` while it modifies `#!cpp *this`. `apply_patch` must not be `#!cpp *this`
-    itself and must not refer to a value contained in `#!cpp *this` (for example, a subobject returned by
-    `#!cpp (*this)[key]`). Calling `merge_patch()` with such an argument reads the argument after it has been
-    invalidated by the modification, which is undefined behavior. If the patch may alias `#!cpp *this`, pass a copy
-    instead:
-
-    ```cpp
-    j.merge_patch(json(j));  // instead of j.merge_patch(j)
-    ```
-
-    Passing `#!cpp *this` itself is **guarded by a [runtime assertion](../../features/assertions.md)**; a value
-    contained in `#!cpp *this` is not detected.
-
-    See [GitHub issue #5641](https://github.com/nlohmann/json/issues/5641) for more information.
+`apply_patch` may be `#!cpp *this` itself or refer to a value contained in `#!cpp *this` (for example, a subobject
+returned by `#!cpp (*this)[key]`); it is read as it was when `merge_patch()` was called, before any modification of
+`#!cpp *this`.
 
 ## Examples
 
@@ -80,5 +67,5 @@ Linear in the lengths of `apply_patch`.
 ## Version history
 
 - Added in version 3.0.0.
-- Documented that `apply_patch` must not be `#!cpp *this` or refer to a value contained in `#!cpp *this`, in version
-  3.13.0.
+- Fixed use of freed or relocated memory when `apply_patch` is `#!cpp *this` or refers to a value contained in
+  `#!cpp *this`, in version 3.13.0.

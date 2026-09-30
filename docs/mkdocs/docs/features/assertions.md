@@ -103,36 +103,6 @@ behavior and yields a runtime assertion.
     Assertion failed: (m_object != nullptr), function operator++, file iter_impl.hpp, line 368.
     ```
 
-### Updating or merge-patching a value with itself
-
-Functions [`update`](../api/basic_json/update.md) and [`merge_patch`](../api/basic_json/merge_patch.md) read their
-argument while they modify the value they are called on. Passing that value itself as the argument is undefined
-behavior and yields a runtime assertion. Pass a copy instead, for example `#!cpp j.merge_patch(json(j))`. An argument
-that refers to a value contained in the value (e.g., `#!cpp j.update(j["defaults"])`) is undefined behavior as well, but
-is not detected.
-
-??? example "Example 4: Merge-patching a value with itself"
-
-    The following code will trigger an assertion at runtime:
-
-    ```cpp
-    #include <nlohmann/json.hpp>
-    
-    using json = nlohmann::json;
-    
-    int main()
-    {
-        json j = {{"key", "value"}};
-        j.merge_patch(j);
-    }
-    ```
-
-    Output:
-
-    ```
-    Assertion failed: (&apply_patch != this), function merge_patch, file json.hpp, line 6310.
-    ```
-
 ## Changes
 
 ### Reading from a null `FILE` or `char` pointer

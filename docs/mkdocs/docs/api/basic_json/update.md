@@ -61,22 +61,9 @@ Basic guarantee: if an exception is thrown during the operation, the JSON value 
 
 ## Notes
 
-!!! danger "Undefined behavior and runtime assertions"
-
-    Both overloads read the argument while they modify `#!cpp *this`. The argument `j` (or, for overload (2), the
-    range `[first, last)`) must not be `#!cpp *this` itself and must not refer to a value contained in
-    `#!cpp *this` (for example, a subobject returned by `#!cpp (*this)[key]`). Calling `update()` with such an
-    argument reads the argument after it has been invalidated by the modification, which is undefined behavior. If
-    the argument may alias `#!cpp *this`, pass a copy instead:
-
-    ```cpp
-    j.update(json(j["defaults"]));  // instead of j.update(j["defaults"])
-    ```
-
-    Passing `#!cpp *this` itself is **guarded by a [runtime assertion](../../features/assertions.md)**; a value
-    contained in `#!cpp *this` is not detected.
-
-    See [GitHub issue #5641](https://github.com/nlohmann/json/issues/5641) for more information.
+The argument `j` (or, for overload (2), the range `[first, last)`) may be `#!cpp *this` itself or refer to a value
+contained in `#!cpp *this` (for example, a subobject returned by `#!cpp (*this)[key]`); it is read as it was when
+`update()` was called, before any modification of `#!cpp *this`.
 
 ## Examples
 
@@ -174,5 +161,5 @@ Basic guarantee: if an exception is thrown during the operation, the JSON value 
 
 - Added in version 3.0.0.
 - Added `merge_objects` parameter in 3.10.5.
-- Documented that the argument must not be `#!cpp *this` or refer to a value contained in `#!cpp *this`, in version
-  3.13.0.
+- Fixed use of freed or relocated memory when the argument is `#!cpp *this` or refers to a value contained in
+  `#!cpp *this`, in version 3.13.0.
