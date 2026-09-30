@@ -128,16 +128,16 @@ foreach(CXX_STANDARD 11 14 17 20 23 26)
         COMMENT "Compile and test with Clang for C++${CXX_STANDARD}"
     )
 
+    # pass -stdlib=libc++ through CXXFLAGS: an explicit -DCMAKE_CXX_FLAGS would make CMake ignore CXXFLAGS
     add_custom_target(ci_test_clang_libcxx_cxx${CXX_STANDARD}
-        COMMAND CXX=${CLANG_TOOL} CXXFLAGS="${CLANG_CXXFLAGS}" ${CMAKE_COMMAND}
+        COMMAND CXX=${CLANG_TOOL} CXXFLAGS="${CLANG_CXXFLAGS};-stdlib=libc++" ${CMAKE_COMMAND}
             -DCMAKE_BUILD_TYPE=Debug -GNinja
             -DJSON_BuildTests=ON -DJSON_FastTests=ON
             -DJSON_TestStandards=${CXX_STANDARD}
-            -DCMAKE_CXX_FLAGS="-stdlib=libc++"
             -DCMAKE_EXE_LINKER_FLAGS="-lc++abi"
-            -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_cxx${CXX_STANDARD}
-        COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang_cxx${CXX_STANDARD}
-        COMMAND cd ${PROJECT_BINARY_DIR}/build_clang_cxx${CXX_STANDARD} && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+            -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_libcxx_cxx${CXX_STANDARD}
+        COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang_libcxx_cxx${CXX_STANDARD}
+        COMMAND cd ${PROJECT_BINARY_DIR}/build_clang_libcxx_cxx${CXX_STANDARD} && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
         COMMENT "Compile and test with Clang for C++${CXX_STANDARD} (libc++)"
     )
 endforeach()
