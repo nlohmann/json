@@ -165,7 +165,7 @@ release: include.zip json.tar.xz
 	cp $(AMALGAMATED_FILE) release_files
 	cp $(AMALGAMATED_FWD_FILE) release_files
 	mv $(AMALGAMATED_FILE).asc $(AMALGAMATED_FWD_FILE).asc json.tar.xz json.tar.xz.asc include.zip include.zip.asc release_files
-	cd release_files ; shasum -a 256 $$(find . -type f -not -name '*.asc' | sort) > hashes.txt
+	cd release_files ; shasum -a 256 $$(find . -type f -not -name '*.asc' | sed 's|^\./||' | sort) > hashes.txt
 
 
 ##########################################################################
