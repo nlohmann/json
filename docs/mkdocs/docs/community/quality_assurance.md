@@ -183,8 +183,8 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
         ```
 
 - [x] The code is checked with the latest [Cppcheck](https://cppcheck.sourceforge.io) with all warnings enabled.
-- [x] The code is checked with the latest [Clang Static Analyzer](https://clang-analyzer.llvm.org) with 89 enabled
-  rules.
+- [x] The code is checked with the latest [Clang Static Analyzer](https://clang-analyzer.llvm.org) checks, run
+  through Clang-Tidy's `clang-analyzer-*` checks with warnings as errors.
 - [x] The code is checked with [Infer](https://fbinfer.com).
 - [x] The code is checked with [Codacy](https://app.codacy.com/gh/nlohmann/json/dashboard).
 

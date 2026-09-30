@@ -81,10 +81,10 @@ jobs:
     container: silkeh/clang:dev
     strategy:
       matrix:
-        target: [ci_test_clang, ci_clang_tidy, ci_test_clang_sanitizer, ci_clang_analyze, ci_single_binaries]
+        target: [ci_test_clang, ci_clang_tidy, ci_test_clang_sanitizer, ci_single_binaries]
     steps:
-      - name: Install git, clang-tools, iwyu (ci_single_binaries), and unzip
-        run: apt-get update ; apt-get install -y git clang-tools iwyu unzip
+      - name: Install git, iwyu (ci_single_binaries), and unzip
+        run: apt-get update ; apt-get install -y git iwyu unzip
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false

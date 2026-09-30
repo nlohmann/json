@@ -60,11 +60,11 @@ measures that counter them. The measures are described in detail in [Quality ass
 |---------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
 | Out-of-bounds read/write ([CWE-125](https://cwe.mitre.org/data/definitions/125.html), [CWE-787](https://cwe.mitre.org/data/definitions/787.html)) | bounds checks on all reads from the input; AddressSanitizer and Valgrind on the test suite; OSS-Fuzz      |
 | Integer overflow ([CWE-190](https://cwe.mitre.org/data/definitions/190.html)) | UndefinedBehaviorSanitizer with integer overflow detection; Clang-Tidy; Cppcheck                 |
-| Use after free, double free ([CWE-416](https://cwe.mitre.org/data/definitions/416.html), [CWE-415](https://cwe.mitre.org/data/definitions/415.html)) | ownership of all memory by values; AddressSanitizer and Valgrind; Clang Static Analyzer          |
+| Use after free, double free ([CWE-416](https://cwe.mitre.org/data/definitions/416.html), [CWE-415](https://cwe.mitre.org/data/definitions/415.html)) | ownership of all memory by values; AddressSanitizer and Valgrind; Clang-Tidy (incl. Clang Static Analyzer checks) |
 | Memory leaks ([CWE-401](https://cwe.mitre.org/data/definitions/401.html)) | Valgrind (Memcheck) on the test suite                                                            |
 | Uncontrolled recursion ([CWE-674](https://cwe.mitre.org/data/definitions/674.html)) | iterative parser, binary readers, and destructor; bounded recursion in value operations; tests with deeply nested inputs |
 | Uncontrolled resource consumption ([CWE-400](https://cwe.mitre.org/data/definitions/400.html)) | allocations based on announced sizes are capped; OSS-Fuzz with memory limits                     |
-| Undefined behavior in general ([CWE-758](https://cwe.mitre.org/data/definitions/758.html)) | UndefinedBehaviorSanitizer; runtime assertions; Clang-Tidy, Cppcheck, Clang Static Analyzer, Infer |
+| Undefined behavior in general ([CWE-758](https://cwe.mitre.org/data/definitions/758.html)) | UndefinedBehaviorSanitizer; runtime assertions; Clang-Tidy (incl. Clang Static Analyzer checks), Cppcheck, Infer |
 
 In addition, every line of the library is covered by the unit tests, and all parsers are fuzz-tested around the clock
 by [OSS-Fuzz](https://github.com/google/oss-fuzz/tree/master/projects/json).
