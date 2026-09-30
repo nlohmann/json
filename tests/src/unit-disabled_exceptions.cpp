@@ -46,6 +46,24 @@ TEST_CASE("Tests with disabled exceptions")
         CHECK(*sax_no_exception::error_string == "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: 'x'");
         delete sax_no_exception::error_string; // NOLINT(cppcoreguidelines-owning-memory)
     }
+
+    SECTION("growing an ordered_json object")
+    {
+        auto j = nlohmann::ordered_json::object();
+        for (int i = 0; i < 100; ++i)
+        {
+            j[std::to_string(i)] = {{"nested", i}};
+        }
+
+        CHECK(j.size() == 100);
+        int i = 0;
+        for (const auto& element : j.items())
+        {
+            CHECK(element.key() == std::to_string(i));
+            CHECK(element.value()["nested"] == i);
+            ++i;
+        }
+    }
 }
 
 DOCTEST_GCC_SUPPRESS_WARNING_POP

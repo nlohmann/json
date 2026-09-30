@@ -155,6 +155,18 @@ TEST_CASE("modifiers")
                 CHECK(j == json(json::value_t::binary));
                 CHECK(j == json(k.type()));
             }
+
+            SECTION("filled binary with subtype")
+            {
+                json j = json::binary({1, 2, 3, 4, 5}, 42);
+                json const k = j;
+
+                j.clear();
+                CHECK(!j.empty());
+                CHECK(!j.get_binary().has_subtype());
+                CHECK(j == json(json::value_t::binary));
+                CHECK(j == json(k.type()));
+            }
         }
 
         SECTION("number (integer)")
@@ -758,6 +770,34 @@ TEST_CASE("modifiers")
                 CHECK(*it == json(7));
                 CHECK((j_array.end() - it) == 3);
                 CHECK(j_array == json({1, 2, 3, 4, 7, 8, 9}));
+            }
+        }
+
+        SECTION("initializer list referring to the array's own elements (#5656)")
+        {
+            SECTION("sufficient capacity (no reallocation)")
+            {
+                json j_own = json::array();
+                j_own.get_ref<json::array_t&>().reserve(8);
+                j_own.push_back("a");
+                j_own.push_back("b");
+                j_own.push_back("c");
+
+                const json& j_own_cref = j_own;
+                auto it = j_own.insert(j_own.begin(), {j_own_cref[0], j_own_cref[1]});
+                CHECK(*it == json("a"));
+                CHECK(j_own == json({"a", "b", "a", "b", "c"}));
+            }
+
+            SECTION("insufficient capacity (reallocation)")
+            {
+                json j_own = {"a", "b", "c"};
+                j_own.get_ref<json::array_t&>().shrink_to_fit();
+
+                const json& j_own_cref = j_own;
+                auto it = j_own.insert(j_own.begin(), {j_own_cref[2]});
+                CHECK(*it == json("c"));
+                CHECK(j_own == json({"c", "a", "b", "c"}));
             }
         }
 
