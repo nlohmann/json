@@ -55,12 +55,6 @@ execute_process(COMMAND ${NINJA_TOOL} --version OUTPUT_VARIABLE NINJA_TOOL_VERSI
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" NINJA_TOOL_VERSION "${NINJA_TOOL_VERSION}")
 message(STATUS "🔖 Ninja ${NINJA_TOOL_VERSION} (${NINJA_TOOL})")
 
-find_program(OCLINT_TOOL NAMES oclint-json-compilation-database)
-find_program(OCLINT_VERSION_TOOL NAMES oclint)
-execute_process(COMMAND ${OCLINT_VERSION_TOOL} --version OUTPUT_VARIABLE OCLINT_TOOL_VERSION ERROR_VARIABLE OCLINT_TOOL_VERSION)
-string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" OCLINT_TOOL_VERSION "${OCLINT_TOOL_VERSION}")
-message(STATUS "🔖 OCLint ${OCLINT_TOOL_VERSION} (${OCLINT_TOOL})")
-
 find_program(VALGRIND_TOOL NAMES valgrind)
 execute_process(COMMAND ${VALGRIND_TOOL} --version OUTPUT_VARIABLE VALGRIND_TOOL_VERSION ERROR_VARIABLE VALGRIND_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" VALGRIND_TOOL_VERSION "${VALGRIND_TOOL_VERSION}")
@@ -450,7 +444,7 @@ add_custom_target(ci_cppcheck
     COMMAND venv_cppcheck/bin/cppcheck --enable=warning --check-level=exhaustive --inline-suppr --inconclusive --force
             --std=c++11 ${PROJECT_SOURCE_DIR}/include/nlohmann/json.hpp -I ${CMAKE_SOURCE_DIR}/include
             --error-exitcode=1 --relative-paths=${PROJECT_SOURCE_DIR} -j ${N} --include=default_defines.hpp
-            --cppcheck-build-dir=cppcheck --check-level=exhaustive
+            --cppcheck-build-dir=cppcheck
             -UJSON_CATCH_USER -UJSON_TRY_USER -UJSON_ASSERT -UJSON_INTERNAL_CATCH -UJSON_THROW
             -DJSON_HAS_CPP_11 -UJSON_HAS_CPP_14 -UJSON_HAS_CPP_17 -UJSON_HAS_CPP_20 -UJSON_HAS_THREE_WAY_COMPARISON
     COMMENT "Check code with Cppcheck"
@@ -469,34 +463,6 @@ add_custom_target(ci_cpplint
 )
 
 ###############################################################################
-# Check code with OCLint.
-###############################################################################
-
-file(COPY ${PROJECT_SOURCE_DIR}/single_include/nlohmann/json.hpp DESTINATION ${PROJECT_BINARY_DIR}/src_single)
-file(RENAME ${PROJECT_BINARY_DIR}/src_single/json.hpp ${PROJECT_BINARY_DIR}/src_single/all.cpp)
-file(APPEND "${PROJECT_BINARY_DIR}/src_single/all.cpp" "\n\nint main()\n{}\n")
-
-add_executable(single_all ${PROJECT_BINARY_DIR}/src_single/all.cpp)
-target_compile_features(single_all PRIVATE cxx_std_11)
-
-add_custom_target(ci_oclint
-    COMMAND ${CMAKE_COMMAND}
-        -DCMAKE_BUILD_TYPE=Debug
-        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-        -DJSON_BuildTests=OFF -DJSON_CI=ON
-        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_oclint
-    COMMAND ${OCLINT_TOOL} -i ${PROJECT_BINARY_DIR}/build_oclint/src_single/all.cpp -p ${PROJECT_BINARY_DIR}/build_oclint --
-        -report-type html -enable-global-analysis --max-priority-1=0 --max-priority-2=1000 --max-priority-3=2000
-        --disable-rule=MultipleUnaryOperator
-        --disable-rule=DoubleNegative
-        --disable-rule=ShortVariableName
-        --disable-rule=GotoStatement
-        --disable-rule=LongLine
-        -o ${PROJECT_BINARY_DIR}/build_oclint/oclint_report.html
-    COMMENT "Check code with OCLint"
-)
-
-###############################################################################
 # Check code with Clang-Tidy.
 ###############################################################################
 
@@ -508,21 +474,6 @@ add_custom_target(ci_clang_tidy
         -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_clang_tidy
     COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_clang_tidy
     COMMENT "Check code with Clang-Tidy"
-)
-
-###############################################################################
-# Check code with PVS-Studio Analyzer <https://www.viva64.com/en/pvs-studio/>.
-###############################################################################
-
-add_custom_target(ci_pvs_studio
-    COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
-        -DCMAKE_BUILD_TYPE=Debug
-        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-        -DJSON_BuildTests=ON
-        -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_pvs_studio
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_pvs_studio && ${PVS_STUDIO_ANALYZER_TOOL} analyze -j 10
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_pvs_studio && ${PLOG_CONVERTER_TOOL} -a'GA:1,2;64:1;CS' -t fullhtml PVS-Studio.log -o pvs
-    COMMENT "Check code with PVS Studio"
 )
 
 ###############################################################################
