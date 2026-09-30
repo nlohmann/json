@@ -31404,11 +31404,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// value is an object; called first by both @ref update overloads
     void prepare_update()
     {
-        // implicitly convert a null value to an empty object
+        // implicitly convert a null value to an empty object; create the
+        // object before setting the type, so a throwing allocation leaves
+        // this value null
         if (is_null())
         {
-            m_data.m_type = value_t::object;
             m_data.m_value.object = create<object_t>();
+            m_data.m_type = value_t::object;
             assert_invariant();
         }
 
