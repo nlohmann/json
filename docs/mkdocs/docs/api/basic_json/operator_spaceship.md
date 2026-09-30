@@ -96,8 +96,5 @@ Linear.
 
 ## Version history
 
-1. Added in version 3.11.0. Fixed in version 3.13.0 to keep the result independent of nesting depth: before, a pair
-   of binary values with the same bytes but a different subtype - unequal by `operator==`, yet equivalent by
-   `operator<=>` - could end an ordered comparison as `unordered` only past 128 levels of nesting, or at every depth
-   with [`JSON_NO_THREAD_LOCAL`](../macros/json_no_thread_local.md) defined.
+1. Added in version 3.11.0.
 2. Added in version 3.11.0.
