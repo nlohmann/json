@@ -4289,6 +4289,13 @@ template<class B, class... Bn>
 struct conjunction<B, Bn...>
 : std::conditional<static_cast<bool>(B::value), conjunction<Bn...>, B>::type {};
 
+// https://en.cppreference.com/w/cpp/types/disjunction
+template<class...> struct disjunction : std::false_type { };
+template<class B> struct disjunction<B> : B { };
+template<class B, class... Bn>
+struct disjunction<B, Bn...>
+: std::conditional<static_cast<bool>(B::value), B, disjunction<Bn...>>::type {};
+
 // https://en.cppreference.com/w/cpp/types/negation
 template<class B> struct negation : std::integral_constant < bool, !B::value > { };
 
@@ -4841,10 +4848,8 @@ using all_signed = conjunction<std::is_signed<Types>...>;
 template<typename... Types>
 using all_unsigned = conjunction<std::is_unsigned<Types>...>;
 
-// there's a disjunction trait in another PR; replace when merged
 template<typename... Types>
-using same_sign = std::integral_constant < bool,
-      all_signed<Types...>::value || all_unsigned<Types...>::value >;
+using same_sign = disjunction<all_signed<Types...>, all_unsigned<Types...>>;
 
 template<typename OfType, typename T>
 using never_out_of_range = std::integral_constant < bool,
@@ -5462,63 +5467,6 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
-// #include <nlohmann/detail/meta/logic.hpp>
-
-
-// #include <nlohmann/detail/macro_scope.hpp>
-
-
-NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
-#ifdef JSON_HAS_CPP_17
-
-template<bool... Booleans>
-struct cxpr_or_impl : std::integral_constant < bool, (Booleans || ...) > {};
-
-template<bool... Booleans>
-struct cxpr_and_impl : std::integral_constant < bool, (Booleans &&...) > {};
-
-#else
-
-template<bool... Booleans>
-struct cxpr_or_impl : std::false_type {};
-
-template<bool... Booleans>
-struct cxpr_or_impl<true, Booleans...> : std::true_type {};
-
-template<bool... Booleans>
-struct cxpr_or_impl<false, Booleans...> : cxpr_or_impl<Booleans...> {};
-
-template<bool... Booleans>
-struct cxpr_and_impl : std::true_type {};
-
-template<bool... Booleans>
-struct cxpr_and_impl<true, Booleans...> : cxpr_and_impl<Booleans...> {};
-
-template<bool... Booleans>
-struct cxpr_and_impl<false, Booleans...> : std::false_type {};
-
-#endif
-
-template<class Boolean>
-struct cxpr_not : std::integral_constant < bool, !Boolean::value > {};
-
-template<class... Booleans>
-struct cxpr_or : cxpr_or_impl<Booleans::value...> {};
-
-template<bool... Booleans>
-struct cxpr_or_c : cxpr_or_impl<Booleans...> {};
-
-template<class... Booleans>
-struct cxpr_and : cxpr_and_impl<Booleans::value...> {};
-
-template<bool... Booleans>
-struct cxpr_and_c : cxpr_and_impl<Booleans...> {};
-
-}  // namespace detail
-NLOHMANN_JSON_NAMESPACE_END
-
 // #include <nlohmann/detail/string_concat.hpp>
 
 // #include <nlohmann/detail/value_t.hpp>
@@ -6020,7 +5968,7 @@ inline void from_json_tuple_impl(BasicJsonType&& j, std::pair<A1, A2>& p, priori
 template<typename BasicJsonType, typename... Args>
 std::tuple<Args...> from_json_tuple_impl(BasicJsonType&& j, identity_tag<std::tuple<Args...>> /*unused*/, priority_tag<2> /*unused*/)
 {
-    static_assert(cxpr_and<cxpr_or<cxpr_not<std::is_reference<Args>>, is_compatible_reference_type<BasicJsonType, Args>>...>::value,
+    static_assert(conjunction<disjunction<negation<std::is_reference<Args>>, is_compatible_reference_type<BasicJsonType, Args>>...>::value,
                   "Can not return a tuple containing references to types not contained in a Json, try Json::get_to()");
     return from_json_tuple_impl_base<1, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
 }
