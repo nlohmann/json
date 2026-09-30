@@ -484,6 +484,10 @@ TEST_CASE("a failed allocation leaves the value unchanged")
         next_construct_fails = false;
     }
 
+    // With iterator debugging, VS 2015's containers construct a proxy with the
+    // allocator in constructors that cannot report its failure, so a failing
+    // allocator crashes this section there (SIGSEGV with VS 2015 Debug x86).
+#if !(defined(_MSC_VER) && _MSC_VER < 1910 && defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0)
     SECTION("converting into an existing value")
     {
         // to_json replaces the value it is given; the old one must survive a
@@ -498,14 +502,9 @@ TEST_CASE("a failed allocation leaves the value unchanged")
         CHECK_THROWS_AS(nlohmann::to_json(j, std::vector<int> {1, 2}), std::bad_alloc&);
         CHECK(j == "old");
 
-        // with iterator debugging, the default constructor of VS 2015's
-        // std::vector is noexcept but constructs a proxy with the allocator,
-        // which terminates when this allocator throws
-#if !(defined(_MSC_VER) && _MSC_VER < 1910 && defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0)
         next_construct_fails = true;
         CHECK_THROWS_AS(nlohmann::to_json(j, std::vector<bool> {true, false}), std::bad_alloc&);
         CHECK(j == "old");
-#endif
 
         next_construct_fails = true;
         CHECK_THROWS_AS(nlohmann::to_json(j, std::map<std::string, int> {{"a", 1}}), std::bad_alloc&);
@@ -567,5 +566,6 @@ TEST_CASE("a failed allocation leaves the value unchanged")
         nlohmann::to_json(j, std::vector<int> {1, 2});
         CHECK(j == my_json({1, 2}));
     }
+#endif
 }
 #endif
