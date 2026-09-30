@@ -7,7 +7,7 @@ void clear() noexcept;
 Clears the content of a JSON value and resets it to the default value as if [`basic_json(value_t)`](basic_json.md) would
 have been called with the current value type from [`type()`](type.md):
 
-| Value type | initial value                          |
+| Value type | initial value                           |
 |------------|-----------------------------------------|
 | null       | `null`                                  |
 | boolean    | `false`                                 |
