@@ -77,11 +77,11 @@ otherwise, it uses unsigned integer storage.
       [`std::strtod`](https://en.cppreference.com/w/cpp/string/byte/strtof), respectively.
     - The result of converting floating-point numbers does not depend on the C locale (`LC_NUMERIC`). They are
       converted with [`std::from_chars`](https://en.cppreference.com/w/cpp/utility/from_chars) where the standard
-      library implements it for the number type (including libc++ 20 or later for `#!c float` and `#!c double`),
-      otherwise with `strtod_l` and the "C" locale where the C library provides it (glibc, macOS, MSVC), and otherwise
-      with `std::strtod` and the decimal point of the current locale. Before version 3.13.0, the last way was used much
-      more often, and a locale whose decimal point is longer than one byte (e.g., `fa_IR.UTF-8`) truncated numbers at
-      the decimal point.
+      library implements it for the number type (with libc++ 20 or later, only for `#!c float` and `#!c double`, and
+      only where `strtod_l` is unavailable, because that is faster), otherwise with `strtod_l` and the "C" locale where
+      the C library provides it (glibc, macOS, MSVC), and otherwise with `std::strtod` and the decimal point of the
+      current locale. Before version 3.13.0, the last way was used much more often, and a locale whose decimal point
+      is longer than one byte (e.g., `fa_IR.UTF-8`) truncated numbers at the decimal point.
 
 !!! example "Examples"
 

@@ -8505,45 +8505,6 @@ NLOHMANN_JSON_NAMESPACE_END
 // #include <nlohmann/detail/macro_scope.hpp>
 
 
-// std::from_chars lives in <charconv>, but being in C++17 mode does not
-// guarantee the header exists: GCC 7 sets __cplusplus to C++17 yet ships no
-// <charconv> (added in GCC 8; floating-point support in GCC 11). Guard the
-// include with __has_include so such toolchains fall back to the scalar path.
-#if defined(JSON_HAS_CPP_17) && defined(__has_include)
-    #if __has_include(<charconv>)
-        #include <charconv> // from_chars
-        #include <system_error> // errc
-
-        // std::from_chars is used for floating-point numbers
-        // - for float, double, and long double if __cpp_lib_to_chars announces
-        //   complete support (only checked in C++17 or later: some standard
-        //   libraries, e.g. libstdc++ 15, define it even in C++14 mode, where
-        //   <charconv> is not included);
-        // - for float and double with libc++ 20 or later, which does not define
-        //   __cpp_lib_to_chars because long double is missing. On Apple
-        //   platforms, the implementation is part of the system's libc++ and
-        //   only available when deploying to macOS/iOS 26 or later; for older
-        //   deployment targets, _LIBCPP_AVAILABILITY_HAS_FROM_CHARS_FLOATING_POINT
-        //   is 0, and the fallbacks below are used.
-        #if defined(__cpp_lib_to_chars)
-            #define JSON_HAS_FLOAT_FROM_CHARS 1
-            #define JSON_HAS_LONG_DOUBLE_FROM_CHARS 1
-        #elif defined(_LIBCPP_VERSION) && defined(_LIBCPP_AVAILABILITY_HAS_FROM_CHARS_FLOATING_POINT)
-            #if _LIBCPP_VERSION >= 200000 && _LIBCPP_AVAILABILITY_HAS_FROM_CHARS_FLOATING_POINT
-                #define JSON_HAS_FLOAT_FROM_CHARS 1
-            #endif
-        #endif
-    #endif
-#endif
-
-#ifndef JSON_HAS_FLOAT_FROM_CHARS
-    #define JSON_HAS_FLOAT_FROM_CHARS 0
-#endif
-
-#ifndef JSON_HAS_LONG_DOUBLE_FROM_CHARS
-    #define JSON_HAS_LONG_DOUBLE_FROM_CHARS 0
-#endif
-
 // strtof_l/strtod_l/strtold_l convert with a given locale object instead of the
 // global C locale. They are not part of ISO C or C++, so they are only used where
 // the C library is known to declare them: Microsoft's UCRT (as _strtod_l etc.),
@@ -8560,6 +8521,47 @@ NLOHMANN_JSON_NAMESPACE_END
     #define JSON_HAS_C_LOCALE_STRTOD 1
 #else
     #define JSON_HAS_C_LOCALE_STRTOD 0
+#endif
+
+// std::from_chars lives in <charconv>, but being in C++17 mode does not
+// guarantee the header exists: GCC 7 sets __cplusplus to C++17 yet ships no
+// <charconv> (added in GCC 8; floating-point support in GCC 11). Guard the
+// include with __has_include so such toolchains fall back to the scalar path.
+#if defined(JSON_HAS_CPP_17) && defined(__has_include)
+    #if __has_include(<charconv>)
+        #include <charconv> // from_chars
+        #include <system_error> // errc
+
+        // std::from_chars is used for floating-point numbers
+        // - for float, double, and long double if __cpp_lib_to_chars announces
+        //   complete support (only checked in C++17 or later: some standard
+        //   libraries, e.g. libstdc++ 15, define it even in C++14 mode, where
+        //   <charconv> is not included);
+        // - for float and double with libc++ 20 or later, which does not define
+        //   __cpp_lib_to_chars because long double is missing, but only where
+        //   the C library offers no strtod_l: libc++'s implementation is slower
+        //   than Apple's strtod_l (by 1.3x to 2.8x per number), and it would be
+        //   tried before Clinger's fast path. On Apple platforms, it is also only
+        //   available when deploying to macOS/iOS 26 or later; for older
+        //   deployment targets, _LIBCPP_AVAILABILITY_HAS_FROM_CHARS_FLOATING_POINT
+        //   is 0.
+        #if defined(__cpp_lib_to_chars)
+            #define JSON_HAS_FLOAT_FROM_CHARS 1
+            #define JSON_HAS_LONG_DOUBLE_FROM_CHARS 1
+        #elif !JSON_HAS_C_LOCALE_STRTOD && defined(_LIBCPP_VERSION) && defined(_LIBCPP_AVAILABILITY_HAS_FROM_CHARS_FLOATING_POINT)
+            #if _LIBCPP_VERSION >= 200000 && _LIBCPP_AVAILABILITY_HAS_FROM_CHARS_FLOATING_POINT
+                #define JSON_HAS_FLOAT_FROM_CHARS 1
+            #endif
+        #endif
+    #endif
+#endif
+
+#ifndef JSON_HAS_FLOAT_FROM_CHARS
+    #define JSON_HAS_FLOAT_FROM_CHARS 0
+#endif
+
+#ifndef JSON_HAS_LONG_DOUBLE_FROM_CHARS
+    #define JSON_HAS_LONG_DOUBLE_FROM_CHARS 0
 #endif
 
 // This file contains the value-conversion helpers used by the lexer to turn an
