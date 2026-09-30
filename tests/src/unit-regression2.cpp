@@ -874,62 +874,60 @@ namespace
 {
 /// builds a value from SAX events, asks the parser to recover from its first
 /// 100 errors, and checks that the events are balanced (see #3989)
-class RecoveringParser : public nlohmann::detail::json_sax_dom_parser<json>
+class RecoveringParser
 {
-    using base = nlohmann::detail::json_sax_dom_parser<json>;
-
   public:
     explicit RecoveringParser(json& j)
-        : base(j, false)
+        : dom(j, false)
     {}
 
     bool null()
     {
         value();
-        return base::null();
+        return dom.null();
     }
 
     bool boolean(bool val)
     {
         value();
-        return base::boolean(val);
+        return dom.boolean(val);
     }
 
     bool number_integer(json::number_integer_t val)
     {
         value();
-        return base::number_integer(val);
+        return dom.number_integer(val);
     }
 
     bool number_unsigned(json::number_unsigned_t val)
     {
         value();
-        return base::number_unsigned(val);
+        return dom.number_unsigned(val);
     }
 
     bool number_float(json::number_float_t val, const std::string& s)
     {
         value();
-        return base::number_float(val, s);
+        return dom.number_float(val, s);
     }
 
     bool string(std::string& val)
     {
         value();
-        return base::string(val);
+        return dom.string(val);
     }
 
     bool binary(json::binary_t& val)
     {
         value();
-        return base::binary(val);
+        return dom.binary(val);
     }
 
     bool start_object(std::size_t elements)
     {
         value();
         stack.push_back('o');
-        return base::start_object(elements);
+        return dom.start_object(elements);
     }
 
     bool key(std::string& val)
@@ -940,7 +938,7 @@ class RecoveringParser : public nlohmann::detail::json_sax_dom_parser<json>
             return false;
         }
         stack.back() = 'v';
-        return base::key(val);
+        return dom.key(val);
     }
 
     bool end_object()
@@ -951,14 +949,14 @@ class RecoveringParser : public nlohmann::detail::json_sax_dom_parser<json>
             return false;
         }
         stack.pop_back();
-        return base::end_object();
+        return dom.end_object();
     }
 
     bool start_array(std::size_t elements)
     {
         value();
         stack.push_back('a');
-        return base::start_array(elements);
+        return dom.start_array(elements);
     }
 
     bool end_array()
@@ -969,7 +967,7 @@ class RecoveringParser : public nlohmann::detail::json_sax_dom_parser<json>
             return false;
         }
         stack.pop_back();
-        return base::end_array();
+        return dom.end_array();
     }
 
     bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& ex)
@@ -986,6 +984,8 @@ class RecoveringParser : public nlohmann::detail::json_sax_dom_parser<json>
         return well_formed && stack.empty();
     }
 
+    /// builds the value
+    nlohmann::detail::json_sax_dom_parser<json> dom;
     std::size_t errors = 0;
     std::vector<std::string> messages {}; // NOLINT(readability-redundant-member-init)
     std::vector<char> stack {}; // NOLINT(readability-redundant-member-init)

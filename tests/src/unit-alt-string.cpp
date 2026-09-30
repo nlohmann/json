@@ -384,6 +384,9 @@ TEST_CASE("alternative string type")
                 : nlohmann::detail::json_sax_dom_parser<alt_json>(j, false)
             {}
 
+            // sax_parse() calls the SAX parser's own parse_error(), so hiding
+            // the one of the base class is what recovering takes
+            // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method)
             bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const nlohmann::detail::exception& /*unused*/)
             {
                 ++errors;

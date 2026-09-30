@@ -143,11 +143,13 @@ class SaxEventLogger
     {
         errored = true;
         events.push_back("parse_error(" + std::to_string(position) + ")");
-        return false;
+        return recover;
     }
 
     std::vector<std::string> events {}; // NOLINT(readability-redundant-member-init)
     bool errored = false;
+    /// whether parse_error() asks the parser to recover from the error (see #3989)
+    bool recover = false;
 };
 
 class SaxCountdown : public nlohmann::json::json_sax_t
@@ -2822,57 +2824,61 @@ namespace
 {
 /// builds a value like json::parse(), but asks the parser to recover from
 /// errors (see #3989), and checks that the events it receives are balanced
-class RecoveringDomParser : public nlohmann::detail::json_sax_dom_parser<json>
+class RecoveringDomParser
 {
-    using base = nlohmann::detail::json_sax_dom_parser<json>;
-
   public:
     explicit RecoveringDomParser(json& j, std::size_t max_errors_ = static_cast<std::size_t>(-1))
-        : base(j, false)
+        : dom(j, false)
         , max_errors(max_errors_)
     {}
 
     bool null()
     {
         value();
-        return base::null();
+        return dom.null();
     }
 
     bool boolean(bool val)
     {
         value();
-        return base::boolean(val);
+        return dom.boolean(val);
     }
 
     bool number_integer(json::number_integer_t val)
     {
         value();
-        return base::number_integer(val);
+        return dom.number_integer(val);
     }
 
     bool number_unsigned(json::number_unsigned_t val)
     {
         value();
-        return base::number_unsigned(val);
+        return dom.number_unsigned(val);
     }
 
     bool number_float(json::number_float_t val, const std::string& s)
     {
         value();
-        return base::number_float(val, s);
+        return dom.number_float(val, s);
     }
 
     bool string(std::string& val)
     {
         value();
-        return base::string(val);
+        return dom.string(val);
+    }
+
+    bool binary(json::binary_t& val)
+    {
+        value();
+        return dom.binary(val);
     }
 
     bool start_object(std::size_t elements)
     {
         value();
         stack.push_back('o');
-        return base::start_object(elements);
+        return dom.start_object(elements);
     }
 
     bool key(std::string& val)
@@ -2884,7 +2890,7 @@ class RecoveringDomParser : public nlohmann::detail::json_sax_dom_parser<json>
             return false;
         }
         stack.back() = 'v';
-        return base::key(val);
+        return dom.key(val);
     }
 
     bool end_object()
@@ -2896,14 +2902,14 @@ class RecoveringDomParser : public nlohmann::detail::json_sax_dom_parser<json>
             return false;
         }
         stack.pop_back();
-        return base::end_object();
+        return dom.end_object();
     }
 
     bool start_array(std::size_t elements)
     {
         value();
         stack.push_back('a');
-        return base::start_array(elements);
+        return dom.start_array(elements);
     }
 
     bool end_array()
@@ -2915,7 +2921,7 @@ class RecoveringDomParser : public nlohmann::detail::json_sax_dom_parser<json>
             return false;
         }
         stack.pop_back();
-        return base::end_array();
+        return dom.end_array();
     }
 
     bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& ex)
@@ -2930,6 +2936,8 @@ class RecoveringDomParser : public nlohmann::detail::json_sax_dom_parser<json>
         return well_formed && stack.empty();
     }
 
+    /// builds the value
+    nlohmann::detail::json_sax_dom_parser<json> dom;
     std::vector<std::string> errors {}; // NOLINT(readability-redundant-member-init)
     std::size_t events = 0;
     /// the open containers: 'a' for an array, 'o' for an object that expects
@@ -2978,17 +2986,6 @@ RecoveryResult parse_recovering(InputType&& input, const bool strict = true,
                                     strict, ignore_comments, ignore_trailing_commas);
     return {j, sax.errors, sax.events, ok, sax.balanced()};
 }
-
-/// logs the events as strings and recovers from errors
-class RecoveringEventLogger : public SaxEventLogger
-{
-  public:
-    bool parse_error(std::size_t position, const std::string& /*unused*/, const json::exception& /*unused*/)
-    {
-        events.push_back("parse_error(" + std::to_string(position) + ")");
-        return true;
-    }
-};
 
 /// stops after a number of events, but recovers from errors
 class RecoveringCountdown : public SaxCountdown
@@ -3139,7 +3136,8 @@ TEST_CASE("parser error recovery (#3989)")
         CHECK(result.value[1].get<double>() == -std::numeric_limits<double>::infinity());
 
         // the SAX parser gets the number's text
-        RecoveringEventLogger logger;
+        SaxEventLogger logger;
+        logger.recover = true;
         CHECK(!json::sax_parse("1e999", &logger));
         CHECK(logger.events == std::vector<std::string>({"parse_error(5)", "number_float(1e999)"}));
     }
@@ -3191,7 +3189,8 @@ TEST_CASE("parser error recovery (#3989)")
     SECTION("events")
     {
         // see #4522
-        RecoveringEventLogger logger;
+        SaxEventLogger logger;
+        logger.recover = true;
         CHECK(!json::sax_parse(R"([{1}, "a"])", &logger));
         CHECK(logger.events == std::vector<std::string>(
         {
