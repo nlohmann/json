@@ -97,13 +97,13 @@ jobs:
 
   ci_cmake_options:
     runs-on: ubuntu-latest
-    container: ubuntu:focal
+    container: ubuntu:24.04
     strategy:
       matrix:
         target: [ci_cmake_flags, ci_test_diagnostics, ci_test_diagnostic_positions, ci_test_noexceptions, ci_test_noimplicitconversions, ci_test_legacycomparison, ci_test_noglobaludls, ci_test_disableenumserialization, ci_test_skiplibraryversioncheck, ci_test_simdutf, ci_test_strict_nul_handling, ci_test_no_thread_local]
     steps:
       - name: Install build-essential
-        run: apt-get update ; apt-get install -y build-essential unzip wget git libssl-dev
+        run: apt-get update ; apt-get install -y build-essential unzip wget git
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false

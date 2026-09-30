@@ -598,17 +598,36 @@ add_custom_target(ci_benchmarks
 
 function(ci_get_cmake version var)
     set(${var} ${PROJECT_BINARY_DIR}/cmake-${version}/bin/cmake)
-    add_custom_command(
-        OUTPUT ${${var}}
-        COMMAND wget -nc https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}.tar.gz
-        COMMAND tar xfz cmake-${version}.tar.gz
-        COMMAND rm cmake-${version}.tar.gz
-        # -DCMAKE_POLICY_VERSION_MINIMUM=3.5 required to compile older CMake versions with CMake 4.0.0
-        COMMAND cmake -S cmake-${version} -B cmake-${version} -DCMAKE_POLICY_VERSION_MINIMUM=3.5
-        COMMAND cmake --build cmake-${version} --parallel 10
-        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-        COMMENT "Download CMake ${version}"
-    )
+    if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64)$")
+        # Kitware publishes a prebuilt Linux x86_64 archive for every release; unpacking it is far
+        # cheaper than compiling all of CMake (including its own test helpers) from source.
+        add_custom_command(
+            OUTPUT ${${var}}
+            COMMAND wget -nc https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-linux-x86_64.tar.gz
+            COMMAND wget -nc https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-SHA-256.txt
+            # verify the archive against Kitware's published SHA-256 sums before unpacking it
+            COMMAND sh -c "grep ' cmake-${version}-linux-x86_64[.]tar[.]gz$' cmake-${version}-SHA-256.txt | sha256sum -c -"
+            COMMAND tar xfz cmake-${version}-linux-x86_64.tar.gz
+            COMMAND rm cmake-${version}-linux-x86_64.tar.gz cmake-${version}-SHA-256.txt
+            COMMAND ${CMAKE_COMMAND} -E rm -rf cmake-${version}
+            COMMAND ${CMAKE_COMMAND} -E rename cmake-${version}-linux-x86_64 cmake-${version}
+            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+            COMMENT "Download prebuilt CMake ${version}"
+        )
+    else()
+        # no prebuilt archive for this platform (e.g. macOS or Linux aarch64): build from source
+        add_custom_command(
+            OUTPUT ${${var}}
+            COMMAND wget -nc https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}.tar.gz
+            COMMAND tar xfz cmake-${version}.tar.gz
+            COMMAND rm cmake-${version}.tar.gz
+            # -DCMAKE_POLICY_VERSION_MINIMUM=3.5 required to compile older CMake versions with CMake 4.0.0
+            COMMAND cmake -S cmake-${version} -B cmake-${version} -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+            COMMAND cmake --build cmake-${version} --parallel 10
+            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+            COMMENT "Download and build CMake ${version} from source"
+        )
+    endif()
     set(${var} ${${var}} PARENT_SCOPE)
 endfunction()
 
