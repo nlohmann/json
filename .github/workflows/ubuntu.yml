@@ -403,3 +403,21 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
         run: cmake --build build --target ${{ matrix.target }}
+
+  # Native Linux ARM64 runner with the latest GCC. The ubuntu-24.04-arm label is
+  # only available for public repositories.
+  ci_test_arm64:
+    runs-on: ubuntu-24.04-arm
+    container: gcc:latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
+      - name: Check that the job runs natively on arm64
+        run: uname -m && test "$(uname -m)" = aarch64
+      - name: Run CMake
+        run: cmake -S . -B build -DJSON_CI=On
+      - name: Build
+        run: cmake --build build --target ci_test_compiler_default

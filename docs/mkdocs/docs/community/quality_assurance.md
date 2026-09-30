@@ -90,7 +90,7 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
         | GNU 14.2.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 15.1.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 16.1.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-        | GNU 16.1.0                                   | arm64        | Linux 6.1.100                     | Cirrus CI |
+        | GNU 16.1.0                                   | arm64        | Ubuntu 24.04                      | GitHub    |
         | icpc (ICC) 2021.10.0 20230609                | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
         | icpx (Intel oneAPI DPC++/C++) 2025.3.2       | x86_64       | Ubuntu 24.04 LTS                  | GitHub    |
         | nvc++ (NVIDIA HPC SDK) 25.5-0                | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
