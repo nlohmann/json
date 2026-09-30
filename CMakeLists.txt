@@ -42,8 +42,11 @@ endif()
 ## OPTIONS
 ##
 
+# Build the tests by default only for the main project and only if the tests
+# directory exists (the release archive json.tar.xz does not contain it).
 # VERSION_GREATER_EQUAL is not available in older CMake (< 3.7)
-if(${MAIN_PROJECT} AND (${CMAKE_VERSION} VERSION_EQUAL 3.13 OR ${CMAKE_VERSION} VERSION_GREATER 3.13))
+if(${MAIN_PROJECT} AND (${CMAKE_VERSION} VERSION_EQUAL 3.13 OR ${CMAKE_VERSION} VERSION_GREATER 3.13)
+   AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/CMakeLists.txt")
     set(JSON_BuildTests_INIT ON)
 else()
     set(JSON_BuildTests_INIT OFF)

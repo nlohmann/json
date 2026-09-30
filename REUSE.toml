@@ -1,0 +1,58 @@
+version = 1
+SPDX-PackageName = "json"
+SPDX-PackageSupplier = "Niels Lohmann <mail@nlohmann.me>"
+SPDX-PackageDownloadLocation = "https://github.com/nlohmann/json"
+
+[[annotations]]
+path = "**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2013-2026 Niels Lohmann <https://nlohmann.me>"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "include/nlohmann/thirdparty/hedley.hpp"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2016-2021 Evan Nemerson <evan@nemerson.com>"
+SPDX-License-Identifier = "CC0"
+
+[[annotations]]
+path = "include/nlohmann/detail/meta/cpp_future.hpp"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2013-2026 Niels Lohmann <https://nlohmann.me> and 2018 The Abseil Authors"
+SPDX-License-Identifier = "MIT AND Apache-2.0"
+
+[[annotations]]
+path = "tests/thirdparty/doctest/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2016-2023 Viktor Kirilov"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "tests/thirdparty/fifo_map/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2015-2017 Niels Lohmann"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = "tests/thirdparty/Fuzzer/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2003-2022 LLVM Project."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "tests/thirdparty/imapdl/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2017 Georg Sauthoff <mail@gms.tf>"
+SPDX-License-Identifier = "GPL-3.0-only"
+
+[[annotations]]
+path = "tools/amalgamate/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2012 Erik Edlund <erik.edlund@32767.se>"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+[[annotations]]
+path = "tools/gdb_pretty_printer/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2020 Hannes Domani <https://github.com/ssbssa>"
+SPDX-License-Identifier = "MIT"

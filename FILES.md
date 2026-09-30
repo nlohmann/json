@@ -207,19 +207,19 @@ Further documentation:
 
 ## REUSE
 
-### `.reuse/dep5`
+### `REUSE.toml`
 
 The file defines the licenses of certain third-party components in the repository. The root `Makefile` contains a target `reuse` that checks for compliance.
 
 Further documentation:
 
-- [DEP5](https://reuse.software/spec-3.2/#dep5-deprecated)
+- [REUSE.toml](https://reuse.software/spec-3.3/#reusetoml)
 - [reuse command-line tool](https://pypi.org/project/reuse/)
 - [documentation of linting](https://reuse.readthedocs.io/en/stable/man/reuse-lint.html)
 - [REUSE](http://reuse.software)
 
 > [!IMPORTANT]
-> The filename `.reuse/dep5` is predetermined by REUSE. Alternatively, a `REUSE.toml` file can be used.
+> The filename `REUSE.toml` is predetermined by REUSE. Alternatively, a `.reuse/dep5` file (deprecated) can be used.
 
 ### `.reuse/templates`
 

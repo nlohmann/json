@@ -1204,15 +1204,18 @@ language bindings, format converters, and the like. See the curated [Ecosystem](
 
 Though it's 2026 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.8 - 14.2 (and possibly later)
-- Clang 3.4 - 21.0 (and possibly later)
-- Apple Clang 9.1 - 16.0 (and possibly later)
-- Intel C++ Compiler 17.0.2 (and possibly later)
-- Nvidia CUDA Compiler 11.0.221 (and possibly later)
-- Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
-- Microsoft Visual C++ 2017 / Build Tools 15.5.180.51428 (and possibly later)
-- Microsoft Visual C++ 2019 / Build Tools 16.3.1+1def00d3d (and possibly later)
-- Microsoft Visual C++ 2022 / Build Tools 19.30.30709.0 (and possibly later)
+- GCC 4.8 - 16.2 (and possibly later)
+- Clang 3.4 - 22.1 (and possibly later)
+- Apple Clang 15.0 - 21.0 (and possibly later)
+- Intel C++ Compiler Classic (icpc) 2021.10
+- Intel oneAPI DPC++/C++ Compiler (icpx) 2025.3 (and possibly later)
+- NVIDIA CUDA Compiler (nvcc) 11.8 - 12.6 (and possibly later)
+- NVIDIA HPC SDK C++ Compiler (nvc++) 25.5 (and possibly later)
+- Microsoft Visual C++ 2015 / MSVC 19.0 (and possibly later)
+- Microsoft Visual C++ 2017 / MSVC 19.16 (and possibly later)
+- Microsoft Visual C++ 2019 / MSVC 19.29 (and possibly later)
+- Microsoft Visual C++ 2022 / MSVC 19.44 (and possibly later)
+- Microsoft Visual C++ 2026 / MSVC 19.51 (and possibly later)
 
 I would be happy to learn about other compilers/versions.
 
@@ -1402,7 +1405,7 @@ The library is compliant to version 3.3 of the [**REUSE specification**](https:/
 
 - Every source file contains an SPDX copyright header.
 - The full text of all licenses used in the repository can be found in the `LICENSES` folder.
-- File `.reuse/dep5` contains an overview of all files' copyrights and licenses.
+- File `REUSE.toml` contains an overview of all files' copyrights and licenses.
 - Run `pipx run reuse lint` to verify the project's REUSE compliance and `pipx run reuse spdx` to generate a SPDX SBOM.
 
 ## Contact

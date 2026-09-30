@@ -443,6 +443,30 @@ installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nl
     - :octicons-file-24: File issues at the [library issue tracker](https://github.com/nlohmann/json/issues)
     - :octicons-question-24: [Xcode documentation](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app)
 
+The `json` target's public headers live at `single_include/nlohmann`, so a consumer must write `#include <json.hpp>` rather than the
+`#include <nlohmann/json.hpp>` form used elsewhere in this documentation. The `json` target also ships only headers, and SwiftPM/Xcode
+expect every library target to produce an object file to link against; without one, linking a consumer fails with a missing `json.o`
+([#4650](https://github.com/nlohmann/json/issues/4650)). The workaround is to add at least one `.cpp` file of your own to the target
+that depends on `json`.
+
+??? example
+
+    1. Create the following files:
+
+        ```swift title="Package.swift"
+        --8<-- "integration/swift/Package.swift"
+        ```
+
+        ```cpp title="Sources/MyLibrary/example.cpp"
+        --8<-- "integration/swift/example.cpp"
+        ```
+
+    2. Build
+
+        ```shell
+        swift build
+        ```
+
 ## NuGet
 
 !!! abstract "Summary"
