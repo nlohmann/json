@@ -106,7 +106,13 @@ class input_stream_adapter
             // was given back with release_lookahead()
             commit_lookahead();
 #endif
-            is->clear(is->rdstate() & std::ios::eofbit);
+            // only call clear() if there is something to clear: it throws
+            // std::ios_base::failure if the stream has exceptions() enabled
+            // for a state bit that remains set, and a destructor must not throw
+            if ((is->rdstate() & ~std::ios::eofbit) != 0)
+            {
+                is->clear(is->rdstate() & std::ios::eofbit);
+            }
         }
     }
 
@@ -811,12 +817,16 @@ inline file_input_adapter input_adapter(std::FILE* file)
 
 inline input_stream_adapter input_adapter(std::istream& stream)
 {
+    if (stream.rdbuf() == nullptr)
+    {
+        JSON_THROW(parse_error::create(101, 0, "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
+    }
     return input_stream_adapter(stream);
 }
 
 inline input_stream_adapter input_adapter(std::istream&& stream)
 {
-    return input_stream_adapter(stream);
+    return input_adapter(stream);
 }
 #endif  // JSON_NO_IO
 
@@ -845,16 +855,28 @@ template<typename T, std::size_t N>
 auto input_adapter(T (&array)[N]) -> decltype(input_adapter(array, array + N)) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 {
 #if JSON_STRICT_NUL_HANDLING
-    // A `char` array from string-literal initialization (e.g. json::parse("123"))
-    // carries a trailing '\0' contributed by the compiler, not by the source
-    // text; drop exactly that one byte so it is not mistaken for real trailing
-    // data. Every other element type (unsigned char, std::uint8_t, ...) keeps
-    // the full extent unconditionally, since a trailing zero byte there is
-    // genuine data (e.g. CBOR/MessagePack). This intentionally does not
-    // strlen()-scan the array (as the pointer overload above does for a
-    // null-delimited string): for a `char` array that is not NUL-terminated
-    // within its bounds, that would read past the end of the array.
-    if (std::is_same<typename std::remove_cv<T>::type, char>::value && N > 0 && array[N - 1] == 0)
+    // A text-literal array from string-literal initialization (e.g.
+    // json::parse("123") or json::parse(L"123")) carries a trailing '\0'
+    // contributed by the compiler, not by the source text; drop exactly that
+    // one byte so it is not mistaken for real trailing data. This covers all
+    // character types that string literals can use: char, wchar_t, char16_t,
+    // char32_t, and (C++20) char8_t. Every other element type (unsigned char,
+    // std::uint8_t, ...) keeps the full extent unconditionally, since a
+    // trailing zero byte there is genuine data (e.g. CBOR/MessagePack). This
+    // intentionally does not strlen()-scan the array (as the pointer overload
+    // above does for a null-delimited string): for an array that is not
+    // NUL-terminated within its bounds, that would read past the end of the
+    // array.
+    using char_t = typename std::remove_cv<T>::type;
+    constexpr bool is_text_literal_type = std::is_same<char_t, char>::value
+                                          || std::is_same<char_t, wchar_t>::value
+                                          || std::is_same<char_t, char16_t>::value
+                                          || std::is_same<char_t, char32_t>::value
+#if defined(__cpp_char8_t)
+                                          || std::is_same<char_t, char8_t>::value
+#endif
+                                          ;
+    if (is_text_literal_type && N > 0 && array[N - 1] == 0)
     {
         return input_adapter(array, array + N - 1);
     }

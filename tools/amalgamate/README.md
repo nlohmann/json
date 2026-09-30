@@ -58,6 +58,11 @@ for `json_fwd.hpp` (see the root `Makefile`).
    directory are the configs used for `json.hpp` and `json_fwd.hpp`; each
    sets `target`, `sources` and `include_paths`.
 
+   The optional `external` list names include paths that are kept as `#include`
+   directives instead of being inlined, e.g. `["nlohmann/json.hpp"]` for a header
+   that includes another amalgamated header. Only the first directive for each
+   of these paths is kept; the repeated ones are commented out.
+
  * The `-s, --source` option should specify the path to the source directory.
    This is useful for supporting separate source and build directories.
 
