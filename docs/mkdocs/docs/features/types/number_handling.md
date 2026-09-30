@@ -71,10 +71,10 @@ otherwise, it uses unsigned integer storage.
 
     - Numbers with a decimal digit or scientific notation are always stored as `#!c double`.
     - The number types can be changed, see [Template number types](#template-number-types). 
-    - As of version 3.9.1, the conversion is realized by
-      [`std::strtoull`](https://en.cppreference.com/w/cpp/string/byte/strtoul),
-      [`std::strtoll`](https://en.cppreference.com/w/cpp/string/byte/strtol), and
-      [`std::strtod`](https://en.cppreference.com/w/cpp/string/byte/strtof), respectively.
+    - The library converts integers and floating-point numbers itself, independent of the locale. Floating-point
+      numbers are correctly rounded (to nearest, ties to even). Only a `#!c long double` that is not IEEE 754 binary64
+      (e.g., the 80-bit x87 format) is converted with `#!cpp std::from_chars` where available, or with
+      [`std::strtold`](https://en.cppreference.com/w/cpp/string/byte/strtof).
 
 !!! example "Examples"
 
@@ -85,10 +85,10 @@ otherwise, it uses unsigned integer storage.
 ### Number limits
 
 - Any 64-bit signed or unsigned integer can be stored without loss of precision.
-- Numbers exceeding the limits of `#!c double` (i.e., numbers that after conversion via
-[`std::strtod`](https://en.cppreference.com/w/cpp/string/byte/strtof) are not satisfying
+- Numbers exceeding the limits of `#!c double` (i.e., numbers whose rounded value is not satisfying
 [`std::isfinite`](https://en.cppreference.com/w/cpp/numeric/math/isfinite) such as `#!c 1E400`) will throw exception
-[`json.exception.out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406) during parsing.
+[`json.exception.out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406) during parsing. Numbers too
+small for `#!c double` (such as `#!c 1E-400`) become zero, with the sign of the number.
 - Floating-point numbers are rounded to the next number representable as `double`. For instance
 `#!c 3.141592653589793238462643383279` is stored as [`0x400921fb54442d18`](https://float.exposed/0x400921fb54442d18).
 This is the same behavior as the code `#!c double x = 3.141592653589793238462643383279;`.

@@ -13,14 +13,17 @@
 using nlohmann::json;
 
 #include <array> // array
-#include <cfloat> // FLT_EVAL_METHOD
 #include <cstdint> // uint32_t, uint64_t
+#include <cstdio> // snprintf
 #include <cstdlib> // strtod
 #include <cstring> // memcpy
+#include <map> // map
 #include <sstream> // stringstream
 #include <string> // string
 #include <utility> // pair
 #include <vector> // vector
+
+#include "float_hard_cases.hpp"
 
 namespace
 {
@@ -257,7 +260,7 @@ TEST_CASE("lexer number fast path")
             "123456789012345678901234567890",  // huge -> float
             "0.30000000000000004", "2.2250738585072014e-308", "1e308",
             // high-precision / wide-exponent values that exercise the
-            // std::from_chars (Eisel-Lemire) path beyond the Clinger subset
+            // Eisel-Lemire path beyond the Clinger subset
             "1.7976931348623157e308", "1.2345678901234567e-250",
             "9007199254740993", "5e-324", "1e-320"
         };
@@ -279,20 +282,18 @@ TEST_CASE("lexer number fast path")
         }
     }
 
-    SECTION("significant-digit gate for the Clinger fast path")
+    SECTION("significant digits around Clinger's fast path")
     {
-        // Clinger's fast path needs a significand below 2^53, so it cannot
-        // succeed once the mantissa has 17 or more significant digits (the
-        // significand would be at least 10^16). The lexer skips the attempt
-        // there. That is only allowed to save work: every value must still come
-        // out bit-exactly, and both scanners must agree. In particular the gate
-        // must not fire for tokens whose leading zeros merely look like extra
-        // digits - "0.1234567890123456" has 16 significant digits, not 17.
+        // Clinger's fast path needs a significand of at most 2^53, which
+        // tokens with 17 or more significant digits exceed. The conversion
+        // splits the token at the positions the scanners recorded, so leading
+        // zeros must not count as digits - "0.1234567890123456" has 16
+        // significant digits, not 17 - and both scanners must agree.
         const std::vector<std::string> numbers =
         {
             "1234567890123456",                  // 16 significant digits
-            "12345678901234567",                 // 17 -> attempt skipped
-            "123456789012345678",                // 18 -> attempt skipped
+            "12345678901234567",                 // 17
+            "123456789012345678",                // 18
             "0.1234567890123456",                // 16: the leading "0" is not significant
             "0.12345678901234567",               // 17
             "0.00000000000000001",               // 1, in a long token
@@ -663,46 +664,145 @@ TEST_CASE("lexer string fast path")
     }
 }
 
-TEST_CASE("parse_float_fast declines what it cannot convert exactly")
+namespace
 {
-    // The lexer only hands well-formed numbers to parse_float_fast, so the
-    // malformed ones below can only be passed to it directly. Declining is
-    // always safe: the caller then falls back to a slower, exact conversion.
-    const auto fast = [](const std::string & s, double & out)
+// the index of the decimal point (or npos) and of the end of the mantissa of a
+// number token, which the lexer records while scanning it
+std::pair<std::size_t, std::size_t> float_token_layout(const std::string& s)
+{
+    std::size_t dot = std::string::npos;
+    std::size_t mantissa_end = s.size();
+    for (std::size_t i = 0; i < s.size(); ++i)
     {
-        return nlohmann::detail::parse_float_fast(s.data(), s.data() + s.size(), out);
-    };
-    double out = 0;
+        if (s[i] == '.')
+        {
+            dot = i;
+        }
+        else if (s[i] == 'e' || s[i] == 'E')
+        {
+            mantissa_end = i;
+            break;
+        }
+    }
+    return {dot, mantissa_end};
+}
 
-#if defined(FLT_EVAL_METHOD) && FLT_EVAL_METHOD != 0
-    // without true double precision, the fast path declines everything
-    CHECK_FALSE(fast("1.5", out));
-#else
-    CHECK(fast("1.5", out));
-    CHECK(out == 1.5);
-    CHECK(fast("+2.5e1", out));
-    CHECK(out == 25.0);
-    CHECK(fast("-25E-1", out));
-    CHECK(out == -2.5);
-    CHECK(fast("1e", out));
-    CHECK(out == 1.0);
-#endif
+template<typename FloatType>
+FloatType parse_native(const std::string& s)
+{
+    const auto layout = float_token_layout(s);
+    return nlohmann::detail::parse_float_native<FloatType>(s.data(), s.data() + s.size(), layout.first, layout.second);
+}
 
-    // not a number
-    CHECK_FALSE(fast("", out));
-    CHECK_FALSE(fast("-", out));
-    CHECK_FALSE(fast(".", out));
-    CHECK_FALSE(fast("1.2.3", out));
-    CHECK_FALSE(fast("1x", out));
-    CHECK_FALSE(fast("1e+", out));
-    CHECK_FALSE(fast("1e1x", out));
+std::uint64_t bits_of(double d)
+{
+    std::uint64_t b = 0;
+    std::memcpy(&b, &d, sizeof(b));
+    return b;
+}
 
-    // numbers that are not represented exactly on the fast path
-    CHECK_FALSE(fast("12345678901234567890", out));
-    CHECK_FALSE(fast("1e10000", out));
-    CHECK_FALSE(fast("9007199254740993", out));
-    CHECK_FALSE(fast("1e23", out));
-    CHECK_FALSE(fast("1e-23", out));
+std::uint32_t bits_of(float f)
+{
+    std::uint32_t b = 0;
+    std::memcpy(&b, &f, sizeof(b));
+    return b;
+}
+
+std::uint64_t native_bits64(const std::string& s)
+{
+    return bits_of(parse_native<double>(s));
+}
+
+std::uint32_t native_bits32(const std::string& s)
+{
+    return bits_of(parse_native<float>(s));
+}
+} // namespace
+
+TEST_CASE("parse_float_native rounds correctly")
+{
+    SECTION("double")
+    {
+        CHECK(native_bits64("1.5") == 0x3FF8000000000000u);
+        CHECK(native_bits64("0.1") == 0x3FB999999999999Au);
+        CHECK(native_bits64("-0.0") == 0x8000000000000000u);
+        CHECK(native_bits64("0e999999999999999999999") == 0u);
+        // 2^53 + 1 is exactly between two doubles: ties to even, unless more digits follow
+        CHECK(native_bits64("9007199254740993") == 0x4340000000000000u);
+        CHECK(native_bits64("9007199254740993.0000000000000000001") == 0x4340000000000001u);
+        CHECK(native_bits64("9007199254740992.9999999999999999999") == 0x4340000000000000u);
+        // 1 + 2^-53 exactly (a tie), and one unit in the 55th digit around it
+        CHECK(native_bits64("1.00000000000000011102230246251565404236316680908203125") == 0x3FF0000000000000u);
+        CHECK(native_bits64("1.00000000000000011102230246251565404236316680908203126") == 0x3FF0000000000001u);
+        CHECK(native_bits64("1.00000000000000011102230246251565404236316680908203124") == 0x3FF0000000000000u);
+        // subnormal and overflow boundaries
+        CHECK(native_bits64("2.4703282292062327e-324") == 0u);
+        CHECK(native_bits64("2.4703282292062328e-324") == 1u);
+        CHECK(native_bits64("2.2250738585072011e-308") == 0x000FFFFFFFFFFFFFu);
+        CHECK(native_bits64("2.2250738585072012e-308") == 0x0010000000000000u);
+        CHECK(native_bits64("1.7976931348623157e308") == 0x7FEFFFFFFFFFFFFFu);
+        CHECK(native_bits64("1.7976931348623159e308") == 0x7FF0000000000000u);
+        CHECK(native_bits64("-1e400") == 0xFFF0000000000000u);
+        CHECK(native_bits64("-1e-400") == 0x8000000000000000u);
+        // exponents and zeros far beyond the range cancel out
+        CHECK(native_bits64("0." + std::string(1000, '0') + "1e1001") == 0x3FF0000000000000u);
+        CHECK(native_bits64("1" + std::string(1000, '0') + "e-1000") == 0x3FF0000000000000u);
+        CHECK(native_bits64("1e-99999999999999999999999") == 0u);
+        CHECK(native_bits64("1E+99999999999999999999999") == 0x7FF0000000000000u);
+        // more digits than any midpoint has (769): only whether a nonzero digit follows matters
+        const std::string tie = "1.00000000000000011102230246251565404236316680908203125";
+        CHECK(native_bits64(tie + std::string(800, '0')) == 0x3FF0000000000000u);
+        CHECK(native_bits64(tie + std::string(800, '0') + "1") == 0x3FF0000000000001u);
+    }
+
+    SECTION("float")
+    {
+        CHECK(native_bits32("1.5") == 0x3FC00000u);
+        CHECK(native_bits32("0.1") == 0x3DCCCCCDu);
+        CHECK(native_bits32("-0.0") == 0x80000000u);
+        // 2^24 + 1 is exactly between two floats
+        CHECK(native_bits32("16777217") == 0x4B800000u);
+        CHECK(native_bits32("16777217.000000000000000000001") == 0x4B800001u);
+        CHECK(native_bits32("16777218.999999999999999999999") == 0x4B800001u);
+        CHECK(native_bits32("16777219") == 0x4B800002u);
+        // subnormal and overflow boundaries
+        CHECK(native_bits32("3.4028235677973366e38") == 0x7F7FFFFFu);
+        CHECK(native_bits32("3.4028235677973367e38") == 0x7F800000u);
+        CHECK(native_bits32("7.006492321624085e-46") == 0u);
+        CHECK(native_bits32("7.006492321624086e-46") == 1u);
+        CHECK(native_bits32("1.1754942e-38") == 0x007FFFFFu);
+        CHECK(native_bits32("-1.17549435e-38") == 0x80800000u);
+        CHECK(native_bits32("1e39") == 0x7F800000u);
+        CHECK(native_bits32("-1e-50") == 0x80000000u);
+        // not rounded through double: its double would round to another float
+        CHECK(native_bits32("1.00000005960464477539062500000000001") == 0x3F800001u);
+        CHECK(native_bits32("9007199254740993") == 0x5A000000u);
+    }
+
+    SECTION("the conversion shared with other parsers")
+    {
+        // convert_float() gives the lexer's results, for every type
+        const std::vector<std::string> tokens =
+        {
+            "0", "-0.0", "1.5", "0.1", "1e-400", "-2.5E+3", "123456789012345678901234567890",
+            "9007199254740993.0000000000000000001", "4.9406564584124654e-324"
+        };
+        using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+        using long_double_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, long double>;
+        for (const auto& t : tokens)
+        {
+            CAPTURE(t);
+            const auto layout = float_token_layout(t);
+            const char* const first = t.data();
+            const char* const last = first + t.size();
+            const auto d = nlohmann::detail::convert_float<double>(first, last, layout.first, layout.second);
+            const auto f = nlohmann::detail::convert_float<float>(first, last, layout.first, layout.second);
+            const auto ld = nlohmann::detail::convert_float<long double>(first, last, layout.first, layout.second);
+            CHECK(bits_of(d) == bits_of(json::parse(t).get<double>()));
+            CHECK(bits_of(f) == bits_of(float_json::parse(t).get<float>()));
+            CHECK(ld == long_double_json::parse(t).get<long double>());
+        }
+    }
 }
 
 namespace
@@ -805,40 +905,6 @@ std::size_t big_bit_length(const big_uint& a)
         --n;
     }
     return n;
-}
-
-std::uint64_t bits_of(double d)
-{
-    std::uint64_t b = 0;
-    std::memcpy(&b, &d, sizeof(b));
-    return b;
-}
-
-bool eisel_lemire(const std::string& s, double& out)
-{
-    return nlohmann::detail::parse_float_eisel_lemire(s.data(), s.data() + s.size(), out);
-}
-
-// significant digits of a token, without trailing zeros
-std::size_t significant_digits(const std::string& s)
-{
-    std::string digits;
-    for (const char c : s)
-    {
-        if (c == 'e' || c == 'E')
-        {
-            break;
-        }
-        if (c >= '0' && c <= '9' && !(digits.empty() && c == '0'))
-        {
-            digits += c;
-        }
-    }
-    while (!digits.empty() && digits.back() == '0')
-    {
-        digits.pop_back();
-    }
-    return digits.size();
 }
 } // namespace
 
@@ -1237,26 +1303,33 @@ TEST_CASE("Eisel-Lemire float conversion")
         for (const auto& c : known)
         {
             CAPTURE(c.first);
-            double out = 0;
-            if (eisel_lemire(c.first, out))
-            {
-                CHECK(bits_of(out) == c.second);
-            }
-            else
-            {
-                // only tokens with more than 19 significant digits are left to
-                // strtod: those whose value lies too close to a tie
-                CHECK(significant_digits(c.first) > 19);
-            }
+            CHECK(native_bits64(c.first) == c.second);
         }
+    }
+
+    SECTION("binary32")
+    {
+        using binary32 = nlohmann::detail::ieee_binary_format<24>;
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(0, 1) == 0x3F800000u);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(-1, 1) == 0x3DCCCCCDu);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(-1, 15) == 0x3FC00000u);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(0, 16777217) == 0x4B800000u); // tie, to even
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(0, 16777219) == 0x4B800002u); // tie, to even
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(-45, 1) == 0x00000001u);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(-46, 7) == 0x00000000u);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(-46, 8) == 0x00000001u);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(-65, 9999999999999999999u) == 0x00000000u);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(20, 3402823466385288598u) == 0x7F7FFFFFu);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(20, 3402823669209384635u) == 0x7F800000u);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(39, 1) == 0x7F800000u);
+        CHECK(nlohmann::detail::eisel_lemire<binary32>(-5, 0) == 0x00000000u);
     }
 
     SECTION("round trip")
     {
-        // every double written by to_chars and read back, also with trailing
-        // digits that make the token longer than 19 digits
+        // every double written by to_chars and read back, and its 17-digit
+        // form with trailing digits that make the token longer than 19 digits
         std::uint64_t state = 5295;
-        std::size_t declined = 0;
         for (int i = 0; i < 200000; ++i)
         {
             state ^= state << 13u;
@@ -1278,30 +1351,51 @@ TEST_CASE("Eisel-Lemire float conversion")
             const char* end = nlohmann::detail::to_chars(buffer.data(), buffer.data() + buffer.size(), d);
             const std::string token(buffer.data(), static_cast<std::size_t>(end - buffer.data()));
             CAPTURE(token);
-            double out = 0;
-            REQUIRE(eisel_lemire(token, out));
-            CHECK(bits_of(out) == b);
+            CHECK(native_bits64(token) == b);
 
-            // insert digits before the exponent: the value moves by far less
-            // than the distance to the rounding boundary, so it must not change
-            std::string longer = token;
+            // insert digits before the exponent of the 17-digit form: that
+            // form lies strictly inside the rounding interval of the double
+            // (the shortest one may lie on its boundary), and the digits move
+            // it by far less than the distance to the boundary, so the value
+            // must not change
+            std::array<char, 64> digits17{};
+            static_cast<void>(std::snprintf(digits17.data(), digits17.size(), "%.17g", d)); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+            std::string longer = digits17.data();
             const std::size_t e = longer.find('e');
             const std::size_t dot = longer.find('.');
             const std::string extra = dot == std::string::npos ? ".000000000000000000001" : "000000000000000000001";
             longer.insert(e == std::string::npos ? longer.size() : e, extra);
             CAPTURE(longer);
-            if (eisel_lemire(longer, out))
-            {
-                CHECK(bits_of(out) == b);
-            }
-            else
-            {
-                // w and w + 1 round differently: only when the value is very
-                // close to a rounding boundary
-                ++declined;
-            }
+            CHECK(native_bits64(longer) == b);
         }
-        CHECK(declined < 1000); // 107 of the 200,000
+    }
+
+    SECTION("round trip, binary32")
+    {
+        std::uint32_t state = 5295;
+        for (int i = 0; i < 100000; ++i)
+        {
+            state ^= state << 13u;
+            state ^= state >> 17u;
+            state ^= state << 5u;
+            std::uint32_t b = state;
+            if ((b & 0x7F800000u) == 0x7F800000u)
+            {
+                continue; // infinity or NaN
+            }
+            if (i % 4 == 0)
+            {
+                b &= 0x807FFFFFu; // subnormals
+            }
+            float f = 0;
+            std::memcpy(&f, &b, sizeof(f));
+
+            std::array<char, 64> buffer{};
+            const char* end = nlohmann::detail::to_chars(buffer.data(), buffer.data() + buffer.size(), f);
+            const std::string token(buffer.data(), static_cast<std::size_t>(end - buffer.data()));
+            CAPTURE(token);
+            CHECK(native_bits32(token) == b);
+        }
     }
 
     SECTION("used by the lexer")
@@ -1313,5 +1407,78 @@ TEST_CASE("Eisel-Lemire float conversion")
         json _;
         CHECK_THROWS_WITH_AS(_ = json::parse("1.7976931348623159e308"),
                              "[json.exception.out_of_range.406] number overflow parsing '1.7976931348623159e308'", json::out_of_range&);
+    }
+}
+
+namespace
+{
+using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+
+// the bits of the float that parse() gives for a token, via both scanners;
+// the value must be the same for both
+template<typename Json, typename Bits>
+void check_parse(const std::string& token, Bits expected, Bits infinity)
+{
+    std::stringstream stream(token);
+    if ((expected & ~(Bits{1} << (8 * sizeof(Bits) - 1))) == infinity)
+    {
+        Json _;
+        CHECK_THROWS_WITH_AS(_ = Json::parse(token), ("[json.exception.out_of_range.406] number overflow parsing '" + token + "'").c_str(), typename Json::out_of_range&);
+        CHECK_THROWS_WITH_AS(_ = Json::parse(stream), ("[json.exception.out_of_range.406] number overflow parsing '" + token + "'").c_str(), typename Json::out_of_range&);
+        return;
+    }
+    const Json contiguous = Json::parse(token);
+    const Json streamed = Json::parse(stream);
+    if (contiguous.is_number_float()) // not an integer that fits
+    {
+        CHECK(bits_of(contiguous.template get<typename Json::number_float_t>()) == expected);
+        CHECK(bits_of(streamed.template get<typename Json::number_float_t>()) == expected);
+    }
+    else
+    {
+        CHECK(streamed.is_number_integer());
+    }
+}
+} // namespace
+
+TEST_CASE("float conversion of hard cases")
+{
+    // see float_hard_cases.hpp
+    for (const auto& c : float_hard_cases::cases())
+    {
+        const std::string token = c.token;
+        CAPTURE(token);
+        CHECK(native_bits64(token) == c.bits64);
+        CHECK(native_bits32(token) == c.bits32);
+        check_parse<json>(token, c.bits64, std::uint64_t{0x7FF0000000000000u});
+        check_parse<float_json>(token, c.bits32, std::uint32_t{0x7F800000u});
+    }
+}
+
+TEST_CASE("float overflow and underflow in the parser")
+{
+    SECTION("double")
+    {
+        check_parse<json>("1.7976931348623157e308", std::uint64_t{0x7FEFFFFFFFFFFFFFu}, std::uint64_t{0x7FF0000000000000u});
+        check_parse<json>("1.7976931348623159e308", std::uint64_t{0x7FF0000000000000u}, std::uint64_t{0x7FF0000000000000u});
+        check_parse<json>("-1e309", std::uint64_t{0xFFF0000000000000u}, std::uint64_t{0x7FF0000000000000u});
+        check_parse<json>("1" + std::string(400, '0'), std::uint64_t{0x7FF0000000000000u}, std::uint64_t{0x7FF0000000000000u});
+        check_parse<json>("1e99999999999999999999", std::uint64_t{0x7FF0000000000000u}, std::uint64_t{0x7FF0000000000000u});
+        // an underflow gives a zero with the sign of the token
+        check_parse<json>("1e-400", std::uint64_t{0}, std::uint64_t{0x7FF0000000000000u});
+        check_parse<json>("-1e-400", std::uint64_t{0x8000000000000000u}, std::uint64_t{0x7FF0000000000000u});
+        check_parse<json>("-2.4703282292062327e-324", std::uint64_t{0x8000000000000000u}, std::uint64_t{0x7FF0000000000000u});
+        check_parse<json>("0." + std::string(400, '0') + "1", std::uint64_t{0}, std::uint64_t{0x7FF0000000000000u});
+    }
+
+    SECTION("float")
+    {
+        check_parse<float_json>("3.4028234e38", std::uint32_t{0x7F7FFFFFu}, std::uint32_t{0x7F800000u});
+        check_parse<float_json>("3.4028236e38", std::uint32_t{0x7F800000u}, std::uint32_t{0x7F800000u});
+        check_parse<float_json>("-1e39", std::uint32_t{0xFF800000u}, std::uint32_t{0x7F800000u});
+        check_parse<float_json>("1e-46", std::uint32_t{0}, std::uint32_t{0x7F800000u});
+        check_parse<float_json>("-1e-46", std::uint32_t{0x80000000u}, std::uint32_t{0x7F800000u});
+        check_parse<float_json>("-7.006492321624085e-46", std::uint32_t{0x80000000u}, std::uint32_t{0x7F800000u});
+        check_parse<float_json>("-7.006492321624086e-46", std::uint32_t{0x80000001u}, std::uint32_t{0x7F800000u});
     }
 }
