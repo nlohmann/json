@@ -33040,12 +33040,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 // the same time, determine whether every added key comes
                 // after every common key in target's order (a precondition
                 // for the fast path below, which only ever appends new keys
-                // at the very end): for an object_t whose iteration order is
-                // a pure function of the key set (e.g. the default std::map,
-                // which always iterates in sorted key order), the order
-                // check further below is always true and this whole
-                // mechanism is effectively a no-op; it only matters for a
-                // reorderable object_t such as the one backing `ordered_json`.
+                // at the very end). Both are only needed for an object_t that
+                // keeps its members in insertion order, such as the one
+                // backing `ordered_json`; for any other object_t, the fast
+                // path is always taken and they are not computed.
                 // patch ops for keys that were added (i.e., in target but not
                 // in source); built here so the fast path below can reuse
                 // them without a second source.find() per target key. Only
@@ -33069,15 +33067,32 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                     }
                     else
                     {
-                        common_keys_target_order.push_back(it.key());
-                        if (seen_new_key)
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning(push )
+#pragma warning(disable : 4127) // ignore warning to replace if with if constexpr
+#endif
+                        if (detail::is_ordered_map<object_t>::value)
                         {
-                            new_keys_form_suffix = false;
+                            common_keys_target_order.push_back(it.key());
+                            if (seen_new_key)
+                            {
+                                new_keys_form_suffix = false;
+                            }
                         }
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning( pop )
+#endif
                     }
                 }
 
-                if (common_keys_source_order == common_keys_target_order && new_keys_form_suffix)
+                // Only an object type that keeps its members in insertion
+                // order, such as nlohmann::ordered_map, can need reordering:
+                // patch() appends a new member at the end of such an object.
+                // Any other object type places its members itself - std::map
+                // in key order, a hash map in an order its operator== ignores -
+                // so a member-by-member diff always reproduces target there.
+                if (!detail::is_ordered_map<object_t>::value
+                        || (common_keys_source_order == common_keys_target_order && new_keys_form_suffix))
                 {
                     // fast path: order of common keys already matches (or the
                     // object_t's iteration order does not depend on
