@@ -99,28 +99,9 @@ class parser
         if (callback)
         {
             json_sax_dom_callback_parser<BasicJsonType, InputAdapterType> sdp(result, callback, allow_exceptions, &m_lexer);
-            sax_parse_internal(&sdp);
-
-            if (strict)
-            {
-                // in strict mode, input must be completely read
-                if (get_token() != token_type::end_of_input)
-                {
-                    sdp.parse_error(m_lexer.get_position(),
-                                    m_lexer.get_token_string(),
-                                    parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::end_of_input, "value"), nullptr));
-                }
-            }
-            else
-            {
-                // the caller keeps using the input: position it right after
-                // the value by leaving the character that terminated it
-                m_lexer.release_lookahead();
-            }
 
             // in case of an error, return a discarded value
-            if (sdp.is_errored())
+            if (!parse_dom(sdp, strict))
             {
                 result = value_t::discarded;
                 return;
@@ -136,26 +117,9 @@ class parser
         else
         {
             json_sax_dom_parser<BasicJsonType, InputAdapterType> sdp(result, allow_exceptions, &m_lexer);
-            sax_parse_internal(&sdp);
-
-            if (strict)
-            {
-                // in strict mode, input must be completely read
-                if (get_token() != token_type::end_of_input)
-                {
-                    sdp.parse_error(m_lexer.get_position(),
-                                    m_lexer.get_token_string(),
-                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
-                }
-            }
-            else
-            {
-                // see above
-                m_lexer.release_lookahead();
-            }
 
             // in case of an error, return a discarded value
-            if (sdp.is_errored())
+            if (!parse_dom(sdp, strict))
             {
                 result = value_t::discarded;
                 return;
@@ -208,6 +172,46 @@ class parser
     }
 
   private:
+    /*!
+    @brief run a DOM SAX parser to completion and position the lexer
+
+    Shared by both branches of @ref parse(): builds no SAX parser itself,
+    but drives an already-constructed @a json_sax_dom_parser or
+    @ref json_sax_dom_callback_parser through @ref sax_parse_internal(),
+    then applies the strict-EOF check (reporting parse_error.101 through
+    @a sdp on failure) or, in non-strict mode, releases the lookahead so
+    the caller can keep reading the input right after the parsed value.
+
+    @param[in,out] sdp     the DOM SAX parser to run
+    @param[in] strict      whether to expect the last token to be EOF
+    @return whether @a sdp did not report an error
+    */
+    template<typename DomSax>
+    bool parse_dom(DomSax& sdp, const bool strict)
+    {
+        sax_parse_internal(&sdp);
+
+        if (strict)
+        {
+            // in strict mode, input must be completely read
+            if (get_token() != token_type::end_of_input)
+            {
+                sdp.parse_error(m_lexer.get_position(),
+                                m_lexer.get_token_string(),
+                                parse_error::create(101, m_lexer.get_position(),
+                                                    exception_message(token_type::end_of_input, "value"), nullptr));
+            }
+        }
+        else
+        {
+            // the caller keeps using the input: position it right after
+            // the value by leaving the character that terminated it
+            m_lexer.release_lookahead();
+        }
+
+        return !sdp.is_errored();
+    }
+
     template<typename SAX>
     JSON_HEDLEY_NON_NULL(2)
     bool sax_parse_internal(SAX* sax)
