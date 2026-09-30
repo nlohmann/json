@@ -29,6 +29,10 @@ namespace detail
 template<typename CharType> struct output_adapter_protocol
 {
     virtual void write_character(CharType c) = 0;
+    /// @param[in] s      pointer to the characters to write; binary_writer legitimately
+    ///                   passes a null pointer together with length 0 for an empty
+    ///                   string or binary value, so implementations must tolerate that
+    /// @param[in] length number of characters at @a s
     virtual void write_characters(const CharType* s, std::size_t length) = 0;
     virtual ~output_adapter_protocol() = default;
 
@@ -95,7 +99,6 @@ class output_vector_adapter : public output_adapter_protocol<CharType>
         sink.write_character(c);
     }
 
-    JSON_HEDLEY_NON_NULL(2)
     void write_characters(const CharType* s, std::size_t length) override
     {
         sink.write_characters(s, length);
@@ -120,7 +123,6 @@ class output_stream_adapter : public output_adapter_protocol<CharType>
         stream.put(c);
     }
 
-    JSON_HEDLEY_NON_NULL(2)
     void write_characters(const CharType* s, std::size_t length) override
     {
         stream.write(s, static_cast<std::streamsize>(length));
@@ -145,7 +147,6 @@ class output_string_adapter : public output_adapter_protocol<CharType>
         str.push_back(c);
     }
 
-    JSON_HEDLEY_NON_NULL(2)
     void write_characters(const CharType* s, std::size_t length) override
     {
         str.append(s, length);
