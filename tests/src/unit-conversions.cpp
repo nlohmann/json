@@ -1389,6 +1389,14 @@ TEST_CASE("value conversion")
         CHECK(json(value_1).get<c_enum>() == value_1);
         CHECK(json(cpp_enum::value_1).get<cpp_enum>() == cpp_enum::value_1);
     }
+
+    SECTION("get an enum with underlying type bool (#5671)")
+    {
+        enum class bool_enum : bool { off, on };
+
+        CHECK(json(bool_enum::off).get<bool_enum>() == bool_enum::off);
+        CHECK(json(bool_enum::on).get<bool_enum>() == bool_enum::on);
+    }
 #endif
 
     SECTION("more involved conversions")
@@ -1799,6 +1807,12 @@ TEST_CASE("Strict JSON to enum mapping")
 
         // conversion of unmapped enum -> exception thrown
         CHECK_THROWS_WITH_AS(json(strict_cards::andere), "[json.exception.out_of_range.410] enum value out of range for strict_cards", json::out_of_range&);
+
+        // invalid UTF-8 -> out_of_range.410, not the type_error.316 thrown while building the
+        // message (regression test for #5667); such strings can reach get<Enum>() unvalidated,
+        // e.g. from from_cbor()/from_msgpack() (#5529)
+        const json j_invalid_utf8 = "\xFF";
+        CHECK_THROWS_WITH_AS(_ = j_invalid_utf8.get<strict_cards>(), "[json.exception.out_of_range.410] enum value out of range for strict_cards: \"\xEF\xBF\xBD\"", json::out_of_range&);
     }
 
     SECTION("traditional enum")
@@ -1885,6 +1899,21 @@ TEST_CASE("std::u8string")
 #endif
 #endif
 
+#if !defined(JSON_NOEXCEPTION)
+namespace
+{
+// a type whose to_json reports an error by throwing, used below to check that
+// converting a std::optional<T> to JSON propagates an exception thrown while
+// converting its contained value instead of calling std::terminate (#5642)
+struct throwing_to_json_type {};
+
+[[noreturn]] void to_json(json& /*unused*/, const throwing_to_json_type& /*unused*/)
+{
+    throw std::runtime_error("cannot serialize throwing_to_json_type");
+}
+}  // namespace
+#endif
+
 TEST_CASE("std::optional")
 {
     SECTION("null")
@@ -1967,6 +1996,23 @@ TEST_CASE("std::optional")
         CHECK(json(opt_object) == j_object);
         CHECK(std::map<std::string, std::optional<int>>(j_object) == opt_object);
     }
+
+#if !defined(JSON_NOEXCEPTION)
+    SECTION("exception from contained value's to_json propagates (#5642)")
+    {
+        // to_json(BasicJsonType&, const std::optional<T>&) must not be
+        // noexcept: it calls T's to_json, which may throw (a user-defined
+        // to_json that reports an error, or std::bad_alloc for T =
+        // std::string/vector/json). Before the fix, this called
+        // std::terminate() instead of letting the exception propagate.
+        const std::optional<throwing_to_json_type> opt = throwing_to_json_type{};
+        CHECK_THROWS_WITH_AS(json(opt), "cannot serialize throwing_to_json_type", std::runtime_error&);
+
+        // the conversion is noexcept exactly when converting the contained value is
+        static_assert(!std::is_nothrow_constructible<json, const std::optional<throwing_to_json_type>&>::value, "");
+        static_assert(std::is_nothrow_constructible<json, const std::optional<int>&>::value, "");
+    }
+#endif
 }
 #endif
 

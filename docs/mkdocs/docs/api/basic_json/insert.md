@@ -195,5 +195,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 1. Added in version 1.0.0.
 2. Added in version 1.0.0.
 3. Added in version 1.0.0.
-4. Added in version 1.0.0.
+4. Added in version 1.0.0. Fixed in version 3.13.0 to copy the values before inserting; before, an `ilist` that
+   referred to elements of the array being inserted into could insert wrong values, because the range insert could
+   move from or shift an element before it was copied.
 5. Added in version 3.0.0.
