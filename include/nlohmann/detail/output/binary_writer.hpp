@@ -337,24 +337,25 @@ class binary_writer
                     // MessagePack does not differentiate between positive
                     // signed integers and unsigned integers. Therefore, we used
                     // the code from the value_t::number_unsigned case here.
-                    if (static_cast<typename BasicJsonType::number_unsigned_t>(j.m_data.m_value.number_integer) < 128)
+                    const auto value_as_unsigned = static_cast<typename BasicJsonType::number_unsigned_t>(j.m_data.m_value.number_integer);
+                    if (value_as_unsigned < 128)
                     {
                         // positive fixnum
                         write_number(static_cast<std::uint8_t>(j.m_data.m_value.number_integer));
                     }
-                    else if (static_cast<typename BasicJsonType::number_unsigned_t>(j.m_data.m_value.number_integer) <= (std::numeric_limits<std::uint8_t>::max)())
+                    else if (value_as_unsigned <= (std::numeric_limits<std::uint8_t>::max)())
                     {
                         // uint 8
                         oa.write_character(to_char_type(0xCC));
                         write_number(static_cast<std::uint8_t>(j.m_data.m_value.number_integer));
                     }
-                    else if (static_cast<typename BasicJsonType::number_unsigned_t>(j.m_data.m_value.number_integer) <= (std::numeric_limits<std::uint16_t>::max)())
+                    else if (value_as_unsigned <= (std::numeric_limits<std::uint16_t>::max)())
                     {
                         // uint 16
                         oa.write_character(to_char_type(0xCD));
                         write_number(static_cast<std::uint16_t>(j.m_data.m_value.number_integer));
                     }
-                    else if (static_cast<typename BasicJsonType::number_unsigned_t>(j.m_data.m_value.number_integer) <= (std::numeric_limits<std::uint32_t>::max)())
+                    else if (value_as_unsigned <= (std::numeric_limits<std::uint32_t>::max)())
                     {
                         // uint 32
                         oa.write_character(to_char_type(0xCE));
