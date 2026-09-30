@@ -75,6 +75,13 @@ otherwise, it uses unsigned integer storage.
       [`std::strtoull`](https://en.cppreference.com/w/cpp/string/byte/strtoul),
       [`std::strtoll`](https://en.cppreference.com/w/cpp/string/byte/strtol), and
       [`std::strtod`](https://en.cppreference.com/w/cpp/string/byte/strtof), respectively.
+    - The result of converting floating-point numbers does not depend on the C locale (`LC_NUMERIC`). They are
+      converted with [`std::from_chars`](https://en.cppreference.com/w/cpp/utility/from_chars) where the standard
+      library implements it for the number type (including libc++ 20 or later for `#!c float` and `#!c double`),
+      otherwise with `strtod_l` and the "C" locale where the C library provides it (glibc, macOS, MSVC), and otherwise
+      with `std::strtod` and the decimal point of the current locale. Before version 3.13.0, the last way was used much
+      more often, and a locale whose decimal point is longer than one byte (e.g., `fa_IR.UTF-8`) truncated numbers at
+      the decimal point.
 
 !!! example "Examples"
 
@@ -85,10 +92,11 @@ otherwise, it uses unsigned integer storage.
 ### Number limits
 
 - Any 64-bit signed or unsigned integer can be stored without loss of precision.
-- Numbers exceeding the limits of `#!c double` (i.e., numbers that after conversion via
-[`std::strtod`](https://en.cppreference.com/w/cpp/string/byte/strtof) are not satisfying
+- Numbers exceeding the limits of `#!c double` (i.e., numbers that after conversion are not satisfying
 [`std::isfinite`](https://en.cppreference.com/w/cpp/numeric/math/isfinite) such as `#!c 1E400`) will throw exception
 [`json.exception.out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406) during parsing.
+- Numbers too close to zero to be represented as `#!c double`, not even as subnormal number (such as `#!c 1E-400`), are
+stored as `#!c 0.0`, or as `#!c -0.0` if they are negative.
 - Floating-point numbers are rounded to the next number representable as `double`. For instance
 `#!c 3.141592653589793238462643383279` is stored as [`0x400921fb54442d18`](https://float.exposed/0x400921fb54442d18).
 This is the same behavior as the code `#!c double x = 3.141592653589793238462643383279;`.

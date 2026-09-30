@@ -14,6 +14,8 @@ using nlohmann::json;
 
 #include <array>
 #include <clocale>
+#include <cstring>
+#include <limits>
 #include <map>
 #include <string>
 #include <utility>
@@ -257,10 +259,10 @@ struct LocaleSwitchingSax final: public nlohmann::json_sax<json>
 
 TEST_CASE("locale changes between lexer construction and number conversion (#5198)")
 {
-    // The numbers are chosen so that the conversion also takes the strtod
-    // fallback, which honors the locale that is current at conversion time:
-    // too many significant digits for Clinger's fast path, an underflow that
-    // std::from_chars rejects, and a plain value.
+    // The numbers are chosen so that the conversion takes the slower paths: too
+    // many significant digits for Clinger's fast path, an underflow, and a plain
+    // value. Without std::from_chars and strtod_l, this is the strtod fallback,
+    // which honors the locale that is current at conversion time.
     const std::vector<std::string> numbers = {"3.14159265358979323846", "1.5e-400", "12.34", "-0.000123456789012345678"};
     std::string text = "[";
     for (const auto& n : numbers)
@@ -346,41 +348,113 @@ TEST_CASE("locale changes between lexer construction and number conversion (#519
     CHECK(std::setlocale(LC_NUMERIC, "C") != nullptr);
 }
 
+namespace
+{
+// sets LC_NUMERIC to the first installed locale whose decimal point is longer
+// than one byte, e.g. U+066B ARABIC DECIMAL SEPARATOR (two bytes in UTF-8)
+const char* set_multi_byte_decimal_point_locale()
+{
+    const std::array<const char*, 6> names = {{"ar_EG.UTF-8", "ar_SA.UTF-8", "fa_IR.UTF-8", "ps_AF.UTF-8", "ar_EG", "fa_IR"}};
+    for (const char* name : names)
+    {
+        if (std::setlocale(LC_NUMERIC, name) != nullptr && std::strlen(std::localeconv()->decimal_point) > 1)
+        {
+            return name;
+        }
+    }
+    return nullptr;
+}
+} // namespace
+
 TEST_CASE("locale with a multi-byte decimal point")
 {
-    // Some locales use a decimal point that is not a single character, e.g.
-    // U+066B ARABIC DECIMAL SEPARATOR (two bytes in UTF-8). It cannot be
-    // substituted in place for '.', so the strtod fallback stops early. The
-    // conversion must still terminate rather than retry forever.
-    const std::array<const char*, 6> names = {{"ar_EG.UTF-8", "ar_SA.UTF-8", "fa_IR.UTF-8", "ps_AF.UTF-8", "ar_EG", "fa_IR"}};
-    bool tested = false;
+    // Such a decimal point cannot be substituted in place for '.'; before
+    // #5660, the strtod fallback stopped there and returned the integer part.
+    const char* name = set_multi_byte_decimal_point_locale();
+    if (name == nullptr)
+    {
+        MESSAGE("no locale with a multi-byte decimal point is usable");
+    }
+    else
+    {
+        const std::string locale_name = name;
+        CAPTURE(locale_name);
+
+        // too many significant digits for Clinger's fast path
+        CHECK(json::parse("3.141592653589793238462643383279") == 3.141592653589793);
+        CHECK(json::parse("1.7976931348623157e308") == (std::numeric_limits<double>::max)());
+        CHECK(json::accept("3.14159265358979323846"));
+
+        // a subnormal number
+        CHECK(json::parse("-2.5e-320") == -2.5e-320);
+
+        // out of range
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::parse("1.5e400"), "[json.exception.out_of_range.406] number overflow parsing '1.5e400'", json::out_of_range&);
+        CHECK(json::parse("1.5e-400") == 0.0);
+
+        // float and long double as number_float_t
+        using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+        using long_double_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, long double>;
+        CHECK(float_json::parse("1.5") == 1.5f);
+        CHECK(long_double_json::parse("1.5") == 1.5L);
+
+        // a value Clinger's fast path converts
+        CHECK(json::parse("12.5") == 12.5);
+    }
+
+    CHECK(std::setlocale(LC_NUMERIC, "C") != nullptr);
+}
+
+TEST_CASE("conversion with the decimal point of the current locale")
+{
+    // parse_float_locale_aware() is the last resort for platforms without
+    // std::from_chars and strtod_l, so it is called directly here
+    const auto convert = [](std::string token, double & out)
+    {
+        nlohmann::detail::parse_float_locale_aware(token, token.find('.'), out);
+        // the token is also handed to the SAX interface and must keep its '.'
+        return token;
+    };
+
+    std::vector<const char*> names = {"C", "de_DE", "de_DE.UTF-8"};
+    const char* multi_byte = set_multi_byte_decimal_point_locale();
+    if (multi_byte != nullptr)
+    {
+        names.push_back(multi_byte);
+    }
+
     for (const char* name : names)
     {
         if (std::setlocale(LC_NUMERIC, name) == nullptr)
         {
             continue;
         }
-        const std::string decimal_point = std::localeconv()->decimal_point;
-        if (decimal_point.size() < 2)
-        {
-            continue;
-        }
-        CAPTURE(name);
-        tested = true;
+        const std::string locale_name = name;
+        CAPTURE(locale_name);
 
-        // too many significant digits for Clinger's fast path, and an underflow
-        // that std::from_chars rejects: both reach the strtod fallback
-        json j;
-        CHECK_NOTHROW(j = json::parse("[3.14159265358979323846, 1.5e-400, -0.000123456789012345678]"));
-        CHECK(j.is_array());
-        CHECK(json::accept("3.14159265358979323846"));
+        double d = 0;
+        CHECK(convert("3.141592653589793238462643383279", d) == "3.141592653589793238462643383279");
+        CHECK(d == 3.141592653589793);
+        CHECK(convert("-2.5e-320", d) == "-2.5e-320");
+        CHECK(d == -2.5e-320);
+        CHECK(convert("12345678901234567890", d) == "12345678901234567890");
+        CHECK(d == 12345678901234567890.0);
 
-        // a value the locale-independent paths convert is not affected
-        CHECK(json::parse("12.5") == 12.5);
-    }
-    if (!tested)
-    {
-        MESSAGE("no locale with a multi-byte decimal point is usable");
+        float f = 0;
+        std::string token = "1.5";
+        nlohmann::detail::parse_float_locale_aware(token, 1, f);
+        CHECK(f == 1.5f);
+
+        long double ld = 0;
+        nlohmann::detail::parse_float_locale_aware(token, 1, ld);
+        CHECK(ld == 1.5L);
+        CHECK(token == "1.5");
+
+        // the lexer only passes valid tokens; for others, the conversion stops
+        // early, and the value parsed up to there is kept
+        CHECK(convert("1.5x", d) == "1.5x");
+        CHECK(d == 1.5);
     }
 
     CHECK(std::setlocale(LC_NUMERIC, "C") != nullptr);

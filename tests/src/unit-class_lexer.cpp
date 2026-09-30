@@ -13,7 +13,10 @@
 using nlohmann::json;
 
 #include <cfloat> // FLT_EVAL_METHOD
+#include <cmath> // signbit
 #include <cstdlib> // strtod
+#include <limits> // numeric_limits
+#include <map> // map
 #include <sstream> // stringstream
 #include <string> // string
 #include <vector> // vector
@@ -699,4 +702,141 @@ TEST_CASE("parse_float_fast declines what it cannot convert exactly")
     CHECK_FALSE(fast("9007199254740993", out));
     CHECK_FALSE(fast("1e23", out));
     CHECK_FALSE(fast("1e-23", out));
+}
+
+namespace
+{
+template<typename FloatType>
+bool out_of_range_value(const std::string& s, FloatType& out)
+{
+    return nlohmann::detail::parse_float_out_of_range(s.data(), s.data() + s.size(), out);
+}
+} // namespace
+
+TEST_CASE("parse_float_out_of_range derives the value from the token")
+{
+    // std::from_chars reports numbers out of range without a portable value
+    // (P4168), so the value is derived from the token
+    const double inf = std::numeric_limits<double>::infinity();
+    double out = 1.0;
+
+    SECTION("overflow")
+    {
+        CHECK(out_of_range_value("1e400", out));
+        CHECK(out == inf);
+        CHECK(out_of_range_value("-1E+400", out));
+        CHECK(out == -inf);
+        CHECK(out_of_range_value("123.456e306", out));
+        CHECK(out == inf);
+        CHECK(out_of_range_value("0.001e99999999999999999999", out));
+        CHECK(out == inf);
+        CHECK(out_of_range_value("-1" + std::string(400, '0'), out));
+        CHECK(out == -inf);
+    }
+
+    SECTION("underflow")
+    {
+        CHECK(out_of_range_value("1e-400", out));
+        CHECK(out == 0.0);
+        CHECK(!std::signbit(out));
+        CHECK(out_of_range_value("-1e-400", out));
+        CHECK(out == 0.0);
+        CHECK(std::signbit(out));
+        CHECK(out_of_range_value("0.00012e-321", out));
+        CHECK(out == 0.0);
+        CHECK(out_of_range_value("-1234e-99999999999999999999", out));
+        CHECK(std::signbit(out));
+        CHECK(out_of_range_value("-0.0", out));
+        CHECK(out == 0.0);
+        CHECK(std::signbit(out));
+    }
+
+    SECTION("possibly subnormal")
+    {
+        // some implementations report subnormal numbers as out of range; the
+        // caller then converts them another way
+        CHECK_FALSE(out_of_range_value("0.0012e-321", out));
+        CHECK_FALSE(out_of_range_value("2.5e-320", out));
+        CHECK_FALSE(out_of_range_value("-1e-310", out));
+    }
+
+    SECTION("float")
+    {
+        float f = 1.0f;
+        CHECK(out_of_range_value("-1e39", f));
+        CHECK(f == -std::numeric_limits<float>::infinity());
+        CHECK(out_of_range_value("1e-47", f));
+        CHECK(f == 0.0f);
+        CHECK_FALSE(out_of_range_value("1e-46", f));
+        CHECK_FALSE(out_of_range_value("1e-40", f));
+    }
+
+    SECTION("long double")
+    {
+        long double ld = 1.0L;
+        CHECK(out_of_range_value("1e5000", ld));
+        CHECK(ld == std::numeric_limits<long double>::infinity());
+        CHECK(out_of_range_value("-1e-5000", ld));
+        CHECK(ld == 0.0L);
+        CHECK(std::signbit(ld));
+    }
+}
+
+TEST_CASE("floating-point numbers out of range")
+{
+    // Whichever conversion the platform uses, an overflow throws, and an
+    // underflow yields a zero with the sign of the number.
+    using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+    using long_double_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, long double>;
+
+    SECTION("double")
+    {
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::parse("1.5e400"), "[json.exception.out_of_range.406] number overflow parsing '1.5e400'", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(_ = json::parse("-1.5e400"), "[json.exception.out_of_range.406] number overflow parsing '-1.5e400'", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(_ = json::parse("1e99999999999999999999"), "[json.exception.out_of_range.406] number overflow parsing '1e99999999999999999999'", json::out_of_range&);
+        CHECK_THROWS_AS(_ = json::parse("1" + std::string(400, '0')), json::out_of_range&);
+
+        const json zero = json::parse("1.5e-400");
+        CHECK(zero == 0.0);
+        CHECK(!std::signbit(zero.get<double>()));
+        const json negative_zero = json::parse("-1.5e-400");
+        CHECK(negative_zero == 0.0);
+        CHECK(std::signbit(negative_zero.get<double>()));
+        CHECK(std::signbit(json::parse("-0.0000000001e-99999999999999999999").get<double>()));
+
+        // around the smallest subnormal number
+        CHECK(json::parse("1e-324") == 0.0);
+        CHECK(json::parse("3e-324") == std::numeric_limits<double>::denorm_min());
+        CHECK(json::parse("-2.5e-320") == -2.5e-320);
+    }
+
+    SECTION("float")
+    {
+        float_json _;
+        CHECK_THROWS_WITH_AS(_ = float_json::parse("1e39"), "[json.exception.out_of_range.406] number overflow parsing '1e39'", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(_ = float_json::parse("-1e39"), "[json.exception.out_of_range.406] number overflow parsing '-1e39'", json::out_of_range&);
+
+        const float_json zero = float_json::parse("1e-50");
+        CHECK(zero == 0.0f);
+        CHECK(!std::signbit(zero.get<float>()));
+        const float_json negative_zero = float_json::parse("-1e-50");
+        CHECK(negative_zero == 0.0f);
+        CHECK(std::signbit(negative_zero.get<float>()));
+        CHECK(float_json::parse("1e-45") == std::numeric_limits<float>::denorm_min());
+    }
+
+    SECTION("long double")
+    {
+        long_double_json _;
+        CHECK_THROWS_WITH_AS(_ = long_double_json::parse("1e5000"), "[json.exception.out_of_range.406] number overflow parsing '1e5000'", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(_ = long_double_json::parse("-1e5000"), "[json.exception.out_of_range.406] number overflow parsing '-1e5000'", json::out_of_range&);
+
+        const long_double_json zero = long_double_json::parse("1e-5000");
+        CHECK(zero == 0.0L);
+        CHECK(!std::signbit(zero.get<long double>()));
+        const long_double_json negative_zero = long_double_json::parse("-1e-5000");
+        CHECK(negative_zero == 0.0L);
+        CHECK(std::signbit(negative_zero.get<long double>()));
+    }
 }

@@ -254,6 +254,8 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
 - `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 to optionally reject a NUL byte in the input instead of treating
   it as end of input; planned to become the default in version 4.0.0.
+- The result of converting floating-point numbers no longer depends on the C locale in version 3.13.0; before, a
+  locale whose decimal point is longer than one byte (e.g., `fa_IR.UTF-8`) truncated them at the decimal point.
 
 !!! warning "Deprecation"
 
