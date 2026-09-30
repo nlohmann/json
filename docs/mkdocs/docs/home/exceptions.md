@@ -331,9 +331,6 @@ An unexpected byte was read in a [binary format](../features/binary_formats/inde
     [json.exception.parse_error.112] parse error at byte 15: syntax error while parsing BSON binary: byte array length cannot be negative, is -1
     ```
     ```
-    [json.exception.parse_error.112] parse error at byte 9: syntax error while parsing CBOR value: negative integer overflow
-    ```
-    ```
     [json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: document size 6 does not match the number of bytes read (5)
     ```
 
@@ -854,12 +851,17 @@ The JSON Patch operations 'remove' and 'add' cannot be applied to the root eleme
 
 ### json.exception.out_of_range.406
 
-A parsed number could not be stored as without changing it to NaN or INF.
+A parsed number could not be stored without changing it to NaN or INF. For the binary formats, this happens when a
+finite floating-point number does not fit into [`number_float_t`](../api/basic_json/number_float_t.md), for example a
+double-precision number when `number_float_t` is `#!cpp float`.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     number overflow parsing '10E1000'
+    ```
+    ```
+    [json.exception.out_of_range.406] syntax error while parsing CBOR value: number overflow
     ```
 
 ### json.exception.out_of_range.407
