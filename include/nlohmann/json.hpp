@@ -1507,7 +1507,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                         const auto found = (!Ordered && !detail::is_ordered_map<object_t>::value)
                                            ? rhs_object->find(current.lhs_object_it->first)
                                            : rhs_object->cend();
-                        if (found == rhs_object->cend())
+                        // the object's comparator may find an entry whose
+                        // key is only equivalent, not equal, to this one
+                        if (found == rhs_object->cend() || !(found->first == current.lhs_object_it->first))
                         {
                             return key_result;
                         }
