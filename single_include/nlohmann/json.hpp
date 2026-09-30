@@ -24364,127 +24364,16 @@ class serializer
             }
 
             case value_t::string:
-            {
-                put_char('"');
-                dump_escaped(*val.m_data.m_value.string);
-                put_char('"');
-                return;
-            }
-
             case value_t::binary:
-            {
-                if (pretty_print)
-                {
-                    put_literal("{\n");
-
-                    // variable to hold indentation for recursive calls
-                    const auto new_indent = next_indent(current_indent, indent_step);
-
-                    put_indent(new_indent);
-
-                    put_literal("\"bytes\": [");
-
-                    if (!val.m_data.m_value.binary->empty())
-                    {
-                        for (auto i = val.m_data.m_value.binary->cbegin();
-                                i != val.m_data.m_value.binary->cend() - 1; ++i)
-                        {
-                            dump_byte(*i);
-                            put_literal(", ");
-                        }
-                        dump_byte(val.m_data.m_value.binary->back());
-                    }
-
-                    put_literal("],\n");
-                    put_indent(new_indent);
-
-                    put_literal("\"subtype\": ");
-                    if (val.m_data.m_value.binary->has_subtype())
-                    {
-                        dump_integer(val.m_data.m_value.binary->subtype());
-                    }
-                    else
-                    {
-                        put_literal("null");
-                    }
-                    put_char('\n');
-                    put_indent(current_indent);
-                    put_char('}');
-                }
-                else
-                {
-                    put_literal("{\"bytes\":[");
-
-                    if (!val.m_data.m_value.binary->empty())
-                    {
-                        for (auto i = val.m_data.m_value.binary->cbegin();
-                                i != val.m_data.m_value.binary->cend() - 1; ++i)
-                        {
-                            dump_byte(*i);
-                            put_char(',');
-                        }
-                        dump_byte(val.m_data.m_value.binary->back());
-                    }
-
-                    put_literal("],\"subtype\":");
-                    if (val.m_data.m_value.binary->has_subtype())
-                    {
-                        dump_integer(val.m_data.m_value.binary->subtype());
-                        put_char('}');
-                    }
-                    else
-                    {
-                        put_literal("null}");
-                    }
-                }
-                return;
-            }
-
             case value_t::boolean:
-            {
-                if (val.m_data.m_value.boolean)
-                {
-                    put_literal("true");
-                }
-                else
-                {
-                    put_literal("false");
-                }
-                return;
-            }
-
             case value_t::number_integer:
-            {
-                dump_integer(val.m_data.m_value.number_integer);
-                return;
-            }
-
             case value_t::number_unsigned:
-            {
-                dump_integer(val.m_data.m_value.number_unsigned);
-                return;
-            }
-
             case value_t::number_float:
-            {
-                dump_float(val.m_data.m_value.number_float);
-                return;
-            }
-
             case value_t::discarded:
-            {
-                put_literal("<discarded>");
-                return;
-            }
-
             case value_t::null:
-            {
-                put_literal("null");
+            default:
+                dump_scalar(val, current_indent);
                 return;
-            }
-
-            default:            // LCOV_EXCL_LINE
-                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
     }
 
@@ -24643,7 +24532,7 @@ class serializer
     An object or array with elements is opened and pushed onto @a stack for
     @ref dump_internal to walk; everything else - including a binary value,
     which looks like an object but has no elements to descend into - is written
-    out here in full.
+    out in full by @ref dump_scalar.
     */
     void dump_value(const BasicJsonType& val,
                     const std::size_t current_indent,
@@ -24701,6 +24590,35 @@ class serializer
                 return;
             }
 
+            case value_t::string:
+            case value_t::binary:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::discarded:
+            case value_t::null:
+            default:
+                dump_scalar(val, current_indent);
+                return;
+        }
+    }
+
+    /*!
+    @brief serialize the value @a val, which is neither an object nor an array
+
+    Shared by @ref dump_internal and @ref dump_value, so that a value is written
+    the same way however deeply it is nested. A binary value is written out here
+    in full: it looks like an object, but has no elements to descend into.
+
+    @param[in] val             value to serialize; not an object or array
+    @param[in] current_indent  the indentation of @a val, used for a
+                               pretty-printed binary value
+    */
+    void dump_scalar(const BasicJsonType& val, const std::size_t current_indent)
+    {
+        switch (val.m_data.m_type)
+        {
             case value_t::string:
             {
                 put_char('"');
@@ -24821,6 +24739,8 @@ class serializer
                 return;
             }
 
+            case value_t::object: // LCOV_EXCL_LINE
+            case value_t::array:  // LCOV_EXCL_LINE
             default:            // LCOV_EXCL_LINE
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
