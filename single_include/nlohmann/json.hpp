@@ -13619,29 +13619,13 @@ class binary_reader
                 return enter_array(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu));
 
             case 0x98: // array (one-byte uint8_t for n follows)
-            {
-                std::uint8_t len{};
-                return get_number(input_format_t::cbor, len) && enter_array(static_cast<std::size_t>(len));
-            }
-
             case 0x99: // array (two-byte uint16_t for n follow)
-            {
-                std::uint16_t len{};
-                return get_number(input_format_t::cbor, len) && enter_array(static_cast<std::size_t>(len));
-            }
-
             case 0x9A: // array (four-byte uint32_t for n follow)
-            {
-                std::uint32_t len{};
-                std::size_t size{};
-                return get_number(input_format_t::cbor, len) && get_cbor_container_size(len, size, "array") && enter_array(size);
-            }
-
             case 0x9B: // array (eight-byte uint64_t for n follow)
             {
                 std::uint64_t len{};
                 std::size_t size{};
-                return get_number(input_format_t::cbor, len) && get_cbor_container_size(len, size, "array") && enter_array(size);
+                return get_cbor_argument(len) && get_cbor_container_size(len, size, "array") && enter_array(size);
             }
 
             case 0x9F: // array (indefinite length)
@@ -13675,35 +13659,19 @@ class binary_reader
                 return enter_object(conditional_static_cast<std::size_t>(static_cast<unsigned int>(current) & 0x1Fu));
 
             case 0xB8: // map (one-byte uint8_t for n follows)
-            {
-                std::uint8_t len{};
-                return get_number(input_format_t::cbor, len) && enter_object(static_cast<std::size_t>(len));
-            }
-
             case 0xB9: // map (two-byte uint16_t for n follow)
-            {
-                std::uint16_t len{};
-                return get_number(input_format_t::cbor, len) && enter_object(static_cast<std::size_t>(len));
-            }
-
             case 0xBA: // map (four-byte uint32_t for n follow)
-            {
-                std::uint32_t len{};
-                std::size_t size{};
-                return get_number(input_format_t::cbor, len) && get_cbor_container_size(len, size, "map") && enter_object(size);
-            }
-
             case 0xBB: // map (eight-byte uint64_t for n follow)
             {
                 std::uint64_t len{};
                 std::size_t size{};
-                return get_number(input_format_t::cbor, len) && get_cbor_container_size(len, size, "map") && enter_object(size);
+                return get_cbor_argument(len) && get_cbor_container_size(len, size, "map") && enter_object(size);
             }
 
             case 0xBF: // map (indefinite length)
                 return enter_object(detail::unknown_size());
 
-            case 0xC0: // tagged item
+            case 0xC0: // tagged item (tag value 0-23, in the head itself)
             case 0xC1:
             case 0xC2:
             case 0xC3:
@@ -13727,6 +13695,22 @@ class binary_reader
             case 0xD5:
             case 0xD6:
             case 0xD7:
+            {
+                if (tag_handler == cbor_tag_handler_t::error)
+                {
+                    auto last_token = get_token_string();
+                    return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                            exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr));
+                }
+
+                // ignore and store: the tag value is already in the head, so
+                // there is nothing left to read here; the tagged value that
+                // follows is read by the loop in parse_cbor_internal() rather
+                // than by recursing here
+                tag_pending = true;
+                return true;
+            }
+
             case 0xD8: // tagged item (1 byte follows)
             case 0xD9: // tagged item (2 bytes follow)
             case 0xDA: // tagged item (4 bytes follow)
@@ -13743,47 +13727,11 @@ class binary_reader
 
                     case cbor_tag_handler_t::ignore:
                     {
-                        // ignore binary subtype
-                        switch (current)
+                        // ignore the tag's binary subtype argument
+                        std::uint64_t subtype_to_ignore{};
+                        if (!get_cbor_argument(subtype_to_ignore))
                         {
-                            case 0xD8:
-                            {
-                                std::uint8_t subtype_to_ignore{};
-                                if (!get_number(input_format_t::cbor, subtype_to_ignore))
-                                {
-                                    return false;
-                                }
-                                break;
-                            }
-                            case 0xD9:
-                            {
-                                std::uint16_t subtype_to_ignore{};
-                                if (!get_number(input_format_t::cbor, subtype_to_ignore))
-                                {
-                                    return false;
-                                }
-                                break;
-                            }
-                            case 0xDA:
-                            {
-                                std::uint32_t subtype_to_ignore{};
-                                if (!get_number(input_format_t::cbor, subtype_to_ignore))
-                                {
-                                    return false;
-                                }
-                                break;
-                            }
-                            case 0xDB:
-                            {
-                                std::uint64_t subtype_to_ignore{};
-                                if (!get_number(input_format_t::cbor, subtype_to_ignore))
-                                {
-                                    return false;
-                                }
-                                break;
-                            }
-                            default:
-                                break;
+                            return false;
                         }
                         // the tagged value follows; it is read by the loop in
                         // parse_cbor_internal() rather than by recursing here
@@ -13793,57 +13741,15 @@ class binary_reader
 
                     case cbor_tag_handler_t::store:
                     {
-                        binary_t b;
                         // use binary subtype and store in a binary container
-                        switch (current)
+                        std::uint64_t subtype{};
+                        if (!get_cbor_argument(subtype))
                         {
-                            case 0xD8:
-                            {
-                                std::uint8_t subtype{};
-                                if (!get_number(input_format_t::cbor, subtype))
-                                {
-                                    return false;
-                                }
-                                b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
-                                break;
-                            }
-                            case 0xD9:
-                            {
-                                std::uint16_t subtype{};
-                                if (!get_number(input_format_t::cbor, subtype))
-                                {
-                                    return false;
-                                }
-                                b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
-                                break;
-                            }
-                            case 0xDA:
-                            {
-                                std::uint32_t subtype{};
-                                if (!get_number(input_format_t::cbor, subtype))
-                                {
-                                    return false;
-                                }
-                                b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
-                                break;
-                            }
-                            case 0xDB:
-                            {
-                                std::uint64_t subtype{};
-                                if (!get_number(input_format_t::cbor, subtype))
-                                {
-                                    return false;
-                                }
-                                b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
-                                break;
-                            }
-                            default:
-                            {
-                                // as above, the tagged value is read by the caller
-                                tag_pending = true;
-                                return true;
-                            }
+                            return false;
                         }
+                        binary_t b;
+                        b.set_subtype(detail::conditional_static_cast<typename binary_t::subtype_type>(subtype));
+
                         get();
                         // a byte string (the heads accepted by get_cbor_binary) keeps the tag as subtype
                         if ((current >= 0x40 && current <= 0x5B) || current == 0x5F)
@@ -14250,6 +14156,73 @@ class binary_reader
             }
 
             get();
+        }
+    }
+
+    /*!
+    @brief read a CBOR argument (additional information 24-27) of the width
+           @ref current announces
+
+    The lower 5 bits of @a current (0x18-0x1B) select a 1/2/4/8-byte
+    big-endian unsigned integer that follows the head byte; this is shared by
+    every major type that uses this encoding (unsigned/negative integers,
+    strings, arrays, maps, tags). Reading always goes through @ref get_number,
+    so EOF is reported the same way as before this helper existed.
+
+    @param[out] value  the decoded argument
+    @return whether reading succeeded
+    */
+    bool get_cbor_argument(std::uint64_t& value)
+    {
+        switch (current & 0x1F)
+        {
+            case 0x18: // 1 byte
+            {
+                std::uint8_t n{};
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::cbor, n)))
+                {
+                    return false;
+                }
+                value = n;
+                return true;
+            }
+
+            case 0x19: // 2 bytes
+            {
+                std::uint16_t n{};
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::cbor, n)))
+                {
+                    return false;
+                }
+                value = n;
+                return true;
+            }
+
+            case 0x1A: // 4 bytes
+            {
+                std::uint32_t n{};
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::cbor, n)))
+                {
+                    return false;
+                }
+                value = n;
+                return true;
+            }
+
+            case 0x1B: // 8 bytes
+            {
+                std::uint64_t n{};
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::cbor, n)))
+                {
+                    return false;
+                }
+                value = n;
+                return true;
+            }
+
+            default:                 // LCOV_EXCL_LINE
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
+                return false;        // LCOV_EXCL_LINE
         }
     }
 
