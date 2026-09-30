@@ -878,6 +878,25 @@ TEST_CASE("JSON pointers")
         }
     }
 
+    SECTION("value(json_pointer, default) with ordered_json #5664")
+    {
+        // ordered_json's transparent object comparator made value()'s
+        // is_comparable_with_object_key check (which passes the pointer as
+        // a reference) instantiate the deprecated json_pointer/string
+        // comparison; this must compile without relying on it. The
+        // deprecation warning itself is not observable here, since the
+        // unit test build disables -Wdeprecated-declarations (see
+        // cmake/clang_flags.cmake); it was checked manually instead.
+        const nlohmann::ordered_json j = {{"n", 1}, {"s", "text"}};
+        const nlohmann::ordered_json::json_pointer ptr_n("/n");
+        const nlohmann::ordered_json::json_pointer ptr_s("/s");
+        const nlohmann::ordered_json::json_pointer ptr_missing("/missing");
+
+        CHECK(j.value(ptr_n, 0) == 1);
+        CHECK(j.value(ptr_s, std::string("x")) == "text");
+        CHECK(j.value(ptr_missing, 42) == 42);
+    }
+
     // build with C++20
     // JSON_HAS_CPP_20
 #if defined(__cpp_char8_t)
