@@ -6235,6 +6235,61 @@ StringType to_string(std::size_t value)
 }
 
 ///////////////////
+// UTF-8 encoding //
+///////////////////
+
+/*!
+@brief encode a Unicode code point as UTF-8
+
+Used to turn a decoded code point back into bytes: by the wide-string input
+adapters in input_adapters.hpp (one code point per UTF-32 unit, per UTF-16
+unit outside the surrogate range, and per valid UTF-16 surrogate pair), and
+by the lexer's `\uXXXX`/`\uXXXX\uYYYY` handling in lexer.hpp. Passing a
+code point above U+10FFFF, or one in the surrogate range U+D800..U+DFFF, is
+undefined behavior; callers are expected to have rejected those already
+(the wide-string adapters pass malformed units through unencoded instead of
+calling this function, and the lexer rejects unpaired surrogates before
+reaching it).
+
+@tparam Out    a callable invoked with one byte (as std::uint32_t, 0x00..0xFF)
+               at a time, most significant byte first
+@param[in] cp   the code point to encode (at most U+10FFFF)
+@param[in] out  called once for each byte of the UTF-8 encoding of @a cp
+*/
+template<typename Out>
+void encode_utf8(std::uint32_t cp, Out&& out)
+{
+    JSON_ASSERT(cp <= 0x10FFFF);
+
+    if (cp < 0x80)
+    {
+        // 1-byte characters: 0xxxxxxx (ASCII)
+        out(cp);
+    }
+    else if (cp <= 0x7FF)
+    {
+        // 2-byte characters: 110xxxxx 10xxxxxx
+        out(0xC0u | (cp >> 6u));
+        out(0x80u | (cp & 0x3Fu));
+    }
+    else if (cp <= 0xFFFF)
+    {
+        // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
+        out(0xE0u | (cp >> 12u));
+        out(0x80u | ((cp >> 6u) & 0x3Fu));
+        out(0x80u | (cp & 0x3Fu));
+    }
+    else
+    {
+        // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+        out(0xF0u | (cp >> 18u));
+        out(0x80u | ((cp >> 12u) & 0x3Fu));
+        out(0x80u | ((cp >> 6u) & 0x3Fu));
+        out(0x80u | (cp & 0x3Fu));
+    }
+}
+
+///////////////////
 // UTF-8 decoding //
 ///////////////////
 
@@ -7563,6 +7618,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <algorithm> // min
 #include <array> // array
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstring> // strlen
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
 #include <streambuf> // streambuf
@@ -7582,6 +7638,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
+
+// #include <nlohmann/detail/string_utils.hpp>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -8004,32 +8062,14 @@ struct wide_string_input_helper<BaseInputAdapter, 4>
             // get the current character
             const auto wc = input.get_character();
 
-            // UTF-32 to UTF-8 encoding
-            if (wc < 0x80)
+            if (wc <= 0x10FFFF)
             {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(wc);
-                utf8_bytes_filled = 1;
-            }
-            else if (wc <= 0x7FF)
-            {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xC0u | ((static_cast<unsigned int>(wc) >> 6u) & 0x1Fu));
-                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
-                utf8_bytes_filled = 2;
-            }
-            else if (wc <= 0xFFFF)
-            {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xE0u | ((static_cast<unsigned int>(wc) >> 12u) & 0x0Fu));
-                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((static_cast<unsigned int>(wc) >> 6u) & 0x3Fu));
-                utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
-                utf8_bytes_filled = 3;
-            }
-            else if (wc <= 0x10FFFF)
-            {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xF0u | ((static_cast<unsigned int>(wc) >> 18u) & 0x07u));
-                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((static_cast<unsigned int>(wc) >> 12u) & 0x3Fu));
-                utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | ((static_cast<unsigned int>(wc) >> 6u) & 0x3Fu));
-                utf8_bytes[3] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
-                utf8_bytes_filled = 4;
+                // UTF-32 to UTF-8 encoding
+                utf8_bytes_filled = 0;
+                encode_utf8(static_cast<std::uint32_t>(wc), [&utf8_bytes, &utf8_bytes_filled](std::uint32_t byte)
+                {
+                    utf8_bytes[utf8_bytes_filled++] = static_cast<std::char_traits<char>::int_type>(byte);
+                });
             }
             else
             {
@@ -8066,24 +8106,15 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
             // get the current character
             const auto wc = input.get_character();
 
-            // UTF-16 to UTF-8 encoding
-            if (wc < 0x80)
+            if (0xD800 > wc || wc >= 0xE000)
             {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(wc);
-                utf8_bytes_filled = 1;
-            }
-            else if (wc <= 0x7FF)
-            {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xC0u | ((static_cast<unsigned int>(wc) >> 6u)));
-                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
-                utf8_bytes_filled = 2;
-            }
-            else if (0xD800 > wc || wc >= 0xE000)
-            {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xE0u | ((static_cast<unsigned int>(wc) >> 12u)));
-                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((static_cast<unsigned int>(wc) >> 6u) & 0x3Fu));
-                utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
-                utf8_bytes_filled = 3;
+                // a UTF-16 code unit outside the surrogate range is a valid
+                // code point (at most U+FFFF) on its own
+                utf8_bytes_filled = 0;
+                encode_utf8(static_cast<std::uint32_t>(wc), [&utf8_bytes, &utf8_bytes_filled](std::uint32_t byte)
+                {
+                    utf8_bytes[utf8_bytes_filled++] = static_cast<std::char_traits<char>::int_type>(byte);
+                });
             }
             else
             {
@@ -8101,11 +8132,11 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
                     if (0xDC00 <= wc2 && wc2 <= 0xDFFF)
                     {
                         const auto charcode = 0x10000u + (((static_cast<unsigned int>(wc) & 0x3FFu) << 10u) | (wc2 & 0x3FFu));
-                        utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xF0u | (charcode >> 18u));
-                        utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((charcode >> 12u) & 0x3Fu));
-                        utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | ((charcode >> 6u) & 0x3Fu));
-                        utf8_bytes[3] = static_cast<std::char_traits<char>::int_type>(0x80u | (charcode & 0x3Fu));
-                        utf8_bytes_filled = 4;
+                        utf8_bytes_filled = 0;
+                        encode_utf8(charcode, [&utf8_bytes, &utf8_bytes_filled](std::uint32_t byte)
+                        {
+                            utf8_bytes[utf8_bytes_filled++] = static_cast<std::char_traits<char>::int_type>(byte);
+                        });
                         valid_pair = true;
                     }
                 }
@@ -8487,6 +8518,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <array> // array
 #include <clocale> // localeconv
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstdio> // snprintf
 #include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
 #include <initializer_list> // initializer_list
@@ -9129,6 +9161,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
+// #include <nlohmann/detail/string_utils.hpp>
+
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -9605,32 +9639,10 @@ class lexer : public lexer_base<BasicJsonType>
                             JSON_ASSERT(0x00 <= codepoint && codepoint <= 0x10FFFF);
 
                             // translate codepoint into bytes
-                            if (codepoint < 0x80)
+                            encode_utf8(static_cast<std::uint32_t>(codepoint), [this](std::uint32_t byte)
                             {
-                                // 1-byte characters: 0xxxxxxx (ASCII)
-                                add(static_cast<char_int_type>(codepoint));
-                            }
-                            else if (codepoint <= 0x7FF)
-                            {
-                                // 2-byte characters: 110xxxxx 10xxxxxx
-                                add(static_cast<char_int_type>(0xC0u | (static_cast<unsigned int>(codepoint) >> 6u)));
-                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
-                            else if (codepoint <= 0xFFFF)
-                            {
-                                // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
-                                add(static_cast<char_int_type>(0xE0u | (static_cast<unsigned int>(codepoint) >> 12u)));
-                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
-                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
-                            else
-                            {
-                                // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-                                add(static_cast<char_int_type>(0xF0u | (static_cast<unsigned int>(codepoint) >> 18u)));
-                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 12u) & 0x3Fu)));
-                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
-                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
+                                add(static_cast<char_int_type>(byte));
+                            });
 
                             break;
                         }

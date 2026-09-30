@@ -11,6 +11,7 @@
 #include <array> // array
 #include <clocale> // localeconv
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstdio> // snprintf
 #include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
 #include <initializer_list> // initializer_list
@@ -24,6 +25,7 @@
 #include <nlohmann/detail/input/string_scan.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
+#include <nlohmann/detail/string_utils.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -500,32 +502,10 @@ class lexer : public lexer_base<BasicJsonType>
                             JSON_ASSERT(0x00 <= codepoint && codepoint <= 0x10FFFF);
 
                             // translate codepoint into bytes
-                            if (codepoint < 0x80)
+                            encode_utf8(static_cast<std::uint32_t>(codepoint), [this](std::uint32_t byte)
                             {
-                                // 1-byte characters: 0xxxxxxx (ASCII)
-                                add(static_cast<char_int_type>(codepoint));
-                            }
-                            else if (codepoint <= 0x7FF)
-                            {
-                                // 2-byte characters: 110xxxxx 10xxxxxx
-                                add(static_cast<char_int_type>(0xC0u | (static_cast<unsigned int>(codepoint) >> 6u)));
-                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
-                            else if (codepoint <= 0xFFFF)
-                            {
-                                // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
-                                add(static_cast<char_int_type>(0xE0u | (static_cast<unsigned int>(codepoint) >> 12u)));
-                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
-                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
-                            else
-                            {
-                                // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-                                add(static_cast<char_int_type>(0xF0u | (static_cast<unsigned int>(codepoint) >> 18u)));
-                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 12u) & 0x3Fu)));
-                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
-                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
+                                add(static_cast<char_int_type>(byte));
+                            });
 
                             break;
                         }
