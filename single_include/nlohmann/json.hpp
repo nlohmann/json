@@ -25426,7 +25426,7 @@ class serializer
         }
 
         // use a pointer to fill the buffer
-        auto buffer_ptr = number_buffer.begin(); // NOLINT(llvm-qualified-auto,readability-qualified-auto,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+        auto buffer_ptr = number_buffer.begin(); // NOLINT(llvm-qualified-auto,readability-qualified-auto)
 
         number_unsigned_t abs_value;
 
@@ -25600,7 +25600,7 @@ class serializer
      */
     number_unsigned_t remove_sign(number_integer_t x) noexcept
     {
-        JSON_ASSERT(x < 0 && x < (std::numeric_limits<number_integer_t>::max)()); // NOLINT(misc-redundant-expression)
+        JSON_ASSERT(x < 0);
         return static_cast<number_unsigned_t>(-(x + 1)) + 1;
     }
 
