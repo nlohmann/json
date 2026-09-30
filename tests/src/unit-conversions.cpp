@@ -1826,15 +1826,20 @@ TEST_CASE("std::u8string")
 #endif
 #endif
 
+#if !defined(JSON_NOEXCEPTION)
+namespace
+{
 // a type whose to_json reports an error by throwing, used below to check that
 // converting a std::optional<T> to JSON propagates an exception thrown while
 // converting its contained value instead of calling std::terminate (#5642)
 struct throwing_to_json_type {};
 
-void to_json(json&, const throwing_to_json_type&)
+[[noreturn]] void to_json(json& /*unused*/, const throwing_to_json_type& /*unused*/)
 {
     throw std::runtime_error("cannot serialize throwing_to_json_type");
 }
+}  // namespace
+#endif
 
 TEST_CASE("std::optional")
 {
@@ -1929,6 +1934,10 @@ TEST_CASE("std::optional")
         // std::terminate() instead of letting the exception propagate.
         const std::optional<throwing_to_json_type> opt = throwing_to_json_type{};
         CHECK_THROWS_WITH_AS(json(opt), "cannot serialize throwing_to_json_type", std::runtime_error&);
+
+        // the conversion is noexcept exactly when converting the contained value is
+        static_assert(!std::is_nothrow_constructible<json, const std::optional<throwing_to_json_type>&>::value, "");
+        static_assert(std::is_nothrow_constructible<json, const std::optional<int>&>::value, "");
     }
 #endif
 }
