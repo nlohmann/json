@@ -1748,6 +1748,12 @@ TEST_CASE("Strict JSON to enum mapping")
 
         // conversion of unmapped enum -> exception thrown
         CHECK_THROWS_WITH_AS(json(strict_cards::andere), "[json.exception.out_of_range.410] enum value out of range for strict_cards", json::out_of_range&);
+
+        // invalid UTF-8 -> out_of_range.410, not the type_error.316 thrown while building the
+        // message (regression test for #5667); such strings can reach get<Enum>() unvalidated,
+        // e.g. from from_cbor()/from_msgpack() (#5529)
+        const json j_invalid_utf8 = "\xFF";
+        CHECK_THROWS_WITH_AS(_ = j_invalid_utf8.get<strict_cards>(), "[json.exception.out_of_range.410] enum value out of range for strict_cards: \"\xEF\xBF\xBD\"", json::out_of_range&);
     }
 
     SECTION("traditional enum")
