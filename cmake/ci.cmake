@@ -356,13 +356,20 @@ add_custom_target(ci_test_clang_sanitizer
 # Check if header is amalgamated and sources are properly indented.
 ###############################################################################
 
+# Same file set as .github/workflows/check_amalgamation.yml, so a direct push to develop/master/release/*
+# (which only this CMake target checks, not the pull_request-only workflow) is held to the same standard.
 file(GLOB_RECURSE INDENT_FILES
-    ${PROJECT_SOURCE_DIR}/include/nlohmann/*.hpp
-        ${PROJECT_SOURCE_DIR}/tests/src/*.cpp
-        ${PROJECT_SOURCE_DIR}/tests/src/*.hpp
-        ${PROJECT_SOURCE_DIR}/tests/benchmarks/src/benchmarks.cpp
+    ${PROJECT_SOURCE_DIR}/docs/mkdocs/docs/examples/*.hpp
     ${PROJECT_SOURCE_DIR}/docs/mkdocs/docs/examples/*.cpp
+    ${PROJECT_SOURCE_DIR}/docs/mkdocs/docs/examples/*.cu
+    ${PROJECT_SOURCE_DIR}/include/*.hpp
+    ${PROJECT_SOURCE_DIR}/include/*.cpp
+    ${PROJECT_SOURCE_DIR}/include/*.cu
+    ${PROJECT_SOURCE_DIR}/tests/*.hpp
+    ${PROJECT_SOURCE_DIR}/tests/*.cpp
+    ${PROJECT_SOURCE_DIR}/tests/*.cu
 )
+list(FILTER INDENT_FILES EXCLUDE REGEX "/tests/thirdparty/|/tests/abi/include/nlohmann/")
 
 set(include_dir ${PROJECT_SOURCE_DIR}/single_include/nlohmann)
 set(tool_dir ${PROJECT_SOURCE_DIR}/tools/amalgamate)
@@ -370,6 +377,7 @@ add_custom_target(ci_test_amalgamation
     COMMAND rm -fr ${include_dir}/json.hpp~ ${include_dir}/json_fwd.hpp~
     COMMAND cp ${include_dir}/json.hpp ${include_dir}/json.hpp~
     COMMAND cp ${include_dir}/json_fwd.hpp ${include_dir}/json_fwd.hpp~
+    COMMAND cp ${PROJECT_SOURCE_DIR}/BUILD.bazel ${PROJECT_SOURCE_DIR}/BUILD.bazel~
 
     COMMAND ${Python3_EXECUTABLE} -mvenv venv_astyle
     COMMAND venv_astyle/bin/pip3 --quiet install -r ${CMAKE_SOURCE_DIR}/tools/astyle/requirements.txt
@@ -378,15 +386,17 @@ add_custom_target(ci_test_amalgamation
     COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json.json -s .
     COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json_fwd.json -s .
     COMMAND venv_astyle/bin/astyle --project=tools/astyle/.astylerc --suffix=none ${include_dir}/json.hpp ${include_dir}/json_fwd.hpp
+    COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/scripts/gen_bazel_build_file.cmake
 
     COMMAND diff ${include_dir}/json.hpp~ ${include_dir}/json.hpp
     COMMAND diff ${include_dir}/json_fwd.hpp~ ${include_dir}/json_fwd.hpp
+    COMMAND diff ${PROJECT_SOURCE_DIR}/BUILD.bazel~ ${PROJECT_SOURCE_DIR}/BUILD.bazel
 
     COMMAND venv_astyle/bin/astyle --project=tools/astyle/.astylerc --suffix=orig ${INDENT_FILES}
     COMMAND for FILE in `find . -name '*.orig'`\; do false \; done
 
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    COMMENT "Check amalgamation and indentation"
+    COMMENT "Check amalgamation, formatting, and BUILD.bazel"
 )
 
 ###############################################################################

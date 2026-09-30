@@ -154,11 +154,11 @@ install_astyle:
 
 # call the Artistic Style pretty printer on all source files
 pretty: install_astyle
-	$(ASTYLE) --project=tools/astyle/.astylerc $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) docs/mkdocs/docs/examples/*.cpp
+	$(ASTYLE) --project=tools/astyle/.astylerc $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) docs/mkdocs/docs/examples/*.cpp docs/mkdocs/docs/examples/*.hpp
 
 # call the Clang-Format on all source files
 pretty_format:
-	for FILE in $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) docs/mkdocs/docs/examples/*.cpp; do echo $$FILE; clang-format -i $$FILE; done
+	for FILE in $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) docs/mkdocs/docs/examples/*.cpp docs/mkdocs/docs/examples/*.hpp; do echo $$FILE; clang-format -i $$FILE; done
 
 # create single header files and pretty print
 amalgamate: $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE)
@@ -173,7 +173,6 @@ $(AMALGAMATED_FWD_FILE): $(SRCS)
 	tools/amalgamate/amalgamate.py -c tools/amalgamate/config_json_fwd.json -s . --verbose=yes
 
 # check if file single_include/nlohmann/json.hpp has been amalgamated from the nlohmann sources
-# Note: this target is called by Travis
 check-amalgamation:
 	@mv $(AMALGAMATED_FILE) $(AMALGAMATED_FILE)~
 	@mv $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_FWD_FILE)~
