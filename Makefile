@@ -95,7 +95,6 @@ $(AMALGAMATED_FWD_FILE): $(SRCS)
 	tools/amalgamate/amalgamate.py -c tools/amalgamate/config_json_fwd.json -s . --verbose=yes
 
 # check if file single_include/nlohmann/json.hpp has been amalgamated from the nlohmann sources
-# Note: this target is called by Travis
 check-amalgamation:
 	@mv $(AMALGAMATED_FILE) $(AMALGAMATED_FILE)~
 	@mv $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_FWD_FILE)~
