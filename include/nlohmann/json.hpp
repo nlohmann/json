@@ -1134,15 +1134,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// types, such as nlohmann::ordered_map, fall back to the plain range
     /// constructor and default-construct their comparator, just as they
     /// always have (@ref detail::is_comparator_constructible_object_type).
-    template < typename Iterator, detail::enable_if_t <
-                   detail::is_comparator_constructible_object_type<object_t, Iterator>::value, int > = 0 >
+    template<typename Iterator, detail::enable_if_t<
+                 detail::is_comparator_constructible_object_type<object_t, Iterator>::value, int> = 0>
     static object_t* create_object_with_comparator(const object_t& src_object, Iterator first, Iterator last)
     {
         return create<object_t>(first, last, src_object.key_comp());
     }
 
-    template < typename Iterator, detail::enable_if_t <
-                   !detail::is_comparator_constructible_object_type<object_t, Iterator>::value, int > = 0 >
+    template<typename Iterator, detail::enable_if_t<
+                 detail::negation<detail::is_comparator_constructible_object_type<object_t, Iterator>>::value, int> = 0>
     static object_t* create_object_with_comparator(const object_t& /*src_object*/, Iterator first, Iterator last)
     {
         return create<object_t>(first, last);
