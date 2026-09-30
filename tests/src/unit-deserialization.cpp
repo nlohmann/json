@@ -28,11 +28,6 @@ using nlohmann::json;
 #include <string>
 #include <valarray>
 
-#if defined(_WIN32)
-    #define NOMINMAX
-    #include <windows.h> // for GetACP()
-#endif
-
 namespace
 {
 struct SaxEventLogger : public nlohmann::json_sax<json>
@@ -228,24 +223,6 @@ class proxy_iterator
     iterator* m_it = nullptr;
 };
 
-// JSON_HAS_CPP_20
-#if defined(__cpp_char8_t)
-bool check_utf8()
-{
-#if defined(_WIN32)
-    // Runtime check of the active ANSI code page
-    // 65001 == UTF-8
-    return GetACP() == 65001;
-#elif defined(__ICC) || defined(__INTEL_COMPILER)
-    // classic Intel ICC does not encode narrow string literals containing
-    // non-ASCII source characters as UTF-8, so comparing a decoded u8 literal
-    // against a narrow string literal containing the same characters fails
-    return false;
-#else
-    return true;
-#endif
-}
-#endif
 } // namespace
 
 TEST_CASE("deserialization")
@@ -1297,14 +1274,15 @@ TEST_CASE("deserialization")
         CHECK(j1["key"] == "value");
         CHECK(j1["num"] == 42);
 
-        // UTF-8 prefixed literal (C++20 and later);
-        // MSVC may not set /utf-8, so we need to check
-        if (check_utf8())
-        {
-            const auto j2 = u8R"({"emoji": "😀", "msg": "hello"})"_json;
-            CHECK(j2["emoji"] == "😀");
-            CHECK(j2["msg"] == "hello");
-        }
+        // UTF-8 prefixed literal (C++20 and later); the emoji is written as a
+        // \U escape rather than a raw multibyte character so this does not
+        // depend on the compiler's source-file encoding (e.g., MSVC without
+        // /utf-8, or classic ICC, which does not encode non-ASCII narrow
+        // string literals as UTF-8 - compare against a \x-escaped expectation
+        // for the same reason)
+        const auto j2 = u8"{\"emoji\": \"\U0001F600\", \"msg\": \"hello\"}"_json;
+        CHECK(j2["emoji"] == "\xF0\x9F\x98\x80");
+        CHECK(j2["msg"] == "hello");
 
         const auto j3 = u8R"({"key": "value", "num": 42})"_json;
         CHECK(j3["key"] == "value");
