@@ -630,6 +630,49 @@ TEST_CASE("modifiers")
             }
         }
 
+        SECTION("rvalue at position moves rather than copies")
+        {
+            // regression test: insert(pos, basic_json&&) used to forward to
+            // insert(pos, const basic_json&) because the named rvalue
+            // reference parameter is itself an lvalue, so it always
+            // deep-copied its argument instead of moving it
+            json j_big = std::string(1000, 'x');
+            const auto* const original_buffer = j_big.get_ref<const std::string&>().data();
+
+            auto it = j_array.insert(j_array.begin(), std::move(j_big));
+            CHECK(j_array.size() == 5);
+            CHECK(*it == json(std::string(1000, 'x')));
+            CHECK((*it).get_ref<const std::string&>().data() == original_buffer);
+
+            // the moved-from value is null, the same as after push_back(&&)
+            CHECK(j_big.is_null()); // NOLINT(bugprone-use-after-move,hicpp-invalid-access-moved)
+        }
+
+        SECTION("self-aliasing insertion")
+        {
+            SECTION("without reallocation")
+            {
+                json j_self = {1, 2, 3, 4};
+                j_self.get_ref<json::array_t&>().reserve(j_self.size() + 1);
+
+                auto it = j_self.insert(j_self.begin(), std::move(j_self[1]));
+                CHECK(j_self.size() == 5);
+                CHECK(*it == json(2));
+                CHECK(j_self == json({2, 1, nullptr, 3, 4}));
+            }
+
+            SECTION("with reallocation")
+            {
+                json j_self = {1, 2, 3, 4};
+                j_self.get_ref<json::array_t&>().shrink_to_fit();
+
+                auto it = j_self.insert(j_self.begin(), std::move(j_self[1]));
+                CHECK(j_self.size() == 5);
+                CHECK(*it == json(2));
+                CHECK(j_self == json({2, 1, nullptr, 3, 4}));
+            }
+        }
+
         SECTION("copies at position")
         {
             SECTION("insert before begin()")

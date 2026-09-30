@@ -1,11 +1,9 @@
-# TODO: The first three checks are only removed to get the CI going. They have to be addressed at some point.
+# TODO: portability-template-virtual-member-function is only removed to get the CI going. It has to be addressed at some point.
 # TODO: portability-avoid-pragma-once: should be fixed eventually
 
 Checks: '*,
 
          -portability-template-virtual-member-function,
-         -bugprone-use-after-move,
-         -hicpp-invalid-access-moved,
 
          -altera-id-dependent-backward-branch,
          -altera-struct-pack-align,
