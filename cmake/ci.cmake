@@ -40,6 +40,14 @@ execute_process(COMMAND ${IWYU_TOOL} --version OUTPUT_VARIABLE IWYU_TOOL_VERSION
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" IWYU_TOOL_VERSION "${IWYU_TOOL_VERSION}")
 message(STATUS "🔖 include-what-you-use ${IWYU_TOOL_VERSION} (${IWYU_TOOL})")
 
+# CMake's CXX_INCLUDE_WHAT_YOU_USE launcher runs IWYU during the normal compile step (useful to see
+# diagnostics inline), but CMake's own __run_co_compile wrapper does not propagate the launched
+# tool's exit code to the build, so IWYU's own "-Xiwyu --error" cannot fail that step (verified: a
+# deliberately-unused #include in a header still lets `cmake --build` finish with exit code 0).
+# iwyu_tool.py, which ships with IWYU, reads compile_commands.json and does return a non-zero exit
+# code for any analyzed file with findings; ci_single_binaries uses it to actually fail on findings.
+find_program(IWYU_TOOL_PY NAMES iwyu_tool iwyu_tool.py iwyu-tool)
+
 find_program(INFER_TOOL NAMES infer)
 execute_process(COMMAND ${INFER_TOOL} --version OUTPUT_VARIABLE INFER_TOOL_VERSION ERROR_VARIABLE INFER_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" INFER_TOOL_VERSION "${INFER_TOOL_VERSION}")
@@ -551,7 +559,13 @@ add_custom_target(ci_reproducible_tests
 # be compiled individually.
 ###############################################################################
 
-set(iwyu_path_and_options ${IWYU_TOOL} -Xiwyu --max_line_length=300)
+set(iwyu_options -Xiwyu --error -Xiwyu --max_line_length=300)
+set(iwyu_path_and_options ${IWYU_TOOL} ${iwyu_options})
+
+# CMake needs to know the exact flags used to compile each src_single/*.cpp below to hand them to
+# iwyu_tool.py; JSON_CI already implies a from-scratch configure, so enabling this project-wide has
+# no downside here.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 foreach(SRC_FILE ${SRC_FILES})
     # get relative path of the header file
@@ -566,14 +580,34 @@ foreach(SRC_FILE ${SRC_FILES})
     target_include_directories(single_${RELATIVE_SRC_FILE} PRIVATE ${PROJECT_SOURCE_DIR}/include)
     target_compile_features(single_${RELATIVE_SRC_FILE} PRIVATE cxx_std_11)
     set_property(TARGET single_${RELATIVE_SRC_FILE} PROPERTY CXX_INCLUDE_WHAT_YOU_USE "${iwyu_path_and_options}")
-    # remember binary for ci_single_binaries target
+    # remember binary for ci_single_binaries
     list(APPEND single_binaries single_${RELATIVE_SRC_FILE})
+    # json.hpp pulls together the whole library behind heavily templated, SFINAE-based code, and
+    # IWYU's suggestion for its one truly ambiguous symbol (a container-comparison "swap,
+    # operator!=") is not deterministic between runs (observed <set>, <unordered_map>, and <map>
+    # for the exact same source across otherwise-identical local and containerized builds). Keep
+    # reporting its diagnostics (informational, via CXX_INCLUDE_WHAT_YOU_USE above) but exclude it
+    # from the hard gate below so a fresh IWYU/compiler combination does not fail this target on a
+    # nondeterministic suggestion for a header that already re-exports everything on purpose.
+    if(NOT RELATIVE_SRC_FILE STREQUAL "json")
+        list(APPEND single_binaries_tus src_single/${RELATIVE_SRC_FILE}.cpp)
+    endif()
 endforeach()
 
-add_custom_target(ci_single_binaries
-    DEPENDS ${single_binaries}
-    COMMENT "Check if headers are self-contained"
-)
+if(IWYU_TOOL_PY)
+    add_custom_target(ci_single_binaries
+        DEPENDS ${single_binaries}
+        COMMAND ${IWYU_TOOL_PY} -p ${PROJECT_BINARY_DIR} ${single_binaries_tus} -- ${iwyu_options}
+        COMMENT "Check if headers are self-contained"
+    )
+else()
+    # iwyu_tool.py (ships with IWYU, e.g. as /usr/bin/iwyu_tool on Debian/Ubuntu) was not found;
+    # fall back to building the self-containment check without enforcing the IWYU findings.
+    add_custom_target(ci_single_binaries
+        DEPENDS ${single_binaries}
+        COMMENT "Check if headers are self-contained"
+    )
+endif()
 
 ###############################################################################
 # Benchmarks
