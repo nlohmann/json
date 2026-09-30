@@ -3,6 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
+// SPDX-FileCopyrightText: 2021 The fast_float authors <https://github.com/fastfloat/fast_float>
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
@@ -14,9 +15,12 @@
 #include <cstddef> // size_t
 #include <cstdint> // int64_t, uint64_t
 #include <cstdlib> // strtof, strtod, strtold
+#include <cstring> // memcpy
 #include <limits> // numeric_limits
 #include <string> // string
 
+#include <nlohmann/detail/bit_ops.hpp>
+#include <nlohmann/detail/input/pow5_table.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
 // std::from_chars lives in <charconv>, but being in C++17 mode does not
@@ -297,6 +301,233 @@ bool parse_float_from_chars(const char* first, const char* last, FloatType& out)
 #endif
 }
 
+/// whether the eight bytes of @a v (see read_eight_bytes()) are ASCII digits
+/// (after fast_float's is_made_of_eight_digits_fast)
+inline bool is_eight_digits(std::uint64_t v) noexcept
+{
+    return ((v & 0xF0F0F0F0F0F0F0F0u) | (((v + 0x0606060606060606u) & 0xF0F0F0F0F0F0F0F0u) >> 4u)) == 0x3333333333333333u;
+}
+
+/// the value of the eight ASCII digits in @a v (see read_eight_bytes()), three
+/// multiplications instead of eight (after simdjson and fast_float)
+inline std::uint32_t parse_eight_digits(std::uint64_t v) noexcept
+{
+    v = ((v & 0x0F0F0F0F0F0F0F0Fu) * 2561u) >> 8u;
+    v = ((v & 0x00FF00FF00FF00FFu) * 6553601u) >> 16u;
+    return static_cast<std::uint32_t>(((v & 0x0000FFFF0000FFFFu) * 42949672960001u) >> 32u);
+}
+
+/*!
+@brief the double nearest to w * 10^q (Eisel-Lemire)
+
+The algorithm of Daniel Lemire, "Number Parsing at a Gigabyte per Second"
+(Software: Practice and Experience, 2021), after fast_float's compute_float
+(used under the MIT license). With a 128-bit approximation of 5^q, the product
+is always sufficient to round correctly for w with at most 19 digits (Noble
+Mushtak and Daniel Lemire, "Fast number parsing without fallback", Software:
+Practice and Experience, 2023). Only integer arithmetic is used, so the result
+does not depend on the floating-point environment.
+
+@param[in] q  decimal exponent
+@param[in] w  significand, w != 0
+@return the IEEE-754 bits of the positive result (0 for underflow, infinity
+        for overflow)
+*/
+inline std::uint64_t eisel_lemire(std::int64_t q, std::uint64_t w) noexcept
+{
+    constexpr int mantissa_bits = 52;
+    constexpr std::uint64_t infinity = std::uint64_t{0x7FF} << mantissa_bits;
+    if (q < pow5_128_smallest_power)
+    {
+        return 0;
+    }
+    if (q > pow5_128_largest_power)
+    {
+        return infinity;
+    }
+
+    const int lz = count_leading_zeros(w);
+    w <<= static_cast<unsigned>(lz);
+    const auto index = static_cast<std::size_t>(2 * (q - pow5_128_smallest_power));
+    uint128_parts product = full_multiplication(w, pow5_128()[index]);
+    constexpr std::uint64_t precision_mask = 0xFFFFFFFFFFFFFFFFu >> (mantissa_bits + 3);
+    if ((product.high & precision_mask) == precision_mask)
+    {
+        // the lower bits may carry into the result: use the next 64 bits of 5^q
+        const uint128_parts second = full_multiplication(w, pow5_128()[index + 1]);
+        product.low += second.high;
+        if (second.high > product.low)
+        {
+            ++product.high;
+        }
+    }
+
+    const auto upperbit = static_cast<int>(product.high >> 63u);
+    const int shift = upperbit + 64 - mantissa_bits - 3;
+    std::uint64_t mantissa = product.high >> static_cast<unsigned>(shift);
+    // floor(log2(10^q)) + 63 + 1023, with log2(10) ~ 217706 / 2^16
+    std::int64_t power2 = (((152170 + 65536) * q) >> 16) + 63 + upperbit - lz + 1023;
+
+    if (power2 <= 0) // subnormal
+    {
+        if (-power2 + 1 >= 64)
+        {
+            return 0;
+        }
+        mantissa >>= static_cast<unsigned>(-power2 + 1);
+        mantissa += (mantissa & 1u);
+        mantissa >>= 1u;
+        // rounding up may produce the smallest normal number
+        power2 = (mantissa < (std::uint64_t{1} << mantissa_bits)) ? 0 : 1;
+        return mantissa | (static_cast<std::uint64_t>(power2) << mantissa_bits);
+    }
+
+    // a value exactly between two doubles rounds to even; this can only
+    // happen for small |q|, where 5^q is exact
+    if (product.low <= 1 && q >= -4 && q <= 23 && (mantissa & 3u) == 1
+            && (mantissa << static_cast<unsigned>(shift)) == product.high)
+    {
+        mantissa &= ~std::uint64_t{1};
+    }
+    mantissa += (mantissa & 1u);
+    mantissa >>= 1u;
+    if (mantissa >= (std::uint64_t{2} << mantissa_bits))
+    {
+        mantissa = std::uint64_t{1} << mantissa_bits;
+        ++power2;
+    }
+    mantissa &= ~(std::uint64_t{1} << mantissa_bits);
+    if (power2 >= 0x7FF)
+    {
+        return infinity;
+    }
+    return mantissa | (static_cast<std::uint64_t>(power2) << mantissa_bits);
+}
+
+/*!
+@brief parse a validated float token with the Eisel-Lemire algorithm
+
+The significand is accumulated eight digits at a time where possible. A token
+with more than 19 significant digits is truncated to w; the value then lies
+in [w, w + 1) * 10^q, and it is only returned if both ends round to the same
+double, which covers all but a few such tokens.
+
+@param[in]  first  pointer to the first character of the token
+@param[in]  last   pointer past the last character
+@param[out] out    the correctly rounded value on success (±infinity if it
+                   overflows, like strtod)
+@return true on success; false if strtod must decide
+*/
+inline bool parse_float_eisel_lemire(const char* first, const char* last, double& out) noexcept
+{
+    const char* p = first;
+    const bool negative = (p != last && *p == '-');
+    if (negative)
+    {
+        ++p;
+    }
+
+    std::uint64_t w = 0;
+    int digits = 0; // significant digits in w
+    std::int64_t exponent = 0;
+    bool truncated = false;
+    bool in_fraction = false;
+    for (;;)
+    {
+        // eight digits at a time, as long as they fit into w
+        while (w != 0 && digits <= 19 - 8 && last - p >= 8)
+        {
+            const std::uint64_t v = read_eight_bytes(p);
+            if (!is_eight_digits(v))
+            {
+                break;
+            }
+            w = (w * 100000000u) + parse_eight_digits(v);
+            digits += 8;
+            exponent -= in_fraction ? 8 : 0;
+            p += 8;
+        }
+        if (p == last)
+        {
+            break;
+        }
+        const char c = *p;
+        if (c >= '0' && c <= '9')
+        {
+            if (w == 0 && c == '0')
+            {
+                // leading zeros are not significant, but scale a fraction
+                exponent -= in_fraction ? 1 : 0;
+            }
+            else if (digits < 19)
+            {
+                w = (w * 10u) + static_cast<std::uint64_t>(c - '0');
+                ++digits;
+                exponent -= in_fraction ? 1 : 0;
+            }
+            else
+            {
+                // dropped: the value lies between w and w + 1 (in units of
+                // the last kept digit) unless all dropped digits are zero
+                truncated = truncated || c != '0';
+                exponent += in_fraction ? 0 : 1;
+            }
+            ++p;
+        }
+        else if (c == '.')
+        {
+            in_fraction = true;
+            ++p;
+        }
+        else
+        {
+            break; // 'e' or 'E'
+        }
+    }
+
+    if (p != last)
+    {
+        ++p; // 'e' or 'E'
+        bool exp_negative = false;
+        if (p != last && (*p == '-' || *p == '+'))
+        {
+            exp_negative = (*p == '-');
+            ++p;
+        }
+        std::int64_t exp_value = 0;
+        for (; p != last; ++p)
+        {
+            // saturate: any exponent beyond this under- or overflows anyway
+            if (exp_value < 100000)
+            {
+                exp_value = (exp_value * 10) + (*p - '0');
+            }
+        }
+        exponent += exp_negative ? -exp_value : exp_value;
+    }
+
+    std::uint64_t bits = 0;
+    if (w != 0)
+    {
+        bits = eisel_lemire(exponent, w);
+        if (truncated && (w + 1 == 0 || eisel_lemire(exponent, w + 1) != bits))
+        {
+            return false;
+        }
+    }
+    bits |= negative ? (std::uint64_t{1} << 63u) : 0u;
+    static_assert(sizeof(double) == sizeof(std::uint64_t), "double must have 64 bits");
+    std::memcpy(&out, &bits, sizeof(out));
+    return true;
+}
+
+/// Eisel-Lemire is only implemented for `double`
+template<typename FloatType>
+bool parse_float_eisel_lemire(const char* /*first*/, const char* /*last*/, FloatType& /*out*/) noexcept
+{
+    return false;
+}
+
 /*!
 @brief check whether Clinger's fast path can still succeed for a float token
 
@@ -355,8 +586,9 @@ inline bool mantissa_fits_clinger(const char* token, std::size_t decimal_point_p
 /*!
 @brief convert a validated float token without the C library, if possible
 
-Tries std::from_chars (when available) and then Clinger's exact fast path
-(double only), skipping the latter when it cannot succeed.
+Tries std::from_chars (when available), Clinger's exact fast path (double
+only, skipped when it cannot succeed), and the Eisel-Lemire algorithm (double
+only).
 
 @param[in]  first                   pointer to the first character of the token
 @param[in]  last                    pointer past the last character
@@ -379,8 +611,12 @@ bool convert_float_fast(const char* first, const char* last, std::size_t decimal
     // Skipping a fast path that cannot succeed is lossless and saves a full
     // extra pass over the token's bytes, which otherwise shows up on
     // high-precision inputs such as canada.json
-    return mantissa_fits_clinger(first, decimal_point_position, mantissa_end)
-           && parse_float_fast(first, last, value);
+    if (mantissa_fits_clinger(first, decimal_point_position, mantissa_end)
+            && parse_float_fast(first, last, value))
+    {
+        return true;
+    }
+    return parse_float_eisel_lemire(first, last, value);
 }
 
 /// std::strtof, std::strtod, or std::strtold, chosen by the type of @a f
