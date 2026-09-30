@@ -147,6 +147,24 @@ TEST_CASE("element access 1")
                 CHECK(j_const[7] == json({1, 2, 3}));
             }
 
+            SECTION("SIZE_MAX index (#5647)")
+            {
+                // idx + 1 must not be computed for idx == SIZE_MAX: it wraps to 0,
+                // which would empty the array and then write out of bounds instead
+                // of growing it; reject it like an oversized resize() would and
+                // leave the array unchanged
+                const auto max_idx = (std::numeric_limits<json::size_type>::max)();
+                const std::string expected = "array index " + std::to_string(max_idx) + " exceeds size_type";
+                const json j_before = j; // NOLINT(performance-unnecessary-copy-initialization)
+
+                CHECK_THROWS_WITH_AS(j[max_idx] = 1, expected.c_str(), std::length_error&);
+                CHECK(j == j_before);
+
+                json j_empty = json::array();
+                CHECK_THROWS_WITH_AS(j_empty[max_idx] = 1, expected.c_str(), std::length_error&);
+                CHECK(j_empty == json::array());
+            }
+
             SECTION("access on non-array type")
             {
                 SECTION("null")

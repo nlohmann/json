@@ -1752,6 +1752,58 @@ TEST_CASE("JSON patch - diff emits array removals in descending index order")
     }
 }
 
+TEST_CASE("JSON patch - diff() takes the fast path for non-reorderable object types (regression #5639)")
+{
+    // #5465 added an order check to diff()'s object handling so a
+    // member-by-member diff is only used when it would also reproduce
+    // target's member *order* -- needed for ordered_json, whose object_t
+    // keeps insertion order and whose patch() "add" op appends a new
+    // member at the end. For json's default object_t (std::map, which
+    // orders members by key regardless of insertion history), that check
+    // could still fail: a new key that sorts before an existing common key
+    // makes target's iteration interleave the new key between common keys,
+    // even though nothing else about the object changed. That sent the
+    // whole object through the slow (remove-every-member,
+    // re-add-every-member) path instead of the minimal one.
+    SECTION("json: added key sorts before an existing common key")
+    {
+        const json source = {{"a", 1}, {"c", {{"x", 1}, {"y", 2}}}};
+        const json target = {{"a", 1}, {"b", 0}, {"c", {{"x", 1}, {"y", 2}}}};
+
+        const json patch = json::diff(source, target);
+
+        // only the new key is added; "a" and "c" are left alone instead of
+        // being removed and re-added
+        const json expected = R"([{"op": "add", "path": "/b", "value": 0}])"_json;
+        CHECK(patch == expected);
+        CHECK(source.patch(patch) == target);
+    }
+
+    SECTION("ordered_json: reordering behavior from #5465 is unchanged")
+    {
+        using nlohmann::ordered_json;
+
+        // same key/value shape as the json case above, but for ordered_json
+        // the *target*'s member order must be reproduced, so the slow path
+        // is still required here.
+        ordered_json source;
+        source["a"] = 1;
+        source["c"] = ordered_json{{"x", 1}, {"y", 2}};
+
+        ordered_json target;
+        target["a"] = 1;
+        target["b"] = 0;
+        target["c"] = ordered_json{{"x", 1}, {"y", 2}};
+
+        const ordered_json patch = ordered_json::diff(source, target);
+
+        // unlike the json case: every member is still removed and re-added
+        // so the result ends up in target's order (2 removes + 3 adds)
+        CHECK(patch.size() == 5);
+        CHECK(source.patch(patch) == target);
+    }
+}
+
 TEST_CASE("JSON patch - every operation on ordered_json")
 {
     using nlohmann::ordered_json;
