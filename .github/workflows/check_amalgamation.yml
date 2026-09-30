@@ -65,6 +65,45 @@ jobs:
       - name: Install generate_natvis dependencies
         run: pip3 install -r $NATVIS_TOOL_DIR/requirements.txt
 
+      - name: Regenerate the tools/macro_builder tables in macro_scope.hpp
+        run: |
+          cd $MAIN_DIR
+
+          # Built from this PR's own tools/macro_builder/main.cpp, not a
+          # develop checkout: unlike amalgamate.py and generate_natvis.py,
+          # this tool has no other source of truth to check against (its
+          # own README documents that it must reproduce macro_scope.hpp
+          # byte for byte), so there is nothing to gain from checking out a
+          # separate copy, and doing so would make this step fail on a PR
+          # that adds support for a new dispatch table until that PR itself
+          # merges to develop, the same way generate_natvis.py's --version
+          # requirement briefly did.
+          TMPDIR=$(mktemp -d ./macro_builder_check.XXXXXX)
+          c++ -std=c++11 tools/macro_builder/main.cpp -o "$TMPDIR/macro_builder"
+          "$TMPDIR/macro_builder" > "$TMPDIR/paste.hpp"
+          "$TMPDIR/macro_builder" type_body > "$TMPDIR/type_body.hpp"
+
+          # Splice the (still unindented) generated blocks back into
+          # macro_scope.hpp; the astyle pass below indents their
+          # continuation lines the same way it does for the rest of
+          # include/, so a correctly regenerated file comes out unchanged.
+          awk -v newfile="$TMPDIR/paste.hpp" '
+            BEGIN { while ((getline line < newfile) > 0) { new = new line "\n" } }
+            /^#define NLOHMANN_JSON_EXPAND\( x \) x$/ { printf "%s", new; skip=1 }
+            skip && /^#define NLOHMANN_JSON_DOUBLE_PASTE63\(/ { skip=0; next }
+            skip { next }
+            { print }
+          ' include/nlohmann/detail/macro_scope.hpp > "$TMPDIR/macro_scope_1.hpp"
+          awk -v newfile="$TMPDIR/type_body.hpp" '
+            BEGIN { while ((getline line < newfile) > 0) { new = new line "\n" } }
+            /^#define NLOHMANN_JSON_TYPE_BODY\(Prefix, \.\.\.\)/ { printf "%s", new; skip=1 }
+            skip && /^[[:space:]]*NLOHMANN_JSON_TYPE_BODY_SENTINEL\)\)$/ { skip=0; next }
+            skip { next }
+            { print }
+          ' "$TMPDIR/macro_scope_1.hpp" > "$TMPDIR/macro_scope_2.hpp"
+          mv "$TMPDIR/macro_scope_2.hpp" include/nlohmann/detail/macro_scope.hpp
+          rm -rf "$TMPDIR"
+
       - name: Regenerate amalgamation, formatting, and BUILD.bazel
         run: |
           cd $MAIN_DIR
