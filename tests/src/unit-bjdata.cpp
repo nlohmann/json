@@ -11,6 +11,7 @@
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
 
 #include <algorithm>
 #include <climits>
@@ -2294,29 +2295,33 @@ TEST_CASE("BJData")
 
         SECTION("start_array() in ndarray _ArraySize_")
         {
+            // _ArrayType_ (2 events: key + string) is now emitted before
+            // _ArraySize_ (see GitHub issue #5661), which shifts the events
+            // below later by the same 2 events
             std::vector<uint8_t> const v = {'[', '$', 'i', '#', '[', '$', 'i', '#', 'i', 2, 2, 1, 1, 2};
-            SaxCountdown scp(2);
+            SaxCountdown scp(4);
             CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
         SECTION("number_integer() in ndarray _ArraySize_")
         {
             std::vector<uint8_t> const v = {'[', '$', 'U', '#', '[', '$', 'i', '#', 'i', 2, 2, 1, 1, 2};
-            SaxCountdown scp(3);
+            SaxCountdown scp(5);
             CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
         SECTION("key() in ndarray _ArrayType_")
         {
+            // _ArrayType_ is emitted right after start_object(), before _ArraySize_
             std::vector<uint8_t> const v = {'[', '$', 'U', '#', '[', '$', 'U', '#', 'i', 2, 2, 2, 1, 2, 3, 4};
-            SaxCountdown scp(6);
+            SaxCountdown scp(1);
             CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
         SECTION("string() in ndarray _ArrayType_")
         {
             std::vector<uint8_t> const v = {'[', '$', 'U', '#', '[', '$', 'U', '#', 'i', 2, 2, 2, 1, 2, 3, 4};
-            SaxCountdown scp(7);
+            SaxCountdown scp(2);
             CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
@@ -2919,6 +2924,22 @@ TEST_CASE("BJData")
                 CHECK(out_single.at(0) == '{');
                 CHECK(json::from_bjdata(out_single) == j_single);
 
+                // a double element that is finite and within the range of "single"
+                // but is not exactly representable as a float, so narrowing it would
+                // silently round it (0.1 is read back as 0.10000000149011612); this,
+                // like the overflow case above, falls back to a plain object (see
+                // GitHub issue #5661)
+                json const j_single_rounded = json({{"_ArrayType_", "single"}, {"_ArraySize_", {2, 1}}, {"_ArrayData_", {1.5, 0.1}}});
+                const auto out_single_rounded = json::to_bjdata(j_single_rounded);
+                CHECK(out_single_rounded.at(0) == '{');
+                CHECK(json::from_bjdata(out_single_rounded) == j_single_rounded);
+
+                // a double element that underflows to 0 when narrowed to "single"
+                json const j_single_underflow = json({{"_ArrayType_", "single"}, {"_ArraySize_", {2, 1}}, {"_ArrayData_", {1.5, 1e-300}}});
+                const auto out_single_underflow = json::to_bjdata(j_single_underflow);
+                CHECK(out_single_underflow.at(0) == '{');
+                CHECK(json::from_bjdata(out_single_underflow) == j_single_underflow);
+
                 // in-range boundary values still use the compact ndarray encoding
                 json const j_uint8_ok = json({{"_ArrayType_", "uint8"}, {"_ArraySize_", {2, 1}}, {"_ArrayData_", {0, 255}}});
                 CHECK(json::to_bjdata(j_uint8_ok) == std::vector<uint8_t>({'[', '$', 'U', '#', '[', 'i', 2, 'i', 1, ']', 0, 255}));
@@ -2930,6 +2951,23 @@ TEST_CASE("BJData")
                 const auto out_single_ok = json::to_bjdata(j_single_ok);
                 CHECK(out_single_ok.at(0) == '[');
                 CHECK(json::from_bjdata(out_single_ok) == json({{"_ArrayType_", "single"}, {"_ArraySize_", {2, 1}}, {"_ArrayData_", {1.5f, -1.5f}}}));
+            }
+
+            SECTION("ndarray annotation keys are read back in the documented order")
+            {
+                // from_bjdata() must emit the annotation object's keys in the order
+                // used throughout the documentation, _ArrayType_, _ArraySize_,
+                // _ArrayData_: the type marker precedes the dimension vector on the
+                // wire (see get_ubjson_size_type()), so it is known, and emitted,
+                // before _ArraySize_. For a plain json this key order is invisible
+                // (its comparison ignores it), but for an ordered_json it is not (see
+                // GitHub issue #5661).
+                const ordered_json o = ordered_json::parse(R"({"_ArrayType_":"uint8","_ArraySize_":[2,2],"_ArrayData_":[1,2,3,4]})");
+                const auto packed = ordered_json::to_bjdata(o);
+                CHECK(packed.at(0) == '[');
+                const ordered_json o_back = ordered_json::from_bjdata(packed);
+                CHECK(o_back == o);
+                CHECK(o_back.dump() == o.dump());
             }
 
             SECTION("ndarray that would not be read back as an annotated object stays as object")
