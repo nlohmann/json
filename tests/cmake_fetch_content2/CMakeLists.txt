@@ -1,4 +1,4 @@
-if (${CMAKE_VERSION} VERSION_GREATER "3.14.0")
+if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.14")
   add_test(NAME cmake_fetch_content2_configure
     COMMAND ${CMAKE_COMMAND}
     -G "${CMAKE_GENERATOR}"
