@@ -9,18 +9,18 @@
 
 #pragma once
 
-#include <algorithm> // reverse, remove, fill, find, none_of, min
+#include <algorithm> // remove, fill, find, none_of, min
 #include <array> // array
 #include <clocale> // localeconv, lconv
-#include <cmath> // labs, isfinite, isnan, signbit
+#include <cmath> // isfinite
 #include <cstddef> // size_t, ptrdiff_t
 #include <cstdint> // uint8_t
 #include <cstdio> // snprintf
 #include <cstring> // memcpy, memset
+#include <iterator> // next
 #include <limits> // numeric_limits
 #include <string> // string, char_traits
 #include <type_traits> // is_same
-#include <utility> // move
 #include <vector> // vector
 
 #include <nlohmann/detail/conversions/to_chars.hpp>

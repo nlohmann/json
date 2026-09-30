@@ -8,9 +8,7 @@
 
 #pragma once
 
-#include <algorithm> // copy
 #include <cstddef> // size_t
-#include <iterator> // back_inserter
 #include <memory> // shared_ptr, make_shared
 #include <string> // basic_string
 #include <utility> // move
