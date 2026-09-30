@@ -1456,8 +1456,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     Converting a container converts its elements, so a value nested deeply
     enough used to exhaust the call stack. The descent is bounded here as in
-    @ref copy_structured: the first @ref nesting_depth_limit levels are
-    converted by the containers' range constructors, just as they always were,
+    @ref copy_structured: the first `detail::recursion_depth_limit()` levels
+    are converted by the containers' range constructors, just as they always were,
     and anything below that is converted without the call stack by
     @ref convert_iteratively.
 
