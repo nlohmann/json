@@ -1942,15 +1942,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief move constructor
     /// @sa https://json.nlohmann.me/api/basic_json/basic_json/
     basic_json(basic_json&& other) noexcept
-        : json_base_class_t(std::forward<json_base_class_t>(other)),
-          m_data(std::move(other.m_data)) // cppcheck-suppress[accessForwarded] TODO check
+        : json_base_class_t(std::move(static_cast<json_base_class_t&>(other))),
+          m_data(std::move(other.m_data))
 #if JSON_DIAGNOSTIC_POSITIONS
-        , start_position(other.start_position) // cppcheck-suppress[accessForwarded] TODO check
-        , end_position(other.end_position) // cppcheck-suppress[accessForwarded] TODO check
+        , start_position(other.start_position)
+        , end_position(other.end_position)
 #endif
     {
         // check that the passed value is valid
-        other.assert_invariant(false); // cppcheck-suppress[accessForwarded]
+        other.assert_invariant(false);
 
         // invalidate payload
         other.m_data.m_type = value_t::null;
