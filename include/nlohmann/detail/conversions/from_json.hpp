@@ -248,43 +248,35 @@ auto from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr,
     }
 }
 
+// reserve() is called through this pair (modeled on from_json_object_reserve)
+// so from_json_array_impl below has a single body for both ConstructibleArrayType
+// that support reserve() and those that don't.
+template<typename ConstructibleArrayType>
+auto from_json_array_reserve(ConstructibleArrayType& arr, typename ConstructibleArrayType::size_type size, priority_tag<1> /*unused*/)
+-> decltype(arr.reserve(size), void())
+{
+    arr.reserve(size);
+}
+
+template<typename ConstructibleArrayType>
+inline void from_json_array_reserve(ConstructibleArrayType& /*arr*/, std::size_t /*size*/, priority_tag<0> /*unused*/)
+{}
+
 template<typename BasicJsonType, typename ConstructibleArrayType,
          enable_if_t<
              std::is_assignable<ConstructibleArrayType&, ConstructibleArrayType>::value,
              int> = 0>
 auto from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr, priority_tag<1> /*unused*/)
 -> decltype(
-    arr.reserve(std::declval<typename ConstructibleArrayType::size_type>()),
     j.template get<typename ConstructibleArrayType::value_type>(),
     void())
 {
     using std::end;
 
     ConstructibleArrayType ret;
-    ret.reserve(j.size());
+    from_json_array_reserve(ret, j.size(), priority_tag<1> {});
     std::transform(j.begin(), j.end(),
                    std::inserter(ret, end(ret)), [](const BasicJsonType & i)
-    {
-        // get<BasicJsonType>() returns *this, this won't call a from_json
-        // method when value_type is BasicJsonType
-        return i.template get<typename ConstructibleArrayType::value_type>();
-    });
-    arr = std::move(ret);
-}
-
-template<typename BasicJsonType, typename ConstructibleArrayType,
-         enable_if_t<
-             std::is_assignable<ConstructibleArrayType&, ConstructibleArrayType>::value,
-             int> = 0>
-inline void from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr,
-                                 priority_tag<0> /*unused*/)
-{
-    using std::end;
-
-    ConstructibleArrayType ret;
-    std::transform(
-        j.begin(), j.end(), std::inserter(ret, end(ret)),
-        [](const BasicJsonType & i)
     {
         // get<BasicJsonType>() returns *this, this won't call a from_json
         // method when value_type is BasicJsonType
@@ -514,10 +506,10 @@ auto from_json(BasicJsonType&& j, TupleRelated&& t)
     return from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), priority_tag<3> {});
 }
 
-template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
-           typename = enable_if_t < !std::is_constructible <
-                                        typename BasicJsonType::string_t, Key >::value >>
-inline void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
+// shared body for std::map/std::unordered_map with a non-string Key: both
+// containers are read from an array of [key, value] pairs the same way
+template<typename BasicJsonType, typename MapType>
+inline void from_json_pair_array_to_map(const BasicJsonType& j, MapType& m)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -530,8 +522,16 @@ inline void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allo
         {
             JSON_THROW(type_error::create(302, concat("type must be array, but is ", p.type_name()), &j));
         }
-        m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
+        m.emplace(p.at(0).template get<typename MapType::key_type>(), p.at(1).template get<typename MapType::mapped_type>());
     }
+}
+
+template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
+           typename = enable_if_t < !std::is_constructible <
+                                        typename BasicJsonType::string_t, Key >::value >>
+inline void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
+{
+    from_json_pair_array_to_map(j, m);
 }
 
 template < typename BasicJsonType, typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator,
@@ -539,19 +539,7 @@ template < typename BasicJsonType, typename Key, typename Value, typename Hash, 
                                         typename BasicJsonType::string_t, Key >::value >>
 inline void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
 {
-    if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
-    {
-        JSON_THROW(type_error::create(302, concat("type must be array, but is ", j.type_name()), &j));
-    }
-    m.clear();
-    for (const auto& p : j)
-    {
-        if (JSON_HEDLEY_UNLIKELY(!p.is_array()))
-        {
-            JSON_THROW(type_error::create(302, concat("type must be array, but is ", p.type_name()), &j));
-        }
-        m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
-    }
+    from_json_pair_array_to_map(j, m);
 }
 
 #if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
