@@ -353,8 +353,14 @@ TEST_CASE("locale with a multi-byte decimal point")
     // Some locales use a decimal point that is not a single character, e.g.
     // U+066B ARABIC DECIMAL SEPARATOR (two bytes in UTF-8). It cannot be
     // substituted in place for '.', so the strtold fallback (only for long
-    // double formats other than binary64) stops early. The conversion must
-    // still terminate rather than retry forever.
+    // double formats other than binary64) converts a copy of the token with
+    // the whole decimal point instead (#5660). The values must be those of the
+    // "C" locale.
+    using long_double_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, long double>;
+    const char* const long_double_numbers = "[3.14159265358979323846, 1.5e-400, -0.000123456789012345678]";
+    REQUIRE(std::setlocale(LC_NUMERIC, "C") != nullptr);
+    const long_double_json expected_long_double = long_double_json::parse(long_double_numbers);
+
     const std::array<const char*, 6> names = {{"ar_EG.UTF-8", "ar_SA.UTF-8", "fa_IR.UTF-8", "ps_AF.UTF-8", "ar_EG", "fa_IR"}};
     bool tested = false;
     for (const char* name : names)
@@ -381,11 +387,10 @@ TEST_CASE("locale with a multi-byte decimal point")
         CHECK(j[2] == -0.000123456789012345678);
         CHECK(json::accept("3.14159265358979323846"));
 
-        // a long double that reaches the strtold fallback must still terminate
-        using long_double_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, long double>;
+        // a long double that reaches the strtold fallback is not truncated
         long_double_json ld;
-        CHECK_NOTHROW(ld = long_double_json::parse("[3.14159265358979323846, 1.5e-400, -0.000123456789012345678]"));
-        CHECK(ld.is_array());
+        CHECK_NOTHROW(ld = long_double_json::parse(long_double_numbers));
+        CHECK(ld == expected_long_double);
 
         // a value the locale-independent paths convert is not affected
         CHECK(json::parse("12.5") == 12.5);

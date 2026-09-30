@@ -8533,6 +8533,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <limits> // numeric_limits
 #include <string> // string
 #include <type_traits> // conditional, integral_constant, true_type, false_type
+#include <utility> // move
 
 // #include <nlohmann/detail/bit_ops.hpp>
 //     __ _____ _____ _____
@@ -9888,12 +9889,12 @@ inline void strtof_by_type(long double& f, const char* str, char** endptr) noexc
     f = std::strtold(str, endptr);
 }
 
-/// return the decimal point of the current locale
-inline char get_decimal_point() noexcept
+/// return the decimal point of the current locale (it may be longer than one byte)
+inline std::string get_decimal_point()
 {
     const auto* loc = localeconv();
     JSON_ASSERT(loc != nullptr);
-    return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
+    return (loc->decimal_point == nullptr || *loc->decimal_point == '\0') ? "." : loc->decimal_point;
 }
 
 /*!
@@ -9907,22 +9908,26 @@ has_native_float_format).
 These functions expect the decimal point of the *current* locale, so it is
 looked up right before the conversion instead of once when the lexer is
 constructed: a locale change in between (by a parser callback, a SAX
-handler, or another thread) must not truncate the value (#5198). The
-token has been validated before, so if the conversion stops early and the
-decimal point changed in the meantime, the locale changed between the
+handler, or another thread) must not truncate the value (#5198). A
+single-byte decimal point is substituted in place and restored afterwards,
+because the token is also handed to the SAX interface. A longer one (e.g.,
+the two-byte U+066B of ar_EG.UTF-8 or fa_IR.UTF-8) is put into a copy of the
+token instead (#5660).
+
+The token has been validated before, so if the conversion stops early and
+the decimal point changed in the meantime, the locale changed between the
 lookup and the call, and the conversion is repeated with the new decimal
-point. If the decimal point did not change, a retry cannot succeed: the
-locale's decimal point is not a single character (e.g., the two-byte
-U+066B of ar_EG.UTF-8 or fa_IR.UTF-8) and cannot be substituted in place.
-The value strtod parsed up to that point is kept, as before this change.
+point. If it did not change, the value strtod parsed up to that point is
+kept.
 
 Note that changing the locale in another thread *while* strtod runs is
 undefined behavior of the C library, which this function cannot prevent.
 
-@param[in,out] token                   the token with '.' as decimal point; its
-                                       decimal point is replaced during the
-                                       conversion and restored afterwards
-                                       (data() must be NUL-terminated)
+@param[in,out] token                   the token with '.' as decimal point; a
+                                       single-byte decimal point is put in
+                                       place during the conversion and
+                                       restored afterwards (data() must be
+                                       NUL-terminated)
 @param[in]     decimal_point_position  index of the '.' in @a token, or
                                        std::string::npos if there is none
 @param[out]    value                   the converted value
@@ -9931,36 +9936,46 @@ template<typename StringType, typename FloatType>
 void convert_float_locale_aware(StringType& token, std::size_t decimal_point_position, FloatType& value)
 {
     const bool has_dot = decimal_point_position != std::string::npos;
-    char decimal_point = get_decimal_point();
+    std::string decimal_point = get_decimal_point();
     for (;;)
     {
-        const bool substitute = has_dot && decimal_point != '.';
-        if (substitute)
-        {
-            token[decimal_point_position] = static_cast<typename StringType::value_type>(decimal_point);
-        }
-
         char* endptr = nullptr; // NOLINT(misc-const-correctness,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        strtof_by_type(value, token.data(), &endptr);
-
-        if (substitute)
+        bool complete = false;
+        if (!has_dot || decimal_point.size() == 1)
         {
-            // the caller hands the token on (e.g. to the SAX interface) with '.'
-            token[decimal_point_position] = '.';
+            const bool substitute = has_dot && decimal_point[0] != '.';
+            if (substitute)
+            {
+                token[decimal_point_position] = static_cast<typename StringType::value_type>(decimal_point[0]);
+            }
+            strtof_by_type(value, token.data(), &endptr);
+            if (substitute)
+            {
+                // the caller hands the token on (e.g. to the SAX interface) with '.'
+                token[decimal_point_position] = '.';
+            }
+            complete = endptr == token.data() + token.size();
+        }
+        else
+        {
+            std::string copy(token.data(), token.size());
+            copy.replace(decimal_point_position, 1, decimal_point);
+            strtof_by_type(value, copy.c_str(), &endptr);
+            complete = endptr == copy.c_str() + copy.size();
         }
 
-        if (JSON_HEDLEY_LIKELY(endptr == token.data() + token.size()))
+        if (JSON_HEDLEY_LIKELY(complete))
         {
             return;
         }
 
         // retry only if the locale changed; otherwise, this would loop forever
-        const char current_decimal_point = get_decimal_point();
+        std::string current_decimal_point = get_decimal_point();
         if (current_decimal_point == decimal_point)
         {
             return;
         }
-        decimal_point = current_decimal_point;
+        decimal_point = std::move(current_decimal_point);
     }
 }
 

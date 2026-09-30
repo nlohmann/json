@@ -74,7 +74,8 @@ otherwise, it uses unsigned integer storage.
     - The library converts integers and floating-point numbers itself, independent of the locale. Floating-point
       numbers are correctly rounded (to nearest, ties to even). Only a `#!c long double` that is not IEEE 754 binary64
       (e.g., the 80-bit x87 format) is converted with `#!cpp std::from_chars` where available, or with
-      [`std::strtold`](https://en.cppreference.com/w/cpp/string/byte/strtof).
+      [`std::strtold`](https://en.cppreference.com/w/cpp/string/byte/strtof), which gets the decimal point of the
+      current locale, also one longer than one byte (e.g., in `fa_IR.UTF-8`).
 
 !!! example "Examples"
 
