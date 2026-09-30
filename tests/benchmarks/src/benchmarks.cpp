@@ -120,6 +120,39 @@ BENCHMARK_CAPTURE(ParseIndented, citm_catalog / 4, TEST_DATA_DIRECTORY "/nativej
 BENCHMARK_CAPTURE(ParseIndented, twitter / 4,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json",      4);
 
 //////////////////////////////////////////////////////////////////////////////
+// parse JSON from string into an ordered_json
+//
+// Same as ParseString above, but with nlohmann::ordered_json, whose objects
+// keep their members in a vector: the pair of rows shows what preserving the
+// insertion order costs.
+//////////////////////////////////////////////////////////////////////////////
+
+static void ParseStringOrdered(benchmark::State& state, const char* filename)
+{
+    std::ifstream f(filename);
+    std::string str((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
+
+    while (state.KeepRunning())
+    {
+        state.PauseTiming();
+        auto* j = new nlohmann::ordered_json();
+        state.ResumeTiming();
+
+        *j = nlohmann::ordered_json::parse(str);
+
+        state.PauseTiming();
+        delete j;
+        state.ResumeTiming();
+    }
+
+    state.SetBytesProcessed(state.iterations() * str.size());
+}
+BENCHMARK_CAPTURE(ParseStringOrdered, jeopardy,     TEST_DATA_DIRECTORY "/jeopardy/jeopardy.json");
+BENCHMARK_CAPTURE(ParseStringOrdered, canada,       TEST_DATA_DIRECTORY "/nativejson-benchmark/canada.json");
+BENCHMARK_CAPTURE(ParseStringOrdered, citm_catalog, TEST_DATA_DIRECTORY "/nativejson-benchmark/citm_catalog.json");
+BENCHMARK_CAPTURE(ParseStringOrdered, twitter,      TEST_DATA_DIRECTORY "/nativejson-benchmark/twitter.json");
+
+//////////////////////////////////////////////////////////////////////////////
 // serialize JSON
 //////////////////////////////////////////////////////////////////////////////
 

@@ -866,6 +866,24 @@ const Json& innermost(const Json& j)
     }
     return *p;
 }
+
+// orders keys case-insensitively, so "key" and "KEY" compare equivalent
+// (neither less than the other) although they are not equal
+struct case_insensitive_less
+{
+    bool operator()(const std::string& a, const std::string& b) const
+    {
+        return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end(),
+                                            [](unsigned char x, unsigned char y)
+        {
+            return std::tolower(x) < std::tolower(y);
+        });
+    }
+};
+
+template<class Key, class Value, class /*Compare*/, class Allocator>
+using case_insensitive_map = std::map<Key, Value, case_insensitive_less, Allocator>;
+using ci_json = nlohmann::basic_json<case_insensitive_map>;
 } // namespace
 
 TEST_CASE("equality of objects whose entries have no fixed order")
@@ -951,6 +969,33 @@ TEST_CASE("copying an object preserves its comparator's state")
             CHECK(innermost(copy).dump() == R"({"B":2,"a":3,"b":1})");
             CHECK(copy == original);
         }
+    }
+}
+
+TEST_CASE("equality of an object whose comparator treats different keys as equivalent")
+{
+    // https://github.com/nlohmann/json/issues/5655: past the nesting bound,
+    // the entries are compared without the call stack, and a key that finds
+    // no counterpart at the same position is looked up with find(), which
+    // uses the object's own comparator. A case-insensitive comparator then
+    // finds "KEY" for "key" and must not accept that pair as a match - the
+    // object type's own operator==, like std::map's, compares keys with ==.
+    ci_json a = ci_json::object();
+    a["key"] = 1;
+    ci_json b = ci_json::object();
+    b["KEY"] = 1;
+
+    // sanity check: the object type's own comparison already disagrees
+    CHECK_FALSE(a.get_ref<const ci_json::object_t&>() == b.get_ref<const ci_json::object_t&>());
+
+    for (const std::size_t depth : std::vector<std::size_t> {0, 127, 128, 200})
+    {
+        CAPTURE(depth);
+
+        const ci_json x = nest(a, depth);
+        const ci_json y = nest(b, depth);
+        CHECK_FALSE(x == y);
+        CHECK(x != y);
     }
 }
 
