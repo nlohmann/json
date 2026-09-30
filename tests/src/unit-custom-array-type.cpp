@@ -117,6 +117,22 @@ TEST_CASE("array type without capacity()")
         CHECK(nested.flatten().unflatten() == nested);
     }
 
+    SECTION("insert(pos, initializer_list) compiles and works without reserve()")
+    {
+        // std::deque has no reserve() either; insert(pos, ilist) must not
+        // require it (regression test for #5656, which also covers an ilist
+        // that refers to elements of the array being inserted into)
+        deque_json j = deque_json::array();
+        j.push_back("a");
+        j.push_back("b");
+        j.push_back("c");
+
+        const deque_json& cj = j;
+        auto it = j.insert(j.begin(), {cj[0], cj[1]});
+        CHECK(*it == deque_json("a"));
+        CHECK(j == deque_json({"a", "b", "a", "b", "c"}));
+    }
+
     SECTION("references stay valid while the array grows")
     {
         deque_json j = deque_json::array();
