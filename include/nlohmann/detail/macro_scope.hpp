@@ -915,7 +915,3 @@ void templated_json_throw(ExceptionType exception)
 #ifndef JSON_DISABLE_ENUM_SERIALIZATION
     #define JSON_DISABLE_ENUM_SERIALIZATION 0
 #endif
-
-#ifndef JSON_USE_GLOBAL_UDLS
-    #define JSON_USE_GLOBAL_UDLS 1
-#endif
