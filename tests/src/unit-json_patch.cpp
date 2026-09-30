@@ -1841,7 +1841,7 @@ TEST_CASE("JSON patch - every operation on ordered_json")
         };
         for (const auto& target : targets)
         {
-            CAPTURE(target.dump());
+            CAPTURE(target.dump())
             CHECK(source.patch(ordered_json::diff(source, target)) == target);
         }
     }

@@ -113,7 +113,7 @@ TEST_CASE("JSON_PRECISE_STREAM_POSITION")
 
         for (const auto& test : tests)
         {
-            CAPTURE(test.first);
+            CAPTURE(test.first)
             std::istringstream ss(test.first);
             json j;
             ss >> j;
@@ -135,7 +135,7 @@ TEST_CASE("JSON_PRECISE_STREAM_POSITION")
 
         for (const auto& test : tests)
         {
-            CAPTURE(test.first);
+            CAPTURE(test.first)
             std::istringstream ss(test.first);
             json j;
             ss >> j;
@@ -149,7 +149,7 @@ TEST_CASE("JSON_PRECISE_STREAM_POSITION")
                 {"1", "12", "-3.5e2", " 7 "
                 })
         {
-            CAPTURE(s);
+            CAPTURE(s)
             std::istringstream ss(s);
             json j;
             ss >> j;

@@ -1784,7 +1784,7 @@ TEST_CASE("BSON: deeply nested values")
         json value = "leaf";
         for (std::size_t depth = 0; depth <= 300; ++depth)
         {
-            CAPTURE(depth);
+            CAPTURE(depth)
             const json document = {{"value", value}, {"n", depth}};
             CHECK(json::from_bson(json::to_bson(document)) == document);
 
@@ -1817,7 +1817,7 @@ value = depth % 2 == 0 ? json{{"a", std::move(value)}, {"b", {1, "x"}}} :
                     false, true
                 })
         {
-            CAPTURE(objects);
+            CAPTURE(objects)
             std::string text = "{\"a\":";
             for (std::size_t i = 0; i < depth; ++i)
             {

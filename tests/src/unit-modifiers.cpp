@@ -1044,10 +1044,10 @@ TEST_CASE("update() on deeply nested values")
         // over (detail::recursion_depth_limit(), 128)
         for (std::size_t depth = 0; depth <= 300; ++depth)
         {
-            CAPTURE(depth);
+            CAPTURE(depth)
             for (int variant = 0; variant < 3; ++variant)
             {
-                CAPTURE(variant);
+                CAPTURE(variant)
                 const json source = json::parse(nested_objects(depth, variant));
                 json result = json::parse(nested_objects(depth, (variant + 1) % 3));
                 json expected = result;

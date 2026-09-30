@@ -2441,7 +2441,7 @@ TEST_CASE("last-read diagnostics are identical across input adapters")
 
     for (const auto& s : inputs)
     {
-        CAPTURE(s);
+        CAPTURE(s)
 
         // reference: contiguous std::string -> seekable (lazy) path
         const std::string reference = parse_error_message(s);

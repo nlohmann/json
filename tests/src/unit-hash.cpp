@@ -191,7 +191,7 @@ TEST_CASE("hash of deeply nested values")
         // every depth on either side of where the iterative path takes over
         for (std::size_t depth = 0; depth <= (2 * nlohmann::detail::recursion_depth_limit()) + 10; ++depth)
         {
-            CAPTURE(depth);
+            CAPTURE(depth)
             const auto arrays = nested<json>(depth, false);
             const auto objects = nested<json>(depth, true);
             const auto ordered = nested<ordered_json>(depth, true);
@@ -212,7 +212,7 @@ TEST_CASE("hash of deeply nested values")
                     false, true
                 })
         {
-            CAPTURE(objects);
+            CAPTURE(objects)
             const auto text = nested_text(depth, objects);
             const auto a = json::parse(text);
             const auto b = json::parse(text);

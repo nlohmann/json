@@ -239,7 +239,7 @@ TEST_CASE("controlled bad_alloc")
             // iterative path instead, part-way through its worklist.
             const auto check_deep_copy = [](bool objects)
             {
-                CAPTURE(objects);
+                CAPTURE(objects)
 
                 next_construct_fails = false;
 

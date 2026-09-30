@@ -286,8 +286,8 @@ TEST_CASE("locale changes between lexer construction and number conversion (#519
 
     for (const auto& transition : transitions)
     {
-        CAPTURE(transition.first);
-        CAPTURE(transition.second);
+        CAPTURE(transition.first)
+        CAPTURE(transition.second)
 
         if (std::setlocale(LC_NUMERIC, transition.first) == nullptr)
         {
@@ -365,7 +365,7 @@ TEST_CASE("locale with a multi-byte decimal point")
         {
             continue;
         }
-        CAPTURE(name);
+        CAPTURE(name)
         tested = true;
 
         // too many significant digits for Clinger's fast path, and an underflow
