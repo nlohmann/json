@@ -2453,10 +2453,12 @@ JSON_HEDLEY_DIAGNOSTIC_POP
         // libstdc++ < 11 has incomplete C++20 ranges (issue #4440)
     #elif defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE < 11
         #define JSON_HAS_RANGES 0
-        // libc++ < 16 has incomplete C++20 ranges (issue #4440)
+        // clang < 16 with libstdc++ does not implement the ranges customization
+        // points libstdc++ declares, so its C++20 ranges support is incomplete (issue #5161)
     #elif defined(__clang__) && !defined(__apple_build_version__) \
         && __clang_major__ < 16 && defined(__GLIBCXX__)
         #define JSON_HAS_RANGES 0
+        // libc++ < 16 has incomplete C++20 ranges (issue #4440)
     #elif defined(_LIBCPP_VERSION) && _LIBCPP_VERSION < 160000
         #define JSON_HAS_RANGES 0
         // nvcc CUDA 12.0/12.1 chokes on the enable_borrowed_range variable-template
@@ -2618,7 +2620,7 @@ void templated_json_throw(ExceptionType exception)
 @brief macro to briefly define a mapping between an enum and JSON with exception
        on invalid input
 @def NLOHMANN_JSON_SERIALIZE_ENUM_STRICT
-@since version 3.12.0
+@since version 3.13.0
 */
 #define NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(ENUM_TYPE, ...)                                     \
     template<typename BasicJsonType>                                                            \
@@ -4591,7 +4593,6 @@ struct is_compatible_integer_type_impl <
     std::is_integral<CompatibleNumberIntegerType>::value&&
     !std::is_same<bool, CompatibleNumberIntegerType>::value >>
 {
-    // is there an assert somewhere on overflows?
     using RealLimits = std::numeric_limits<RealIntegerType>;
     using CompatibleLimits = std::numeric_limits<CompatibleNumberIntegerType>;
 
@@ -5831,9 +5832,7 @@ inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
 }
 
 // overload for arithmetic types, not chosen for basic_json template arguments
-// (BooleanType, etc.); note: Is it really necessary to provide explicit
-// overloads for boolean_t etc. in case of a custom BooleanType which is not
-// an arithmetic type?
+// (BooleanType, etc.)
 template < typename BasicJsonType, typename ArithmeticType,
            enable_if_t <
                std::is_arithmetic<ArithmeticType>::value&&
@@ -5994,7 +5993,7 @@ inline void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Has
 
 #if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
 
-// Workaround for MSVC 19.51 (and possibly later): in large in large cpp files, the compiler may fail to resolve with generic has_from_json (issue #4996)
+// Workaround for MSVC 19.51 (and possibly later): in large cpp files, the compiler may fail to resolve with generic has_from_json (issue #4996)
 template<typename BasicJsonType>
 struct has_from_json<BasicJsonType, std_fs::path, void> : std::true_type {};
 
