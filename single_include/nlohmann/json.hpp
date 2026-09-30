@@ -7281,10 +7281,16 @@ namespace detail
 /*!
 @brief the number of nesting levels an operation recurses into
 
-Operations that walk a value (serializing, hashing, merging, ...) recurse once
+Operations that walk a value (copying, comparing, serializing, hashing, merging,
+...) recurse once
 per nesting level, which is fastest, but a value nested deeply enough would
 exhaust the call stack. So they recurse only this many levels deep and finish
 whatever lies below with an explicit stack. All of them share this limit.
+
+Most of them pass the depth down as an argument. The copy constructor and the
+comparison operators cannot, as their signatures are fixed, so they count it
+in basic_json::nesting_depth() instead, a byte per thread; the limit must
+therefore stay below 255.
 
 @sa https://github.com/nlohmann/json/issues/5387
 */
@@ -27772,12 +27778,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
 #ifndef JSON_NO_THREAD_LOCAL
-    /// the number of levels an operation descends into before it finishes the
-    /// value below it without the call stack
-    static constexpr std::uint8_t nesting_depth_limit()
-    {
-        return 128;
-    }
+    // nesting_depth() is a byte and may exceed the limit by one level
+    static_assert(detail::recursion_depth_limit() < 255, "the nesting depth count must fit in a byte");
 
     /*!
     @brief how many levels the operation going on in this thread has descended into
@@ -27819,7 +27821,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         static_cast<void>(may_descend);
         return true;
 #else
-        return !may_descend || nesting_depth() >= nesting_depth_limit();
+        return !may_descend || nesting_depth() >= detail::recursion_depth_limit();
 #endif
     }
 
@@ -27843,7 +27845,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #ifdef JSON_NO_THREAD_LOCAL
             : m_okay(false)
 #else
-            : m_okay(nesting_depth() < nesting_depth_limit())
+            : m_okay(nesting_depth() < detail::recursion_depth_limit())
 #endif
         {
 #ifndef JSON_NO_THREAD_LOCAL
@@ -28047,7 +28049,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     The values whose copy has not been created yet are kept on an explicit
     worklist rather than on the call stack. This is only reached for values
-    nested deeper than @ref nesting_depth_limit levels, which is why it copies
+    nested deeper than @ref detail::recursion_depth_limit levels, which is why it copies
     every container by hand instead of letting the container do it: the fast
     ways of doing so would descend into the elements and defeat the purpose.
     */
@@ -28113,7 +28115,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     Copying a container copies its elements, so a value nested deeply enough
     used to exhaust the call stack. The descent is bounded here: the first
-    @ref nesting_depth_limit levels are copied by the containers themselves, just
+    @ref detail::recursion_depth_limit levels are copied by the containers themselves, just
     as they always were, and anything below that is copied without the call
     stack by @ref copy_iteratively. Copying a value can therefore no longer
     exhaust the stack, however deeply it is nested, just like destroying one
@@ -28251,7 +28253,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /*!
     @brief compare @a lhs and @a rhs without descending into them
 
-    Reached once a comparison has descended @ref nesting_depth_limit levels, so
+    Reached once a comparison has descended @ref detail::recursion_depth_limit levels, so
     that comparing values cannot exhaust the call stack however deeply they are
     nested. The two values are walked in lockstep on an explicit stack and
     compared lexicographically, element by element in the order the containers
