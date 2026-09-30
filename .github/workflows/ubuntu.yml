@@ -52,6 +52,13 @@ jobs:
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
         run: cmake --build build --target ci_infer
+      - name: Archive Infer report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: infer-report
+          path: ${{ github.workspace }}/build/build_infer/infer-out/report.txt
+          if-no-files-found: ignore
 
   ci_static_analysis_ubuntu:
     runs-on: ubuntu-latest

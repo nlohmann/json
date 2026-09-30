@@ -490,10 +490,12 @@ add_custom_target(ci_clang_tidy
 # Check code with Infer <https://fbinfer.com> static analyzer.
 ###############################################################################
 
+# .inferconfig (repository root) pins --fail-on-issue and the currently-triaged issue types that
+# are disabled until they are addressed separately; see #5715 item 4b.
 add_custom_target(ci_infer
     COMMAND mkdir -p ${PROJECT_BINARY_DIR}/build_infer
     COMMAND cd ${PROJECT_BINARY_DIR}/build_infer && ${INFER_TOOL} compile -- ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${PROJECT_SOURCE_DIR} -DJSON_BuildTests=ON
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_infer && ${INFER_TOOL} run -- make
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_infer && ${INFER_TOOL} run --project-root ${PROJECT_SOURCE_DIR} -- make
     COMMENT "Check code with Infer"
 )
 
