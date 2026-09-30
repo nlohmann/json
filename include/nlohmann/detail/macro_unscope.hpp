@@ -46,6 +46,7 @@
     #undef JSON_BRACE_INIT_COPY_SEMANTICS
     #undef JSON_PRECISE_STREAM_POSITION
     #undef JSON_STRICT_NUL_HANDLING
+    #undef JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
 #endif
 
 #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>

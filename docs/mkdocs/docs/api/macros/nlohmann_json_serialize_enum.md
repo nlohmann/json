@@ -41,6 +41,9 @@ inline void from_json(const BasicJsonType& j, type& e);
       conversion. Select this default pair carefully. See example 1 below.
     - If an enum or JSON value is specified in multiple conversions, the first matching conversion from the top of the
       list will be returned when converting to or from JSON. See example 2 below.
+    - Maps with enum keys (e.g., `std::map<ENUM_TYPE, T>`) are stored as arrays of `[key, value]` pairs by default.
+      Define [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](json_use_objects_for_enum_keyed_maps.md) to store them as objects
+      with the converted keys. Such maps can be read from both forms.
 
 ## Examples
 
@@ -80,6 +83,7 @@ inline void from_json(const BasicJsonType& j, type& e);
 - [Specializing enum conversion](../../features/enum_conversion.md)
 - [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](./nlohmann_json_serialize_enum_strict.md)
 - [`JSON_DISABLE_ENUM_SERIALIZATION`](json_disable_enum_serialization.md)
+- [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](json_use_objects_for_enum_keyed_maps.md)
 
 ## Version history
 
