@@ -231,6 +231,11 @@ The `serializer` (used by [`dump`](../api/basic_json/dump.md) and [`operator<<`]
 - `output_stream_adapter` writes to a `std::ostream`.
 - `output_string_adapter` appends to a string.
 
+The `serializer` writes IEEE-754 `float` and `double` numbers with the Grisu2 algorithm in `to_chars.hpp`, and other
+floating-point types with `snprintf("%.*g")` and `max_digits10` digits. With a precision (used by the
+[`std::format`](../api/basic_json/std_formatter.md) spec `{:.N}`), every floating-point type takes the `snprintf`
+path, with N digits instead of `max_digits10`.
+
 ## Value conversion
 
 Values are converted from and to other types with the `JSONSerializer` template parameter. The default,
