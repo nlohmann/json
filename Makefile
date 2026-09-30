@@ -1,4 +1,4 @@
-.PHONY: pretty clean ChangeLog.md release update_hedley update_hedley_undef BUILD.bazel
+.PHONY: pretty clean ChangeLog.md release update_hedley update_hedley_undef BUILD.bazel natvis
 
 ##########################################################################
 # configuration
@@ -35,6 +35,7 @@ all:
 	@echo "check-amalgamation - check whether sources have been amalgamated and BUILD.bazel is up to date"
 	@echo "clean - remove built files"
 	@echo "fuzzing - see tests/fuzzing.md for how to build and run the fuzzers"
+	@echo "natvis - regenerate nlohmann_json.natvis from the current ABI tags and version"
 	@echo "pretty - beautify code with Artistic Style"
 	@echo "run_benchmarks - build and run benchmarks"
 	@echo "update_hedley - download Hedley and regenerate hedley.hpp / hedley_undef.hpp"
@@ -94,6 +95,10 @@ $(AMALGAMATED_FILE): $(SRCS)
 $(AMALGAMATED_FWD_FILE): $(SRCS)
 	tools/amalgamate/amalgamate.py -c tools/amalgamate/config_json_fwd.json -s . --verbose=yes
 
+# regenerate nlohmann_json.natvis from the ABI tags and version in include/nlohmann/detail/abi_macros.hpp
+natvis:
+	python3 tools/generate_natvis/generate_natvis.py .
+
 # check if file single_include/nlohmann/json.hpp has been amalgamated from the nlohmann sources
 check-amalgamation:
 	@mv $(AMALGAMATED_FILE) $(AMALGAMATED_FILE)~
@@ -107,6 +112,10 @@ check-amalgamation:
 	@$(MAKE) BUILD.bazel
 	@diff BUILD.bazel BUILD.bazel~ || (echo "===================================================================\n  BUILD.bazel is out of date! Please run 'make BUILD.bazel'.\n===================================================================" ; mv BUILD.bazel~ BUILD.bazel ; false)
 	@mv BUILD.bazel~ BUILD.bazel
+	@mv nlohmann_json.natvis nlohmann_json.natvis~
+	@$(MAKE) natvis
+	@diff nlohmann_json.natvis nlohmann_json.natvis~ || (echo "===================================================================\n  nlohmann_json.natvis is out of date! Please run 'make natvis'.\n===================================================================" ; mv nlohmann_json.natvis~ nlohmann_json.natvis ; false)
+	@mv nlohmann_json.natvis~ nlohmann_json.natvis
 
 # generate the Bazel BUILD file; phony, because a removed header would not trigger a rebuild
 BUILD.bazel:

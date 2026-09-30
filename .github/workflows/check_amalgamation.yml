@@ -35,6 +35,7 @@ jobs:
       MAIN_DIR: ${{ github.workspace }}/main
       INCLUDE_DIR: ${{ github.workspace }}/main/single_include/nlohmann
       TOOL_DIR: ${{ github.workspace }}/tools/tools/amalgamate
+      NATVIS_TOOL_DIR: ${{ github.workspace }}/tools/tools/generate_natvis
 
     steps:
       - name: Harden Runner
@@ -61,6 +62,9 @@ jobs:
           python3 -mvenv venv
           venv/bin/pip3 install -r $MAIN_DIR/tools/astyle/requirements.txt
 
+      - name: Install generate_natvis dependencies
+        run: pip3 install -r $NATVIS_TOOL_DIR/requirements.txt
+
       - name: Regenerate amalgamation, formatting, and BUILD.bazel
         run: |
           cd $MAIN_DIR
@@ -86,6 +90,9 @@ jobs:
 
           ${{ github.workspace }}/venv/bin/astyle --project=tools/astyle/.astylerc --suffix=none --quiet \
             $(find $SOURCE_DIRS -type f \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' \) -not -path 'tests/thirdparty/*' -not -path 'tests/abi/include/nlohmann/*' | sort)
+
+      - name: Regenerate nlohmann_json.natvis
+        run: python3 $NATVIS_TOOL_DIR/generate_natvis.py $MAIN_DIR
 
       - name: Build patch and check for differences
         id: diff
