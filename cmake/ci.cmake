@@ -372,9 +372,10 @@ file(GLOB_RECURSE INDENT_FILES
 set(include_dir ${PROJECT_SOURCE_DIR}/single_include/nlohmann)
 set(tool_dir ${PROJECT_SOURCE_DIR}/tools/amalgamate)
 add_custom_target(ci_test_amalgamation
-    COMMAND rm -fr ${include_dir}/json.hpp~ ${include_dir}/json_fwd.hpp~
+    COMMAND rm -fr ${include_dir}/json.hpp~ ${include_dir}/json_fwd.hpp~ ${include_dir}/json_literals.hpp~
     COMMAND cp ${include_dir}/json.hpp ${include_dir}/json.hpp~
     COMMAND cp ${include_dir}/json_fwd.hpp ${include_dir}/json_fwd.hpp~
+    COMMAND cp ${include_dir}/json_literals.hpp ${include_dir}/json_literals.hpp~
 
     COMMAND ${Python3_EXECUTABLE} -mvenv venv_astyle
     COMMAND venv_astyle/bin/pip3 --quiet install -r ${CMAKE_SOURCE_DIR}/tools/astyle/requirements.txt
@@ -382,10 +383,12 @@ add_custom_target(ci_test_amalgamation
 
     COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json.json -s .
     COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json_fwd.json -s .
+    COMMAND cp ${PROJECT_SOURCE_DIR}/include/nlohmann/json_literals.hpp ${include_dir}/json_literals.hpp
     COMMAND venv_astyle/bin/astyle --project=tools/astyle/.astylerc --suffix=none ${include_dir}/json.hpp ${include_dir}/json_fwd.hpp
 
     COMMAND diff ${include_dir}/json.hpp~ ${include_dir}/json.hpp
     COMMAND diff ${include_dir}/json_fwd.hpp~ ${include_dir}/json_fwd.hpp
+    COMMAND diff ${include_dir}/json_literals.hpp~ ${include_dir}/json_literals.hpp
 
     COMMAND venv_astyle/bin/astyle --project=tools/astyle/.astylerc --suffix=orig ${INDENT_FILES}
     COMMAND for FILE in `find . -name '*.orig'`\; do false \; done

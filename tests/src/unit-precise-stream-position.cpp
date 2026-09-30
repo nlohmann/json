@@ -234,4 +234,33 @@ TEST_CASE("JSON_PRECISE_STREAM_POSITION")
         CHECK(j == json(1));
         CHECK(remaining(is) == "true");
     }
+
+    SECTION("stream with eofbit in its exception mask (issue #5646)")
+    {
+        // with JSON_PRECISE_STREAM_POSITION, get_character() peeks via
+        // sb->sgetc() rather than consuming via sb->sbumpc(), but it still
+        // calls std::istream::clear() to record eofbit once the streambuf is
+        // exhausted; with eofbit in the exception mask, that clear() itself
+        // throws std::ios_base::failure, which must propagate to the caller
+        // instead of ~input_stream_adapter() throwing a second exception
+        // while the first is still unwinding (which would call std::terminate)
+        json _;
+
+        std::istringstream is1("1");
+        is1.exceptions(std::ios::eofbit);
+        CHECK_THROWS_AS(_ = json::parse(is1), std::ios_base::failure&);
+
+        std::istringstream is2("1");
+        is2.exceptions(std::ios::failbit | std::ios::badbit | std::ios::eofbit);
+        CHECK_THROWS_AS(_ = json::parse(is2), std::ios_base::failure&);
+    }
+
+    SECTION("stream without a streambuf (issue #5646)")
+    {
+        // std::istream(nullptr) has badbit set and rdbuf() == nullptr;
+        // get_character() must not dereference that null streambuf
+        std::istream is(nullptr);
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::parse(is), "[json.exception.parse_error.101] parse error: attempting to parse an empty input; check that your input string or stream contains the expected JSON", json::parse_error&);
+    }
 }

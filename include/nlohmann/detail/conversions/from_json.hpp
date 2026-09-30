@@ -167,9 +167,13 @@ template<typename BasicJsonType, typename EnumType,
          enable_if_t<std::is_enum<EnumType>::value, int> = 0>
 inline void from_json(const BasicJsonType& j, EnumType& e)
 {
-    typename std::underlying_type<EnumType>::type val;
+    using underlying_type = typename std::underlying_type<EnumType>::type;
+    // get_arithmetic_value() does not accept boolean_t; read the number that to_json() wrote instead
+    using value_type = typename std::conditional<std::is_same<underlying_type, typename BasicJsonType::boolean_t>::value,
+          typename BasicJsonType::number_unsigned_t, underlying_type>::type;
+    value_type val;
     get_arithmetic_value(j, val);
-    e = static_cast<EnumType>(val);
+    e = static_cast<EnumType>(static_cast<underlying_type>(val));
 }
 #endif  // JSON_DISABLE_ENUM_SERIALIZATION
 
@@ -564,7 +568,7 @@ inline void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allo
     {
         if (JSON_HEDLEY_UNLIKELY(!p.is_array()))
         {
-            JSON_THROW(type_error::create(302, concat("type must be array, but is ", p.type_name()), &j));
+            JSON_THROW(type_error::create(302, concat("type must be array, but is ", p.type_name()), &p));
         }
         m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
     }
@@ -584,7 +588,7 @@ inline void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Has
     {
         if (JSON_HEDLEY_UNLIKELY(!p.is_array()))
         {
-            JSON_THROW(type_error::create(302, concat("type must be array, but is ", p.type_name()), &j));
+            JSON_THROW(type_error::create(302, concat("type must be array, but is ", p.type_name()), &p));
         }
         m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
     }
