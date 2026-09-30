@@ -352,6 +352,41 @@ TEST_CASE("alternative string type")
         CHECK(j2.flatten().unflatten() == j2);
     }
 
+    SECTION("contains(json_pointer)")
+    {
+        // contains(json_pointer) must compile and work with a string_t that has
+        // no c_str() and no comparison with const char* (see #5666)
+        auto j = alt_json::parse(R"({"foo": ["bar", "baz"]})");
+
+        // present: object key and array indices
+        CHECK(j.contains(alt_json::json_pointer("/foo")));
+        CHECK(j.contains(alt_json::json_pointer("/foo/0")));
+        CHECK(j.contains(alt_json::json_pointer("/foo/1")));
+
+        // missing: absent object key and out-of-range array index
+        CHECK_FALSE(j.contains(alt_json::json_pointer("/bar")));
+        CHECK_FALSE(j.contains(alt_json::json_pointer("/foo/2")));
+
+        // "-" always fails the range check
+        CHECK_FALSE(j.contains(alt_json::json_pointer("/foo/-")));
+
+        // an array index must not have a leading zero
+        CHECK_FALSE(j.contains(alt_json::json_pointer("/foo/01")));
+
+        // a reference token that is not a number
+        CHECK_FALSE(j.contains(alt_json::json_pointer("/foo/bar")));
+    }
+
+    SECTION("operator/(std::size_t)")
+    {
+        // json_pointer::operator/=(std::size_t) must compile without string_t
+        // being constructible from std::string (see #5666)
+        auto j = alt_json::parse(R"({"foo": ["bar", "baz"]})");
+
+        CHECK(j.at(alt_json::json_pointer("/foo") / std::size_t(0)) == j["foo"][0]);
+        CHECK(j.at(alt_json::json_pointer("/foo") / std::size_t(1)) == j["foo"][1]);
+    }
+
     SECTION("patch")
     {
         alt_json const patch1 = alt_json::parse(R"([{ "op": "add", "path": "/a/b", "value": [ "foo", "bar" ] }])");
