@@ -28233,11 +28233,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 JSONSerializer<other_binary_t>::to_json(*this, val.template get_ref<const other_binary_t&>());
                 break;
             case value_t::null:
-                // this value is null already. The converting constructor has
-                // copied the positions of val (JSON_DIAGNOSTIC_POSITIONS), and
-                // like the other cases, which only set the value, this keeps
-                // them: assigning null would replace them with those of the
-                // assigned temporary
+                // m_data.m_type is already value_t::null
                 break;
             case value_t::discarded:
                 m_data.m_type = value_t::discarded;
@@ -28321,9 +28317,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         for (;;)
         {
             const BasicJsonType& container = *pending.back().first;
-            // a reference, so ++next advances the iterator kept in pending; it
-            // is not used once pending has grown or shrunk below
-            other_const_iterator& next = pending.back().second;
+            // a copy, as descending below can reallocate pending; the
+            // iterator kept in pending is only advanced through pending.back()
+            const other_const_iterator next = pending.back().second;
 
             if (next != container.cend())
             {
@@ -28344,7 +28340,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 {
                     elements.emplace_back(*next);
                 }
-                ++next;
+                ++pending.back().second;
                 continue;
             }
 
