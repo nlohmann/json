@@ -204,7 +204,7 @@ class binary_writer
                 }
                 else
                 {
-                    write_compact_float(j.m_data.m_value.number_float, detail::input_format_t::cbor);
+                    write_compact_float(j.m_data.m_value.number_float, to_char_type(0xFA), to_char_type(0xFB));
                 }
                 break;
             }
@@ -428,7 +428,7 @@ class binary_writer
 
             case value_t::number_float:
             {
-                write_compact_float(j.m_data.m_value.number_float, detail::input_format_t::msgpack);
+                write_compact_float(j.m_data.m_value.number_float, to_char_type(0xCA), to_char_type(0xCB));
                 break;
             }
 
@@ -1410,52 +1410,6 @@ class binary_writer
         }
     }
 
-    static constexpr CharType get_cbor_float_prefix(float /*unused*/)
-    {
-        return to_char_type(0xFA);  // Single-Precision Float
-    }
-
-    static constexpr CharType get_cbor_float_prefix(double /*unused*/)
-    {
-        return to_char_type(0xFB);  // Double-Precision Float
-    }
-
-    /////////////
-    // MsgPack //
-    /////////////
-
-    static constexpr CharType get_msgpack_float_prefix(float /*unused*/)
-    {
-        return to_char_type(0xCA);  // float 32
-    }
-
-    static constexpr CharType get_msgpack_float_prefix(double /*unused*/)
-    {
-        return to_char_type(0xCB);  // float 64
-    }
-
-    /// @return the BON8 type marker for binary32 (float) or binary64 (double)
-    template<typename FloatType>
-    static constexpr CharType get_bon8_float_prefix()
-    {
-        return to_char_type(std::is_same<FloatType, float>::value ? 0x8E : 0x8F);
-    }
-
-    /// @return the type marker for a FloatType value in @a format (CBOR, MessagePack, or BON8)
-    template<typename FloatType>
-    static CharType get_compact_float_prefix(const detail::input_format_t format)
-    {
-        if (format == detail::input_format_t::cbor)
-        {
-            return get_cbor_float_prefix(FloatType{});
-        }
-        if (format == detail::input_format_t::bon8)
-        {
-            return get_bon8_float_prefix<FloatType>();
-        }
-        return get_msgpack_float_prefix(FloatType{});
-    }
-
     ////////////
     // UBJSON //
     ////////////
@@ -1645,14 +1599,16 @@ class binary_writer
                || marker == 'T' || marker == 'F' || marker == 'N' || marker == 'Z';
     }
 
-    static constexpr CharType get_ubjson_float_prefix(float /*unused*/)
+    /// @return the UBJSON/BJData type marker for a float or double value
+    ///
+    /// number_float_t must be float or double; a static_assert (rather than
+    /// an ambiguous overload) reports an unsupported number_float_t clearly.
+    template<typename FloatType>
+    static constexpr CharType get_ubjson_float_prefix(FloatType /*unused*/)
     {
-        return 'd';  // float 32
-    }
-
-    static constexpr CharType get_ubjson_float_prefix(double /*unused*/)
-    {
-        return 'D';  // float 64
+        static_assert(std::is_same<FloatType, float>::value || std::is_same<FloatType, double>::value,
+                      "number_float_t must be float or double for the UBJSON/BJData writer");
+        return std::is_same<FloatType, float>::value ? 'd' : 'D';  // float 32 / float 64
     }
 
     /*!
@@ -2240,7 +2196,7 @@ class binary_writer
         }
         else
         {
-            write_compact_float(n, detail::input_format_t::bon8);
+            write_compact_float(n, to_char_type(0x8E), to_char_type(0x8F));
         }
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_POP
@@ -2362,8 +2318,17 @@ class binary_writer
         oa.write_characters(vec.data(), sizeof(NumberType));
     }
 
-    void write_compact_float(const number_float_t n, detail::input_format_t format)
+    /// @brief write @a n using @a float32_marker if it round-trips through
+    ///        float, otherwise using @a float64_marker
+    ///
+    /// @a float32_marker and @a float64_marker are the format-specific type
+    /// markers (CBOR: 0xFA/0xFB, MessagePack: 0xCA/0xCB, BON8: 0x8E/0x8F);
+    /// each caller already knows them at compile time, so the format itself
+    /// no longer needs to be passed in.
+    void write_compact_float(const number_float_t n, const CharType float32_marker, const CharType float64_marker)
     {
+        static_assert(std::is_same<number_float_t, float>::value || std::is_same<number_float_t, double>::value,
+                      "number_float_t must be float or double for the CBOR/MessagePack/BON8 writer");
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_PUSH
         JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
@@ -2381,12 +2346,12 @@ class binary_writer
                                    static_cast<double>(n) <= static_cast<double>((std::numeric_limits<float>::max)()) &&
                                    static_cast<double>(static_cast<float>(n)) == static_cast<double>(n))))
         {
-            oa.write_character(get_compact_float_prefix<float>(format));
+            oa.write_character(float32_marker);
             write_number(static_cast<float>(n));
         }
         else
         {
-            oa.write_character(get_compact_float_prefix<number_float_t>(format));
+            oa.write_character(float64_marker);
             write_number(n);
         }
 #ifdef __GNUC__
