@@ -104,6 +104,12 @@ TEST_CASE("Regression tests for extended diagnostics")
         CHECK_THROWS_WITH_AS(j.unflatten(), "[json.exception.type_error.315] (/~1foo) values in object must be primitive", json::type_error);
     }
 
+    SECTION("Regression test for issue #5675 - to_bson: out_of_range.415 has no diagnostics context")
+    {
+        json const j = {{"a", {{"b", json::binary({1, 2}, 300)}}}};
+        CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.out_of_range.415] (/a/b) subtype 300 is too large for the BSON binary subtype (max 255)", json::out_of_range);
+    }
+
     SECTION("Regression test for issue #2838 - Assertion failure when inserting into arrays with JSON_DIAGNOSTICS set")
     {
         // void push_back(basic_json&& val)
