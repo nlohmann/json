@@ -582,8 +582,8 @@ class json_sax_dom_callback_parser
 
     bool start_object(std::size_t len)
     {
-        // check callback for object start
-        const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::object_start, discarded);
+        // check callback for object start; not called inside a discarded container
+        const bool keep = keep_stack.back() && callback(static_cast<int>(ref_stack.size()), parse_event_t::object_start, discarded);
         keep_stack.push_back(keep);
 
         // the key this object will be stored under, read before handle_value()
@@ -619,6 +619,18 @@ class json_sax_dom_callback_parser
 
     bool key(string_t& val)
     {
+        if (!keep_stack.back() || !ref_stack.back())
+        {
+            // the object is not stored: the value of this key is dropped in
+            // handle_value() without touching the key stacks
+            if (keep_stack.back())
+            {
+                BasicJsonType k = BasicJsonType(val);
+                static_cast<void>(callback(static_cast<int>(ref_stack.size()), parse_event_t::key, k));
+            }
+            return true;
+        }
+
         BasicJsonType k = BasicJsonType(val);
 
         // check callback for the key
@@ -704,7 +716,7 @@ class json_sax_dom_callback_parser
 
     bool start_array(std::size_t len)
     {
-        const bool keep = callback(static_cast<int>(ref_stack.size()), parse_event_t::array_start, discarded);
+        const bool keep = keep_stack.back() && callback(static_cast<int>(ref_stack.size()), parse_event_t::array_start, discarded);
         keep_stack.push_back(keep);
 
         // see start_object()
