@@ -351,7 +351,6 @@ markdown_extensions:
   - toc:
       permalink: true
   - md_in_html
-  - pymdownx.arithmatex
   - pymdownx.betterem:
       smart_enable: all
   - pymdownx.caret
@@ -443,6 +442,3 @@ plugins:
 
 extra_css:
   - css/custom.css
-
-extra_javascript:
-  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML
