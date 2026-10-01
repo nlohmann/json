@@ -361,6 +361,7 @@ nav:
           - 'JSON_DIAGNOSTICS': api/macros/json_diagnostics.md
           - 'JSON_DIAGNOSTIC_POSITIONS': api/macros/json_diagnostic_positions.md
           - 'JSON_DISABLE_ENUM_SERIALIZATION': api/macros/json_disable_enum_serialization.md
+          - 'JSON_DISABLE_TUPLE_REFERENCE_CONVERSION': api/macros/json_disable_tuple_reference_conversion.md
           - 'JSON_HAS_CPP_11, JSON_HAS_CPP_14, JSON_HAS_CPP_17, JSON_HAS_CPP_20': api/macros/json_has_cpp_11.md
           - 'JSON_HAS_EXPERIMENTAL_FILESYSTEM, JSON_HAS_FILESYSTEM': api/macros/json_has_filesystem.md
           - 'JSON_HAS_RANGES': api/macros/json_has_ranges.md
@@ -426,7 +427,6 @@ markdown_extensions:
   - toc:
       permalink: true
   - md_in_html
-  - pymdownx.arithmatex
   - pymdownx.betterem:
       smart_enable: all
   - pymdownx.caret
@@ -520,6 +520,3 @@ plugins:
 
 extra_css:
   - css/custom.css
-
-extra_javascript:
-  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML

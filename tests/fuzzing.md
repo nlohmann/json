@@ -7,8 +7,7 @@ Additionally, `parse_json_view_fuzzer` (`tests/src/fuzzer-parse_json_view.cpp`) 
 (the zero-copy, read-only view declared in `json_view.hpp`) against `basic_json` on the same JSON text: it asserts that
 `json_document::accept` agrees with `json::accept`, that an accepted input materializes to the same value `json::parse`
 produces, and that a rejected input makes both parsers throw with an identical `what()`. It takes plain JSON text, so it
-reuses the `corpus_json` corpus (or, for the `make fuzz_testing_json_view` target below, `tests/data/json_tests`) rather
-than a format of its own.
+reuses the `corpus_json` corpus rather than a format of its own.
 
 `json_view_image_fuzzer` (`tests/src/fuzzer-json_view_image.cpp`) tests the images of `json_document` (`save()` and
 `load()`). It uses each input twice: as an image, which `load()` must either reject with `parse_error.116` or read
@@ -106,9 +105,10 @@ conventions:
   add it as a regression test to the unit test of the affected format (e.g., `tests/src/unit-bjdata.cpp`), with a
   comment naming the OSS-Fuzz issue. This way the input is checked by every CI run rather than only by OSS-Fuzz, and
   it stays covered even if OSS-Fuzz later closes the report as not reproducible.
-- **Keep the fuzzer drivers and the unit tests in sync.** The round-trip checks of the UBJSON and BJData drivers are
-  also run on a fixed corpus in the unit tests (see `tests/src/round_trip_corpus.hpp` and the "round-trip invariants"
-  test cases), so a regression shows up in CI first. When a driver's checks change, change the unit tests with them.
+- **Keep the fuzzer drivers and the unit tests in sync.** The round-trip checks of the BJData, BON8, BSON, CBOR,
+  MessagePack and UBJSON drivers are also run on a fixed corpus in the unit tests (see
+  `tests/src/round_trip_corpus.hpp` and the "round-trip invariants" test cases), so a regression shows up in CI
+  first. When a driver's checks change, change the unit tests with them.
 - **Record in the report whether the bug shipped.** OSS-Fuzz asks whether a crash was a short-lived regression or
   affects a released version; answer it when the fix is merged, as it decides whether the fix needs a release note or
   a security advisory (see the [security policy](../.github/SECURITY.md)).

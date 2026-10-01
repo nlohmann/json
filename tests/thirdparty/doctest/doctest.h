@@ -4498,6 +4498,12 @@ namespace {
     String translateActiveException() {
 #ifndef DOCTEST_CONFIG_NO_EXCEPTIONS
         auto&  translators = getExceptionTranslators();
+        // nlohmann/json locally patches upstream doctest 2.4.12 here: "res" was
+        // declared once before the loop and reused by every iteration; move it
+        // inside the loop so each translator gets a freshly default-constructed
+        // "res" instead of one a previous, non-matching translator may have
+        // written to (see nlohmann/json#4801). Re-apply this hunk when
+        // re-vendoring doctest.h from upstream.
         for(auto& curr : translators) {
             String res;
             if (curr->translate(res))
