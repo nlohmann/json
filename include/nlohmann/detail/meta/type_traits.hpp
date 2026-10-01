@@ -640,6 +640,18 @@ template<typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
     : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
 
+// a one-element std::tuple holding a reference to BasicJsonType, as created by
+// std::forward_as_tuple(j); see JSON_DISABLE_TUPLE_REFERENCE_CONVERSION
+template<typename BasicJsonType, typename T>
+struct is_basic_json_reference_tuple : std::false_type {};
+
+template<typename BasicJsonType, typename T>
+struct is_basic_json_reference_tuple<BasicJsonType, std::tuple<T>>
+{
+    static constexpr bool value =
+        std::is_reference<T>::value && std::is_same<uncvref_t<T>, BasicJsonType>::value;
+};
+
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_binary_type
 {

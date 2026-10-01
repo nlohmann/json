@@ -53,6 +53,7 @@ header. See also the [macro overview page](../../features/macros.md).
 
 - [**JSON_BRACE_INIT_COPY_SEMANTICS**](json_brace_init_copy_semantics.md) - opt in to copy/move semantics for single-element brace initialization
 - [**JSON_DISABLE_ENUM_SERIALIZATION**](json_disable_enum_serialization.md) - switch off default serialization/deserialization functions for enums
+- [**JSON_DISABLE_TUPLE_REFERENCE_CONVERSION**](json_disable_tuple_reference_conversion.md) - switch off conversion from a one-element tuple of a JSON reference
 - [**JSON_USE_IMPLICIT_CONVERSIONS**](json_use_implicit_conversions.md) - control implicit conversions
 
 ## Comparison behavior
