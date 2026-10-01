@@ -23,10 +23,6 @@ Files: tests/thirdparty/fifo_map/*
 Copyright: 2015-2017 Niels Lohmann
 License: MIT
 
-Files: tests/thirdparty/Fuzzer/*
-Copyright: 2003-2022 LLVM Project.
-License: Apache-2.0
-
 Files: tests/thirdparty/imapdl/*
 Copyright: 2017 Georg Sauthoff <mail@gms.tf>
 License: GPL-3.0-only

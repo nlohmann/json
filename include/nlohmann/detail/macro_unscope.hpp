@@ -8,11 +8,6 @@
 
 #pragma once
 
-// restore clang diagnostic settings
-#if defined(__clang__)
-    #pragma clang diagnostic pop
-#endif
-
 // clean up
 #undef JSON_ASSERT
 #undef JSON_INTERNAL_CATCH
