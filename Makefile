@@ -87,7 +87,7 @@ install_astyle:
 
 # call the Artistic Style pretty printer on all source files
 pretty: install_astyle
-	$(ASTYLE) --project=tools/astyle/.astylerc $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_LITERALS_FILE) docs/mkdocs/docs/examples/*.cpp
+	$(ASTYLE) --project=tools/astyle/.astylerc $(SRCS) $(TESTS_SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_LITERALS_FILE) docs/mkdocs/docs/examples/*.cpp docs/mkdocs/docs/examples/*.hpp
 
 # create single header files and pretty print
 amalgamate: $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_LITERALS_FILE)

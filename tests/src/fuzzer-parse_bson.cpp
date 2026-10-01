@@ -13,7 +13,7 @@ array data, it performs the following steps:
 - j1 = from_bson(data)
 - vec = to_bson(j1)
 - j2 = from_bson(vec)
-- assert(j1 == j2)
+- assert(to_bson(j2) == vec)
 
 Furthermore, it reads data with a SAX parser that recovers from every error
 and checks that the events are balanced, that reading ends, and that it
@@ -24,8 +24,6 @@ drivers.
 */
 
 #include <cassert>
-#include <iostream>
-#include <sstream>
 #include <nlohmann/json.hpp>
 
 // the round-trip checks below are assertions; NDEBUG would compile them away
@@ -49,11 +47,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         std::vector<uint8_t> const vec1(data, data + size);
         json const j1 = json::from_bson(vec1);
         assert(recovered_without_errors);
-
-        if (j1.is_discarded())
-        {
-            return 0;
-        }
 
         try
         {

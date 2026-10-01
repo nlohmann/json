@@ -13,7 +13,7 @@ array data, it performs the following steps:
 - j1 = from_cbor(data)
 - vec = to_cbor(j1)
 - j2 = from_cbor(vec)
-- assert(j1 == j2)
+- assert(to_cbor(j2) == vec)
 
 Furthermore, it reads data with a SAX parser that recovers from every error
 and checks that the events are balanced, that reading ends, and that it
@@ -24,8 +24,6 @@ drivers.
 */
 
 #include <cassert>
-#include <iostream>
-#include <sstream>
 #include <nlohmann/json.hpp>
 
 // the round-trip checks below are assertions; NDEBUG would compile them away
