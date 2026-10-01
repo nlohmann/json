@@ -12,7 +12,6 @@ target_compile_options(abi_compat_common INTERFACE
     # https://github.com/nlohmann/json/pull/3229
     $<$<CXX_COMPILER_ID:Intel>:-diag-disable=2196>
 
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
     $<$<CXX_COMPILER_ID:Intel>:-diag-disable=1786>)
 target_include_directories(abi_compat_common SYSTEM INTERFACE

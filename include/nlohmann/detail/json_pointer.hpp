@@ -26,6 +26,7 @@
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/string_escape.hpp>
+#include <nlohmann/detail/string_utils.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -116,7 +117,7 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slasheq/
     json_pointer& operator/=(std::size_t array_idx)
     {
-        return *this /= std::to_string(array_idx);
+        return *this /= detail::to_string<string_t>(array_idx);
     }
 
     /// @brief create a new JSON pointer by appending the right JSON pointer at the end of the left JSON pointer
@@ -277,11 +278,11 @@ class json_pointer
             JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", s, "'"), nullptr));
         }
 
-        // only triggered on special platforms (like 32bit), see also
-        // https://github.com/nlohmann/json/pull/2203
+        // the index does not fit into size_type; on 64-bit platforms this is
+        // only SIZE_MAX itself (see #2203 and #5395)
         if (res >= static_cast<unsigned long long>((std::numeric_limits<size_type>::max)()))  // NOLINT(runtime/int)
         {
-            JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));   // LCOV_EXCL_LINE
+            JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));
         }
 
         return static_cast<size_type>(res);
@@ -315,7 +316,7 @@ class json_pointer
     /*!
     @brief create and return a reference to the pointed to value
 
-    @complexity Linear in the number of reference tokens.
+    Complexity: Linear in the number of reference tokens.
 
     @throw parse_error.106 if an array index begins with '0'
     @throw parse_error.109 if array index is not a number
@@ -402,7 +403,7 @@ class json_pointer
 
     @return reference to the JSON value pointed to by the JSON pointer
 
-    @complexity Linear in the length of the JSON pointer.
+    Complexity: Linear in the length of the JSON pointer.
 
     @throw parse_error.106   if an array index begins with '0'
     @throw parse_error.109   if an array index was not a number
@@ -746,7 +747,13 @@ class json_pointer
                         // "-" always fails the range check
                         return false;
                     }
-                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() == 1 && !("0" <= reference_token && reference_token <= "9")))
+                    if (JSON_HEDLEY_UNLIKELY(reference_token.empty()))
+                    {
+                        // an empty reference token is not an array index; array_index()
+                        // would throw out_of_range.404 -- contains() must not throw (see #5395)
+                        return false;
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() == 1 && !('0' <= reference_token[0] && reference_token[0] <= '9')))
                     {
                         // invalid char
                         return false;
@@ -774,7 +781,7 @@ class json_pointer
                     // not throw (see #5395), so such a reference token is treated as "not found"
                     errno = 0; // strtoull() does not reset errno on success
                     char* p_end = nullptr; // NOLINT(misc-const-correctness)
-                    const unsigned long long magnitude = std::strtoull(reference_token.c_str(), &p_end, 10); // NOLINT(runtime/int)
+                    const unsigned long long magnitude = std::strtoull(reference_token.data(), &p_end, 10); // NOLINT(runtime/int)
                     if (JSON_HEDLEY_UNLIKELY(errno == ERANGE // the value exceeds ULLONG_MAX
                                              || magnitude >= static_cast<unsigned long long>((std::numeric_limits<typename BasicJsonType::size_type>::max)()))) // NOLINT(runtime/int)
                     {

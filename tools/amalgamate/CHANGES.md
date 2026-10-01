@@ -8,3 +8,6 @@ The following changes have been made to the code with respect to <https://github
   - membership check
   - made function from `_is_within`
   - removed unused variable `actual_path`
+- Added the optional config key `external`: include paths listed there are kept as
+  `#include` directives instead of being inlined (the first directive per path; the
+  repeated ones are commented out).

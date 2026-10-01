@@ -11,15 +11,15 @@ This file implements a parser test suitable for fuzz testing. Given a byte
 array data, it performs the following steps:
 
 - j1 = from_ubjson(data)
-- vec = to_ubjson(j1)
-- j2 = from_ubjson(vec)
-- assert(j1 == j2)
-- vec2 = to_ubjson(j1, use_size = true, use_type = false)
-- j3 = from_ubjson(vec2)
-- assert(j1 == j3)
-- vec3 = to_ubjson(j1, use_size = true, use_type = true)
-- j4 = from_ubjson(vec3)
-- assert(j1 == j4)
+- vec2 = to_ubjson(j1, use_size = false, use_type = false)
+- vec3 = to_ubjson(j1, use_size = true, use_type = false)
+- vec4 = to_ubjson(j1, use_size = true, use_type = true)
+- j2 = from_ubjson(vec2)
+- j3 = from_ubjson(vec3)
+- j4 = from_ubjson(vec4)
+- assert(to_ubjson(j2, use_size = false, use_type = false) == vec2)
+- assert(to_ubjson(j3, use_size = true, use_type = false) == vec3)
+- assert(to_ubjson(j4, use_size = true, use_type = true) == vec4)
 
 The unit tests run the same checks on a fixed corpus (see the "UBJSON round-trip
 invariants" test case), so keep both in sync.
@@ -29,8 +29,6 @@ drivers.
 */
 
 #include <cassert>
-#include <iostream>
-#include <sstream>
 #include <nlohmann/json.hpp>
 
 // the round-trip checks below are assertions; NDEBUG would compile them away
