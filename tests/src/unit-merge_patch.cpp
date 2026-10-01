@@ -305,10 +305,10 @@ TEST_CASE("JSON Merge Patch on deeply nested values")
         // over (detail::recursion_depth_limit(), 128)
         for (std::size_t depth = 0; depth <= 300; ++depth)
         {
-            CAPTURE(depth);
+            CAPTURE(depth)
             for (int variant = 0; variant < 3; ++variant)
             {
-                CAPTURE(variant);
+                CAPTURE(variant)
                 const json patch = json::parse(nested_objects(depth, variant));
 
                 json result = json::parse(nested_objects(depth, (variant + 1) % 3));
@@ -372,5 +372,54 @@ TEST_CASE("JSON Merge Patch and update on ordered_json")
 
         target.update(ordered_json::parse(R"({"a": 1})"), false);
         CHECK(target == ordered_json::parse(R"({"a": 1, "e": {"y": 5}, "g": 6})"));
+    }
+}
+
+TEST_CASE("merge_patch() with an argument that aliases *this (#5641)")
+{
+    SECTION("j.merge_patch(j): erasing a member destroys the node the loop's iterator points to")
+    {
+        // reproduces issue #5641, case 1
+        json j = {{"a", nullptr}, {"b", 1}};
+        j.merge_patch(j);
+        CHECK(j == json({{"b", 1}}));
+    }
+
+    SECTION("j.merge_patch(j[\"a\"]): removing \"a\" destroys the patch while it is iterated")
+    {
+        // reproduces issue #5641, case 2
+        json j = {{"a", {{"a", nullptr}, {"b", 2}}}};
+        j.merge_patch(j["a"]);
+        CHECK(j == json({{"b", 2}}));
+    }
+
+    SECTION("a patch nested past the iterative descent bound aliases *this")
+    {
+        // every depth on either side of where the iterative version takes
+        // over (detail::recursion_depth_limit(), 128); patching *this with
+        // itself is idempotent, aliased or not
+        for (const std::size_t depth :
+                {
+                    std::size_t{0}, std::size_t{127}, std::size_t{128}, std::size_t{300}
+                })
+        {
+            CAPTURE(depth)
+            json j = json::parse(nested_objects(depth, 0));
+            const json expected = j;
+            j.merge_patch(j);
+            CHECK(j == expected);
+        }
+    }
+
+    SECTION("ordered_json")
+    {
+        using nlohmann::ordered_json;
+
+        SECTION("merge_patch with a member of *this")
+        {
+            ordered_json j = {{"a", {{"a", nullptr}, {"b", 2}}}};
+            j.merge_patch(j["a"]);
+            CHECK(j == ordered_json({{"b", 2}}));
+        }
     }
 }

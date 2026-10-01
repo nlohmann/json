@@ -1,4 +1,0 @@
-# Dictionary for SimpleDictionaryTest
-
-a="Elvis"
-b="Presley"
