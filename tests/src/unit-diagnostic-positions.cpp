@@ -141,6 +141,58 @@ TEST_CASE("Better diagnostics with positions")
         check_objects(300);
     }
 
+    SECTION("converting keeps the positions of nested values (#5650)")
+    {
+        // Values nested deeper than the converting constructor's descent bound
+        // are converted without the call stack, on a path that has to carry the
+        // positions of every value over itself. Objects and arrays take turns,
+        // and the innermost value is null, which used to lose its positions.
+        const auto check_conversion = [](std::size_t depth)
+        {
+            CAPTURE(depth)
+
+            std::string text;
+            std::string closing;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                text += (i % 2 == 0) ? "[12, " : R"({"b":1, "a":)";
+                closing += (i % 2 == 0) ? ']' : '}';
+            }
+            text += "null";
+            text.append(closing.rbegin(), closing.rend());
+
+            const json original = json::parse(text);
+            const nlohmann::ordered_json converted = original;
+
+            const json* o = &original;
+            const nlohmann::ordered_json* c = &converted;
+            for (std::size_t level = 0; level <= depth; ++level)
+            {
+                CAPTURE(level)
+                REQUIRE(c->start_pos() == o->start_pos());
+                REQUIRE(c->end_pos() == o->end_pos());
+
+                if (level < depth)
+                {
+                    // the number beside the value nested next
+                    const json& o_number = o->is_object() ? o->at("b") : o->at(0);
+                    const nlohmann::ordered_json& c_number = c->is_object() ? c->at("b") : c->at(0);
+                    REQUIRE(c_number.start_pos() == o_number.start_pos());
+                    REQUIRE(c_number.end_pos() == o_number.end_pos());
+
+                    o = o->is_object() ? &o->at("a") : &o->at(1);
+                    c = c->is_object() ? &c->at("a") : &c->at(1);
+                }
+            }
+        };
+
+        check_conversion(1);
+        check_conversion(127);
+        check_conversion(128);
+        check_conversion(129);
+        check_conversion(300);
+    }
+
     SECTION("JSON patch add to primitive parent (#4292)")
     {
         // the JSON Patch "add" target /foo/bar/baz has a string parent
