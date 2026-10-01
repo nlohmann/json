@@ -275,7 +275,7 @@ TEST_CASE("lexer number fast path")
             std::stringstream ss(doc);
             const json b = json::parse(ss);
 
-            CAPTURE(n);
+            CAPTURE(n)
             CHECK(a == b);
             CHECK(a.dump() == b.dump());
             CHECK(a[0].type() == b[0].type());
@@ -311,7 +311,7 @@ TEST_CASE("lexer number fast path")
 
         for (const auto& n : numbers)
         {
-            CAPTURE(n);
+            CAPTURE(n)
             const std::string doc = "[" + n + "]";
 
             const json a = json::parse(doc);   // contiguous fast path
@@ -348,7 +348,7 @@ TEST_CASE("lexer number fast path")
                 {"-", "1.", "1e", "1e+", "1.2e", "01", "-01", "1..2", "1.2.3"
                 })
         {
-            CAPTURE(bad);
+            CAPTURE(bad)
             // the contiguous fast path must decline and let the byte path report
             const std::string doc = std::string("[") + bad + "]";
             CHECK_FALSE(json::accept(doc));
@@ -416,7 +416,7 @@ TEST_CASE("lexer number fast path")
 
         // 7 + 49 + 343 + 2401 tokens
         CHECK(tokens.size() == 2401);
-        CAPTURE(mismatches);
+        CAPTURE(mismatches)
         CHECK(mismatches.empty());
     }
 
@@ -460,7 +460,7 @@ TEST_CASE("lexer number fast path")
                  "[1 \n2]", "[\n1\n2]", "1\n2", "[01\r\n]", "[1e\n]", "[-\n]"
                 })
         {
-            CAPTURE(bad);
+            CAPTURE(bad)
             const std::string doc = bad;
             const std::string contiguous_what = contiguous_error(doc);
 
@@ -577,7 +577,7 @@ TEST_CASE("lexer string fast path")
 
         // 13 + 169 + 2197 tokens, each at two offsets
         CHECK(tokens.size() == 2197);
-        CAPTURE(mismatches);
+        CAPTURE(mismatches)
         CHECK(mismatches.empty());
     }
 
@@ -605,7 +605,7 @@ TEST_CASE("lexer string fast path")
                 }
             }
         }
-        CAPTURE(mismatches);
+        CAPTURE(mismatches)
         CHECK(mismatches.empty());
     }
 #endif
@@ -650,10 +650,10 @@ TEST_CASE("lexer string fast path")
 
         for (const auto& test_case : cases)
         {
-            CAPTURE(test_case.description);
+            CAPTURE(test_case.description)
             for (const std::size_t offset : offsets)
             {
-                CAPTURE(offset);
+                CAPTURE(offset)
                 const std::string doc = "[\"" + std::string(offset, 'a') + test_case.sequence + "\"]";
                 CHECK(json::accept(doc) == test_case.valid);
 #if !defined(JSON_NOEXCEPTION)
@@ -1302,7 +1302,7 @@ TEST_CASE("Eisel-Lemire float conversion")
 
         for (const auto& c : known)
         {
-            CAPTURE(c.first);
+            CAPTURE(c.first)
             CHECK(native_bits64(c.first) == c.second);
         }
     }
@@ -1350,7 +1350,7 @@ TEST_CASE("Eisel-Lemire float conversion")
             std::array<char, 64> buffer{};
             const char* end = nlohmann::detail::to_chars(buffer.data(), buffer.data() + buffer.size(), d);
             const std::string token(buffer.data(), static_cast<std::size_t>(end - buffer.data()));
-            CAPTURE(token);
+            CAPTURE(token)
             CHECK(native_bits64(token) == b);
 
             // insert digits before the exponent of the 17-digit form: that
@@ -1365,7 +1365,7 @@ TEST_CASE("Eisel-Lemire float conversion")
             const std::size_t dot = longer.find('.');
             const std::string extra = dot == std::string::npos ? ".000000000000000000001" : "000000000000000000001";
             longer.insert(e == std::string::npos ? longer.size() : e, extra);
-            CAPTURE(longer);
+            CAPTURE(longer)
             CHECK(native_bits64(longer) == b);
         }
     }
