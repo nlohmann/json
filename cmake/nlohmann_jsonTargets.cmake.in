@@ -12,6 +12,10 @@ if(TARGET @PROJECT_NAME@::@NLOHMANN_JSON_TARGET_NAME@)
 endif()
 
 get_filename_component(_IMPORT_PREFIX "${CMAKE_CURRENT_LIST_DIR}/@NLOHMANN_JSON_CONFIG_TO_PREFIX@" ABSOLUTE)
+# As in CMake's generated file: avoid "//include" for an installation to "/".
+if(_IMPORT_PREFIX STREQUAL "/")
+    set(_IMPORT_PREFIX "")
+endif()
 
 add_library(@PROJECT_NAME@::@NLOHMANN_JSON_TARGET_NAME@ INTERFACE IMPORTED)
 set_target_properties(@PROJECT_NAME@::@NLOHMANN_JSON_TARGET_NAME@ PROPERTIES
