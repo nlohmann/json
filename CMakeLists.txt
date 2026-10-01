@@ -55,6 +55,7 @@ option(JSON_Diagnostic_Positions           "Enable diagnostic positions." OFF)
 option(JSON_GlobalUDLs                     "Place user-defined string literals in the global namespace." ON)
 option(JSON_ImplicitConversions            "Enable implicit conversions." ON)
 option(JSON_DisableEnumSerialization       "Disable default integer enum serialization." OFF)
+option(JSON_DisableTupleReferenceConversion "Disable conversion from a one-element tuple of a JSON reference." OFF)
 option(JSON_LegacyDiscardedValueComparison "Enable legacy discarded value comparison." OFF)
 option(JSON_Install                        "Install CMake targets during install step." ${MAIN_PROJECT})
 option(JSON_MultipleHeaders                "Use non-amalgamated version of the library." ON)
@@ -101,6 +102,10 @@ if (JSON_DisableEnumSerialization)
     message(STATUS "Enum integer serialization is disabled (JSON_DISABLE_ENUM_SERIALIZATION=1)")
 endif()
 
+if (JSON_DisableTupleReferenceConversion)
+    message(STATUS "Tuple reference conversion is disabled (JSON_DISABLE_TUPLE_REFERENCE_CONVERSION=1)")
+endif()
+
 if (JSON_LegacyDiscardedValueComparison)
     message(STATUS "Legacy discarded value comparison enabled (JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1)")
 endif()
@@ -143,6 +148,7 @@ target_compile_definitions(
     $<$<NOT:$<BOOL:${JSON_GlobalUDLs}>>:JSON_USE_GLOBAL_UDLS=0>
     $<$<NOT:$<BOOL:${JSON_ImplicitConversions}>>:JSON_USE_IMPLICIT_CONVERSIONS=0>
     $<$<BOOL:${JSON_DisableEnumSerialization}>:JSON_DISABLE_ENUM_SERIALIZATION=1>
+    $<$<BOOL:${JSON_DisableTupleReferenceConversion}>:JSON_DISABLE_TUPLE_REFERENCE_CONVERSION=1>
     $<$<BOOL:${JSON_Diagnostics}>:JSON_DIAGNOSTICS=1>
     $<$<BOOL:${JSON_Diagnostic_Positions}>:JSON_DIAGNOSTIC_POSITIONS=1>
     $<$<BOOL:${JSON_LegacyDiscardedValueComparison}>:JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1>

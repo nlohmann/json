@@ -33,17 +33,6 @@ Further documentation:
 > [!IMPORTANT]
 > The folder `.github/workflows` is predetermined by GitHub.
 
-### `.cirrus.yml`
-
-Configuration file for the pipeline at [Cirrus CI](https://cirrus-ci.com/github/nlohmann/json).
-
-Further documentation:
-
-- [Writing tasks](https://cirrus-ci.org/guide/writing-tasks/)
-
-> [!IMPORTANT]
-> The filename `.cirrus.yml` and position (root of the repository) are predetermined by Cirrus CI.
-
 ### `.github/external_ci/appveyor.yml`
 
 Configuration for the pipelines at [AppVeyor](https://ci.appveyor.com/project/nlohmann/json).

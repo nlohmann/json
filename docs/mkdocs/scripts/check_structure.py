@@ -79,9 +79,9 @@ def check_structure() -> None:
                     report("whitespace/line_length", f"{file}:{lineno+1} ({current_section})", f"line is too long ({len(line)} vs. 160 chars)")
 
                 # sections in `<!-- NOLINT -->` comments are treated as present
-                if line.startswith("<!-- NOLINT"):
-                    current_section = line.strip("<!-- NOLINT")
-                    current_section = current_section.strip(" -->")
+                nolint_match = re.match(r"<!--\s*NOLINT\s+(.*?)\s*-->", line)
+                if nolint_match:
+                    current_section = nolint_match.group(1)
                     existing_sections.append(current_section)
 
                 # check if sections are correct
@@ -97,7 +97,7 @@ def check_structure() -> None:
                             if len(unexpected):
                                 report("style/numbering", f"{file}:{lineno} ({current_section})", f'unexpected overloads: {", ".join([f"({x})" for x in unexpected])}')
 
-                    current_section = line.strip("## ")
+                    current_section = line[3:]
                     existing_sections.append(current_section)
 
                     if current_section in expected_sections:
@@ -141,7 +141,7 @@ def check_structure() -> None:
                 # check that non-example admonitions have titles
                 untitled_admonition = re.match(r"^(\?\?\?|!!!) ([^ ]+)$", line)
                 if untitled_admonition and untitled_admonition.group(2) != "example":
-                    report("style/admonition_title", f"{file}:{lineno} ({current_section})", f'"{untitled_admonition.group(2)}" admonitions should have a title')
+                    report("style/admonition_title", f"{file}:{lineno+1} ({current_section})", f'"{untitled_admonition.group(2)}" admonitions should have a title')
 
                 previous_line = line
 

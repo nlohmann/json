@@ -7,10 +7,11 @@ documentation browsers like [Dash](https://kapeli.com/dash), [Velocity](https://
 The docset can be created with
 
 ```sh
-make nlohmann_json.docset
+make JSON_for_Modern_C++.docset
 ```
 
-The generated folder `nlohmann_json.docset` can then be opened in the documentation browser.
+The generated folder `JSON_for_Modern_C++.docset` can then be opened in the documentation browser. `make all` builds a
+`JSON_for_Modern_C++.tgz` archive instead, and `make install_docset_zeal` installs the docset for Zeal directly.
 
 A recent version is also part of the [Dash user contributions](https://github.com/Kapeli/Dash-User-Contributions/tree/master/docsets/JSON_for_Modern_C%2B%2B).
 
