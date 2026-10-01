@@ -278,11 +278,11 @@ class json_pointer
             JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", s, "'"), nullptr));
         }
 
-        // only triggered on special platforms (like 32bit), see also
-        // https://github.com/nlohmann/json/pull/2203
+        // the index does not fit into size_type; on 64-bit platforms this is
+        // only SIZE_MAX itself (see #2203 and #5395)
         if (res >= static_cast<unsigned long long>((std::numeric_limits<size_type>::max)()))  // NOLINT(runtime/int)
         {
-            JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));   // LCOV_EXCL_LINE
+            JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));
         }
 
         return static_cast<size_type>(res);
@@ -316,7 +316,7 @@ class json_pointer
     /*!
     @brief create and return a reference to the pointed to value
 
-    @complexity Linear in the number of reference tokens.
+    Complexity: Linear in the number of reference tokens.
 
     @throw parse_error.106 if an array index begins with '0'
     @throw parse_error.109 if array index is not a number
@@ -403,7 +403,7 @@ class json_pointer
 
     @return reference to the JSON value pointed to by the JSON pointer
 
-    @complexity Linear in the length of the JSON pointer.
+    Complexity: Linear in the length of the JSON pointer.
 
     @throw parse_error.106   if an array index begins with '0'
     @throw parse_error.109   if an array index was not a number

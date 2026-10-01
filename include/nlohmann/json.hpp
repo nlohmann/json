@@ -18,18 +18,10 @@
 #ifndef INCLUDE_NLOHMANN_JSON_HPP_
 #define INCLUDE_NLOHMANN_JSON_HPP_
 
-// Workaround for GCC template redefinition errors in C++ modules
-// When nlohmann/json.hpp is included in a C++20 module preamble after
-// other module imports, GCC may report spurious redefinition errors for
-// STL templates. These pragmas suppress those false positives.
-// See: https://github.com/nlohmann/json/issues/5103
-#if defined(__GNUC__) && !defined(__clang__) && __cplusplus >= 202002L
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wignored-attributes"
-#endif
-
 #include <algorithm> // all_of, find, for_each, none_of
+#include <cmath> // isnan
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
+#include <cstdint> // uint8_t
 #include <functional> // hash, less
 #include <initializer_list> // initializer_list
 #ifndef JSON_NO_IO
@@ -38,20 +30,29 @@
 #include <iterator> // make_move_iterator, random_access_iterator_tag
 #include <limits> // numeric_limits
 #include <memory> // unique_ptr
+#include <set> // swap, operator!=
 #include <stdexcept> // length_error
 #include <string> // string, stoi, to_string
+#include <type_traits> // enable_if_t, is_same, is_scalar, ...
+#include <unordered_map> // swap (for the from_json(..., std::unordered_map&) overload)
 #include <utility> // declval, forward, move, pair, swap
 #include <vector> // vector
 
-#include <nlohmann/adl_serializer.hpp>
+// keep: json.hpp's own basic_json<> default template arguments need the complete definition of
+// each of these, not only the forward declarations from json_fwd.hpp, so IWYU's suggestion to
+// drop them (nothing in this file otherwise names the type) would break every downstream
+// translation unit that relies on basic_json<>'s defaults actually being usable.
+#include <nlohmann/adl_serializer.hpp> // IWYU pragma: keep
 #include <nlohmann/byte_container_with_subtype.hpp>
 #include <nlohmann/detail/abi_config.hpp>
-#include <nlohmann/detail/conversions/from_json.hpp>
-#include <nlohmann/detail/conversions/to_json.hpp>
+#include <nlohmann/detail/abi_macros.hpp>
+#include <nlohmann/detail/conversions/from_json.hpp> // IWYU pragma: keep
+#include <nlohmann/detail/conversions/to_json.hpp> // IWYU pragma: keep
 #include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/hash.hpp>
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
+#include <nlohmann/detail/input/json_sax.hpp>
 #include <nlohmann/detail/input/lexer.hpp>
 #include <nlohmann/detail/input/parser.hpp>
 #include <nlohmann/detail/iterators/internal_iterator.hpp>
@@ -63,6 +64,7 @@
 #include <nlohmann/detail/json_pointer.hpp>
 #include <nlohmann/detail/json_ref.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/meta/detected.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/string_escape.hpp>
 #include <nlohmann/detail/string_utils.hpp>
@@ -74,7 +76,8 @@
 #include <nlohmann/detail/recursion_depth_limit.hpp>
 #include <nlohmann/detail/value_t.hpp>
 #include <nlohmann/json_fwd.hpp>
-#include <nlohmann/ordered_map.hpp>
+#include <nlohmann/ordered_map.hpp> // IWYU pragma: keep
+#include <nlohmann/thirdparty/hedley/hedley.hpp>
 
 #if defined(JSON_HAS_CPP_17)
     #if JSON_HAS_STATIC_RTTI
@@ -152,6 +155,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     friend class ::nlohmann::detail::json_sax_dom_parser;
     template<typename BasicJsonType, typename InputAdapterType>
     friend class ::nlohmann::detail::json_sax_dom_callback_parser;
+#if JSON_DIAGNOSTIC_POSITIONS
+    friend struct ::nlohmann::detail::diagnostic_positions;
+#endif
     friend class ::nlohmann::detail::exception;
 
     /// workaround type for MSVC
@@ -907,11 +913,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /*!
     @brief how many levels the operation going on in this thread has descended into
 
-    Copying a value and comparing two values share this count. The library never
-    nests one inside the other - copying a value does not compare one, and
-    comparing two values does not copy them - and where user code nests them
-    anyway, sharing the count only ends a descent sooner than it had to, which
-    costs a little speed and is never wrong.
+    Copying a value, converting one from another specialization, and comparing
+    two values share this count. The library never nests one of them inside
+    another - none of them does either of the other two on the way - and where
+    user code nests them anyway, sharing the count only ends a descent sooner
+    than it had to, which costs a little speed and is never wrong.
 
     A byte is enough: the count never exceeds the limit by more than the single
     level that notices the limit has been reached.
@@ -1268,6 +1274,222 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         copy_iteratively(src);
     }
 
+    /*!
+    @brief convert the value @a val of another specialization into this null
+           value; @a val must be neither an object nor an array
+
+    Converting such a value never descends, so both ways of converting an
+    object or an array (@ref convert_structured) leave their elements of this
+    kind to the converting constructor, which leaves them to this.
+    */
+    template<typename BasicJsonType>
+    void convert_leaf(const BasicJsonType& val)
+    {
+        using other_boolean_t = typename BasicJsonType::boolean_t;
+        using other_number_float_t = typename BasicJsonType::number_float_t;
+        using other_number_integer_t = typename BasicJsonType::number_integer_t;
+        using other_number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+        using other_string_t = typename BasicJsonType::string_t;
+        using other_binary_t = typename BasicJsonType::binary_t;
+
+        switch (val.type())
+        {
+            case value_t::boolean:
+                JSONSerializer<other_boolean_t>::to_json(*this, val.template get<other_boolean_t>());
+                break;
+            case value_t::number_float:
+                JSONSerializer<other_number_float_t>::to_json(*this, val.template get<other_number_float_t>());
+                break;
+            case value_t::number_integer:
+                JSONSerializer<other_number_integer_t>::to_json(*this, val.template get<other_number_integer_t>());
+                break;
+            case value_t::number_unsigned:
+                JSONSerializer<other_number_unsigned_t>::to_json(*this, val.template get<other_number_unsigned_t>());
+                break;
+            case value_t::string:
+                JSONSerializer<other_string_t>::to_json(*this, val.template get_ref<const other_string_t&>());
+                break;
+            case value_t::binary:
+                JSONSerializer<other_binary_t>::to_json(*this, val.template get_ref<const other_binary_t&>());
+                break;
+            case value_t::null:
+                // m_data.m_type is already value_t::null
+                break;
+            case value_t::discarded:
+                m_data.m_type = value_t::discarded;
+                break;
+            case value_t::object: // LCOV_EXCL_LINE
+            case value_t::array:  // LCOV_EXCL_LINE
+            default:              // LCOV_EXCL_LINE
+                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
+        }
+    }
+
+    /// scratch space for the converted elements of the arrays that
+    /// @ref convert_iteratively has yet to create
+    using convert_scratch_t = std::vector<basic_json, AllocatorType<basic_json>>;
+
+    /*!
+    @brief create the object or array @a val converted into this null value
+
+    Its converted elements are the last `val.size()` entries of @a elements (an
+    array) or of @a members (an object); they are moved into the container in
+    one go and then removed.
+    */
+    template<typename BasicJsonType>
+    void convert_level(const BasicJsonType& val, convert_scratch_t& elements, copy_scratch_t& members)
+    {
+        if (val.is_object())
+        {
+            const auto first = members.end() - static_cast<typename copy_scratch_t::difference_type>(val.size());
+            m_data.m_value.object = create<object_t>(std::make_move_iterator(first),
+                                    std::make_move_iterator(members.end()));
+            // only now that the object exists may this stop being a null value
+            m_data.m_type = value_t::object;
+            members.erase(first, members.end());
+        }
+        else
+        {
+            const auto first = elements.end() - static_cast<typename convert_scratch_t::difference_type>(val.size());
+            m_data.m_value.array = create<array_t>(std::make_move_iterator(first),
+                                                   std::make_move_iterator(elements.end()));
+            // only now that the array exists may this stop being a null value
+            m_data.m_type = value_t::array;
+            elements.erase(first, elements.end());
+        }
+
+        set_parents();
+    }
+
+    /*!
+    @brief convert the object or array @a val of another specialization into
+           this null value without recursing
+
+    The containers whose conversion has begun are kept on an explicit stack
+    rather than on the call stack. Unlike @ref copy_iteratively, this builds
+    every container from the bottom up: all its elements are converted first,
+    and the container is then created from them in one go, the way the range
+    constructor that converts the levels above the bound does. The two object
+    types need not enumerate their members in the same order, so the members
+    could not be paired up by position anyway, and building from a range keeps
+    what the range constructor does with keys that become equal on conversion.
+
+    Every value is complete before it is handed on, and a container gets its
+    type only once it exists, so whatever throws, every value left behind can
+    be destroyed.
+    */
+    template<typename BasicJsonType>
+    void convert_iteratively(const BasicJsonType& val)
+    {
+        using other_const_iterator = typename BasicJsonType::const_iterator;
+
+        // the containers whose conversion has begun, innermost last, each with
+        // its element to convert next
+        std::vector<std::pair<const BasicJsonType*, other_const_iterator>> pending;
+
+        // the converted elements of the pending arrays and the converted
+        // members of the pending objects, those of the innermost one last
+        convert_scratch_t elements;
+        copy_scratch_t members;
+
+        pending.emplace_back(&val, val.cbegin());
+
+        for (;;)
+        {
+            const BasicJsonType& container = *pending.back().first;
+            // a copy, as descending below can reallocate pending; the
+            // iterator kept in pending is only advanced through pending.back()
+            const other_const_iterator next = pending.back().second;
+
+            if (next != container.cend())
+            {
+                if (next->is_structured())
+                {
+                    // convert its elements first; next stays where it is until
+                    // the converted container is handed back to this one
+                    pending.emplace_back(&*next, next->cbegin());
+                    continue;
+                }
+
+                // the converting constructor does not descend into this value
+                if (container.is_object())
+                {
+                    members.emplace_back(next.key(), *next);
+                }
+                else
+                {
+                    elements.emplace_back(*next);
+                }
+                ++pending.back().second;
+                continue;
+            }
+
+            // all elements of the container are converted: create it
+            pending.pop_back();
+
+            if (pending.empty())
+            {
+                convert_level(container, elements, members);
+                return;
+            }
+
+            basic_json converted;
+            converted.convert_level(container, elements, members);
+#if JSON_DIAGNOSTIC_POSITIONS
+            converted.start_position = container.start_pos();
+            converted.end_position = container.end_pos();
+#endif
+
+            // hand it to the container it is an element of
+            if (pending.back().first->is_object())
+            {
+                members.emplace_back(pending.back().second.key(), std::move(converted));
+            }
+            else
+            {
+                elements.push_back(std::move(converted));
+            }
+            ++pending.back().second;
+        }
+    }
+
+    /*!
+    @brief convert the object or array @a val of another specialization into
+           this null value
+
+    Converting a container converts its elements, so a value nested deeply
+    enough used to exhaust the call stack. The descent is bounded here as in
+    @ref copy_structured: the first `detail::recursion_depth_limit()` levels
+    are converted by the containers' range constructors, just as they always were,
+    and anything below that is converted without the call stack by
+    @ref convert_iteratively.
+
+    @sa https://github.com/nlohmann/json/issues/5650
+    */
+    template<typename BasicJsonType>
+    void convert_structured(const BasicJsonType& val)
+    {
+        const nesting_depth_guard guard;
+
+        if (JSON_HEDLEY_LIKELY(guard.okay()))
+        {
+            // every element comes back to the converting constructor
+            if (val.is_object())
+            {
+                using other_object_t = typename BasicJsonType::object_t;
+                JSONSerializer<other_object_t>::to_json(*this, val.template get_ref<const other_object_t&>());
+            }
+            else
+            {
+                using other_array_t = typename BasicJsonType::array_t;
+                JSONSerializer<other_array_t>::to_json(*this, val.template get_ref<const other_array_t&>());
+            }
+            return;
+        }
+
+        convert_iteratively(val);
+    }
+
 
     /// the result of comparing two values, including values that cannot be
     /// ordered at all, such as a discarded value or a NaN
@@ -1597,7 +1819,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template < typename CompatibleType,
                typename U = detail::uncvref_t<CompatibleType>,
                detail::enable_if_t <
-                   !detail::is_basic_json<U>::value && detail::is_compatible_type<basic_json_t, U>::value, int > = 0 >
+                   !detail::is_basic_json<U>::value && detail::is_compatible_type<basic_json_t, U>::value
+#if JSON_DISABLE_TUPLE_REFERENCE_CONVERSION
+                   // see https://github.com/nlohmann/json/issues/2226
+                   && !detail::is_basic_json_reference_tuple<basic_json_t, U>::value
+#endif
+                   , int > = 0 >
     basic_json(CompatibleType && val) noexcept(noexcept( // NOLINT(bugprone-forwarding-reference-overload,bugprone-exception-escape)
                 JSONSerializer<U>::to_json(std::declval<basic_json_t&>(),
                                            std::forward<CompatibleType>(val))))
@@ -1618,49 +1845,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
           end_position(val.end_pos())
 #endif
     {
-        using other_boolean_t = typename BasicJsonType::boolean_t;
-        using other_number_float_t = typename BasicJsonType::number_float_t;
-        using other_number_integer_t = typename BasicJsonType::number_integer_t;
-        using other_number_unsigned_t = typename BasicJsonType::number_unsigned_t;
-        using other_string_t = typename BasicJsonType::string_t;
-        using other_object_t = typename BasicJsonType::object_t;
-        using other_array_t = typename BasicJsonType::array_t;
-        using other_binary_t = typename BasicJsonType::binary_t;
-
-        switch (val.type())
+        if (val.is_structured())
         {
-            case value_t::boolean:
-                JSONSerializer<other_boolean_t>::to_json(*this, val.template get<other_boolean_t>());
-                break;
-            case value_t::number_float:
-                JSONSerializer<other_number_float_t>::to_json(*this, val.template get<other_number_float_t>());
-                break;
-            case value_t::number_integer:
-                JSONSerializer<other_number_integer_t>::to_json(*this, val.template get<other_number_integer_t>());
-                break;
-            case value_t::number_unsigned:
-                JSONSerializer<other_number_unsigned_t>::to_json(*this, val.template get<other_number_unsigned_t>());
-                break;
-            case value_t::string:
-                JSONSerializer<other_string_t>::to_json(*this, val.template get_ref<const other_string_t&>());
-                break;
-            case value_t::object:
-                JSONSerializer<other_object_t>::to_json(*this, val.template get_ref<const other_object_t&>());
-                break;
-            case value_t::array:
-                JSONSerializer<other_array_t>::to_json(*this, val.template get_ref<const other_array_t&>());
-                break;
-            case value_t::binary:
-                JSONSerializer<other_binary_t>::to_json(*this, val.template get_ref<const other_binary_t&>());
-                break;
-            case value_t::null:
-                *this = nullptr;
-                break;
-            case value_t::discarded:
-                m_data.m_type = value_t::discarded;
-                break;
-            default:            // LCOV_EXCL_LINE
-                JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
+            convert_structured(val);
+        }
+        else
+        {
+            convert_leaf(val);
         }
         JSON_ASSERT(m_data.m_type == val.type());
 
@@ -2351,12 +2542,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @throw what @ref json_serializer<ValueType> `from_json()` method throws
 
-    @liveexample{The example below shows several conversions from JSON values
+    The example below shows several conversions from JSON values
     to other types. There a few things to note: (1) Floating-point numbers can
-    be converted to integers\, (2) A JSON array can be converted to a standard
-    `std::vector<short>`\, (3) A JSON object can be converted to C++
-    associative containers such as `std::unordered_map<std::string\,
-    json>`.,get__ValueType_const}
+    be converted to integers, (2) A JSON array can be converted to a standard
+    `std::vector<short>`, (3) A JSON object can be converted to C++
+    associative containers such as `std::unordered_map<std::string,
+    json>`.
 
     @since version 2.1.0
     */
@@ -2423,7 +2614,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @return a copy of *this, converted into @a BasicJsonType
 
-    @complexity Depending on the implementation of the called `from_json()`
+    Complexity: Depending on the implementation of the called `from_json()`
                 method.
 
     @since version 3.2.0
@@ -2447,7 +2638,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @return a copy of *this
 
-    @complexity Constant.
+    Complexity: Constant.
 
     @since version 2.1.0
     */
@@ -2493,7 +2684,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @tparam ValueTypeCV the provided value type
     @tparam ValueType the returned value type
 
-    @return copy of the JSON value, converted to @tparam ValueType if necessary
+    @return copy of the JSON value, converted to @a ValueType if necessary
 
     @throw what @ref json_serializer<ValueType> `from_json()` method throws if conversion is required
 
@@ -2531,12 +2722,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @return pointer to the internally stored JSON value if the requested
     pointer type @a PointerType fits to the JSON value; `nullptr` otherwise
 
-    @complexity Constant.
+    Complexity: Constant.
 
-    @liveexample{The example below shows how pointers to internal values of a
+    The example below shows how pointers to internal values of a
     JSON value can be requested. Note that no type conversions are made and a
     `nullptr` is returned if the value and the requested pointer type does not
-    match.,get__PointerType}
+    match.
 
     @sa see @ref get_ptr() for explicit pointer-member access
 
@@ -2630,14 +2821,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     to the JSON value type (e.g., the JSON value is of type boolean, but a
     string is requested); see example below
 
-    @complexity Linear in the size of the JSON value.
+    Complexity: Linear in the size of the JSON value.
 
-    @liveexample{The example below shows several conversions from JSON values
+    The example below shows several conversions from JSON values
     to other types. There a few things to note: (1) Floating-point numbers can
-    be converted to integers\, (2) A JSON array can be converted to a standard
-    `std::vector<short>`\, (3) A JSON object can be converted to C++
-    associative containers such as `std::unordered_map<std::string\,
-    json>`.,operator__ValueType}
+    be converted to integers, (2) A JSON array can be converted to a standard
+    `std::vector<short>`, (3) A JSON object can be converted to C++
+    associative containers such as `std::unordered_map<std::string,
+    json>`.
 
     @since version 1.0.0
     */
@@ -4218,25 +4409,26 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/update/
     void update(const_reference j, bool merge_objects = false)
     {
-        update(j.begin(), j.end(), merge_objects);
+        prepare_update();
+
+        // passed value must be an object (checked here so a type_error names
+        // j, not the copy made below)
+        if (JSON_HEDLEY_UNLIKELY(!j.is_object()))
+        {
+            JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", j.type_name()), &j));
+        }
+
+        // copy first: j may be *this or one of its descendants, and is
+        // iterated (and moved from) below to update *this
+        basic_json source = j;
+        update_from(source, merge_objects);
     }
 
     /// @brief updates a JSON object from another object, overwriting existing keys
     /// @sa https://json.nlohmann.me/api/basic_json/update/
     void update(const_iterator first, const_iterator last, bool merge_objects = false) // NOLINT(performance-unnecessary-value-param)
     {
-        // implicitly convert a null value to an empty object
-        if (is_null())
-        {
-            m_data.m_type = value_t::object;
-            m_data.m_value.object = create<object_t>();
-            assert_invariant();
-        }
-
-        if (JSON_HEDLEY_UNLIKELY(!is_object()))
-        {
-            JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", type_name()), this));
-        }
+        prepare_update();
 
         // check if range iterators belong to the same JSON object
         if (JSON_HEDLEY_UNLIKELY(first.m_object != last.m_object))
@@ -4250,7 +4442,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", first.m_object->type_name()), first.m_object));
         }
 
-        update_members(first, last, merge_objects, 0);
+        // copy first: the range may belong to *this or one of its
+        // descendants, and is iterated (and moved from) below to update
+        // *this
+        basic_json source(first, last);
+        update_from(source, merge_objects);
     }
 
   private:
@@ -4258,14 +4454,41 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// merge_patch_iteratively is merging into, and the members still to merge
     struct merge_frame
     {
-        merge_frame(basic_json* target_, const_iterator position_, const_iterator last_) noexcept
+        merge_frame(basic_json* target_, iterator position_, iterator last_) noexcept
             : target(target_), position(std::move(position_)), last(std::move(last_))
         {}
 
         basic_json* target;
-        const_iterator position;
-        const_iterator last;
+        iterator position;
+        iterator last;
     };
+
+    /// @brief converts a null value to an empty object and checks that this
+    /// value is an object; called first by both @ref update overloads
+    void prepare_update()
+    {
+        // implicitly convert a null value to an empty object; create the
+        // object before setting the type, so a throwing allocation leaves
+        // this value null
+        if (is_null())
+        {
+            m_data.m_value.object = create<object_t>();
+            m_data.m_type = value_t::object;
+            assert_invariant();
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(!is_object()))
+        {
+            JSON_THROW(type_error::create(312, detail::concat("cannot use update() with ", type_name()), this));
+        }
+    }
+
+    /// @brief starts the @ref update_members loop over an already-copied @a
+    /// source; called by both @ref update overloads
+    void update_from(basic_json& source, const bool merge_objects)
+    {
+        update_members(source.begin(), source.end(), merge_objects, 0);
+    }
 
     /*!
     @brief the members loop of @ref update, for this object and range
@@ -4279,7 +4502,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @param[in] depth  nesting level of this object, counted from the object
                       @ref update was called on
     */
-    void update_members(const const_iterator& first, const const_iterator& last, const bool merge_objects, const std::size_t depth)
+    void update_members(const iterator& first, const iterator& last, const bool merge_objects, const std::size_t depth)
     {
         if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
         {
@@ -4297,13 +4520,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 // are overwritten as usual" behavior (see #5402).
                 if (it2 != m_data.m_value.object->end() && it2->second.is_object())
                 {
-                    it2->second.update_members(it.value().cbegin(), it.value().cend(), true, depth + 1);
+                    it2->second.update_members(it.value().begin(), it.value().end(), true, depth + 1);
                     continue;
                 }
             }
             // set_parent() also repairs the other members, which ordered_json
             // relocates when adding a key makes its vector grow
-            set_parent(m_data.m_value.object->operator[](it.key()) = it.value());
+            set_parent(m_data.m_value.object->operator[](it.key()) = std::move(it.value()));
         }
     }
 
@@ -4317,7 +4540,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     version. Only reached for values nested deeper than @ref
     detail::recursion_depth_limit.
     */
-    void update_members_iteratively(const_iterator first, const_iterator last)
+    void update_members_iteratively(iterator first, iterator last)
     {
         std::vector<merge_frame> stack;
 
@@ -4344,18 +4567,18 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 const auto it2 = target->m_data.m_value.object->find(first.key());
                 if (it2 != target->m_data.m_value.object->end() && it2->second.is_object())
                 {
-                    const basic_json& source = first.value();
+                    basic_json& source = first.value();
                     ++first;
                     stack.emplace_back(target, first, last);
                     target = &it2->second;
-                    first = source.cbegin();
-                    last = source.cend();
+                    first = source.begin();
+                    last = source.end();
                     continue;
                 }
             }
             // set_parent() also repairs the other members, which ordered_json
             // relocates when adding a key makes its vector grow
-            target->set_parent(target->m_data.m_value.object->operator[](first.key()) = first.value());
+            target->set_parent(target->m_data.m_value.object->operator[](first.key()) = std::move(first.value()));
             ++first;
         }
     }
@@ -5035,7 +5258,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         return format == input_format_t::json
                ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(format, sax, strict);
+               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(sax, strict);
     }
 
     /// @brief generate SAX events (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -5052,7 +5275,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         return format == input_format_t::json
                ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(format, sax, strict);
+               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(sax, strict);
     }
 
     /// @brief generate SAX events
@@ -5060,6 +5283,19 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @deprecated This function is deprecated since 3.8.0 and will be removed in
     ///             version 4.0.0 of the library. Please use
     ///             sax_parse(ptr, ptr + len) instead.
+    //
+    // Clang reports "declaration is marked with '@deprecated' command but does
+    // not have a deprecation attribute" for this overload even though
+    // JSON_HEDLEY_DEPRECATED_FOR below does expand to __attribute__((deprecated));
+    // isolated reproductions of this exact declaration shape (doc comment,
+    // template<>, two stacked __attribute__ lines, an overload set of the same
+    // name) do not reproduce it, so this looks like a Clang comment/declaration
+    // association quirk specific to this overload within basic_json, not a
+    // genuine documentation bug. See #5725 item 2.
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation-deprecated-sync"
+#endif
     template <typename SAX>
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, sax_parse(ptr, ptr + len, ...))
     JSON_HEDLEY_NON_NULL(2)
@@ -5074,8 +5310,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
                ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(format, sax, strict);
+               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(sax, strict);
     }
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 #ifndef JSON_NO_IO
     /// @brief deserialize from stream
     /// @sa https://json.nlohmann.me/api/basic_json/operator_gtgt/
@@ -5372,7 +5611,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(&sdp, strict, tag_handler)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5392,7 +5631,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(&sdp, strict, tag_handler)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5421,7 +5660,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = i.get();
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(&sdp, strict, tag_handler)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5439,7 +5678,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5458,7 +5697,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5485,7 +5724,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = i.get();
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5503,7 +5742,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5522,7 +5761,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5549,7 +5788,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = i.get();
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5567,7 +5806,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(input_format_t::bjdata, &sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5586,7 +5825,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(input_format_t::bjdata, &sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5604,7 +5843,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bon8).sax_parse(input_format_t::bon8, &sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bon8).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5623,7 +5862,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bon8).sax_parse(input_format_t::bon8, &sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bon8).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5641,7 +5880,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5660,7 +5899,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5687,7 +5926,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = i.get();
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -6107,21 +6346,256 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         // the patch
         basic_json result(value_t::array);
+        diff_recursively(result, source, target, path, 0);
+        return result;
+    }
 
-        // if the values are the same, return an empty patch
+  private:
+    /// @brief two arrays or two objects @ref diff_iteratively is diffing
+    struct diff_frame
+    {
+        diff_frame(const basic_json* source_, const basic_json* target_, const std::size_t path_length_) noexcept
+            : source(source_), target(target_), path_length(path_length_)
+        {}
+
+        // declared for GCC's -Weffc++, which asks for them in a class with
+        // pointer members and a non-trivial destructor; the exception
+        // specifications are left implicit, as GCC 4.8 rejects explicit ones
+        // that differ from them
+        diff_frame(const diff_frame&) = default;
+        diff_frame(diff_frame&&) = default;
+        diff_frame& operator=(const diff_frame&) = default;
+        diff_frame& operator=(diff_frame&&) = default;
+        ~diff_frame() = default;
+
+        /// the values being diffed, both arrays or both objects
+        const basic_json* source;
+        const basic_json* target;
+        /// the length of their path in `current_path`
+        std::size_t path_length;
+        /// arrays: the next index to diff
+        std::size_t index = 0;
+        /// objects: the next member of source to look at
+        const_iterator member{}; // NOLINT(readability-redundant-member-init)
+        /// objects: the keys common to both, in source's order
+        std::vector<typename object_t::key_type> common_keys{}; // NOLINT(readability-redundant-member-init)
+        /// objects: the next entry of common_keys
+        std::size_t next_common = 0;
+        /// objects: the "add" operations for keys only target has
+        basic_json added_ops{}; // NOLINT(readability-redundant-member-init)
+    };
+
+    // The operations of a diff are built by the functions below rather than
+    // where they are needed: building one takes several temporaries, and
+    // unoptimized builds give each temporary a stack slot of its own in the
+    // function it appears in. In diff_recursively, which is on the call stack
+    // once per nesting level, that made every level cost kilobytes of stack.
+
+    /// @brief append a "replace" operation for @a path with @a value to @a result
+    static void diff_replace(basic_json& result, const string_t& path, const basic_json& value)
+    {
+        result.push_back(
+        {
+            {"op", "replace"}, {"path", path}, {"value", value}
+        });
+    }
+
+    /// @brief append a "remove" operation for @a path to @a result
+    static void diff_remove(basic_json& result, const string_t& path)
+    {
+        result.push_back(object(
+        {
+            {"op", "remove"}, {"path", path}
+        }));
+    }
+
+    /// @brief append an "add" operation for @a path with @a value to @a result
+    static void diff_add(basic_json& result, const string_t& path, const basic_json& value)
+    {
+        result.push_back(
+        {
+            {"op", "add"}, {"path", path}, {"value", value}
+        });
+    }
+
+    /// @brief append the "remove" operations for the elements of array
+    ///        @a source from @a index on, and the "add" operations for the
+    ///        elements of array @a target from source's size on, to @a result
+    static void diff_array_tails(basic_json& result, const basic_json& source, const basic_json& target,
+                                 const string_t& path, const std::size_t index)
+    {
+        // remove my remaining elements, highest index first; appending
+        // in that order avoids the quadratic reinsertion done before
+        for (std::size_t j = source.size(); j > index; --j)
+        {
+            diff_remove(result, detail::concat<string_t>(path, '/', detail::to_string<string_t>(j - 1)));
+        }
+
+        // add other remaining elements
+        for (std::size_t i = source.size(); i < target.size(); ++i)
+        {
+            diff_add(result, detail::concat<string_t>(path, "/-"), target[i]);
+        }
+    }
+
+    /*!
+    @brief compare the keys of objects @a source and @a target
+
+    If object_t does not keep its members in insertion order, or if the keys
+    both objects have are in the same order in both, and the keys only
+    @a target has come after them, stores the keys common to both in
+    source's order in @a common_keys, stores the "add" operations for the keys
+    only @a target has in @a added_ops, and returns true: the caller then diffs
+    the objects member by member. Otherwise, appends operations that remove
+    every member of @a source and add every member of @a target to @a result,
+    and returns false.
+    */
+    static bool diff_object_keys(basic_json& result, const basic_json& source, const basic_json& target,
+                                 const string_t& path, std::vector<typename object_t::key_type>& common_keys,
+                                 basic_json& added_ops)
+    {
+        // first pass: record, for every source key, whether it is
+        // common to both objects (in source's iteration order) or
+        // was deleted (i.e., in source but not in target) -- this is
+        // a by-product of the target.find() call already needed to
+        // tell the two cases apart, so it adds no extra lookups. The
+        // "remove" ops themselves are emitted later, interleaved
+        // with the per-key diffs in the caller's fast path, to match
+        // source's original iteration order (as the original,
+        // pre-reordering-aware implementation did) instead of
+        // grouping all removes before all per-key diffs.
+        std::vector<typename object_t::key_type> common_keys_source_order;
+        for (auto it = source.cbegin(); it != source.cend(); ++it)
+        {
+            if (target.find(it.key()) != target.end())
+            {
+                common_keys_source_order.push_back(it.key());
+            }
+        }
+
+        // second pass: find keys that were added (i.e., in target but
+        // not in source), and record the keys common to both, in
+        // target's iteration order -- again a by-product of the
+        // source.find() call already needed to detect added keys. At
+        // the same time, determine whether every added key comes
+        // after every common key in target's order (a precondition
+        // for the fast path, which only ever appends new keys
+        // at the very end). Both are only needed for an object_t that
+        // keeps its members in insertion order, such as the one
+        // backing `ordered_json`; for any other object_t, the fast
+        // path is always taken and they are not computed.
+        // The patch ops for keys that were added (i.e., in target but not
+        // in source) are built here so the fast path can reuse
+        // them without a second source.find() per target key. Only
+        // used by the fast path -- the slow (reordering) path
+        // rebuilds "add" ops for every key itself.
+        std::vector<typename object_t::key_type> common_keys_target_order;
+        bool new_keys_form_suffix = true;
+        bool seen_new_key = false;
+        for (auto it = target.cbegin(); it != target.cend(); ++it)
+        {
+            if (source.find(it.key()) == source.end())
+            {
+                seen_new_key = true;
+                diff_add(added_ops, detail::concat<string_t>(path, '/', detail::escape(it.key())), it.value());
+            }
+            else
+            {
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning(push )
+#pragma warning(disable : 4127) // ignore warning to replace if with if constexpr
+#endif
+                if (detail::is_ordered_map<object_t>::value)
+                {
+                    common_keys_target_order.push_back(it.key());
+                    if (seen_new_key)
+                    {
+                        new_keys_form_suffix = false;
+                    }
+                }
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning( pop )
+#endif
+            }
+        }
+
+        // Only an object type that keeps its members in insertion
+        // order, such as nlohmann::ordered_map, can need reordering:
+        // patch() appends a new member at the end of such an object.
+        // Any other object type places its members itself - std::map
+        // in key order, a hash map in an order its operator== ignores -
+        // so a member-by-member diff always reproduces target there.
+        if (!detail::is_ordered_map<object_t>::value
+                || (common_keys_source_order == common_keys_target_order && new_keys_form_suffix))
+        {
+            // fast path: order of common keys already matches (or the
+            // object_t's iteration order does not depend on
+            // insertion history), so a plain per-key diff is correct
+            // and minimal, as before
+            common_keys = std::move(common_keys_source_order);
+            return true;
+        }
+
+        // slow path: the common keys are in a different relative
+        // order in source and target (only possible for a
+        // reorderable object_t like ordered_map). Building a
+        // minimal reordering patch is a nontrivial (LCS-like)
+        // problem; instead, remove every source key -- both
+        // deleted keys (which must be removed regardless) and
+        // common keys (removed so they can be re-added in
+        // target's order) -- and re-add every key that should
+        // remain, with its final target value, in target's
+        // order. basic_json::patch()'s "add" operation on an
+        // object uses operator[], which appends at the end for a
+        // vector-backed insertion-ordered map when the key does
+        // not already exist -- so removing a key and then adding
+        // it moves it to the end, fixing its position.
+        for (auto it = source.cbegin(); it != source.cend(); ++it)
+        {
+            diff_remove(result, detail::concat<string_t>(path, '/', detail::escape(it.key())));
+        }
+
+        // add every key that is either common (just removed
+        // above) or brand new, in target's iteration order, so
+        // that the final order after applying the patch matches
+        // target exactly
+        for (auto it = target.cbegin(); it != target.cend(); ++it)
+        {
+            diff_add(result, detail::concat<string_t>(path, '/', detail::escape(it.key())), it.value());
+        }
+        return false;
+    }
+
+    /*!
+    @brief @ref diff, for values at nesting level @a depth, appending the
+           operations to @a result
+
+    Diffing two arrays or objects calls this function again, once per nesting
+    level, so values nested deeply enough used to exhaust the call stack and
+    terminate the process. The descent is bounded here: once @ref
+    detail::recursion_depth_limit levels have been entered, @ref
+    diff_iteratively diffs what is left without the call stack.
+    */
+    static void diff_recursively(basic_json& result, const basic_json& source, const basic_json& target,
+                                 const string_t& path, const std::size_t depth)
+    {
+        // if the values are the same, there is nothing to do
         if (source == target)
         {
-            return result;
+            return;
+        }
+
+        if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
+        {
+            diff_iteratively(result, source, target, path);
+            return;
         }
 
         if (source.type() != target.type())
         {
             // different types: replace value
-            result.push_back(
-            {
-                {"op", "replace"}, {"path", path}, {"value", target}
-            });
-            return result;
+            diff_replace(result, path, target);
+            return;
         }
 
         switch (source.type())
@@ -6133,200 +6607,50 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 while (i < source.size() && i < target.size())
                 {
                     // recursive call to compare array values at index i
-                    auto temp_diff = diff(source[i], target[i], detail::concat<string_t>(path, '/', detail::to_string<string_t>(i)));
-                    result.insert(result.end(), temp_diff.begin(), temp_diff.end());
+                    diff_recursively(result, source[i], target[i], detail::concat<string_t>(path, '/', detail::to_string<string_t>(i)), depth + 1);
                     ++i;
                 }
 
                 // We now reached the end of at least one array
                 // in a second pass, traverse the remaining elements
-
-                // remove my remaining elements, highest index first; appending
-                // in that order avoids the quadratic reinsertion done before
-                for (std::size_t j = source.size(); j > i; --j)
-                {
-                    result.push_back(object(
-                    {
-                        {"op", "remove"},
-                        {"path", detail::concat<string_t>(path, '/', detail::to_string<string_t>(j - 1))}
-                    }));
-                }
-                i = source.size();
-
-                // add other remaining elements
-                while (i < target.size())
-                {
-                    result.push_back(
-                    {
-                        {"op", "add"},
-                        {"path", detail::concat<string_t>(path, "/-")},
-                        {"value", target[i]}
-                    });
-                    ++i;
-                }
-
+                diff_array_tails(result, source, target, path, i);
                 break;
             }
 
             case value_t::object:
             {
-                // first pass: record, for every source key, whether it is
-                // common to both objects (in source's iteration order) or
-                // was deleted (i.e., in source but not in target) -- this is
-                // a by-product of the target.find() call already needed to
-                // tell the two cases apart, so it adds no extra lookups. The
-                // "remove" ops themselves are emitted later, interleaved
-                // with the recursive per-key diffs in the fast path below,
-                // to match source's original iteration order (as the
-                // original, pre-reordering-aware implementation did) instead
-                // of grouping all removes before all recursive diffs.
-                std::vector<typename object_t::key_type> common_keys_source_order;
-                for (auto it = source.cbegin(); it != source.cend(); ++it)
-                {
-                    if (target.find(it.key()) != target.end())
-                    {
-                        common_keys_source_order.push_back(it.key());
-                    }
-                }
-
-                // second pass: find keys that were added (i.e., in target but
-                // not in source), and record the keys common to both, in
-                // target's iteration order -- again a by-product of the
-                // source.find() call already needed to detect added keys. At
-                // the same time, determine whether every added key comes
-                // after every common key in target's order (a precondition
-                // for the fast path below, which only ever appends new keys
-                // at the very end). Both are only needed for an object_t that
-                // keeps its members in insertion order, such as the one
-                // backing `ordered_json`; for any other object_t, the fast
-                // path is always taken and they are not computed.
-                // patch ops for keys that were added (i.e., in target but not
-                // in source); built here so the fast path below can reuse
-                // them without a second source.find() per target key. Only
-                // used by the fast path -- the slow (reordering) path
-                // rebuilds "add" ops for every key itself.
-                std::vector<typename object_t::key_type> common_keys_target_order;
+                std::vector<typename object_t::key_type> common_keys;
                 basic_json added_ops(value_t::array);
-                bool new_keys_form_suffix = true;
-                bool seen_new_key = false;
-                for (auto it = target.cbegin(); it != target.cend(); ++it)
+                if (diff_object_keys(result, source, target, path, common_keys, added_ops))
                 {
-                    if (source.find(it.key()) == source.end())
-                    {
-                        seen_new_key = true;
-                        const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
-                        added_ops.push_back(
-                        {
-                            {"op", "add"}, {"path", path_key},
-                            {"value", it.value()}
-                        });
-                    }
-                    else
-                    {
-#ifdef JSON_HEDLEY_MSVC_VERSION
-#pragma warning(push )
-#pragma warning(disable : 4127) // ignore warning to replace if with if constexpr
-#endif
-                        if (detail::is_ordered_map<object_t>::value)
-                        {
-                            common_keys_target_order.push_back(it.key());
-                            if (seen_new_key)
-                            {
-                                new_keys_form_suffix = false;
-                            }
-                        }
-#ifdef JSON_HEDLEY_MSVC_VERSION
-#pragma warning( pop )
-#endif
-                    }
-                }
-
-                // Only an object type that keeps its members in insertion
-                // order, such as nlohmann::ordered_map, can need reordering:
-                // patch() appends a new member at the end of such an object.
-                // Any other object type places its members itself - std::map
-                // in key order, a hash map in an order its operator== ignores -
-                // so a member-by-member diff always reproduces target there.
-                if (!detail::is_ordered_map<object_t>::value
-                        || (common_keys_source_order == common_keys_target_order && new_keys_form_suffix))
-                {
-                    // fast path: order of common keys already matches (or the
-                    // object_t's iteration order does not depend on
-                    // insertion history), so a plain per-key recursive diff
-                    // is correct and minimal, as before. common_keys_source_order
-                    // is, by construction, the subsequence of source's keys
-                    // that are common to both objects, in source's iteration
-                    // order -- so it can be walked in lockstep with `source`
-                    // using a cheap key comparison instead of another lookup.
-                    // Deleted keys (those source keys not in common_keys_source_order)
-                    // are interleaved here too, in source's original order, to
-                    // match the historical (pre-reordering-aware) output order.
-                    auto common_it = common_keys_source_order.cbegin();
+                    // fast path: common_keys is, by construction, the
+                    // subsequence of source's keys that are common to both
+                    // objects, in source's iteration order -- so it can be
+                    // walked in lockstep with `source` using a cheap key
+                    // comparison instead of another lookup. Deleted keys
+                    // (those source keys not in common_keys) are interleaved
+                    // here too, in source's original order, to match the
+                    // historical (pre-reordering-aware) output order.
+                    auto common_it = common_keys.cbegin();
                     for (auto it = source.cbegin(); it != source.cend(); ++it)
                     {
-                        if (common_it != common_keys_source_order.cend() && it.key() == *common_it)
+                        if (common_it != common_keys.cend() && it.key() == *common_it)
                         {
-                            const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
-                            auto temp_diff = diff(it.value(), target[it.key()], path_key);
-                            result.insert(result.end(), temp_diff.begin(), temp_diff.end());
+                            diff_recursively(result, it.value(), target[it.key()], detail::concat<string_t>(path, '/', detail::escape(it.key())), depth + 1);
                             ++common_it;
                         }
                         else
                         {
                             // found a key that is not in target -> remove it
-                            const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
-                            result.push_back(object(
-                            {
-                                {"op", "remove"}, {"path", path_key}
-                            }));
+                            diff_remove(result, detail::concat<string_t>(path, '/', detail::escape(it.key())));
                         }
                     }
 
-                    // append the "add" ops for brand-new keys collected above
-                    // during the pass over target -- no second source.find()
-                    // per target key needed
+                    // append the "add" ops for brand-new keys collected by
+                    // diff_object_keys -- no second source.find() per target
+                    // key needed
                     result.insert(result.end(), added_ops.begin(), added_ops.end());
                 }
-                else
-                {
-                    // slow path: the common keys are in a different relative
-                    // order in source and target (only possible for a
-                    // reorderable object_t like ordered_map). Building a
-                    // minimal reordering patch is a nontrivial (LCS-like)
-                    // problem; instead, remove every source key -- both
-                    // deleted keys (which must be removed regardless) and
-                    // common keys (removed so they can be re-added in
-                    // target's order) -- and re-add every key that should
-                    // remain, with its final target value, in target's
-                    // order. basic_json::patch()'s "add" operation on an
-                    // object uses operator[], which appends at the end for a
-                    // vector-backed insertion-ordered map when the key does
-                    // not already exist -- so removing a key and then adding
-                    // it moves it to the end, fixing its position.
-                    for (auto it = source.cbegin(); it != source.cend(); ++it)
-                    {
-                        const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
-                        result.push_back(object(
-                        {
-                            {"op", "remove"}, {"path", path_key}
-                        }));
-                    }
-
-                    // add every key that is either common (just removed
-                    // above) or brand new, in target's iteration order, so
-                    // that the final order after applying the patch matches
-                    // target exactly
-                    for (auto it = target.cbegin(); it != target.cend(); ++it)
-                    {
-                        const auto path_key = detail::concat<string_t>(path, '/', detail::escape(it.key()));
-                        result.push_back(
-                        {
-                            {"op", "add"}, {"path", path_key},
-                            {"value", it.value()}
-                        });
-                    }
-                }
-
                 break;
             }
 
@@ -6341,16 +6665,170 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             default:
             {
                 // both primitive types: replace value
-                result.push_back(
-                {
-                    {"op", "replace"}, {"path", path}, {"value", target}
-                });
+                diff_replace(result, path, target);
                 break;
             }
         }
-
-        return result;
     }
+
+    /*!
+    @brief @ref diff without the call stack, appending the operations to
+           @a result
+
+    Produces the same operations as @ref diff_recursively. Only reached for
+    values nested more deeply than @ref detail::recursion_depth_limit.
+    */
+    static void diff_iteratively(basic_json& result, const basic_json& source, const basic_json& target,
+                                 const string_t& path)
+    {
+        // The arrays and objects being diffed are kept on an explicit stack,
+        // and every pair of elements is still diffed completely before the
+        // next one, so the operations come out in the same order as in
+        // diff_recursively. The path of the values being diffed is kept in
+        // one buffer that grows and shrinks with the stack, rather than in a
+        // new string per level.
+        std::vector<diff_frame> stack;
+        string_t current_path = path;
+
+        // diff `s` against `t`, whose path is current_path: primitives,
+        // values of different types, and objects whose members were reordered
+        // are handled right away; arrays and other objects get a frame
+        const auto enter = [&result, &stack, &current_path](const basic_json & s, const basic_json & t)
+        {
+            // if the values are the same, there is nothing to do. Arrays and
+            // objects are not compared up front: comparing them visits
+            // everything below them, so doing that at every level would take
+            // quadratic time in the nesting depth - equal ones yield no
+            // operations anyway.
+            if ((!s.is_structured() || !t.is_structured()) && s == t)
+            {
+                return;
+            }
+
+            if (s.type() != t.type())
+            {
+                // different types: replace value
+                diff_replace(result, current_path, t);
+                return;
+            }
+
+            switch (s.type())
+            {
+                case value_t::array:
+                {
+                    stack.emplace_back(&s, &t, current_path.size());
+                    return;
+                }
+
+                case value_t::object:
+                {
+                    std::vector<typename object_t::key_type> common_keys;
+                    basic_json added_ops(value_t::array);
+                    if (diff_object_keys(result, s, t, current_path, common_keys, added_ops))
+                    {
+                        // fast path: the frame walks source in lockstep with
+                        // common_keys, as diff_recursively does, and appends
+                        // added_ops once all members are done
+                        stack.emplace_back(&s, &t, current_path.size());
+                        stack.back().member = s.cbegin();
+                        stack.back().common_keys = std::move(common_keys);
+                        stack.back().added_ops = std::move(added_ops);
+                    }
+                    return;
+                }
+
+                case value_t::null:
+                case value_t::string:
+                case value_t::boolean:
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                case value_t::number_float:
+                case value_t::binary:
+                case value_t::discarded:
+                default:
+                {
+                    // both primitive types: replace value
+                    diff_replace(result, current_path, t);
+                    return;
+                }
+            }
+        };
+
+        enter(source, target);
+        while (!stack.empty())
+        {
+            // the frame is copied out member by member and changed through
+            // stack.back(): enter() may push a frame and the end of the loop
+            // pops it, either of which would invalidate a reference to it
+            const basic_json* const s = stack.back().source;
+            const basic_json* const t = stack.back().target;
+            const std::size_t path_length = stack.back().path_length;
+            const std::size_t depth = stack.size();
+
+            if (s->is_array())
+            {
+                const auto& source_array = *s->m_data.m_value.array;
+                const auto& target_array = *t->m_data.m_value.array;
+
+                // first pass: traverse common elements
+                const std::size_t i = stack.back().index;
+                if (i < source_array.size() && i < target_array.size())
+                {
+                    ++stack.back().index;
+                    detail::concat_into(current_path, '/', detail::to_string<string_t>(i));
+                    enter(source_array[i], target_array[i]);
+                    if (stack.size() == depth)
+                    {
+                        current_path.resize(path_length);
+                    }
+                    continue;
+                }
+
+                // We now reached the end of at least one array
+                // in a second pass, traverse the remaining elements
+                diff_array_tails(result, *s, *t, current_path, i);
+            }
+            else
+            {
+                const const_iterator it = stack.back().member;
+                if (it != s->cend())
+                {
+                    ++stack.back().member;
+                    const std::size_t next_common = stack.back().next_common;
+                    if (next_common < stack.back().common_keys.size() && it.key() == stack.back().common_keys[next_common])
+                    {
+                        ++stack.back().next_common;
+                        const basic_json& target_value = (*t)[it.key()];
+                        detail::concat_into(current_path, '/', detail::escape(it.key()));
+                        enter(it.value(), target_value);
+                        if (stack.size() == depth)
+                        {
+                            current_path.resize(path_length);
+                        }
+                    }
+                    else
+                    {
+                        // found a key that is not in target -> remove it
+                        diff_remove(result, detail::concat<string_t>(current_path, '/', detail::escape(it.key())));
+                    }
+                    continue;
+                }
+
+                // append the "add" ops for brand-new keys collected when the
+                // object was entered
+                result.insert(result.end(), stack.back().added_ops.begin(), stack.back().added_ops.end());
+            }
+
+            // this array or object is done: continue with the one it is in
+            stack.pop_back();
+            if (!stack.empty())
+            {
+                current_path.resize(stack.back().path_length);
+            }
+        }
+    }
+
+  public:
     /// @}
 
     ////////////////////////////////
@@ -6364,7 +6842,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/merge_patch/
     void merge_patch(const basic_json& apply_patch)
     {
-        apply_merge_patch(apply_patch, 0);
+        // copy first: apply_patch may be *this or one of its descendants,
+        // and is iterated (and moved from) below to patch *this
+        basic_json patch = apply_patch;
+        apply_merge_patch(patch, 0);
     }
 
   private:
@@ -6377,7 +6858,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     detail::recursion_depth_limit levels have been entered, @ref
     merge_patch_iteratively applies what is left without the call stack.
     */
-    void apply_merge_patch(const basic_json& apply_patch, const std::size_t depth)
+    void apply_merge_patch(basic_json& apply_patch, const std::size_t depth)
     {
         if (apply_patch.is_object())
         {
@@ -6405,7 +6886,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
         else
         {
-            *this = apply_patch;
+            *this = std::move(apply_patch);
         }
     }
 
@@ -6418,12 +6899,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     recursive version. Only reached for patches nested deeper than @ref
     detail::recursion_depth_limit.
     */
-    void merge_patch_iteratively(const basic_json& apply_patch)
+    void merge_patch_iteratively(basic_json& apply_patch)
     {
         std::vector<merge_frame> stack;
 
         // patch `target` with `patch`, or start patching it member by member
-        const auto apply = [&stack](basic_json & target, const basic_json & patch)
+        const auto apply = [&stack](basic_json & target, basic_json & patch)
         {
             if (patch.is_object())
             {
@@ -6431,11 +6912,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 {
                     target = basic_json::object();
                 }
-                stack.emplace_back(&target, patch.cbegin(), patch.cend());
+                stack.emplace_back(&target, patch.begin(), patch.end());
             }
             else
             {
-                target = patch;
+                target = std::move(patch);
             }
         };
 
@@ -6451,7 +6932,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 continue;
             }
 
-            const const_iterator member = frame.position;
+            const iterator member = frame.position;
             ++stack.back().position;
             if (member.value().is_null())
             {
@@ -6496,7 +6977,7 @@ namespace std // NOLINT(cert-dcl58-cpp)
 /// @brief hash value for JSON objects
 /// @sa https://json.nlohmann.me/api/basic_json/std_hash/
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
-struct hash<nlohmann::NLOHMANN_BASIC_JSON_TPL> // NOLINT(cert-dcl58-cpp)
+struct hash<nlohmann::NLOHMANN_BASIC_JSON_TPL> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
 {
     std::size_t operator()(const nlohmann::NLOHMANN_BASIC_JSON_TPL& j) const
     {
@@ -6529,7 +7010,7 @@ struct less< ::nlohmann::detail::value_t> // do not remove the space after '<', 
 /// @brief exchanges the values of two JSON objects
 /// @sa https://json.nlohmann.me/api/basic_json/std_swap/
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
-inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC_JSON_TPL& j2) noexcept(  // NOLINT(readability-inconsistent-declaration-parameter-name, cert-dcl58-cpp)
+inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC_JSON_TPL& j2) noexcept(  // NOLINT(readability-inconsistent-declaration-parameter-name, cert-dcl58-cpp,bugprone-std-namespace-modification)
     is_nothrow_move_constructible<nlohmann::NLOHMANN_BASIC_JSON_TPL>::value&&                          // NOLINT(misc-redundant-expression,cppcoreguidelines-noexcept-swap,performance-noexcept-swap)
     is_nothrow_move_assignable<nlohmann::NLOHMANN_BASIC_JSON_TPL>::value)
 {
@@ -6543,7 +7024,7 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 /// @brief std::formatter specialization for JSON values
 /// @sa https://json.nlohmann.me/api/basic_json/std_formatter/
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
-struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-cpp)
+struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
 {
     // -1 means compact output (dump()); any value >= 0 means pretty-printed
     // output with that many spaces (or indent_char) per level (dump(indent, indent_char)).
@@ -6618,12 +7099,10 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 
 }  // namespace std
 
-#include <nlohmann/detail/macro_unscope.hpp>
-
-// End of GCC diagnostic pragmas for C++ modules support
-#if defined(__GNUC__) && !defined(__clang__) && __cplusplus >= 202002L
-    #pragma GCC diagnostic pop
-#endif
+// keep: undoes the macros defined via detail/macro_scope.hpp at the top of this file; removing it
+// (nothing in this file *uses* a symbol from it) would leak JSON_* macros into every translation
+// unit that includes this header.
+#include <nlohmann/detail/macro_unscope.hpp> // IWYU pragma: keep
 
 // The user-defined string literals are in a separate header, because their
 // bodies instantiate the parser in every translation unit that includes them.
