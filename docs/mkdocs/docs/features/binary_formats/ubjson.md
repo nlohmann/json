@@ -126,12 +126,14 @@ The library maps UBJSON types to JSON value types as follows:
 
     The mapping is **complete** in the sense that any UBJSON value can be converted to a JSON value.
 
-!!! warning "UTF-8 validation of string values and object keys"
+!!! warning "Ill-formed UTF-8 in string values and object keys"
 
-    This library validates the bytes of every string value and object key at decode time and rejects ill-formed
-    UTF-8 with a [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) exception (or, with
-    `allow_exceptions` set to `false`, a discarded value), rather than only failing later when the resulting value
-    is dumped.
+    UBJSON's required string encoding is UTF-8, but this is not enforced on read: `from_ubjson()` accepts a string
+    value or object key whose bytes are not valid UTF-8 and hands them back unchanged. However,
+    [`dump()`](../../api/basic_json/dump.md) still requires valid UTF-8 and throws
+    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for such a value, unless an error
+    handler is passed that replaces or ignores the ill-formed bytes. `to_ubjson()` is strict as well (see above), so
+    a value read this way cannot be written back to UBJSON.
 
 ??? example
 

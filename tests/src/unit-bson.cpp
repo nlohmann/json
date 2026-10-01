@@ -154,11 +154,12 @@ TEST_CASE("BSON")
 #endif
     }
 
-    SECTION("ill-formed UTF-8 (see #5651)")
+    SECTION("ill-formed UTF-8 (see #5529, #5651)")
     {
         // a BSON document {"s": "\xC0\xAE"} (0xC0 0xAE is an overlong
-        // encoding of '.'); the reader rejects an ill-formed string value at
-        // decode time
+        // encoding of '.'); the BSON spec does not require a decoder to
+        // reject ill-formed UTF-8 in a string value, so the reader hands the
+        // bytes back unchanged
         const std::vector<uint8_t> v =
         {
             0x0F, 0x00, 0x00, 0x00, // document length
@@ -167,9 +168,15 @@ TEST_CASE("BSON")
             0xc0, 0xae, 0x00,       // string content and its null terminator
             0x00                    // document terminator
         };
-        json _;
-        CHECK_THROWS_WITH_AS(_ = json::from_bson(v), "[json.exception.parse_error.113] parse error at byte 13: syntax error while parsing BSON string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
-        CHECK(json::from_bson(v, true, false).is_discarded());
+        json j;
+        CHECK_NOTHROW(j = json::from_bson(v));
+        REQUIRE(j.is_object());
+        REQUIRE(j.contains("s"));
+        CHECK(j["s"].get_ref<const json::string_t&>() == std::string("\xc0\xae"));
+        // dump() still requires valid UTF-8 and throws for such a value
+        CHECK_THROWS_AS(j.dump(), json::type_error&);
+        // to_bson() is strict as well, so the value cannot be written back
+        CHECK_THROWS_AS(json::to_bson(j), json::type_error&);
 
         // to_bson() rejects the same kind of ill-formed string value, before
         // any bytes reach the output adapter (the BSON document length

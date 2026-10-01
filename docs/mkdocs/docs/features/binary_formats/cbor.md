@@ -189,17 +189,16 @@ The library maps CBOR types to JSON value types as follows:
     ([RFC 8392](https://www.rfc-editor.org/rfc/rfc8392.html)), cannot be read with this library and need a
     general-purpose CBOR library instead.
 
-!!! warning "UTF-8 validation of text strings"
+!!! warning "Ill-formed UTF-8 in text strings"
 
     [RFC 8949, Section 3.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-3.1) requires CBOR text strings
-    (major type 3) to be valid UTF-8. This library validates the bytes of every text string (object keys included) at
-    decode time and rejects ill-formed UTF-8 with a
-    [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) exception (or, with
-    `allow_exceptions` set to `false`, a discarded value), rather than only failing later when the resulting value is
-    dumped. Byte strings (major type 2) are unaffected and are never validated, since they are not required to hold
-    text. `to_cbor()` validates string values and object keys the same way and throws
-    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for ill-formed UTF-8, so a value with
-    such a string cannot be serialized in the first place.
+    (major type 3) to be valid UTF-8, but leaves it up to the decoder whether to enforce this. This library does
+    not: `from_cbor()` accepts a text string (object keys included) whose bytes are not valid UTF-8 and hands them
+    back unchanged. However, [`dump()`](../../api/basic_json/dump.md) still requires valid UTF-8 and throws
+    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for such a value, unless an error
+    handler is passed that replaces or ignores the ill-formed bytes. `to_cbor()` is strict as well and throws the
+    same exception for a string value or object key that is not valid UTF-8, so such a value cannot be written back
+    to CBOR. Byte strings (major type 2) are unaffected, since they are not required to hold text.
 
 !!! warning "Tagged items"
 

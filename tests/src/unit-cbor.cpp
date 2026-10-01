@@ -1801,19 +1801,40 @@ TEST_CASE("CBOR")
             CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0xA1, 0x7C, 0x01})), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x7C", json::parse_error&);
         }
 
-        SECTION("invalid UTF-8 in string (see #5529)")
+        SECTION("ill-formed UTF-8 in string (see #5529, #5651)")
         {
+            // RFC 8949 §3.1 leaves it up to the decoder whether to reject
+            // ill-formed UTF-8 in a text string; this library does not, and
+            // hands the original bytes back unchanged, matching the
+            // MessagePack reader and the behavior before #5185/#5531 (not in
+            // any release)
+
             // a two-character text string (major type 3) whose bytes are not
-            // valid UTF-8 (0xC0 0xAE is an overlong encoding of '.') must be
-            // rejected at decode time, matching every other kind of
-            // malformed binary input, rather than only failing later when
-            // the resulting value is dumped
-            json _;
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x62, 0xc0, 0xae})), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
-            CHECK(json::from_cbor(std::vector<uint8_t>({0x62, 0xc0, 0xae}), true, false).is_discarded());
+            // valid UTF-8 (0xC0 0xAE is an overlong encoding of '.') round-trips
+            // byte for byte as a string value
+            const std::vector<uint8_t> ill_formed_value = {0x62, 0xc0, 0xae};
+            json j_value;
+            CHECK_NOTHROW(j_value = json::from_cbor(ill_formed_value));
+            REQUIRE(j_value.is_string());
+            CHECK(j_value.get_ref<const json::string_t&>() == std::string("\xc0\xae"));
+            // dump() still requires valid UTF-8 and throws for such a value,
+            // unless an error handler that replaces or ignores the bytes is
+            // passed
+            CHECK_THROWS_AS(j_value.dump(), json::type_error&);
+            // to_cbor() is strict as well, so the value cannot be written back
+            CHECK_THROWS_AS(json::to_cbor(j_value), json::type_error&);
+
+            // the same bytes as an object key round-trip as well
+            const std::vector<uint8_t> ill_formed_key = {0xa1, 0x62, 0xc0, 0xae, 0x01};
+            json j_key;
+            CHECK_NOTHROW(j_key = json::from_cbor(ill_formed_key));
+            REQUIRE(j_key.is_object());
+            CHECK(j_key.contains(std::string("\xc0\xae")));
+            CHECK_THROWS_AS(json::to_cbor(j_key), json::type_error&);
 
             // a CBOR byte string (major type 2) with the very same bytes is
             // NOT text and must still be accepted as-is
+            json _;
             CHECK_NOTHROW(_ = json::from_cbor(std::vector<uint8_t>({0x42, 0xc0, 0xae})));
             CHECK(_ == json::binary(std::vector<std::uint8_t>({0xc0, 0xae})));
 
@@ -1841,17 +1862,27 @@ TEST_CASE("CBOR")
             CHECK_NOTHROW(json::to_cbor(json::binary(std::vector<std::uint8_t>({0xFF}))));
         }
 
-        SECTION("invalid UTF-8 in indefinite-length string")
+        SECTION("ill-formed UTF-8 in indefinite-length string")
         {
             json _;
 
-            // every chunk must be valid UTF-8 on its own (RFC 8949, Section
-            // 3.2.3), so a code point split across two chunks is rejected
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x7f, 0x61, 0xc3, 0x61, 0xa9, 0xff})), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
-            CHECK(json::from_cbor(std::vector<uint8_t>({0x7f, 0x61, 0xc3, 0x61, 0xa9, 0xff}), true, false).is_discarded());
+            // the chunks are concatenated as is, without checking that each
+            // chunk is valid UTF-8 on its own (RFC 8949, Section 3.2.3), so
+            // a code point split across two chunks yields a valid string
+            CHECK_NOTHROW(_ = json::from_cbor(std::vector<uint8_t>({0x7f, 0x61, 0xc3, 0x61, 0xa9, 0xff})));
+            CHECK(_ == "\xc3\xa9");
+            CHECK(_.dump() == "\"\xc3\xa9\"");
 
-            // an ill-formed later chunk is rejected after valid ones
-            CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<uint8_t>({0x7f, 0x62, 0xc3, 0xa9, 0x62, 0xc0, 0xae, 0xff})), "[json.exception.parse_error.113] parse error at byte 7: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
+            // a truncated code point is kept as is
+            CHECK_NOTHROW(_ = json::from_cbor(std::vector<uint8_t>({0x7f, 0x61, 0xc3, 0xff})));
+            CHECK(_ == "\xc3");
+            CHECK_THROWS_AS(_.dump(), json::type_error&);
+            CHECK_THROWS_AS(json::to_cbor(_), json::type_error&);
+
+            // an ill-formed later chunk is kept after valid ones
+            CHECK_NOTHROW(_ = json::from_cbor(std::vector<uint8_t>({0x7f, 0x62, 0xc3, 0xa9, 0x62, 0xc0, 0xae, 0xff})));
+            CHECK(_ == "\xc3\xa9\xc0\xae");
+            CHECK_THROWS_AS(_.dump(), json::type_error&);
 
             // valid multi-byte chunks are accepted
             CHECK(json::from_cbor(std::vector<uint8_t>({0x7f, 0x62, 0xc3, 0xa9, 0x62, 0xc3, 0xb6, 0xff})) == "\xc3\xa9\xc3\xb6");
@@ -1859,9 +1890,6 @@ TEST_CASE("CBOR")
 
         SECTION("many chunks in indefinite-length string")
         {
-            // only the newly read chunk is validated, not the whole string
-            // collected so far; validating the latter made this input take
-            // quadratic time (about ten seconds for 100000 chunks)
             constexpr std::size_t chunks = 100000;
             std::vector<uint8_t> v{0x7f};
             for (std::size_t i = 0; i < chunks; ++i)

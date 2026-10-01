@@ -3908,17 +3908,28 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             CHECK(json::from_bjdata(v) == j);
         }
 
-        SECTION("ill-formed UTF-8 (see #5651)")
+        SECTION("ill-formed UTF-8 (see #5529, #5651)")
         {
-            // a string value whose bytes are not valid UTF-8 (0xC0 0xAE is an
-            // overlong encoding of '.') is rejected at decode time, matching
-            // every other kind of malformed binary input, and to_bjdata()
-            // rejects it as well, so a value it accepts can always be read
-            // back
+            // none of the binary format specs requires a decoder to reject
+            // ill-formed UTF-8 in a text string, so a value whose bytes are
+            // not valid UTF-8 (0xC0 0xAE is an overlong encoding of '.')
+            // round-trips byte for byte as a string value; to_bjdata() is
+            // strict, so such a value cannot be written back
             const std::vector<uint8_t> v = {'S', 'i', 2, 0xc0, 0xae};
-            json _;
-            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v), "[json.exception.parse_error.113] parse error at byte 5: syntax error while parsing BJData string: invalid string: ill-formed UTF-8 byte", json::parse_error&);
-            CHECK(json::from_bjdata(v, true, false).is_discarded());
+            json j;
+            CHECK_NOTHROW(j = json::from_bjdata(v));
+            REQUIRE(j.is_string());
+            CHECK(j.get_ref<const json::string_t&>() == std::string("\xc0\xae"));
+            CHECK_THROWS_AS(j.dump(), json::type_error&);
+            CHECK_THROWS_AS(json::to_bjdata(j), json::type_error&);
+
+            // the same bytes as an object key round-trip as well
+            const std::vector<uint8_t> v_key = {'{', 'i', 2, 0xc0, 0xae, 'i', 1, '}'};
+            json j_key;
+            CHECK_NOTHROW(j_key = json::from_bjdata(v_key));
+            REQUIRE(j_key.is_object());
+            CHECK(j_key.contains(std::string("\xc0\xae")));
+            CHECK_THROWS_AS(json::to_bjdata(j_key), json::type_error&);
 
             CHECK_THROWS_WITH_AS(json::to_bjdata(json("\xFF")), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
             // a truncated multi-byte sequence
