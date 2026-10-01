@@ -763,6 +763,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         static_cast<void>(check_parents);
     }
 
+    // GCC 13 to at least 15 report a false -Warray-bounds error when set_parents()
+    // is inlined at -O3 right after a non-container value was created: the analysis
+    // does not use m_type to rule out the object/array branches and checks
+    // the std::map access against the allocation of, e.g., a string.
+    // See https://github.com/nlohmann/json/issues/5742 and #4819.
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
     void set_parents()
     {
 #if JSON_DIAGNOSTICS
@@ -799,6 +808,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
 #endif
     }
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
     iterator set_parents(iterator it, std::ptrdiff_t count_set_parents)
     {
