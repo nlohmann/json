@@ -3,6 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.12.0
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
+// SPDX-FileCopyrightText: 2008, 2009 Björn Hoehrmann <bjoern@hoehrmann.de>
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
@@ -33,6 +34,16 @@ StringType to_string(std::size_t value)
 {
     StringType result;
     int_to_string(result, value);
+    return result;
+}
+
+/// @return a byte as two uppercase hexadecimal digits
+inline std::string hex_byte(const std::uint8_t byte)
+{
+    std::string result = "00";
+    constexpr const char* nibble_to_hex = "0123456789ABCDEF";
+    result[0] = nibble_to_hex[byte / 16];
+    result[1] = nibble_to_hex[byte % 16];
     return result;
 }
 
