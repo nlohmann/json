@@ -2,16 +2,23 @@ name: "Check amalgamation"
 
 on:
   pull_request:
+  # also check develop itself: a PR can be merged before its own run of this
+  # workflow completes (e.g. while it is still queued), leaving single_include
+  # stale on develop without any failing check
+  push:
+    branches:
+      - develop
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
   save:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
@@ -43,11 +50,11 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Checkout pull request
+      - name: Checkout pull request or pushed commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: main
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
       - name: Checkout tools
