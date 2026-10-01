@@ -6270,6 +6270,61 @@ inline std::string hex_byte(const std::uint8_t byte)
 }
 
 ///////////////////
+// UTF-8 encoding //
+///////////////////
+
+/*!
+@brief encode a Unicode code point as UTF-8
+
+Used to turn a decoded code point back into bytes: by the wide-string input
+adapters in input_adapters.hpp (one code point per UTF-32 unit, per UTF-16
+unit outside the surrogate range, and per valid UTF-16 surrogate pair), and
+by the lexer's `\uXXXX`/`\uXXXX\uYYYY` handling in lexer.hpp. Passing a
+code point above U+10FFFF, or one in the surrogate range U+D800..U+DFFF, is
+undefined behavior; callers are expected to have rejected those already
+(the wide-string adapters pass malformed units through unencoded instead of
+calling this function, and the lexer rejects unpaired surrogates before
+reaching it).
+
+@tparam Out    a callable invoked with one byte (as std::uint32_t, 0x00..0xFF)
+               at a time, most significant byte first
+@param[in] cp   the code point to encode (at most U+10FFFF)
+@param[in] out  called once for each byte of the UTF-8 encoding of @a cp
+*/
+template<typename Out>
+void encode_utf8(std::uint32_t cp, Out&& out)
+{
+    JSON_ASSERT(cp <= 0x10FFFF);
+
+    if (cp < 0x80)
+    {
+        // 1-byte characters: 0xxxxxxx (ASCII)
+        out(cp);
+    }
+    else if (cp <= 0x7FF)
+    {
+        // 2-byte characters: 110xxxxx 10xxxxxx
+        out(0xC0u | (cp >> 6u));
+        out(0x80u | (cp & 0x3Fu));
+    }
+    else if (cp <= 0xFFFF)
+    {
+        // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
+        out(0xE0u | (cp >> 12u));
+        out(0x80u | ((cp >> 6u) & 0x3Fu));
+        out(0x80u | (cp & 0x3Fu));
+    }
+    else
+    {
+        // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+        out(0xF0u | (cp >> 18u));
+        out(0x80u | ((cp >> 12u) & 0x3Fu));
+        out(0x80u | ((cp >> 6u) & 0x3Fu));
+        out(0x80u | (cp & 0x3Fu));
+    }
+}
+
+///////////////////
 // UTF-8 decoding //
 ///////////////////
 
@@ -6284,11 +6339,23 @@ This is a single-byte step of a "shift-based" UTF-8 decoder originally
 written by Björn Hoehrmann. See
 http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
 
-This decoder is the single source of truth for UTF-8 validation in this
-library: it is used both by the serializer (to escape and, in strict mode,
-reject ill-formed UTF-8 when dumping a string) and by the binary readers
-(to reject ill-formed UTF-8 in CBOR/MessagePack/BSON/UBJSON text strings at
-decode time; see @ref is_valid_utf8 below).
+The library checks UTF-8 well-formedness (RFC 3629, section 4) in four
+places, which differ in speed, diagnostics, and how they read the input:
+
+- decode() and @ref is_valid_utf8 below: the serializer (to escape and, in
+  strict mode, reject ill-formed UTF-8 when dumping a string) and the CBOR,
+  MessagePack, BSON, UBJSON and BJData readers (to reject ill-formed UTF-8 in
+  text strings at decode time).
+- the per-lead-byte switch in lexer::scan_string(): JSON text, with a
+  diagnostic for each kind of error.
+- validate_one_utf8() and valid_utf8_prefix() in string_scan.hpp: the lexer's
+  bulk string scan, the bulk path of the BON8 reader, and the BON8 writer.
+  They must accept exactly what the lexer's switch accepts.
+- the byte path of binary_reader::get_bon8_string(): BON8 input without bulk
+  access, and the bytes the bulk path leaves to it.
+
+All four must accept the same set of sequences, so a change to one needs a
+matching change to the others.
 
 @param[in,out] state  the current decoder state
 @param[in,out] codep  codepoint (valid only if resulting state is UTF8_ACCEPT)
@@ -7591,12 +7658,12 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
+#include <algorithm> // min
 #include <array> // array
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstring> // strlen
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
-#include <memory> // shared_ptr, make_shared, addressof
-#include <numeric> // accumulate
 #include <streambuf> // streambuf
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
@@ -7614,6 +7681,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // #include <nlohmann/detail/macro_scope.hpp>
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
+
+// #include <nlohmann/detail/string_utils.hpp>
 
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -7669,8 +7738,9 @@ class file_input_adapter
 };
 
 /*!
-Input adapter for a (caching) istream. Ignores a UFT Byte Order Mark at
-beginning of input. Does not support changing the underlying std::streambuf
+Input adapter for a (caching) istream. Does not skip a UTF Byte Order Mark
+itself; that is done by the lexer's skip_bom(). Does not support changing
+the underlying std::streambuf
 in mid-input. Maintains underlying std::istream and std::streambuf to support
 subsequent use of standard std::istream operations to process any input
 characters following those used in parsing the JSON input.  Clears the
@@ -8041,32 +8111,14 @@ struct wide_string_input_helper<BaseInputAdapter, 4>
             // get the current character
             const auto wc = input.get_character();
 
-            // UTF-32 to UTF-8 encoding
-            if (wc < 0x80)
+            if (wc <= 0x10FFFF)
             {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(wc);
-                utf8_bytes_filled = 1;
-            }
-            else if (wc <= 0x7FF)
-            {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xC0u | ((static_cast<unsigned int>(wc) >> 6u) & 0x1Fu));
-                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
-                utf8_bytes_filled = 2;
-            }
-            else if (wc <= 0xFFFF)
-            {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xE0u | ((static_cast<unsigned int>(wc) >> 12u) & 0x0Fu));
-                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((static_cast<unsigned int>(wc) >> 6u) & 0x3Fu));
-                utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
-                utf8_bytes_filled = 3;
-            }
-            else if (wc <= 0x10FFFF)
-            {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xF0u | ((static_cast<unsigned int>(wc) >> 18u) & 0x07u));
-                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((static_cast<unsigned int>(wc) >> 12u) & 0x3Fu));
-                utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | ((static_cast<unsigned int>(wc) >> 6u) & 0x3Fu));
-                utf8_bytes[3] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
-                utf8_bytes_filled = 4;
+                // UTF-32 to UTF-8 encoding
+                utf8_bytes_filled = 0;
+                encode_utf8(static_cast<std::uint32_t>(wc), [&utf8_bytes, &utf8_bytes_filled](std::uint32_t byte)
+                {
+                    utf8_bytes[utf8_bytes_filled++] = static_cast<std::char_traits<char>::int_type>(byte);
+                });
             }
             else
             {
@@ -8103,24 +8155,15 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
             // get the current character
             const auto wc = input.get_character();
 
-            // UTF-16 to UTF-8 encoding
-            if (wc < 0x80)
+            if (0xD800 > wc || wc >= 0xE000)
             {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(wc);
-                utf8_bytes_filled = 1;
-            }
-            else if (wc <= 0x7FF)
-            {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xC0u | ((static_cast<unsigned int>(wc) >> 6u)));
-                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
-                utf8_bytes_filled = 2;
-            }
-            else if (0xD800 > wc || wc >= 0xE000)
-            {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xE0u | ((static_cast<unsigned int>(wc) >> 12u)));
-                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((static_cast<unsigned int>(wc) >> 6u) & 0x3Fu));
-                utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
-                utf8_bytes_filled = 3;
+                // a UTF-16 code unit outside the surrogate range is a valid
+                // code point (at most U+FFFF) on its own
+                utf8_bytes_filled = 0;
+                encode_utf8(static_cast<std::uint32_t>(wc), [&utf8_bytes, &utf8_bytes_filled](std::uint32_t byte)
+                {
+                    utf8_bytes[utf8_bytes_filled++] = static_cast<std::char_traits<char>::int_type>(byte);
+                });
             }
             else
             {
@@ -8138,11 +8181,11 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
                     if (0xDC00 <= wc2 && wc2 <= 0xDFFF)
                     {
                         const auto charcode = 0x10000u + (((static_cast<unsigned int>(wc) & 0x3FFu) << 10u) | (wc2 & 0x3FFu));
-                        utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xF0u | (charcode >> 18u));
-                        utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((charcode >> 12u) & 0x3Fu));
-                        utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | ((charcode >> 6u) & 0x3Fu));
-                        utf8_bytes[3] = static_cast<std::char_traits<char>::int_type>(0x80u | (charcode & 0x3Fu));
-                        utf8_bytes_filled = 4;
+                        utf8_bytes_filled = 0;
+                        encode_utf8(charcode, [&utf8_bytes, &utf8_bytes_filled](std::uint32_t byte)
+                        {
+                            utf8_bytes[utf8_bytes_filled++] = static_cast<std::char_traits<char>::int_type>(byte);
+                        });
                         valid_pair = true;
                     }
                 }
@@ -8471,9 +8514,9 @@ auto input_adapter(T (&array)[N]) -> decltype(input_adapter(array, array + N)) /
     return input_adapter(array, array + N);
 }
 
-// This class only handles inputs of input_buffer_adapter type.
-// It's required so that expressions like {ptr, len} can be implicitly cast
-// to the correct adapter.
+// This class only handles inputs that construct a contiguous_bytes_input_adapter
+// (e.g. span_input_adapter). It's required so that expressions like {ptr, len}
+// can be implicitly cast to the correct adapter.
 class span_input_adapter
 {
   public:
@@ -8518,6 +8561,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 #include <algorithm> // find_if, min
 #include <cstddef>
+#include <limits> // numeric_limits
 #include <string> // string
 #include <type_traits> // enable_if_t
 #include <utility> // move, pair
@@ -8538,6 +8582,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 #include <array> // array
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstdio> // snprintf
 #include <initializer_list> // initializer_list
 #include <string> // char_traits, string
@@ -10053,6 +10098,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
+// #include <nlohmann/detail/string_utils.hpp>
+
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -10517,32 +10564,10 @@ class lexer : public lexer_base<BasicJsonType>
                             JSON_ASSERT(0x00 <= codepoint && codepoint <= 0x10FFFF);
 
                             // translate codepoint into bytes
-                            if (codepoint < 0x80)
+                            encode_utf8(static_cast<std::uint32_t>(codepoint), [this](std::uint32_t byte)
                             {
-                                // 1-byte characters: 0xxxxxxx (ASCII)
-                                add(static_cast<char_int_type>(codepoint));
-                            }
-                            else if (codepoint <= 0x7FF)
-                            {
-                                // 2-byte characters: 110xxxxx 10xxxxxx
-                                add(static_cast<char_int_type>(0xC0u | (static_cast<unsigned int>(codepoint) >> 6u)));
-                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
-                            else if (codepoint <= 0xFFFF)
-                            {
-                                // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
-                                add(static_cast<char_int_type>(0xE0u | (static_cast<unsigned int>(codepoint) >> 12u)));
-                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
-                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
-                            else
-                            {
-                                // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-                                add(static_cast<char_int_type>(0xF0u | (static_cast<unsigned int>(codepoint) >> 18u)));
-                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 12u) & 0x3Fu)));
-                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
-                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
+                                add(static_cast<char_int_type>(byte));
+                            });
 
                             break;
                         }
@@ -11440,45 +11465,30 @@ scan_number_done:
     */
     token_type convert_number(token_type number_type, std::size_t mantissa_end)
     {
-        // If the caller does not need the converted value (only whether the
-        // input is syntactically valid; see json_sax_acceptor/accept()), an
-        // unsigned/integer token can be reported without calling
-        // strtoull()/strtoll() at all, *provided* we can already tell from
-        // the digit count alone that the conversion cannot overflow 64 bits.
-        // Such tokens are always finite and are accepted unconditionally by
-        // the parser regardless of their actual value (parser::sax_parse_internal()
-        // never checks finiteness for value_unsigned/value_integer), so the
-        // classification below is all that is needed.
+        // accept() only needs to know whether the input is valid, so it sets
+        // discard_number_values (see json.hpp), and an integer token whose
+        // digit count shows that it fits is reported without calling
+        // convert_integer(). A number with up to 18 digits always fits into
+        // both std::uint64_t and std::int64_t (18 nines is about 1e18, below
+        // INT64_MAX, which is about 9.2e18). Longer tokens take the exact path
+        // below, including the fallback to floating point when the value does
+        // not fit.
         //
-        // A decimal number with up to 18 digits is always representable in
-        // both std::uint64_t and std::int64_t (18 nines is ~1e18, well below
-        // both UINT64_MAX ~1.8e19 and INT64_MAX ~9.2e18), so strtoull()/strtoll()
-        // could not have set errno to ERANGE for it. Numbers with more digits
-        // (rare in practice) fall through to the exact code below, unchanged,
-        // so their handling -- including reclassification to value_float when
-        // the value overflows 64 bits, and rejection when it is not even
-        // finite as a double -- is bit-for-bit identical to before this
-        // optimization.
+        // With a narrower number_unsigned_t/number_integer_t (e.g.
+        // std::uint32_t), the exact path would reclassify some of these tokens
+        // as (finite) floats, while this check reports integers. That does not
+        // change the result of accept(): it always parses through
+        // json_sax_acceptor, whose number callbacks discard their argument and
+        // return true, and the parser rejects neither integers nor finite
+        // floats. value_unsigned/value_integer are left unset here, so a caller
+        // that reads the converted value must not set discard_number_values.
         //
-        // Note this reasons about std::uint64_t/std::int64_t, not about
-        // number_unsigned_t/number_integer_t (BasicJsonType's own, possibly
-        // narrower, template parameters -- e.g. std::uint32_t). That is fine
-        // *only* because discard_number_values is exclusively set by
-        // accept() (see json.hpp), and accept() always parses through the
-        // library's own json_sax_acceptor -- never a user-supplied SAX
-        // consumer -- whose number_unsigned()/number_integer()/number_float()
-        // callbacks unconditionally discard their argument and return true.
-        // So for every caller that can reach this branch, neither the token
-        // classification below nor the eventual (possibly narrowed, and on
-        // this fast path left stale/unset) value_unsigned/value_integer is
-        // ever consulted -- an unsigned/integer token is accepted outright,
-        // and even a >18-digit token that this fast path deliberately falls
-        // through for is, once reclassified to value_float, still finite
-        // (and thus accepted) for any digit count that fits in number_unsigned_t
-        // or number_integer_t regardless of that type's width. If this
-        // function is ever taught to run with discard_number_values true for
-        // a caller that *does* read the converted value, this reasoning (and
-        // the fast path below) would need to be revisited.
+        // On contiguous input, scan_number_bulk_contiguous() converts integer
+        // tokens itself and does not pass them to this function, unless
+        // JSON_DIAGNOSTIC_POSITIONS is enabled. This check is therefore only
+        // reached for input without bulk access (e.g. streams), with
+        // JSON_DIAGNOSTIC_POSITIONS, or when scan_number_bulk_contiguous()
+        // falls back to scan_number().
         if (discard_number_values)
         {
             constexpr std::size_t safe_digit_count = 18;
@@ -11907,7 +11917,7 @@ scan_number_done:
         return value_float;
     }
 
-    /// return current string value (implicitly resets the token; useful only once)
+    /// return current string value
     string_t& get_string()
     {
         // a number token holds '.' regardless of the locale (#4084)
@@ -12209,11 +12219,11 @@ scan_number_done:
     /// the position of the decimal point in token_buffer
     std::size_t decimal_point_position = std::string::npos;
 
-    /// whether the caller (e.g. accept()/json_sax_acceptor) only needs the
-    /// token classification and never looks at the converted numeric value;
-    /// when set, scan_number() may skip strtoull()/strtoll() for
-    /// value_unsigned/value_integer tokens whose digit count guarantees they
-    /// fit into 64 bits (see scan_number())
+    /// whether the caller only needs the token types and never looks at the
+    /// converted numeric values; set only by accept(), which parses through
+    /// json_sax_acceptor. When set, convert_number() skips converting integer
+    /// tokens whose digit count guarantees that they fit into 64 bits (see
+    /// there)
     const bool discard_number_values = false;
 };
 
@@ -12380,6 +12390,88 @@ auto reserve_array(ArrayType& arr, std::size_t len, priority_tag<1> /*unused*/)
 template<typename ArrayType>
 inline void reserve_array(ArrayType& /*arr*/, std::size_t /*len*/, priority_tag<0> /*unused*/)
 {}
+
+#if JSON_DIAGNOSTIC_POSITIONS
+/*!
+@brief set the diagnostic positions of a value the DOM SAX parsers just stored
+
+Shared by json_sax_dom_parser and json_sax_dom_callback_parser. basic_json
+befriends this struct, as the position members are private.
+*/
+struct diagnostic_positions
+{
+    /*!
+    @param[in,out] v  the value that was just parsed
+    @param[in] lexer  the lexer that read it, or nullptr to leave @a v alone
+    */
+    template<typename BasicJsonType, typename LexerType>
+    static void set_from_lexer(BasicJsonType& v, LexerType* lexer)
+    {
+        if (lexer)
+        {
+            // Lexer has read past the current field value, so set the end position to the current position.
+            // The start position will be set below based on the length of the string representation
+            // of the value.
+            v.end_position = lexer->get_position();
+
+            switch (v.type())
+            {
+                case value_t::boolean:
+                {
+                    // 4 and 5 are the string length of "true" and "false"
+                    v.start_position = v.end_position - (v.m_data.m_value.boolean ? 4 : 5);
+                    break;
+                }
+
+                case value_t::null:
+                {
+                    // 4 is the string length of "null"
+                    v.start_position = v.end_position - 4;
+                    break;
+                }
+
+                case value_t::string:
+                {
+                    // escape sequences make the token longer than the value it
+                    // parses to, so the start position cannot be derived from
+                    // the value; use the offset the lexer recorded instead
+                    v.start_position = lexer->get_token_start_position();
+                    break;
+                }
+
+                case value_t::discarded:
+                {
+                    // an object or array the callback of
+                    // json_sax_dom_callback_parser rejected has no position
+                    v.end_position = std::string::npos;
+                    v.start_position = v.end_position;
+                    break;
+                }
+
+                case value_t::binary:
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                case value_t::number_float:
+                {
+                    v.start_position = v.end_position - lexer->get_string().size();
+                    break;
+                }
+
+                case value_t::object:
+                case value_t::array:
+                {
+                    // object and array are handled in start_object() and start_array() handlers
+                    // skip setting the values here.
+                    break;
+                }
+                default: // LCOV_EXCL_LINE
+                    // Handle all possible types discretely, default handler should never be reached.
+                    JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
+            }
+        }
+    }
+};
+#endif
 
 /*!
 @brief SAX implementation to create a JSON value from SAX events
@@ -12582,76 +12674,6 @@ class json_sax_dom_parser
 
   private:
 
-#if JSON_DIAGNOSTIC_POSITIONS
-    void handle_diagnostic_positions_for_json_value(BasicJsonType& v)
-    {
-        if (m_lexer_ref)
-        {
-            // Lexer has read past the current field value, so set the end position to the current position.
-            // The start position will be set below based on the length of the string representation
-            // of the value.
-            v.end_position = m_lexer_ref->get_position();
-
-            switch (v.type())
-            {
-                case value_t::boolean:
-                {
-                    // 4 and 5 are the string length of "true" and "false"
-                    v.start_position = v.end_position - (v.m_data.m_value.boolean ? 4 : 5);
-                    break;
-                }
-
-                case value_t::null:
-                {
-                    // 4 is the string length of "null"
-                    v.start_position = v.end_position - 4;
-                    break;
-                }
-
-                case value_t::string:
-                {
-                    // escape sequences make the token longer than the value it
-                    // parses to, so the start position cannot be derived from
-                    // the value; use the offset the lexer recorded instead
-                    v.start_position = m_lexer_ref->get_token_start_position();
-                    break;
-                }
-
-                // As we handle the start and end positions for values created during parsing,
-                // we do not expect the following value type to be called. Regardless, set the positions
-                // in case this is created manually or through a different constructor. Exclude from lcov
-                // since the exact condition of this switch is esoteric.
-                // LCOV_EXCL_START
-                case value_t::discarded:
-                {
-                    v.end_position = std::string::npos;
-                    v.start_position = v.end_position;
-                    break;
-                }
-                // LCOV_EXCL_STOP
-                case value_t::binary:
-                case value_t::number_integer:
-                case value_t::number_unsigned:
-                case value_t::number_float:
-                {
-                    v.start_position = v.end_position - m_lexer_ref->get_string().size();
-                    break;
-                }
-                case value_t::object:
-                case value_t::array:
-                {
-                    // object and array are handled in start_object() and start_array() handlers
-                    // skip setting the values here.
-                    break;
-                }
-                default: // LCOV_EXCL_LINE
-                    // Handle all possible types discretely, default handler should never be reached.
-                    JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert,-warnings-as-errors) LCOV_EXCL_LINE
-            }
-        }
-    }
-#endif
-
     /*!
     @invariant If the ref stack is empty, then the passed value will be the new
                root.
@@ -12667,7 +12689,7 @@ class json_sax_dom_parser
             root = BasicJsonType(std::forward<Value>(v));
 
 #if JSON_DIAGNOSTIC_POSITIONS
-            handle_diagnostic_positions_for_json_value(root);
+            diagnostic_positions::set_from_lexer(root, m_lexer_ref);
 #endif
 
             return &root;
@@ -12680,7 +12702,7 @@ class json_sax_dom_parser
             ref_stack.back()->m_data.m_value.array->emplace_back(std::forward<Value>(v));
 
 #if JSON_DIAGNOSTIC_POSITIONS
-            handle_diagnostic_positions_for_json_value(ref_stack.back()->m_data.m_value.array->back());
+            diagnostic_positions::set_from_lexer(ref_stack.back()->m_data.m_value.array->back(), m_lexer_ref);
 #endif
 
             return &(ref_stack.back()->m_data.m_value.array->back());
@@ -12691,7 +12713,7 @@ class json_sax_dom_parser
         *object_element = BasicJsonType(std::forward<Value>(v));
 
 #if JSON_DIAGNOSTIC_POSITIONS
-        handle_diagnostic_positions_for_json_value(*object_element);
+        diagnostic_positions::set_from_lexer(*object_element, m_lexer_ref);
 #endif
 
         return object_element;
@@ -12880,7 +12902,7 @@ class json_sax_dom_callback_parser
 
 #if JSON_DIAGNOSTIC_POSITIONS
                     // Set start/end positions for discarded object.
-                    handle_diagnostic_positions_for_json_value(*ref_stack.back());
+                    diagnostic_positions::set_from_lexer(*ref_stack.back(), m_lexer_ref);
 #endif
                 }
             }
@@ -12996,7 +13018,7 @@ class json_sax_dom_callback_parser
 
 #if JSON_DIAGNOSTIC_POSITIONS
                     // Set start/end positions for discarded array.
-                    handle_diagnostic_positions_for_json_value(*ref_stack.back());
+                    diagnostic_positions::set_from_lexer(*ref_stack.back(), m_lexer_ref);
 #endif
                 }
             }
@@ -13048,72 +13070,6 @@ class json_sax_dom_callback_parser
     }
 
   private:
-
-#if JSON_DIAGNOSTIC_POSITIONS
-    void handle_diagnostic_positions_for_json_value(BasicJsonType& v)
-    {
-        if (m_lexer_ref)
-        {
-            // Lexer has read past the current field value, so set the end position to the current position.
-            // The start position will be set below based on the length of the string representation
-            // of the value.
-            v.end_position = m_lexer_ref->get_position();
-
-            switch (v.type())
-            {
-                case value_t::boolean:
-                {
-                    // 4 and 5 are the string length of "true" and "false"
-                    v.start_position = v.end_position - (v.m_data.m_value.boolean ? 4 : 5);
-                    break;
-                }
-
-                case value_t::null:
-                {
-                    // 4 is the string length of "null"
-                    v.start_position = v.end_position - 4;
-                    break;
-                }
-
-                case value_t::string:
-                {
-                    // escape sequences make the token longer than the value it
-                    // parses to, so the start position cannot be derived from
-                    // the value; use the offset the lexer recorded instead
-                    v.start_position = m_lexer_ref->get_token_start_position();
-                    break;
-                }
-
-                case value_t::discarded:
-                {
-                    v.end_position = std::string::npos;
-                    v.start_position = v.end_position;
-                    break;
-                }
-
-                case value_t::binary:
-                case value_t::number_integer:
-                case value_t::number_unsigned:
-                case value_t::number_float:
-                {
-                    v.start_position = v.end_position - m_lexer_ref->get_string().size();
-                    break;
-                }
-
-                case value_t::object:
-                case value_t::array:
-                {
-                    // object and array are handled in start_object() and start_array() handlers
-                    // skip setting the values here.
-                    break;
-                }
-                default: // LCOV_EXCL_LINE
-                    // Handle all possible types discretely, default handler should never be reached.
-                    JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert,-warnings-as-errors) LCOV_EXCL_LINE
-            }
-        }
-    }
-#endif
 
     /// if there is a pending duplicate-key stash entry for this exact slot,
     /// remove it from the stash; if restore_value is true, the stashed
@@ -13236,7 +13192,7 @@ class json_sax_dom_callback_parser
         auto value = BasicJsonType(std::forward<Value>(v));
 
 #if JSON_DIAGNOSTIC_POSITIONS
-        handle_diagnostic_positions_for_json_value(value);
+        diagnostic_positions::set_from_lexer(value, m_lexer_ref);
 #endif
 
         // check callback
@@ -16784,8 +16740,8 @@ class binary_reader
         return enter_object(detail::unknown_size());
     }
 
-    // Note, no reader for UBJSON binary types is implemented because they do
-    // not exist
+    // Note, UBJSON has no binary type of its own; BJData, which shares this
+    // reader, decodes optimized 'B' arrays as binary in get_ubjson_array().
 
     bool get_ubjson_high_precision_number()
     {
@@ -17491,7 +17447,7 @@ class binary_reader
 #endif
     }
 
-    /*
+    /*!
     @brief read a number from the input
 
     @tparam NumberType the type of the number
@@ -17501,10 +17457,10 @@ class binary_reader
     @return whether conversion completed
 
     @note This function needs to respect the system's endianness, because
-          bytes in CBOR, MessagePack, and UBJSON are stored in network order
-          (big endian) and therefore need reordering on little endian systems.
-          On the other hand, BSON and BJData use little endian and should reorder
-          on big endian systems.
+          bytes in CBOR, MessagePack, UBJSON, and BON8 are stored in network
+          order (big endian) and therefore need reordering on little endian
+          systems. On the other hand, BSON and BJData use little endian and
+          should reorder on big endian systems.
     */
     template<typename NumberType, bool InputIsLittleEndian = false>
     bool get_number(const input_format_t format, NumberType& result)
@@ -17945,7 +17901,8 @@ using parser_callback_t =
 /*!
 @brief syntax analysis
 
-This class implements a recursive descent parser.
+This class implements an iterative parser that keeps the open containers on
+an explicit stack and reports what it reads as SAX events.
 */
 template<typename BasicJsonType, typename InputAdapterType>
 class parser
@@ -17989,28 +17946,9 @@ class parser
         if (callback)
         {
             json_sax_dom_callback_parser<BasicJsonType, InputAdapterType> sdp(result, callback, allow_exceptions, &m_lexer);
-            sax_parse_internal(&sdp);
-
-            if (strict)
-            {
-                // in strict mode, input must be completely read
-                if (get_token() != token_type::end_of_input)
-                {
-                    sdp.parse_error(m_lexer.get_position(),
-                                    m_lexer.get_token_string(),
-                                    parse_error::create(101, m_lexer.get_position(),
-                                                        exception_message(token_type::end_of_input, "value"), nullptr));
-                }
-            }
-            else
-            {
-                // the caller keeps using the input: position it right after
-                // the value by leaving the character that terminated it
-                m_lexer.release_lookahead();
-            }
 
             // in case of an error, return a discarded value
-            if (sdp.is_errored())
+            if (!parse_dom(sdp, strict))
             {
                 result = value_t::discarded;
                 return;
@@ -18026,26 +17964,9 @@ class parser
         else
         {
             json_sax_dom_parser<BasicJsonType, InputAdapterType> sdp(result, allow_exceptions, &m_lexer);
-            sax_parse_internal(&sdp);
-
-            if (strict)
-            {
-                // in strict mode, input must be completely read
-                if (get_token() != token_type::end_of_input)
-                {
-                    sdp.parse_error(m_lexer.get_position(),
-                                    m_lexer.get_token_string(),
-                                    parse_error::create(101, m_lexer.get_position(), exception_message(token_type::end_of_input, "value"), nullptr));
-                }
-            }
-            else
-            {
-                // see above
-                m_lexer.release_lookahead();
-            }
 
             // in case of an error, return a discarded value
-            if (sdp.is_errored())
+            if (!parse_dom(sdp, strict))
             {
                 result = value_t::discarded;
                 return;
@@ -18098,6 +18019,46 @@ class parser
     }
 
   private:
+    /*!
+    @brief run a DOM SAX parser to completion and position the lexer
+
+    Shared by both branches of @ref parse(): builds no SAX parser itself,
+    but drives an already-constructed @a json_sax_dom_parser or
+    @ref json_sax_dom_callback_parser through @ref sax_parse_internal(),
+    then applies the strict-EOF check (reporting parse_error.101 through
+    @a sdp on failure) or, in non-strict mode, releases the lookahead so
+    the caller can keep reading the input right after the parsed value.
+
+    @param[in,out] sdp     the DOM SAX parser to run
+    @param[in] strict      whether to expect the last token to be EOF
+    @return whether @a sdp did not report an error
+    */
+    template<typename DomSax>
+    bool parse_dom(DomSax& sdp, const bool strict)
+    {
+        sax_parse_internal(&sdp);
+
+        if (strict)
+        {
+            // in strict mode, input must be completely read
+            if (get_token() != token_type::end_of_input)
+            {
+                sdp.parse_error(m_lexer.get_position(),
+                                m_lexer.get_token_string(),
+                                parse_error::create(101, m_lexer.get_position(),
+                                                    exception_message(token_type::end_of_input, "value"), nullptr));
+            }
+        }
+        else
+        {
+            // the caller keeps using the input: position it right after
+            // the value by leaving the character that terminated it
+            m_lexer.release_lookahead();
+        }
+
+        return !sdp.is_errored();
+    }
+
     template<typename SAX>
     JSON_HEDLEY_NON_NULL(2)
     bool sax_parse_internal(SAX* sax)
@@ -18330,8 +18291,9 @@ class parser
 
                     // We are done with this array. Before we can parse a
                     // new value, we need to evaluate the new state first.
-                    // By setting skip_to_state_evaluation to false, we
-                    // are effectively jumping to the beginning of this if.
+                    // By setting skip_to_state_evaluation to true, the next
+                    // iteration skips parsing a value and evaluates the
+                    // enclosing state directly.
                     JSON_ASSERT(!states.empty());
                     states.pop_back();
                     skip_to_state_evaluation = true;
@@ -18391,8 +18353,9 @@ class parser
 
                 // We are done with this object. Before we can parse a
                 // new value, we need to evaluate the new state first.
-                // By setting skip_to_state_evaluation to false, we
-                // are effectively jumping to the beginning of this if.
+                // By setting skip_to_state_evaluation to true, the next
+                // iteration skips parsing a value and evaluates the
+                // enclosing state directly.
                 JSON_ASSERT(!states.empty());
                 states.pop_back();
                 skip_to_state_evaluation = true;
@@ -26806,6 +26769,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     friend class ::nlohmann::detail::json_sax_dom_parser;
     template<typename BasicJsonType, typename InputAdapterType>
     friend class ::nlohmann::detail::json_sax_dom_callback_parser;
+#if JSON_DIAGNOSTIC_POSITIONS
+    friend struct ::nlohmann::detail::diagnostic_positions;
+#endif
     friend class ::nlohmann::detail::exception;
 
     /// workaround type for MSVC
