@@ -1,4 +1,4 @@
-.PHONY: pretty clean ChangeLog.md release update_hedley update_hedley_undef BUILD.bazel natvis macro_builder_check
+.PHONY: pretty clean ChangeLog.md release update_hedley update_hedley_undef BUILD.bazel natvis macro_builder_check check_build_options
 
 ##########################################################################
 # configuration
@@ -123,6 +123,10 @@ macro_builder_check:
 	sed -n '/^#define NLOHMANN_JSON_TYPE_BODY(Prefix, \.\.\.)/,/^        NLOHMANN_JSON_TYPE_BODY_SENTINEL))$$/p' $(MACRO_SCOPE_HPP) > "$$TMPDIR/type_body_actual.hpp"; \
 	diff "$$TMPDIR/paste.hpp" "$$TMPDIR/paste_actual.hpp" || (echo "===================================================================\n  $(MACRO_SCOPE_HPP) (NLOHMANN_JSON_EXPAND..NLOHMANN_JSON_DOUBLE_PASTE63) is out of date!\n  Regenerate it, see tools/macro_builder/README.md.\n===================================================================" ; exit 1); \
 	diff "$$TMPDIR/type_body.hpp" "$$TMPDIR/type_body_actual.hpp" || (echo "===================================================================\n  $(MACRO_SCOPE_HPP) (NLOHMANN_JSON_TYPE_BODY) is out of date!\n  Regenerate it, see tools/macro_builder/README.md.\n===================================================================" ; exit 1)
+
+# check that the Meson build and the pkg-config files offer the options of the CMake target
+check_build_options:
+	python3 tools/check_build_options/check_build_options.py .
 
 # check if file single_include/nlohmann/json.hpp has been amalgamated from the nlohmann sources
 check-amalgamation:

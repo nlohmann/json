@@ -267,7 +267,9 @@ ninja -C builddir
 ```
 
 `meson_options.txt` defines the options, which mirror the CMake options that change the library's target (for example,
-`-DDiagnostics=true`). Meson requires this file next to `meson.build`, so it is also part of `include.zip`.
+`-DDiagnostics=true`). Meson requires this file next to `meson.build`, so it is also part of `include.zip`. `make check_build_options`
+([`tools/check_build_options`](tools/check_build_options/README.md)) checks in CI that both files and the pkg-config files
+stay in sync with the CMake options.
 
 When installing, `meson.build` installs the headers, a pkg-config file, and the CMake package config files, so that
 `find_package(nlohmann_json)` works. As Meson cannot generate `nlohmann_jsonTargets.cmake` itself, it is created from

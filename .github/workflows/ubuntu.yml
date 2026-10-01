@@ -39,6 +39,8 @@ jobs:
           persist-credentials: false
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
+      - name: Check that Meson and pkg-config offer the CMake options
+        run: make check_build_options
       - name: Install Meson
         run: pip install meson
       - name: Install with Meson
