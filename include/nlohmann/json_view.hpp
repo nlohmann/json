@@ -872,6 +872,7 @@ class basic_json_document
 
     /// parse into this document, reusing its memory
     template<typename InputType>
+    // flawfinder: ignore (a member function, not POSIX read())
     void read(InputType&& input,
               const bool allow_exceptions = true,
               const bool ignore_comments = false,
@@ -1044,6 +1045,8 @@ class basic_json_document
             return;
         }
         const char* cs = reinterpret_cast<const char*>(s); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        // C strings are null-terminated, as for json::parse(const char*)
+        // flawfinder: ignore
         build(cs, std::strlen(cs), ae, c, tc, false, true);
     }
 

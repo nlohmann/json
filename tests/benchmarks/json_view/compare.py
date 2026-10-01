@@ -30,7 +30,8 @@ import platform
 import re
 import shlex
 import shutil
-import subprocess
+# runs only the compilers and benchmark binaries this script builds
+import subprocess  # nosec B404
 import sys
 import tarfile
 import urllib.request
@@ -71,12 +72,14 @@ DEFAULT_CORPUS = [
 
 def run(cmd, **kwargs):
     print('+ ' + ' '.join(shlex.quote(c) for c in cmd), flush=True)
-    return subprocess.run(cmd, check=True, **kwargs)
+    # cmd is an argument list built by this script, never a shell string
+    return subprocess.run(cmd, check=True, **kwargs)  # nosec B603
 
 
 def output(cmd):
     try:
-        return subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()
+        # cmd is an argument list built by this script, never a shell string
+        return subprocess.run(cmd, check=True, capture_output=True, text=True).stdout.strip()  # nosec B603
     except (OSError, subprocess.CalledProcessError):
         return ''
 
@@ -150,7 +153,8 @@ def download_library(name, work):
     os.makedirs(os.path.dirname(archive), exist_ok=True)
     if not os.path.isfile(archive):
         print(f'downloading {pin["url"]}', flush=True)
-        urllib.request.urlretrieve(pin['url'], archive)
+        # the URLs are the https constants in PINNED, and the SHA-256 is checked below
+        urllib.request.urlretrieve(pin['url'], archive)  # nosec B310
     with open(archive, 'rb') as f:
         digest = hashlib.sha256(f.read()).hexdigest()
     if digest != pin['sha256']:
@@ -160,7 +164,7 @@ def download_library(name, work):
         with tarfile.open(archive) as t:
             # (the 'data' filter rejects links and paths outside the target where Python has it)
             kwargs = {'filter': 'data'} if hasattr(tarfile, 'data_filter') else {}
-            t.extractall(os.path.join(work, 'download'), **kwargs)  # noqa: S202 (checked archive)
+            t.extractall(os.path.join(work, 'download'), **kwargs)  # noqa: S202 (checked archive)  # nosec B202
     if name == 'yyjson':
         return Library(name, [os.path.join(src, 'src')], [os.path.join(src, 'src', 'yyjson.c')], [], pin['version'])
     if name == 'simdjson':
