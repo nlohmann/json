@@ -13,15 +13,13 @@ array data, it performs the following steps:
 - j1 = from_bson(data)
 - vec = to_bson(j1)
 - j2 = from_bson(vec)
-- assert(j1 == j2)
+- assert(to_bson(j2) == vec)
 
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
 
 #include <cassert>
-#include <iostream>
-#include <sstream>
 #include <nlohmann/json.hpp>
 
 // the round-trip checks below are assertions; NDEBUG would compile them away
@@ -39,11 +37,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
         // step 1: parse input
         std::vector<uint8_t> const vec1(data, data + size);
         json const j1 = json::from_bson(vec1);
-
-        if (j1.is_discarded())
-        {
-            return 0;
-        }
 
         try
         {

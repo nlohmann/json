@@ -213,11 +213,11 @@ namespace std
     JSON_HEDLEY_PRAGMA(clang diagnostic ignored "-Wmismatched-tags")
 #endif
 template<typename IteratorType>
-class tuple_size<::nlohmann::detail::iteration_proxy_value<IteratorType>> // NOLINT(cert-dcl58-cpp)
+class tuple_size<::nlohmann::detail::iteration_proxy_value<IteratorType>> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
     : public std::integral_constant<std::size_t, 2> {};
 
 template<std::size_t N, typename IteratorType>
-class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >> // NOLINT(cert-dcl58-cpp)
+class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
 {
   public:
     using type = decltype(
