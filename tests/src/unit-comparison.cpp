@@ -857,7 +857,7 @@ TEST_CASE("equality of objects whose entries have no fixed order")
 
     for (const std::size_t depth : std::vector<std::size_t> {0, 200})
     {
-        CAPTURE(depth);
+        CAPTURE(depth)
 
         const unordered_json descending = nest(make_unordered_object(true), depth);
         const unordered_json ascending = nest(make_unordered_object(false), depth);
@@ -909,7 +909,7 @@ TEST_CASE("equality of an object whose comparator treats different keys as equiv
 
     for (const std::size_t depth : std::vector<std::size_t> {0, 127, 128, 200})
     {
-        CAPTURE(depth);
+        CAPTURE(depth)
 
         const ci_json x = nest(a, depth);
         const ci_json y = nest(b, depth);
@@ -935,7 +935,7 @@ TEST_CASE("containers are compared element by element")
 
     for (const std::size_t depth : std::vector<std::size_t> {0, 200})
     {
-        CAPTURE(depth);
+        CAPTURE(depth)
 
         // objects with different keys
         {
