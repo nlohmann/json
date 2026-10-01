@@ -89,7 +89,7 @@ TEST_CASE("binary writer output sinks")
         // the first iteration
         for (const auto& j : test_values())
         {
-            CAPTURE(j.dump(-1, ' ', false, json::error_handler_t::replace));
+            CAPTURE(j.dump(-1, ' ', false, json::error_handler_t::replace))
 
             std::vector<std::uint8_t> cbor;
             json::to_cbor(j, cbor);
@@ -120,8 +120,8 @@ TEST_CASE("binary writer output sinks")
                     {
                         continue; // not a supported combination
                     }
-                    CAPTURE(use_size);
-                    CAPTURE(use_type);
+                    CAPTURE(use_size)
+                    CAPTURE(use_type)
                     std::vector<std::uint8_t> ubjson;
                     json::to_ubjson(j, ubjson, use_size, use_type);
                     CHECK(json::to_ubjson(j, use_size, use_type) == ubjson);
@@ -141,7 +141,7 @@ TEST_CASE("binary writer output sinks")
 
         for (const auto& j : bson_values())
         {
-            CAPTURE(j.dump());
+            CAPTURE(j.dump())
             std::vector<std::uint8_t> bson;
             json::to_bson(j, bson);
             CHECK(json::to_bson(j) == bson);
@@ -152,7 +152,7 @@ TEST_CASE("binary writer output sinks")
     {
         for (const auto& j : test_values())
         {
-            CAPTURE(j.dump(-1, ' ', false, json::error_handler_t::replace));
+            CAPTURE(j.dump(-1, ' ', false, json::error_handler_t::replace))
 
             const std::vector<std::uint8_t> expected = json::to_cbor(j);
             std::vector<char> as_char;
@@ -177,7 +177,7 @@ TEST_CASE("binary_reserve_hint never over-reserves")
 {
     for (const auto& j : test_values())
     {
-        CAPTURE(j.dump(-1, ' ', false, json::error_handler_t::replace));
+        CAPTURE(j.dump(-1, ' ', false, json::error_handler_t::replace))
 
         const std::size_t hint = nlohmann::detail::binary_reserve_hint(j);
 
@@ -194,7 +194,7 @@ TEST_CASE("binary_reserve_hint never over-reserves")
 
     for (const auto& j : bson_values())
     {
-        CAPTURE(j.dump());
+        CAPTURE(j.dump())
         CHECK(nlohmann::detail::binary_reserve_hint(j) <= json::to_bson(j).size());
     }
 
