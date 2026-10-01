@@ -273,7 +273,7 @@ When the default type is used, the maximal unsigned integer number that can be s
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) further states:
 
-> Note that when such software is used, numbers that are integers and are in the range $[-2^{53}+1, 2^{53}-1]$ are interoperable in the sense that implementations will agree exactly on their numeric values.
+> Note that when such software is used, numbers that are integers and are in the range [-2<sup>53</sup>+1, 2<sup>53</sup>-1] are interoperable in the sense that implementations will agree exactly on their numeric values.
 
 As this range is a subrange of the exactly supported range [`INT64_MIN`, `INT64_MAX`], this class's integer type is interoperable.
 

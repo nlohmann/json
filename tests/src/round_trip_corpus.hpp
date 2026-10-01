@@ -19,13 +19,14 @@
 
 #include <nlohmann/json.hpp>
 
-// Values for the round-trip property tests of the UBJSON and BJData writers.
+// Values for the round-trip property tests of the binary format writers
+// (BJData, BON8, BSON, CBOR, MessagePack and UBJSON).
 //
-// The fuzzer drivers (tests/src/fuzzer-parse_ubjson.cpp and
-// fuzzer-parse_bjdata.cpp) check that anything the library parses can be
-// serialized, parsed back, and serialized again without loss. Those checks
-// only run at OSS-Fuzz, so a regression used to surface days later as an
-// external report. The unit tests run the same checks on this corpus in CI.
+// The fuzzer drivers (tests/src/fuzzer-parse_*.cpp) check that anything the
+// library parses can be serialized, parsed back, and serialized again
+// without loss. Those checks only run at OSS-Fuzz, so a regression used to
+// surface days later as an external report. The unit tests run the same
+// checks on this corpus in CI.
 //
 // The corpus is deterministic: std::mt19937's output sequence is fixed by
 // the standard, and it is used directly rather than through a distribution
