@@ -73,9 +73,11 @@ otherwise, it uses unsigned integer storage.
     - The number types can be changed, see [Template number types](#template-number-types). 
     - The library converts integers and floating-point numbers itself, independent of the locale. Floating-point
       numbers are correctly rounded (to nearest, ties to even). Only a `#!c long double` that is not IEEE 754 binary64
-      (e.g., the 80-bit x87 format) is converted with `#!cpp std::from_chars` where available, or with
-      [`std::strtold`](https://en.cppreference.com/w/cpp/string/byte/strtof), which gets the decimal point of the
-      current locale, also one longer than one byte (e.g., in `fa_IR.UTF-8`).
+      (e.g., the 80-bit x87 format) is converted with `#!cpp std::from_chars` where available, or else with
+      [`std::strtold`](https://en.cppreference.com/w/cpp/string/byte/strtof). For that call, the library temporarily
+      replaces the `.` with the decimal point of the current locale (which may be longer than one byte, e.g., in
+      `fa_IR.UTF-8`), so the result does not depend on the locale either. Changing the locale in another thread during
+      parsing is undefined behavior of the C library, though.
 
 !!! example "Examples"
 
