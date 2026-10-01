@@ -236,6 +236,31 @@ TEST_CASE("Regression tests for extended diagnostics")
         }
     }
 
+    SECTION("Regression test for issue #5641 - parent pointers after update()/merge_patch() with an aliasing argument")
+    {
+        // update()'s and merge_patch()'s argument may be *this or one of its
+        // descendants; the values moved out of the (temporary) copy must end
+        // up with their parent pointing at their new location in *this
+        {
+            json j = {{"a", {{"a", 1}, {"b", 2}}}};
+            j.update(j["a"]);
+            CHECK(j == json({{"a", 1}, {"b", 2}}));
+
+            // Must call operator[] on const element, otherwise m_parent gets updated.
+            auto const& constJ = j;
+            CHECK_THROWS_WITH_AS(constJ["a"].at(0), "[json.exception.type_error.304] (/a) cannot use at() with number", json::type_error);
+        }
+
+        {
+            json j = {{"a", {{"a", nullptr}, {"b", 2}}}};
+            j.merge_patch(j["a"]);
+            CHECK(j == json({{"b", 2}}));
+
+            auto const& constJ = j;
+            CHECK_THROWS_WITH_AS(constJ["b"].at(0), "[json.exception.type_error.304] (/b) cannot use at() with number", json::type_error);
+        }
+    }
+
     SECTION("Regression test for issue #3032 - Yet another assertion failure when inserting into arrays with JSON_DIAGNOSTICS set")
     {
         // reference operator[](size_type idx)

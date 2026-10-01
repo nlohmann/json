@@ -21,85 +21,11 @@ using nlohmann::json;
 #include <limits>
 #include <set>
 #include "make_test_data_available.hpp"
+#include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
+#include "sax_countdown.hpp"
+using utils::SaxCountdown;
 
-namespace
-{
-class SaxCountdown
-{
-  public:
-    explicit SaxCountdown(const int count) : events_left(count)
-    {}
-
-    bool null()
-    {
-        return events_left-- > 0;
-    }
-
-    bool boolean(bool /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_integer(json::number_integer_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_unsigned(json::number_unsigned_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_float(json::number_float_t /*unused*/, const std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool string(std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool binary(std::vector<std::uint8_t>& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool start_object(std::size_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool key(std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool end_object()
-    {
-        return events_left-- > 0;
-    }
-
-    bool start_array(std::size_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool end_array()
-    {
-        return events_left-- > 0;
-    }
-
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/) // NOLINT(readability-convert-member-functions-to-static)
-    {
-        return false;
-    }
-
-  private:
-    int events_left = 0;
-};
-} // namespace
 
 TEST_CASE("MessagePack")
 {
@@ -1948,6 +1874,38 @@ TEST_CASE("Parse MessagePack directly from a file using iterator and sentinel")
     const std::istreambuf_iterator<char> first(file);
     const json parsed = json::from_msgpack(first, utils::istreambuf_sentinel{});
     CHECK((parsed.is_object() || parsed.is_array()));
+}
+
+TEST_CASE("MessagePack round-trip invariants")
+{
+    // This checks what the parse_msgpack_fuzzer driver checks (see
+    // tests/src/fuzzer-parse_msgpack.cpp), so that a regression shows up in
+    // CI rather than as an OSS-Fuzz report: anything from_msgpack() returns
+    // (j1) can be serialized, parsed back (j2), and serialized again to
+    // reproduce the exact bytes.
+    for (const auto& j0 : utils::round_trip_corpus::values())
+    {
+        json j1;
+        try
+        {
+            // turn the corpus value into a value as from_msgpack() returns it
+            j1 = json::from_msgpack(json::to_msgpack(j0));
+        }
+        catch (const json::exception&)
+        {
+            // the fuzzer driver only ever sees values from_msgpack() actually
+            // produced, so skip corpus values that do not survive the
+            // round trip here, too
+            continue;
+        }
+
+        INFO("j1 = " << j1.dump());
+        const std::vector<std::uint8_t> vec = json::to_msgpack(j1);
+        json j2;
+        // anything the library writes must be parsable by the library
+        REQUIRE_NOTHROW(j2 = json::from_msgpack(vec));
+        CHECK(json::to_msgpack(j2) == vec);
+    }
 }
 
 TEST_CASE("MessagePack roundtrips" * doctest::skip())

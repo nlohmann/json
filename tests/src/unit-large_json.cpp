@@ -135,7 +135,7 @@ TEST_CASE("tests on deeply nested JSONs")
             // are known to meet cleanly - wherever the bound is set.
             for (std::size_t d = 1; d <= 300; ++d)
             {
-                CAPTURE(d);
+                CAPTURE(d)
 
                 const json array = json::parse(std::string(d, '[') + '0' + std::string(d, ']'));
                 const json array_copy(array); // NOLINT(performance-unnecessary-copy-initialization): the copy is what is tested
@@ -252,7 +252,7 @@ TEST_CASE("tests on deeply nested JSONs")
         {
             for (const auto& pattern : patterns)
             {
-                CAPTURE(pattern);
+                CAPTURE(pattern)
                 const std::string text = nested_text(depth, pattern);
                 const json j = json::parse(text);
 
@@ -265,7 +265,7 @@ TEST_CASE("tests on deeply nested JSONs")
         {
             for (const auto& pattern : patterns)
             {
-                CAPTURE(pattern);
+                CAPTURE(pattern)
                 const std::string text = nested_text(depth, pattern);
                 const nlohmann::ordered_json o = nlohmann::ordered_json::parse(text);
 
@@ -278,7 +278,7 @@ TEST_CASE("tests on deeply nested JSONs")
         {
             for (const auto& pattern : patterns)
             {
-                CAPTURE(pattern);
+                CAPTURE(pattern)
                 const std::string text = nested_text(depth, pattern);
                 const json j = json::parse(text);
 
@@ -290,10 +290,10 @@ TEST_CASE("tests on deeply nested JSONs")
         {
             for (std::size_t d = 1; d <= 300; ++d)
             {
-                CAPTURE(d);
+                CAPTURE(d)
                 for (const auto& pattern : patterns)
                 {
-                    CAPTURE(pattern);
+                    CAPTURE(pattern)
                     const std::string text = nested_text(d, pattern);
                     const json j = json::parse(text);
 
