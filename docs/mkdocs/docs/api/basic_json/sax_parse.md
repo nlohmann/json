@@ -8,7 +8,8 @@ static bool sax_parse(InputType&& i,
                       input_format_t format = input_format_t::json,
                       const bool strict = true,
                       const bool ignore_comments = false,
-                      const bool ignore_trailing_commas = false);
+                      const bool ignore_trailing_commas = false,
+                      const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error);
 
 // (2)
 template<class IteratorType, class SAX, class SentinelType = IteratorType>
@@ -17,21 +18,8 @@ static bool sax_parse(IteratorType first, SentinelType last,
                       input_format_t format = input_format_t::json,
                       const bool strict = true,
                       const bool ignore_comments = false,
-                      const bool ignore_trailing_commas = false);
-
-// (3)
-template <typename InputType, typename SAX>
-static bool sax_parse(InputType&& i, SAX* sax,
-                      input_format_t format, const bool strict,
-                      const bool ignore_comments, const bool ignore_trailing_commas,
-                      const cbor_tag_handler_t tag_handler);
-
-// (4)
-template<class IteratorType, class SAX, class SentinelType = IteratorType>
-static bool sax_parse(IteratorType first, SentinelType last, SAX* sax,
-                      input_format_t format, const bool strict,
-                      const bool ignore_comments, const bool ignore_trailing_commas,
-                      const cbor_tag_handler_t tag_handler);
+                      const bool ignore_trailing_commas = false,
+                      const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error);
 ```
 
 Read from input and generate SAX events
@@ -42,8 +30,6 @@ Read from input and generate SAX events
     The value_type of the iterator must be an integral type with a size of 1, 2, or 4 bytes, which will be interpreted
     respectively as UTF-8, UTF-16, and UTF-32. If `SentinelType` differs from `IteratorType`, it must be comparable to
     the iterator type with `operator!=`.
-3. Like (1), with explicit handling for CBOR tags.
-4. Like (2), with explicit handling for CBOR tags.
 
 The SAX event lister must follow the interface of [`json_sax`](../json_sax/index.md).
 
@@ -99,8 +85,8 @@ The SAX event lister must follow the interface of [`json_sax`](../json_sax/index
     (`#!cpp false`); (optional, `#!cpp false` by default)
 
 `tag_handler` (in)
-:   how to handle CBOR tags; see [`cbor_tag_handler_t`](cbor_tag_handler_t.md). Required for overloads (3) and (4),
-    and ignored for formats other than CBOR. Overloads (1) and (2) use `cbor_tag_handler_t::error`.
+:   how to handle CBOR tags; see [`cbor_tag_handler_t`](cbor_tag_handler_t.md). Ignored for formats other than CBOR
+    (optional, `cbor_tag_handler_t::error` by default).
 
 `first` (in)
 :   iterator to the start of a character range

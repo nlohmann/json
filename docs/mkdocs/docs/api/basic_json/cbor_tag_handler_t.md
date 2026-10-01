@@ -9,8 +9,7 @@ enum class cbor_tag_handler_t
 };
 ```
 
-This enumeration is used in [`from_cbor`](from_cbor.md) and the tag-handler overloads of
-[`sax_parse`](sax_parse.md) to choose how to treat tags:
+This enumeration is used in [`from_cbor`](from_cbor.md) and [`sax_parse`](sax_parse.md) to choose how to treat tags:
 
 error
 :   report a parse error in case of a tag (the `from_cbor` overloads throw a `parse_error` exception by default)

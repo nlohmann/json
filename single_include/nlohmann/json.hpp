@@ -31930,22 +31930,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                           input_format_t format = input_format_t::json,
                           const bool strict = true,
                           const bool ignore_comments = false,
-                          const bool ignore_trailing_commas = false)
-    {
-        auto ia = detail::input_adapter(std::forward<InputType>(i));
-        return format == input_format_t::json
-               ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(sax, strict);
-    }
-
-    template <typename InputType, typename SAX>
-    JSON_HEDLEY_NON_NULL(2)
-    static bool sax_parse(InputType&& i, SAX* sax,
-                          input_format_t format,
-                          const bool strict,
-                          const bool ignore_comments,
-                          const bool ignore_trailing_commas,
-                          const cbor_tag_handler_t tag_handler)
+                          const bool ignore_trailing_commas = false,
+                          const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         return format == input_format_t::json
@@ -31962,23 +31948,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                           input_format_t format = input_format_t::json,
                           const bool strict = true,
                           const bool ignore_comments = false,
-                          const bool ignore_trailing_commas = false)
-    {
-        auto ia = detail::input_adapter(std::move(first), std::move(last));
-        return format == input_format_t::json
-               ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(sax, strict);
-    }
-
-    template<class IteratorType, class SAX, class SentinelType = IteratorType,
-             detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0>
-    JSON_HEDLEY_NON_NULL(3)
-    static bool sax_parse(IteratorType first, SentinelType last, SAX* sax,
-                          input_format_t format,
-                          const bool strict,
-                          const bool ignore_comments,
-                          const bool ignore_trailing_commas,
-                          const cbor_tag_handler_t tag_handler)
+                          const bool ignore_trailing_commas = false,
+                          const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         return format == input_format_t::json
@@ -32011,29 +31982,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                           input_format_t format = input_format_t::json,
                           const bool strict = true,
                           const bool ignore_comments = false,
-                          const bool ignore_trailing_commas = false)
+                          const bool ignore_trailing_commas = false,
+                          const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         auto ia = i.get();
         return format == input_format_t::json
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
                ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(sax, strict);
-    }
-
-    template <typename SAX>
-    JSON_HEDLEY_DEPRECATED_FOR(3.8.0, sax_parse(ptr, ptr + len, ...))
-    JSON_HEDLEY_NON_NULL(2)
-    static bool sax_parse(detail::span_input_adapter&& i, SAX* sax,
-                          input_format_t format,
-                          const bool strict,
-                          const bool ignore_comments,
-                          const bool ignore_trailing_commas,
-                          const cbor_tag_handler_t tag_handler)
-    {
-        auto ia = i.get();
-        return format == input_format_t::json
-               ? parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict)
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(sax, strict, tag_handler);
     }
 #if defined(__clang__)
