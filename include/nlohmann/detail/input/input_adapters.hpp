@@ -744,6 +744,9 @@ struct container_input_adapter_factory< ContainerType,
 
            static adapter_type create(ContainerType&& container)
 {
+    // container is forwarded twice on purpose: the resulting begin/end
+    // iterator types must match adapter_type, computed the same way
+    // NOLINTNEXTLINE(bugprone-use-after-move)
     return input_adapter(begin(std::forward<ContainerType>(container)), end(std::forward<ContainerType>(container)));
 }
        };

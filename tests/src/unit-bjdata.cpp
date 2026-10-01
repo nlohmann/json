@@ -2523,7 +2523,7 @@ TEST_CASE("BJData")
                         {"uint8", "int8", "uint16", "int16", "uint32", "int32", "uint64", "int64", "char"
                         })
                 {
-                    CAPTURE(type);
+                    CAPTURE(type)
                     const std::string text = std::string(R"({"_ArrayType_":")") + type +
                                              R"(","_ArraySize_":[2,3],"_ArrayData_":[1,2,3,4,5,6]})";
                     const auto from_text = json::to_bjdata(json::parse(text));
@@ -2831,7 +2831,7 @@ TEST_CASE("BJData")
                             R"({"_ArrayType_":"int16","_ArraySize_":[0,2],"_ArrayData_":[]})"
                         })
                 {
-                    CAPTURE(text);
+                    CAPTURE(text)
                     const json j = json::parse(text);
                     for (const bool use_size :
                             {
@@ -2865,7 +2865,7 @@ TEST_CASE("BJData")
                             R"({"_ArrayType_":"int16","_ArraySize_":[],"_ArrayData_":null})"
                         })
                 {
-                    CAPTURE(text);
+                    CAPTURE(text)
                     const json j = json::parse(text);
                     const auto out = json::to_bjdata(j);
                     CHECK(out.at(0) == '{');
@@ -4199,7 +4199,7 @@ TEST_CASE("BJData and UBJSON can be written to a string")
 
     for (const auto& j : values)
     {
-        CAPTURE(j.dump());
+        CAPTURE(j.dump())
         for (const bool use_size :
                 {
                     false, true
@@ -4214,8 +4214,8 @@ TEST_CASE("BJData and UBJSON can be written to a string")
                 {
                     continue;
                 }
-                CAPTURE(use_size);
-                CAPTURE(use_type);
+                CAPTURE(use_size)
+                CAPTURE(use_type)
 
                 const auto bjdata = json::to_bjdata(j, use_size, use_type);
                 std::string bjdata_string;

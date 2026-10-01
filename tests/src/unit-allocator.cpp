@@ -239,7 +239,7 @@ TEST_CASE("controlled bad_alloc")
             // iterative path instead, part-way through its worklist.
             const auto check_deep_copy = [](bool objects)
             {
-                CAPTURE(objects);
+                CAPTURE(objects)
 
                 next_construct_fails = false;
 
@@ -315,7 +315,7 @@ struct nth_alloc_fails_allocator : std::allocator<T>
 template<class BasicJsonType>
 void check_deep_copy_survives_failing_allocation(bool nest_objects)
 {
-    CAPTURE(nest_objects);
+    CAPTURE(nest_objects)
 
     fail_at_alloc_call = -1;
 
@@ -352,7 +352,7 @@ void check_deep_copy_survives_failing_allocation(bool nest_objects)
     // must come out exactly as it went in
     for (std::size_t n = 0; n < total_allocations; ++n)
     {
-        CAPTURE(n);
+        CAPTURE(n)
         alloc_call_count = 0;
         fail_at_alloc_call = static_cast<long>(n);
 

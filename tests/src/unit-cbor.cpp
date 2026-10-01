@@ -2878,7 +2878,7 @@ TEST_CASE("Tagged values")
         0xD5, 0xD6, 0xD7
     })
         {
-            CAPTURE(b);
+            CAPTURE(b)
 
             // add tag to value
             auto v_tagged = v;
@@ -3218,7 +3218,7 @@ TEST_CASE("CBOR large strings and binaries (chunked reader)")
                 std::size_t{4097}, std::size_t{8192}, std::size_t{100000}
             })
     {
-        CAPTURE(len);
+        CAPTURE(len)
 
         // text string
         const json j_string = std::string(len, 'x');

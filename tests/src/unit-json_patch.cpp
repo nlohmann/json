@@ -1829,13 +1829,13 @@ TEST_CASE("JSON patch: diff of deeply nested values")
 
         for (const auto depth : depths)
         {
-            CAPTURE(depth);
+            CAPTURE(depth)
             for (int from = 0; from < 3; ++from)
             {
                 for (int to = 0; to < 3; ++to)
                 {
-                    CAPTURE(from);
-                    CAPTURE(to);
+                    CAPTURE(from)
+                    CAPTURE(to)
                     const auto source = nested<json>(depth, from);
                     const auto target = nested<json>(depth, to);
                     const auto patch = json::diff(source, target);
@@ -1854,7 +1854,7 @@ TEST_CASE("JSON patch: diff of deeply nested values")
     {
         for (std::size_t depth = 0; depth <= 300; ++depth)
         {
-            CAPTURE(depth);
+            CAPTURE(depth)
             json source = 1;
             json target = 2;
             for (std::size_t i = 0; i < depth; ++i)
@@ -1878,7 +1878,7 @@ TEST_CASE("JSON patch: diff of deeply nested values")
                     false, true
                 })
         {
-            CAPTURE(objects);
+            CAPTURE(objects)
             std::string source_text;
             std::string target_text;
             std::string equal_text;
@@ -2046,7 +2046,7 @@ TEST_CASE("JSON patch - every operation on ordered_json")
         };
         for (const auto& target : targets)
         {
-            CAPTURE(target.dump());
+            CAPTURE(target.dump())
             CHECK(source.patch(ordered_json::diff(source, target)) == target);
         }
     }
