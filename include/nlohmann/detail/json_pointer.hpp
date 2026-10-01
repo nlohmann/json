@@ -320,26 +320,19 @@ class json_pointer
     static typename BasicJsonType::size_type array_index(const string_t& s)
     {
         typename BasicJsonType::size_type idx{};
-        const auto status = parse_array_index<BasicJsonType>(s, idx);
-
-        if (JSON_HEDLEY_UNLIKELY(status == array_index_status::leading_zero))
+        switch (parse_array_index<BasicJsonType>(s, idx))
         {
-            JSON_THROW(detail::parse_error::create(106, 0, detail::concat("array index '", s, "' must not begin with '0'"), nullptr));
-        }
-
-        if (JSON_HEDLEY_UNLIKELY(status == array_index_status::not_a_number))
-        {
-            JSON_THROW(detail::parse_error::create(109, 0, detail::concat("array index '", s, "' is not a number"), nullptr));
-        }
-
-        if (JSON_HEDLEY_UNLIKELY(status == array_index_status::unresolved))
-        {
-            JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", s, "'"), nullptr));
-        }
-
-        if (JSON_HEDLEY_UNLIKELY(status == array_index_status::exceeds_size_type))
-        {
-            JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));   // LCOV_EXCL_LINE
+            case array_index_status::leading_zero:
+                JSON_THROW(detail::parse_error::create(106, 0, detail::concat("array index '", s, "' must not begin with '0'"), nullptr));
+            case array_index_status::not_a_number:
+                JSON_THROW(detail::parse_error::create(109, 0, detail::concat("array index '", s, "' is not a number"), nullptr));
+            case array_index_status::unresolved:
+                JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", s, "'"), nullptr));
+            case array_index_status::exceeds_size_type:
+                JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));   // LCOV_EXCL_LINE
+            case array_index_status::ok:
+            default:
+                break;
         }
 
         return idx;
@@ -679,7 +672,7 @@ class json_pointer
                         return nullptr;
                     }
 
-                    // a malformed index still throws parse_error.106/109; an
+                    // a malformed index throws parse_error.106/109; an
                     // index that is syntactically valid but cannot be
                     // represented (out_of_range.404/410) is treated like an
                     // out-of-range index below

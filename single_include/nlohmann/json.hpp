@@ -5681,7 +5681,7 @@ auto from_json_array_reserve(ConstructibleArrayType& arr, typename Constructible
 }
 
 template<typename ConstructibleArrayType>
-inline void from_json_array_reserve(ConstructibleArrayType& /*arr*/, std::size_t /*size*/, priority_tag<0> /*unused*/)
+void from_json_array_reserve(ConstructibleArrayType& /*arr*/, std::size_t /*size*/, priority_tag<0> /*unused*/)
 {}
 
 template<typename BasicJsonType, typename ConstructibleArrayType,
@@ -5931,7 +5931,7 @@ auto from_json(BasicJsonType&& j, TupleRelated&& t)
 // shared body for std::map/std::unordered_map with a non-string Key: both
 // containers are read from an array of [key, value] pairs the same way
 template<typename BasicJsonType, typename MapType>
-inline void from_json_pair_array_to_map(const BasicJsonType& j, MapType& m)
+void from_json_pair_array_to_map(const BasicJsonType& j, MapType& m)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -5951,7 +5951,7 @@ inline void from_json_pair_array_to_map(const BasicJsonType& j, MapType& m)
 template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
            typename = enable_if_t < !std::is_constructible <
                                         typename BasicJsonType::string_t, Key >::value >>
-inline void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
+void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
 {
     from_json_pair_array_to_map(j, m);
 }
@@ -5959,7 +5959,7 @@ inline void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allo
 template < typename BasicJsonType, typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator,
            typename = enable_if_t < !std::is_constructible <
                                         typename BasicJsonType::string_t, Key >::value >>
-inline void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
+void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
 {
     from_json_pair_array_to_map(j, m);
 }
@@ -19774,26 +19774,19 @@ class json_pointer
     static typename BasicJsonType::size_type array_index(const string_t& s)
     {
         typename BasicJsonType::size_type idx{};
-        const auto status = parse_array_index<BasicJsonType>(s, idx);
-
-        if (JSON_HEDLEY_UNLIKELY(status == array_index_status::leading_zero))
+        switch (parse_array_index<BasicJsonType>(s, idx))
         {
-            JSON_THROW(detail::parse_error::create(106, 0, detail::concat("array index '", s, "' must not begin with '0'"), nullptr));
-        }
-
-        if (JSON_HEDLEY_UNLIKELY(status == array_index_status::not_a_number))
-        {
-            JSON_THROW(detail::parse_error::create(109, 0, detail::concat("array index '", s, "' is not a number"), nullptr));
-        }
-
-        if (JSON_HEDLEY_UNLIKELY(status == array_index_status::unresolved))
-        {
-            JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", s, "'"), nullptr));
-        }
-
-        if (JSON_HEDLEY_UNLIKELY(status == array_index_status::exceeds_size_type))
-        {
-            JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));   // LCOV_EXCL_LINE
+            case array_index_status::leading_zero:
+                JSON_THROW(detail::parse_error::create(106, 0, detail::concat("array index '", s, "' must not begin with '0'"), nullptr));
+            case array_index_status::not_a_number:
+                JSON_THROW(detail::parse_error::create(109, 0, detail::concat("array index '", s, "' is not a number"), nullptr));
+            case array_index_status::unresolved:
+                JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", s, "'"), nullptr));
+            case array_index_status::exceeds_size_type:
+                JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));   // LCOV_EXCL_LINE
+            case array_index_status::ok:
+            default:
+                break;
         }
 
         return idx;
@@ -20133,7 +20126,7 @@ class json_pointer
                         return nullptr;
                     }
 
-                    // a malformed index still throws parse_error.106/109; an
+                    // a malformed index throws parse_error.106/109; an
                     // index that is syntactically valid but cannot be
                     // represented (out_of_range.404/410) is treated like an
                     // out-of-range index below

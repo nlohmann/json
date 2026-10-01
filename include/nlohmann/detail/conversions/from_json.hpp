@@ -263,7 +263,7 @@ auto from_json_array_reserve(ConstructibleArrayType& arr, typename Constructible
 }
 
 template<typename ConstructibleArrayType>
-inline void from_json_array_reserve(ConstructibleArrayType& /*arr*/, std::size_t /*size*/, priority_tag<0> /*unused*/)
+void from_json_array_reserve(ConstructibleArrayType& /*arr*/, std::size_t /*size*/, priority_tag<0> /*unused*/)
 {}
 
 template<typename BasicJsonType, typename ConstructibleArrayType,
@@ -513,7 +513,7 @@ auto from_json(BasicJsonType&& j, TupleRelated&& t)
 // shared body for std::map/std::unordered_map with a non-string Key: both
 // containers are read from an array of [key, value] pairs the same way
 template<typename BasicJsonType, typename MapType>
-inline void from_json_pair_array_to_map(const BasicJsonType& j, MapType& m)
+void from_json_pair_array_to_map(const BasicJsonType& j, MapType& m)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -533,7 +533,7 @@ inline void from_json_pair_array_to_map(const BasicJsonType& j, MapType& m)
 template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
            typename = enable_if_t < !std::is_constructible <
                                         typename BasicJsonType::string_t, Key >::value >>
-inline void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
+void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
 {
     from_json_pair_array_to_map(j, m);
 }
@@ -541,7 +541,7 @@ inline void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allo
 template < typename BasicJsonType, typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator,
            typename = enable_if_t < !std::is_constructible <
                                         typename BasicJsonType::string_t, Key >::value >>
-inline void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
+void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
 {
     from_json_pair_array_to_map(j, m);
 }
