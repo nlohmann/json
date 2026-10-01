@@ -5,7 +5,7 @@ class parse_error : public exception;
 ```
 
 The library throws this exception when a parse error occurs. Parse errors can occur during the deserialization of
-JSON text, BSON, CBOR, MessagePack, UBJSON, as well as when using JSON Patch.
+JSON text, BJData, BON8, BSON, CBOR, MessagePack, UBJSON, as well as when using JSON Patch.
 
 Member `byte` holds the byte index of the last read character in the input file (see note below).
 
@@ -54,7 +54,7 @@ classDiagram
 
 ## Notes
 
-For an input with $n$ bytes, 1 is the index of the first character and $n+1$ is the index of the terminating null byte
+For an input with <i>n</i> bytes, 1 is the index of the first character and <i>n</i>+1 is the index of the terminating null byte
 or the end of file. This also holds true when reading a byte vector for binary formats.
 
 ## Examples

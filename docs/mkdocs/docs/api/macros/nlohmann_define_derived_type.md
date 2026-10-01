@@ -57,7 +57,8 @@ Summary:
 :   name of the base type (class, struct) `type` is derived from
 
 `member` (in)
-:   name of the member variable to serialize/deserialize; up to 63 members can be given as a comma-separated list
+:   name of the member variable to serialize/deserialize; up to 63 members can be given as a comma-separated
+    list, which may also be empty
 
 ## Default definition
 
@@ -126,6 +127,20 @@ void to_json(BasicJsonType& j, const B& b) {
     - Macros 1, 2, and 3 have the same prerequisites of [NLOHMANN_DEFINE_TYPE_INTRUSIVE](nlohmann_define_type_intrusive.md).
     - Macros 4, 5, and 6 have the same prerequisites of [NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE](nlohmann_define_type_non_intrusive.md).
     - Serialization/deserialization of base types must be defined.
+
+!!! info "Derived types without own members"
+
+    The member list may be empty. The macro then generates a `to_json`/`from_json` pair that only delegates to
+    the base type, so `type` serializes exactly like `base_type`:
+
+    ```cpp
+    struct derived : base
+    {
+        NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(derived, base)
+    };
+    ```
+
+    The `WITH_NAMES` variants do not support this.
 
 !!! warning "Implementation limits"
 

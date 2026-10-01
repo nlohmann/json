@@ -13,15 +13,19 @@ array data, it performs the following steps:
 - j1 = from_cbor(data)
 - vec = to_cbor(j1)
 - j2 = from_cbor(vec)
-- assert(j1 == j2)
+- assert(to_cbor(j2) == vec)
 
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
 
-#include <iostream>
-#include <sstream>
+#include <cassert>
 #include <nlohmann/json.hpp>
+
+// the round-trip checks below are assertions; NDEBUG would compile them away
+#ifdef NDEBUG
+    #error "the fuzzer drivers must be built without NDEBUG"
+#endif
 
 using json = nlohmann::json;
 

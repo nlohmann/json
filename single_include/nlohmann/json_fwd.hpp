@@ -11,8 +11,7 @@
 
 #include <cstdint> // int64_t, uint64_t
 #include <map> // map
-#include <memory> // allocator
-#include <string> // string
+#include <string> // allocator, string
 #include <vector> // vector
 
 // #include <nlohmann/detail/abi_macros.hpp>
@@ -52,6 +51,18 @@
     #define JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON 0
 #endif
 
+#ifndef JSON_BRACE_INIT_COPY_SEMANTICS
+    #define JSON_BRACE_INIT_COPY_SEMANTICS 0
+#endif
+
+#ifndef JSON_PRECISE_STREAM_POSITION
+    #define JSON_PRECISE_STREAM_POSITION 0
+#endif
+
+#ifndef JSON_STRICT_NUL_HANDLING
+    #define JSON_STRICT_NUL_HANDLING 0
+#endif
+
 #if JSON_DIAGNOSTICS
     #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS _diag
 #else
@@ -70,20 +81,41 @@
     #define NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON
 #endif
 
+#if JSON_BRACE_INIT_COPY_SEMANTICS
+    #define NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS _bics
+#else
+    #define NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS
+#endif
+
+#if JSON_PRECISE_STREAM_POSITION
+    #define NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION _psp
+#else
+    #define NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION
+#endif
+
+#if JSON_STRICT_NUL_HANDLING
+    #define NLOHMANN_JSON_ABI_TAG_STRICT_NUL_HANDLING _snul
+#else
+    #define NLOHMANN_JSON_ABI_TAG_STRICT_NUL_HANDLING
+#endif
+
 #ifndef NLOHMANN_JSON_NAMESPACE_NO_VERSION
     #define NLOHMANN_JSON_NAMESPACE_NO_VERSION 0
 #endif
 
 // Construct the namespace ABI tags component
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c) json_abi ## a ## b ## c
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c) \
-    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c)
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f) json_abi ## a ## b ## c ## d ## e ## f
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d, e, f) \
+    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f)
 
 #define NLOHMANN_JSON_ABI_TAGS                                       \
     NLOHMANN_JSON_ABI_TAGS_CONCAT(                                   \
             NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS,                       \
             NLOHMANN_JSON_ABI_TAG_LEGACY_DISCARDED_VALUE_COMPARISON, \
-            NLOHMANN_JSON_ABI_TAG_DIAGNOSTIC_POSITIONS)
+            NLOHMANN_JSON_ABI_TAG_DIAGNOSTIC_POSITIONS,              \
+            NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS,         \
+            NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION,           \
+            NLOHMANN_JSON_ABI_TAG_STRICT_NUL_HANDLING)
 
 // Construct the namespace version component
 #define NLOHMANN_JSON_NAMESPACE_VERSION_CONCAT_EX(major, minor, patch) \
@@ -144,7 +176,7 @@ This serializer ignores the template arguments and uses ADL
 for serialization.
 */
 template<typename T = void, typename SFINAE = void>
-struct adl_serializer;
+struct adl_serializer; // IWYU pragma: keep
 
 /// a class to store JSON values
 /// @sa https://json.nlohmann.me/api/basic_json/
@@ -160,12 +192,12 @@ template<template<typename U, typename V, typename... Args> class ObjectType =
          adl_serializer,
          class BinaryType = std::vector<std::uint8_t>, // cppcheck-suppress syntaxError
          class CustomBaseClass = void>
-class basic_json;
+class basic_json; // IWYU pragma: keep
 
 /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
 /// @sa https://json.nlohmann.me/api/json_pointer/
 template<typename RefStringType>
-class json_pointer;
+class json_pointer; // IWYU pragma: keep
 
 /*!
 @brief default specialization
@@ -176,7 +208,7 @@ using json = basic_json<>;
 /// @brief a minimal map-like container that preserves insertion order
 /// @sa https://json.nlohmann.me/api/ordered_map/
 template<class Key, class T, class IgnoredLess, class Allocator>
-struct ordered_map;
+struct ordered_map; // IWYU pragma: keep
 
 /// @brief specialization that maintains the insertion order of object keys
 /// @sa https://json.nlohmann.me/api/ordered_json/

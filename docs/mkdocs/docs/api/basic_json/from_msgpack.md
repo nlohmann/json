@@ -73,8 +73,8 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
   the end of the file was not reached when `strict` was set to true
 - Throws [parse_error.112](../../home/exceptions.md#jsonexceptionparse_error112) if unsupported features from
   MessagePack were used in the given input or if the input is not valid MessagePack
-- Throws [parse_error.113](../../home/exceptions.md#jsonexceptionparse_error113) if a string was expected as a map key,
-  but not found
+- Throws [parse_error.113](../../home/exceptions.md#jsonexceptionparse_error113) if a map key is not a string (keys of other
+  types are not supported, as JSON object keys are always strings) or a string is malformed
 
 ## Complexity
 
@@ -103,6 +103,7 @@ Linear in the size of the input.
 - [from_bson](from_bson.md) create a JSON value from an input in BSON format
 - [from_ubjson](from_ubjson.md) create a JSON value from an input in UBJSON format
 - [from_bjdata](from_bjdata.md) create a JSON value from an input in BJData format
+- [from_bon8](from_bon8.md) create a JSON value from an input in BON8 format
 
 ## Version history
 

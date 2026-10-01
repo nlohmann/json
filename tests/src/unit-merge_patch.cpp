@@ -14,6 +14,60 @@ using nlohmann::json;
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 #endif
 
+#include <string>
+
+namespace
+{
+// RFC 7396's MergePatch, written recursively as in the RFC; only usable on
+// values nested a few hundred levels deep
+void reference_merge_patch(json& target, const json& patch)
+{
+    if (!patch.is_object())
+    {
+        target = patch;
+        return;
+    }
+    if (!target.is_object())
+    {
+        target = json::object();
+    }
+    for (auto it = patch.begin(); it != patch.end(); ++it)
+    {
+        if (it.value().is_null())
+        {
+            target.erase(it.key());
+        }
+        else
+        {
+            reference_merge_patch(target[it.key()], it.value());
+        }
+    }
+}
+
+// objects nested `depth` levels deep under the key "a", with members that
+// differ by `variant` on the way down
+std::string nested_objects(const std::size_t depth, const int variant)
+{
+    std::string text;
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        text += "{";
+        if ((i + static_cast<std::size_t>(variant)) % 3 == 0)
+        {
+            text += "\"s" + std::to_string(variant) + "\":" + std::to_string(i) + ",";
+        }
+        if (variant == 2 && i % 5 == 0)
+        {
+            text += "\"s0\":null,";
+        }
+        text += "\"a\":";
+    }
+    text += variant == 1 ? R"({"x":1,"y":null})" : "{\"y\":2}";
+    text.append(depth, '}');
+    return text;
+}
+} // namespace
+
 TEST_CASE("JSON Merge Patch")
 {
     SECTION("examples from RFC 7396")
@@ -239,6 +293,133 @@ TEST_CASE("JSON Merge Patch")
                 original.merge_patch(patch);
                 CHECK(original == result);
             }
+        }
+    }
+}
+
+TEST_CASE("JSON Merge Patch on deeply nested values")
+{
+    SECTION("patching past the descent bound gives the same result")
+    {
+        // every depth on either side of where the iterative version takes
+        // over (detail::recursion_depth_limit(), 128)
+        for (std::size_t depth = 0; depth <= 300; ++depth)
+        {
+            CAPTURE(depth)
+            for (int variant = 0; variant < 3; ++variant)
+            {
+                CAPTURE(variant)
+                const json patch = json::parse(nested_objects(depth, variant));
+
+                json result = json::parse(nested_objects(depth, (variant + 1) % 3));
+                json expected = result;
+                result.merge_patch(patch);
+                reference_merge_patch(expected, patch);
+                CHECK(result == expected);
+
+                // a target that is not an object, and an empty one
+                json from_null;
+                from_null.merge_patch(patch);
+                json expected_from_null;
+                reference_merge_patch(expected_from_null, patch);
+                CHECK(from_null == expected_from_null);
+            }
+        }
+    }
+
+    SECTION("patches nested too deeply for the call stack (#5393)")
+    {
+        // applying a patch used to recurse once per nesting level. The result
+        // is only walked, never copied or compared, since those recurse too.
+        const std::size_t depth = 100000;
+        json target = json::parse(nested_objects(depth, 0));
+        target.merge_patch(json::parse(nested_objects(depth, 1)));
+
+        const json* p = &target;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            p = &p->at("a");
+        }
+        // {"y":2} patched with {"x":1,"y":null}
+        CHECK(p->size() == 1);
+        CHECK(p->at("x") == 1);
+    }
+}
+
+TEST_CASE("JSON Merge Patch and update on ordered_json")
+{
+    using nlohmann::ordered_json;
+
+    SECTION("merge_patch")
+    {
+        ordered_json target = ordered_json::parse(R"({"a": {"b": 1, "c": 2}, "d": 3, "e": [1]})");
+        target.merge_patch(ordered_json::parse(R"({"a": {"b": null, "f": 4}, "d": {"x": {"y": null}}, "e": null, "g": {"h": 5}})"));
+        CHECK(target == ordered_json::parse(R"({"a": {"c": 2, "f": 4}, "d": {"x": {}}, "g": {"h": 5}})"));
+
+        // a patch that is not an object replaces the target
+        target.merge_patch(ordered_json({1, 2}));
+        CHECK(target == ordered_json({1, 2}));
+        // an object patch turns a target that is not an object into one
+        target.merge_patch(ordered_json::parse(R"({"k": {"l": null}})"));
+        CHECK(target == ordered_json::parse(R"({"k": {}})"));
+    }
+
+    SECTION("update with merge_objects")
+    {
+        ordered_json target = ordered_json::parse(R"({"a": {"b": 1, "c": {"d": 2}}, "e": 3})");
+        target.update(ordered_json::parse(R"({"a": {"c": {"x": 1}, "f": 4}, "e": {"y": 5}, "g": 6})"), true);
+        CHECK(target == ordered_json::parse(R"({"a": {"b": 1, "c": {"d": 2, "x": 1}, "f": 4}, "e": {"y": 5}, "g": 6})"));
+
+        target.update(ordered_json::parse(R"({"a": 1})"), false);
+        CHECK(target == ordered_json::parse(R"({"a": 1, "e": {"y": 5}, "g": 6})"));
+    }
+}
+
+TEST_CASE("merge_patch() with an argument that aliases *this (#5641)")
+{
+    SECTION("j.merge_patch(j): erasing a member destroys the node the loop's iterator points to")
+    {
+        // reproduces issue #5641, case 1
+        json j = {{"a", nullptr}, {"b", 1}};
+        j.merge_patch(j);
+        CHECK(j == json({{"b", 1}}));
+    }
+
+    SECTION("j.merge_patch(j[\"a\"]): removing \"a\" destroys the patch while it is iterated")
+    {
+        // reproduces issue #5641, case 2
+        json j = {{"a", {{"a", nullptr}, {"b", 2}}}};
+        j.merge_patch(j["a"]);
+        CHECK(j == json({{"b", 2}}));
+    }
+
+    SECTION("a patch nested past the iterative descent bound aliases *this")
+    {
+        // every depth on either side of where the iterative version takes
+        // over (detail::recursion_depth_limit(), 128); patching *this with
+        // itself is idempotent, aliased or not
+        for (const std::size_t depth :
+                {
+                    std::size_t{0}, std::size_t{127}, std::size_t{128}, std::size_t{300}
+                })
+        {
+            CAPTURE(depth)
+            json j = json::parse(nested_objects(depth, 0));
+            const json expected = j;
+            j.merge_patch(j);
+            CHECK(j == expected);
+        }
+    }
+
+    SECTION("ordered_json")
+    {
+        using nlohmann::ordered_json;
+
+        SECTION("merge_patch with a member of *this")
+        {
+            ordered_json j = {{"a", {{"a", nullptr}, {"b", 2}}}};
+            j.merge_patch(j["a"]);
+            CHECK(j == ordered_json({{"b", 2}}));
         }
     }
 }

@@ -8,6 +8,14 @@
 
 #include "doctest_compatibility.h"
 
+// capture whether JSON_STRICT_NUL_HANDLING was enabled on the command line
+// (e.g. -DJSON_STRICT_NUL_HANDLING=1) *before* including json.hpp, since the
+// library #undefs JSON_STRICT_NUL_HANDLING itself once the header has been
+// fully processed (see include/nlohmann/detail/macro_unscope.hpp)
+#if defined(JSON_STRICT_NUL_HANDLING) && (JSON_STRICT_NUL_HANDLING == 1)
+    #define JSON_TEST_STRICT_NUL_HANDLING_ENABLED 1
+#endif
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 #ifdef JSON_TEST_NO_GLOBAL_UDLS
@@ -17,12 +25,8 @@ using nlohmann::json;
 #include <iostream>
 #include <iterator>
 #include <sstream>
+#include <string>
 #include <valarray>
-
-#if defined(_WIN32)
-    #define NOMINMAX
-    #include <windows.h> // for GetACP()
-#endif
 
 namespace
 {
@@ -219,24 +223,6 @@ class proxy_iterator
     iterator* m_it = nullptr;
 };
 
-// JSON_HAS_CPP_20
-#if defined(__cpp_char8_t)
-bool check_utf8()
-{
-#if defined(_WIN32)
-    // Runtime check of the active ANSI code page
-    // 65001 == UTF-8
-    return GetACP() == 65001;
-#elif defined(__ICC) || defined(__INTEL_COMPILER)
-    // classic Intel ICC does not encode narrow string literals containing
-    // non-ASCII source characters as UTF-8, so comparing a decoded u8 literal
-    // against a narrow string literal containing the same characters fails
-    return false;
-#else
-    return true;
-#endif
-}
-#endif
 } // namespace
 
 TEST_CASE("deserialization")
@@ -323,6 +309,23 @@ TEST_CASE("deserialization")
             CHECK(j == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
         }
 
+        SECTION("operator>> with a NUL byte after the value (issue #5530)")
+        {
+            // operator>> parses non-strictly (it does not require the whole
+            // stream to be consumed), so a NUL byte following a complete
+            // value is simply left unread on the stream and never reaches
+            // the "expected end of input" check that JSON_STRICT_NUL_HANDLING
+            // affects; this holds regardless of the macro (verified below for
+            // the opt-in state as well)
+            std::string data = "123";
+            data.push_back('\0');
+            std::istringstream ss(data);
+            json j;
+            ss >> j;
+            CHECK(j == json(123));
+            CHECK(ss.good());
+        }
+
         SECTION("user-defined string literal")
         {
             CHECK("[\"foo\",1,2,3,false,{\"one\":1}]"_json == json({"foo", 1, 2, 3, false, {{"one", 1}}}));
@@ -360,6 +363,37 @@ TEST_CASE("deserialization")
                 "start_object()", "key(one)", "number_unsigned(1)",
                 "end_object()", "parse_error(29)"
             }));
+        }
+
+        SECTION("stream with eofbit in its exception mask (issue #5646)")
+        {
+            // reaching EOF while parsing a value that fills the whole input
+            // (e.g., a number, or any value under strict parsing) makes
+            // get_character() call std::istream::clear() to record eofbit;
+            // with eofbit in the exception mask, that clear() itself throws
+            // std::ios_base::failure - it must propagate to the caller instead
+            // of ~input_stream_adapter() throwing a second exception while the
+            // first is still unwinding, which would call std::terminate
+            json _;
+
+            std::istringstream is1("1");
+            is1.exceptions(std::ios::eofbit);
+            CHECK_THROWS_AS(_ = json::parse(is1), std::ios_base::failure&);
+
+            // the same holds for the common std::ifstream::exceptions(failbit |
+            // badbit | eofbit) pattern, because only eofbit ends up set
+            std::istringstream is2("1");
+            is2.exceptions(std::ios::failbit | std::ios::badbit | std::ios::eofbit);
+            CHECK_THROWS_AS(_ = json::parse(is2), std::ios_base::failure&);
+        }
+
+        SECTION("stream without a streambuf (issue #5646)")
+        {
+            // std::istream(nullptr) has badbit set and rdbuf() == nullptr;
+            // get_character() must not dereference that null streambuf
+            std::istream is(nullptr);
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::parse(is), "[json.exception.parse_error.101] parse error: attempting to parse an empty input; check that your input string or stream contains the expected JSON", json::parse_error&);
         }
 
         SECTION("string")
@@ -404,6 +438,27 @@ TEST_CASE("deserialization")
             json j;
             CHECK_THROWS_WITH_AS(ss >> j, "[json.exception.parse_error.101] parse error at line 1, column 29: syntax error while parsing array - unexpected end of input; expected ']'", json::parse_error&);
         }
+
+#if defined(JSON_TEST_STRICT_NUL_HANDLING_ENABLED)
+        SECTION("operator>> with a NUL byte where a value is expected (JSON_STRICT_NUL_HANDLING == 1, issue #5530)")
+        {
+            // a trailing NUL byte *after* a complete value is unaffected by the
+            // macro (see the successful-deserialization "operator>> with a NUL
+            // byte after the value" section above): operator>> parses
+            // non-strictly and never reaches the "expected end of input" check
+            // that the macro changes. A NUL byte where a *value* is expected,
+            // however, goes through the same token dispatch as any other input
+            // and is affected: with the macro enabled it now raises
+            // parse_error.101 (like any other unrecognized byte) instead of
+            // being silently treated the same as an empty stream.
+            std::string const data(1, '\0');
+            std::istringstream ss(data);
+            json j;
+            CHECK_THROWS_WITH_AS(ss >> j,
+                                 "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: '<U+0000>'",
+                                 json::parse_error&);
+        }
+#endif
 
         SECTION("user-defined string literal")
         {
@@ -453,7 +508,11 @@ TEST_CASE("deserialization")
 
             SECTION("from std::array")
             {
-                std::array<uint8_t, 5> const v { {'t', 'r', 'u', 'e'} };
+                // sized to exactly the length of "true": a size of 5 would leave
+                // a value-initialized trailing 0x00 element that is only
+                // silently accepted as end-of-input by default and would fail
+                // under JSON_STRICT_NUL_HANDLING
+                std::array<uint8_t, 4> const v { {'t', 'r', 'u', 'e'} };
                 CHECK(json::parse(v) == json(true));
                 CHECK(json::accept(v));
 
@@ -549,7 +608,9 @@ TEST_CASE("deserialization")
 
             SECTION("from std::array")
             {
-                std::array<uint8_t, 5> v { {'t', 'r', 'u', 'e'} };
+                // sized to exactly the length of "true", see the analogous
+                // "from std::array" section above for why
+                std::array<uint8_t, 4> v { {'t', 'r', 'u', 'e'} };
                 CHECK(json::parse(std::begin(v), std::end(v)) == json(true));
                 CHECK(json::accept(std::begin(v), std::end(v)));
 
@@ -1181,6 +1242,59 @@ TEST_CASE("deserialization")
         }
     }
 
+    SECTION("stream position after extraction without JSON_PRECISE_STREAM_POSITION (#5340)")
+    {
+        // By default, the character that terminates a number is consumed, so
+        // the stream is left one byte too far after a number (and only after a
+        // number). JSON_PRECISE_STREAM_POSITION changes this; see
+        // unit-precise-stream-position.cpp. These checks pin the default.
+        const auto remaining = [](std::istream & is) -> std::string
+        {
+            return {std::istreambuf_iterator<char>(is), std::istreambuf_iterator<char>()};
+        };
+
+        SECTION("the character after a number is consumed")
+        {
+            std::istringstream ss("1true");
+            json j;
+            ss >> j;
+            CHECK(j == 1);
+            CHECK(remaining(ss) == "rue");
+        }
+
+        SECTION("the character after other values is not consumed")
+        {
+            std::istringstream ss("[1]true");
+            json j;
+            ss >> j;
+            CHECK(j == json::parse("[1]"));
+            CHECK(remaining(ss) == "true");
+        }
+
+        SECTION("comma-separated numbers can be read one by one")
+        {
+            std::istringstream ss("1,2,3");
+            json j1;
+            json j2;
+            json j3;
+            ss >> j1 >> j2 >> j3;
+            CHECK(j1 == 1);
+            CHECK(j2 == 2);
+            CHECK(j3 == 3);
+        }
+
+        SECTION("std::getline after a number skips the line break")
+        {
+            std::istringstream ss("42\nfoo");
+            json j;
+            std::string line;
+            ss >> j;
+            std::getline(ss, line);
+            CHECK(j == 42);
+            CHECK(line == "foo");
+        }
+    }
+
     // build with C++20
     // JSON_HAS_CPP_20
 #if defined(__cpp_char8_t)
@@ -1191,14 +1305,15 @@ TEST_CASE("deserialization")
         CHECK(j1["key"] == "value");
         CHECK(j1["num"] == 42);
 
-        // UTF-8 prefixed literal (C++20 and later);
-        // MSVC may not set /utf-8, so we need to check
-        if (check_utf8())
-        {
-            const auto j2 = u8R"({"emoji": "😀", "msg": "hello"})"_json;
-            CHECK(j2["emoji"] == "😀");
-            CHECK(j2["msg"] == "hello");
-        }
+        // UTF-8 prefixed literal (C++20 and later); the emoji is written as a
+        // \U escape rather than a raw multibyte character so this does not
+        // depend on the compiler's source-file encoding (e.g., MSVC without
+        // /utf-8, or classic ICC, which does not encode non-ASCII narrow
+        // string literals as UTF-8 - compare against a \x-escaped expectation
+        // for the same reason)
+        const auto j2 = u8"{\"emoji\": \"\U0001F600\", \"msg\": \"hello\"}"_json;
+        CHECK(j2["emoji"] == "\xF0\x9F\x98\x80");
+        CHECK(j2["msg"] == "hello");
 
         const auto j3 = u8R"({"key": "value", "num": 42})"_json;
         CHECK(j3["key"] == "value");

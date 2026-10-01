@@ -88,6 +88,8 @@ Strong exception safety: if an exception occurs, the original value stays intact
       do not belong to the same JSON value; example: `"iterators do not fit"`
     - Throws [`invalid_iterator.211`](../../home/exceptions.md#jsonexceptioninvalid_iterator211) if `first` or `last`
       are iterators into container for which insert is called; example: `"passed iterators may not belong to container"`
+    - Throws [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202) if `first` or `last`
+      do not point to an array; example: `"iterators first and last must point to arrays"`
 4. The function can throw the following exceptions:
     - Throws [`type_error.309`](../../home/exceptions.md#jsonexceptiontype_error309) if called on JSON values other than
       arrays; example: `"cannot use insert() with string"`
@@ -193,5 +195,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 1. Added in version 1.0.0.
 2. Added in version 1.0.0.
 3. Added in version 1.0.0.
-4. Added in version 1.0.0.
+4. Added in version 1.0.0. Fixed in version 3.13.0 to copy the values before inserting; before, an `ilist` that
+   referred to elements of the array being inserted into could insert wrong values, because the range insert could
+   move from or shift an element before it was copied.
 5. Added in version 3.0.0.

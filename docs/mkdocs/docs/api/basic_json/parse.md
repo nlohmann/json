@@ -88,7 +88,12 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 ## Exceptions
 
 - Throws [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) in case of an unexpected token, or
-  empty input like a null `FILE*` or `char*` pointer.
+  empty input like a null `FILE*` or `char*` pointer, or an `std::istream` without a stream buffer
+  (`#!cpp i.rdbuf() == nullptr`, for instance `#!cpp std::istream(nullptr)`).
+- If reading from an `std::istream` reaches the end of the input and `eofbit` is part of the stream's
+  [`exceptions()`](https://en.cppreference.com/w/cpp/io/basic_ios/exceptions) mask, the `std::ios_base::failure`
+  thrown by the stream itself propagates instead of a `parse_error`, the same as it would for the standard library's
+  own extraction operators.
 
 ## Complexity
 
@@ -102,6 +107,10 @@ A UTF-8 byte order mark is silently ignored.
 
 Invalid Unicode escapes and unpaired surrogates in the input are reported as
 [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) with a detailed message.
+
+By default, a `'\0'` (NUL) byte anywhere in the input is treated as end of input, rather than as an ordinary (and,
+outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-bytes-in-the-input) for details and the
+[`JSON_STRICT_NUL_HANDLING`](../macros/json_strict_nul_handling.md) macro to opt into rejecting it instead.
 
 ## Examples
 
@@ -236,6 +245,8 @@ Invalid Unicode escapes and unpaired surrogates in the input are reported as
 - [accept](accept.md) - check if the input is valid JSON
 - [sax_parse](sax_parse.md) - parse input using the SAX interface
 - [operator>>](../operator_gtgt.md) - deserialize from stream
+- [`JSON_STRICT_NUL_HANDLING`](../macros/json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input
+  instead of treating it as end of input
 
 ## Version history
 
@@ -246,6 +257,10 @@ Invalid Unicode escapes and unpaired surrogates in the input are reported as
 - Added `ignore_trailing_commas` in version 3.13.0.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
+- `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 to optionally reject a NUL byte in the input instead of treating
+  it as end of input; planned to become the default in version 4.0.0.
+- Extended empty-input detection to also cover an `std::istream` without a stream buffer, and fixed a crash
+  (`std::terminate`) when parsing from an `std::istream` with `eofbit` in its exception mask, in version 3.13.0.
 
 !!! warning "Deprecation"
 

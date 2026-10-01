@@ -169,6 +169,12 @@ Enable position diagnostics by defining macro [`JSON_DIAGNOSTIC_POSITIONS`](../a
 Disable default `enum` serialization by defining the macro
 [`JSON_DISABLE_ENUM_SERIALIZATION`](../api/macros/json_disable_enum_serialization.md). This option is `OFF` by default.
 
+### `JSON_DisableTupleReferenceConversion`
+
+Disable the conversion from a one-element `std::tuple` holding a reference to a JSON value by defining the macro
+[`JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`](../api/macros/json_disable_tuple_reference_conversion.md). This option is
+`OFF` by default.
+
 ### `JSON_FastTests`
 
 Skip expensive/slow test suites. This option is `OFF` by default. Depends on `JSON_BuildTests`.
@@ -197,6 +203,11 @@ Use the non-amalgamated version of the library. This option is `ON` by default.
 ### `JSON_SystemInclude`
 
 Treat the library headers like system headers (i.e., adding `SYSTEM` to the [`target_include_directories`](https://cmake.org/cmake/help/latest/command/target_include_directories.html) call) to check for this library by tools like Clang-Tidy. This option is `OFF` by default.
+
+### `JSON_StrictNulHandling`
+
+Reject a `'\0'` (NUL) byte in the input instead of treating it as end of input, by defining the macro
+[`JSON_STRICT_NUL_HANDLING`](../api/macros/json_strict_nul_handling.md). This option is `OFF` by default.
 
 ### `JSON_Valgrind`
 

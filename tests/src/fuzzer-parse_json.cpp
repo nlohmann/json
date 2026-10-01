@@ -20,9 +20,13 @@ The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
 
-#include <iostream>
-#include <sstream>
+#include <cassert>
 #include <nlohmann/json.hpp>
+
+// the round-trip checks below are assertions; NDEBUG would compile them away
+#ifdef NDEBUG
+    #error "the fuzzer drivers must be built without NDEBUG"
+#endif
 
 using json = nlohmann::json;
 

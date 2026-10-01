@@ -52,35 +52,25 @@ install_docset_zeal: JSON_for_Modern_C++.docset
 	mkdir -p $$docset_root; \
 	cp -r JSON_for_Modern_C++.docset $$docset_root/
 
+# both targets below compare the docset search index with the mkdocs page
+# set. They share the same normalization (docs/foo/index.md and
+# docs/foo.md both become foo/index.html, the URL mkdocs itself would
+# give the page; the top-level index.md is excluded, as it is not part
+# of the hand-curated docSet.sql) and use comm(1) on two sorted lists
+# instead of running a sqlite3 query, or an O(n*m) nested shell loop,
+# once per page.
+DOCSET_INDEX_PATHS=$(shell sqlite3 docSet.dsidx "SELECT DISTINCT path FROM searchIndex" | sort)
+DOCSET_PAGE_PATHS=$(shell echo '$(MKDOCS_PAGES)' | tr ' ' '\n' | grep -v '^index\.md$$' | $(SED) -E 's@/index\.md$$@/index.html@; s@\.md$$@/index.html@' | sort)
+
 # list mkdocs pages missing from the docset index
 .PHONY: list_missing_pages
 list_missing_pages: docSet.dsidx
-	@for page in $(MKDOCS_PAGES); do \
-		case "$$page" in \
-			*/index.md) path=$${page/\/index.md/} ;; \
-			*)          path=$${page/.md/}        ;; \
-		esac; \
-		if [ "x$$page" != "xindex.md" -a "x$$(sqlite3 docSet.dsidx "SELECT COUNT(*) FROM searchIndex WHERE path='$$path/index.html'")" = "x0" ]; then \
-			echo $$page; \
-		fi \
-	done
+	@comm -23 <(echo '$(DOCSET_PAGE_PATHS)' | tr ' ' '\n') <(echo '$(DOCSET_INDEX_PATHS)' | tr ' ' '\n')
 
 # list paths in the docset index without a corresponding mkdocs page
 .PHONY: list_removed_paths
 list_removed_paths: docSet.dsidx
-	@for path in $$(sqlite3 docSet.dsidx "SELECT path FROM searchIndex"); do \
-		page=$${path/\/index.html/.md}; \
-		page_index=$${path/index.html/index.md}; \
-		page_found=0; \
-		for p in $(MKDOCS_PAGES); do \
-			if [ "x$$p" = "x$$page" -o "x$$p" = "x$$page_index" ]; then \
-				page_found=1; \
-			fi \
-		done; \
-		if [ "x$$page_found" = "x0" ]; then \
-			echo $$path; \
-		fi \
-	done
+	@comm -13 <(echo '$(DOCSET_PAGE_PATHS)' | tr ' ' '\n') <(echo '$(DOCSET_INDEX_PATHS)' | tr ' ' '\n')
 
 .PHONY: clean
 clean:

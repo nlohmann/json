@@ -79,7 +79,8 @@ template<
     class NumberFloatType = double,
     template<typename U> class AllocatorType = std::allocator,
     template<typename T, typename SFINAE = void> class JSONSerializer = adl_serializer,
-    class BinaryType = std::vector<std::uint8_t>
+    class BinaryType = std::vector<std::uint8_t>,
+    class CustomBaseClass = void
 >
 class basic_json;
 ```
@@ -105,6 +106,10 @@ using number_float_t = NumberFloatType;
 
 using binary_t = nlohmann::byte_container_with_subtype<BinaryType>;
 ```
+
+Not every type can be passed for these template arguments: the library uses the resulting types in ways that imply a
+number of requirements, for instance that `StringType` is `char`-based or that `ArrayType` is vector-like. These
+requirements are collected in [Template Parameter Requirements](template_parameters.md).
 
 
 ## Objects
@@ -268,7 +273,7 @@ When the default type is used, the maximal unsigned integer number that can be s
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) further states:
 
-> Note that when such software is used, numbers that are integers and are in the range $[-2^{53}+1, 2^{53}-1]$ are interoperable in the sense that implementations will agree exactly on their numeric values.
+> Note that when such software is used, numbers that are integers and are in the range [-2<sup>53</sup>+1, 2<sup>53</sup>-1] are interoperable in the sense that implementations will agree exactly on their numeric values.
 
 As this range is a subrange of the exactly supported range [`INT64_MIN`, `INT64_MAX`], this class's integer type is interoperable.
 

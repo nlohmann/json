@@ -678,11 +678,11 @@ to install the [nlohmann-json](https://ports.macports.org/port/nlohmann-json/) p
     1. Create the following files:
 
         ```cpp title="example.cpp"
-        --8<-- "integration/homebrew/example.cpp"
+        --8<-- "integration/macports/example.cpp"
         ```
 
         ```cmake title="CMakeLists.txt"
-        --8<-- "integration/homebrew/CMakeLists.txt"
+        --8<-- "integration/macports/CMakeLists.txt"
         ```
 
     2. Install the package:

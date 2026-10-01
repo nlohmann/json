@@ -2,12 +2,14 @@ cmake_minimum_required(VERSION 3.13...4.0)
 
 option(JSON_Valgrind    "Execute test suite with Valgrind." OFF)
 option(JSON_FastTests   "Skip expensive/slow tests." OFF)
+option(JSON_TestSimdutf "Build the unit tests against the simdutf UTF-8 validation backend." OFF)
+
+set(JSON_SIMDUTF_VERSION 9.1.0 CACHE STRING "The simdutf version used by JSON_TestSimdutf.")
 
 set(JSON_32bitTest     AUTO CACHE STRING "Enable the 32bit unit test (ON/OFF/AUTO/ONLY).")
 set(JSON_TestStandards "" CACHE STRING "The list of standards to test explicitly.")
 
 # using an env var, since this will also affect targets executing cmake (such as "ci_test_compiler_default")
-set(JSON_FORCED_GLOBAL_COMPILE_OPTIONS $ENV{JSON_FORCED_GLOBAL_COMPILE_OPTIONS})
 if (NOT "" STREQUAL "$ENV{JSON_FORCED_GLOBAL_COMPILE_OPTIONS}")
     add_compile_options($ENV{JSON_FORCED_GLOBAL_COMPILE_OPTIONS})
 endif()
@@ -72,21 +74,34 @@ target_compile_options(test_main PUBLIC
     #                              is annotated JSON_HEDLEY_NO_RETURN (it always throws), which
     #                              makes MSVC flag the code following its call in binary_reader.hpp
     #                              as unreachable for that instantiation, in both Debug and Release
-    $<$<CXX_COMPILER_ID:MSVC>:/W4;/wd4566;/wd4996;/wd4702>
+    #       Disable warning C4503: decorated name length exceeded, name was truncated; the deep
+    #                              copy support added for #5387 pushes the mangled name of
+    #                              std::allocator_traits<...>::construct for the custom-base-class
+    #                              test's map type past VS2015's limit. The name is only used for
+    #                              debug info, so truncation does not affect the build.
+    #       Disable warning C5285: cannot declare a specialization for 'std::tuple'; MSVC 19.51
+    #                              reports the forward declarations of standard library
+    #                              templates in the vendored doctest.h
+    $<$<CXX_COMPILER_ID:MSVC>:/W4;/wd4566;/wd4996;/wd4702;/wd4503;/wd5285>
     # https://github.com/nlohmann/json/issues/1114
     $<$<CXX_COMPILER_ID:MSVC>:/bigobj> $<$<BOOL:${MINGW}>:-Wa,-mbig-obj>
 
     # https://github.com/nlohmann/json/pull/3229
     $<$<CXX_COMPILER_ID:Intel>:-diag-disable=2196>
 
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated;-Wno-float-equal>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
     $<$<CXX_COMPILER_ID:Intel>:-diag-disable=1786>)
+target_include_directories(test_main SYSTEM PUBLIC
+    thirdparty/doctest)
 target_include_directories(test_main PUBLIC
-    thirdparty/doctest
-    thirdparty/fifo_map
     ${PROJECT_BINARY_DIR}/include)
 target_link_libraries(test_main PUBLIC ${NLOHMANN_JSON_TARGET_NAME})
+
+# thirdparty/fifo_map is only used by the #972 regression test, so only
+# test-regression1 needs it on its include path (see json_test_set_test_options
+# below), rather than every test-* target via test_main.
+add_library(fifo_map_include INTERFACE)
+target_include_directories(fifo_map_include INTERFACE thirdparty/fifo_map)
 
 #############################################################################
 # define test- and standard-specific build settings
@@ -101,7 +116,7 @@ endif()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # avoid stack overflow, see https://github.com/nlohmann/json/issues/2955
-    json_test_set_test_options("test-cbor;test-msgpack;test-ubjson;test-bjdata;test-binary_formats" LINK_OPTIONS /STACK:4000000)
+    json_test_set_test_options("test-bon8;test-cbor;test-msgpack;test-ubjson;test-bjdata;test-binary_formats" LINK_OPTIONS /STACK:4000000)
 endif()
 
 # disable exceptions for test-disabled_exceptions
@@ -120,6 +135,9 @@ json_test_set_test_options(test-disabled_exceptions
 
 # raise timeout of expensive Unicode test
 json_test_set_test_options(test-unicode4 TEST_PROPERTIES TIMEOUT 3000)
+
+# only the #972 regression test needs thirdparty/fifo_map on its include path
+json_test_set_test_options(test-regression1 LINK_LIBRARIES fifo_map_include)
 
 #############################################################################
 # add unit tests
@@ -194,6 +212,71 @@ if(test_force)
 endif()
 message(STATUS "${msg}")
 
+#############################################################################
+# optionally validate UTF-8 with simdutf (JSON_USE_SIMDUTF)
+#############################################################################
+
+# The simdutf backend is opt-in and not vendored, so it is fetched here rather
+# than being a checked-in dependency. Everything below hangs off test_main,
+# whose usage requirements every test target inherits; the library target and
+# the installed CMake package are deliberately left untouched.
+if (JSON_TestSimdutf)
+    # simdutf requires C++17, both to compile itself and to be reachable from
+    # the library, which keeps its scalar validator below that. Find a tested
+    # standard that satisfies it.
+    set(simdutf_standard "")
+    foreach(cxx_standard ${test_cxx_standards})
+        if(NOT cxx_standard LESS 17 AND compiler_supports_cpp_${cxx_standard})
+            set(simdutf_standard ${cxx_standard})
+            break()
+        endif()
+    endforeach()
+
+    if("${simdutf_standard}" STREQUAL "")
+        # Building simdutf would fail outright without a C++17 compiler, and
+        # even with one it would go unused if no C++17-or-later standard is
+        # tested. Say so and fall back to the scalar validator rather than
+        # failing the build.
+        if(NOT compiler_supports_cpp_17)
+            set(simdutf_reason "the compiler does not support C++17")
+        else()
+            set(simdutf_reason "no tested standard is C++17 or later (testing ${msg_standards})")
+        endif()
+        message(WARNING
+            "JSON_TestSimdutf is enabled, but ${simdutf_reason}. simdutf requires C++17, so it "
+            "is not fetched and JSON_USE_SIMDUTF is not defined: the tests run against the "
+            "built-in scalar UTF-8 validator instead. Set JSON_TestStandards to include 17 or "
+            "later, or build with a compiler that supports C++17.")
+    else()
+        if (CMAKE_VERSION VERSION_LESS 3.18)
+            message(FATAL_ERROR "JSON_TestSimdutf requires CMake 3.18 or later (simdutf's minimum).")
+        endif()
+
+        include(FetchContent)
+
+        # simdutf builds its tests and tools by default, and its tests pull
+        # further dependencies of their own; only the library is needed here
+        set(SIMDUTF_TESTS OFF CACHE BOOL "" FORCE)
+        set(SIMDUTF_TOOLS OFF CACHE BOOL "" FORCE)
+        set(SIMDUTF_BENCHMARKS OFF CACHE BOOL "" FORCE)
+        set(SIMDUTF_ICONV OFF CACHE BOOL "" FORCE)
+
+        FetchContent_Declare(simdutf
+            URL https://github.com/simdutf/simdutf/archive/refs/tags/v${JSON_SIMDUTF_VERSION}.tar.gz
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        )
+        FetchContent_MakeAvailable(simdutf)
+
+        target_compile_definitions(test_main PUBLIC JSON_USE_SIMDUTF)
+        target_link_libraries(test_main PUBLIC simdutf::simdutf)
+
+        # simdutf.h requires C++17; below that the library keeps its scalar
+        # validator, so any C++11/14 test targets exercise the fallback and the
+        # C++17-and-later ones exercise simdutf. Both must agree.
+        message(STATUS "UTF-8 validation delegated to simdutf ${JSON_SIMDUTF_VERSION} for C++17 and later (JSON_USE_SIMDUTF)")
+    endif()
+endif()
+
 # *DO* use json_test_set_test_options() above this line
 
 json_test_should_build_32bit_test(json_32bit_test json_32bit_test_only "${JSON_32bitTest}")
@@ -227,6 +310,24 @@ json_test_set_test_options(test-comparison_legacy
 )
 json_test_add_test_for(src/unit-comparison.cpp
     NAME test-comparison_legacy
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+
+# test the parser again with JSON_DIAGNOSTIC_POSITIONS enabled
+json_test_set_test_options(test-class_parser_diagnostic_positions
+    COMPILE_DEFINITIONS JSON_DIAGNOSTIC_POSITIONS=1
+)
+json_test_add_test_for(src/unit-class_parser.cpp
+    NAME test-class_parser_diagnostic_positions
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+
+# test diagnostic positions again without regular diagnostics (JSON pointer paths)
+json_test_set_test_options(test-diagnostic-positions_only
+    COMPILE_DEFINITIONS JSON_DIAGNOSTICS=0
+)
+json_test_add_test_for(src/unit-diagnostic-positions.cpp
+    NAME test-diagnostic-positions_only
     MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
 )
 

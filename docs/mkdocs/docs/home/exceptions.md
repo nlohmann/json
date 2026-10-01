@@ -340,21 +340,32 @@ An unexpected byte was read in a [binary format](../features/binary_formats/inde
 ### json.exception.parse_error.113
 
 A string could not be read from a [binary format](../features/binary_formats/index.md): either a value that is not a
-string was read where one was required (for instance as a map key), or the string's length specification is invalid.
+string was read where one was required (for instance as a map key), the string's length specification is invalid, or
+the string's bytes are not valid UTF-8.
+
+CBOR and MessagePack allow map keys of any type, but JSON object keys are always strings. Maps with keys of any other
+type (for instance integers or `null`) are therefore not supported; see the notes on
+[CBOR](../features/binary_formats/cbor.md) and [MessagePack](../features/binary_formats/messagepack.md).
 
 !!! failure "Example messages"
 
     ```
-    [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0xFF
+    [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR object key: only string keys are supported, but found an unsigned integer; last byte: 0x01
     ```
     ```
-    [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack string: expected length specification (0xA0-0xBF, 0xD9-0xDB); last byte: 0xFF
+    [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing MessagePack object key: only string keys are supported, but found nil; last byte: 0xC0
+    ```
+    ```
+    [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: expected length specification (0x60-0x7B) or indefinite string type (0x7F); last byte: 0x7C
     ```
     ```
     [json.exception.parse_error.113] parse error at byte 2: syntax error while parsing UBJSON char: byte after 'C' must be in range 0x00..0x7F; last byte: 0x82
     ```
     ```
     [json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData string: string length must not be negative
+    ```
+    ```
+    [json.exception.parse_error.113] parse error at byte 3: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte
     ```
 
 ### json.exception.parse_error.114
@@ -868,6 +879,12 @@ The size of an array or object in a [binary format](../features/binary_formats/i
 the size following `#` for [UBJSON](../features/binary_formats/ubjson.md)/[BJData](../features/binary_formats/bjdata.md),
 or the encoded length for [CBOR](../features/binary_formats/cbor.md).
 
+The exception is also thrown for a [UBJSON](../features/binary_formats/ubjson.md) array of a type that is encoded by its
+marker alone (`Z`, `T` or `F`) whose declared count exceeds 1,048,576 (`1 << 20`). Such an array has no payload, so its
+count alone decides how much memory is allocated, and a handful of bytes would otherwise describe billions of values.
+[`to_ubjson`](../api/basic_json/to_ubjson.md) writes longer arrays of these types without the size and type annotation,
+so any value it produces can still be read back.
+
 !!! failure "Example messages"
 
     ```
@@ -878,6 +895,9 @@ or the encoded length for [CBOR](../features/binary_formats/cbor.md).
     ```
     ```
     [json.exception.out_of_range.408] syntax error while parsing CBOR size: excessive map size
+    ```
+    ```
+    [json.exception.out_of_range.408] syntax error while parsing UBJSON size: excessive array size
     ```
 
 ### json.exception.out_of_range.409
@@ -919,19 +939,25 @@ A JSON Patch `add` operation cannot be applied because the target location's par
 
 ### json.exception.out_of_range.412
 
-BSON stores the length of documents, arrays, strings, and binary values in a signed 32-bit integer. This exception is thrown when a value is too large to be described by such a length field.
+BSON stores the length of documents, arrays, strings, and binary values in a signed 32-bit integer, and MessagePack
+stores the length of strings, binary values, arrays, and objects in at most an unsigned 32-bit integer. This exception
+is thrown when a value is too large to be described by such a length field.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     BSON length 2147483661 exceeds maximum of 2147483647
     ```
+    ```
+    MessagePack length 4294967296 exceeds maximum of 4294967295
+    ```
 
 !!! note
 
-    This exception was added in version 3.13.0. Before that, the length was silently truncated, and
+    This exception was added in version 3.13.0. Before that, the BSON length was silently truncated, and
     [`to_bson`](../api/basic_json/to_bson.md) produced documents with negative length prefixes that
-    [`from_bson`](../api/basic_json/from_bson.md) rejected.
+    [`from_bson`](../api/basic_json/from_bson.md) rejected; [`to_msgpack`](../api/basic_json/to_msgpack.md) wrote such
+    a value without any length, producing output that could not be read back.
 
 ### json.exception.out_of_range.413
 
@@ -960,6 +986,21 @@ A JSON Patch `move` operation's `"from"` location is a proper prefix of its `"pa
 !!! note
 
     This exception was added in version 3.13.0. Before that, this situation could succeed with a corrupted result: for an array target, removing the "from" element before the "add" step shifted subsequent indices, so "path" silently re-resolved to a different element than intended.
+
+### json.exception.out_of_range.415
+
+MessagePack's ext type and BSON's binary subtype are each stored in a single byte. This exception is thrown when serializing a
+[`byte_container_with_subtype`](../api/byte_container_with_subtype/index.md) whose subtype exceeds 255.
+
+!!! failure "Example message"
+
+    ```
+    [json.exception.out_of_range.415] subtype 70000 is too large for the MessagePack ext type (max 255)
+    ```
+
+!!! note
+
+    This exception was added in version 3.13.0. Before that, subtypes above 255 were silently truncated modulo 256 instead of raising an error.
 
 ## Further exceptions
 

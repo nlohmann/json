@@ -18,9 +18,18 @@ Deserializes an input stream to a JSON value.
 
 the stream `i`
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes in `j`.
+
 ## Exceptions
 
-- Throws [`parse_error.101`](../home/exceptions.md#jsonexceptionparse_error101) in case of an unexpected token.
+- Throws [`parse_error.101`](../home/exceptions.md#jsonexceptionparse_error101) in case of an unexpected token, or if
+  `i` has no stream buffer (`#!cpp i.rdbuf() == nullptr`, for instance `#!cpp std::istream(nullptr)`).
+- If reading from `i` reaches the end of the input and `eofbit` is part of `i`'s
+  [`exceptions()`](https://en.cppreference.com/w/cpp/io/basic_ios/exceptions) mask, the `std::ios_base::failure`
+  thrown by `i` itself propagates instead of a `parse_error`, the same as it would for the standard library's own
+  extraction operators.
 
 ## Complexity
 
@@ -67,10 +76,19 @@ input >> j2;  // parses the next value
     Only numbers are affected. Values ending in a self-delimiting character do not read past themselves, so
     `truefalse`, `[1][2]`, `{"a":1}{"b":2}`, and `"a""b"` can be read back to back without a separator.
 
-    This is tracked in [#5340](https://github.com/nlohmann/json/issues/5340).
+    Define [`JSON_PRECISE_STREAM_POSITION`](macros/json_precise_stream_position.md) to `1` to leave the terminating character in the stream
+    instead, so that the stream is positioned right after the value for every value type and no separator is
+    needed. This is tracked in [#5340](https://github.com/nlohmann/json/issues/5340).
 
 Note that reading concatenated values does **not** work for [JSON Lines](../features/parsing/json_lines.md)
 (newline-delimited JSON) input -- see that page for why and for the recommended alternative.
+
+By default, a `'\0'` (NUL) byte encountered while reading a value is treated as end of input, rather than as an
+ordinary (and, outside of a string, invalid) byte; see the [FAQ entry](../home/faq.md#nul-bytes-in-the-input) for
+details and the [`JSON_STRICT_NUL_HANDLING`](macros/json_strict_nul_handling.md) macro to opt into rejecting it
+instead. Because `operator>>` only parses a single value and does not require the rest of the stream to be consumed,
+a NUL byte *after* a complete value has no effect on `operator>>` either way; it only matters while a value is still
+being read.
 
 !!! warning "Deprecation"
 
@@ -98,7 +116,18 @@ Note that reading concatenated values does **not** work for [JSON Lines](../feat
 
 - [accept](basic_json/accept.md) - check if the input is valid JSON
 - [parse](basic_json/parse.md) - deserialize from a compatible input
+- [`JSON_STRICT_NUL_HANDLING`](macros/json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input
+  instead of treating it as end of input
+- [`JSON_PRECISE_STREAM_POSITION`](macros/json_precise_stream_position.md) - opt in to leaving the stream positioned right after a number
 
 ## Version history
 
 - Added in version 1.0.0.
+- `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 to optionally reject a NUL byte in the input instead of treating
+  it as end of input; planned to become the default in version 4.0.0.
+- `JSON_PRECISE_STREAM_POSITION` added in version 3.13.0 to optionally leave the character that terminates a number in
+  the stream; planned to become the default in version 4.0.0.
+- Fixed a null pointer dereference for an `std::istream` without a stream buffer (now throws `parse_error.101`), and a
+  crash (`std::terminate`) when `i` has `eofbit` in its exception mask, in version 3.13.0.
+- Changed to the strong exception safety guarantee in version 3.13.0: `j` is no longer left with a partially parsed
+  value if parsing throws.

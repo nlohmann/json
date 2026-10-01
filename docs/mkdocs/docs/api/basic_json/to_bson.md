@@ -43,12 +43,14 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [`out_of_range.412`](../../home/exceptions.md#jsonexceptionout_of_range412) if the length of a document, array,
   string, or binary value exceeds the range of the 32-bit BSON length field; example:
   `"BSON length 2147483661 exceeds maximum of 2147483647"`
+- Throws [`out_of_range.415`](../../home/exceptions.md#jsonexceptionout_of_range415) if the subtype of a binary value
+  exceeds 255, the maximum of the BSON binary subtype; example:
+  `"subtype 70000 is too large for the BSON binary subtype (max 255)"`
 
 ## Complexity
 
-Proportional to the size of the JSON value `j` multiplied by its maximum nesting
-depth, `O(n × d)`. BSON length prefixes are computed recursively before nested
-values are written.
+Linear in the size of the JSON value `j`. The length prefixes of all nested documents and arrays are computed in one
+pass before anything is written.
 
 ## Examples
 
@@ -73,7 +75,10 @@ values are written.
 - [to_msgpack](to_msgpack.md) create a MessagePack serialization of a JSON value
 - [to_ubjson](to_ubjson.md) create a UBJSON serialization of a JSON value
 - [to_bjdata](to_bjdata.md) create a BJData serialization of a JSON value
+- [to_bon8](to_bon8.md) create a BON8 serialization of a JSON value
 
 ## Version history
 
 - Added in version 3.4.0.
+- Linear in the size of `j`, and no longer limited by the call stack for deeply nested values, since version 3.13.0.
+- `out_of_range.415` is now detected before anything is written, like the other exceptions above, since version 3.13.0.

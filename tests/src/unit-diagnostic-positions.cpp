@@ -8,7 +8,9 @@
 
 #include "doctest_compatibility.h"
 
-#define JSON_DIAGNOSTICS 1
+#ifndef JSON_DIAGNOSTICS
+    #define JSON_DIAGNOSTICS 1
+#endif
 #define JSON_DIAGNOSTIC_POSITIONS 1
 #include <nlohmann/json.hpp>
 
@@ -27,8 +29,13 @@ TEST_CASE("Better diagnostics with positions")
         }
         )";
         json j = json::parse(json_invalid_string);
+#if JSON_DIAGNOSTICS
         CHECK_THROWS_WITH_AS(j.at("address").at("housenumber").get<int>(),
                              "[json.exception.type_error.302] (/address/housenumber) (bytes 108-111) type must be number, but is string", json::type_error);
+#else
+        CHECK_THROWS_WITH_AS(j.at("address").at("housenumber").get<int>(),
+                             "[json.exception.type_error.302] (bytes 108-111) type must be number, but is string", json::type_error);
+#endif
     }
 
     SECTION("invalid type without positions")
@@ -68,13 +75,171 @@ TEST_CASE("Better diagnostics with positions")
         CHECK(j.end_pos() == root.size());
     }
 
+    SECTION("copying keeps the positions of nested values (#5387)")
+    {
+        // Values nested deeper than the copy constructor's descent bound are
+        // copied without the call stack, on a path that has to carry the
+        // positions over itself; shallower ones copy their containers, which
+        // bring the positions along. Both sides of the bound are checked here.
+        const auto check_copy = [](std::size_t depth, bool objects)
+        {
+            CAPTURE(depth)
+            CAPTURE(objects)
+
+            const std::string opening = objects ? R"({"a":)" : "[";
+            const std::string closing = objects ? "}" : "]";
+
+            std::string text;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                text += opening;
+            }
+            text += "12";
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                text += closing;
+            }
+
+            const json original = json::parse(text);
+            const json copy(original); // NOLINT(performance-unnecessary-copy-initialization)
+
+            const json* o = &original;
+            const json* c = &copy;
+            for (std::size_t level = 0; level <= depth; ++level)
+            {
+                CAPTURE(level)
+                REQUIRE(c->start_pos() == o->start_pos());
+                REQUIRE(c->end_pos() == o->end_pos());
+
+                if (level < depth)
+                {
+                    o = objects ? &o->at("a") : &o->at(0);
+                    c = objects ? &c->at("a") : &c->at(0);
+                }
+            }
+        };
+
+        const auto check_arrays = [&check_copy](std::size_t depth)
+        {
+            check_copy(depth, false);
+        };
+        const auto check_objects = [&check_copy](std::size_t depth)
+        {
+            check_copy(depth, true);
+        };
+
+        check_arrays(1);
+        check_arrays(127);
+        check_arrays(128);
+        check_arrays(129);
+        check_arrays(300);
+
+        check_objects(1);
+        check_objects(127);
+        check_objects(128);
+        check_objects(129);
+        check_objects(300);
+    }
+
+    SECTION("converting keeps the positions of nested values (#5650)")
+    {
+        // Values nested deeper than the converting constructor's descent bound
+        // are converted without the call stack, on a path that has to carry the
+        // positions of every value over itself. Objects and arrays take turns,
+        // and the innermost value is null, which used to lose its positions.
+        const auto check_conversion = [](std::size_t depth)
+        {
+            CAPTURE(depth)
+
+            std::string text;
+            std::string closing;
+            for (std::size_t i = 0; i < depth; ++i)
+            {
+                text += (i % 2 == 0) ? "[12, " : R"({"b":1, "a":)";
+                closing += (i % 2 == 0) ? ']' : '}';
+            }
+            text += "null";
+            text.append(closing.rbegin(), closing.rend());
+
+            const json original = json::parse(text);
+            const nlohmann::ordered_json converted = original;
+
+            const json* o = &original;
+            const nlohmann::ordered_json* c = &converted;
+            for (std::size_t level = 0; level <= depth; ++level)
+            {
+                CAPTURE(level)
+                REQUIRE(c->start_pos() == o->start_pos());
+                REQUIRE(c->end_pos() == o->end_pos());
+
+                if (level < depth)
+                {
+                    // the number beside the value nested next
+                    const json& o_number = o->is_object() ? o->at("b") : o->at(0);
+                    const nlohmann::ordered_json& c_number = c->is_object() ? c->at("b") : c->at(0);
+                    REQUIRE(c_number.start_pos() == o_number.start_pos());
+                    REQUIRE(c_number.end_pos() == o_number.end_pos());
+
+                    o = o->is_object() ? &o->at("a") : &o->at(1);
+                    c = c->is_object() ? &c->at("a") : &c->at(1);
+                }
+            }
+        };
+
+        check_conversion(1);
+        check_conversion(127);
+        check_conversion(128);
+        check_conversion(129);
+        check_conversion(300);
+    }
+
     SECTION("JSON patch add to primitive parent (#4292)")
     {
         // the JSON Patch "add" target /foo/bar/baz has a string parent
         // (/foo/bar); the position of that parent is reported in the message
         const json doc = json::parse(R"({"foo":{"bar":"a string"}})");
         const json patch = json::parse(R"([{"op":"add","path":"/foo/bar/baz","value":1}])");
+#if JSON_DIAGNOSTICS
         CHECK_THROWS_WITH_AS(doc.patch(patch),
                              "[json.exception.out_of_range.411] (/foo/bar) (bytes 14-24) cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array", json::out_of_range);
+#else
+        CHECK_THROWS_WITH_AS(doc.patch(patch),
+                             "[json.exception.out_of_range.411] (bytes 14-24) cannot add value: the JSON Patch 'add' target's parent is of type string, but must be an object or array", json::out_of_range);
+#endif
+    }
+}
+
+TEST_CASE("values read from a binary format have no positions")
+{
+    // only the JSON lexer knows where a value started and ended
+    const json source = {{"a", {1, "x", json::binary({1})}}, {"b", {{"c", true}}}, {"d", nullptr}, {"e", 1.5}};
+    const std::vector<std::uint8_t> cbor = json::to_cbor(source);
+
+    const auto check_no_positions = [](const json & j)
+    {
+        CHECK(j.start_pos() == std::string::npos);
+        CHECK(j.end_pos() == std::string::npos);
+        CHECK(j.at("a").start_pos() == std::string::npos);
+        CHECK(j.at("a").at(1).end_pos() == std::string::npos);
+        CHECK(j.at("b").at("c").start_pos() == std::string::npos);
+    };
+
+    SECTION("DOM parser")
+    {
+        const json j = json::from_cbor(cbor);
+        CHECK(j == source);
+        check_no_positions(j);
+    }
+
+    SECTION("DOM parser with a callback")
+    {
+        json j;
+        nlohmann::detail::json_sax_dom_callback_parser<json, decltype(nlohmann::detail::input_adapter(cbor))> sdp(j, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
+        {
+            return true;
+        });
+        CHECK(json::sax_parse(cbor, &sdp, json::input_format_t::cbor));
+        CHECK(j == source);
+        check_no_positions(j);
     }
 }

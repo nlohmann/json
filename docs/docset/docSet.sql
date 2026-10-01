@@ -48,6 +48,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::from_bjdata', 'Fu
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::from_bson', 'Function', 'api/basic_json/from_bson/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::from_cbor', 'Function', 'api/basic_json/from_cbor/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::from_msgpack', 'Function', 'api/basic_json/from_msgpack/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::from_bon8', 'Function', 'api/basic_json/from_bon8/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::from_ubjson', 'Function', 'api/basic_json/from_ubjson/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::front', 'Method', 'api/basic_json/front/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::get', 'Method', 'api/basic_json/get/index.html');
@@ -121,6 +122,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::to_bjdata', 'Func
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::to_bson', 'Function', 'api/basic_json/to_bson/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::to_cbor', 'Function', 'api/basic_json/to_cbor/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::to_msgpack', 'Function', 'api/basic_json/to_msgpack/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::to_bon8', 'Function', 'api/basic_json/to_bon8/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::to_string', 'Method', 'api/basic_json/to_string/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::to_ubjson', 'Function', 'api/basic_json/to_ubjson/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::value', 'Method', 'api/basic_json/value/index.html');
@@ -171,6 +173,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('Binary Formats: BJData', 'Gui
 INSERT INTO searchIndex(name, type, path) VALUES ('Binary Formats: BSON', 'Guide', 'features/binary_formats/bson/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Binary Formats: CBOR', 'Guide', 'features/binary_formats/cbor/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Binary Formats: MessagePack', 'Guide', 'features/binary_formats/messagepack/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('Binary Formats: BON8', 'Guide', 'features/binary_formats/bon8/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Binary Formats: UBJSON', 'Guide', 'features/binary_formats/ubjson/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Binary Values', 'Guide', 'features/binary_values/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Comments', 'Guide', 'features/comments/index.html');
@@ -207,6 +210,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('JSON_CATCH_USER', 'Macro', 'a
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DIAGNOSTICS', 'Macro', 'api/macros/json_diagnostics/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DIAGNOSTIC_POSITIONS', 'Macro', 'api/macros/json_diagnostic_positions/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DISABLE_ENUM_SERIALIZATION', 'Macro', 'api/macros/json_disable_enum_serialization/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DISABLE_TUPLE_REFERENCE_CONVERSION', 'Macro', 'api/macros/json_disable_tuple_reference_conversion/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_HAS_CPP_11', 'Macro', 'api/macros/json_has_cpp_11/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_HAS_CPP_14', 'Macro', 'api/macros/json_has_cpp_11/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_HAS_CPP_17', 'Macro', 'api/macros/json_has_cpp_11/index.html');

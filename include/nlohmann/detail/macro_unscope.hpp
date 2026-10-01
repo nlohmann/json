@@ -8,11 +8,6 @@
 
 #pragma once
 
-// restore clang diagnostic settings
-#if defined(__clang__)
-    #pragma clang diagnostic pop
-#endif
-
 // clean up
 #undef JSON_ASSERT
 #undef JSON_INTERNAL_CATCH
@@ -25,8 +20,7 @@
 #undef JSON_INLINE_VARIABLE
 #undef JSON_NO_UNIQUE_ADDRESS
 #undef JSON_DISABLE_ENUM_SERIALIZATION
-#undef JSON_USE_GLOBAL_UDLS
-#undef JSON_BRACE_INIT_COPY_SEMANTICS
+#undef JSON_DISABLE_TUPLE_REFERENCE_CONVERSION
 
 #ifndef JSON_TEST_KEEP_MACROS
     #undef JSON_CATCH
@@ -44,6 +38,9 @@
     #undef JSON_HAS_STD_FORMAT
     #undef JSON_HAS_STATIC_RTTI
     #undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+    #undef JSON_BRACE_INIT_COPY_SEMANTICS
+    #undef JSON_PRECISE_STREAM_POSITION
+    #undef JSON_STRICT_NUL_HANDLING
 #endif
 
 #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>

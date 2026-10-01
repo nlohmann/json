@@ -15,7 +15,14 @@
 
 #include "doctest_compatibility.h"
 
+#include <algorithm>
+
+#include <cctype>
 #include <cstdint>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
 
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
@@ -359,6 +366,15 @@ TEST_CASE("lexicographical comparison operators")
             CHECK(json(1) < json(1.5));
             CHECK(json(1.5) < json(2));
             CHECK(json(2) > json(1.5));
+            CHECK(json(-1) > json(-1.5));
+            CHECK(json(-1.5) < json(-1));
+            CHECK(json(-2) < json(-1.5));
+
+            // a float below the range of the integer type
+            CHECK(json(0) > json(-1e30));
+            CHECK(json(-1e30) < json(0));
+            CHECK(json(0u) > json(-0.5));
+            CHECK(json(-0.5) < json(0u));
 
             // a NaN operand stays unordered against either integer kind
             CHECK_FALSE(json(1) == json(nan));
@@ -735,3 +751,250 @@ TEST_CASE("regression #3868 - heterogeneous comparisons compile under C++20 (P24
     }
 }
 #endif
+
+namespace
+{
+// orders keys ascending or descending, as chosen when a map is created
+template<class Key>
+class directed_less
+{
+  public:
+    directed_less() = default;
+
+    explicit directed_less(const bool descending) noexcept
+        : m_descending(descending)
+    {}
+
+    bool operator()(const Key& lhs, const Key& rhs) const
+    {
+        return m_descending ? rhs < lhs : lhs < rhs;
+    }
+
+  private:
+    bool m_descending = false;
+};
+
+// An object type that, like std::unordered_map, enumerates its entries in no
+// fixed order - ascending or descending by key, depending on how the map was
+// created - and whose operator== does not depend on that order.
+// std::unordered_map itself cannot be used here: the standard does not
+// require it to accept an incomplete mapped type such as basic_json, and
+// libstdc++ 6 to 9 as well as the EDG front ends of icpc and nvc++ reject
+// basic_json<std::unordered_map>. std::map, the default object type, works
+// with all supported compilers.
+template<class Key, class Value, class /*Compare*/, class Allocator>
+struct unordered_object_t : std::map<Key, Value, directed_less<Key>, Allocator>
+{
+    using base_type = std::map<Key, Value, directed_less<Key>, Allocator>;
+    using base_type::base_type;
+
+    friend bool operator==(const unordered_object_t& lhs, const unordered_object_t& rhs)
+    {
+        return lhs.size() == rhs.size() && std::all_of(lhs.begin(), lhs.end(), [&rhs](const std::pair<const Key, Value>& entry)
+        {
+            const auto it = rhs.find(entry.first);
+            return it != rhs.end() && it->second == entry.second;
+        });
+    }
+
+    friend bool operator!=(const unordered_object_t& lhs, const unordered_object_t& rhs)
+    {
+        return !(lhs == rhs);
+    }
+};
+using unordered_json = nlohmann::basic_json<unordered_object_t>;
+
+// the entries "0" to "9", enumerated in ascending or in descending order
+unordered_json make_unordered_object(const bool descending)
+{
+    unordered_json j = unordered_json::object_t(directed_less<std::string>(descending));
+    for (int i = 0; i < 10; ++i)
+    {
+        j[std::to_string(i)] = i;
+    }
+    return j;
+}
+
+template<typename Json>
+Json nest(Json j, const std::size_t depth)
+{
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        Json outer = Json::object();
+        outer["x"] = std::move(j);
+        j = std::move(outer);
+    }
+    return j;
+}
+
+// orders keys case-insensitively, so "key" and "KEY" compare equivalent
+// (neither less than the other) although they are not equal
+struct case_insensitive_less
+{
+    bool operator()(const std::string& a, const std::string& b) const
+    {
+        return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end(),
+                                            [](unsigned char x, unsigned char y)
+        {
+            return std::tolower(x) < std::tolower(y);
+        });
+    }
+};
+
+template<class Key, class Value, class /*Compare*/, class Allocator>
+using case_insensitive_map = std::map<Key, Value, case_insensitive_less, Allocator>;
+using ci_json = nlohmann::basic_json<case_insensitive_map>;
+} // namespace
+
+TEST_CASE("equality of objects whose entries have no fixed order")
+{
+    // Values nested deeper than a bound are compared without the call stack,
+    // entry by entry. That must agree with the object type's own operator==,
+    // which for unordered_object_t (as for std::unordered_map) does not
+    // depend on the order of the entries, and for ordered_map does.
+    REQUIRE(make_unordered_object(true).begin().key() == "9");
+    REQUIRE(make_unordered_object(false).begin().key() == "0");
+
+    for (const std::size_t depth : std::vector<std::size_t> {0, 200})
+    {
+        CAPTURE(depth)
+
+        const unordered_json descending = nest(make_unordered_object(true), depth);
+        const unordered_json ascending = nest(make_unordered_object(false), depth);
+        CHECK(descending == ascending);
+        CHECK_FALSE(descending != ascending);
+
+        // a copy is equal to its original
+        const unordered_json copy = descending; // NOLINT(performance-unnecessary-copy-initialization)
+        CHECK(copy == descending);
+
+        // a different value, a different key, or another entry still count
+        unordered_json other_value = make_unordered_object(true);
+        other_value["5"] = 42;
+        CHECK_FALSE(nest(other_value, depth) == ascending);
+
+        unordered_json other_key = make_unordered_object(true);
+        other_key.erase("5");
+        other_key["50"] = 5;
+        CHECK_FALSE(nest(other_key, depth) == ascending);
+
+        unordered_json more_entries = make_unordered_object(true);
+        more_entries["10"] = 10;
+        CHECK_FALSE(nest(more_entries, depth) == ascending);
+        CHECK_FALSE(ascending == nest(more_entries, depth));
+
+        // ordered_json compares its entries in sequence
+        const nlohmann::ordered_json ab = nest(nlohmann::ordered_json({{"a", 1}, {"b", 2}}), depth);
+        const nlohmann::ordered_json ba = nest(nlohmann::ordered_json({{"b", 2}, {"a", 1}}), depth);
+        CHECK_FALSE(ab == ba);
+        CHECK(ab != ba);
+    }
+}
+
+TEST_CASE("equality of an object whose comparator treats different keys as equivalent")
+{
+    // https://github.com/nlohmann/json/issues/5655: past the nesting bound,
+    // the entries are compared without the call stack, and a key that finds
+    // no counterpart at the same position is looked up with find(), which
+    // uses the object's own comparator. A case-insensitive comparator then
+    // finds "KEY" for "key" and must not accept that pair as a match - the
+    // object type's own operator==, like std::map's, compares keys with ==.
+    ci_json a = ci_json::object();
+    a["key"] = 1;
+    ci_json b = ci_json::object();
+    b["KEY"] = 1;
+
+    // sanity check: the object type's own comparison already disagrees
+    CHECK_FALSE(a.get_ref<const ci_json::object_t&>() == b.get_ref<const ci_json::object_t&>());
+
+    for (const std::size_t depth : std::vector<std::size_t> {0, 127, 128, 200})
+    {
+        CAPTURE(depth)
+
+        const ci_json x = nest(a, depth);
+        const ci_json y = nest(b, depth);
+        CHECK_FALSE(x == y);
+        CHECK(x != y);
+    }
+}
+
+TEST_CASE("containers are compared element by element")
+{
+    // Containers nested deeper than a bound are compared without the call
+    // stack, by code of their own; every relation is checked both at the top
+    // level and below that bound.
+    const auto deep = [](const json & j, const std::size_t depth)
+    {
+        json result = j;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            result = json::array({std::move(result)});
+        }
+        return result;
+    };
+
+    for (const std::size_t depth : std::vector<std::size_t> {0, 200})
+    {
+        CAPTURE(depth)
+
+        // objects with different keys
+        {
+            const json a = deep({{"a", 1}}, depth);
+            const json b = deep({{"b", 1}}, depth);
+            CHECK_FALSE(a == b);
+            CHECK(a != b);
+            CHECK(a < b);
+            CHECK(b > a);
+            CHECK_FALSE(b < a);
+#if JSON_HAS_THREE_WAY_COMPARISON
+            // JSON_HAS_CPP_20 (do not remove; see note at top of file)
+            CHECK((a <=> b) == std::partial_ordering::less); // *NOPAD*
+            CHECK((b <=> a) == std::partial_ordering::greater); // *NOPAD*
+            CHECK((a <=> a) == std::partial_ordering::equivalent); // *NOPAD*
+#endif
+        }
+
+        // a container that is a prefix of the other one
+        {
+            // the one that runs out of elements first is the smaller one
+            const json shorter = deep({1}, depth);
+            const json longer = deep({1, 2}, depth);
+            CHECK(shorter < longer);
+            CHECK(longer > shorter);
+            CHECK_FALSE(longer < shorter);
+            CHECK_FALSE(shorter == longer);
+
+            const json smaller_object = deep({{"a", 1}}, depth);
+            const json larger_object = deep({{"a", 1}, {"b", 2}}, depth);
+            CHECK(smaller_object < larger_object);
+            CHECK(larger_object > smaller_object);
+            CHECK_FALSE(smaller_object == larger_object);
+#if JSON_HAS_THREE_WAY_COMPARISON
+            // JSON_HAS_CPP_20 (do not remove; see note at top of file)
+            CHECK((shorter <=> longer) == std::partial_ordering::less); // *NOPAD*
+            CHECK((longer <=> shorter) == std::partial_ordering::greater); // *NOPAD*
+#endif
+        }
+
+        // elements that cannot be ordered
+        {
+            const double nan = std::numeric_limits<double>::quiet_NaN();
+            const json lhs = deep({nan, 1}, depth);
+            const json rhs = deep({nan, 2}, depth);
+
+            CHECK_FALSE(lhs == lhs);
+            CHECK_FALSE(rhs < lhs);
+#if JSON_HAS_THREE_WAY_COMPARISON
+            // JSON_HAS_CPP_20 (do not remove; see note at top of file)
+            // operator<=> stops there, as std::lexicographical_compare_three_way
+            // does, and operator< is derived from it
+            CHECK((lhs <=> rhs) == std::partial_ordering::unordered); // *NOPAD*
+            CHECK_FALSE(lhs < rhs);
+#else
+            // operator< skips a pair of elements that cannot be ordered, as
+            // std::lexicographical_compare does, and the next pair decides
+            CHECK(lhs < rhs);
+#endif
+        }
+    }
+}

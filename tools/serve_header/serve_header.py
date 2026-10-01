@@ -5,6 +5,8 @@ import logging
 import os
 import re
 import shutil
+import socket
+import ssl
 import sys
 import subprocess
 
@@ -26,11 +28,15 @@ HEADER = 'json.hpp'
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
+# origins whose pages may read the served header from a browser; Compiler
+# Explorer downloads #include <https://...> headers client-side
+DEFAULT_CORS_ORIGINS = ['https://godbolt.org', 'https://compiler-explorer.com']
+
 JSON_VERSION_RE = re.compile(r'\s*#\s*define\s+NLOHMANN_JSON_VERSION_MAJOR\s+')
 
 class ExitHandler(logging.StreamHandler):
     def __init__(self, level):
-        """."""
+        """Exit the process on log records at or above level."""
         super().__init__()
         self.level = level
 
@@ -50,7 +56,7 @@ def is_project_root(test_dir='.'):
 
 class DirectoryEventBucket:
     def __init__(self, callback, delay=1.2, threshold=0.8):
-        """."""
+        """Batch directory events and pass their common path to callback."""
         self.delay = delay
         self.threshold = timedelta(seconds=threshold)
         self.callback = callback
@@ -95,7 +101,7 @@ class WorkTree:
     make_command = 'make'
 
     def __init__(self, root_dir, tree_dir):
-        """."""
+        """Track the working tree at tree_dir and its amalgamated header."""
         self.root_dir = root_dir
         self.tree_dir = tree_dir
         self.rel_dir = os.path.relpath(tree_dir, root_dir)
@@ -110,11 +116,11 @@ class WorkTree:
         self.build_time = t.strftime(DATETIME_FORMAT)
 
     def __hash__(self):
-        """."""
+        """Hash by working tree directory."""
         return hash((self.tree_dir))
 
     def __eq__(self, other):
-        """."""
+        """Compare by working tree directory."""
         if not isinstance(other, type(self)):
             return NotImplemented
         return self.tree_dir == other.tree_dir
@@ -146,7 +152,7 @@ class WorkTree:
 
 class WorkTrees(FileSystemEventHandler):
     def __init__(self, root_dir):
-        """."""
+        """Find the working trees below root_dir and watch it for changes."""
         super().__init__()
         self.root_dir = root_dir
         self.trees = set([])
@@ -246,9 +252,11 @@ class WorkTrees(FileSystemEventHandler):
         self.observer.stop()
         self.observer.join()
 
-class HeaderRequestHandler(SimpleHTTPRequestHandler): # lgtm[py/missing-call-to-init]
+class HeaderRequestHandler(SimpleHTTPRequestHandler):
+    cors_origins = DEFAULT_CORS_ORIGINS
+
     def __init__(self, request, client_address, server):
-        """."""
+        """Handle a request for a header below the working trees' root directory."""
         self.worktrees = server.worktrees
         self.worktree = None
         try:
@@ -310,8 +318,11 @@ class HeaderRequestHandler(SimpleHTTPRequestHandler): # lgtm[py/missing-call-to-
 
         # set content length
         super().send_header('Content-Length', length)
-        # CORS header
-        self.send_header('Access-Control-Allow-Origin', '*')
+        # CORS header; only for the configured origins
+        origin = self.headers.get('Origin')
+        if origin in self.cors_origins:
+            self.send_header('Access-Control-Allow-Origin', origin)
+        self.send_header('Vary', 'Origin')
         # prevent caching
         self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
         self.send_header('Pragma', 'no-cache')
@@ -327,7 +338,7 @@ class HeaderRequestHandler(SimpleHTTPRequestHandler): # lgtm[py/missing-call-to-
 
 class DualStackServer(ThreadingHTTPServer):
     def __init__(self, addr, worktrees):
-        """."""
+        """Serve the headers of worktrees on addr."""
         self.worktrees = worktrees
         super().__init__(addr, HeaderRequestHandler)
 
@@ -340,8 +351,6 @@ class DualStackServer(ThreadingHTTPServer):
 
 if __name__ == '__main__':
     import argparse
-    import ssl
-    import socket
     import yaml
 
     # exit code
@@ -383,8 +392,15 @@ if __name__ == '__main__':
         # find and monitor working trees
         worktrees = WorkTrees(config.get('root', '.'))
 
-        # start web server
-        infos = socket.getaddrinfo(config.get('bind', None), config.get('port', 8443),
+        # origins allowed to read the header from a browser
+        cors_origins = config.get('cors_origins', DEFAULT_CORS_ORIGINS)
+        if isinstance(cors_origins, str):
+            cors_origins = [cors_origins]
+        HeaderRequestHandler.cors_origins = cors_origins
+
+        # start web server; only reachable from this machine unless configured
+        # otherwise (bind: null listens on all interfaces)
+        infos = socket.getaddrinfo(config.get('bind', 'localhost'), config.get('port', 8443),
                                    type=socket.SOCK_STREAM, flags=socket.AI_PASSIVE)
         DualStackServer.address_family = infos[0][0]
         HeaderRequestHandler.protocol_version = 'HTTP/1.0'

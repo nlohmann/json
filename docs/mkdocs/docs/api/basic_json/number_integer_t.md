@@ -20,6 +20,13 @@ used.
 To store integer numbers in C++, a type is defined by the template parameter `NumberIntegerType` which chooses the type
 to use.
 
+## Template parameters
+
+`NumberIntegerType`
+:   the type to store signed integers. It must be a **signed integral** type (`#!cpp std::is_integral`) with a
+    `#!cpp std::numeric_limits` specialization, and it is stored directly inside a `basic_json` value. See
+    [Template Parameter Requirements](../../features/types/template_parameters.md#numberintegertype-and-numberunsignedtype).
+
 ## Notes
 
 #### Default type
@@ -44,7 +51,7 @@ range will yield over/underflow when used in a constructor. During deserializati
 will automatically be stored as [`number_unsigned_t`](number_unsigned_t.md) or [`number_float_t`](number_float_t.md).
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) further states:
-> Note that when such software is used, numbers that are integers and are in the range $[-2^{53}+1, 2^{53}-1]$ are
+> Note that when such software is used, numbers that are integers and are in the range [-2<sup>53</sup>+1, 2<sup>53</sup>-1] are
 > interoperable in the sense that implementations will agree exactly on their numeric values.
 
 As this range is a subrange of the exactly supported range [INT64_MIN, INT64_MAX], this class's integer type is
