@@ -23,6 +23,12 @@ option(
     description: 'Disable default integer enum serialization',
 )
 option(
+    'DisableTupleReferenceConversion',
+    type: 'boolean',
+    value: false,
+    description: 'Disable conversion from a one-element tuple of a JSON reference',
+)
+option(
     'Diagnostics',
     type: 'boolean',
     value: false,

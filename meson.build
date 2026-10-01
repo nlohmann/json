@@ -24,6 +24,9 @@ endif
 if get_option('DisableEnumSerialization')
     json_defines += 'JSON_DISABLE_ENUM_SERIALIZATION=1'
 endif
+if get_option('DisableTupleReferenceConversion')
+    json_defines += 'JSON_DISABLE_TUPLE_REFERENCE_CONVERSION=1'
+endif
 if get_option('Diagnostics')
     json_defines += 'JSON_DIAGNOSTICS=1'
 endif

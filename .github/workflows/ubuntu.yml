@@ -51,7 +51,7 @@ jobs:
           cmake --build build-import
       - name: Install with Meson and non-default options
         run: |
-          meson setup build-meson-options --prefix=${{ github.workspace }}/install-options -DMultipleHeaders=true -DDiagnostics=true -DGlobalUDLs=false
+          meson setup build-meson-options --prefix=${{ github.workspace }}/install-options -DMultipleHeaders=true -DDiagnostics=true -DGlobalUDLs=false -DDisableTupleReferenceConversion=true
           meson install -C build-meson-options
       - name: Check that the options reach the installed files
         run: |
@@ -60,7 +60,8 @@ jobs:
           echo "$cflags"
           echo "$cflags" | grep -q -- '-DJSON_DIAGNOSTICS=1'
           echo "$cflags" | grep -q -- '-DJSON_USE_GLOBAL_UDLS=0'
-          grep -q 'JSON_USE_GLOBAL_UDLS=0;JSON_DIAGNOSTICS=1' install-options/share/cmake/nlohmann_json/nlohmann_jsonTargets.cmake
+          echo "$cflags" | grep -q -- '-DJSON_DISABLE_TUPLE_REFERENCE_CONVERSION=1'
+          grep -q 'JSON_USE_GLOBAL_UDLS=0;JSON_DISABLE_TUPLE_REFERENCE_CONVERSION=1;JSON_DIAGNOSTICS=1' install-options/share/cmake/nlohmann_json/nlohmann_jsonTargets.cmake
           cmake -S tests/cmake_import/project -B build-import-options -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install-options
           cmake --build build-import-options
       - name: Install with Meson and the include directory outside the prefix
