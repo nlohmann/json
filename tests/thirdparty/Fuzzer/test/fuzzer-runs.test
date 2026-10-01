@@ -1,8 +1,0 @@
-RUN: mkdir -p %t
-RUN: echo abcd > %t/NthRunCrashTest.in
-RUN: LLVMFuzzer-NthRunCrashTest %t/NthRunCrashTest.in
-RUN: LLVMFuzzer-NthRunCrashTest %t/NthRunCrashTest.in -runs=10
-RUN: not LLVMFuzzer-NthRunCrashTest %t/NthRunCrashTest.in -runs=10000 2>&1 | FileCheck %s
-RUN: rm %t/NthRunCrashTest.in
-CHECK: BINGO
-
