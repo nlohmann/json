@@ -5774,6 +5774,8 @@ class string_ref
     using const_iterator = const char*;
 
     string_ref() noexcept = default;
+    // s must be null-terminated, as for std::string_view(const char*)
+    // flawfinder: ignore
     string_ref(const char* s) : m_data(s), m_size(std::strlen(s)) {} // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
     string_ref(const char* s, std::size_t n) noexcept : m_data(s), m_size(n) {}
     template<typename Traits, typename Alloc>
@@ -6791,6 +6793,7 @@ class basic_json_document
 
     /// parse into this document, reusing its memory
     template<typename InputType>
+    // flawfinder: ignore (a member function, not POSIX read())
     void read(InputType&& input,
               const bool allow_exceptions = true,
               const bool ignore_comments = false,
@@ -7177,6 +7180,8 @@ class basic_json_document
             return;
         }
         const char* cs = reinterpret_cast<const char*>(s); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        // C strings are null-terminated, as for json::parse(const char*)
+        // flawfinder: ignore
         build(cs, std::strlen(cs), ae, c, tc, false, true);
     }
 
