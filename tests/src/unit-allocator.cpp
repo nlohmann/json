@@ -481,6 +481,77 @@ TEST_CASE("deep copy uses the provided allocator")
 
 namespace
 {
+// the number of constructions countdown_allocator lets happen, including the
+// one that fails; 0 means none ever fails
+std::size_t constructions_until_failure = 0;
+
+template<class T>
+struct countdown_allocator : std::allocator<T>
+{
+    using std::allocator<T>::allocator;
+
+    template<class U, class... Args>
+    void construct(U* p, Args&& ... args)
+    {
+        if (constructions_until_failure != 0 && --constructions_until_failure == 0)
+        {
+            throw std::bad_alloc();
+        }
+
+        ::new (static_cast<void*>(p)) U(std::forward<Args>(args)...);
+    }
+
+    template <class U>
+    struct rebind
+    {
+        using other = countdown_allocator<U>;
+    };
+};
+} // namespace
+
+TEST_CASE("converting a deeply nested value from another specialization fails cleanly (#5650)")
+{
+    using countdown_json = nlohmann::basic_json<std::map,
+          std::vector,
+          std::string,
+          bool,
+          std::int64_t,
+          std::uint64_t,
+          double,
+          countdown_allocator>;
+
+    // deeper than the 128 levels the converting constructor descends into, so
+    // that failures land on both sides of the bound - or, built with
+    // JSON_NO_THREAD_LOCAL, all in the iterative conversion
+    json j = {1, "two", {{"three", 3}}};
+    for (std::size_t i = 0; i < 150; ++i)
+    {
+        j = json{{"a", json::array({j, "sibling"})}};
+    }
+
+    // Fail every construction in turn. Each failure has to reach the caller,
+    // and everything built until then has to be destroyed cleanly.
+    std::size_t failures = 0;
+    for (std::size_t n = 1;; ++n)
+    {
+        constructions_until_failure = n;
+        try
+        {
+            const countdown_json converted = j;
+            constructions_until_failure = 0;
+            CHECK(converted.dump() == j.dump());
+            break;
+        }
+        catch (const std::bad_alloc&)
+        {
+            ++failures;
+        }
+    }
+    CHECK(failures > 0);
+}
+
+namespace
+{
 template<class T>
 struct allocator_no_forward : std::allocator<T>
 {

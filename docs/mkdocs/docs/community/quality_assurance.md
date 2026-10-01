@@ -90,7 +90,7 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
         | GNU 14.2.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 15.1.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 16.1.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-        | GNU 16.1.0                                   | arm64        | Linux 6.1.100                     | Cirrus CI |
+        | GNU 16.1.0                                   | arm64        | Ubuntu 24.04                      | GitHub    |
         | icpc (ICC) 2021.10.0 20230609                | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
         | icpx (Intel oneAPI DPC++/C++) 2025.3.2       | x86_64       | Ubuntu 24.04 LTS                  | GitHub    |
         | nvc++ (NVIDIA HPC SDK) 25.5-0                | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
@@ -132,7 +132,8 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
   [libstdc++](https://gcc.gnu.org/onlinedocs/libstdc++/) to detect subtle differences or incompatibilities.
 - [x] The code checked with [Include What You Use (IWYU)](https://include-what-you-use.org) that all required standard
   headers are included.
-- [x] On Windows, the library is compiled with `<Windows.h>` being included to detect and avoid common bugs.
+- [x] On Windows, the library is compiled with `<Windows.h>` being included to detect and avoid common bugs (see
+  [`unit-windows_h.cpp`](https://github.com/nlohmann/json/blob/develop/tests/src/unit-windows_h.cpp)).
 - [x] The library is compiled with exceptions disabled to support alternative means of error handling.
 
 ## Stable public API
@@ -183,8 +184,8 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
         ```
 
 - [x] The code is checked with the latest [Cppcheck](https://cppcheck.sourceforge.io) with all warnings enabled.
-- [x] The code is checked with the latest [Clang Static Analyzer](https://clang-analyzer.llvm.org) checks, run
-  through Clang-Tidy's `clang-analyzer-*` checks with warnings as errors.
+- [x] The code is checked with the latest [Clang Static Analyzer](https://clang-analyzer.llvm.org) with 89 enabled
+  rules.
 - [x] The code is checked with [Infer](https://fbinfer.com).
 - [x] The code is checked with [Codacy](https://app.codacy.com/gh/nlohmann/json/dashboard).
 

@@ -10,7 +10,6 @@ set(JSON_32bitTest     AUTO CACHE STRING "Enable the 32bit unit test (ON/OFF/AUT
 set(JSON_TestStandards "" CACHE STRING "The list of standards to test explicitly.")
 
 # using an env var, since this will also affect targets executing cmake (such as "ci_test_compiler_default")
-set(JSON_FORCED_GLOBAL_COMPILE_OPTIONS $ENV{JSON_FORCED_GLOBAL_COMPILE_OPTIONS})
 if (NOT "" STREQUAL "$ENV{JSON_FORCED_GLOBAL_COMPILE_OPTIONS}")
     add_compile_options($ENV{JSON_FORCED_GLOBAL_COMPILE_OPTIONS})
 endif()
@@ -95,9 +94,14 @@ target_compile_options(test_main PUBLIC
 target_include_directories(test_main SYSTEM PUBLIC
     thirdparty/doctest)
 target_include_directories(test_main PUBLIC
-    thirdparty/fifo_map
     ${PROJECT_BINARY_DIR}/include)
 target_link_libraries(test_main PUBLIC ${NLOHMANN_JSON_TARGET_NAME})
+
+# thirdparty/fifo_map is only used by the #972 regression test, so only
+# test-regression1 needs it on its include path (see json_test_set_test_options
+# below), rather than every test-* target via test_main.
+add_library(fifo_map_include INTERFACE)
+target_include_directories(fifo_map_include INTERFACE thirdparty/fifo_map)
 
 #############################################################################
 # define test- and standard-specific build settings
@@ -131,6 +135,9 @@ json_test_set_test_options(test-disabled_exceptions
 
 # raise timeout of expensive Unicode test
 json_test_set_test_options(test-unicode4 TEST_PROPERTIES TIMEOUT 3000)
+
+# only the #972 regression test needs thirdparty/fifo_map on its include path
+json_test_set_test_options(test-regression1 LINK_LIBRARIES fifo_map_include)
 
 #############################################################################
 # add unit tests

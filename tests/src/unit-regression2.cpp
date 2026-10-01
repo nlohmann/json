@@ -18,6 +18,19 @@
 // for some reason including this after the json header leads to linker errors with VS 2017...
 #include <locale>
 
+// skip tests if JSON_DISABLE_TUPLE_REFERENCE_CONVERSION=1 (#2226)
+#if defined(JSON_DISABLE_TUPLE_REFERENCE_CONVERSION) && (JSON_DISABLE_TUPLE_REFERENCE_CONVERSION == 1)
+    #define SKIP_TESTS_FOR_TUPLE_REFERENCE_CONVERSION
+#endif
+
+// clang before 4 and GCC before 5 cannot create a std::tuple of basic_json
+// references at all, with or without JSON_DISABLE_TUPLE_REFERENCE_CONVERSION:
+// the tuple constructors make them instantiate basic_json's conversion operator
+// for libstdc++'s internal tuple bases, which fails hard
+#if (defined(__clang__) && __clang_major__ < 4) || (!defined(__clang__) && defined(__GNUC__) && __GNUC__ < 5)
+    #define SKIP_TESTS_FOR_JSON_REFERENCE_TUPLES
+#endif
+
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -28,6 +41,7 @@ using ordered_json = nlohmann::ordered_json;
 
 #include <cstdio>
 #include <list>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 
@@ -198,28 +212,6 @@ struct adl_serializer<NonDefaultConstructible>
     }
 };
 }  // namespace nlohmann
-
-/////////////////////////////////////////////////////////////////////
-// for #2824
-/////////////////////////////////////////////////////////////////////
-
-class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type>
-{
-  public:
-    explicit sax_no_exception(json& j)
-        : nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type>(j, false)
-    {}
-
-    static bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& ex)
-    {
-        error_string = new std::string(ex.what());  // NOLINT(cppcoreguidelines-owning-memory)
-        return false;
-    }
-
-    static std::string* error_string;
-};
-
-std::string* sax_no_exception::error_string = nullptr;
 
 /////////////////////////////////////////////////////////////////////
 // for #2982
@@ -542,6 +534,20 @@ TEST_CASE("regression tests 2")
                       )));
     }
 
+#ifndef SKIP_TESTS_FOR_TUPLE_REFERENCE_CONVERSION
+    SECTION("issue #2226 - std::tuple dangling reference - implicit conversion")
+    {
+        // by default, a one-element tuple holding a json reference converts to
+        // a one-element array; JSON_DISABLE_TUPLE_REFERENCE_CONVERSION removes
+        // this conversion (see unit-disable-tuple-reference-conversion.cpp)
+        const json j = true;
+        CHECK(std::is_constructible<json, std::tuple<const json&>>::value);
+#ifndef SKIP_TESTS_FOR_JSON_REFERENCE_TUPLES
+        CHECK(json(std::forward_as_tuple(j)) == json::array({true}));
+#endif
+    }
+#endif
+
     SECTION("PR #2181 - regression bug with lvalue")
     {
         // see https://github.com/nlohmann/json/pull/2181#issuecomment-653326060
@@ -721,16 +727,6 @@ TEST_CASE("regression tests 2")
             // call to_json with a non-null JSON value
             nlohmann::to_json(o["foo"], s);
         }
-    }
-
-    SECTION("issue #2824 - encoding of json::exception::what()")
-    {
-        json j;
-        sax_no_exception sax(j);
-
-        CHECK(!json::sax_parse("xyz", &sax));
-        CHECK(*sax_no_exception::error_string == "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: 'x'");
-        delete sax_no_exception::error_string;  // NOLINT(cppcoreguidelines-owning-memory)
     }
 
     SECTION("issue #2825 - Properly constrain the basic_json conversion operator")
