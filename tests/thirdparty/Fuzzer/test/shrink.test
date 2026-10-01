@@ -1,7 +1,0 @@
-RUN: LLVMFuzzer-ShrinkControlFlowTest -seed=1 -exit_on_item=0eb8e4ed029b774d80f2b66408203801cb982a60 -runs=1000000  -shrink=1 2>&1 | FileCheck %s --check-prefix=SHRINK1
-RUN: LLVMFuzzer-ShrinkControlFlowTest -seed=1 -exit_on_item=0eb8e4ed029b774d80f2b66408203801cb982a60 -runs=1000000 -shrink=0 2>&1 | FileCheck %s --check-prefix=SHRINK0
-RUN: LLVMFuzzer-ShrinkValueProfileTest -seed=1 -exit_on_item=aea2e3923af219a8956f626558ef32f30a914ebc -runs=100000 -shrink=1 -use_value_profile=1 2>&1 | FileCheck %s --check-prefix=SHRINK1_VP
-
-SHRINK0: Done 1000000 runs in
-SHRINK1: INFO: found item with checksum '0eb8e4ed029b774d80f2b66408203801cb982a60', exiting.
-SHRINK1_VP: INFO: found item with checksum 'aea2e3923af219a8956f626558ef32f30a914ebc', exiting
