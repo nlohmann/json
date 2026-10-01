@@ -282,6 +282,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('JSON_CATCH_USER', 'Macro', 'a
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DIAGNOSTICS', 'Macro', 'api/macros/json_diagnostics/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DIAGNOSTIC_POSITIONS', 'Macro', 'api/macros/json_diagnostic_positions/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DISABLE_ENUM_SERIALIZATION', 'Macro', 'api/macros/json_disable_enum_serialization/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DISABLE_TUPLE_REFERENCE_CONVERSION', 'Macro', 'api/macros/json_disable_tuple_reference_conversion/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_HAS_CPP_11', 'Macro', 'api/macros/json_has_cpp_11/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_HAS_CPP_14', 'Macro', 'api/macros/json_has_cpp_11/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_HAS_CPP_17', 'Macro', 'api/macros/json_has_cpp_11/index.html');

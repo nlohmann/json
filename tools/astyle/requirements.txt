@@ -1,1 +1,4 @@
+# astyle is deliberately pinned: newer versions reformat the code, and this version
+# defines the formatting that `make amalgamate` produces and check_amalgamation.yml enforces.
+# Dependabot is told to ignore it in .github/dependabot.yml.
 astyle==3.4.13
