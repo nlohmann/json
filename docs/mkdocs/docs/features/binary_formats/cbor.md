@@ -192,13 +192,18 @@ The library maps CBOR types to JSON value types as follows:
 !!! warning "Ill-formed UTF-8 in text strings"
 
     [RFC 8949, Section 3.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-3.1) requires CBOR text strings
-    (major type 3) to be valid UTF-8, but leaves it up to the decoder whether to enforce this. This library does
-    not: `from_cbor()` accepts a text string (object keys included) whose bytes are not valid UTF-8 and hands them
-    back unchanged. However, [`dump()`](../../api/basic_json/dump.md) still requires valid UTF-8 and throws
-    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for such a value, unless an error
-    handler is passed that replaces or ignores the ill-formed bytes. `to_cbor()` is strict as well and throws the
-    same exception for a string value or object key that is not valid UTF-8, so such a value cannot be written back
-    to CBOR. Byte strings (major type 2) are unaffected, since they are not required to hold text.
+    (major type 3) to be valid UTF-8, but leaves it up to the decoder whether to enforce this, so checking is
+    opt-in: with the [`error_handler`](../../api/basic_json/from_cbor.md) parameter left at `keep` (the default),
+    `from_cbor()` accepts a text string (object keys included) whose bytes are not valid UTF-8 and hands them back
+    unchanged. Passing `error_handler_t::strict` makes `from_cbor()` check and throw
+    [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) for ill-formed UTF-8, and
+    `replace`/`ignore` sanitize the string instead of keeping it. However, [`dump()`](../../api/basic_json/dump.md)
+    still requires valid UTF-8 and throws [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316)
+    for a value read with the default `keep` handler, unless an error handler is passed that replaces or ignores
+    the ill-formed bytes. `to_cbor()`'s own [`error_handler`](../../api/basic_json/to_cbor.md) parameter defaults
+    to `strict` and throws the same exception for a string value or object key that is not valid UTF-8, so such a
+    value cannot be written back to CBOR unless a non-strict handler is passed there too. Byte strings (major
+    type 2) are unaffected, since they are not required to hold text.
 
 !!! warning "Tagged items"
 

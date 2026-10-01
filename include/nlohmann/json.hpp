@@ -201,9 +201,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // used by the vector-returning to_* overloads
     template<typename CharType> using vector_binary_writer =
         ::nlohmann::detail::binary_writer<basic_json, CharType, ::nlohmann::detail::output_vector_sink<CharType>>;
-    template<typename CharType> static vector_binary_writer<CharType> vector_writer(std::vector<CharType>& v)
+    template<typename CharType> static vector_binary_writer<CharType> vector_writer(
+        std::vector<CharType>& v, const ::nlohmann::detail::error_handler_t error_handler = ::nlohmann::detail::error_handler_t::strict)
     {
-        return vector_binary_writer<CharType>(::nlohmann::detail::output_vector_sink<CharType>(v));
+        return vector_binary_writer<CharType>(::nlohmann::detail::output_vector_sink<CharType>(v), error_handler);
     }
 
   JSON_PRIVATE_UNLESS_TESTED:
@@ -5445,26 +5446,29 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
   public:
     /// @brief create a CBOR serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_cbor/
-    static std::vector<std::uint8_t> to_cbor(const basic_json& j)
+    static std::vector<std::uint8_t> to_cbor(const basic_json& j,
+            const error_handler_t error_handler = error_handler_t::strict)
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        vector_writer(result).write_cbor(j);
+        vector_writer(result, error_handler).write_cbor(j);
         return result;
     }
 
     /// @brief create a CBOR serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_cbor/
-    static void to_cbor(const basic_json& j, detail::output_adapter<std::uint8_t> o)
+    static void to_cbor(const basic_json& j, detail::output_adapter<std::uint8_t> o,
+                        const error_handler_t error_handler = error_handler_t::strict)
     {
-        binary_writer<std::uint8_t>(o).write_cbor(j);
+        binary_writer<std::uint8_t>(o, error_handler).write_cbor(j);
     }
 
     /// @brief create a CBOR serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_cbor/
-    static void to_cbor(const basic_json& j, detail::output_adapter<char> o)
+    static void to_cbor(const basic_json& j, detail::output_adapter<char> o,
+                        const error_handler_t error_handler = error_handler_t::strict)
     {
-        binary_writer<char>(o).write_cbor(j);
+        binary_writer<char>(o, error_handler).write_cbor(j);
     }
 
     /// @brief create a MessagePack serialization of a given JSON value
@@ -5495,28 +5499,31 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/to_ubjson/
     static std::vector<std::uint8_t> to_ubjson(const basic_json& j,
             const bool use_size = false,
-            const bool use_type = false)
+            const bool use_type = false,
+            const error_handler_t error_handler = error_handler_t::strict)
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        vector_writer(result).write_ubjson(j, use_size, use_type);
+        vector_writer(result, error_handler).write_ubjson(j, use_size, use_type);
         return result;
     }
 
     /// @brief create a UBJSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_ubjson/
     static void to_ubjson(const basic_json& j, detail::output_adapter<std::uint8_t> o,
-                          const bool use_size = false, const bool use_type = false)
+                          const bool use_size = false, const bool use_type = false,
+                          const error_handler_t error_handler = error_handler_t::strict)
     {
-        binary_writer<std::uint8_t>(o).write_ubjson(j, use_size, use_type);
+        binary_writer<std::uint8_t>(o, error_handler).write_ubjson(j, use_size, use_type);
     }
 
     /// @brief create a UBJSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_ubjson/
     static void to_ubjson(const basic_json& j, detail::output_adapter<char> o,
-                          const bool use_size = false, const bool use_type = false)
+                          const bool use_size = false, const bool use_type = false,
+                          const error_handler_t error_handler = error_handler_t::strict)
     {
-        binary_writer<char>(o).write_ubjson(j, use_size, use_type);
+        binary_writer<char>(o, error_handler).write_ubjson(j, use_size, use_type);
     }
 
     /// @brief create a BJData serialization of a given JSON value
@@ -5524,11 +5531,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static std::vector<std::uint8_t> to_bjdata(const basic_json& j,
             const bool use_size = false,
             const bool use_type = false,
-            const bjdata_version_t version = bjdata_version_t::draft2)
+            const bjdata_version_t version = bjdata_version_t::draft2,
+            const error_handler_t error_handler = error_handler_t::strict)
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        vector_writer(result).write_ubjson(j, use_size, use_type, true, true, version);
+        vector_writer(result, error_handler).write_ubjson(j, use_size, use_type, true, true, version);
         return result;
     }
 
@@ -5536,42 +5544,47 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/to_bjdata/
     static void to_bjdata(const basic_json& j, detail::output_adapter<std::uint8_t> o,
                           const bool use_size = false, const bool use_type = false,
-                          const bjdata_version_t version = bjdata_version_t::draft2)
+                          const bjdata_version_t version = bjdata_version_t::draft2,
+                          const error_handler_t error_handler = error_handler_t::strict)
     {
-        binary_writer<std::uint8_t>(o).write_ubjson(j, use_size, use_type, true, true, version);
+        binary_writer<std::uint8_t>(o, error_handler).write_ubjson(j, use_size, use_type, true, true, version);
     }
 
     /// @brief create a BJData serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bjdata/
     static void to_bjdata(const basic_json& j, detail::output_adapter<char> o,
                           const bool use_size = false, const bool use_type = false,
-                          const bjdata_version_t version = bjdata_version_t::draft2)
+                          const bjdata_version_t version = bjdata_version_t::draft2,
+                          const error_handler_t error_handler = error_handler_t::strict)
     {
-        binary_writer<char>(o).write_ubjson(j, use_size, use_type, true, true, version);
+        binary_writer<char>(o, error_handler).write_ubjson(j, use_size, use_type, true, true, version);
     }
 
     /// @brief create a BSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bson/
-    static std::vector<std::uint8_t> to_bson(const basic_json& j)
+    static std::vector<std::uint8_t> to_bson(const basic_json& j,
+            const error_handler_t error_handler = error_handler_t::strict)
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        vector_writer(result).write_bson(j);
+        vector_writer(result, error_handler).write_bson(j);
         return result;
     }
 
     /// @brief create a BSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bson/
-    static void to_bson(const basic_json& j, detail::output_adapter<std::uint8_t> o)
+    static void to_bson(const basic_json& j, detail::output_adapter<std::uint8_t> o,
+                        const error_handler_t error_handler = error_handler_t::strict)
     {
-        binary_writer<std::uint8_t>(o).write_bson(j);
+        binary_writer<std::uint8_t>(o, error_handler).write_bson(j);
     }
 
     /// @brief create a BSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bson/
-    static void to_bson(const basic_json& j, detail::output_adapter<char> o)
+    static void to_bson(const basic_json& j, detail::output_adapter<char> o,
+                        const error_handler_t error_handler = error_handler_t::strict)
     {
-        binary_writer<char>(o).write_bson(j);
+        binary_writer<char>(o, error_handler).write_bson(j);
     }
 
     /// @brief create a BON8 serialization of a given JSON value
@@ -5605,12 +5618,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static basic_json from_cbor(InputType&& i,
                                 const bool strict = true,
                                 const bool allow_exceptions = true,
-                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
+                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error,
+                                const error_handler_t error_handler = error_handler_t::keep)
     {
         basic_json result;
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(&sdp, strict, tag_handler)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor, error_handler).sax_parse(&sdp, strict, tag_handler)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5625,12 +5639,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static basic_json from_cbor(IteratorType first, SentinelType last,
                                 const bool strict = true,
                                 const bool allow_exceptions = true,
-                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
+                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error,
+                                const error_handler_t error_handler = error_handler_t::keep)
     {
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(&sdp, strict, tag_handler)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor, error_handler).sax_parse(&sdp, strict, tag_handler)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5672,12 +5687,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_msgpack(InputType&& i,
                                    const bool strict = true,
-                                   const bool allow_exceptions = true)
+                                   const bool allow_exceptions = true,
+                                   const error_handler_t error_handler = error_handler_t::keep)
     {
         basic_json result;
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack, error_handler).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5691,12 +5707,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_msgpack(IteratorType first, SentinelType last,
                                    const bool strict = true,
-                                   const bool allow_exceptions = true)
+                                   const bool allow_exceptions = true,
+                                   const error_handler_t error_handler = error_handler_t::keep)
     {
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack, error_handler).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5736,12 +5753,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_ubjson(InputType&& i,
                                   const bool strict = true,
-                                  const bool allow_exceptions = true)
+                                  const bool allow_exceptions = true,
+                                  const error_handler_t error_handler = error_handler_t::keep)
     {
         basic_json result;
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson, error_handler).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5755,12 +5773,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_ubjson(IteratorType first, SentinelType last,
                                   const bool strict = true,
-                                  const bool allow_exceptions = true)
+                                  const bool allow_exceptions = true,
+                                  const error_handler_t error_handler = error_handler_t::keep)
     {
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson, error_handler).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5800,12 +5819,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bjdata(InputType&& i,
                                   const bool strict = true,
-                                  const bool allow_exceptions = true)
+                                  const bool allow_exceptions = true,
+                                  const error_handler_t error_handler = error_handler_t::keep)
     {
         basic_json result;
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata, error_handler).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5819,12 +5839,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bjdata(IteratorType first, SentinelType last,
                                   const bool strict = true,
-                                  const bool allow_exceptions = true)
+                                  const bool allow_exceptions = true,
+                                  const error_handler_t error_handler = error_handler_t::keep)
     {
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata, error_handler).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5874,12 +5895,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bson(InputType&& i,
                                 const bool strict = true,
-                                const bool allow_exceptions = true)
+                                const bool allow_exceptions = true,
+                                const error_handler_t error_handler = error_handler_t::keep)
     {
         basic_json result;
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson, error_handler).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }
@@ -5893,12 +5915,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bson(IteratorType first, SentinelType last,
                                 const bool strict = true,
-                                const bool allow_exceptions = true)
+                                const bool allow_exceptions = true,
+                                const error_handler_t error_handler = error_handler_t::keep)
     {
         basic_json result;
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         detail::json_sax_dom_parser<basic_json, decltype(ia)> sdp(result, allow_exceptions);
-        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
+        if (!binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson, error_handler).sax_parse(&sdp, strict)) // cppcheck-suppress[accessMoved]
         {
             result = value_t::discarded;
         }

@@ -157,11 +157,17 @@ The library maps MessagePack types to JSON value types as follows:
 
     The MessagePack specification explicitly allows a `str` value (`fixstr`, `str 8`, `str 16`, `str 32`) to contain
     a byte sequence that is not valid UTF-8, and expects a deserializer to hand the original bytes back unchanged.
-    This library follows that: `from_msgpack()` reads `str` bytes (object keys included) as-is, without validating
-    them, and `to_msgpack()` writes them back as-is, so such a value round-trips through `from_msgpack(to_msgpack(j))`
-    byte for byte. However, [`dump()`](../../api/basic_json/dump.md) still requires valid UTF-8 and throws
-    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for a value read this way, unless an
-    error handler is passed that replaces or ignores the ill-formed bytes.
+    This library follows that by default: with its
+    [`error_handler`](../../api/basic_json/from_msgpack.md) parameter left at `keep` (the default),
+    `from_msgpack()` reads `str` bytes (object keys included) as-is, without validating them, so such a value
+    round-trips through `from_msgpack(to_msgpack(j))` byte for byte. Passing `error_handler_t::strict` makes
+    `from_msgpack()` check anyway and throw
+    [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) for ill-formed UTF-8, and
+    `replace`/`ignore` sanitize the string instead of keeping it. `to_msgpack()` itself has no `error_handler`
+    parameter and always writes `str` bytes as-is, since the specification permits it. However,
+    [`dump()`](../../api/basic_json/dump.md) still requires valid UTF-8 and throws
+    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for a value read this way with the
+    default `keep` handler, unless an error handler is passed that replaces or ignores the ill-formed bytes.
 
 ??? example
 
