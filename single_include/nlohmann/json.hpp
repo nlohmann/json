@@ -18,16 +18,6 @@
 #ifndef INCLUDE_NLOHMANN_JSON_HPP_
 #define INCLUDE_NLOHMANN_JSON_HPP_
 
-// Workaround for GCC template redefinition errors in C++ modules
-// When nlohmann/json.hpp is included in a C++20 module preamble after
-// other module imports, GCC may report spurious redefinition errors for
-// STL templates. These pragmas suppress those false positives.
-// See: https://github.com/nlohmann/json/issues/5103
-#if defined(__GNUC__) && !defined(__clang__) && __cplusplus >= 202002L
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wignored-attributes"
-#endif
-
 #include <algorithm> // all_of, find, for_each, none_of
 #include <cmath> // isnan
 #include <cstddef> // nullptr_t, ptrdiff_t, size_t
@@ -2617,13 +2607,6 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_NO_THREAD_LOCAL 1
 #endif
 
-// disable documentation warnings on clang
-#if defined(__clang__)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wdocumentation"
-    #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
-#endif
-
 // allow disabling exceptions
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
     #define JSON_THROW(exception) throw exception
@@ -2682,7 +2665,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     {                                                                                           \
         /* NOLINTNEXTLINE(modernize-type-traits) we use C++11 */                                \
         static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");          \
-        /* NOLINTNEXTLINE(modernize-avoid-c-arrays) we don't want to depend on <array> */       \
+        /* NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) we don't want to depend on <array> */ \
         static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                     \
         auto it = std::find_if(std::begin(m), std::end(m),                                      \
                                [e](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool  \
@@ -2696,7 +2679,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     {                                                                                           \
         /* NOLINTNEXTLINE(modernize-type-traits) we use C++11 */                                \
         static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");          \
-        /* NOLINTNEXTLINE(modernize-avoid-c-arrays) we don't want to depend on <array> */       \
+        /* NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) we don't want to depend on <array> */ \
         static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                     \
         auto it = std::find_if(std::begin(m), std::end(m),                                      \
                                [&j](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool \
@@ -2735,7 +2718,7 @@ void templated_json_throw(ExceptionType exception)
     {                                                                                           \
         /* NOLINTNEXTLINE(modernize-type-traits) we use C++11 */                                \
         static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");          \
-        /* NOLINTNEXTLINE(modernize-avoid-c-arrays) we don't want to depend on <array> */       \
+        /* NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) we don't want to depend on <array> */ \
         static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                     \
         auto it = std::find_if(std::begin(m), std::end(m),                                      \
                                [e](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool  \
@@ -2750,7 +2733,7 @@ void templated_json_throw(ExceptionType exception)
     {                                                                                           \
         /* NOLINTNEXTLINE(modernize-type-traits) we use C++11 */                                \
         static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");          \
-        /* NOLINTNEXTLINE(modernize-avoid-c-arrays) we don't want to depend on <array> */       \
+        /* NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) we don't want to depend on <array> */ \
         static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                     \
         auto it = std::find_if(std::begin(m), std::end(m),                                      \
                                [&j](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool \
@@ -3578,8 +3561,7 @@ inline StringType escape(const StringType& s)
 
 /*!
  * @brief string unescaping as described in RFC 6901 (Sect. 4)
- * @param[in] s string to unescape
- * @return    unescaped string
+ * @param[in,out] s string to unescape in place
  *
  * Note the order of escaping "~1" to "/" and "~0" to "~" is important.
  *
@@ -5871,22 +5853,22 @@ void())
 }
 
 template < typename BasicJsonType, typename T, std::size_t... Idx >
-std::array<T, sizeof...(Idx)> from_json_inplace_array_impl(BasicJsonType&& j,
+std::array<T, sizeof...(Idx)> from_json_inplace_array_impl(const BasicJsonType& j,
                      identity_tag<std::array<T, sizeof...(Idx)>> /*unused*/, index_sequence<Idx...> /*unused*/)
 {
-    return { { std::forward<BasicJsonType>(j).at(Idx).template get<T>()... } };
+    return { { j.at(Idx).template get<T>()... } };
 }
 
 template < typename BasicJsonType, typename T, std::size_t N >
-auto from_json(BasicJsonType&& j, identity_tag<std::array<T, N>> tag)
--> decltype(from_json_inplace_array_impl(std::forward<BasicJsonType>(j), tag, make_index_sequence<N> {}))
+auto from_json(const BasicJsonType& j, identity_tag<std::array<T, N>> tag)
+-> decltype(from_json_inplace_array_impl(j, tag, make_index_sequence<N> {}))
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
         JSON_THROW(type_error::create(302, concat("type must be array, but is ", j.type_name()), &j));
     }
 
-    return from_json_inplace_array_impl(std::forward<BasicJsonType>(j), tag, make_index_sequence<N> {});
+    return from_json_inplace_array_impl(j, tag, make_index_sequence<N> {});
 }
 
 template<typename BasicJsonType>
@@ -6021,54 +6003,54 @@ template<std::size_t PTagValue, typename BasicJsonType, typename... Types>
 using tuple_type = std::tuple < decltype(from_json_tuple_get_impl(std::declval<BasicJsonType>(), detail::identity_tag<Types> {}, detail::priority_tag<PTagValue> {}))... >;
 
 template<std::size_t PTagValue, typename... Args, typename BasicJsonType, std::size_t... Idx>
-tuple_type<PTagValue, BasicJsonType, Args...> from_json_tuple_impl_base(BasicJsonType&& j, index_sequence<Idx...> /*unused*/)
+tuple_type<PTagValue, const BasicJsonType&, Args...> from_json_tuple_impl_base(const BasicJsonType& j, index_sequence<Idx...> /*unused*/)
 {
-    return tuple_type<PTagValue, BasicJsonType, Args...>(from_json_tuple_get_impl(std::forward<BasicJsonType>(j).at(Idx), detail::identity_tag<Args> {}, detail::priority_tag<PTagValue> {})...);
+    return tuple_type<PTagValue, const BasicJsonType&, Args...>(from_json_tuple_get_impl(j.at(Idx), detail::identity_tag<Args> {}, detail::priority_tag<PTagValue> {})...);
 }
 
 template<std::size_t PTagValue, typename BasicJsonType>
-std::tuple<> from_json_tuple_impl_base(BasicJsonType& /*unused*/, index_sequence<> /*unused*/)
+std::tuple<> from_json_tuple_impl_base(const BasicJsonType& /*unused*/, index_sequence<> /*unused*/)
 {
     return {};
 }
 
 template < typename BasicJsonType, class A1, class A2 >
-std::pair<A1, A2> from_json_tuple_impl(BasicJsonType&& j, identity_tag<std::pair<A1, A2>> /*unused*/, priority_tag<0> /*unused*/)
+std::pair<A1, A2> from_json_tuple_impl(const BasicJsonType& j, identity_tag<std::pair<A1, A2>> /*unused*/, priority_tag<0> /*unused*/)
 {
-    return {std::forward<BasicJsonType>(j).at(0).template get<A1>(),
-            std::forward<BasicJsonType>(j).at(1).template get<A2>()};
+    return {j.at(0).template get<A1>(),
+            j.at(1).template get<A2>()};
 }
 
 template<typename BasicJsonType, typename A1, typename A2>
-inline void from_json_tuple_impl(BasicJsonType&& j, std::pair<A1, A2>& p, priority_tag<1> /*unused*/)
+inline void from_json_tuple_impl(const BasicJsonType& j, std::pair<A1, A2>& p, priority_tag<1> /*unused*/)
 {
-    p = from_json_tuple_impl(std::forward<BasicJsonType>(j), identity_tag<std::pair<A1, A2>> {}, priority_tag<0> {});
+    p = from_json_tuple_impl(j, identity_tag<std::pair<A1, A2>> {}, priority_tag<0> {});
 }
 
 template<typename BasicJsonType, typename... Args>
-std::tuple<Args...> from_json_tuple_impl(BasicJsonType&& j, identity_tag<std::tuple<Args...>> /*unused*/, priority_tag<2> /*unused*/)
+std::tuple<Args...> from_json_tuple_impl(const BasicJsonType& j, identity_tag<std::tuple<Args...>> /*unused*/, priority_tag<2> /*unused*/)
 {
-    static_assert(cxpr_and<cxpr_or<cxpr_not<std::is_reference<Args>>, is_compatible_reference_type<BasicJsonType, Args>>...>::value,
+    static_assert(cxpr_and<cxpr_or<cxpr_not<std::is_reference<Args>>, is_compatible_reference_type<const BasicJsonType&, Args>>...>::value,
                   "Can not return a tuple containing references to types not contained in a Json, try Json::get_to()");
-    return from_json_tuple_impl_base<1, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
+    return from_json_tuple_impl_base<1, Args...>(j, index_sequence_for<Args...> {});
 }
 
 template<typename BasicJsonType, typename... Args>
-inline void from_json_tuple_impl(BasicJsonType&& j, std::tuple<Args...>& t, priority_tag<3> /*unused*/)
+inline void from_json_tuple_impl(const BasicJsonType& j, std::tuple<Args...>& t, priority_tag<3> /*unused*/)
 {
-    t = from_json_tuple_impl_base<2, Args...>(std::forward<BasicJsonType>(j), index_sequence_for<Args...> {});
+    t = from_json_tuple_impl_base<2, Args...>(j, index_sequence_for<Args...> {});
 }
 
 template<typename BasicJsonType, typename TupleRelated>
-auto from_json(BasicJsonType&& j, TupleRelated&& t)
--> decltype(from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), priority_tag<3> {}))
+auto from_json(const BasicJsonType& j, TupleRelated&& t)
+-> decltype(from_json_tuple_impl(j, std::forward<TupleRelated>(t), priority_tag<3> {}))
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
         JSON_THROW(type_error::create(302, concat("type must be array, but is ", j.type_name()), &j));
     }
 
-    return from_json_tuple_impl(std::forward<BasicJsonType>(j), std::forward<TupleRelated>(t), priority_tag<3> {});
+    return from_json_tuple_impl(j, std::forward<TupleRelated>(t), priority_tag<3> {});
 }
 
 template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
@@ -6153,7 +6135,7 @@ struct from_json_fn
 /// namespace to hold default `from_json` function
 /// to see why this is required:
 /// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html
-namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-namespaces)
+namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-namespaces,misc-anonymous-namespace-in-header)
 {
 #endif
 JSON_INLINE_VARIABLE constexpr const auto& from_json = // NOLINT(misc-definitions-in-headers)
@@ -6629,11 +6611,11 @@ namespace std
     JSON_HEDLEY_PRAGMA(clang diagnostic ignored "-Wmismatched-tags")
 #endif
 template<typename IteratorType>
-class tuple_size<::nlohmann::detail::iteration_proxy_value<IteratorType>> // NOLINT(cert-dcl58-cpp)
+class tuple_size<::nlohmann::detail::iteration_proxy_value<IteratorType>> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
     : public std::integral_constant<std::size_t, 2> {};
 
 template<std::size_t N, typename IteratorType>
-class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >> // NOLINT(cert-dcl58-cpp)
+class tuple_element<N, ::nlohmann::detail::iteration_proxy_value<IteratorType >> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
 {
   public:
     using type = decltype(
@@ -7178,7 +7160,7 @@ struct to_json_fn
 /// namespace to hold default `to_json` function
 /// to see why this is required:
 /// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html
-namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-namespaces)
+namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-namespaces,misc-anonymous-namespace-in-header)
 {
 #endif
 JSON_INLINE_VARIABLE constexpr const auto& to_json = // NOLINT(misc-definitions-in-headers)
@@ -8399,6 +8381,9 @@ struct container_input_adapter_factory< ContainerType,
 
            static adapter_type create(ContainerType&& container)
 {
+    // container is forwarded twice on purpose: the resulting begin/end
+    // iterator types must match adapter_type, computed the same way
+    // NOLINTNEXTLINE(bugprone-use-after-move)
     return input_adapter(begin(std::forward<ContainerType>(container)), end(std::forward<ContainerType>(container)));
 }
        };
@@ -10298,9 +10283,9 @@ class lexer : public lexer_base<BasicJsonType>
     /////////////////////
 
     /*!
-    @brief get codepoint from 4 hex characters following `\u`
+    @brief get codepoint from 4 hex characters following `\\u`
 
-    For input "\u c1 c2 c3 c4" the codepoint is:
+    For input "\\u c1 c2 c3 c4" the codepoint is:
       (c1 * 0x1000) + (c2 * 0x0100) + (c3 * 0x0010) + c4
     = (c1 << 12) + (c2 << 8) + (c3 << 4) + (c4 << 0)
 
@@ -13949,7 +13934,7 @@ class binary_reader
     @brief Parses a C-style string from the BSON input.
     @param[in,out] result  A reference to the string variable where the read
                             string is to be stored.
-    @return `true` if the \x00-byte indicating the end of the string was
+    @return `true` if the \\x00-byte indicating the end of the string was
              encountered before the EOF; false` indicates an unexpected EOF.
     */
     bool get_bson_cstr(string_t& result)
@@ -13979,7 +13964,7 @@ class binary_reader
     @brief read a C-style string from contiguous input in one step
 
     @param[in,out] result  the string to append to
-    @return whether the string was read; if the input has no \x00-byte, nothing
+    @return whether the string was read; if the input has no \\x00-byte, nothing
             is read, and @ref get_bson_cstr reports the end of the input
     */
     bool get_bson_cstr_bulk(string_t& result, std::true_type /*bulk*/)
@@ -18636,7 +18621,7 @@ This class implements a both iterators (iterator and const_iterator) for the
       been set (e.g., by a constructor or a copy assignment). If the iterator is
       default-constructed, it is *uninitialized* and most methods are undefined.
       **The library uses assertions to detect calls on uninitialized iterators.**
-@requirement REQ-JSON-01 The class satisfies the following concept requirements:
+This class satisfies the following concept requirements (REQ-JSON-01):
 -
 [BidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator):
   The iterator that can be moved can be moved in both directions (i.e.
@@ -19400,7 +19385,7 @@ namespace detail
 iterator (to create @ref reverse_iterator) and @ref const_iterator (to
 create @ref const_reverse_iterator).
 
-@requirement REQ-JSON-02 The class satisfies the following concept requirements:
+This class satisfies the following concept requirements (REQ-JSON-02):
 -
 [BidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator):
   The iterator that can be moved can be moved in both directions (i.e.
@@ -19843,11 +19828,11 @@ class json_pointer
             JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", s, "'"), nullptr));
         }
 
-        // only triggered on special platforms (like 32bit), see also
-        // https://github.com/nlohmann/json/pull/2203
+        // the index does not fit into size_type; on 64-bit platforms this is
+        // only SIZE_MAX itself (see #2203 and #5395)
         if (res >= static_cast<unsigned long long>((std::numeric_limits<size_type>::max)()))  // NOLINT(runtime/int)
         {
-            JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));   // LCOV_EXCL_LINE
+            JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));
         }
 
         return static_cast<size_type>(res);
@@ -19881,7 +19866,7 @@ class json_pointer
     /*!
     @brief create and return a reference to the pointed to value
 
-    @complexity Linear in the number of reference tokens.
+    Complexity: Linear in the number of reference tokens.
 
     @throw parse_error.106 if an array index begins with '0'
     @throw parse_error.109 if array index is not a number
@@ -19968,7 +19953,7 @@ class json_pointer
 
     @return reference to the JSON value pointed to by the JSON pointer
 
-    @complexity Linear in the length of the JSON pointer.
+    Complexity: Linear in the length of the JSON pointer.
 
     @throw parse_error.106   if an array index begins with '0'
     @throw parse_error.109   if an array index was not a number
@@ -20880,6 +20865,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstddef> // size_t
 #include <memory> // shared_ptr, make_shared
 #include <string> // basic_string
+#include <type_traits> // conditional, integral_constant, is_same
 #include <utility> // move
 #include <vector> // vector
 
@@ -20988,11 +20974,13 @@ class output_stream_adapter : public output_adapter_protocol<CharType>
         : stream(s)
     {}
 
+    // NOLINTNEXTLINE(portability-template-virtual-member-function)
     void write_character(CharType c) override
     {
         stream.put(c);
     }
 
+    // NOLINTNEXTLINE(portability-template-virtual-member-function)
     void write_characters(const CharType* s, std::size_t length) override
     {
         stream.write(s, static_cast<std::streamsize>(length));
@@ -21059,7 +21047,82 @@ class output_adapter_sink
     output_adapter_t<CharType> oa;
 };
 
-template<typename CharType, typename StringType = std::basic_string<CharType>>
+/// @brief whether std::basic_string<CharType> has a non-deprecated std::char_traits
+///        specialization, and is therefore usable as output_adapter's default StringType
+///
+/// std::char_traits is only guaranteed (and, on some standard libraries, only
+/// implemented without a deprecation warning) for the character types listed
+/// below; std::char_traits<T> for any other T (e.g. std::uint8_t, as used by the
+/// binary writers) is a non-standard extension some standard libraries deprecate.
+/// See https://github.com/nlohmann/json/issues/5725 item 2.
+template<typename CharType>
+struct is_output_adapter_string_char_type : std::integral_constant < bool,
+    std::is_same<CharType, char>::value ||
+    std::is_same<CharType, wchar_t>::value ||
+    std::is_same<CharType, char16_t>::value ||
+    std::is_same<CharType, char32_t>::value
+#if defined(__cpp_lib_char8_t) && (__cpp_lib_char8_t >= 201907L)
+    || std::is_same<CharType, char8_t>::value
+#endif
+    > {};
+
+/// @brief placeholder type for output_adapter's StringType and (with JSON_NO_IO
+///        undefined) its std::basic_ostream constructor parameter, for CharType
+///        with no non-deprecated std::char_traits specialization
+///
+/// Never actually used: the StringType- and std::basic_ostream-based
+/// output_adapter constructors are neither documented nor tested for such
+/// CharType (only the std::vector-based constructor is used for them, by the
+/// binary writers). Naming std::basic_string<CharType> or
+/// std::basic_ostream<CharType> anywhere such a constructor would otherwise be
+/// declared - even as an unused default template argument or an unused,
+/// never-called overload - instantiates std::char_traits<CharType> merely to
+/// name the type, which is exactly what triggers the deprecation warning this
+/// placeholder avoids.
+template<typename CharType>
+struct output_adapter_no_string_type {};
+
+// Select output_adapter's default StringType (and, below, its ostream
+// constructor's parameter type) via partial specialization, not
+// std::conditional: std::conditional<B, T, F> requires both T and F to be named
+// as template arguments up front, which would still instantiate (and thus name)
+// std::basic_string<CharType> / std::basic_ostream<CharType> for every CharType,
+// defeating the point. A bool non-type parameter with two specializations only
+// ever names the type that is actually selected.
+template<typename CharType, bool = is_output_adapter_string_char_type<CharType>::value>
+struct output_adapter_default_string_type
+{
+    using type = output_adapter_no_string_type<CharType>;
+};
+
+template<typename CharType>
+struct output_adapter_default_string_type<CharType, true>
+{
+    using type = std::basic_string<CharType>;
+};
+
+#ifndef JSON_NO_IO
+/// distinct from output_adapter_no_string_type, so the placeholder overloads of
+/// output_adapter's constructor (used when CharType is not a character type)
+/// stay distinct overloads instead of colliding into a single redeclaration
+template<typename CharType>
+struct output_adapter_no_ostream_type {};
+
+template<typename CharType, bool = is_output_adapter_string_char_type<CharType>::value>
+struct output_adapter_ostream_type
+{
+    using type = output_adapter_no_ostream_type<CharType>;
+};
+
+template<typename CharType>
+struct output_adapter_ostream_type<CharType, true>
+{
+    using type = std::basic_ostream<CharType>;
+};
+#endif  // JSON_NO_IO
+
+template < typename CharType, typename StringType =
+           typename output_adapter_default_string_type<CharType>::type >
 class output_adapter
 {
   public:
@@ -21068,7 +21131,7 @@ class output_adapter
         : oa(std::make_shared<output_vector_adapter<CharType, AllocatorType>>(vec)) {}
 
 #ifndef JSON_NO_IO
-    output_adapter(std::basic_ostream<CharType>& s)
+    output_adapter(typename output_adapter_ostream_type<CharType>::type& s)
         : oa(std::make_shared<output_stream_adapter<CharType>>(s)) {}
 #endif  // JSON_NO_IO
 
@@ -24727,7 +24790,7 @@ class serializer
     @param[in] ichar  indentation character to use
     @param[in] pretty_print_  whether the output shall be pretty-printed
     @param[in] ensure_ascii_ If @a ensure_ascii_ is true, all non-ASCII
-    characters in the output are escaped with `\uXXXX` sequences, and the
+    characters in the output are escaped with `\\uXXXX` sequences, and the
     result consists of ASCII characters only.
     @param[in] indent_step_  the indent level
     @param[in] error_handler_  how to react on decoding errors
@@ -25352,7 +25415,7 @@ class serializer
 
     @param[in] s  the string to escape
 
-    @complexity Linear in the length of string @a s.
+    Complexity: Linear in the length of string @a s.
     */
     void dump_escaped(const string_t& s)
     {
@@ -25856,7 +25919,7 @@ class serializer
     }
 
     /*!
-     * @brief write a lowercase "\uXXXX" escape sequence into @a string_buffer
+     * @brief write a lowercase "\\uXXXX" escape sequence into @a string_buffer
      *
      * Branch-free replacement for `snprintf(buf, 7, "\\u%04x", codeunit)` in the
      * string escaping hot path. It writes exactly six characters ('\\', 'u' and
@@ -26206,7 +26269,7 @@ class serializer
     /// whether to pretty-print the output
     const bool pretty_print;
 
-    /// whether to escape non-ASCII characters with \uXXXX sequences
+    /// whether to escape non-ASCII characters with \\uXXXX sequences
     const bool ensure_ascii;
 
     /// the indent level
@@ -29156,12 +29219,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @throw what @ref json_serializer<ValueType> `from_json()` method throws
 
-    @liveexample{The example below shows several conversions from JSON values
+    The example below shows several conversions from JSON values
     to other types. There a few things to note: (1) Floating-point numbers can
-    be converted to integers\, (2) A JSON array can be converted to a standard
-    `std::vector<short>`\, (3) A JSON object can be converted to C++
-    associative containers such as `std::unordered_map<std::string\,
-    json>`.,get__ValueType_const}
+    be converted to integers, (2) A JSON array can be converted to a standard
+    `std::vector<short>`, (3) A JSON object can be converted to C++
+    associative containers such as `std::unordered_map<std::string,
+    json>`.
 
     @since version 2.1.0
     */
@@ -29228,7 +29291,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @return a copy of *this, converted into @a BasicJsonType
 
-    @complexity Depending on the implementation of the called `from_json()`
+    Complexity: Depending on the implementation of the called `from_json()`
                 method.
 
     @since version 3.2.0
@@ -29252,7 +29315,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     @return a copy of *this
 
-    @complexity Constant.
+    Complexity: Constant.
 
     @since version 2.1.0
     */
@@ -29298,7 +29361,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @tparam ValueTypeCV the provided value type
     @tparam ValueType the returned value type
 
-    @return copy of the JSON value, converted to @tparam ValueType if necessary
+    @return copy of the JSON value, converted to @a ValueType if necessary
 
     @throw what @ref json_serializer<ValueType> `from_json()` method throws if conversion is required
 
@@ -29336,12 +29399,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     @return pointer to the internally stored JSON value if the requested
     pointer type @a PointerType fits to the JSON value; `nullptr` otherwise
 
-    @complexity Constant.
+    Complexity: Constant.
 
-    @liveexample{The example below shows how pointers to internal values of a
+    The example below shows how pointers to internal values of a
     JSON value can be requested. Note that no type conversions are made and a
     `nullptr` is returned if the value and the requested pointer type does not
-    match.,get__PointerType}
+    match.
 
     @sa see @ref get_ptr() for explicit pointer-member access
 
@@ -29435,14 +29498,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     to the JSON value type (e.g., the JSON value is of type boolean, but a
     string is requested); see example below
 
-    @complexity Linear in the size of the JSON value.
+    Complexity: Linear in the size of the JSON value.
 
-    @liveexample{The example below shows several conversions from JSON values
+    The example below shows several conversions from JSON values
     to other types. There a few things to note: (1) Floating-point numbers can
-    be converted to integers\, (2) A JSON array can be converted to a standard
-    `std::vector<short>`\, (3) A JSON object can be converted to C++
-    associative containers such as `std::unordered_map<std::string\,
-    json>`.,operator__ValueType}
+    be converted to integers, (2) A JSON array can be converted to a standard
+    `std::vector<short>`, (3) A JSON object can be converted to C++
+    associative containers such as `std::unordered_map<std::string,
+    json>`.
 
     @since version 1.0.0
     */
@@ -31897,6 +31960,19 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @deprecated This function is deprecated since 3.8.0 and will be removed in
     ///             version 4.0.0 of the library. Please use
     ///             sax_parse(ptr, ptr + len) instead.
+    //
+    // Clang reports "declaration is marked with '@deprecated' command but does
+    // not have a deprecation attribute" for this overload even though
+    // JSON_HEDLEY_DEPRECATED_FOR below does expand to __attribute__((deprecated));
+    // isolated reproductions of this exact declaration shape (doc comment,
+    // template<>, two stacked __attribute__ lines, an overload set of the same
+    // name) do not reproduce it, so this looks like a Clang comment/declaration
+    // association quirk specific to this overload within basic_json, not a
+    // genuine documentation bug. See #5725 item 2.
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation-deprecated-sync"
+#endif
     template <typename SAX>
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, sax_parse(ptr, ptr + len, ...))
     JSON_HEDLEY_NON_NULL(2)
@@ -31913,6 +31989,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(sax, strict);
     }
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 #ifndef JSON_NO_IO
     /// @brief deserialize from stream
     /// @sa https://json.nlohmann.me/api/basic_json/operator_gtgt/
@@ -33575,7 +33654,7 @@ namespace std // NOLINT(cert-dcl58-cpp)
 /// @brief hash value for JSON objects
 /// @sa https://json.nlohmann.me/api/basic_json/std_hash/
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
-struct hash<nlohmann::NLOHMANN_BASIC_JSON_TPL> // NOLINT(cert-dcl58-cpp)
+struct hash<nlohmann::NLOHMANN_BASIC_JSON_TPL> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
 {
     std::size_t operator()(const nlohmann::NLOHMANN_BASIC_JSON_TPL& j) const
     {
@@ -33608,7 +33687,7 @@ struct less< ::nlohmann::detail::value_t> // do not remove the space after '<', 
 /// @brief exchanges the values of two JSON objects
 /// @sa https://json.nlohmann.me/api/basic_json/std_swap/
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
-inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC_JSON_TPL& j2) noexcept(  // NOLINT(readability-inconsistent-declaration-parameter-name, cert-dcl58-cpp)
+inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC_JSON_TPL& j2) noexcept(  // NOLINT(readability-inconsistent-declaration-parameter-name, cert-dcl58-cpp,bugprone-std-namespace-modification)
     is_nothrow_move_constructible<nlohmann::NLOHMANN_BASIC_JSON_TPL>::value&&                          // NOLINT(misc-redundant-expression,cppcoreguidelines-noexcept-swap,performance-noexcept-swap)
     is_nothrow_move_assignable<nlohmann::NLOHMANN_BASIC_JSON_TPL>::value)
 {
@@ -33622,7 +33701,7 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 /// @brief std::formatter specialization for JSON values
 /// @sa https://json.nlohmann.me/api/basic_json/std_formatter/
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
-struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-cpp)
+struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-cpp,bugprone-std-namespace-modification)
 {
     // -1 means compact output (dump()); any value >= 0 means pretty-printed
     // output with that many spaces (or indent_char) per level (dump(indent, indent_char)).
@@ -33710,11 +33789,6 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 // SPDX-License-Identifier: MIT
 
 
-
-// restore clang diagnostic settings
-#if defined(__clang__)
-    #pragma clang diagnostic pop
-#endif
 
 // clean up
 #undef JSON_ASSERT
@@ -33915,11 +33989,6 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 #undef JSON_HEDLEY_FALL_THROUGH
 
 // IWYU pragma: keep
-
-// End of GCC diagnostic pragmas for C++ modules support
-#if defined(__GNUC__) && !defined(__clang__) && __cplusplus >= 202002L
-    #pragma GCC diagnostic pop
-#endif
 
 // The user-defined string literals are in a separate header, because their
 // bodies instantiate the parser in every translation unit that includes them.
