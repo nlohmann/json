@@ -10,6 +10,7 @@
 
 #include <array> // array
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstdio> // snprintf
 #include <initializer_list> // initializer_list
 #include <string> // char_traits, string
@@ -22,6 +23,7 @@
 #include <nlohmann/detail/input/string_scan.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
+#include <nlohmann/detail/string_utils.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -258,9 +260,9 @@ class lexer : public lexer_base<BasicJsonType>
     }
 
     /*!
-    @brief get codepoint from 4 hex characters following `\u`
+    @brief get codepoint from 4 hex characters following `\\u`
 
-    For input "\u c1 c2 c3 c4" the codepoint is:
+    For input "\\u c1 c2 c3 c4" the codepoint is:
       (c1 * 0x1000) + (c2 * 0x0100) + (c3 * 0x0010) + c4
     = (c1 << 12) + (c2 << 8) + (c3 << 4) + (c4 << 0)
 
@@ -532,32 +534,10 @@ class lexer : public lexer_base<BasicJsonType>
                             JSON_ASSERT(0x00 <= codepoint && codepoint <= 0x10FFFF);
 
                             // translate codepoint into bytes
-                            if (codepoint < 0x80)
+                            encode_utf8(static_cast<std::uint32_t>(codepoint), [this](std::uint32_t byte)
                             {
-                                // 1-byte characters: 0xxxxxxx (ASCII)
-                                add(static_cast<char_int_type>(codepoint));
-                            }
-                            else if (codepoint <= 0x7FF)
-                            {
-                                // 2-byte characters: 110xxxxx 10xxxxxx
-                                add(static_cast<char_int_type>(0xC0u | (static_cast<unsigned int>(codepoint) >> 6u)));
-                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
-                            else if (codepoint <= 0xFFFF)
-                            {
-                                // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
-                                add(static_cast<char_int_type>(0xE0u | (static_cast<unsigned int>(codepoint) >> 12u)));
-                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
-                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
-                            else
-                            {
-                                // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-                                add(static_cast<char_int_type>(0xF0u | (static_cast<unsigned int>(codepoint) >> 18u)));
-                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 12u) & 0x3Fu)));
-                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
-                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
+                                add(static_cast<char_int_type>(byte));
+                            });
 
                             break;
                         }
@@ -1457,45 +1437,30 @@ scan_number_done:
     */
     token_type convert_number(token_type number_type, std::size_t mantissa_end)
     {
-        // If the caller does not need the converted value (only whether the
-        // input is syntactically valid; see json_sax_acceptor/accept()), an
-        // unsigned/integer token can be reported without calling
-        // strtoull()/strtoll() at all, *provided* we can already tell from
-        // the digit count alone that the conversion cannot overflow 64 bits.
-        // Such tokens are always finite and are accepted unconditionally by
-        // the parser regardless of their actual value (parser::sax_parse_internal()
-        // never checks finiteness for value_unsigned/value_integer), so the
-        // classification below is all that is needed.
+        // accept() only needs to know whether the input is valid, so it sets
+        // discard_number_values (see json.hpp), and an integer token whose
+        // digit count shows that it fits is reported without calling
+        // convert_integer(). A number with up to 18 digits always fits into
+        // both std::uint64_t and std::int64_t (18 nines is about 1e18, below
+        // INT64_MAX, which is about 9.2e18). Longer tokens take the exact path
+        // below, including the fallback to floating point when the value does
+        // not fit.
         //
-        // A decimal number with up to 18 digits is always representable in
-        // both std::uint64_t and std::int64_t (18 nines is ~1e18, well below
-        // both UINT64_MAX ~1.8e19 and INT64_MAX ~9.2e18), so strtoull()/strtoll()
-        // could not have set errno to ERANGE for it. Numbers with more digits
-        // (rare in practice) fall through to the exact code below, unchanged,
-        // so their handling -- including reclassification to value_float when
-        // the value overflows 64 bits, and rejection when it is not even
-        // finite as a double -- is bit-for-bit identical to before this
-        // optimization.
+        // With a narrower number_unsigned_t/number_integer_t (e.g.
+        // std::uint32_t), the exact path would reclassify some of these tokens
+        // as (finite) floats, while this check reports integers. That does not
+        // change the result of accept(): it always parses through
+        // json_sax_acceptor, whose number callbacks discard their argument and
+        // return true, and the parser rejects neither integers nor finite
+        // floats. value_unsigned/value_integer are left unset here, so a caller
+        // that reads the converted value must not set discard_number_values.
         //
-        // Note this reasons about std::uint64_t/std::int64_t, not about
-        // number_unsigned_t/number_integer_t (BasicJsonType's own, possibly
-        // narrower, template parameters -- e.g. std::uint32_t). That is fine
-        // *only* because discard_number_values is exclusively set by
-        // accept() (see json.hpp), and accept() always parses through the
-        // library's own json_sax_acceptor -- never a user-supplied SAX
-        // consumer -- whose number_unsigned()/number_integer()/number_float()
-        // callbacks unconditionally discard their argument and return true.
-        // So for every caller that can reach this branch, neither the token
-        // classification below nor the eventual (possibly narrowed, and on
-        // this fast path left stale/unset) value_unsigned/value_integer is
-        // ever consulted -- an unsigned/integer token is accepted outright,
-        // and even a >18-digit token that this fast path deliberately falls
-        // through for is, once reclassified to value_float, still finite
-        // (and thus accepted) for any digit count that fits in number_unsigned_t
-        // or number_integer_t regardless of that type's width. If this
-        // function is ever taught to run with discard_number_values true for
-        // a caller that *does* read the converted value, this reasoning (and
-        // the fast path below) would need to be revisited.
+        // On contiguous input, scan_number_bulk_contiguous() converts integer
+        // tokens itself and does not pass them to this function, unless
+        // JSON_DIAGNOSTIC_POSITIONS is enabled. This check is therefore only
+        // reached for input without bulk access (e.g. streams), with
+        // JSON_DIAGNOSTIC_POSITIONS, or when scan_number_bulk_contiguous()
+        // falls back to scan_number().
         if (discard_number_values)
         {
             constexpr std::size_t safe_digit_count = 18;
@@ -1925,7 +1890,7 @@ scan_number_done:
         return value_float;
     }
 
-    /// return current string value (implicitly resets the token; useful only once)
+    /// return current string value
     string_t& get_string()
     {
         // a number token holds '.' regardless of the locale (#4084)
@@ -2227,11 +2192,11 @@ scan_number_done:
     /// the position of the decimal point in token_buffer
     std::size_t decimal_point_position = std::string::npos;
 
-    /// whether the caller (e.g. accept()/json_sax_acceptor) only needs the
-    /// token classification and never looks at the converted numeric value;
-    /// when set, scan_number() may skip strtoull()/strtoll() for
-    /// value_unsigned/value_integer tokens whose digit count guarantees they
-    /// fit into 64 bits (see scan_number())
+    /// whether the caller only needs the token types and never looks at the
+    /// converted numeric values; set only by accept(), which parses through
+    /// json_sax_acceptor. When set, convert_number() skips converting integer
+    /// tokens whose digit count guarantees that they fit into 64 bits (see
+    /// there)
     const bool discard_number_values = false;
 };
 
