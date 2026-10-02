@@ -10,6 +10,14 @@ Returns the allocator associated with the container.
 
 associated allocator
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+
+## Complexity
+
+Constant.
+
 ## Examples
 
 ??? example
@@ -25,6 +33,11 @@ associated allocator
     ```json
     --8<-- "examples/get_allocator.output"
     ```
+
+## See also
+
+- [basic_json](index.md#template-parameters) the class template, with `AllocatorType` as one of its template parameters
+- [Template Parameter Requirements](../../features/types/template_parameters.md#allocatortype) - the requirements for `AllocatorType`
 
 ## Version history
 

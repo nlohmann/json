@@ -2001,7 +2001,7 @@ TEST_CASE("parser class")
             const json j = json::parse(R"({"skip": {"k1": 1, "k2": [2, {"k3": 3}]}, "keep": 1})",
                                        [&](int depth, json::parse_event_t event, json & parsed)
             {
-                static const char* const names[] = {"object_start", "object_end", "array_start", "array_end", "key", "value"};
+                static const char* const names[] = {"object_start", "object_end", "array_start", "array_end", "key", "value"}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
                 log.push_back(std::to_string(depth) + " " + names[static_cast<int>(event)] + " " + parsed.dump());
 
                 if (depth == 1 && event == json::parse_event_t::object_start && first)
@@ -2036,7 +2036,7 @@ TEST_CASE("parser class")
             // further effect")
             const auto record = [](std::vector<std::string>& log, int depth, json::parse_event_t event, const json & parsed)
             {
-                static const char* const names[] = {"object_start", "object_end", "array_start", "array_end", "key", "value"};
+                static const char* const names[] = {"object_start", "object_end", "array_start", "array_end", "key", "value"}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
                 log.push_back(std::to_string(depth) + " " + names[static_cast<int>(event)] + " " + parsed.dump());
             };
 

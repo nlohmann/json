@@ -1,0 +1,6 @@
+[json.exception.out_of_range.414] cannot move value: 'from' path '/a' is a proper prefix of 'path' '/a/b'
+{
+    "a": {
+        "b": 1
+    }
+}
