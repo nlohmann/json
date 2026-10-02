@@ -12,9 +12,9 @@
 [12345678909876,23456789098765,34567890987654,45678909876543]
 [1,2,3,4]
 ["four","one","three","two"]
-["four","three","two","one"]
+["one"]
 ["four","one","one","two"]
-["four","two","one","one"]
+["one","one"]
 
 "The quick brown fox jumps over the lazy dog."
 "The quick brown fox jumps over the lazy dog."

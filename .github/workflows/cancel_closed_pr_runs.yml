@@ -1,0 +1,53 @@
+name: "Cancel runs of closed pull requests"
+
+# The concurrency groups of the other workflows cancel superseded runs when a
+# pull request gets new commits, but nothing stops the runs of its last commit
+# once the pull request is merged or closed. They then keep the runners busy
+# for hours while the queue of the open pull requests waits.
+#
+# pull_request_target is needed to get a token that can cancel runs for pull
+# requests from forks. This is safe because the workflow never checks out or
+# runs code from the pull request; it only calls the API.
+on:
+  pull_request_target:
+    types: [closed]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  cancel:
+    permissions:
+      actions: write
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Cancel unfinished runs of the pull request's head commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          SELF: ${{ github.run_id }}
+        # only runs triggered by the pull request: when a branch is pushed to
+        # develop directly, its push runs share the head commit
+        run: |
+          gh api --paginate "repos/$GH_REPO/actions/runs?head_sha=$HEAD_SHA&per_page=100" \
+            --jq ".workflow_runs[]
+                  | select(.status != \"completed\" and .id != $SELF)
+                  | select(.event == \"pull_request\" or .event == \"pull_request_target\")
+                  | \"\(.id) \(.name)\"" |
+          while read -r id name; do
+            echo "Cancelling run $id ($name)"
+            # a run may finish between listing and cancelling; that is not an error
+            gh run cancel "$id" || true
+          done

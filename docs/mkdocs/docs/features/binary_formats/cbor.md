@@ -98,7 +98,7 @@ see "binary" cells in the table above.
 
     Binary subtypes will be serialized as tagged items. See [binary values](../binary_values.md#cbor) for an example.
 
-??? example
+??? example "Example: serialize a JSON value to CBOR"
 
     ```cpp
     --8<-- "examples/to_cbor.cpp"
@@ -203,7 +203,7 @@ The library maps CBOR types to JSON value types as follows:
 
     Tagged items (0xC0..0xDB) will throw a parse error by default. They can be ignored by passing `cbor_tag_handler_t::ignore` to function `from_cbor`, in which case the tag is skipped and the enclosed data item is parsed on its own. Passing `cbor_tag_handler_t::store` to function `from_cbor` stores tagged byte strings (for bytes 0xd8..0xdb) as binary values with the tag as subtype; other tagged values are read as if the tag were ignored. If several tags precede a byte string, only the innermost one is stored. Note that no tag is ever interpreted: for instance, a text string tagged with tag 0 (date/time) stays a string.
 
-??? example
+??? example "Example: deserialize a JSON value from CBOR"
 
     ```cpp
     --8<-- "examples/from_cbor.cpp"

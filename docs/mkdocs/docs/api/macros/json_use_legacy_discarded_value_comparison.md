@@ -53,6 +53,8 @@ When the macro is not defined, the library will define it to its default value.
 
     New code should not depend on it and existing code should try to remove or rewrite expressions relying on it.
 
+    See the [migration guide](../../integration/migration_guide.md#miscellaneous-functions) for how to update existing code.
+
 !!! hint "CMake option"
 
     Legacy comparison can also be controlled with the CMake option

@@ -446,6 +446,8 @@ TEST_CASE("adl_serializer specialization" * doctest::test_suite("udt"))
 
             auto optPerson = j.get<std::shared_ptr<udt::person>>();
             REQUIRE(optPerson);
+            // false positive: REQUIRE above guarantees optPerson is non-null
+            // @infer-ignore NULLPTR_DEREFERENCE
             CHECK(*optPerson == person);
 
             j = nullptr;
@@ -559,6 +561,8 @@ TEST_CASE("Non-copyable types" * doctest::test_suite("udt"))
 
         auto optPerson = j.get<std::unique_ptr<udt::person>>();
         REQUIRE(optPerson);
+        // false positive: REQUIRE above guarantees optPerson is non-null
+        // @infer-ignore NULLPTR_DEREFERENCE
         CHECK(*optPerson == person);
 
         j = nullptr;

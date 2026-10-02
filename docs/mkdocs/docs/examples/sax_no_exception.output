@@ -1,0 +1,5 @@
+parse error at input byte 8
+[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - unexpected ']'; expected '[', '{', or a literal
+last read: "3,]"
+parsing unsuccessful!
+parsed value: [1,2,3]
