@@ -3,6 +3,7 @@
 *.gcno
 *.gcda
 .DS_Store
+__pycache__/
 
 /.idea
 /cmake-build-*
@@ -42,6 +43,10 @@
 venv
 
 nlohmann_json.spdx
+
+# api_checker: ephemeral, location/doc-status-sensitive working file (not the committed
+# release-tracking artifact -- see tools/api_checker/api_surface.json for that)
+/tools/api_checker/api_snapshot.json
 
 # Bazel-related
 MODULE.bazel.lock

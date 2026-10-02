@@ -2,7 +2,8 @@
 
 This page summarizes the notable changes of every release and links to the relevant documentation.
 The **complete release notes** — including all changes, the download files, and their checksums — are
-published on the [GitHub releases page](https://github.com/nlohmann/json/releases).
+published on the [GitHub releases page](https://github.com/nlohmann/json/releases). For a raw,
+signature-level diff of the public API between releases, see [API Changes](api_changes.md).
 
 ## v3.12.0 (2025-04-11)
 

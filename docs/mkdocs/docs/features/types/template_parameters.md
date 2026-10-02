@@ -37,7 +37,7 @@ Requirements are split into two groups:
 
 | Template parameter                                                | Default                           | Notable substitutes                                                   |
 |-------------------------------------------------------------------|-----------------------------------|-----------------------------------------------------------------------|
-| [`ObjectType`](#objecttype)                                       | `std::map`                        | [`nlohmann::ordered_map`](../../api/ordered_map.md), Abseil hash maps |
+| [`ObjectType`](#objecttype)                                       | `std::map`                        | [`nlohmann::ordered_map`](../../api/ordered_map/index.md), Abseil hash maps |
 | [`ArrayType`](#arraytype)                                         | `std::vector`                     | `#!cpp std::deque`                                                    |
 | [`StringType`](#stringtype)                                       | `std::string`                     | `std::string`-like types over `char`                                  |
 | [`BooleanType`](#booleantype)                                     | `bool`                            | none worth using                                                      |
@@ -230,7 +230,7 @@ The library does not sort or de-duplicate keys itself; the behavior described in
 | Container                                                                        | Notes                                                                         |
 |----------------------------------------------------------------------------------|-------------------------------------------------------------------------------|
 | `#!cpp std::map` (default)                                                       |                                                                               |
-| [`nlohmann::ordered_map`](../../api/ordered_map.md)                              | used by [`ordered_json`](../../api/ordered_json.md); keeps insertion order    |
+| [`nlohmann::ordered_map`](../../api/ordered_map/index.md)                              | used by [`ordered_json`](../../api/ordered_json.md); keeps insertion order    |
 | [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map)                     | keeps insertion order; adapter puts `fifo_map_compare` in the comparator slot |
 | `boost::container::map`, `boost::container::flat_map`                            | no adapter needed                                                             |
 | `#!cpp std::unordered_map`                                                       | through the adapter above; not with libstdc++ 9, see the note                 |

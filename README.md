@@ -105,7 +105,7 @@ Thanks everyone!
 
 :books: If you want to **learn more** about how to use the library, check out the rest of the [**README**](#examples), have a look at [**code examples**](https://github.com/nlohmann/json/tree/develop/docs/mkdocs/docs/examples), or browse through the [**help pages**](https://json.nlohmann.me).
 
-:construction: If you want to understand the **API** better, check out the [**API Reference**](https://json.nlohmann.me/api/basic_json/) or have a look at the [quick reference](#quick-reference) below.
+:construction: If you want to understand the **API** better, check out the [**API Reference**](https://json.nlohmann.me/api/basic_json/) or have a look at the [quick reference](#quick-reference) below. The public API surface is derived mechanically and checked for documentation coverage by the tooling in [`tools/api_checker/`](tools/api_checker/), whose [POLICY.md](tools/api_checker/POLICY.md) defines what counts as public API and what stability is guaranteed.
 
 :bug: If you found a **bug**, please check the [**FAQ**](https://json.nlohmann.me/home/faq/) if it is a known issue or the result of a design decision. Please also have a look at the [**issue list**](https://github.com/nlohmann/json/issues) before you [**create a new issue**](https://github.com/nlohmann/json/issues/new/choose). Please provide as much information as possible to help us understand and reproduce your issue.
 
