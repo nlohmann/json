@@ -1039,9 +1039,11 @@ class lexer : public lexer_base<BasicJsonType>
             token_type::parse_error otherwise
 
     @note The scanner is independent of the current locale: token_buffer
-          always holds `.`. Only the std::strtod fallback of convert_number()
-          depends on the locale, and it looks up the decimal point right
-          before converting (see detail::convert_float_locale_aware()).
+          always holds `.`. The conversion of float and double does not use
+          the locale either. Only the std::strtold fallback of
+          convert_number() for long double formats other than binary64
+          depends on it, and it looks up the decimal point right before
+          converting (see detail::convert_float_locale_aware()).
     */
     token_type scan_number()  // lgtm [cpp/use-of-goto] `goto` is used in this function to implement the number-parsing state machine described above. By design, any finite input will eventually reach the "done" state or return token_type::parse_error. In each intermediate state, 1 byte of the input is appended to the token_buffer vector, and only the already initialized variables token_buffer, number_type, and error_message are manipulated.
     {
@@ -1054,7 +1056,7 @@ class lexer : public lexer_base<BasicJsonType>
 
         // offset just past the last mantissa byte in token_buffer (i.e. the
         // index of 'e'/'E', or the whole token when there is no exponent).
-        // convert_number() uses it to count significant digits; npos means
+        // convert_number() uses it to split the token; npos means
         // "not seen an exponent yet" and is resolved at scan_number_done
         std::size_t mantissa_end = std::string::npos;
 
@@ -1384,8 +1386,8 @@ scan_number_done:
     @param[in] mantissa_end  offset just past the last mantissa byte in
                              token_buffer (the index of 'e'/'E', or
                              token_buffer.size() when there is no exponent);
-                             used to skip Clinger's fast path when it cannot
-                             possibly succeed - see detail::mantissa_fits_clinger()
+                             with decimal_point_position, it locates the parts
+                             of a float token without scanning it again
     */
     token_type convert_number(token_type number_type, std::size_t mantissa_end)
     {
@@ -1439,10 +1441,11 @@ scan_number_done:
         }
 
         // this code is reached if we parse a floating-point number or if an
-        // integer conversion above overflowed. Prefer std::from_chars
-        // (Eisel-Lemire, locale-independent, correctly rounded) when available;
-        // otherwise the exact Clinger fast path (double only); otherwise the
-        // locale-aware strtof/strtod/strtold.
+        // integer conversion above overflowed. float and double (and long
+        // double where it is binary64) are converted by the library itself,
+        // correctly rounded and independent of the locale; other long double
+        // formats use std::from_chars when available, otherwise the
+        // locale-aware strtold.
         if (convert_float_fast(num_begin, num_end, decimal_point_position, mantissa_end, value_float))
         {
             return token_type::value_float;

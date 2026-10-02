@@ -26,9 +26,9 @@ Requirements are split into two groups:
     diagnosed with dedicated error messages, and violating most of them results in a compiler error somewhere inside
     the library. Four violations are not caught at compile time at all:
 
-    - A [`StringType`](#stringtype) whose `data()` is not null-terminated compiles and can silently misparse
-      floating-point numbers, because the lexer may hand the buffer to `#!cpp std::strtod`, which reads up to the
-      terminating null character.
+    - A [`StringType`](#stringtype) whose `data()` is not null-terminated compiles and silently misparses numbers
+      stored as a `#!cpp long double` that is not IEEE 754 binary64 (e.g., the 80-bit x87 format), because the lexer
+      hands the buffer to `#!cpp std::strtold`.
     - A stateful [`AllocatorType`](#allocatortype) compiles and silently ignores its state: allocation, deallocation,
       and [`get_allocator()`](../../api/basic_json/get_allocator.md) each use a different default-constructed instance.
     - The two [cross-specialization conversions](#cross-specialization-conversions) below. These abort on an assertion
@@ -537,9 +537,10 @@ therefore silently changes parse results rather than raising an error. See
 
 `NumberFloatType` must be one of `#!cpp float`, `#!cpp double`, or `#!cpp long double`:
 
-- The [parser](../parsing/index.md) converts number literals with `#!cpp std::from_chars` or, as a fallback, with
-  `#!cpp std::strtof`, `#!cpp std::strtod`, or `#!cpp std::strtold`; the library provides overloads for exactly these
-  three types.
+- The [parser](../parsing/index.md) converts number literals to `#!cpp float`, `#!cpp double`, and a
+  `#!cpp long double` that is IEEE 754 binary64 itself; other `#!cpp long double` formats are converted with
+  `#!cpp std::from_chars` where available, or with `#!cpp std::strtold`. The library provides overloads for exactly
+  these three types.
 - [`dump`](../../api/basic_json/dump.md) falls back to `#!cpp std::snprintf` with the `%g` and `%Lg` conversion
   specifiers, for which the library likewise provides only `#!cpp double` and `#!cpp long double` overloads
   (`#!cpp float` is promoted to `#!cpp double`).
