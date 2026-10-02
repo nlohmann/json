@@ -16,6 +16,7 @@
 
 #include <nlohmann/json.hpp>
 #include <nlohmann/detail/view/macro_scope.hpp>
+#include <nlohmann/detail/view/simd.hpp>
 
 // Scanning primitives of the view's parser. The unrolled checks at fixed
 // offsets follow yyjson (https://github.com/ibireme/yyjson, MIT license): the
@@ -62,9 +63,12 @@ NLOHMANN_VIEW_ALWAYS_INLINE std::uint16_t load16(const unsigned char* p) noexcep
 
 /// Advance over plain string bytes and well-formed UTF-8. Stops at a quote,
 /// a backslash, a control character, ill-formed UTF-8, or the end. The first
-/// 16 bytes are checked one by one, so that the position advances by
-/// constants in predicted branches (most strings are short); longer runs
-/// continue eight bytes at a time.
+/// bytes are checked one by one, so that the position advances by constants
+/// in predicted branches: 16 for keys, whose lengths repeat from record to
+/// record, and 8 for string values (Value) where a vector loop follows, as
+/// their lengths vary more. Longer runs continue 16 bytes at a time with NEON
+/// or SSE2, else eight bytes at a time.
+template<bool Value = false>
 NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* scan_string_run(const unsigned char* p, const unsigned char* e) noexcept
 {
     const std::uint8_t* plain = string_plain();
@@ -73,9 +77,23 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* scan_string_run(const unsigned 
         if (e - p >= 16)
         {
 #define NLOHMANN_VIEW_STEP(i) if (NLOHMANN_VIEW_LIKELY(plain[p[i]] != 0)) {} else { p += (i); goto stop; }
-            NLOHMANN_VIEW_REPEAT16(NLOHMANN_VIEW_STEP)
+            NLOHMANN_VIEW_STEP(0) NLOHMANN_VIEW_STEP(1) NLOHMANN_VIEW_STEP(2) NLOHMANN_VIEW_STEP(3)
+            NLOHMANN_VIEW_STEP(4) NLOHMANN_VIEW_STEP(5) NLOHMANN_VIEW_STEP(6) NLOHMANN_VIEW_STEP(7)
+            if (!Value || !NLOHMANN_VIEW_VECTOR)
+            {
+                NLOHMANN_VIEW_STEP(8) NLOHMANN_VIEW_STEP(9) NLOHMANN_VIEW_STEP(10) NLOHMANN_VIEW_STEP(11)
+                NLOHMANN_VIEW_STEP(12) NLOHMANN_VIEW_STEP(13) NLOHMANN_VIEW_STEP(14) NLOHMANN_VIEW_STEP(15)
+                p += 8;
+            }
 #undef NLOHMANN_VIEW_STEP
-            p += 16;
+            p += 8;
+#if NLOHMANN_VIEW_VECTOR
+            p = vector_plain_run(p, e);
+            if (p != e && plain[*p] == 0)
+            {
+                goto stop;
+            }
+#else
             while (e - p >= 8)
             {
                 const std::uint64_t special = swar_string_special(read_eight_bytes(p));
@@ -86,6 +104,7 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* scan_string_run(const unsigned 
                 }
                 p += 8;
             }
+#endif
             continue;
         }
         while (p != e && plain[*p] != 0)
@@ -101,6 +120,10 @@ stop:
         {
             return p; // quote, backslash, or control character
         }
+#if NLOHMANN_VIEW_VECTOR_UTF8
+        // non-ASCII: the vector check, out of line
+        return scan_string_vector(p, e, plain);
+#else
         // non-ASCII: a run of well-formed sequences (the library's check, so
         // that exactly what json::parse accepts is accepted)
         do
@@ -113,6 +136,7 @@ stop:
             p += n;
         }
         while (p != e && *p >= 0x80);
+#endif
     }
 }
 

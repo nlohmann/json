@@ -503,7 +503,7 @@ class builder
     switch (cur())                                                                              \
     {                                                                                           \
         case '"':                                                                               \
-            if (NLOHMANN_VIEW_UNLIKELY(!string())) { return false; }                      \
+            if (NLOHMANN_VIEW_UNLIKELY(!string<true>())) { return false; }                \
             goto NEXT;                                                                          \
         case '{':                                                                               \
             open(value_t::object);                                                              \
@@ -587,7 +587,7 @@ obj_key:
             {
                 return fail(error_code::expected_key);
             }
-            if (NLOHMANN_VIEW_UNLIKELY(!string()))
+            if (NLOHMANN_VIEW_UNLIKELY(!string<false>()))
             {
                 return false;
             }
@@ -690,7 +690,7 @@ root_done:
             switch (cur())
             {
                 case '"':
-                    return string();
+                    return string<true>();
                 case 't':
                     return literal("true", 4, value_t::boolean, node_flags::is_true);
                 case 'f':
@@ -977,12 +977,13 @@ indent_done:
             return true;
         }
 
-        /// a string (value or key) at p
+        /// a string at p: a value (Value) or a key
+        template<bool Value>
         NLOHMANN_VIEW_ALWAYS_INLINE bool string()
         {
             ++p; // opening quote
             const unsigned char* const s = p;
-            p = scan_string_run(p, e);
+            p = scan_string_run<Value>(p, e);
             if (NLOHMANN_VIEW_LIKELY(p != e && *p == '"'))
             {
                 emit(value_t::string, 0, 0, static_cast<std::size_t>(s - b), static_cast<std::uint64_t>(p - s));
