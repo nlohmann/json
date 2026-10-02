@@ -44,6 +44,7 @@
 // translation unit that relies on basic_json<>'s defaults actually being usable.
 #include <nlohmann/adl_serializer.hpp> // IWYU pragma: keep
 #include <nlohmann/byte_container_with_subtype.hpp>
+#include <nlohmann/detail/abi_config.hpp>
 #include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/conversions/from_json.hpp> // IWYU pragma: keep
 #include <nlohmann/detail/conversions/to_json.hpp> // IWYU pragma: keep
