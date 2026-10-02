@@ -259,6 +259,14 @@ edited:
 - Views of read-only documents compile without any of this: how views walk the index is a template parameter
   (`navigation<Editable>`).
 
+Images ([`save`](../api/basic_json_document/save.md) and [`load`](../api/basic_json_document/load.md),
+[`detail/view/image.hpp`](https://github.com/nlohmann/json/blob/develop/include/nlohmann/detail/view/image.hpp)) store
+the nodes as they are: a 64-byte header (the magic bytes `NJVI`, a format version, the sizes, and reserved bytes that
+must be zero), the nodes, the text, and the decoded strings. An edited document is first written in document order, as
+the parser would have written it (without links), and the numbers of the hash indexes are cleared, since `load`
+rebuilds the indexes. So a change of the node layout is a change of the image format: it must raise `image_version`,
+and `load` then rejects images of other versions (`parse_error.116`) instead of misreading them.
+
 ## Input adapters
 
 Input is read via **input adapters** that abstract a source. Every input adapter provides this interface:

@@ -132,6 +132,7 @@ integer type becomes a floating-point value.
 - [accept](accept.md) - check whether the input is valid JSON
 - [read](read.md) - (re-)parse into this document, reusing its memory
 - [owns_source](owns_source.md) - return whether the document holds its own copy of the text
+- [load](load.md) - read a document from an image instead of parsing JSON text
 - [`BasicJsonType::parse`](../basic_json/parse.md) - the corresponding function of `basic_json`
 
 ## Version history

@@ -25,7 +25,7 @@
 #define INCLUDE_NLOHMANN_JSON_VIEW_HPP_
 
 #include <cstddef> // size_t
-#include <cstdint> // uint32_t
+#include <cstdint> // uint8_t, uint32_t
 #include <cstring> // memcpy, strlen
 #include <iterator> // distance, input_iterator_tag, iterator_traits
 #include <map> // map
@@ -53,6 +53,7 @@
 #include <nlohmann/detail/view/edit.hpp>
 #include <nlohmann/detail/view/edit_storage.hpp>
 #include <nlohmann/detail/view/errors.hpp>
+#include <nlohmann/detail/view/image.hpp>
 #include <nlohmann/detail/view/input.hpp>
 #include <nlohmann/detail/view/iterator.hpp>
 #include <nlohmann/detail/view/lookup.hpp>
@@ -934,7 +935,7 @@ class basic_json_document
     /// whether the document holds its own copy of the text
     bool owns_source() const noexcept
     {
-        return m_data && !m_data->owned.empty() && m_data->src == m_data->owned.data();
+        return m_data && ((!m_data->owned.empty() && m_data->src == m_data->owned.data()) || !m_data->owned_image.empty());
     }
 
     /// number of index nodes (values plus object keys)
@@ -943,7 +944,7 @@ class basic_json_document
         return m_data ? m_data->tape_size : 0;
     }
 
-    /// bytes held by the document (index, decoded strings, owned text)
+    /// bytes held by the document (index, decoded strings, owned text or image)
     std::size_t memory_usage() const noexcept
     {
         if (!m_data)
@@ -952,7 +953,7 @@ class basic_json_document
         }
         return sizeof(document_data) + (m_data->inline_cap * sizeof(detail::view::node))
                + (m_data->tape != m_data->inline_tape ? m_data->tape_cap * sizeof(detail::view::node) : 0)
-               + m_data->arena.capacity() + m_data->owned.capacity()
+               + m_data->arena.capacity() + m_data->owned.capacity() + m_data->owned_image.capacity()
                + (m_data->indexes.capacity() * sizeof(document_data::object_index)) + (m_data->index_slots.capacity() * sizeof(std::uint32_t))
                + (m_data->large_objects.capacity() * sizeof(std::uint32_t))
                + (m_data->edits != nullptr ? m_data->edits->bytes : 0);
@@ -972,8 +973,10 @@ class basic_json_document
 
         // allocate everything first, so that an exception leaves the document
         // unchanged
+        // (the decoded strings of a loaded image stay in the image)
+        const bool arena_in_use = d.base[1] == d.arena.data();
         const bool shrink_arena = d.arena.capacity() > d.arena.size();
-        std::string arena(shrink_arena ? d.arena : std::string());
+        std::string arena(shrink_arena && arena_in_use ? d.arena : std::string());
         // (edits link to the nodes of the index, which then stays in place)
         const bool shrink_tape = d.tape != d.inline_tape && d.tape_size != d.tape_cap && d.edits == nullptr;
         const bool into_header = d.tape_size <= d.inline_cap;
@@ -989,8 +992,60 @@ class basic_json_document
         if (shrink_arena)
         {
             d.arena.swap(arena);
-            d.base[1] = d.arena.data();
+            if (arena_in_use)
+            {
+                d.base[1] = d.arena.data();
+            }
         }
+    }
+
+    ////////////
+    // images //
+    ////////////
+
+    /// how load() checks an image (full, bounds, or none)
+    using image_check = detail::view::image_check;
+
+    /// The document as an image that load() reads without parsing: the node
+    /// index, the text, and the decoded strings. An edited document is
+    /// written in its current state (floats that are not finite become null,
+    /// as in dump()).
+    std::vector<std::uint8_t> save() const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!m_data || m_data->discarded))
+        {
+            detail::view::throw_type_error(320, "cannot save a discarded json_document");
+        }
+        return detail::view::save_image(*m_data);
+    }
+
+    /// Read an image written by save(). The image is borrowed: it must stay
+    /// alive and unchanged while the document is used.
+    NLOHMANN_VIEW_NODISCARD
+    static basic_json_document load(const std::uint8_t* image, std::size_t size, const image_check check = image_check::full)
+    {
+        basic_json_document d;
+        d.ensure_data(nullptr, 0);
+        detail::view::load_image(*d.m_data, image, size, check);
+        return d;
+    }
+
+    /// read an image (borrowed)
+    NLOHMANN_VIEW_NODISCARD
+    static basic_json_document load(const std::vector<std::uint8_t>& image, const image_check check = image_check::full)
+    {
+        return load(image.data(), image.size(), check);
+    }
+
+    /// read an image and keep it (no copy)
+    NLOHMANN_VIEW_NODISCARD
+    static basic_json_document load(std::vector<std::uint8_t>&& image, const image_check check = image_check::full)
+    {
+        basic_json_document d;
+        d.ensure_data(nullptr, 0);
+        d.m_data->owned_image = std::move(image);
+        detail::view::load_image(*d.m_data, d.m_data->owned_image.data(), d.m_data->owned_image.size(), check);
+        return d;
     }
 
     ///////////
@@ -1176,6 +1231,7 @@ class basic_json_document
         {
             d.owned.clear();
         }
+        d.owned_image.clear();
         d.src = src;
         d.size = size;
         d.tape_size = 0;
@@ -1200,6 +1256,7 @@ class basic_json_document
         {
             d.base[0] = d.src;
             d.base[1] = d.arena.data();
+            d.arena_size = d.arena.size();
             detail::view::build_object_indexes(d);
             d.discarded = false;
             return;
