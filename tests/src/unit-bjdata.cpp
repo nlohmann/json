@@ -4454,3 +4454,31 @@ TEST_CASE("BJData roundtrips" * doctest::skip())
         }
     }
 }
+
+TEST_CASE("issue #5648 - from_bjdata(ptr, len) must read len bytes, not treat ptr as a C string")
+{
+    // to_bjdata() encodes the integer 0 as the two bytes 'i' 0x00 (a BJData
+    // type marker followed by the value byte 0x00), so the packed data
+    // below contains a 0x00 byte before its end.
+    const json j = {{"a", 0}};
+    const std::vector<std::uint8_t> packed = json::to_bjdata(j);
+    bool contains_nul = false;
+    for (const auto byte : packed)
+    {
+        contains_nul |= (byte == 0x00);
+    }
+    REQUIRE(contains_nul);
+
+    // before the fix, from_bjdata had no (ptr, len) overload, so this call
+    // bound to from_bjdata(InputType&&, bool strict) instead: ptr was read
+    // as a NUL-terminated C string (stopping at the embedded 0x00 byte), and
+    // len was silently converted to the strict flag. The deprecated
+    // overload added for this issue forwards to from_bjdata(ptr, ptr + len,
+    // ...) instead, like from_ubjson's deprecated (ptr, len) overload does.
+    json result;
+    CHECK_NOTHROW(result = json::from_bjdata(packed.data(), packed.size()));
+    CHECK(result == j);
+
+    // len must not collapse into the strict flag either
+    CHECK(json::from_bjdata(packed.data(), packed.size(), false) == j);
+}
