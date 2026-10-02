@@ -57,6 +57,7 @@ TEST_CASE("UTF-8 error_handler for the binary readers and writers")
             const json jval = c.bytes;
 
             CHECK_THROWS_AS(json::to_cbor(jval, eh::strict), json::type_error&);
+            CHECK_THROWS_AS(json::to_msgpack(jval, eh::strict), json::type_error&);
             CHECK_THROWS_AS(json::to_ubjson(jval, false, false, eh::strict), json::type_error&);
             CHECK_THROWS_AS(json::to_bjdata(jval, false, false, json::bjdata_version_t::draft2, eh::strict), json::type_error&);
             {
@@ -74,6 +75,7 @@ TEST_CASE("UTF-8 error_handler for the binary readers and writers")
                 const std::string expected = dump_and_parse(c.bytes, h);
 
                 CHECK(json::from_cbor(json::to_cbor(jval, h)).get<std::string>() == expected);
+                CHECK(json::from_msgpack(json::to_msgpack(jval, h)).get<std::string>() == expected);
                 CHECK(json::from_ubjson(json::to_ubjson(jval, false, false, h)).get<std::string>() == expected);
                 CHECK(json::from_bjdata(json::to_bjdata(jval, false, false, json::bjdata_version_t::draft2, h)).get<std::string>() == expected);
                 {
@@ -87,6 +89,7 @@ TEST_CASE("UTF-8 error_handler for the binary readers and writers")
             // keep: the writer passes the ill-formed bytes through unchanged,
             // exactly as every binary writer did before this parameter existed
             CHECK(json::from_cbor(json::to_cbor(jval, eh::keep)).get<std::string>() == c.bytes);
+            CHECK(json::from_msgpack(json::to_msgpack(jval, eh::keep)).get<std::string>() == c.bytes);
             CHECK(json::from_ubjson(json::to_ubjson(jval, false, false, eh::keep)).get<std::string>() == c.bytes);
             CHECK(json::from_bjdata(json::to_bjdata(jval, false, false, json::bjdata_version_t::draft2, eh::keep)).get<std::string>() == c.bytes);
             {
@@ -107,6 +110,7 @@ TEST_CASE("UTF-8 error_handler for the binary readers and writers")
             jobj[c.bytes] = 1;
 
             CHECK_THROWS_AS(json::to_cbor(jobj, eh::strict), json::type_error&);
+            CHECK_THROWS_AS(json::to_msgpack(jobj, eh::strict), json::type_error&);
             CHECK_THROWS_AS(json::to_ubjson(jobj, false, false, eh::strict), json::type_error&);
             CHECK_THROWS_AS(json::to_bjdata(jobj, false, false, json::bjdata_version_t::draft2, eh::strict), json::type_error&);
             CHECK_THROWS_AS(json::to_bson(jobj, eh::strict), json::type_error&);
@@ -120,6 +124,7 @@ TEST_CASE("UTF-8 error_handler for the binary readers and writers")
                 const std::string expected = dump_and_parse(c.bytes, h);
 
                 CHECK(json::from_cbor(json::to_cbor(jobj, h)).begin().key() == expected);
+                CHECK(json::from_msgpack(json::to_msgpack(jobj, h)).begin().key() == expected);
                 CHECK(json::from_ubjson(json::to_ubjson(jobj, false, false, h)).begin().key() == expected);
                 CHECK(json::from_bjdata(json::to_bjdata(jobj, false, false, json::bjdata_version_t::draft2, h)).begin().key() == expected);
                 CHECK(json::from_bson(json::to_bson(jobj, h)).begin().key() == expected);
@@ -127,6 +132,7 @@ TEST_CASE("UTF-8 error_handler for the binary readers and writers")
 
             // keep: object keys round-trip unchanged too
             CHECK(json::from_cbor(json::to_cbor(jobj, eh::keep)).begin().key() == c.bytes);
+            CHECK(json::from_msgpack(json::to_msgpack(jobj, eh::keep)).begin().key() == c.bytes);
             CHECK(json::from_ubjson(json::to_ubjson(jobj, false, false, eh::keep)).begin().key() == c.bytes);
             CHECK(json::from_bjdata(json::to_bjdata(jobj, false, false, json::bjdata_version_t::draft2, eh::keep)).begin().key() == c.bytes);
             CHECK(json::from_bson(json::to_bson(jobj, eh::keep)).begin().key() == c.bytes);
@@ -243,6 +249,7 @@ TEST_CASE("UTF-8 error_handler for the binary readers and writers")
             CAPTURE(static_cast<int>(h));
 
             CHECK(json::from_cbor(json::to_cbor(jval, h)).get<std::string>() == valid_sequence);
+            CHECK(json::from_msgpack(json::to_msgpack(jval, h)).get<std::string>() == valid_sequence);
             CHECK(json::from_ubjson(json::to_ubjson(jval, false, false, h)).get<std::string>() == valid_sequence);
             CHECK(json::from_bjdata(json::to_bjdata(jval, false, false, json::bjdata_version_t::draft2, h)).get<std::string>() == valid_sequence);
             CHECK(json::from_bson(json::to_bson(jobj, h)).begin().key() == valid_sequence);
@@ -294,16 +301,22 @@ TEST_CASE("UTF-8 error_handler for the binary readers and writers")
         CHECK(json("\xC3\xC3\xA9").dump(-1, ' ', true, eh::keep) == "\"\xC3\\u00e9\"");
     }
 
-    SECTION("to_msgpack and to_bon8 are not affected by error_handler")
+    SECTION("to_msgpack defaults to keep; to_bon8 is not affected by error_handler")
     {
         const json jval = ill_formed_cases[1].bytes; // lone 0xFF
 
-        // to_msgpack has no error_handler parameter; the bytes are always
-        // passed through, as MessagePack's spec allows
+        // to_msgpack's error_handler defaults to keep, as MessagePack's spec
+        // allows any bytes in a str, so the bytes are passed through
+        CHECK(json::to_msgpack(jval) == json::to_msgpack(jval, eh::keep));
         CHECK(json::from_msgpack(json::to_msgpack(jval)).get<std::string>() == ill_formed_cases[1].bytes);
 
-        // to_bon8 has no error_handler parameter either; UTF-8 is structural
-        // for BON8, so it always rejects ill-formed input
+        // the diagnostics context of an ill-formed key is the object
+        json jobj;
+        jobj["\xFF"] = 1;
+        CHECK_THROWS_WITH_AS(json::to_msgpack(jobj, eh::strict), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+
+        // to_bon8 has no error_handler parameter; UTF-8 is structural for
+        // BON8, so it always rejects ill-formed input
         CHECK_THROWS_AS(json::to_bon8(jval), json::type_error&);
     }
 

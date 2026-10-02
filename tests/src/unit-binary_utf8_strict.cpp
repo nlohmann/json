@@ -112,9 +112,11 @@ TEST_CASE("JSON_STRICT_BINARY_UTF8 (see #5529, #5651)")
 
     SECTION("MessagePack and BON8 are unaffected")
     {
-        // MessagePack allows any bytes in a str, so to_msgpack() writes them as
-        // is; BON8 always checks, because the lead bytes mark where strings end
+        // MessagePack allows any bytes in a str, so to_msgpack() still
+        // defaults to keep (strict only if passed explicitly); BON8 always
+        // checks, because the lead bytes mark where strings end
         CHECK(json::to_msgpack(json("\xFF")) == std::vector<std::uint8_t>({0xa1, 0xff}));
+        CHECK_THROWS_AS(json::to_msgpack(json("\xFF"), json::error_handler_t::strict), json::type_error&);
         CHECK_THROWS_AS(json::to_bon8(json("\xFF")), json::type_error&);
     }
 }

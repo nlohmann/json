@@ -755,7 +755,8 @@ The `dump()` function only works with UTF-8 encoded strings; that is, if you ass
 The binary writers [`to_cbor()`](../api/basic_json/to_cbor.md), [`to_ubjson()`](../api/basic_json/to_ubjson.md),
 [`to_bjdata()`](../api/basic_json/to_bjdata.md), and [`to_bson()`](../api/basic_json/to_bson.md) throw this exception
 as well for a string value or object key that is not valid UTF-8 if their `error_handler` is `strict` (the default if
-[`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md) is enabled).
+[`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md) is enabled). So does
+[`to_msgpack()`](../api/basic_json/to_msgpack.md) if `error_handler_t::strict` is passed.
 
 !!! failure "Example message"
 

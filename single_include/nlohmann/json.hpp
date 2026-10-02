@@ -21418,8 +21418,8 @@ class binary_writer
                      output_vector_sink, or output_adapter_sink wrapping a
                      type-erased output adapter)
     @param[in] error_handler_  how to treat a string value or object key that
-               is not valid UTF-8 (CBOR, UBJSON, BJData, and BSON only; never
-               consulted by @ref write_msgpack or @ref write_bon8)
+               is not valid UTF-8 (CBOR, MessagePack, UBJSON, BJData, and BSON;
+               never consulted by @ref write_bon8)
     */
     explicit binary_writer(OutputSinkType sink, const error_handler_t error_handler_ = binary_writer_default_error_handler())
         : oa(std::move(sink)), error_handler(error_handler_)
@@ -21436,8 +21436,8 @@ class binary_writer
 
     @param[in] adapter  output adapter to write to
     @param[in] error_handler_  how to treat a string value or object key that
-               is not valid UTF-8 (CBOR, UBJSON, BJData, and BSON only; never
-               consulted by @ref write_msgpack or @ref write_bon8)
+               is not valid UTF-8 (CBOR, MessagePack, UBJSON, BJData, and BSON;
+               never consulted by @ref write_bon8)
     */
     template < typename SinkType = OutputSinkType,
                typename std::enable_if < std::is_constructible<SinkType, output_adapter_t<CharType>>::value, int >::type = 0 >
@@ -21784,8 +21784,11 @@ class binary_writer
 
             case value_t::string:
             {
+                string_t storage;
+                const string_t& value = sanitize_utf8_for_write(*j.m_data.m_value.string, j, storage);
+
                 // step 1: write control byte and the string length
-                const auto N = to_msgpack_length(j.m_data.m_value.string->size(), j);
+                const auto N = to_msgpack_length(value.size(), j);
                 if (N <= 31)
                 {
                     // fixstr
@@ -21812,8 +21815,8 @@ class binary_writer
 
                 // step 2: write the string
                 oa.write_characters(
-                      reinterpret_cast<const CharType*>(j.m_data.m_value.string->data()),
-                      j.m_data.m_value.string->size());
+                      reinterpret_cast<const CharType*>(value.data()),
+                      value.size());
                 break;
             }
 
@@ -21960,6 +21963,13 @@ class binary_writer
                 // step 2: write each element
                 for (const auto& el : *j.m_data.m_value.object)
                 {
+                    // as in write_cbor, el.first is checked here against the
+                    // object as diagnostics context; the recursive call below
+                    // handles keep/replace/ignore like any other string
+                    if (error_handler == error_handler_t::strict)
+                    {
+                        check_utf8(el.first, j);
+                    }
                     write_msgpack(el.first);
                     write_msgpack(el.second);
                 }
@@ -23543,12 +23553,10 @@ class binary_writer
     /*!
     @brief return @a s as it should be written, honoring @ref error_handler
 
-    Used by @ref write_cbor, @ref write_ubjson (and so @ref write_bjdata), and
-    the BSON writing functions for string values and object keys; never by
-    @ref write_msgpack or @ref write_bon8, which do not take an @ref
-    error_handler (MessagePack's spec allows a str object to contain
-    ill-formed UTF-8, and BON8 always validates, since UTF-8 lead bytes are
-    structural there).
+    Used by @ref write_cbor, @ref write_msgpack, @ref write_ubjson (and so
+    @ref write_bjdata), and the BSON writing functions for string values and
+    object keys; never by @ref write_bon8, which always validates, since UTF-8
+    lead bytes are structural there.
 
     - @ref error_handler_t::keep: @a s is returned unchanged, without even
       checking it (the behavior of release 3.12.0 and earlier).
@@ -23923,7 +23931,7 @@ class binary_writer
     OutputSinkType oa;
 
     /// how to treat a string value or object key that is not valid UTF-8
-    /// (CBOR, UBJSON, BJData, and BSON only)
+    /// (CBOR, MessagePack, UBJSON, BJData, and BSON; not BON8)
     const error_handler_t error_handler = binary_writer_default_error_handler();
 };
 
@@ -32543,26 +32551,29 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @brief create a MessagePack serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_msgpack/
-    static std::vector<std::uint8_t> to_msgpack(const basic_json& j)
+    static std::vector<std::uint8_t> to_msgpack(const basic_json& j,
+            const error_handler_t error_handler = error_handler_t::keep)
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        vector_writer(result).write_msgpack(j);
+        vector_writer(result, error_handler).write_msgpack(j);
         return result;
     }
 
     /// @brief create a MessagePack serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_msgpack/
-    static void to_msgpack(const basic_json& j, detail::output_adapter<std::uint8_t> o)
+    static void to_msgpack(const basic_json& j, detail::output_adapter<std::uint8_t> o,
+                           const error_handler_t error_handler = error_handler_t::keep)
     {
-        binary_writer<std::uint8_t>(o).write_msgpack(j);
+        binary_writer<std::uint8_t>(o, error_handler).write_msgpack(j);
     }
 
     /// @brief create a MessagePack serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_msgpack/
-    static void to_msgpack(const basic_json& j, detail::output_adapter<char> o)
+    static void to_msgpack(const basic_json& j, detail::output_adapter<char> o,
+                           const error_handler_t error_handler = error_handler_t::keep)
     {
-        binary_writer<char>(o).write_msgpack(j);
+        binary_writer<char>(o, error_handler).write_msgpack(j);
     }
 
     /// @brief create a UBJSON serialization of a given JSON value

@@ -15,7 +15,7 @@ always takes precedence.
 The macro does not affect:
 
 - [`to_msgpack`](../basic_json/to_msgpack.md): the MessagePack specification allows a `str` value to contain bytes that
-  are not valid UTF-8, so it always writes them unchanged.
+  are not valid UTF-8, so its `error_handler` always defaults to `keep`.
 - [`to_bon8`](../basic_json/to_bon8.md): BON8 always checks, because the UTF-8 lead bytes mark where a string ends.
 - The binary readers ([`from_cbor`](../basic_json/from_cbor.md), [`from_msgpack`](../basic_json/from_msgpack.md),
   [`from_ubjson`](../basic_json/from_ubjson.md), [`from_bjdata`](../basic_json/from_bjdata.md),

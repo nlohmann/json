@@ -12,14 +12,13 @@ enum class error_handler_t {
 This enumeration is used to choose how to treat ill-formed UTF-8 in a string value or object key:
 
 - [`dump`](dump.md) uses it while serializing a `basic_json` value to text.
-- [`to_cbor`](to_cbor.md), [`to_ubjson`](to_ubjson.md), [`to_bjdata`](to_bjdata.md), and [`to_bson`](to_bson.md) use it
-  while serializing a `basic_json` value to that binary format; none of CBOR, UBJSON, BJData, or BSON requires a
-  decoder to reject ill-formed UTF-8, so the library can check on write instead. Their default is `keep`, as no
-  binary writer checked before this parameter was added, or `strict` if
-  [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md) is enabled. `to_msgpack` and
-  `to_bon8` do not take this parameter: MessagePack's specification explicitly allows a string to contain ill-formed
-  UTF-8, so `to_msgpack` always passes it through, while BON8 always validates, since UTF-8 lead bytes are structural
-  to that format.
+- [`to_cbor`](to_cbor.md), [`to_msgpack`](to_msgpack.md), [`to_ubjson`](to_ubjson.md), [`to_bjdata`](to_bjdata.md),
+  and [`to_bson`](to_bson.md) use it while serializing a `basic_json` value to that binary format. Their default is
+  `keep`, as no binary writer checked before this parameter was added. CBOR, UBJSON, BJData, and BSON require valid
+  UTF-8, so for these four the default is `strict` if [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md)
+  is enabled; MessagePack's specification explicitly allows a string to contain ill-formed UTF-8, so `to_msgpack`
+  stays at `keep`. `to_bon8` does not take this parameter: BON8 always validates, since UTF-8 lead bytes are
+  structural to that format.
 - [`from_cbor`](from_cbor.md), [`from_msgpack`](from_msgpack.md), [`from_ubjson`](from_ubjson.md),
   [`from_bjdata`](from_bjdata.md), and [`from_bson`](from_bson.md) use it while parsing that binary format, to decide
   whether to check a string value or object key for well-formed UTF-8 at all; by default (`keep`) they do not, as no
