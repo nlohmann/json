@@ -35,6 +35,11 @@ Binary formats may report the number of elements.
     --8<-- "examples/sax_parse.output"
     ```
 
+## See also
+
+- [end_array](end_array.md) - the end of an array was read
+- [sax_parse](../basic_json/sax_parse.md) - SAX parser
+
 ## Version history
 
 - Added in version 3.2.0.

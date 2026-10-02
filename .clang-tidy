@@ -84,6 +84,10 @@ Checks: '*,
 CheckOptions:
   - key: hicpp-special-member-functions.AllowSoleDefaultDtor
     value: 1
+  # clang-tidy 22.1 extended this check to classes and enums; the test files
+  # define many such helper types at namespace scope, which is harmless
+  - key: misc-use-internal-linkage.AnalyzeTypes
+    value: false
 
 WarningsAsErrors: '*'
 

@@ -67,7 +67,7 @@ contained in `#!cpp *this` (for example, a subobject returned by `#!cpp (*this)[
 
 ## Examples
 
-??? example
+??? example "Example: (1) update with another object"
 
     The example shows how `update()` is used.
     
@@ -81,7 +81,7 @@ contained in `#!cpp *this` (for example, a subobject returned by `#!cpp (*this)[
     --8<-- "examples/update.output"
     ```
 
-??? example
+??? example "Example: (2) update with an iterator range"
 
     The example shows how `update()` is used.
     
@@ -95,7 +95,7 @@ contained in `#!cpp *this` (for example, a subobject returned by `#!cpp (*this)[
     --8<-- "examples/update__range.output"
     ```
 
-??? example
+??? example "Example: (1) merge user settings into default settings"
 
     One common use case for this function is the handling of user settings. Assume your application can be configured in
     some aspects:

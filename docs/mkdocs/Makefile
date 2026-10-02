@@ -1,3 +1,8 @@
+# The MkDocs 2.0 banners of Material for MkDocs and ProperDocs (via mkdocs-redirects) are printed to stderr, not
+# logged, so they do not affect --strict; silence them anyway.
+export NO_MKDOCS_2_WARNING := true
+export DISABLE_MKDOCS_2_WARNING := true
+
 # serve the site locally
 serve: style_check
 	venv/bin/mkdocs serve
@@ -8,10 +13,16 @@ serve_dirty: style_check
 # This target is used in the CI (ci_test_build_documentation).
 # This target is used by the docset Makefile.
 build: style_check
-	venv/bin/mkdocs build
+	venv/bin/mkdocs build --strict
 
 style_check:
 	@cd docs ; ../venv/bin/python3 ../scripts/check_structure.py
+
+# check that all Mermaid diagrams parse (needs Node.js)
+# This target is used in the CI (ci_test_documentation_mermaid).
+check_mermaid:
+	npm ci --prefix scripts/mermaid --ignore-scripts --no-audit --no-fund
+	node scripts/mermaid/check_mermaid.mjs docs
 
 # check the links in the documentation files in docs/mkdocs
 link_check:

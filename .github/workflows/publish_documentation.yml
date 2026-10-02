@@ -43,6 +43,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # the git-revision-date-localized plugin needs the history for correct "last update" dates and so the
+          # strict build does not fail on a shallow clone
+          fetch-depth: 0
 
       - name: Install virtual environment
         run: make install_venv -C docs/mkdocs
