@@ -67,6 +67,7 @@ cc_library(
         "include/nlohmann/detail/string_utils.hpp",
         "include/nlohmann/detail/value_t.hpp",
         "include/nlohmann/detail/view/builder.hpp",
+        "include/nlohmann/detail/view/compare.hpp",
         "include/nlohmann/detail/view/document_data.hpp",
         "include/nlohmann/detail/view/errors.hpp",
         "include/nlohmann/detail/view/input.hpp",

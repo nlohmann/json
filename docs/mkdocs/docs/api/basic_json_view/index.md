@@ -20,11 +20,12 @@ Moving the document itself does not invalidate its views: the index is heap-allo
 `basic_json_document` object.
 
 `basic_json_view` provides the read-only part of the `BasicJsonType` interface: the type-inspection functions, element
-access, lookup, iteration, and conversion -- [`get<T>()`](get.md), [`get_string()`](get_string.md),
+access, lookup, iteration, conversion, and comparison -- [`get<T>()`](get.md), [`get_string()`](get_string.md),
 [`number_token()`](number_token.md), and [`materialize()`](materialize.md) to build the `BasicJsonType` value of a
 subtree on demand. [`operator[]`](operator%5B%5D.md), [`at`](at.md), [`contains`](contains.md), and
-[`value`](value.md) also accept a [`json_pointer`](../json_pointer/index.md). It does not (yet) provide
-comparison.
+[`value`](value.md) also accept a [`json_pointer`](../json_pointer/index.md). [`operator==`](operator_eq.md) and
+[`operator!=`](operator_ne.md) compare two views, or a view and a `BasicJsonType` value, without ever building a
+`BasicJsonType` value for a view; no ordering comparison (`#!cpp operator<`) is provided.
 
 ## Template parameters
 
@@ -106,6 +107,11 @@ comparison.
 - [**get_string**](get_string.md) - get a string value without a copy
 - [**number_token**](number_token.md) - get a number's token text without a copy
 - [**materialize**](materialize.md) - build the `BasicJsonType` value of this subtree
+
+### Comparison
+
+- [**operator==**](operator_eq.md) - comparison: equal
+- [**operator!=**](operator_ne.md) - comparison: not equal
 
 ### Serialization
 

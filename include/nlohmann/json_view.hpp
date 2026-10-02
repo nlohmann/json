@@ -47,6 +47,7 @@
 #endif
 
 #include <nlohmann/detail/view/builder.hpp>
+#include <nlohmann/detail/view/compare.hpp>
 #include <nlohmann/detail/view/document_data.hpp>
 #include <nlohmann/detail/view/errors.hpp>
 #include <nlohmann/detail/view/input.hpp>
@@ -603,6 +604,44 @@ class basic_json_view
     }
 #endif
 
+    ////////////////
+    // comparison //
+    ////////////////
+
+    /// whether the values parse() would produce for two views are equal, as
+    /// by BasicJsonType's operator== (numbers by value, objects by their
+    /// members with duplicate keys resolved as parse() resolves them)
+    friend bool operator==(const basic_json_view& a, const basic_json_view& b)
+    {
+        return detail::view::equal<BasicJsonType>(side(a), side(b));
+    }
+
+    friend bool operator!=(const basic_json_view& a, const basic_json_view& b)
+    {
+        return !(a == b);
+    }
+
+    /// whether the value parse() would produce for a view equals a value
+    friend bool operator==(const basic_json_view& a, const BasicJsonType& j)
+    {
+        return detail::view::equal<BasicJsonType>(side(a), json_side_t(j));
+    }
+
+    friend bool operator==(const BasicJsonType& j, const basic_json_view& a)
+    {
+        return a == j;
+    }
+
+    friend bool operator!=(const basic_json_view& a, const BasicJsonType& j)
+    {
+        return !(a == j);
+    }
+
+    friend bool operator!=(const BasicJsonType& j, const basic_json_view& a)
+    {
+        return !(a == j);
+    }
+
     /////////////////
     // materialize //
     /////////////////
@@ -634,6 +673,13 @@ class basic_json_view
     basic_json_view(const document_data* d, const node* n) noexcept
         : m_doc(d), m_node(n)
     {}
+
+    using json_side_t = detail::view::json_side<BasicJsonType, string_view_t>;
+
+    static detail::view::view_side<BasicJsonType, basic_json_view> side(const basic_json_view& v) noexcept
+    {
+        return detail::view::view_side<BasicJsonType, basic_json_view>(v);
+    }
 
     /// the number of source bytes of this value (estimated for values with
     /// decoded strings)

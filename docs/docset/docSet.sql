@@ -181,6 +181,8 @@ INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::number_token
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::operator bool', 'Method', 'api/basic_json_view/operator_bool/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::operator<<', 'Operator', 'api/basic_json_view/operator_ltlt/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::operator[]', 'Operator', 'api/basic_json_view/operator[]/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::operator==', 'Operator', 'api/basic_json_view/operator_eq/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::operator!=', 'Operator', 'api/basic_json_view/operator_ne/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::size', 'Method', 'api/basic_json_view/size/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::source_offset', 'Method', 'api/basic_json_view/source_offset/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::type', 'Method', 'api/basic_json_view/type/index.html');
