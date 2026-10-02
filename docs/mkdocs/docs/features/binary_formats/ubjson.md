@@ -49,10 +49,12 @@ The library uses the following mapping from JSON values types to UBJSON types ac
 
 !!! warning "UTF-8 validation of string values and object keys"
 
-    UBJSON's required string encoding is UTF-8. By default, `to_ubjson()` writes the bytes of string values and object
-    keys unchanged, even if they are not valid UTF-8. If
-    [`JSON_STRICT_BINARY_UTF8`](../../api/macros/json_strict_binary_utf8.md) is enabled, it throws
-    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for ill-formed UTF-8 instead.
+    UBJSON's required string encoding is UTF-8. By default (the [`error_handler`](../../api/basic_json/to_ubjson.md)
+    parameter left at `keep`), `to_ubjson()` writes the bytes of string values and object keys unchanged, even if they
+    are not valid UTF-8. With `error_handler_t::strict`, it throws
+    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for ill-formed UTF-8 instead;
+    `replace`/`ignore` sanitize the string. [`JSON_STRICT_BINARY_UTF8`](../../api/macros/json_strict_binary_utf8.md)
+    makes `strict` the default.
 
 !!! info "Unused UBJSON markers"
 
@@ -129,12 +131,16 @@ The library maps UBJSON types to JSON value types as follows:
 
 !!! warning "Ill-formed UTF-8 in string values and object keys"
 
-    UBJSON's required string encoding is UTF-8, but this is not enforced on read: `from_ubjson()` accepts a string
-    value or object key whose bytes are not valid UTF-8 and hands them back unchanged. However,
+    UBJSON's required string encoding is UTF-8, but checking it on read is opt-in: with the
+    [`error_handler`](../../api/basic_json/from_ubjson.md) parameter left at `keep` (the default), `from_ubjson()`
+    accepts a string value or object key whose bytes are not valid UTF-8 and hands them back unchanged. Passing
+    `error_handler_t::strict` makes `from_ubjson()` check and throw
+    [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) for ill-formed UTF-8, and
+    `replace`/`ignore` sanitize the string instead of keeping it. However,
     [`dump()`](../../api/basic_json/dump.md) still requires valid UTF-8 and throws
-    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for such a value, unless an error
-    handler is passed that replaces or ignores the ill-formed bytes. By default, `to_ubjson()` writes such a value
-    back unchanged (see above).
+    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for a value read with the default
+    `keep` handler, unless an error handler is passed that replaces or ignores the ill-formed bytes. `to_ubjson()`'s
+    own `error_handler` parameter defaults to `keep` (see above), so such a value is written back unchanged.
 
 ??? example
 
