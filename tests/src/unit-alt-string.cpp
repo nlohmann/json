@@ -16,6 +16,10 @@
 #include <utility>
 #include <vector>
 
+// NLOHMANN_JSON_SERIALIZE_ENUM_STRICT uses a static std::pair
+DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
+
 /* forward declarations */
 class alt_string;
 bool operator<(const char* op1, const alt_string& op2) noexcept; // NOLINT(misc-use-internal-linkage)
@@ -174,7 +178,7 @@ bool operator<(const char* op1, const alt_string& op2) noexcept
     return op1 < op2.str_impl;
 }
 
-enum class alt_color { red, green };
+enum class alt_color { red, green }; // NOLINT(misc-use-internal-linkage)
 
 // NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
 NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(alt_color,
@@ -434,3 +438,5 @@ TEST_CASE("alternative string type")
         CHECK_THROWS_WITH_AS(_ = doc.get<alt_color>(), "[json.exception.out_of_range.410] enum value out of range for alt_color: \"blue\"", alt_json::out_of_range&);
     }
 }
+
+DOCTEST_CLANG_SUPPRESS_WARNING_POP

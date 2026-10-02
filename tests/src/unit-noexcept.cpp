@@ -60,9 +60,9 @@ TEST_CASE("noexcept")
 {
     // silence -Wunneeded-internal-declaration errors
     static_cast<void>(static_cast<void(*)(json&, pod)>(&to_json));
-    static_cast<void>(static_cast<void(*)(json&, pod_bis)>(&to_json));
+    static_cast<void>(static_cast<void(*)(json&, pod_bis)>(&to_json)); // NOLINT(readability-redundant-casting): selects the overload
     static_cast<void>(static_cast<void(*)(const json&, pod)>(&from_json));
-    static_cast<void>(static_cast<void(*)(const json&, pod_bis)>(&from_json));
+    static_cast<void>(static_cast<void(*)(const json&, pod_bis)>(&from_json)); // NOLINT(readability-redundant-casting): selects the overload
 
     SECTION("nothrow-copy-constructible exceptions")
     {

@@ -33,6 +33,10 @@ Thereby, `Target` is the current object; that is, the patch is applied to the cu
 `apply_patch` (in)
 :   the patch to apply
 
+## Exception safety
+
+Basic guarantee: if an exception is thrown during the operation, the JSON value may be partially modified.
+
 ## Complexity
 
 Linear in the lengths of `apply_patch`.

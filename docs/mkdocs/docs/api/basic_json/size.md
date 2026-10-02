@@ -53,6 +53,8 @@ JSON value which is `1` in the case of a string.
 
 ## See also
 
+- [empty](empty.md) checks whether the JSON value has no elements
+- [max_size](max_size.md) returns the maximum possible number of elements
 - [basic_json_view::size](../basic_json_view/size.md) - the same function on a zero-copy view
 
 ## Version history
