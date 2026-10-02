@@ -256,7 +256,7 @@ class view_serializer
                 }
                 else
                 {
-                    write_float(float_value<number_float_t>(m_doc.str(n), n));
+                    write_float(float_value<number_float_t>(m_doc, n));
                 }
                 break;
             case value_t::object:    // LCOV_EXCL_LINE (containers are written by dump())
