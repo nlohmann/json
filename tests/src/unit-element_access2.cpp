@@ -1973,4 +1973,115 @@ TEST_CASE("operator[] with user-defined std::string_view-convertible types")
         }
     }
 }
+
+TEST_CASE("keys convertible to std::string_view work with all lookup functions (regression test for #5663)")
+{
+    // a key type convertible only to std::string_view: the case #4958 added
+    // support for, but only the non-const operator[] compiled with it
+    struct ViewKey
+    {
+        operator std::string_view() const
+        {
+            return "a";
+        }
+    };
+
+    // a key type convertible to both std::string and std::string_view: with
+    // 3.12.0, such a key worked with at, the const operator[], find, count and
+    // contains via the conversion to std::string; #4958 made the KeyType&&
+    // templates win overload resolution for it instead, and those then failed
+    struct DualKey
+    {
+        operator std::string() const
+        {
+            return "a";
+        }
+        operator std::string_view() const
+        {
+            return "a";
+        }
+    };
+
+    SECTION("nlohmann::json")
+    {
+        using json = nlohmann::json;
+
+        SECTION("ViewKey")
+        {
+            json j = {{"a", 1}};
+            const json& cj = j;
+
+            CHECK(j[ViewKey{}] == 1);
+            CHECK(cj[ViewKey{}] == 1);
+            CHECK(j.at(ViewKey{}) == 1);
+            CHECK(cj.at(ViewKey{}) == 1);
+            CHECK(j.find(ViewKey{}) != j.end());
+            CHECK(cj.find(ViewKey{}) != cj.end());
+            CHECK(j.count(ViewKey{}) == 1);
+            CHECK(j.contains(ViewKey{}));
+            CHECK(j.value(ViewKey{}, 0) == 1);
+            CHECK(j.erase(ViewKey{}) == 1);
+            CHECK(!j.contains("a"));
+        }
+
+        SECTION("DualKey")
+        {
+            json j = {{"a", 1}};
+            const json& cj = j;
+
+            CHECK(j[DualKey{}] == 1);
+            CHECK(cj[DualKey{}] == 1);
+            CHECK(j.at(DualKey{}) == 1);
+            CHECK(cj.at(DualKey{}) == 1);
+            CHECK(j.find(DualKey{}) != j.end());
+            CHECK(cj.find(DualKey{}) != cj.end());
+            CHECK(j.count(DualKey{}) == 1);
+            CHECK(j.contains(DualKey{}));
+            CHECK(j.value(DualKey{}, 0) == 1);
+            CHECK(j.erase(DualKey{}) == 1);
+            CHECK(!j.contains("a"));
+        }
+    }
+
+    SECTION("nlohmann::ordered_json")
+    {
+        using ordered_json = nlohmann::ordered_json;
+
+        SECTION("ViewKey")
+        {
+            ordered_json j = {{"a", 1}};
+            const ordered_json& cj = j;
+
+            CHECK(j[ViewKey{}] == 1);
+            CHECK(cj[ViewKey{}] == 1);
+            CHECK(j.at(ViewKey{}) == 1);
+            CHECK(cj.at(ViewKey{}) == 1);
+            CHECK(j.find(ViewKey{}) != j.end());
+            CHECK(cj.find(ViewKey{}) != cj.end());
+            CHECK(j.count(ViewKey{}) == 1);
+            CHECK(j.contains(ViewKey{}));
+            CHECK(j.value(ViewKey{}, 0) == 1);
+            CHECK(j.erase(ViewKey{}) == 1);
+            CHECK(!j.contains("a"));
+        }
+
+        SECTION("DualKey")
+        {
+            ordered_json j = {{"a", 1}};
+            const ordered_json& cj = j;
+
+            CHECK(j[DualKey{}] == 1);
+            CHECK(cj[DualKey{}] == 1);
+            CHECK(j.at(DualKey{}) == 1);
+            CHECK(cj.at(DualKey{}) == 1);
+            CHECK(j.find(DualKey{}) != j.end());
+            CHECK(cj.find(DualKey{}) != cj.end());
+            CHECK(j.count(DualKey{}) == 1);
+            CHECK(j.contains(DualKey{}));
+            CHECK(j.value(DualKey{}, 0) == 1);
+            CHECK(j.erase(DualKey{}) == 1);
+            CHECK(!j.contains("a"));
+        }
+    }
+}
 #endif

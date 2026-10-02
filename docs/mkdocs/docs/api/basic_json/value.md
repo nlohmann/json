@@ -195,7 +195,9 @@ changes to any JSON value.
 1. Added in version 1.0.0. Changed parameter `default_value` type from `const ValueType&` to `ValueType&&` in version
    3.11.0. Deleted overload for integral key types added in version 3.13.0 to reject such calls at compile time
    instead of causing undefined behavior at runtime.
-2. Added in version 3.11.0. Made `ValueType` the first template parameter in version 3.11.2.
+2. Added in version 3.11.0. Made `ValueType` the first template parameter in version 3.11.2. Fixed in version 3.13.0
+   to consistently accept `std::string_view`-convertible keys, as already supported by
+   [`operator[]`](operator[].md), [`at`](at.md), [`find`](find.md), and other lookup functions.
 3. Added in version 2.0.2. Extended to work with arrays in version 3.13.0, including fixing an issue where resolving
    `ptr` through an array unexpectedly threw `out_of_range` instead of returning the resolved element (or
    `default_value`, as documented).
