@@ -34,6 +34,12 @@ Constant.
     --8<-- "examples/is_binary.output"
     ```
 
+## See also
+
+- [is_primitive](is_primitive.md) checks whether the JSON value is primitive
+- [binary_t](binary_t.md) the type used to store binary values
+- [get_binary](get_binary.md) returns a reference to the stored binary value
+
 ## Version history
 
 - Added in version 3.8.0.

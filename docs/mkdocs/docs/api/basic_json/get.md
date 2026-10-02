@@ -13,16 +13,16 @@ BasicJsonType get() const;
 
 // (3)
 template<typename PointerType>
-PointerType get_ptr();
+PointerType get() noexcept;
 
 template<typename PointerType>
-constexpr const PointerType get_ptr() const noexcept;
+const PointerType get() const noexcept;  // constexpr since C++14
 ```
 
 1. Explicit type conversion between the JSON value and a compatible value which is
    [CopyConstructible](https://en.cppreference.com/w/cpp/named_req/CopyConstructible) and
    [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). The value is converted by
-   calling the `json_serializer<ValueType>` `from_json()` method.
+   calling the [`json_serializer<ValueType>`](json_serializer.md) `from_json()` method.
    
     The function is equivalent to executing
     ```cpp
@@ -84,6 +84,12 @@ constexpr const PointerType get_ptr() const noexcept;
 3. pointer to the internally stored JSON value if the requested pointer type fits to the JSON value; `#!cpp nullptr`
    otherwise
 
+## Exception safety
+
+Depends on what `json_serializer<ValueType>` `from_json()` method throws for overloads (1) and (2); the JSON value
+itself is never modified, since `get()` is a `#!cpp const` member function. No-throw guarantee for overload (3): this
+function never throws exceptions.
+
 ## Exceptions
 
 Depends on what `json_serializer<ValueType>` `from_json()` method throws
@@ -123,13 +129,13 @@ overload (3).
 
 ## Examples
 
-??? example
+??? example "Example: (1) explicit conversion to compatible types"
 
     The example below shows several conversions from JSON values
     to other types. There a few things to note: (1) Floating-point numbers can
     be converted to integers, (2) A JSON array can be converted to a standard
     `std::vector<short>`, (3) A JSON object can be converted to C++
-    associative containers such as `std::unordered_map<std::string, json>`.
+    associative containers such as `std::map<std::string, json>`.
         
     ```cpp
     --8<-- "examples/get__ValueType_const.cpp"
@@ -141,7 +147,21 @@ overload (3).
     --8<-- "examples/get__ValueType_const.output"
     ```
 
-??? example
+??? example "Example: (2) explicit conversion to another `basic_json` specialization"
+
+    The example below shows how a `json` value is converted to an `ordered_json` value using `get<BasicJsonType>()`.
+
+    ```cpp
+    --8<-- "examples/get__BasicJsonType.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/get__BasicJsonType.output"
+    ```
+
+??? example "Example: (3) explicit pointer access to the stored value"
 
     The example below shows how pointers to internal values of a JSON value can be requested. Note that no type
     conversions are made and a `#cpp nullptr` is returned if the value and the requested pointer type does not match.

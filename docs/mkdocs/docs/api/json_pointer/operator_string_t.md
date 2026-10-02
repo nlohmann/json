@@ -26,6 +26,8 @@ operator string_t() const
     This function is deprecated in favor of [`to_string`](to_string.md) and will be removed in a future major version
     release.
 
+    See the [migration guide](../../integration/migration_guide.md#json-pointers) for how to update existing code.
+
 ## Examples
 
 ??? example
@@ -44,7 +46,8 @@ operator string_t() const
 
 ## See also
 
-- [string_t](../basic_json/string_t.md)- type for strings
+- [to_string](to_string.md) return a string representation of the JSON pointer
+- [string_t](../basic_json/string_t.md) - type for strings
 
 ## Version history
 
