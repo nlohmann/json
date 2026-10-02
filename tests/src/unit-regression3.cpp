@@ -862,6 +862,46 @@ TEST_CASE("issue #5338 - truncated CBOR tagged binary subtype is rejected")
     }
 }
 
+TEST_CASE("issue #5676 - SAX parsing of CBOR tags")
+{
+    const json expected = json::binary({1, 2, 3}, 42);
+    const auto cbor = json::to_cbor(expected);
+
+    nlohmann::detail::json_sax_acceptor<json> acceptor;
+    CHECK_FALSE(json::sax_parse(cbor, &acceptor, json::input_format_t::cbor));
+    CHECK_FALSE(json::sax_parse(cbor, &acceptor, json::input_format_t::cbor,
+                                true, false, false, json::cbor_tag_handler_t::error));
+
+    CHECK(json::sax_parse(cbor, &acceptor, json::input_format_t::cbor,
+                          true, false, false, json::cbor_tag_handler_t::ignore));
+
+    json parsed;
+    nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type> sax(parsed);
+    CHECK(json::sax_parse(cbor, &sax, json::input_format_t::cbor,
+                          true, false, false, json::cbor_tag_handler_t::store));
+    CHECK(parsed == expected);
+
+    json iterator_parsed;
+    nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type> iterator_sax(iterator_parsed);
+    CHECK(json::sax_parse(cbor.begin(), cbor.end(), &iterator_sax, json::input_format_t::cbor,
+                          true, false, false, json::cbor_tag_handler_t::store));
+    CHECK(iterator_parsed == expected);
+
+    json span_parsed;
+    nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type> span_sax(span_parsed);
+    CHECK(json::sax_parse(nlohmann::detail::span_input_adapter(cbor.data(), cbor.size()), &span_sax,
+                          json::input_format_t::cbor, true, false, false, json::cbor_tag_handler_t::store));
+    CHECK(span_parsed == expected);
+
+    const std::string text = "null";
+    CHECK(json::sax_parse(text, &acceptor, json::input_format_t::json,
+                          true, false, false, json::cbor_tag_handler_t::store));
+    CHECK(json::sax_parse(text.begin(), text.end(), &acceptor, json::input_format_t::json,
+                          true, false, false, json::cbor_tag_handler_t::store));
+    CHECK(json::sax_parse(nlohmann::detail::span_input_adapter(text.data(), text.size()), &acceptor,
+                          json::input_format_t::json, true, false, false, json::cbor_tag_handler_t::store));
+}
+
 TEST_CASE("issue #5402 - update(merge_objects=true) overwrites a primitive with an object")
 {
     json t = {{"k", 1}};

@@ -8,7 +8,8 @@ static bool sax_parse(InputType&& i,
                       input_format_t format = input_format_t::json,
                       const bool strict = true,
                       const bool ignore_comments = false,
-                      const bool ignore_trailing_commas = false);
+                      const bool ignore_trailing_commas = false,
+                      const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error);
 
 // (2)
 template<class IteratorType, class SAX, class SentinelType = IteratorType>
@@ -17,13 +18,14 @@ static bool sax_parse(IteratorType first, SentinelType last,
                       input_format_t format = input_format_t::json,
                       const bool strict = true,
                       const bool ignore_comments = false,
-                      const bool ignore_trailing_commas = false);
+                      const bool ignore_trailing_commas = false,
+                      const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error);
 ```
 
 Read from input and generate SAX events
 
 1. Read from a compatible input.
-2. Read from a pair of character iterators, or an iterator and a sentinel of a different type (C++20 ranges support)
+2. Read from a pair of character iterators, or an iterator and a sentinel of a different type (C++20 ranges support).
     
     The value_type of the iterator must be an integral type with a size of 1, 2, or 4 bytes, which will be interpreted
     respectively as UTF-8, UTF-16, and UTF-32. If `SentinelType` differs from `IteratorType`, it must be comparable to
@@ -81,6 +83,10 @@ The SAX event lister must follow the interface of [`json_sax`](../json_sax/index
 `ignore_trailing_commas` (in)
 :   whether trailing commas in arrays or objects should be ignored and treated like whitespace (`#!cpp true`) or yield a parse error
     (`#!cpp false`); (optional, `#!cpp false` by default)
+
+`tag_handler` (in)
+:   how to handle CBOR tags; see [`cbor_tag_handler_t`](cbor_tag_handler_t.md). Ignored for formats other than CBOR
+    (optional, `cbor_tag_handler_t::error` by default).
 
 `first` (in)
 :   iterator to the start of a character range
