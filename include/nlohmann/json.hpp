@@ -1133,6 +1133,27 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         }
     }
 
+    /// @brief create the object type from a range, preserving @a src_object's
+    /// comparator when the object type supports it
+    /// Enabled for object types that provide a key_comp() and a matching
+    /// range-plus-comparator constructor, such as std::map. Other object
+    /// types, such as nlohmann::ordered_map, fall back to the plain range
+    /// constructor and default-construct their comparator, just as they
+    /// always have (@ref detail::is_comparator_constructible_object_type).
+    template<typename Iterator, detail::enable_if_t<
+                 detail::is_comparator_constructible_object_type<object_t, Iterator>::value, int> = 0>
+    static object_t* create_object_with_comparator(const object_t& src_object, Iterator first, Iterator last)
+    {
+        return create<object_t>(first, last, src_object.key_comp());
+    }
+
+    template<typename Iterator, detail::enable_if_t<
+                 detail::negation<detail::is_comparator_constructible_object_type<object_t, Iterator>>::value, int> = 0>
+    static object_t* create_object_with_comparator(const object_t& /*src_object*/, Iterator first, Iterator last)
+    {
+        return create<object_t>(first, last);
+    }
+
     /// @brief create the copy of the object @a src in @a dst
     /// @note structured values are appended to @a worklist instead
     static void copy_object_level(const basic_json& src, basic_json& dst,
@@ -1150,7 +1171,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             scratch.emplace_back(element.first, basic_json());
         }
 
-        dst.m_data.m_value.object = create<object_t>(std::make_move_iterator(scratch.begin()),
+        dst.m_data.m_value.object = create_object_with_comparator(src_object,
+                                    std::make_move_iterator(scratch.begin()),
                                     std::make_move_iterator(scratch.end()));
         // only now that the object exists may dst stop being a null value
         dst.m_data.m_type = value_t::object;
