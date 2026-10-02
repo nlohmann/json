@@ -235,8 +235,11 @@ struct external_constructor<value_t::array>
         for (auto&& x : std::forward<CompatibleArrayType>(arr))
         {
             j.m_data.m_value.array->push_back(x);
-            j.set_parent(j.m_data.m_value.array->back());
         }
+        // set the parents only once all elements are in place: a push_back
+        // that reallocates moves the earlier elements, which does not keep
+        // their parent pointers
+        j.set_parents();
         j.assert_invariant();
     }
 #endif

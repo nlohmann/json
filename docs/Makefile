@@ -46,9 +46,10 @@ create_output: $(EXAMPLES:.cpp=.output)
 # check output of all stand-alone example files
 check_output: $(EXAMPLES:.cpp=.test)
 
-# check output of all stand-alone example files (exclude files with platform-dependent output.)
+# check output of all stand-alone example files (exclude files whose output depends on the platform by nature:
+# library and compiler information, container size limits, and hash values)
 # This target is used in the CI (ci_test_documentation).
-check_output_portable: $(filter-out mkdocs/docs/examples/meta.test mkdocs/docs/examples/max_size.test mkdocs/docs/examples/std_hash.test mkdocs/docs/examples/basic_json__CompatibleType.test,$(EXAMPLES:.cpp=.test))
+check_output_portable: $(filter-out mkdocs/docs/examples/meta.test mkdocs/docs/examples/max_size.test mkdocs/docs/examples/std_hash.test,$(EXAMPLES:.cpp=.test))
 
 clean:
 	rm -fr $(EXAMPLES:.cpp=)

@@ -27,7 +27,7 @@ If you are not sure whether an element in an object exists, use checked access w
 
 See also the documentation on [element access](element_access/index.md).
 
-??? example "Example 1: Missing object key"
+??? example "Example: missing object key"
 
     The following code will trigger an assertion at runtime:
 
@@ -54,7 +54,7 @@ See also the documentation on [element access](element_access/index.md).
 Constructing a JSON value from an iterator range (see [constructor](../api/basic_json/basic_json.md)) with an
 uninitialized iterator is undefined behavior and yields a runtime assertion.
 
-??? example "Example 2: Uninitialized iterator range"
+??? example "Example: uninitialized iterator range"
 
     The following code will trigger an assertion at runtime:
 
@@ -81,7 +81,7 @@ uninitialized iterator is undefined behavior and yields a runtime assertion.
 Any operation on uninitialized iterators (i.e., iterators that are not associated with any JSON value) is undefined
 behavior and yields a runtime assertion.
 
-??? example "Example 3: Uninitialized iterator"
+??? example "Example: uninitialized iterator"
 
     The following code will trigger an assertion at runtime:
 
@@ -112,7 +112,7 @@ library asserted that the pointer was not `nullptr` using a runtime assertion. I
 result in undefined behavior. Since version 3.12.0, this library checks for `nullptr` and throws a
 [`parse_error.101`](../home/exceptions.md#jsonexceptionparse_error101) to prevent the undefined behavior.
 
-??? example "Example 4: Reading from null pointer"
+??? example "Example: reading from null pointer"
 
     The following code will trigger an assertion at runtime:
 

@@ -27,7 +27,7 @@ Empty objects and arrays are flattened to `#!json null` and will not be reconstr
 
 ## Examples
 
-??? example
+??? example "Example: flatten a JSON object"
 
     The following code shows how a JSON object is flattened to an object whose keys consist of JSON pointers.
     
@@ -39,6 +39,21 @@ Empty objects and arrays are flattened to `#!json null` and will not be reconstr
     
     ```json
     --8<-- "examples/flatten.output"
+    ```
+
+??? example "Example: empty objects and arrays are flattened to `#!json null`"
+
+    The following code shows that an empty object and an empty array are both flattened to `#!json null`, and that
+    `unflatten()` restores them as `#!json null` rather than as empty containers.
+
+    ```cpp
+    --8<-- "examples/flatten__empty.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/flatten__empty.output"
     ```
 
 ## See also
