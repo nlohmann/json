@@ -5128,7 +5128,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @{
 #ifndef JSON_NO_IO
     /// @brief serialize to stream
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_ltlt/
+    /// @sa https://json.nlohmann.me/api/operator_ltlt/
     friend std::ostream& operator<<(std::ostream& o, const basic_json& j)
     {
         // read width member and use it as the indentation parameter if nonzero
@@ -5147,7 +5147,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     /// @brief serialize to stream
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_ltlt/
+    /// @sa https://json.nlohmann.me/api/operator_ltlt/
     /// @deprecated This function is deprecated since 3.0.0 and will be removed in
     ///             version 4.0.0 of the library. Please use
     ///             operator<<(std::ostream&, const basic_json&) instead; that is,
@@ -5316,7 +5316,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #endif
 #ifndef JSON_NO_IO
     /// @brief deserialize from stream
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_gtgt/
+    /// @sa https://json.nlohmann.me/api/operator_gtgt/
     /// @deprecated This stream operator is deprecated since 3.0.0 and will be removed in
     ///             version 4.0.0 of the library. Please use
     ///             operator>>(std::istream&, basic_json&) instead; that is,
@@ -5328,7 +5328,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     /// @brief deserialize from stream
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_gtgt/
+    /// @sa https://json.nlohmann.me/api/operator_gtgt/
     friend std::istream& operator>>(std::istream& i, basic_json& j)
     {
         // parse into a temporary so that j is left unchanged if parsing fails

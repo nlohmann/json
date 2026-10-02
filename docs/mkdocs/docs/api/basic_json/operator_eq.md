@@ -139,7 +139,7 @@ Linear.
 
 ## Examples
 
-??? example
+??? example "Example: (1) compare JSON values"
 
     The example demonstrates comparing several JSON types.
         
@@ -153,7 +153,7 @@ Linear.
     --8<-- "examples/operator__equal.output"
     ```
 
-??? example
+??? example "Example: (2) compare JSON values with `#!cpp nullptr`"
 
     The example demonstrates comparing several JSON types against the null pointer (JSON `#!json null`).
         

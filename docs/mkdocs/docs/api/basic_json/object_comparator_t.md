@@ -25,6 +25,11 @@ and [`default_object_comparator_t`](default_object_comparator_t.md) otherwise.
     --8<-- "examples/object_comparator_t.output"
     ```
 
+## See also
+
+- [object_t](object_t.md) the type used to store JSON objects
+- [default_object_comparator_t](default_object_comparator_t.md) the fallback comparator used when `object_t` has no `key_compare` member type
+
 ## Version history
 
 - Added in version 3.0.0.

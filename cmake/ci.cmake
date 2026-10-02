@@ -901,6 +901,12 @@ add_custom_target(ci_test_build_documentation
     COMMENT "Build the documentation"
 )
 
+add_custom_target(ci_test_documentation_mermaid
+    COMMAND make check_mermaid
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/docs/mkdocs
+    COMMENT "Check the Mermaid diagrams of the documentation"
+)
+
 ###############################################################################
 # Clean up all generated files.
 ###############################################################################

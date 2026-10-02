@@ -65,6 +65,16 @@ Linear.
     Since C++20 overload resolution will consider the _rewritten candidate_ generated from
     [`operator<=>`](operator_spaceship.md).
 
+!!! warning "Deprecation"
+
+    If [`JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](../macros/json_use_legacy_discarded_value_comparison.md) is
+    defined to `1`, the library declares a member `#!cpp bool operator>=(const_reference rhs) const noexcept` in
+    C++20 mode to emulate the legacy comparison of discarded values. This member is deprecated since version 3.11.0,
+    together with the legacy comparison behavior.
+
+    See the [migration guide](../../integration/migration_guide.md#miscellaneous-functions) for how to update existing
+    code.
+
 ## Examples
 
 ??? example
