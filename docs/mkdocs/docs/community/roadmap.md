@@ -63,6 +63,7 @@ The following macros guard changes that are planned to become the default in ver
 | [`JSON_BRACE_INIT_COPY_SEMANTICS`](../api/macros/json_brace_init_copy_semantics.md)                              | `0`         | `1`: single-element brace initialization such as `#!cpp json j{obj};` copies the element instead of creating an array         | –                                                                                                                  | 3.13.0 |
 | [`JSON_PRECISE_STREAM_POSITION`](../api/macros/json_precise_stream_position.md)                                  | `0`         | `1`: reading from a stream does not consume the character after a number                                                      | –                                                                                                                  | 3.13.0 |
 | [`JSON_STRICT_NUL_HANDLING`](../api/macros/json_strict_nul_handling.md)                                          | `0`         | `1`: a NUL byte in the input is a parse error instead of the end of input                                                     | [`JSON_StrictNulHandling`](../integration/cmake.md#json_strictnulhandling)                                         | 3.13.0 |
+| [`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md)                                            | `0`         | `1`: `to_cbor`, `to_ubjson`, `to_bjdata`, and `to_bson` throw for strings that are not valid UTF-8 by default                 | [`JSON_StrictBinaryUTF8`](../integration/cmake.md#json_strictbinaryutf8)                                           | 3.13.0 |
 
 For example, the following makes a 3.x release behave like version 4.0 with respect to these changes:
 
@@ -73,6 +74,7 @@ For example, the following makes a 3.x release behave like version 4.0 with resp
 #define JSON_BRACE_INIT_COPY_SEMANTICS 1
 #define JSON_PRECISE_STREAM_POSITION 1
 #define JSON_STRICT_NUL_HANDLING 1
+#define JSON_STRICT_BINARY_UTF8 1
 #include <nlohmann/json.hpp>
 ```
 
