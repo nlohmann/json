@@ -77,6 +77,8 @@ TEST_CASE("Better diagnostics")
     SECTION("Parse error")
     {
         json _;
+        // false positive: a default-constructed json is a valid null value
+        // @infer-ignore NULLPTR_DEREFERENCE
         CHECK_THROWS_WITH_AS(_ = json::parse(""), "[json.exception.parse_error.101] parse error at line 1, column 1: attempting to parse an empty input; check that your input string or stream contains the expected JSON", json::parse_error);
     }
 
