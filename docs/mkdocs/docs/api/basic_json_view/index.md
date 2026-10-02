@@ -3,7 +3,7 @@
 <small>Defined in header `<nlohmann/json_view.hpp>`</small>
 
 ```cpp
-template<typename BasicJsonType>
+template<typename BasicJsonType, bool Editable = false>
 class basic_json_view;
 ```
 
@@ -27,16 +27,30 @@ subtree on demand. [`operator[]`](operator%5B%5D.md), [`at`](at.md), [`contains`
 [`operator!=`](operator_ne.md) compare two views, or a view and a `BasicJsonType` value, without ever building a
 `BasicJsonType` value for a view; no ordering comparison (`#!cpp operator<`) is provided.
 
+`basic_json_view` itself is always read-only -- it never has a `set` or `push_back` of its own. A view of an
+**editable** document (`#!cpp Editable == true`) sees every edit made through
+[`basic_json_document::set`](../basic_json_document/set.md) and
+[`basic_json_document::push_back`](../basic_json_document/push_back.md): once a value is changed, every view that
+still refers to it -- including ones taken before the change -- reads the new value. See
+[Edits](../basic_json_document/index.md#edits).
+
 ## Template parameters
 
 `BasicJsonType`
 :   a specialization of [`basic_json`](../basic_json/index.md), matching the
     [`basic_json_document`](../basic_json_document/index.md) the view was taken from.
 
+`Editable`
+:   whether the view is of an editable document, matching the [`basic_json_document`](../basic_json_document/index.md)
+    it was taken from (optional, `#!cpp false` by default). See [Edits](../basic_json_document/index.md#edits).
+
 ## Specializations
 
 - [**json_view**](../json_view.md) - views of a [`json_document`](../json_document.md)
 - [**ordered_json_view**](../ordered_json_view.md) - views of an [`ordered_json_document`](../ordered_json_document.md)
+- [**json_editable_view**](../json_editable_view.md) - views of a [`json_editable_document`](../json_editable_document.md)
+- [**ordered_json_editable_view**](../ordered_json_editable_view.md) - views of an
+  [`ordered_json_editable_document`](../ordered_json_editable_document.md)
 
 ## Member types
 

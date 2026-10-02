@@ -140,8 +140,10 @@ INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::node_cou
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::owns_source', 'Method', 'api/basic_json_document/owns_source/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::parse', 'Function', 'api/basic_json_document/parse/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::parse_copy', 'Function', 'api/basic_json_document/parse_copy/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::push_back', 'Method', 'api/basic_json_document/push_back/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::read', 'Method', 'api/basic_json_document/read/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::root', 'Method', 'api/basic_json_document/root/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::set', 'Method', 'api/basic_json_document/set/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::shrink_to_fit', 'Method', 'api/basic_json_document/shrink_to_fit/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_document::source', 'Method', 'api/basic_json_document/source/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view', 'Class', 'api/basic_json_view/index.html');
@@ -190,6 +192,8 @@ INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::type_name', 
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::value', 'Method', 'api/basic_json_view/value/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json', 'Class', 'api/json/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_document', 'Class', 'api/json_document/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('json_editable_document', 'Class', 'api/json_editable_document/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('json_editable_view', 'Class', 'api/json_editable_view/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_view', 'Class', 'api/json_view/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer', 'Class', 'api/json_pointer/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('json_pointer::back', 'Method', 'api/json_pointer/back/index.html');
@@ -229,6 +233,8 @@ INSERT INTO searchIndex(name, type, path) VALUES ('operator<<', 'Operator', 'api
 INSERT INTO searchIndex(name, type, path) VALUES ('operator>>', 'Operator', 'api/operator_gtgt/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('ordered_json', 'Class', 'api/ordered_json/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('ordered_json_document', 'Class', 'api/ordered_json_document/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('ordered_json_editable_document', 'Class', 'api/ordered_json_editable_document/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('ordered_json_editable_view', 'Class', 'api/ordered_json_editable_view/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('ordered_json_view', 'Class', 'api/ordered_json_view/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('ordered_map', 'Class', 'api/ordered_map/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('std::formatter<basic_json>', 'Class', 'api/basic_json/std_formatter/index.html');

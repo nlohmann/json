@@ -1,0 +1,23 @@
+{"t":0,"type":"start"}
+4
+{
+  "source": "sensor-1",
+  "events": [
+    {
+      "t": 0,
+      "type": "start"
+    },
+    {
+      "t": 1,
+      "type": "tick"
+    },
+    {
+      "t": 2,
+      "type": "tick"
+    },
+    {
+      "t": 3,
+      "type": "tick"
+    }
+  ]
+}
