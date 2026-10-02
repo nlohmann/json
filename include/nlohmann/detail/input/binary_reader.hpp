@@ -4042,28 +4042,13 @@ class binary_reader
                     const NumberType len,
                     string_t& result)
     {
-        // get_bytes() appends to result, and CBOR indefinite-length strings
-        // collect all their chunks in the same result; validating only the
-        // newly read bytes keeps the check linear in the input size
-        const std::size_t old_size = result.size();
-        if (JSON_HEDLEY_UNLIKELY(!get_bytes(format, len, "string", result)))
-        {
-            return false;
-        }
-
-        // RFC 8949 (CBOR) §3.1 and the MessagePack/BSON/UBJSON specifications
-        // all require text strings to be valid UTF-8; reject anything else
-        // right here so malformed input is caught at decode time instead of
-        // only surfacing later as a type_error.316 when the value is dumped
-        // (which would defeat allow_exceptions=false / strict discarding).
-        if (JSON_HEDLEY_UNLIKELY(!is_valid_utf8(result, old_size)))
-        {
-            return sax->parse_error(chars_read, get_token_string(),
-                                    parse_error::create(113, chars_read,
-                                            exception_message(format, "invalid string: ill-formed UTF-8 byte", "string"), nullptr));
-        }
-
-        return true;
+        // Strings are taken as is: none of CBOR (RFC 8949 §3.1 leaves the
+        // choice to the decoder), MessagePack (whose spec explicitly allows
+        // a str object to contain an invalid byte sequence), UBJSON, BJData,
+        // or BSON requires a decoder to reject ill-formed UTF-8. The bytes
+        // are kept unchanged; dump() and the binary writers are the ones
+        // that check them and report type_error.316 if they are not valid.
+        return get_bytes(format, len, "string", result);
     }
 
     /*!

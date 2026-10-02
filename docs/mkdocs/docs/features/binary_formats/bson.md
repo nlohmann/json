@@ -109,14 +109,16 @@ The library maps BSON record types to JSON value types as follows:
     If BSON input must be validated for strict specification compliance, validate it separately before passing it to
     `from_bson()`.
 
-!!! warning "UTF-8 validation of string values"
+!!! warning "Ill-formed UTF-8 in string values"
 
-    The BSON specification requires `string` values (type `0x02`) to be valid UTF-8. This library validates the
-    bytes of every such string at decode time and rejects ill-formed UTF-8 with a
-    [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) exception (or, with `allow_exceptions`
-    set to `false`, a discarded value), rather than only failing later when the resulting value is dumped. Element
-    (key) names and `binary` values (type `0x05`) are unaffected and are never validated, since they are read
-    byte-by-byte as a C string, or are not required to hold text, respectively.
+    The BSON specification requires `string` values (type `0x02`) to be valid UTF-8, but this is not required of a
+    decoder. `from_bson()` accepts a `string` value whose bytes are not valid UTF-8 and hands them back unchanged.
+    However, [`dump()`](../../api/basic_json/dump.md) still requires valid UTF-8 and throws
+    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for such a value, unless an error handler is
+    passed that replaces or ignores the ill-formed bytes. By default, `to_bson()` writes such a string value or element
+    (key) name unchanged; if [`JSON_STRICT_BINARY_UTF8`](../../api/macros/json_strict_binary_utf8.md) is enabled, it
+    throws the same exception instead. Element (key) names are never validated on read, since they are read byte-by-byte
+    as a C string. `binary` values (type `0x05`) are unaffected, since they are not required to hold text.
 
 ??? example
 

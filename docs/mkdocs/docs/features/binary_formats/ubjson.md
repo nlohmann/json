@@ -47,6 +47,13 @@ The library uses the following mapping from JSON values types to UBJSON types ac
 
       - strings with more than 9223372036854775807 bytes (theoretical)
 
+!!! warning "UTF-8 validation of string values and object keys"
+
+    UBJSON's required string encoding is UTF-8. By default, `to_ubjson()` writes the bytes of string values and object
+    keys unchanged, even if they are not valid UTF-8. If
+    [`JSON_STRICT_BINARY_UTF8`](../../api/macros/json_strict_binary_utf8.md) is enabled, it throws
+    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for ill-formed UTF-8 instead.
+
 !!! info "Unused UBJSON markers"
 
     The following markers are not used in the conversion:
@@ -119,6 +126,15 @@ The library maps UBJSON types to JSON value types as follows:
 !!! success "Complete mapping"
 
     The mapping is **complete** in the sense that any UBJSON value can be converted to a JSON value.
+
+!!! warning "Ill-formed UTF-8 in string values and object keys"
+
+    UBJSON's required string encoding is UTF-8, but this is not enforced on read: `from_ubjson()` accepts a string
+    value or object key whose bytes are not valid UTF-8 and hands them back unchanged. However,
+    [`dump()`](../../api/basic_json/dump.md) still requires valid UTF-8 and throws
+    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for such a value, unless an error
+    handler is passed that replaces or ignores the ill-formed bytes. By default, `to_ubjson()` writes such a value
+    back unchanged (see above).
 
 ??? example
 
