@@ -14262,6 +14262,23 @@ this library can always be read back.
 */
 JSON_INLINE_VARIABLE constexpr std::size_t max_valueless_container_size = 1 << 20;
 
+/*!
+@param[in] byte  a byte
+@return whether @a byte begins a well-formed CBOR data item (RFC 8949,
+        Section 3): its additional information is not reserved, and the
+        indefinite length is only used for strings, arrays, and maps
+*/
+inline bool is_cbor_item_head(const unsigned int byte) noexcept
+{
+    const unsigned int major_type = byte >> 5u;
+    const unsigned int additional_information = byte & 0x1Fu;
+    if (additional_information < 28)
+    {
+        return true;
+    }
+    return additional_information == 31 && major_type >= 2 && major_type <= 5;
+}
+
 ///////////////////
 // binary reader //
 ///////////////////
@@ -14285,9 +14302,6 @@ class binary_reader
     using json_sax_t = SAX;
     using char_type = typename InputAdapterType::char_type;
     using char_int_type = typename char_traits<char_type>::int_type;
-    /// the result of @ref report_repairable_error, which is always false if
-    /// the code that recovers is not compiled
-    using repair_t = typename std::conditional<AllowRecovery, bool, std::false_type>::type;
 
     /// whether the input is a contiguous block of bytes that can be inspected
     /// and consumed in bulk (as in the lexer); used by @ref get_bon8_string_bulk
@@ -14391,7 +14405,7 @@ class binary_reader
 
         if (!result)
         {
-            close_open_containers(std::integral_constant<bool, AllowRecovery> {});
+            close_open_containers();
         }
 
         return result && !error_repaired;
@@ -14516,8 +14530,9 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(document_size < 0 || static_cast<std::size_t>(document_size) != chars_read - document_start))
         {
-            return report_repairable_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
-                                           exception_message(input_format_t::bson, concat("document size ", std::to_string(document_size), " does not match the number of bytes read (", std::to_string(chars_read - document_start), ")"), "document"), nullptr));
+            static_cast<void>(report_error(chars_read, get_token_string(), parse_error::create(112, chars_read,
+                                           exception_message(input_format_t::bson, concat("document size ", std::to_string(document_size), " does not match the number of bytes read (", std::to_string(chars_read - document_start), ")"), "document"), nullptr)));
+            return repair_requested();
         }
         return true;
     }
@@ -14536,80 +14551,39 @@ class binary_reader
     }
 
     /*!
-    @brief report an error that loses the end of a BSON element
-
-    If the rest of the document can be skipped, the error is repairable, and
-    the SAX parser asks to recover, the reading loop passes null for the
-    element and skips to the end of the document (see @ref
-    skip_to_bson_document_end). Otherwise, reading stops.
-
-    @return false, so that the caller stops reading the element
-    */
-    template<typename Exception>
-    bool report_bson_element_error(const std::size_t position, const std::string& last_token, const Exception& ex)
-    {
-        if (report_error_repairable_if(can_skip_to_bson_document_end(), position, last_token, ex))
-        {
-            skip_requested = true;
-        }
-        return false;
-    }
-
-    /// the code that recovers is not compiled: stop
-    std::false_type skip_to_bson_document_end(std::false_type /*allow_recovery*/) const noexcept
-    {
-        return {};
-    }
-
-    /*!
     @brief skip the rest of a BSON document after an element that could not be
            read
 
-    Called after reading an element failed. If @ref report_bson_element_error
-    asked for it, passes null for the element and skips to the document's
-    terminator, which the reading loop reads next. The elements after the one
-    that could not be read are lost.
+    Called by @ref resync. Passes null for the element and skips to the
+    document's terminator, which the reading loop reads next. The elements
+    after the one that could not be read are lost.
 
+    @pre @ref can_skip_to_bson_document_end
     @return whether reading continues
     */
-    bool skip_to_bson_document_end(std::true_type /*allow_recovery*/)
+    bool skip_to_bson_document_end()
     {
-        if (!skip_requested)
-        {
-            return false;
-        }
-        skip_requested = false;
-
         const container_frame& top = container_stack.back();
         const std::size_t terminator = top.start_position + static_cast<std::size_t>(top.declared_size) - 1;
         return skip_bytes(terminator - chars_read, "document") && sax->null();
     }
 
     /*!
-    @brief report a BSON element of a type the library does not read
+    @brief skip a BSON element of a type the library does not read
 
-    The BSON specification defines the size of the value of every element
-    type, so when recovering, the value is skipped and null passed instead. A
-    type the specification does not define, or a string length that cannot be
-    right, loses the end of the element (see @ref report_bson_element_error).
+    Called after its error was reported. The BSON specification defines the
+    size of the value of every element type, so when recovering, the value is
+    skipped and null passed instead. A type the specification does not define,
+    or a string length that cannot be right, loses the end of the element; the
+    rest of the document is then skipped (see @ref resync).
 
     @param[in] element_type  the element's type
-    @param[in] element_type_parse_position  where the type was read
     @return whether the value was skipped and null passed instead
     */
-    bool skip_unsupported_bson_element(const char_int_type element_type, const std::size_t element_type_parse_position)
+    template<bool Recover = AllowRecovery, enable_if_t<Recover, int> = 0>
+    bool skip_unsupported_bson_element(const char_int_type element_type)
     {
-        // the type as two uppercase hexadecimal digits, without a format string
-        const auto type_byte = static_cast<unsigned int>(static_cast<unsigned char>(element_type));
-        const auto hex_digit = [](const unsigned int digit)
-        {
-            return static_cast<char>(digit < 10 ? '0' + digit : 'A' + (digit - 10));
-        };
-        const std::string cr_str{hex_digit(type_byte >> 4u), hex_digit(type_byte & 0x0Fu)};
-        const auto error = parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr);
-
-        // the number of bytes to skip, -1 if the value is read differently, or
-        // -2 if the type is unknown
+        // the number of bytes to skip, or -1 if the value is read differently
         std::int64_t size = -1;
         switch (element_type)
         {
@@ -14638,21 +14612,13 @@ class binary_reader
             case 0x0F: // JavaScript code with scope: size of it all, string, document
                 break;
 
-            default:
-                size = -2;
-                break;
+            default: // a type the specification does not define
+                skip_requested = true;
+                return false;
         }
 
-        // an element of an unknown type loses its end, like the elements
-        // reported with report_bson_element_error
-        const bool known = size != -2;
-        if (!report_error_repairable_if(known || can_skip_to_bson_document_end(), element_type_parse_position, cr_str, error))
+        if (!repair_requested())
         {
-            return false;
-        }
-        if (!known)
-        {
-            skip_requested = true;
             return false;
         }
 
@@ -14677,19 +14643,23 @@ class binary_reader
             }
             if (JSON_HEDLEY_UNLIKELY(size < 0 || (element_type != 0x0F && len < 1)))
             {
-                // already reported: skip to the end of the document if that
-                // is possible, or stop
-                if (!can_skip_to_bson_document_end())
-                {
-                    close_requested = true;
-                    return false;
-                }
+                // the end of the element is lost after all: undo the repair,
+                // so that resync() skips the rest of the document or reading
+                // stops
+                close_requested = true;
                 skip_requested = true;
                 return false;
             }
         }
 
         return skip_bytes(static_cast<std::uint64_t>(size), "value") && sax->null();
+    }
+
+    /// @copydoc skip_unsupported_bson_element
+    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    constexpr std::false_type skip_unsupported_bson_element(const char_int_type /*element_type*/) const noexcept
+    {
+        return {};
     }
 
     /*!
@@ -14788,7 +14758,7 @@ class binary_reader
 
             if (JSON_HEDLEY_UNLIKELY(!parse_bson_element_internal(element_type, element_type_parse_position)))
             {
-                if (!skip_to_bson_document_end(std::integral_constant<bool, AllowRecovery> {}))
+                if (!resync())
                 {
                     return value_failed();
                 }
@@ -14882,9 +14852,11 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(len < 1))
         {
+            // the end of the element is lost (see resync)
+            skip_requested = true;
             auto last_token = get_token_string();
-            return report_bson_element_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                             exception_message(input_format_t::bson, concat("string length must be at least 1, is ", std::to_string(len)), "string"), nullptr));
+            return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                exception_message(input_format_t::bson, concat("string length must be at least 1, is ", std::to_string(len)), "string"), nullptr));
         }
 
         if (JSON_HEDLEY_UNLIKELY(!get_string(input_format_t::bson, len - static_cast<NumberType>(1), result)))
@@ -14894,13 +14866,14 @@ class binary_reader
 
         if (JSON_HEDLEY_UNLIKELY(get() != 0x00))
         {
+            auto last_token = get_token_string();
+            static_cast<void>(report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                           exception_message(input_format_t::bson,
+                                                   "BSON string is not null-terminated",
+                                                   "string"), nullptr)));
             // when recovering, a byte in place of the terminator is dropped;
             // the end of the input is not
-            auto last_token = get_token_string();
-            return report_error_repairable_if(current != char_traits<char_type>::eof(), chars_read, last_token, parse_error::create(112, chars_read,
-                                              exception_message(input_format_t::bson,
-                                                      "BSON string is not null-terminated",
-                                                      "string"), nullptr));
+            return current != char_traits<char_type>::eof() && repair_requested();
         }
 
         return true;
@@ -14920,9 +14893,11 @@ class binary_reader
     {
         if (JSON_HEDLEY_UNLIKELY(len < 0))
         {
+            // the end of the element is lost (see resync)
+            skip_requested = true;
             auto last_token = get_token_string();
-            return report_bson_element_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                             exception_message(input_format_t::bson, concat("byte array length cannot be negative, is ", std::to_string(len)), "binary"), nullptr));
+            return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                exception_message(input_format_t::bson, concat("byte array length cannot be negative, is ", std::to_string(len)), "binary"), nullptr));
         }
 
         // All BSON binary values have a subtype
@@ -15011,7 +14986,14 @@ class binary_reader
             }
 
             default: // anything else is not supported (yet)
-                return skip_unsupported_bson_element(element_type, element_type_parse_position);
+            {
+                std::array<char, 3> cr{{}};
+                static_cast<void>((std::snprintf)(cr.data(), cr.size(), "%.2hhX", static_cast<unsigned char>(element_type))); // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+                const std::string cr_str{cr.data()};
+                static_cast<void>(report_error(element_type_parse_position, cr_str,
+                                               parse_error::create(114, element_type_parse_position, concat("Unsupported BSON record type 0x", cr_str), nullptr)));
+                return skip_unsupported_bson_element(element_type);
+            }
         }
     }
 
@@ -15030,9 +15012,10 @@ class binary_reader
         const auto max_val = static_cast<NumberType>((std::numeric_limits<number_integer_t>::max)());
         if (number > max_val)
         {
-            if (!report_repairable_error(chars_read, get_token_string(),
-                                         parse_error::create(112, chars_read,
-                                                 exception_message(input_format_t::cbor, "negative integer overflow", "value"), nullptr)))
+            static_cast<void>(report_error(chars_read, get_token_string(),
+                                           parse_error::create(112, chars_read,
+                                                   exception_message(input_format_t::cbor, "negative integer overflow", "value"), nullptr)));
+            if (!repair_requested())
             {
                 return false;
             }
@@ -15334,8 +15317,9 @@ class binary_reader
                 if (tag_handler == cbor_tag_handler_t::error)
                 {
                     auto last_token = get_token_string();
-                    if (!report_repairable_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                                 exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr)))
+                    static_cast<void>(report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                                   exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr)));
+                    if (!repair_requested())
                     {
                         return false;
                     }
@@ -15361,8 +15345,9 @@ class binary_reader
                     case cbor_tag_handler_t::error:
                     {
                         auto last_token = get_token_string();
-                        if (!report_repairable_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                                     exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr)))
+                        static_cast<void>(report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                                       exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr)));
+                        if (!repair_requested())
                         {
                             return false;
                         }
@@ -15446,8 +15431,9 @@ class binary_reader
                 // the simple values other than false, true, and null (0xE0..0xF3,
                 // 0xF7 for undefined, and 0xF8 followed by a byte) are complete
                 const bool simple_value = (current >= 0xE0 && current <= 0xF3) || current == 0xF7 || current == 0xF8;
-                if (!report_error_repairable_if(simple_value, chars_read, last_token, parse_error::create(112, chars_read,
-                                                exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr)))
+                static_cast<void>(report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                                               exception_message(input_format_t::cbor, concat("invalid byte: 0x", last_token), "value"), nullptr)));
+                if (!simple_value || !repair_requested())
                 {
                     return false;
                 }
@@ -15670,15 +15656,12 @@ class binary_reader
                 break;
         }
 
-        // a break stop code or a reserved byte begins no item that could be
-        // skipped
+        // a key that begins an item is skipped with its value when recovering
+        // (see resync); a break stop code or a reserved byte begins none
+        skip_requested = is_cbor_item_head(static_cast<unsigned int>(current));
         auto last_token = get_token_string();
-        if (report_error_repairable_if(is_cbor_item_head(current), chars_read, last_token, parse_error::create(113, chars_read,
-                                       exception_message(input_format_t::cbor, concat("only string keys are supported, but found ", found, "; last byte: 0x", last_token), "object key"), nullptr)))
-        {
-            skip_requested = true;
-        }
-        return false;
+        return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                            exception_message(input_format_t::cbor, concat("only string keys are supported, but found ", found, "; last byte: 0x", last_token), "object key"), nullptr));
     }
 
     /*!
@@ -15989,7 +15972,7 @@ class binary_reader
                     key.clear();
                     if (JSON_HEDLEY_UNLIKELY(!get_cbor_object_key(key)))
                     {
-                        if (!skip_member(std::integral_constant<bool, AllowRecovery> {}))
+                        if (!resync())
                         {
                             return false;
                         }
@@ -16026,23 +16009,6 @@ class binary_reader
     }
 
     /*!
-    @param[in] byte  a byte
-    @return whether @a byte begins a well-formed CBOR data item (RFC 8949,
-            Section 3): its additional information is not reserved, and the
-            indefinite length is only used for strings, arrays, and maps
-    */
-    static bool is_cbor_item_head(const char_int_type byte) noexcept
-    {
-        const auto major_type = static_cast<unsigned int>(byte) >> 5u;
-        const auto additional_information = static_cast<unsigned int>(byte) & 0x1Fu;
-        if (additional_information < 28)
-        {
-            return true;
-        }
-        return additional_information == 31 && major_type >= 2 && major_type <= 5;
-    }
-
-    /*!
     @brief skip the head of a CBOR data item, and its content unless it holds
            other items (see @ref skip_items)
 
@@ -16072,7 +16038,7 @@ class binary_reader
             return true;
         }
 
-        if (JSON_HEDLEY_UNLIKELY(!is_cbor_item_head(current)))
+        if (JSON_HEDLEY_UNLIKELY(!is_cbor_item_head(static_cast<unsigned int>(current))))
         {
             auto last_token = get_token_string();
             return report_error(chars_read, last_token, parse_error::create(112, chars_read,
@@ -16712,13 +16678,11 @@ class binary_reader
                 break;
         }
 
+        // the key is skipped with its value when recovering (see resync)
+        skip_requested = true;
         auto last_token = get_token_string();
-        if (report_repairable_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                    exception_message(input_format_t::msgpack, concat("only string keys are supported, but found ", found, "; last byte: 0x", last_token), "object key"), nullptr)))
-        {
-            skip_requested = true;
-        }
-        return false;
+        return report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                            exception_message(input_format_t::msgpack, concat("only string keys are supported, but found ", found, "; last byte: 0x", last_token), "object key"), nullptr));
     }
 
     /*!
@@ -16884,7 +16848,7 @@ class binary_reader
                     key.clear();
                     if (JSON_HEDLEY_UNLIKELY(!get_msgpack_object_key(key)))
                     {
-                        if (!skip_member(std::integral_constant<bool, AllowRecovery> {}))
+                        if (!resync())
                         {
                             return false;
                         }
@@ -17770,8 +17734,9 @@ class binary_reader
                 if (JSON_HEDLEY_UNLIKELY(current > 127))
                 {
                     auto last_token = get_token_string();
-                    if (!report_repairable_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                                 exception_message(input_format, concat("byte after 'C' must be in range 0x00..0x7F; last byte: 0x", last_token), "char"), nullptr)))
+                    static_cast<void>(report_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                                   exception_message(input_format, concat("byte after 'C' must be in range 0x00..0x7F; last byte: 0x", last_token), "char"), nullptr)));
+                    if (!repair_requested())
                     {
                         return false;
                     }
@@ -17962,11 +17927,8 @@ class binary_reader
 
         if (JSON_HEDLEY_UNLIKELY(result_remainder != token_type::end_of_input))
         {
-            if (!report_repairable_error(chars_read, number_string, parse_error::create(115, chars_read,
-                                         exception_message(input_format, concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr)))
-            {
-                return false;
-            }
+            static_cast<void>(report_error(chars_read, number_string, parse_error::create(115, chars_read,
+                                           exception_message(input_format, concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr)));
             return recover_high_precision_number(number_vector);
         }
 
@@ -17983,10 +17945,11 @@ class binary_reader
                 {
                     // when recovering, the number is passed as infinity with
                     // its text, as it is in JSON text
-                    if (!report_repairable_error(
-                                chars_read,
-                                number_string,
-                                out_of_range::create(406, concat("number overflow parsing '", number_string, '\''), nullptr)))
+                    static_cast<void>(report_error(
+                                          chars_read,
+                                          number_string,
+                                          out_of_range::create(406, concat("number overflow parsing '", number_string, '\''), nullptr)));
+                    if (!repair_requested())
                     {
                         return false;
                     }
@@ -18011,11 +17974,8 @@ class binary_reader
             case token_type::end_of_input:
             case token_type::literal_or_value:
             default:
-                if (!report_repairable_error(chars_read, number_string, parse_error::create(115, chars_read,
-                                             exception_message(input_format, concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr)))
-                {
-                    return false;
-                }
+                static_cast<void>(report_error(chars_read, number_string, parse_error::create(115, chars_read,
+                                               exception_message(input_format, concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr)));
                 return recover_high_precision_number(number_vector);
         }
     }
@@ -18023,14 +17983,21 @@ class binary_reader
     /*!
     @brief pass what can be read of an invalid high-precision number
 
-    Like the parser for JSON text when it recovers, keeps the longest beginning
-    of the text that is a number, or passes null if there is none.
+    Called after the number's error was reported. If the SAX parser asked to
+    recover, keeps the longest beginning of the text that is a number, like the
+    parser for JSON text, or passes null if there is none.
 
     @param[in] number_vector  the number's text
-    @return whether the SAX parser accepted the value
+    @return whether the SAX parser asked to recover and accepted the value
     */
+    template<bool Recover = AllowRecovery, enable_if_t<Recover, int> = 0>
     bool recover_high_precision_number(const std::vector<char>& number_vector)
     {
+        if (!repair_requested())
+        {
+            return false;
+        }
+
         using ia_type = decltype(detail::input_adapter(number_vector));
         auto number_lexer = detail::lexer<BasicJsonType, ia_type>(detail::input_adapter(number_vector), false);
         using token_type = typename detail::lexer_base<BasicJsonType>::token_type;
@@ -18066,6 +18033,13 @@ class binary_reader
             default:
                 return sax->null();
         }
+    }
+
+    /// @copydoc recover_high_precision_number
+    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    constexpr std::false_type recover_high_precision_number(const std::vector<char>& /*number_vector*/) const noexcept
+    {
+        return {};
     }
 
     //////////
@@ -18131,23 +18105,9 @@ class binary_reader
     */
     bool bon8_error(const std::string& detail, const char* context)
     {
-        return bon8_error_repairable_if(false, detail, context);
-    }
-
-    /*!
-    @brief report a parse error at the last read byte that is repairable in
-           some cases (see @ref report_error_repairable_if)
-
-    @param[in] repairable  whether the error is repairable
-    @param[in] detail      a detailed error message
-    @param[in] context     further context information
-    @return whether the caller repairs the error and reads on
-    */
-    repair_t bon8_error_repairable_if(const bool repairable, const std::string& detail, const char* context)
-    {
         auto last_token = get_token_string();
-        return report_error_repairable_if(repairable, chars_read, last_token, parse_error::create(112, chars_read,
-                                          exception_message(input_format_t::bon8, concat(detail, ": 0x", last_token), context), nullptr));
+        return report_error(chars_read, last_token, parse_error::create(112, chars_read,
+                            exception_message(input_format_t::bon8, concat(detail, ": 0x", last_token), context), nullptr));
     }
 
     /*!
@@ -18216,7 +18176,7 @@ class binary_reader
                     key.clear();
                     if (JSON_HEDLEY_UNLIKELY(!get_bon8_key(key)))
                     {
-                        if (!skip_member(std::integral_constant<bool, AllowRecovery> {}))
+                        if (!resync())
                         {
                             return false;
                         }
@@ -18501,11 +18461,8 @@ class binary_reader
 
         // an end-of-container marker is no value; any other byte begins one,
         // and the member is skipped when recovering (see skip_member)
-        if (bon8_error_repairable_if(byte != 0xFE, "expected a string; last byte", "key"))
-        {
-            skip_requested = true;
-        }
-        return false;
+        skip_requested = byte != 0xFE;
+        return bon8_error("expected a string; last byte", "key");
     }
 
     /*!
@@ -18973,9 +18930,10 @@ class binary_reader
         // (which would defeat allow_exceptions=false / strict discarding).
         if (JSON_HEDLEY_UNLIKELY(!is_valid_utf8(result, old_size)))
         {
-            if (!report_repairable_error(chars_read, get_token_string(),
-                                         parse_error::create(113, chars_read,
-                                                 exception_message(format, "invalid string: ill-formed UTF-8 byte", "string"), nullptr)))
+            static_cast<void>(report_error(chars_read, get_token_string(),
+                                           parse_error::create(113, chars_read,
+                                                   exception_message(format, "invalid string: ill-formed UTF-8 byte", "string"), nullptr)));
+            if (!repair_requested())
             {
                 return false;
             }
@@ -19071,14 +19029,16 @@ class binary_reader
     }
 
     /*!
-    @brief report an error after which the input cannot be read on
+    @brief report an error to the SAX parser and remember its answer
 
     After most errors, it is unknown where the item that was being read ends:
     the input ended, a byte is not a valid type marker, or a size cannot be
     right. The binary formats have no delimiters to find the next item by, so
     reading stops, whatever the SAX parser's parse_error() returns. If it asks
     to recover, the value read so far is completed before @ref sax_parse
-    returns (see @ref close_open_containers and #3989).
+    returns (see @ref close_open_containers and #3989). Where the end of the
+    item is known, the caller can repair the item instead (see @ref
+    repair_requested and @ref resync).
 
     @return false, so that the caller stops reading
     */
@@ -19089,64 +19049,39 @@ class binary_reader
         return false;
     }
 
+    // The functions below have a second variant for readers that do not
+    // recover. It only returns, so that the code that recovers is not even
+    // referenced there, and unoptimized builds do not emit it either.
+
     /*!
-    @brief report an error in an item whose end is known
+    @brief whether to repair an item whose error was just reported
 
     Some items are complete, but cannot be passed on as they are: a CBOR tag or
-    simple value, a string that is not valid UTF-8, a BSON element of a type
-    the library does not read, or an object key that is not a string. If the
-    SAX parser's parse_error() returns true, the caller replaces the item and
-    reads on after it (RFC 8949, Section 5.3).
-
-    @return whether the caller replaces the item and reads on
-    */
-    template<typename Exception>
-    repair_t report_repairable_error(const std::size_t position, const std::string& last_token, const Exception& ex)
-    {
-        return accept_repair(sax->parse_error(position, last_token, ex), std::integral_constant<bool, AllowRecovery> {});
-    }
-
-    /// the code that recovers is not compiled: stop
-    std::false_type accept_repair(const bool /*repair*/, std::false_type /*allow_recovery*/) const noexcept
-    {
-        return {};
-    }
-
-    /// remember that an error was repaired, so that @ref sax_parse returns false
-    bool accept_repair(const bool repair, std::true_type /*allow_recovery*/) noexcept
-    {
-        error_repaired = error_repaired || repair;
-        return repair;
-    }
-
-    /*!
-    @brief report an error that is repairable in some cases
-
-    Like @ref report_repairable_error if @a repairable is true, and like @ref
-    report_error otherwise. If the code that recovers is not compiled, the
-    error is reported in one place only.
+    simple value, a string that is not valid UTF-8, or a BSON element of a type
+    the library does not read. If the SAX parser asked to recover from the
+    error, the caller replaces the item and reads on after it (RFC 8949,
+    Section 5.3).
 
     @return whether the caller repairs the item and reads on
     */
-    template<typename Exception>
-    repair_t report_error_repairable_if(const bool repairable, const std::size_t position, const std::string& last_token, const Exception& ex)
+    template<bool Recover = AllowRecovery, enable_if_t<Recover, int> = 0>
+    bool repair_requested() noexcept
     {
-        return report_error_repairable_if(repairable, position, last_token, ex, std::integral_constant<bool, AllowRecovery> {});
+        if (!close_requested)
+        {
+            return false;
+        }
+        // reading goes on, but sax_parse() returns false
+        close_requested = false;
+        error_repaired = true;
+        return true;
     }
 
-    /// the code that recovers is not compiled: stop
-    template<typename Exception>
-    std::false_type report_error_repairable_if(const bool /*repairable*/, const std::size_t position, const std::string& last_token, const Exception& ex, std::false_type /*allow_recovery*/)
+    /// @copydoc repair_requested
+    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    constexpr std::false_type repair_requested() const noexcept
     {
-        static_cast<void>(sax->parse_error(position, last_token, ex));
         return {};
-    }
-
-    /// report the error as repairable or not
-    template<typename Exception>
-    bool report_error_repairable_if(const bool repairable, const std::size_t position, const std::string& last_token, const Exception& ex, std::true_type /*allow_recovery*/)
-    {
-        return repairable ? report_repairable_error(position, last_token, ex) : report_error(position, last_token, ex);
     }
 
     /*!
@@ -19159,26 +19094,19 @@ class binary_reader
 
     @return false, so that the caller stops reading
     */
+    template<bool Recover = AllowRecovery, enable_if_t<Recover, int> = 0>
     bool value_failed() noexcept
-    {
-        return value_failed(std::integral_constant<bool, AllowRecovery> {});
-    }
-
-    /// the code that recovers is not compiled: nothing to remember
-    std::false_type value_failed(std::false_type /*allow_recovery*/) const noexcept
-    {
-        return {};
-    }
-
-    /// remember whether a key waits for its value
-    bool value_failed(std::true_type /*allow_recovery*/) noexcept
     {
         key_pending = !container_stack.empty() && container_stack.back().is_object && ndarray_open == 0;
         return false;
     }
 
-    /// the code that recovers is not compiled: nothing to complete
-    void close_open_containers(std::false_type /*allow_recovery*/) const noexcept {}
+    /// @copydoc value_failed
+    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    constexpr std::false_type value_failed() const noexcept
+    {
+        return {};
+    }
 
     /*!
     @brief complete the value read before an error
@@ -19188,7 +19116,8 @@ class binary_reader
     its value and closes the arrays and objects that are still open, innermost
     first, until an event returns false.
     */
-    void close_open_containers(std::true_type /*allow_recovery*/)
+    template<bool Recover = AllowRecovery, enable_if_t<Recover, int> = 0>
+    void close_open_containers()
     {
         if (!close_requested)
         {
@@ -19222,30 +19151,46 @@ class binary_reader
         }
     }
 
-    /// the code that recovers is not compiled: stop
-    std::false_type skip_member(std::false_type /*allow_recovery*/) const noexcept
-    {
-        return {};
-    }
+    /// @copydoc close_open_containers
+    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    void close_open_containers() const noexcept {}
 
     /*!
-    @brief skip an object member whose key is not a string
+    @brief skip an item whose error was just reported, if its end can be found
 
-    Called after reading a key failed. If the key is a complete item of another
-    type, and the SAX parser asked to recover from the error, the key, whose
-    first byte has been read, and the value after it are skipped, like the
-    parser for JSON text skips a member without a key.
+    Called after reading an object key or a BSON element failed. The error
+    sites set @ref skip_requested for an item that can be skipped:
+    - an object key that is a complete item, but not a string: the key, whose
+      first byte has been read, and the value after it are skipped, like the
+      parser for JSON text skips a member without a key;
+    - a BSON element whose end is lost: it gets null, and the rest of its
+      document is skipped (see @ref skip_to_bson_document_end).
 
-    @return whether the member was skipped and reading continues
+    @return whether the SAX parser asked to recover, the item was skipped, and
+            reading continues
     */
-    bool skip_member(std::true_type /*allow_recovery*/)
+    template<bool Recover = AllowRecovery, enable_if_t<Recover, int> = 0>
+    bool resync()
     {
         if (!skip_requested)
         {
             return false;
         }
         skip_requested = false;
-        return skip_items(2);
+
+        if (input_format == input_format_t::bson)
+        {
+            // without a usable document size, reading stops
+            return can_skip_to_bson_document_end() && repair_requested() && skip_to_bson_document_end();
+        }
+        return repair_requested() && skip_items(2);
+    }
+
+    /// @copydoc resync
+    template < bool Recover = AllowRecovery, enable_if_t < !Recover, int > = 0 >
+    constexpr std::false_type resync() const noexcept
+    {
+        return {};
     }
 
     /*!
