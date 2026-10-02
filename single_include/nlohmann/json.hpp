@@ -276,104 +276,6 @@
 
 
 #include <utility> // declval, pair
-// #include <nlohmann/detail/meta/detected.hpp>
-//     __ _____ _____ _____
-//  __|  |   __|     |   | |  JSON for Modern C++
-// |  |  |__   |  |  | | | |  version 3.12.0
-// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
-//
-// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
-// SPDX-License-Identifier: MIT
-
-
-
-#include <type_traits>
-
-// #include <nlohmann/detail/meta/void_t.hpp>
-//     __ _____ _____ _____
-//  __|  |   __|     |   | |  JSON for Modern C++
-// |  |  |__   |  |  | | | |  version 3.12.0
-// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
-//
-// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
-// SPDX-License-Identifier: MIT
-
-
-
-// #include <nlohmann/detail/abi_macros.hpp>
-
-
-NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
-
-template<typename ...Ts> struct make_void
-{
-    using type = void;
-};
-template<typename ...Ts> using void_t = typename make_void<Ts...>::type;
-
-}  // namespace detail
-NLOHMANN_JSON_NAMESPACE_END
-
-
-NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
-
-// https://en.cppreference.com/w/cpp/experimental/is_detected
-struct nonesuch
-{
-    nonesuch() = delete;
-    ~nonesuch() = delete;
-    nonesuch(nonesuch const&) = delete;
-    nonesuch(nonesuch const&&) = delete;
-    void operator=(nonesuch const&) = delete;
-    void operator=(nonesuch&&) = delete;
-};
-
-template<class Default,
-         class AlwaysVoid,
-         template<class...> class Op,
-         class... Args>
-struct detector
-{
-    using value_t = std::false_type;
-    using type = Default;
-};
-
-template<class Default, template<class...> class Op, class... Args>
-struct detector<Default, void_t<Op<Args...>>, Op, Args...>
-{
-    using value_t = std::true_type;
-    using type = Op<Args...>;
-};
-
-template<template<class...> class Op, class... Args>
-using is_detected = typename detector<nonesuch, void, Op, Args...>::value_t;
-
-template<template<class...> class Op, class... Args>
-struct is_detected_lazy : is_detected<Op, Args...> { };
-
-template<template<class...> class Op, class... Args>
-using detected_t = typename detector<nonesuch, void, Op, Args...>::type;
-
-template<class Default, template<class...> class Op, class... Args>
-using detected_or = detector<Default, void, Op, Args...>;
-
-template<class Default, template<class...> class Op, class... Args>
-using detected_or_t = typename detected_or<Default, Op, Args...>::type;
-
-template<class Expected, template<class...> class Op, class... Args>
-using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
-
-template<class To, template<class...> class Op, class... Args>
-using is_detected_convertible =
-    std::is_convertible<detected_t<Op, Args...>, To>;
-
-}  // namespace detail
-NLOHMANN_JSON_NAMESPACE_END
-
 // #include <nlohmann/thirdparty/hedley/hedley.hpp>
 
 
@@ -2552,10 +2454,12 @@ JSON_HEDLEY_DIAGNOSTIC_POP
         // libstdc++ < 11 has incomplete C++20 ranges (issue #4440)
     #elif defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE < 11
         #define JSON_HAS_RANGES 0
-        // libc++ < 16 has incomplete C++20 ranges (issue #4440)
+        // clang < 16 with libstdc++ does not implement the ranges customization
+        // points libstdc++ declares, so its C++20 ranges support is incomplete (issue #5161)
     #elif defined(__clang__) && !defined(__apple_build_version__) \
         && __clang_major__ < 16 && defined(__GLIBCXX__)
         #define JSON_HAS_RANGES 0
+        // libc++ < 16 has incomplete C++20 ranges (issue #4440)
     #elif defined(_LIBCPP_VERSION) && _LIBCPP_VERSION < 160000
         #define JSON_HAS_RANGES 0
         // nvcc CUDA 12.0/12.1 chokes on the enable_borrowed_range variable-template
@@ -2567,6 +2471,18 @@ JSON_HEDLEY_DIAGNOSTIC_POP
         #define JSON_HAS_RANGES 1
     #else
         #define JSON_HAS_RANGES 0
+    #endif
+#endif
+
+// std::ranges view conversion (to_json/is_compatible_array_type_impl) additionally
+// needs to be disabled on MinGW, whose std::ranges support is incomplete
+// (issue #4916); this macro combines both conditions so the check and its
+// reason are not duplicated at every use site.
+#ifndef JSON_HAS_RANGE_VIEW_CONVERSION
+    #if JSON_HAS_RANGES && !defined(__MINGW32__)
+        #define JSON_HAS_RANGE_VIEW_CONVERSION 1
+    #else
+        #define JSON_HAS_RANGE_VIEW_CONVERSION 0
     #endif
 #endif
 
@@ -2692,25 +2608,10 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 
 
 /*!
-@brief function to wrap JSON_THROW_MACRO - there can be compilation errors about
-       there being no arguments to JSON_THROW that depend on template arguments
-       if this is not used to call JSON_THROW
-*/
-template<typename ExceptionType>
-void templated_json_throw(ExceptionType exception)
-{
-    JSON_THROW(exception);
-
-    /* JSON_THROW(exception) discards exception and aborts - void cast needed to supress
-       compilation error if compiled with -Werror and Wunused-parameter */
-    (void)exception;
-}
-
-/*!
 @brief macro to briefly define a mapping between an enum and JSON with exception
        on invalid input
 @def NLOHMANN_JSON_SERIALIZE_ENUM_STRICT
-@since version 3.12.0
+@since version 3.13.0
 */
 #define NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(ENUM_TYPE, ...)                                     \
     template<typename BasicJsonType>                                                            \
@@ -2726,7 +2627,7 @@ void templated_json_throw(ExceptionType exception)
             return ej_pair.first == e;                                                          \
         });                                                                                     \
         if (it != std::end(m)) j = it->second;                                                  \
-        else templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(410,"enum value out of range for " #ENUM_TYPE, nullptr)); \
+        else ::nlohmann::detail::templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(410,"enum value out of range for " #ENUM_TYPE, nullptr)); \
     }                                                                                           \
     template<typename BasicJsonType>                                                            \
     inline void from_json(const BasicJsonType& j, ENUM_TYPE& e)                                 \
@@ -2741,7 +2642,7 @@ void templated_json_throw(ExceptionType exception)
             return ej_pair.second == j;                                                         \
         });                                                                                     \
         if (it != std::end(m)) e = it->first;                                                   \
-        else templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(410, nlohmann::detail::concat("enum value out of range for " #ENUM_TYPE ": ", j.dump(-1, ' ', false, nlohmann::detail::error_handler_t::replace)), &j)); \
+        else ::nlohmann::detail::templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(410, nlohmann::detail::concat("enum value out of range for " #ENUM_TYPE ": ", j.dump(-1, ' ', false, nlohmann::detail::error_handler_t::replace)), &j)); \
     }
 
 // Ugly macros to avoid uglier copy-paste when specializing basic_json. They
@@ -3286,30 +3187,6 @@ void templated_json_throw(ExceptionType exception)
     \
     template<typename... T>                                                       \
     using result_of_##std_name = decltype(std_name(std::declval<T>()...));        \
-    }                                                                             \
-    \
-    namespace detail2 {                                                           \
-    struct std_name##_tag                                                         \
-    {                                                                             \
-    };                                                                            \
-    \
-    template<typename... T>                                                       \
-    std_name##_tag std_name(T&&...);                                              \
-    \
-    template<typename... T>                                                       \
-    using result_of_##std_name = decltype(std_name(std::declval<T>()...));        \
-    \
-    template<typename... T>                                                       \
-    struct would_call_std_##std_name                                              \
-    {                                                                             \
-        static constexpr auto const value = ::nlohmann::detail::                  \
-                                            is_detected_exact<std_name##_tag, result_of_##std_name, T...>::value; \
-    };                                                                            \
-    } /* namespace detail2 */ \
-    \
-    template<typename... T>                                                       \
-    struct would_call_std_##std_name : detail2::would_call_std_##std_name<T...>   \
-    {                                                                             \
     }
 
 #ifndef JSON_USE_IMPLICIT_CONVERSIONS
@@ -3851,6 +3728,31 @@ NLOHMANN_JSON_NAMESPACE_END
 // #include <nlohmann/detail/abi_macros.hpp>
 
 // #include <nlohmann/detail/meta/void_t.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+// #include <nlohmann/detail/abi_macros.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+
+template<typename ...Ts> struct make_void
+{
+    using type = void;
+};
+template<typename ...Ts> using void_t = typename make_void<Ts...>::type;
+
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
@@ -3922,7 +3824,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
-NLOHMANN_CAN_CALL_STD_FUNC_IMPL(begin);
+NLOHMANN_CAN_CALL_STD_FUNC_IMPL(begin)
 
 NLOHMANN_JSON_NAMESPACE_END
 
@@ -3942,13 +3844,80 @@ NLOHMANN_JSON_NAMESPACE_END
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
-NLOHMANN_CAN_CALL_STD_FUNC_IMPL(end);
+NLOHMANN_CAN_CALL_STD_FUNC_IMPL(end)
 
 NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
 // #include <nlohmann/detail/meta/detected.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <type_traits>
+
+// #include <nlohmann/detail/meta/void_t.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+
+// https://en.cppreference.com/w/cpp/experimental/is_detected
+struct nonesuch
+{
+    nonesuch() = delete;
+    ~nonesuch() = delete;
+    nonesuch(nonesuch const&) = delete;
+    nonesuch(nonesuch const&&) = delete;
+    void operator=(nonesuch const&) = delete;
+    void operator=(nonesuch&&) = delete;
+};
+
+template<class Default,
+         class AlwaysVoid,
+         template<class...> class Op,
+         class... Args>
+struct detector
+{
+    using value_t = std::false_type;
+    using type = Default;
+};
+
+template<class Default, template<class...> class Op, class... Args>
+struct detector<Default, void_t<Op<Args...>>, Op, Args...>
+{
+    using value_t = std::true_type;
+    using type = Op<Args...>;
+};
+
+template<template<class...> class Op, class... Args>
+using is_detected = typename detector<nonesuch, void, Op, Args...>::value_t;
+
+template<template<class...> class Op, class... Args>
+struct is_detected_lazy : is_detected<Op, Args...> { };
+
+template<template<class...> class Op, class... Args>
+using detected_t = typename detector<nonesuch, void, Op, Args...>::type;
+
+template<class Default, template<class...> class Op, class... Args>
+using detected_or = detector<Default, void, Op, Args...>;
+
+template<class Default, template<class...> class Op, class... Args>
+using detected_or_t = typename detected_or<Default, Op, Args...>::type;
+
+template<class Expected, template<class...> class Op, class... Args>
+using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
+
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/json_fwd.hpp>
 //     __ _____ _____ _____
@@ -4283,6 +4252,13 @@ template<class B, class... Bn>
 struct conjunction<B, Bn...>
 : std::conditional<static_cast<bool>(B::value), conjunction<Bn...>, B>::type {};
 
+// https://en.cppreference.com/w/cpp/types/disjunction
+template<class...> struct disjunction : std::false_type { };
+template<class B> struct disjunction<B> : B { };
+template<class B, class... Bn>
+struct disjunction<B, Bn...>
+: std::conditional<static_cast<bool>(B::value), B, disjunction<Bn...>>::type {};
+
 // https://en.cppreference.com/w/cpp/types/negation
 template<class B> struct negation : std::integral_constant < bool, !B::value > { };
 
@@ -4477,9 +4453,7 @@ template<typename T> struct is_range_view_optional_type<std::optional<T>> : std:
 template<typename T> struct is_range_view_optional_type : std::false_type {};
 #endif
 
-// std::ranges does not work properly on MinGW due to incomplete C++20 support
-// see https://github.com/nlohmann/json/issues/4916
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 
 // SafeToCheck guards against types that trigger circular constraints when
 // std::ranges::view<T> is evaluated on GCC 12 / libstdc++ 12:
@@ -4518,7 +4492,7 @@ struct is_compatible_array_type_impl <
 // filter_view) can match BOTH this iterator-based specialization AND the view-based one
 // below, causing ambiguity. Exclude views here so the two specializations are mutually
 // exclusive: this one handles plain iterable containers, the other handles views.
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 && !is_compatible_range_view<CompatibleArrayType>::value
 #endif
             >>
@@ -4528,7 +4502,7 @@ struct is_compatible_array_type_impl <
         range_value_t<CompatibleArrayType>>::value;
 };
 
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type_impl <
     BasicJsonType, CompatibleArrayType,
@@ -4604,7 +4578,6 @@ struct is_compatible_integer_type_impl <
     std::is_integral<CompatibleNumberIntegerType>::value&&
     !std::is_same<bool, CompatibleNumberIntegerType>::value >>
 {
-    // is there an assert somewhere on overflows?
     using RealLimits = std::numeric_limits<RealIntegerType>;
     using CompatibleLimits = std::numeric_limits<CompatibleNumberIntegerType>;
 
@@ -4810,20 +4783,7 @@ struct has_capacity : std::integral_constant<bool, is_detected<detect_capacity, 
 // a naive helper to check if a type is an ordered_map (exploits the fact that
 // ordered_map inherits capacity() from std::vector)
 template <typename T>
-struct is_ordered_map
-{
-    using one = char;
-
-    struct two
-    {
-        char x[2]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-    };
-
-    template <typename C> static one test( decltype(&C::capacity) ) ;
-    template <typename C> static two test(...);
-
-    enum { value = sizeof(test<T>(nullptr)) == sizeof(char) }; // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg,cppcoreguidelines-use-enum-class)
-};
+struct is_ordered_map : has_capacity<T> {};
 
 // to avoid useless casts (see https://github.com/nlohmann/json/issues/2893#issuecomment-889152324)
 template < typename T, typename U, enable_if_t < !std::is_same<T, U>::value, int > = 0 >
@@ -4847,10 +4807,8 @@ using all_signed = conjunction<std::is_signed<Types>...>;
 template<typename... Types>
 using all_unsigned = conjunction<std::is_unsigned<Types>...>;
 
-// there's a disjunction trait in another PR; replace when merged
 template<typename... Types>
-using same_sign = std::integral_constant < bool,
-      all_signed<Types...>::value || all_unsigned<Types...>::value >;
+using same_sign = disjunction<all_signed<Types...>, all_unsigned<Types...>>;
 
 template<typename OfType, typename T>
 using never_out_of_range = std::integral_constant < bool,
@@ -5399,6 +5357,27 @@ class other_error : public exception
     other_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
 };
 
+/*!
+@brief helper function to call JSON_THROW from a template
+@note JSON_THROW is a macro that, depending on the JSON_THROW_USER /
+      JSON_TRY_USER / JSON_NOEXCEPTION configuration, may expand to code
+      that does not reference its argument (e.g. `std::abort()`), which
+      would trigger a compilation error if the argument's type depends on
+      a template parameter that is otherwise unused. Wrapping the call in
+      a templated function avoids this and gives the compiler a single
+      place to see the (possibly unused) parameter.
+*/
+template<typename ExceptionType>
+void templated_json_throw(ExceptionType exception)
+{
+    JSON_THROW(exception);
+
+    // JSON_THROW may expand to code that discards its argument (e.g. when
+    // exceptions are disabled) - the cast below avoids an unused-parameter
+    // warning with -Werror in that case
+    (void)exception;
+}
+
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
@@ -5467,63 +5446,6 @@ NLOHMANN_JSON_NAMESPACE_END
 #endif
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
-
-// #include <nlohmann/detail/meta/logic.hpp>
-
-
-// #include <nlohmann/detail/macro_scope.hpp>
-
-
-NLOHMANN_JSON_NAMESPACE_BEGIN
-namespace detail
-{
-#ifdef JSON_HAS_CPP_17
-
-template<bool... Booleans>
-struct cxpr_or_impl : std::integral_constant < bool, (Booleans || ...) > {};
-
-template<bool... Booleans>
-struct cxpr_and_impl : std::integral_constant < bool, (Booleans &&...) > {};
-
-#else
-
-template<bool... Booleans>
-struct cxpr_or_impl : std::false_type {};
-
-template<bool... Booleans>
-struct cxpr_or_impl<true, Booleans...> : std::true_type {};
-
-template<bool... Booleans>
-struct cxpr_or_impl<false, Booleans...> : cxpr_or_impl<Booleans...> {};
-
-template<bool... Booleans>
-struct cxpr_and_impl : std::true_type {};
-
-template<bool... Booleans>
-struct cxpr_and_impl<true, Booleans...> : cxpr_and_impl<Booleans...> {};
-
-template<bool... Booleans>
-struct cxpr_and_impl<false, Booleans...> : std::false_type {};
-
-#endif
-
-template<class Boolean>
-struct cxpr_not : std::integral_constant < bool, !Boolean::value > {};
-
-template<class... Booleans>
-struct cxpr_or : cxpr_or_impl<Booleans::value...> {};
-
-template<bool... Booleans>
-struct cxpr_or_c : cxpr_or_impl<Booleans...> {};
-
-template<class... Booleans>
-struct cxpr_and : cxpr_and_impl<Booleans::value...> {};
-
-template<bool... Booleans>
-struct cxpr_and_c : cxpr_and_impl<Booleans...> {};
-
-}  // namespace detail
-NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/string_concat.hpp>
 
@@ -5710,62 +5632,29 @@ inline void from_json(const BasicJsonType& j, std::valarray<T>& l)
     });
 }
 
+// element is not itself a C array: read it directly
+template<typename BasicJsonType, typename T>
+auto from_json_c_array_element(const BasicJsonType& j, T& e)
+-> decltype(e = j.template get<T>(), void())
+{
+    e = j.template get<T>();
+}
+
+// element is itself a C array: recurse one dimension at a time, so any rank is supported
 template<typename BasicJsonType, typename T, std::size_t N>
-auto from_json(const BasicJsonType& j, T (&arr)[N])  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
--> decltype(j.template get<T>(), void())
+void from_json_c_array_element(const BasicJsonType& j, T (&arr)[N])  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 {
     for (std::size_t i = 0; i < N; ++i)
     {
-        arr[i] = j.at(i).template get<T>();
+        from_json_c_array_element(j.at(i), arr[i]);
     }
 }
 
-template<typename BasicJsonType, typename T, std::size_t N1, std::size_t N2>
-auto from_json(const BasicJsonType& j, T (&arr)[N1][N2])  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
--> decltype(j.template get<T>(), void())
+template<typename BasicJsonType, typename T, std::size_t N>
+auto from_json(const BasicJsonType& j, T (&arr)[N])  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+-> decltype(j.template get<typename std::remove_all_extents<T>::type>(), void())
 {
-    for (std::size_t i1 = 0; i1 < N1; ++i1)
-    {
-        for (std::size_t i2 = 0; i2 < N2; ++i2)
-        {
-            arr[i1][i2] = j.at(i1).at(i2).template get<T>();
-        }
-    }
-}
-
-template<typename BasicJsonType, typename T, std::size_t N1, std::size_t N2, std::size_t N3>
-auto from_json(const BasicJsonType& j, T (&arr)[N1][N2][N3])  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
--> decltype(j.template get<T>(), void())
-{
-    for (std::size_t i1 = 0; i1 < N1; ++i1)
-    {
-        for (std::size_t i2 = 0; i2 < N2; ++i2)
-        {
-            for (std::size_t i3 = 0; i3 < N3; ++i3)
-            {
-                arr[i1][i2][i3] = j.at(i1).at(i2).at(i3).template get<T>();
-            }
-        }
-    }
-}
-
-template<typename BasicJsonType, typename T, std::size_t N1, std::size_t N2, std::size_t N3, std::size_t N4>
-auto from_json(const BasicJsonType& j, T (&arr)[N1][N2][N3][N4])  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
--> decltype(j.template get<T>(), void())
-{
-    for (std::size_t i1 = 0; i1 < N1; ++i1)
-    {
-        for (std::size_t i2 = 0; i2 < N2; ++i2)
-        {
-            for (std::size_t i3 = 0; i3 < N3; ++i3)
-            {
-                for (std::size_t i4 = 0; i4 < N4; ++i4)
-                {
-                    arr[i1][i2][i3][i4] = j.at(i1).at(i2).at(i3).at(i4).template get<T>();
-                }
-            }
-        }
-    }
+    from_json_c_array_element(j, arr);
 }
 
 template<typename BasicJsonType>
@@ -5785,43 +5674,35 @@ auto from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr,
     }
 }
 
+// reserve() is called through this pair (modeled on from_json_object_reserve)
+// so from_json_array_impl below has a single body for both ConstructibleArrayType
+// that support reserve() and those that don't.
+template<typename ConstructibleArrayType>
+auto from_json_array_reserve(ConstructibleArrayType& arr, typename ConstructibleArrayType::size_type size, priority_tag<1> /*unused*/)
+-> decltype(arr.reserve(size), void())
+{
+    arr.reserve(size);
+}
+
+template<typename ConstructibleArrayType>
+void from_json_array_reserve(ConstructibleArrayType& /*arr*/, std::size_t /*size*/, priority_tag<0> /*unused*/)
+{}
+
 template<typename BasicJsonType, typename ConstructibleArrayType,
          enable_if_t<
              std::is_assignable<ConstructibleArrayType&, ConstructibleArrayType>::value,
              int> = 0>
 auto from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr, priority_tag<1> /*unused*/)
 -> decltype(
-    arr.reserve(std::declval<typename ConstructibleArrayType::size_type>()),
     j.template get<typename ConstructibleArrayType::value_type>(),
     void())
 {
     using std::end;
 
     ConstructibleArrayType ret;
-    ret.reserve(j.size());
+    from_json_array_reserve(ret, j.size(), priority_tag<1> {});
     std::transform(j.begin(), j.end(),
                    std::inserter(ret, end(ret)), [](const BasicJsonType & i)
-    {
-        // get<BasicJsonType>() returns *this, this won't call a from_json
-        // method when value_type is BasicJsonType
-        return i.template get<typename ConstructibleArrayType::value_type>();
-    });
-    arr = std::move(ret);
-}
-
-template<typename BasicJsonType, typename ConstructibleArrayType,
-         enable_if_t<
-             std::is_assignable<ConstructibleArrayType&, ConstructibleArrayType>::value,
-             int> = 0>
-inline void from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr,
-                                 priority_tag<0> /*unused*/)
-{
-    using std::end;
-
-    ConstructibleArrayType ret;
-    std::transform(
-        j.begin(), j.end(), std::inserter(ret, end(ret)),
-        [](const BasicJsonType & i)
     {
         // get<BasicJsonType>() returns *this, this won't call a from_json
         // method when value_type is BasicJsonType
@@ -5932,9 +5813,7 @@ inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
 }
 
 // overload for arithmetic types, not chosen for basic_json template arguments
-// (BooleanType, etc.); note: Is it really necessary to provide explicit
-// overloads for boolean_t etc. in case of a custom BooleanType which is not
-// an arithmetic type?
+// (BooleanType, etc.)
 template < typename BasicJsonType, typename ArithmeticType,
            enable_if_t <
                std::is_arithmetic<ArithmeticType>::value&&
@@ -6030,7 +5909,7 @@ inline void from_json_tuple_impl(const BasicJsonType& j, std::pair<A1, A2>& p, p
 template<typename BasicJsonType, typename... Args>
 std::tuple<Args...> from_json_tuple_impl(const BasicJsonType& j, identity_tag<std::tuple<Args...>> /*unused*/, priority_tag<2> /*unused*/)
 {
-    static_assert(cxpr_and<cxpr_or<cxpr_not<std::is_reference<Args>>, is_compatible_reference_type<const BasicJsonType&, Args>>...>::value,
+    static_assert(conjunction<disjunction<negation<std::is_reference<Args>>, is_compatible_reference_type<const BasicJsonType&, Args>>...>::value,
                   "Can not return a tuple containing references to types not contained in a Json, try Json::get_to()");
     return from_json_tuple_impl_base<1, Args...>(j, index_sequence_for<Args...> {});
 }
@@ -6053,10 +5932,10 @@ auto from_json(const BasicJsonType& j, TupleRelated&& t)
     return from_json_tuple_impl(j, std::forward<TupleRelated>(t), priority_tag<3> {});
 }
 
-template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
-           typename = enable_if_t < !std::is_constructible <
-                                        typename BasicJsonType::string_t, Key >::value >>
-inline void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
+// shared body for std::map/std::unordered_map with a non-string Key: both
+// containers are read from an array of [key, value] pairs the same way
+template<typename BasicJsonType, typename MapType>
+void from_json_pair_array_to_map(const BasicJsonType& j, MapType& m)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -6069,33 +5948,29 @@ inline void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allo
         {
             JSON_THROW(type_error::create(302, concat("type must be array, but is ", p.type_name()), &p));
         }
-        m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
+        m.emplace(p.at(0).template get<typename MapType::key_type>(), p.at(1).template get<typename MapType::mapped_type>());
     }
+}
+
+template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
+           typename = enable_if_t < !std::is_constructible <
+                                        typename BasicJsonType::string_t, Key >::value >>
+void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
+{
+    from_json_pair_array_to_map(j, m);
 }
 
 template < typename BasicJsonType, typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator,
            typename = enable_if_t < !std::is_constructible <
                                         typename BasicJsonType::string_t, Key >::value >>
-inline void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
+void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
 {
-    if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
-    {
-        JSON_THROW(type_error::create(302, concat("type must be array, but is ", j.type_name()), &j));
-    }
-    m.clear();
-    for (const auto& p : j)
-    {
-        if (JSON_HEDLEY_UNLIKELY(!p.is_array()))
-        {
-            JSON_THROW(type_error::create(302, concat("type must be array, but is ", p.type_name()), &p));
-        }
-        m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
-    }
+    from_json_pair_array_to_map(j, m);
 }
 
 #if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
 
-// Workaround for MSVC 19.51 (and possibly later): in large in large cpp files, the compiler may fail to resolve with generic has_from_json (issue #4996)
+// Workaround for MSVC 19.51 (and possibly later): in large cpp files, the compiler may fail to resolve with generic has_from_json (issue #4996)
 template<typename BasicJsonType>
 struct has_from_json<BasicJsonType, std_fs::path, void> : std::true_type {};
 
@@ -6791,7 +6666,7 @@ struct external_constructor<value_t::array>
 
     template < typename BasicJsonType, typename CompatibleArrayType,
                enable_if_t < !std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
                              && !is_compatible_range_view<CompatibleArrayType>::value
 #endif
                              , int > = 0 >
@@ -6835,9 +6710,7 @@ struct external_constructor<value_t::array>
         j.assert_invariant();
     }
 
-    // std::ranges does not work properly on MinGW due to incomplete C++20 support
-    // see https://github.com/nlohmann/json/issues/4916
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
     template<typename BasicJsonType, typename CompatibleArrayType,
              enable_if_t<is_compatible_range_view<std::remove_cvref_t<CompatibleArrayType>>::value, int> = 0>
     static void construct(BasicJsonType& j, CompatibleArrayType && arr)
@@ -6992,7 +6865,7 @@ template < typename BasicJsonType, typename CompatibleArrayType,
                          !std::is_same<typename BasicJsonType::binary_t, CompatibleArrayType>::value&&
                          !is_compatible_binary_type<BasicJsonType, CompatibleArrayType>::value&&
                          !is_basic_json<CompatibleArrayType>::value
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
     && !is_compatible_range_view<CompatibleArrayType>::value
 #endif
                          ,
@@ -7002,7 +6875,7 @@ inline void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
     external_constructor<value_t::array>::construct(j, arr);
 }
 
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 template < typename BasicJsonType, typename T,
            enable_if_t < is_compatible_range_view<std::remove_cvref_t<T>>::value
                          && !is_compatible_string_type<BasicJsonType, std::remove_cvref_t<T>>::value
@@ -13386,7 +13259,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-#include <cstdint> // size_t
+#include <cstddef> // size_t
 #include <utility> // declval
 #include <string> // string
 
@@ -13452,37 +13325,6 @@ using parse_error_function_t = decltype(std::declval<T&>().parse_error(
         std::declval<const Exception&>()));
 
 template<typename SAX, typename BasicJsonType>
-struct is_sax
-{
-  private:
-    static_assert(is_basic_json<BasicJsonType>::value,
-                  "BasicJsonType must be of type basic_json<...>");
-
-    using number_integer_t = typename BasicJsonType::number_integer_t;
-    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
-    using number_float_t = typename BasicJsonType::number_float_t;
-    using string_t = typename BasicJsonType::string_t;
-    using binary_t = typename BasicJsonType::binary_t;
-    using exception_t = typename BasicJsonType::exception;
-
-  public:
-    static constexpr bool value =
-        is_detected_exact<bool, null_function_t, SAX>::value &&
-        is_detected_exact<bool, boolean_function_t, SAX>::value &&
-        is_detected_exact<bool, number_integer_function_t, SAX, number_integer_t>::value &&
-        is_detected_exact<bool, number_unsigned_function_t, SAX, number_unsigned_t>::value &&
-        is_detected_exact<bool, number_float_function_t, SAX, number_float_t, string_t>::value &&
-        is_detected_exact<bool, string_function_t, SAX, string_t>::value &&
-        is_detected_exact<bool, binary_function_t, SAX, binary_t>::value &&
-        is_detected_exact<bool, start_object_function_t, SAX>::value &&
-        is_detected_exact<bool, key_function_t, SAX, string_t>::value &&
-        is_detected_exact<bool, end_object_function_t, SAX>::value &&
-        is_detected_exact<bool, start_array_function_t, SAX>::value &&
-        is_detected_exact<bool, end_array_function_t, SAX>::value &&
-        is_detected_exact<bool, parse_error_function_t, SAX, exception_t>::value;
-};
-
-template<typename SAX, typename BasicJsonType>
 struct is_sax_static_asserts
 {
   private:
@@ -13499,8 +13341,6 @@ struct is_sax_static_asserts
   public:
     static_assert(is_detected_exact<bool, null_function_t, SAX>::value,
                   "Missing/invalid function: bool null()");
-    static_assert(is_detected_exact<bool, boolean_function_t, SAX>::value,
-                  "Missing/invalid function: bool boolean(bool)");
     static_assert(is_detected_exact<bool, boolean_function_t, SAX>::value,
                   "Missing/invalid function: bool boolean(bool)");
     static_assert(
@@ -18657,9 +18497,11 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     static_assert(is_basic_json<typename std::remove_const<BasicJsonType>::type>::value,
                   "iter_impl only accepts (const) basic_json");
     // superficial check for the LegacyBidirectionalIterator named requirement
-    static_assert(std::is_base_of<std::bidirectional_iterator_tag, std::bidirectional_iterator_tag>::value
-                  &&  std::is_base_of<std::bidirectional_iterator_tag, typename std::iterator_traits<typename array_t::iterator>::iterator_category>::value,
-                  "basic_json iterator assumes array and object type iterators satisfy the LegacyBidirectionalIterator named requirement.");
+    // note: only array_t::iterator is checked here; object_t::iterator may be
+    // a forward-only iterator as long as reverse iteration and operator--
+    // are never used on it
+    static_assert(std::is_base_of<std::bidirectional_iterator_tag, typename std::iterator_traits<typename array_t::iterator>::iterator_category>::value,
+                  "basic_json iterator assumes array type iterators satisfy the LegacyBidirectionalIterator named requirement.");
 
   public:
     /// The std::iterator class template (used as a base class to provide typedefs) is deprecated in C++17.
@@ -19802,6 +19644,72 @@ class json_pointer
 
   private:
     /*!
+    @brief result of @ref parse_array_index
+
+    @ref array_index maps each value to the corresponding parse_error/out_of_range
+    exception; @ref contains and @ref get_checked_or_null, which must not throw for
+    an out-of-range or unrepresentable index, switch on it directly instead.
+    */
+    enum class array_index_status
+    {
+        ok,                ///< @a s is a valid, representable array index
+        leading_zero,      ///< @a s begins with '0' but has more than one character
+        not_a_number,      ///< @a s does not begin with a digit
+        unresolved,        ///< @a s could not be converted to an integer
+        exceeds_size_type  ///< @a s converts to an integer that exceeds size_type
+    };
+
+    /*!
+    @param[in] s    reference token to be converted into an array index
+    @param[out] idx the integer representation of @a s if @ref array_index_status::ok
+                     is returned; left unchanged otherwise
+
+    @return whether @a s is a valid array index, and if not, why
+
+    @note this function never throws; @ref array_index and the callers that must not
+          throw (@ref contains, @ref get_checked_or_null) build on it instead of each
+          re-implementing the RFC 6901 digit rules and the @a size_type range check
+    */
+    template<typename BasicJsonType>
+    static array_index_status parse_array_index(const string_t& s, typename BasicJsonType::size_type& idx) noexcept
+    {
+        using size_type = typename BasicJsonType::size_type;
+
+        // error condition (cf. RFC 6901, Sect. 4)
+        if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && s[0] == '0'))
+        {
+            return array_index_status::leading_zero;
+        }
+
+        // error condition (cf. RFC 6901, Sect. 4)
+        if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && !(s[0] >= '1' && s[0] <= '9')))
+        {
+            return array_index_status::not_a_number;
+        }
+
+        const char* p = s.data();
+        char* p_end = nullptr; // NOLINT(misc-const-correctness)
+        errno = 0; // strtoull doesn't reset errno
+        const unsigned long long res = std::strtoull(p, &p_end, 10); // NOLINT(runtime/int)
+        if (p == p_end // invalid input or empty string
+                || errno == ERANGE // out of range
+                || JSON_HEDLEY_UNLIKELY(static_cast<std::size_t>(p_end - p) != s.size())) // incomplete read
+        {
+            return array_index_status::unresolved;
+        }
+
+        // the index does not fit into size_type; on 64-bit platforms this is
+        // only SIZE_MAX itself (see #2203 and #5395)
+        if (res >= static_cast<unsigned long long>((std::numeric_limits<size_type>::max)()))  // NOLINT(runtime/int)
+        {
+            return array_index_status::exceeds_size_type;
+        }
+
+        idx = static_cast<size_type>(res);
+        return array_index_status::ok;
+    }
+
+    /*!
     @param[in] s  reference token to be converted into an array index
 
     @return integer representation of @a s
@@ -19814,39 +19722,23 @@ class json_pointer
     template<typename BasicJsonType>
     static typename BasicJsonType::size_type array_index(const string_t& s)
     {
-        using size_type = typename BasicJsonType::size_type;
-
-        // error condition (cf. RFC 6901, Sect. 4)
-        if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && s[0] == '0'))
+        typename BasicJsonType::size_type idx{};
+        switch (parse_array_index<BasicJsonType>(s, idx))
         {
-            JSON_THROW(detail::parse_error::create(106, 0, detail::concat("array index '", s, "' must not begin with '0'"), nullptr));
+            case array_index_status::leading_zero:
+                JSON_THROW(detail::parse_error::create(106, 0, detail::concat("array index '", s, "' must not begin with '0'"), nullptr));
+            case array_index_status::not_a_number:
+                JSON_THROW(detail::parse_error::create(109, 0, detail::concat("array index '", s, "' is not a number"), nullptr));
+            case array_index_status::unresolved:
+                JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", s, "'"), nullptr));
+            case array_index_status::exceeds_size_type:
+                JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));
+            case array_index_status::ok:
+            default:
+                break;
         }
 
-        // error condition (cf. RFC 6901, Sect. 4)
-        if (JSON_HEDLEY_UNLIKELY(s.size() > 1 && !(s[0] >= '1' && s[0] <= '9')))
-        {
-            JSON_THROW(detail::parse_error::create(109, 0, detail::concat("array index '", s, "' is not a number"), nullptr));
-        }
-
-        const char* p = s.data();
-        char* p_end = nullptr; // NOLINT(misc-const-correctness)
-        errno = 0; // strtoull doesn't reset errno
-        const unsigned long long res = std::strtoull(p, &p_end, 10); // NOLINT(runtime/int)
-        if (p == p_end // invalid input or empty string
-                || errno == ERANGE // out of range
-                || JSON_HEDLEY_UNLIKELY(static_cast<std::size_t>(p_end - p) != s.size())) // incomplete read
-        {
-            JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", s, "'"), nullptr));
-        }
-
-        // the index does not fit into size_type; on 64-bit platforms this is
-        // only SIZE_MAX itself (see #2203 and #5395)
-        if (res >= static_cast<unsigned long long>((std::numeric_limits<size_type>::max)()))  // NOLINT(runtime/int)
-        {
-            JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));
-        }
-
-        return static_cast<size_type>(res);
+        return idx;
     }
 
   JSON_PRIVATE_UNLESS_TESTED:
@@ -20146,63 +20038,6 @@ class json_pointer
     }
 
     /*!
-    @throw parse_error.106   if an array index begins with '0'
-    @throw parse_error.109   if an array index was not a number
-    @throw out_of_range.402  if the array index '-' is used
-    @throw out_of_range.404  if the JSON pointer can not be resolved
-    */
-    template<typename BasicJsonType>
-    const BasicJsonType& get_checked(const BasicJsonType* ptr) const
-    {
-        for (const auto& reference_token : reference_tokens)
-        {
-            switch (ptr->type())
-            {
-                case detail::value_t::object:
-                {
-                    // note: at performs range check
-                    ptr = &ptr->at(reference_token);
-                    break;
-                }
-
-                case detail::value_t::array:
-                {
-                    if (JSON_HEDLEY_UNLIKELY(reference_token == "-"))
-                    {
-                        // "-" always fails the range check
-                        JSON_THROW(detail::out_of_range::create(402, detail::concat(
-                                "array index '-' (", std::to_string(ptr->m_data.m_value.array->size()),
-                                ") is out of range"), ptr));
-                    }
-
-                    const auto idx = array_index<BasicJsonType>(reference_token);
-                    // Bounds check before access to avoid exception with JSON_NOEXCEPTION
-                    if (JSON_HEDLEY_UNLIKELY(idx >= ptr->m_data.m_value.array->size()))
-                    {
-                        JSON_THROW(detail::out_of_range::create(401, detail::concat(
-                                "array index ", std::to_string(idx), " is out of range"), ptr));
-                    }
-                    ptr = &ptr->operator[](idx);
-                    break;
-                }
-
-                case detail::value_t::null:
-                case detail::value_t::string:
-                case detail::value_t::boolean:
-                case detail::value_t::number_integer:
-                case detail::value_t::number_unsigned:
-                case detail::value_t::number_float:
-                case detail::value_t::binary:
-                case detail::value_t::discarded:
-                default:
-                    JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", reference_token, "'"), ptr));
-            }
-        }
-
-        return *ptr;
-    }
-
-    /*!
     @brief return a pointer to the pointed to value, or `nullptr` if the
            pointer cannot be resolved because a key is missing, an array
            index is out of range, or the array index is "-"
@@ -20240,18 +20075,23 @@ class json_pointer
                         return nullptr;
                     }
 
-                    // may throw parse_error.106/109 for a malformed index; an
+                    // a malformed index throws parse_error.106/109; an
                     // index that is syntactically valid but cannot be
                     // represented (out_of_range.404/410) is treated like an
                     // out-of-range index below
                     typename BasicJsonType::size_type idx{};
-                    JSON_TRY
+                    switch (parse_array_index<BasicJsonType>(reference_token, idx))
                     {
-                        idx = array_index<BasicJsonType>(reference_token);
-                    }
-                    JSON_INTERNAL_CATCH (detail::out_of_range&)
-                    {
-                        return nullptr;
+                        case array_index_status::leading_zero:
+                            JSON_THROW(detail::parse_error::create(106, 0, detail::concat("array index '", reference_token, "' must not begin with '0'"), nullptr));
+                        case array_index_status::not_a_number:
+                            JSON_THROW(detail::parse_error::create(109, 0, detail::concat("array index '", reference_token, "' is not a number"), nullptr));
+                        case array_index_status::unresolved:
+                        case array_index_status::exceeds_size_type:
+                            return nullptr;
+                        case array_index_status::ok:
+                        default:
+                            break;
                     }
 
                     if (JSON_HEDLEY_UNLIKELY(idx >= ptr->m_data.m_value.array->size()))
@@ -20279,8 +20119,8 @@ class json_pointer
     }
 
     /*!
-    @throw parse_error.106   if an array index begins with '0'
-    @throw parse_error.109   if an array index was not a number
+    @note unlike array_index(), this never throws: a malformed or unrepresentable
+          array index reference token is treated like a missing key (see #5395)
     */
     template<typename BasicJsonType>
     bool contains(const BasicJsonType* ptr) const
@@ -20308,49 +20148,17 @@ class json_pointer
                         // "-" always fails the range check
                         return false;
                     }
-                    if (JSON_HEDLEY_UNLIKELY(reference_token.empty()))
-                    {
-                        // an empty reference token is not an array index; array_index()
-                        // would throw out_of_range.404 -- contains() must not throw (see #5395)
-                        return false;
-                    }
-                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() == 1 && !('0' <= reference_token[0] && reference_token[0] <= '9')))
-                    {
-                        // invalid char
-                        return false;
-                    }
-                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() > 1))
-                    {
-                        if (JSON_HEDLEY_UNLIKELY(!('1' <= reference_token[0] && reference_token[0] <= '9')))
-                        {
-                            // the first char should be between '1' and '9'
-                            return false;
-                        }
-                        for (std::size_t i = 1; i < reference_token.size(); i++)
-                        {
-                            if (JSON_HEDLEY_UNLIKELY(!('0' <= reference_token[i] && reference_token[i] <= '9')))
-                            {
-                                // other char should be between '0' and '9'
-                                return false;
-                            }
-                        }
-                    }
 
-                    // the reference token consists only of digits at this point (cf. checks
-                    // above); however, its numeric value might not be representable, in which
-                    // case array_index() would throw out_of_range.404/410 -- contains() must
-                    // not throw (see #5395), so such a reference token is treated as "not found"
-                    errno = 0; // strtoull() does not reset errno on success
-                    char* p_end = nullptr; // NOLINT(misc-const-correctness)
-                    const unsigned long long magnitude = std::strtoull(reference_token.data(), &p_end, 10); // NOLINT(runtime/int)
-                    if (JSON_HEDLEY_UNLIKELY(errno == ERANGE // the value exceeds ULLONG_MAX
-                                             || magnitude >= static_cast<unsigned long long>((std::numeric_limits<typename BasicJsonType::size_type>::max)()))) // NOLINT(runtime/int)
+                    // any parse failure (malformed index, or one that is syntactically
+                    // valid but not representable as size_type) means the reference
+                    // token cannot denote an existing array element -- contains() must
+                    // not throw (see #5395), so it is treated as "not found"
+                    typename BasicJsonType::size_type idx{};
+                    if (JSON_HEDLEY_UNLIKELY(parse_array_index<BasicJsonType>(reference_token, idx) != array_index_status::ok))
                     {
-                        // the array index cannot be represented as size_type
                         return false;
                     }
 
-                    const auto idx = array_index<BasicJsonType>(reference_token);
                     if (idx >= ptr->size())
                     {
                         // index out of range
@@ -33828,6 +33636,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
     #undef JSON_HAS_EXPERIMENTAL_FILESYSTEM
     #undef JSON_HAS_THREE_WAY_COMPARISON
     #undef JSON_HAS_RANGES
+    #undef JSON_HAS_RANGE_VIEW_CONVERSION
     #undef JSON_HAS_STD_FORMAT
     #undef JSON_HAS_STATIC_RTTI
     #undef JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
