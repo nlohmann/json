@@ -10,7 +10,8 @@ This function implements a user-defined to_string for JSON objects.
 ## Template parameters
 
 `BasicJsonType`
-:   a specialization of [`basic_json`](index.md)
+:   a specialization of [`basic_json`](index.md) whose [`string_t`](string_t.md) is convertible to `#!cpp std::string`;
+    for other string types, use [`dump`](dump.md), which returns a `string_t`
 
 ## Return value
 

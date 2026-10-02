@@ -54,8 +54,9 @@ using parser_callback_t =
 /*!
 @brief syntax analysis
 
-This class implements an iterative parser that keeps the open containers on
-an explicit stack and reports what it reads as SAX events.
+This class implements a parser for JSON text. Nested arrays and objects are tracked with an explicit
+stack instead of recursion, so deeply nested input does not exhaust the call stack, and what is read
+is reported as SAX events.
 */
 template<typename BasicJsonType, typename InputAdapterType>
 class parser

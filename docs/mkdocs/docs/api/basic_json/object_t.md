@@ -33,7 +33,7 @@ To store objects in C++, a type is defined by the template parameters described 
 
 ## Notes
 
-#### Default type
+### Default type
 
 With the default values for `ObjectType` (`std::map`), `StringType` (`std::string`), and `AllocatorType`
 (`std::allocator`), the default value for `object_t` is:
@@ -58,7 +58,7 @@ std::map<
 
 See [`default_object_comparator_t`](default_object_comparator_t.md) for more information.
 
-#### Behavior
+### Behavior
 
 The choice of `object_t` influences the behavior of the JSON class. With the default type, objects have the following
 behavior:
@@ -76,7 +76,7 @@ behavior:
   that they will not be affected by these differences. For instance, `#!json {"b": 1, "a": 2}` and
   `#!json {"a": 2, "b": 1}` will be treated as equal.
 
-#### Limits
+### Limits
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) specifies:
 > An implementation may set limits on the maximum depth of nesting.
@@ -85,12 +85,12 @@ In this class, the object's limit of nesting is not explicitly constrained. Howe
 introduced by the compiler or runtime environment. A theoretical limit can be queried by calling the
 [`max_size`](max_size.md) function of a JSON object.
 
-#### Storage
+### Storage
 
 Objects are stored as pointers in a `basic_json` type. That is, for any access to object values, a pointer of type
 `object_t*` must be dereferenced.
 
-#### Object key order
+### Object key order
 
 The order name/value pairs are added to the object are *not* preserved by the library. Therefore, iterating an object
 may return name/value pairs in a different order than they were originally stored. In fact, keys will be traversed in
@@ -98,10 +98,10 @@ alphabetical order as `std::map` with `std::less` is used by default. Please not
 [RFC 8259](https://tools.ietf.org/html/rfc8259), because any order implements the specified "unordered" nature of JSON
 objects.
 
-#### Cross-`basic_json` conversion requirements
+### Cross-`basic_json` conversion requirements
 
 When converting an object from one `basic_json` specialization to another via the
-[converting constructor](basic_json.md#overload-4), the target `object_t`'s `key_type` must be
+[converting constructor](basic_json.md) (overload 4), the target `object_t`'s `key_type` must be
 directly constructible from the source `basic_json`'s `string_t` type (or more generally, from the
 source object's key type). If this requirement is not met, the conversion does not fail; instead,
 the object is silently converted as an array of key-value pairs, which is incorrect. See
@@ -122,6 +122,13 @@ the object is silently converted as an array of key-value pairs, which is incorr
     ```json
     --8<-- "examples/object_t.output"
     ```
+
+## See also
+
+- [array_t](array_t.md) the type used to store JSON arrays
+- [string_t](string_t.md) the type used to store JSON strings
+- [object_comparator_t](object_comparator_t.md) the comparator used to order object keys
+- [Object Order](../../features/object_order.md) - the article on object key ordering
 
 ## Version history
 

@@ -235,8 +235,11 @@ struct external_constructor<value_t::array>
         for (auto&& x : std::forward<CompatibleArrayType>(arr))
         {
             j.m_data.m_value.array->push_back(x);
-            j.set_parent(j.m_data.m_value.array->back());
         }
+        // set the parents only once all elements are in place: a push_back
+        // that reallocates moves the earlier elements, which does not keep
+        // their parent pointers
+        j.set_parents();
         j.assert_invariant();
     }
 #endif
@@ -547,7 +550,7 @@ struct to_json_fn
 /// namespace to hold default `to_json` function
 /// to see why this is required:
 /// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html
-namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-namespaces)
+namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-namespaces,misc-anonymous-namespace-in-header)
 {
 #endif
 JSON_INLINE_VARIABLE constexpr const auto& to_json = // NOLINT(misc-definitions-in-headers)

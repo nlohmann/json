@@ -63,10 +63,10 @@ TEST_CASE_TEMPLATE_DEFINE("value_in_range_of trait", T, value_in_range_of_test) 
 
     INFO("type := ", type_str);
 
-    CAPTURE(val_min);
-    CAPTURE(min_in_range);
-    CAPTURE(val_max);
-    CAPTURE(max_in_range);
+    CAPTURE(val_min)
+    CAPTURE(min_in_range)
+    CAPTURE(val_max)
+    CAPTURE(max_in_range)
 
     if (min_in_range)
     {

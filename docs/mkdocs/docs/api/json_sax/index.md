@@ -10,6 +10,27 @@ different situations while the input is parsed. The boolean return value informs
 processing the input; for [`parse_error`](parse_error.md), it decides whether to
 [recover from the error](../../features/parsing/error_recovery.md).
 
+For instance, parsing the JSON text `{"a": [1, true]}` triggers the following callbacks, in order:
+
+```mermaid
+sequenceDiagram
+    participant P as Parser
+    participant H as SAX handler
+
+    P->>H: start_object(elements)
+    P->>H: key("a")
+    P->>H: start_array(elements)
+    P->>H: number_unsigned(1)
+    P->>H: boolean(true)
+    P->>H: end_array()
+    P->>H: end_object()
+```
+
+Note `elements` is passed as `#!cpp std::numeric_limits<std::size_t>::max()` (i.e., "unknown") for JSON text input;
+only binary formats such as CBOR or MessagePack may report the actual number of elements in `start_object`/
+`start_array`. Also note that `1` is reported via `number_unsigned` rather than `number_integer` because it has no
+leading `-` sign.
+
 ## Template parameters
 
 `BasicJsonType`

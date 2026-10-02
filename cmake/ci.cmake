@@ -8,24 +8,24 @@ set(N 10)
 include(FindPython3)
 find_package(Python3 COMPONENTS Interpreter)
 
-find_program(CLANG_TOOL NAMES clang++-HEAD clang++ clang++-20 clang++-19 clang++-18 clang++-17 clang++-16 clang++-15 clang++-14 clang++-13 clang++-12 clang++-11 clang++)
+find_program(CLANG_TOOL NAMES clang++-HEAD clang++ clang++-22 clang++-21 clang++-20 clang++-19 clang++-18 clang++-17 clang++-16 clang++-15 clang++-14 clang++-13 clang++-12 clang++-11 clang++)
 execute_process(COMMAND ${CLANG_TOOL} --version OUTPUT_VARIABLE CLANG_TOOL_VERSION ERROR_VARIABLE CLANG_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TOOL_VERSION "${CLANG_TOOL_VERSION}")
 message(STATUS "🔖 Clang ${CLANG_TOOL_VERSION} (${CLANG_TOOL})")
 
-find_program(CLANG_TIDY_TOOL NAMES clang-tidy-20 clang-tidy-19 clang-tidy-18 clang-tidy-17 clang-tidy-16 clang-tidy-15 clang-tidy-14 clang-tidy-13 clang-tidy-12 clang-tidy-11 clang-tidy)
+find_program(CLANG_TIDY_TOOL NAMES clang-tidy-22 clang-tidy-21 clang-tidy-20 clang-tidy-19 clang-tidy-18 clang-tidy-17 clang-tidy-16 clang-tidy-15 clang-tidy-14 clang-tidy-13 clang-tidy-12 clang-tidy-11 clang-tidy)
 execute_process(COMMAND ${CLANG_TIDY_TOOL} --version OUTPUT_VARIABLE CLANG_TIDY_TOOL_VERSION ERROR_VARIABLE CLANG_TIDY_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CLANG_TIDY_TOOL_VERSION "${CLANG_TIDY_TOOL_VERSION}")
 message(STATUS "🔖 Clang-Tidy ${CLANG_TIDY_TOOL_VERSION} (${CLANG_TIDY_TOOL})")
 
 message(STATUS "🔖 CMake ${CMAKE_VERSION} (${CMAKE_COMMAND})")
 
-find_program(GCC_TOOL NAMES g++-latest g++-HEAD g++ g++-15 g++-14 g++-13 g++-12 g++-11 g++-10)
+find_program(GCC_TOOL NAMES g++-latest g++-HEAD g++ g++-16 g++-15 g++-14 g++-13 g++-12 g++-11 g++-10)
 execute_process(COMMAND ${GCC_TOOL} --version OUTPUT_VARIABLE GCC_TOOL_VERSION ERROR_VARIABLE GCC_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" GCC_TOOL_VERSION "${GCC_TOOL_VERSION}")
 message(STATUS "🔖 GCC ${GCC_TOOL_VERSION} (${GCC_TOOL})")
 
-find_program(GCOV_TOOL NAMES gcov-HEAD gcov gcov-15 gcov-14 gcov-13 gcov-12 gcov-11 gcov-10)
+find_program(GCOV_TOOL NAMES gcov-HEAD gcov gcov-16 gcov-15 gcov-14 gcov-13 gcov-12 gcov-11 gcov-10)
 execute_process(COMMAND ${GCOV_TOOL} --version OUTPUT_VARIABLE GCOV_TOOL_VERSION ERROR_VARIABLE GCOV_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" GCOV_TOOL_VERSION "${GCOV_TOOL_VERSION}")
 message(STATUS "🔖 GCOV ${GCOV_TOOL_VERSION} (${GCOV_TOOL})")
@@ -596,7 +596,12 @@ foreach(SRC_FILE ${SRC_FILES})
     add_executable(single_${RELATIVE_SRC_FILE} EXCLUDE_FROM_ALL ${PROJECT_BINARY_DIR}/src_single/${RELATIVE_SRC_FILE}.cpp)
     target_include_directories(single_${RELATIVE_SRC_FILE} PRIVATE ${PROJECT_SOURCE_DIR}/include)
     target_compile_features(single_${RELATIVE_SRC_FILE} PRIVATE cxx_std_11)
-    set_property(TARGET single_${RELATIVE_SRC_FILE} PROPERTY CXX_INCLUDE_WHAT_YOU_USE "${iwyu_path_and_options}")
+    if(RELATIVE_SRC_FILE STREQUAL "json")
+        # see below: report json.hpp's diagnostics without --error, so they do not fail the build
+        set_property(TARGET single_${RELATIVE_SRC_FILE} PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_TOOL} -Xiwyu --max_line_length=300)
+    else()
+        set_property(TARGET single_${RELATIVE_SRC_FILE} PROPERTY CXX_INCLUDE_WHAT_YOU_USE "${iwyu_path_and_options}")
+    endif()
     # remember binary for ci_single_binaries
     list(APPEND single_binaries single_${RELATIVE_SRC_FILE})
     # json.hpp pulls together the whole library behind heavily templated, SFINAE-based code, and
@@ -658,14 +663,19 @@ function(ci_get_cmake version var)
             OUTPUT ${${var}}
             COMMAND wget -nc https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-linux-x86_64.tar.gz
             COMMAND wget -nc https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-SHA-256.txt
-            # verify the archive against Kitware's published SHA-256 sums before unpacking it
-            COMMAND sh -c "grep ' cmake-${version}-linux-x86_64[.]tar[.]gz$' cmake-${version}-SHA-256.txt | sha256sum -c -"
-            COMMAND tar xfz cmake-${version}-linux-x86_64.tar.gz
-            COMMAND rm cmake-${version}-linux-x86_64.tar.gz cmake-${version}-SHA-256.txt
+            # verify the archive against Kitware's published SHA-256 sums before unpacking it; old
+            # releases list the archive as "Linux-x86_64", so match case-insensitively and rewrite
+            # the name to the lowercase one the download was saved under
+            COMMAND sh -c "grep -i ' cmake-${version}-linux-x86_64[.]tar[.]gz$' cmake-${version}-SHA-256.txt | tr L l | sha256sum -c -"
+            # unpack into cmake-${version} directly, as the archive's top-level directory is spelled
+            # "Linux" in old releases and "linux" in newer ones
             COMMAND ${CMAKE_COMMAND} -E rm -rf cmake-${version}
-            COMMAND ${CMAKE_COMMAND} -E rename cmake-${version}-linux-x86_64 cmake-${version}
+            COMMAND ${CMAKE_COMMAND} -E make_directory cmake-${version}
+            COMMAND tar xfz cmake-${version}-linux-x86_64.tar.gz -C cmake-${version} --strip-components=1
+            COMMAND rm cmake-${version}-linux-x86_64.tar.gz cmake-${version}-SHA-256.txt
             WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
             COMMENT "Download prebuilt CMake ${version}"
+            VERBATIM
         )
     else()
         # no prebuilt archive for this platform (e.g. macOS or Linux aarch64): build from source
@@ -889,6 +899,12 @@ add_custom_target(ci_test_build_documentation
     COMMAND make build
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/docs/mkdocs
     COMMENT "Build the documentation"
+)
+
+add_custom_target(ci_test_documentation_mermaid
+    COMMAND make check_mermaid
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/docs/mkdocs
+    COMMENT "Check the Mermaid diagrams of the documentation"
 )
 
 ###############################################################################

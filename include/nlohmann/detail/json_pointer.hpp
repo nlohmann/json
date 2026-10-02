@@ -78,7 +78,7 @@ class json_pointer
     }
 
     /// @brief return a string representation of the JSON pointer
-    /// @sa https://json.nlohmann.me/api/json_pointer/operator_string/
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_string_t/
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, to_string())
     operator string_t() const
     {
@@ -87,7 +87,7 @@ class json_pointer
 
 #ifndef JSON_NO_IO
     /// @brief write string representation of the JSON pointer to stream
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_ltlt/
+    /// @sa https://json.nlohmann.me/api/operator_ltlt/
     friend std::ostream& operator<<(std::ostream& o, const json_pointer& ptr)
     {
         o << ptr.to_string();
@@ -278,11 +278,11 @@ class json_pointer
             JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", s, "'"), nullptr));
         }
 
-        // only triggered on special platforms (like 32bit), see also
-        // https://github.com/nlohmann/json/pull/2203
+        // the index does not fit into size_type; on 64-bit platforms this is
+        // only SIZE_MAX itself (see #2203 and #5395)
         if (res >= static_cast<unsigned long long>((std::numeric_limits<size_type>::max)()))  // NOLINT(runtime/int)
         {
-            JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));   // LCOV_EXCL_LINE
+            JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));
         }
 
         return static_cast<size_type>(res);
@@ -316,7 +316,7 @@ class json_pointer
     /*!
     @brief create and return a reference to the pointed to value
 
-    @complexity Linear in the number of reference tokens.
+    Complexity: Linear in the number of reference tokens.
 
     @throw parse_error.106 if an array index begins with '0'
     @throw parse_error.109 if array index is not a number
@@ -403,7 +403,7 @@ class json_pointer
 
     @return reference to the JSON value pointed to by the JSON pointer
 
-    @complexity Linear in the length of the JSON pointer.
+    Complexity: Linear in the length of the JSON pointer.
 
     @throw parse_error.106   if an array index begins with '0'
     @throw parse_error.109   if an array index was not a number
@@ -1099,7 +1099,8 @@ class json_pointer
     friend bool operator!=(const StringType& lhs,
                            const json_pointer<RefStringTypeRhs>& rhs);
 
-    /// @brief compares two JSON pointer for less-than
+    /// @brief compares two JSON pointers for less-than
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_spaceship/
     template<typename RefStringTypeLhs, typename RefStringTypeRhs>
     // NOLINTNEXTLINE(readability-redundant-declaration)
     friend bool operator<(const json_pointer<RefStringTypeLhs>& lhs,

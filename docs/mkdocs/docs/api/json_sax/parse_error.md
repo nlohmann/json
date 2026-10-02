@@ -32,7 +32,7 @@ Either way, [`sax_parse`](../basic_json/sax_parse.md) returns `#!cpp false`.
 
 ## Examples
 
-??? example
+??? example "Example: (1) the SAX interface"
 
     The example below shows how the SAX interface is used.
 
@@ -46,7 +46,7 @@ Either way, [`sax_parse`](../basic_json/sax_parse.md) returns `#!cpp false`.
     --8<-- "examples/sax_parse.output"
     ```
 
-??? example
+??? example "Example: (2) recovering from errors"
 
     The example below shows how a SAX parser recovers from errors.
 
@@ -59,6 +59,13 @@ Either way, [`sax_parse`](../basic_json/sax_parse.md) returns `#!cpp false`.
     ```
     --8<-- "examples/sax_parse__error_recovery.output"
     ```
+
+## See also
+
+- [sax_parse](../basic_json/sax_parse.md) - SAX parser
+- [Parsing and Exceptions](../../features/parsing/parse_exceptions.md) - the article on handling parse errors without
+  exceptions
+- [Error Recovery](../../features/parsing/error_recovery.md) - the article on recovering from parse errors
 
 ## Version history
 

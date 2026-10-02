@@ -35,6 +35,12 @@ Binary formats may report the number of elements.
     --8<-- "examples/sax_parse.output"
     ```
 
+## See also
+
+- [end_object](end_object.md) - the end of an object was read
+- [key](key.md) - an object key was read
+- [sax_parse](../basic_json/sax_parse.md) - SAX parser
+
 ## Version history
 
 - Added in version 3.2.0.

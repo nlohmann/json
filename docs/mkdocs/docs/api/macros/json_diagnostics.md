@@ -43,7 +43,7 @@ When the macro is not defined, the library will define it to its default value.
 
 ## Examples
 
-??? example "Example 1: default behavior"
+??? example "Example: default behavior"
 
     ```cpp
     --8<-- "examples/diagnostics_standard.cpp"
@@ -57,7 +57,7 @@ When the macro is not defined, the library will define it to its default value.
 
     This exception can be hard to debug if storing the value `#!c "12"` and accessing it is further apart.
 
-??? example "Example 2: extended diagnostic messages"
+??? example "Example: extended diagnostic messages"
 
     ```cpp
     --8<-- "examples/diagnostics_extended.cpp"
@@ -71,7 +71,7 @@ When the macro is not defined, the library will define it to its default value.
 
     Now the exception message contains a JSON Pointer `/address/housenumber` that indicates which value has the wrong type.
 
-??? example "Example 3: using only diagnostic positions in exceptions"
+??? example "Example: using only diagnostic positions in exceptions"
 
     ```cpp
     --8<-- "examples/diagnostic_positions_exception.cpp"

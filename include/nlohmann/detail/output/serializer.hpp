@@ -65,7 +65,7 @@ class serializer
     @param[in] ichar  indentation character to use
     @param[in] pretty_print_  whether the output shall be pretty-printed
     @param[in] ensure_ascii_ If @a ensure_ascii_ is true, all non-ASCII
-    characters in the output are escaped with `\uXXXX` sequences, and the
+    characters in the output are escaped with `\\uXXXX` sequences, and the
     result consists of ASCII characters only.
     @param[in] indent_step_  the indent level
     @param[in] error_handler_  how to react on decoding errors
@@ -690,7 +690,7 @@ class serializer
 
     @param[in] s  the string to escape
 
-    @complexity Linear in the length of string @a s.
+    Complexity: Linear in the length of string @a s.
     */
     void dump_escaped(const string_t& s)
     {
@@ -1194,7 +1194,7 @@ class serializer
     }
 
     /*!
-     * @brief write a lowercase "\uXXXX" escape sequence into @a string_buffer
+     * @brief write a lowercase "\\uXXXX" escape sequence into @a string_buffer
      *
      * Branch-free replacement for `snprintf(buf, 7, "\\u%04x", codeunit)` in the
      * string escaping hot path. It writes exactly six characters ('\\', 'u' and
@@ -1544,7 +1544,7 @@ class serializer
     /// whether to pretty-print the output
     const bool pretty_print;
 
-    /// whether to escape non-ASCII characters with \uXXXX sequences
+    /// whether to escape non-ASCII characters with \\uXXXX sequences
     const bool ensure_ascii;
 
     /// the indent level

@@ -67,10 +67,9 @@ TEST_CASE("BJData")
 {
     SECTION("binary_reader BJData lookup tables")
     {
+        // both lookups are static member functions
         std::vector<std::uint8_t> const data;
-        auto ia = nlohmann::detail::input_adapter(data);
-        // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-        nlohmann::detail::binary_reader<json, decltype(ia)> const br{std::move(ia), json::input_format_t::bjdata};
+        using reader_t = nlohmann::detail::binary_reader<json, decltype(nlohmann::detail::input_adapter(data))>;
 
         // the excluded optimized-type markers must match binary_writer's
         // is_bjdata_excluded_type_marker(), which encodes the same 8 markers
@@ -78,13 +77,13 @@ TEST_CASE("BJData")
                 {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'
                 })
         {
-            CHECK(br.is_bjd_excluded_optimized_type(marker));
+            CHECK(reader_t::is_bjd_excluded_optimized_type(static_cast<unsigned char>(marker)));
         }
         for (const char marker :
                 {'U', 'i', 'u', 'I', 'm', 'l', 'M', 'L', 'd', 'D', 'C', 'B', 'x'
                 })
         {
-            CHECK(!br.is_bjd_excluded_optimized_type(marker));
+            CHECK(!reader_t::is_bjd_excluded_optimized_type(static_cast<unsigned char>(marker)));
         }
 
         // every dtype marker must round-trip to its ND-array type name
@@ -96,11 +95,11 @@ TEST_CASE("BJData")
         };
         for (const auto& type : types)
         {
-            const char* name = br.bjd_type_name(type.first);
+            const char* name = reader_t::bjd_type_name(static_cast<unsigned char>(type.first));
             REQUIRE(name != nullptr);
             CHECK(std::string(name) == type.second);
         }
-        CHECK(br.bjd_type_name('x') == nullptr);
+        CHECK(reader_t::bjd_type_name(static_cast<unsigned char>('x')) == nullptr);
     }
 
     SECTION("individual values")
@@ -2523,7 +2522,7 @@ TEST_CASE("BJData")
                         {"uint8", "int8", "uint16", "int16", "uint32", "int32", "uint64", "int64", "char"
                         })
                 {
-                    CAPTURE(type);
+                    CAPTURE(type)
                     const std::string text = std::string(R"({"_ArrayType_":")") + type +
                                              R"(","_ArraySize_":[2,3],"_ArrayData_":[1,2,3,4,5,6]})";
                     const auto from_text = json::to_bjdata(json::parse(text));
@@ -2831,7 +2830,7 @@ TEST_CASE("BJData")
                             R"({"_ArrayType_":"int16","_ArraySize_":[0,2],"_ArrayData_":[]})"
                         })
                 {
-                    CAPTURE(text);
+                    CAPTURE(text)
                     const json j = json::parse(text);
                     for (const bool use_size :
                             {
@@ -2865,7 +2864,7 @@ TEST_CASE("BJData")
                             R"({"_ArrayType_":"int16","_ArraySize_":[],"_ArrayData_":null})"
                         })
                 {
-                    CAPTURE(text);
+                    CAPTURE(text)
                     const json j = json::parse(text);
                     const auto out = json::to_bjdata(j);
                     CHECK(out.at(0) == '{');
@@ -4199,7 +4198,7 @@ TEST_CASE("BJData and UBJSON can be written to a string")
 
     for (const auto& j : values)
     {
-        CAPTURE(j.dump());
+        CAPTURE(j.dump())
         for (const bool use_size :
                 {
                     false, true
@@ -4214,8 +4213,8 @@ TEST_CASE("BJData and UBJSON can be written to a string")
                 {
                     continue;
                 }
-                CAPTURE(use_size);
-                CAPTURE(use_type);
+                CAPTURE(use_size)
+                CAPTURE(use_type)
 
                 const auto bjdata = json::to_bjdata(j, use_size, use_type);
                 std::string bjdata_string;

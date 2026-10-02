@@ -1,0 +1,46 @@
+name: Check documentation links
+
+# check the links of the documentation weekly; external links break without any change in this repository
+on:
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  check_docs_links:
+    if: github.repository == 'nlohmann/json'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install virtual environment
+        run: make install_venv -C docs/mkdocs
+
+      - name: Check links
+        shell: bash  # adds -o pipefail, so tee does not hide the exit code
+        run: make link_check -C docs/mkdocs 2>&1 | tee link_check.log
+
+      - name: Summarize broken links
+        if: failure()
+        run: |
+          {
+            echo '### Broken documentation links'
+            echo '```'
+            grep 'invalid url' link_check.log || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

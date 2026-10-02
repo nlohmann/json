@@ -3,6 +3,16 @@
 This library can create a JSON value from a wide range of inputs. This page gives an overview of the available parsing
 functions and how they behave; the linked pages go into more detail.
 
+```mermaid
+flowchart LR
+    I["JSON input"] --> P["parse()"]
+    I --> S["sax_parse()"]
+    I --> A["accept()"]
+    P -->|"optional parser callback filters values"| D["basic_json value (DOM)"]
+    S --> H["events delivered to a user SAX handler"]
+    A --> V["bool: is the input valid JSON?"]
+```
+
 ## Input
 
 The [`parse`](../../api/basic_json/parse.md) function reads a JSON value from an input. The input can be
@@ -77,3 +87,4 @@ options. To get as much as possible out of malformed input, a SAX parser can [re
 - [SAX interface](sax_interface.md) - implement a custom SAX handler
 - [parsing and exceptions](parse_exceptions.md) - control error handling
 - [error recovery](error_recovery.md) - get as much as possible out of malformed input
+- [parsing untrusted input](untrusted_input.md) - what to consider when parsing input from untrusted sources

@@ -239,7 +239,7 @@ TEST_CASE("controlled bad_alloc")
             // iterative path instead, part-way through its worklist.
             const auto check_deep_copy = [](bool objects)
             {
-                CAPTURE(objects);
+                CAPTURE(objects)
 
                 next_construct_fails = false;
 
@@ -315,7 +315,7 @@ struct nth_alloc_fails_allocator : std::allocator<T>
 template<class BasicJsonType>
 void check_deep_copy_survives_failing_allocation(bool nest_objects)
 {
-    CAPTURE(nest_objects);
+    CAPTURE(nest_objects)
 
     fail_at_alloc_call = -1;
 
@@ -352,7 +352,7 @@ void check_deep_copy_survives_failing_allocation(bool nest_objects)
     // must come out exactly as it went in
     for (std::size_t n = 0; n < total_allocations; ++n)
     {
-        CAPTURE(n);
+        CAPTURE(n)
         alloc_call_count = 0;
         fail_at_alloc_call = static_cast<long>(n);
 
@@ -372,6 +372,11 @@ void check_deep_copy_survives_failing_allocation(bool nest_objects)
 
 TEST_CASE("copy of a deeply nested value survives a failing allocation (#5640)")
 {
+    // With iterator debugging (MSVC STL debug builds, also used by clang-cl),
+    // containers allocate a debug proxy through the allocator inside their
+    // noexcept move constructors, so failing that allocation terminates the
+    // program instead of throwing std::bad_alloc. Nothing to check there.
+#if !(defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0)
     SECTION("std::map-backed object_t")
     {
         using bad_alloc_json = nlohmann::basic_json<std::map,
@@ -401,6 +406,7 @@ TEST_CASE("copy of a deeply nested value survives a failing allocation (#5640)")
         check_deep_copy_survives_failing_allocation<bad_alloc_ordered_json>(false);
         check_deep_copy_survives_failing_allocation<bad_alloc_ordered_json>(true);
     }
+#endif
 }
 
 namespace
@@ -493,9 +499,13 @@ struct countdown_allocator : std::allocator<T>
     template<class U, class... Args>
     void construct(U* p, Args&& ... args)
     {
-        if (constructions_until_failure != 0 && --constructions_until_failure == 0)
+        if (constructions_until_failure != 0)
         {
-            throw std::bad_alloc();
+            --constructions_until_failure;
+            if (constructions_until_failure == 0)
+            {
+                throw std::bad_alloc();
+            }
         }
 
         ::new (static_cast<void*>(p)) U(std::forward<Args>(args)...);

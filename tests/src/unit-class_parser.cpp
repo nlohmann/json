@@ -2003,7 +2003,7 @@ TEST_CASE("parser class")
             const json j = json::parse(R"({"skip": {"k1": 1, "k2": [2, {"k3": 3}]}, "keep": 1})",
                                        [&](int depth, json::parse_event_t event, json & parsed)
             {
-                static const char* const names[] = {"object_start", "object_end", "array_start", "array_end", "key", "value"};
+                static const char* const names[] = {"object_start", "object_end", "array_start", "array_end", "key", "value"}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
                 log.push_back(std::to_string(depth) + " " + names[static_cast<int>(event)] + " " + parsed.dump());
 
                 if (depth == 1 && event == json::parse_event_t::object_start && first)
@@ -2038,7 +2038,7 @@ TEST_CASE("parser class")
             // further effect")
             const auto record = [](std::vector<std::string>& log, int depth, json::parse_event_t event, const json & parsed)
             {
-                static const char* const names[] = {"object_start", "object_end", "array_start", "array_end", "key", "value"};
+                static const char* const names[] = {"object_start", "object_end", "array_start", "array_end", "key", "value"}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
                 log.push_back(std::to_string(depth) + " " + names[static_cast<int>(event)] + " " + parsed.dump());
             };
 
@@ -2563,7 +2563,7 @@ TEST_CASE("last-read diagnostics are identical across input adapters")
 
     for (const auto& s : inputs)
     {
-        CAPTURE(s);
+        CAPTURE(s)
 
         // reference: contiguous std::string -> seekable (lazy) path
         const std::string reference = parse_error_message(s);
@@ -2647,7 +2647,7 @@ TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
 
         SECTION("move constructor resets the moved-from value to npos")
         {
-            // basic_json(basic_json&&) (json.hpp, around line 1265) copies
+            // basic_json(basic_json&&) (json.hpp, around line 1951) copies
             // other's start_position/end_position into *this and then resets
             // other's to npos (see the cppcheck-suppress[accessForwarded]
             // annotation there, which flags this reset as worth a second
