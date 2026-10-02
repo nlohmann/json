@@ -24,6 +24,21 @@ The parser callback distinguishes the following events:
 
 ![Example when certain parse events are triggered](../../images/callback_events.png)
 
+??? example
+
+    The following code parses a small JSON text with a parser callback that reports every event together with its
+    depth and keeps every value (by always returning `#!cpp true`).
+
+    ```cpp
+    --8<-- "examples/parse_event_t.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/parse_event_t.output"
+    ```
+
 ## See also
 
 - [parser_callback_t](parser_callback_t.md) callback function type for the parser

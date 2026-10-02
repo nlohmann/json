@@ -31,6 +31,12 @@ Constant.
     --8<-- "examples/byte_container_with_subtype__clear_subtype.output"
     ```
 
+## See also
+
+- [set_subtype](set_subtype.md) sets the binary subtype
+- [has_subtype](has_subtype.md) return whether the value has a subtype
+- [subtype](subtype.md) return the binary subtype
+
 ## Version history
 
 Since version 3.8.0.

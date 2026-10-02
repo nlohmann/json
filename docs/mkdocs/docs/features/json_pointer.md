@@ -128,4 +128,5 @@ auto j_original = j_flat.unflatten();
 - Class [`json_pointer`](../api/json_pointer/index.md)
 - Function [`flatten`](../api/basic_json/flatten.md)
 - Function [`unflatten`](../api/basic_json/unflatten.md)
-- [JSON Patch](json_patch.md)
+- [JSON Patch](json_patch.md) - paths inside a patch are JSON Pointers
+- [JSON Merge Patch](merge_patch.md) - an alternative patch format that does not use JSON Pointer

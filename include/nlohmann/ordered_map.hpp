@@ -12,12 +12,13 @@
 #include <functional> // equal_to, less
 #include <initializer_list> // initializer_list
 #include <iterator> // input_iterator_tag, iterator_traits
+#include <memory> // allocator
 #include <new> // for operator new (placement new)
 #include <stdexcept> // for out_of_range
 #include <tuple> // forward_as_tuple
 #include <type_traits> // enable_if, integral_constant, is_convertible, is_nothrow_move_constructible
 #include <utility> // forward, move, pair, piecewise_construct
-#include <vector> // vector, allocator
+#include <vector> // vector
 
 #include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/macro_scope.hpp>

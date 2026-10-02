@@ -41,6 +41,14 @@ byte_container_with_subtype(container_type&& container, subtype_type subtype);
     --8<-- "examples/byte_container_with_subtype__byte_container_with_subtype.output"
     ```
 
+## See also
+
+- [set_subtype](set_subtype.md) sets the binary subtype
+- [subtype](subtype.md) return the binary subtype
+- [has_subtype](has_subtype.md) return whether the value has a subtype
+- [binary](../basic_json/binary.md) create a binary JSON value
+- [Binary Values](../../features/binary_values.md) - the article on binary values
+
 ## Version history
 
 Since version 3.8.0.
