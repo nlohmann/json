@@ -91,6 +91,8 @@ Like [`set`](set.md) on a member or an element, `push_back` never moves an exist
 ## See also
 
 - [set](set.md) - replace a value, or set an object member, an array element, or the value a JSON pointer refers to
+- [insert](insert.md) - insert an element into an array before a given position
+- [erase](erase.md) - remove an object member, an array element, or the value a JSON pointer refers to
 - [root](root.md) - the view of the root value
 - [`BasicJsonType::push_back`](../basic_json/push_back.md) - the corresponding function of `basic_json`
 - [Edits](index.md#edits) - what an edit guarantees, for every overload

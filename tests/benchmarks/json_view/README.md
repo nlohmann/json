@@ -7,7 +7,7 @@ users ask when they pick a library. They are not built by CMake or run by CI.
 
 ## Reproducing the numbers
 
-`compare.py` builds both programs against `include/` of this checkout, runs them, and writes the results together with
+`compare.py` builds the programs against `include/` of this checkout, runs them, and writes the results together with
 everything needed to reproduce them to `results/<date>-<host>.md` (and `.csv`): the date, the commit, the CPU, the
 OS, the compiler, the flags, and the versions of all libraries.
 
@@ -51,6 +51,12 @@ JSON-RPC request (`rpc`):
 
 `bench_corpus.cpp` runs parse, traverse, and dump on any list of files, so that no library is tuned to a handful of
 documents.
+
+`bench_edit.cpp` measures read-modify-write: parse, apply the same logical edits with each library's own API, and
+serialize (compact). Workloads: `patch` (a handful of edits at fixed places) and `update` (edits in every record).
+An editable `json_document` edits in place; yyjson copies its immutable document into a mutable one first
+(`yyjson_doc_mut_copy`); Boost.JSON and `json::parse` build mutable DOMs; simdjson cannot edit a document. All
+outputs are checked to describe the same value.
 
 Before anything is timed, all engines must accept each document and agree on the traversal: the number of values, the
 bytes of all strings and keys, and the sum of all numbers. All engines run interleaved in every round, and the best

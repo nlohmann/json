@@ -180,6 +180,8 @@ one-node scalar.
 ## See also
 
 - [push_back](push_back.md) - append to an array
+- [insert](insert.md) - insert an element into an array
+- [erase](erase.md) - remove an object member, an array element, or the value a JSON pointer refers to
 - [root](root.md) - the view of the root value, the starting point of overload 4
 - [`basic_json_view::dump`](../basic_json_view/dump.md) - serialize the document, keeping an untouched number's
   spelling with `#!cpp number_format::source`

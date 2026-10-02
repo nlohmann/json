@@ -278,11 +278,44 @@ TEST_CASE("json_view edits: differential")
                     d.set(tv, key, v);
                     j[p][key] = v;
                 }
+                else if (op == 6 && target.is_object() && !target.empty()) // erase a member
+                {
+                    const std::string key = std::next(target.begin(), r(static_cast<int>(target.size()))).key();
+                    if (r(2) == 0)
+                    {
+                        d.erase(tv, key);
+                    }
+                    else
+                    {
+                        d.erase(p / key);
+                    }
+                    j[p].erase(key);
+                }
                 else if (op == 7 && (target.is_array() || target.is_null())) // push_back
                 {
                     const ordered_json v = random_value(2);
                     d.push_back(tv, v);
                     j[p].push_back(v);
+                }
+                else if (op == 8 && target.is_array()) // insert
+                {
+                    const auto i = static_cast<std::size_t>(r(static_cast<int>(target.size()) + 1));
+                    const ordered_json v = random_value(2);
+                    d.insert(tv, i, v);
+                    j[p].insert(j[p].begin() + static_cast<std::ptrdiff_t>(i), v);
+                }
+                else if (op == 9 && target.is_array() && !target.empty()) // erase an element
+                {
+                    const auto i = static_cast<std::size_t>(r(static_cast<int>(target.size())));
+                    if (r(2) == 0)
+                    {
+                        d.erase(tv, i);
+                    }
+                    else
+                    {
+                        d.erase(p / i);
+                    }
+                    j[p].erase(i);
                 }
                 else if (op == 10 && target.is_array() && !target.empty()) // assign an element
                 {
@@ -350,6 +383,13 @@ TEST_CASE("json_view edits: errors")
     CHECK_THROWS_WITH_AS(d.set(root["a"], 2, 1), "[json.exception.out_of_range.401] array index 2 is out of range", json::out_of_range&);
     CHECK_THROWS_WITH_AS(d.set(root["a"], -1, 1), "[json.exception.out_of_range.401] array index -1 is out of range", json::out_of_range&);
     CHECK_THROWS_WITH_AS(d.push_back(root["o"], 1), "[json.exception.type_error.308] cannot use push_back() with object", json::type_error&);
+    CHECK_THROWS_WITH_AS(d.insert(root["n"], 0, 1), "[json.exception.type_error.309] cannot use insert() with number", json::type_error&);
+    CHECK_THROWS_WITH_AS(d.insert(root["a"], 3, 1), "[json.exception.out_of_range.401] array index 3 is out of range", json::out_of_range&);
+    CHECK_THROWS_WITH_AS(d.erase(root["n"], "k"), "[json.exception.type_error.307] cannot use erase() with number", json::type_error&);
+    CHECK_THROWS_WITH_AS(d.erase(root["o"], 0), "[json.exception.type_error.307] cannot use erase() with object", json::type_error&);
+    CHECK_THROWS_WITH_AS(d.erase(root["a"], 2), "[json.exception.out_of_range.401] array index 2 is out of range", json::out_of_range&);
+    CHECK_THROWS_WITH_AS(d.erase(json::json_pointer("")), "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
+    CHECK_THROWS_WITH_AS(d.erase(json::json_pointer("/missing/x")), "[json.exception.out_of_range.403] key 'missing' not found", json::out_of_range&);
     CHECK_THROWS_WITH_AS(d.set(json::json_pointer("/a/01"), 1), "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
     CHECK_THROWS_WITH_AS(d.set(root, json_editable_view()), "[json.exception.type_error.302] type must be a value, but is discarded", json::type_error&);
     CHECK_THROWS_WITH_AS(d.set(root, json::binary({1, 2})), "[json.exception.type_error.319] cannot store a binary value in a json_document", json::type_error&);
@@ -388,6 +428,27 @@ TEST_CASE("json_view edits: views and values")
         d.set(inner, 5);
         CHECK(d.root().dump() == "[[7]]");
         CHECK(inner.get<int>() == 5);
+    }
+
+    SECTION("views keep referring to their value")
+    {
+        json_editable_document d = json_editable_document::parse(R"({"a": [10, 20, 30], "b": {"c": "text"}})");
+        const json_editable_view a = d.root()["a"];
+        const json_editable_view twenty = a[1];
+        const json_editable_view c = d.root()["b"]["c"];
+        d.insert(a, 0, 5);
+        d.push_back(a, 40);
+        CHECK(twenty.get<int>() == 20);
+        CHECK(a[2].get<int>() == 20);
+        d.erase(a, 2);
+        CHECK(twenty.get<int>() == 20); // an erased value keeps its last value
+        d.set(c, 7);
+        CHECK(c.get<int>() == 7); // a held view sees an assignment
+        d.set(d.root()["b"], json::array({1, 2}));
+        CHECK(d.root()["b"].dump() == "[1,2]");
+        CHECK(d.root().dump() == R"({"a":[5,10,30,40],"b":[1,2]})");
+        CHECK(d.root()["a"][0].source_offset() == static_cast<std::size_t>(-1)); // a new value
+        CHECK(d.root()["a"][1].source_offset() != static_cast<std::size_t>(-1));
     }
 
     SECTION("strings stay valid while more edits come")
@@ -433,6 +494,10 @@ TEST_CASE("json_view edits: views and values")
         d.set(json::json_pointer("/x/3"), 4); // the size of the array appends too
         d.set(json::json_pointer("/y"), false);
         CHECK(d.root().dump() == R"({"x":[1,2,3,4],"y":false})");
+        CHECK(d.erase(json::json_pointer("/x/0")) == 1);
+        CHECK(d.erase(json::json_pointer("/y")) == 1);
+        CHECK(d.erase(json::json_pointer("/nothing")) == 0);
+        CHECK(d.root().dump() == R"({"x":[2,3,4]})");
     }
 
     SECTION("duplicate keys")
@@ -440,6 +505,9 @@ TEST_CASE("json_view edits: views and values")
         json_editable_document d = json_editable_document::parse(R"({"a": 1, "b": 2, "a": 3})");
         d.set(d.root(), "a", 4); // the first member is assigned, the others dropped
         CHECK(d.root().dump() == R"({"a":4,"b":2})");
+        d = json_editable_document::parse(R"({"a": 1, "b": 2, "a": 3})");
+        CHECK(d.erase(d.root(), "a") == 2);
+        CHECK(d.root().dump() == R"({"b":2})");
     }
 
     SECTION("values from other documents")
@@ -472,7 +540,9 @@ TEST_CASE("json_view edits: views and values")
         d.set(d.root(), "new", 1); // appended: the members move, the lookup is linear
         CHECK(d.root()["new"].get<int>() == 1);
         CHECK(d.root()["k199"].get<int>() == 199);
-        CHECK(d.root().size() == 201);
+        d.erase(d.root(), "k0");
+        CHECK(!d.root().contains("k0"));
+        CHECK(d.root().size() == 200);
     }
 
     SECTION("reuse and memory")

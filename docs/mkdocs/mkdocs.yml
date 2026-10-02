@@ -235,6 +235,8 @@ nav:
           - 'Overview': api/basic_json_document/index.md
           - '(Constructor)': api/basic_json_document/basic_json_document.md
           - 'accept': api/basic_json_document/accept.md
+          - 'erase': api/basic_json_document/erase.md
+          - 'insert': api/basic_json_document/insert.md
           - 'is_discarded': api/basic_json_document/is_discarded.md
           - 'memory_usage': api/basic_json_document/memory_usage.md
           - 'node_count': api/basic_json_document/node_count.md
