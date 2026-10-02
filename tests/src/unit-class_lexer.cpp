@@ -18,6 +18,7 @@ using nlohmann::json;
 #include <cstdlib> // strtod
 #include <cstring> // memcpy
 #include <map> // map
+#include <random> // mt19937
 #include <sstream> // stringstream
 #include <string> // string
 #include <utility> // pair
@@ -662,6 +663,184 @@ TEST_CASE("lexer string fast path")
             }
         }
     }
+}
+
+TEST_CASE("lexer escape fast path")
+{
+    // json::accept() never throws, so this section stays covered without
+    // exceptions; it pins which of the cases below are valid/invalid and
+    // checks the contiguous and streaming paths agree on that classification.
+    SECTION("accept() parity")
+    {
+        const std::vector<std::pair<std::string, bool>> cases =
+        {
+            {"\\u0041", true}, {"\\u00e4", true}, {"\\u00E4", true},
+            {"\\uD83D\\uDE00", true},
+            {"\\u12", false}, {"\\u12G4", false}, {"\\uXYZW", false},
+            {"\\uD800", false}, {"\\uD800A", false}, {"\\uD800\\u0041", false},
+            {"\\uDC00", false}, {"\\u", false}
+        };
+
+        for (const auto& c : cases)
+        {
+            for (const std::size_t offset :
+                    {
+                        std::size_t{0}, std::size_t{9}
+                    })
+            {
+                const std::string doc = "[\"" + std::string(offset, 'a') + c.first + "\"]";
+                CAPTURE(doc);
+                CHECK(json::accept(doc) == c.second);
+                std::stringstream ss(doc);
+                CHECK(json::accept(ss) == c.second);
+            }
+        }
+    }
+
+#if !defined(JSON_NOEXCEPTION)
+    // the full outcome of parsing @a doc: the parsed value, or the exact
+    // error message, so a mismatch in either is caught
+    const auto outcome = [](const std::string & doc, bool streaming) -> std::string
+    {
+        try
+        {
+            if (streaming)
+            {
+                std::stringstream ss(doc);
+                const json j = json::parse(ss);
+                return j.dump();
+            }
+            const json j = json::parse(doc);
+            return j.dump();
+        }
+        catch (const json::exception& e)
+        {
+            return {e.what()};
+        }
+    };
+
+    SECTION("contiguous vs streaming parity")
+    {
+        const std::vector<std::string> escapes =
+        {
+            "\\u0041",             // "A"
+            "\\u00e4",             // "ä" (lowercase hex)
+            "\\u00E4",             // "ä" (uppercase hex)
+            "\\uD83D\\uDE00",      // valid surrogate pair (an emoji)
+            "\\u12",               // truncated: only 2 hex digits before the closing quote
+            "\\u12G4",             // invalid hex digit at the 3rd position
+            "\\uXYZW",             // all 4 bytes invalid
+            "\\uD800",             // lone high surrogate, string ends right after
+            "\\uD800A",            // high surrogate not followed by another \u escape
+            "\\uD800\\u0041",      // high surrogate followed by \u, but not a low surrogate
+            "\\uDC00",             // lone low surrogate
+            "\\u",                 // '\u' with nothing after (closing quote right away)
+        };
+
+        // once at the start of the string and once past the first 8-byte SWAR
+        // word of the outer string_bulk_run, so the escape is reached both
+        // right after the opening quote and mid-run
+        for (const auto& escape : escapes)
+        {
+            for (const std::size_t offset :
+                    {
+                        std::size_t{0}, std::size_t{9}
+                    })
+            {
+                const std::string doc = "[\"" + std::string(offset, 'a') + escape + "\"]";
+                CAPTURE(doc);
+                CHECK(outcome(doc, false) == outcome(doc, true));
+            }
+
+            // the escape is the last thing before end of input: no closing
+            // quote at all
+            const std::string truncated_doc = "[\"" + escape;
+            CAPTURE(truncated_doc);
+            CHECK(outcome(truncated_doc, false) == outcome(truncated_doc, true));
+        }
+    }
+
+    SECTION("truncated \\u escape at every distance from the end of input")
+    {
+        // ia.bulk_remaining() must correctly report fewer than 4 bytes for
+        // every possible count of trailing hex-looking bytes (0, 1, 2, or 3)
+        // before end of input, so the fast path declines and the byte path
+        // alone reports the "must be followed by 4 hex digits" error, at the
+        // same position, in every case
+        for (const std::string& tail :
+                {
+                    std::string{}, std::string("1"), std::string("12"), std::string("123")
+                })
+        {
+            const std::string doc = "[\"\\u" + tail;
+            CAPTURE(doc);
+            CHECK(outcome(doc, false) == outcome(doc, true));
+            CHECK(outcome(doc, false).find("must be followed by 4 hex digits") != std::string::npos);
+        }
+    }
+
+    SECTION("invalid hex digit at every position of the 4")
+    {
+        // the fast path must decline for *any* invalid byte among the 4, not
+        // just the first, and the byte path must then stop at exactly that
+        // position - same as it always has
+        for (std::size_t bad_pos = 0; bad_pos < 4; ++bad_pos)
+        {
+            std::string digits = "1234";
+            digits[bad_pos] = 'g'; // not a hex digit
+            const std::string doc = "[\"\\u" + digits + "\"]";
+            CAPTURE(doc);
+            CHECK(outcome(doc, false) == outcome(doc, true));
+            CHECK(outcome(doc, false).find("must be followed by 4 hex digits") != std::string::npos);
+        }
+    }
+
+    SECTION("random escapes")
+    {
+        // A seeded PRNG builds the 4 bytes following `\u` from a mix of hex
+        // digits and non-hex bytes, at varying distances from the start of
+        // the string, to compare the two scanners on many more shapes than
+        // are practical to enumerate by hand.
+        std::mt19937 gen(7654321); // NOLINT(cert-msc32-c,cert-msc51-cpp)
+        const std::string hex_alphabet = "0123456789AaBbCcDdEeFf";
+        std::uniform_int_distribution<std::size_t> pick_hex(0, hex_alphabet.size() - 1);
+        std::uniform_int_distribution<int> pick_byte(1, 255); // never NUL
+        std::uniform_int_distribution<int> pick_is_hex(0, 4); // 4-in-5 chance of a hex digit
+        std::uniform_int_distribution<std::size_t> pick_offset(0, 12);
+
+        std::vector<std::string> mismatches;
+        for (int iter = 0; iter < 3000; ++iter)
+        {
+            std::string digits;
+            for (int i = 0; i < 4; ++i)
+            {
+                if (pick_is_hex(gen) != 0)
+                {
+                    digits += hex_alphabet[pick_hex(gen)];
+                }
+                else
+                {
+                    char c = static_cast<char>(pick_byte(gen));
+                    if (c == '"' || c == '\\')
+                    {
+                        // keep the string well-formed apart from the escape
+                        // itself, so any mismatch is attributable to the \u
+                        // handling and not to an unrelated quote/escape
+                        c = 'z';
+                    }
+                    digits += c;
+                }
+            }
+            const std::string doc = "[\"" + std::string(pick_offset(gen), 'a') + "\\u" + digits + "\"]";
+            if (outcome(doc, false) != outcome(doc, true))
+            {
+                mismatches.push_back(doc);
+            }
+        }
+        CAPTURE(mismatches);
+        CHECK(mismatches.empty());
+    }
+#endif
 }
 
 namespace
