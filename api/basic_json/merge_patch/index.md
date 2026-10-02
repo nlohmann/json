@@ -34,6 +34,10 @@ Thereby, `Target` is the current object; that is, the patch is applied to the cu
 
 Linear in the lengths of `apply_patch`.
 
+## Notes
+
+`apply_patch` may be `*this` itself or refer to a value contained in `*this` (for example, a subobject returned by `(*this)[key]`); it is read as it was when `merge_patch()` was called, before any modification of `*this`.
+
 ## Examples
 
 Example
@@ -108,3 +112,4 @@ Output:
 ## Version history
 
 - Added in version 3.0.0.
+- Fixed use of freed or relocated memory when `apply_patch` is `*this` or refers to a value contained in `*this`, in version 3.13.0.

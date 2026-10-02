@@ -83,6 +83,22 @@ When defined, default parse and serialize functions for enums are excluded and h
 
 See [full documentation of `JSON_DISABLE_ENUM_SERIALIZATION`](../api/macros/json_disable_enum_serialization.md).
 
+## `JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`
+
+When defined to `1`, a JSON value can no longer be created from a one-element `std::tuple` holding a reference to a JSON
+value, such as the result of `std::forward_as_tuple(j)`. This lets `std::tuple` convert such tuples element-wise.
+
+See [full documentation of `JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`](../api/macros/json_disable_tuple_reference_conversion.md).
+
+## `JSON_NO_AUTOMATIC_UDLS`
+
+When defined, `<nlohmann/json.hpp>` does not include `<nlohmann/json_literals.hpp>` with the user-defined string literals
+`operator""_json` and `operator""_json_pointer`. This reduces the compile time of translation units that do not use
+them, because the literals instantiate the parser in every translation unit that includes them. Include
+`<nlohmann/json_literals.hpp>` where the literals are needed.
+
+See [full documentation of `JSON_NO_AUTOMATIC_UDLS`](../api/macros/json_no_automatic_udls.md).
+
 ## `JSON_NO_IO`
 
 When defined, headers `<cstdio>`, `<ios>`, `<iosfwd>`, `<istream>`, and `<ostream>` are not included and parse functions

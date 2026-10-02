@@ -14,7 +14,7 @@ The default value is `1`.
 #define JSON_USE_GLOBAL_UDLS 1
 ```
 
-When the macro is not defined, the library will define it to its default value.
+When the macro is not defined, the library behaves as if it were defined to its default value.
 
 ## Notes
 
@@ -27,6 +27,10 @@ To prepare existing code, define `JSON_USE_GLOBAL_UDLS` to `0` and bring the str
 CMake option
 
 The placement of user-defined string literals can also be controlled with the CMake option [`JSON_GlobalUDLs`](https://json.nlohmann.me/integration/cmake/#json_globaludls) (`ON` by default) which defines `JSON_USE_GLOBAL_UDLS` accordingly.
+
+Leaving out the literals
+
+If [`JSON_NO_AUTOMATIC_UDLS`](https://json.nlohmann.me/api/macros/json_no_automatic_udls/index.md) is defined, the literals are only declared where `<nlohmann/json_literals.hpp>` is included; this macro then applies to that header.
 
 ## Examples
 
@@ -87,6 +91,7 @@ Output:
 
 - [`operator""_json`](https://json.nlohmann.me/api/operator_literal_json/index.md)
 - [`operator""_json_pointer`](https://json.nlohmann.me/api/operator_literal_json_pointer/index.md)
+- [`JSON_NO_AUTOMATIC_UDLS`](https://json.nlohmann.me/api/macros/json_no_automatic_udls/index.md) - do not include the user-defined string literals automatically
 - [JSON_GlobalUDLs](https://json.nlohmann.me/integration/cmake/#json_globaludls) - CMake option to control the macro
 
 ## Version history

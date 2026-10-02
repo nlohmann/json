@@ -10,7 +10,7 @@ The macro only affects the JSON text parser ([`parse`](https://json.nlohmann.me/
 
 - The binary formats ([`from_bjdata`](https://json.nlohmann.me/api/basic_json/from_bjdata/index.md), [`from_bon8`](https://json.nlohmann.me/api/basic_json/from_bon8/index.md), [`from_bson`](https://json.nlohmann.me/api/basic_json/from_bson/index.md), [`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md), [`from_msgpack`](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md), [`from_ubjson`](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md)) are never affected: there, `0x00` is ordinary data.
 - A bare `const char*` pointer has no length of its own, so its length is still determined with `strlen()`. The first NUL byte therefore still marks the end of the input, and nothing after it is read.
-- One trailing `'\0'` at the end of a `char` array (e.g., a string literal) is trimmed; see the warning below.
+- One trailing `'\0'` at the end of a `char`, `wchar_t`, `char16_t`, `char32_t`, or (C++20) `char8_t` array (e.g., a string literal) is trimmed; see the warning below.
 
 ## Default definition
 
@@ -39,7 +39,7 @@ Opt-in only
 
 This macro must be defined **before** including `<nlohmann/json.hpp>`. Defining it after the include has no effect.
 
-Enabling it also changes how a `char` array (including a string literal, e.g. `json::parse("123")`) is read: such an array normally carries a trailing `'\0'` contributed by the compiler, not by the source text. With this macro enabled, that one trailing byte is trimmed if present so that parsing a string literal keeps working; every other byte in the array - including any `'\0'` that is not the very last element - is read as real data and rejected like any other unexpected byte. Arrays of any other element type (`unsigned char`, `std::uint8_t`, ...), as used for CBOR or MessagePack, are never affected by this trimming; their full extent - including a genuine trailing `0x00` - is always preserved, in both states of this macro.
+Enabling it also changes how an array of a text-literal element type (`char`, `wchar_t`, `char16_t`, `char32_t`, or, since C++20, `char8_t` - including a string literal, e.g. `json::parse("123")` or `json::parse(L"123")`) is read: such an array normally carries a trailing `'\0'` contributed by the compiler, not by the source text. With this macro enabled, that one trailing element is trimmed if present so that parsing a string literal keeps working, for any of these character types; every other element in the array - including any `'\0'` that is not the very last element - is read as real data and rejected like any other unexpected byte. Arrays of any other element type (`unsigned char`, `std::uint8_t`, ...), as used for CBOR or MessagePack, are never affected by this trimming; their full extent - including a genuine trailing `0x00` - is always preserved, in both states of this macro.
 
 ABI compatibility
 

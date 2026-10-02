@@ -44,6 +44,8 @@ Only the following symbols are exported from `nlohmann.json`:
 - `nlohmann::literals::json_literals::operator""_json`
 - `nlohmann::literals::json_literals::operator""_json_pointer`
 
+The module always exports the two user-defined string literals, even if [`JSON_NO_AUTOMATIC_UDLS`](https://json.nlohmann.me/api/macros/json_no_automatic_udls/index.md) is defined when building it.
+
 Additionally, the following `nlohmann::detail` symbols are exported, solely to work around an MSVC compilation issue ([#3970](https://github.com/nlohmann/json/issues/3970)). They are implementation details, not part of the public API, and should not be used directly:
 
 - `nlohmann::detail::json_sax_dom_callback_parser`

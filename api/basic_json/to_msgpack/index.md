@@ -90,3 +90,4 @@ Output:
 
 - Added in version 2.0.9.
 - Throws `out_of_range.412` and `out_of_range.415` since version 3.13.0.
+- Fixed in version 3.13.0 to serialize `number_integer_t`/`number_unsigned_t` pairs of different width correctly; before, integers could be serialized with the wrong value if `number_integer_t` was narrower than `number_unsigned_t`.

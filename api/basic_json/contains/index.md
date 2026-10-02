@@ -50,6 +50,7 @@ Logarithmic in the size of the JSON object.
 
 - This method always returns `false` when executed on a JSON type that is not an object.
 - This method can be executed on any JSON value type.
+- Calling this function with an integer argument (for example, `contains(0)`) does not compile: such an argument would otherwise implicitly convert to a null `const char*` and, from there, cause undefined behavior when constructing a `std::string` for the object key. To check for an array element instead, use [`at`](https://json.nlohmann.me/api/basic_json/at/index.md), [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md), or compare against [`size`](https://json.nlohmann.me/api/basic_json/size/index.md).
 
 Postconditions
 
@@ -197,3 +198,4 @@ false
 1. Added in version 3.11.0.
 1. Added in version 3.6.0. Extended template `KeyType` to support comparable types in version 3.11.0.
 1. Added in version 3.7.0.
+1. Deleted overloads for integral key types added in version 3.13.0 to reject such calls at compile time instead of causing undefined behavior at runtime.

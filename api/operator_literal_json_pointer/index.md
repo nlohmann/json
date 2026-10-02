@@ -17,7 +17,7 @@ using namespace nlohmann::literals::json_literals;
 using namespace nlohmann;
 ```
 
-This is suggested to ease migration to the next major version release of the library. See [`JSON_USE_GLOBAL_UDLS`](https://json.nlohmann.me/api/macros/json_use_global_udls/#notes) for details.
+This is suggested to ease migration to the next major version release of the library. See [`JSON_USE_GLOBAL_UDLS`](https://json.nlohmann.me/api/macros/json_use_global_udls/#notes) for details. The operator is declared in header `<nlohmann/json_literals.hpp>`, which `<nlohmann/json.hpp>` includes unless [`JSON_NO_AUTOMATIC_UDLS`](https://json.nlohmann.me/api/macros/json_no_automatic_udls/index.md) is defined.
 
 ## Parameters
 
@@ -69,6 +69,7 @@ Output:
 ## See also
 
 - [json_pointer](https://json.nlohmann.me/api/json_pointer/index.md) - type to represent JSON Pointers
+- [JSON_NO_AUTOMATIC_UDLS](https://json.nlohmann.me/api/macros/json_no_automatic_udls/index.md) - do not include the user-defined string literals automatically
 
 ## Version history
 

@@ -48,6 +48,10 @@ Basic guarantee: if an exception is thrown during the operation, the JSON value 
 1. O(N\*log(size() + N)), where N is the number of elements to insert.
 1. O(N\*log(size() + N)), where N is the number of elements to insert.
 
+## Notes
+
+The argument `j` (or, for overload (2), the range `[first, last)`) may be `*this` itself or refer to a value contained in `*this` (for example, a subobject returned by `(*this)[key]`); it is read as it was when `update()` was called, before any modification of `*this`.
+
 ## Examples
 
 Example
@@ -221,3 +225,4 @@ effective_settings.update(user_settings, true);
 
 - Added in version 3.0.0.
 - Added `merge_objects` parameter in 3.10.5.
+- Fixed use of freed or relocated memory when the argument is `*this` or refers to a value contained in `*this`, in version 3.13.0.

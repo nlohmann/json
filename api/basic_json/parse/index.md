@@ -78,7 +78,8 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 ## Exceptions
 
-- Throws [`parse_error.101`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error101) in case of an unexpected token, or empty input like a null `FILE*` or `char*` pointer.
+- Throws [`parse_error.101`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error101) in case of an unexpected token, or empty input like a null `FILE*` or `char*` pointer, or an `std::istream` without a stream buffer (`i.rdbuf() == nullptr`, for instance `std::istream(nullptr)`).
+- If reading from an `std::istream` reaches the end of the input and `eofbit` is part of the stream's [`exceptions()`](https://en.cppreference.com/w/cpp/io/basic_ios/exceptions) mask, the `std::ios_base::failure` thrown by the stream itself propagates instead of a `parse_error`, the same as it would for the standard library's own extraction operators.
 
 ## Complexity
 
@@ -630,6 +631,7 @@ Output:
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
 - `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 to optionally reject a NUL byte in the input instead of treating it as end of input; planned to become the default in version 4.0.0.
+- Extended empty-input detection to also cover an `std::istream` without a stream buffer, and fixed a crash (`std::terminate`) when parsing from an `std::istream` with `eofbit` in its exception mask, in version 3.13.0.
 
 Deprecation
 

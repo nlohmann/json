@@ -52,7 +52,7 @@ Size constraints
 
 The following values can **not** be converted to a BJData value:
 
-- strings with more than 18446744073709551615 bytes, i.e., 2^{64}-1 bytes (theoretical)
+- strings with more than 18446744073709551615 bytes, i.e., 264-1 bytes (theoretical)
 
 Unused BJData markers
 

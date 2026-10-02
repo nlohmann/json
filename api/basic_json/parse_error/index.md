@@ -53,7 +53,7 @@ classDiagram
 
 ## Notes
 
-For an input with n bytes, 1 is the index of the first character and n+1 is the index of the terminating null byte or the end of file. This also holds true when reading a byte vector for binary formats.
+For an input with *n* bytes, 1 is the index of the first character and *n*+1 is the index of the terminating null byte or the end of file. This also holds true when reading a byte vector for binary formats.
 
 ## Examples
 

@@ -28,7 +28,7 @@ On number interoperability, the following remarks are made:
 
 This specification allows implementations to set limits on the range and precision of numbers accepted. Since software that implements IEEE 754 binary64 (double precision) numbers [IEEE754] is generally available and widely used, good interoperability can be achieved by implementations that expect no more precision or range than these provide, in the sense that implementations will approximate JSON numbers within the expected precision. A JSON number such as 1E400 or 3.141592653589793238462643383279 may indicate potential interoperability problems, since it suggests that the software that created it expects receiving software to have greater capabilities for numeric magnitude and precision than is widely available.
 
-Note that when such software is used, numbers that are integers and are in the range [-2^{53}+1, 2^{53}-1] are interoperable in the sense that implementations will agree exactly on their numeric values.
+Note that when such software is used, numbers that are integers and are in the range [-253+1, 253-1] are interoperable in the sense that implementations will agree exactly on their numeric values.
 
 ## Library implementation
 
@@ -59,8 +59,8 @@ Examples
 
 Interoperability
 
-- The library is interoperable with respect to the specification, because its supported range [-2^{63}, 2^{64}-1] is larger than the described range [-2^{53}+1, 2^{53}-1].
-- All integers outside the range [-2^{63}, 2^{64}-1], as well as floating-point numbers are stored as `double`. This also concurs with the specification above.
+- The library is interoperable with respect to the specification, because its supported range [-263, 264-1] is larger than the described range [-253+1, 253-1].
+- All integers outside the range [-263, 264-1], as well as floating-point numbers are stored as `double`. This also concurs with the specification above.
 
 ### Zeros
 

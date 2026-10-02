@@ -58,6 +58,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 1. The function can throw the following exceptions:
    - Throws [`type_error.305`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error305) if the JSON value is not an array or null; in that case, using the `[]` operator with an index makes no sense.
+   - Throws `std::length_error` if `idx` equals the maximum value of `size_type`; the array is left unchanged. (This is the one index for which growing the array to hold it cannot be expressed as a `size_type` size, the same way an oversized [`resize`](https://en.cppreference.com/w/cpp/container/vector/resize) throws.)
 1. The function can throw the following exceptions:
    - Throws [`type_error.305`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error305) if the JSON value is not an object or null; in that case, using the `[]` operator with a key makes no sense.
 1. See 2.
@@ -478,7 +479,7 @@ Output:
 
 ## Version history
 
-1. Added in version 1.0.0.
+1. Added in version 1.0.0. Fixed in version 3.13.0 to throw `std::length_error` instead of emptying the array and accessing it out of bounds when `idx` equals the maximum value of `size_type`.
 1. Added in version 1.0.0. Added overloads for `T* key` in version 1.1.0. Removed overloads for `T* key` (replaced by 3) in version 3.11.0.
 1. Added in version 3.11.0. Fixed in version 3.13.0 to consistently accept `std::string_view`-convertible keys, as already supported by [`at`](https://json.nlohmann.me/api/basic_json/at/index.md), [`value`](https://json.nlohmann.me/api/basic_json/value/index.md), [`find`](https://json.nlohmann.me/api/basic_json/find/index.md), and other lookup functions.
 1. Added in version 2.0.0.

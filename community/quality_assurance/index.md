@@ -16,89 +16,89 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
 
   Compilers used in continuous integration
 
-  | Compiler                                     | Architecture | Operating System                  | CI        |
-  | -------------------------------------------- | ------------ | --------------------------------- | --------- |
-  | AppleClang 15.0.0.15000040; Xcode 15.0.1     | arm64        | macOS 14.7.2 (Sonoma)             | GitHub    |
-  | AppleClang 15.0.0.15000100; Xcode 15.1       | arm64        | macOS 14.7.2 (Sonoma)             | GitHub    |
-  | AppleClang 15.0.0.15000100; Xcode 15.2       | arm64        | macOS 14.7.2 (Sonoma)             | GitHub    |
-  | AppleClang 15.0.0.15000309; Xcode 15.3       | arm64        | macOS 14.7.2 (Sonoma)             | GitHub    |
-  | AppleClang 15.0.0.15000309; Xcode 15.4       | arm64        | macOS 14.7.2 (Sonoma)             | GitHub    |
-  | AppleClang 16.0.0.16000026; Xcode 16         | arm64        | macOS 15.2 (Sequoia)              | GitHub    |
-  | AppleClang 16.0.0.16000026; Xcode 16.1       | arm64        | macOS 15.2 (Sequoia)              | GitHub    |
-  | AppleClang 16.0.0.16000026; Xcode 16.2       | arm64        | macOS 15.2 (Sequoia)              | GitHub    |
-  | AppleClang 17.0.0.17000013; Xcode 16.3       | arm64        | macOS 15.5 (Sequoia)              | GitHub    |
-  | AppleClang 17.0.0.17000013; Xcode 16.4       | arm64        | macOS 15.5 (Sequoia)              | GitHub    |
-  | AppleClang 17.0.0.17000319; Xcode 26.0.1     | arm64        | macOS 15.5 (Sequoia)              | GitHub    |
-  | Clang 3.4.2                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 3.5.2                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 3.6.2                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 3.7.1                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 3.8.1                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 3.9.1                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 4.0.1                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 5.0.2                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 6.0.1                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 7.1.0                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 8.0.1                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 9.0.1                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 10.0.1                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 11.0.1 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
-  | Clang 11.1.0                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 12.0.1 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
-  | Clang 12.0.1                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 13.0.1 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
-  | Clang 13.0.1                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 14.0.6                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 14.0.6 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
-  | Clang 15.0.7                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 15.0.7 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
-  | Clang 16.0.6                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 16.0.6 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
-  | Clang 17.0.6                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 18.1.8                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 18.1.8 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
-  | Clang 19.1.5 with MSVC-like command-line     | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
-  | Clang 19.1.7                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 19.1.7 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
-  | Clang 20.1.1                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 20.1.8 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
-  | Clang 21.1.8                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | Clang 22.1.8                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | CUDA 11.8.0 (nvcc)                           | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
-  | CUDA 12.1.1 (nvcc)                           | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
-  | CUDA 12.6.3 (nvcc)                           | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
-  | Emscripten 4.0.6                             | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | GNU 4.8.5                                    | x86_64       | Ubuntu 20.04 LTS                  | GitHub    |
-  | GNU 4.9.3                                    | x86_64       | Ubuntu 20.04 LTS                  | GitHub    |
-  | GNU 5.5.0                                    | x86_64       | Ubuntu 20.04 LTS                  | GitHub    |
-  | GNU 6.4.0                                    | x86_64       | Ubuntu 20.04 LTS                  | GitHub    |
-  | GNU 7.5.0                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | GNU 8.5.0                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | GNU 9.3.0                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | GNU 9.4.0                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | GNU 9.5.0                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | GNU 10.5.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | GNU 11.4.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | GNU 11.5.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | GNU 12.2.0 (MinGW-W64 i686-ucrt-posix-dwarf) | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
-  | GNU 12.2.0 (MinGW-W64 x86_64-ucrt-posix-seh) | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
-  | GNU 12.4.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | GNU 13.3.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | GNU 14.2.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | GNU 15.1.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | GNU 16.1.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-  | GNU 16.1.0                                   | arm64        | Linux 6.1.100                     | Cirrus CI |
-  | icpc (ICC) 2021.10.0 20230609                | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
-  | icpx (Intel oneAPI DPC++/C++) 2025.3.2       | x86_64       | Ubuntu 24.04 LTS                  | GitHub    |
-  | nvc++ (NVIDIA HPC SDK) 25.5-0                | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
-  | MSVC 19.0.24241.7                            | x86          | Windows 8.1                       | AppVeyor  |
-  | MSVC 19.16.27035.0                           | x86          | Windows-10 (Build 14393)          | AppVeyor  |
-  | MSVC 19.29.30157.0                           | x86          | Windows-10 (Build 17763)          | AppVeyor  |
-  | MSVC 19.44.35207.0                           | arm64        | Windows 11 (Build 26200)          | GitHub    |
-  | MSVC 19.44.35214.0                           | x86          | Windows Server 2022 (Build 20348) | GitHub    |
-  | MSVC 19.44.35214.0                           | x86_64       | Windows Server 2022 (Build 20348) | GitHub    |
-  | MSVC 19.51.36231.0                           | x86          | Windows Server 2025 (Build 26100) | GitHub    |
-  | MSVC 19.51.36231.0                           | x86_64       | Windows Server 2025 (Build 26100) | GitHub    |
+  | Compiler                                     | Architecture | Operating System                  | CI       |
+  | -------------------------------------------- | ------------ | --------------------------------- | -------- |
+  | AppleClang 15.0.0.15000040; Xcode 15.0.1     | arm64        | macOS 14.7.2 (Sonoma)             | GitHub   |
+  | AppleClang 15.0.0.15000100; Xcode 15.1       | arm64        | macOS 14.7.2 (Sonoma)             | GitHub   |
+  | AppleClang 15.0.0.15000100; Xcode 15.2       | arm64        | macOS 14.7.2 (Sonoma)             | GitHub   |
+  | AppleClang 15.0.0.15000309; Xcode 15.3       | arm64        | macOS 14.7.2 (Sonoma)             | GitHub   |
+  | AppleClang 15.0.0.15000309; Xcode 15.4       | arm64        | macOS 14.7.2 (Sonoma)             | GitHub   |
+  | AppleClang 16.0.0.16000026; Xcode 16         | arm64        | macOS 15.2 (Sequoia)              | GitHub   |
+  | AppleClang 16.0.0.16000026; Xcode 16.1       | arm64        | macOS 15.2 (Sequoia)              | GitHub   |
+  | AppleClang 16.0.0.16000026; Xcode 16.2       | arm64        | macOS 15.2 (Sequoia)              | GitHub   |
+  | AppleClang 17.0.0.17000013; Xcode 16.3       | arm64        | macOS 15.5 (Sequoia)              | GitHub   |
+  | AppleClang 17.0.0.17000013; Xcode 16.4       | arm64        | macOS 15.5 (Sequoia)              | GitHub   |
+  | AppleClang 17.0.0.17000319; Xcode 26.0.1     | arm64        | macOS 15.5 (Sequoia)              | GitHub   |
+  | Clang 3.4.2                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 3.5.2                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 3.6.2                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 3.7.1                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 3.8.1                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 3.9.1                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 4.0.1                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 5.0.2                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 6.0.1                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 7.1.0                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 8.0.1                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 9.0.1                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 10.0.1                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 11.0.1 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub   |
+  | Clang 11.1.0                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 12.0.1 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub   |
+  | Clang 12.0.1                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 13.0.1 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub   |
+  | Clang 13.0.1                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 14.0.6                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 14.0.6 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub   |
+  | Clang 15.0.7                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 15.0.7 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub   |
+  | Clang 16.0.6                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 16.0.6 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub   |
+  | Clang 17.0.6                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 18.1.8                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 18.1.8 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub   |
+  | Clang 19.1.5 with MSVC-like command-line     | x86_64       | Windows Server 2022 (Build 20348) | GitHub   |
+  | Clang 19.1.7                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 19.1.7 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub   |
+  | Clang 20.1.1                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 20.1.8 with GNU-like command-line      | x86_64       | Windows Server 2022 (Build 20348) | GitHub   |
+  | Clang 21.1.8                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | Clang 22.1.8                                 | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | CUDA 11.8.0 (nvcc)                           | x86_64       | Ubuntu 22.04 LTS                  | GitHub   |
+  | CUDA 12.1.1 (nvcc)                           | x86_64       | Ubuntu 22.04 LTS                  | GitHub   |
+  | CUDA 12.6.3 (nvcc)                           | x86_64       | Ubuntu 22.04 LTS                  | GitHub   |
+  | Emscripten 4.0.6                             | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | GNU 4.8.5                                    | x86_64       | Ubuntu 20.04 LTS                  | GitHub   |
+  | GNU 4.9.3                                    | x86_64       | Ubuntu 20.04 LTS                  | GitHub   |
+  | GNU 5.5.0                                    | x86_64       | Ubuntu 20.04 LTS                  | GitHub   |
+  | GNU 6.4.0                                    | x86_64       | Ubuntu 20.04 LTS                  | GitHub   |
+  | GNU 7.5.0                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | GNU 8.5.0                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | GNU 9.3.0                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | GNU 9.4.0                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | GNU 9.5.0                                    | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | GNU 10.5.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | GNU 11.4.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | GNU 11.5.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | GNU 12.2.0 (MinGW-W64 i686-ucrt-posix-dwarf) | x86_64       | Windows Server 2022 (Build 20348) | GitHub   |
+  | GNU 12.2.0 (MinGW-W64 x86_64-ucrt-posix-seh) | x86_64       | Windows Server 2022 (Build 20348) | GitHub   |
+  | GNU 12.4.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | GNU 13.3.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | GNU 14.2.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | GNU 15.1.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | GNU 16.1.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub   |
+  | GNU 16.1.0                                   | arm64        | Ubuntu 24.04                      | GitHub   |
+  | icpc (ICC) 2021.10.0 20230609                | x86_64       | Ubuntu 22.04 LTS                  | GitHub   |
+  | icpx (Intel oneAPI DPC++/C++) 2025.3.2       | x86_64       | Ubuntu 24.04 LTS                  | GitHub   |
+  | nvc++ (NVIDIA HPC SDK) 25.5-0                | x86_64       | Ubuntu 22.04 LTS                  | GitHub   |
+  | MSVC 19.0.24241.7                            | x86          | Windows 8.1                       | AppVeyor |
+  | MSVC 19.16.27035.0                           | x86          | Windows-10 (Build 14393)          | AppVeyor |
+  | MSVC 19.29.30157.0                           | x86          | Windows-10 (Build 17763)          | AppVeyor |
+  | MSVC 19.44.35207.0                           | arm64        | Windows 11 (Build 26200)          | GitHub   |
+  | MSVC 19.44.35214.0                           | x86          | Windows Server 2022 (Build 20348) | GitHub   |
+  | MSVC 19.44.35214.0                           | x86_64       | Windows Server 2022 (Build 20348) | GitHub   |
+  | MSVC 19.51.36231.0                           | x86          | Windows Server 2025 (Build 26100) | GitHub   |
+  | MSVC 19.51.36231.0                           | x86_64       | Windows Server 2025 (Build 26100) | GitHub   |
 
 - The library is compiled with all C++ language revisions (C++11, C++14, C++17, C++20, C++23, and C++26) to detect and fix language deprecations early.
 
@@ -113,7 +113,6 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
   # -Wno-c++98-compat               The library targets C++11.
   # -Wno-c++98-compat-pedantic      The library targets C++11.
   # -Wno-deprecated-declarations    The library contains annotations for deprecated functions.
-  # -Wno-extra-semi-stmt            The library uses assert which triggers this warning.
   # -Wno-padded                     We do not care about padding warnings.
   # -Wno-covered-switch-default     All switches list all cases and a default case.
   # -Wno-c2y-extensions             Clang 22.1 diagnoses __COUNTER__ as a C2y extension, also in
@@ -131,7 +130,6 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
       -Wno-c++98-compat
       -Wno-c++98-compat-pedantic
       -Wno-deprecated-declarations
-      -Wno-extra-semi-stmt
       -Wno-padded
       -Wno-covered-switch-default
       -Wno-c2y-extensions
@@ -144,7 +142,7 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
   GCC warnings
 
   ```
-  # Warning flags determined for GCC 15.1.0 with https://github.com/nlohmann/gcc_flags:
+  # Warning flags determined for GCC 16.2.0 with https://github.com/nlohmann/gcc_flags:
   # Ignored GCC warnings:
   # -Wno-abi-tag           We do not care about ABI tags.
   # -Wno-aggregate-return  The library uses aggregate returns.
@@ -162,6 +160,8 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
       --extra-warnings
       -W
       -WNSObject-attribute
+      -Wabbreviated-auto-in-template-arg
+      -Wabi
       -Wno-abi-tag
       -Waddress
       -Waddress-of-packed-member
@@ -210,6 +210,7 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
       -Wanalyzer-tainted-divisor
       -Wanalyzer-tainted-offset
       -Wanalyzer-tainted-size
+      -Wanalyzer-throw-of-unexpected-type
       -Wanalyzer-too-complex
       -Wanalyzer-undefined-behavior-ptrdiff
       -Wanalyzer-undefined-behavior-strtok
@@ -226,10 +227,13 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
       -Warith-conversion
       -Warray-bounds=2
       -Warray-compare
+      -Warray-parameter
       -Warray-parameter=2
       -Wattribute-alias=2
       -Wattribute-warning
       -Wattributes
+      -Wauto-profile
+      -Wbidi-chars=any
       -Wbool-compare
       -Wbool-operation
       -Wbuiltin-declaration-mismatch
@@ -245,6 +249,7 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
       -Wc++20-compat
       -Wc++20-extensions
       -Wc++23-extensions
+      -Wc++26-compat
       -Wc++26-extensions
       -Wc++2a-compat
       -Wcalloc-transposed-args
@@ -288,6 +293,7 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
       -Wdeprecated-enum-enum-conversion
       -Wdeprecated-enum-float-conversion
       -Wdeprecated-literal-operator
+      -Wdeprecated-openmp
       -Wdeprecated-variadic-comma-omission
       -Wdisabled-optimization
       -Wdiv-by-zero
@@ -302,21 +308,17 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
       -Wenum-conversion
       -Wexceptions
       -Wexpansion-to-defined
+      -Wexpose-global-module-tu-local
+      -Wexternal-tu-local
       -Wextra
       -Wextra-semi
       -Wflex-array-member-not-at-end
       -Wfloat-conversion
       -Wfloat-equal
-      -Wformat -Wformat-contains-nul
-      -Wformat -Wformat-diag
-      -Wformat -Wformat-extra-args
-      -Wformat -Wformat-nonliteral
-      -Wformat -Wformat-overflow=2
-      -Wformat -Wformat-security
-      -Wformat -Wformat-signedness
-      -Wformat -Wformat-truncation=2
-      -Wformat -Wformat-y2k
-      -Wformat -Wformat-zero-length
+      -Wformat-diag
+      -Wformat-overflow=2
+      -Wformat-signedness
+      -Wformat-truncation=2
       -Wformat=2
       -Wframe-address
       -Wfree-nonheap-object
@@ -343,6 +345,8 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
       -Winvalid-offsetof
       -Winvalid-pch
       -Winvalid-utf8
+      -Wkeyword-macro
+      -Wleading-whitespace=spaces
       -Wliteral-suffix
       -Wlogical-not-parentheses
       -Wlogical-op
@@ -373,6 +377,7 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
       -Wnarrowing
       -Wnoexcept
       -Wnoexcept-type
+      -Wnon-c-typedef-for-linkage
       -Wnon-template-friend
       -Wnon-virtual-dtor
       -Wnonnull
@@ -415,6 +420,8 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
       -Wscalar-storage-order
       -Wself-move
       -Wsequence-point
+      -Wsfinae-incomplete
+      -Wsfinae-incomplete=2
       -Wshadow=compatible-local
       -Wshadow=global
       -Wshadow=local
@@ -435,6 +442,7 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
       -Wstrict-aliasing=3
       -Wstrict-null-sentinel
       -Wstrict-overflow
+      -Wstrict-overflow=5
       -Wstring-compare
       -Wstringop-overflow
       -Wstringop-overflow=4
@@ -479,8 +487,8 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
       -Wunreachable-code
       -Wunsafe-loop-optimizations
       -Wunused
-      -Wunused-but-set-parameter
-      -Wunused-but-set-variable
+      -Wunused-but-set-parameter=3
+      -Wunused-but-set-variable=3
       -Wunused-const-variable=2
       -Wunused-function
       -Wunused-label
@@ -517,7 +525,7 @@ The library has no prerequisites other than the Standard Template Library (STL).
 
 - The library is compiled and tested with both [libc++](https://libcxx.llvm.org) and [libstdc++](https://gcc.gnu.org/onlinedocs/libstdc++/) to detect subtle differences or incompatibilities.
 - The code checked with [Include What You Use (IWYU)](https://include-what-you-use.org) that all required standard headers are included.
-- On Windows, the library is compiled with `<Windows.h>` being included to detect and avoid common bugs.
+- On Windows, the library is compiled with `<Windows.h>` being included to detect and avoid common bugs (see [`unit-windows_h.cpp`](https://github.com/nlohmann/json/blob/develop/tests/src/unit-windows_h.cpp)).
 - The library is compiled with exceptions disabled to support alternative means of error handling.
 
 ## Stable public API
@@ -560,12 +568,18 @@ The code is checked with state-of-the-art static code analysis tools.
   Clang-Tidy configuration (.clang-tidy)
 
   ```
-  # TODO: The first three checks are only removed to get the CI going. They have to be addressed at some point.
-  # TODO: portability-avoid-pragma-once: should be fixed eventually
+  # bugprone-use-after-move (hicpp-invalid-access-moved is its alias) still flags
+  # the basic_json move constructor, which forwards the whole object to its base
+  # class (#5724), and two forwards in the error-message construction of
+  # at(KeyType&&) (json.hpp, both overloads: find(std::forward<KeyType>(key))
+  # followed by string_t(std::forward<KeyType>(key)) in the throw), which #5689
+  # rewrites. Re-enable both checks once those changes have landed.
+  # portability-avoid-pragma-once: kept disabled on purpose. #pragma once is accepted
+  # by every supported compiler, and tools/amalgamate/amalgamate.py strips it from
+  # single_include, so there is nothing left to fix here.
 
   Checks: '*,
 
-           -portability-template-virtual-member-function,
            -bugprone-use-after-move,
            -hicpp-invalid-access-moved,
 
@@ -599,7 +613,6 @@ The code is checked with state-of-the-art static code analysis tools.
            -google-readability-function-size,
            -google-runtime-float,
            -google-runtime-int,
-           -google-runtime-references,
            -hicpp-avoid-goto,
            -hicpp-explicit-conversions,
            -hicpp-function-size,
@@ -633,6 +646,7 @@ The code is checked with state-of-the-art static code analysis tools.
            -readability-magic-numbers,
            -readability-redundant-access-specifiers,
            -readability-redundant-parentheses,
+           -readability-redundant-typename,
            -readability-simplify-boolean-expr,
            -readability-uppercase-literal-suffix,
            -readability-use-concise-preprocessor-directives'
@@ -640,10 +654,13 @@ The code is checked with state-of-the-art static code analysis tools.
   CheckOptions:
     - key: hicpp-special-member-functions.AllowSoleDefaultDtor
       value: 1
+    # clang-tidy 22.1 extended this check to classes and enums; the test files
+    # define many such helper types at namespace scope, which is harmless
+    - key: misc-use-internal-linkage.AnalyzeTypes
+      value: false
 
   WarningsAsErrors: '*'
 
-  #HeaderFilterRegex: '.*nlohmann.*'
   HeaderFilterRegex: '.*hpp$'
   ```
 

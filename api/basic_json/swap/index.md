@@ -6,7 +6,9 @@ void swap(reference other) noexcept (
     std::is_nothrow_move_constructible<value_t>::value &&
     std::is_nothrow_move_assignable<value_t>::value &&
     std::is_nothrow_move_constructible<json_value>::value &&
-    std::is_nothrow_move_assignable<json_value>::value
+    std::is_nothrow_move_assignable<json_value>::value &&
+    std::is_nothrow_move_constructible<json_base_class_t>::value &&
+    std::is_nothrow_move_assignable<json_base_class_t>::value
 );
 
 // (2)
@@ -14,7 +16,9 @@ friend void swap(reference left, reference right) noexcept (
     std::is_nothrow_move_constructible<value_t>::value &&
     std::is_nothrow_move_assignable<value_t>::value &&
     std::is_nothrow_move_constructible<json_value>::value &&
-    std::is_nothrow_move_assignable<json_value>::value
+    std::is_nothrow_move_assignable<json_value>::value &&
+    std::is_nothrow_move_constructible<json_base_class_t>::value &&
+    std::is_nothrow_move_assignable<json_base_class_t>::value
 );
 
 // (3)
@@ -33,8 +37,8 @@ void swap(binary_t& other);
 void swap(typename binary_t::container_type& other);
 ```
 
-1. Exchanges the contents of the JSON value with those of `other`. Does not invoke any move, copy, or swap operations on individual elements. All iterators and references remain valid. The past-the-end iterator is invalidated. If macro [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) is defined to `1`, the [`start_pos()`](https://json.nlohmann.me/api/basic_json/start_pos/index.md)/[`end_pos()`](https://json.nlohmann.me/api/basic_json/end_pos/index.md) diagnostic positions are exchanged along with the value.
-1. Exchanges the contents of the JSON value from `left` with those of `right`. Does not invoke any move, copy, or swap operations on individual elements. All iterators and references remain valid. The past-the-end iterator is invalidated. Implemented as a friend function callable via ADL. If macro [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) is defined to `1`, the [`start_pos()`](https://json.nlohmann.me/api/basic_json/start_pos/index.md)/[`end_pos()`](https://json.nlohmann.me/api/basic_json/end_pos/index.md) diagnostic positions are exchanged along with the value.
+1. Exchanges the contents of the JSON value with those of `other`. Does not invoke any move, copy, or swap operations on individual elements. All iterators and references remain valid. The past-the-end iterator is invalidated. If macro [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) is defined to `1`, the [`start_pos()`](https://json.nlohmann.me/api/basic_json/start_pos/index.md)/[`end_pos()`](https://json.nlohmann.me/api/basic_json/end_pos/index.md) diagnostic positions are exchanged along with the value. The [`json_base_class_t`](https://json.nlohmann.me/api/basic_json/json_base_class_t/index.md) subobject is exchanged along with the value as well, the same way it is copied or moved by the copy/move constructors and assignment operators.
+1. Exchanges the contents of the JSON value from `left` with those of `right`. Does not invoke any move, copy, or swap operations on individual elements. All iterators and references remain valid. The past-the-end iterator is invalidated. Implemented as a friend function callable via ADL. If macro [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) is defined to `1`, the [`start_pos()`](https://json.nlohmann.me/api/basic_json/start_pos/index.md)/[`end_pos()`](https://json.nlohmann.me/api/basic_json/end_pos/index.md) diagnostic positions are exchanged along with the value. The [`json_base_class_t`](https://json.nlohmann.me/api/basic_json/json_base_class_t/index.md) subobject is exchanged along with the value as well, the same way it is copied or moved by the copy/move constructors and assignment operators.
 1. Exchanges the contents of a JSON array with those of `other`. Does not invoke any move, copy, or swap operations on individual elements. All iterators and references remain valid. The past-the-end iterator is invalidated.
 1. Exchanges the contents of a JSON object with those of `other`. Does not invoke any move, copy, or swap operations on individual elements. All iterators and references remain valid. The past-the-end iterator is invalidated.
 1. Exchanges the contents of a JSON string with those of `other`. Does not invoke any move, copy, or swap operations on individual elements. All iterators and references remain valid. The past-the-end iterator is invalidated.
@@ -241,8 +245,8 @@ binary = {"bytes":[1,2,3],"subtype":null}
 
 ## Version history
 
-1. Since version 1.0.0.
-1. Since version 1.0.0.
+1. Since version 1.0.0. Exchanges the `json_base_class_t` subobject along with the value since version 3.13.0.
+1. Since version 1.0.0. Exchanges the `json_base_class_t` subobject along with the value since version 3.13.0.
 1. Since version 1.0.0.
 1. Since version 1.0.0.
 1. Since version 1.0.0.

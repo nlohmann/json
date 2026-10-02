@@ -31,6 +31,7 @@ Some aspects of the library can be configured by defining preprocessor macros **
 - [**JSON_HAS_RANGES**](https://json.nlohmann.me/api/macros/json_has_ranges/index.md) - control `std::ranges` support
 - [**JSON_HAS_STD_FORMAT**](https://json.nlohmann.me/api/macros/json_has_std_format/index.md) - control `std::format`/`std::formatter` support
 - [**JSON_HAS_THREE_WAY_COMPARISON**](https://json.nlohmann.me/api/macros/json_has_three_way_comparison/index.md) - control 3-way comparison support
+- [**JSON_NO_AUTOMATIC_UDLS**](https://json.nlohmann.me/api/macros/json_no_automatic_udls/index.md) - do not include the user-defined string literals (UDLs) automatically
 - [**JSON_NO_IO**](https://json.nlohmann.me/api/macros/json_no_io/index.md) - switch off functions relying on certain C++ I/O headers
 - [**JSON_NO_THREAD_LOCAL**](https://json.nlohmann.me/api/macros/json_no_thread_local/index.md) - switch off the use of `thread_local` storage
 - [**JSON_SKIP_UNSUPPORTED_COMPILER_CHECK**](https://json.nlohmann.me/api/macros/json_skip_unsupported_compiler_check/index.md) - do not warn about unsupported compilers
@@ -56,6 +57,7 @@ Some aspects of the library can be configured by defining preprocessor macros **
 
 - [**JSON_BRACE_INIT_COPY_SEMANTICS**](https://json.nlohmann.me/api/macros/json_brace_init_copy_semantics/index.md) - opt in to copy/move semantics for single-element brace initialization
 - [**JSON_DISABLE_ENUM_SERIALIZATION**](https://json.nlohmann.me/api/macros/json_disable_enum_serialization/index.md) - switch off default serialization/deserialization functions for enums
+- [**JSON_DISABLE_TUPLE_REFERENCE_CONVERSION**](https://json.nlohmann.me/api/macros/json_disable_tuple_reference_conversion/index.md) - switch off conversion from a one-element tuple of a JSON reference
 - [**JSON_USE_IMPLICIT_CONVERSIONS**](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md) - control implicit conversions
 
 ## Comparison behavior

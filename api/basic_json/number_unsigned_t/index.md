@@ -38,7 +38,7 @@ When the default type is used, the maximal integer number that can be stored is 
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) further states:
 
-> Note that when such software is used, numbers that are integers and are in the range [-2^{53}+1, 2^{53}-1] are interoperable in the sense that implementations will agree exactly on their numeric values.
+> Note that when such software is used, numbers that are integers and are in the range [-253+1, 253-1] are interoperable in the sense that implementations will agree exactly on their numeric values.
 
 As this range is a subrange (when considered in conjunction with the `number_integer_t` type) of the exactly supported range [0, UINT64_MAX], this class's integer type is interoperable.
 

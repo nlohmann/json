@@ -154,6 +154,10 @@ Enable position diagnostics by defining macro [`JSON_DIAGNOSTIC_POSITIONS`](http
 
 Disable default `enum` serialization by defining the macro [`JSON_DISABLE_ENUM_SERIALIZATION`](https://json.nlohmann.me/api/macros/json_disable_enum_serialization/index.md). This option is `OFF` by default.
 
+### `JSON_DisableTupleReferenceConversion`
+
+Disable the conversion from a one-element `std::tuple` holding a reference to a JSON value by defining the macro [`JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`](https://json.nlohmann.me/api/macros/json_disable_tuple_reference_conversion/index.md). This option is `OFF` by default.
+
 ### `JSON_FastTests`
 
 Skip expensive/slow test suites. This option is `OFF` by default. Depends on `JSON_BuildTests`.

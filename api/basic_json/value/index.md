@@ -50,6 +50,10 @@ Differences to `at` and `operator[]`
 - Unlike [`at`](https://json.nlohmann.me/api/basic_json/at/index.md), this function does not throw if the given `key`/`ptr` was not found.
 - Unlike [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md), this function does not implicitly add an element to the position defined by `key`/`ptr` key. This function is furthermore also applicable to const objects.
 
+Integer keys
+
+Calling this function with an integer `key` argument (for example, `value(0, 1)`) does not compile in C++11, where `object_comparator_t` is not transparent: such an argument would otherwise implicitly convert to a null `const char*` and, from there, cause undefined behavior when constructing a `std::string` for the object key. To access an array element with a default value, use [`at`](https://json.nlohmann.me/api/basic_json/at/index.md) together with a `try`/`catch` block, or compare against [`size`](https://json.nlohmann.me/api/basic_json/size/index.md) instead.
+
 ## Template parameters
 
 `KeyType` : A type for an object key other than [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md) that is comparable with [`string_t`](https://json.nlohmann.me/api/basic_json/string_t/index.md) using [`object_comparator_t`](https://json.nlohmann.me/api/basic_json/object_comparator_t/index.md). This can also be a string view (C++17).
@@ -267,6 +271,6 @@ Output:
 
 ## Version history
 
-1. Added in version 1.0.0. Changed parameter `default_value` type from `const ValueType&` to `ValueType&&` in version 3.11.0.
+1. Added in version 1.0.0. Changed parameter `default_value` type from `const ValueType&` to `ValueType&&` in version 3.11.0. Deleted overload for integral key types added in version 3.13.0 to reject such calls at compile time instead of causing undefined behavior at runtime.
 1. Added in version 3.11.0. Made `ValueType` the first template parameter in version 3.11.2.
 1. Added in version 2.0.2. Extended to work with arrays in version 3.13.0, including fixing an issue where resolving `ptr` through an array unexpectedly threw `out_of_range` instead of returning the resolved element (or `default_value`, as documented).

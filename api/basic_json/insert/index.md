@@ -263,5 +263,5 @@ Output:
 1. Added in version 1.0.0.
 1. Added in version 1.0.0.
 1. Added in version 1.0.0.
-1. Added in version 1.0.0.
+1. Added in version 1.0.0. Fixed in version 3.13.0 to copy the values before inserting; before, an `ilist` that referred to elements of the array being inserted into could insert wrong values, because the range insert could move from or shift an element before it was copied.
 1. Added in version 3.0.0.

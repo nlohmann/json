@@ -28,6 +28,7 @@ header. See also the [macro overview page](../../features/macros.md).
 - [**JSON_HAS_RANGES**](json_has_ranges.md) - control `std::ranges` support
 - [**JSON_HAS_STD_FORMAT**](json_has_std_format.md) - control `std::format`/`std::formatter` support
 - [**JSON_HAS_THREE_WAY_COMPARISON**](json_has_three_way_comparison.md) - control 3-way comparison support
+- [**JSON_NO_AUTOMATIC_UDLS**](json_no_automatic_udls.md) - do not include the user-defined string literals (UDLs) automatically
 - [**JSON_NO_IO**](json_no_io.md) - switch off functions relying on certain C++ I/O headers
 - [**JSON_NO_THREAD_LOCAL**](json_no_thread_local.md) - switch off the use of `thread_local` storage
 - [**JSON_SKIP_UNSUPPORTED_COMPILER_CHECK**](json_skip_unsupported_compiler_check.md) - do not warn about unsupported compilers
@@ -52,6 +53,7 @@ header. See also the [macro overview page](../../features/macros.md).
 
 - [**JSON_BRACE_INIT_COPY_SEMANTICS**](json_brace_init_copy_semantics.md) - opt in to copy/move semantics for single-element brace initialization
 - [**JSON_DISABLE_ENUM_SERIALIZATION**](json_disable_enum_serialization.md) - switch off default serialization/deserialization functions for enums
+- [**JSON_DISABLE_TUPLE_REFERENCE_CONVERSION**](json_disable_tuple_reference_conversion.md) - switch off conversion from a one-element tuple of a JSON reference
 - [**JSON_USE_IMPLICIT_CONVERSIONS**](json_use_implicit_conversions.md) - control implicit conversions
 
 ## Comparison behavior

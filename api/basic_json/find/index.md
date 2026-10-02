@@ -37,7 +37,8 @@ Logarithmic in the size of the JSON object.
 
 ## Notes
 
-This method always returns `end()` when executed on a JSON type that is not an object.
+- This method always returns `end()` when executed on a JSON type that is not an object.
+- Calling this function with an integer argument (for example, `find(0)`) does not compile: such an argument would otherwise implicitly convert to a null `const char*` and, from there, cause undefined behavior when constructing a `std::string` for the object key. To access an array element instead, use [`at`](https://json.nlohmann.me/api/basic_json/at/index.md), [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md), or compare against [`size`](https://json.nlohmann.me/api/basic_json/size/index.md).
 
 ## Examples
 
@@ -122,3 +123,4 @@ value at key "two": 2
 
 1. Added in version 3.11.0.
 1. Added in version 1.0.0. Changed to support comparable types in version 3.11.0.
+1. Deleted overloads for integral key types added in version 3.13.0 to reject such calls at compile time instead of causing undefined behavior at runtime.
