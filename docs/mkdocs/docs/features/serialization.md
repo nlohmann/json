@@ -28,7 +28,7 @@ std::cout << j << std::endl;
 By default, `dump` produces the most compact representation without any superfluous whitespace. Passing a non-negative
 `indent` argument pretty-prints the output with the given number of spaces per level:
 
-??? example
+??? example "Example: pretty-print JSON values with `dump()`"
 
     ```cpp
     --8<-- "examples/dump.cpp"
@@ -65,7 +65,7 @@ serialization fails by default. The fourth argument of `dump` selects an
 - `replace` — replace invalid bytes with the Unicode replacement character U+FFFD (`�`).
 - `ignore` — silently drop invalid bytes.
 
-??? example
+??? example "Example: serialize invalid UTF-8 with different error handlers"
 
     ```cpp
     --8<-- "examples/error_handler_t.cpp"

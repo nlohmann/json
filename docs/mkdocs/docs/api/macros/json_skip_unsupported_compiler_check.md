@@ -28,6 +28,11 @@ By default, the macro is not defined.
     ...
     ```
 
+## See also
+
+- [JSON_HAS_CPP_11 / JSON_HAS_CPP_14 / JSON_HAS_CPP_17 / JSON_HAS_CPP_20 / JSON_HAS_CPP_23 /
+  JSON_HAS_CPP_26](json_has_cpp_11.md) - set supported C++ standard
+
 ## Version history
 
-Added in version 3.2.0.
+- Added in version 3.2.0.

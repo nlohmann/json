@@ -11,29 +11,29 @@ achieve the generality of JSON, combined with being much easier to process than 
 
 The library uses the following mapping from JSON values types to UBJSON types according to the UBJSON specification:
 
-| JSON value type | value/range                       | UBJSON type    | marker |
-|-----------------|-----------------------------------|----------------|--------|
-| null            | `null`                            | null           | `Z`    |
-| boolean         | `true`                            | true           | `T`    |
-| boolean         | `false`                           | false          | `F`    |
-| number_integer  | -9223372036854775808..-2147483649 | int64          | `L`    |
-| number_integer  | -2147483648..-32769               | int32          | `l`    |
-| number_integer  | -32768..-129                      | int16          | `I`    |
-| number_integer  | -128..127                         | int8           | `i`    |
-| number_integer  | 128..255                          | uint8          | `U`    |
-| number_integer  | 256..32767                        | int16          | `I`    |
-| number_integer  | 32768..2147483647                 | int32          | `l`    |
-| number_integer  | 2147483648..9223372036854775807   | int64          | `L`    |
-| number_unsigned | 0..127                            | int8           | `i`    |
-| number_unsigned | 128..255                          | uint8          | `U`    |
-| number_unsigned | 256..32767                        | int16          | `I`    |
-| number_unsigned | 32768..2147483647                 | int32          | `l`    |
-| number_unsigned | 2147483648..9223372036854775807   | int64          | `L`    |
-| number_unsigned | 2147483649..18446744073709551615  | high-precision | `H`    |
-| number_float    | *any value*                       | float64        | `D`    |
-| string          | *with shortest length indicator*  | string         | `S`    |
-| array           | *see notes on optimized format*   | array          | `[`    |
-| object          | *see notes on optimized format*   | map            | `{`    |
+| JSON value type | value/range                               | UBJSON type    | marker |
+|-----------------|-------------------------------------------|----------------|--------|
+| null            | `null`                                    | null           | `Z`    |
+| boolean         | `true`                                    | true           | `T`    |
+| boolean         | `false`                                   | false          | `F`    |
+| number_integer  | -9223372036854775808..-2147483649         | int64          | `L`    |
+| number_integer  | -2147483648..-32769                       | int32          | `l`    |
+| number_integer  | -32768..-129                              | int16          | `I`    |
+| number_integer  | -128..127                                 | int8           | `i`    |
+| number_integer  | 128..255                                  | uint8          | `U`    |
+| number_integer  | 256..32767                                | int16          | `I`    |
+| number_integer  | 32768..2147483647                         | int32          | `l`    |
+| number_integer  | 2147483648..9223372036854775807           | int64          | `L`    |
+| number_unsigned | 0..127                                    | int8           | `i`    |
+| number_unsigned | 128..255                                  | uint8          | `U`    |
+| number_unsigned | 256..32767                                | int16          | `I`    |
+| number_unsigned | 32768..2147483647                         | int32          | `l`    |
+| number_unsigned | 2147483648..9223372036854775807           | int64          | `L`    |
+| number_unsigned | 9223372036854775808..18446744073709551615 | high-precision | `H`    |
+| number_float    | *any value*                               | float64        | `D`    |
+| string          | *with shortest length indicator*          | string         | `S`    |
+| array           | *see notes on optimized format*           | array          | `[`    |
+| object          | *see notes on optimized format*           | map            | `{`    |
 
 !!! success "Complete mapping"
 
@@ -57,7 +57,7 @@ The library uses the following mapping from JSON values types to UBJSON types ac
 !!! info "NaN/infinity handling"
 
     If NaN or Infinity are stored inside a JSON number, they are serialized properly. This behavior differs from the
-    `dump()` function which serializes NaN or Infinity to `null`.
+    [`dump()`](../../api/basic_json/dump.md) function which serializes NaN or Infinity to `null`.
 
 !!! info "Optimized formats"
 
@@ -82,7 +82,7 @@ The library uses the following mapping from JSON values types to UBJSON types ac
     documentation.  In particular, this means that serialization and the deserialization of a JSON containing binary
     values into UBJSON and back will result in a different JSON object.
 
-??? example
+??? example "Example: serialize JSON values to UBJSON, with and without size/type optimization"
 
     ```cpp
     --8<-- "examples/to_ubjson.cpp"
@@ -120,7 +120,7 @@ The library maps UBJSON types to JSON value types as follows:
 
     The mapping is **complete** in the sense that any UBJSON value can be converted to a JSON value.
 
-??? example
+??? example "Example: deserialize a JSON value from UBJSON"
 
     ```cpp
     --8<-- "examples/from_ubjson.cpp"
