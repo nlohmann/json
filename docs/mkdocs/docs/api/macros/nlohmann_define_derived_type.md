@@ -149,7 +149,7 @@ void to_json(BasicJsonType& j, const B& b) {
 
 ## Examples
 
-??? example "NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE"
+??? example "Example: (1) NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE"
 
     Consider the following complete example:
 

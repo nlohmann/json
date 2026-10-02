@@ -18,6 +18,17 @@ updates:
     cooldown:
       default-days: 7
 
+  - package-ecosystem: npm
+    directory: /docs/mkdocs/scripts/mermaid
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7
+    ignore:
+      # Material for MkDocs loads mermaid@11; keep the checker on the same major version
+      - dependency-name: mermaid
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: pip
     directory: /tools/astyle
     schedule:

@@ -54,6 +54,12 @@ string elements the JSON value can store which is `1`.
 
     Note the output is platform-dependent.
 
+## See also
+
+- [size](size.md) returns the number of elements
+- [array_t](array_t.md) the type used to store JSON arrays
+- [object_t](object_t.md) the type used to store JSON objects
+
 ## Version history
 
 - Added in version 1.0.0.

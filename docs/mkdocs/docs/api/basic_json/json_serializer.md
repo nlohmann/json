@@ -15,11 +15,11 @@ using json_serializer = JSONSerializer<T, SFINAE>;
 
 ## Notes
 
-#### Default type
+### Default type
 
 The default values for `json_serializer` is [`adl_serializer`](../adl_serializer/index.md).
 
-#### Requirements
+### Requirements
 
 A custom serializer must provide `#!cpp static void to_json(basic_json&, T)` for every type it serializes, and either
 `#!cpp static void from_json(const basic_json&, T&)` or `#!cpp static T from_json(const basic_json&)` for every type it
@@ -41,6 +41,13 @@ deserializes. See [Template Parameter Requirements](../../features/types/templat
     ```json
     --8<-- "examples/from_json__non_default_constructible.output"
     ```
+
+## See also
+
+- [adl_serializer](../adl_serializer/index.md) the default `json_serializer`
+- [get](get.md) explicit type conversion using the `json_serializer`'s `from_json()` method
+- [get_to](get_to.md) explicit type conversion into a variable using the `json_serializer`'s `from_json()` method
+- [Arbitrary Type Conversions](../../features/arbitrary_types.md) - the article on converting between JSON values and arbitrary types
 
 ## Version history
 
