@@ -139,8 +139,32 @@ whenever any of the other conditions above was not met.
   element access and lookup functions never carry the JSON Pointer path `JSON_DIAGNOSTICS` would otherwise add: the
   view has no `basic_json` value to point at, so the exception is created without one, regardless of how
   `BasicJsonType` was built.
-- **`get<T>()`, JSON Pointer, `dump()`, and comparison are not (yet) provided** by `basic_json_view`. For now,
+- **`dump()` and comparison are not (yet) provided** by `basic_json_view`. For now,
   [`materialize()`](../api/basic_json_view/materialize.md) is the way to get a value you can do those things with.
+
+## Getting values out without copying
+
+[`get<T>()`](../api/basic_json_view/get.md) converts many `T` directly from the flat index, without ever building a
+`basic_json` value for the conversion: `#!cpp bool`, arithmetic types, `#!cpp std::nullptr_t`,
+`#!cpp std::string`/other `#!cpp std::basic_string`s (copied once), `basic_json`/`ordered_json` (via
+[`materialize()`](../api/basic_json_view/materialize.md)), `basic_json_view` itself, `#!cpp std::vector<U>`, and
+`#!cpp std::map`/`#!cpp std::unordered_map` with string-like keys. Every other type -- `#!cpp std::list`,
+`#!cpp std::pair`, `#!cpp std::array`, enumerations, user types with a `from_json()` -- goes through
+[`materialize()`](../api/basic_json_view/materialize.md)`.get<T>()` instead: the subtree is built into a real
+`basic_json` value first, exactly as [`parse()`](../api/basic_json/parse.md) would, and converted from there.
+
+Two conversions never copy at all:
+
+- [`get_string()`](../api/basic_json_view/get_string.md) (equivalently, `#!cpp get<string_view_t>()`) returns a
+  string as a `string_view_t` pointing into the document's [`source()`](../api/basic_json_document/source.md) text --
+  or, for a string that contains escape sequences, into the document's own buffer of decoded strings -- instead of
+  allocating a new `#!cpp std::string`.
+- [`number_token()`](../api/basic_json_view/number_token.md) returns a number exactly as it was written in the
+  source, e.g. `#!cpp "1.50"`, `#!cpp "1E2"`, or an integer with more digits than any number type holds, instead of
+  rounding it into a `#!cpp double`/`#!cpp int64_t` the way `#!cpp get<T>()` (and
+  [`basic_json::parse()`](../api/basic_json/parse.md)) would.
+
+Both results are only valid as long as the view -- and, for a string with no escapes, the borrowed source text -- is.
 
 ## Choosing between `json`, `ordered_json`, the SAX interface, and `json_view`
 

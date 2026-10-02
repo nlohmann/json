@@ -2561,6 +2561,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         auto ret = ValueType();
         JSONSerializer<ValueType>::from_json(*this, ret);
+        // false positive: ret is returned by value, not its address
+        // @infer-ignore STACK_VARIABLE_ADDRESS_ESCAPE
         return ret;
     }
 

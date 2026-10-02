@@ -20110,6 +20110,11 @@ NLOHMANN_JSON_NAMESPACE_END
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
+namespace detail
+{
+struct json_pointer_access;
+}  // namespace detail
+
 /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
 /// @sa https://json.nlohmann.me/api/json_pointer/
 template<typename RefStringType>
@@ -20121,6 +20126,8 @@ class json_pointer
 
     template<typename>
     friend class json_pointer;
+
+    friend struct detail::json_pointer_access;
 
     template<typename T>
     struct string_t_helper
@@ -21250,6 +21257,20 @@ inline bool operator<(const json_pointer<RefStringTypeLhs>& lhs,
     return lhs.reference_tokens < rhs.reference_tokens;
 }
 #endif
+
+namespace detail
+{
+/// the reference tokens of a json_pointer, for code that resolves pointers
+/// without a basic_json value (such as the zero-copy view)
+struct json_pointer_access
+{
+    template<typename RefStringType>
+    static const std::vector<typename json_pointer<RefStringType>::string_t>& reference_tokens(const json_pointer<RefStringType>& ptr) noexcept
+    {
+        return ptr.reference_tokens;
+    }
+};
+}  // namespace detail
 
 NLOHMANN_JSON_NAMESPACE_END
 
@@ -29769,6 +29790,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         auto ret = ValueType();
         JSONSerializer<ValueType>::from_json(*this, ret);
+        // false positive: ret is returned by value, not its address
+        // @infer-ignore STACK_VARIABLE_ADDRESS_ESCAPE
         return ret;
     }
 

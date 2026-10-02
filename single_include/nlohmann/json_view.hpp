@@ -27,11 +27,14 @@
 #include <cstddef> // size_t
 #include <cstring> // memcpy, strlen
 #include <iterator> // distance, input_iterator_tag, iterator_traits
+#include <map> // map
 #include <memory> // unique_ptr
 #include <string> // string
 #include <tuple> // tuple_element, tuple_size
-#include <type_traits> // enable_if, integral_constant, is_base_of, is_integral, is_same, remove_cv, remove_extent
+#include <type_traits> // decay, enable_if, integral_constant, is_arithmetic, is_base_of, is_integral, is_same, remove_cv, remove_extent
+#include <unordered_map> // unordered_map
 #include <utility> // forward, move
+#include <vector> // vector
 
 #include <nlohmann/json.hpp>
 
@@ -1621,6 +1624,12 @@ namespace view
     NLOHMANN_VIEW_THROW(invalid_iterator::create(id, msg, nullptr));
 }
 
+/// a parse error without a position (as those of json_pointer)
+[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_parse_error(int id, const std::string& msg)
+{
+    NLOHMANN_VIEW_THROW(parse_error::create(id, 0, msg, nullptr));
+}
+
 /*!
 @brief throw the exception BasicJsonType::parse would throw for this input
 
@@ -2379,6 +2388,181 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/view/node.hpp>
 
+// #include <nlohmann/detail/view/pointer.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <cstddef> // size_t
+#include <cstdint> // uint64_t
+#include <limits> // numeric_limits
+#include <string> // string, to_string
+
+// #include <nlohmann/json.hpp>
+// #include <nlohmann/detail/view/errors.hpp>
+
+// #include <nlohmann/detail/view/macro_scope.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+namespace view
+{
+
+/// what resolving a JSON pointer does where it cannot continue
+enum class pointer_mode
+{
+    unchecked, ///< as const basic_json::operator[]: a discarded view where basic_json's behavior is undefined
+    checked,   ///< as basic_json::at(): out_of_range.401/403
+    value,     ///< as basic_json::value(): no out_of_range exceptions (the default value is used)
+    contains,  ///< as basic_json::contains(): no exceptions at all
+};
+
+/// the outcome of reading an array index from a reference token
+enum class index_status
+{
+    ok,
+    leading_zero, ///< parse_error.106
+    not_number,   ///< parse_error.109
+    unresolved,   ///< out_of_range.404
+    too_large,    ///< out_of_range.410
+};
+
+/// reads an array index like json_pointer::array_index (RFC 6901, Sect. 4),
+/// but reports errors instead of throwing them
+template<typename StringType>
+index_status array_index(const StringType& s, std::size_t& idx) noexcept
+{
+    if (s.size() > 1 && s[0] == '0')
+    {
+        return index_status::leading_zero;
+    }
+    if (s.size() > 1 && !(s[0] >= '1' && s[0] <= '9'))
+    {
+        return index_status::not_number;
+    }
+    if (s.empty())
+    {
+        return index_status::unresolved;
+    }
+    std::uint64_t v = 0;
+    for (std::size_t i = 0; i < s.size(); ++i)
+    {
+        const auto d = static_cast<unsigned>(static_cast<unsigned char>(s[i])) - '0';
+        if (d > 9 || v > ((std::numeric_limits<std::uint64_t>::max)() - d) / 10)
+        {
+            return index_status::unresolved; // not a number, or beyond unsigned long long
+        }
+        v = (v * 10) + d;
+    }
+    if (v >= (std::numeric_limits<std::size_t>::max)()) // (std::size_t converts to std::uint64_t implicitly)
+    {
+        return index_status::too_large;
+    }
+    idx = static_cast<std::size_t>(v);
+    return index_status::ok;
+}
+
+/// throws the exception json_pointer::array_index throws for this status
+template<typename StringType>
+[[noreturn]] NLOHMANN_VIEW_NOINLINE void throw_array_index_error(index_status status, const StringType& s)
+{
+    switch (status)
+    {
+        case index_status::leading_zero:
+            throw_parse_error(106, concat("array index '", s, "' must not begin with '0'"));
+        case index_status::not_number:
+            throw_parse_error(109, concat("array index '", s, "' is not a number"));
+        case index_status::too_large:
+            throw_out_of_range(410, concat("array index ", s, " exceeds size_type")); // LCOV_EXCL_LINE
+        case index_status::unresolved:
+        case index_status::ok:
+        default:
+            throw_out_of_range(404, concat("unresolved reference token '", s, "'"));
+    }
+}
+
+/*!
+@brief resolve the reference tokens of a JSON pointer, starting at a view
+
+The exceptions are those basic_json throws for the same pointer; where
+basic_json's behavior is undefined (a missing key or an index out of range
+with const operator[]), the result is a discarded view.
+*/
+template<typename View, typename Tokens>
+View resolve_pointer(View cur, const Tokens& tokens, pointer_mode mode)
+{
+    using string_view_t = typename View::string_view_t;
+    const bool throwing = mode == pointer_mode::unchecked || mode == pointer_mode::checked;
+    for (const auto& token : tokens)
+    {
+        if (cur.is_object())
+        {
+            const auto it = cur.find(string_view_t(token.data(), token.size()));
+            if (it == cur.end())
+            {
+                if (mode == pointer_mode::checked)
+                {
+                    throw_out_of_range(403, concat("key '", token, "' not found"));
+                }
+                return View();
+            }
+            cur = *it;
+        }
+        else if (cur.is_array())
+        {
+            if (token.size() == 1 && token[0] == '-')
+            {
+                if (throwing)
+                {
+                    throw_out_of_range(402, concat("array index '-' (", std::to_string(cur.size()), ") is out of range"));
+                }
+                return View();
+            }
+            std::size_t idx = 0;
+            const index_status status = array_index(token, idx);
+            if (status != index_status::ok)
+            {
+                const bool parse_error = status == index_status::leading_zero || status == index_status::not_number;
+                if (throwing || (mode == pointer_mode::value && parse_error))
+                {
+                    throw_array_index_error(status, token);
+                }
+                return View();
+            }
+            if (idx >= cur.size())
+            {
+                if (mode == pointer_mode::checked)
+                {
+                    throw_out_of_range(401, concat("array index ", std::to_string(idx), " is out of range"));
+                }
+                return View();
+            }
+            cur = cur[idx];
+        }
+        else
+        {
+            if (throwing)
+            {
+                throw_out_of_range(404, concat("unresolved reference token '", token, "'"));
+            }
+            return View();
+        }
+    }
+    return cur;
+}
+
+}  // namespace view
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
 // #include <nlohmann/detail/view/string_ref.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -2490,6 +2674,121 @@ class string_ref
     std::size_t m_size = 0;
 };
 #endif
+
+}  // namespace view
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
+// #include <nlohmann/detail/view/value.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <cstdint> // int64_t
+#include <map> // map
+#include <string> // basic_string
+#include <type_traits> // enable_if, is_constructible
+#include <unordered_map> // unordered_map
+#include <vector> // vector
+
+// #include <nlohmann/json.hpp>
+// #include <nlohmann/detail/view/document_data.hpp>
+
+// #include <nlohmann/detail/view/errors.hpp>
+
+// #include <nlohmann/detail/view/macro_scope.hpp>
+
+// #include <nlohmann/detail/view/node.hpp>
+
+// #include <nlohmann/detail/view/number.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+namespace view
+{
+
+/// selects a conversion by its target type
+template<typename T>
+struct value_tag {};
+
+/*!
+@brief the number or boolean of a node converted to an arithmetic type
+
+As basic_json's get<T>() for arithmetic types: integers and floats are
+converted with static_cast, booleans give 0 or 1, and other types throw
+type_error.302.
+*/
+template<typename T, typename BasicJsonType>
+NLOHMANN_VIEW_ALWAYS_INLINE T arithmetic_value(const document_data& d, const node& n)
+{
+    switch (static_cast<value_t>(n.kind))
+    {
+        case value_t::number_unsigned:
+            return static_cast<T>(static_cast<typename BasicJsonType::number_unsigned_t>(integer_bits(n)));
+        case value_t::number_integer:
+            return static_cast<T>(static_cast<typename BasicJsonType::number_integer_t>(static_cast<std::int64_t>(integer_bits(n))));
+        case value_t::number_float:
+            return static_cast<T>(float_value<typename BasicJsonType::number_float_t>(d.str(n), n));
+        case value_t::boolean:
+            return static_cast<T>((n.flags & node_flags::is_true) != 0);
+        case value_t::null:
+        case value_t::object:
+        case value_t::array:
+        case value_t::string:
+        case value_t::binary:
+        case value_t::discarded:
+        default:
+            throw_type_error(302, "type must be number, but is ", value_type_name(static_cast<value_t>(n.kind)));
+    }
+}
+
+/// std::vector from an array, element by element (type_error.302 otherwise)
+template<typename View, typename U, typename A>
+std::vector<U, A> vector_value(const View& v)
+{
+    if (NLOHMANN_VIEW_UNLIKELY(!v.is_array()))
+    {
+        throw_type_error(302, "type must be array, but is ", v.type_name());
+    }
+    std::vector<U, A> r;
+    r.reserve(v.size());
+    for (const View e : v)
+    {
+        r.push_back(e.template get<U>());
+    }
+    return r;
+}
+
+/// a map with string keys from an object; with duplicate keys, the last
+/// value is kept, as parse() does (type_error.302 for other types)
+template<typename Map, typename View>
+Map map_value(const View& v)
+{
+    if (NLOHMANN_VIEW_UNLIKELY(!v.is_object()))
+    {
+        throw_type_error(302, "type must be object, but is ", v.type_name());
+    }
+    Map r;
+    for (auto it = v.begin(); it != v.end(); ++it)
+    {
+        const auto key = it.key();
+        r[typename Map::key_type(key.data(), key.size())] = it.value().template get<typename Map::mapped_type>();
+    }
+    return r;
+}
+
+/// whether a map type is read member by member (its keys are made from
+/// characters and a length); other maps go through basic_json
+template<typename Key>
+struct is_string_key : std::is_constructible<Key, const char*, std::size_t> {};
 
 }  // namespace view
 }  // namespace detail
@@ -2713,6 +3012,14 @@ class basic_json_view
         return operator[](static_cast<size_type>(idx));
     }
 
+    /// the value a JSON pointer refers to; a discarded view if a key is
+    /// missing or an index is out of range. Other errors throw what const
+    /// basic_json::operator[] throws.
+    basic_json_view operator[](const json_pointer& ptr) const
+    {
+        return detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::unchecked);
+    }
+
     /// the value of the member with this key (the first one, should the key
     /// occur more than once). Throws type_error.304 if this is not an object,
     /// and out_of_range.403 if there is no such member.
@@ -2758,6 +3065,51 @@ class basic_json_view
     basic_json_view at(int idx) const
     {
         return at(static_cast<size_type>(idx));
+    }
+
+    /// the value a JSON pointer refers to; throws what basic_json::at()
+    /// throws if it cannot be resolved
+    basic_json_view at(const json_pointer& ptr) const
+    {
+        return detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::checked);
+    }
+
+    /// the member with this key converted to T, or the default value if there
+    /// is no such member (the first one, should the key occur more than
+    /// once). Throws type_error.306 if this is not an object.
+    template < typename T, typename std::enable_if < !std::is_same<typename std::decay<T>::type, const char*>::value, int >::type = 0 >
+    T value(string_view_t key, const T& default_value) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
+        {
+            detail::view::throw_type_error(306, "cannot use value() with ", type_name());
+        }
+        const basic_json_view r = lookup(key);
+        return r ? r.template get<T>() : default_value;
+    }
+
+    string_t value(string_view_t key, const char* default_value) const
+    {
+        return value(key, string_t(default_value));
+    }
+
+    /// the value a JSON pointer refers to converted to T, or the default
+    /// value if the pointer cannot be resolved. Throws type_error.306 if this
+    /// is neither an object nor an array.
+    template < typename T, typename std::enable_if < !std::is_same<typename std::decay<T>::type, const char*>::value, int >::type = 0 >
+    T value(const json_pointer& ptr, const T& default_value) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_structured()))
+        {
+            detail::view::throw_type_error(306, "cannot use value() with ", type_name());
+        }
+        const basic_json_view r = detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::value);
+        return r ? r.template get<T>() : default_value;
+    }
+
+    string_t value(const json_pointer& ptr, const char* default_value) const
+    {
+        return value(ptr, string_t(default_value));
     }
 
     /// the first element or member value; a primitive value itself. Throws
@@ -2826,6 +3178,13 @@ class basic_json_view
         return contains(string_view_t(key.data(), key.size()));
     }
 
+    /// whether a JSON pointer can be resolved (never throws, as
+    /// basic_json::contains())
+    bool contains(const json_pointer& ptr) const
+    {
+        return static_cast<bool>(detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::contains));
+    }
+
     /// 1 if this is an object with a member with this key, else 0 (duplicate
     /// keys count once)
     size_type count(string_view_t key) const
@@ -2883,6 +3242,50 @@ class basic_json_view
         return detail::view::view_items<basic_json_view>(*this);
     }
 
+    ////////////////
+    // conversion //
+    ////////////////
+
+    /// the value converted to T, as BasicJsonType::get<T>(): arithmetic types,
+    /// strings (string_view_t without a copy), std::nullptr_t, std::vector,
+    /// maps with string keys, and views are converted directly; other types
+    /// through materialize().get<T>()
+    template<typename T>
+    NLOHMANN_VIEW_ALWAYS_INLINE T get() const
+    {
+        return get_impl(detail::view::value_tag<T> {}, detail::priority_tag<2> {});
+    }
+
+    template<typename T>
+    T& get_to(T& v) const
+    {
+        v = get<T>();
+        return v;
+    }
+
+    /// the string, without a copy; valid as long as the view is. Throws
+    /// type_error.302 for other types.
+    string_view_t get_string() const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_string()))
+        {
+            detail::view::throw_type_error(302, "type must be string, but is ", type_name());
+        }
+        return {m_doc->str(*m_node), m_node->len};
+    }
+
+    /// the text of a number as it appears in the source (e.g. "1.50", "1E2",
+    /// or an integer with more digits than any number type holds). Throws
+    /// type_error.302 for other types.
+    string_view_t number_token() const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_number()))
+        {
+            detail::view::throw_type_error(302, "type must be number, but is ", type_name());
+        }
+        return {m_doc->str(*m_node), detail::view::number_length(*m_node)};
+    }
+
     /////////////////
     // materialize //
     /////////////////
@@ -2921,6 +3324,83 @@ class basic_json_view
     {
         const node* const k = detail::view::find_member(*m_doc, m_node, key.data(), key.size());
         return k != nullptr ? basic_json_view(m_doc, k + 1) : basic_json_view();
+    }
+
+    // --- get() dispatch ---
+
+    bool get_impl(detail::view::value_tag<bool> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_boolean()))
+        {
+            detail::view::throw_type_error(302, "type must be boolean, but is ", type_name());
+        }
+        return (m_node->flags & detail::view::node_flags::is_true) != 0;
+    }
+
+    template < typename T, typename std::enable_if < std::is_arithmetic<T>::value && !std::is_same<T, bool>::value, int >::type = 0 >
+    NLOHMANN_VIEW_ALWAYS_INLINE T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(m_node == nullptr))
+        {
+            detail::view::throw_type_error(302, "type must be number, but is ", type_name());
+        }
+        return detail::view::arithmetic_value<T, BasicJsonType>(*m_doc, *m_node);
+    }
+
+    std::nullptr_t get_impl(detail::view::value_tag<std::nullptr_t> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_null()))
+        {
+            detail::view::throw_type_error(302, "type must be null, but is ", type_name());
+        }
+        return nullptr;
+    }
+
+    string_view_t get_impl(detail::view::value_tag<string_view_t> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        return get_string();
+    }
+
+    template<typename Traits, typename Alloc>
+    std::basic_string<char, Traits, Alloc> get_impl(detail::view::value_tag<std::basic_string<char, Traits, Alloc>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        const string_view_t s = get_string();
+        return std::basic_string<char, Traits, Alloc>(s.data(), s.size());
+    }
+
+    BasicJsonType get_impl(detail::view::value_tag<BasicJsonType> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        return materialize();
+    }
+
+    basic_json_view get_impl(detail::view::value_tag<basic_json_view> /*unused*/, detail::priority_tag<2> /*unused*/) const noexcept
+    {
+        return *this;
+    }
+
+    template<typename U, typename A>
+    std::vector<U, A> get_impl(detail::view::value_tag<std::vector<U, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        return detail::view::vector_value<basic_json_view, U, A>(*this);
+    }
+
+    template<typename K, typename V, typename C, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
+    std::map<K, V, C, A> get_impl(detail::view::value_tag<std::map<K, V, C, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        return detail::view::map_value<std::map<K, V, C, A>>(*this);
+    }
+
+    template<typename K, typename V, typename H, typename E, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
+    std::unordered_map<K, V, H, E, A> get_impl(detail::view::value_tag<std::unordered_map<K, V, H, E, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        return detail::view::map_value<std::unordered_map<K, V, H, E, A>>(*this);
+    }
+
+    /// everything else through the BasicJsonType value (from_json included)
+    template<typename T>
+    T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<0> /*unused*/) const
+    {
+        return materialize().template get<T>();
     }
 
     const document_data* m_doc = nullptr;
