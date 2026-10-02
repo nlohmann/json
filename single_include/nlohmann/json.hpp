@@ -20773,6 +20773,7 @@ class json_ref
 
     json_ref(std::initializer_list<json_ref> init)
         : owned_value(init)
+        , braced_list(true)
     {}
 
     template <
@@ -20808,9 +20809,17 @@ class json_ref
         return &** this;
     }
 
+    /// whether the value was written as a braced list, such as {"key", 1},
+    /// rather than given as a value
+    bool is_braced_list() const noexcept
+    {
+        return braced_list;
+    }
+
   private:
     mutable value_type owned_value = nullptr;
     value_type const* value_ref = nullptr;
+    bool braced_list = false;
 };
 
 }  // namespace detail
@@ -28553,6 +28562,18 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                bool type_deduction = true,
                value_t manual_type = value_t::array)
     {
+#if JSON_BRACE_INIT_COPY_SEMANTICS
+        // a single element that is a value rather than a braced list is
+        // copied or moved as is, whatever its content looks like
+        if (type_deduction && init.size() == 1 && !init.begin()->is_braced_list())
+        {
+            *this = init.begin()->moved_or_copied();
+            set_parents();
+            assert_invariant();
+            return;
+        }
+#endif
+
         // check if each element is an array with two elements whose first
         // element is a string
         bool is_an_object = std::all_of(init.begin(), init.end(),
