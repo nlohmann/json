@@ -67,6 +67,17 @@ Positive integers are stored as `#!c std::uint64_t`, while negative integers are
 distinction is determined at parse time: if the JSON number has a leading minus sign, it uses signed integer storage;
 otherwise, it uses unsigned integer storage.
 
+```mermaid
+flowchart TD
+    A["number literal"] --> B{"has a fraction (.) or exponent (e/E)?"}
+    B -->|"yes"| F["number_float_t"]
+    B -->|"no"| C{"has a leading minus sign?"}
+    C -->|"yes"| D["try number_integer_t"]
+    C -->|"no"| E["try number_unsigned_t"]
+    D -->|"overflow"| F
+    E -->|"overflow"| F
+```
+
 !!! info "Notes"
 
     - Numbers with a decimal digit or scientific notation are always stored as `#!c double`.
@@ -77,7 +88,9 @@ otherwise, it uses unsigned integer storage.
       [`std::strtold`](https://en.cppreference.com/w/cpp/string/byte/strtof). For that call, the library temporarily
       replaces the `.` with the decimal point of the current locale (which may be longer than one byte, e.g., in
       `fa_IR.UTF-8`), so the result does not depend on the locale either. Changing the locale in another thread during
-      parsing is undefined behavior of the C library, though.
+      parsing is undefined behavior of the C library, though. Before version 3.13.0, the conversion was realized by
+      [`std::strtoull`](https://en.cppreference.com/w/cpp/string/byte/strtoul),
+      [`std::strtoll`](https://en.cppreference.com/w/cpp/string/byte/strtol), and `std::strtod`, respectively.
 
 !!! example "Examples"
 

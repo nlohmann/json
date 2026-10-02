@@ -79,7 +79,7 @@ The default value is `0` (disabled — existing behavior is preserved).
 
 ## Examples
 
-??? example "Default behavior (macro not defined)"
+??? example "Example: default behavior (macro not defined)"
 
     Without the macro, the character after a number is consumed:
 
@@ -99,7 +99,7 @@ The default value is `0` (disabled — existing behavior is preserved).
     }
     ```
 
-??? example "Opt-in precise stream position (macro defined to 1)"
+??? example "Example: opt-in precise stream position (macro defined to 1)"
 
     With the macro, the stream is positioned right after the number:
 

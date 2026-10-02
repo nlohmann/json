@@ -141,6 +141,18 @@ changes to any JSON value.
     --8<-- "examples/value__return_type.output"
     ```
 
+!!! warning "Deprecation"
+
+    Overload (3) also accepts a [`json_pointer`](../json_pointer/index.md) whose template argument is a `basic_json`
+    specialization (e.g., `nlohmann::json_pointer<nlohmann::json>`) instead of a string type. This is deprecated since
+    version 3.11.0 and will be removed in a future major version; use `basic_json::json_pointer` (for `json`,
+    `nlohmann::json_pointer<std::string>`) instead.
+
+    You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated
+    function.
+
+    See the [migration guide](../../integration/migration_guide.md#json-pointers) for how to update existing code.
+
 ## Examples
 
 ??? example "Example: (1) access specified object element with default value"
@@ -183,6 +195,21 @@ changes to any JSON value.
     
     ```json
     --8<-- "examples/value__json_ptr.output"
+    ```
+
+??? example "Example: (1) type_error.302 and type_error.306 exceptions"
+
+    The example below shows how `value()` throws `type_error.302` when the default value's type does not match the type
+    of the stored value, and `type_error.306` when `value()` is called on a JSON value that is not an object.
+
+    ```cpp
+    --8<-- "examples/value__exception.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/value__exception.output"
     ```
 
 ## See also

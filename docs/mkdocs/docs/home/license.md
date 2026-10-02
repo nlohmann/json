@@ -1,6 +1,6 @@
 # License
 
-<img align="right" src="https://149753425.v2.pressablecdn.com/wp-content/uploads/2009/06/OSIApproved_100X125.png">
+<img align="right" src="https://149753425.v2.pressablecdn.com/wp-content/uploads/2009/06/OSIApproved_100X125.png" alt="OSI approved license">
 
 The class is licensed under the [MIT License](https://opensource.org/licenses/MIT):
 

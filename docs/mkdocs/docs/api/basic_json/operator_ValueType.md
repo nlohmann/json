@@ -17,6 +17,11 @@ Implicit type conversion between the JSON value and a compatible value. The call
 
 copy of the JSON value, converted to `ValueType`
 
+## Exception safety
+
+Depends on what `json_serializer<ValueType>` `from_json()` method throws; the JSON value itself is never modified,
+since `#!cpp operator ValueType()` is a `#!cpp const` member function that only calls [`get()`](get.md).
+
 ## Exceptions
 
 Depends on what `json_serializer<ValueType>` `from_json()` method throws
@@ -56,6 +61,8 @@ Linear in the size of the JSON value.
     [`JSON_USE_IMPLICIT_CONVERSIONS`](../macros/json_use_implicit_conversions.md) to `0` and replace any implicit
     conversions with calls to [`get`](../basic_json/get.md).
 
+    See the [migration guide](../../integration/migration_guide.md#replace-implicit-conversions) for how to update existing code.
+
 ## Examples
 
 ??? example
@@ -63,7 +70,7 @@ Linear in the size of the JSON value.
     The example below shows several conversions from JSON values to other types. There are a few things to note: (1)
     Floating-point numbers can be converted to integers, (2) A JSON array can be converted to a standard
     `std::vector<short>`, (3) A JSON object can be converted to C++ associative containers such as
-    `std::unordered_map<std::string, json>`.
+    `std::map<std::string, json>`.
         
     ```cpp
     --8<-- "examples/operator__ValueType.cpp"

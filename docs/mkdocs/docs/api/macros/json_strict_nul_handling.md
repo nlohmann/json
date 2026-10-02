@@ -85,7 +85,7 @@ The default value is `0` (disabled — existing behavior is preserved).
 
 ## Examples
 
-??? example "Default behavior (macro not defined)"
+??? example "Example: default behavior (macro not defined)"
 
     Without the macro, a NUL byte silently ends parsing at that point:
 
@@ -101,7 +101,7 @@ The default value is `0` (disabled — existing behavior is preserved).
     }
     ```
 
-??? example "Opt-in strict handling (macro defined to 1)"
+??? example "Example: opt-in strict handling (macro defined to 1)"
 
     With the macro, a NUL byte is rejected like any other unexpected byte:
 
@@ -124,6 +124,7 @@ The default value is `0` (disabled — existing behavior is preserved).
 
 ## See also
 
+- [:simple-cmake: JSON_StrictNulHandling](../../integration/cmake.md#json_strictnulhandling) - CMake option to control the macro
 - [FAQ: NUL bytes in the input](../../home/faq.md#nul-bytes-in-the-input)
 - [**parse**](../basic_json/parse.md) - deserialize from a compatible input
 - [**accept**](../basic_json/accept.md) - check if the input is valid JSON

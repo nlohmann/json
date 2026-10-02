@@ -39,6 +39,12 @@ Whether parsing should proceed (**must return `#!cpp false`**).
     --8<-- "examples/sax_parse.output"
     ```
 
+## See also
+
+- [sax_parse](../basic_json/sax_parse.md) - SAX parser
+- [Parsing and Exceptions](../../features/parsing/parse_exceptions.md) - the article on handling parse errors without
+  exceptions
+
 ## Version history
 
 - Added in version 3.2.0.
