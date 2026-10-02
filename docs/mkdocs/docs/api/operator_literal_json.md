@@ -18,8 +18,9 @@ using namespace nlohmann;
 ```
 
 This is suggested to ease migration to the next major version release of the library. See
-[`JSON_USE_GLOBAL_UDLS`](macros/json_use_global_udls.md#notes) for details. The operator is declared in header
-`<nlohmann/json_literals.hpp>`, which `<nlohmann/json.hpp>` includes unless
+[`JSON_USE_GLOBAL_UDLS`](macros/json_use_global_udls.md#notes) and the
+[migration guide](../integration/migration_guide.md#import-namespace-literals-for-udls) for details. The operator is
+declared in header `<nlohmann/json_literals.hpp>`, which `<nlohmann/json.hpp>` includes unless
 [`JSON_NO_AUTOMATIC_UDLS`](macros/json_no_automatic_udls.md) is defined.
 
 ## Parameters
@@ -68,4 +69,4 @@ Linear.
 
 - Added in version 1.0.0.
 - Moved to namespace `nlohmann::literals::json_literals` in 3.11.0.
-- Added `char8_t*` overload in 3.13.0.
+- Added `char8_t*` overload in version 3.13.0.

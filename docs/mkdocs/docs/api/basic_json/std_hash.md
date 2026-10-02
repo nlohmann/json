@@ -28,6 +28,10 @@ type of the JSON value is taken into account to have different hash values for `
 
     Note the output is platform-dependent.
 
+## See also
+
+- [operator==](operator_eq.md) compares two JSON values for equality, consistent with equal hash values
+
 ## Version history
 
 - Added in version 1.0.0.
