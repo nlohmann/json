@@ -7,10 +7,14 @@
 // SPDX-License-Identifier: MIT
 
 // Regression test for https://github.com/nlohmann/json/issues/5742: with
-// JSON_DIAGNOSTICS, GCC (13 to at least 15) reports a false -Warray-bounds
-// error in the inlined set_parents() at -O3. The warning depends on GCC's
-// inlining decisions, so the sections cover patterns that trigger it on
-// different GCC versions (#4819: GCC 13 and 14; #5742: GCC 14 and 15).
+// JSON_DIAGNOSTICS, GCC (12 to at least 16) reported a false -Warray-bounds
+// error in the inlined set_parents() at -O3. The type of a new string was set
+// before the string was allocated, so GCC had to assume that operator new
+// could change it again and checked the object branch of set_parents()
+// against the string's allocation. Setting the type after creating the value
+// avoids this. The warning depends on GCC's inlining decisions, so the
+// sections cover two patterns that trigger it on different GCC versions
+// (#4819 and #5742).
 // On GCC, this file is compiled with -O3 -Werror=array-bounds (see
 // tests/CMakeLists.txt), so the test fails to build if the warning returns.
 
