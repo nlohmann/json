@@ -536,6 +536,10 @@ class json_pointer
     @return const reference to the JSON value pointed to by the JSON
     pointer
 
+    @pre Every object key and array index the pointer refers to exists.
+         Like the const operator[] for keys and indices, a missing one is
+         undefined behavior, guarded by a runtime assertion.
+
     @throw parse_error.106   if an array index begins with '0'
     @throw parse_error.109   if an array index was not a number
     @throw out_of_range.402  if the array index '-' is used
@@ -550,7 +554,8 @@ class json_pointer
             {
                 case detail::value_t::object:
                 {
-                    // use unchecked object access
+                    // use unchecked object access; the const operator[]
+                    // asserts that the key exists
                     ptr = &ptr->operator[](reference_token);
                     break;
                 }
@@ -563,7 +568,8 @@ class json_pointer
                         JSON_THROW(detail::out_of_range::create(402, detail::concat("array index '-' (", std::to_string(ptr->m_data.m_value.array->size()), ") is out of range"), ptr));
                     }
 
-                    // use unchecked array access
+                    // use unchecked array access; the const operator[]
+                    // asserts that the index exists
                     ptr = &ptr->operator[](array_index<BasicJsonType>(reference_token));
                     break;
                 }
