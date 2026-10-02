@@ -233,6 +233,52 @@ class my_allocator : public std::allocator<T>
     };
 };
 
+/////////////////////////////////////////////////////////////////////
+// for #3669
+/////////////////////////////////////////////////////////////////////
+
+// mimics boost::optional's converting constructor, whose SFINAE check asks
+// whether T is constructible from const U&
+template<class T, class Arg>
+struct issue3669_is_constructible
+{
+    template<class T2, class A2, class = decltype(T2(std::declval<A2>()))>
+    static char test(int);
+    template<class, class>
+    static long test(...);
+    static constexpr bool value = sizeof(test<T, Arg>(0)) == 1;
+};
+
+template<class T>
+class issue3669_optional
+{
+  public:
+    issue3669_optional() = default;
+    template<class U>
+    issue3669_optional(const issue3669_optional<U>& /*unused*/, // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
+                       typename std::enable_if<issue3669_is_constructible<T, const U&>::value, bool>::type /*unused*/ = true) {}
+};
+
+class Issue3669Dummy
+{
+  public:
+    explicit Issue3669Dummy(const json& /*unused*/) {}
+};
+
+class Issue3669Holder
+{
+    issue3669_optional<Issue3669Dummy> d{};
+
+    // GCC < 11 (C++11/14) rejects a free to_json(json&, const Issue3669Holder&)
+    // here, because ADL for Issue3669Dummy finds it and closes an instantiation
+    // cycle; a hidden friend is only visible to ADL for Issue3669Holder
+    friend void to_json(json& j, const Issue3669Holder& h)
+    {
+        static_cast<void>(h.d); // silence -Wunused-private-field
+        j = "holder";
+    }
+};
+
 TEST_CASE("regression tests 2")
 {
     SECTION("issue #1001 - Fix memory leak during parser callback")
@@ -760,6 +806,14 @@ TEST_CASE("regression tests 2")
         json::to_cbor(j, my_vector);
         json k = json::from_cbor(my_vector);
         CHECK(j == k);
+    }
+
+    SECTION("issue #3669 - invalid use of incomplete type with optional member and to_json")
+    {
+        const Issue3669Holder h{};
+        const Issue3669Holder h2(h); // NOLINT(performance-unnecessary-copy-initialization)
+        const json j = h2;
+        CHECK(j == "holder");
     }
 
 }
