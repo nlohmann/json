@@ -35,6 +35,10 @@ updates:
       interval: daily
     cooldown:
       default-days: 7
+    ignore:
+      # astyle is deliberately pinned (see tools/astyle/requirements.txt): newer versions
+      # reformat the code, and the pinned version defines the formatting CI enforces
+      - dependency-name: astyle
 
   - package-ecosystem: pip
     directory: /tools/generate_natvis

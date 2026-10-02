@@ -61,7 +61,7 @@ The library uses the following mapping from JSON values types to BJData types ac
 
     The following values can **not** be converted to a BJData value:
 
-      - strings with more than 18446744073709551615 bytes, i.e., $2^{64}-1$ bytes (theoretical)
+      - strings with more than 18446744073709551615 bytes, i.e., 2<sup>64</sup>-1 bytes (theoretical)
 
 !!! info "Unused BJData markers"
 

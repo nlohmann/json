@@ -178,6 +178,8 @@ basic_json(basic_json&& other) noexcept;
     - `CompatibleType` is not `basic_json` (to avoid hijacking copy/move constructors),
     - `CompatibleType` is not a different `basic_json` type (i.e. with different template arguments)
     - `CompatibleType` is not a `basic_json` nested type (e.g., `json_pointer`, `iterator`, etc.)
+    - if [`JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`](../macros/json_disable_tuple_reference_conversion.md) is defined
+      to `1`: `CompatibleType` is not a one-element `std::tuple` holding a reference to `basic_json`
     - `json_serializer<U>` (with `U = uncvref_t<CompatibleType>`) has a `to_json(basic_json_t&, CompatibleType&&)`
        method
 

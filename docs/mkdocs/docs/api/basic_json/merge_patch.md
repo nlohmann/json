@@ -41,6 +41,12 @@ Basic guarantee: if an exception is thrown during the operation, the JSON value 
 
 Linear in the lengths of `apply_patch`.
 
+## Notes
+
+`apply_patch` may be `#!cpp *this` itself or refer to a value contained in `#!cpp *this` (for example, a subobject
+returned by `#!cpp (*this)[key]`); it is read as it was when `merge_patch()` was called, before any modification of
+`#!cpp *this`.
+
 ## Examples
 
 ??? example
@@ -65,3 +71,5 @@ Linear in the lengths of `apply_patch`.
 ## Version history
 
 - Added in version 3.0.0.
+- Fixed use of freed or relocated memory when `apply_patch` is `#!cpp *this` or refers to a value contained in
+  `#!cpp *this`, in version 3.13.0.

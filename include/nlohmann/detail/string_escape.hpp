@@ -62,8 +62,7 @@ inline StringType escape(const StringType& s)
 
 /*!
  * @brief string unescaping as described in RFC 6901 (Sect. 4)
- * @param[in] s string to unescape
- * @return    unescaped string
+ * @param[in,out] s string to unescape in place
  *
  * Note the order of escaping "~1" to "/" and "~0" to "~" is important.
  *

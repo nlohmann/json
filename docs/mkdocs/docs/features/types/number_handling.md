@@ -48,7 +48,7 @@ On number interoperability, the following remarks are made:
     for numeric magnitude and precision than is widely available.
     
     Note that when such software is used, numbers that are integers and
-    are in the range $[-2^{53}+1, 2^{53}-1]$ are interoperable in the
+    are in the range [-2<sup>53</sup>+1, 2<sup>53</sup>-1] are interoperable in the
     sense that implementations will agree exactly on their numeric
     values.
 
@@ -110,9 +110,9 @@ This is the same behavior as the code `#!c double x = 3.141592653589793238462643
 
 !!! success "Interoperability"
 
-    - The library is interoperable with respect to the specification, because its supported range $[-2^{63}, 2^{64}-1]$ is
-      larger than the described range $[-2^{53}+1, 2^{53}-1]$.
-    - All integers outside the range $[-2^{63}, 2^{64}-1]$, as well as floating-point numbers are stored as `double`.
+    - The library is interoperable with respect to the specification, because its supported range [-2<sup>63</sup>, 2<sup>64</sup>-1] is
+      larger than the described range [-2<sup>53</sup>+1, 2<sup>53</sup>-1].
+    - All integers outside the range [-2<sup>63</sup>, 2<sup>64</sup>-1], as well as floating-point numbers are stored as `double`.
       This also concurs with the specification above.
 
 ### Zeros
