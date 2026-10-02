@@ -59,6 +59,7 @@ Currently, only `remove`, `add`, and `replace` operations are generated.
 - [patch](patch.md) applies a JSON Patch
 - [patch_inplace](patch_inplace.md) applies a JSON Patch in place
 - [merge_patch](merge_patch.md) applies a JSON Merge Patch
+- [merge_diff](merge_diff.md) creates a diff as a JSON Merge Patch
 
 ## Version history
 
