@@ -44,7 +44,7 @@ int main()
     // create an object from std::unordered_multimap
     std::unordered_multimap<std::string, bool> c_ummap
     {
-        {"one", true}, {"two", true}, {"three", false}, {"three", true}
+        {"one", true}, {"two", true}, {"three", false}, {"three", false}
     };
     json j_ummap(c_ummap); // only one entry for key "three" is used
 
@@ -92,7 +92,7 @@ int main()
     json j_set(c_set); // only one entry for "one" is used
 
     // create an array from std::unordered_set
-    std::unordered_set<std::string> c_uset {"one", "two", "three", "four", "one"};
+    std::unordered_set<std::string> c_uset {"one", "one"};
     json j_uset(c_uset); // only one entry for "one" is used
 
     // create an array from std::multiset
@@ -100,7 +100,7 @@ int main()
     json j_mset(c_mset); // both entries for "one" are used
 
     // create an array from std::unordered_multiset
-    std::unordered_multiset<std::string> c_umset {"one", "two", "one", "four"};
+    std::unordered_multiset<std::string> c_umset {"one", "one"};
     json j_umset(c_umset); // both entries for "one" are used
 
     // serialize the JSON arrays

@@ -96,6 +96,8 @@ being read.
     been deprecated in version 3.0.0. It will be removed in version 4.0.0. Please replace calls like `#!cpp j << i;`
     with `#!cpp i >> j;`.
 
+    See the [migration guide](../integration/migration_guide.md#parsing) for how to update existing code.
+
 ## Examples
 
 ??? example

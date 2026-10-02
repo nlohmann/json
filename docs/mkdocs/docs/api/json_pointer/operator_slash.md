@@ -35,6 +35,11 @@ json_pointer operator/(const json_pointer& lhs, std::size_t array_idx);
 2. a new JSON pointer with unescaped `token` appended to `lhs`
 3. a new JSON pointer with `array_idx` appended to `lhs`
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes to any JSON pointer. The operands are not modified;
+a new JSON pointer is built from a copy of `lhs`.
+
 ## Complexity
 
 1. Linear in the length of `lhs` and `rhs`.
@@ -56,6 +61,11 @@ json_pointer operator/(const json_pointer& lhs, std::size_t array_idx);
     ```json
     --8<-- "examples/json_pointer__operator_add_binary.output"
     ```
+
+## See also
+
+- [operator/=](operator_slasheq.md) append to the end of the JSON pointer
+- [push_back](push_back.md) append an unescaped token at the end of the pointer
 
 ## Version history
 

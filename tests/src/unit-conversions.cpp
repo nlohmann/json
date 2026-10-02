@@ -1571,9 +1571,15 @@ TEST_CASE("value conversion")
 
                 json const j7 = {0, 1, 2, 3};
                 json const j8 = 2;
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS((j7.get<std::map<int, int>>()),
+                                     "[json.exception.type_error.302] (/0) type must be array, "
+                                     "but is number", json::type_error&);
+#else
                 CHECK_THROWS_WITH_AS((j7.get<std::map<int, int>>()),
                                      "[json.exception.type_error.302] type must be array, "
                                      "but is number", json::type_error&);
+#endif
                 CHECK_THROWS_WITH_AS((j8.get<std::map<int, int>>()),
                                      "[json.exception.type_error.302] type must be array, "
                                      "but is number", json::type_error&);
@@ -1596,9 +1602,15 @@ TEST_CASE("value conversion")
 
                 json const j7 = {0, 1, 2, 3};
                 json const j8 = 2;
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS((j7.get<std::unordered_map<int, int>>()),
+                                     "[json.exception.type_error.302] (/0) type must be array, "
+                                     "but is number", json::type_error&);
+#else
                 CHECK_THROWS_WITH_AS((j7.get<std::unordered_map<int, int>>()),
                                      "[json.exception.type_error.302] type must be array, "
                                      "but is number", json::type_error&);
+#endif
                 CHECK_THROWS_WITH_AS((j8.get<std::unordered_map<int, int>>()),
                                      "[json.exception.type_error.302] type must be array, "
                                      "but is number", json::type_error&);
@@ -1747,10 +1759,10 @@ TEST_CASE("Strict JSON to enum mapping")
         CHECK(json(strict_cards::karo) == "karo");
 
         // json -> enum
-        CHECK(strict_cards::kreuz == json("kreuz"));
-        CHECK(strict_cards::pik == json("pik"));
-        CHECK(strict_cards::herz == json("herz"));
-        CHECK(strict_cards::karo == json("karo"));
+        CHECK(json("kreuz").get<strict_cards>() == strict_cards::kreuz);
+        CHECK(json("pik").get<strict_cards>() == strict_cards::pik);
+        CHECK(json("herz").get<strict_cards>() == strict_cards::herz);
+        CHECK(json("karo").get<strict_cards>() == strict_cards::karo);
 
         // invalid json -> exception thrown
         json _;
@@ -1775,10 +1787,10 @@ TEST_CASE("Strict JSON to enum mapping")
         CHECK(json(STRICT_TS_INVALID) == json());
 
         // json -> enum
-        CHECK(STRICT_TS_STOPPED == json("stopped"));
-        CHECK(STRICT_TS_RUNNING == json("running"));
-        CHECK(STRICT_TS_COMPLETED == json("completed"));
-        CHECK(STRICT_TS_INVALID == json());
+        CHECK(json("stopped").get<StrictTaskState>() == STRICT_TS_STOPPED);
+        CHECK(json("running").get<StrictTaskState>() == STRICT_TS_RUNNING);
+        CHECK(json("completed").get<StrictTaskState>() == STRICT_TS_COMPLETED);
+        CHECK(json().get<StrictTaskState>() == STRICT_TS_INVALID);
 
         // invalid json -> exception thrown
         json _;
@@ -1910,6 +1922,8 @@ TEST_CASE("std::optional")
 
         CHECK(json(opt_string) == j_string);
         CHECK(std::optional<std::string>(j_string) == opt_string);
+        // false positive: Infer attributes the destruction of the temporaries above to opt_string
+        // @infer-ignore USE_AFTER_DELETE
     }
 
     SECTION("bool")
@@ -1960,8 +1974,8 @@ TEST_CASE("std::optional")
         CHECK_THROWS_WITH_AS(json(opt), "cannot serialize throwing_to_json_type", std::runtime_error&);
 
         // the conversion is noexcept exactly when converting the contained value is
-        static_assert(!std::is_nothrow_constructible<json, const std::optional<throwing_to_json_type>&>::value, "");
-        static_assert(std::is_nothrow_constructible<json, const std::optional<int>&>::value, "");
+        static_assert(!std::is_nothrow_constructible<json, const std::optional<throwing_to_json_type>&>::value);
+        static_assert(std::is_nothrow_constructible<json, const std::optional<int>&>::value);
     }
 #endif
 }
