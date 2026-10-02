@@ -31,7 +31,7 @@ Therefore, assertions can be switched off by defining `NDEBUG`.
 
 ## Examples
 
-??? example "Example 1: default behavior"
+??? example "Example: default behavior"
 
     The following code will trigger an assertion at runtime:
 
@@ -53,7 +53,7 @@ Therefore, assertions can be switched off by defining `NDEBUG`.
     Assertion failed: (m_value.object->find(key) != m_value.object->end()), function operator[], file json.hpp, line 2144.
     ```
 
-??? example "Example 2: user-defined behavior"
+??? example "Example: user-defined behavior"
 
     The assertion reporting can be changed by defining `JSON_ASSERT(x)` differently.
 

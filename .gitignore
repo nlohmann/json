@@ -28,6 +28,8 @@
 /docs/docset/docSet.dsidx
 /docs/mkdocs/.cache/
 /docs/mkdocs/docs/__pycache__/
+/docs/mkdocs/hooks/__pycache__/
+/docs/mkdocs/scripts/mermaid/node_modules/
 /docs/mkdocs/site/
 /docs/mkdocs/venv/
 

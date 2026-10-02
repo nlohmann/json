@@ -4,7 +4,10 @@
 
 A `basic_json` value is a container and allows access via iterators. Depending on the value type, `basic_json` stores zero or more values.
 
-As for other containers, `begin()` returns an iterator to the first value and `end()` returns an iterator to the value following the last value. The latter iterator is a placeholder and cannot be dereferenced. In case of null values, empty arrays, or empty objects, `begin()` will return `end()`.
+As for other containers, [`begin()`](../api/basic_json/begin.md) returns an iterator to the first value and
+[`end()`](../api/basic_json/end.md) returns an iterator to the value following the last value. The latter iterator is a
+placeholder and cannot be dereferenced. In case of null values, empty arrays, or empty objects, `begin()` will return
+`end()`.
 
 ![Illustration from cppreference.com](../images/range-begin-end.svg)
 
@@ -12,7 +15,7 @@ As for other containers, `begin()` returns an iterator to the first value and `e
 
 When iterating over objects, values are ordered with respect to the `object_comparator_t` type which defaults to `std::less`. See the [types documentation](types/index.md#key-order) for more information.
 
-??? example
+??? example "Example: iteration order of object values"
 
     ```cpp
     // create JSON object {"one": 1, "two": 2, "three": 3}
@@ -41,7 +44,7 @@ When iterating over objects, values are ordered with respect to the `object_comp
 
 The JSON iterators have two member functions, `key()` and `value()` to access the object key and stored value, respectively. When calling `key()` on a non-object iterator, an [invalid_iterator.207](../home/exceptions.md#jsonexceptioninvalid_iterator207) exception is thrown.
 
-??? example
+??? example "Example: access object keys with `key()` and `value()`"
 
     ```cpp
     // create JSON object {"one": 1, "two": 2, "three": 3}
@@ -76,7 +79,9 @@ for (auto it : j_object)
 }
 ```
 
-For this reason, the `items()` function allows accessing `iterator::key()` and `iterator::value()` during range-based for loops. In these loops, a reference to the JSON values is returned, so there is no access to the underlying iterator.
+For this reason, the [`items()`](../api/basic_json/items.md) function allows accessing `iterator::key()` and
+`iterator::value()` during range-based for loops. In these loops, a reference to the JSON values is returned, so there
+is no access to the underlying iterator.
 
 ```cpp
 for (auto& el : j_object.items())
@@ -104,11 +109,12 @@ for (auto& [key, val] : j_object.items())
 
 ### Reverse iteration order
 
-`rbegin()` and `rend()` return iterators in the reverse sequence.
+[`rbegin()`](../api/basic_json/rbegin.md) and [`rend()`](../api/basic_json/rend.md) return iterators in the reverse
+sequence.
     
 ![Illustration from cppreference.com](../images/range-rbegin-rend.svg)
 
-??? example
+??? example "Example: reverse iteration with `rbegin()` and `rend()`"
 
     ```cpp
     json j = {1, 2, 3, 4};
@@ -132,7 +138,7 @@ for (auto& [key, val] : j_object.items())
 
 Note that "value" means a JSON value in this setting, not values stored in the underlying containers. That is, `*begin()` returns the complete string or binary array and is also safe if the underlying string or binary array is empty.
 
-??? example
+??? example "Example: iterate over a string value"
 
     ```cpp
     json j = "Hello, world";
