@@ -3,6 +3,12 @@
 Each parser of the library (JSON, BJData, BON8, BSON, CBOR, MessagePack, and UBJSON) can be fuzz tested. Currently,
 [libFuzzer](https://llvm.org/docs/LibFuzzer.html) and [afl++](https://github.com/AFLplusplus/AFLplusplus) are supported.
 
+Additionally, `parse_json_view_fuzzer` (`tests/src/fuzzer-parse_json_view.cpp`) cross-checks `json_document`/`json_view`
+(the zero-copy, read-only view declared in `json_view.hpp`) against `basic_json` on the same JSON text: it asserts that
+`json_document::accept` agrees with `json::accept`, that an accepted input materializes to the same value `json::parse`
+produces, and that a rejected input makes both parsers throw with an identical `what()`. It takes plain JSON text, so it
+reuses the `corpus_json` corpus rather than a format of its own.
+
 ## Corpus creation
 
 For most effective fuzzing, a [corpus](https://llvm.org/docs/LibFuzzer.html#corpus) should be provided. A corpus is a

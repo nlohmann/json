@@ -85,6 +85,11 @@ with `allow_exceptions` set to `#!cpp false`: a parse error then yields a discar
     --8<-- "examples/is_discarded__parse.output"
     ```
 
+## See also
+
+- [basic_json_view::is_discarded](../basic_json_view/is_discarded.md) - the corresponding check on a zero-copy view,
+  which is `#!cpp true` if the view refers to no value
+
 ## Version history
 
 - Added in version 1.0.0.

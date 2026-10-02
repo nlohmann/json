@@ -38,3 +38,10 @@ target_compile_features(json_benchmarks PRIVATE cxx_std_11)
 target_link_libraries(json_benchmarks benchmark ${CMAKE_THREAD_LIBS_INIT})
 add_dependencies(json_benchmarks download_test_data)
 target_include_directories(json_benchmarks PRIVATE ${JSON_BENCHMARK_INCLUDE_DIR} ${CMAKE_BINARY_DIR}/include)
+
+# the json_document benchmarks, unless the header to benchmark predates json_view.hpp
+if(EXISTS "${JSON_BENCHMARK_INCLUDE_DIR}/nlohmann/json_view.hpp")
+    target_sources(json_benchmarks PRIVATE src/benchmarks_view.cpp)
+else()
+    message(STATUS "${JSON_BENCHMARK_INCLUDE_DIR} has no nlohmann/json_view.hpp: skipping the json_document benchmarks")
+endif()

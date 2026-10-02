@@ -37,6 +37,14 @@
     #define NLOHMANN_VIEW_NOINLINE
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+    #define NLOHMANN_VIEW_NODISCARD __attribute__((warn_unused_result))
+#elif defined(_MSC_VER)
+    #define NLOHMANN_VIEW_NODISCARD _Check_return_
+#else
+    #define NLOHMANN_VIEW_NODISCARD
+#endif
+
 // exceptions as in json.hpp (JSON_NOEXCEPTION, JSON_THROW_USER)
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
     #define NLOHMANN_VIEW_THROW(exception) throw exception

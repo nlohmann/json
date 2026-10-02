@@ -39,6 +39,7 @@ Constant.
 - [is_primitive](is_primitive.md) checks whether the JSON value is primitive
 - [type](type.md) returns the type of the JSON value
 - [string_t](string_t.md) the type used to store JSON strings
+- [basic_json_view::is_string](../basic_json_view/is_string.md) - the same check on a zero-copy view
 
 ## Version history
 

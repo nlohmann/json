@@ -9,6 +9,7 @@ Micro-benchmarks for parsing, serialization and the binary formats, written with
 | benchmark | what it does |
 |---|---|
 | `ParseFile`, `ParseString` | parse JSON from a file stream or a string |
+| `Accept` | validate JSON from a string (`json::accept`) |
 | `ParseIndented` | parse the large files re-indented by 4 spaces, for the lexer's whitespace handling |
 | `Dump` | serialize, compact (`-`) and indented (`4`) |
 | `ToCbor`, `BinaryToCbor` | write CBOR; `BinaryToCbor` writes binary values of growing size |
@@ -16,6 +17,10 @@ Micro-benchmarks for parsing, serialization and the binary formats, written with
 | `FromBinaryBuffer`, `FromBinaryFile` | read CBOR, MessagePack, UBJSON, BJData and BSON from a buffer or a `FILE*` |
 | `FromBinaryShape` | read deeply nested, container-heavy and scalar-heavy documents in every binary format |
 | `FromCborChunkedString` | read CBOR strings split into indefinite-length chunks |
+| `ViewParse`, `ViewRead` | parse with [`json_document`](https://json.nlohmann.me/features/json_view/) into a new document, or into one that is reused; compare with `ParseString` |
+| `ViewParseIndented` | as `ParseIndented`, with a reused `json_document` |
+| `ViewAccept` | validate with `json_document::accept`; compare with `Accept` |
+| `ViewMaterialize` | convert a parsed `json_document` into a `json` value |
 
 The input files are those of [nativejson-benchmark](https://github.com/miloyip/nativejson-benchmark) (`canada`,
 `citm_catalog`, `twitter`), a large `jeopardy` file, and number-heavy files (`floats`, `signed_ints`, ...).
@@ -110,7 +115,9 @@ Python, unpinned versions work as well. In its output:
 - `OVERALL_GEOMEAN` summarizes all benchmarks;
 - `-a` shows only the aggregates, not every repetition.
 
-The header you compare with must support everything the benchmarks use. The current benchmarks build against 3.12.0.
+The header you compare with must support everything the benchmarks use. The current benchmarks build against 3.12.0;
+the `View*` benchmarks (in `src/benchmarks_view.cpp`) are only built if the directory also holds
+`nlohmann/json_view.hpp`.
 Only benchmarks present in both result files are compared, so for older releases, either filter the benchmarks or
 build that release's own `tests/benchmarks` against its own header.
 
