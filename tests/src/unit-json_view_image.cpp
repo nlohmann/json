@@ -169,7 +169,11 @@ TEST_CASE("json_view images: round trips")
                 })
         {
             CAPTURE(text);
+            // false positive: parse() returns a document with a root
+            // @infer-ignore NULLPTR_DEREFERENCE
             check_round_trip(json_document::parse(text));
+            // false positive: parse() returns a document with a root
+            // @infer-ignore NULLPTR_DEREFERENCE
             check_round_trip(ordered_json_document::parse(text));
         }
     }
