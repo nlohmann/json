@@ -79,7 +79,7 @@ specification:
     total), because the check used to select the smaller float 32 encoding compared magnitudes with NaN, which is
     always `false` and caused the float 32 path to be skipped.
 
-??? example
+??? example "Example: serialize a JSON value to MessagePack"
 
     ```cpp
     --8<-- "examples/to_msgpack.cpp"
@@ -162,7 +162,7 @@ The library maps MessagePack types to JSON value types as follows:
     value is dumped. `bin`/`ext`/`fixext` values are unaffected and are never validated, since they are not required
     to hold text.
 
-??? example
+??? example "Example: deserialize a JSON value from MessagePack"
 
     ```cpp
     --8<-- "examples/from_msgpack.cpp"

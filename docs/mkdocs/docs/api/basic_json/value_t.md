@@ -38,6 +38,16 @@ functions [`is_null`](is_null.md), [`is_object`](is_object.md), [`is_array`](is_
 
     `discarded` is unordered.
 
+    ```mermaid
+    flowchart LR
+        A[null] --> B[boolean]
+        B --> C["number_integer / number_unsigned / number_float"]
+        C --> D[object]
+        D --> E[array]
+        E --> F[string]
+        F --> G[binary]
+    ```
+
 !!! note "Types of numbers"
 
     There are three enumerators for numbers (`number_integer`, `number_unsigned`, and `number_float`) to distinguish
@@ -73,6 +83,14 @@ functions [`is_null`](is_null.md), [`is_object`](is_object.md), [`is_array`](is_
     ```json
     --8<-- "examples/type.output"
     ```
+
+## See also
+
+- [type](type.md) return the type of the JSON value
+- [type_name](type_name.md) return the type as string
+- [operator value_t](operator_value_t.md) return the type of the JSON value
+- [is_primitive](is_primitive.md) return whether the type is primitive
+- [is_structured](is_structured.md) return whether the type is structured
 
 ## Version history
 

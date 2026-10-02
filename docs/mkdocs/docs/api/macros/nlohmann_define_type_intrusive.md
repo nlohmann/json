@@ -83,7 +83,7 @@ See the examples below for the concrete generated code.
 
 ## Examples
 
-??? example "Example (1): NLOHMANN_DEFINE_TYPE_INTRUSIVE"
+??? example "Example: (1) NLOHMANN_DEFINE_TYPE_INTRUSIVE"
 
     Consider the following complete example:
 
@@ -112,7 +112,7 @@ See the examples below for the concrete generated code.
     --8<-- "examples/nlohmann_define_type_intrusive_explicit.cpp"
     ```
 
-??? example "Example (2): NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT"
+??? example "Example: (2) NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT"
 
     Consider the following complete example:
 
@@ -142,7 +142,7 @@ See the examples below for the concrete generated code.
 
     Note how a default-initialized `person` object is used in the `from_json` to fill missing values.
 
-??? example "Example (3): NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE"
+??? example "Example: (3) NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE"
     Consider the following complete example:
 
     ```cpp hl_lines="22"

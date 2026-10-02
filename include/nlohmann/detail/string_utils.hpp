@@ -57,7 +57,7 @@ inline std::string hex_byte(const std::uint8_t byte)
 Used to turn a decoded code point back into bytes: by the wide-string input
 adapters in input_adapters.hpp (one code point per UTF-32 unit, per UTF-16
 unit outside the surrogate range, and per valid UTF-16 surrogate pair), and
-by the lexer's `\uXXXX`/`\uXXXX\uYYYY` handling in lexer.hpp. Passing a
+by the lexer's handling of u-escapes and surrogate pairs in lexer.hpp. Passing a
 code point above U+10FFFF, or one in the surrogate range U+D800..U+DFFF, is
 undefined behavior; callers are expected to have rejected those already
 (the wide-string adapters pass malformed units through unencoded instead of
@@ -70,7 +70,7 @@ reaching it).
 @param[in] out  called once for each byte of the UTF-8 encoding of @a cp
 */
 template<typename Out>
-void encode_utf8(std::uint32_t cp, Out&& out)
+void encode_utf8(std::uint32_t cp, const Out& out)
 {
     JSON_ASSERT(cp <= 0x10FFFF);
 

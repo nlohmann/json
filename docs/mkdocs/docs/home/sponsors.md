@@ -9,7 +9,7 @@ You can sponsor this library at [GitHub Sponsors](https://github.com/sponsors/nl
 
 ## Named Sponsors
 
-- [Michael Hartmann](https://github.com/reFX-Mike)
+- Michael Hartmann
 - [Stefan Hagen](https://github.com/sthagen)
 - [Steve Sperandeo](https://github.com/homer6)
 - [Robert Jefe Lindstädt](https://github.com/eljefedelrodeodeljefe)

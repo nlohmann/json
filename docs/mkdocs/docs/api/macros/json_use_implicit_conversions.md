@@ -24,6 +24,8 @@ By default, implicit conversions are enabled.
     You can prepare existing code by already defining `JSON_USE_IMPLICIT_CONVERSIONS` to `0` and replace any implicit
     conversions with calls to [`get`](../basic_json/get.md).
 
+    See the [migration guide](../../integration/migration_guide.md#replace-implicit-conversions) for how to update existing code.
+
 !!! tip "Automatic migration"
 
     The community-maintained clang-tidy check `modernize-nlohmann-json-explicit-conversions` rewrites implicit

@@ -2,3 +2,19 @@
 .md-typeset code, .md-typeset pre {
     font-variant-ligatures: common-ligatures;
 }
+
+/* badge after version numbers newer than the latest release (hooks/unreleased_versions.py) */
+.md-typeset .unreleased-version {
+    display: inline-block;
+    padding: 0 .5em;
+    border: .05rem solid var(--md-accent-fg-color);
+    border-radius: 1em;
+    background-color: var(--md-accent-fg-color--transparent);
+    color: var(--md-typeset-color);
+    font-size: .7em;
+    font-weight: 700;
+    line-height: 1.6;
+    vertical-align: .1em;
+    white-space: nowrap;
+    cursor: help;
+}

@@ -164,7 +164,6 @@ set(GCC_CXXFLAGS
     -Wenum-conversion
     -Wexceptions
     -Wexpansion-to-defined
-    -Wexperimental-fmv-target
     -Wexpose-global-module-tu-local
     -Wexternal-tu-local
     -Wextra
