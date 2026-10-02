@@ -291,7 +291,9 @@ void to_json(BasicJsonType& j, const std::optional<T>& opt) noexcept(std::is_not
 {
     if (opt.has_value())
     {
-        j = *opt;
+        // explicit construction, as the conversion from a basic_json with a different
+        // string type is explicit if JSON_USE_IMPLICIT_CONVERSIONS is 0 (#2649)
+        j = BasicJsonType(*opt);
     }
     else
     {
