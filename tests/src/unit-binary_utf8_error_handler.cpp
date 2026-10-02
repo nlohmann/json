@@ -318,14 +318,17 @@ TEST_CASE("UTF-8 error_handler for the binary readers and writers")
     {
         const json jval = ill_formed_cases[0].bytes;
 
-        // to_*: the default error_handler is strict, so ill-formed input still throws
-        CHECK_THROWS_AS(json::to_cbor(jval), json::type_error&);
-        CHECK_THROWS_AS(json::to_ubjson(jval), json::type_error&);
-        CHECK_THROWS_AS(json::to_bjdata(jval), json::type_error&);
+        // to_*: the default error_handler is keep, so ill-formed bytes are
+        // written unchanged, exactly as in release 3.12.0 (it is strict only
+        // if JSON_STRICT_BINARY_UTF8 is enabled, see
+        // unit-binary_utf8_strict.cpp)
+        CHECK(json::to_cbor(jval) == json::to_cbor(jval, eh::keep));
+        CHECK(json::to_ubjson(jval) == json::to_ubjson(jval, false, false, eh::keep));
+        CHECK(json::to_bjdata(jval) == json::to_bjdata(jval, false, false, json::bjdata_version_t::draft2, eh::keep));
         {
             json jobj;
             jobj["k"] = jval;
-            CHECK_THROWS_AS(json::to_bson(jobj), json::type_error&);
+            CHECK(json::to_bson(jobj) == json::to_bson(jobj, eh::keep));
         }
 
         // from_*: the default error_handler is keep, so ill-formed bytes are

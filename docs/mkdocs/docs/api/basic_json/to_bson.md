@@ -3,13 +3,13 @@
 ```cpp
 // (1)
 static std::vector<std::uint8_t> to_bson(const basic_json& j,
-                                         const error_handler_t error_handler = error_handler_t::strict);
+                                         const error_handler_t error_handler = error_handler_t::keep);
 
 // (2)
 static void to_bson(const basic_json& j, detail::output_adapter<std::uint8_t> o,
-                    const error_handler_t error_handler = error_handler_t::strict);
+                    const error_handler_t error_handler = error_handler_t::keep);
 static void to_bson(const basic_json& j, detail::output_adapter<char> o,
-                    const error_handler_t error_handler = error_handler_t::strict);
+                    const error_handler_t error_handler = error_handler_t::keep);
 ```
 
 BSON (Binary JSON) is a binary format in which zero or more ordered key/value pairs are stored as a single entity (a
@@ -30,9 +30,9 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 
 `error_handler` (in)
 :   how to treat a string or object key in `j` that is not valid UTF-8; see [`error_handler_t`](error_handler_t.md).
-    The default, `strict`, throws; `keep` writes the ill-formed bytes to the output as is, as every version of
-    `to_bson` did before this parameter was added; `replace`/`ignore` sanitize it the same way
-    [`dump`](dump.md) would
+    The default, `keep`, writes the ill-formed bytes to the output as is, as every version of `to_bson` did before
+    this parameter was added; `strict` throws; `replace`/`ignore` sanitize it the same way [`dump`](dump.md) would.
+    If [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md) is enabled, the default is `strict` instead.
 
 ## Return value
 
@@ -56,7 +56,8 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
   exceeds 255, the maximum of the BSON binary subtype; example:
   `"subtype 70000 is too large for the BSON binary subtype (max 255)"`
 - Throws [type_error.316](../../home/exceptions.md#jsonexceptiontype_error316) if a string or object key is
-  not valid UTF-8 and `error_handler` is `strict` (the default)
+  not valid UTF-8 and `error_handler` is `strict` (the default only if
+  [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md) is enabled)
 
 ## Complexity
 
@@ -93,6 +94,7 @@ pass before anything is written.
 - Added in version 3.4.0.
 - Linear in the size of `j`, and no longer limited by the call stack for deeply nested values, since version 3.13.0.
 - `out_of_range.415` is now detected before anything is written, like the other exceptions above, since version 3.13.0.
-- Throwing `type_error.316` for a string value or object key that is not valid UTF-8, detected before anything is
-  written, added in version 3.13.0.
-- Added `error_handler` parameter in version 3.13.0.
+- Added `error_handler` parameter in version 3.13.0. Its default, `keep`, writes the bytes of a string or object key
+  that is not valid UTF-8 unchanged, as before; `strict` (the default if
+  [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md) is enabled) throws `type_error.316` before anything
+  is written.

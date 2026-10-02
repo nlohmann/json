@@ -65,9 +65,12 @@ The library uses the following mapping from JSON values types to BJData types ac
 
 !!! warning "UTF-8 validation of string values and object keys"
 
-    BJData strings must use UTF-8 encoding. `to_bjdata()` validates the bytes of every string value and object key
-    and throws [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for ill-formed UTF-8, so a
-    value with such a string cannot be serialized in the first place.
+    BJData strings must use UTF-8 encoding. By default (the [`error_handler`](../../api/basic_json/to_bjdata.md)
+    parameter left at `keep`), `to_bjdata()` writes the bytes of string values and object keys unchanged, even if they
+    are not valid UTF-8. With `error_handler_t::strict`, it throws
+    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for ill-formed UTF-8 instead;
+    `replace`/`ignore` sanitize the string. [`JSON_STRICT_BINARY_UTF8`](../../api/macros/json_strict_binary_utf8.md)
+    makes `strict` the default.
 
 !!! info "Unused BJData markers"
 
@@ -225,8 +228,7 @@ The library maps BJData types to JSON value types as follows:
     [`dump()`](../../api/basic_json/dump.md) still requires valid UTF-8 and throws
     [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for a value read with the default
     `keep` handler, unless an error handler is passed that replaces or ignores the ill-formed bytes. `to_bjdata()`'s
-    own `error_handler` parameter defaults to `strict` (see above), so a value read this way cannot be written back
-    to BJData unless a non-strict handler is passed there too.
+    own `error_handler` parameter defaults to `keep` (see above), so such a value is written back unchanged.
 
 !!! info "Round trips"
 

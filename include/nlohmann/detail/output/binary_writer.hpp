@@ -98,7 +98,7 @@ class binary_writer
                is not valid UTF-8 (CBOR, UBJSON, BJData, and BSON only; never
                consulted by @ref write_msgpack or @ref write_bon8)
     */
-    explicit binary_writer(OutputSinkType sink, const error_handler_t error_handler_ = error_handler_t::strict)
+    explicit binary_writer(OutputSinkType sink, const error_handler_t error_handler_ = binary_writer_default_error_handler())
         : oa(std::move(sink)), error_handler(error_handler_)
     {}
 
@@ -118,7 +118,7 @@ class binary_writer
     */
     template < typename SinkType = OutputSinkType,
                typename std::enable_if < std::is_constructible<SinkType, output_adapter_t<CharType>>::value, int >::type = 0 >
-    explicit binary_writer(output_adapter_t<CharType> adapter, const error_handler_t error_handler_ = error_handler_t::strict)
+    explicit binary_writer(output_adapter_t<CharType> adapter, const error_handler_t error_handler_ = binary_writer_default_error_handler())
         : oa(SinkType(std::move(adapter))), error_handler(error_handler_)
     {}
 
@@ -2601,7 +2601,7 @@ class binary_writer
 
     /// how to treat a string value or object key that is not valid UTF-8
     /// (CBOR, UBJSON, BJData, and BSON only)
-    const error_handler_t error_handler = error_handler_t::strict;
+    const error_handler_t error_handler = binary_writer_default_error_handler();
 };
 
 }  // namespace detail

@@ -34,5 +34,17 @@ enum class error_handler_t
     keep     ///< keep invalid UTF-8 sequences unchanged
 };
 
+/// the default error handler of the CBOR, UBJSON, BJData, and BSON writers:
+/// error_handler_t::strict if JSON_STRICT_BINARY_UTF8 is enabled, otherwise
+/// error_handler_t::keep (the behavior before version 3.13.0)
+constexpr error_handler_t binary_writer_default_error_handler() noexcept
+{
+#if JSON_STRICT_BINARY_UTF8
+    return error_handler_t::strict;
+#else
+    return error_handler_t::keep;
+#endif
+}
+
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END

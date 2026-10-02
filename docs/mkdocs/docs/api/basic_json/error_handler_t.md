@@ -14,7 +14,9 @@ This enumeration is used to choose how to treat ill-formed UTF-8 in a string val
 - [`dump`](dump.md) uses it while serializing a `basic_json` value to text.
 - [`to_cbor`](to_cbor.md), [`to_ubjson`](to_ubjson.md), [`to_bjdata`](to_bjdata.md), and [`to_bson`](to_bson.md) use it
   while serializing a `basic_json` value to that binary format; none of CBOR, UBJSON, BJData, or BSON requires a
-  decoder to reject ill-formed UTF-8, so by default (`strict`) the library checks on write instead. `to_msgpack` and
+  decoder to reject ill-formed UTF-8, so the library can check on write instead. Their default is `keep`, as no
+  binary writer checked before this parameter was added, or `strict` if
+  [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md) is enabled. `to_msgpack` and
   `to_bon8` do not take this parameter: MessagePack's specification explicitly allows a string to contain ill-formed
   UTF-8, so `to_msgpack` always passes it through, while BON8 always validates, since UTF-8 lead bytes are structural
   to that format.

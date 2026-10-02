@@ -1821,8 +1821,9 @@ TEST_CASE("CBOR")
             // unless an error handler that replaces or ignores the bytes is
             // passed
             CHECK_THROWS_AS(j_value.dump(), json::type_error&);
-            // to_cbor() is strict as well, so the value cannot be written back
-            CHECK_THROWS_AS(json::to_cbor(j_value), json::type_error&);
+            // to_cbor() writes the bytes back unchanged, as before 3.13.0,
+            // unless JSON_STRICT_BINARY_UTF8 is enabled (see unit-binary_utf8_strict.cpp)
+            CHECK(json::from_cbor(json::to_cbor(j_value)) == j_value);
 
             // the same bytes as an object key round-trip as well
             const std::vector<uint8_t> ill_formed_key = {0xa1, 0x62, 0xc0, 0xae, 0x01};
@@ -1830,7 +1831,7 @@ TEST_CASE("CBOR")
             CHECK_NOTHROW(j_key = json::from_cbor(ill_formed_key));
             REQUIRE(j_key.is_object());
             CHECK(j_key.contains(std::string("\xc0\xae")));
-            CHECK_THROWS_AS(json::to_cbor(j_key), json::type_error&);
+            CHECK(json::from_cbor(json::to_cbor(j_key)) == j_key);
 
             // a CBOR byte string (major type 2) with the very same bytes is
             // NOT text and must still be accepted as-is
@@ -1843,20 +1844,21 @@ TEST_CASE("CBOR")
             CHECK(json::from_cbor(json::to_cbor(j)) == j);
         }
 
-        SECTION("to_cbor rejects ill-formed UTF-8 (see #5651)")
+        SECTION("to_cbor keeps ill-formed UTF-8 (see #5651)")
         {
-            // to_cbor() must reject the same ill-formed strings from_cbor()
-            // rejects, so a value it accepts can always be read back
-            CHECK_THROWS_WITH_AS(json::to_cbor(json("\xFF")), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+            // to_cbor() writes the bytes unchanged, as before 3.13.0, unless
+            // JSON_STRICT_BINARY_UTF8 is enabled (see
+            // unit-binary_utf8_strict.cpp); from_cbor() reads them back as is
+            CHECK(json::from_cbor(json::to_cbor(json("\xFF"))) == json("\xFF"));
             // a truncated multi-byte sequence
-            CHECK_THROWS_WITH_AS(json::to_cbor(json("\xC3")), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xC3", json::type_error&);
+            CHECK(json::from_cbor(json::to_cbor(json("\xC3"))) == json("\xC3"));
             // an encoded surrogate half (U+D800)
-            CHECK_THROWS_WITH_AS(json::to_cbor(json("\xED\xA0\x80")), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xED", json::type_error&);
+            CHECK(json::from_cbor(json::to_cbor(json("\xED\xA0\x80"))) == json("\xED\xA0\x80"));
             // an overlong encoding of '.'
-            CHECK_THROWS_WITH_AS(json::to_cbor(json("\xC0\xAF")), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xC0", json::type_error&);
+            CHECK(json::from_cbor(json::to_cbor(json("\xC0\xAF"))) == json("\xC0\xAF"));
 
-            // an object key with ill-formed UTF-8 is rejected the same way
-            CHECK_THROWS_WITH_AS(json::to_cbor(json{{"\xFF", 1}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+            // an object key with ill-formed UTF-8 is kept the same way
+            CHECK(json::from_cbor(json::to_cbor(json{{"\xFF", 1}})) == json{{"\xFF", 1}});
 
             // binary values are not text and are unaffected
             CHECK_NOTHROW(json::to_cbor(json::binary(std::vector<std::uint8_t>({0xFF}))));
@@ -1877,7 +1879,7 @@ TEST_CASE("CBOR")
             CHECK_NOTHROW(_ = json::from_cbor(std::vector<uint8_t>({0x7f, 0x61, 0xc3, 0xff})));
             CHECK(_ == "\xc3");
             CHECK_THROWS_AS(_.dump(), json::type_error&);
-            CHECK_THROWS_AS(json::to_cbor(_), json::type_error&);
+            CHECK(json::from_cbor(json::to_cbor(_)) == _);
 
             // an ill-formed later chunk is kept after valid ones
             CHECK_NOTHROW(_ = json::from_cbor(std::vector<uint8_t>({0x7f, 0x62, 0xc3, 0xa9, 0x62, 0xc0, 0xae, 0xff})));
