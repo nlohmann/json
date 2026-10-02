@@ -36,6 +36,10 @@ Constant.
 
 ## See also
 
+- [is_object](is_object.md) checks whether the JSON value is an object
+- [is_structured](is_structured.md) checks whether the JSON value is structured (array or object)
+- [type](type.md) returns the type of the JSON value
+- [array_t](array_t.md) the type used to store JSON arrays
 - [basic_json_view::is_array](../basic_json_view/is_array.md) - the same check on a zero-copy view
 
 ## Version history

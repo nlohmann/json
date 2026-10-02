@@ -1,0 +1,1 @@
+[json.exception.out_of_range.409] BSON key cannot contain code point U+0000 (at byte 2)

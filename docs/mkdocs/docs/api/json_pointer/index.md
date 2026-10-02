@@ -20,6 +20,24 @@ are the base for JSON patches.
     in which case `string_t` will be deduced as [`basic_json::string_t`](../basic_json/string_t.md). This feature is
     deprecated and may be removed in a future major version.
 
+    See the [migration guide](../../integration/migration_guide.md#json-pointers) for how to update existing code.
+
+A JSON pointer is internally a sequence of reference tokens. [`front`](front.md), [`pop_front`](pop_front.md), and
+[`push_front`](push_front.md) act on the first reference token, whereas [`back`](back.md), [`pop_back`](pop_back.md),
+and [`push_back`](push_back.md) act on the last one. [`parent_pointer`](parent_pointer.md) returns a new JSON pointer
+with the last reference token removed (like a non-mutating [`pop_back`](pop_back.md)):
+
+```mermaid
+flowchart LR
+    A["a"] --> B["b"] --> C["c"]
+
+    front["front() / pop_front() / push_front()"] -.-> A
+    back["back() / pop_back() / push_back()"] -.-> C
+    parent["parent_pointer() returns /a/b"] -.-> B
+```
+
+The diagram shows the reference tokens of the JSON pointer `/a/b/c`.
+
 ## Member types
 
 - [**string_t**](string_t.md) - the string type used for the reference tokens
@@ -28,9 +46,10 @@ are the base for JSON patches.
 
 - [(constructor)](json_pointer.md)
 - [**to_string**](to_string.md) - return a string representation of the JSON pointer
-- [**operator string_t**](operator_string_t.md) - return a string representation of the JSON pointer
+- [**operator string_t**](operator_string_t.md) - return a string representation of the JSON pointer (deprecated)
 - [**operator==**](operator_eq.md) - compare: equal
 - [**operator!=**](operator_ne.md) - compare: not equal
+- [**operator<=>**](operator_spaceship.md) - compare: 3-way (C++20)
 - [**operator/=**](operator_slasheq.md) - append to the end of the JSON pointer
 - [**operator/**](operator_slash.md) - create JSON Pointer by appending
 - [**parent_pointer**](parent_pointer.md) - returns the parent of this JSON pointer
@@ -45,6 +64,7 @@ are the base for JSON patches.
 ## Literals
 
 - [**operator""_json_pointer**](../operator_literal_json_pointer.md) - user-defined string literal for JSON pointers
+
 ## See also
 
 - [RFC 6901](https://datatracker.ietf.org/doc/html/rfc6901)

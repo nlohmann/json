@@ -67,7 +67,7 @@ The default value is `0` (disabled — existing behavior is preserved).
 
 ## Examples
 
-??? example "Default behavior (macro not defined)"
+??? example "Example: default behavior (macro not defined)"
 
     ```cpp
     #include <nlohmann/json.hpp>
@@ -83,7 +83,7 @@ The default value is `0` (disabled — existing behavior is preserved).
     }
     ```
 
-??? example "Conversion disabled (macro defined to 1)"
+??? example "Example: conversion disabled (macro defined to 1)"
 
     ```cpp
     #define JSON_DISABLE_TUPLE_REFERENCE_CONVERSION 1

@@ -23,9 +23,9 @@ In case exceptions are undesired or not supported by the environment, there are 
 
 ## Switch off exceptions
 
-The `parse()` function accepts a `#!cpp bool` parameter `allow_exceptions` which controls whether an exception is
-thrown when a parse error occurs (`#!cpp true`, default) or whether a discarded value should be returned
-(`#!cpp false`).
+The [`parse()`](../../api/basic_json/parse.md) function accepts a `#!cpp bool` parameter `allow_exceptions` which
+controls whether an exception is thrown when a parse error occurs (`#!cpp true`, default) or whether a discarded value
+should be returned (`#!cpp false`).
 
 ```cpp
 json j = json::parse(my_input, nullptr, false);
@@ -39,8 +39,8 @@ Note there is no diagnostic information available in this scenario.
 
 ## Use accept() function
 
-Alternatively, function `accept()` can be used which does not return a `json` value, but a `#!cpp bool` indicating
-whether the input is valid JSON.
+Alternatively, function [`accept()`](../../api/basic_json/accept.md) can be used which does not return a `json` value,
+but a `#!cpp bool` indicating whether the input is valid JSON.
 
 ```cpp
 if (!json::accept(my_input))
@@ -66,56 +66,18 @@ bool parse_error(std::size_t position,
 
 The return value indicates whether the parsing should continue, so the function should usually return `#!cpp false`.
 
-??? example
+??? example "Example: report parse errors without exceptions"
+
+    The example derives from the library's DOM parser and overrides `parse_error` to print the error instead of
+    throwing. Note the DOM parser is an implementation detail (`nlohmann::detail`) and may change between releases;
+    see [Do not use the `detail` namespace](../../integration/migration_guide.md#do-not-use-the-detail-namespace).
 
     ```cpp
-    #include <iostream>
-    #include <nlohmann/json.hpp>
-    
-    using json = nlohmann::json;
-    
-    class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json>
-    {
-      public:
-        sax_no_exception(json& j)
-          : nlohmann::detail::json_sax_dom_parser<json>(j, false)
-        {}
-        
-        bool parse_error(std::size_t position,
-                         const std::string& last_token,
-                         const json::exception& ex)
-        {
-            std::cerr << "parse error at input byte " << position << "\n"
-                      << ex.what() << "\n"
-                      << "last read: \"" << last_token << "\""
-                      << std::endl;
-            return false;
-        }
-    };
-    
-    int main()
-    {
-        std::string myinput = "[1,2,3,]";
-    
-        json result;
-        sax_no_exception sax(result);
-        
-        bool parse_result = json::sax_parse(myinput, &sax);
-        if (!parse_result)
-        {
-            std::cerr << "parsing unsuccessful!" << std::endl;
-        }
-        
-        std::cout << "parsed value: " << result << std::endl;
-    }
+    --8<-- "examples/sax_no_exception.cpp"
     ```
 
     Output:
-    
+
     ```
-    parse error at input byte 8
-    [json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - unexpected ']'; expected '[', '{', or a literal
-    last read: "3,]"
-    parsing unsuccessful!
-    parsed value: [1,2,3]
+    --8<-- "examples/sax_no_exception.output"
     ```

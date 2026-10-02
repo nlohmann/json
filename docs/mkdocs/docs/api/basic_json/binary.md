@@ -7,9 +7,9 @@ static basic_json binary(typename binary_t::container_type&& init);
 
 // (2)
 static basic_json binary(const typename binary_t::container_type& init,
-                         std::uint8_t subtype);
+                         typename binary_t::subtype_type subtype);
 static basic_json binary(typename binary_t::container_type&& init,
-                         std::uint8_t subtype);
+                         typename binary_t::subtype_type subtype);
 ```
 
 1. Creates a JSON binary array value from a given binary container.
@@ -61,6 +61,15 @@ initialization of a binary array type, for backwards compatibility and so it doe
     --8<-- "examples/binary.output"
     ```
 
+## See also
+
+- [binary_t](binary_t.md) type for binary values
+- [get_binary](get_binary.md) get a reference to the stored binary value
+- [is_binary](is_binary.md) return whether the value is binary
+- [byte_container_with_subtype](../byte_container_with_subtype/index.md) container for binary values with subtype
+- [Binary Values](../../features/binary_values.md) - the article on binary values
+
 ## Version history
 
 - Added in version 3.8.0.
+- Changed the type of `subtype` from `std::uint8_t` to `binary_t::subtype_type` (`std::uint64_t`) in version 3.10.0.
