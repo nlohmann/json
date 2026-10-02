@@ -30,6 +30,11 @@ The actual comparator used depends on [`object_t`](object_t.md) and can be obtai
     --8<-- "examples/default_object_comparator_t.output"
     ```
 
+## See also
+
+- [object_comparator_t](object_comparator_t.md) the comparator actually used by `object_t`
+- [object_t](object_t.md) the type used to store JSON objects
+
 ## Version history
 
 - Added in version 3.11.0.

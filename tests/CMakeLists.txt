@@ -89,7 +89,8 @@ target_compile_options(test_main PUBLIC
     # https://github.com/nlohmann/json/pull/3229
     $<$<CXX_COMPILER_ID:Intel>:-diag-disable=2196>
 
-    $<$<CXX_COMPILER_ID:GNU>:-Wno-deprecated-declarations>
+    # several tests call deprecated functions on purpose to keep them covered
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wno-deprecated-declarations>
     $<$<CXX_COMPILER_ID:Intel>:-diag-disable=1786>)
 target_include_directories(test_main SYSTEM PUBLIC
     thirdparty/doctest)
@@ -101,7 +102,7 @@ target_link_libraries(test_main PUBLIC ${NLOHMANN_JSON_TARGET_NAME})
 # test-regression1 needs it on its include path (see json_test_set_test_options
 # below), rather than every test-* target via test_main.
 add_library(fifo_map_include INTERFACE)
-target_include_directories(fifo_map_include INTERFACE thirdparty/fifo_map)
+target_include_directories(fifo_map_include SYSTEM INTERFACE thirdparty/fifo_map)
 
 #############################################################################
 # define test- and standard-specific build settings

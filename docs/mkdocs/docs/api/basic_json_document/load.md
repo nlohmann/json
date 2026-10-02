@@ -89,7 +89,9 @@ Linear in the number of nodes, which are always copied into the document. With `
 additionally linear in the combined length of the text and the decoded strings; `#!cpp image_check::bounds` and
 `#!cpp image_check::none` do not read them.
 
-## `image_check`
+## Notes
+
+**The `image_check` modes.**
 
 ```cpp
 using image_check = detail::view::image_check;
@@ -116,8 +118,6 @@ fits a cache your own process just wrote and reads straight back, where damage w
 rather than adversarial input; it still cannot crash or read out of bounds. `none` skips validation entirely and
 should only be used for an image you trust as much as your own memory.
 
-## Notes
-
 **Lifetime.** Overloads 1 and 2 borrow `image`: it must stay alive and byte-for-byte unchanged for as long as the
 returned document, and any [view](../basic_json_view/index.md) taken from it, is used -- exactly like a document
 [`parse()`](parse.md) borrowed its input for. Overload 3 avoids this by keeping the vector itself; see
@@ -134,8 +134,8 @@ returned document, and any [view](../basic_json_view/index.md) taken from it, is
 [`root()`](root.md), element access, or [`materialize()`](../basic_json_view/materialize.md) read outside the image,
 so those stay safe on a damaged one. It does *not* guarantee that the image describes valid JSON: a string
 that a `full` check would have rejected can make [`dump()`](../basic_json_view/dump.md) write invalid UTF-8 or invalid
-JSON, or throw `type_error.316`, and a number can read back with a value that does not match how it is spelled. Reserve `bounds` for images you already trust to be well-formed, and use it
-only to skip the extra scan.
+JSON, or throw `type_error.316`, and a number can read back with a value that does not match how it is spelled.
+Reserve `bounds` for images you already trust to be well-formed, and use it only to skip the extra scan.
 
 ## Examples
 

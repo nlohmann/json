@@ -49,7 +49,7 @@ Linear in the size of the JSON value `j`.
 
 ## Examples
 
-??? example
+??? example "Example: serialize a JSON value to MessagePack"
 
     The example shows the serialization of a JSON value to a byte vector in MessagePack format.
      
@@ -61,6 +61,21 @@ Linear in the size of the JSON value `j`.
     
     ```json
     --8<-- "examples/to_msgpack.output"
+    ```
+
+??? example "Example: out_of_range.415 exception"
+
+    The example shows how serializing a binary value whose subtype exceeds 255 throws an exception, because the
+    MessagePack ext type stores the subtype in a single byte.
+
+    ```cpp
+    --8<-- "examples/to_msgpack__exception.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/to_msgpack__exception.output"
     ```
 
 ## See also

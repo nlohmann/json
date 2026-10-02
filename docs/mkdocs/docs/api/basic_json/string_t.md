@@ -30,16 +30,16 @@ JSON class into byte-sized characters during deserialization.
 
 ## Notes
 
-#### Default type
+### Default type
 
 With the default values for `StringType` (`std::string`), the default value for `string_t` is `#!cpp std::string`.
 
-#### Encoding
+### Encoding
 
 Strings are stored in UTF-8 encoding. Therefore, functions like `std::string::size()` or `std::string::length()` return
 the number of bytes in the string rather than the number of characters or glyphs.
 
-#### String comparison
+### String comparison
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) states:
 > Software implementations are typically required to test names of object members for equality. Implementations that
@@ -50,15 +50,15 @@ the number of bytes in the string rather than the number of characters or glyphs
 
 This implementation is interoperable as it does compare strings code unit by code unit.
 
-#### Storage
+### Storage
 
 String values are stored as pointers in a `basic_json` type. That is, for any access to string values, a pointer of type
 `string_t*` must be dereferenced.
 
-#### Cross-`basic_json` conversion requirements
+### Cross-`basic_json` conversion requirements
 
 When converting a string value from one `basic_json` specialization to another via the
-[converting constructor](basic_json.md#overload-4), the target `string_t` must be directly
+[converting constructor](basic_json.md) (overload 4), the target `string_t` must be directly
 constructible from the source `basic_json`'s `string_t` type. If this requirement is not met, the
 conversion does not fail; instead, the string is silently converted as an array of character codes,
 which is incorrect. See [issue #3425](https://github.com/nlohmann/json/issues/3425) for details
@@ -79,6 +79,12 @@ and an example.
     ```json
     --8<-- "examples/string_t.output"
     ```
+
+## See also
+
+- [object_t](object_t.md) the type used to store JSON objects (and their keys, which are also `string_t`)
+- [binary_t](binary_t.md) the type used to store binary values
+- [get_ptr](get_ptr.md) returns a pointer to the stored string value
 
 ## Version history
 
