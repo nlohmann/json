@@ -545,9 +545,10 @@ therefore silently changes parse results rather than raising an error. See
   specifiers, for which the library likewise provides only `#!cpp double` and `#!cpp long double` overloads
   (`#!cpp float` is promoted to `#!cpp double`).
 
-If `#!cpp std::numeric_limits<NumberFloatType>` describes an IEEE 754 binary32 or binary64 number, `dump` uses the
-Grisu2 algorithm, which produces the shortest representation that round-trips. Otherwise the `snprintf` fallback with
-`max_digits10` digits is used.
+If `#!cpp std::numeric_limits<NumberFloatType>` describes an IEEE 754 binary64 number, `dump` uses the algorithm of
+Żmij, which produces the shortest representation that round-trips. For IEEE 754 binary32 numbers, it uses Grisu2,
+which produces a short representation that round-trips. Otherwise the `snprintf` fallback with `max_digits10` digits is
+used.
 
 ### Required for the binary formats
 
@@ -559,7 +560,7 @@ binary32 or binary64 field and have no encoding for `#!cpp long double`.
 
 | Type                     | Support                                                                                                               |
 |--------------------------|-----------------------------------------------------------------------------------------------------------------------|
-| `#!cpp double` (default) | full; short round-trip output through Grisu2                                                                          |
+| `#!cpp double` (default) | full; shortest round-trip output through Żmij                                                                         |
 | `#!cpp float`            | full; short round-trip output through Grisu2                                                                          |
 | `#!cpp long double`      | `dump` and `parse` only; the binary format writers do not compile, as they only handle IEEE 754 binary32 and binary64 |
 | any other type           | not usable                                                                                                            |
