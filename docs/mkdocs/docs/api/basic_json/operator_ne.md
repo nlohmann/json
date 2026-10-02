@@ -5,17 +5,17 @@
 bool operator!=(const_reference lhs, const_reference rhs) noexcept;   // (1)
 
 template<typename ScalarType>
-bool operator!=(const_reference lhs, const ScalarType rhs) noexcept;  // (2)
+bool operator!=(const_reference lhs, const ScalarType rhs) noexcept(/* see below */); // (2)
 
 template<typename ScalarType>
-bool operator!=(ScalarType lhs, const const_reference rhs) noexcept;  // (2)
+bool operator!=(ScalarType lhs, const const_reference rhs) noexcept(/* see below */); // (2)
 
 // since C++20
 class basic_json {
     bool operator!=(const_reference rhs) const noexcept;              // (1)
 
     template<typename ScalarType>
-    bool operator!=(ScalarType rhs) const noexcept;                   // (2)
+    bool operator!=(ScalarType rhs) const noexcept(/* see below */); // (2)
 };
 ```
 
@@ -44,7 +44,12 @@ whether the values `lhs`/`*this` and `rhs` are not equal
 
 ## Exception safety
 
-No-throw guarantee: this function never throws exceptions.
+1. No-throw guarantee: this function never throws exceptions.
+2. No-throw guarantee if converting the scalar to a JSON value cannot throw, as for numbers, Booleans, and
+   `#!cpp nullptr`; the function is `#!cpp noexcept` exactly in that case. Otherwise, it throws what the conversion
+   throws, for example `std::bad_alloc` when converting a string, or
+   [`out_of_range.410`](../../home/exceptions.md#jsonexceptionout_of_range410) for an enum value not mapped by
+   [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](../macros/nlohmann_json_serialize_enum_strict.md).
 
 ## Complexity
 
@@ -95,3 +100,4 @@ Linear.
    special-casing for `NaN` and `discarded` values; `operator!=` now consistently means `!(a == b)`.
 2. Added in version 1.0.0. Added C++20 member functions in version 3.11.0. Changed in version 3.13.0 to remove
    special-casing for `NaN` and `discarded` values; `operator!=` now consistently means `!(a == b)`.
+   Made conditionally `#!cpp noexcept` in version 3.13.0; before, a throwing conversion called `std::terminate`.
