@@ -115,3 +115,4 @@ The default value is `0` (disabled — existing behavior is preserved).
 ## Version history
 
 - Added in version 3.13.0.
+- Planned to become the default (with the macro removed) in version 4.0.0.
