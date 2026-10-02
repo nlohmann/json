@@ -1,0 +1,54 @@
+option(
+    'MultipleHeaders',
+    type: 'boolean',
+    value: false,
+    description: 'Use non-amalgamated version of the library',
+)
+option(
+    'GlobalUDLs',
+    type: 'boolean',
+    value: true,
+    description: 'Place user-defined string literals in the global namespace',
+)
+option(
+    'ImplicitConversions',
+    type: 'boolean',
+    value: true,
+    description: 'Enable implicit conversions',
+)
+option(
+    'DisableEnumSerialization',
+    type: 'boolean',
+    value: false,
+    description: 'Disable default integer enum serialization',
+)
+option(
+    'DisableTupleReferenceConversion',
+    type: 'boolean',
+    value: false,
+    description: 'Disable conversion from a one-element tuple of a JSON reference',
+)
+option(
+    'Diagnostics',
+    type: 'boolean',
+    value: false,
+    description: 'Use extended diagnostic messages',
+)
+option(
+    'Diagnostic_Positions',
+    type: 'boolean',
+    value: false,
+    description: 'Enable diagnostic positions',
+)
+option(
+    'LegacyDiscardedValueComparison',
+    type: 'boolean',
+    value: false,
+    description: 'Enable legacy discarded value comparison',
+)
+option(
+    'StrictNulHandling',
+    type: 'boolean',
+    value: false,
+    description: 'Enable strict NUL-byte handling',
+)

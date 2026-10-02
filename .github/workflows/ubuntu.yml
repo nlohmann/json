@@ -31,6 +31,48 @@ jobs:
       - name: Build
         run: cmake --build build --target ci_test_gcc
 
+  ci_meson_install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
+      - name: Check that Meson and pkg-config offer the CMake options
+        run: make check_build_options
+      - name: Install Meson
+        run: pip install meson
+      - name: Install with Meson
+        run: |
+          meson setup build-meson --prefix=${{ github.workspace }}/install
+          meson install -C build-meson
+      - name: Use the installed package with find_package
+        run: |
+          cmake -S tests/cmake_import/project -B build-import -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install
+          cmake --build build-import
+      - name: Install with Meson and non-default options
+        run: |
+          meson setup build-meson-options --prefix=${{ github.workspace }}/install-options -DMultipleHeaders=true -DDiagnostics=true -DGlobalUDLs=false -DDisableTupleReferenceConversion=true
+          meson install -C build-meson-options
+      - name: Check that the options reach the installed files
+        run: |
+          test -d install-options/include/nlohmann/detail
+          cflags=$(PKG_CONFIG_PATH=${{ github.workspace }}/install-options/share/pkgconfig pkg-config --cflags nlohmann_json)
+          echo "$cflags"
+          echo "$cflags" | grep -q -- '-DJSON_DIAGNOSTICS=1'
+          echo "$cflags" | grep -q -- '-DJSON_USE_GLOBAL_UDLS=0'
+          echo "$cflags" | grep -q -- '-DJSON_DISABLE_TUPLE_REFERENCE_CONVERSION=1'
+          grep -q 'JSON_USE_GLOBAL_UDLS=0;JSON_DISABLE_TUPLE_REFERENCE_CONVERSION=1;JSON_DIAGNOSTICS=1' install-options/share/cmake/nlohmann_json/nlohmann_jsonTargets.cmake
+          cmake -S tests/cmake_import/project -B build-import-options -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install-options
+          cmake --build build-import-options
+      - name: Install with Meson and the include directory outside the prefix
+        run: |
+          meson setup build-meson-split --prefix=${{ github.workspace }}/install-split --includedir=${{ github.workspace }}/install-split-dev/include
+          meson install -C build-meson-split
+          cmake -S tests/cmake_import/project -B build-import-split -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install-split
+          cmake --build build-import-split
+
   ci_infer:
     runs-on: ubuntu-latest
     steps:

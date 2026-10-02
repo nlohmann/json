@@ -1,4 +1,4 @@
-.PHONY: pretty clean ChangeLog.md release update_hedley update_hedley_undef BUILD.bazel natvis macro_builder_check
+.PHONY: pretty clean ChangeLog.md release update_hedley update_hedley_undef BUILD.bazel natvis macro_builder_check check_build_options
 
 ##########################################################################
 # configuration
@@ -124,6 +124,10 @@ macro_builder_check:
 	diff "$$TMPDIR/paste.hpp" "$$TMPDIR/paste_actual.hpp" || (echo "===================================================================\n  $(MACRO_SCOPE_HPP) (NLOHMANN_JSON_EXPAND..NLOHMANN_JSON_DOUBLE_PASTE63) is out of date!\n  Regenerate it, see tools/macro_builder/README.md.\n===================================================================" ; exit 1); \
 	diff "$$TMPDIR/type_body.hpp" "$$TMPDIR/type_body_actual.hpp" || (echo "===================================================================\n  $(MACRO_SCOPE_HPP) (NLOHMANN_JSON_TYPE_BODY) is out of date!\n  Regenerate it, see tools/macro_builder/README.md.\n===================================================================" ; exit 1)
 
+# check that the Meson build and the pkg-config files offer the options of the CMake target
+check_build_options:
+	python3 tools/check_build_options/check_build_options.py .
+
 # check if file single_include/nlohmann/json.hpp has been amalgamated from the nlohmann sources
 check-amalgamation:
 	@mv $(AMALGAMATED_FILE) $(AMALGAMATED_FILE)~
@@ -181,7 +185,7 @@ json.tar.xz:
 # We use `-X` to make the resulting ZIP file reproducible, see
 # <https://content.pivotal.io/blog/barriers-to-deterministic-reproducible-zip-files>.
 include.zip: BUILD.bazel
-	zip -9 --recurse-paths -X include.zip $(SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_LITERALS_FILE) BUILD.bazel MODULE.bazel meson.build LICENSE.MIT
+	zip -9 --recurse-paths -X include.zip $(SRCS) $(AMALGAMATED_FILE) $(AMALGAMATED_FWD_FILE) $(AMALGAMATED_LITERALS_FILE) BUILD.bazel MODULE.bazel meson.build meson_options.txt LICENSE.MIT
 
 # Create the files for a release and add signatures and hashes.
 release: include.zip json.tar.xz
