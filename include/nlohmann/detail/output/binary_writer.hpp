@@ -115,8 +115,8 @@ class binary_writer
 
     /*!
     @param[in] j  JSON value to serialize
-    @throw type_error.316 if a string value or an object key is not valid
-           UTF-8
+    @throw type_error.316 if JSON_STRICT_BINARY_UTF8 is enabled and a string
+           value or an object key is not valid UTF-8
     @throw type_error.317 if @a j is not an object
     */
     void write_bson(const BasicJsonType& j)
@@ -147,8 +147,8 @@ class binary_writer
 
     /*!
     @param[in] j  JSON value to serialize
-    @throw type_error.316 if a string value or an object key is not valid
-           UTF-8
+    @throw type_error.316 if JSON_STRICT_BINARY_UTF8 is enabled and a string
+           value or an object key is not valid UTF-8
     */
     void write_cbor(const BasicJsonType& j)
     {
@@ -215,7 +215,7 @@ class binary_writer
 
             case value_t::string:
             {
-                check_utf8(*j.m_data.m_value.string, j);
+                check_text_utf8(*j.m_data.m_value.string, j);
 
                 // step 1: write control byte and the string length
                 write_cbor_head(0x60, j.m_data.m_value.string->size());
@@ -297,7 +297,7 @@ class binary_writer
                     // diagnostics context, because write_cbor(el.first)
                     // converts it to a temporary basic_json that would be
                     // used as the context instead
-                    check_utf8(el.first, j);
+                    check_text_utf8(el.first, j);
                     write_cbor(el.first);
                     write_cbor(el.second);
                 }
@@ -640,8 +640,8 @@ class binary_writer
     @param[in] add_prefix  whether prefixes need to be used for this value
     @param[in] use_bjdata  whether write in BJData format, default is false
     @param[in] bjdata_version  which BJData version to use, default is draft2
-    @throw type_error.316 if a string value or an object key is not valid
-           UTF-8
+    @throw type_error.316 if JSON_STRICT_BINARY_UTF8 is enabled and a string
+           value or an object key is not valid UTF-8
     */
     void write_ubjson(const BasicJsonType& j, const bool use_count,
                       const bool use_type, const bool add_prefix = true,
@@ -691,7 +691,7 @@ class binary_writer
 
             case value_t::string:
             {
-                check_utf8(*j.m_data.m_value.string, j);
+                check_text_utf8(*j.m_data.m_value.string, j);
 
                 if (add_prefix)
                 {
@@ -855,7 +855,7 @@ class binary_writer
 
                 for (const auto& el : *j.m_data.m_value.object)
                 {
-                    check_utf8(el.first, j);
+                    check_text_utf8(el.first, j);
                     write_number_with_ubjson_prefix(el.first.size(), true, use_bjdata);
                     oa.write_characters(
                           reinterpret_cast<const CharType*>(el.first.data()),
@@ -902,8 +902,8 @@ class binary_writer
             and the entry name size (and its null-terminator).
     @throw out_of_range.409 if @a name contains U+0000, before anything is
            written
-    @throw type_error.316 if @a name is not valid UTF-8, before anything is
-           written
+    @throw type_error.316 if JSON_STRICT_BINARY_UTF8 is enabled and @a name is
+           not valid UTF-8, before anything is written
     */
     static std::size_t calc_bson_entry_header_size(const string_t& name, const BasicJsonType& j)
     {
@@ -913,7 +913,7 @@ class binary_writer
             JSON_THROW(out_of_range::create(409, concat("BSON key cannot contain code point U+0000 (at byte ", std::to_string(it), ")"), &j));
         }
 
-        check_utf8(name, j);
+        check_text_utf8(name, j);
 
         return /*id*/ 1ul + name.size() + /*zero-terminator*/1u;
     }
@@ -970,8 +970,8 @@ class binary_writer
 
     /*!
     @return The size of the BSON-encoded string in @a value
-    @throw type_error.316 if @a value is not valid UTF-8, before anything is
-           written
+    @throw type_error.316 if JSON_STRICT_BINARY_UTF8 is enabled and @a value
+           is not valid UTF-8, before anything is written
 
     @note The UTF-8 check is skipped if @a value is already too long for the
           32-bit BSON length field (@ref to_bson_length rejects it later, once
@@ -983,7 +983,7 @@ class binary_writer
     {
         if (JSON_HEDLEY_LIKELY(value_in_range_of<std::int32_t>(value.size())))
         {
-            check_utf8(value, j);
+            check_text_utf8(value, j);
         }
         return sizeof(std::int32_t) + value.size() + 1ul;
     }
@@ -1113,8 +1113,8 @@ class binary_writer
             is neither an object nor an array
     @throw out_of_range.415 if @a j is binary with a subtype that does not fit
            into a byte, before anything is written
-    @throw type_error.316 if @a j is a string that is not valid UTF-8, before
-           anything is written
+    @throw type_error.316 if JSON_STRICT_BINARY_UTF8 is enabled and @a j is a
+           string that is not valid UTF-8, before anything is written
     */
     static std::size_t calc_bson_value_size(const BasicJsonType& j)
     {
@@ -1249,8 +1249,8 @@ class binary_writer
            written
     @throw out_of_range.415 if a binary value's subtype does not fit into a
            byte, before anything is written
-    @throw type_error.316 if a string value or a key is not valid UTF-8,
-           before anything is written
+    @throw type_error.316 if JSON_STRICT_BINARY_UTF8 is enabled and a string
+           value or a key is not valid UTF-8, before anything is written
     */
     static std::size_t calc_bson_sizes(const BasicJsonType& document, std::vector<std::size_t>& nested_sizes)
     {
@@ -2168,6 +2168,29 @@ class binary_writer
         {
             JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(valid), ": 0x", detail::hex_byte(data[valid])), &context));
         }
+    }
+
+    /*!
+    @brief check a CBOR, UBJSON, BJData, or BSON text string for valid UTF-8
+
+    The check only happens if JSON_STRICT_BINARY_UTF8 is enabled. Otherwise,
+    the bytes are written unchanged, as before version 3.13.0. MessagePack
+    always writes the bytes as is, and BON8 always checks them (see
+    @ref check_utf8).
+
+    @param[in] s        the string to check
+    @param[in] context  the value that holds @a s (for diagnostics)
+    @throw type_error.316 if JSON_STRICT_BINARY_UTF8 is enabled and @a s is
+           not valid UTF-8
+    */
+    static void check_text_utf8(const string_t& s, const BasicJsonType& context)
+    {
+#if JSON_STRICT_BINARY_UTF8
+        check_utf8(s, context);
+#else
+        static_cast<void>(s);
+        static_cast<void>(context);
+#endif
     }
 
     /*!

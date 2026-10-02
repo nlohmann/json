@@ -747,6 +747,11 @@ The `unflatten()` function only works for an object whose keys are JSON Pointers
 
 The `dump()` function only works with UTF-8 encoded strings; that is, if you assign a `std::string` to a JSON value, make sure it is UTF-8 encoded.
 
+If [`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md) is enabled, the binary writers
+[`to_cbor()`](../api/basic_json/to_cbor.md), [`to_ubjson()`](../api/basic_json/to_ubjson.md),
+[`to_bjdata()`](../api/basic_json/to_bjdata.md), and [`to_bson()`](../api/basic_json/to_bson.md) throw this exception
+for a string value or object key that is not valid UTF-8 as well.
+
 !!! failure "Example message"
 
     Calling `dump()` on a JSON value containing an ISO 8859-1 encoded string:
