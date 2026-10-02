@@ -750,6 +750,28 @@ TEST_CASE("regression #3868 - heterogeneous comparisons compile under C++20 (P24
         CHECK_FALSE(j != i);
     }
 }
+
+#if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+TEST_CASE("regression #5665 - scalar <= discarded and scalar >= discarded in C++20 legacy mode")
+{
+    // Issue #5665: with a scalar on the left-hand side, <= and >= only had the
+    // candidate rewritten from operator<=>, which does not emulate the legacy
+    // discarded-value behavior. Check that scalar-on-the-left now matches the
+    // other three operand orders.
+    const json discarded(json::value_t::discarded);
+    const json one = 1;
+
+    CHECK(discarded <= 1);
+    CHECK(discarded >= 1);
+    CHECK(one <= discarded);
+    CHECK(one >= discarded);
+    CHECK(1 <= discarded);
+    CHECK(1 >= discarded);
+    CHECK(1.5 <= discarded);
+    CHECK(1.5 >= discarded);
+}
+#endif
+
 #endif
 
 namespace
