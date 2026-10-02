@@ -23,6 +23,7 @@
 #include <nlohmann/detail/view/macro_scope.hpp>
 #include <nlohmann/detail/view/node.hpp>
 #include <nlohmann/detail/view/number.hpp>
+#include <nlohmann/detail/view/simd.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -220,6 +221,69 @@ struct dump_style
     bool ensure_ascii = false;
     bool source_numbers = false;   ///< copy number tokens from the source
 };
+
+/*!
+@brief digits * 10^exp as dtoa_impl::write_decimal() writes it (digits not 0,
+at most 17 digits; up to 41 bytes are written at first)
+
+With NEON, the fixed layouts ("0.00123", "12.5", "100.0") are put together in
+vector registers: output byte i is byte s + i of the digits (after '0's)
+before the point, and byte s + i - 1 after it. The portable code writes the
+digits to a buffer and copies them from there at another offset, and a load
+that spans several recent stores waits until they reach the cache.
+*/
+NLOHMANN_VIEW_ALWAYS_INLINE char* write_decimal(char* first, std::uint64_t digits, int exp) noexcept
+{
+#if NLOHMANN_VIEW_NEON
+    namespace dtoa = ::nlohmann::detail::dtoa_impl;
+    const std::uint64_t upper = digits / 100000000u;
+    const std::uint64_t b0 = upper / 100000000u; // one digit
+    const std::uint64_t b1 = dtoa::eight_digit_bytes(upper % 100000000u);
+    const std::uint64_t b2 = dtoa::eight_digit_bytes(digits % 100000000u);
+    // leading and trailing zero digits (as dtoa_impl::write_decimal())
+    int leading = 7;
+    if (b0 == 0)
+    {
+        leading = b1 != 0 ? 8 + (count_leading_zeros(b1) / 8) : 16 + (count_leading_zeros(b2) / 8);
+    }
+    int zeros = 16;
+    if (b2 != 0)
+    {
+        zeros = count_trailing_zeros(b2) / 8;
+    }
+    else if (b1 != 0)
+    {
+        zeros = 8 + (count_trailing_zeros(b1) / 8);
+    }
+    const int k = 24 - leading - zeros; // significant digits
+    const int n = k + exp + zeros;      // position of the point after the first digit
+    if (NLOHMANN_VIEW_LIKELY(-4 < n && n <= 15))
+    {
+        static const std::array<std::uint8_t, 32> iota = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31}};
+        const int pad = n <= 0 ? 1 - n : 0;
+        const int len = k + pad;
+        const int point = n + pad;
+        // the 24 digit bytes in memory order, then '0's
+        const std::uint64_t zero_chars = 0x3030303030303030u;
+        const uint8x16x2_t table = {{
+                vcombine_u8(vcreate_u8(__builtin_bswap64(b0 + zero_chars)), vcreate_u8(__builtin_bswap64(b1 + zero_chars))),
+                vcombine_u8(vcreate_u8(__builtin_bswap64(b2 + zero_chars)), vdup_n_u8('0'))
+            }
+        };
+        const uint8x16_t s = vdupq_n_u8(static_cast<std::uint8_t>(leading - pad));
+        const uint8x16_t at_point = vdupq_n_u8(static_cast<std::uint8_t>(point));
+        for (std::size_t half = 0; half < 2; ++half)
+        {
+            const uint8x16_t i = vld1q_u8(iota.data() + (16 * half));
+            // (+ 0xFF is - 1 after the point; indexes past the digits read a '0')
+            const uint8x16_t index = vminq_u8(vaddq_u8(vaddq_u8(i, s), vcgtq_u8(i, at_point)), vdupq_n_u8(31));
+            vst1q_u8(reinterpret_cast<std::uint8_t*>(first) + (16 * half), vbslq_u8(vceqq_u8(i, at_point), vdupq_n_u8('.'), vqtbl2q_u8(table, index))); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        }
+        return first + (point >= len ? point + 2 : len + 1); // "digits[000].0" ends after ".0"
+    }
+#endif
+    return ::nlohmann::detail::dtoa_impl::write_decimal(first, digits, exp);
+}
 
 /*!
 @brief write a view's subtree as basic_json::dump() writes the value
@@ -496,10 +560,15 @@ class view_serializer
                         room(n->len);
                         copy(src + n->off, n->len);
                     }
+                    else if (std::is_same<number_float_t, double>::value)
+                    {
+                        room(64);
+                        w = write_double_at(w, *n);
+                    }
                     else
                     {
                         m_out.set_cursor(w);
-                        write_float(float_value<number_float_t>(m_doc, *n));
+                        write_float_node(*n);
                         w = m_out.cursor();
                         lim = m_out.limit();
                     }
@@ -666,7 +735,7 @@ class view_serializer
                 }
                 else
                 {
-                    write_float(float_value<number_float_t>(m_doc, n));
+                    write_float_node(n);
                 }
                 break;
             case value_t::object:    // LCOV_EXCL_LINE (containers are written by dump())
@@ -676,6 +745,83 @@ class view_serializer
             default:                 // LCOV_EXCL_LINE
                 break;               // LCOV_EXCL_LINE
         }
+    }
+
+    /// a float node as dump() writes it
+    void write_float_node(const node& n)
+    {
+        write_float_node(n, std::is_same<number_float_t, double> {});
+    }
+
+    void write_float_node(const node& n, std::false_type /*other*/)
+    {
+        write_float(float_value<number_float_t>(m_doc, n));
+    }
+
+    void write_float_node(const node& n, std::true_type /*double*/)
+    {
+        m_out.reserve(64);
+        m_out.set_cursor(write_double_at(m_out.cursor(), n));
+    }
+
+    /*!
+    @brief (doubles) the float at n as dump() writes it, at w (64 bytes of room)
+
+    A token of at most 15 significant digits is written from its digits,
+    without a conversion: two decimals of at most 15 digits are farther
+    apart than the rounding interval of a (normal) double (the argument
+    behind DBL_DIG), so the token's digits are the shortest ones of its
+    double, which the library's conversion writes (Zmij). Other tokens are
+    converted from the digits already read.
+    */
+    char* write_double_at(char* w, const node& n)
+    {
+        const unsigned int_digits = n.extra & 0xFFu;
+        const unsigned frac_digits = n.extra >> 8u;
+        if ((n.flags & node_flags::storage) != node_flags::edited && int_digits + frac_digits <= 19)
+        {
+            const auto* const first = reinterpret_cast<const unsigned char*>(m_doc.src + n.off); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            const float_significand d = layout_decimal(first, first + n.len, int_digits, frac_digits, reinterpret_cast<const unsigned char*>(m_doc.src + m_doc.size)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            // (the exponent keeps the value far from subnormals and overflow)
+            if (d.w != 0 && d.w < 1000000000000000u && d.exponent >= -290 && d.exponent <= 290)
+            {
+                *w = '-';
+                return write_decimal(w + (d.negative ? 1 : 0), d.w, static_cast<int>(d.exponent));
+            }
+            return write_double_value_at(w, decimal_to_float<double>(d)); // (without reading the token again)
+        }
+        return write_double_value_at(w, static_cast<double>(float_value<number_float_t>(m_doc, n)));
+    }
+
+    /// n bytes of text at w
+    static char* write_text_at(char* w, const char* text, std::size_t n) noexcept
+    {
+        std::memcpy(w, text, n);
+        return w + n;
+    }
+
+    /// a double as dump() writes it, at w (64 bytes of room)
+    static char* write_double_value_at(char* w, double x)
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!std::isfinite(x)))
+        {
+            return write_text_at(w, "null", 4);
+        }
+#if NLOHMANN_VIEW_NEON
+        std::uint64_t bits = 0;
+        std::memcpy(&bits, &x, sizeof(bits));
+        *w = '-';
+        w += bits >> 63u;
+        bits &= ~(std::uint64_t{1} << 63u);
+        if (bits == 0)
+        {
+            return write_text_at(w, "0.0", 3);
+        }
+        const ::nlohmann::detail::zmij::decimal d = ::nlohmann::detail::zmij::to_decimal(bits);
+        return write_decimal(w, d.significand, d.exponent);
+#else
+        return ::nlohmann::detail::to_chars(w, w + 64, x);
+#endif
     }
 
     /// as serializer::dump_float()

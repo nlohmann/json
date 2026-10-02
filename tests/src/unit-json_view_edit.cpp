@@ -26,6 +26,7 @@ using ptr_t = ordered_json::json_pointer;
 #include <functional>
 #include <iterator>
 #include <limits>
+#include <map>
 #include <random>
 #include <string>
 #include <vector>
@@ -479,6 +480,19 @@ TEST_CASE("json_view edits: views and values")
         CHECK(d.root()[5].get<std::uint64_t>() == 18446744073709551615u);
         CHECK(d.root()[6].number_token() == "-9223372036854775808");
         CHECK(d.root().materialize().dump() == json::parse(R"([1.5, 100.0, 0.1, null, null, 18446744073709551615, -9223372036854775808])").dump());
+    }
+
+    SECTION("numbers of other float types")
+    {
+        // doubles have their own path to the output; other float types are
+        // written as basic_json writes them, non-finite values as null
+        using json_float = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+        using document_float = nlohmann::basic_json_document<json_float, true>;
+        document_float d = document_float::parse("[1.5]");
+        d.push_back(d.root(), std::numeric_limits<float>::quiet_NaN());
+        d.push_back(d.root(), -std::numeric_limits<float>::infinity());
+        CHECK(d.root().dump() == "[1.5,null,null]");
+        CHECK(d.root().dump(2) == json_float::parse("[1.5, null, null]").dump(2));
     }
 
     SECTION("nulls become containers, and the root can be replaced")
