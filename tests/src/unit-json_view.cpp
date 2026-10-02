@@ -22,6 +22,7 @@ using nlohmann::ordered_json_view;
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <iomanip>
 #include <iterator>
 #include <list>
 #include <map>
@@ -1080,4 +1081,107 @@ TEST_CASE("json_view JSON pointers")
         }
     }
 #endif
+}
+
+TEST_CASE("json_view dump")
+{
+    SECTION("the output of ordered_json::dump()")
+    {
+        generator g;
+        for (int i = 0; i < 2000; ++i)
+        {
+            std::string text;
+            g.value(text, 0);
+            const ordered_json_document d = ordered_json_document::parse(text);
+            if (has_duplicate_keys(d.root()))
+            {
+                continue;
+            }
+            CAPTURE(text);
+            const ordered_json j = ordered_json::parse(text);
+            for (const int indent :
+                    {
+                        -1, 0, 2
+                    })
+            {
+                for (const bool ensure_ascii :
+                        {
+                            false, true
+                        })
+                {
+                    CHECK(d.root().dump(indent, i % 2 == 0 ? ' ' : '\t', ensure_ascii) == j.dump(indent, i % 2 == 0 ? ' ' : '\t', ensure_ascii));
+                }
+            }
+            // also of each element
+            for (const ordered_json_view e : d.root())
+            {
+                CHECK(e.dump() == e.materialize().dump());
+            }
+        }
+    }
+
+    SECTION("strings")
+    {
+        const std::string text = R"(["plain", "\u0000\u0001\u001f\u007f\u0080é€￿😀", "\"\\\/\b\f\n\r\t", "aéあ😀b", "long text beyond the eight bytes of a word \n with an escape in the middle"])";
+        const ordered_json_document d = ordered_json_document::parse(text);
+        const ordered_json j = ordered_json::parse(text);
+        CHECK(d.root().dump() == j.dump());
+        CHECK(d.root().dump(-1, ' ', true) == j.dump(-1, ' ', true));
+        CHECK(d.root().dump(4, ' ', true) == j.dump(4, ' ', true));
+        const ordered_json_document keys = ordered_json_document::parse(R"({"é\n": {"\"": [], "": {}}})");
+        CHECK(keys.root().dump(2, ' ', true) == ordered_json::parse(R"({"é\n": {"\"": [], "": {}}})").dump(2, ' ', true));
+    }
+
+    SECTION("numbers")
+    {
+        const std::string text = "[1.50, 1E2, -0, -0.0, 123456789012345678901234567890, 18446744073709551615, -9223372036854775808, 0.1, 1e-7, 5e-324]";
+        const json_document d = json_document::parse(text);
+        CHECK(d.root().dump() == json::parse(text).dump());
+        CHECK(d.root().dump() == "[1.5,100.0,0,-0.0,1.2345678901234568e+29,18446744073709551615,-9223372036854775808,0.1,1e-07,5e-324]");
+        CHECK(d.root().dump(-1, ' ', false, json_view::number_format::source) == "[1.50,1E2,-0,-0.0,123456789012345678901234567890,18446744073709551615,-9223372036854775808,0.1,1e-7,5e-324]");
+
+        // random doubles, written as parse() and dump() would
+        std::mt19937_64 rng(1170); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
+        std::string many = "[";
+        for (int i = 0; i < 5000; ++i)
+        {
+            const std::uint64_t bits = rng();
+            double x = 0;
+            std::memcpy(&x, &bits, sizeof(x));
+            if (std::isfinite(x))
+            {
+                many += (many.size() > 1 ? "," : "") + json(x).dump();
+            }
+        }
+        many += ']';
+        CHECK(json_document::parse(many).root().dump() == json::parse(many).dump());
+
+        using json_float = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+        CHECK(nlohmann::basic_json_document<json_float>::parse("[0.1, 1.5e10, 3.4028235e38]").root().dump() == json_float::parse("[0.1, 1.5e10, 3.4028235e38]").dump());
+    }
+
+    SECTION("members in document order, all of them")
+    {
+        const json_document d = json_document::parse(R"({"b": 1, "a": 2, "b": 3})");
+        CHECK(d.root().dump() == R"({"b":1,"a":2,"b":3})");
+        CHECK(d.root().dump(1) == "{\n \"b\": 1,\n \"a\": 2,\n \"b\": 3\n}");
+    }
+
+    SECTION("deep nesting")
+    {
+        const std::string deep = std::string(100000, '[') + std::string(100000, ']');
+        CHECK(json_document::parse(deep).root().dump() == deep);
+    }
+
+    SECTION("streams and discarded views")
+    {
+        const json_document d = json_document::parse(R"({"a": [1, 2]})");
+        std::ostringstream compact;
+        compact << d.root();
+        CHECK(compact.str() == R"({"a":[1,2]})");
+        std::ostringstream pretty;
+        pretty << std::setw(2) << std::setfill('.') << d.root() << d.root()["a"];
+        CHECK(pretty.str() == "{\n..\"a\": [\n....1,\n....2\n..]\n}[1,2]");
+        CHECK(json_view().dump() == json(json::value_t::discarded).dump());
+    }
 }

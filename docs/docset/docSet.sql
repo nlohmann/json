@@ -153,6 +153,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::cbegin', 'Me
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::cend', 'Method', 'api/basic_json_view/cend/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::contains', 'Method', 'api/basic_json_view/contains/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::count', 'Method', 'api/basic_json_view/count/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::dump', 'Method', 'api/basic_json_view/dump/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::empty', 'Method', 'api/basic_json_view/empty/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::end', 'Method', 'api/basic_json_view/end/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::find', 'Method', 'api/basic_json_view/find/index.html');
@@ -175,8 +176,10 @@ INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::is_string', 
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::is_structured', 'Method', 'api/basic_json_view/is_structured/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::items', 'Method', 'api/basic_json_view/items/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::materialize', 'Method', 'api/basic_json_view/materialize/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::number_format', 'Enum', 'api/basic_json_view/number_format/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::number_token', 'Method', 'api/basic_json_view/number_token/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::operator bool', 'Method', 'api/basic_json_view/operator_bool/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::operator<<', 'Operator', 'api/basic_json_view/operator_ltlt/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::operator[]', 'Operator', 'api/basic_json_view/operator[]/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::size', 'Method', 'api/basic_json_view/size/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json_view::source_offset', 'Method', 'api/basic_json_view/source_offset/index.html');
