@@ -30,7 +30,7 @@ The default value is `0`.
 
 ## Examples
 
-??? example "Example 1: Disabled behavior"
+??? example "Example: Disabled behavior"
 
     The code below forces the library **not** to create default serialization/deserialization functions `from_json` and `to_json`, meaning the code below
     **does not** compile.
@@ -57,7 +57,7 @@ The default value is `0`.
     }
     ```
 
-??? example "Example 2: Serialize enum macro"
+??? example "Example: Serialize enum macro"
 
     The code below forces the library **not** to create default serialization/deserialization functions `from_json` and `to_json`, but uses
     [`NLOHMANN_JSON_SERIALIZE_ENUM`](nlohmann_json_serialize_enum.md) to parse and serialize the enum.
@@ -90,7 +90,7 @@ The default value is `0`.
     }
     ```
 
-??? example "Example 3: User-defined serialization/deserialization functions"
+??? example "Example: User-defined serialization/deserialization functions"
 
     The code below forces the library **not** to create default serialization/deserialization functions `from_json` and `to_json`, but uses user-defined
     functions to parse and serialize the enum.

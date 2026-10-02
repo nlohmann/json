@@ -214,7 +214,7 @@ The library does not sort or de-duplicate keys itself; the behavior described in
     --8<-- "examples/custom_object_type.hpp"
     ```
 
-??? example "Compiling and using it"
+??? example "Example: use the custom `ObjectType`"
 
     ```cpp
     --8<-- "examples/custom_object_type.cpp"
@@ -307,7 +307,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
     --8<-- "examples/custom_array_type.hpp"
     ```
 
-??? example "Compiling and using it"
+??? example "Example: use the custom `ArrayType`"
 
     ```cpp
     --8<-- "examples/custom_array_type.cpp"
@@ -349,16 +349,16 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 ### Always required
 
 - A member type `value_type` that is one byte wide and `char`-compatible. The library stores and processes UTF-8
-  encoded `char` data and hands `data()` to `#!cpp std::strtoull`/`#!cpp std::strtoll`.
+  encoded `char` data and passes `data()` to functions that take a `#!cpp const char*`, such as `#!cpp std::strtod`.
   `#!cpp std::wstring`, `#!cpp std::u16string`, and `#!cpp std::u32string` are **not** valid choices; see the FAQ on
   [wide string handling](../../home/faq.md#wide-string-handling).
 - Constructors: default, copy, move, from `#!cpp const char*` (which must not be `#!cpp explicit`), from
   `#!cpp (const char*, size_type)`, and from `#!cpp (size_type, char)`; and copy or move assignment.
 - Member functions `size()`, `clear()`, `resize(n, c)`, `data()`, `push_back(char)`, and `operator[]`
   (const and non-const, returning references). `c_str()` and `back()` are **not** required.
-- `data()` must return a pointer to a contiguous, **null-terminated** buffer -- the parser hands it to
-  `#!cpp std::strtoull`. A type whose `data()` is not null-terminated does not fail to compile; it silently
-  misparses numbers.
+- `data()` must return a pointer to a contiguous, **null-terminated** buffer -- the parser may hand it to
+  `#!cpp std::strtod`, which reads up to the null character. A type whose `data()` is not null-terminated does not
+  fail to compile; it can silently misparse floating-point numbers.
 - `append(const char*, size_type)`, used by [`dump`](../../api/basic_json/dump.md), and `append(const StringType&)`,
   used by the CBOR reader for indefinite-length strings. The library's internal string concatenation additionally has
   to append a `#!cpp char` and a `#!cpp const char*`; for each it selects between `append(arg)`, `#!cpp operator+=`,
@@ -395,6 +395,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | [`to_bson`](../../api/basic_json/to_bson.md)                                                                                      | `find(value_type)` and `npos`                                                                                                                                                                |
 | [`parse`](../../api/basic_json/parse.md) from a `string_t`                                                                        | the input adapters must accept it; otherwise pass a character range                                                                                                                          |
 | `#!cpp operator<<(std::ostream&, const json_pointer&)`                                                                            | streamability to `#!cpp std::ostream`                                                                                                                                                        |
+| [`to_string`](../../api/basic_json/to_string.md)                                                                                  | conversion of `StringType` to `#!cpp std::string` (the function returns a `#!cpp std::string`)                                                                                               |
 | exception messages                                                                                                                | `data()` and `size()`, or `begin()` and `end()`                                                                                                                                              |
 
 ### Compatible types
@@ -449,7 +450,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
     --8<-- "examples/custom_string_type.hpp"
     ```
 
-??? example "Compiling and using it"
+??? example "Example: use the custom `StringType`"
 
     ```cpp
     --8<-- "examples/custom_string_type.cpp"
@@ -673,7 +674,7 @@ such a container to a `basic_json` value.
     --8<-- "examples/custom_binary_type.hpp"
     ```
 
-??? example "Compiling and using it"
+??? example "Example: use the custom `BinaryType`"
 
     ```cpp
     --8<-- "examples/custom_binary_type.cpp"

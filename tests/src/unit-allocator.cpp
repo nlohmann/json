@@ -372,6 +372,11 @@ void check_deep_copy_survives_failing_allocation(bool nest_objects)
 
 TEST_CASE("copy of a deeply nested value survives a failing allocation (#5640)")
 {
+    // With iterator debugging (MSVC STL debug builds, also used by clang-cl),
+    // containers allocate a debug proxy through the allocator inside their
+    // noexcept move constructors, so failing that allocation terminates the
+    // program instead of throwing std::bad_alloc. Nothing to check there.
+#if !(defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0)
     SECTION("std::map-backed object_t")
     {
         using bad_alloc_json = nlohmann::basic_json<std::map,
@@ -401,6 +406,7 @@ TEST_CASE("copy of a deeply nested value survives a failing allocation (#5640)")
         check_deep_copy_survives_failing_allocation<bad_alloc_ordered_json>(false);
         check_deep_copy_survives_failing_allocation<bad_alloc_ordered_json>(true);
     }
+#endif
 }
 
 namespace
@@ -493,9 +499,13 @@ struct countdown_allocator : std::allocator<T>
     template<class U, class... Args>
     void construct(U* p, Args&& ... args)
     {
-        if (constructions_until_failure != 0 && --constructions_until_failure == 0)
+        if (constructions_until_failure != 0)
         {
-            throw std::bad_alloc();
+            --constructions_until_failure;
+            if (constructions_until_failure == 0)
+            {
+                throw std::bad_alloc();
+            }
         }
 
         ::new (static_cast<void*>(p)) U(std::forward<Args>(args)...);

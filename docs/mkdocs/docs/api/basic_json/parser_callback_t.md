@@ -60,7 +60,7 @@ the latter case, it is skipped completely, or replaced by `null` if it is the to
 
 ## Examples
 
-??? example
+??? example "Example: skip an object key while parsing"
 
     The example below demonstrates the `parse()` function with
     and without callback function.
@@ -75,7 +75,7 @@ the latter case, it is skipped completely, or replaced by `null` if it is the to
     --8<-- "examples/parse__string__parser_callback_t.output"
     ```
 
-??? example
+??? example "Example: how discarded values are removed"
 
     The example below shows where discarded values are removed. The array and the number are discarded in different
     ways, but in each case the parse result contains neither the value nor its key.
