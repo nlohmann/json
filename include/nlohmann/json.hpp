@@ -6524,6 +6524,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // Any other object type places its members itself - std::map
         // in key order, a hash map in an order its operator== ignores -
         // so a member-by-member diff always reproduces target there.
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning(push )
+#pragma warning(disable : 4127) // ignore warning to replace if with if constexpr
+#endif
         if (!detail::is_ordered_map<object_t>::value
                 || (common_keys_source_order == common_keys_target_order && new_keys_form_suffix))
         {
@@ -6534,6 +6538,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             common_keys = std::move(common_keys_source_order);
             return true;
         }
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning( pop )
+#endif
 
         // slow path: the common keys are in a different relative
         // order in source and target (only possible for a
@@ -7030,10 +7037,10 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
     int indent = -1;
     char indent_char = ' ';
 
-    constexpr auto parse(format_parse_context& ctx) -> format_parse_context::iterator
+    constexpr format_parse_context::iterator parse(format_parse_context& ctx)
     {
-        auto it = ctx.begin();
-        const auto end = ctx.end();
+        format_parse_context::iterator it = ctx.begin();
+        const format_parse_context::iterator end = ctx.end();
         constexpr auto is_align = [](char c)
         {
             return c == '<' || c == '>' || c == '^';

@@ -614,13 +614,13 @@ class binary_reader
             case 0x10: // int32
             {
                 std::int32_t value{};
-                return get_number<std::int32_t, true>(input_format_t::bson, value) && sax->number_integer(value);
+                return get_number<std::int32_t, true>(input_format_t::bson, value) && sax->number_integer(conditional_static_cast<number_integer_t>(value));
             }
 
             case 0x12: // int64
             {
                 std::int64_t value{};
-                return get_number<std::int64_t, true>(input_format_t::bson, value) && sax->number_integer(value);
+                return get_number<std::int64_t, true>(input_format_t::bson, value) && sax->number_integer(conditional_static_cast<number_integer_t>(value));
             }
 
             case 0x11: // uint64
@@ -659,7 +659,7 @@ class binary_reader
                                     parse_error::create(112, chars_read,
                                             exception_message(input_format_t::cbor, "negative integer overflow", "value"), nullptr));
         }
-        return sax->number_integer(static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(number));
+        return sax->number_integer(conditional_static_cast<number_integer_t>(static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(number)));
     }
 
     /*!
@@ -1905,25 +1905,25 @@ class binary_reader
             case 0xD0: // int 8
             {
                 std::int8_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
+                return get_number(input_format_t::msgpack, number) && sax->number_integer(conditional_static_cast<number_integer_t>(number));
             }
 
             case 0xD1: // int 16
             {
                 std::int16_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
+                return get_number(input_format_t::msgpack, number) && sax->number_integer(conditional_static_cast<number_integer_t>(number));
             }
 
             case 0xD2: // int 32
             {
                 std::int32_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
+                return get_number(input_format_t::msgpack, number) && sax->number_integer(conditional_static_cast<number_integer_t>(number));
             }
 
             case 0xD3: // int 64
             {
                 std::int64_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
+                return get_number(input_format_t::msgpack, number) && sax->number_integer(conditional_static_cast<number_integer_t>(number));
             }
 
             case 0xDC: // array 16
@@ -2980,25 +2980,25 @@ class binary_reader
             case 'i':
             {
                 std::int8_t number{};
-                return get_number(input_format, number) && sax->number_integer(number);
+                return get_number(input_format, number) && sax->number_integer(conditional_static_cast<number_integer_t>(number));
             }
 
             case 'I':
             {
                 std::int16_t number{};
-                return get_number(input_format, number) && sax->number_integer(number);
+                return get_number(input_format, number) && sax->number_integer(conditional_static_cast<number_integer_t>(number));
             }
 
             case 'l':
             {
                 std::int32_t number{};
-                return get_number(input_format, number) && sax->number_integer(number);
+                return get_number(input_format, number) && sax->number_integer(conditional_static_cast<number_integer_t>(number));
             }
 
             case 'L':
             {
                 std::int64_t number{};
-                return get_number(input_format, number) && sax->number_integer(number);
+                return get_number(input_format, number) && sax->number_integer(conditional_static_cast<number_integer_t>(number));
             }
 
             case 'u':
@@ -3558,7 +3558,7 @@ class binary_reader
         // integer -1..-10
         if (byte <= 0xC1)
         {
-            return sax->number_integer(-1 - static_cast<number_integer_t>(byte - 0xB8));
+            return sax->number_integer(conditional_static_cast<number_integer_t>(-1 - static_cast<number_integer_t>(byte - 0xB8)));
         }
 
         // 0xC2..0xF7: a UTF-8 lead byte begins a string if a continuation
@@ -3877,6 +3877,8 @@ class binary_reader
     template<class T>
     bool get_to(T& dest, const input_format_t format, const char* context)
     {
+        // false positive: new_chars_read is read on the next lines
+        // @infer-ignore DEAD_STORE
         auto new_chars_read = ia.get_elements(&dest);
         chars_read += new_chars_read;
         if (JSON_HEDLEY_UNLIKELY(new_chars_read < sizeof(T)))
@@ -4128,6 +4130,8 @@ class binary_reader
             // resize() is required to make size() exactly old_size + wanted;
             // that is the room get_elements() is allowed to write into
             JSON_ASSERT(result.size() == old_size + wanted);
+            // false positive: bytes_read is read on the next lines
+            // @infer-ignore DEAD_STORE
             const std::size_t bytes_read = ia.get_elements(&result[old_size], wanted);
             chars_read += bytes_read;
             if (JSON_HEDLEY_UNLIKELY(bytes_read < wanted))

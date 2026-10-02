@@ -6261,7 +6261,7 @@ inline std::string hex_byte(const std::uint8_t byte)
 Used to turn a decoded code point back into bytes: by the wide-string input
 adapters in input_adapters.hpp (one code point per UTF-32 unit, per UTF-16
 unit outside the surrogate range, and per valid UTF-16 surrogate pair), and
-by the lexer's `\uXXXX`/`\uXXXX\uYYYY` handling in lexer.hpp. Passing a
+by the lexer's handling of u-escapes and surrogate pairs in lexer.hpp. Passing a
 code point above U+10FFFF, or one in the surrogate range U+D800..U+DFFF, is
 undefined behavior; callers are expected to have rejected those already
 (the wide-string adapters pass malformed units through unencoded instead of
@@ -6274,7 +6274,7 @@ reaching it).
 @param[in] out  called once for each byte of the UTF-8 encoding of @a cp
 */
 template<typename Out>
-void encode_utf8(std::uint32_t cp, Out&& out)
+void encode_utf8(std::uint32_t cp, const Out& out)
 {
     JSON_ASSERT(cp <= 0x10FFFF);
 
@@ -6848,8 +6848,11 @@ struct external_constructor<value_t::array>
         for (auto&& x : std::forward<CompatibleArrayType>(arr))
         {
             j.m_data.m_value.array->push_back(x);
-            j.set_parent(j.m_data.m_value.array->back());
         }
+        // set the parents only once all elements are in place: a push_back
+        // that reallocates moves the earlier elements, which does not keep
+        // their parent pointers
+        j.set_parents();
         j.assert_invariant();
     }
 #endif
@@ -9464,14 +9467,14 @@ inline bool parse_float_eisel_lemire(const char* first, const char* last, double
     }
 
     std::uint64_t w = 0;
-    int digits = 0; // significant digits in w
+    unsigned int digits = 0; // significant digits in w
     std::int64_t exponent = 0;
     bool truncated = false;
     bool in_fraction = false;
     for (;;)
     {
         // eight digits at a time, as long as they fit into w
-        while (w != 0 && digits <= 19 - 8 && last - p >= 8)
+        while (w != 0 && digits <= 19u - 8u && last - p >= 8)
         {
             const std::uint64_t v = read_eight_bytes(p);
             if (!is_eight_digits(v))
@@ -9479,7 +9482,7 @@ inline bool parse_float_eisel_lemire(const char* first, const char* last, double
                 break;
             }
             w = (w * 100000000u) + parse_eight_digits(v);
-            digits += 8;
+            digits += 8u;
             exponent -= in_fraction ? 8 : 0;
             p += 8;
         }
@@ -9495,7 +9498,7 @@ inline bool parse_float_eisel_lemire(const char* first, const char* last, double
                 // leading zeros are not significant, but scale a fraction
                 exponent -= in_fraction ? 1 : 0;
             }
-            else if (digits < 19)
+            else if (digits < 19u)
             {
                 w = (w * 10u) + static_cast<std::uint64_t>(c - '0');
                 ++digits;
@@ -14127,13 +14130,13 @@ class binary_reader
             case 0x10: // int32
             {
                 std::int32_t value{};
-                return get_number<std::int32_t, true>(input_format_t::bson, value) && sax->number_integer(value);
+                return get_number<std::int32_t, true>(input_format_t::bson, value) && sax->number_integer(conditional_static_cast<number_integer_t>(value));
             }
 
             case 0x12: // int64
             {
                 std::int64_t value{};
-                return get_number<std::int64_t, true>(input_format_t::bson, value) && sax->number_integer(value);
+                return get_number<std::int64_t, true>(input_format_t::bson, value) && sax->number_integer(conditional_static_cast<number_integer_t>(value));
             }
 
             case 0x11: // uint64
@@ -14172,7 +14175,7 @@ class binary_reader
                                     parse_error::create(112, chars_read,
                                             exception_message(input_format_t::cbor, "negative integer overflow", "value"), nullptr));
         }
-        return sax->number_integer(static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(number));
+        return sax->number_integer(conditional_static_cast<number_integer_t>(static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(number)));
     }
 
     /*!
@@ -15418,25 +15421,25 @@ class binary_reader
             case 0xD0: // int 8
             {
                 std::int8_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
+                return get_number(input_format_t::msgpack, number) && sax->number_integer(conditional_static_cast<number_integer_t>(number));
             }
 
             case 0xD1: // int 16
             {
                 std::int16_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
+                return get_number(input_format_t::msgpack, number) && sax->number_integer(conditional_static_cast<number_integer_t>(number));
             }
 
             case 0xD2: // int 32
             {
                 std::int32_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
+                return get_number(input_format_t::msgpack, number) && sax->number_integer(conditional_static_cast<number_integer_t>(number));
             }
 
             case 0xD3: // int 64
             {
                 std::int64_t number{};
-                return get_number(input_format_t::msgpack, number) && sax->number_integer(number);
+                return get_number(input_format_t::msgpack, number) && sax->number_integer(conditional_static_cast<number_integer_t>(number));
             }
 
             case 0xDC: // array 16
@@ -16493,25 +16496,25 @@ class binary_reader
             case 'i':
             {
                 std::int8_t number{};
-                return get_number(input_format, number) && sax->number_integer(number);
+                return get_number(input_format, number) && sax->number_integer(conditional_static_cast<number_integer_t>(number));
             }
 
             case 'I':
             {
                 std::int16_t number{};
-                return get_number(input_format, number) && sax->number_integer(number);
+                return get_number(input_format, number) && sax->number_integer(conditional_static_cast<number_integer_t>(number));
             }
 
             case 'l':
             {
                 std::int32_t number{};
-                return get_number(input_format, number) && sax->number_integer(number);
+                return get_number(input_format, number) && sax->number_integer(conditional_static_cast<number_integer_t>(number));
             }
 
             case 'L':
             {
                 std::int64_t number{};
-                return get_number(input_format, number) && sax->number_integer(number);
+                return get_number(input_format, number) && sax->number_integer(conditional_static_cast<number_integer_t>(number));
             }
 
             case 'u':
@@ -17071,7 +17074,7 @@ class binary_reader
         // integer -1..-10
         if (byte <= 0xC1)
         {
-            return sax->number_integer(-1 - static_cast<number_integer_t>(byte - 0xB8));
+            return sax->number_integer(conditional_static_cast<number_integer_t>(-1 - static_cast<number_integer_t>(byte - 0xB8)));
         }
 
         // 0xC2..0xF7: a UTF-8 lead byte begins a string if a continuation
@@ -17390,6 +17393,8 @@ class binary_reader
     template<class T>
     bool get_to(T& dest, const input_format_t format, const char* context)
     {
+        // false positive: new_chars_read is read on the next lines
+        // @infer-ignore DEAD_STORE
         auto new_chars_read = ia.get_elements(&dest);
         chars_read += new_chars_read;
         if (JSON_HEDLEY_UNLIKELY(new_chars_read < sizeof(T)))
@@ -17641,6 +17646,8 @@ class binary_reader
             // resize() is required to make size() exactly old_size + wanted;
             // that is the room get_elements() is allowed to write into
             JSON_ASSERT(result.size() == old_size + wanted);
+            // false positive: bytes_read is read on the next lines
+            // @infer-ignore DEAD_STORE
             const std::size_t bytes_read = ia.get_elements(&result[old_size], wanted);
             chars_read += bytes_read;
             if (JSON_HEDLEY_UNLIKELY(bytes_read < wanted))
@@ -26321,12 +26328,13 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <functional> // equal_to, less
 #include <initializer_list> // initializer_list
 #include <iterator> // input_iterator_tag, iterator_traits
+#include <memory> // allocator
 #include <new> // for operator new (placement new)
 #include <stdexcept> // for out_of_range
 #include <tuple> // forward_as_tuple
 #include <type_traits> // enable_if, integral_constant, is_convertible, is_nothrow_move_constructible
 #include <utility> // forward, move, pair, piecewise_construct
-#include <vector> // vector, allocator
+#include <vector> // vector
 
 // #include <nlohmann/detail/abi_macros.hpp>
 
@@ -33213,6 +33221,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // Any other object type places its members itself - std::map
         // in key order, a hash map in an order its operator== ignores -
         // so a member-by-member diff always reproduces target there.
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning(push )
+#pragma warning(disable : 4127) // ignore warning to replace if with if constexpr
+#endif
         if (!detail::is_ordered_map<object_t>::value
                 || (common_keys_source_order == common_keys_target_order && new_keys_form_suffix))
         {
@@ -33223,6 +33235,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             common_keys = std::move(common_keys_source_order);
             return true;
         }
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning( pop )
+#endif
 
         // slow path: the common keys are in a different relative
         // order in source and target (only possible for a
@@ -33719,10 +33734,10 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
     int indent = -1;
     char indent_char = ' ';
 
-    constexpr auto parse(format_parse_context& ctx) -> format_parse_context::iterator
+    constexpr format_parse_context::iterator parse(format_parse_context& ctx)
     {
-        auto it = ctx.begin();
-        const auto end = ctx.end();
+        format_parse_context::iterator it = ctx.begin();
+        const format_parse_context::iterator end = ctx.end();
         constexpr auto is_align = [](char c)
         {
             return c == '<' || c == '>' || c == '^';

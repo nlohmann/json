@@ -428,14 +428,14 @@ inline bool parse_float_eisel_lemire(const char* first, const char* last, double
     }
 
     std::uint64_t w = 0;
-    int digits = 0; // significant digits in w
+    unsigned int digits = 0; // significant digits in w
     std::int64_t exponent = 0;
     bool truncated = false;
     bool in_fraction = false;
     for (;;)
     {
         // eight digits at a time, as long as they fit into w
-        while (w != 0 && digits <= 19 - 8 && last - p >= 8)
+        while (w != 0 && digits <= 19u - 8u && last - p >= 8)
         {
             const std::uint64_t v = read_eight_bytes(p);
             if (!is_eight_digits(v))
@@ -443,7 +443,7 @@ inline bool parse_float_eisel_lemire(const char* first, const char* last, double
                 break;
             }
             w = (w * 100000000u) + parse_eight_digits(v);
-            digits += 8;
+            digits += 8u;
             exponent -= in_fraction ? 8 : 0;
             p += 8;
         }
@@ -459,7 +459,7 @@ inline bool parse_float_eisel_lemire(const char* first, const char* last, double
                 // leading zeros are not significant, but scale a fraction
                 exponent -= in_fraction ? 1 : 0;
             }
-            else if (digits < 19)
+            else if (digits < 19u)
             {
                 w = (w * 10u) + static_cast<std::uint64_t>(c - '0');
                 ++digits;
