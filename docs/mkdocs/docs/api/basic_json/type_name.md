@@ -54,7 +54,8 @@ Constant.
 
 ## See also
 
-- [type](type.md) - return the type of the JSON value
+- [type](type.md) returns the type of the JSON value
+- [value_t](value_t.md) the enumeration of JSON types
 - [basic_json_view::type_name](../basic_json_view/type_name.md) - the same function on a zero-copy view
 
 ## Version history

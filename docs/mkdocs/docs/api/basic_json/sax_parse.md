@@ -147,3 +147,5 @@ A UTF-8 byte order mark is silently ignored.
     Overload (2) replaces calls to `sax_parse` with a pair of iterators as their first parameter which has been
     deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like
     `#!cpp sax_parse({ptr, ptr+len});` with `#!cpp sax_parse(ptr, ptr+len);`.
+
+    See the [migration guide](../../integration/migration_guide.md#parsing) for how to update existing code.
