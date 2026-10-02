@@ -127,6 +127,7 @@ Logarithmic in the size of the JSON object.
 
 - [find](find.md) find a value in an object
 - [count](count.md) returns the number of occurrences of a key
+- [basic_json_view::contains](../basic_json_view/contains.md) - the same check on a zero-copy view
 
 ## Version history
 

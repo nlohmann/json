@@ -29,6 +29,7 @@
 #include <iterator> // distance, input_iterator_tag, iterator_traits
 #include <memory> // unique_ptr
 #include <string> // string
+#include <tuple> // tuple_element, tuple_size
 #include <type_traits> // enable_if, integral_constant, is_base_of, is_integral, is_same, remove_cv, remove_extent
 #include <utility> // forward, move
 
@@ -1755,6 +1756,419 @@ std::string collect_adapter(Adapter ia)
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
+// #include <nlohmann/detail/view/iterator.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <cstddef> // ptrdiff_t, size_t
+#include <iterator> // forward_iterator_tag
+#include <string> // string, to_string
+#include <type_traits> // enable_if
+
+// #include <nlohmann/json.hpp>
+// #include <nlohmann/detail/view/document_data.hpp>
+
+// #include <nlohmann/detail/view/errors.hpp>
+
+// #include <nlohmann/detail/view/macro_scope.hpp>
+
+// #include <nlohmann/detail/view/node.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+namespace view
+{
+
+/// the result of view_iterator::operator->: keeps the view alive for the
+/// duration of the member access
+template<typename View>
+class arrow_proxy
+{
+  public:
+    explicit arrow_proxy(const View& v) noexcept
+        : m_view(v)
+    {}
+
+    const View* operator->() const noexcept
+    {
+        return &m_view;
+    }
+
+  private:
+    View m_view;
+};
+
+/*!
+@brief forward iterator over the elements of a basic_json_view
+
+Iterates over the elements of an array or the member values of an object, in
+document order; key() gives the key of an object member. As for basic_json, a
+primitive value iterates as a range of one element (itself), and null as an
+empty range.
+*/
+template<typename View>
+class view_iterator
+{
+  public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = View;
+    using difference_type = std::ptrdiff_t;
+    using pointer = arrow_proxy<View>;
+    using reference = View;
+    using string_view_t = typename View::string_view_t;
+
+    view_iterator() noexcept = default;
+
+    /// @param[in] pos  the element, or the key of the member
+    /// @param[in] object  whether pos is a key (its value is the next node)
+    view_iterator(const document_data* d, const node* pos, bool object) noexcept
+        : m_doc(d), m_pos(pos), m_value_offset(object ? 1 : 0)
+    {}
+
+    NLOHMANN_VIEW_ALWAYS_INLINE View operator*() const noexcept
+    {
+        return View(m_doc, m_pos + m_value_offset);
+    }
+
+    pointer operator->() const noexcept
+    {
+        return pointer(**this);
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE view_iterator& operator++() noexcept
+    {
+        m_pos = document_data::after(m_pos + m_value_offset);
+        return *this;
+    }
+
+    view_iterator operator++(int) noexcept
+    {
+        const view_iterator r = *this;
+        ++*this;
+        return r;
+    }
+
+    friend bool operator==(const view_iterator& a, const view_iterator& b) noexcept
+    {
+        return a.m_pos == b.m_pos;
+    }
+
+    friend bool operator!=(const view_iterator& a, const view_iterator& b) noexcept
+    {
+        return a.m_pos != b.m_pos;
+    }
+
+    /// the key of the current object member; throws invalid_iterator.207 for
+    /// other iterators, like basic_json's iterators
+    string_view_t key() const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(m_value_offset == 0))
+        {
+            throw_invalid_iterator(207, "cannot use key() for non-object iterators");
+        }
+        return string_view_t(m_doc->str(*m_pos), m_pos->len);
+    }
+
+    View value() const noexcept
+    {
+        return **this;
+    }
+
+    /// whether the iterator runs over the members of an object
+    bool is_object_iterator() const noexcept
+    {
+        return m_value_offset != 0;
+    }
+
+  private:
+    const document_data* m_doc = nullptr;
+    const node* m_pos = nullptr;
+    std::size_t m_value_offset = 0; ///< 1 for objects: the value follows its key
+};
+
+/*!
+@brief a (key, value) item of basic_json_view::items()
+
+The key of an array element is its index, as for basic_json::items().
+Supports structured bindings: for (const auto [key, value] : view.items())
+*/
+template<typename View>
+class view_item
+{
+  public:
+    using string_view_t = typename View::string_view_t;
+    using iterator = view_iterator<View>;
+
+    view_item(const iterator& it, std::size_t index)
+        : m_it(it)
+    {
+        if (!it.is_object_iterator())
+        {
+            m_index = std::to_string(index);
+        }
+    }
+
+    /// the member key, or the element index for arrays
+    string_view_t key() const
+    {
+        if (m_it.is_object_iterator())
+        {
+            return m_it.key();
+        }
+        return string_view_t(m_index.data(), m_index.size());
+    }
+
+    View value() const noexcept
+    {
+        return *m_it;
+    }
+
+    template<std::size_t N, typename std::enable_if<N == 0, int>::type = 0>
+    string_view_t get() const
+    {
+        return key();
+    }
+
+    template<std::size_t N, typename std::enable_if<N == 1, int>::type = 0>
+    View get() const noexcept
+    {
+        return value();
+    }
+
+  private:
+    iterator m_it;
+    std::string m_index{}; // NOLINT(readability-redundant-member-init)
+};
+
+/// the range returned by basic_json_view::items()
+template<typename View>
+class view_items
+{
+  public:
+    using item = view_item<View>;
+
+    class iterator
+    {
+      public:
+        using iterator_category = std::forward_iterator_tag;
+        using value_type = item;
+        using difference_type = std::ptrdiff_t;
+        using pointer = void;
+        using reference = item;
+
+        explicit iterator(const view_iterator<View>& it) noexcept
+            : m_it(it)
+        {}
+
+        item operator*() const
+        {
+            return item(m_it, m_index);
+        }
+
+        iterator& operator++() noexcept
+        {
+            ++m_it;
+            ++m_index;
+            return *this;
+        }
+
+        iterator operator++(int) noexcept
+        {
+            const iterator r = *this;
+            ++*this;
+            return r;
+        }
+
+        friend bool operator==(const iterator& a, const iterator& b) noexcept
+        {
+            return a.m_it == b.m_it;
+        }
+
+        friend bool operator!=(const iterator& a, const iterator& b) noexcept
+        {
+            return a.m_it != b.m_it;
+        }
+
+      private:
+        view_iterator<View> m_it;
+        std::size_t m_index = 0;
+    };
+
+    explicit view_items(const View& v) noexcept
+        : m_view(v)
+    {}
+
+    iterator begin() const noexcept
+    {
+        return iterator(m_view.begin());
+    }
+
+    iterator end() const noexcept
+    {
+        return iterator(m_view.end());
+    }
+
+  private:
+    View m_view;
+};
+
+}  // namespace view
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
+// #include <nlohmann/detail/view/lookup.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+#include <cstddef> // size_t
+#include <cstdint> // uint16_t, uint32_t, uint64_t
+#include <cstring> // memcmp, memcpy
+
+// #include <nlohmann/json.hpp>
+// #include <nlohmann/detail/view/document_data.hpp>
+
+// #include <nlohmann/detail/view/macro_scope.hpp>
+
+// #include <nlohmann/detail/view/node.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+namespace view
+{
+
+/// equality test for strings of one length n <= 16: two overlapping loads per
+/// string (the first and the last 8, 4, or 2 bytes) replace a memcmp, and no
+/// byte outside [s, s + n) is read
+class short_key
+{
+  public:
+    short_key(const unsigned char* k, std::size_t n) noexcept
+        : m_n(n)
+    {
+        load(k, m_a, m_b);
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE bool matches(const unsigned char* s) const noexcept
+    {
+        std::uint64_t a = 0;
+        std::uint64_t b = 0;
+        load(s, a, b);
+        return a == m_a && b == m_b;
+    }
+
+  private:
+    template<typename T>
+    static NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t load_word(const unsigned char* s) noexcept
+    {
+        T w = 0;
+        std::memcpy(&w, s, sizeof(T));
+        return w;
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE void load(const unsigned char* s, std::uint64_t& a, std::uint64_t& b) const noexcept
+    {
+        if (m_n >= 8)
+        {
+            a = load_word<std::uint64_t>(s);
+            b = load_word<std::uint64_t>(s + m_n - 8);
+        }
+        else if (m_n >= 4)
+        {
+            a = load_word<std::uint32_t>(s);
+            b = load_word<std::uint32_t>(s + m_n - 4);
+        }
+        else if (m_n >= 2)
+        {
+            a = load_word<std::uint16_t>(s);
+            b = load_word<std::uint16_t>(s + m_n - 2);
+        }
+        else
+        {
+            a = m_n == 1 ? s[0] : 0;
+            b = 0;
+        }
+    }
+
+    std::size_t m_n;
+    std::uint64_t m_a = 0;
+    std::uint64_t m_b = 0;
+};
+
+/// the key node of the first member of an object with the given key, or
+/// nullptr; most keys are rejected by their length, from the index alone
+inline const node* find_member(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
+{
+    const node* const end = document_data::child_end(object);
+    const auto* const k = reinterpret_cast<const unsigned char*>(key); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    if (NLOHMANN_VIEW_LIKELY(n <= 16))
+    {
+        const short_key probe(k, n);
+        for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
+        {
+            if (m->len == n && probe.matches(reinterpret_cast<const unsigned char*>(d.str(*m)))) // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+            {
+                return m;
+            }
+        }
+        return nullptr;
+    }
+    for (const node* m = document_data::first_child(object); m != end; m = document_data::after(m + 1))
+    {
+        if (m->len == n && std::memcmp(d.str(*m), key, n) == 0)
+        {
+            return m;
+        }
+    }
+    return nullptr;
+}
+
+/// the element of an array at an index below its size
+inline const node* element_at(const node* array, std::size_t idx) noexcept
+{
+    const node* e = document_data::first_child(array);
+    for (std::size_t i = 0; i < idx; ++i)
+    {
+        e = document_data::after(e);
+    }
+    return e;
+}
+
+/// the last element of a non-empty array, or the key of the last member of a
+/// non-empty object
+inline const node* last_child(const node* container) noexcept
+{
+    const std::size_t value_offset = container->kind == static_cast<std::uint8_t>(value_t::object) ? 1 : 0;
+    const node* const end = document_data::child_end(container);
+    const node* last = document_data::first_child(container);
+    for (const node* c = document_data::after(last + value_offset); c != end; c = document_data::after(c + value_offset))
+    {
+        last = c;
+    }
+    return last;
+}
+
+}  // namespace view
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
 // #include <nlohmann/detail/view/macro_scope.hpp>
 
 // #include <nlohmann/detail/view/materialize.hpp>
@@ -2109,6 +2523,11 @@ class basic_json_view
     using size_type = std::size_t;
     /// std::string_view from C++17 on
     using string_view_t = detail::view::string_ref;
+    /// forward iterator over elements (arrays) or member values (objects)
+    using iterator = detail::view::view_iterator<basic_json_view>;
+    using const_iterator = iterator;
+    /// a (key, value) item of items()
+    using item = detail::view::view_item<basic_json_view>;
 
     /// an invalid view (type() == value_t::discarded)
     basic_json_view() noexcept = default;
@@ -2196,6 +2615,12 @@ class basic_json_view
         return m_node != nullptr;
     }
 
+    /// the name of the type, as basic_json::type_name()
+    const char* type_name() const noexcept
+    {
+        return detail::value_type_name(type());
+    }
+
     //////////////
     // capacity //
     //////////////
@@ -2245,6 +2670,219 @@ class basic_json_view
         }
     }
 
+    ////////////////////
+    // element access //
+    ////////////////////
+
+    /// the value of the member with this key (the first one, should the key
+    /// occur more than once); a discarded view if there is none. Throws
+    /// type_error.305 if this is not an object.
+    NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view operator[](string_view_t key) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
+        {
+            detail::view::throw_type_error(305, "cannot use operator[] with a string argument with ", type_name());
+        }
+        return lookup(key);
+    }
+
+    basic_json_view operator[](const char* key) const
+    {
+        return operator[](string_view_t(key));
+    }
+
+    basic_json_view operator[](const string_t& key) const
+    {
+        return operator[](string_view_t(key.data(), key.size()));
+    }
+
+    /// the element at this index; a discarded view if the index is out of
+    /// range. Throws type_error.305 if this is not an array.
+    basic_json_view operator[](size_type idx) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_array()))
+        {
+            detail::view::throw_type_error(305, "cannot use operator[] with a numeric argument with ", type_name());
+        }
+        return idx < m_node->len ? basic_json_view(m_doc, detail::view::element_at(m_node, idx)) : basic_json_view();
+    }
+
+    /// (an int argument would be ambiguous between size_type and const char*)
+    basic_json_view operator[](int idx) const
+    {
+        return operator[](static_cast<size_type>(idx));
+    }
+
+    /// the value of the member with this key (the first one, should the key
+    /// occur more than once). Throws type_error.304 if this is not an object,
+    /// and out_of_range.403 if there is no such member.
+    basic_json_view at(string_view_t key) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
+        {
+            detail::view::throw_type_error(304, "cannot use at() with ", type_name());
+        }
+        const basic_json_view r = lookup(key);
+        if (NLOHMANN_VIEW_UNLIKELY(!r))
+        {
+            detail::view::throw_out_of_range(403, detail::concat("key '", std::string(key.data(), key.size()), "' not found"));
+        }
+        return r;
+    }
+
+    basic_json_view at(const char* key) const
+    {
+        return at(string_view_t(key));
+    }
+
+    basic_json_view at(const string_t& key) const
+    {
+        return at(string_view_t(key.data(), key.size()));
+    }
+
+    /// the element at this index. Throws type_error.304 if this is not an
+    /// array, and out_of_range.401 if the index is out of range.
+    basic_json_view at(size_type idx) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_array()))
+        {
+            detail::view::throw_type_error(304, "cannot use at() with ", type_name());
+        }
+        if (NLOHMANN_VIEW_UNLIKELY(idx >= m_node->len))
+        {
+            detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
+        }
+        return basic_json_view(m_doc, detail::view::element_at(m_node, idx));
+    }
+
+    basic_json_view at(int idx) const
+    {
+        return at(static_cast<size_type>(idx));
+    }
+
+    /// the first element or member value; a primitive value itself. Throws
+    /// invalid_iterator.214 for null, discarded views, and empty containers.
+    basic_json_view front() const
+    {
+        const iterator it = begin();
+        if (NLOHMANN_VIEW_UNLIKELY(it == end()))
+        {
+            detail::view::throw_invalid_iterator(214, "cannot get value");
+        }
+        return *it;
+    }
+
+    /// the last element or member value (linear in the size); a primitive
+    /// value itself. Throws invalid_iterator.214 for null, discarded views,
+    /// and empty containers.
+    basic_json_view back() const
+    {
+        if (is_structured() && m_node->len != 0)
+        {
+            return basic_json_view(m_doc, detail::view::last_child(m_node) + (is_object() ? 1 : 0));
+        }
+        return front();
+    }
+
+    ////////////
+    // lookup //
+    ////////////
+
+    /// an iterator to the member with this key (the first one, should the
+    /// key occur more than once), or end(); end() also for non-objects
+    iterator find(string_view_t key) const
+    {
+        if (!is_object())
+        {
+            return end();
+        }
+        const node* const k = detail::view::find_member(*m_doc, m_node, key.data(), key.size());
+        return k != nullptr ? iterator(m_doc, k, true) : end();
+    }
+
+    iterator find(const char* key) const
+    {
+        return find(string_view_t(key));
+    }
+
+    iterator find(const string_t& key) const
+    {
+        return find(string_view_t(key.data(), key.size()));
+    }
+
+    /// whether this is an object with a member with this key
+    bool contains(string_view_t key) const
+    {
+        return is_object() && detail::view::find_member(*m_doc, m_node, key.data(), key.size()) != nullptr;
+    }
+
+    bool contains(const char* key) const
+    {
+        return contains(string_view_t(key));
+    }
+
+    bool contains(const string_t& key) const
+    {
+        return contains(string_view_t(key.data(), key.size()));
+    }
+
+    /// 1 if this is an object with a member with this key, else 0 (duplicate
+    /// keys count once)
+    size_type count(string_view_t key) const
+    {
+        return contains(key) ? 1 : 0;
+    }
+
+    size_type count(const char* key) const
+    {
+        return count(string_view_t(key));
+    }
+
+    size_type count(const string_t& key) const
+    {
+        return count(string_view_t(key.data(), key.size()));
+    }
+
+    ///////////////
+    // iteration //
+    ///////////////
+
+    /// the first element or member value, in document order; a primitive
+    /// value is a range of one element (itself), null an empty range
+    NLOHMANN_VIEW_ALWAYS_INLINE iterator begin() const noexcept
+    {
+        if (NLOHMANN_VIEW_LIKELY(is_structured()))
+        {
+            return iterator(m_doc, document_data::first_child(m_node), is_object());
+        }
+        return iterator(m_doc, m_node, false);
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE iterator end() const noexcept
+    {
+        if (NLOHMANN_VIEW_LIKELY(is_structured()))
+        {
+            return iterator(m_doc, document_data::child_end(m_node), is_object());
+        }
+        return iterator(m_doc, (is_null() || is_discarded()) ? m_node : m_node + 1, false);
+    }
+
+    iterator cbegin() const noexcept
+    {
+        return begin();
+    }
+
+    iterator cend() const noexcept
+    {
+        return end();
+    }
+
+    /// (key, value) items; the key of an array element is its index
+    detail::view::view_items<basic_json_view> items() const noexcept
+    {
+        return detail::view::view_items<basic_json_view>(*this);
+    }
+
     /////////////////
     // materialize //
     /////////////////
@@ -2271,10 +2909,19 @@ class basic_json_view
 
   private:
     template<typename> friend class basic_json_document;
+    friend iterator;
 
     basic_json_view(const document_data* d, const node* n) noexcept
         : m_doc(d), m_node(n)
     {}
+
+    /// the value of the first member with this key, or a discarded view
+    /// (object required)
+    NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view lookup(string_view_t key) const noexcept
+    {
+        const node* const k = detail::view::find_member(*m_doc, m_node, key.data(), key.size());
+        return k != nullptr ? basic_json_view(m_doc, k + 1) : basic_json_view();
+    }
 
     const document_data* m_doc = nullptr;
     const node* m_node = nullptr;
@@ -2623,6 +3270,31 @@ using ordered_json_document = basic_json_document<ordered_json>;
 using ordered_json_view = basic_json_view<ordered_json>;
 
 NLOHMANN_JSON_NAMESPACE_END
+
+// tuple protocol for the items of basic_json_view::items() (structured bindings)
+namespace std // NOLINT(cert-dcl58-cpp)
+{
+
+#if defined(__clang__)
+    // Fix: https://github.com/nlohmann/json/issues/1401
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wmismatched-tags"
+#endif
+template<typename View>
+class tuple_size<::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp)
+    : public std::integral_constant<std::size_t, 2> {};
+
+template<std::size_t N, typename View>
+class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp)
+{
+  public:
+    using type = decltype(std::declval<::nlohmann::detail::view::view_item<View>>().template get<N>());
+};
+#if defined(__clang__)
+    #pragma clang diagnostic pop
+#endif
+
+}  // namespace std
 
 // #include <nlohmann/detail/view/macro_unscope.hpp>
 //     __ _____ _____ _____

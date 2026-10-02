@@ -22,10 +22,15 @@ actually needed (for a string, only if it contains escape sequences, into one sh
 [`basic_json_view`](../api/basic_json_view/index.md) is a small, trivially copyable handle (two pointers) into that
 index. It gives you the read-only, type-inspection part of the `basic_json` interface --
 [`type()`](../api/basic_json_view/type.md) and the `is_*()` predicates,
-[`size()`](../api/basic_json_view/size.md)/[`empty()`](../api/basic_json_view/empty.md) -- without ever allocating a
-`basic_json` value. When you do need an actual `basic_json` value for a subtree,
-[`materialize()`](../api/basic_json_view/materialize.md) builds exactly the one
-[`parse()`](../api/basic_json/parse.md) would have produced for it.
+[`size()`](../api/basic_json_view/size.md)/[`empty()`](../api/basic_json_view/empty.md) -- as well as element access
+([`operator[]`](../api/basic_json_view/operator%5B%5D.md), [`at`](../api/basic_json_view/at.md),
+[`front`](../api/basic_json_view/front.md)/[`back`](../api/basic_json_view/back.md)), lookup
+([`find`](../api/basic_json_view/find.md), [`contains`](../api/basic_json_view/contains.md),
+[`count`](../api/basic_json_view/count.md)), and iteration
+([`begin`](../api/basic_json_view/begin.md)/[`end`](../api/basic_json_view/end.md),
+[`items`](../api/basic_json_view/items.md)) -- without ever allocating a `basic_json` value. When you do need an
+actual `basic_json` value for a subtree, [`materialize()`](../api/basic_json_view/materialize.md) builds exactly the
+one [`parse()`](../api/basic_json/parse.md) would have produced for it.
 
 ## How to use it
 
@@ -116,9 +121,26 @@ whenever any of the other conditions above was not met.
   [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md) enabled,
   [`materialize()`](../api/basic_json_view/materialize.md) does not set them: there is no lexer run during the
   replay to record them.
-- **Element access, iteration, `get<T>()`, JSON Pointer, `dump()`, and comparison are not (yet) provided** by
-  `basic_json_view`. For now, [`materialize()`](../api/basic_json_view/materialize.md) is the way to get a value you
-  can do those things with.
+- **Objects iterate in document order.** [`begin()`](../api/basic_json_view/begin.md)/
+  [`end()`](../api/basic_json_view/end.md) and [`items()`](../api/basic_json_view/items.md) visit an object's
+  members in the order they appear in the source text. `basic_json`'s default `object_t` is a `std::map`, which
+  sorts by key, so iterating a [`materialize()`](../api/basic_json_view/materialize.md)d value can print members in
+  a different order than iterating the view they came from.
+- **Duplicate keys are visible.** If an object in the source text repeats a key,
+  [`begin()`](../api/basic_json_view/begin.md)/[`end()`](../api/basic_json_view/end.md) and
+  [`items()`](../api/basic_json_view/items.md) visit *every* occurrence (and [`size()`](../api/basic_json_view/size.md)
+  counts all of them), while [`operator[]`](../api/basic_json_view/operator%5B%5D.md),
+  [`at`](../api/basic_json_view/at.md), [`find`](../api/basic_json_view/find.md),
+  [`contains`](../api/basic_json_view/contains.md), and [`count`](../api/basic_json_view/count.md) resolve to the
+  *first* occurrence, since a lookup can stop as soon as it finds a match. `basic_json::parse()` (and so
+  [`materialize()`](../api/basic_json_view/materialize.md)) instead keeps only the *last* value for a repeated key.
+  See the [Notes on duplicate keys](../api/basic_json_view/operator%5B%5D.md#notes) of `operator[]`.
+- **No [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) path.** Exceptions thrown by `basic_json_view`'s own
+  element access and lookup functions never carry the JSON Pointer path `JSON_DIAGNOSTICS` would otherwise add: the
+  view has no `basic_json` value to point at, so the exception is created without one, regardless of how
+  `BasicJsonType` was built.
+- **`get<T>()`, JSON Pointer, `dump()`, and comparison are not (yet) provided** by `basic_json_view`. For now,
+  [`materialize()`](../api/basic_json_view/materialize.md) is the way to get a value you can do those things with.
 
 ## Choosing between `json`, `ordered_json`, the SAX interface, and `json_view`
 

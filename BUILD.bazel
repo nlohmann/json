@@ -70,6 +70,8 @@ cc_library(
         "include/nlohmann/detail/view/document_data.hpp",
         "include/nlohmann/detail/view/errors.hpp",
         "include/nlohmann/detail/view/input.hpp",
+        "include/nlohmann/detail/view/iterator.hpp",
+        "include/nlohmann/detail/view/lookup.hpp",
         "include/nlohmann/detail/view/macro_scope.hpp",
         "include/nlohmann/detail/view/macro_unscope.hpp",
         "include/nlohmann/detail/view/materialize.hpp",
