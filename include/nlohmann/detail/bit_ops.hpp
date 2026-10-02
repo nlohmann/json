@@ -39,6 +39,25 @@ inline int count_leading_zeros(std::uint64_t x) noexcept
 #endif
 }
 
+/// number of trailing zero bits of x (x != 0)
+inline int count_trailing_zeros(std::uint64_t x) noexcept
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return __builtin_ctzll(x);
+#else
+    int n = 0;
+    for (int shift = 32; shift != 0; shift >>= 1)
+    {
+        if ((x << (64 - shift)) == 0)
+        {
+            n += shift;
+            x >>= shift;
+        }
+    }
+    return n;
+#endif
+}
+
 /// the 128-bit product of two 64-bit numbers
 struct uint128_parts
 {
@@ -68,13 +87,18 @@ inline uint128_parts full_multiplication(std::uint64_t a, std::uint64_t b) noexc
 
 /// eight bytes as a little-endian word (compilers fold this into one load on
 /// little-endian targets)
-inline std::uint64_t read_eight_bytes(const char* p) noexcept
+inline std::uint64_t read_eight_bytes(const unsigned char* b) noexcept
 {
-    const auto* b = reinterpret_cast<const unsigned char*>(p); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     return static_cast<std::uint64_t>(b[0]) | (static_cast<std::uint64_t>(b[1]) << 8u)
            | (static_cast<std::uint64_t>(b[2]) << 16u) | (static_cast<std::uint64_t>(b[3]) << 24u)
            | (static_cast<std::uint64_t>(b[4]) << 32u) | (static_cast<std::uint64_t>(b[5]) << 40u)
            | (static_cast<std::uint64_t>(b[6]) << 48u) | (static_cast<std::uint64_t>(b[7]) << 56u);
+}
+
+/// eight bytes as a little-endian word
+inline std::uint64_t read_eight_bytes(const char* p) noexcept
+{
+    return read_eight_bytes(reinterpret_cast<const unsigned char*>(p)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 }
 
 }  // namespace detail
