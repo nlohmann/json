@@ -116,6 +116,13 @@ class builder
     frame shallow[64]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): not initialized on purpose; filled as containers open
     std::vector<frame> deep{};
 
+    /// remember an object to index after parsing (out of line, so that the
+    /// parse loop only has a call for it)
+    NLOHMANN_VIEW_NOINLINE void note_large_object(std::uint32_t idx)
+    {
+        doc.large_objects.push_back(idx);
+    }
+
     NLOHMANN_VIEW_NOINLINE bool fail(error_code c, const unsigned char* at) noexcept
     {
         m_failure.code = c;
@@ -628,18 +635,26 @@ obj_next:
                 if (enabled(TrailingCommas) && cur() == '}')
                 {
                     ++p;
-                    goto close_container;
+                    goto close_object;
                 }
                 goto obj_key;
             }
             if (cur() == '}')
             {
                 ++p;
-                goto close_container;
+                goto close_object;
             }
             return fail(error_code::expected_object_end);
 
 #undef NLOHMANN_VIEW_VALUE
+
+close_object:
+            // a large object gets a hash index (objects only, so that closing
+            // an array pays nothing for this)
+            if (NLOHMANN_VIEW_UNLIKELY(cur_count >= document_data::index_min_members))
+            {
+                cold.note_large_object(cur_idx);
+            }
 
 close_container:
             close();

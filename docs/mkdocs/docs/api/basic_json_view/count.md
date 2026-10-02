@@ -26,6 +26,8 @@ No-throw guarantee: this function never throws exceptions.
 Linear in the number of members: as for [`ordered_json`](../ordered_json.md), members are compared one after
 another, in document order, stopping at the first match. Each comparison first checks the key's length -- already
 known from the index, without reading the key bytes -- before comparing its content.
+Objects with 128 or more members get a hash index while parsing, so that a lookup in them takes constant time on
+average.
 
 ## Notes
 

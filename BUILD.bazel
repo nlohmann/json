@@ -78,6 +78,7 @@ cc_library(
         "include/nlohmann/detail/view/materialize.hpp",
         "include/nlohmann/detail/view/node.hpp",
         "include/nlohmann/detail/view/number.hpp",
+        "include/nlohmann/detail/view/object_index.hpp",
         "include/nlohmann/detail/view/pointer.hpp",
         "include/nlohmann/detail/view/scan.hpp",
         "include/nlohmann/detail/view/serializer.hpp",

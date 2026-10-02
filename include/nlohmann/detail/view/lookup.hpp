@@ -16,6 +16,7 @@
 #include <nlohmann/detail/view/document_data.hpp>
 #include <nlohmann/detail/view/macro_scope.hpp>
 #include <nlohmann/detail/view/node.hpp>
+#include <nlohmann/detail/view/object_index.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -85,6 +86,10 @@ class short_key
 /// nullptr; most keys are rejected by their length, from the index alone
 inline const node* find_member(const document_data& d, const node* object, const char* key, std::size_t n) noexcept
 {
+    if (NLOHMANN_VIEW_UNLIKELY(object->extra != 0))
+    {
+        return find_indexed(d, object, key, n); // a large object
+    }
     const node* const end = document_data::child_end(object);
     const auto* const k = reinterpret_cast<const unsigned char*>(key); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
     if (NLOHMANN_VIEW_LIKELY(n <= 16))

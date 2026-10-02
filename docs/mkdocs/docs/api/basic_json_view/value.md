@@ -70,6 +70,8 @@ None of these exceptions carry a [`JSON_DIAGNOSTICS`](../macros/json_diagnostics
 1. Linear in the number of members: as for [`operator[]`](operator[].md#complexity), members are compared one after
    another, in document order, stopping at the first match. Plus the complexity of converting the found member to
    `T` (see [`get`](get.md)).
+   Objects with 128 or more members get a hash index while parsing, so that a lookup in them takes constant time
+   on average.
 2. Linear in the number of reference tokens of `ptr` and, for each token, in the number of members of the object at
    that level or the index into the array -- as for the [`operator[]`](operator[].md#complexity) and
    [`at`](at.md#complexity) overloads that take a JSON pointer. Plus the complexity of converting the resolved value
