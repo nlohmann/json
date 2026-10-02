@@ -234,7 +234,7 @@ TEST_CASE("JSON Node Metadata")
         // travel with it, just as it does for copy, move, and assignment
         using json = json_with_metadata<int>;
         std::vector<json> values;
-        for (int v :
+        for (const int v :
                 {
                     5, 3, 9, 1, 7, 2, 8, 4, 6, 0, 15, 13, 19, 11, 17, 12, 18, 14, 16, 10,
                     25, 23, 29, 21, 27, 22, 28, 24, 26, 20, 35, 33

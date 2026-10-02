@@ -4382,6 +4382,8 @@ BasicJsonType materialize(const document_data& d, const node* n)
     std::vector<frame> open;
     for (;;)
     {
+        // false positive: n comes from nav::value(), which never returns null for a valid index
+        // @infer-ignore NULLPTR_DEREFERENCE
         switch (static_cast<value_t>(n->kind))
         {
             case value_t::object:
