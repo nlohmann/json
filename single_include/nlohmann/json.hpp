@@ -12259,7 +12259,7 @@ scan_number_done:
     read of the token and skips the rest:
 
     - A string keeps its characters. An unknown escape stands for the escaped
-      character itself (as in JavaScript), an invalid `\u` escape and ill-formed
+      character itself (as in JavaScript), an invalid Unicode escape and ill-formed
       UTF-8 become U+FFFD, and a control character is kept. A line break or the
       end of the input ends a string that lacks its closing quote.
     - A number keeps its longest valid prefix, e.g. `1` for `1.` or `1e+`.
@@ -12436,7 +12436,7 @@ scan_number_done:
         }
     }
 
-    /// append a code point read from a `\u` escape; a surrogate becomes U+FFFD
+    /// append a code point read from a Unicode escape; a surrogate becomes U+FFFD
     void add_escaped_codepoint(const int codepoint)
     {
         if (0xD800 <= codepoint && codepoint <= 0xDFFF)
