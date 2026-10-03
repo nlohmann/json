@@ -16,6 +16,10 @@ array data, it performs the following steps:
 - s2 = serialize(j2)
 - assert(s1 == s2)
 
+Furthermore, it parses data with a SAX parser that recovers from every error
+and checks that the events are balanced, that parsing ends, and that valid
+input is parsed without errors (see #3989).
+
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
@@ -28,11 +32,20 @@ drivers.
     #error "the fuzzer drivers must be built without NDEBUG"
 #endif
 
+#include "fuzzer-recovering_checker.hpp"
+
 using json = nlohmann::json;
 
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
+    // step 0: recover from all errors, reading from memory and from a stream
+    {
+        const auto checker = check_recovering_parse(data, size, json::input_format_t::json);
+        assert(checker.events <= (4 * size) + 4);
+        assert((checker.errors == 0) == json::accept(data, data + size));
+    }
+
     try
     {
         // step 1: parse input

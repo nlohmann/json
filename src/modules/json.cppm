@@ -47,6 +47,7 @@ inline namespace json_literals
 namespace detail
 {
     using NLOHMANN_JSON_NAMESPACE::detail::json_sax_dom_callback_parser;
+    using NLOHMANN_JSON_NAMESPACE::detail::json_sax_dom_parser;
     using NLOHMANN_JSON_NAMESPACE::detail::unknown_size;
 } // namespace detail
 

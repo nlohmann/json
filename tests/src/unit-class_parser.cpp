@@ -143,11 +143,13 @@ class SaxEventLogger
     {
         errored = true;
         events.push_back("parse_error(" + std::to_string(position) + ")");
-        return false;
+        return recover;
     }
 
     std::vector<std::string> events {}; // NOLINT(readability-redundant-member-init)
     bool errored = false;
+    /// whether parse_error() asks the parser to recover from the error (see #3989)
+    bool recover = false;
 };
 
 class SaxCountdown : public nlohmann::json::json_sax_t
@@ -2937,3 +2939,583 @@ TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
     }
 }
 #endif
+
+namespace
+{
+/// builds a value like json::parse(), but asks the parser to recover from
+/// errors (see #3989), and checks that the events it receives are balanced
+class RecoveringDomParser
+{
+  public:
+    explicit RecoveringDomParser(json& j, std::size_t max_errors_ = static_cast<std::size_t>(-1))
+        : dom(j, false)
+        , max_errors(max_errors_)
+    {}
+
+    bool null()
+    {
+        value();
+        return dom.null();
+    }
+
+    bool boolean(bool val)
+    {
+        value();
+        return dom.boolean(val);
+    }
+
+    bool number_integer(json::number_integer_t val)
+    {
+        value();
+        return dom.number_integer(val);
+    }
+
+    bool number_unsigned(json::number_unsigned_t val)
+    {
+        value();
+        return dom.number_unsigned(val);
+    }
+
+    bool number_float(json::number_float_t val, const std::string& s)
+    {
+        value();
+        return dom.number_float(val, s);
+    }
+
+    bool string(std::string& val)
+    {
+        value();
+        return dom.string(val);
+    }
+
+    bool binary(json::binary_t& val)
+    {
+        value();
+        return dom.binary(val);
+    }
+
+    bool start_object(std::size_t elements)
+    {
+        value();
+        stack.push_back('o');
+        return dom.start_object(elements);
+    }
+
+    bool key(std::string& val)
+    {
+        ++events;
+        if (stack.empty() || stack.back() != 'o')
+        {
+            well_formed = false;
+            return false;
+        }
+        stack.back() = 'v';
+        return dom.key(val);
+    }
+
+    bool end_object()
+    {
+        ++events;
+        if (stack.empty() || stack.back() != 'o')
+        {
+            well_formed = false;
+            return false;
+        }
+        stack.pop_back();
+        return dom.end_object();
+    }
+
+    bool start_array(std::size_t elements)
+    {
+        value();
+        stack.push_back('a');
+        return dom.start_array(elements);
+    }
+
+    bool end_array()
+    {
+        ++events;
+        if (stack.empty() || stack.back() != 'a')
+        {
+            well_formed = false;
+            return false;
+        }
+        stack.pop_back();
+        return dom.end_array();
+    }
+
+    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& ex)
+    {
+        errors.emplace_back(ex.what());
+        return errors.size() < max_errors;
+    }
+
+    /// whether the events were balanced and every key was followed by a value
+    bool balanced() const
+    {
+        return well_formed && stack.empty();
+    }
+
+    /// builds the value
+    nlohmann::detail::json_sax_dom_parser<json> dom;
+    std::vector<std::string> errors {}; // NOLINT(readability-redundant-member-init)
+    std::size_t events = 0;
+    /// the open containers: 'a' for an array, 'o' for an object that expects
+    /// a key, 'v' for an object that expects the value of a key
+    std::vector<char> stack {}; // NOLINT(readability-redundant-member-init)
+    bool well_formed = true;
+    std::size_t max_errors;
+
+  private:
+    /// a value is passed: it is an array element, or the value of a key
+    void value()
+    {
+        ++events;
+        if (!stack.empty())
+        {
+            if (stack.back() == 'v')
+            {
+                stack.back() = 'o';
+            }
+            else if (stack.back() == 'o')
+            {
+                // a value without a key
+                well_formed = false;
+            }
+        }
+    }
+
+};
+
+struct RecoveryResult
+{
+    json value;
+    std::vector<std::string> errors;
+    std::size_t events;
+    bool ok;
+    bool balanced;
+};
+
+template<typename InputType>
+RecoveryResult parse_recovering(InputType&& input, const bool strict = true,
+                                const bool ignore_comments = false, const bool ignore_trailing_commas = false)
+{
+    json j;
+    RecoveringDomParser sax(j);
+    const bool ok = json::sax_parse(std::forward<InputType>(input), &sax, json::input_format_t::json,
+                                    strict, ignore_comments, ignore_trailing_commas);
+    return {j, sax.errors, sax.events, ok, sax.balanced()};
+}
+
+/// stops after a number of events, but recovers from errors
+class RecoveringCountdown : public SaxCountdown
+{
+  public:
+    using SaxCountdown::SaxCountdown;
+
+    bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& /*ex*/) override
+    {
+        return true;
+    }
+};
+
+/// a repaired input: the value it is repaired to, and the number of errors
+struct Repair
+{
+    const char* input;
+    const char* expected;
+    std::size_t errors;
+};
+} // namespace
+
+TEST_CASE("parser error recovery (#3989)")
+{
+    SECTION("repairs")
+    {
+        const std::vector<Repair> repairs =
+        {
+            // a missing separator is inserted
+            {"[1 2]", "[1,2]", 1},
+            {R"({"a":1 "b":2})", R"({"a":1,"b":2})", 1},
+            {R"({"a" 1})", R"({"a":1})", 1},
+            {"[1 tru 2]", "[1,null,2]", 2},
+            {R"({"a" "b": 1})", R"({"a":"b"})", 2},
+
+            // a missing value is null in an object; in an array, a ',' stands
+            // for null, while an array that ends there just ends
+            {R"({"a":})", R"({"a":null})", 1},
+            {R"({"a"})", R"({"a":null})", 1},
+            {R"({"a","b":1})", R"({"a":null,"b":1})", 1},
+            {"[1,,2]", "[1,null,2]", 1},
+            {"[,1]", "[null,1]", 1},
+            {"[1,]", "[1]", 1},
+            {"[1,2,3,]", "[1,2,3]", 1},
+            {R"({"a":1,})", R"({"a":1})", 1},
+
+            // a broken string keeps what can be read
+            {R"(["a\qb"])", R"(["aqb"])", 1},
+            {R"({"na\me":1})", R"({"name":1})", 1},
+            {"[\"\xFF\"]", R"(["\uFFFD"])", 1},
+            {"[\"a\xC3(\"]", R"(["a\uFFFD("])", 1},
+            {"[\"\xE2\x82\"]", R"(["\uFFFD"])", 1},
+            {"[\"\xC3\\\\\", 1]", R"(["\uFFFD\\",1])", 1},
+            {R"(["\u12"])", R"(["\uFFFD"])", 1},
+            {R"(["\u12G4"])", R"(["\uFFFDG4"])", 1},
+            {R"(["\uDC00x"])", R"(["\uFFFDx"])", 1},
+            {R"(["\uD800x"])", R"(["\uFFFDx"])", 1},
+            {R"(["\uD800\u0041"])", R"(["\uFFFDA"])", 1},
+            {R"(["\uD800\uD800\uDC00"])", R"(["\uFFFD\uD800\uDC00"])", 1},
+            {R"(["\uD800\uD800\uD800x"])", R"(["\uFFFD\uFFFD\uFFFDx"])", 1},
+            {
+                R"(["\uD800\"x", 1])", R"(["\uFFFD\"x",1])", 1
+            },
+            {R"(["\uD800\q"])", R"(["\uFFFDq"])", 1},
+            {"[\"a\tb\"]", R"(["a\tb"])", 1},
+            {R"(["a\qb\u0041\x"])", R"(["aqbAx"])", 1},
+
+            // a broken number keeps its longest valid prefix
+            {"[1.]", "[1]", 1},
+            {"[-2.]", "[-2]", 1},
+            {"[1.5e]", "[1.5]", 1},
+            {"[1e+]", "[1]", 1},
+            {"[1.x2, 3]", "[1,3]", 1},
+
+            // what cannot be read at all is null
+            {"[1,NaN,3]", "[1,null,3]", 1},
+            {"[tru]", "[null]", 1},
+            {"[-]", "[null]", 1},
+            {R"({"a":Infinity})", R"({"a":null})", 1},
+
+            // a stray token is dropped
+            {"[:1]", "[1]", 1},
+            {R"(["a":1])", R"(["a",1])", 1},
+            {R"({"a"::1})", R"({"a":1})", 1},
+
+            // a member that cannot be read is skipped
+            {R"({1:2,"b":3})", R"({"b":3})", 1},
+            {R"({"a":1 2})", R"({"a":1})", 1},
+            {R"({,"a":1})", R"({"a":1})", 1},
+            {R"({"a":1,,"b":2})", R"({"a":1,"b":2})", 1},
+            {"{a:1}", "{}", 1},
+            {R"({"a":1 [1,{"b":2}], "c":3})", R"({"a":1,"c":3})", 1},
+            {R"([{1}, "a"])", R"([{},"a"])", 1},
+
+            // a wrong closing bracket closes the innermost container
+            {R"({"a":[1,2}, "b":3})", R"({"a":[1,2],"b":3})", 1},
+            {R"([{"a":1], 2])", R"([{"a":1},2])", 1},
+            {"{]", "{}", 1},
+            {"[}", "[]", 1},
+
+            // the end of the input closes all containers
+            {R"({"a":[1,2)", R"({"a":[1,2]})", 1},
+            {"[", "[]", 1},
+            {"{", "{}", 1},
+            {R"({"a")", R"({"a":null})", 1},
+            {R"({"a":)", R"({"a":null})", 1},
+            {"[1,", "[1]", 1},
+            {"[[[1", "[[[1]]]", 1},
+            {
+                R"(["abc)", R"(["abc"])", 2
+            },
+            {"[1,tr", "[1,null]", 2},
+            {"\"abc", "\"abc\"", 1},
+            {"[\"ab\ncd\"]", R"(["ab",null,"]"])", 4},
+
+            // what comes before the top-level value is skipped
+            {")]}'\n{\"a\":1}", R"({"a":1})", 1},
+            {R"(data: {"a":1})", R"({"a":1})", 1},
+            {"\xEF\xBB[1]", "[1]", 1},
+
+            // what comes after it is an error that ends parsing
+            {R"({"a":1}})", R"({"a":1})", 1},
+            {"[1}]", "[1]", 2},
+            {"[1] [2]", "[1]", 1},
+        };
+
+        for (const auto& repair : repairs)
+        {
+            CAPTURE(repair.input)
+            const auto result = parse_recovering(std::string(repair.input));
+            CHECK(!result.ok);
+            CHECK(result.balanced);
+            CHECK(result.value == json::parse(repair.expected));
+            CHECK(result.errors.size() == repair.errors);
+        }
+    }
+
+    SECTION("number overflow")
+    {
+        const auto result = parse_recovering(std::string("[1e999,-1e999]"));
+        CHECK(!result.ok);
+        CHECK(result.balanced);
+        CHECK(result.errors.size() == 2);
+        CHECK(result.errors[0] == "[json.exception.out_of_range.406] number overflow parsing '1e999'");
+        REQUIRE(result.value.size() == 2);
+        CHECK(result.value[0].is_number_float());
+        CHECK(result.value[0].get<double>() == std::numeric_limits<double>::infinity());
+        CHECK(result.value[1].get<double>() == -std::numeric_limits<double>::infinity());
+
+        // the SAX parser gets the number's text
+        SaxEventLogger logger;
+        logger.recover = true;
+        CHECK(!json::sax_parse("1e999", &logger));
+        CHECK(logger.events == std::vector<std::string>({"parse_error(5)", "number_float(1e999)"}));
+    }
+
+    SECTION("nothing to recover")
+    {
+        for (const std::string s :
+                {
+                    "", "   ", "]", "tru", "NaN", ",:", "/* comment"
+                })
+        {
+            CAPTURE(s)
+            const auto result = parse_recovering(s, true, true);
+            CHECK(!result.ok);
+            CHECK(result.balanced);
+            CHECK(result.events == 0);
+            CHECK(result.value == nullptr);
+            CHECK(result.errors.size() == 1);
+        }
+    }
+
+    SECTION("error messages")
+    {
+        // the first error is reported as without recovery
+        for (const std::string s :
+                {
+                    "[1 2]", R"({"a":1 "b":2})", R"({"a" 1})", R"({"a":})", "[1,]", "[1.]",
+                    R"(["a\qb"])", "[1e999]", "{1:2}", R"({"a":[1,2}})", "[1,", "[1] [2]", "{a:1}"
+                })
+        {
+            CAPTURE(s)
+            const auto result = parse_recovering(s);
+            REQUIRE(!result.errors.empty());
+            json _;
+            CHECK_THROWS_WITH_STD_STR(_ = json::parse(s), result.errors.front());
+        }
+
+        // the token of an error begins where the previous error was
+        const auto result = parse_recovering(std::string("[tru, fals, nul]"));
+        CHECK(result.errors == std::vector<std::string>(
+        {
+            "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid literal; last read: '[tru,'",
+            "[json.exception.parse_error.101] parse error at line 1, column 11: syntax error while parsing value - invalid literal; last read: ', fals,'",
+            "[json.exception.parse_error.101] parse error at line 1, column 16: syntax error while parsing value - invalid literal; last read: ', nul]'"
+        }));
+        CHECK(result.value == json::parse("[null,null,null]"));
+    }
+
+    SECTION("events")
+    {
+        // see #4522
+        SaxEventLogger logger;
+        logger.recover = true;
+        CHECK(!json::sax_parse(R"([{1}, "a"])", &logger));
+        CHECK(logger.events == std::vector<std::string>(
+        {
+            "start_array()", "start_object()", "parse_error(3)", "end_object()", "string(a)", "end_array()"
+        }));
+    }
+
+    SECTION("options")
+    {
+        SECTION("strict")
+        {
+            const auto result = parse_recovering(std::string("[1 2] [3]"), false);
+            CHECK(!result.ok);
+            CHECK(result.value == json::parse("[1,2]"));
+            CHECK(result.errors.size() == 1);
+        }
+
+        SECTION("ignore_trailing_commas")
+        {
+            for (const std::string s :
+                    {
+                        "[1,]", R"({"a":1,})", "[[1,],]"
+                    })
+            {
+                CAPTURE(s)
+                const auto result = parse_recovering(s, true, false, true);
+                CHECK(result.ok);
+                CHECK(result.errors.empty());
+            }
+
+            auto result = parse_recovering(std::string("[1,,]"), true, false, true);
+            CHECK(result.value == json::parse("[1,null]"));
+            CHECK(result.errors.size() == 1);
+
+            result = parse_recovering(std::string(R"({"a":1,,})"), true, false, true);
+            CHECK(result.value == json::parse(R"({"a":1})"));
+            CHECK(result.errors.size() == 1);
+        }
+
+        SECTION("ignore_comments")
+        {
+            auto result = parse_recovering(std::string("[1 /* one */ 2]"), true, true);
+            CHECK(result.value == json::parse("[1,2]"));
+            CHECK(result.errors.size() == 1);
+
+            // a comment that is not closed runs to the end of the input, which
+            // is not reported again
+            result = parse_recovering(std::string("[1, 2 /* unterminated"), true, true);
+            CHECK(result.balanced);
+            CHECK(result.value == json::parse("[1,2]"));
+            CHECK(result.errors.size() == 1);
+
+            // a '/' that does not begin a comment is garbage
+            result = parse_recovering(std::string("[1, /x, 2]"), true, true);
+            CHECK(result.balanced);
+            CHECK(result.value == json::parse("[1,null,2]"));
+            CHECK(result.errors.size() == 1);
+        }
+    }
+
+    SECTION("null bytes")
+    {
+        // a null byte ends the input, unless JSON_STRICT_NUL_HANDLING is set
+        const auto result = parse_recovering(std::string("[1,\0x", 5));
+        CHECK(result.balanced);
+        CHECK(!result.ok);
+#ifdef JSON_TEST_STRICT_NUL_HANDLING_ENABLED
+        CHECK(result.value == json::parse("[1,null]"));
+#else
+        CHECK(result.value == json::parse("[1]"));
+        CHECK(result.errors.size() == 1);
+#endif
+
+        const auto in_string = parse_recovering(std::string("[\"a\0b\"]", 7));
+        CHECK(in_string.balanced);
+#ifdef JSON_TEST_STRICT_NUL_HANDLING_ENABLED
+        CHECK(in_string.value == json::array({std::string("a\0b", 3)}));
+#else
+        CHECK(in_string.value == json::parse(R"(["a"])"));
+#endif
+    }
+
+    SECTION("the SAX parser stops recovering")
+    {
+        json j;
+        RecoveringDomParser sax(j, 2);
+        CHECK(!json::sax_parse("[1 2 3 4 5]", &sax));
+        CHECK(sax.errors.size() == 2);
+
+        // an error at a delimiter that an invalid token consumed is reported
+        // to the SAX parser, too
+        json j2;
+        RecoveringDomParser sax2(j2, 2);
+        CHECK(!json::sax_parse("[tru}, 1]", &sax2));
+        CHECK(sax2.errors.size() == 2);
+    }
+
+    SECTION("an event stops parsing during a repair")
+    {
+        // start_object() and key() are passed, then null() for the missing
+        // value returns false
+        RecoveringCountdown countdown(2);
+        CHECK(!json::sax_parse(R"({"a":})", &countdown));
+
+        // the end of the input: end_array() for the second array returns false
+        RecoveringCountdown countdown2(4);
+        CHECK(!json::sax_parse("[[1", &countdown2));
+    }
+
+    SECTION("input adapters")
+    {
+        // the lexer reads contiguous and streaming input differently, and it
+        // puts back a character that ended an invalid token
+        for (const std::string s :
+                {
+                    "[1 2]", "[tru}, 1]", R"({"a" "b\q", "c":[1.x, 2}})", "[\"\xFF\xC3(\", -, 1e+]", "{a:1,\"b\":2", ")]}' [1]"
+                })
+        {
+            CAPTURE(s)
+            const auto reference = parse_recovering(s);
+            CHECK(reference.balanced);
+
+            const auto from_c_string = parse_recovering(s.c_str());
+            CHECK(from_c_string.value == reference.value);
+            CHECK(from_c_string.errors == reference.errors);
+
+            const std::list<char> l(s.begin(), s.end());
+            json j;
+            RecoveringDomParser sax(j);
+            CHECK(!json::sax_parse(l.begin(), l.end(), &sax));
+            CHECK(j == reference.value);
+            CHECK(sax.errors == reference.errors);
+
+            std::istringstream ss(s);
+            const auto from_stream = parse_recovering(ss);
+            CHECK(from_stream.value == reference.value);
+            CHECK(from_stream.errors == reference.errors);
+        }
+    }
+
+    SECTION("long runs of errors")
+    {
+        // no error may copy all the input read before it
+        const auto closing = parse_recovering("[" + std::string(100000, '}'));
+        CHECK(closing.balanced);
+        CHECK(closing.value == json::array());
+
+        const auto garbage = parse_recovering("[" + std::string(100000, 'x') + "]");
+        CHECK(garbage.balanced);
+        CHECK(garbage.errors.size() == 1);
+
+        const auto commas = parse_recovering("{" + std::string(100000, ',') + "}");
+        CHECK(commas.balanced);
+        CHECK(commas.value == json::object());
+    }
+
+    SECTION("mutations of valid input")
+    {
+        // whatever the input, the events are balanced, every error is reported
+        // at most once, and valid input is parsed as usual
+        const std::vector<std::string> documents =
+        {
+            R"({"name": "value", "list": [1, -2.5, true, null, {"x": [[]]}], "e": "\u00e9"})",
+            R"([{"a": [1, 2, {"b": "c"}]}, [], {}, "\ud83d\ude00", 1e10])",
+            "{\"\xC3\xA9\": \"\xF0\x9F\x98\x80\"}",
+            R"(  {"k" : [ "v" , 0 ] }  )",
+        };
+        // each character that can be inserted, including a null byte
+        const std::string insertions("[]{},:\"x\\\0\xFF", 11);
+
+        std::vector<std::string> inputs;
+        for (const auto& doc : documents)
+        {
+            for (std::size_t i = 0; i <= doc.size(); ++i)
+            {
+                inputs.push_back(doc.substr(0, i));
+                if (i < doc.size())
+                {
+                    inputs.push_back(doc.substr(0, i) + doc.substr(i + 1));
+                }
+                for (const char c : insertions)
+                {
+                    inputs.push_back(doc.substr(0, i) + c + doc.substr(i));
+                }
+            }
+        }
+
+        for (const auto& s : inputs)
+        {
+            CAPTURE(s)
+            const auto result = parse_recovering(s);
+            CHECK(result.balanced);
+            CHECK(result.errors.size() <= s.size() + 1);
+            CHECK(result.events <= (4 * s.size()) + 4);
+            if (json::accept(s))
+            {
+                CHECK(result.ok);
+                CHECK(result.errors.empty());
+                CHECK(result.value == json::parse(s));
+            }
+            else
+            {
+                CHECK(!result.ok);
+                CHECK(!result.errors.empty());
+            }
+        }
+    }
+}

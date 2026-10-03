@@ -13,6 +13,7 @@
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint32_t
 #include <string> // string, to_string
+#include <utility> // move
 
 #include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
@@ -209,6 +210,79 @@ inline bool is_valid_utf8(const StringType& s, const std::size_t first = 0) noex
     }
 
     return state == UTF8_ACCEPT;
+}
+
+/*!
+@brief append U+FFFD REPLACEMENT CHARACTER, encoded in UTF-8
+@param[in,out] s  the string to append to
+*/
+template<typename StringType>
+inline void append_replacement_character(StringType& s)
+{
+    s.push_back(static_cast<typename StringType::value_type>(0xEFu));
+    s.push_back(static_cast<typename StringType::value_type>(0xBFu));
+    s.push_back(static_cast<typename StringType::value_type>(0xBDu));
+}
+
+/*!
+@brief replace ill-formed UTF-8 with U+FFFD REPLACEMENT CHARACTER
+
+Each maximal subpart of an ill-formed sequence becomes one U+FFFD, as the
+Unicode Standard recommends (Section 3.9, "U+FFFD Substitution of Maximal
+Subparts"), and as the parser for JSON text does when it recovers from errors.
+
+@param[in,out] s  the string to repair
+@param[in] first  index of the first byte to repair; the bytes before it are
+                  assumed to be valid UTF-8 that ends on a code point boundary
+*/
+template<typename StringType>
+inline void replace_invalid_utf8(StringType& s, const std::size_t first = 0)
+{
+    StringType result = s;
+    result.resize(first);
+
+    std::uint8_t state = UTF8_ACCEPT;
+    std::uint32_t codepoint = 0;
+    // the first byte of the sequence being decoded
+    std::size_t sequence_start = first;
+
+    std::size_t i = first;
+    while (i < s.size())
+    {
+        switch (decode(state, codepoint, static_cast<std::uint8_t>(s[i])))
+        {
+            case UTF8_ACCEPT:
+                for (++i; sequence_start < i; ++sequence_start)
+                {
+                    result.push_back(s[sequence_start]);
+                }
+                break;
+
+            case UTF8_REJECT:
+                append_replacement_character(result);
+                // the byte that made the sequence ill-formed begins the next
+                // one, unless it began this one
+                if (i == sequence_start)
+                {
+                    ++i;
+                }
+                state = UTF8_ACCEPT;
+                sequence_start = i;
+                break;
+
+            default: // in the middle of a sequence
+                ++i;
+                break;
+        }
+    }
+
+    // a sequence that the string ends in the middle of
+    if (state != UTF8_ACCEPT)
+    {
+        append_replacement_character(result);
+    }
+
+    s = std::move(result);
 }
 
 }  // namespace detail
