@@ -64,7 +64,7 @@ Separate the values in the stream with whitespace. The character consumed after 
 
 ## Examples
 
-Default behavior (macro not defined)
+Example: default behavior (macro not defined)
 
 Without the macro, the character after a number is consumed:
 
@@ -84,7 +84,7 @@ int main()
 }
 ```
 
-Opt-in precise stream position (macro defined to 1)
+Example: opt-in precise stream position (macro defined to 1)
 
 With the macro, the stream is positioned right after the number:
 
@@ -112,5 +112,5 @@ int main()
 
 ## Version history
 
-- Added in version 3.13.0.
+- Added in version 3.13.0 unreleased.
 - Planned to become the default (with the macro removed) in version 4.0.0.

@@ -40,6 +40,10 @@ For [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md), also a
 
 `*this`
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes to any JSON value. As an exception, a `null` value is converted to an empty array or object before the element is added and keeps that type if adding the element throws.
+
 ## Exceptions
 
 1. Throws [`type_error.308`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error308) when called on a type other than JSON array or null; example: `"cannot use push_back() with number"`

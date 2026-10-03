@@ -71,6 +71,11 @@ false
 false
 ```
 
+## See also
+
+- [boolean_t](https://json.nlohmann.me/api/basic_json/boolean_t/index.md) the type used to store JSON booleans
+- [is_primitive](https://json.nlohmann.me/api/basic_json/is_primitive/index.md) checks whether the JSON value is primitive
+
 ## Version history
 
 - Added in version 1.0.0.

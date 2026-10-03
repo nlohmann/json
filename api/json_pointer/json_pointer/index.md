@@ -10,10 +10,18 @@ Create a JSON pointer according to the syntax described in [Section 3 of RFC6901
 
 `s` (in) : string representing the JSON pointer; if omitted, the empty string is assumed which references the whole JSON value
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes to any JSON pointer.
+
 ## Exceptions
 
 - Throws [parse_error.107](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error107) if the given JSON pointer `s` is nonempty and does not begin with a slash (`/`); see example below.
 - Throws [parse_error.108](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error108) if a tilde (`~`) in the given JSON pointer `s` is not followed by `0` (representing `~`) or `1` (representing `/`); see example below.
+
+## Complexity
+
+Linear in the length of `s`.
 
 ## Examples
 
@@ -78,6 +86,11 @@ Output:
 [json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'
 [json.exception.parse_error.108] parse error: escape character '~' must be followed with '0' or '1'
 ```
+
+## See also
+
+- [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md) - the article on JSON Pointer support
+- [operator""\_json_pointer](https://json.nlohmann.me/api/operator_literal_json_pointer/index.md) user-defined string literal for JSON pointers
 
 ## Version history
 

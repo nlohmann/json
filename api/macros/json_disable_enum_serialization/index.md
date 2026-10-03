@@ -26,7 +26,7 @@ Enum serialization can also be controlled with the CMake option [`JSON_DisableEn
 
 ## Examples
 
-Example 1: Disabled behavior
+Example: Disabled behavior
 
 The code below forces the library **not** to create default serialization/deserialization functions `from_json` and `to_json`, meaning the code below **does not** compile.
 
@@ -52,7 +52,7 @@ int main()
 }
 ```
 
-Example 2: Serialize enum macro
+Example: Serialize enum macro
 
 The code below forces the library **not** to create default serialization/deserialization functions `from_json` and `to_json`, but uses [`NLOHMANN_JSON_SERIALIZE_ENUM`](https://json.nlohmann.me/api/macros/nlohmann_json_serialize_enum/index.md) to parse and serialize the enum.
 
@@ -84,7 +84,7 @@ int main()
 }
 ```
 
-Example 3: User-defined serialization/deserialization functions
+Example: User-defined serialization/deserialization functions
 
 The code below forces the library **not** to create default serialization/deserialization functions `from_json` and `to_json`, but uses user-defined functions to parse and serialize the enum.
 

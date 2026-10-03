@@ -7,7 +7,7 @@ ValueType& get_to(ValueType& v) const noexcept(
         std::declval<const basic_json_t&>(), v)));
 ```
 
-Explicit type conversion between the JSON value and a compatible value. The value is filled into the input parameter by calling the `json_serializer<ValueType>` `from_json()` method.
+Explicit type conversion between the JSON value and a compatible value. The value is filled into the input parameter by calling the [`json_serializer<ValueType>`](https://json.nlohmann.me/api/basic_json/json_serializer/index.md) `from_json()` method.
 
 The function is equivalent to executing
 
@@ -31,6 +31,10 @@ This overload is chosen if:
 
 the input parameter, allowing chaining calls
 
+## Exception safety
+
+Depends on what `json_serializer<ValueType>` `from_json()` method throws; the JSON value itself is never modified, since `get_to()` is a `const` member function.
+
 ## Exceptions
 
 Depends on what `json_serializer<ValueType>` `from_json()` method throws
@@ -43,11 +47,11 @@ Depends on the `json_serializer<ValueType>::from_json()` implementation.
 
 Example
 
-The example below shows several conversions from JSON values to other types. There a few things to note: (1) Floating-point numbers can be converted to integers, (2) A JSON array can be converted to a standard `std::vector<short>`, (3) A JSON object can be converted to C++ associative containers such as `#cpp std::unordered_map<std::string, json>`.
+The example below shows several conversions from JSON values to other types. There a few things to note: (1) Floating-point numbers can be converted to integers, (2) A JSON array can be converted to a standard `std::vector<short>`, (3) A JSON object can be converted to C++ associative containers such as `std::map<std::string, json>`.
 
 ```
 #include <iostream>
-#include <unordered_map>
+#include <map>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -76,7 +80,7 @@ int main()
     int v5;
     std::string v6;
     std::vector<short> v7;
-    std::unordered_map<std::string, json> v8;
+    std::map<std::string, json> v8;
 
     // use explicit conversions
     json_types["boolean"].get_to(v1);
@@ -116,11 +120,11 @@ Output:
 Hello, world!
 1 2 3 4 5 
 
-number: {"floating-point":17.23,"integer":42}
-null: null
-string: "Hello, world!"
-boolean: true
 array: [1,2,3,4,5]
+boolean: true
+null: null
+number: {"floating-point":17.23,"integer":42}
+string: "Hello, world!"
 ```
 
 ## See also
@@ -133,4 +137,4 @@ array: [1,2,3,4,5]
 ## Version history
 
 - Since version 3.3.0.
-- Added a `static_assert` with a clear message for `const` arguments in version 3.13.0.
+- Added a `static_assert` with a clear message for `const` arguments in version 3.13.0 unreleased.

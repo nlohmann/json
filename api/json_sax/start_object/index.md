@@ -200,6 +200,12 @@ parse_error(position=460, last_token=12.723374634<U+000A>        }<U+000A>    }]
 result: false
 ```
 
+## See also
+
+- [end_object](https://json.nlohmann.me/api/json_sax/end_object/index.md) - the end of an object was read
+- [key](https://json.nlohmann.me/api/json_sax/key/index.md) - an object key was read
+- [sax_parse](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - SAX parser
+
 ## Version history
 
 - Added in version 3.2.0.

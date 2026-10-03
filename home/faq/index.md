@@ -44,9 +44,9 @@ To explicitly create a single-element array, use `json::array({value})`:
 json j = json::array({true});  // [true]
 ```
 
-**Opt-in copy semantics (since version 3.12.0)**
+**Opt-in copy semantics (since version 3.13.0 unreleased)**
 
-If you define `JSON_BRACE_INIT_COPY_SEMANTICS` to `1` before including the library, single-element brace initialization is treated as copy/move instead of creating a single-element array:
+If you define [`JSON_BRACE_INIT_COPY_SEMANTICS`](https://json.nlohmann.me/api/macros/json_brace_init_copy_semantics/index.md) to `1` before including the library, single-element brace initialization is treated as copy/move instead of creating a single-element array:
 
 ```
 #define JSON_BRACE_INIT_COPY_SEMANTICS 1
@@ -84,7 +84,7 @@ The library supports **Unicode input** as follows:
 - The library will not replace [Unicode noncharacters](http://www.unicode.org/faq/private_use.html#nonchar1).
 - Invalid surrogates (e.g., incomplete pairs such as `\uDEAD`) will yield parse errors.
 - The strings stored in the library are UTF-8 encoded. When using the default string type (`std::string`), note that its length/size functions return the number of stored bytes rather than the number of characters or glyphs.
-- When you store strings with different encodings in the library, calling [`dump()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a50ec80b02d0f3f51130d4abb5d1cfdc5.html#a50ec80b02d0f3f51130d4abb5d1cfdc5) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
+- When you store strings with different encodings in the library, calling [`dump()`](https://json.nlohmann.me/api/basic_json/dump/index.md) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
 
 In most cases, the parser is right to complain, because the input is not UTF-8 encoded. This is especially true for Microsoft Windows, where Latin-1 or ISO 8859-1 is often the standard encoding.
 
@@ -92,7 +92,7 @@ In most cases, the parser is right to complain, because the input is not UTF-8 e
 
 Questions
 
-- Why does `json::parse()` silently ignore part of my input?
+- Why does [`json::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) silently ignore part of my input?
 - Why does a `std::string`/buffer with extra data after the JSON text parse without error, while a similar-looking string with extra text does not?
 
 A `'\0'` (NUL) byte anywhere in the input is treated the same as the real end of the input, rather than as an ordinary (and, outside of a string, invalid) byte. Everything from that byte onward is silently ignored, without a parse error — including further, otherwise well-formed JSON:
@@ -117,7 +117,7 @@ s.resize(s.find('\0')); // drop everything from the first NUL onward, if any
 json::parse(s);
 ```
 
-**Opt-in strict handling (since version 3.13.0)**
+**Opt-in strict handling (since version 3.13.0 unreleased)**
 
 Manually trimming every input is easy to forget. If you define [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) to `1` before including the library, a `'\0'` byte is instead rejected like any other unexpected byte and raises `parse_error.101`, instead of being treated as end of input:
 
@@ -191,7 +191,7 @@ Question
 
 Does this library support JSON Schema validation?
 
-Not directly, but the companion project [json-schema-validator](https://github.com/pboettch/json-schema-validator) builds JSON Schema (draft 4, 6, 7, and 2019-09) validation on top of this library and is a common recommendation for this use case.
+Not directly, but the companion project [json-schema-validator](https://github.com/pboettch/json-schema-validator) builds JSON Schema (draft 7; draft 4 in its older, now-superseded 1.x releases) validation on top of this library and is a common recommendation for this use case.
 
 ## Exceptions
 
@@ -255,7 +255,7 @@ Question
 - Can I use `std::format("{}", j)` on a JSON value?
 - Can I use `fmt::format("{}", j)` or `fmt::print("{}", j)` (the [{fmt}](https://github.com/fmtlib/fmt) library) on a JSON value?
 
-`std::format` works out of the box since version 3.13.0, as long as the standard library provides `<format>` (see [`JSON_HAS_STD_FORMAT`](https://json.nlohmann.me/api/macros/json_has_std_format/index.md)); see [`std::formatter<basic_json>`](https://json.nlohmann.me/api/basic_json/std_formatter/index.md) for details, including the `"{:#}"` pretty-print spec, indent widths (`"{:2}"`), and custom indent characters (`"{:.>#}"`).
+`std::format` works out of the box since version 3.13.0 unreleased, as long as the standard library provides `<format>` (see [`JSON_HAS_STD_FORMAT`](https://json.nlohmann.me/api/macros/json_has_std_format/index.md)); see [`std::formatter<basic_json>`](https://json.nlohmann.me/api/basic_json/std_formatter/index.md) for details, including the `"{:#}"` pretty-print spec, indent widths (`"{:2}"`), and custom indent characters (`"{:.>#}"`).
 
 For `fmt`, the library ships [`format_as`](https://json.nlohmann.me/api/basic_json/format_as/index.md), a small customization point `fmt` looks for via argument-dependent lookup. It only has an effect on fmt 10.0.0 through 11.0.2 — from fmt 11.1.0 onwards, `fmt` no longer picks up a `format_as` overload that returns a `std::string`. On such versions (or any version, if you also want the same `"{:#}"`/width/fill-and-align spec support that `std::formatter<basic_json>` has), define your own `fmt::formatter` specialization; see [`format_as`](https://json.nlohmann.me/api/basic_json/format_as/index.md) for a recipe that mirrors it.
 
@@ -269,15 +269,9 @@ Question
 
 Why does the code not compile with Android SDK?
 
-Android defaults to using very old compilers and C++ libraries. To fix this, add the following to your `Application.mk`. This will switch to the LLVM C++ library, the Clang compiler, and enable C++11 and other features disabled by default.
+Since [NDK r18](https://github.com/android/ndk/wiki/Changelog-r18) (2018), GCC and the `gnustl`/`stlport` C++ libraries have been removed from the Android NDK; Clang and `libc++` are now the only compiler and C++ library, and they support C++11 and later out of the box. With a current NDK, no special configuration is needed to use this library.
 
-```
-APP_STL := c++_shared
-NDK_TOOLCHAIN_VERSION := clang3.6
-APP_CPPFLAGS += -frtti -fexceptions
-```
-
-The code compiles successfully with [Android NDK](https://developer.android.com/ndk/index.html?hl=ml), Revision 9 - 11 (and possibly later) and [CrystaX's Android NDK](https://www.crystax.net/en/android/ndk) version 10.
+Only very old NDKs (before r18), which defaulted to GCC and `gnustl`, lacked C++11 library features such as `std::to_string`. If you run into this, update to a current NDK.
 
 ### Missing STL function
 
@@ -286,4 +280,4 @@ Questions
 - Why do I get a compilation error `'to_string' is not a member of 'std'` (or similarly, for `strtod` or `strtof`)?
 - Why does the code not compile with MinGW or Android SDK?
 
-This is not an issue with the code, but rather with the compiler itself. On Android, see above to build with a newer environment. For MinGW, please refer to [this site](http://tehsausage.com/mingw-to-string) and [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug. For Android NDK using `APP_STL := gnustl_static`, please refer to [this discussion](https://github.com/nlohmann/json/issues/219).
+This is not an issue with the code, but rather with the compiler itself. On Android, use a current NDK (see above). For MinGW, please refer to [this site](http://tehsausage.com/mingw-to-string) and [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug.

@@ -12,6 +12,10 @@ Append an unescaped token at the start of the reference pointer.
 
 `token` (in) : token to add
 
+## Exception safety
+
+Basic guarantee: if an exception is thrown (for instance, if copying the reference token fails), the JSON pointer is left in a valid state, but its reference tokens may have changed.
+
 ## Complexity
 
 Linear in the number of reference tokens in the `json_pointer`.
@@ -55,6 +59,11 @@ Output:
 "/bar/0/foo"
 ```
 
+## See also
+
+- [front](https://json.nlohmann.me/api/json_pointer/front/index.md) return first reference token
+- [pop_front](https://json.nlohmann.me/api/json_pointer/pop_front/index.md) remove the first reference token
+
 ## Version history
 
-- Added in version 3.13.0.
+- Added in version 3.13.0 unreleased.

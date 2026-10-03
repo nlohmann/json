@@ -63,6 +63,14 @@ Output:
 {"bytes":[202,254,186,190],"subtype":42}
 ```
 
+## See also
+
+- [set_subtype](https://json.nlohmann.me/api/byte_container_with_subtype/set_subtype/index.md) sets the binary subtype
+- [subtype](https://json.nlohmann.me/api/byte_container_with_subtype/subtype/index.md) return the binary subtype
+- [has_subtype](https://json.nlohmann.me/api/byte_container_with_subtype/has_subtype/index.md) return whether the value has a subtype
+- [binary](https://json.nlohmann.me/api/basic_json/binary/index.md) create a binary JSON value
+- [Binary Values](https://json.nlohmann.me/features/binary_values/index.md) - the article on binary values
+
 ## Version history
 
 Since version 3.8.0.

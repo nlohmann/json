@@ -23,6 +23,10 @@ By adding an element to the end of the array, a reallocation can happen, in whic
 
 reference to the inserted element
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes to any JSON value. As an exception, a `null` value is converted to an empty array before the element is added and keeps that type if adding the element throws.
+
 ## Exceptions
 
 Throws [`type_error.311`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error311) when called on a type other than JSON array or `null`; example: `"cannot use emplace_back() with number"`

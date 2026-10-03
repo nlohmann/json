@@ -84,6 +84,11 @@ Output:
 1
 ```
 
+## See also
+
+- [empty](https://json.nlohmann.me/api/basic_json/empty/index.md) checks whether the JSON value has no elements
+- [max_size](https://json.nlohmann.me/api/basic_json/max_size/index.md) returns the maximum possible number of elements
+
 ## Version history
 
 - Added in version 1.0.0.

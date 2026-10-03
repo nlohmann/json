@@ -59,7 +59,7 @@ json j = json::array({obj});  // always creates [obj]
 
 ## Examples
 
-Default behavior (macro not defined)
+Example: default behavior (macro not defined)
 
 Without the macro, single-element brace initialization wraps the value in an array:
 
@@ -77,7 +77,7 @@ int main()
 }
 ```
 
-Opt-in copy semantics (macro defined to 1)
+Example: opt-in copy semantics (macro defined to 1)
 
 With the macro, single-element brace initialization copies/moves the value:
 
@@ -103,4 +103,4 @@ int main()
 
 ## Version history
 
-- Added in version 3.13.0.
+- Added in version 3.13.0 unreleased.

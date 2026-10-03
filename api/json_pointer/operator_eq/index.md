@@ -68,6 +68,8 @@ Deprecation
 
 Overload 2 is deprecated and will be removed in a future major version release.
 
+See the [migration guide](https://json.nlohmann.me/integration/migration_guide/#json-pointers) for how to update existing code.
+
 ## Examples
 
 Example: (1) Comparing JSON pointers
@@ -153,6 +155,11 @@ Output:
 "/foo" == "/foo": true
 "bar" == "/foo": [json.exception.parse_error.107] parse error at byte 1: JSON pointer must be empty or begin with '/' - was: 'bar'
 ```
+
+## See also
+
+- [operator!=](https://json.nlohmann.me/api/json_pointer/operator_ne/index.md) compare for inequality
+- [operator\<=>](https://json.nlohmann.me/api/json_pointer/operator_spaceship/index.md) comparison: 3-way (C++20)
 
 ## Version history
 

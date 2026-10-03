@@ -45,6 +45,8 @@ When executed, this program should create output similar to
 }
 ```
 
+Many of the package managers below install a CMake package configuration that exposes the same `nlohmann_json::nlohmann_json` interface target described in [CMake](https://json.nlohmann.me/integration/cmake/index.md); their CMake examples below link against that target.
+
 ## Homebrew
 
 Summary
@@ -159,7 +161,7 @@ meson wrap install nlohmann_json
 
 Please see the Meson project for any issues regarding the packaging.
 
-The provided `meson.build` can also be used as an alternative to CMake for installing `nlohmann_json` system-wide in which case a pkg-config file is installed. To use it, have your build system require the `nlohmann_json` pkg-config dependency. In Meson, it is preferred to use the [`dependency()`](https://mesonbuild.com/Reference-manual.html#dependency) object with a subproject fallback, rather than using the subproject directly.
+The provided `meson.build` can also be used as an alternative to CMake for installing `nlohmann_json` system-wide in which case a [pkg-config](https://json.nlohmann.me/integration/pkg-config/index.md) file is installed. To use it, have your build system require the `nlohmann_json` pkg-config dependency. In Meson, it is preferred to use the [`dependency()`](https://mesonbuild.com/Reference-manual.html#dependency) object with a subproject fallback, rather than using the subproject directly.
 
 Example: Wrap
 
@@ -223,7 +225,7 @@ use `bazel_dep`, `git_override`, or `local_path_override`
 
 This repository provides a [Bazel](https://bazel.build/) `MODULE.bazel` and a corresponding `BUILD.bazel` file. Therefore, this repository can be referenced within a `MODULE.bazel` by rules such as `archive_override`, `git_override`, or `local_path_override`. To use the library, you need to depend on the target `@nlohmann_json//:json` (i.e., via `deps` attribute).
 
-Example
+Example: Bazel module with `bazel_dep`
 
 1. Create the following files:
 
@@ -237,10 +239,10 @@ Example
    )
    ```
 
-   WORKSPACE
+   MODULE.bazel
 
    ```
-   bazel_dep(name = "nlohmann_json", version = "3.11.3.bcr.1")
+   bazel_dep(name = "nlohmann_json", version = "3.12.0.bcr.2")
    ```
 
    example.cpp
@@ -278,7 +280,7 @@ recipe: [**`nlohmann_json`**](https://conan.io/center/recipes/nlohmann_json)
 
 If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add `nlohmann_json/x.y.z` to your `conanfile`'s requires, where `x.y.z` is the release version you want to use.
 
-Example
+Example: CMake with the Conan toolchain
 
 1. Create the following files:
 
@@ -353,7 +355,7 @@ spack install nlohmann-json
 
 Please see the [Spack project](https://github.com/spack/spack) for any issues regarding the packaging.
 
-Example
+Example: CMake with a Spack-installed package
 
 1. Create the following files:
 
@@ -422,7 +424,7 @@ hunter_add_package(nlohmann_json)
 
 Please see the Hunter project for any issues regarding the packaging.
 
-Example
+Example: CMake with HunterGate
 
 1. Create the following files:
 
@@ -494,7 +496,7 @@ vcpkg install nlohmann-json
 
 and follow the then displayed descriptions. Please see the vcpkg project for any issues regarding the packaging.
 
-Example
+Example: CMake with the vcpkg toolchain
 
 1. Create the following files:
 
@@ -557,7 +559,7 @@ cget install nlohmann/json
 
 A specific version can be installed with `cget install nlohmann/json@v3.12.0`. Also, the multiple header version can be installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nlohmann/json -DJSON_MultipleHeaders=ON`).
 
-Example
+Example: CMake with the cget toolchain
 
 1. Create the following files:
 
@@ -567,7 +569,7 @@ Example
    cmake_minimum_required(VERSION 3.15)
    project(json_example)
 
-   find_package(nlohmann_json CONFIG REQUIRED)
+   find_package(nlohmann_json REQUIRED)
 
    add_executable(json_example example.cpp)
    target_link_libraries(json_example PRIVATE nlohmann_json::nlohmann_json)
@@ -618,6 +620,76 @@ package: **`nlohmann/json`**
 - File issues at the [library issue tracker](https://github.com/nlohmann/json/issues)
 - [Xcode documentation](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app)
 
+If you are using the [Swift Package Manager](https://www.swift.org/documentation/package-manager/), add this repository as a package dependency and depend on its `json` product:
+
+```
+dependencies: [
+    .package(url: "https://github.com/nlohmann/json", from: "3.12.0")
+],
+targets: [
+    .target(name: "MyTarget", dependencies: [.product(name: "json", package: "json")])
+]
+```
+
+The library's own [`Package.swift`](https://github.com/nlohmann/json/blob/develop/Package.swift) publishes `single_include/nlohmann` (not `single_include`) as the public headers directory, so include the header without the `nlohmann/` prefix:
+
+```
+#include <json.hpp>
+```
+
+Example: a minimal executable package
+
+1. Create the following files (the source file goes into `Sources/json_example/`, following Swift Package Manager's directory layout convention):
+
+   Package.swift
+
+   ```
+   // swift-tools-version: 5.9
+   import PackageDescription
+
+   let package = Package(
+       name: "json_example",
+       dependencies: [
+           .package(url: "https://github.com/nlohmann/json", from: "3.12.0")
+       ],
+       targets: [
+           .executableTarget(
+               name: "json_example",
+               dependencies: [
+                   .product(name: "json", package: "json")
+               ]
+           )
+       ]
+   )
+   ```
+
+   Sources/json_example/example.cpp
+
+   ```
+   #include <json.hpp>
+   #include <iostream>
+   #include <iomanip>
+
+   using json = nlohmann::json;
+
+   int main()
+   {
+       std::cout << std::setw(4) << json::meta() << std::endl;
+   }
+   ```
+
+1. Build and run:
+
+   ```
+   swift run --build-system native
+   ```
+
+Warning
+
+On some toolchains, `swift run`/`swift build` fail to link an **executable** target against the header-only `json` product with an error such as `Build input file cannot be found: '.../json.o'`, because the product itself has no compiled sources; see [#4650](https://github.com/nlohmann/json/issues/4650) and the upstream [Swift Package Manager issue](https://github.com/swiftlang/swift-package-manager/issues/5706). Passing `--build-system native` (shown above) selects Swift Package Manager's legacy build system, which does not have this problem; depending on the library from a *library* target instead of an executable is not affected either.
+
+You can also add the dependency from within Xcode via **File → Add Package Dependencies…** and the same repository URL; see [Apple's documentation](https://developer.apple.com/documentation/xcode/adding-package-dependencies-to-your-app).
+
 ## NuGet
 
 Summary
@@ -636,74 +708,16 @@ If you are using [NuGet](https://www.nuget.org), you can use the package [nlohma
 dotnet add package nlohmann.json
 ```
 
-Example
+NuGet integrates with C++ projects through MSBuild, so it is mainly useful for Visual Studio/MSBuild projects; using it as a dependency from other build systems, such as CMake, is possible but more cumbersome than the other package managers on this page.
 
-Probably the easiest way to use NuGet packages is through Visual Studio graphical interface. Right-click on a project (any C++ project would do) in “Solution Explorer” and select “Manage NuGet Packages…”
+Example: Visual Studio project
 
-Now you can click on “Browse” tab and find the package you like to install.
+1. Right-click the project (any C++ project) in "Solution Explorer" and select "Manage NuGet Packages…"
+1. Switch to the "Browse" tab.
+1. Search for `nlohmann.json`, select it, and click "Install".
+1. `#include <nlohmann/json.hpp>` in your code and build the project. The package's `build/native/nlohmann.json.targets` file adds `$(MSBuildThisFileDirectory)include` to the project's `AdditionalIncludeDirectories`, so no further include path configuration is needed.
 
-Most of the packages in NuGet gallery are .NET packages and would not be useful in a C++ project. Microsoft recommends adding “native” and “nativepackage” tags to C++ NuGet packages to distinguish them, but even adding “native” to search query would still show many .NET-only packages in the list.
-
-Nevertheless, after finding the package you want, click on “Install” button and accept confirmation dialogs. After the package is successfully added to the projects, you should be able to build and execute the project without the need for making any more changes to build settings.
-
-Note
-
-A few notes:
-
-- NuGet packages are installed per project and not system-wide. The header and binaries for the package are only available to the project it is added to, and not other projects (obviously unless we add the package to those projects as well)
-- One of the many great things about your elegant work is that it is a header-only library, which makes deployment very straightforward. In case of libraries which need binary deployment (`.lib`, `.dll` and `.pdb` for debug info) the different binaries for each supported compiler version must be added to the NuGet package. Some library creators cram binary versions for all supported Visual C++ compiler versions in the same package, so a single package will support all compilers. Some others create a different package for each compiler version (and you usually see things like “v140” or “vc141” in package name to clarify which VC++ compiler this package supports).
-- Packages can have dependency to other packages, and in this case, NuGet will install all dependencies as well as the requested package recursively.
-
-**What happens behind the scenes**
-
-After you add a NuGet package, three changes occur in the project source directory. Of course, we could make these changes manually instead of using GUI:
-
-1. A `packages.config` file will be created (or updated to include the package name if one such file already exists). This file contains a list of the packages required by this project (name and minimum version) and must be added to the project source code repository, so if you move the source code to a new machine, MSBuild/NuGet knows which packages it has to restore (which it does automatically before each build).
-
-   ```
-   <?xml version="1.0" encoding="utf-8"?>
-   <packages>
-     <package id="nlohmann.json" version="3.5.0" targetFramework="native" />
-   </packages>
-   ```
-
-1. A `packages` folder which contains actual files in the packages (these are header and binary files required for a successful build, plus a few metadata files). In case of this library for example, it contains `json.hpp`:
-
-   Note
-
-   This directory should not be added to the project source code repository, as it will be restored before each build by MSBuild/NuGet. If you go ahead and delete this folder, then build the project again, it will magically re-appear!
-
-1. Project MSBuild makefile (which for Visual C++ projects has a .vcxproj extension) will be updated to include settings from the package.
-
-   The important bit for us here is line 170, which tells MSBuild to import settings from `packages\nlohmann.json.3.5.0\build\native\nlohmann.json.targets` file. This is a file the package creator created and added to the package (you can see it is one of the two files I created in this repository, the other just contains package attributes like name and version number). What does it contain?
-
-   For our header-only repository, the only setting we need is to add our include directory to the list of `AdditionalIncludeDirectories`:
-
-   ```
-   <?xml version="1.0" encoding="utf-8"?>
-   <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-       <ItemDefinitionGroup>
-           <ClCompile>
-               <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-           </ClCompile>
-       </ItemDefinitionGroup>
-   </Project>
-   ```
-
-   For libraries with binary files, we will need to add `.lib` files to linker inputs and add settings to copy `.dll` and other redistributable files to output directory, if needed.
-
-   There are other changes to the makefile as well:
-
-   - Lines 165-167 add the `packages.config` as one of project files (so it is shown in Solution Explorer tree view). It is added as None (no build action) and removing it wouldn’t affect build.
-   - Lines 172-177 check to ensure the required packages are present. This will display a build error if package directory is empty (for example when NuGet cannot restore packages because Internet connection is down). Again, if you omit this section, the only change in build would be a more cryptic error message if build fails.
-
-   Note
-
-   Changes to .vcxproj makefile should also be added to project source code repository.
-
-As you can see, the mechanism NuGet uses to modify project settings is through MSBuild makefiles, so using NuGet with other build systems and compilers (like CMake) as a dependency manager is either impossible or more problematic than useful.
-
-Please refer to [this extensive description](https://github.com/nlohmann/json/issues/1132#issuecomment-452250255) for more information.
+For further details, see the [original discussion](https://github.com/nlohmann/json/issues/1132#issuecomment-452250255) this section is based on.
 
 ## Conda
 
@@ -722,7 +736,7 @@ If you are using [conda](https://conda.io/), you can use the package [nlohmann_j
 conda install -c conda-forge nlohmann_json
 ```
 
-Example
+Example: Raw compilation
 
 1. Create the following file:
 
@@ -762,9 +776,46 @@ Example
 
 ## MSYS2
 
-If you are using [MSYS2](http://www.msys2.org/), you can use the [mingw-w64-nlohmann-json](https://packages.msys2.org/base/mingw-w64-nlohmann-json) package, type `pacman -S mingw-w64-i686-nlohmann-json` or `pacman -S mingw-w64-x86_64-nlohmann-json` for installation. Please file issues [here](https://github.com/msys2/MINGW-packages/issues/new?title=%5Bnlohmann-json%5D) if you experience problems with the packages.
+Summary
 
-The [package](https://packages.msys2.org/base/mingw-w64-nlohmann-json) is updated automatically.
+package: [**`mingw-w64-nlohmann-json`**](https://packages.msys2.org/base/mingw-w64-nlohmann-json)
+
+- The [package](https://packages.msys2.org/base/mingw-w64-nlohmann-json) is updated automatically.
+- File issues at the [MINGW-packages issue tracker](https://github.com/msys2/MINGW-packages/issues/new?title=%5Bnlohmann-json%5D)
+- [MSYS2 website](http://www.msys2.org/)
+
+If you are using [MSYS2](http://www.msys2.org/), you can use the [mingw-w64-nlohmann-json](https://packages.msys2.org/base/mingw-w64-nlohmann-json) package; type `pacman -S mingw-w64-i686-nlohmann-json` or `pacman -S mingw-w64-x86_64-nlohmann-json` for installation.
+
+Example: Raw compilation
+
+1. Create the following file:
+
+   example.cpp
+
+   ```
+   #include <nlohmann/json.hpp>
+   #include <iostream>
+   #include <iomanip>
+
+   using json = nlohmann::json;
+
+   int main()
+   {
+       std::cout << std::setw(4) << json::meta() << std::endl;
+   }
+   ```
+
+1. Install the package (from an MSYS2 MinGW 64-bit shell):
+
+   ```
+   pacman -S mingw-w64-x86_64-nlohmann-json
+   ```
+
+1. Compile the code:
+
+   ```
+   g++ example.cpp -std=c++11 -o example
+   ```
 
 ## MacPorts
 
@@ -1067,7 +1118,7 @@ If you are using [`CPM.cmake`](https://github.com/TheLartians/CPM.cmake), add th
 CPMAddPackage("gh:nlohmann/json@3.12.0")
 ```
 
-Example
+Example: CMake with `CPMAddPackage`
 
 1. Create the following files:
 
@@ -1125,7 +1176,7 @@ package: [**`nlohmann_json`**](https://github.com/xmake-io/xmake-repo/blob/maste
 - File issues at the [xmake issue tracker](https://github.com/xmake-io/xmake-repo/issues)
 - [xmake website](https://xmake.io/#/)
 
-Example
+Example: xmake project
 
 1. Create the following files:
 
@@ -1173,15 +1224,13 @@ ______________________________________________________________________
 
 ## Other package managers
 
-The library is also contained in many other package repositories:
-
-Package version overview
+The library is also contained in many other package repositories; [Repology](https://repology.org/project/nlohmann-json/versions) tracks the packaged versions across repositories.
 
 ______________________________________________________________________
 
 ## Buckaroo
 
-If you are using [Buckaroo](https://buckaroo.pm), you can install this library's module with `buckaroo add github.com/buckaroo-pm/nlohmann-json`. There is a demo repo [here](https://github.com/njlr/buckaroo-nholmann-json-example).
+If you are using [Buckaroo](https://github.com/LoopPerfect/buckaroo), you can install this library's module with `buckaroo add github.com/buckaroo-pm/nlohmann-json`. There is a demo repo [here](https://github.com/njlr/buckaroo-nholmann-json-example).
 
 Warning
 
@@ -1189,7 +1238,11 @@ The module is outdated as the respective [repository](https://github.com/buckaro
 
 ## CocoaPods
 
-If you are using [CocoaPods](https://cocoapods.org), you can use the library by adding pod `"nlohmann_json", '~>3.1.2'` to your podfile (see [an example](https://bitbucket.org/benman/nlohmann_json-cocoapod/src/master/)). Please file issues [here](https://bitbucket.org/benman/nlohmann_json-cocoapod/issues?status=new&status=open).
+If you are using [CocoaPods](https://cocoapods.org), you can use the library by adding pod `"nlohmann_json", '~>3.1.2'` to your podfile (see [an example](https://bitbucket.org/benman/nlohmann_json-cocoapod/src/master/)). Please file issues at [the repository](https://bitbucket.org/benman/nlohmann_json-cocoapod/src/master/), as its issue tracker is no longer reachable.
+
+Warning
+
+The module is outdated as the respective [pod](https://cocoapods.org/pods/nlohmann_json) has not been updated in years.
 
 ## npm
 
@@ -1198,7 +1251,3 @@ This project does not publish an official [npm](https://www.npmjs.com) package. 
 ## ESP-IDF and PlatformIO
 
 There is no official package published to the [ESP-IDF Component Registry](https://components.espressif.com) or the [PlatformIO Registry](https://registry.platformio.org). A community-maintained fork, [Johboh/nlohmann-json](https://github.com/Johboh/nlohmann-json), publishes this library to both registries on each new release and can be used as an unofficial component/package for ESP-IDF and PlatformIO projects. As the library is header-only, it can otherwise be used directly by adding its `include/` directory to your component's/project's include paths, like any other integration method described on this page.
-
-Warning
-
-The module is outdated as the respective [pod](https://cocoapods.org/pods/nlohmann_json) has not been updated in years.

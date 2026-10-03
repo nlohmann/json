@@ -114,4 +114,4 @@ number of elements with key "three": 0
 
 1. Added in version 3.11.0.
 1. Added in version 1.0.0. Changed parameter `key` type to `KeyType&&` in version 3.11.0.
-1. Deleted overload for integral key types added in version 3.13.0 to reject such calls at compile time instead of causing undefined behavior at runtime.
+1. Deleted overload for integral key types added in version 3.13.0 unreleased to reject such calls at compile time instead of causing undefined behavior at runtime.

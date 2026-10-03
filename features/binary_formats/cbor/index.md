@@ -67,7 +67,7 @@ NaN/infinity handling
 
 Note
 
-Prior to version 3.13.0, NaN and Infinity were instead serialized as a CBOR double-precision float (type 0xFB, 9 bytes total), because the check used to select a smaller encoding compared magnitudes with NaN, which is always `false` and caused the intended half-precision path to be skipped.
+Prior to version 3.13.0 unreleased, NaN and Infinity were instead serialized as a CBOR double-precision float (type 0xFB, 9 bytes total), because the check used to select a smaller encoding compared magnitudes with NaN, which is always `false` and caused the intended half-precision path to be skipped.
 
 Unused CBOR types
 
@@ -91,7 +91,7 @@ Tagged items
 
 Binary subtypes will be serialized as tagged items. See [binary values](https://json.nlohmann.me/features/binary_values/#cbor) for an example.
 
-Example
+Example: serialize a JSON value to CBOR
 
 ```
 #include <iostream>
@@ -201,7 +201,7 @@ Tagged items
 
 Tagged items (0xC0..0xDB) will throw a parse error by default. They can be ignored by passing `cbor_tag_handler_t::ignore` to function `from_cbor`, in which case the tag is skipped and the enclosed data item is parsed on its own. Passing `cbor_tag_handler_t::store` to function `from_cbor` stores tagged byte strings (for bytes 0xd8..0xdb) as binary values with the tag as subtype; other tagged values are read as if the tag were ignored. If several tags precede a byte string, only the innermost one is stored. Note that no tag is ever interpreted: for instance, a text string tagged with tag 0 (date/time) stays a string.
 
-Example
+Example: deserialize a JSON value from CBOR
 
 ```
 #include <iostream>

@@ -86,6 +86,11 @@ Output:
 }
 ```
 
+## See also
+
+- [basic_json](https://json.nlohmann.me/api/basic_json/index.md) - the underlying class template
+- [ordered_json](https://json.nlohmann.me/api/ordered_json/index.md) - specialization that preserves the insertion order of object keys
+
 ## Version history
 
 Since version 1.0.0.

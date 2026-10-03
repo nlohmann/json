@@ -79,6 +79,97 @@ Some important things:
 - In function `from_json`, use function [`at()`](https://json.nlohmann.me/api/basic_json/at/index.md) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
 - You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
 
+Example: serialize a `person` to JSON with `to_json`
+
+```
+#include <iostream>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
+namespace ns
+{
+// a simple struct to model a person
+struct person
+{
+    std::string name;
+    std::string address;
+    int age;
+};
+} // namespace ns
+
+namespace ns
+{
+void to_json(json& j, const person& p)
+{
+    j = json{ {"name", p.name}, {"address", p.address}, {"age", p.age} };
+}
+} // namespace ns
+
+int main()
+{
+    ns::person p = {"Ned Flanders", "744 Evergreen Terrace", 60};
+
+    json j = p;
+
+    std::cout << j << std::endl;
+}
+```
+
+Output:
+
+```
+{"address":"744 Evergreen Terrace","age":60,"name":"Ned Flanders"}
+```
+
+Example: deserialize a `person` from JSON with `from_json`
+
+```
+#include <iostream>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
+namespace ns
+{
+// a simple struct to model a person
+struct person
+{
+    std::string name;
+    std::string address;
+    int age;
+};
+} // namespace ns
+
+namespace ns
+{
+void from_json(const json& j, person& p)
+{
+    j.at("name").get_to(p.name);
+    j.at("address").get_to(p.address);
+    j.at("age").get_to(p.age);
+}
+} // namespace ns
+
+int main()
+{
+    json j;
+    j["name"] = "Ned Flanders";
+    j["address"] = "744 Evergreen Terrace";
+    j["age"] = 60;
+
+    auto p = j.get<ns::person>();
+
+    std::cout << p.name << " (" << p.age << ") lives in " << p.address << std::endl;
+}
+```
+
+Output:
+
+```
+Ned Flanders (60) lives in 744 Evergreen Terrace
+```
+
 ## Simplify your life with macros
 
 If you just want to serialize/deserialize some structs, the `to_json`/`from_json` functions can be a lot of boilerplate.
@@ -96,32 +187,54 @@ There are several macros to make your life easier as long as you want to use a J
 
 For all the macros, the first parameter is the name of the class/struct. The `DERIVED_TYPE` macros require a second parameter of a base class. All the remaining parameters name the member variables. The `WITH_NAMES` macros require a JSON name before each of the variables.
 
-| Need access to private members | Need only de-serialization | Allow missing values when de-serializing | macro                                                                                                                                    |
-| ------------------------------ | -------------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-|                                |                            |                                          | [**NLOHMANN_DEFINE_TYPE_INTRUSIVE**](https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/index.md)                        |
-|                                |                            |                                          | [**NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT**](https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/index.md)           |
-|                                |                            |                                          | [**NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE**](https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/index.md)         |
-|                                |                            |                                          | [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE**](https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/index.md)                |
-|                                |                            |                                          | [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT**](https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/index.md)   |
-|                                |                            |                                          | [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE**](https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/index.md) |
+```
+flowchart TD
+    A["choosing a NLOHMANN_DEFINE_* macro"] --> B{"adding fields to a base class?"}
+    B -->|"yes"| C["...DERIVED_TYPE..."]
+    B -->|"no"| D["...TYPE..."]
+    C --> E{"need access to private members?"}
+    D --> E
+    E -->|"yes"| F["...INTRUSIVE... (used inside the class)"]
+    E -->|"no"| G["...NON_INTRUSIVE... (used in the namespace)"]
+    F --> H{"only serializing, never parsing back?"}
+    G --> H
+    H -->|"yes"| I["...ONLY_SERIALIZE"]
+    H -->|"no"| J{"allow missing keys when parsing?"}
+    J -->|"yes"| K["...WITH_DEFAULT"]
+    J -->|"no"| L["plain (missing keys throw)"]
+    I --> M{"need custom JSON key names?"}
+    K --> M
+    L --> M
+    M -->|"yes"| N["...WITH_NAMES"]
+    M -->|"no"| O["done"]
+```
+
+| Need access to private members | Need only serialization | Allow missing values when de-serializing | macro                                                                                                                                    |
+| ------------------------------ | ----------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+|                                |                         |                                          | [**NLOHMANN_DEFINE_TYPE_INTRUSIVE**](https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/index.md)                        |
+|                                |                         |                                          | [**NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT**](https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/index.md)           |
+|                                |                         |                                          | [**NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE**](https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/index.md)         |
+|                                |                         |                                          | [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE**](https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/index.md)                |
+|                                |                         |                                          | [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT**](https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/index.md)   |
+|                                |                         |                                          | [**NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE**](https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/index.md) |
 
 For *derived* classes and structs, use the following macros
 
-| Need access to private members | Need only de-serialization | Allow missing values when de-serializing | macro                                                                                                                                      |
-| ------------------------------ | -------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-|                                |                            |                                          | [**NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE**](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md)                    |
-|                                |                            |                                          | [**NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT**](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md)       |
-|                                |                            |                                          | [**NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE**](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md)     |
-|                                |                            |                                          | [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE**](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md)                |
-|                                |                            |                                          | [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT**](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md)   |
-|                                |                            |                                          | [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE**](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md) |
+| Need access to private members | Need only serialization | Allow missing values when de-serializing | macro                                                                                                                                      |
+| ------------------------------ | ----------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+|                                |                         |                                          | [**NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE**](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md)                    |
+|                                |                         |                                          | [**NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT**](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md)       |
+|                                |                         |                                          | [**NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE**](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md)     |
+|                                |                         |                                          | [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE**](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md)                |
+|                                |                         |                                          | [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT**](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md)   |
+|                                |                         |                                          | [**NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE**](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md) |
 
 Implementation limits
 
 - The current macro implementations are limited to at most 63 member variables. If you want to serialize/deserialize types with more than 63 member variables, you need to define the `to_json`/`from_json` functions manually.
 - For the `WITH_NAMES` variants the limit is halved to 31 member variables.
 
-Example
+Example: using the `NLOHMANN_DEFINE_TYPE_*` macros
 
 The `to_json`/`from_json` functions for the `person` struct above can be created with:
 
@@ -222,6 +335,14 @@ There is currently no `NLOHMANN_DEFINE_TYPE_*`-style macro for types that are no
 
 This requires a bit more advanced technique. But first, let us see how this conversion mechanism works:
 
+```
+flowchart LR
+    A["construct json j = t, or call j.get() for T"] --> B["JSONSerializer for T: to_json / from_json"]
+    B -->|"default JSONSerializer"| C["adl_serializer for T: to_json / from_json"]
+    C -->|"unqualified call, found via ADL"| D["free to_json(j, t) / from_json(j, t) in T's namespace"]
+    B -->|"user specialization replaces the default"| E["user's adl_serializer specialization for T"]
+```
+
 The library uses **JSON Serializers** to convert types to JSON. The default serializer for `nlohmann::json` is `nlohmann::adl_serializer` (ADL means [Argument-Dependent Lookup](https://en.cppreference.com/w/cpp/language/adl)).
 
 It is implemented like this (simplified):
@@ -275,7 +396,73 @@ Use [`NLOHMANN_JSON_NAMESPACE_BEGIN`](https://json.nlohmann.me/api/macros/nlohma
 
 ## How can I use `get()` for non-default constructible/non-copyable types?
 
-There is a way if your type is [MoveConstructible](https://en.cppreference.com/w/cpp/named_req/MoveConstructible). You will need to specialize the `adl_serializer` as well, but with a special `from_json` overload:
+For a type that is not [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible) but is otherwise an ordinary value type, specialize `adl_serializer` with a `from_json` overload that returns the value instead of writing into a reference:
+
+Example: `get()` for a non-default-constructible type
+
+```
+#include <iostream>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
+namespace ns
+{
+// a simple struct to model a person (not default constructible)
+struct person
+{
+    person(std::string n, std::string a, int aa)
+        : name(std::move(n)), address(std::move(a)), age(aa)
+    {}
+
+    std::string name;
+    std::string address;
+    int age;
+};
+} // namespace ns
+
+namespace nlohmann
+{
+template <>
+struct adl_serializer<ns::person>
+{
+    static ns::person from_json(const json& j)
+    {
+        return {j.at("name"), j.at("address"), j.at("age")};
+    }
+
+    // Here's the catch! You must provide a to_json method! Otherwise, you
+    // will not be able to convert person to json, since you fully
+    // specialized adl_serializer on that type
+    static void to_json(json& j, ns::person p)
+    {
+        j["name"] = p.name;
+        j["address"] = p.address;
+        j["age"] = p.age;
+    }
+};
+} // namespace nlohmann
+
+int main()
+{
+    json j;
+    j["name"] = "Ned Flanders";
+    j["address"] = "744 Evergreen Terrace";
+    j["age"] = 60;
+
+    auto p = j.get<ns::person>();
+
+    std::cout << p.name << " (" << p.age << ") lives in " << p.address << std::endl;
+}
+```
+
+Output:
+
+```
+Ned Flanders (60) lives in 744 Evergreen Terrace
+```
+
+The same technique also works if your type is not copyable, as long as it is [MoveConstructible](https://en.cppreference.com/w/cpp/named_req/MoveConstructible):
 
 ```
 struct move_only_type {
@@ -331,13 +518,7 @@ json any_to_json(const std::any& a) {
 
 ## Why does serializing a `std::map`/`std::unordered_map` with non-string keys produce an array?
 
-A `std::map`/`std::unordered_map` whose key type is not string-like (e.g., `std::map<int, std::string>`) is serialized as a JSON *array* of 2-element `[key, value]` arrays, not as a JSON object -- JSON object keys must be strings, so the library cannot represent an integer-keyed map as an object.
-
-```
-std::map<int, std::string> m{{1, "one"}, {2, "two"}};
-json j = m;
-// j is [[1,"one"],[2,"two"]], not {"1":"one","2":"two"}
-```
+A `std::map`/`std::unordered_map` whose key type is not string-like (e.g., `std::map<int, std::string>`) cannot be serialized as a JSON object, because JSON object keys must be strings. See [Converting maps with non-string keys](https://json.nlohmann.me/features/types/#converting-maps-with-non-string-keys) in the types article for what the library does instead.
 
 ## Why does `std::wstring` convert or dump incorrectly?
 
@@ -380,7 +561,7 @@ struct less_than_32_serializer {
 Be **very** careful when reimplementing your serializer, you can stack overflow if you don't pay attention:
 
 ```
-template <typename T, void>
+template <typename T, typename = void>
 struct bad_serializer
 {
     template <typename BasicJsonType>
@@ -398,3 +579,10 @@ struct bad_serializer
     }
 };
 ```
+
+## See also
+
+- [Converting values](https://json.nlohmann.me/features/conversions/index.md) - the general overview of `get`/`get_to` and implicit conversions
+- [Specializing enum conversion](https://json.nlohmann.me/features/enum_conversion/index.md) - map enums to JSON strings instead of integers
+- [Supported macros](https://json.nlohmann.me/features/macros/index.md) - reference for `NLOHMANN_DEFINE_TYPE_*` and related macros
+- [`adl_serializer`](https://json.nlohmann.me/api/adl_serializer/index.md) - the default `JSONSerializer` used in the conversion dispatch

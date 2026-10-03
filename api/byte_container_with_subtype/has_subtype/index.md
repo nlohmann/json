@@ -53,6 +53,12 @@ c1.has_subtype() = false
 c2.has_subtype() = true
 ```
 
+## See also
+
+- [set_subtype](https://json.nlohmann.me/api/byte_container_with_subtype/set_subtype/index.md) sets the binary subtype
+- [clear_subtype](https://json.nlohmann.me/api/byte_container_with_subtype/clear_subtype/index.md) clears the binary subtype
+- [subtype](https://json.nlohmann.me/api/byte_container_with_subtype/subtype/index.md) return the binary subtype
+
 ## Version history
 
 Since version 3.8.0.

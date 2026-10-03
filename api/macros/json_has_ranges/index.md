@@ -37,6 +37,11 @@ The code below forces the library to enable support for ranges:
 ...
 ```
 
+## See also
+
+- [JSON_HAS_CPP_11 / JSON_HAS_CPP_14 / JSON_HAS_CPP_17 / JSON_HAS_CPP_20 / JSON_HAS_CPP_23 / JSON_HAS_CPP_26](https://json.nlohmann.me/api/macros/json_has_cpp_11/index.md) - set supported C++ standard
+- [JSON_HAS_STD_FORMAT](https://json.nlohmann.me/api/macros/json_has_std_format/index.md) - a similar feature-detection macro, for `std::format`/`std::formatter` support
+
 ## Version history
 
 - Added in version 3.11.0.

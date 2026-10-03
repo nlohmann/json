@@ -130,6 +130,14 @@ default value (uint64_t):  18446744073709551615
 explicit return value type: 18446744073709551615
 ```
 
+Deprecation
+
+Overload (3) also accepts a [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md) whose template argument is a `basic_json` specialization (e.g., `nlohmann::json_pointer<nlohmann::json>`) instead of a string type. This is deprecated since version 3.11.0 and will be removed in a future major version; use `basic_json::json_pointer` (for `json`, `nlohmann::json_pointer<std::string>`) instead.
+
+You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated function.
+
+See the [migration guide](https://json.nlohmann.me/integration/migration_guide/#json-pointers) for how to update existing code.
+
 ## Examples
 
 Example: (1) access specified object element with default value
@@ -264,6 +272,53 @@ Output:
 1 42.23 oops false
 ```
 
+Example: (1) type_error.302 and type_error.306 exceptions
+
+The example below shows how `value()` throws `type_error.302` when the default value's type does not match the type of the stored value, and `type_error.306` when `value()` is called on a JSON value that is not an object.
+
+```
+#include <iostream>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
+int main()
+{
+    // create a JSON object with a string value
+    json j = {{"name", "the good"}};
+
+    // exception type_error.302
+    try
+    {
+        int v = j.value("name", 0);
+        std::cout << v << '\n';
+    }
+    catch (const json::type_error& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+
+    // exception type_error.306
+    try
+    {
+        json str = "I am a string";
+        auto v = str.value("name", 0);
+        std::cout << v << '\n';
+    }
+    catch (const json::type_error& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+}
+```
+
+Output:
+
+```
+[json.exception.type_error.302] type must be number, but is string
+[json.exception.type_error.306] cannot use value() with string
+```
+
 ## See also
 
 - see [`at`](https://json.nlohmann.me/api/basic_json/at/index.md) for access by reference with range checking
@@ -271,6 +326,6 @@ Output:
 
 ## Version history
 
-1. Added in version 1.0.0. Changed parameter `default_value` type from `const ValueType&` to `ValueType&&` in version 3.11.0. Deleted overload for integral key types added in version 3.13.0 to reject such calls at compile time instead of causing undefined behavior at runtime.
+1. Added in version 1.0.0. Changed parameter `default_value` type from `const ValueType&` to `ValueType&&` in version 3.11.0. Deleted overload for integral key types added in version 3.13.0 unreleased to reject such calls at compile time instead of causing undefined behavior at runtime.
 1. Added in version 3.11.0. Made `ValueType` the first template parameter in version 3.11.2.
-1. Added in version 2.0.2. Extended to work with arrays in version 3.13.0, including fixing an issue where resolving `ptr` through an array unexpectedly threw `out_of_range` instead of returning the resolved element (or `default_value`, as documented).
+1. Added in version 2.0.2. Extended to work with arrays in version 3.13.0 unreleased, including fixing an issue where resolving `ptr` through an array unexpectedly threw `out_of_range` instead of returning the resolved element (or `default_value`, as documented).

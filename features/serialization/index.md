@@ -22,7 +22,7 @@ String, not raw value
 
 By default, `dump` produces the most compact representation without any superfluous whitespace. Passing a non-negative `indent` argument pretty-prints the output with the given number of spaces per level:
 
-Example
+Example: pretty-print JSON values with `dump()`
 
 ```
 #include <iostream>
@@ -155,7 +155,7 @@ If a string contains invalid UTF-8 sequences (for example, because it holds data
 - `replace` — replace invalid bytes with the Unicode replacement character U+FFFD (`�`).
 - `ignore` — silently drop invalid bytes.
 
-Example
+Example: serialize invalid UTF-8 with different error handlers
 
 ```
 #include <iostream>

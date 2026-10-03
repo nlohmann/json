@@ -68,6 +68,15 @@ while (input >> j)
 }
 ```
 
-with a JSON Lines input does not work, because the parser will try to parse one value after the last one.
+with a JSON Lines input does not work, because the parser will try to parse one value after the last one and throw a [`parse_error.101`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error101) exception. The same happens for a stream of *concatenated* (non-newline-delimited) JSON values: `operator>>` reads them one at a time, but the loop above throws after the last value. To read either format with `operator>>`, check for the end of the stream before each read:
 
-This is different from parsing a stream of *concatenated* (non-newline-delimited) JSON values, for which `operator>>` does work, provided that a value that is a number is followed by whitespace -- see its [notes](https://json.nlohmann.me/api/operator_gtgt/#notes) for details.
+```
+json j;
+while (input >> std::ws && input.peek() != std::char_traits<char>::eof())
+{
+    input >> j;
+    std::cout << j << std::endl;
+}
+```
+
+A value that is a number must be followed by whitespace -- see the [notes](https://json.nlohmann.me/api/operator_gtgt/#notes) of `operator>>` for details.

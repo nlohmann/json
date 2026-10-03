@@ -56,7 +56,7 @@ json::parse(s);
 
 ## Examples
 
-Default behavior (macro not defined)
+Example: default behavior (macro not defined)
 
 Without the macro, a NUL byte silently ends parsing at that point:
 
@@ -72,7 +72,7 @@ int main()
 }
 ```
 
-Opt-in strict handling (macro defined to 1)
+Example: opt-in strict handling (macro defined to 1)
 
 With the macro, a NUL byte is rejected like any other unexpected byte:
 
@@ -95,6 +95,7 @@ int main()
 
 ## See also
 
+- [JSON_StrictNulHandling](https://json.nlohmann.me/integration/cmake/#json_strictnulhandling) - CMake option to control the macro
 - [FAQ: NUL bytes in the input](https://json.nlohmann.me/home/faq/#nul-bytes-in-the-input)
 - [**parse**](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
 - [**accept**](https://json.nlohmann.me/api/basic_json/accept/index.md) - check if the input is valid JSON
@@ -102,5 +103,5 @@ int main()
 
 ## Version history
 
-- Added in version 3.13.0.
+- Added in version 3.13.0 unreleased.
 - Planned to become the default (with the macro removed) in version 4.0.0.

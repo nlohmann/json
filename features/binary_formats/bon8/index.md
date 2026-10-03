@@ -48,7 +48,7 @@ The library uses the following mapping from JSON values types to BON8 types acco
 | binary          | *size*: 0..4                               | array with count            | 0x80..0x84             |
 | binary          | *size*: 5 or more                          | array (terminated by 0xFE)  | 0x85                   |
 
-An integer that takes 2 to 4 bytes starts with a UTF-8 lead byte (0xC2..0xF7) that is followed by a byte that cannot continue a UTF-8 character: 0x00..0x7F for positive and 0xC0..0xFF for negative integers. A string is terminated by 0xFF only if it is empty, if another string follows it, or if it is the last value of the message; otherwise, the first byte of the next value ends it.
+An integer that takes 2 to 4 bytes starts with a UTF-8 lead byte (0xC2..0xF7) that is followed by a byte that cannot continue a UTF-8 character: 0x00..0x7F for positive and 0xC0..0xFF for negative integers. A string is terminated by 0xFF only if it is empty, if another string follows it, or if nothing follows it in the message; otherwise, the byte after it ends it: the first byte of the next value, or the 0xFE that ends an array or object. For example, `["e"]` is serialized as 0x81 0x65 0xFF, but `[1,2,3,4,"e"]` as 0x85 0x91 0x92 0x93 0x94 0x65 0xFE.
 
 Complete mapping
 
@@ -78,7 +78,7 @@ The output follows the specification's canonical representation rules: every val
 - Strings are not normalized to Unicode Normalization Form C (NFC).
 - Object keys are written in the order of the object type, which is sorted for `json`, but not for [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md).
 
-Example
+Example: serialize a JSON value to BON8
 
 ```
 #include <iostream>
@@ -145,13 +145,13 @@ Info
 
 Values that do not use the canonical representation, such as integers with a longer encoding than necessary, arrays and objects with up to four elements that are terminated by 0xFE, unsorted object keys, or a 0xFF after a string that would also end without it, are accepted. A second 0xFF is not a terminator but an empty string.
 
-Strings must be valid UTF-8, and the last string of a message must be terminated by 0xFF.
+Strings must be valid UTF-8, and a string at the very end of a message must be terminated by 0xFF.
 
 Info
 
 Any BON8 output created by `to_bon8` can be successfully parsed by `from_bon8`.
 
-Example
+Example: deserialize a JSON value from BON8
 
 ```
 #include <iostream>

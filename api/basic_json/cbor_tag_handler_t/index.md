@@ -62,6 +62,12 @@ Output:
 {"bytes":[202,254,186,190],"subtype":66}
 ```
 
+## See also
+
+- [from_cbor](https://json.nlohmann.me/api/basic_json/from_cbor/index.md) deserializes a JSON value from CBOR
+- [input_format_t](https://json.nlohmann.me/api/basic_json/input_format_t/index.md) the enumeration of supported input formats
+- [CBOR](https://json.nlohmann.me/features/binary_formats/cbor/index.md) - the article on the CBOR format
+
 ## Version history
 
 - Added in version 3.9.0. Added value `store` in 3.10.0.

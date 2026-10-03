@@ -29,6 +29,9 @@ The [`NLOHMANN_JSON_SERIALIZE_ENUM()` macro](../api/macros/nlohmann_json_seriali
 
 ## Usage
 
+Serialization converts an enum value to its mapped string, deserialization does the reverse, and an unrecognized JSON
+value deserializes to the first pair in the map:
+
 ```cpp
 // enum to JSON as string
 json j = TS_STOPPED;
@@ -43,6 +46,18 @@ json jPi = 3.14;
 assert(jPi.get<TaskState>() == TS_INVALID );
 ```
 
+??? example "Example: serializing/deserializing enums, including a second enum type"
+
+    ```cpp
+    --8<-- "examples/nlohmann_json_serialize_enum.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/nlohmann_json_serialize_enum.output"
+    ```
+
 ## Notes
 
 Just as in [Arbitrary Type Conversions](arbitrary_types.md) above,
@@ -54,9 +69,25 @@ Just as in [Arbitrary Type Conversions](arbitrary_types.md) above,
 
 Other Important points:
 
-- When using `get<ENUM_TYPE>()`, undefined JSON values will default to the first pair specified in your map. Select this
-  default pair carefully. If you desire an exception in this circumstance use [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT()`](../api/macros/nlohmann_json_serialize_enum_strict.md)
-  which behaves identically except for throwing an exception on unrecognized values.
+- When using [`get<ENUM_TYPE>()`](../api/basic_json/get.md), undefined JSON values will default to the first pair
+  specified in your map. Select this default pair carefully. If you desire an exception in this circumstance use
+  [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT()`](../api/macros/nlohmann_json_serialize_enum_strict.md) which behaves
+  identically except for throwing an
+  [`out_of_range.410`](../home/exceptions.md#jsonexceptionout_of_range410) exception on unrecognized values, both when
+  serializing an enum value not listed in the map and when deserializing a JSON value that matches none of the map's
+  entries.
 - If an enum or JSON value is specified more than once in your map, the first matching occurrence from the top of the
   map will be returned when converting to or from JSON.
 - To disable the default serialization of enumerators as integers and force a compiler error instead, see [`JSON_DISABLE_ENUM_SERIALIZATION`](../api/macros/json_disable_enum_serialization.md).
+
+??? example "Example: `NLOHMANN_JSON_SERIALIZE_ENUM_STRICT` throwing on unrecognized values"
+
+    ```cpp
+    --8<-- "examples/nlohmann_json_serialize_enum_strict_err.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/nlohmann_json_serialize_enum_strict_err.output"
+    ```

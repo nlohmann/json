@@ -75,6 +75,23 @@ basic_json(basic_json&& other) noexcept;
    1. If the list consists of pairs whose first element is a string, a JSON object value is created where the first elements of the pairs are treated as keys and the second elements are as values.
    1. In all other cases, an array is created.
 
+   The following flowchart also takes into account what happens when `type_deduction` is `false`, in which case `manual_type` decides between object and array, and an object can only be forced if `init` actually matches rule 2 (or is empty):
+
+   ```
+   flowchart TD
+       A(["initializer_list init"]) --> B{"empty, or every element is a 2-element<br/>array whose first element is a string?"}
+       B -->|"yes"| C{"type_deduction"}
+       B -->|"no"| D{"type_deduction"}
+       C -->|"true"| OBJ["create object"]
+       C -->|"false"| E{"manual_type"}
+       E -->|"object"| OBJ
+       E -->|"array"| ARR["create array"]
+       D -->|"true"| ARR
+       D -->|"false"| F{"manual_type"}
+       F -->|"array"| ARR
+       F -->|"object"| ERR["throw type_error.301"]
+   ```
+
    The rules aim to create the best fit between a C++ initializer list and JSON values. The rationale is as follows:
 
    1. The empty initializer list is written as `{}` which is exactly an empty JSON object.
@@ -134,8 +151,8 @@ basic_json(basic_json&& other) noexcept;
 - `BasicJsonType` has different template arguments than `basic_json_t`.
 
 **Note:** For cross-`basic_json` conversions to produce correct results, the target `basic_json`'s
-`object_t::key_type` and `string_t` must be directly constructible from the source `basic_json`'s
-corresponding types. See the description of overload (4) above for details on what happens when
+[`object_t`](https://json.nlohmann.me/api/basic_json/object_t/index.md)`::key_type` and [`string_t`](https://json.nlohmann.me/api/basic_json/string_t/index.md) must be directly constructible from the source
+`basic_json`'s corresponding types. See the description of overload (4) above for details on what happens when
 this requirement is not met.
 ```
 
@@ -360,7 +377,7 @@ int main()
     // create an object from std::unordered_multimap
     std::unordered_multimap<std::string, bool> c_ummap
     {
-        {"one", true}, {"two", true}, {"three", false}, {"three", true}
+        {"one", true}, {"two", true}, {"three", false}, {"three", false}
     };
     json j_ummap(c_ummap); // only one entry for key "three" is used
 
@@ -408,7 +425,7 @@ int main()
     json j_set(c_set); // only one entry for "one" is used
 
     // create an array from std::unordered_set
-    std::unordered_set<std::string> c_uset {"one", "two", "three", "four", "one"};
+    std::unordered_set<std::string> c_uset {"one", "one"};
     json j_uset(c_uset); // only one entry for "one" is used
 
     // create an array from std::multiset
@@ -416,7 +433,7 @@ int main()
     json j_mset(c_mset); // both entries for "one" are used
 
     // create an array from std::unordered_multiset
-    std::unordered_multiset<std::string> c_umset {"one", "two", "one", "four"};
+    std::unordered_multiset<std::string> c_umset {"one", "one"};
     json j_umset(c_umset); // both entries for "one" are used
 
     // serialize the JSON arrays
@@ -547,9 +564,9 @@ Output:
 [12345678909876,23456789098765,34567890987654,45678909876543]
 [1,2,3,4]
 ["four","one","three","two"]
-["four","three","two","one"]
+["one"]
 ["four","one","one","two"]
-["four","two","one","one"]
+["one","one"]
 
 "The quick brown fox jumps over the lazy dog."
 "The quick brown fox jumps over the lazy dog."
@@ -575,6 +592,43 @@ false
 ```
 
 Note the output is platform-dependent.
+
+Example: (4) create a JSON value from another `basic_json` specialization
+
+The example below shows how a `json` value is converted to an `ordered_json` value and back using the converting constructor. Note how the original insertion order of `oj` is not restored, because it was already given up when converting to `json`, whose `object_t` sorts by key.
+
+```
+#include <iostream>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
+int main()
+{
+    // create an ordered_json value; insertion order is preserved
+    ordered_json oj = {{"c", 3}, {"a", 1}, {"b", 2}};
+
+    // convert to json -- overload (4) is used; keys end up sorted
+    json j(oj);
+
+    // convert back to ordered_json -- the original insertion order is lost,
+    // because it was already given up when converting to json
+    ordered_json oj2(j);
+
+    std::cout << oj << '\n';
+    std::cout << j << '\n';
+    std::cout << oj2 << '\n';
+}
+```
+
+Output:
+
+```
+{"c":3,"a":1,"b":2}
+{"a":1,"b":2,"c":3}
+{"a":1,"b":2,"c":3}
+```
 
 Example: (5) create a container (array or object) from an initializer list
 
@@ -757,6 +811,14 @@ null
 23
 ```
 
+## See also
+
+- [array](https://json.nlohmann.me/api/basic_json/array/index.md) create a JSON array value, forcing array creation from an initializer list even when it looks like an object
+- [object](https://json.nlohmann.me/api/basic_json/object/index.md) create a JSON object value, forcing object creation from an initializer list
+- [binary](https://json.nlohmann.me/api/basic_json/binary/index.md) create a JSON binary array value
+- [operator=](https://json.nlohmann.me/api/basic_json/operator%3D/index.md) copy assignment operator
+- [Creating JSON values](https://json.nlohmann.me/features/creating_values/index.md) - the article on creating JSON values
+
 ## Version history
 
 1. Since version 1.0.0.
@@ -765,6 +827,6 @@ null
 1. Since version 3.2.0.
 1. Since version 1.0.0.
 1. Since version 1.0.0.
-1. Since version 1.0.0. Fixed in version 3.13.0 to also check the iterator range for binary values; before, a range that did not cover the whole value (such as `(end(), end())`) was accepted and the whole binary value was copied, unlike the other primitive types.
+1. Since version 1.0.0. Fixed in version 3.13.0 unreleased to also check the iterator range for binary values; before, a range that did not cover the whole value (such as `(end(), end())`) was accepted and the whole binary value was copied, unlike the other primitive types.
 1. Since version 1.0.0.
 1. Since version 1.0.0.

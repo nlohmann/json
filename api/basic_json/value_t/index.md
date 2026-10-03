@@ -33,6 +33,16 @@ The order of types is as follows:
 
 `discarded` is unordered.
 
+```
+flowchart LR
+    A[null] --> B[boolean]
+    B --> C["number_integer / number_unsigned / number_float"]
+    C --> D[object]
+    D --> E[array]
+    E --> F[string]
+    F --> G[binary]
+```
+
 Types of numbers
 
 There are three enumerators for numbers (`number_integer`, `number_unsigned`, and `number_float`) to distinguish between different types of numbers:
@@ -97,6 +107,14 @@ true
 true
 true
 ```
+
+## See also
+
+- [type](https://json.nlohmann.me/api/basic_json/type/index.md) return the type of the JSON value
+- [type_name](https://json.nlohmann.me/api/basic_json/type_name/index.md) return the type as string
+- [operator value_t](https://json.nlohmann.me/api/basic_json/operator_value_t/index.md) return the type of the JSON value
+- [is_primitive](https://json.nlohmann.me/api/basic_json/is_primitive/index.md) return whether the type is primitive
+- [is_structured](https://json.nlohmann.me/api/basic_json/is_structured/index.md) return whether the type is structured
 
 ## Version history
 

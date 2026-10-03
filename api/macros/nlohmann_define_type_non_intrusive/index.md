@@ -65,7 +65,7 @@ Implementation limits
 
 ## Examples
 
-Example (1): NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE
+Example: (1) NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE
 
 Consider the following complete example:
 
@@ -187,7 +187,7 @@ int main()
 }
 ```
 
-Example (2): NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT
+Example: (2) NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT
 
 Consider the following complete example:
 
@@ -310,7 +310,7 @@ int main()
 
 Note how a default-initialized `person` object is used in the `from_json` to fill missing values.
 
-Example (3): NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE
+Example: (3) NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE
 
 Consider the following complete example:
 

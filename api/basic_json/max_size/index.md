@@ -80,6 +80,12 @@ Output:
 
 Note the output is platform-dependent.
 
+## See also
+
+- [size](https://json.nlohmann.me/api/basic_json/size/index.md) returns the number of elements
+- [array_t](https://json.nlohmann.me/api/basic_json/array_t/index.md) the type used to store JSON arrays
+- [object_t](https://json.nlohmann.me/api/basic_json/object_t/index.md) the type used to store JSON objects
+
 ## Version history
 
 - Added in version 1.0.0.

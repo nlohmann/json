@@ -132,3 +132,5 @@ Deprecation
 This function replaces the static function `iterator_wrapper` which was introduced in version 1.0.0, but has been deprecated in version 3.1.0. Function `iterator_wrapper` will be removed in version 4.0.0. Please replace all occurrences of `iterator_wrapper(j)` with `j.items()`.
 
 You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated function.
+
+See the [migration guide](https://json.nlohmann.me/integration/migration_guide/#miscellaneous-functions) for how to update existing code.

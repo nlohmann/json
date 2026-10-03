@@ -12,11 +12,11 @@ The base class used to inject custom functionality into each instance of `basic_
 
 ## Notes
 
-#### Default type
+### Default type
 
 The default value for `CustomBaseClass` is `void`. In this case, an [empty base class](https://en.cppreference.com/w/cpp/language/ebo) is used and no additional functionality is injected.
 
-#### Limitations
+### Limitations
 
 The type `CustomBaseClass` has to be a default-constructible, non-`final` class. `basic_json` only supports copy/move construction/assignment if `CustomBaseClass` does so as well. A `CustomBaseClass` with non-static data members forfeits `basic_json`'s [standard layout](https://en.cppreference.com/w/cpp/named_req/StandardLayoutType) guarantee. See [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#custombaseclass).
 
@@ -125,6 +125,10 @@ Output:
 /object - metadata = 21 -> {"uint":1}
 /object/uint - metadata = 42 -> 1
 ```
+
+## See also
+
+- [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#custombaseclass) - the requirements for `CustomBaseClass`
 
 ## Version history
 

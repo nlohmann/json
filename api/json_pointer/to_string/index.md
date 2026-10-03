@@ -10,6 +10,14 @@ Return a string representation of the JSON pointer.
 
 A string representation of the JSON pointer
 
+## Exception safety
+
+Strong exception safety: if an exception occurs, the original value stays intact.
+
+## Complexity
+
+Linear in the total length of the reference tokens.
+
 ## Notes
 
 For each JSON pointer `ptr`, it holds:
@@ -77,6 +85,11 @@ Output:
 "/ "
 "/m~0n"
 ```
+
+## See also
+
+- [operator string_t](https://json.nlohmann.me/api/json_pointer/operator_string_t/index.md) return a string representation of the JSON pointer (deprecated)
+- [operator\<<](https://json.nlohmann.me/api/operator_ltlt/index.md) write a JSON pointer to a stream
 
 ## Version history
 

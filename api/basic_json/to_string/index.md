@@ -9,7 +9,7 @@ This function implements a user-defined to_string for JSON objects.
 
 ## Template parameters
 
-`BasicJsonType` : a specialization of [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md)
+`BasicJsonType` : a specialization of [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md) whose [`string_t`](https://json.nlohmann.me/api/basic_json/string_t/index.md) is convertible to `std::string`; for other string types, use [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md), which returns a `string_t`
 
 ## Return value
 

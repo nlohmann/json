@@ -30,6 +30,10 @@ Thereby, `Target` is the current object; that is, the patch is applied to the cu
 
 `apply_patch` (in) : the patch to apply
 
+## Exception safety
+
+Basic guarantee: if an exception is thrown during the operation, the JSON value may be partially modified.
+
 ## Complexity
 
 Linear in the lengths of `apply_patch`.
@@ -112,4 +116,4 @@ Output:
 ## Version history
 
 - Added in version 3.0.0.
-- Fixed use of freed or relocated memory when `apply_patch` is `*this` or refers to a value contained in `*this`, in version 3.13.0.
+- Fixed use of freed or relocated memory when `apply_patch` is `*this` or refers to a value contained in `*this`, in version 3.13.0 unreleased.

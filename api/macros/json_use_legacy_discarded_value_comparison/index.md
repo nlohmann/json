@@ -48,6 +48,8 @@ The legacy comparison behavior is deprecated and may be removed in a future majo
 
 New code should not depend on it and existing code should try to remove or rewrite expressions relying on it.
 
+See the [migration guide](https://json.nlohmann.me/integration/migration_guide/#miscellaneous-functions) for how to update existing code.
+
 CMake option
 
 Legacy comparison can also be controlled with the CMake option [`JSON_LegacyDiscardedValueComparison`](https://json.nlohmann.me/integration/cmake/#json_legacydiscardedvaluecomparison) (`OFF` by default) which defines `JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON` accordingly.

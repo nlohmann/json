@@ -51,6 +51,12 @@ before calling clear_subtype(): {"bytes":[202,254,186,190],"subtype":42}
 after calling clear_subtype(): {"bytes":[202,254,186,190],"subtype":null}
 ```
 
+## See also
+
+- [set_subtype](https://json.nlohmann.me/api/byte_container_with_subtype/set_subtype/index.md) sets the binary subtype
+- [has_subtype](https://json.nlohmann.me/api/byte_container_with_subtype/has_subtype/index.md) return whether the value has a subtype
+- [subtype](https://json.nlohmann.me/api/byte_container_with_subtype/subtype/index.md) return the binary subtype
+
 ## Version history
 
 Since version 3.8.0.

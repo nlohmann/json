@@ -4,7 +4,7 @@
 
 The [`at`](https://json.nlohmann.me/api/basic_json/at/index.md) member function performs checked access; that is, it returns a reference to the desired value if it exists and throws a [`basic_json::out_of_range` exception](https://json.nlohmann.me/home/exceptions/#out-of-range) otherwise.
 
-Read access
+Example: read access
 
 Consider the following JSON value:
 
@@ -29,7 +29,7 @@ Assume the value is parsed to a `json` variable `j`.
 
 The return value is a reference, so it can be used to modify the original value.
 
-Write access
+Example: write access
 
 ```
 j.at("name") = "John Smith";
@@ -47,7 +47,7 @@ This code produces the following JSON value:
 
 When accessing an invalid index (i.e., an index greater than or equal to the array size) or the passed object key is non-existing, an exception is thrown.
 
-Accessing via invalid index or missing key
+Example: access via invalid index or missing key
 
 ```
 j.at("hobbies").at(3) = "cooking";

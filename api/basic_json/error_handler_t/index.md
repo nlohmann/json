@@ -57,6 +57,11 @@ string with replaced invalid characters: "ä�ü"
 string with ignored invalid characters: "äü"
 ```
 
+## See also
+
+- [dump](https://json.nlohmann.me/api/basic_json/dump/index.md) serializes a JSON value, with an `error_handler_t` parameter to configure invalid UTF-8 handling
+- [Handling invalid UTF-8](https://json.nlohmann.me/features/serialization/#handling-invalid-utf-8) - the article on handling invalid UTF-8
+
 ## Version history
 
 - Added in version 3.4.0.

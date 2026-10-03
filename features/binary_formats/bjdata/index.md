@@ -63,7 +63,7 @@ The following markers are not used in the conversion:
 
 NaN/infinity handling
 
-If NaN or Infinity are stored inside a JSON number, they are serialized properly. This behavior differs from the `dump()` function which serializes NaN or Infinity to `null`.
+If NaN or Infinity are stored inside a JSON number, they are serialized properly. This behavior differs from the [`dump()`](https://json.nlohmann.me/api/basic_json/dump/index.md) function which serializes NaN or Infinity to `null`.
 
 Endianness
 
@@ -119,7 +119,7 @@ To preserve compatibility with BJData Draft 2, the Draft 3 optimized binary arra
 
 In Draft2 mode (default), if the JSON data contains the binary type, the value stored as a list of integers, as suggested by the BJData documentation. In particular, this means that the serialization and the deserialization of JSON containing binary values into BJData and back will result in a different JSON object.
 
-Example
+Example: serialize JSON values to BJData, with and without size/type optimization
 
 ```
 #include <iostream>
@@ -234,7 +234,7 @@ Round trips
 
 A value returned by [`from_bjdata`](https://json.nlohmann.me/api/basic_json/from_bjdata/index.md) can be serialized with [`to_bjdata`](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md) using any combination of options and parsed back into an equal value, and serializing that value again with the same options produces the same bytes. The exception is binary values: they are only written as an optimized binary array (`[$B`) if Draft 3 is enabled and both `use_size` and `use_type` are set. Otherwise, they are written as arrays of integers and parsed back as such (see the notes on binary values above), and serializing such an array again may choose different, but equally valid, type markers. The bytes can then differ, but parsing them again yields the same value.
 
-Example
+Example: deserialize a JSON value from BJData
 
 ```
 #include <iostream>

@@ -71,6 +71,13 @@ false
 false
 ```
 
+## See also
+
+- [is_array](https://json.nlohmann.me/api/basic_json/is_array/index.md) checks whether the JSON value is an array
+- [is_object](https://json.nlohmann.me/api/basic_json/is_object/index.md) checks whether the JSON value is an object
+- [type](https://json.nlohmann.me/api/basic_json/type/index.md) returns the type of the JSON value
+- [value_t](https://json.nlohmann.me/api/basic_json/value_t/index.md) the enumeration of JSON types
+
 ## Version history
 
 - Added in version 1.0.0.

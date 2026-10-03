@@ -21,9 +21,15 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 ## Exceptions
 
 - Throws [`parse_error.104`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error104) if the JSON patch does not consist of an array of objects.
-- Throws [`parse_error.105`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error105) if the JSON patch is malformed (e.g., mandatory attributes are missing); example: `"operation add must have member path"`.
+- Throws [`parse_error.105`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error105) if the JSON patch is malformed (e.g., mandatory attributes are missing); example: `"operation 'add' must have member 'path'"`.
 - Throws [`out_of_range.401`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range401) if an array index is out of range.
+- Throws [`parse_error.106`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error106) if an array index in a "path" or "from" member begins with '0'; example: `"array index '01' must not begin with '0'"`.
+- Throws [`parse_error.107`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error107) if a "path" or "from" member is not empty and does not begin with a slash (`/`); example: `"JSON pointer must be empty or begin with '/' - was: 'a'"`.
+- Throws [`parse_error.108`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error108) if a tilde (`~`) in a "path" or "from" member is not followed by `0` or `1`; example: `"escape character '~' must be followed with '0' or '1'"`.
+- Throws [`parse_error.109`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error109) if an array index in a "path" or "from" member is not a number; example: `"array index 'foo' is not a number"`.
+- Throws [`out_of_range.402`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range402) if the array index `-` is used where an existing element is required (the "path" of "replace", the "from" of "move" and "copy"); example: `"array index '-' (3) is out of range"`.
 - Throws [`out_of_range.403`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range403) if a JSON pointer inside the patch could not be resolved successfully in the current JSON value; example: `"key baz not found"`.
+- Throws [`out_of_range.404`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range404) if a reference token of a JSON pointer inside the patch cannot be resolved, e.g., `-` in a "remove" operation or `1a` for an array; example: `"unresolved reference token '-'"`.
 - Throws [`out_of_range.405`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range405) if JSON pointer has no parent ("add", "remove", "move")
 - Throws [`out_of_range.411`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range411) if an "add" operation's target location has a parent that is neither an object nor an array.
 - Throws [`out_of_range.413`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range413) if a "remove" operation's target location has a parent that is neither an object nor an array.
@@ -40,7 +46,7 @@ The application of a patch is atomic: Either all operations succeed and the patc
 
 ## Examples
 
-Example
+Example: apply a JSON patch
 
 The following code shows how a JSON patch is applied to a value.
 
@@ -96,6 +102,60 @@ Output:
 }
 ```
 
+Example: out_of_range.414 exception
+
+The following code shows how a "move" operation whose "from" location is a proper prefix of its "path" location is rejected, and how the original document is left unchanged because the patch is applied to a copy.
+
+```
+#include <iostream>
+#include <iomanip>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+using namespace nlohmann::literals;
+
+int main()
+{
+    // the original document
+    json doc = R"(
+        {
+          "a": { "b": 1 }
+        }
+    )"_json;
+
+    // a patch that tries to move "/a" into one of its own children
+    json patch = R"(
+        [
+          { "op": "move", "from": "/a", "path": "/a/b" }
+        ]
+    )"_json;
+
+    // exception out_of_range.414
+    try
+    {
+        json patched_doc = doc.patch(patch);
+    }
+    catch (const json::out_of_range& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+
+    // the original document is unchanged
+    std::cout << std::setw(4) << doc << std::endl;
+}
+```
+
+Output:
+
+```
+[json.exception.out_of_range.414] cannot move value: 'from' path '/a' is a proper prefix of 'path' '/a/b'
+{
+    "a": {
+        "b": 1
+    }
+}
+```
+
 ## See also
 
 - [RFC 6902 (JSON Patch)](https://tools.ietf.org/html/rfc6902)
@@ -106,6 +166,6 @@ Output:
 ## Version history
 
 - Added in version 2.0.0.
-- Added [`out_of_range.411`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range411) and stopped relying on an internal assertion when an "add" operation's target location has a non-object/non-array parent in version 3.13.0.
-- Added [`out_of_range.413`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range413) and stopped silently ignoring a "remove" operation whose target location has a non-object/non-array parent in version 3.13.0.
-- Added [`out_of_range.414`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range414) and rejected a "move" operation whose "from" location is a proper prefix of its "path" location instead of silently producing a corrupted result in version 3.13.0.
+- Added [`out_of_range.411`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range411) and stopped relying on an internal assertion when an "add" operation's target location has a non-object/non-array parent in version 3.13.0 unreleased.
+- Added [`out_of_range.413`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range413) and stopped silently ignoring a "remove" operation whose target location has a non-object/non-array parent in version 3.13.0 unreleased.
+- Added [`out_of_range.414`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range414) and rejected a "move" operation whose "from" location is a proper prefix of its "path" location instead of silently producing a corrupted result in version 3.13.0 unreleased.

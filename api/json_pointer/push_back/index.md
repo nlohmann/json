@@ -12,6 +12,10 @@ Append an unescaped token at the end of the reference pointer.
 
 `token` (in) : token to add
 
+## Exception safety
+
+Strong exception safety: if an exception occurs, the original value stays intact.
+
 ## Complexity
 
 Amortized constant.
@@ -54,6 +58,13 @@ Output:
 "/foo/0"
 "/foo/0/bar"
 ```
+
+## See also
+
+- [back](https://json.nlohmann.me/api/json_pointer/back/index.md) return last reference token
+- [pop_back](https://json.nlohmann.me/api/json_pointer/pop_back/index.md) remove the last reference token
+- [operator/=](https://json.nlohmann.me/api/json_pointer/operator_slasheq/index.md) append to the end of the JSON pointer
+- [operator/](https://json.nlohmann.me/api/json_pointer/operator_slash/index.md) create JSON Pointer by appending
 
 ## Version history
 

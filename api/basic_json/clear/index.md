@@ -89,8 +89,13 @@ false
 ""
 ```
 
+## See also
+
+- [erase](https://json.nlohmann.me/api/basic_json/erase/index.md) removes elements from a JSON value
+- [empty](https://json.nlohmann.me/api/basic_json/empty/index.md) checks whether the JSON value has no elements
+
 ## Version history
 
 - Added in version 1.0.0.
 - Added support for binary types in version 3.8.0.
-- Fixed in version 3.13.0 to also clear the subtype of a binary value; before, the subtype was left unchanged.
+- Fixed in version 3.13.0 unreleased to also clear the subtype of a binary value; before, the subtype was left unchanged.

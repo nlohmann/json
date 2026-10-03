@@ -1,12 +1,12 @@
 # Migration Guide
 
-This page collects some guidelines on how to future-proof your code for future versions of this library.
+This page collects some guidelines on how to future-proof your code for future versions of this library. For how to add the library to your project in the first place, see [Integration](https://json.nlohmann.me/integration/index.md), [CMake](https://json.nlohmann.me/integration/cmake/index.md), or [Package Managers](https://json.nlohmann.me/integration/package_managers/index.md).
 
 ## Replace deprecated functions
 
 The following functions have been deprecated and will be removed in the next major version (i.e., 4.0.0). All deprecations are annotated with [`HEDLEY_DEPRECATED_FOR`](https://nemequ.github.io/hedley/api-reference.html#HEDLEY_DEPRECATED_FOR) to report which function to use instead.
 
-#### Parsing
+### Parsing
 
 - Function `friend std::istream& operator<<(basic_json&, std::istream&)` is deprecated since 3.0.0. Please use [`friend std::istream& operator>>(std::istream&, basic_json&)`](https://json.nlohmann.me/api/operator_gtgt/index.md) instead.
 
@@ -22,7 +22,7 @@ The following functions have been deprecated and will be removed in the next maj
   ss >> j;
   ```
 
-- Passing iterator pairs or pointer/length pairs to parsing functions ([`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md), [`accept`](https://json.nlohmann.me/api/basic_json/accept/index.md), [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md), [`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md), [`from_msgpack`](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md), [`from_ubjson`](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md), and [`from_bson`](https://json.nlohmann.me/api/basic_json/from_bson/index.md) via initializer lists is deprecated since 3.8.0. Instead, pass two iterators; for instance, call `from_cbor(ptr, ptr+len)` instead of `from_cbor({ptr, len})`.
+- Passing iterator pairs or pointer/length pairs to parsing functions ([`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md), [`accept`](https://json.nlohmann.me/api/basic_json/accept/index.md), [`sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md), [`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md), [`from_msgpack`](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md), [`from_ubjson`](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md), and [`from_bson`](https://json.nlohmann.me/api/basic_json/from_bson/index.md)) via initializer lists is deprecated since 3.8.0. Instead, pass two iterators; for instance, call `from_cbor(ptr, ptr+len)` instead of `from_cbor({ptr, len})`. Likewise, passing a pointer and a length as two separate arguments to `from_cbor`, `from_msgpack`, `from_ubjson`, and `from_bson` is deprecated since 3.8.0; call `from_cbor(ptr, ptr+len)` instead of `from_cbor(ptr, len)`.
 
   ```
   const char* s = "[1,2,3]";
@@ -34,7 +34,7 @@ The following functions have been deprecated and will be removed in the next maj
   bool ok = nlohmann::json::accept(s, s + std::strlen(s));
   ```
 
-#### JSON Pointers
+### JSON Pointers
 
 - Comparing JSON Pointers with strings via [`operator==`](https://json.nlohmann.me/api/json_pointer/operator_eq/index.md) and [`operator!=`](https://json.nlohmann.me/api/json_pointer/operator_ne/index.md) is deprecated since 3.11.2. To compare a [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md) `p` with a string `s`, convert `s` to a `json_pointer` first and use [`json_pointer::operator==`](https://json.nlohmann.me/api/json_pointer/operator_eq/index.md) or [`json_pointer::operator!=`](https://json.nlohmann.me/api/json_pointer/operator_ne/index.md).
 
@@ -60,7 +60,7 @@ The following functions have been deprecated and will be removed in the next maj
   std::string s = ptr.to_string();
   ```
 
-- Passing a `basic_json` specialization as template parameter `RefStringType` to [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md) is deprecated since 3.11.0. The string type can now be directly provided.
+- Passing a `basic_json` specialization as template parameter `RefStringType` to [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md) is deprecated since 3.11.0. The string type can now be directly provided. This also applies to passing such a JSON pointer to [`at`](https://json.nlohmann.me/api/basic_json/at/index.md), [`contains`](https://json.nlohmann.me/api/basic_json/contains/index.md), [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md), and [`value`](https://json.nlohmann.me/api/basic_json/value/index.md).
 
   ```
   using my_json = nlohmann::basic_json<std::map, std::vector, my_string_type>;
@@ -71,9 +71,9 @@ The following functions have been deprecated and will be removed in the next maj
   nlohmann::json_pointer<my_string_type> ptr("/foo/bar/1");
   ```
 
-  Thereby, `nlohmann::my_json::json_pointer` is an alias for `nlohmann::json_pointer<my_string_type>` and is always an alias to the `json_pointer` with the appropriate string type for all specializations of `basic_json`.
+  Thereby, `my_json::json_pointer` is an alias for `nlohmann::json_pointer<my_string_type>`; in general, `basic_json::json_pointer` is always an alias to the `json_pointer` with the appropriate string type for all specializations of `basic_json`.
 
-#### Miscellaneous functions
+### Miscellaneous functions
 
 - The function `iterator_wrapper` is deprecated since 3.1.0. Please use the member function [`items`](https://json.nlohmann.me/api/basic_json/items/index.md) instead.
 
@@ -178,6 +178,6 @@ void to_json(NLOHMANN_JSON_NAMESPACE::json& j, const person& p)
 }
 ```
 
-## Do not use the `details` namespace
+## Do not use the `detail` namespace
 
-The `details` namespace is not part of the public API of the library and can change in any version without an announcement. Do not rely on any function or type in the `details` namespace.
+The `nlohmann::detail` namespace is not part of the public API of the library and can change in any version without an announcement. Do not rely on any function or type in the `detail` namespace.

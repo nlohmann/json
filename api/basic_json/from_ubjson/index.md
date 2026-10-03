@@ -124,8 +124,8 @@ Output:
 
 - Added in version 3.1.0.
 - Added `allow_exceptions` parameter in version 3.2.0.
-- Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
-- Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
+- Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0 unreleased.
+- Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0 unreleased.
 
 Deprecation
 
@@ -133,3 +133,5 @@ Deprecation
 - Overload (2) replaces calls to `from_ubjson` with a pair of iterators as their first parameter, which has been deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like `from_ubjson({ptr, ptr+len}, ...);` with `from_ubjson(ptr, ptr+len, ...);`.
 
 You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated function.
+
+See the [migration guide](https://json.nlohmann.me/integration/migration_guide/#parsing) for how to update existing code.

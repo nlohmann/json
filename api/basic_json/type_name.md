@@ -52,6 +52,11 @@ Constant.
     --8<-- "examples/type_name.output"
     ```
 
+## See also
+
+- [type](type.md) returns the type of the JSON value
+- [value_t](value_t.md) the enumeration of JSON types
+
 ## Version history
 
 - Added in version 1.0.0.

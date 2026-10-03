@@ -84,11 +84,11 @@ Strong exception safety: if an exception occurs, the original value stays intact
 1. Linear in `cnt` plus linear in the distance between `pos` and end of the container.
 1. Linear in `std::distance(first, last)` plus linear in the distance between `pos` and end of the container.
 1. Linear in `ilist.size()` plus linear in the distance between `pos` and end of the container.
-1. Logarithmic: `O(N*log(size() + N))`, where `N` is the number of elements to insert.
+1. `O(N*log(size() + N))`, where `N` is the number of elements to insert.
 
 ## Examples
 
-Example (1): insert element into array
+Example: (1) insert element into array
 
 The example shows how `insert()` is used.
 
@@ -119,7 +119,7 @@ Output:
 [1,2,10,3,4]
 ```
 
-Example (2): insert copies of element into array
+Example: (2) insert copies of element into array
 
 The example shows how `insert()` is used.
 
@@ -150,7 +150,7 @@ Output:
 [1,2,7,7,7,7,7,7,7,3,4]
 ```
 
-Example (3): insert a range of elements into an array
+Example: (3) insert a range of elements into an array
 
 The example shows how `insert()` is used.
 
@@ -184,7 +184,7 @@ Output:
 [1,2,3,4,"one","two","three","four"]
 ```
 
-Example (4): insert elements from an initializer list into an array
+Example: (4) insert elements from an initializer list into an array
 
 The example shows how `insert()` is used.
 
@@ -215,7 +215,7 @@ Output:
 [1,2,3,4,7,8,9]
 ```
 
-Example (5): insert a range of elements into an object
+Example: (5) insert a range of elements into an object
 
 The example shows how `insert()` is used.
 
@@ -263,5 +263,5 @@ Output:
 1. Added in version 1.0.0.
 1. Added in version 1.0.0.
 1. Added in version 1.0.0.
-1. Added in version 1.0.0. Fixed in version 3.13.0 to copy the values before inserting; before, an `ilist` that referred to elements of the array being inserted into could insert wrong values, because the range insert could move from or shift an element before it was copied.
+1. Added in version 1.0.0. Fixed in version 3.13.0 unreleased to copy the values before inserting; before, an `ilist` that referred to elements of the array being inserted into could insert wrong values, because the range insert could move from or shift an element before it was copied.
 1. Added in version 3.0.0.

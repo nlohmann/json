@@ -39,7 +39,7 @@ Binary values without a subtype
 
 BSON requires every binary value to have a subtype. If a binary value has no subtype, this library serializes it with the generic subtype `0x00`. After deserialization, `has_subtype()` returns `true` and `subtype()` returns `0`. As a result, serializing and deserializing a JSON object containing such a value produces a different JSON object, even though the binary data is unchanged.
 
-Example
+Example: serialize a JSON value to BSON
 
 ```
 #include <iostream>
@@ -122,7 +122,7 @@ UTF-8 validation of string values
 
 The BSON specification requires `string` values (type `0x02`) to be valid UTF-8. This library validates the bytes of every such string at decode time and rejects ill-formed UTF-8 with a [`parse_error.113`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113) exception (or, with `allow_exceptions` set to `false`, a discarded value), rather than only failing later when the resulting value is dumped. Element (key) names and `binary` values (type `0x05`) are unaffected and are never validated, since they are read byte-by-byte as a C string, or are not required to hold text, respectively.
 
-Example
+Example: deserialize a JSON value from BSON
 
 ```
 #include <iostream>

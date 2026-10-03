@@ -25,7 +25,7 @@ a pair consisting of an iterator to the inserted element, or the already-existin
 
 ## Exception safety
 
-Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+Strong guarantee: if an exception is thrown, there are no changes to any JSON value. As an exception, a `null` value is converted to an empty object before the element is added and keeps that type if adding the element throws.
 
 ## Exceptions
 

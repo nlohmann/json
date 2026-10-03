@@ -37,6 +37,11 @@ This is a string.
 true
 ```
 
+## See also
+
+- [basic_json::string_t](https://json.nlohmann.me/api/basic_json/string_t/index.md) type used to store JSON strings
+- [to_string](https://json.nlohmann.me/api/json_pointer/to_string/index.md) return a string representation of the JSON pointer
+
 ## Version history
 
 - Added in version 3.11.0.

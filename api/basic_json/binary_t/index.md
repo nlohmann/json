@@ -42,15 +42,15 @@ the binary readers additionally require `resize()` and `operator[]`. See
 
 ## Notes
 
-#### Default type
+### Default type
 
 The default values for `BinaryType` is `std::vector<std::uint8_t>`.
 
-#### Supported byte types
+### Supported byte types
 
 `std::vector<std::uint8_t>`, `std::vector<char>`, and `std::vector<std::byte>` are supported. Regardless of which of them is configured, [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) writes the bytes as the numbers 0..255.
 
-#### Custom BinaryType behavior
+### Custom BinaryType behavior
 
 When a custom `BinaryType` is configured (other than the default `std::vector<std::uint8_t>`), you can assign values of that type directly to a `basic_json` instance, and they will automatically be recognized as binary values rather than arrays:
 
@@ -79,11 +79,11 @@ assert(extracted == data);
 
 This automatic type detection is a convenience feature that only applies to custom (non-default) `BinaryType` configurations. The default `nlohmann::json` continues to treat `std::vector<std::uint8_t>` as arrays for backward compatibility.
 
-#### Storage
+### Storage
 
 Binary Arrays are stored as pointers in a `basic_json` type. That is, for any access to array values, a pointer of the type `binary_t*` must be dereferenced.
 
-#### Notes on subtypes
+### Notes on subtypes
 
 - CBOR
 
@@ -131,4 +131,4 @@ true
 ## Version history
 
 - Added in version 3.8.0. Changed the type of subtype to `std::uint64_t` in version 3.10.0.
-- Fixed [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md), [`std::hash`](https://json.nlohmann.me/api/basic_json/std_hash/index.md), and [`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) for byte types that are not integers (e.g., `std::byte`) in version 3.13.0. `dump` now writes the bytes of a signed byte type (e.g., `char`) as 0..255 rather than as negative numbers.
+- Fixed [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md), [`std::hash`](https://json.nlohmann.me/api/basic_json/std_hash/index.md), and [`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) for byte types that are not integers (e.g., `std::byte`) in version 3.13.0 unreleased. `dump` now writes the bytes of a signed byte type (e.g., `char`) as 0..255 rather than as negative numbers.

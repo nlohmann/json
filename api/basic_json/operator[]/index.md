@@ -104,6 +104,14 @@ The following cases apply to the **const** overloads; the non-const overloads in
 
    When the JSON pointer traverses intermediate levels that don't exist at all yet (not just a missing leaf), each missing level is created as an array or an object depending on whether the corresponding pointer token parses as a non-negative integer: a numeric token creates an array, a non-numeric token creates an object. For example, on an initially `null` value, `/foo/0/0/0` creates nested arrays, while `/foo/one/one/one` creates nested objects. This is not specified by the JSON Pointer RFC; it is this library's own, intentional disambiguation rule. See also [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md).
 
+Deprecation
+
+Overload (4) also accepts a [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md) whose template argument is a `basic_json` specialization (e.g., `nlohmann::json_pointer<nlohmann::json>`) instead of a string type. This is deprecated since version 3.11.0 and will be removed in a future major version; use `basic_json::json_pointer` (for `json`, `nlohmann::json_pointer<std::string>`) instead.
+
+You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated function.
+
+See the [migration guide](https://json.nlohmann.me/integration/migration_guide/#json-pointers) for how to update existing code.
+
 ## Examples
 
 Example: (1) access specified array element
@@ -479,7 +487,7 @@ Output:
 
 ## Version history
 
-1. Added in version 1.0.0. Fixed in version 3.13.0 to throw `std::length_error` instead of emptying the array and accessing it out of bounds when `idx` equals the maximum value of `size_type`.
+1. Added in version 1.0.0. Fixed in version 3.13.0 unreleased to throw `std::length_error` instead of emptying the array and accessing it out of bounds when `idx` equals the maximum value of `size_type`.
 1. Added in version 1.0.0. Added overloads for `T* key` in version 1.1.0. Removed overloads for `T* key` (replaced by 3) in version 3.11.0.
-1. Added in version 3.11.0. Fixed in version 3.13.0 to consistently accept `std::string_view`-convertible keys, as already supported by [`at`](https://json.nlohmann.me/api/basic_json/at/index.md), [`value`](https://json.nlohmann.me/api/basic_json/value/index.md), [`find`](https://json.nlohmann.me/api/basic_json/find/index.md), and other lookup functions.
+1. Added in version 3.11.0. Fixed in version 3.13.0 unreleased to consistently accept `std::string_view`-convertible keys, as already supported by [`at`](https://json.nlohmann.me/api/basic_json/at/index.md), [`value`](https://json.nlohmann.me/api/basic_json/value/index.md), [`find`](https://json.nlohmann.me/api/basic_json/find/index.md), and other lookup functions.
 1. Added in version 2.0.0.

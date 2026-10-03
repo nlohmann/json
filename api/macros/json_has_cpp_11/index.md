@@ -33,8 +33,15 @@ The code below forces the library to use the C++14 standard:
 ...
 ```
 
+## See also
+
+- [JSON_HAS_FILESYSTEM / JSON_HAS_EXPERIMENTAL_FILESYSTEM](https://json.nlohmann.me/api/macros/json_has_filesystem/index.md) - control `std::filesystem` support
+- [JSON_HAS_RANGES](https://json.nlohmann.me/api/macros/json_has_ranges/index.md) - control `std::ranges` support
+- [JSON_HAS_THREE_WAY_COMPARISON](https://json.nlohmann.me/api/macros/json_has_three_way_comparison/index.md) - control 3-way comparison support
+- [JSON_HAS_STD_FORMAT](https://json.nlohmann.me/api/macros/json_has_std_format/index.md) - control `std::format`/`std::formatter` support
+
 ## Version history
 
 - Added in version 3.10.5.
 - Added `JSON_HAS_CPP_23` in version 3.12.0.
-- Added `JSON_HAS_CPP_26` in version 3.13.0.
+- Added `JSON_HAS_CPP_26` in version 3.13.0 unreleased.

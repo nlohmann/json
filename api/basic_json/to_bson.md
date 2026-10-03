@@ -54,7 +54,7 @@ pass before anything is written.
 
 ## Examples
 
-??? example
+??? example "Example: serialize a JSON value to BSON"
 
     The example shows the serialization of a JSON value to a byte vector in BSON format.
      
@@ -66,6 +66,21 @@ pass before anything is written.
     
     ```json
     --8<-- "examples/to_bson.output"
+    ```
+
+??? example "Example: out_of_range.409 exception"
+
+    The example shows how serializing a JSON object whose key contains a null byte (U+0000) throws an exception, because
+    BSON keys are null-terminated C strings and cannot contain U+0000 themselves.
+
+    ```cpp
+    --8<-- "examples/to_bson__exception.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/to_bson__exception.output"
     ```
 
 ## See also
@@ -80,5 +95,6 @@ pass before anything is written.
 ## Version history
 
 - Added in version 3.4.0.
+- Throws `out_of_range.412` and `out_of_range.415` since version 3.13.0.
 - Linear in the size of `j`, and no longer limited by the call stack for deeply nested values, since version 3.13.0.
 - `out_of_range.415` is now detected before anything is written, like the other exceptions above, since version 3.13.0.

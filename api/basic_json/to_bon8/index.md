@@ -42,7 +42,7 @@ Linear in the size of the JSON value `j`.
 
 ## Examples
 
-Example
+Example: serialize a JSON value to BON8
 
 The example shows the serialization of a JSON value to a byte vector in BON8 format.
 
@@ -77,6 +77,41 @@ Output:
 0x89 0x63 0x6f 0x6d 0x70 0x61 0x63 0x74 0xf9 0x66 0x6f 0x72 0x6d 0x61 0x74 0xff 0x42 0x4f 0x4e 0x38 0xff 0x73 0x63 0x68 0x65 0x6d 0x61 0x90
 ```
 
+Example: type_error.316 exception
+
+The example shows how serializing a string that is not valid UTF-8 throws an exception, because BON8 stores strings as UTF-8.
+
+```
+#include <iostream>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
+int main()
+{
+    // create a JSON string that is not valid UTF-8
+    std::string invalid_utf8;
+    invalid_utf8.push_back(static_cast<char>(0xFF));
+    json j = invalid_utf8;
+
+    // exception type_error.316
+    try
+    {
+        json::to_bon8(j);
+    }
+    catch (const json::type_error& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+}
+```
+
+Output:
+
+```
+[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF
+```
+
 ## See also
 
 - [from_bon8](https://json.nlohmann.me/api/basic_json/from_bon8/index.md) create a JSON value from an input in BON8 format
@@ -88,4 +123,4 @@ Output:
 
 ## Version history
 
-- Added in version 3.13.0.
+- Added in version 3.13.0 unreleased.

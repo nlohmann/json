@@ -19,8 +19,8 @@ This type extends the template parameter `BinaryType` provided to [`basic_json`]
 ## Member functions
 
 - [(constructor)](https://json.nlohmann.me/api/byte_container_with_subtype/byte_container_with_subtype/index.md)
-- **operator==** - comparison: equal
-- **operator!=** - comparison: not equal
+- [**operator==**](https://json.nlohmann.me/api/byte_container_with_subtype/operator_eq/index.md) - comparison: equal
+- [**operator!=**](https://json.nlohmann.me/api/byte_container_with_subtype/operator_ne/index.md) - comparison: not equal
 - [**set_subtype**](https://json.nlohmann.me/api/byte_container_with_subtype/set_subtype/index.md) - sets the binary subtype
 - [**subtype**](https://json.nlohmann.me/api/byte_container_with_subtype/subtype/index.md) - return the binary subtype
 - [**has_subtype**](https://json.nlohmann.me/api/byte_container_with_subtype/has_subtype/index.md) - return whether the value has a subtype

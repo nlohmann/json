@@ -39,6 +39,11 @@ one < two : true
 three < four : false
 ```
 
+## See also
+
+- [object_comparator_t](https://json.nlohmann.me/api/basic_json/object_comparator_t/index.md) the comparator actually used by `object_t`
+- [object_t](https://json.nlohmann.me/api/basic_json/object_t/index.md) the type used to store JSON objects
+
 ## Version history
 
 - Added in version 3.11.0.

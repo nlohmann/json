@@ -55,7 +55,7 @@ with `allow_exceptions` set to `#!cpp false`: a parse error then yields a discar
 
 ## Examples
 
-??? example
+??? example "Example: `is_discarded()` for ordinary JSON values"
 
     The following code exemplifies `is_discarded()` for all JSON types.
     
@@ -67,6 +67,22 @@ with `allow_exceptions` set to `#!cpp false`: a parse error then yields a discar
     
     ```json
     --8<-- "examples/is_discarded.output"
+    ```
+
+??? example "Example: discarded values from parsing"
+
+    The following code shows the two situations in which a discarded value can be observed: parsing invalid JSON with
+    `allow_exceptions` set to `#!cpp false`, and a parser callback that discards the top-level value (which is replaced
+    by `#!json null` and therefore does *not* remain discarded).
+
+    ```cpp
+    --8<-- "examples/is_discarded__parse.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/is_discarded__parse.output"
     ```
 
 ## Version history

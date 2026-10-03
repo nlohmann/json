@@ -38,7 +38,7 @@ Important notes
 
 ## Examples
 
-Example 1: Basic usage
+Example: Basic usage
 
 The example shows how `NLOHMANN_JSON_SERIALIZE_ENUM_STRICT` can be used to serialize/deserialize both classical enums and C++11 enum classes:
 
@@ -104,7 +104,7 @@ ns::TS_STOPPED -> "stopped", ns::Color::red -> "red"
 "running" -> 1, "blue" -> 2
 ```
 
-Example 2: Multiple conversions for one enumerator
+Example: Multiple conversions for one enumerator
 
 The example shows how to use multiple conversions for a single enumerator. In the example, `Color::red` will always be *serialized* to `"red"`, because the first occurring conversion. The second conversion, however, offers an alternative *deserialization* from `"rot"` to `Color::red`.
 
@@ -152,7 +152,7 @@ Output:
 "red" -> 0
 ```
 
-Example 3: exceptions on invalid serialization
+Example: exceptions on invalid serialization
 
 The example shows how an invalid serialization causes an exception to be thrown. In the example, Color::unknown is not defined in the mapping used to call `NLOHMANN_JSON_SERIALIZE_ENUM_STRICT` so causes an exception when used to serialize. Similarly, "what" does not refer to an enum value so also causes an exception when deserialization is attempted.
 
@@ -227,4 +227,4 @@ deserialization failed: [json.exception.out_of_range.410] enum value out of rang
 
 ## Version history
 
-Added in version 3.13.0.
+Added in version 3.13.0 unreleased.

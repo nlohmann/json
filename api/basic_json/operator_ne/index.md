@@ -9,17 +9,9 @@ bool operator!=(const_reference lhs, const ScalarType rhs) noexcept;  // (2)
 
 template<typename ScalarType>
 bool operator!=(ScalarType lhs, const const_reference rhs) noexcept;  // (2)
-
-// since C++20
-class basic_json {
-    bool operator!=(const_reference rhs) const noexcept;              // (1)
-
-    template<typename ScalarType>
-    bool operator!=(ScalarType rhs) const noexcept;                   // (2)
-};
 ```
 
-1. Compares two JSON values for inequality. Returns `!(lhs == rhs)` (until C++20) or `!(*this == rhs)` (since C++20).
+1. Compares two JSON values for inequality. Returns `!(lhs == rhs)`.
 
    - This means the comparison is simply the logical negation of `operator==`, including for special values like `NaN` and `discarded`.
 
@@ -49,6 +41,10 @@ Linear.
 
 ## Notes
 
+C++20
+
+Since C++20, `basic_json` declares no `operator!=`. The compiler rewrites `a != b` as `!(a == b)` using [`operator==`](https://json.nlohmann.me/api/basic_json/operator_eq/index.md), so the result is the same as described above.
+
 Comparing `NaN` and `discarded`
 
 Since `operator!=` is defined as `!(a == b)`, the behavior for special values follows that of `operator==`:
@@ -58,7 +54,7 @@ Since `operator!=` is defined as `!(a == b)`, the behavior for special values fo
 
 ## Examples
 
-Example
+Example: (1) compare JSON values
 
 The example demonstrates comparing several JSON types.
 
@@ -98,7 +94,7 @@ Output:
 "foo" != "bar" true
 ```
 
-Example
+Example: (2) compare JSON values with `nullptr`
 
 The example demonstrates comparing several JSON types against the null pointer (JSON `null`).
 
@@ -137,7 +133,12 @@ Output:
 null != nullptr false
 ```
 
+## See also
+
+- [operator==](https://json.nlohmann.me/api/basic_json/operator_eq/index.md) comparison: equal
+- [operator\<=>](https://json.nlohmann.me/api/basic_json/operator_spaceship/index.md) comparison: 3-way (C++20)
+
 ## Version history
 
-1. Added in version 1.0.0. Added C++20 member functions in version 3.11.0. Changed in version 3.13.0 to remove special-casing for `NaN` and `discarded` values; `operator!=` now consistently means `!(a == b)`.
-1. Added in version 1.0.0. Added C++20 member functions in version 3.11.0. Changed in version 3.13.0 to remove special-casing for `NaN` and `discarded` values; `operator!=` now consistently means `!(a == b)`.
+1. Added in version 1.0.0. Added a C++20 member function in version 3.11.0. Changed in version 3.13.0 unreleased to remove special-casing for `NaN` and `discarded` values; `operator!=` now consistently means `!(a == b)`. Removed the C++20 member function in version 3.13.0 unreleased; since C++20, the compiler rewrites `a != b` using `operator==`.
+1. Added in version 1.0.0. Changed in version 3.13.0 unreleased to remove special-casing for `NaN` and `discarded` values; `operator!=` now consistently means `!(a == b)`. Since C++20, the compiler rewrites `a != b` using `operator==`.

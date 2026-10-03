@@ -13,7 +13,7 @@ Requirements are not checked
 
 Three requirements are checked with a `static_assert`: the array iterator category, the width of [`BinaryType`](#binarytype)'s `value_type`, and [`NumberUnsignedType`](#numberintegertype-and-numberunsignedtype) being at least as wide as [`NumberIntegerType`](#numberintegertype-and-numberunsignedtype). The rest are not diagnosed with dedicated error messages, and violating most of them results in a compiler error somewhere inside the library. Four violations are not caught at compile time at all:
 
-- A [`StringType`](#stringtype) whose `data()` is not null-terminated compiles and silently misparses numbers, because the lexer hands the buffer to `std::strtoull`/`std::strtoll`/`std::strtod`.
+- A [`StringType`](#stringtype) whose `data()` is not null-terminated compiles and can silently misparse floating-point numbers, because the lexer may hand the buffer to `std::strtod`, which reads up to the terminating null character.
 - A stateful [`AllocatorType`](#allocatortype) compiles and silently ignores its state: allocation, deallocation, and [`get_allocator()`](https://json.nlohmann.me/api/basic_json/get_allocator/index.md) each use a different default-constructed instance.
 - The two [cross-specialization conversions](#cross-specialization-conversions) below. These abort on an assertion in a normal build, and only fail silently under `NDEBUG`.
 
@@ -287,7 +287,7 @@ class custom_object_type
 };
 ```
 
-Compiling and using it
+Example: use the custom `ObjectType`
 
 ```
 #include <iostream>
@@ -549,7 +549,7 @@ class custom_array_type
 };
 ```
 
-Compiling and using it
+Example: use the custom `ArrayType`
 
 ```
 #include <iostream>
@@ -608,10 +608,10 @@ true
 
 ### Always required
 
-- A member type `value_type` that is one byte wide and `char`-compatible. The library stores and processes UTF-8 encoded `char` data and hands `data()` to `std::strtoull`/`std::strtoll`. `std::wstring`, `std::u16string`, and `std::u32string` are **not** valid choices; see the FAQ on [wide string handling](https://json.nlohmann.me/home/faq/#wide-string-handling).
+- A member type `value_type` that is one byte wide and `char`-compatible. The library stores and processes UTF-8 encoded `char` data and passes `data()` to functions that take a `const char*`, such as `std::strtod`. `std::wstring`, `std::u16string`, and `std::u32string` are **not** valid choices; see the FAQ on [wide string handling](https://json.nlohmann.me/home/faq/#wide-string-handling).
 - Constructors: default, copy, move, from `const char*` (which must not be `explicit`), from `(const char*, size_type)`, and from `(size_type, char)`; and copy or move assignment.
 - Member functions `size()`, `clear()`, `resize(n, c)`, `data()`, `push_back(char)`, and `operator[]` (const and non-const, returning references). `c_str()` and `back()` are **not** required.
-- `data()` must return a pointer to a contiguous, **null-terminated** buffer -- the parser hands it to `std::strtoull`. A type whose `data()` is not null-terminated does not fail to compile; it silently misparses numbers.
+- `data()` must return a pointer to a contiguous, **null-terminated** buffer -- the parser may hand it to `std::strtod`, which reads up to the null character. A type whose `data()` is not null-terminated does not fail to compile; it can silently misparse floating-point numbers.
 - `append(const char*, size_type)`, used by [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md), and `append(const StringType&)`, used by the CBOR reader for indefinite-length strings. The library's internal string concatenation additionally has to append a `char` and a `const char*`; for each it selects between `append(arg)`, `operator+=`, `append(first, last)`, and `append(data, size)`.
 - The comparison operator `==` against another `StringType`, and `<` for use as a key of the chosen [`ObjectType`](#objecttype) (with the default comparator, `std::less<>` must be able to compare two `StringType` values, and a `StringType` with the key types used for lookup). `!=` is never applied to a `StringType`, and `==` against `const char*` is resolved by the implicit `const char*` constructor.
 
@@ -636,6 +636,7 @@ true
 | [`to_bson`](https://json.nlohmann.me/api/basic_json/to_bson/index.md)                                                                                                                                        | `find(value_type)` and `npos`                                                                                                                                              |
 | [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) from a `string_t`                                                                                                                          | the input adapters must accept it; otherwise pass a character range                                                                                                        |
 | `operator<<(std::ostream&, const json_pointer&)`                                                                                                                                                             | streamability to `std::ostream`                                                                                                                                            |
+| [`to_string`](https://json.nlohmann.me/api/basic_json/to_string/index.md)                                                                                                                                    | conversion of `StringType` to `std::string` (the function returns a `std::string`)                                                                                         |
 | exception messages                                                                                                                                                                                           | `data()` and `size()`, or `begin()` and `end()`                                                                                                                            |
 
 ### Compatible types
@@ -677,6 +678,7 @@ Reference implementation
 ```
 #pragma once
 
+#include <cstddef>
 #include <ostream>
 #include <string>
 
@@ -685,10 +687,10 @@ Reference implementation
 // and nothing more of std::string's interface.
 //
 // Covers the "Always required" members, the extras needed for the binary
-// formats, and the extras needed for JSON Pointer / flatten / unflatten /
-// diff. Extending it further (e.g. for std::hash<basic_json> or to_bson) is
-// a matter of adding the extra members listed in the "Required for other
-// functionality" table.
+// formats, JSON Pointer / flatten / unflatten, and the int_to_string overload
+// needed for diff and items. Extending it further (e.g. for
+// std::hash<basic_json> or to_bson) is a matter of adding the extra members
+// listed in the "Required for other functionality" table.
 //
 // See https://json.nlohmann.me/features/types/template_parameters/#stringtype
 class custom_string_type
@@ -770,6 +772,11 @@ class custom_string_type
         data_.append(other.data_);
         return *this;
     }
+    custom_string_type& operator+=(char c)
+    {
+        data_.push_back(c);
+        return *this;
+    }
 
     size_type find_first_of(char c, size_type pos = 0) const
     {
@@ -793,6 +800,12 @@ class custom_string_type
         return data_.end();
     }
 
+    // found by ADL; converts array indices to keys in diff and items
+    friend void int_to_string(custom_string_type& target, std::size_t value)
+    {
+        target.data_ = std::to_string(value);
+    }
+
     friend bool operator==(const custom_string_type& lhs, const custom_string_type& rhs)
     {
         return lhs.data_ == rhs.data_;
@@ -811,7 +824,7 @@ class custom_string_type
 };
 ```
 
-Compiling and using it
+Example: use the custom `StringType`
 
 ```
 #include <iostream>
@@ -909,7 +922,7 @@ The number types influence what the parser accepts: an integer literal that does
 
 `NumberFloatType` must be one of `float`, `double`, or `long double`:
 
-- The [parser](https://json.nlohmann.me/features/parsing/index.md) converts number literals with `std::strtof`, `std::strtod`, or `std::strtold`; the library provides overloads for exactly these three types.
+- The [parser](https://json.nlohmann.me/features/parsing/index.md) converts number literals with `std::from_chars` or, as a fallback, with `std::strtof`, `std::strtod`, or `std::strtold`; the library provides overloads for exactly these three types.
 - [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) falls back to `std::snprintf` with the `%g` and `%Lg` conversion specifiers, for which the library likewise provides only `double` and `long double` overloads (`float` is promoted to `double`).
 
 If `std::numeric_limits<NumberFloatType>` describes an IEEE 754 binary32 or binary64 number, `dump` uses the Grisu2 algorithm, which produces the shortest representation that round-trips. Otherwise the `snprintf` fallback with `max_digits10` digits is used.
@@ -1112,7 +1125,7 @@ class custom_binary_type
 };
 ```
 
-Compiling and using it
+Example: use the custom `BinaryType`
 
 ```
 #include <cstdint>

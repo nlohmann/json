@@ -161,7 +161,7 @@ Parsed string:
 
 The output shows the start/end positions of all the objects and fields in the JSON string.
 
-Example 2: using only diagnostic positions in exceptions
+Example: using only diagnostic positions in exceptions
 
 ```
 #include <iostream>
@@ -206,7 +206,7 @@ Output:
 The output shows the exception with start/end positions only.
 ```
 
-Example 3: using extended diagnostics with positions enabled in exceptions
+Example: using extended diagnostics with positions enabled in exceptions
 
 ```
 #include <iostream>

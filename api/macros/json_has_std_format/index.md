@@ -31,6 +31,10 @@ The code below forces the library to disable support for `std::format`, even if 
 ...
 ```
 
+## See also
+
+- [`std::formatter<basic_json>`](https://json.nlohmann.me/api/basic_json/std_formatter/index.md) - format JSON values with `std::format`
+
 ## Version history
 
-- Added in version 3.13.0.
+- Added in version 3.13.0 unreleased.

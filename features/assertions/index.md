@@ -20,7 +20,7 @@ If you are not sure whether an element in an object exists, use checked access w
 
 See also the documentation on [element access](https://json.nlohmann.me/features/element_access/index.md).
 
-Example 1: Missing object key
+Example: missing object key
 
 The following code will trigger an assertion at runtime:
 
@@ -46,7 +46,7 @@ Assertion failed: (m_value.object->find(key) != m_value.object->end()), function
 
 Constructing a JSON value from an iterator range (see [constructor](https://json.nlohmann.me/api/basic_json/basic_json/index.md)) with an uninitialized iterator is undefined behavior and yields a runtime assertion.
 
-Example 2: Uninitialized iterator range
+Example: uninitialized iterator range
 
 The following code will trigger an assertion at runtime:
 
@@ -72,7 +72,7 @@ Assertion failed: (m_object != nullptr), function operator++, file iter_impl.hpp
 
 Any operation on uninitialized iterators (i.e., iterators that are not associated with any JSON value) is undefined behavior and yields a runtime assertion.
 
-Example 3: Uninitialized iterator
+Example: uninitialized iterator
 
 The following code will trigger an assertion at runtime:
 
@@ -100,7 +100,7 @@ Assertion failed: (m_object != nullptr), function operator++, file iter_impl.hpp
 
 Reading from a null `FILE` or `char` pointer in C++ is undefined behavior. Until version 3.12.0, this library asserted that the pointer was not `nullptr` using a runtime assertion. If assertions were disabled, this would result in undefined behavior. Since version 3.12.0, this library checks for `nullptr` and throws a [`parse_error.101`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error101) to prevent the undefined behavior.
 
-Example 4: Reading from null pointer
+Example: reading from null pointer
 
 The following code will trigger an assertion at runtime:
 

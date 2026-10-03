@@ -51,6 +51,10 @@ hash({"hello": "world"}) = 4469488738203676328
 
 Note the output is platform-dependent.
 
+## See also
+
+- [operator==](https://json.nlohmann.me/api/basic_json/operator_eq/index.md) compares two JSON values for equality, consistent with equal hash values
+
 ## Version history
 
 - Added in version 1.0.0.

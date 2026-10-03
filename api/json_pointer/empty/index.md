@@ -56,6 +56,12 @@ Output:
 "/foo/0": false
 ```
 
+## See also
+
+- [front](https://json.nlohmann.me/api/json_pointer/front/index.md) return first reference token
+- [back](https://json.nlohmann.me/api/json_pointer/back/index.md) return last reference token
+- [to_string](https://json.nlohmann.me/api/json_pointer/to_string/index.md) return a string representation of the JSON pointer
+
 ## Version history
 
 Added in version 3.6.0.

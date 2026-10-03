@@ -44,7 +44,7 @@ Linear in the size of the JSON value `j`. The length prefixes of all nested docu
 
 ## Examples
 
-Example
+Example: serialize a JSON value to BSON
 
 The example shows the serialization of a JSON value to a byte vector in BSON format.
 
@@ -79,6 +79,42 @@ Output:
 0x1b 0x00 0x00 0x00 0x08 0x63 0x6f 0x6d 0x70 0x61 0x63 0x74 0x00 0x01 0x10 0x73 0x63 0x68 0x65 0x6d 0x61 0x00 0x00 0x00 0x00 0x00 0x00
 ```
 
+Example: out_of_range.409 exception
+
+The example shows how serializing a JSON object whose key contains a null byte (U+0000) throws an exception, because BSON keys are null-terminated C strings and cannot contain U+0000 themselves.
+
+```
+#include <iostream>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
+int main()
+{
+    // create a JSON object whose key contains a null byte (U+0000)
+    std::string key = "ab";
+    key.push_back('\0');
+    key.push_back('c');
+    json j = {{key, 1}};
+
+    // exception out_of_range.409
+    try
+    {
+        json::to_bson(j);
+    }
+    catch (const json::out_of_range& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+}
+```
+
+Output:
+
+```
+[json.exception.out_of_range.409] BSON key cannot contain code point U+0000 (at byte 2)
+```
+
 ## See also
 
 - [from_bson](https://json.nlohmann.me/api/basic_json/from_bson/index.md) create a JSON value from an input in BSON format
@@ -91,5 +127,6 @@ Output:
 ## Version history
 
 - Added in version 3.4.0.
-- Linear in the size of `j`, and no longer limited by the call stack for deeply nested values, since version 3.13.0.
-- `out_of_range.415` is now detected before anything is written, like the other exceptions above, since version 3.13.0.
+- Throws `out_of_range.412` and `out_of_range.415` since version 3.13.0 unreleased.
+- Linear in the size of `j`, and no longer limited by the call stack for deeply nested values, since version 3.13.0 unreleased.
+- `out_of_range.415` is now detected before anything is written, like the other exceptions above, since version 3.13.0 unreleased.

@@ -57,7 +57,7 @@ This behavior can also be controlled with the CMake option [`JSON_DisableTupleRe
 
 ## Examples
 
-Default behavior (macro not defined)
+Example: default behavior (macro not defined)
 
 ```
 #include <nlohmann/json.hpp>
@@ -73,7 +73,7 @@ int main()
 }
 ```
 
-Conversion disabled (macro defined to 1)
+Example: conversion disabled (macro defined to 1)
 
 ```
 #define JSON_DISABLE_TUPLE_REFERENCE_CONVERSION 1
@@ -100,4 +100,4 @@ int main()
 
 ## Version history
 
-- Added in version 3.13.0.
+- Added in version 3.13.0 unreleased.

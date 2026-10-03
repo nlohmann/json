@@ -33,6 +33,10 @@ The code below forces the library not to use `thread_local` storage.
 ...
 ```
 
+## See also
+
+- [FAQ: Thread safety](https://json.nlohmann.me/home/faq/#thread-safety)
+
 ## Version history
 
-- Added in version 3.12.1.
+- Added in version 3.13.0 unreleased.

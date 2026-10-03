@@ -20,7 +20,7 @@ To store objects in C++, a type is defined by the template parameters explained 
 
 ## Notes
 
-#### Default type
+### Default type
 
 With the default values for `ArrayType` (`std::vector`) and `AllocatorType` (`std::allocator`), the default value for `array_t` is:
 
@@ -31,7 +31,7 @@ std::vector<
 >
 ```
 
-#### Limits
+### Limits
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) specifies:
 
@@ -39,7 +39,7 @@ std::vector<
 
 In this class, the array's limit of nesting is not explicitly constrained. However, a maximum depth of nesting may be introduced by the compiler or runtime environment. A theoretical limit can be queried by calling the [`max_size`](https://json.nlohmann.me/api/basic_json/max_size/index.md) function of a JSON array.
 
-#### Storage
+### Storage
 
 Arrays are stored as pointers in a `basic_json` type. That is, for any access to array values, a pointer of type `array_t*` must be dereferenced.
 
@@ -68,7 +68,14 @@ Output:
 true
 ```
 
+## See also
+
+- [object_t](https://json.nlohmann.me/api/basic_json/object_t/index.md) the type used to store JSON objects
+- [binary_t](https://json.nlohmann.me/api/basic_json/binary_t/index.md) the type used to store binary values
+- [is_array](https://json.nlohmann.me/api/basic_json/is_array/index.md) checks whether the JSON value is an array
+- [max_size](https://json.nlohmann.me/api/basic_json/max_size/index.md) returns the maximum possible number of elements
+
 ## Version history
 
 - Added in version 1.0.0.
-- Made `capacity()` optional, so that array types such as `std::deque` can be used, in version 3.13.0.
+- Made `capacity()` optional, so that array types such as `std::deque` can be used, in version 3.13.0 unreleased.

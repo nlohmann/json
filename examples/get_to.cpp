@@ -1,5 +1,5 @@
 #include <iostream>
-#include <unordered_map>
+#include <map>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -28,7 +28,7 @@ int main()
     int v5;
     std::string v6;
     std::vector<short> v7;
-    std::unordered_map<std::string, json> v8;
+    std::map<std::string, json> v8;
 
     // use explicit conversions
     json_types["boolean"].get_to(v1);

@@ -25,7 +25,7 @@ To store objects in C++, a type is defined by the template parameters described 
 
 ## Notes
 
-#### Default type
+### Default type
 
 With the default values for `ObjectType` (`std::map`), `StringType` (`std::string`), and `AllocatorType` (`std::allocator`), the default value for `object_t` is:
 
@@ -49,7 +49,7 @@ std::map<
 
 See [`default_object_comparator_t`](https://json.nlohmann.me/api/basic_json/default_object_comparator_t/index.md) for more information.
 
-#### Behavior
+### Behavior
 
 The choice of `object_t` influences the behavior of the JSON class. With the default type, objects have the following behavior:
 
@@ -58,7 +58,7 @@ The choice of `object_t` influences the behavior of the JSON class. With the def
 - Internally, name/value pairs are stored in lexicographical order of the names. Objects will also be serialized (see [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md)) in this order. For instance, `{"b": 1, "a": 2}` and `{"a": 2, "b": 1}` will be stored and serialized as `{"a": 2, "b": 1}`.
 - When comparing objects, the order of the name/value pairs is irrelevant. This makes objects interoperable in the sense that they will not be affected by these differences. For instance, `{"b": 1, "a": 2}` and `{"a": 2, "b": 1}` will be treated as equal.
 
-#### Limits
+### Limits
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) specifies:
 
@@ -66,17 +66,17 @@ The choice of `object_t` influences the behavior of the JSON class. With the def
 
 In this class, the object's limit of nesting is not explicitly constrained. However, a maximum depth of nesting may be introduced by the compiler or runtime environment. A theoretical limit can be queried by calling the [`max_size`](https://json.nlohmann.me/api/basic_json/max_size/index.md) function of a JSON object.
 
-#### Storage
+### Storage
 
 Objects are stored as pointers in a `basic_json` type. That is, for any access to object values, a pointer of type `object_t*` must be dereferenced.
 
-#### Object key order
+### Object key order
 
 The order name/value pairs are added to the object are *not* preserved by the library. Therefore, iterating an object may return name/value pairs in a different order than they were originally stored. In fact, keys will be traversed in alphabetical order as `std::map` with `std::less` is used by default. Please note this behavior conforms to [RFC 8259](https://tools.ietf.org/html/rfc8259), because any order implements the specified "unordered" nature of JSON objects.
 
-#### Cross-`basic_json` conversion requirements
+### Cross-`basic_json` conversion requirements
 
-When converting an object from one `basic_json` specialization to another via the [converting constructor](https://json.nlohmann.me/api/basic_json/basic_json/#overload-4), the target `object_t`'s `key_type` must be directly constructible from the source `basic_json`'s `string_t` type (or more generally, from the source object's key type). If this requirement is not met, the conversion does not fail; instead, the object is silently converted as an array of key-value pairs, which is incorrect. See [issue #3425](https://github.com/nlohmann/json/issues/3425) for details and an example.
+When converting an object from one `basic_json` specialization to another via the [converting constructor](https://json.nlohmann.me/api/basic_json/basic_json/index.md) (overload 4), the target `object_t`'s `key_type` must be directly constructible from the source `basic_json`'s `string_t` type (or more generally, from the source object's key type). If this requirement is not met, the conversion does not fail; instead, the object is silently converted as an array of key-value pairs, which is incorrect. See [issue #3425](https://github.com/nlohmann/json/issues/3425) for details and an example.
 
 ## Examples
 
@@ -103,7 +103,14 @@ Output:
 true
 ```
 
+## See also
+
+- [array_t](https://json.nlohmann.me/api/basic_json/array_t/index.md) the type used to store JSON arrays
+- [string_t](https://json.nlohmann.me/api/basic_json/string_t/index.md) the type used to store JSON strings
+- [object_comparator_t](https://json.nlohmann.me/api/basic_json/object_comparator_t/index.md) the comparator used to order object keys
+- [Object Order](https://json.nlohmann.me/features/object_order/index.md) - the article on object key ordering
+
 ## Version history
 
 - Added in version 1.0.0.
-- Allowed object types whose `erase(iterator)` returns `void` in version 3.13.0.
+- Allowed object types whose `erase(iterator)` returns `void` in version 3.13.0 unreleased.

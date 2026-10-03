@@ -196,6 +196,12 @@ parse_error(position=460, last_token=12.723374634<U+000A>        }<U+000A>    }]
 result: false
 ```
 
+## See also
+
+- [number_integer](https://json.nlohmann.me/api/json_sax/number_integer/index.md) - an integer number was read
+- [number_float](https://json.nlohmann.me/api/json_sax/number_float/index.md) - a floating-point number was read
+- [sax_parse](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - SAX parser
+
 ## Version history
 
 - Added in version 3.2.0.

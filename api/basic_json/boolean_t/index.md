@@ -16,11 +16,11 @@ To store boolean values in C++, a type is defined by the template parameter `Boo
 
 ## Notes
 
-#### Default type
+### Default type
 
 With the default values for `BooleanType` (`bool`), the default value for `boolean_t` is `bool`.
 
-#### Storage
+### Storage
 
 Boolean values are stored directly inside a `basic_json` type.
 
@@ -48,6 +48,10 @@ Output:
 ```
 true
 ```
+
+## See also
+
+- [is_boolean](https://json.nlohmann.me/api/basic_json/is_boolean/index.md) checks whether the JSON value is a boolean
 
 ## Version history
 

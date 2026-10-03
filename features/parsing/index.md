@@ -2,6 +2,16 @@
 
 This library can create a JSON value from a wide range of inputs. This page gives an overview of the available parsing functions and how they behave; the linked pages go into more detail.
 
+```
+flowchart LR
+    I["JSON input"] --> P["parse()"]
+    I --> S["sax_parse()"]
+    I --> A["accept()"]
+    P -->|"optional parser callback filters values"| D["basic_json value (DOM)"]
+    S --> H["events delivered to a user SAX handler"]
+    A --> V["bool: is the input valid JSON?"]
+```
+
 ## Input
 
 The [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) function reads a JSON value from an input. The input can be
@@ -55,3 +65,4 @@ When the input is not valid JSON, the `parse` function throws an exception by de
 - [parser callbacks](https://json.nlohmann.me/features/parsing/parser_callbacks/index.md) - influence the parsing by a callback function
 - [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) - implement a custom SAX handler
 - [parsing and exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md) - control error handling
+- [parsing untrusted input](https://json.nlohmann.me/features/parsing/untrusted_input/index.md) - what to consider when parsing input from untrusted sources

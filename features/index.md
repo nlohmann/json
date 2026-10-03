@@ -5,7 +5,7 @@ This section describes the features of the library in detail. If you are new to 
 ## Creating and reading values
 
 - [Creating JSON values](https://json.nlohmann.me/features/creating_values/index.md) — build values from literals, initializer lists, and STL containers, and understand the `{}` vs. `[]` ambiguity.
-- [Parsing](https://json.nlohmann.me/features/parsing/index.md) — read a JSON value from a string, file, or stream, including [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md), [callbacks](https://json.nlohmann.me/features/parsing/parser_callbacks/index.md), the [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md), and [error handling](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md).
+- [Parsing](https://json.nlohmann.me/features/parsing/index.md) — read a JSON value from a string, file, or stream, including [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md), [callbacks](https://json.nlohmann.me/features/parsing/parser_callbacks/index.md), the [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md), [error handling](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md), and [parsing untrusted input](https://json.nlohmann.me/features/parsing/untrusted_input/index.md).
 - [Comments](https://json.nlohmann.me/features/comments/index.md) and [trailing commas](https://json.nlohmann.me/features/trailing_commas/index.md) — opt-in relaxations of the JSON grammar.
 
 ## Accessing and modifying values
@@ -31,7 +31,9 @@ This section describes the features of the library in detail. If you are new to 
 ## How values are stored and configured
 
 - [Types](https://json.nlohmann.me/features/types/index.md) and [number handling](https://json.nlohmann.me/features/types/number_handling/index.md) — how JSON types map to C++ types and how numbers are treated.
+- [Template parameter requirements](https://json.nlohmann.me/features/types/template_parameters/index.md) — what a type passed as one of `basic_json`'s template parameters has to provide.
 - [Object order](https://json.nlohmann.me/features/object_order/index.md) — keep insertion order with [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md).
+- [Performance](https://json.nlohmann.me/features/performance/index.md) — practical advice on parsing, memory use, serialization, and compile times.
 - [Runtime assertions](https://json.nlohmann.me/features/assertions/index.md), [supported macros](https://json.nlohmann.me/features/macros/index.md), the [`nlohmann` namespace](https://json.nlohmann.me/features/namespace/index.md), and [C++ modules](https://json.nlohmann.me/features/modules/index.md) — build-time and runtime configuration.
 
 Looking for a specific function?

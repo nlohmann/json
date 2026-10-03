@@ -192,6 +192,11 @@ parse_error(position=460, last_token=12.723374634<U+000A>        }<U+000A>    }]
 result: false
 ```
 
+## See also
+
+- [sax_parse](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - SAX parser
+- [SAX Interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) - the SAX interface article
+
 ## Version history
 
 - Added in version 3.2.0.

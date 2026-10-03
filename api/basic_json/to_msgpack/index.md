@@ -42,7 +42,7 @@ Linear in the size of the JSON value `j`.
 
 ## Examples
 
-Example
+Example: serialize a JSON value to MessagePack
 
 The example shows the serialization of a JSON value to a byte vector in MessagePack format.
 
@@ -77,6 +77,39 @@ Output:
 0x82 0xa7 0x63 0x6f 0x6d 0x70 0x61 0x63 0x74 0xc3 0xa6 0x73 0x63 0x68 0x65 0x6d 0x61 0x00
 ```
 
+Example: out_of_range.415 exception
+
+The example shows how serializing a binary value whose subtype exceeds 255 throws an exception, because the MessagePack ext type stores the subtype in a single byte.
+
+```
+#include <iostream>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
+int main()
+{
+    // create a JSON value with a binary subtype that exceeds 255
+    json j = json::binary({1, 2, 3}, 300);
+
+    // exception out_of_range.415
+    try
+    {
+        json::to_msgpack(j);
+    }
+    catch (const json::out_of_range& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+}
+```
+
+Output:
+
+```
+[json.exception.out_of_range.415] subtype 300 is too large for the MessagePack ext type (max 255)
+```
+
 ## See also
 
 - [from_msgpack](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md) create a JSON value from an input in MessagePack format
@@ -89,5 +122,5 @@ Output:
 ## Version history
 
 - Added in version 2.0.9.
-- Throws `out_of_range.412` and `out_of_range.415` since version 3.13.0.
-- Fixed in version 3.13.0 to serialize `number_integer_t`/`number_unsigned_t` pairs of different width correctly; before, integers could be serialized with the wrong value if `number_integer_t` was narrower than `number_unsigned_t`.
+- Throws `out_of_range.412` and `out_of_range.415` since version 3.13.0 unreleased.
+- Fixed in version 3.13.0 unreleased to serialize `number_integer_t`/`number_unsigned_t` pairs of different width correctly; before, integers could be serialized with the wrong value if `number_integer_t` was narrower than `number_unsigned_t`.

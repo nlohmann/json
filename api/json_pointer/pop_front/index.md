@@ -6,6 +6,10 @@ void pop_front();
 
 Remove the first reference token.
 
+## Exception safety
+
+Strong exception safety: if an exception occurs, the original value stays intact.
+
 ## Exceptions
 
 Throws [out_of_range.405](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range405) if the JSON pointer has no parent.
@@ -53,6 +57,11 @@ Output:
 ""
 ```
 
+## See also
+
+- [front](https://json.nlohmann.me/api/json_pointer/front/index.md) return first reference token
+- [push_front](https://json.nlohmann.me/api/json_pointer/push_front/index.md) append an unescaped token at the start of the pointer
+
 ## Version history
 
-- Added in version 3.13.0.
+- Added in version 3.13.0 unreleased.

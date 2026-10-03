@@ -30,15 +30,15 @@ for the string types that are known to work.
 
 ## Notes
 
-#### Default type
+### Default type
 
 With the default values for `StringType` (`std::string`), the default value for `string_t` is `std::string`.
 
-#### Encoding
+### Encoding
 
 Strings are stored in UTF-8 encoding. Therefore, functions like `std::string::size()` or `std::string::length()` return the number of bytes in the string rather than the number of characters or glyphs.
 
-#### String comparison
+### String comparison
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) states:
 
@@ -46,13 +46,13 @@ Strings are stored in UTF-8 encoding. Therefore, functions like `std::string::si
 
 This implementation is interoperable as it does compare strings code unit by code unit.
 
-#### Storage
+### Storage
 
 String values are stored as pointers in a `basic_json` type. That is, for any access to string values, a pointer of type `string_t*` must be dereferenced.
 
-#### Cross-`basic_json` conversion requirements
+### Cross-`basic_json` conversion requirements
 
-When converting a string value from one `basic_json` specialization to another via the [converting constructor](https://json.nlohmann.me/api/basic_json/basic_json/#overload-4), the target `string_t` must be directly constructible from the source `basic_json`'s `string_t` type. If this requirement is not met, the conversion does not fail; instead, the string is silently converted as an array of character codes, which is incorrect. See [issue #3425](https://github.com/nlohmann/json/issues/3425) for details and an example.
+When converting a string value from one `basic_json` specialization to another via the [converting constructor](https://json.nlohmann.me/api/basic_json/basic_json/index.md) (overload 4), the target `string_t` must be directly constructible from the source `basic_json`'s `string_t` type. If this requirement is not met, the conversion does not fail; instead, the string is silently converted as an array of character codes, which is incorrect. See [issue #3425](https://github.com/nlohmann/json/issues/3425) for details and an example.
 
 ## Examples
 
@@ -79,7 +79,13 @@ Output:
 true
 ```
 
+## See also
+
+- [object_t](https://json.nlohmann.me/api/basic_json/object_t/index.md) the type used to store JSON objects (and their keys, which are also `string_t`)
+- [binary_t](https://json.nlohmann.me/api/basic_json/binary_t/index.md) the type used to store binary values
+- [get_ptr](https://json.nlohmann.me/api/basic_json/get_ptr/index.md) returns a pointer to the stored string value
+
 ## Version history
 
 - Added in version 1.0.0.
-- Removed the requirement that `string_t` be implicitly convertible from `std::string`, which the BSON writer and the UBJSON reader relied on, in version 3.13.0.
+- Removed the requirement that `string_t` be implicitly convertible from `std::string`, which the BSON writer and the UBJSON reader relied on, in version 3.13.0 unreleased.

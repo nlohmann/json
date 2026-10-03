@@ -27,7 +27,7 @@ vector <|-- binary_t
 
 By default, binary values are stored as `std::vector<std::uint8_t>`. This type can be changed by providing a template
 parameter to the `basic_json` type. To store binary subtypes, the storage type is extended and exposed as
-`json::binary_t`:
+[`json::binary_t`](../api/basic_json/binary_t.md):
 
 ```cpp
 auto binary = json::binary_t({0xCA, 0xFE, 0xBA, 0xBE});
@@ -62,21 +62,23 @@ JSON values can be constructed from `json::binary_t`:
 json j = binary;
 ```
 
-Binary values are primitive values just like numbers or strings:
+Binary values are primitive values just like numbers or strings, as reflected by
+[`is_binary()`](../api/basic_json/is_binary.md) and [`is_primitive()`](../api/basic_json/is_primitive.md):
 
 ```cpp
 j.is_binary();    // returns true
 j.is_primitive(); // returns true
 ```
 
-Given a binary JSON value, the `binary_t` can be accessed by reference as via `get_binary()`:
+Given a binary JSON value, the `binary_t` can be accessed by reference via
+[`get_binary()`](../api/basic_json/get_binary.md):
 
 ```cpp
 j.get_binary().has_subtype();  // returns true
 j.get_binary().size();         // returns 4
 ```
 
-For convenience, binary JSON values can be constructed via `json::binary`:
+For convenience, binary JSON values can be constructed via [`json::binary`](../api/basic_json/binary.md):
 
 ```cpp
 auto j2 = json::binary({0xCA, 0xFE, 0xBA, 0xBE}, 23);
@@ -99,7 +101,7 @@ JSON does not have a binary type, and this library does not introduce a new type
 Instead, binary values are serialized as an object with two keys: `bytes` holds an array of integers, and `subtype`
 is an integer or `null`.
 
-??? example
+??? example "Example: serialize a binary value to JSON"
 
     Code:
 
@@ -133,7 +135,7 @@ is an integer or `null`.
 [BJData](binary_formats/bjdata.md) neither supports binary values nor subtypes and proposes to serialize binary values
 as an array of uint8 values. The library implements this translation.
 
-??? example
+??? example "Example: serialize a binary value to BJData"
 
     Code:
     
@@ -192,7 +194,7 @@ as an array of uint8 values. The library implements this translation.
 [BON8](binary_formats/bon8.md) neither supports binary values nor subtypes. The library serializes binary values as an
 array of integers.
 
-??? example
+??? example "Example: serialize a binary value to BON8"
 
     Code:
 
@@ -227,7 +229,7 @@ array of integers.
 [BSON](binary_formats/bson.md) supports binary values and subtypes. If a subtype is given, it is used and added as an
 unsigned 8-bit integer. If no subtype is given, the generic binary subtype 0x00 is used.
 
-??? example
+??? example "Example: serialize a binary value to BSON"
 
     Code:
     
@@ -269,7 +271,7 @@ unsigned 8-bit integer. If no subtype is given, the generic binary subtype 0x00 
 value will be serialized as byte strings. The library will choose the smallest representation using the length of the
 byte array.
 
-??? example
+??? example "Example: serialize a binary value to CBOR"
 
     Code:
     
@@ -294,7 +296,9 @@ byte array.
     ```
 
     Note that the subtype is serialized as tag. However, parsing tagged values yield a parse error unless
-    `json::cbor_tag_handler_t::ignore` or `json::cbor_tag_handler_t::store` is passed to `json::from_cbor`.
+    `json::cbor_tag_handler_t::ignore` or `json::cbor_tag_handler_t::store` is passed to
+    [`json::from_cbor`](../api/basic_json/from_cbor.md) (see
+    [`cbor_tag_handler_t`](../api/basic_json/cbor_tag_handler_t.md)).
 
     ```json
     {
@@ -313,7 +317,7 @@ ext32. The subtype is then added as a signed 8-bit integer.
 
 If no subtype is given, the bin family (bin8, bin16, bin32) is used.
 
-??? example
+??? example "Example: serialize a binary value to MessagePack"
 
     Code:
     
@@ -353,7 +357,7 @@ If no subtype is given, the bin family (bin8, bin16, bin32) is used.
 [UBJSON](binary_formats/ubjson.md) neither supports binary values nor subtypes and proposes to serialize binary values
 as an array of uint8 values. The library implements this translation.
 
-??? example
+??? example "Example: serialize a binary value to UBJSON"
 
     Code:
     

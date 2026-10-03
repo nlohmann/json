@@ -6,6 +6,10 @@ void pop_back();
 
 Remove the last reference token.
 
+## Exception safety
+
+Strong exception safety: if an exception occurs, the original value stays intact.
+
 ## Exceptions
 
 Throws [out_of_range.405](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range405) if the JSON pointer has no parent.
@@ -52,6 +56,12 @@ Output:
 "/foo"
 ""
 ```
+
+## See also
+
+- [back](https://json.nlohmann.me/api/json_pointer/back/index.md) return last reference token
+- [push_back](https://json.nlohmann.me/api/json_pointer/push_back/index.md) append an unescaped token at the end of the pointer
+- [parent_pointer](https://json.nlohmann.me/api/json_pointer/parent_pointer/index.md) returns the parent of this JSON pointer
 
 ## Version history
 

@@ -53,6 +53,16 @@ void swap(typename binary_t::container_type& other);
 
 `right` (in, out) : value to exchange the contents with
 
+## Exception safety
+
+1. No-throw guarantee: this function never throws exceptions.
+1. No-throw guarantee: this function never throws exceptions.
+1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+
 ## Exceptions
 
 1. No-throw guarantee: this function never throws exceptions.
@@ -69,7 +79,7 @@ Constant.
 
 ## Examples
 
-Example: Swap JSON value (1, 2)
+Example: (1, 2) swap JSON values
 
 The example below shows how JSON values can be swapped with `swap()`.
 
@@ -101,7 +111,7 @@ j1 = {"e":2.718281828459045,"pi":3.141592653589793}
 j2 = [1,2,3,4,5]
 ```
 
-Example: Swap array (3)
+Example: (3) swap array
 
 The example below shows how arrays can be swapped with `swap()`.
 
@@ -135,7 +145,7 @@ value = {"array":["Snap","Crackle","Pop"]}
 array = [1,2,3,4]
 ```
 
-Example: Swap object (4)
+Example: (4) swap object
 
 The example below shows how objects can be swapped with `swap()`.
 
@@ -169,7 +179,7 @@ value = {"translation":{"cow":"Kuh","dog":"Hund"}}
 object = {"one":"eins","two":"zwei"}
 ```
 
-Example: Swap string (5)
+Example: (5) swap string
 
 The example below shows how strings can be swapped with `swap()`.
 
@@ -203,7 +213,7 @@ value = ["the good","the fast","the ugly"]
 string = the bad
 ```
 
-Example: Swap binary (6)
+Example: (6) swap binary
 
 The example below shows how binary values can be swapped with `swap()`.
 
@@ -245,8 +255,8 @@ binary = {"bytes":[1,2,3],"subtype":null}
 
 ## Version history
 
-1. Since version 1.0.0. Exchanges the `json_base_class_t` subobject along with the value since version 3.13.0.
-1. Since version 1.0.0. Exchanges the `json_base_class_t` subobject along with the value since version 3.13.0.
+1. Since version 1.0.0. Exchanges the `json_base_class_t` subobject along with the value since version 3.13.0 unreleased.
+1. Since version 1.0.0. Exchanges the `json_base_class_t` subobject along with the value since version 3.13.0 unreleased.
 1. Since version 1.0.0.
 1. Since version 1.0.0.
 1. Since version 1.0.0.

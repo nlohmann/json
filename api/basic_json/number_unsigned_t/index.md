@@ -20,15 +20,15 @@ To store unsigned integer numbers in C++, a type is defined by the template para
 
 ## Notes
 
-#### Default type
+### Default type
 
 With the default values for `NumberUnsignedType` (`std::uint64_t`), the default value for `number_unsigned_t` is `std::uint64_t`.
 
-#### Default behavior
+### Default behavior
 
 - The restrictions about leading zeros are not enforced in C++. Instead, leading zeros in integer literals lead to an interpretation as an octal number. Internally, the value will be stored as a decimal number. For instance, the C++ integer literal `010` will be serialized to `8`. During deserialization, leading zeros yield an error.
 
-#### Limits
+### Limits
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) specifies:
 
@@ -42,7 +42,7 @@ When the default type is used, the maximal integer number that can be stored is 
 
 As this range is a subrange (when considered in conjunction with the `number_integer_t` type) of the exactly supported range [0, UINT64_MAX], this class's integer type is interoperable.
 
-#### Storage
+### Storage
 
 Integer number values are stored directly inside a `basic_json` type.
 
@@ -70,6 +70,13 @@ Output:
 ```
 true
 ```
+
+## See also
+
+- [number_integer_t](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md) the type used to store JSON integer numbers
+- [number_float_t](https://json.nlohmann.me/api/basic_json/number_float_t/index.md) the type used to store JSON floating-point numbers
+- [is_number_unsigned](https://json.nlohmann.me/api/basic_json/is_number_unsigned/index.md) checks whether the JSON value is an unsigned integer number
+- [Number Handling](https://json.nlohmann.me/features/types/number_handling/index.md) - the article on number handling
 
 ## Version history
 

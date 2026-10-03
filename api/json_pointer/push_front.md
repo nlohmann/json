@@ -13,6 +13,11 @@ Append an unescaped token at the start of the reference pointer.
 `token` (in)
 :   token to add
 
+## Exception safety
+
+Basic guarantee: if an exception is thrown (for instance, if copying the reference token fails), the JSON pointer is
+left in a valid state, but its reference tokens may have changed.
+
 ## Complexity
 
 Linear in the number of reference tokens in the `json_pointer`.
@@ -32,6 +37,11 @@ Linear in the number of reference tokens in the `json_pointer`.
     ```json
     --8<-- "examples/json_pointer__push_front.output"
     ```
+
+## See also
+
+- [front](front.md) return first reference token
+- [pop_front](pop_front.md) remove the first reference token
 
 ## Version history
 

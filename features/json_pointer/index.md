@@ -121,4 +121,5 @@ auto j_original = j_flat.unflatten();
 - Class [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md)
 - Function [`flatten`](https://json.nlohmann.me/api/basic_json/flatten/index.md)
 - Function [`unflatten`](https://json.nlohmann.me/api/basic_json/unflatten/index.md)
-- [JSON Patch](https://json.nlohmann.me/features/json_patch/index.md)
+- [JSON Patch](https://json.nlohmann.me/features/json_patch/index.md) - paths inside a patch are JSON Pointers
+- [JSON Merge Patch](https://json.nlohmann.me/features/merge_patch/index.md) - an alternative patch format that does not use JSON Pointer

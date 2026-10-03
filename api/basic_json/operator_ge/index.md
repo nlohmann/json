@@ -54,6 +54,12 @@ Operator overload resolution
 
 Since C++20 overload resolution will consider the *rewritten candidate* generated from [`operator<=>`](https://json.nlohmann.me/api/basic_json/operator_spaceship/index.md).
 
+Deprecation
+
+If [`JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](https://json.nlohmann.me/api/macros/json_use_legacy_discarded_value_comparison/index.md) is defined to `1`, the library declares a member `bool operator>=(const_reference rhs) const noexcept` in C++20 mode to emulate the legacy comparison of discarded values. This member is deprecated since version 3.11.0, together with the legacy comparison behavior.
+
+See the [migration guide](https://json.nlohmann.me/integration/migration_guide/#miscellaneous-functions) for how to update existing code.
+
 ## Examples
 
 Example

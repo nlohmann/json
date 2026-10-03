@@ -2,9 +2,13 @@
 
 ## Patches
 
-JSON Patch ([RFC 6902](https://tools.ietf.org/html/rfc6902)) defines a JSON document structure for expressing a sequence of operations to apply to a JSON document. With the `patch` function, a JSON Patch is applied to the current JSON value by executing all operations from the patch.
+JSON Patch ([RFC 6902](https://tools.ietf.org/html/rfc6902)) defines a JSON document structure for expressing a sequence of operations to apply to a JSON document. Operations address locations in the document using [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md) paths. With the [`patch`](https://json.nlohmann.me/api/basic_json/patch/index.md) function, a JSON Patch is applied to the current JSON value by executing all operations from the patch, yielding the patched document as a new value.
 
-Example
+Applying a patch without copying
+
+[`patch`](https://json.nlohmann.me/api/basic_json/patch/index.md) leaves the original value unchanged and returns the patched result as a copy. If the document is large and the original value is no longer needed, [`patch_inplace`](https://json.nlohmann.me/api/basic_json/patch_inplace/index.md) applies the same operations in place instead.
+
+Example: apply a JSON Patch
 
 The following code shows how a JSON patch is applied to a value.
 
@@ -62,7 +66,14 @@ Output:
 
 ## Diff
 
-The library can also calculate a JSON patch (i.e., a **diff**) given two JSON values.
+The library can also calculate a JSON patch (i.e., a **diff**) given two JSON values with the [`diff`](https://json.nlohmann.me/api/basic_json/diff/index.md) function.
+
+```
+flowchart LR
+    S["source"] -->|"diff(source, target)"| P["patch"]
+    S -->|"source.patch(patch)"| T["target"]
+    P -.->|"applied to source, yields"| T
+```
 
 Invariant
 
@@ -72,7 +83,7 @@ For two JSON values *source* and *target*, the following code yields always true
 source.patch(diff(source, target)) == target;
 ```
 
-Example
+Example: create a JSON Patch from the difference of two values
 
 The following code shows how a JSON patch is created as a diff for two JSON values.
 
@@ -145,3 +156,11 @@ Output:
     ]
 }
 ```
+
+## See also
+
+- [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md) - the addressing scheme used for patch paths
+- [JSON Merge Patch](https://json.nlohmann.me/features/merge_patch/index.md) - a simpler, less expressive alternative patch format
+- [`patch`](https://json.nlohmann.me/api/basic_json/patch/index.md) - apply a JSON Patch, returning the result as a copy
+- [`patch_inplace`](https://json.nlohmann.me/api/basic_json/patch_inplace/index.md) - apply a JSON Patch without copying
+- [`diff`](https://json.nlohmann.me/api/basic_json/diff/index.md) - compute a JSON Patch from two values

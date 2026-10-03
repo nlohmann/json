@@ -75,6 +75,8 @@ Deprecation
 
 This function replaces function `std::istream& operator<<(basic_json& j, std::istream& i)` which has been deprecated in version 3.0.0. It will be removed in version 4.0.0. Please replace calls like `j << i;` with `i >> j;`.
 
+See the [migration guide](https://json.nlohmann.me/integration/migration_guide/#parsing) for how to update existing code.
+
 ## Examples
 
 Example
@@ -138,7 +140,7 @@ Output:
 ## Version history
 
 - Added in version 1.0.0.
-- `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 to optionally reject a NUL byte in the input instead of treating it as end of input; planned to become the default in version 4.0.0.
-- `JSON_PRECISE_STREAM_POSITION` added in version 3.13.0 to optionally leave the character that terminates a number in the stream; planned to become the default in version 4.0.0.
-- Fixed a null pointer dereference for an `std::istream` without a stream buffer (now throws `parse_error.101`), and a crash (`std::terminate`) when `i` has `eofbit` in its exception mask, in version 3.13.0.
-- Changed to the strong exception safety guarantee in version 3.13.0: `j` is no longer left with a partially parsed value if parsing throws.
+- `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 unreleased to optionally reject a NUL byte in the input instead of treating it as end of input; planned to become the default in version 4.0.0.
+- `JSON_PRECISE_STREAM_POSITION` added in version 3.13.0 unreleased to optionally leave the character that terminates a number in the stream; planned to become the default in version 4.0.0.
+- Fixed a null pointer dereference for an `std::istream` without a stream buffer (now throws `parse_error.101`), and a crash (`std::terminate`) when `i` has `eofbit` in its exception mask, in version 3.13.0 unreleased.
+- Changed to the strong exception safety guarantee in version 3.13.0 unreleased: `j` is no longer left with a partially parsed value if parsing throws.

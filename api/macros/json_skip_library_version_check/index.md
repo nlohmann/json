@@ -22,7 +22,7 @@ Mixing different library versions in the same code can be a problem as the diffe
 
 ## Examples
 
-Example
+Example: switch off the version check
 
 The code below switches off the warning about including a different version of the library.
 
@@ -33,7 +33,7 @@ The code below switches off the warning about including a different version of t
 ...
 ```
 
-Example
+Example: warning about a different library version
 
 The following warning will be shown in case a different version of the library was already included:
 
@@ -41,6 +41,10 @@ The following warning will be shown in case a different version of the library w
 Already included a different version of the library!
 ```
 
+## See also
+
+- [NLOHMANN_JSON_VERSION_MAJOR, NLOHMANN_JSON_VERSION_MINOR, NLOHMANN_JSON_VERSION_PATCH](https://json.nlohmann.me/api/macros/nlohmann_json_version_major/index.md) - library version information
+
 ## Version history
 
-Added in version 3.11.0.
+- Added in version 3.11.0.

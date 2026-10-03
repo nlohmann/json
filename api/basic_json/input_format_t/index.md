@@ -159,6 +159,11 @@ binary(val=[...])
 result: true
 ```
 
+## See also
+
+- [sax_parse](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) generic SAX parse interface, taking an `input_format_t` to select the input format
+- [cbor_tag_handler_t](https://json.nlohmann.me/api/basic_json/cbor_tag_handler_t/index.md) configures how CBOR tags are treated while parsing
+
 ## Version history
 
 - Added in version 3.2.0.

@@ -25,7 +25,12 @@ When the macro is not defined, the library will define it to its default value.
 
     ...
     ```
-    
+
+## See also
+
+- [**operator ValueType**](../basic_json/operator_ValueType.md) - get a value (implicit); on C++17, this macro
+  controls whether `std::any` is excluded from its candidate types
+
 ## Version history
 
 - Added in version 3.11.3.

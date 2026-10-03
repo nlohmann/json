@@ -71,6 +71,12 @@ true
 false
 ```
 
+## See also
+
+- [is_primitive](https://json.nlohmann.me/api/basic_json/is_primitive/index.md) checks whether the JSON value is primitive
+- [type](https://json.nlohmann.me/api/basic_json/type/index.md) returns the type of the JSON value
+- [string_t](https://json.nlohmann.me/api/basic_json/string_t/index.md) the type used to store JSON strings
+
 ## Version history
 
 - Added in version 1.0.0.

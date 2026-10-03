@@ -71,6 +71,13 @@ false
 false
 ```
 
+## See also
+
+- [is_array](https://json.nlohmann.me/api/basic_json/is_array/index.md) checks whether the JSON value is an array
+- [is_structured](https://json.nlohmann.me/api/basic_json/is_structured/index.md) checks whether the JSON value is structured (array or object)
+- [type](https://json.nlohmann.me/api/basic_json/type/index.md) returns the type of the JSON value
+- [object_t](https://json.nlohmann.me/api/basic_json/object_t/index.md) the type used to store JSON objects
+
 ## Version history
 
 - Added in version 1.0.0.

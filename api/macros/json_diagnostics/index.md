@@ -34,7 +34,7 @@ Diagnostic messages can also be controlled with the CMake option [`JSON_Diagnost
 
 ## Examples
 
-Example 1: default behavior
+Example: default behavior
 
 ```
 #include <iostream>
@@ -67,7 +67,7 @@ Output:
 
 This exception can be hard to debug if storing the value `"12"` and accessing it is further apart.
 
-Example 2: extended diagnostic messages
+Example: extended diagnostic messages
 
 ```
 #include <iostream>
@@ -102,7 +102,7 @@ Output:
 
 Now the exception message contains a JSON Pointer `/address/housenumber` that indicates which value has the wrong type.
 
-Example 3: using only diagnostic positions in exceptions
+Example: using only diagnostic positions in exceptions
 
 ```
 #include <iostream>

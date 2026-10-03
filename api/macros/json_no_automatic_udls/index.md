@@ -56,4 +56,4 @@ Without the include of `<nlohmann/json_literals.hpp>`, the code would fail to co
 
 ## Version history
 
-- Added in version 3.13.0.
+- Added in version 3.13.0 unreleased.

@@ -38,7 +38,7 @@ Important notes
 
 ## Examples
 
-Example 1: Basic usage
+Example: Basic usage
 
 The example shows how `NLOHMANN_JSON_SERIALIZE_ENUM` can be used to serialize/deserialize both classical enums and C++11 enum classes:
 
@@ -112,7 +112,7 @@ ns::TS_STOPPED -> "stopped", ns::Color::red -> "red"
 3.14 -> -1, 3.14 -> 3
 ```
 
-Example 2: Multiple conversions for one enumerator
+Example: Multiple conversions for one enumerator
 
 The example shows how to use multiple conversions for a single enumerator. In the example, `Color::red` will always be *serialized* to `"red"`, because the first occurring conversion. The second conversion, however, offers an alternative *deserialization* from `"rot"` to `Color::red`.
 

@@ -81,6 +81,12 @@ true
 true
 ```
 
+## See also
+
+- [operator value_t](https://json.nlohmann.me/api/basic_json/operator_value_t/index.md) implicit conversion operator equivalent to this named member function
+- [type_name](https://json.nlohmann.me/api/basic_json/type_name/index.md) returns the type as a string, for use in error messages
+- [value_t](https://json.nlohmann.me/api/basic_json/value_t/index.md) the enumeration of JSON types
+
 ## Version history
 
 - Added in version 1.0.0.

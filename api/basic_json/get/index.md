@@ -13,13 +13,13 @@ BasicJsonType get() const;
 
 // (3)
 template<typename PointerType>
-PointerType get_ptr();
+PointerType get() noexcept;
 
 template<typename PointerType>
-constexpr const PointerType get_ptr() const noexcept;
+const PointerType get() const noexcept;  // constexpr since C++14
 ```
 
-1. Explicit type conversion between the JSON value and a compatible value which is [CopyConstructible](https://en.cppreference.com/w/cpp/named_req/CopyConstructible) and [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). The value is converted by calling the `json_serializer<ValueType>` `from_json()` method.
+1. Explicit type conversion between the JSON value and a compatible value which is [CopyConstructible](https://en.cppreference.com/w/cpp/named_req/CopyConstructible) and [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). The value is converted by calling the [`json_serializer<ValueType>`](https://json.nlohmann.me/api/basic_json/json_serializer/index.md) `from_json()` method.
 
    The function is equivalent to executing
 
@@ -72,6 +72,10 @@ constexpr const PointerType get_ptr() const noexcept;
 1. a copy of `*this`, converted into `BasicJsonType`
 1. pointer to the internally stored JSON value if the requested pointer type fits to the JSON value; `nullptr` otherwise
 
+## Exception safety
+
+Depends on what `json_serializer<ValueType>` `from_json()` method throws for overloads (1) and (2); the JSON value itself is never modified, since `get()` is a `const` member function. No-throw guarantee for overload (3): this function never throws exceptions.
+
 ## Exceptions
 
 Depends on what `json_serializer<ValueType>` `from_json()` method throws
@@ -96,17 +100,17 @@ See [Number conversion](https://json.nlohmann.me/features/types/number_handling/
 
 `std::optional` conversions
 
-Prior to version 3.13.0, `get<std::optional<T>>()` (and other conversions to `std::optional<T>`) failed to compile in every configuration, due to an internal implementation bug that made the `from_json` overload for `std::optional` unreachable regardless of the [`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md) setting. This has been fixed.
+Prior to version 3.13.0 unreleased, `get<std::optional<T>>()` (and other conversions to `std::optional<T>`) failed to compile in every configuration, due to an internal implementation bug that made the `from_json` overload for `std::optional` unreachable regardless of the [`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md) setting. This has been fixed.
 
 ## Examples
 
-Example
+Example: (1) explicit conversion to compatible types
 
-The example below shows several conversions from JSON values to other types. There a few things to note: (1) Floating-point numbers can be converted to integers, (2) A JSON array can be converted to a standard `std::vector<short>`, (3) A JSON object can be converted to C++ associative containers such as `std::unordered_map<std::string, json>`.
+The example below shows several conversions from JSON values to other types. There a few things to note: (1) Floating-point numbers can be converted to integers, (2) A JSON array can be converted to a standard `std::vector<short>`, (3) A JSON object can be converted to C++ associative containers such as `std::map<std::string, json>`.
 
 ```
 #include <iostream>
-#include <unordered_map>
+#include <map>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -136,7 +140,7 @@ int main()
     auto v5 = json_types["number"]["floating-point"].get<int>();
     auto v6 = json_types["string"].get<std::string>();
     auto v7 = json_types["array"].get<std::vector<short>>();
-    auto v8 = json_types.get<std::unordered_map<std::string, json>>();
+    auto v8 = json_types.get<std::map<std::string, json>>();
 
     // print the conversion results
     std::cout << v1 << '\n';
@@ -166,14 +170,45 @@ Output:
 Hello, world!
 1 2 3 4 5 
 
-number: {"floating-point":17.23,"integer":42}
-null: null
-string: "Hello, world!"
-boolean: true
 array: [1,2,3,4,5]
+boolean: true
+null: null
+number: {"floating-point":17.23,"integer":42}
+string: "Hello, world!"
 ```
 
-Example
+Example: (2) explicit conversion to another `basic_json` specialization
+
+The example below shows how a `json` value is converted to an `ordered_json` value using `get<BasicJsonType>()`.
+
+```
+#include <iostream>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
+int main()
+{
+    // create a JSON value
+    json j = {{"one", 1}, {"two", 2}, {"three", 3}};
+
+    // convert to a different basic_json specialization
+    ordered_json oj = j.get<ordered_json>();
+
+    std::cout << j << '\n';
+    std::cout << oj << '\n';
+}
+```
+
+Output:
+
+```
+{"one":1,"three":3,"two":2}
+{"one":1,"three":3,"two":2}
+```
+
+Example: (3) explicit pointer access to the stored value
 
 The example below shows how pointers to internal values of a JSON value can be requested. Note that no type conversions are made and a `#cpp nullptr` is returned if the value and the requested pointer type does not match.
 

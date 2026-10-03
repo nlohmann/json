@@ -202,6 +202,11 @@ parse_error(position=460, last_token=12.723374634<U+000A>        }<U+000A>    }]
 result: false
 ```
 
+## See also
+
+- [sax_parse](https://json.nlohmann.me/api/basic_json/sax_parse/index.md) - SAX parser
+- [Parsing and Exceptions](https://json.nlohmann.me/features/parsing/parse_exceptions/index.md) - the article on handling parse errors without exceptions
+
 ## Version history
 
 - Added in version 3.2.0.

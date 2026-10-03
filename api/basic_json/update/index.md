@@ -54,7 +54,7 @@ The argument `j` (or, for overload (2), the range `[first, last)`) may be `*this
 
 ## Examples
 
-Example
+Example: (1) update with another object
 
 The example shows how `update()` is used.
 
@@ -107,7 +107,7 @@ Output:
 }
 ```
 
-Example
+Example: (2) update with an iterator range
 
 The example shows how `update()` is used.
 
@@ -160,7 +160,7 @@ Output:
 }
 ```
 
-Example
+Example: (1) merge user settings into default settings
 
 One common use case for this function is the handling of user settings. Assume your application can be configured in some aspects:
 
@@ -225,4 +225,4 @@ effective_settings.update(user_settings, true);
 
 - Added in version 3.0.0.
 - Added `merge_objects` parameter in 3.10.5.
-- Fixed use of freed or relocated memory when the argument is `*this` or refers to a value contained in `*this`, in version 3.13.0.
+- Fixed use of freed or relocated memory when the argument is `*this` or refers to a value contained in `*this`, in version 3.13.0 unreleased.

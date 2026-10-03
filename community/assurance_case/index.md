@@ -18,6 +18,17 @@ The primary threat is therefore **untrusted input**: JSON text or binary data (B
 - **Untrusted:** all serialized input read by the parser, the SAX interface, and the binary readers. The library must handle every possible input by either producing a value or throwing a [`parse_error`](https://json.nlohmann.me/home/exceptions/#parse-errors) (or returning `false` when exceptions are disabled for the call).
 - **Trusted:** the C++ code that calls the library. Calling a function with violated preconditions, for instance accessing an array with [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) out of range, is a programming error and not a security boundary. Such preconditions are checked with [runtime assertions](https://json.nlohmann.me/features/assertions/index.md) in debug builds; functions such as [`at`](https://json.nlohmann.me/api/basic_json/at/index.md) offer checked access with exceptions.
 
+```
+flowchart LR
+    A[Untrusted input] --> B[Parser]
+    A --> C[SAX interface]
+    A --> D[Binary readers]
+    B --> E["Value tree (basic_json)"]
+    C --> E
+    D --> E
+    E --> F[Trusted caller]
+```
+
 ## Secure design
 
 - **Strict parsing.** The parser accepts exactly the JSON grammar of [RFC 8259](https://datatracker.ietf.org/doc/html/rfc8259). Extensions such as [comments](https://json.nlohmann.me/features/comments/index.md) and [trailing commas](https://json.nlohmann.me/features/trailing_commas/index.md) must be enabled explicitly. Invalid UTF-8 is rejected.

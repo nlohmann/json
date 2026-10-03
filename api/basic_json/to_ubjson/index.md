@@ -41,7 +41,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 ## Exceptions
 
-- Throws [`other_error.502`](https://json.nlohmann.me/home/exceptions/#jsonexceptionother_error502) if `use_type` is true and `use_size` is false.
+- Throws [`other_error.502`](https://json.nlohmann.me/home/exceptions/#jsonexceptionother_error502) if `use_type` is true and `use_size` is false, and `j` contains a non-empty array, object, or binary value.
 
 ## Complexity
 
@@ -49,7 +49,7 @@ Linear in the size of the JSON value `j`.
 
 ## Examples
 
-Example
+Example: serialize a JSON value to UBJSON
 
 The example shows the serialization of a JSON value to a byte vector in UBJSON format.
 
@@ -127,6 +127,39 @@ Output:
 [i1i2i3i4i5i6i7i8]
 [#i8i1i2i3i4i5i6i7i8
 [$i#i812345678
+```
+
+Example: other_error.502 exception
+
+The example shows how requesting type annotations (`use_type`) without size annotations (`use_size`) throws an exception, because type-optimized containers can only be read back with a preceding size.
+
+```
+#include <iostream>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
+int main()
+{
+    // create a non-empty JSON array
+    json j = {1, 2, 3};
+
+    // exception other_error.502
+    try
+    {
+        json::to_ubjson(j, false, true);
+    }
+    catch (const json::other_error& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+}
+```
+
+Output:
+
+```
+[json.exception.other_error.502] use_type requires use_size = true
 ```
 
 ## See also

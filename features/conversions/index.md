@@ -24,7 +24,7 @@ Example
 
 ```
 #include <iostream>
-#include <unordered_map>
+#include <map>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -53,7 +53,7 @@ int main()
     int v5;
     std::string v6;
     std::vector<short> v7;
-    std::unordered_map<std::string, json> v8;
+    std::map<std::string, json> v8;
 
     // use explicit conversions
     json_types["boolean"].get_to(v1);
@@ -93,11 +93,11 @@ Output:
 Hello, world!
 1 2 3 4 5 
 
-number: {"floating-point":17.23,"integer":42}
-null: null
-string: "Hello, world!"
-boolean: true
 array: [1,2,3,4,5]
+boolean: true
+null: null
+number: {"floating-point":17.23,"integer":42}
+string: "Hello, world!"
 ```
 
 The library already knows how to convert to and from the scalar types and the STL containers (such as `std::vector`, `std::map`, `std::array`, `std::optional`, and many more). Converting a JSON object back to a `std::map` or a JSON array back to a `std::vector` therefore works without any extra code:

@@ -27,6 +27,10 @@ The code below switches off the check whether the compiler is supported.
 ...
 ```
 
+## See also
+
+- [JSON_HAS_CPP_11 / JSON_HAS_CPP_14 / JSON_HAS_CPP_17 / JSON_HAS_CPP_20 / JSON_HAS_CPP_23 / JSON_HAS_CPP_26](https://json.nlohmann.me/api/macros/json_has_cpp_11/index.md) - set supported C++ standard
+
 ## Version history
 
-Added in version 3.2.0.
+- Added in version 3.2.0.

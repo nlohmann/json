@@ -24,6 +24,8 @@ The user-defined string literals will be removed from the global namespace in th
 
 To prepare existing code, define `JSON_USE_GLOBAL_UDLS` to `0` and bring the string literals into scope where needed. Refer to any of the [string literals](#see-also) for details.
 
+See the [migration guide](https://json.nlohmann.me/integration/migration_guide/#import-namespace-literals-for-udls) for how to update existing code.
+
 CMake option
 
 The placement of user-defined string literals can also be controlled with the CMake option [`JSON_GlobalUDLs`](https://json.nlohmann.me/integration/cmake/#json_globaludls) (`ON` by default) which defines `JSON_USE_GLOBAL_UDLS` accordingly.
@@ -34,7 +36,7 @@ If [`JSON_NO_AUTOMATIC_UDLS`](https://json.nlohmann.me/api/macros/json_no_automa
 
 ## Examples
 
-Example 1: Default behavior
+Example: Default behavior
 
 The code below shows the default behavior using the `_json` UDL.
 
@@ -57,7 +59,7 @@ Output:
 42
 ```
 
-Example 2: Namespaced UDLs
+Example: Namespaced UDLs
 
 The code below shows how UDLs need to be brought into scope before using `_json` when `JSON_USE_GLOBAL_UDLS` is defined to `0`.
 

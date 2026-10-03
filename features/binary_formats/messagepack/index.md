@@ -70,9 +70,9 @@ NaN/infinity handling
 
 Note
 
-Prior to version 3.13.0, NaN and Infinity were instead serialized as a MessagePack float 64 (type 0xCB, 9 bytes total), because the check used to select the smaller float 32 encoding compared magnitudes with NaN, which is always `false` and caused the float 32 path to be skipped.
+Prior to version 3.13.0 unreleased, NaN and Infinity were instead serialized as a MessagePack float 64 (type 0xCB, 9 bytes total), because the check used to select the smaller float 32 encoding compared magnitudes with NaN, which is always `false` and caused the float 32 path to be skipped.
 
-Example
+Example: serialize a JSON value to MessagePack
 
 ```
 #include <iostream>
@@ -166,7 +166,7 @@ UTF-8 validation of string values
 
 The MessagePack specification requires `str` values (`fixstr`, `str 8`, `str 16`, `str 32`) to be valid UTF-8. This library validates the bytes of every such string (object keys included) at decode time and rejects ill-formed UTF-8 with a [`parse_error.113`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113) exception (or, with `allow_exceptions` set to `false`, a discarded value), rather than only failing later when the resulting value is dumped. `bin`/`ext`/`fixext` values are unaffected and are never validated, since they are not required to hold text.
 
-Example
+Example: deserialize a JSON value from MessagePack
 
 ```
 #include <iostream>

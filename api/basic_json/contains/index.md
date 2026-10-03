@@ -56,6 +56,14 @@ Postconditions
 
 If `j.contains(x)` returns `true` for a key or JSON pointer `x`, then it is safe to call `j[x]`.
 
+Deprecation
+
+Overload (3) also accepts a [`json_pointer`](https://json.nlohmann.me/api/json_pointer/index.md) whose template argument is a `basic_json` specialization (e.g., `nlohmann::json_pointer<nlohmann::json>`) instead of a string type. This is deprecated since version 3.11.0 and will be removed in a future major version; use `basic_json::json_pointer` (for `json`, `nlohmann::json_pointer<std::string>`) instead.
+
+You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated function.
+
+See the [migration guide](https://json.nlohmann.me/integration/migration_guide/#json-pointers) for how to update existing code.
+
 ## Examples
 
 Example: (1) check with key
@@ -198,4 +206,4 @@ false
 1. Added in version 3.11.0.
 1. Added in version 3.6.0. Extended template `KeyType` to support comparable types in version 3.11.0.
 1. Added in version 3.7.0.
-1. Deleted overloads for integral key types added in version 3.13.0 to reject such calls at compile time instead of causing undefined behavior at runtime.
+1. Deleted overloads for integral key types added in version 3.13.0 unreleased to reject such calls at compile time instead of causing undefined behavior at runtime.

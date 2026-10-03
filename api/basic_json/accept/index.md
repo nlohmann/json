@@ -88,7 +88,7 @@ By default, a `'\0'` (NUL) byte anywhere in the input is treated as end of input
 
 ## Examples
 
-Example
+Example: (1) reading from a string
 
 The example below demonstrates the `accept()` function reading from a string.
 
@@ -127,6 +127,34 @@ Output:
 true false
 ```
 
+Example: (2) reading from an iterator pair
+
+The example below demonstrates the `accept()` function reading from an iterator pair. Only the first call covers exactly the JSON text; the second one also covers the trailing bytes and is therefore rejected.
+
+```
+#include <iostream>
+#include <vector>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
+int main()
+{
+    // a buffer containing a JSON text followed by more data
+    std::vector<std::uint8_t> input = {'[', '1', ',', '2', ',', '3', ']', 'o', 't', 'h', 'e', 'r'};
+
+    std::cout << std::boolalpha
+              << json::accept(input.begin(), input.begin() + 7) << ' '
+              << json::accept(input.begin(), input.end()) << '\n';
+}
+```
+
+Output:
+
+```
+true false
+```
+
 ## See also
 
 - [parse](https://json.nlohmann.me/api/basic_json/parse/index.md) - deserialize from a compatible input
@@ -139,13 +167,15 @@ true false
 - Added in version 3.0.0.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
 - Changed [runtime assertion](https://json.nlohmann.me/features/assertions/index.md) in case of `FILE*` null pointers to exception in version 3.12.0.
-- Added `ignore_trailing_commas` in version 3.13.0.
-- Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
-- Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
-- `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 to optionally reject a NUL byte in the input instead of treating it as end of input; planned to become the default in version 4.0.0.
+- Added `ignore_trailing_commas` in version 3.13.0 unreleased.
+- Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0 unreleased.
+- Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0 unreleased.
+- `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 unreleased to optionally reject a NUL byte in the input instead of treating it as end of input; planned to become the default in version 4.0.0.
 
 Deprecation
 
 Overload (2) replaces calls to `accept` with a pair of iterators as their first parameter which has been deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like `accept({ptr, ptr+len}, ...);` with `accept(ptr, ptr+len, ...);`.
 
 You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated function.
+
+See the [migration guide](https://json.nlohmann.me/integration/migration_guide/#parsing) for how to update existing code.

@@ -41,7 +41,7 @@ Exceptions are used widely within the library. They can, however, be switched of
 
 Note that [`JSON_THROW_USER`](https://json.nlohmann.me/api/macros/json_throw_user/index.md) should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield undefined behavior.
 
-Example
+Example: switch off exceptions and log errors before aborting
 
 The code below switches off exceptions and creates a log entry with a detailed error message in case of errors.
 
@@ -67,7 +67,7 @@ See [documentation of `JSON_TRY_USER`, `JSON_CATCH_USER` and `JSON_THROW_USER`](
 
 Exceptions in the library are thrown in the local context of the JSON value they are detected. This makes detailed diagnostics messages, and hence debugging, difficult.
 
-Example
+Example: standard diagnostic message
 
 ```
 #include <iostream>
@@ -104,7 +104,7 @@ To create better diagnostics messages, each JSON value needs a pointer to its pa
 
 As this global context comes at the price of storing one additional pointer per JSON value and runtime overhead to maintain the parent relation, extended diagnostics are disabled by default. They can, however, be enabled by defining the preprocessor symbol [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) to `1` before including `json.hpp`.
 
-Example
+Example: extended diagnostic message with `JSON_DIAGNOSTICS`
 
 ```
 #include <iostream>
@@ -153,7 +153,7 @@ Member `byte` holds the byte index of the last read character in the input file.
 
 For an input with n bytes, 1 is the index of the first character and n+1 is the index of the terminating null byte or the end of file. This also holds true when reading a byte vector (CBOR or MessagePack).
 
-Example
+Example: catch a `parse_error` exception
 
 The following code shows how a `parse_error` exception can be caught.
 
@@ -461,7 +461,7 @@ This exception is thrown if iterators passed to a library function do not match 
 
 Exceptions have ids 2xx.
 
-Example
+Example: catch an `invalid_iterator` exception
 
 The following code shows how an `invalid_iterator` exception can be caught.
 
@@ -508,7 +508,7 @@ Example message
 
 ### json.exception.invalid_iterator.202
 
-In the [erase](https://json.nlohmann.me/api/basic_json/erase/index.md) or insert function, the passed iterator `pos` does not belong to the JSON value for which the function was called. It hence does not define a valid position for the deletion/insertion.
+In the [erase](https://json.nlohmann.me/api/basic_json/erase/index.md) or [insert](https://json.nlohmann.me/api/basic_json/insert/index.md) function, the passed iterator `pos` does not belong to the JSON value for which the function was called. It hence does not define a valid position for the deletion/insertion.
 
 Example messages
 
@@ -542,7 +542,7 @@ Example message
 
 ### json.exception.invalid_iterator.205
 
-When an iterator for a primitive type (number, boolean, or string) is passed to an [erase](https://json.nlohmann.me/api/basic_json/erase/index.md) function, the iterator has to be the `begin()` iterator, because it is the only way to address the stored value. All other iterators are invalid.
+When an iterator for a primitive type (number, boolean, or string) is passed to an [erase](https://json.nlohmann.me/api/basic_json/erase/index.md) function, the iterator has to be the [`begin()`](https://json.nlohmann.me/api/basic_json/begin/index.md) iterator, because it is the only way to address the stored value. All other iterators are invalid.
 
 Example message
 
@@ -632,7 +632,7 @@ Example message
 
 ### json.exception.invalid_iterator.214
 
-Cannot retrieve value from iterator: The iterator either refers to a null value, or it refers to a primitive type (number, boolean, or string), but does not match the iterator returned by `begin()`.
+Cannot retrieve value from iterator: The iterator either refers to a null value, or it refers to a primitive type (number, boolean, or string), but does not match the iterator returned by [`begin()`](https://json.nlohmann.me/api/basic_json/begin/index.md).
 
 Example message
 
@@ -646,7 +646,7 @@ This exception is thrown in case of a type error; that is, a library function is
 
 Exceptions have ids 3xx.
 
-Example
+Example: catch a `type_error` exception
 
 The following code shows how a `type_error` exception can be caught.
 
@@ -720,7 +720,7 @@ Example messages
 
 ### json.exception.type_error.304
 
-The `at()` member functions can only be executed for certain JSON types.
+The [`at()`](https://json.nlohmann.me/api/basic_json/at/index.md) member functions can only be executed for certain JSON types.
 
 Example messages
 
@@ -734,7 +734,7 @@ Example messages
 
 ### json.exception.type_error.305
 
-The `operator[]` member functions can only be executed for certain JSON types.
+The [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) member functions can only be executed for certain JSON types.
 
 Example messages
 
@@ -748,7 +748,7 @@ Example messages
 
 ### json.exception.type_error.306
 
-The `value()` member functions can only be executed for certain JSON types.
+The [`value()`](https://json.nlohmann.me/api/basic_json/value/index.md) member functions can only be executed for certain JSON types.
 
 Example message
 
@@ -768,7 +768,7 @@ Example message
 
 ### json.exception.type_error.308
 
-The `push_back()` and `operator+=` member functions can only be executed for certain JSON types.
+The [`push_back()`](https://json.nlohmann.me/api/basic_json/push_back/index.md) and [`operator+=`](https://json.nlohmann.me/api/basic_json/operator%2B%3D/index.md) member functions can only be executed for certain JSON types.
 
 Example message
 
@@ -778,7 +778,7 @@ Example message
 
 ### json.exception.type_error.309
 
-The `insert()` member functions can only be executed for certain JSON types.
+The [`insert()`](https://json.nlohmann.me/api/basic_json/insert/index.md) member functions can only be executed for certain JSON types.
 
 Example messages
 
@@ -792,7 +792,7 @@ Example messages
 
 ### json.exception.type_error.310
 
-The `swap()` member functions can only be executed for certain JSON types.
+The [`swap()`](https://json.nlohmann.me/api/basic_json/swap/index.md) member functions can only be executed for certain JSON types.
 
 Example message
 
@@ -802,7 +802,7 @@ Example message
 
 ### json.exception.type_error.311
 
-The `emplace()` and `emplace_back()` member functions can only be executed for certain JSON types.
+The [`emplace()`](https://json.nlohmann.me/api/basic_json/emplace/index.md) and [`emplace_back()`](https://json.nlohmann.me/api/basic_json/emplace_back/index.md) member functions can only be executed for certain JSON types.
 
 Example messages
 
@@ -816,7 +816,7 @@ Example messages
 
 ### json.exception.type_error.312
 
-The `update()` member functions can only be executed for certain JSON types.
+The [`update()`](https://json.nlohmann.me/api/basic_json/update/index.md) member functions can only be executed for certain JSON types.
 
 Example message
 
@@ -826,7 +826,7 @@ Example message
 
 ### json.exception.type_error.313
 
-The `unflatten` function converts an object whose keys are JSON Pointers back into an arbitrary nested JSON value. The JSON Pointers must not overlap, because then the resulting value would not be well-defined.
+The [`unflatten()`](https://json.nlohmann.me/api/basic_json/unflatten/index.md) function converts an object whose keys are JSON Pointers back into an arbitrary nested JSON value. The JSON Pointers must not overlap, because then the resulting value would not be well-defined.
 
 Example message
 
@@ -836,7 +836,7 @@ Example message
 
 ### json.exception.type_error.314
 
-The `unflatten` function only works for an object whose keys are JSON Pointers.
+The [`unflatten()`](https://json.nlohmann.me/api/basic_json/unflatten/index.md) function only works for an object whose keys are JSON Pointers.
 
 Example message
 
@@ -848,7 +848,7 @@ Calling `unflatten()` on an array `[1,2,3]`:
 
 ### json.exception.type_error.315
 
-The `unflatten()` function only works for an object whose keys are JSON Pointers and whose values are primitive.
+The [`unflatten()`](https://json.nlohmann.me/api/basic_json/unflatten/index.md) function only works for an object whose keys are JSON Pointers and whose values are primitive.
 
 Example message
 
@@ -860,7 +860,7 @@ Calling `unflatten()` on an object `{"/1", [1,2,3]}`:
 
 ### json.exception.type_error.316
 
-The `dump()` function only works with UTF-8 encoded strings; that is, if you assign a `std::string` to a JSON value, make sure it is UTF-8 encoded.
+The [`dump()`](https://json.nlohmann.me/api/basic_json/dump/index.md) function only works with UTF-8 encoded strings; that is, if you assign a `std::string` to a JSON value, make sure it is UTF-8 encoded. See the FAQ entry on [serializing untrusted or invalid UTF-8](https://json.nlohmann.me/home/faq/#serializing-untrusted-or-invalid-utf-8) for background and the recommended fix.
 
 Example message
 
@@ -905,7 +905,7 @@ This exception is thrown in case a library function is called on an input parame
 
 Exceptions have ids 4xx.
 
-Example
+Example: catch an `out_of_range` exception
 
 The following code shows how an `out_of_range` exception can be caught.
 
@@ -1065,7 +1065,7 @@ cannot add value: the JSON Patch 'add' target's parent is of type string, but mu
 
 Note
 
-This exception was added in version 3.13.0. Before that, this situation hit an internal assertion (aborting the program in debug builds) or was silently ignored when assertions were disabled.
+This exception was added in version 3.13.0 unreleased. Before that, this situation hit an internal assertion (aborting the program in debug builds) or was silently ignored when assertions were disabled.
 
 ### json.exception.out_of_range.412
 
@@ -1083,7 +1083,7 @@ MessagePack length 4294967296 exceeds maximum of 4294967295
 
 Note
 
-This exception was added in version 3.13.0. Before that, the BSON length was silently truncated, and [`to_bson`](https://json.nlohmann.me/api/basic_json/to_bson/index.md) produced documents with negative length prefixes that [`from_bson`](https://json.nlohmann.me/api/basic_json/from_bson/index.md) rejected; [`to_msgpack`](https://json.nlohmann.me/api/basic_json/to_msgpack/index.md) wrote such a value without any length, producing output that could not be read back.
+This exception was added in version 3.13.0 unreleased. Before that, the BSON length was silently truncated, and [`to_bson`](https://json.nlohmann.me/api/basic_json/to_bson/index.md) produced documents with negative length prefixes that [`from_bson`](https://json.nlohmann.me/api/basic_json/from_bson/index.md) rejected; [`to_msgpack`](https://json.nlohmann.me/api/basic_json/to_msgpack/index.md) wrote such a value without any length, producing output that could not be read back.
 
 ### json.exception.out_of_range.413
 
@@ -1097,7 +1097,7 @@ cannot remove value: the JSON Patch 'remove' target's parent is of type number, 
 
 Note
 
-This exception was added in version 3.13.0. Before that, this situation was silently ignored (the `remove` operation had no effect).
+This exception was added in version 3.13.0 unreleased. Before that, this situation was silently ignored (the `remove` operation had no effect).
 
 ### json.exception.out_of_range.414
 
@@ -1111,7 +1111,7 @@ cannot move value: 'from' path '/0' is a proper prefix of 'path' '/0/0'
 
 Note
 
-This exception was added in version 3.13.0. Before that, this situation could succeed with a corrupted result: for an array target, removing the "from" element before the "add" step shifted subsequent indices, so "path" silently re-resolved to a different element than intended.
+This exception was added in version 3.13.0 unreleased. Before that, this situation could succeed with a corrupted result: for an array target, removing the "from" element before the "add" step shifted subsequent indices, so "path" silently re-resolved to a different element than intended.
 
 ### json.exception.out_of_range.415
 
@@ -1125,7 +1125,7 @@ Example message
 
 Note
 
-This exception was added in version 3.13.0. Before that, subtypes above 255 were silently truncated modulo 256 instead of raising an error.
+This exception was added in version 3.13.0 unreleased. Before that, subtypes above 255 were silently truncated modulo 256 instead of raising an error.
 
 ## Further exceptions
 
@@ -1133,7 +1133,7 @@ This exception is thrown in case of errors that cannot be classified with the ot
 
 Exceptions have ids 5xx.
 
-Example
+Example: catch an `other_error` exception
 
 The following code shows how an `other_error` exception can be caught.
 
@@ -1201,4 +1201,4 @@ Example message
 
 Note
 
-This exception was added in version 3.13.0. Before that, debug builds aborted on an assertion and release builds wrote a `$` marker without `#`, which [`from_ubjson`](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md) then rejected.
+This exception was added in version 3.13.0 unreleased. Before that, debug builds aborted on an assertion and release builds wrote a `$` marker without `#`, which [`from_ubjson`](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md) then rejected.

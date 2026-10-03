@@ -35,8 +35,13 @@ json::object_comparator_t("one", "two") = true
 json::object_comparator_t("three", "four") = false
 ```
 
+## See also
+
+- [object_t](https://json.nlohmann.me/api/basic_json/object_t/index.md) the type used to store JSON objects
+- [default_object_comparator_t](https://json.nlohmann.me/api/basic_json/default_object_comparator_t/index.md) the fallback comparator used when `object_t` has no `key_compare` member type
+
 ## Version history
 
 - Added in version 3.0.0.
 - Changed to be conditionally defined as `typename object_t::key_compare` or `default_object_comparator_t` in version 3.11.0.
-- Fixed the fallback to `default_object_comparator_t`, which previously failed to compile for object types without a `key_compare` member type, in version 3.13.0.
+- Fixed the fallback to `default_object_comparator_t`, which previously failed to compile for object types without a `key_compare` member type, in version 3.13.0 unreleased.

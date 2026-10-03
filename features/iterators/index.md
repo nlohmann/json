@@ -4,13 +4,13 @@
 
 A `basic_json` value is a container and allows access via iterators. Depending on the value type, `basic_json` stores zero or more values.
 
-As for other containers, `begin()` returns an iterator to the first value and `end()` returns an iterator to the value following the last value. The latter iterator is a placeholder and cannot be dereferenced. In case of null values, empty arrays, or empty objects, `begin()` will return `end()`.
+As for other containers, [`begin()`](https://json.nlohmann.me/api/basic_json/begin/index.md) returns an iterator to the first value and [`end()`](https://json.nlohmann.me/api/basic_json/end/index.md) returns an iterator to the value following the last value. The latter iterator is a placeholder and cannot be dereferenced. In case of null values, empty arrays, or empty objects, `begin()` will return `end()`.
 
 ### Iteration order for objects
 
 When iterating over objects, values are ordered with respect to the `object_comparator_t` type which defaults to `std::less`. See the [types documentation](https://json.nlohmann.me/features/types/#key-order) for more information.
 
-Example
+Example: iteration order of object values
 
 ```
 // create JSON object {"one": 1, "two": 2, "three": 3}
@@ -39,7 +39,7 @@ The reason for the order is the lexicographic ordering of the object keys "one",
 
 The JSON iterators have two member functions, `key()` and `value()` to access the object key and stored value, respectively. When calling `key()` on a non-object iterator, an [invalid_iterator.207](https://json.nlohmann.me/home/exceptions/#jsonexceptioninvalid_iterator207) exception is thrown.
 
-Example
+Example: access object keys with `key()` and `value()`
 
 ```
 // create JSON object {"one": 1, "two": 2, "three": 3}
@@ -74,7 +74,7 @@ for (auto it : j_object)
 }
 ```
 
-For this reason, the `items()` function allows accessing `iterator::key()` and `iterator::value()` during range-based for loops. In these loops, a reference to the JSON values is returned, so there is no access to the underlying iterator.
+For this reason, the [`items()`](https://json.nlohmann.me/api/basic_json/items/index.md) function allows accessing `iterator::key()` and `iterator::value()` during range-based for loops. In these loops, a reference to the JSON values is returned, so there is no access to the underlying iterator.
 
 ```
 for (auto& el : j_object.items())
@@ -102,9 +102,9 @@ Using `items()` on temporary objects is dangerous. Make sure the object's lifeti
 
 ### Reverse iteration order
 
-`rbegin()` and `rend()` return iterators in the reverse sequence.
+[`rbegin()`](https://json.nlohmann.me/api/basic_json/rbegin/index.md) and [`rend()`](https://json.nlohmann.me/api/basic_json/rend/index.md) return iterators in the reverse sequence.
 
-Example
+Example: reverse iteration with `rbegin()` and `rend()`
 
 ```
 json j = {1, 2, 3, 4};
@@ -128,7 +128,7 @@ Output:
 
 Note that "value" means a JSON value in this setting, not values stored in the underlying containers. That is, `*begin()` returns the complete string or binary array and is also safe if the underlying string or binary array is empty.
 
-Example
+Example: iterate over a string value
 
 ```
 json j = "Hello, world";

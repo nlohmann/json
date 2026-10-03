@@ -15,6 +15,21 @@ Deprecation
 
 For backwards compatibility `RefStringType` may also be a specialization of [`basic_json`](https://json.nlohmann.me/api/basic_json/index.md) in which case `string_t` will be deduced as [`basic_json::string_t`](https://json.nlohmann.me/api/basic_json/string_t/index.md). This feature is deprecated and may be removed in a future major version.
 
+See the [migration guide](https://json.nlohmann.me/integration/migration_guide/#json-pointers) for how to update existing code.
+
+A JSON pointer is internally a sequence of reference tokens. [`front`](https://json.nlohmann.me/api/json_pointer/front/index.md), [`pop_front`](https://json.nlohmann.me/api/json_pointer/pop_front/index.md), and [`push_front`](https://json.nlohmann.me/api/json_pointer/push_front/index.md) act on the first reference token, whereas [`back`](https://json.nlohmann.me/api/json_pointer/back/index.md), [`pop_back`](https://json.nlohmann.me/api/json_pointer/pop_back/index.md), and [`push_back`](https://json.nlohmann.me/api/json_pointer/push_back/index.md) act on the last one. [`parent_pointer`](https://json.nlohmann.me/api/json_pointer/parent_pointer/index.md) returns a new JSON pointer with the last reference token removed (like a non-mutating [`pop_back`](https://json.nlohmann.me/api/json_pointer/pop_back/index.md)):
+
+```
+flowchart LR
+    A["a"] --> B["b"] --> C["c"]
+
+    front["front() / pop_front() / push_front()"] -.-> A
+    back["back() / pop_back() / push_back()"] -.-> C
+    parent["parent_pointer() returns /a/b"] -.-> B
+```
+
+The diagram shows the reference tokens of the JSON pointer `/a/b/c`.
+
 ## Member types
 
 - [**string_t**](https://json.nlohmann.me/api/json_pointer/string_t/index.md) - the string type used for the reference tokens
@@ -23,9 +38,10 @@ For backwards compatibility `RefStringType` may also be a specialization of [`ba
 
 - [(constructor)](https://json.nlohmann.me/api/json_pointer/json_pointer/index.md)
 - [**to_string**](https://json.nlohmann.me/api/json_pointer/to_string/index.md) - return a string representation of the JSON pointer
-- [**operator string_t**](https://json.nlohmann.me/api/json_pointer/operator_string_t/index.md) - return a string representation of the JSON pointer
+- [**operator string_t**](https://json.nlohmann.me/api/json_pointer/operator_string_t/index.md) - return a string representation of the JSON pointer (deprecated)
 - [**operator==**](https://json.nlohmann.me/api/json_pointer/operator_eq/index.md) - compare: equal
 - [**operator!=**](https://json.nlohmann.me/api/json_pointer/operator_ne/index.md) - compare: not equal
+- [**operator\<=>**](https://json.nlohmann.me/api/json_pointer/operator_spaceship/index.md) - compare: 3-way (C++20)
 - [**operator/=**](https://json.nlohmann.me/api/json_pointer/operator_slasheq/index.md) - append to the end of the JSON pointer
 - [**operator/**](https://json.nlohmann.me/api/json_pointer/operator_slash/index.md) - create JSON Pointer by appending
 - [**parent_pointer**](https://json.nlohmann.me/api/json_pointer/parent_pointer/index.md) - returns the parent of this JSON pointer

@@ -15,6 +15,10 @@ Implicit type conversion between the JSON value and a compatible value. The call
 
 copy of the JSON value, converted to `ValueType`
 
+## Exception safety
+
+Depends on what `json_serializer<ValueType>` `from_json()` method throws; the JSON value itself is never modified, since `operator ValueType()` is a `const` member function that only calls [`get()`](https://json.nlohmann.me/api/basic_json/get/index.md).
+
 ## Exceptions
 
 Depends on what `json_serializer<ValueType>` `from_json()` method throws
@@ -49,15 +53,17 @@ Implicit conversions will be switched off by default in the next major release o
 
 You can prepare existing code by already defining [`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md) to `0` and replace any implicit conversions with calls to [`get`](https://json.nlohmann.me/api/basic_json/get/index.md).
 
+See the [migration guide](https://json.nlohmann.me/integration/migration_guide/#replace-implicit-conversions) for how to update existing code.
+
 ## Examples
 
 Example
 
-The example below shows several conversions from JSON values to other types. There are a few things to note: (1) Floating-point numbers can be converted to integers, (2) A JSON array can be converted to a standard `std::vector<short>`, (3) A JSON object can be converted to C++ associative containers such as `std::unordered_map<std::string, json>`.
+The example below shows several conversions from JSON values to other types. There are a few things to note: (1) Floating-point numbers can be converted to integers, (2) A JSON array can be converted to a standard `std::vector<short>`, (3) A JSON object can be converted to C++ associative containers such as `std::map<std::string, json>`.
 
 ```
 #include <iostream>
-#include <unordered_map>
+#include <map>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -87,7 +93,7 @@ int main()
     int v5 = json_types["number"]["floating-point"];
     std::string v6 = json_types["string"];
     std::vector<short> v7 = json_types["array"];
-    std::unordered_map<std::string, json> v8 = json_types;
+    std::map<std::string, json> v8 = json_types;
 
     // print the conversion results
     std::cout << v1 << '\n';
@@ -127,11 +133,11 @@ Output:
 Hello, world!
 1 2 3 4 5 
 
-number: {"floating-point":17.23,"integer":42}
-null: null
-string: "Hello, world!"
-boolean: true
 array: [1,2,3,4,5]
+boolean: true
+null: null
+number: {"floating-point":17.23,"integer":42}
+string: "Hello, world!"
 [json.exception.type_error.302] type must be boolean, but is string
 ```
 

@@ -50,6 +50,14 @@ Output:
 1
 ```
 
+## See also
+
+- [end](https://json.nlohmann.me/api/basic_json/end/index.md) returns an iterator to one past the last element
+- [cbegin](https://json.nlohmann.me/api/basic_json/cbegin/index.md) returns a const iterator to the first element
+- [rbegin](https://json.nlohmann.me/api/basic_json/rbegin/index.md) returns a reverse iterator to the last element
+- [items](https://json.nlohmann.me/api/basic_json/items/index.md) returns an iteration proxy to access keys and values during range-based for loops
+- [Iterators](https://json.nlohmann.me/features/iterators/index.md) - the article on iterators
+
 ## Version history
 
 - Added in version 1.0.0.

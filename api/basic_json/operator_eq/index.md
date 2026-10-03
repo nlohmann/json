@@ -141,7 +141,7 @@ false
 
 ## Examples
 
-Example
+Example: (1) compare JSON values
 
 The example demonstrates comparing several JSON types.
 
@@ -181,7 +181,7 @@ Output:
 "foo" == "bar" false
 ```
 
-Example
+Example: (2) compare JSON values with `nullptr`
 
 The example demonstrates comparing several JSON types against the null pointer (JSON `null`).
 

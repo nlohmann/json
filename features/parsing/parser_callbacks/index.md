@@ -2,7 +2,7 @@
 
 ## Overview
 
-With a parser callback function, the result of parsing a JSON text can be influenced. When passed to `parse`, it is called on certain events (passed as `parse_event_t` via parameter `event`) with a set recursion depth `depth` and context JSON value `parsed`. The return value of the callback function is a boolean indicating whether the element that emitted the callback shall be kept or not.
+With a parser callback function, the result of parsing a JSON text can be influenced. When passed to [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md), it is called on certain events (passed as [`parse_event_t`](https://json.nlohmann.me/api/basic_json/parse_event_t/index.md) via parameter `event`) with a set recursion depth `depth` and context JSON value `parsed`. The return value of the callback function is a boolean indicating whether the element that emitted the callback shall be kept or not.
 
 The type of the callback function is:
 
@@ -25,7 +25,7 @@ We distinguish six scenarios (determined by the event type) in which the callbac
 | `parse_event_t::array_end`    | the parser read `]` and finished processing a JSON array  | depth of the parent of the JSON array     | the parsed JSON array            |
 | `parse_event_t::value`        | the parser finished reading a JSON value                  | depth of the value                        | the parsed JSON value            |
 
-Example
+Example: sequence of callback events
 
 When parsing the following JSON text,
 
@@ -64,7 +64,7 @@ Discarding a value (i.e., returning `false`) has different effects depending on 
 - Discarded values in structured types are skipped. That is, the parser will behave as if the discarded value was never read.
 - In case a value outside a structured type is skipped, it is replaced with `null`. This case happens if the top-level element is skipped.
 
-Example
+Example: skip an object key while parsing
 
 The example below demonstrates the `parse()` function with and without callback function.
 
@@ -162,7 +162,7 @@ Output:
 
 The JSON specification leaves the handling of objects with repeated keys up to the implementation. As described in [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/#behavior), it is unspecified which value for a repeated key ends up in the resulting `json` value -- once parsing has produced that value, the duplicate is already gone, because object storage maps each key to a single value. If duplicate keys should instead be treated as an error, a parser callback can detect them while the object is still being read, before that ambiguity ever applies.
 
-Example
+Example: reject duplicate object keys
 
 ```
 #include <iostream>
@@ -235,18 +235,19 @@ Output:
 duplicate JSON object key: one
 ```
 
-This approach has two limitations:
+This approach has three limitations:
 
 - The depth-indexed bookkeeping must account for the fact that `object_start` reports the depth of the *parent* of the object, while the `key` events inside that object are reported one depth deeper (see the event table above); it is easy to get this off by one for nested objects.
 - The thrown exception cannot carry a `parse_error`-style byte offset, because position tracking only exists inside the parser and lexer, not at the callback layer.
+- The exception only names the repeated key, not where it occurs in the document. Reporting its full path requires maintaining a stack of the enclosing keys and array indices in the callback as well.
 
-For strict validation with precise error positions, implementing a [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) instead gives access to the parser's position information directly.
+A [SAX interface](https://json.nlohmann.me/features/parsing/sax_interface/index.md) does not lift the position limitation: its `key` function receives no position either -- only `parse_error` is passed the byte position.
 
 ## Recipe: streaming a large homogeneous array
 
 A common use case is a huge top-level array of many similarly-shaped objects, too large to hold entirely in memory as a `json` value. A parser callback can hand off each completed element to a user function and then discard it, so memory usage stays bounded by a single element (plus the not-yet-parsed tail of the input) rather than the whole document. Since the top-level array's `array_start`/`array_end` are reported at `depth == 0` (its parent is the document root), the object elements it contains are reported at `depth == 1`:
 
-Example
+Example: stream a large top-level array
 
 ```
 std::ifstream input("large_array.json");
@@ -268,7 +269,7 @@ If the array's elements are scalars or nested arrays instead of objects, check f
 
 Since there is no built-in nesting-depth limit (see the note above), a callback can enforce one manually by tracking the maximum `depth` seen and throwing once it is exceeded:
 
-Example
+Example: limit the nesting depth
 
 ```
 constexpr int max_depth = 32;

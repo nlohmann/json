@@ -24,7 +24,7 @@ Empty objects and arrays are flattened to `null` and will not be reconstructed c
 
 ## Examples
 
-Example
+Example: flatten a JSON object
 
 The following code shows how a JSON object is flattened to an object whose keys consist of JSON pointers.
 
@@ -77,6 +77,52 @@ Output:
     "/object/currency": "USD",
     "/object/value": 42.99,
     "/pi": 3.141
+}
+```
+
+Example: empty objects and arrays are flattened to `null`
+
+The following code shows that an empty object and an empty array are both flattened to `null`, and that `unflatten()` restores them as `null` rather than as empty containers.
+
+```
+#include <iostream>
+#include <iomanip>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
+int main()
+{
+    // create a JSON value with an empty object and an empty array
+    json j =
+    {
+        {"empty_object", json::object()},
+        {"empty_array", json::array()},
+        {"name", "Niels"}
+    };
+
+    // call flatten()
+    json flattened = j.flatten();
+    std::cout << std::setw(4) << flattened << "\n\n";
+
+    // the empty containers cannot be restored by unflatten()
+    std::cout << std::setw(4) << flattened.unflatten() << '\n';
+}
+```
+
+Output:
+
+```
+{
+    "/empty_array": null,
+    "/empty_object": null,
+    "/name": "Niels"
+}
+
+{
+    "empty_array": null,
+    "empty_object": null,
+    "name": "Niels"
 }
 ```
 

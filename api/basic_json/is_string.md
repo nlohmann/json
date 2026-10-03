@@ -34,6 +34,12 @@ Constant.
     --8<-- "examples/is_string.output"
     ```
 
+## See also
+
+- [is_primitive](is_primitive.md) checks whether the JSON value is primitive
+- [type](type.md) returns the type of the JSON value
+- [string_t](string_t.md) the type used to store JSON strings
+
 ## Version history
 
 - Added in version 1.0.0.

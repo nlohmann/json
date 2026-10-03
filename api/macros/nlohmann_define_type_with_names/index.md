@@ -33,7 +33,7 @@ For further information please refer to the corresponding macros without `WITH_N
 
 ## Examples
 
-Example (1): NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES
+Example: NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_NAMES
 
 Consider the following complete example:
 
@@ -155,6 +155,13 @@ int main()
 }
 ```
 
+## See also
+
+- [NLOHMANN_DEFINE_TYPE_INTRUSIVE, NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE](https://json.nlohmann.me/api/macros/nlohmann_define_type_intrusive/index.md) - the macros these variants add custom JSON key names to
+- [NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE](https://json.nlohmann.me/api/macros/nlohmann_define_type_non_intrusive/index.md) - the macros these variants add custom JSON key names to
+- [NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_ONLY_SERIALIZE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE](https://json.nlohmann.me/api/macros/nlohmann_define_derived_type/index.md) - similar macros for derived types, also available with custom names
+- [Arbitrary Type Conversions](https://json.nlohmann.me/features/arbitrary_types/index.md) - overview of type conversion mechanisms
+
 ## Version history
 
-1. Added in version 3.13.0.
+- Added in version 3.13.0 unreleased.

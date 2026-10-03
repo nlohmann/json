@@ -10,6 +10,14 @@ Returns the allocator associated with the container.
 
 associated allocator
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+
+## Complexity
+
+Constant.
+
 ## Examples
 
 Example
@@ -42,6 +50,11 @@ Output:
 ```
 "Hello, world!"
 ```
+
+## See also
+
+- [basic_json](https://json.nlohmann.me/api/basic_json/#template-parameters) the class template, with `AllocatorType` as one of its template parameters
+- [Template Parameter Requirements](https://json.nlohmann.me/features/types/template_parameters/#allocatortype) - the requirements for `AllocatorType`
 
 ## Version history
 

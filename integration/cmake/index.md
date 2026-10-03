@@ -2,7 +2,7 @@
 
 ## Integration
 
-You can use the `nlohmann_json::nlohmann_json` interface target in CMake. This target populates the appropriate usage requirements for [`INTERFACE_INCLUDE_DIRECTORIES`](https://cmake.org/cmake/help/latest/prop_tgt/INTERFACE_INCLUDE_DIRECTORIES.html) to point to the appropriate include directories and [`INTERFACE_COMPILE_FEATURES`](https://cmake.org/cmake/help/latest/prop_tgt/INTERFACE_COMPILE_FEATURES.html) for the necessary C++11 flags.
+You can use the `nlohmann_json::nlohmann_json` interface target in CMake. This target populates the appropriate usage requirements for [`INTERFACE_INCLUDE_DIRECTORIES`](https://cmake.org/cmake/help/latest/prop_tgt/INTERFACE_INCLUDE_DIRECTORIES.html) to point to the appropriate include directories and [`INTERFACE_COMPILE_FEATURES`](https://cmake.org/cmake/help/latest/prop_tgt/INTERFACE_COMPILE_FEATURES.html) for the necessary C++11 flags. Most [package managers](https://json.nlohmann.me/integration/package_managers/index.md) that provide a CMake package configuration for this library expose this same target.
 
 ### External
 
@@ -134,7 +134,7 @@ Enable [extended diagnostic messages](https://json.nlohmann.me/home/exceptions/#
 
 Does not apply to a pre-installed package
 
-This option only takes effect when building nlohmann/json from source as part of your own CMake project (e.g. via [`FetchContent`](#fetchcontent) or [`add_subdirectory`](#external)). It has **no effect** on a package that was already built and installed elsewhere (Homebrew, vcpkg, a system package, etc.) — the resulting compile definition is baked into the exported `nlohmann_jsonTargets.cmake` at install time, and `set(JSON_Diagnostics ON)` before `find_package()` does not change it (verified against the Homebrew-installed package: the exported target still carries a fixed `$<$<BOOL:OFF>:JSON_DIAGNOSTICS=1>`, regardless of any variable set in the consuming project).
+This option only takes effect when building nlohmann/json from source as part of your own CMake project (e.g. via [`FetchContent`](#fetchcontent) or [`add_subdirectory`](#embedded)). It has **no effect** on a package that was already built and installed elsewhere (Homebrew, vcpkg, a system package, etc.) — the resulting compile definition is baked into the exported `nlohmann_jsonTargets.cmake` at install time, and `set(JSON_Diagnostics ON)` before `find_package()` does not change it (verified against the Homebrew-installed package: the exported target still carries a fixed `$<$<BOOL:OFF>:JSON_DIAGNOSTICS=1>`, regardless of any variable set in the consuming project).
 
 To enable extended diagnostics for a pre-installed package, override the imported target's property directly after `find_package()`:
 
@@ -164,15 +164,15 @@ Skip expensive/slow test suites. This option is `OFF` by default. Depends on `JS
 
 ### `JSON_GlobalUDLs`
 
-Place user-defined string literals in the global namespace by defining the macro [`JSON_USE_GLOBAL_UDLS`](https://json.nlohmann.me/api/macros/json_use_global_udls/index.md). This option is `OFF` by default.
+Place user-defined string literals in the global namespace by defining the macro [`JSON_USE_GLOBAL_UDLS`](https://json.nlohmann.me/api/macros/json_use_global_udls/index.md). This option is `ON` by default; see the [migration guide](https://json.nlohmann.me/integration/migration_guide/#import-namespace-literals-for-udls) for how to prepare code for the next major release, where the literals are removed from the global namespace.
 
 ### `JSON_ImplicitConversions`
 
-Enable implicit conversions by defining macro [`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md). This option is `ON` by default.
+Enable implicit conversions by defining macro [`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md). This option is `ON` by default; see the [migration guide](https://json.nlohmann.me/integration/migration_guide/#replace-implicit-conversions) for how to prepare code for the next major release, where implicit conversions are switched off by default.
 
 ### `JSON_Install`
 
-Install CMake targets during install step. This option is `ON` by default if the library's CMake project is the top project.
+Install CMake targets during install step. This option is `ON` by default if the library's CMake project is the top project. Installing also generates a [pkg-config](https://json.nlohmann.me/integration/pkg-config/index.md) file for tools that rely on `pkg-config` instead of CMake.
 
 ### `JSON_LegacyDiscardedValueComparison`
 
@@ -189,6 +189,10 @@ Treat the library headers like system headers (i.e., adding `SYSTEM` to the [`ta
 ### `JSON_StrictNulHandling`
 
 Reject a `'\0'` (NUL) byte in the input instead of treating it as end of input, by defining the macro [`JSON_STRICT_NUL_HANDLING`](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md). This option is `OFF` by default.
+
+### `JSON_TestSimdutf`
+
+Build the unit tests against the [simdutf](https://github.com/simdutf/simdutf) UTF-8 validation backend by defining [`JSON_USE_SIMDUTF`](https://json.nlohmann.me/api/macros/json_use_simdutf/index.md) for every test target. simdutf is fetched during configuration; its version is set by the cache variable `JSON_SIMDUTF_VERSION`. This option is `OFF` by default. Depends on `JSON_BuildTests`.
 
 ### `JSON_Valgrind`
 

@@ -38,6 +38,8 @@ Deprecation
 
 Function `std::ostream& operator<<(std::ostream& o, const basic_json& j)` replaces function `std::ostream& operator>>(const basic_json& j, std::ostream& o)` which has been deprecated in version 3.0.0. It will be removed in version 4.0.0. Please replace calls like `j >> o;` with `o << j;`.
 
+See the [migration guide](https://json.nlohmann.me/integration/migration_guide/#miscellaneous-functions) for how to update existing code.
+
 ## Examples
 
 Example: (1) serialize JSON value to stream

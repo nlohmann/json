@@ -52,6 +52,13 @@ Output:
 1
 ```
 
+## See also
+
+- [crbegin](https://json.nlohmann.me/api/basic_json/crbegin/index.md) returns a const reverse iterator to the last element
+- [rend](https://json.nlohmann.me/api/basic_json/rend/index.md) returns a reverse iterator to one before the first element
+- [cend](https://json.nlohmann.me/api/basic_json/cend/index.md) returns a const iterator to one past the last element
+- [Iterators](https://json.nlohmann.me/features/iterators/index.md) - the article on iterators
+
 ## Version history
 
 - Added in version 1.0.0.

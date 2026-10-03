@@ -95,7 +95,7 @@ The cost is negligible for the object sizes typically found in configuration fil
 | 8000   | 1.6 ms | 67.8 ms        | 43×    |
 | 16 000 | 3.3 ms | 181.6 ms       | 54×    |
 
-If key order matters for objects of that size, consider a container with a lookup index, such as [`tsl::ordered_map`](https://github.com/Tessil/ordered-map) ([integration](https://github.com/nlohmann/json/issues/546#issuecomment-304447518)), as the object type -- see [object order](https://json.nlohmann.me/features/object_order/index.md).
+If key order matters for objects of that size, consider a container with a lookup index, such as [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map) ([integration](https://github.com/nlohmann/json/issues/485#issuecomment-333652309)), as the object type -- see [object order](https://json.nlohmann.me/features/object_order/index.md).
 
 ## Examples
 
@@ -166,4 +166,4 @@ m_std = { one:eins three:drei two:zwei }
 
 - Added in version 3.9.0 to implement [`nlohmann::ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md).
 - Added **key_compare** member in version 3.11.0.
-- Changed in version 3.13.0: growing the storage moves the mapped values instead of copying them.
+- Changed in version 3.13.0 unreleased: growing the storage moves the mapped values instead of copying them.

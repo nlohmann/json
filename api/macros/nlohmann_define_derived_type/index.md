@@ -131,7 +131,7 @@ See Implementation limits for [NLOHMANN_DEFINE_TYPE_INTRUSIVE](https://json.nloh
 
 ## Examples
 
-NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE
+Example: (1) NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE
 
 Consider the following complete example:
 

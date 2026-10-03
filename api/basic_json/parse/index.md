@@ -95,7 +95,7 @@ By default, a `'\0'` (NUL) byte anywhere in the input is treated as end of input
 
 ## Examples
 
-Parsing from a character array
+Example: (1) parse from a character array
 
 The example below demonstrates the `parse()` function reading from an array.
 
@@ -156,7 +156,7 @@ Output:
 }
 ```
 
-Parsing from a string
+Example: (1) parse from a string
 
 The example below demonstrates the `parse()` function with and without callback function.
 
@@ -250,7 +250,7 @@ Output:
 }
 ```
 
-Parsing from an input stream
+Example: (1) parse from an input stream
 
 The example below demonstrates the `parse()` function with and without callback function.
 
@@ -353,7 +353,7 @@ Output:
 }
 ```
 
-Parsing from a contiguous container
+Example: (1) parse from a contiguous container
 
 The example below demonstrates the `parse()` function reading from a contiguous container.
 
@@ -385,7 +385,7 @@ Output:
 ]
 ```
 
-Parsing from a non-null-terminated string
+Example: (2) parse from a non-null-terminated string
 
 The example below demonstrates the `parse()` function reading from a string that is not null-terminated.
 
@@ -417,7 +417,7 @@ Output:
 ]
 ```
 
-Parsing from an iterator pair
+Example: (2) parse from an iterator pair
 
 The example below demonstrates the `parse()` function reading from an iterator pair.
 
@@ -449,7 +449,7 @@ Output:
 ]
 ```
 
-Effect of `allow_exceptions` parameter
+Example: effect of `allow_exceptions` parameter
 
 The example below demonstrates the effect of the `allow_exceptions` parameter in the `parse()` function.
 
@@ -499,7 +499,7 @@ Output:
 the input is invalid JSON
 ```
 
-Effect of `ignore_comments` parameter
+Example: effect of `ignore_comments` parameter
 
 The example below demonstrates the effect of the `ignore_comments` parameter in the `parse()` function.
 
@@ -553,7 +553,7 @@ Output:
 }
 ```
 
-Effect of `ignore_trailing_commas` parameter
+Example: effect of `ignore_trailing_commas` parameter
 
 The example below demonstrates the effect of the `ignore_trailing_commas` parameter in the `parse()` function.
 
@@ -627,14 +627,16 @@ Output:
 - Overload for contiguous containers (1) added in version 2.0.3.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
 - Changed [runtime assertion](https://json.nlohmann.me/features/assertions/index.md) in case of `FILE*` null pointers to exception in version 3.12.0.
-- Added `ignore_trailing_commas` in version 3.13.0.
-- Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
-- Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
-- `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 to optionally reject a NUL byte in the input instead of treating it as end of input; planned to become the default in version 4.0.0.
-- Extended empty-input detection to also cover an `std::istream` without a stream buffer, and fixed a crash (`std::terminate`) when parsing from an `std::istream` with `eofbit` in its exception mask, in version 3.13.0.
+- Added `ignore_trailing_commas` in version 3.13.0 unreleased.
+- Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0 unreleased.
+- Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0 unreleased.
+- `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 unreleased to optionally reject a NUL byte in the input instead of treating it as end of input; planned to become the default in version 4.0.0.
+- Extended empty-input detection to also cover an `std::istream` without a stream buffer, and fixed a crash (`std::terminate`) when parsing from an `std::istream` with `eofbit` in its exception mask, in version 3.13.0 unreleased.
 
 Deprecation
 
 Overload (2) replaces calls to `parse` with a pair of iterators as their first parameter which has been deprecated in version 3.8.0. This overload will be removed in version 4.0.0. Please replace all calls like `parse({ptr, ptr+len}, ...);` with `parse(ptr, ptr+len, ...);`.
 
 You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated function.
+
+See the [migration guide](https://json.nlohmann.me/integration/migration_guide/#parsing) for how to update existing code.
