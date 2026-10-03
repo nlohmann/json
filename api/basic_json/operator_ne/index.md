@@ -5,10 +5,10 @@
 bool operator!=(const_reference lhs, const_reference rhs) noexcept;   // (1)
 
 template<typename ScalarType>
-bool operator!=(const_reference lhs, const ScalarType rhs) noexcept;  // (2)
+bool operator!=(const_reference lhs, const ScalarType rhs) noexcept(/* see below */); // (2)
 
 template<typename ScalarType>
-bool operator!=(ScalarType lhs, const const_reference rhs) noexcept;  // (2)
+bool operator!=(ScalarType lhs, const const_reference rhs) noexcept(/* see below */); // (2)
 ```
 
 1. Compares two JSON values for inequality. Returns `!(lhs == rhs)`.
@@ -33,7 +33,8 @@ whether the values `lhs`/`*this` and `rhs` are not equal
 
 ## Exception safety
 
-No-throw guarantee: this function never throws exceptions.
+1. No-throw guarantee: this function never throws exceptions.
+1. No-throw guarantee if converting the scalar to a JSON value cannot throw, as for numbers, Booleans, and `nullptr`; the function is `noexcept` exactly in that case. Otherwise, it throws what the conversion throws, for example `std::bad_alloc` when converting a string, or [`out_of_range.410`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range410) for an enum value not mapped by [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](https://json.nlohmann.me/api/macros/nlohmann_json_serialize_enum_strict/index.md).
 
 ## Complexity
 
@@ -141,4 +142,4 @@ null != nullptr false
 ## Version history
 
 1. Added in version 1.0.0. Added a C++20 member function in version 3.11.0. Changed in version 3.13.0 unreleased to remove special-casing for `NaN` and `discarded` values; `operator!=` now consistently means `!(a == b)`. Removed the C++20 member function in version 3.13.0 unreleased; since C++20, the compiler rewrites `a != b` using `operator==`.
-1. Added in version 1.0.0. Changed in version 3.13.0 unreleased to remove special-casing for `NaN` and `discarded` values; `operator!=` now consistently means `!(a == b)`. Since C++20, the compiler rewrites `a != b` using `operator==`.
+1. Added in version 1.0.0. Changed in version 3.13.0 unreleased to remove special-casing for `NaN` and `discarded` values; `operator!=` now consistently means `!(a == b)`. Since C++20, the compiler rewrites `a != b` using `operator==`. Made conditionally `noexcept` in version 3.13.0 unreleased; before, a throwing conversion called `std::terminate`.

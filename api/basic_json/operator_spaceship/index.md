@@ -6,7 +6,7 @@ class basic_json {
     std::partial_ordering operator<=>(const_reference rhs) const noexcept;  // (1)
 
     template<typename ScalarType>
-    std::partial_ordering operator<=>(const ScalarType rhs) const noexcept; // (2)
+    std::partial_ordering operator<=>(const ScalarType rhs) const noexcept(/* see below */); // (2)
 };
 ```
 
@@ -33,7 +33,8 @@ the `std::partial_ordering` of the 3-way comparison of `*this` and `rhs`
 
 ## Exception safety
 
-No-throw guarantee: this function never throws exceptions.
+1. No-throw guarantee: this function never throws exceptions.
+1. No-throw guarantee if converting the scalar to a JSON value cannot throw, as for numbers, Booleans, and `nullptr`; the function is `noexcept` exactly in that case. Otherwise, it throws what the conversion throws, for example `std::bad_alloc` when converting a string, or [`out_of_range.410`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range410) for an enum value not mapped by [`NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`](https://json.nlohmann.me/api/macros/nlohmann_json_serialize_enum_strict/index.md).
 
 ## Complexity
 
@@ -174,4 +175,4 @@ false <=> true := less
 ## Version history
 
 1. Added in version 3.11.0.
-1. Added in version 3.11.0.
+1. Added in version 3.11.0. Made conditionally `noexcept` in version 3.13.0 unreleased; before, a throwing conversion called `std::terminate`.
