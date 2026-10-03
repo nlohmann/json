@@ -1154,12 +1154,12 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
         {
             const auto format = encoding.first;
             const auto& bytes = encoding.second;
-            CAPTURE(format);
+            CAPTURE(format)
 
             // every prefix is truncated input
             for (std::size_t length = 0; length < bytes.size(); ++length)
             {
-                CAPTURE(length);
+                CAPTURE(length)
                 const auto result = parse_binary_recovering(std::vector<std::uint8_t>(bytes.begin(), bytes.begin() + static_cast<std::ptrdiff_t>(length)), format);
                 CHECK(!result.ok);
                 CHECK(result.errors == 1);
@@ -1306,8 +1306,8 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
 
         for (const auto& repair : repairs)
         {
-            CAPTURE(repair.format);
-            CAPTURE(repair.input);
+            CAPTURE(repair.format)
+            CAPTURE(repair.input)
             const auto result = parse_binary_recovering(repair.input, repair.format);
             CHECK(!result.ok);
             CHECK(result.balanced);
@@ -1390,7 +1390,7 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
         {
             const auto format = encoding.first;
             const auto& original = encoding.second;
-            CAPTURE(format);
+            CAPTURE(format)
 
             std::vector<std::vector<std::uint8_t>> inputs;
             for (std::size_t position = 0; position < original.size(); ++position)
@@ -1408,7 +1408,7 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
 
             for (const auto& input : inputs)
             {
-                CAPTURE(input);
+                CAPTURE(input)
                 const auto result = parse_binary_recovering(input, format);
                 CHECK(result.balanced);
                 CHECK(result.errors <= input.size() + 1);

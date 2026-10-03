@@ -3234,7 +3234,7 @@ TEST_CASE("parser error recovery (#3989)")
 
         for (const auto& repair : repairs)
         {
-            CAPTURE(repair.input);
+            CAPTURE(repair.input)
             const auto result = parse_recovering(std::string(repair.input));
             CHECK(!result.ok);
             CHECK(result.balanced);
@@ -3269,7 +3269,7 @@ TEST_CASE("parser error recovery (#3989)")
                     "", "   ", "]", "tru", "NaN", ",:", "/* comment"
                 })
         {
-            CAPTURE(s);
+            CAPTURE(s)
             const auto result = parse_recovering(s, true, true);
             CHECK(!result.ok);
             CHECK(result.balanced);
@@ -3288,7 +3288,7 @@ TEST_CASE("parser error recovery (#3989)")
                     R"(["a\qb"])", "[1e999]", "{1:2}", R"({"a":[1,2}})", "[1,", "[1] [2]", "{a:1}"
                 })
         {
-            CAPTURE(s);
+            CAPTURE(s)
             const auto result = parse_recovering(s);
             REQUIRE(!result.errors.empty());
             json _;
@@ -3335,7 +3335,7 @@ TEST_CASE("parser error recovery (#3989)")
                         "[1,]", R"({"a":1,})", "[[1,],]"
                     })
             {
-                CAPTURE(s);
+                CAPTURE(s)
                 const auto result = parse_recovering(s, true, false, true);
                 CHECK(result.ok);
                 CHECK(result.errors.empty());
@@ -3429,7 +3429,7 @@ TEST_CASE("parser error recovery (#3989)")
                     "[1 2]", "[tru}, 1]", R"({"a" "b\q", "c":[1.x, 2}})", "[\"\xFF\xC3(\", -, 1e+]", "{a:1,\"b\":2", ")]}' [1]"
                 })
         {
-            CAPTURE(s);
+            CAPTURE(s)
             const auto reference = parse_recovering(s);
             CHECK(reference.balanced);
 
@@ -3500,7 +3500,7 @@ TEST_CASE("parser error recovery (#3989)")
 
         for (const auto& s : inputs)
         {
-            CAPTURE(s);
+            CAPTURE(s)
             const auto result = parse_recovering(s);
             CHECK(result.balanced);
             CHECK(result.errors.size() <= s.size() + 1);
