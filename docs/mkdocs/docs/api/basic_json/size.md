@@ -51,6 +51,11 @@ JSON value which is `1` in the case of a string.
     --8<-- "examples/size.output"
     ```
 
+## See also
+
+- [empty](empty.md) checks whether the JSON value has no elements
+- [max_size](max_size.md) returns the maximum possible number of elements
+
 ## Version history
 
 - Added in version 1.0.0.

@@ -16,7 +16,8 @@ byte is still not rejected:
   [`from_msgpack`](../basic_json/from_msgpack.md), [`from_ubjson`](../basic_json/from_ubjson.md)) are never affected: there, `0x00` is ordinary data.
 - A bare `const char*` pointer has no length of its own, so its length is still determined with `strlen()`. The first
   NUL byte therefore still marks the end of the input, and nothing after it is read.
-- One trailing `'\0'` at the end of a `char` array (e.g., a string literal) is trimmed; see the warning below.
+- One trailing `'\0'` at the end of a `char`, `wchar_t`, `char16_t`, `char32_t`, or (C++20) `char8_t` array (e.g., a
+  string literal) is trimmed; see the warning below.
 
 ## Default definition
 
@@ -57,13 +58,15 @@ The default value is `0` (disabled — existing behavior is preserved).
     This macro must be defined **before** including `<nlohmann/json.hpp>`. Defining it after the include has no
     effect.
 
-    Enabling it also changes how a `char` array (including a string literal, e.g. `json::parse("123")`) is read: such
-    an array normally carries a trailing `'\0'` contributed by the compiler, not by the source text. With this macro
-    enabled, that one trailing byte is trimmed if present so that parsing a string literal keeps working; every other
-    byte in the array - including any `'\0'` that is not the very last element - is read as real data and rejected
-    like any other unexpected byte. Arrays of any other element type (`unsigned char`, `std::uint8_t`, ...), as used
-    for CBOR or MessagePack, are never affected by this trimming; their full extent - including a genuine trailing
-    `0x00` - is always preserved, in both states of this macro.
+    Enabling it also changes how an array of a text-literal element type (`char`, `wchar_t`, `char16_t`, `char32_t`,
+    or, since C++20, `char8_t` - including a string literal, e.g. `json::parse("123")` or `json::parse(L"123")`) is
+    read: such an array normally carries a trailing `'\0'` contributed by the compiler, not by the source text. With
+    this macro enabled, that one trailing element is trimmed if present so that parsing a string literal keeps
+    working, for any of these character types; every other element in the array - including any `'\0'` that is not
+    the very last element - is read as real data and rejected like any other unexpected byte. Arrays of any other
+    element type (`unsigned char`, `std::uint8_t`, ...), as used for CBOR or MessagePack, are never affected by this
+    trimming; their full extent - including a genuine trailing `0x00` - is always preserved, in both states of this
+    macro.
 
 !!! note "ABI compatibility"
 
@@ -82,7 +85,7 @@ The default value is `0` (disabled — existing behavior is preserved).
 
 ## Examples
 
-??? example "Default behavior (macro not defined)"
+??? example "Example: default behavior (macro not defined)"
 
     Without the macro, a NUL byte silently ends parsing at that point:
 
@@ -98,7 +101,7 @@ The default value is `0` (disabled — existing behavior is preserved).
     }
     ```
 
-??? example "Opt-in strict handling (macro defined to 1)"
+??? example "Example: opt-in strict handling (macro defined to 1)"
 
     With the macro, a NUL byte is rejected like any other unexpected byte:
 
@@ -121,6 +124,7 @@ The default value is `0` (disabled — existing behavior is preserved).
 
 ## See also
 
+- [:simple-cmake: JSON_StrictNulHandling](../../integration/cmake.md#json_strictnulhandling) - CMake option to control the macro
 - [FAQ: NUL bytes in the input](../../home/faq.md#nul-bytes-in-the-input)
 - [**parse**](../basic_json/parse.md) - deserialize from a compatible input
 - [**accept**](../basic_json/accept.md) - check if the input is valid JSON

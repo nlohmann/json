@@ -30,6 +30,17 @@ that an attacker controls, passed to [`parse`](../api/basic_json/parse.md), [`ac
   not a security boundary. Such preconditions are checked with [runtime assertions](../features/assertions.md) in debug
   builds; functions such as [`at`](../api/basic_json/at.md) offer checked access with exceptions.
 
+```mermaid
+flowchart LR
+    A[Untrusted input] --> B[Parser]
+    A --> C[SAX interface]
+    A --> D[Binary readers]
+    B --> E["Value tree (basic_json)"]
+    C --> E
+    D --> E
+    E --> F[Trusted caller]
+```
+
 ## Secure design
 
 - **Strict parsing.** The parser accepts exactly the JSON grammar of [RFC 8259](https://datatracker.ietf.org/doc/html/rfc8259).

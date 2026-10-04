@@ -23,6 +23,11 @@ See [`basic_json::string_t`](../basic_json/string_t.md) for more information.
     --8<-- "examples/json_pointer__string_t.output"
     ```
 
+## See also
+
+- [basic_json::string_t](../basic_json/string_t.md) type used to store JSON strings
+- [to_string](to_string.md) return a string representation of the JSON pointer
+
 ## Version history
 
 - Added in version 3.11.0.

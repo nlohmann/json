@@ -34,6 +34,12 @@ Whether parsing should proceed.
     --8<-- "examples/sax_parse.output"
     ```
 
+## See also
+
+- [number_integer](number_integer.md) - an integer number was read
+- [number_unsigned](number_unsigned.md) - an unsigned integer number was read
+- [sax_parse](../basic_json/sax_parse.md) - SAX parser
+
 ## Version history
 
 - Added in version 3.2.0.

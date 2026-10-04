@@ -41,7 +41,7 @@ Exceptions are used widely within the library. They can, however, be switched of
 
 Note that [`JSON_THROW_USER`](../api/macros/json_throw_user.md) should leave the current scope (e.g., by throwing or aborting), as continuing after it may yield undefined behavior.
 
-??? example
+??? example "Example: switch off exceptions and log errors before aborting"
 
     The code below switches off exceptions and creates a log entry with a detailed error message in case of errors.
 
@@ -67,7 +67,7 @@ See [documentation of `JSON_TRY_USER`, `JSON_CATCH_USER` and `JSON_THROW_USER`](
 
 Exceptions in the library are thrown in the local context of the JSON value they are detected. This makes detailed diagnostics messages, and hence debugging, difficult.
 
-??? example
+??? example "Example: standard diagnostic message"
 
     ```cpp
     --8<-- "examples/diagnostics_standard.cpp"
@@ -85,7 +85,7 @@ To create better diagnostics messages, each JSON value needs a pointer to its pa
 
 As this global context comes at the price of storing one additional pointer per JSON value and runtime overhead to maintain the parent relation, extended diagnostics are disabled by default. They can, however, be enabled by defining the preprocessor symbol [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) to `1` before including `json.hpp`.
 
-??? example
+??? example "Example: extended diagnostic message with `JSON_DIAGNOSTICS`"
 
     ```cpp
     --8<-- "examples/diagnostics_extended.cpp"
@@ -118,7 +118,7 @@ Exceptions have ids 1xx.
     is the index of the terminating null byte or the end of file. This also
     holds true when reading a byte vector (CBOR or MessagePack).
 
-??? example
+??? example "Example: catch a `parse_error` exception"
 
     The following code shows how a `parse_error` exception can be caught.
 
@@ -338,7 +338,10 @@ An unexpected byte was read in a [binary format](../features/binary_formats/inde
 
 A string could not be read from a [binary format](../features/binary_formats/index.md): either a value that is not a
 string was read where one was required (for instance as a map key), the string's length specification is invalid, or
-the string's bytes are not valid UTF-8.
+the string's bytes are not valid UTF-8 and the `error_handler` parameter of the corresponding `from_*` function is
+set to `strict`. By default (`error_handler_t::keep`), the bytes of a string are not checked for valid UTF-8 on read;
+see the ill-formed UTF-8 notes on the individual [binary format](../features/binary_formats/index.md) pages for how
+such a string is handled depending on `error_handler`.
 
 CBOR and MessagePack allow map keys of any type, but JSON object keys are always strings. Maps with keys of any other
 type (for instance integers or `null`) are therefore not supported; see the notes on
@@ -392,7 +395,7 @@ the expected semantics.
 
 Exceptions have ids 2xx.
 
-??? example
+??? example "Example: catch an `invalid_iterator` exception"
 
     The following code shows how an `invalid_iterator` exception can be caught.
 
@@ -418,7 +421,7 @@ The iterators passed to constructor `basic_json(InputIT first, InputIT last)` ar
 
 ### json.exception.invalid_iterator.202
 
-In the [erase](../api/basic_json/erase.md) or insert function, the passed iterator `pos` does not belong to the JSON value for which the function was called. It hence does not define a valid position for the deletion/insertion.
+In the [erase](../api/basic_json/erase.md) or [insert](../api/basic_json/insert.md) function, the passed iterator `pos` does not belong to the JSON value for which the function was called. It hence does not define a valid position for the deletion/insertion.
 
 !!! failure "Example messages"
 
@@ -451,7 +454,7 @@ When an iterator range for a primitive type (number, boolean, or string) is pass
 
 ### json.exception.invalid_iterator.205
 
-When an iterator for a primitive type (number, boolean, or string) is passed to an [erase](../api/basic_json/erase.md) function, the iterator has to be the `begin()` iterator, because it is the only way to address the stored value. All other iterators are invalid.
+When an iterator for a primitive type (number, boolean, or string) is passed to an [erase](../api/basic_json/erase.md) function, the iterator has to be the [`begin()`](../api/basic_json/begin.md) iterator, because it is the only way to address the stored value. All other iterators are invalid.
 
 !!! failure "Example message"
 
@@ -542,7 +545,7 @@ The order of object iterators cannot be compared, because JSON objects are unord
 
 ### json.exception.invalid_iterator.214
 
-Cannot retrieve value from iterator: The iterator either refers to a null value, or it refers to a primitive type (number, boolean, or string), but does not match the iterator returned by `begin()`.
+Cannot retrieve value from iterator: The iterator either refers to a null value, or it refers to a primitive type (number, boolean, or string), but does not match the iterator returned by [`begin()`](../api/basic_json/begin.md).
 
 !!! failure "Example message"
 
@@ -556,7 +559,7 @@ This exception is thrown in case of a type error; that is, a library function is
 
 Exceptions have ids 3xx.
 
-??? example
+??? example "Example: catch a `type_error` exception"
 
     The following code shows how a `type_error` exception can be caught.
 
@@ -608,7 +611,7 @@ To retrieve a reference to a value stored in a `basic_json` object with `get_ref
 
 ### json.exception.type_error.304
 
-The `at()` member functions can only be executed for certain JSON types.
+The [`at()`](../api/basic_json/at.md) member functions can only be executed for certain JSON types.
 
 !!! failure "Example messages"
 
@@ -621,7 +624,7 @@ The `at()` member functions can only be executed for certain JSON types.
 
 ### json.exception.type_error.305
 
-The `operator[]` member functions can only be executed for certain JSON types.
+The [`operator[]`](../api/basic_json/operator%5B%5D.md) member functions can only be executed for certain JSON types.
 
 !!! failure "Example messages"
 
@@ -634,7 +637,7 @@ The `operator[]` member functions can only be executed for certain JSON types.
 
 ### json.exception.type_error.306
 
-The `value()` member functions can only be executed for certain JSON types.
+The [`value()`](../api/basic_json/value.md) member functions can only be executed for certain JSON types.
 
 !!! failure "Example message"
 
@@ -654,7 +657,7 @@ The [`erase()`](../api/basic_json/erase.md) member functions can only be execute
 
 ### json.exception.type_error.308
 
-The `push_back()` and `operator+=` member functions can only be executed for certain JSON types.
+The [`push_back()`](../api/basic_json/push_back.md) and [`operator+=`](../api/basic_json/operator+=.md) member functions can only be executed for certain JSON types.
 
 !!! failure "Example message"
 
@@ -664,7 +667,7 @@ The `push_back()` and `operator+=` member functions can only be executed for cer
 
 ### json.exception.type_error.309
 
-The `insert()` member functions can only be executed for certain JSON types.
+The [`insert()`](../api/basic_json/insert.md) member functions can only be executed for certain JSON types.
 
 !!! failure "Example messages"
 
@@ -677,7 +680,7 @@ The `insert()` member functions can only be executed for certain JSON types.
 
 ### json.exception.type_error.310
 
-The `swap()` member functions can only be executed for certain JSON types.
+The [`swap()`](../api/basic_json/swap.md) member functions can only be executed for certain JSON types.
 
 !!! failure "Example message"
 
@@ -687,7 +690,7 @@ The `swap()` member functions can only be executed for certain JSON types.
 
 ### json.exception.type_error.311
 
-The `emplace()` and `emplace_back()` member functions can only be executed for certain JSON types.
+The [`emplace()`](../api/basic_json/emplace.md) and [`emplace_back()`](../api/basic_json/emplace_back.md) member functions can only be executed for certain JSON types.
 
 !!! failure "Example messages"
 
@@ -700,7 +703,7 @@ The `emplace()` and `emplace_back()` member functions can only be executed for c
 
 ### json.exception.type_error.312
 
-The `update()` member functions can only be executed for certain JSON types.
+The [`update()`](../api/basic_json/update.md) member functions can only be executed for certain JSON types.
 
 !!! failure "Example message"
 
@@ -710,7 +713,7 @@ The `update()` member functions can only be executed for certain JSON types.
 
 ### json.exception.type_error.313
 
-The `unflatten` function converts an object whose keys are JSON Pointers back into an arbitrary nested JSON value. The JSON Pointers must not overlap, because then the resulting value would not be well-defined.
+The [`unflatten()`](../api/basic_json/unflatten.md) function converts an object whose keys are JSON Pointers back into an arbitrary nested JSON value. The JSON Pointers must not overlap, because then the resulting value would not be well-defined.
 
 !!! failure "Example message"
 
@@ -720,7 +723,7 @@ The `unflatten` function converts an object whose keys are JSON Pointers back in
 
 ### json.exception.type_error.314
 
-The `unflatten` function only works for an object whose keys are JSON Pointers.
+The [`unflatten()`](../api/basic_json/unflatten.md) function only works for an object whose keys are JSON Pointers.
 
 !!! failure "Example message"
 
@@ -732,7 +735,7 @@ The `unflatten` function only works for an object whose keys are JSON Pointers.
 
 ### json.exception.type_error.315
 
-The `unflatten()` function only works for an object whose keys are JSON Pointers and whose values are primitive.
+The [`unflatten()`](../api/basic_json/unflatten.md) function only works for an object whose keys are JSON Pointers and whose values are primitive.
 
 !!! failure "Example message"
 
@@ -744,7 +747,13 @@ The `unflatten()` function only works for an object whose keys are JSON Pointers
 
 ### json.exception.type_error.316
 
-The `dump()` function only works with UTF-8 encoded strings; that is, if you assign a `std::string` to a JSON value, make sure it is UTF-8 encoded.
+The [`dump()`](../api/basic_json/dump.md) function only works with UTF-8 encoded strings; that is, if you assign a `std::string` to a JSON value, make sure it is UTF-8 encoded. See the FAQ entry on [serializing untrusted or invalid UTF-8](faq.md#serializing-untrusted-or-invalid-utf-8) for background and the recommended fix.
+
+The binary writers [`to_cbor()`](../api/basic_json/to_cbor.md), [`to_ubjson()`](../api/basic_json/to_ubjson.md),
+[`to_bjdata()`](../api/basic_json/to_bjdata.md), and [`to_bson()`](../api/basic_json/to_bson.md) throw this exception
+as well for a string value or object key that is not valid UTF-8 if their `error_handler` is `strict` (the default if
+[`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md) is enabled). So does
+[`to_msgpack()`](../api/basic_json/to_msgpack.md) if `error_handler_t::strict` is passed.
 
 !!! failure "Example message"
 
@@ -785,7 +794,7 @@ This exception is thrown in case a library function is called on an input parame
 
 Exceptions have ids 4xx.
 
-??? example
+??? example "Example: catch an `out_of_range` exception"
 
     The following code shows how an `out_of_range` exception can be caught.
 
@@ -1011,7 +1020,7 @@ other exception types.
 
 Exceptions have ids 5xx.
 
-??? example
+??? example "Example: catch an `other_error` exception"
 
     The following code shows how an `other_error` exception can be caught.
 
