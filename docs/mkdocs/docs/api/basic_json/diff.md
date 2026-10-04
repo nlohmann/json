@@ -8,7 +8,7 @@ static basic_json diff(const basic_json& source,
 Creates a [JSON Patch](http://jsonpatch.com) so that value `source` can be changed into the value `target` by calling
 [`patch`](patch.md) function.
 
-For two JSON values `source` and `target`, the following code yields always `#!cpp true`:
+For two JSON values `source` and `target`, the following code always yields `#!cpp true`:
 ```cpp
 source.patch(diff(source, target)) == target;
 ```
@@ -27,7 +27,7 @@ a JSON patch to convert the `source` to `target`
 
 ## Exception safety
 
-Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
+Strong guarantee: `source` and `target` are never modified.
 
 ## Complexity
 
