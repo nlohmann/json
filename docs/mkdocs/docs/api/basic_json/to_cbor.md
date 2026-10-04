@@ -35,6 +35,12 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 
 Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
 
+## Exceptions
+
+- Throws [type_error.316](../../home/exceptions.md#jsonexceptiontype_error316) if a string or object key in `j` is not
+  valid UTF-8 and [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md) is enabled; otherwise, the bytes are
+  written unchanged
+
 ## Complexity
 
 Linear in the size of the JSON value `j`.
@@ -68,3 +74,5 @@ Linear in the size of the JSON value `j`.
 
 - Added in version 2.0.9.
 - Compact representation of floating-point numbers added in version 3.8.0.
+- Throwing `type_error.316` for a string or object key that is not valid UTF-8 if
+  [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md) is enabled added in version 3.13.0.
