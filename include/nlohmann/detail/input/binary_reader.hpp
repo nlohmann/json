@@ -132,15 +132,15 @@ class binary_reader
 
     @param[in] adapter  input adapter to read from
     @param[in] format   the binary format to parse
-    @param[in] error_handler  how to treat text strings and object keys that
+    @param[in] error_handler_  how to treat text strings and object keys that
                are not well-formed UTF-8; none of the supported formats
                requires a decoder to reject those, so the default is to
                @ref error_handler_t::keep them unchanged, as every binary
                reader did before this parameter existed
     */
     explicit binary_reader(InputAdapterType&& adapter, const input_format_t format = input_format_t::json,
-                           const error_handler_t error_handler = error_handler_t::keep) noexcept
-        : ia(std::move(adapter)), input_format(format), error_handler(error_handler)
+                           const error_handler_t error_handler_ = error_handler_t::keep) noexcept
+        : ia(std::move(adapter)), input_format(format), error_handler(error_handler_)
     {
         (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
     }

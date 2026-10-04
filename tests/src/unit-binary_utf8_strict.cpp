@@ -83,21 +83,45 @@ TEST_CASE("JSON_STRICT_BINARY_UTF8 (see #5529, #5651)")
         // any bytes reach the output adapter (the BSON document length
         // prefix must be known up front, so nothing is written incrementally)
         std::vector<std::uint8_t> out{0x42}; // a sentinel byte the writer must not touch
-        CHECK_THROWS_WITH_AS(json::to_bson(json{{"s", "\xFF"}}, nlohmann::detail::output_adapter<std::uint8_t>(out)), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(json::to_bson(json {{"s", "\xFF"}}, nlohmann::detail::output_adapter<std::uint8_t>(out)), "[json.exception.type_error.316] (/s) invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+#else
+        CHECK_THROWS_WITH_AS(json::to_bson(json {{"s", "\xFF"}}, nlohmann::detail::output_adapter<std::uint8_t>(out)), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+#endif
         CHECK(out == std::vector<std::uint8_t> {0x42});
 
-        CHECK_THROWS_WITH_AS(json::to_bson(json{{"s", "\xFF"}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(json::to_bson(json {{"s", "\xFF"}}), "[json.exception.type_error.316] (/s) invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+#else
+        CHECK_THROWS_WITH_AS(json::to_bson(json {{"s", "\xFF"}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+#endif
         // a truncated multi-byte sequence
-        CHECK_THROWS_WITH_AS(json::to_bson(json{{"s", "\xC3"}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xC3", json::type_error&);
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(json::to_bson(json {{"s", "\xC3"}}), "[json.exception.type_error.316] (/s) invalid UTF-8 byte at index 0: 0xC3", json::type_error&);
+#else
+        CHECK_THROWS_WITH_AS(json::to_bson(json {{"s", "\xC3"}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xC3", json::type_error&);
+#endif
         // an encoded surrogate half (U+D800)
-        CHECK_THROWS_WITH_AS(json::to_bson(json{{"s", "\xED\xA0\x80"}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xED", json::type_error&);
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(json::to_bson(json {{"s", "\xED\xA0\x80"}}), "[json.exception.type_error.316] (/s) invalid UTF-8 byte at index 0: 0xED", json::type_error&);
+#else
+        CHECK_THROWS_WITH_AS(json::to_bson(json {{"s", "\xED\xA0\x80"}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xED", json::type_error&);
+#endif
         // an overlong encoding of '.'
-        CHECK_THROWS_WITH_AS(json::to_bson(json{{"s", "\xC0\xAF"}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xC0", json::type_error&);
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(json::to_bson(json {{"s", "\xC0\xAF"}}), "[json.exception.type_error.316] (/s) invalid UTF-8 byte at index 0: 0xC0", json::type_error&);
+#else
+        CHECK_THROWS_WITH_AS(json::to_bson(json {{"s", "\xC0\xAF"}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xC0", json::type_error&);
+#endif
 
         // an object key with ill-formed UTF-8 is rejected as well; unlike
         // the reader (which never validates element names), the writer
         // checks both string values and object keys
-        CHECK_THROWS_WITH_AS(json::to_bson(json{{"\xFF", 1}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(json::to_bson(json {{"\xFF", 1}}), "[json.exception.type_error.316] (/\xFF) invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+#else
+        CHECK_THROWS_WITH_AS(json::to_bson(json {{"\xFF", 1}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
+#endif
     }
 
     SECTION("an explicit error_handler overrides the default")
