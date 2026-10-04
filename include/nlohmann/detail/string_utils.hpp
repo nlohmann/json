@@ -16,6 +16,7 @@
 
 #include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/output/error_handler.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -117,13 +118,14 @@ This is a single-byte step of a "shift-based" UTF-8 decoder originally
 written by Björn Hoehrmann. See
 http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
 
-The library checks UTF-8 well-formedness (RFC 3629, section 4) in four
+The library checks UTF-8 well-formedness (RFC 3629, section 4) in three
 places, which differ in speed, diagnostics, and how they read the input:
 
-- decode() and @ref is_valid_utf8 below: the serializer (to escape and, in
-  strict mode, reject ill-formed UTF-8 when dumping a string) and the CBOR,
-  MessagePack, BSON, UBJSON and BJData readers (to reject ill-formed UTF-8 in
-  text strings at decode time).
+- decode() below: the serializer, to escape and, in strict mode, reject
+  ill-formed UTF-8 when dumping a string. The CBOR, MessagePack, BSON,
+  UBJSON and BJData readers do not use it: none of those specs requires a
+  decoder to reject ill-formed UTF-8 in text strings, so the readers keep
+  the bytes as is and leave the check to dump() and the binary writers.
 - the per-lead-byte switch in lexer::scan_string(): JSON text, with a
   diagnostic for each kind of error.
 - validate_one_utf8() and valid_utf8_prefix() in string_scan.hpp: the lexer's
@@ -179,19 +181,19 @@ inline std::uint8_t decode(std::uint8_t& state, std::uint32_t& codep, const std:
 }
 
 /*!
-@brief check whether a string consists solely of valid UTF-8
+@brief check a string for well-formed UTF-8 (RFC 3629, section 4)
 
-Used by the CBOR/MessagePack/BSON/UBJSON binary readers to reject text
-strings that are not valid UTF-8 at decode time (RFC 8949 §3.1 and the
-MessagePack/BSON specifications all require text strings to be UTF-8), so
-that malformed input is caught immediately instead of only surfacing later
-as a type_error.316 when the resulting value is dumped.
+Used by the binary readers (CBOR, MessagePack, UBJSON, BJData, BSON) when an
+@ref error_handler_t other than `keep` is requested for a text string value
+or object key: none of those formats requires a decoder to reject ill-formed
+UTF-8 on its own, so the check is opt-in there, unlike the JSON lexer and the
+serializer's @ref decode -based escaping, which always run it.
 
 @param[in] s      the string to check
-@param[in] first  index of the first byte to check; the bytes before it are
-                  assumed to have been validated already and to end on a
-                  code point boundary
-@return whether @a s (from index @a first on) is valid UTF-8
+@param[in] first  the index to start checking at
+@return whether `s.substr(first)` is well-formed UTF-8
+
+@sa @ref decode
 */
 template<typename StringType>
 inline bool is_valid_utf8(const StringType& s, const std::size_t first = 0) noexcept
@@ -209,6 +211,102 @@ inline bool is_valid_utf8(const StringType& s, const std::size_t first = 0) noex
     }
 
     return state == UTF8_ACCEPT;
+}
+
+/*!
+@brief sanitize a string with ill-formed UTF-8 for @ref error_handler_t::replace or @ref error_handler_t::ignore
+
+Replaces every maximal ill-formed subsequence with U+FFFD (`replace`) or
+drops it (`ignore`), using exactly the same boundaries @ref
+serializer::dump_escaped_impl uses while escaping a string: a byte that does
+not extend the sequence started by the previous byte(s) is reread as the
+start of a new one, instead of being swallowed along with them.
+
+@pre @a error_handler is @ref error_handler_t::replace or @ref error_handler_t::ignore
+@note Well-formed input is copied through unchanged, including bytes (e.g.
+      control characters or quotes) that @ref serializer::dump_escaped_impl
+      would itself escape; this function only concerns itself with
+      well-formedness, not with producing valid JSON text.
+
+@param[in] s              the string to sanitize
+@param[in] error_handler  @ref error_handler_t::replace or @ref error_handler_t::ignore
+
+@return @a s with every ill-formed subsequence replaced or removed
+
+@sa @ref decode
+*/
+template<typename StringType>
+inline StringType sanitize_utf8(const StringType& s, const error_handler_t error_handler)
+{
+    JSON_ASSERT(error_handler == error_handler_t::replace || error_handler == error_handler_t::ignore);
+
+    StringType result;
+    result.reserve(s.size());
+
+    std::uint32_t codepoint = 0;
+    std::uint8_t state = UTF8_ACCEPT;
+    // length of result after the last accepted code point
+    std::size_t result_len_after_last_accept = 0;
+    // whether bytes of an as yet unresolved sequence were already appended
+    bool pending = false;
+
+    for (std::size_t i = 0; i < s.size(); ++i)
+    {
+        switch (decode(state, codepoint, static_cast<std::uint8_t>(s[i])))
+        {
+            case UTF8_ACCEPT: // decode found a well-formed code point
+            {
+                result.push_back(s[i]);
+                result_len_after_last_accept = result.size();
+                pending = false;
+                break;
+            }
+
+            case UTF8_REJECT: // decode found an ill-formed byte
+            {
+                // in case we saw this byte for the first time, read it again,
+                // because it may be fine for itself, just not for the
+                // sequence that came before it
+                if (pending)
+                {
+                    --i;
+                }
+
+                // drop the bytes of the ill-formed sequence buffered below
+                result.resize(result_len_after_last_accept);
+
+                if (error_handler == error_handler_t::replace)
+                {
+                    result.append("\xEF\xBF\xBD");
+                    result_len_after_last_accept = result.size();
+                }
+
+                pending = false;
+                state = UTF8_ACCEPT;
+                break;
+            }
+
+            default: // decode found yet incomplete multibyte code point
+            {
+                result.push_back(s[i]);
+                pending = true;
+                break;
+            }
+        }
+    }
+
+    // the string ended with an incomplete sequence
+    if (state != UTF8_ACCEPT)
+    {
+        result.resize(result_len_after_last_accept);
+
+        if (error_handler == error_handler_t::replace)
+        {
+            result.append("\xEF\xBF\xBD");
+        }
+    }
+
+    return result;
 }
 
 }  // namespace detail
