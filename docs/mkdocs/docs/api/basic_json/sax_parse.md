@@ -143,6 +143,7 @@ A UTF-8 byte order mark is silently ignored.
 - Added in version 3.2.0.
 - Ignoring comments via `ignore_comments` added in version 3.9.0.
 - Added `ignore_trailing_commas` in version 3.13.0.
+- Added `tag_handler` in version 3.13.0.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
 - `JSON_PRECISE_STREAM_POSITION` added in version 3.13.0 to optionally leave a `#!cpp std::istream` positioned right
