@@ -54,6 +54,15 @@ static_assert(noexcept(json(pod {})), "");
 static_assert(noexcept(std::declval<json>().get<pod>()), "");
 static_assert(!noexcept(std::declval<json>().get<pod_bis>()), "");
 static_assert(noexcept(json(pod{})), "");
+
+// comparing with a scalar is noexcept exactly when converting the scalar is
+static_assert(noexcept(std::declval<const json&>() == 1), "");
+static_assert(noexcept(1 != std::declval<const json&>()), "");
+static_assert(noexcept(std::declval<const json&>() < 2.5), "");
+static_assert(noexcept(nullptr == std::declval<const json&>()), "");
+static_assert(!noexcept(std::declval<const json&>() == "foo"), "");
+static_assert(!noexcept("foo" >= std::declval<const json&>()), "");
+static_assert(noexcept(std::declval<const json&>() == std::declval<const json&>()), "");
 } // namespace
 
 TEST_CASE("noexcept")

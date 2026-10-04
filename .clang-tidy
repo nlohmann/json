@@ -1,17 +1,8 @@
-# bugprone-use-after-move (hicpp-invalid-access-moved is its alias) still flags
-# the basic_json move constructor, which forwards the whole object to its base
-# class (#5724), and two forwards in the error-message construction of
-# at(KeyType&&) (json.hpp, both overloads: find(std::forward<KeyType>(key))
-# followed by string_t(std::forward<KeyType>(key)) in the throw), which #5689
-# rewrites. Re-enable both checks once those changes have landed.
 # portability-avoid-pragma-once: kept disabled on purpose. #pragma once is accepted
 # by every supported compiler, and tools/amalgamate/amalgamate.py strips it from
 # single_include, so there is nothing left to fix here.
 
 Checks: '*,
-
-         -bugprone-use-after-move,
-         -hicpp-invalid-access-moved,
 
          -altera-id-dependent-backward-branch,
          -altera-struct-pack-align,
