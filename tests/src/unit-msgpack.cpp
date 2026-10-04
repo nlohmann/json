@@ -1560,7 +1560,7 @@ TEST_CASE("MessagePack")
             // dump() still requires valid UTF-8 and throws for such a value,
             // unless an error handler that replaces or ignores the bytes is
             // passed
-            CHECK_THROWS_AS(j_value.dump(), json::type_error&);
+            CHECK_THROWS_AS(utils::ignore_return_value(j_value.dump()), json::type_error&);
 
             // the same bytes as an object key round-trip as well
             const std::vector<uint8_t> ill_formed_key = {0x81, 0xa2, 0xc0, 0xae, 0x01};

@@ -430,8 +430,8 @@ TEST_CASE("ordered_map")
 
         SECTION("with T& (lvalue)")
         {
-            std::string one = "1";
-            std::string four = "four";
+            std::string one = "1"; // NOLINT(misc-const-correctness): emplace must accept a non-const lvalue
+            std::string four = "four"; // NOLINT(misc-const-correctness): see above
 
             auto res1 = om.emplace("eins", one);
             CHECK(res1.first == om.begin());
@@ -467,7 +467,7 @@ TEST_CASE("ordered_map")
         SECTION("with key of key_type (non-template overload)")
         {
             const std::string key_vier{"vier"};
-            std::string four = "four";
+            std::string four = "four"; // NOLINT(misc-const-correctness): emplace must accept a non-const lvalue
 
             auto res4 = om.emplace(key_vier, four);
             CHECK(res4.first == om.begin() + 3);

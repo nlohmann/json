@@ -1963,8 +1963,8 @@ TEST_CASE("operator[] with user-defined std::string_view-convertible types")
     };
 
     json j = {{"foo", "from_class"}, {"bar", "from_struct"}};
-    TestClass foo_obj;
-    TestStruct bar_obj;
+    const TestClass foo_obj;
+    const TestStruct bar_obj;
 
     SECTION("read access")
     {
@@ -2005,6 +2005,10 @@ TEST_CASE("keys convertible to std::string_view work with all lookup functions (
     // 3.12.0, such a key worked with at, the const operator[], find, count and
     // contains via the conversion to std::string; #4958 made the KeyType&&
     // templates win overload resolution for it instead, and those then failed
+    // the lookups pick the conversion to std::string_view, which leaves the one
+    // to std::string unused; it has to exist to reproduce the ambiguity
+    DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+    DOCTEST_CLANG_SUPPRESS_WARNING("-Wunused-member-function")
     struct DualKey
     {
         operator std::string() const
@@ -2016,6 +2020,7 @@ TEST_CASE("keys convertible to std::string_view work with all lookup functions (
             return "a";
         }
     };
+    DOCTEST_CLANG_SUPPRESS_WARNING_POP
 
     SECTION("nlohmann::json")
     {

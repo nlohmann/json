@@ -44,7 +44,7 @@ By default, implicit conversions are enabled.
 
 ## Examples
 
-??? example
+??? example "Example: implicit conversion"
 
     This is an example for an implicit conversion:
 
@@ -61,7 +61,7 @@ By default, implicit conversions are enabled.
     auto s = j.get<std::string>();
     ```
 
-??? example "Conversion between `basic_json` specializations"
+??? example "Example: conversion between `basic_json` specializations"
 
     A `basic_json` specialization with a different string type is also no longer converted implicitly when
     `JSON_USE_IMPLICIT_CONVERSIONS` is defined to `0`:

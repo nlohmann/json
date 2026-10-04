@@ -322,6 +322,8 @@ class json_pointer
         typename BasicJsonType::size_type idx{};
         switch (parse_array_index<BasicJsonType>(s, idx))
         {
+            // the branches differ in their messages, not after JSON_THROW's expansion
+            // NOLINTNEXTLINE(bugprone-branch-clone)
             case array_index_status::leading_zero:
                 JSON_THROW(detail::parse_error::create(106, 0, detail::concat("array index '", s, "' must not begin with '0'"), nullptr));
             case array_index_status::not_a_number:
@@ -685,6 +687,8 @@ class json_pointer
                     typename BasicJsonType::size_type idx{};
                     switch (parse_array_index<BasicJsonType>(reference_token, idx))
                     {
+                        // the branches differ in their messages, not after JSON_THROW's expansion
+                        // NOLINTNEXTLINE(bugprone-branch-clone)
                         case array_index_status::leading_zero:
                             JSON_THROW(detail::parse_error::create(106, 0, detail::concat("array index '", reference_token, "' must not begin with '0'"), nullptr));
                         case array_index_status::not_a_number:
