@@ -198,6 +198,13 @@ default.
 
 See [full documentation of `JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](../api/macros/json_use_legacy_discarded_value_comparison.md).
 
+## `JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`
+
+When defined to `1`, maps with enum keys (e.g., `std::map<E, T>`) are stored as objects, using the enum's conversion for
+the keys, instead of arrays of `[key, value]` pairs. It is switched off (`0`) by default.
+
+See [full documentation of `JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](../api/macros/json_use_objects_for_enum_keyed_maps.md).
+
 ## `JSON_USE_SIMDUTF`
 
 When defined, UTF-8 validation of JSON strings read from contiguous byte input is delegated to the

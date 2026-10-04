@@ -108,6 +108,10 @@
     #define JSON_STRICT_BINARY_UTF8 0
 #endif
 
+#ifndef JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+    #define JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS 0
+#endif
+
 #if JSON_DIAGNOSTICS
     #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS _diag
 #else
@@ -150,14 +154,20 @@
     #define NLOHMANN_JSON_ABI_TAG_STRICT_BINARY_UTF8
 #endif
 
+#if JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+    #define NLOHMANN_JSON_ABI_TAG_OBJECTS_FOR_ENUM_KEYED_MAPS _ekmo
+#else
+    #define NLOHMANN_JSON_ABI_TAG_OBJECTS_FOR_ENUM_KEYED_MAPS
+#endif
+
 #ifndef NLOHMANN_JSON_NAMESPACE_NO_VERSION
     #define NLOHMANN_JSON_NAMESPACE_NO_VERSION 0
 #endif
 
 // Construct the namespace ABI tags component
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g) json_abi ## a ## b ## c ## d ## e ## f ## g
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d, e, f, g) \
-    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g)
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g, h) json_abi ## a ## b ## c ## d ## e ## f ## g ## h
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d, e, f, g, h) \
+    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g, h)
 
 #define NLOHMANN_JSON_ABI_TAGS                                       \
     NLOHMANN_JSON_ABI_TAGS_CONCAT(                                   \
@@ -167,7 +177,8 @@
             NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS,         \
             NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION,           \
             NLOHMANN_JSON_ABI_TAG_STRICT_NUL_HANDLING,               \
-            NLOHMANN_JSON_ABI_TAG_STRICT_BINARY_UTF8)
+            NLOHMANN_JSON_ABI_TAG_STRICT_BINARY_UTF8,                \
+            NLOHMANN_JSON_ABI_TAG_OBJECTS_FOR_ENUM_KEYED_MAPS)
 
 // Construct the namespace version component
 #define NLOHMANN_JSON_NAMESPACE_VERSION_CONCAT_EX(major, minor, patch) \
@@ -4422,6 +4433,30 @@ template<typename BasicJsonType, typename CompatibleObjectType>
 struct is_compatible_object_type
     : is_compatible_object_type_impl<BasicJsonType, CompatibleObjectType> {};
 
+template<typename T>
+using insert_result_t = decltype(std::declval<T&>().insert(std::declval<const value_type_t<T>&>()));
+
+template<typename T>
+using insert_result_second_t = decltype(std::declval<T&>().insert(std::declval<const value_type_t<T>&>()).second);
+
+// a map-like type (std::map, std::unordered_map, ...) whose keys are enums; see
+// JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+template<typename T, typename = void>
+struct is_enum_keyed_map : std::false_type {};
+
+template<typename T>
+struct is_enum_keyed_map <
+    T, enable_if_t < is_detected<mapped_type_t, T>::value&&
+    is_detected<key_type_t, T>::value >>
+{
+    // maps with non-unique keys (std::multimap, std::unordered_multimap, ...)
+    // are excluded, because an object cannot hold duplicate keys; they are
+    // detected by insert() returning an iterator instead of a pair<iterator, bool>
+    // NOLINTNEXTLINE(modernize-type-traits) we use C++11
+    static constexpr bool value = std::is_enum<typename T::key_type>::value &&
+                                  !(is_detected<insert_result_t, T>::value && !is_detected<insert_result_second_t, T>::value);
+};
+
 template<typename BasicJsonType, typename ConstructibleObjectType,
          typename = void>
 struct is_constructible_object_type_impl : std::false_type {};
@@ -6019,11 +6054,40 @@ void from_json_pair_array_to_map(const BasicJsonType& j, MapType& m)
     }
 }
 
+// read a map with enum keys from an object, using the enum's own from_json for
+// the keys (e.g., from NLOHMANN_JSON_SERIALIZE_ENUM); this is the form written
+// with JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+template<typename BasicJsonType, typename Map>
+inline bool from_json_enum_keyed_object(const BasicJsonType& j, Map& m, std::true_type /*key is enum*/)
+{
+    if (!j.is_object())
+    {
+        return false;
+    }
+    m.clear();
+    for (const auto& p : *j.template get_ptr<const typename BasicJsonType::object_t*>())
+    {
+        m.emplace(BasicJsonType(p.first).template get<typename Map::key_type>(), p.second.template get<typename Map::mapped_type>());
+    }
+    return true;
+}
+
+template<typename BasicJsonType, typename Map>
+inline bool from_json_enum_keyed_object(const BasicJsonType& /*j*/, Map& /*m*/, std::false_type /*key is enum*/)
+{
+    return false;
+}
+
 template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
            typename = enable_if_t < !std::is_constructible <
                                         typename BasicJsonType::string_t, Key >::value >>
 void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
 {
+    // NOLINTNEXTLINE(modernize-type-traits) we use C++11
+    if (from_json_enum_keyed_object(j, m, std::is_enum<Key> {}))
+    {
+        return;
+    }
     from_json_pair_array_to_map(j, m);
 }
 
@@ -6032,6 +6096,11 @@ template < typename BasicJsonType, typename Key, typename Value, typename Hash, 
                                         typename BasicJsonType::string_t, Key >::value >>
 void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
 {
+    // NOLINTNEXTLINE(modernize-type-traits) we use C++11
+    if (from_json_enum_keyed_object(j, m, std::is_enum<Key> {}))
+    {
+        return;
+    }
     from_json_pair_array_to_map(j, m);
 }
 
@@ -6114,6 +6183,8 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <utility> // move, forward, declval, pair
 #include <valarray> // valarray
 #include <vector> // vector
+
+// #include <nlohmann/detail/exceptions.hpp>
 
 // #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 //     __ _____ _____ _____
@@ -7090,6 +7161,9 @@ template < typename BasicJsonType, typename CompatibleArrayType,
 #if JSON_HAS_RANGE_VIEW_CONVERSION
     && !is_compatible_range_view<CompatibleArrayType>::value
 #endif
+#if JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+    && !is_enum_keyed_map<CompatibleArrayType>::value
+#endif
                          ,
                          int > = 0 >
 inline void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
@@ -7142,6 +7216,33 @@ inline void to_json(BasicJsonType& j, const CompatibleObjectType& obj)
 {
     external_constructor<value_t::object>::construct(j, obj);
 }
+
+#if JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+// store a map with enum keys as an object, using the enum's own to_json for the
+// keys (e.g., from NLOHMANN_JSON_SERIALIZE_ENUM); without the macro, such maps
+// are stored as arrays of [key, value] pairs
+template < typename BasicJsonType, typename EnumKeyedMap,
+           enable_if_t < is_enum_keyed_map<EnumKeyedMap>::value&& !is_basic_json<EnumKeyedMap>::value, int > = 0 >
+inline void to_json(BasicJsonType& j, const EnumKeyedMap& map)
+{
+    typename BasicJsonType::object_t obj;
+    for (const auto& p : map)
+    {
+        BasicJsonType key = p.first;
+        if (JSON_HEDLEY_UNLIKELY(!key.is_string()))
+        {
+            JSON_THROW(type_error::create(302, concat("type must be string, but is ", key.type_name()), &key));
+        }
+
+        auto& key_string = *key.template get_ptr<typename BasicJsonType::string_t*>();
+        if (JSON_HEDLEY_UNLIKELY(!obj.emplace(key_string, BasicJsonType(p.second)).second))
+        {
+            JSON_THROW(type_error::create(318, concat("duplicate object key '", key_string, "'"), &key));
+        }
+    }
+    external_constructor<value_t::object>::construct(j, std::move(obj));
+}
+#endif
 
 template<typename BasicJsonType>
 inline void to_json(BasicJsonType& j, typename BasicJsonType::object_t&& obj)
@@ -34266,6 +34367,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
     #undef JSON_PRECISE_STREAM_POSITION
     #undef JSON_STRICT_NUL_HANDLING
     #undef JSON_STRICT_BINARY_UTF8
+    #undef JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
 #endif
 
 // #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>
