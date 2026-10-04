@@ -1286,6 +1286,34 @@ TEST_CASE("BJData")
                     CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec2), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing BJData high-precision number: invalid number text: 1A", json::parse_error);
                     std::vector<uint8_t> const vec3 = {'H', 'i', 2, '1', '.'};
                     CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec3), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing BJData high-precision number: invalid number text: 1.", json::parse_error);
+                    // 2026-10-05：拒绝长度限定数字中的 NUL，覆盖末尾、隐藏字节和嵌套输入。
+                    SECTION("NUL in high-precision number (issue #5753)")
+                    {
+                        for (const auto& vec : std::vector<std::vector<uint8_t>>
+                    {
+                        {'H', 'i', 3, '1', 0, 'x'},
+                        {'H', 'i', 2, '1', 0}
+                    })
+                        {
+                            CAPTURE(vec)
+                            const std::string expected_error = "[json.exception.parse_error.115] parse error at byte "
+                            + std::to_string(vec.size())
+                            + ": syntax error while parsing BJData high-precision number: invalid number text: 1<U+0000>";
+                            CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec), expected_error.c_str(), json::parse_error);
+                            CHECK(json::from_bjdata(vec, true, false).is_discarded());
+                            CHECK(json::from_bjdata(vec, false, false).is_discarded());
+                        }
+
+                        std::vector<uint8_t> const nested = {'[', 'H', 'i', 3, '1', 0, 'x', ']'};
+                        CHECK_THROWS_WITH_AS(_ = json::from_bjdata(nested), "[json.exception.parse_error.115] parse error at byte 7: syntax error while parsing BJData high-precision number: invalid number text: 1<U+0000>", json::parse_error);
+                        CHECK(json::from_bjdata(nested, true, false).is_discarded());
+
+                        std::vector<uint8_t> const valid = {'H', 'i', 1, '1'};
+                        const auto j = json::from_bjdata(valid);
+                        CHECK(j.is_number_unsigned());
+                        CHECK(j == json(1));
+                    }
+
                     std::vector<uint8_t> const vec_overflow = {'H', 'i', 5, '1', 'e', '4', '0', '0'};
                     CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vec_overflow), "[json.exception.out_of_range.406] number overflow parsing '1e400'", json::out_of_range);
                     std::vector<uint8_t> const vec4 = {'H', 2, '1', '0'};

@@ -16984,6 +16984,13 @@ class binary_reader
                                     exception_message(concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));
         }
 
+        // 2026-10-05：长度限定的数字载荷不能把 NUL 当作真实结尾，沿用词法器的错误文本。
+        if (JSON_HEDLEY_UNLIKELY(std::find(number_vector.begin(), number_vector.end(), '\0') != number_vector.end()))
+        {
+            return sax->parse_error(chars_read, number_string, parse_error::create(115, chars_read,
+                                    exception_message(concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));
+        }
+
         switch (result_number)
         {
             case token_type::value_integer:
