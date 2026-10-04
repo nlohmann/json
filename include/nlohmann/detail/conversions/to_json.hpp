@@ -178,7 +178,7 @@ struct external_constructor<value_t::array>
 
     template < typename BasicJsonType, typename CompatibleArrayType,
                enable_if_t < !std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
                              && !is_compatible_range_view<CompatibleArrayType>::value
 #endif
                              , int > = 0 >
@@ -222,9 +222,7 @@ struct external_constructor<value_t::array>
         j.assert_invariant();
     }
 
-    // std::ranges does not work properly on MinGW due to incomplete C++20 support
-    // see https://github.com/nlohmann/json/issues/4916
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
     template<typename BasicJsonType, typename CompatibleArrayType,
              enable_if_t<is_compatible_range_view<std::remove_cvref_t<CompatibleArrayType>>::value, int> = 0>
     static void construct(BasicJsonType& j, CompatibleArrayType && arr)
@@ -235,8 +233,11 @@ struct external_constructor<value_t::array>
         for (auto&& x : std::forward<CompatibleArrayType>(arr))
         {
             j.m_data.m_value.array->push_back(x);
-            j.set_parent(j.m_data.m_value.array->back());
         }
+        // set the parents only once all elements are in place: a push_back
+        // that reallocates moves the earlier elements, which does not keep
+        // their parent pointers
+        j.set_parents();
         j.assert_invariant();
     }
 #endif
@@ -287,11 +288,13 @@ struct external_constructor<value_t::object>
 #ifdef JSON_HAS_CPP_17
 template<typename BasicJsonType, typename T,
          enable_if_t<std::is_constructible<BasicJsonType, T>::value, int> = 0>
-void to_json(BasicJsonType& j, const std::optional<T>& opt) noexcept
+void to_json(BasicJsonType& j, const std::optional<T>& opt) noexcept(std::is_nothrow_assignable<BasicJsonType&, const T&>::value)
 {
     if (opt.has_value())
     {
-        j = *opt;
+        // explicit construction, as the conversion from a basic_json with a different
+        // string type is explicit if JSON_USE_IMPLICIT_CONVERSIONS is 0 (#2649)
+        j = BasicJsonType(*opt);
     }
     else
     {
@@ -379,7 +382,7 @@ template < typename BasicJsonType, typename CompatibleArrayType,
                          !std::is_same<typename BasicJsonType::binary_t, CompatibleArrayType>::value&&
                          !is_compatible_binary_type<BasicJsonType, CompatibleArrayType>::value&&
                          !is_basic_json<CompatibleArrayType>::value
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
     && !is_compatible_range_view<CompatibleArrayType>::value
 #endif
                          ,
@@ -389,7 +392,7 @@ inline void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
     external_constructor<value_t::array>::construct(j, arr);
 }
 
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 template < typename BasicJsonType, typename T,
            enable_if_t < is_compatible_range_view<std::remove_cvref_t<T>>::value
                          && !is_compatible_string_type<BasicJsonType, std::remove_cvref_t<T>>::value
@@ -471,11 +474,13 @@ inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<
     j = { std::get<Idx>(t)... };
 }
 
-#if JSON_BRACE_INIT_COPY_SEMANTICS
-// JSON_BRACE_INIT_COPY_SEMANTICS makes a one-element braced list copy its
-// element instead of wrapping it, which would serialize std::tuple<int>{5} as 5
-// rather than [5]. Build what the default deduction builds instead: an object
-// if the element is a [string, value] pair, a one-element array otherwise.
+// A one-element braced list does not reliably wrap its element: with
+// JSON_BRACE_INIT_COPY_SEMANTICS it copies it, which would serialize
+// std::tuple<int>{5} as 5 rather than [5], and some compilers (e.g., Apple clang
+// 15 and 16) copy an element that is itself a basic_json even without it, so
+// std::tuple<json>{true} became true rather than [true]. Build what the default
+// deduction builds instead: an object if the element is a [string, value] pair,
+// a one-element array otherwise.
 template<typename BasicJsonType, typename Tuple>
 inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<0> /*unused*/)
 {
@@ -493,7 +498,6 @@ inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& t, index_sequence<
         j = BasicJsonType::array({std::move(element)});
     }
 }
-#endif
 
 template<typename BasicJsonType, typename Tuple>
 inline void to_json_tuple_impl(BasicJsonType& j, const Tuple& /*unused*/, index_sequence<> /*unused*/)
@@ -546,7 +550,7 @@ struct to_json_fn
 /// namespace to hold default `to_json` function
 /// to see why this is required:
 /// http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html
-namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-namespaces)
+namespace // NOLINT(cert-dcl59-cpp,fuchsia-header-anon-namespaces,google-build-namespaces,misc-anonymous-namespace-in-header)
 {
 #endif
 JSON_INLINE_VARIABLE constexpr const auto& to_json = // NOLINT(misc-definitions-in-headers)

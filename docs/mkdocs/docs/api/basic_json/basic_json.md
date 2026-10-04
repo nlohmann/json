@@ -99,6 +99,25 @@ basic_json(basic_json&& other) noexcept;
       elements of the pairs are treated as keys and the second elements are as values.
     3. In all other cases, an array is created.
     
+    The following flowchart also takes into account what happens when `type_deduction` is `#!cpp false`, in which case
+    `manual_type` decides between object and array, and an object can only be forced if `init` actually matches rule 2
+    (or is empty):
+
+    ```mermaid
+    flowchart TD
+        A(["initializer_list init"]) --> B{"empty, or every element is a 2-element<br/>array whose first element is a string?"}
+        B -->|"yes"| C{"type_deduction"}
+        B -->|"no"| D{"type_deduction"}
+        C -->|"true"| OBJ["create object"]
+        C -->|"false"| E{"manual_type"}
+        E -->|"object"| OBJ
+        E -->|"array"| ARR["create array"]
+        D -->|"true"| ARR
+        D -->|"false"| F{"manual_type"}
+        F -->|"array"| ARR
+        F -->|"object"| ERR["throw type_error.301"]
+    ```
+
     The rules aim to create the best fit between a C++ initializer list and JSON values. The rationale is as follows:
     
     1. The empty initializer list is written as `#!cpp {}` which is exactly an empty JSON object.
@@ -139,8 +158,8 @@ basic_json(basic_json&& other) noexcept;
 
     - In case of a `#!json null` type, [invalid_iterator.206](../../home/exceptions.md#jsonexceptioninvalid_iterator206)
       is thrown.
-    - In case of other primitive types (number, boolean, or string), `first` must be `begin()` and `last` must be
-      `end()`. In this case, the value is copied. Otherwise,
+    - In case of other primitive types (number, boolean, string, or binary), `first` must be `begin()` and `last`
+      must be `end()`. In this case, the value is copied. Otherwise,
       [`invalid_iterator.204`](../../home/exceptions.md#jsonexceptioninvalid_iterator204) is thrown.
     - In case of structured types (array, object), the constructor behaves as similar versions for `std::vector` or
       `std::map`; that is, a JSON array or object is constructed from the values in the range.
@@ -159,6 +178,8 @@ basic_json(basic_json&& other) noexcept;
     - `CompatibleType` is not `basic_json` (to avoid hijacking copy/move constructors),
     - `CompatibleType` is not a different `basic_json` type (i.e. with different template arguments)
     - `CompatibleType` is not a `basic_json` nested type (e.g., `json_pointer`, `iterator`, etc.)
+    - if [`JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`](../macros/json_disable_tuple_reference_conversion.md) is defined
+      to `1`: `CompatibleType` is not a one-element `std::tuple` holding a reference to `basic_json`
     - `json_serializer<U>` (with `U = uncvref_t<CompatibleType>`) has a `to_json(basic_json_t&, CompatibleType&&)`
        method
 
@@ -169,8 +190,8 @@ basic_json(basic_json&& other) noexcept;
     - `BasicJsonType` has different template arguments than `basic_json_t`.
     
     **Note:** For cross-`basic_json` conversions to produce correct results, the target `basic_json`'s
-    `object_t::key_type` and `string_t` must be directly constructible from the source `basic_json`'s
-    corresponding types. See the description of overload (4) above for details on what happens when
+    [`object_t`](object_t.md)`::key_type` and [`string_t`](string_t.md) must be directly constructible from the source
+    `basic_json`'s corresponding types. See the description of overload (4) above for details on what happens when
     this requirement is not met.
 
 `U`:
@@ -242,8 +263,8 @@ basic_json(basic_json&& other) noexcept;
       and `last` are not compatible (i.e., do not belong to the same JSON value). In this case, the range
       `[first, last)` is undefined.
     - Throws [`invalid_iterator.204`](../../home/exceptions.md#jsonexceptioninvalid_iterator204) if iterators `first`
-      and `last` belong to a primitive type (number, boolean, or string), but `first` does not point to the first
-      element anymore. In this case, the range `[first, last)` is undefined. See the example code below.
+      and `last` belong to a primitive type (number, boolean, string, or binary), but `first` does not point to the
+      first element anymore. In this case, the range `[first, last)` is undefined. See the example code below.
     - Throws [`invalid_iterator.206`](../../home/exceptions.md#jsonexceptioninvalid_iterator206) if iterators `first`
       and `last` belong to a `#!json null` value. In this case, the range `[first, last)` is undefined.
 8. (none)
@@ -271,6 +292,15 @@ basic_json(basic_json&& other) noexcept;
 
         When used without parentheses around an empty initializer list, `basic_json()` is called instead of this
         function, yielding the JSON `#!json null` value.
+
+- Overload 4:
+
+    !!! info "Implicit conversion"
+
+        The conversion is implicit unless [`JSON_USE_IMPLICIT_CONVERSIONS`](../macros/json_use_implicit_conversions.md)
+        is defined to `0` and `BasicJsonType::string_t` differs from `string_t`. In that case, the constructor is
+        `explicit`, so a JSON value with a different string type is no longer silently converted, for example when it is
+        passed to a function taking `#!cpp const json&`. Write `#!cpp json(other)` or `#!cpp other.get<json>()` instead.
 
 - Overload 7:
 
@@ -345,6 +375,22 @@ basic_json(basic_json&& other) noexcept;
 
     Note the output is platform-dependent.
 
+??? example "Example: (4) create a JSON value from another `basic_json` specialization"
+
+    The example below shows how a `json` value is converted to an `ordered_json` value and back using the converting
+    constructor. Note how the original insertion order of `oj` is not restored, because it was already given up when
+    converting to `json`, whose `object_t` sorts by key.
+
+    ```cpp
+    --8<-- "examples/basic_json__BasicJsonType.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/basic_json__BasicJsonType.output"
+    ```
+
 ??? example "Example: (5) create a container (array or object) from an initializer list"
 
     The example below shows how JSON values are created from initializer lists.
@@ -415,14 +461,26 @@ basic_json(basic_json&& other) noexcept;
     --8<-- "examples/basic_json__moveconstructor.output"
     ```
 
+## See also
+
+- [array](array.md) create a JSON array value, forcing array creation from an initializer list even when it looks like
+  an object
+- [object](object.md) create a JSON object value, forcing object creation from an initializer list
+- [binary](binary.md) create a JSON binary array value
+- [operator=](operator=.md) copy assignment operator
+- [Creating JSON values](../../features/creating_values.md) - the article on creating JSON values
+
 ## Version history
 
 1. Since version 1.0.0.
 2. Since version 1.0.0.
 3. Since version 2.1.0.
-4. Since version 3.2.0.
+4. Since version 3.2.0. Explicit for different string types if `JSON_USE_IMPLICIT_CONVERSIONS` is `0` since
+   version 3.13.0.
 5. Since version 1.0.0.
 6. Since version 1.0.0.
-7. Since version 1.0.0.
+7. Since version 1.0.0. Fixed in version 3.13.0 to also check the iterator range for binary values; before, a range
+   that did not cover the whole value (such as `(end(), end())`) was accepted and the whole binary value was copied,
+   unlike the other primitive types.
 8. Since version 1.0.0.
 9. Since version 1.0.0.

@@ -8,7 +8,7 @@ ValueType& get_to(ValueType& v) const noexcept(
 ```
 
 Explicit type conversion between the JSON value and a compatible value. The value is filled into the input parameter by
-calling the `json_serializer<ValueType>` `from_json()` method.
+calling the [`json_serializer<ValueType>`](json_serializer.md) `from_json()` method.
 
 The function is equivalent to executing
 ```cpp
@@ -34,6 +34,11 @@ the compiler reports that no matching `get_to` was found.
 
 the input parameter, allowing chaining calls
 
+## Exception safety
+
+Depends on what `json_serializer<ValueType>` `from_json()` method throws; the JSON value itself is never modified,
+since `get_to()` is a `#!cpp const` member function.
+
 ## Exceptions
 
 Depends on what `json_serializer<ValueType>` `from_json()` method throws
@@ -49,7 +54,7 @@ Depends on the `json_serializer<ValueType>::from_json()` implementation.
     The example below shows several conversions from JSON values to other types. There a few things to note: (1)
     Floating-point numbers can be converted to integers, (2) A JSON array can be converted to a standard
     `#!cpp std::vector<short>`, (3) A JSON object can be converted to C++ associative containers such as
-    `#cpp std::unordered_map<std::string, json>`.
+    `#!cpp std::map<std::string, json>`.
         
     ```cpp
     --8<-- "examples/get_to.cpp"

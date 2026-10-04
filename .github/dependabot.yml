@@ -18,12 +18,27 @@ updates:
     cooldown:
       default-days: 7
 
+  - package-ecosystem: npm
+    directory: /docs/mkdocs/scripts/mermaid
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7
+    ignore:
+      # Material for MkDocs loads mermaid@11; keep the checker on the same major version
+      - dependency-name: mermaid
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: pip
     directory: /tools/astyle
     schedule:
       interval: daily
     cooldown:
       default-days: 7
+    ignore:
+      # astyle is deliberately pinned (see tools/astyle/requirements.txt): newer versions
+      # reformat the code, and the pinned version defines the formatting CI enforces
+      - dependency-name: astyle
 
   - package-ecosystem: pip
     directory: /tools/generate_natvis

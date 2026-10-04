@@ -88,7 +88,12 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 ## Exceptions
 
 - Throws [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) in case of an unexpected token, or
-  empty input like a null `FILE*` or `char*` pointer.
+  empty input like a null `FILE*` or `char*` pointer, or an `std::istream` without a stream buffer
+  (`#!cpp i.rdbuf() == nullptr`, for instance `#!cpp std::istream(nullptr)`).
+- If reading from an `std::istream` reaches the end of the input and `eofbit` is part of the stream's
+  [`exceptions()`](https://en.cppreference.com/w/cpp/io/basic_ios/exceptions) mask, the `std::ios_base::failure`
+  thrown by the stream itself propagates instead of a `parse_error`, the same as it would for the standard library's
+  own extraction operators.
 
 ## Complexity
 
@@ -109,7 +114,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
 
 ## Examples
 
-??? example "Parsing from a character array"
+??? example "Example: (1) parse from a character array"
 
     The example below demonstrates the `parse()` function reading from an array.
 
@@ -123,7 +128,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     --8<-- "examples/parse__array__parser_callback_t.output"
     ```
 
-??? example "Parsing from a string"
+??? example "Example: (1) parse from a string"
 
     The example below demonstrates the `parse()` function with and without callback function.
 
@@ -137,7 +142,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     --8<-- "examples/parse__string__parser_callback_t.output"
     ```
 
-??? example "Parsing from an input stream"
+??? example "Example: (1) parse from an input stream"
 
     The example below demonstrates the `parse()` function with and without callback function.
 
@@ -151,7 +156,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     --8<-- "examples/parse__istream__parser_callback_t.output"
     ```
 
-??? example "Parsing from a contiguous container"
+??? example "Example: (1) parse from a contiguous container"
 
     The example below demonstrates the `parse()` function reading from a contiguous container.
 
@@ -165,7 +170,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     --8<-- "examples/parse__contiguouscontainer__parser_callback_t.output"
     ```
 
-??? example "Parsing from a non-null-terminated string"
+??? example "Example: (2) parse from a non-null-terminated string"
 
     The example below demonstrates the `parse()` function reading from a string that is not null-terminated.
 
@@ -179,7 +184,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     --8<-- "examples/parse__pointers.output"
     ```
 
-??? example "Parsing from an iterator pair"
+??? example "Example: (2) parse from an iterator pair"
 
     The example below demonstrates the `parse()` function reading from an iterator pair.
 
@@ -193,7 +198,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     --8<-- "examples/parse__iterator_pair.output"
     ```
 
-??? example "Effect of `allow_exceptions` parameter"
+??? example "Example: effect of `allow_exceptions` parameter"
 
     The example below demonstrates the effect of the `allow_exceptions` parameter in the `parse()` function.
 
@@ -207,7 +212,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     --8<-- "examples/parse__allow_exceptions.output"
     ```
 
-??? example "Effect of `ignore_comments` parameter"
+??? example "Example: effect of `ignore_comments` parameter"
 
     The example below demonstrates the effect of the `ignore_comments` parameter in the `parse()` function.
 
@@ -221,7 +226,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     --8<-- "examples/comments.output"
     ```
 
-??? example "Effect of `ignore_trailing_commas` parameter"
+??? example "Example: effect of `ignore_trailing_commas` parameter"
 
     The example below demonstrates the effect of the `ignore_trailing_commas` parameter in the `parse()` function.
 
@@ -254,6 +259,8 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
 - `JSON_STRICT_NUL_HANDLING` added in version 3.13.0 to optionally reject a NUL byte in the input instead of treating
   it as end of input; planned to become the default in version 4.0.0.
+- Extended empty-input detection to also cover an `std::istream` without a stream buffer, and fixed a crash
+  (`std::terminate`) when parsing from an `std::istream` with `eofbit` in its exception mask, in version 3.13.0.
 
 !!! warning "Deprecation"
 
@@ -263,3 +270,5 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
 
     You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated
     function.
+
+    See the [migration guide](../../integration/migration_guide.md#parsing) for how to update existing code.

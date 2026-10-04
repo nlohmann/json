@@ -7,13 +7,11 @@
 [![Coverage Status](https://coveralls.io/repos/github/nlohmann/json/badge.svg?branch=develop)](https://coveralls.io/github/nlohmann/json?branch=develop)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/5550/badge.svg)](https://scan.coverity.com/projects/nlohmann-json)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e0d1a9d5d6fd46fcb655c4cb930bb3e8)](https://app.codacy.com/gh/nlohmann/json/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![Cirrus CI](https://api.cirrus-ci.com/github/nlohmann/json.svg)](https://cirrus-ci.com/github/nlohmann/json)
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/json.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:json)
 [![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/1mp10JbaANo6FUc7)
 [![Documentation](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://json.nlohmann.me)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/develop/LICENSE.MIT)
 [![GitHub Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
-[![Packaging status](https://repology.org/badge/tiny-repos/nlohmann-json.svg)](https://repology.org/project/nlohmann-json/versions)
 [![GitHub Downloads](https://img.shields.io/github/downloads/nlohmann/json/total)](https://github.com/nlohmann/json/releases)
 [![GitHub Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](https://github.com/nlohmann/json/issues)
 [![Average time to resolve an issue](https://isitmaintained.com/badge/resolution/nlohmann/json.svg)](https://isitmaintained.com/project/nlohmann/json "Average time to resolve an issue")
@@ -1395,6 +1393,7 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 - The class contains a slightly modified version of the Grisu2 algorithm from Florian Loitsch which is licensed under the [MIT License](https://opensource.org/licenses/MIT) (see above). Copyright &copy; 2009 [Florian Loitsch](https://florian.loitsch.com/)
 - The class contains a copy of [Hedley](https://nemequ.github.io/hedley/) from Evan Nemerson which is licensed as [CC0-1.0](https://creativecommons.org/publicdomain/zero/1.0/).
 - The class contains parts of [Google Abseil](https://github.com/abseil/abseil-cpp) which is licensed under the [Apache 2.0 License](https://opensource.org/licenses/Apache-2.0).
+- The class contains an adapted version of the Eisel-Lemire algorithm and its table of powers of five from [fast_float](https://github.com/fastfloat/fast_float) by Daniel Lemire and contributors, which is available under the [MIT License](https://opensource.org/licenses/MIT) (used here), the Apache 2.0 License, and the Boost Software License. Copyright &copy; 2021 The fast_float authors
 
 <img align="right" src="https://git.fsfe.org/reuse/reuse-ci/raw/branch/master/reuse-horizontal.png" alt="REUSE Software">
 

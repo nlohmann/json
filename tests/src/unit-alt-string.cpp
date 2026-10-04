@@ -13,8 +13,13 @@
 
 #include <cstdint>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
+
+// NLOHMANN_JSON_SERIALIZE_ENUM_STRICT uses a static std::pair
+DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
 
 /* forward declarations */
 class alt_string;
@@ -173,6 +178,15 @@ bool operator<(const char* op1, const alt_string& op2) noexcept
 {
     return op1 < op2.str_impl;
 }
+
+enum class alt_color { red, green }; // NOLINT(misc-use-internal-linkage)
+
+// NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(alt_color,
+{
+    {alt_color::red, "red"},
+    {alt_color::green, "green"},
+})
 
 TEST_CASE("alternative string type")
 {
@@ -343,6 +357,41 @@ TEST_CASE("alternative string type")
         CHECK(j2.flatten().unflatten() == j2);
     }
 
+    SECTION("contains(json_pointer)")
+    {
+        // contains(json_pointer) must compile and work with a string_t that has
+        // no c_str() and no comparison with const char* (see #5666)
+        auto j = alt_json::parse(R"({"foo": ["bar", "baz"]})");
+
+        // present: object key and array indices
+        CHECK(j.contains(alt_json::json_pointer("/foo")));
+        CHECK(j.contains(alt_json::json_pointer("/foo/0")));
+        CHECK(j.contains(alt_json::json_pointer("/foo/1")));
+
+        // missing: absent object key and out-of-range array index
+        CHECK_FALSE(j.contains(alt_json::json_pointer("/bar")));
+        CHECK_FALSE(j.contains(alt_json::json_pointer("/foo/2")));
+
+        // "-" always fails the range check
+        CHECK_FALSE(j.contains(alt_json::json_pointer("/foo/-")));
+
+        // an array index must not have a leading zero
+        CHECK_FALSE(j.contains(alt_json::json_pointer("/foo/01")));
+
+        // a reference token that is not a number
+        CHECK_FALSE(j.contains(alt_json::json_pointer("/foo/bar")));
+    }
+
+    SECTION("operator/(std::size_t)")
+    {
+        // json_pointer::operator/=(std::size_t) must compile without string_t
+        // being constructible from std::string (see #5666)
+        auto j = alt_json::parse(R"({"foo": ["bar", "baz"]})");
+
+        CHECK(j.at(alt_json::json_pointer("/foo") / std::size_t(0)) == j["foo"][0]);
+        CHECK(j.at(alt_json::json_pointer("/foo") / std::size_t(1)) == j["foo"][1]);
+    }
+
     SECTION("patch")
     {
         alt_json const patch1 = alt_json::parse(R"([{ "op": "add", "path": "/a/b", "value": [ "foo", "bar" ] }])");
@@ -374,4 +423,56 @@ TEST_CASE("alternative string type")
         const auto j2 = j.flatten();
         CHECK(j2.dump() == R"({"/foo/0":"bar","/foo/1":"baz"})");
     }
+
+    SECTION("conversion between basic_json specializations (#2649)")
+    {
+        // explicit conversions are always possible
+        CHECK(std::is_constructible<nlohmann::json, alt_json>::value);
+        CHECK(std::is_constructible<alt_json, nlohmann::json>::value);
+        CHECK(std::is_constructible<nlohmann::json, nlohmann::ordered_json>::value);
+        CHECK(std::is_constructible<nlohmann::ordered_json, nlohmann::json>::value);
+
+        // specializations with the same string type are implicitly convertible
+        CHECK(std::is_convertible<nlohmann::ordered_json, nlohmann::json>::value);
+        CHECK(std::is_convertible<nlohmann::json, nlohmann::ordered_json>::value);
+
+        // specializations with different string types are only implicitly convertible
+        // if implicit conversions are enabled
+#if JSON_USE_IMPLICIT_CONVERSIONS
+        CHECK(std::is_convertible<alt_json, nlohmann::json>::value);
+        CHECK(std::is_convertible<nlohmann::json, alt_json>::value);
+#else
+        CHECK_FALSE(std::is_convertible<alt_json, nlohmann::json>::value);
+        CHECK_FALSE(std::is_convertible<nlohmann::json, alt_json>::value);
+#endif
+
+        // get<BasicJsonType>() works in either case
+        const nlohmann::json j = {{"foo", 1}, {"bar", true}};
+        CHECK(j.get<nlohmann::ordered_json>() == nlohmann::ordered_json(j));
+        // (only a number is converted here, as objects and strings are affected by #3425)
+        CHECK(nlohmann::json(42).get<alt_json>() == 42);
+        CHECK(alt_json(nlohmann::json(42)) == 42);
+
+        // get_to() also works in either case
+        alt_json a;
+        nlohmann::json(42).get_to(a);
+        CHECK(a == 42);
+    }
+
+    SECTION("strict enum")
+    {
+        // regression test for #5667: NLOHMANN_JSON_SERIALIZE_ENUM_STRICT's from_json
+        // built its exception message with "..." + j.dump(), which does not compile
+        // when j.dump() returns a custom string_t (here alt_string) instead of
+        // std::string
+        alt_json doc;
+        doc = "red";
+        CHECK(doc.get<alt_color>() == alt_color::red);
+
+        alt_json _;
+        doc = "blue";
+        CHECK_THROWS_WITH_AS(_ = doc.get<alt_color>(), "[json.exception.out_of_range.410] enum value out of range for alt_color: \"blue\"", alt_json::out_of_range&);
+    }
 }
+
+DOCTEST_CLANG_SUPPRESS_WARNING_POP

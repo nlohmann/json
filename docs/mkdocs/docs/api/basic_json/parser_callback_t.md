@@ -60,7 +60,7 @@ the latter case, it is skipped completely, or replaced by `null` if it is the to
 
 ## Examples
 
-??? example
+??? example "Example: skip an object key while parsing"
 
     The example below demonstrates the `parse()` function with
     and without callback function.
@@ -75,7 +75,7 @@ the latter case, it is skipped completely, or replaced by `null` if it is the to
     --8<-- "examples/parse__string__parser_callback_t.output"
     ```
 
-??? example
+??? example "Example: how discarded values are removed"
 
     The example below shows where discarded values are removed. The array and the number are discarded in different
     ways, but in each case the parse result contains neither the value nor its key.
@@ -100,3 +100,6 @@ the latter case, it is skipped completely, or replaced by `null` if it is the to
 - Added in version 1.0.0.
 - Fixed in version 3.13.0 to also remove discarded values from a parent object; before, discarding an array or a value
   stored under an object key left a discarded member behind, which made the parse result serialize to invalid JSON.
+- Fixed in version 3.13.0 so that discarding an array or object at its start event also hides its content from the
+  callback, as documented above; before, the callback was still called for the content, and the key of every member of
+  a discarded object was kept in memory until the parse ended.

@@ -1,0 +1,2 @@
+[json.exception.type_error.302] type must be number, but is string
+[json.exception.type_error.306] cannot use value() with string
