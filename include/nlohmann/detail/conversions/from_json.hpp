@@ -27,7 +27,6 @@
 #include <nlohmann/detail/meta/identity_tag.hpp>
 #include <nlohmann/detail/meta/std_fs.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
-#include <nlohmann/detail/meta/logic.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
@@ -211,62 +210,29 @@ inline void from_json(const BasicJsonType& j, std::valarray<T>& l)
     });
 }
 
+// element is not itself a C array: read it directly
+template<typename BasicJsonType, typename T>
+auto from_json_c_array_element(const BasicJsonType& j, T& e)
+-> decltype(e = j.template get<T>(), void())
+{
+    e = j.template get<T>();
+}
+
+// element is itself a C array: recurse one dimension at a time, so any rank is supported
 template<typename BasicJsonType, typename T, std::size_t N>
-auto from_json(const BasicJsonType& j, T (&arr)[N])  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
--> decltype(j.template get<T>(), void())
+void from_json_c_array_element(const BasicJsonType& j, T (&arr)[N])  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 {
     for (std::size_t i = 0; i < N; ++i)
     {
-        arr[i] = j.at(i).template get<T>();
+        from_json_c_array_element(j.at(i), arr[i]);
     }
 }
 
-template<typename BasicJsonType, typename T, std::size_t N1, std::size_t N2>
-auto from_json(const BasicJsonType& j, T (&arr)[N1][N2])  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
--> decltype(j.template get<T>(), void())
+template<typename BasicJsonType, typename T, std::size_t N>
+auto from_json(const BasicJsonType& j, T (&arr)[N])  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+-> decltype(j.template get<typename std::remove_all_extents<T>::type>(), void())
 {
-    for (std::size_t i1 = 0; i1 < N1; ++i1)
-    {
-        for (std::size_t i2 = 0; i2 < N2; ++i2)
-        {
-            arr[i1][i2] = j.at(i1).at(i2).template get<T>();
-        }
-    }
-}
-
-template<typename BasicJsonType, typename T, std::size_t N1, std::size_t N2, std::size_t N3>
-auto from_json(const BasicJsonType& j, T (&arr)[N1][N2][N3])  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
--> decltype(j.template get<T>(), void())
-{
-    for (std::size_t i1 = 0; i1 < N1; ++i1)
-    {
-        for (std::size_t i2 = 0; i2 < N2; ++i2)
-        {
-            for (std::size_t i3 = 0; i3 < N3; ++i3)
-            {
-                arr[i1][i2][i3] = j.at(i1).at(i2).at(i3).template get<T>();
-            }
-        }
-    }
-}
-
-template<typename BasicJsonType, typename T, std::size_t N1, std::size_t N2, std::size_t N3, std::size_t N4>
-auto from_json(const BasicJsonType& j, T (&arr)[N1][N2][N3][N4])  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
--> decltype(j.template get<T>(), void())
-{
-    for (std::size_t i1 = 0; i1 < N1; ++i1)
-    {
-        for (std::size_t i2 = 0; i2 < N2; ++i2)
-        {
-            for (std::size_t i3 = 0; i3 < N3; ++i3)
-            {
-                for (std::size_t i4 = 0; i4 < N4; ++i4)
-                {
-                    arr[i1][i2][i3][i4] = j.at(i1).at(i2).at(i3).at(i4).template get<T>();
-                }
-            }
-        }
-    }
+    from_json_c_array_element(j, arr);
 }
 
 template<typename BasicJsonType>
@@ -286,43 +252,35 @@ auto from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr,
     }
 }
 
+// reserve() is called through this pair (modeled on from_json_object_reserve)
+// so from_json_array_impl below has a single body for both ConstructibleArrayType
+// that support reserve() and those that don't.
+template<typename ConstructibleArrayType>
+auto from_json_array_reserve(ConstructibleArrayType& arr, typename ConstructibleArrayType::size_type size, priority_tag<1> /*unused*/)
+-> decltype(arr.reserve(size), void())
+{
+    arr.reserve(size);
+}
+
+template<typename ConstructibleArrayType>
+void from_json_array_reserve(ConstructibleArrayType& /*arr*/, std::size_t /*size*/, priority_tag<0> /*unused*/)
+{}
+
 template<typename BasicJsonType, typename ConstructibleArrayType,
          enable_if_t<
              std::is_assignable<ConstructibleArrayType&, ConstructibleArrayType>::value,
              int> = 0>
 auto from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr, priority_tag<1> /*unused*/)
 -> decltype(
-    arr.reserve(std::declval<typename ConstructibleArrayType::size_type>()),
     j.template get<typename ConstructibleArrayType::value_type>(),
     void())
 {
     using std::end;
 
     ConstructibleArrayType ret;
-    ret.reserve(j.size());
+    from_json_array_reserve(ret, j.size(), priority_tag<1> {});
     std::transform(j.begin(), j.end(),
                    std::inserter(ret, end(ret)), [](const BasicJsonType & i)
-    {
-        // get<BasicJsonType>() returns *this, this won't call a from_json
-        // method when value_type is BasicJsonType
-        return i.template get<typename ConstructibleArrayType::value_type>();
-    });
-    arr = std::move(ret);
-}
-
-template<typename BasicJsonType, typename ConstructibleArrayType,
-         enable_if_t<
-             std::is_assignable<ConstructibleArrayType&, ConstructibleArrayType>::value,
-             int> = 0>
-inline void from_json_array_impl(const BasicJsonType& j, ConstructibleArrayType& arr,
-                                 priority_tag<0> /*unused*/)
-{
-    using std::end;
-
-    ConstructibleArrayType ret;
-    std::transform(
-        j.begin(), j.end(), std::inserter(ret, end(ret)),
-        [](const BasicJsonType & i)
     {
         // get<BasicJsonType>() returns *this, this won't call a from_json
         // method when value_type is BasicJsonType
@@ -433,9 +391,7 @@ inline void from_json(const BasicJsonType& j, ConstructibleObjectType& obj)
 }
 
 // overload for arithmetic types, not chosen for basic_json template arguments
-// (BooleanType, etc.); note: Is it really necessary to provide explicit
-// overloads for boolean_t etc. in case of a custom BooleanType which is not
-// an arithmetic type?
+// (BooleanType, etc.)
 template < typename BasicJsonType, typename ArithmeticType,
            enable_if_t <
                std::is_arithmetic<ArithmeticType>::value&&
@@ -531,7 +487,7 @@ inline void from_json_tuple_impl(const BasicJsonType& j, std::pair<A1, A2>& p, p
 template<typename BasicJsonType, typename... Args>
 std::tuple<Args...> from_json_tuple_impl(const BasicJsonType& j, identity_tag<std::tuple<Args...>> /*unused*/, priority_tag<2> /*unused*/)
 {
-    static_assert(cxpr_and<cxpr_or<cxpr_not<std::is_reference<Args>>, is_compatible_reference_type<const BasicJsonType&, Args>>...>::value,
+    static_assert(conjunction<disjunction<negation<std::is_reference<Args>>, is_compatible_reference_type<const BasicJsonType&, Args>>...>::value,
                   "Can not return a tuple containing references to types not contained in a Json, try Json::get_to()");
     return from_json_tuple_impl_base<1, Args...>(j, index_sequence_for<Args...> {});
 }
@@ -554,10 +510,10 @@ auto from_json(const BasicJsonType& j, TupleRelated&& t)
     return from_json_tuple_impl(j, std::forward<TupleRelated>(t), priority_tag<3> {});
 }
 
-template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
-           typename = enable_if_t < !std::is_constructible <
-                                        typename BasicJsonType::string_t, Key >::value >>
-inline void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
+// shared body for std::map/std::unordered_map with a non-string Key: both
+// containers are read from an array of [key, value] pairs the same way
+template<typename BasicJsonType, typename MapType>
+void from_json_pair_array_to_map(const BasicJsonType& j, MapType& m)
 {
     if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
     {
@@ -570,33 +526,63 @@ inline void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allo
         {
             JSON_THROW(type_error::create(302, concat("type must be array, but is ", p.type_name()), &p));
         }
-        m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
+        m.emplace(p.at(0).template get<typename MapType::key_type>(), p.at(1).template get<typename MapType::mapped_type>());
     }
+}
+
+// read a map with enum keys from an object, using the enum's own from_json for
+// the keys (e.g., from NLOHMANN_JSON_SERIALIZE_ENUM); this is the form written
+// with JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+template<typename BasicJsonType, typename Map>
+inline bool from_json_enum_keyed_object(const BasicJsonType& j, Map& m, std::true_type /*key is enum*/)
+{
+    if (!j.is_object())
+    {
+        return false;
+    }
+    m.clear();
+    for (const auto& p : *j.template get_ptr<const typename BasicJsonType::object_t*>())
+    {
+        m.emplace(BasicJsonType(p.first).template get<typename Map::key_type>(), p.second.template get<typename Map::mapped_type>());
+    }
+    return true;
+}
+
+template<typename BasicJsonType, typename Map>
+inline bool from_json_enum_keyed_object(const BasicJsonType& /*j*/, Map& /*m*/, std::false_type /*key is enum*/)
+{
+    return false;
+}
+
+template < typename BasicJsonType, typename Key, typename Value, typename Compare, typename Allocator,
+           typename = enable_if_t < !std::is_constructible <
+                                        typename BasicJsonType::string_t, Key >::value >>
+void from_json(const BasicJsonType& j, std::map<Key, Value, Compare, Allocator>& m)
+{
+    // NOLINTNEXTLINE(modernize-type-traits) we use C++11
+    if (from_json_enum_keyed_object(j, m, std::is_enum<Key> {}))
+    {
+        return;
+    }
+    from_json_pair_array_to_map(j, m);
 }
 
 template < typename BasicJsonType, typename Key, typename Value, typename Hash, typename KeyEqual, typename Allocator,
            typename = enable_if_t < !std::is_constructible <
                                         typename BasicJsonType::string_t, Key >::value >>
-inline void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
+void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyEqual, Allocator>& m)
 {
-    if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
+    // NOLINTNEXTLINE(modernize-type-traits) we use C++11
+    if (from_json_enum_keyed_object(j, m, std::is_enum<Key> {}))
     {
-        JSON_THROW(type_error::create(302, concat("type must be array, but is ", j.type_name()), &j));
+        return;
     }
-    m.clear();
-    for (const auto& p : j)
-    {
-        if (JSON_HEDLEY_UNLIKELY(!p.is_array()))
-        {
-            JSON_THROW(type_error::create(302, concat("type must be array, but is ", p.type_name()), &p));
-        }
-        m.emplace(p.at(0).template get<Key>(), p.at(1).template get<Value>());
-    }
+    from_json_pair_array_to_map(j, m);
 }
 
 #if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
 
-// Workaround for MSVC 19.51 (and possibly later): in large in large cpp files, the compiler may fail to resolve with generic has_from_json (issue #4996)
+// Workaround for MSVC 19.51 (and possibly later): in large cpp files, the compiler may fail to resolve with generic has_from_json (issue #4996)
 template<typename BasicJsonType>
 struct has_from_json<BasicJsonType, std_fs::path, void> : std::true_type {};
 

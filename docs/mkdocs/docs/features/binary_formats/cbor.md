@@ -98,7 +98,7 @@ see "binary" cells in the table above.
 
     Binary subtypes will be serialized as tagged items. See [binary values](../binary_values.md#cbor) for an example.
 
-??? example
+??? example "Example: serialize a JSON value to CBOR"
 
     ```cpp
     --8<-- "examples/to_cbor.cpp"
@@ -168,9 +168,9 @@ The library maps CBOR types to JSON value types as follows:
 !!! warning "Negative integer overflow"
 
     CBOR negative integers (major type 1) are decoded as `-1 - n`. If the encoded magnitude `n` is too large for the
-    result to fit into `number_integer_t` (`std::int64_t` by default), parsing fails with a
-    [`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112) exception rather than overflowing
-    silently.
+    result to fit into `number_integer_t` (`std::int64_t` by default), the result is stored as `number_float_t`, like
+    a too small integer in JSON text. For example, `-18446744073709551616` (`0x3B` followed by eight `0xFF` bytes) is
+    stored as `-1.8446744073709552e+19`.
 
 !!! warning "Object keys"
 
@@ -189,21 +189,27 @@ The library maps CBOR types to JSON value types as follows:
     ([RFC 8392](https://www.rfc-editor.org/rfc/rfc8392.html)), cannot be read with this library and need a
     general-purpose CBOR library instead.
 
-!!! warning "UTF-8 validation of text strings"
+!!! warning "Ill-formed UTF-8 in text strings"
 
-    [RFC 8949, Section 3.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-3.1) requires CBOR text strings
-    (major type 3) to be valid UTF-8. This library validates the bytes of every text string (object keys included) at
-    decode time and rejects ill-formed UTF-8 with a
-    [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) exception (or, with
-    `allow_exceptions` set to `false`, a discarded value), rather than only failing later when the resulting value is
-    dumped. Byte strings (major type 2) are unaffected and are never validated, since they are not required to hold
-    text.
+    [RFC 8949, Section 3.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-3.1) requires CBOR text strings (major
+    type 3) to be valid UTF-8, but leaves it up to the decoder whether to enforce this, so checking is opt-in: with the
+    [`error_handler`](../../api/basic_json/from_cbor.md) parameter left at `keep` (the default), `from_cbor()` accepts a
+    text string (object keys included) whose bytes are not valid UTF-8 and hands them back unchanged. Passing
+    `error_handler_t::strict` makes `from_cbor()` check and throw
+    [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) for ill-formed UTF-8, and
+    `replace`/`ignore` sanitize the string instead of keeping it. However, [`dump()`](../../api/basic_json/dump.md)
+    still requires valid UTF-8 and throws [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for a
+    value read with the default `keep` handler, unless an error handler is passed that replaces or ignores the
+    ill-formed bytes. `to_cbor()`'s own [`error_handler`](../../api/basic_json/to_cbor.md) parameter defaults to `keep`,
+    so such a value is written back unchanged; with `strict` (the default if
+    [`JSON_STRICT_BINARY_UTF8`](../../api/macros/json_strict_binary_utf8.md) is enabled), it throws the same exception
+    instead. Byte strings (major type 2) are unaffected, since they are not required to hold text.
 
 !!! warning "Tagged items"
 
     Tagged items (0xC0..0xDB) will throw a parse error by default. They can be ignored by passing `cbor_tag_handler_t::ignore` to function `from_cbor`, in which case the tag is skipped and the enclosed data item is parsed on its own. Passing `cbor_tag_handler_t::store` to function `from_cbor` stores tagged byte strings (for bytes 0xd8..0xdb) as binary values with the tag as subtype; other tagged values are read as if the tag were ignored. If several tags precede a byte string, only the innermost one is stored. Note that no tag is ever interpreted: for instance, a text string tagged with tag 0 (date/time) stays a string.
 
-??? example
+??? example "Example: deserialize a JSON value from CBOR"
 
     ```cpp
     --8<-- "examples/from_cbor.cpp"

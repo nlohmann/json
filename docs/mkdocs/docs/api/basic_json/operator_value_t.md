@@ -47,6 +47,11 @@ Constant.
     --8<-- "examples/operator__value_t.output"
     ```
 
+## See also
+
+- [type](type.md) named member function equivalent to this implicit conversion operator
+- [value_t](value_t.md) the enumeration of JSON types
+
 ## Version history
 
 - Added in version 1.0.0.

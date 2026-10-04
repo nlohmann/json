@@ -34,6 +34,13 @@ Constant.
     --8<-- "examples/is_object.output"
     ```
 
+## See also
+
+- [is_array](is_array.md) checks whether the JSON value is an array
+- [is_structured](is_structured.md) checks whether the JSON value is structured (array or object)
+- [type](type.md) returns the type of the JSON value
+- [object_t](object_t.md) the type used to store JSON objects
+
 ## Version history
 
 - Added in version 1.0.0.

@@ -596,7 +596,13 @@ foreach(SRC_FILE ${SRC_FILES})
     add_executable(single_${RELATIVE_SRC_FILE} EXCLUDE_FROM_ALL ${PROJECT_BINARY_DIR}/src_single/${RELATIVE_SRC_FILE}.cpp)
     target_include_directories(single_${RELATIVE_SRC_FILE} PRIVATE ${PROJECT_SOURCE_DIR}/include)
     target_compile_features(single_${RELATIVE_SRC_FILE} PRIVATE cxx_std_11)
-    set_property(TARGET single_${RELATIVE_SRC_FILE} PROPERTY CXX_INCLUDE_WHAT_YOU_USE "${iwyu_path_and_options}")
+    if(RELATIVE_SRC_FILE STREQUAL "json" OR RELATIVE_SRC_FILE STREQUAL "json_literals")
+        # see below: report the diagnostics of json.hpp and json_literals.hpp without --error, so they
+        # do not fail the build
+        set_property(TARGET single_${RELATIVE_SRC_FILE} PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_TOOL} -Xiwyu --max_line_length=300)
+    else()
+        set_property(TARGET single_${RELATIVE_SRC_FILE} PROPERTY CXX_INCLUDE_WHAT_YOU_USE "${iwyu_path_and_options}")
+    endif()
     # remember binary for ci_single_binaries
     list(APPEND single_binaries single_${RELATIVE_SRC_FILE})
     # json.hpp pulls together the whole library behind heavily templated, SFINAE-based code, and
@@ -606,7 +612,10 @@ foreach(SRC_FILE ${SRC_FILES})
     # reporting its diagnostics (informational, via CXX_INCLUDE_WHAT_YOU_USE above) but exclude it
     # from the hard gate below so a fresh IWYU/compiler combination does not fail this target on a
     # nondeterministic suggestion for a header that already re-exports everything on purpose.
-    if(NOT RELATIVE_SRC_FILE STREQUAL "json")
+    # json_literals.hpp and json.hpp include each other on purpose (json.hpp includes it at its end
+    # unless JSON_NO_AUTOMATIC_UDLS is defined), and IWYU, not following the cycle, suggests replacing
+    # json.hpp with json_fwd.hpp although the literals need the complete basic_json; exclude it, too.
+    if(NOT RELATIVE_SRC_FILE STREQUAL "json" AND NOT RELATIVE_SRC_FILE STREQUAL "json_literals")
         list(APPEND single_binaries_tus src_single/${RELATIVE_SRC_FILE}.cpp)
     endif()
 endforeach()
@@ -658,14 +667,19 @@ function(ci_get_cmake version var)
             OUTPUT ${${var}}
             COMMAND wget -nc https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-linux-x86_64.tar.gz
             COMMAND wget -nc https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-SHA-256.txt
-            # verify the archive against Kitware's published SHA-256 sums before unpacking it
-            COMMAND sh -c "grep ' cmake-${version}-linux-x86_64[.]tar[.]gz$' cmake-${version}-SHA-256.txt | sha256sum -c -"
-            COMMAND tar xfz cmake-${version}-linux-x86_64.tar.gz
-            COMMAND rm cmake-${version}-linux-x86_64.tar.gz cmake-${version}-SHA-256.txt
+            # verify the archive against Kitware's published SHA-256 sums before unpacking it; old
+            # releases list the archive as "Linux-x86_64", so match case-insensitively and rewrite
+            # the name to the lowercase one the download was saved under
+            COMMAND sh -c "grep -i ' cmake-${version}-linux-x86_64[.]tar[.]gz$' cmake-${version}-SHA-256.txt | tr L l | sha256sum -c -"
+            # unpack into cmake-${version} directly, as the archive's top-level directory is spelled
+            # "Linux" in old releases and "linux" in newer ones
             COMMAND ${CMAKE_COMMAND} -E rm -rf cmake-${version}
-            COMMAND ${CMAKE_COMMAND} -E rename cmake-${version}-linux-x86_64 cmake-${version}
+            COMMAND ${CMAKE_COMMAND} -E make_directory cmake-${version}
+            COMMAND tar xfz cmake-${version}-linux-x86_64.tar.gz -C cmake-${version} --strip-components=1
+            COMMAND rm cmake-${version}-linux-x86_64.tar.gz cmake-${version}-SHA-256.txt
             WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
             COMMENT "Download prebuilt CMake ${version}"
+            VERBATIM
         )
     else()
         # no prebuilt archive for this platform (e.g. macOS or Linux aarch64): build from source
@@ -691,7 +705,7 @@ ci_get_cmake(4.0.0  CMAKE_4_0_0_BINARY)
 # the tests require CMake 3.13 or later, so they are excluded for CMake 3.5.0
 set(JSON_CMAKE_FLAGS_3_5_0 JSON_Diagnostics JSON_Diagnostic_Positions JSON_GlobalUDLs JSON_ImplicitConversions JSON_DisableEnumSerialization
     JSON_LegacyDiscardedValueComparison JSON_Install JSON_MultipleHeaders JSON_SystemInclude JSON_Valgrind
-    JSON_StrictNulHandling)
+    JSON_StrictNulHandling JSON_StrictBinaryUTF8)
 set(JSON_CMAKE_FLAGS_3_31_6 JSON_BuildTests ${JSON_CMAKE_FLAGS_3_5_0})
 set(JSON_CMAKE_FLAGS_4_0_0 JSON_BuildTests ${JSON_CMAKE_FLAGS_3_5_0})
 
@@ -889,6 +903,12 @@ add_custom_target(ci_test_build_documentation
     COMMAND make build
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/docs/mkdocs
     COMMENT "Build the documentation"
+)
+
+add_custom_target(ci_test_documentation_mermaid
+    COMMAND make check_mermaid
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/docs/mkdocs
+    COMMENT "Check the Mermaid diagrams of the documentation"
 )
 
 ###############################################################################

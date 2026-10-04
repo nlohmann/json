@@ -44,6 +44,14 @@ TEST_CASE("default namespace")
         expected += "_snul";
 #endif
 
+#if JSON_STRICT_BINARY_UTF8
+        expected += "_sbu8";
+#endif
+
+#if JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+        expected += "_ekmo";
+#endif
+
         expected += "_v" STRINGIZE(NLOHMANN_JSON_VERSION_MAJOR);
         expected += "_" STRINGIZE(NLOHMANN_JSON_VERSION_MINOR);
         expected += "_" STRINGIZE(NLOHMANN_JSON_VERSION_PATCH) "::basic_json";

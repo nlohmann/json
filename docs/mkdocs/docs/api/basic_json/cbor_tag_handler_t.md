@@ -38,6 +38,12 @@ store
     --8<-- "examples/cbor_tag_handler_t.output"
     ```
 
+## See also
+
+- [from_cbor](from_cbor.md) deserializes a JSON value from CBOR
+- [input_format_t](input_format_t.md) the enumeration of supported input formats
+- [CBOR](../../features/binary_formats/cbor.md) - the article on the CBOR format
+
 ## Version history
 
 - Added in version 3.9.0. Added value `store` in 3.10.0.

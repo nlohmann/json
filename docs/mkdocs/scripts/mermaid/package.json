@@ -1,0 +1,10 @@
+{
+  "name": "check-mermaid",
+  "private": true,
+  "description": "Validate the Mermaid diagrams of the documentation (see check_mermaid.mjs)",
+  "type": "module",
+  "dependencies": {
+    "jsdom": "30.1.1",
+    "mermaid": "11.17.2"
+  }
+}

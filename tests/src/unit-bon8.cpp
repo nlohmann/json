@@ -459,6 +459,47 @@ TEST_CASE("BON8")
             CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{0x87, 'a'}), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BON8 string: unexpected end of input", json::parse_error&);
         }
 
+        SECTION("input that ends after a UTF-8 lead byte")
+        {
+            // the lead byte begins either a character or an integer; both are
+            // incomplete, so the lead byte must not end the string before it
+            for (const bool strict :
+                    {
+                        true, false
+                    })
+            {
+                CAPTURE(strict)
+                CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{'a', 0xC3}, strict), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BON8 string: unexpected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{0x81, 'a', 0xC3}, strict), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BON8 string: unexpected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{0x81, 'a', 0xE2}, strict), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BON8 string: unexpected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{0x81, 'a', 0xF0}, strict), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BON8 string: unexpected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{0x81, 0xC3, 0xA9, 0xC3}, strict), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing BON8 string: unexpected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{0x87, 'a', 0xC3}, strict), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BON8 string: unexpected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{0x87, 0xC3}, strict), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BON8 key: unexpected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{0x88, 'a', 0x91, 0xE2}, strict), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing BON8 key: unexpected end of input", json::parse_error&);
+            }
+        }
+
+        SECTION("a message that is cut off is not read as a shorter value")
+        {
+            const json values = {"\xC3\xA9", "a\xE2\x82\xAC", "\xF0\x9F\x98\x80\xC3\xA9", {"a\xC3\xA9"}, {{"\xC3\xA9", "\xE2\x82\xAC"}}, {{"a", {"b\xC3\xA9", 1}}}};
+            for (const auto& j : values)
+            {
+                const bytes message = json::to_bon8(j);
+                for (std::size_t length = 0; length < message.size(); ++length)
+                {
+                    CAPTURE(j)
+                    CAPTURE(length)
+                    bytes prefix = message;
+                    prefix.resize(length);
+                    CHECK(json::from_bon8(prefix, false, false).is_discarded());
+                    // a stream is read byte by byte rather than in bulk
+                    std::istringstream stream(str(prefix));
+                    CHECK(json::from_bon8(stream, false, false).is_discarded());
+                }
+            }
+        }
+
         SECTION("invalid UTF-8")
         {
             // overlong
@@ -745,6 +786,7 @@ TEST_CASE("Parse BON8 directly from a file using iterator and sentinel")
     CHECK((parsed.is_object() || parsed.is_array()));
 }
 
+#if !defined(JSON_NOEXCEPTION) // corpus values that do not survive the round trip are skipped by catching the exception
 TEST_CASE("BON8 round-trip invariants")
 {
     // This checks what the parse_bon8_fuzzer driver checks (see
@@ -777,6 +819,7 @@ TEST_CASE("BON8 round-trip invariants")
         CHECK(json::to_bon8(j2) == vec);
     }
 }
+#endif
 
 TEST_CASE("BON8 roundtrips" * doctest::skip())
 {

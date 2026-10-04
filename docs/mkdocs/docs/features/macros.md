@@ -138,6 +138,20 @@ using the library with compilers that do not fully support C++11 and may only wo
 
 See [full documentation of `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`](../api/macros/json_skip_unsupported_compiler_check.md).
 
+## `JSON_STRICT_BINARY_UTF8`
+
+When defined to `1`, [`to_cbor`](../api/basic_json/to_cbor.md), [`to_ubjson`](../api/basic_json/to_ubjson.md),
+[`to_bjdata`](../api/basic_json/to_bjdata.md), and [`to_bson`](../api/basic_json/to_bson.md) throw
+[`type_error.316`](../home/exceptions.md#jsonexceptiontype_error316) for a string value or object key that is not
+valid UTF-8. The default value is `0`, which writes the bytes unchanged as before version 3.13.0; this is planned to
+become the default in version 4.0.0.
+
+The check can also be enabled with the CMake option
+[`JSON_StrictBinaryUTF8`](../integration/cmake.md#json_strictbinaryutf8) (`OFF` by default) which sets
+`JSON_STRICT_BINARY_UTF8` accordingly.
+
+See [full documentation of `JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md).
+
 ## `JSON_STRICT_NUL_HANDLING`
 
 When defined to `1`, a `'\0'` (NUL) byte anywhere in the input is rejected with `parse_error.101`, like any other
@@ -179,9 +193,17 @@ See [full documentation of `JSON_USE_GLOBAL_UDLS`](../api/macros/json_use_global
 ## `JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`
 
 When defined to `1`, the library restores the legacy behavior in which a discarded value compared equal to itself. This
-behavior is deprecated and switched off (`0`) by default.
+behavior is [deprecated](../integration/migration_guide.md#miscellaneous-functions) and switched off (`0`) by
+default.
 
 See [full documentation of `JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON`](../api/macros/json_use_legacy_discarded_value_comparison.md).
+
+## `JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`
+
+When defined to `1`, maps with enum keys (e.g., `std::map<E, T>`) are stored as objects, using the enum's conversion for
+the keys, instead of arrays of `[key, value]` pairs. It is switched off (`0`) by default.
+
+See [full documentation of `JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](../api/macros/json_use_objects_for_enum_keyed_maps.md).
 
 ## `JSON_USE_SIMDUTF`
 

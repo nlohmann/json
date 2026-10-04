@@ -67,10 +67,9 @@ TEST_CASE("BJData")
 {
     SECTION("binary_reader BJData lookup tables")
     {
+        // both lookups are static member functions
         std::vector<std::uint8_t> const data;
-        auto ia = nlohmann::detail::input_adapter(data);
-        // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-        nlohmann::detail::binary_reader<json, decltype(ia)> const br{std::move(ia), json::input_format_t::bjdata};
+        using reader_t = nlohmann::detail::binary_reader<json, decltype(nlohmann::detail::input_adapter(data))>;
 
         // the excluded optimized-type markers must match binary_writer's
         // is_bjdata_excluded_type_marker(), which encodes the same 8 markers
@@ -78,13 +77,13 @@ TEST_CASE("BJData")
                 {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'
                 })
         {
-            CHECK(br.is_bjd_excluded_optimized_type(marker));
+            CHECK(reader_t::is_bjd_excluded_optimized_type(static_cast<unsigned char>(marker)));
         }
         for (const char marker :
                 {'U', 'i', 'u', 'I', 'm', 'l', 'M', 'L', 'd', 'D', 'C', 'B', 'x'
                 })
         {
-            CHECK(!br.is_bjd_excluded_optimized_type(marker));
+            CHECK(!reader_t::is_bjd_excluded_optimized_type(static_cast<unsigned char>(marker)));
         }
 
         // every dtype marker must round-trip to its ND-array type name
@@ -96,11 +95,11 @@ TEST_CASE("BJData")
         };
         for (const auto& type : types)
         {
-            const char* name = br.bjd_type_name(type.first);
+            const char* name = reader_t::bjd_type_name(static_cast<unsigned char>(type.first));
             REQUIRE(name != nullptr);
             CHECK(std::string(name) == type.second);
         }
-        CHECK(br.bjd_type_name('x') == nullptr);
+        CHECK(reader_t::bjd_type_name(static_cast<unsigned char>('x')) == nullptr);
     }
 
     SECTION("individual values")
@@ -3906,6 +3905,43 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             std::vector<uint8_t> v = {'S', 'i', 10, 0xD9, 0x85, 0xD8, 0xB1, 0xD8, 0xAD, 0xD8, 0xA8, 0xD8, 0xA7};
             CHECK(json::to_bjdata(j) == v);
             CHECK(json::from_bjdata(v) == j);
+        }
+
+        SECTION("ill-formed UTF-8 (see #5529, #5651)")
+        {
+            // none of the binary format specs requires a decoder to reject
+            // ill-formed UTF-8 in a text string, so a value whose bytes are
+            // not valid UTF-8 (0xC0 0xAE is an overlong encoding of '.')
+            // round-trips byte for byte as a string value; to_bjdata() writes
+            // the bytes unchanged, as before 3.13.0, unless
+            // JSON_STRICT_BINARY_UTF8 is enabled (see
+            // unit-binary_utf8_strict.cpp)
+            const std::vector<uint8_t> v = {'S', 'i', 2, 0xc0, 0xae};
+            json j;
+            CHECK_NOTHROW(j = json::from_bjdata(v));
+            REQUIRE(j.is_string());
+            CHECK(j.get_ref<const json::string_t&>() == std::string("\xc0\xae"));
+            CHECK_THROWS_AS(utils::ignore_return_value(j.dump()), json::type_error&);
+            CHECK(json::from_bjdata(json::to_bjdata(j)) == j);
+
+            // the same bytes as an object key round-trip as well
+            const std::vector<uint8_t> v_key = {'{', 'i', 2, 0xc0, 0xae, 'i', 1, '}'};
+            json j_key;
+            CHECK_NOTHROW(j_key = json::from_bjdata(v_key));
+            REQUIRE(j_key.is_object());
+            CHECK(j_key.contains(std::string("\xc0\xae")));
+            CHECK(json::from_bjdata(json::to_bjdata(j_key)) == j_key);
+
+            CHECK(json::from_bjdata(json::to_bjdata(json("\xFF"))) == json("\xFF"));
+            // a truncated multi-byte sequence
+            CHECK(json::from_bjdata(json::to_bjdata(json("\xC3"))) == json("\xC3"));
+            // an encoded surrogate half (U+D800)
+            CHECK(json::from_bjdata(json::to_bjdata(json("\xED\xA0\x80"))) == json("\xED\xA0\x80"));
+            // an overlong encoding of '.'
+            CHECK(json::from_bjdata(json::to_bjdata(json("\xC0\xAF"))) == json("\xC0\xAF"));
+
+            // an object key with ill-formed UTF-8 is kept the same way
+            CHECK(json::from_bjdata(json::to_bjdata(json{{"\xFF", 1}})) == json{{"\xFF", 1}});
         }
     }
 

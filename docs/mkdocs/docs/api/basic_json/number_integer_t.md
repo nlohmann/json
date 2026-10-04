@@ -29,26 +29,27 @@ to use.
 
 ## Notes
 
-#### Default type
+### Default type
 
 With the default values for `NumberIntegerType` (`std::int64_t`), the default value for `number_integer_t` is
 `#!cpp std::int64_t`.
 
-#### Default behavior
+### Default behavior
 
 - The restrictions about leading zeros are not enforced in C++. Instead, leading zeros in integer literals lead to an
   interpretation as an octal number. Internally, the value will be stored as a decimal number. For instance, the C++
   integer literal `010` will be serialized to `8`. During deserialization, leading zeros yield an error.
 
-#### Limits
+### Limits
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) specifies:
 > An implementation may set limits on the range and precision of numbers.
 
 When the default type is used, the maximal integer number that can be stored is `9223372036854775807` (INT64_MAX) and
 the minimal integer number that can be stored is `-9223372036854775808` (INT64_MIN). Integer numbers that are out of
-range will yield over/underflow when used in a constructor. During deserialization, too large or small integer numbers
-will automatically be stored as [`number_unsigned_t`](number_unsigned_t.md) or [`number_float_t`](number_float_t.md).
+range will yield over/underflow when used in a constructor. During deserialization (from JSON text or any of the binary
+formats), too large or small integer numbers will automatically be stored as [`number_unsigned_t`](number_unsigned_t.md)
+or [`number_float_t`](number_float_t.md).
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) further states:
 > Note that when such software is used, numbers that are integers and are in the range [-2<sup>53</sup>+1, 2<sup>53</sup>-1] are
@@ -57,7 +58,7 @@ will automatically be stored as [`number_unsigned_t`](number_unsigned_t.md) or [
 As this range is a subrange of the exactly supported range [INT64_MIN, INT64_MAX], this class's integer type is
 interoperable.
 
-#### Storage
+### Storage
 
 Integer number values are stored directly inside a `basic_json` type.
 
@@ -76,6 +77,13 @@ Integer number values are stored directly inside a `basic_json` type.
     ```json
     --8<-- "examples/number_integer_t.output"
     ```
+
+## See also
+
+- [number_unsigned_t](number_unsigned_t.md) the type used to store JSON unsigned integer numbers
+- [number_float_t](number_float_t.md) the type used to store JSON floating-point numbers
+- [is_number_integer](is_number_integer.md) checks whether the JSON value is a signed integer number
+- [Number Handling](../../features/types/number_handling.md) - the article on number handling
 
 ## Version history
 

@@ -23,6 +23,7 @@
 #include <valarray> // valarray
 #include <vector> // vector
 
+#include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/std_fs.hpp>
@@ -178,7 +179,7 @@ struct external_constructor<value_t::array>
 
     template < typename BasicJsonType, typename CompatibleArrayType,
                enable_if_t < !std::is_same<CompatibleArrayType, typename BasicJsonType::array_t>::value
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
                              && !is_compatible_range_view<CompatibleArrayType>::value
 #endif
                              , int > = 0 >
@@ -222,9 +223,7 @@ struct external_constructor<value_t::array>
         j.assert_invariant();
     }
 
-    // std::ranges does not work properly on MinGW due to incomplete C++20 support
-    // see https://github.com/nlohmann/json/issues/4916
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
     template<typename BasicJsonType, typename CompatibleArrayType,
              enable_if_t<is_compatible_range_view<std::remove_cvref_t<CompatibleArrayType>>::value, int> = 0>
     static void construct(BasicJsonType& j, CompatibleArrayType && arr)
@@ -235,8 +234,11 @@ struct external_constructor<value_t::array>
         for (auto&& x : std::forward<CompatibleArrayType>(arr))
         {
             j.m_data.m_value.array->push_back(x);
-            j.set_parent(j.m_data.m_value.array->back());
         }
+        // set the parents only once all elements are in place: a push_back
+        // that reallocates moves the earlier elements, which does not keep
+        // their parent pointers
+        j.set_parents();
         j.assert_invariant();
     }
 #endif
@@ -291,7 +293,9 @@ void to_json(BasicJsonType& j, const std::optional<T>& opt) noexcept(std::is_not
 {
     if (opt.has_value())
     {
-        j = *opt;
+        // explicit construction, as the conversion from a basic_json with a different
+        // string type is explicit if JSON_USE_IMPLICIT_CONVERSIONS is 0 (#2649)
+        j = BasicJsonType(*opt);
     }
     else
     {
@@ -379,8 +383,11 @@ template < typename BasicJsonType, typename CompatibleArrayType,
                          !std::is_same<typename BasicJsonType::binary_t, CompatibleArrayType>::value&&
                          !is_compatible_binary_type<BasicJsonType, CompatibleArrayType>::value&&
                          !is_basic_json<CompatibleArrayType>::value
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
     && !is_compatible_range_view<CompatibleArrayType>::value
+#endif
+#if JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+    && !is_enum_keyed_map<CompatibleArrayType>::value
 #endif
                          ,
                          int > = 0 >
@@ -389,7 +396,7 @@ inline void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
     external_constructor<value_t::array>::construct(j, arr);
 }
 
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 template < typename BasicJsonType, typename T,
            enable_if_t < is_compatible_range_view<std::remove_cvref_t<T>>::value
                          && !is_compatible_string_type<BasicJsonType, std::remove_cvref_t<T>>::value
@@ -434,6 +441,33 @@ inline void to_json(BasicJsonType& j, const CompatibleObjectType& obj)
 {
     external_constructor<value_t::object>::construct(j, obj);
 }
+
+#if JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+// store a map with enum keys as an object, using the enum's own to_json for the
+// keys (e.g., from NLOHMANN_JSON_SERIALIZE_ENUM); without the macro, such maps
+// are stored as arrays of [key, value] pairs
+template < typename BasicJsonType, typename EnumKeyedMap,
+           enable_if_t < is_enum_keyed_map<EnumKeyedMap>::value&& !is_basic_json<EnumKeyedMap>::value, int > = 0 >
+inline void to_json(BasicJsonType& j, const EnumKeyedMap& map)
+{
+    typename BasicJsonType::object_t obj;
+    for (const auto& p : map)
+    {
+        BasicJsonType key = p.first;
+        if (JSON_HEDLEY_UNLIKELY(!key.is_string()))
+        {
+            JSON_THROW(type_error::create(302, concat("type must be string, but is ", key.type_name()), &key));
+        }
+
+        auto& key_string = *key.template get_ptr<typename BasicJsonType::string_t*>();
+        if (JSON_HEDLEY_UNLIKELY(!obj.emplace(key_string, BasicJsonType(p.second)).second))
+        {
+            JSON_THROW(type_error::create(318, concat("duplicate object key '", key_string, "'"), &key));
+        }
+    }
+    external_constructor<value_t::object>::construct(j, std::move(obj));
+}
+#endif
 
 template<typename BasicJsonType>
 inline void to_json(BasicJsonType& j, typename BasicJsonType::object_t&& obj)

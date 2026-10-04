@@ -750,6 +750,28 @@ TEST_CASE("regression #3868 - heterogeneous comparisons compile under C++20 (P24
         CHECK_FALSE(j != i);
     }
 }
+
+#if JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON
+TEST_CASE("regression #5665 - scalar <= discarded and scalar >= discarded in C++20 legacy mode")
+{
+    // Issue #5665: with a scalar on the left-hand side, <= and >= only had the
+    // candidate rewritten from operator<=>, which does not emulate the legacy
+    // discarded-value behavior. Check that scalar-on-the-left now matches the
+    // other three operand orders.
+    const json discarded(json::value_t::discarded);
+    const json one = 1;
+
+    CHECK(discarded <= 1);
+    CHECK(discarded >= 1);
+    CHECK(one <= discarded);
+    CHECK(one >= discarded);
+    CHECK(1 <= discarded);
+    CHECK(1 >= discarded);
+    CHECK(1.5 <= discarded);
+    CHECK(1.5 >= discarded);
+}
+#endif
+
 #endif
 
 namespace
@@ -827,6 +849,46 @@ Json nest(Json j, const std::size_t depth)
     return j;
 }
 
+// a std::map comparator with state: case-insensitive, unless constructed
+// case-sensitive. Used to check that copying an object copies the original's
+// comparator rather than default-constructing a new one (see #5649).
+struct key_case_less
+{
+    key_case_less() = default;
+    explicit key_case_less(const bool cs) noexcept : case_sensitive(cs) {}
+
+    bool operator()(const std::string& a, const std::string& b) const
+    {
+        if (case_sensitive)
+        {
+            return a < b;
+        }
+        return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end(),
+                                            [](unsigned char x, unsigned char y)
+        {
+            return std::tolower(x) < std::tolower(y);
+        });
+    }
+
+    bool case_sensitive = false;
+};
+
+template<class Key, class Value, class /*Compare*/, class Allocator>
+using key_case_map = std::map<Key, Value, key_case_less, Allocator>;
+using key_case_json = nlohmann::basic_json<key_case_map>;
+
+// the innermost value of a chain of single-element arrays
+template<typename Json>
+const Json& innermost(const Json& j)
+{
+    const Json* p = &j;
+    while (p->is_array())
+    {
+        p = &(*p)[0];
+    }
+    return *p;
+}
+
 // orders keys case-insensitively, so "key" and "KEY" compare equivalent
 // (neither less than the other) although they are not equal
 struct case_insensitive_less
@@ -888,6 +950,47 @@ TEST_CASE("equality of objects whose entries have no fixed order")
         const nlohmann::ordered_json ba = nest(nlohmann::ordered_json({{"b", 2}, {"a", 1}}), depth);
         CHECK_FALSE(ab == ba);
         CHECK(ab != ba);
+    }
+}
+
+TEST_CASE("copying an object preserves its comparator's state")
+{
+    // Past the iterative deep copy's nesting bound, an object copy used to be
+    // built with a default-constructed comparator instead of a copy of the
+    // original's. For an object type whose comparator carries state - here, a
+    // std::map that compares keys case-sensitively only when created that way
+    // - this reordered the copy's keys and could even drop entries that the
+    // original's comparator kept distinct (see #5649).
+    key_case_json object = key_case_json::object_t(key_case_less(true)); // case-sensitive
+    object["b"] = 1;
+    object["B"] = 2;
+    object["a"] = 3;
+    REQUIRE(object.dump() == R"({"B":2,"a":3,"b":1})");
+
+    for (const std::size_t depth : std::vector<std::size_t> {0, 127, 128, 200})
+    {
+        CAPTURE(depth)
+
+        key_case_json original = object;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            original = key_case_json::array({std::move(original)});
+        }
+
+        {
+            const key_case_json copy = original; // NOLINT(performance-unnecessary-copy-initialization)
+            CHECK(innermost(copy).size() == 3);
+            CHECK(innermost(copy).dump() == R"({"B":2,"a":3,"b":1})");
+            CHECK(copy == original);
+        }
+
+        {
+            key_case_json copy = key_case_json::array();
+            copy = original;
+            CHECK(innermost(copy).size() == 3);
+            CHECK(innermost(copy).dump() == R"({"B":2,"a":3,"b":1})");
+            CHECK(copy == original);
+        }
     }
 }
 
@@ -998,3 +1101,51 @@ TEST_CASE("containers are compared element by element")
         }
     }
 }
+
+#if JSON_HAS_THREE_WAY_COMPARISON
+// JSON_HAS_CPP_20 (do not remove; see note at top of file)
+TEST_CASE("operator<=> of binary values with a different subtype does not depend on nesting depth")
+{
+    // #5654: std::vector<std::uint8_t>::operator<=>, which the binary type's
+    // own operator<=> uses, ignores the subtype that operator== checks. So a
+    // pair of binary values with the same bytes but a different subtype is
+    // unequal, yet <=>-equivalent - the same inconsistency between == and <=>
+    // that a NaN has. Within the nesting bound, an array compares itself
+    // with std::vector's own operator<=>, which treats an equivalent pair as
+    // undecided and lets the next element decide, same as
+    // std::lexicographical_compare_three_way does. Past the bound,
+    // compare_iteratively<true>() takes over and must classify the pair the
+    // same way, or the result of operator<=> - and of <, which C++20 derives
+    // from it - depends on how deeply the values are nested.
+    const json a = json::array({json::binary({1}, 1), 1});
+    const json b = json::array({json::binary({1}, 2), 2});
+
+    // the root inconsistency: unequal, yet <=>-equivalent
+    CHECK_FALSE(a[0] == b[0]);
+    CHECK((a[0] <=> b[0]) == std::partial_ordering::equivalent); // *NOPAD*
+
+    const auto deep = [](const json & j, const std::size_t depth)
+    {
+        json result = j;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            result = json::array({std::move(result)});
+        }
+        return result;
+    };
+
+    // 127 levels stay within nesting_depth_limit() (128); 128 and 200 do not,
+    // and must still agree with the levels that do
+    for (const std::size_t depth : std::vector<std::size_t> {0, 127, 128, 200})
+    {
+        CAPTURE(depth)
+        const json x = deep(a, depth);
+        const json y = deep(b, depth);
+        CHECK((x <=> y) == std::partial_ordering::less); // *NOPAD*
+        CHECK((y <=> x) == std::partial_ordering::greater); // *NOPAD*
+        CHECK(x < y);
+        CHECK(y > x);
+        CHECK_FALSE(y < x);
+    }
+}
+#endif

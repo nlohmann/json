@@ -44,10 +44,13 @@ inline void from_json(const BasicJsonType& j, type& e);
       `"enum value out of range for <type>"`.
     - If an enum or JSON value is specified in multiple conversions, the first matching conversion from the top of the
       list will be returned when converting to or from JSON. See example 2 below.
+    - Maps with enum keys (e.g., `std::map<ENUM_TYPE, T>`) are stored as arrays of `[key, value]` pairs by default.
+      Define [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](json_use_objects_for_enum_keyed_maps.md) to store them as objects
+      with the converted keys. Such maps can be read from both forms.
 
 ## Examples
 
-??? example "Example 1: Basic usage"
+??? example "Example: Basic usage"
 
     The example shows how `NLOHMANN_JSON_SERIALIZE_ENUM_STRICT` can be used to serialize/deserialize both classical enums and
     C++11 enum classes:
@@ -62,7 +65,7 @@ inline void from_json(const BasicJsonType& j, type& e);
     --8<-- "examples/nlohmann_json_serialize_enum_strict.output"
     ```
 
-??? example "Example 2: Multiple conversions for one enumerator"
+??? example "Example: Multiple conversions for one enumerator"
 
     The example shows how to use multiple conversions for a single enumerator. In the example, `Color::red` will always
     be *serialized* to `"red"`, because the first occurring conversion. The second conversion, however, offers an
@@ -78,7 +81,7 @@ inline void from_json(const BasicJsonType& j, type& e);
     --8<-- "examples/nlohmann_json_serialize_enum_strict_2.output"
     ```
 
-??? example "Example 3: exceptions on invalid serialization"
+??? example "Example: exceptions on invalid serialization"
     
     The example shows how an invalid serialization causes an exception to be thrown. In the example,
     Color::unknown is not defined in the mapping used to call `NLOHMANN_JSON_SERIALIZE_ENUM_STRICT`
@@ -99,6 +102,7 @@ inline void from_json(const BasicJsonType& j, type& e);
 - [Specializing enum conversion](../../features/enum_conversion.md)
 - [`NLOHMANN_JSON_SERIALIZE_ENUM`](./nlohmann_json_serialize_enum.md)
 - [`JSON_DISABLE_ENUM_SERIALIZATION`](json_disable_enum_serialization.md)
+- [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](json_use_objects_for_enum_keyed_maps.md)
 
 ## Version history
 
