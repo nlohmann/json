@@ -67,6 +67,18 @@ Logarithmic in the size of the JSON object.
 
     If `#!cpp j.contains(x)` returns `#!c true` for a key or JSON pointer `x`, then it is safe to call `j[x]`.
 
+!!! warning "Deprecation"
+
+    Overload (3) also accepts a [`json_pointer`](../json_pointer/index.md) whose template argument is a `basic_json`
+    specialization (e.g., `nlohmann::json_pointer<nlohmann::json>`) instead of a string type. This is deprecated since
+    version 3.11.0 and will be removed in a future major version; use `basic_json::json_pointer` (for `json`,
+    `nlohmann::json_pointer<std::string>`) instead.
+
+    You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated
+    function.
+
+    See the [migration guide](../../integration/migration_guide.md#json-pointers) for how to update existing code.
+
 ## Examples
 
 ??? example "Example: (1) check with key"
@@ -119,7 +131,9 @@ Logarithmic in the size of the JSON object.
 ## Version history
 
 1. Added in version 3.11.0.
-2. Added in version 3.6.0. Extended template `KeyType` to support comparable types in version 3.11.0.
+2. Added in version 3.6.0. Extended template `KeyType` to support comparable types in version 3.11.0. Fixed in
+   version 3.13.0 to consistently accept `std::string_view`-convertible keys, as already supported by
+   [`operator[]`](operator[].md), [`at`](at.md), [`value`](value.md), and other lookup functions.
 3. Added in version 3.7.0.
 4. Deleted overloads for integral key types added in version 3.13.0 to reject such calls at compile time instead of
    causing undefined behavior at runtime.

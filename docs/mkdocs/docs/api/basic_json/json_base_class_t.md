@@ -14,12 +14,12 @@ Examples of such functionality might be metadata, additional member functions (e
 
 ## Notes
 
-#### Default type
+### Default type
 
 The default value for `CustomBaseClass` is `void`. In this case, an
 [empty base class](https://en.cppreference.com/w/cpp/language/ebo) is used and no additional functionality is injected.
 
-#### Limitations
+### Limitations
 
 The type `CustomBaseClass` has to be a default-constructible, non-`final` class.
 `basic_json` only supports copy/move construction/assignment if `CustomBaseClass` does so as well.
@@ -58,6 +58,7 @@ same name. Hidden members remain accessible via [`as_base_class`](as_base_class.
 ## See also
 
 - [as_base_class](as_base_class.md) - access the custom base class
+- [Template Parameter Requirements](../../features/types/template_parameters.md#custombaseclass) - the requirements for `CustomBaseClass`
 
 ## Version history
 

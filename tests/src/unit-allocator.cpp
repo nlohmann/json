@@ -239,7 +239,7 @@ TEST_CASE("controlled bad_alloc")
             // iterative path instead, part-way through its worklist.
             const auto check_deep_copy = [](bool objects)
             {
-                CAPTURE(objects);
+                CAPTURE(objects)
 
                 next_construct_fails = false;
 
@@ -315,7 +315,7 @@ struct nth_alloc_fails_allocator : std::allocator<T>
 template<class BasicJsonType>
 void check_deep_copy_survives_failing_allocation(bool nest_objects)
 {
-    CAPTURE(nest_objects);
+    CAPTURE(nest_objects)
 
     fail_at_alloc_call = -1;
 
@@ -352,7 +352,7 @@ void check_deep_copy_survives_failing_allocation(bool nest_objects)
     // must come out exactly as it went in
     for (std::size_t n = 0; n < total_allocations; ++n)
     {
-        CAPTURE(n);
+        CAPTURE(n)
         alloc_call_count = 0;
         fail_at_alloc_call = static_cast<long>(n);
 
@@ -372,6 +372,11 @@ void check_deep_copy_survives_failing_allocation(bool nest_objects)
 
 TEST_CASE("copy of a deeply nested value survives a failing allocation (#5640)")
 {
+    // With iterator debugging (MSVC STL debug builds, also used by clang-cl),
+    // containers allocate a debug proxy through the allocator inside their
+    // noexcept move constructors, so failing that allocation terminates the
+    // program instead of throwing std::bad_alloc. Nothing to check there.
+#if !(defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0)
     SECTION("std::map-backed object_t")
     {
         using bad_alloc_json = nlohmann::basic_json<std::map,
@@ -401,6 +406,7 @@ TEST_CASE("copy of a deeply nested value survives a failing allocation (#5640)")
         check_deep_copy_survives_failing_allocation<bad_alloc_ordered_json>(false);
         check_deep_copy_survives_failing_allocation<bad_alloc_ordered_json>(true);
     }
+#endif
 }
 
 namespace
@@ -477,6 +483,81 @@ TEST_CASE("deep copy uses the provided allocator")
     const counting_json copy(j);
     CHECK(scratch_pair_allocations > 0);
     CHECK(copy == j);
+}
+
+namespace
+{
+// the number of constructions countdown_allocator lets happen, including the
+// one that fails; 0 means none ever fails
+std::size_t constructions_until_failure = 0;
+
+template<class T>
+struct countdown_allocator : std::allocator<T>
+{
+    using std::allocator<T>::allocator;
+
+    template<class U, class... Args>
+    void construct(U* p, Args&& ... args)
+    {
+        if (constructions_until_failure != 0)
+        {
+            --constructions_until_failure;
+            if (constructions_until_failure == 0)
+            {
+                throw std::bad_alloc();
+            }
+        }
+
+        ::new (static_cast<void*>(p)) U(std::forward<Args>(args)...);
+    }
+
+    template <class U>
+    struct rebind
+    {
+        using other = countdown_allocator<U>;
+    };
+};
+} // namespace
+
+TEST_CASE("converting a deeply nested value from another specialization fails cleanly (#5650)")
+{
+    using countdown_json = nlohmann::basic_json<std::map,
+          std::vector,
+          std::string,
+          bool,
+          std::int64_t,
+          std::uint64_t,
+          double,
+          countdown_allocator>;
+
+    // deeper than the 128 levels the converting constructor descends into, so
+    // that failures land on both sides of the bound - or, built with
+    // JSON_NO_THREAD_LOCAL, all in the iterative conversion
+    json j = {1, "two", {{"three", 3}}};
+    for (std::size_t i = 0; i < 150; ++i)
+    {
+        j = json{{"a", json::array({j, "sibling"})}};
+    }
+
+    // Fail every construction in turn. Each failure has to reach the caller,
+    // and everything built until then has to be destroyed cleanly.
+    std::size_t failures = 0;
+    for (std::size_t n = 1;; ++n)
+    {
+        constructions_until_failure = n;
+        try
+        {
+            const countdown_json converted = j;
+            constructions_until_failure = 0;
+            CHECK(converted.dump() == j.dump());
+            break;
+        }
+        catch (const std::bad_alloc&)
+        {
+            ++failures;
+        }
+    }
+    CHECK(failures > 0);
 }
 
 namespace

@@ -48,7 +48,7 @@ On number interoperability, the following remarks are made:
     for numeric magnitude and precision than is widely available.
     
     Note that when such software is used, numbers that are integers and
-    are in the range $[-2^{53}+1, 2^{53}-1]$ are interoperable in the
+    are in the range [-2<sup>53</sup>+1, 2<sup>53</sup>-1] are interoperable in the
     sense that implementations will agree exactly on their numeric
     values.
 
@@ -67,14 +67,29 @@ Positive integers are stored as `#!c std::uint64_t`, while negative integers are
 distinction is determined at parse time: if the JSON number has a leading minus sign, it uses signed integer storage;
 otherwise, it uses unsigned integer storage.
 
+```mermaid
+flowchart TD
+    A["number literal"] --> B{"has a fraction (.) or exponent (e/E)?"}
+    B -->|"yes"| F["number_float_t"]
+    B -->|"no"| C{"has a leading minus sign?"}
+    C -->|"yes"| D["try number_integer_t"]
+    C -->|"no"| E["try number_unsigned_t"]
+    D -->|"overflow"| F
+    E -->|"overflow"| F
+```
+
 !!! info "Notes"
 
     - Numbers with a decimal digit or scientific notation are always stored as `#!c double`.
     - The number types can be changed, see [Template number types](#template-number-types). 
-    - As of version 3.9.1, the conversion is realized by
+    - Integers are converted by the library's own digit parser. Floating-point numbers are converted with
+      [`std::from_chars`](https://en.cppreference.com/w/cpp/utility/from_chars) if the library is compiled with C++17
+      and the standard library supports it, then with an exact fast path for `#!c double` values with few significant
+      digits, and otherwise with the locale-aware
+      [`std::strtod`](https://en.cppreference.com/w/cpp/string/byte/strtof) (`std::strtof`/`std::strtold` for the
+      other floating-point types). Before version 3.13.0, the conversion was realized by
       [`std::strtoull`](https://en.cppreference.com/w/cpp/string/byte/strtoul),
-      [`std::strtoll`](https://en.cppreference.com/w/cpp/string/byte/strtol), and
-      [`std::strtod`](https://en.cppreference.com/w/cpp/string/byte/strtof), respectively.
+      [`std::strtoll`](https://en.cppreference.com/w/cpp/string/byte/strtol), and `std::strtod`, respectively.
 
 !!! example "Examples"
 
@@ -95,9 +110,9 @@ This is the same behavior as the code `#!c double x = 3.141592653589793238462643
 
 !!! success "Interoperability"
 
-    - The library is interoperable with respect to the specification, because its supported range $[-2^{63}, 2^{64}-1]$ is
-      larger than the described range $[-2^{53}+1, 2^{53}-1]$.
-    - All integers outside the range $[-2^{63}, 2^{64}-1]$, as well as floating-point numbers are stored as `double`.
+    - The library is interoperable with respect to the specification, because its supported range [-2<sup>63</sup>, 2<sup>64</sup>-1] is
+      larger than the described range [-2<sup>53</sup>+1, 2<sup>53</sup>-1].
+    - All integers outside the range [-2<sup>63</sup>, 2<sup>64</sup>-1], as well as floating-point numbers are stored as `double`.
       This also concurs with the specification above.
 
 ### Zeros

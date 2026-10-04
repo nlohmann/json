@@ -26,6 +26,7 @@ header. See also the [macro overview page](../../features/macros.md).
 - [**JSON_HAS_CPP_11**<br>**JSON_HAS_CPP_14**<br>**JSON_HAS_CPP_17**<br>**JSON_HAS_CPP_20**](json_has_cpp_11.md) - set supported C++ standard
 - [**JSON_HAS_FILESYSTEM**<br>**JSON_HAS_EXPERIMENTAL_FILESYSTEM**](json_has_filesystem.md) - control `std::filesystem` support
 - [**JSON_HAS_RANGES**](json_has_ranges.md) - control `std::ranges` support
+- [**JSON_HAS_STATIC_RTTI**](json_has_static_rtti.md) - control RTTI (run time type information) support
 - [**JSON_HAS_STD_FORMAT**](json_has_std_format.md) - control `std::format`/`std::formatter` support
 - [**JSON_HAS_THREE_WAY_COMPARISON**](json_has_three_way_comparison.md) - control 3-way comparison support
 - [**JSON_NO_AUTOMATIC_UDLS**](json_no_automatic_udls.md) - do not include the user-defined string literals (UDLs) automatically
@@ -53,6 +54,7 @@ header. See also the [macro overview page](../../features/macros.md).
 
 - [**JSON_BRACE_INIT_COPY_SEMANTICS**](json_brace_init_copy_semantics.md) - opt in to copy/move semantics for single-element brace initialization
 - [**JSON_DISABLE_ENUM_SERIALIZATION**](json_disable_enum_serialization.md) - switch off default serialization/deserialization functions for enums
+- [**JSON_DISABLE_TUPLE_REFERENCE_CONVERSION**](json_disable_tuple_reference_conversion.md) - switch off conversion from a one-element tuple of a JSON reference
 - [**JSON_USE_IMPLICIT_CONVERSIONS**](json_use_implicit_conversions.md) - control implicit conversions
 
 ## Comparison behavior

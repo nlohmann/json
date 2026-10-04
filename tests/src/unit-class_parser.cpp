@@ -592,6 +592,45 @@ TEST_CASE("parser class")
 
                 // parsing from a string literal is unaffected either way
                 CHECK(json::parse("123") == json(123));
+
+                // a NUL byte that ends a // comment ends the input just
+                // like a NUL byte anywhere else (issue #5659); before the
+                // fix, the NUL was consumed as part of the comment, and
+                // scanning continued with whatever followed it
+                {
+                    // same as "//c" alone (real end of input after the
+                    // comment), rather than continuing with "[1]"
+                    std::string s1 = "//c";
+                    s1.push_back('\0');
+                    s1 += "[1]";
+                    json _; // NOLINT(readability-identifier-naming)
+                    CHECK_THROWS_WITH_AS(_ = json::parse(s1, nullptr, true, true),
+                                         "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal",
+                                         json::parse_error&);
+                    CHECK_FALSE(json::accept(s1, true, true));
+                }
+
+                {
+                    // same as "[1, //c" alone, rather than continuing with " 2]"
+                    std::string s2 = "[1, //c";
+                    s2.push_back('\0');
+                    s2 += " 2]";
+                    json _; // NOLINT(readability-identifier-naming)
+                    CHECK_THROWS_WITH_AS(_ = json::parse(s2, nullptr, true, true),
+                                         "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal",
+                                         json::parse_error&);
+                    CHECK_FALSE(json::accept(s2, true, true));
+                }
+
+                {
+                    // same as "1 //c" alone: the comment (and the NUL that
+                    // ends it) is ignored, and "x" is never reached
+                    std::string s3 = "1 //c";
+                    s3.push_back('\0');
+                    s3 += "x";
+                    CHECK(json::parse(s3, nullptr, true, true) == json(1));
+                    CHECK(json::accept(s3, true, true));
+                }
             }
 #endif
 
@@ -2001,7 +2040,7 @@ TEST_CASE("parser class")
             const json j = json::parse(R"({"skip": {"k1": 1, "k2": [2, {"k3": 3}]}, "keep": 1})",
                                        [&](int depth, json::parse_event_t event, json & parsed)
             {
-                static const char* const names[] = {"object_start", "object_end", "array_start", "array_end", "key", "value"};
+                static const char* const names[] = {"object_start", "object_end", "array_start", "array_end", "key", "value"}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
                 log.push_back(std::to_string(depth) + " " + names[static_cast<int>(event)] + " " + parsed.dump());
 
                 if (depth == 1 && event == json::parse_event_t::object_start && first)
@@ -2036,7 +2075,7 @@ TEST_CASE("parser class")
             // further effect")
             const auto record = [](std::vector<std::string>& log, int depth, json::parse_event_t event, const json & parsed)
             {
-                static const char* const names[] = {"object_start", "object_end", "array_start", "array_end", "key", "value"};
+                static const char* const names[] = {"object_start", "object_end", "array_start", "array_end", "key", "value"}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
                 log.push_back(std::to_string(depth) + " " + names[static_cast<int>(event)] + " " + parsed.dump());
             };
 
@@ -2561,7 +2600,7 @@ TEST_CASE("last-read diagnostics are identical across input adapters")
 
     for (const auto& s : inputs)
     {
-        CAPTURE(s);
+        CAPTURE(s)
 
         // reference: contiguous std::string -> seekable (lazy) path
         const std::string reference = parse_error_message(s);
@@ -2645,12 +2684,10 @@ TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
 
         SECTION("move constructor resets the moved-from value to npos")
         {
-            // basic_json(basic_json&&) (json.hpp, around line 1265) copies
+            // basic_json(basic_json&&) copies
             // other's start_position/end_position into *this and then resets
-            // other's to npos (see the cppcheck-suppress[accessForwarded]
-            // annotation there, which flags this reset as worth a second
-            // look). Only the top-level moved-from value is affected; its
-            // (moved-away) children are gone along with it.
+            // other's to npos. Only the top-level moved-from value is
+            // affected; its (moved-away) children are gone along with it.
             const std::string s = R"({"a":1,"b":[1,2,3]})";
             json a = json::parse(s);
             const auto a_start = a.start_pos();

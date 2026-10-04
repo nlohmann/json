@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <ostream>
 #include <string>
 
@@ -8,10 +9,10 @@
 // and nothing more of std::string's interface.
 //
 // Covers the "Always required" members, the extras needed for the binary
-// formats, and the extras needed for JSON Pointer / flatten / unflatten /
-// diff. Extending it further (e.g. for std::hash<basic_json> or to_bson) is
-// a matter of adding the extra members listed in the "Required for other
-// functionality" table.
+// formats, JSON Pointer / flatten / unflatten, and the int_to_string overload
+// needed for diff and items. Extending it further (e.g. for
+// std::hash<basic_json> or to_bson) is a matter of adding the extra members
+// listed in the "Required for other functionality" table.
 //
 // See https://json.nlohmann.me/features/types/template_parameters/#stringtype
 class custom_string_type
@@ -93,6 +94,11 @@ class custom_string_type
         data_.append(other.data_);
         return *this;
     }
+    custom_string_type& operator+=(char c)
+    {
+        data_.push_back(c);
+        return *this;
+    }
 
     size_type find_first_of(char c, size_type pos = 0) const
     {
@@ -114,6 +120,12 @@ class custom_string_type
     const_iterator end() const
     {
         return data_.end();
+    }
+
+    // found by ADL; converts array indices to keys in diff and items
+    friend void int_to_string(custom_string_type& target, std::size_t value)
+    {
+        target.data_ = std::to_string(value);
     }
 
     friend bool operator==(const custom_string_type& lhs, const custom_string_type& rhs)

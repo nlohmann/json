@@ -6,7 +6,7 @@ The [`at`](../../api/basic_json/at.md) member function performs checked access; 
 desired value if it exists and throws a [`basic_json::out_of_range` exception](../../home/exceptions.md#out-of-range)
 otherwise.
 
-??? example "Read access"
+??? example "Example: read access"
 
     Consider the following JSON value:
     
@@ -31,7 +31,7 @@ otherwise.
 
 The return value is a reference, so it can be used to modify the original value.
 
-??? example "Write access"
+??? example "Example: write access"
 
     ```cpp
     j.at("name") = "John Smith";
@@ -50,7 +50,7 @@ The return value is a reference, so it can be used to modify the original value.
 When accessing an invalid index (i.e., an index greater than or equal to the array size) or the passed object key is
 non-existing, an exception is thrown.
 
-??? example "Accessing via invalid index or missing key"
+??? example "Example: access via invalid index or missing key"
 
     ```cpp
     j.at("hobbies").at(3) = "cooking";

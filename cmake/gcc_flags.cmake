@@ -1,4 +1,4 @@
-# Warning flags determined for GCC 15.1.0 with https://github.com/nlohmann/gcc_flags:
+# Warning flags determined for GCC 16.2.0 with https://github.com/nlohmann/gcc_flags:
 # Ignored GCC warnings:
 # -Wno-abi-tag           We do not care about ABI tags.
 # -Wno-aggregate-return  The library uses aggregate returns.
@@ -16,6 +16,8 @@ set(GCC_CXXFLAGS
     --extra-warnings
     -W
     -WNSObject-attribute
+    -Wabbreviated-auto-in-template-arg
+    -Wabi
     -Wno-abi-tag
     -Waddress
     -Waddress-of-packed-member
@@ -64,6 +66,7 @@ set(GCC_CXXFLAGS
     -Wanalyzer-tainted-divisor
     -Wanalyzer-tainted-offset
     -Wanalyzer-tainted-size
+    -Wanalyzer-throw-of-unexpected-type
     -Wanalyzer-too-complex
     -Wanalyzer-undefined-behavior-ptrdiff
     -Wanalyzer-undefined-behavior-strtok
@@ -80,10 +83,13 @@ set(GCC_CXXFLAGS
     -Warith-conversion
     -Warray-bounds=2
     -Warray-compare
+    -Warray-parameter
     -Warray-parameter=2
     -Wattribute-alias=2
     -Wattribute-warning
     -Wattributes
+    -Wauto-profile
+    -Wbidi-chars=any
     -Wbool-compare
     -Wbool-operation
     -Wbuiltin-declaration-mismatch
@@ -99,6 +105,7 @@ set(GCC_CXXFLAGS
     -Wc++20-compat
     -Wc++20-extensions
     -Wc++23-extensions
+    -Wc++26-compat
     -Wc++26-extensions
     -Wc++2a-compat
     -Wcalloc-transposed-args
@@ -142,6 +149,7 @@ set(GCC_CXXFLAGS
     -Wdeprecated-enum-enum-conversion
     -Wdeprecated-enum-float-conversion
     -Wdeprecated-literal-operator
+    -Wdeprecated-openmp
     -Wdeprecated-variadic-comma-omission
     -Wdisabled-optimization
     -Wdiv-by-zero
@@ -156,21 +164,17 @@ set(GCC_CXXFLAGS
     -Wenum-conversion
     -Wexceptions
     -Wexpansion-to-defined
+    -Wexpose-global-module-tu-local
+    -Wexternal-tu-local
     -Wextra
     -Wextra-semi
     -Wflex-array-member-not-at-end
     -Wfloat-conversion
     -Wfloat-equal
-    -Wformat -Wformat-contains-nul
-    -Wformat -Wformat-diag
-    -Wformat -Wformat-extra-args
-    -Wformat -Wformat-nonliteral
-    -Wformat -Wformat-overflow=2
-    -Wformat -Wformat-security
-    -Wformat -Wformat-signedness
-    -Wformat -Wformat-truncation=2
-    -Wformat -Wformat-y2k
-    -Wformat -Wformat-zero-length
+    -Wformat-diag
+    -Wformat-overflow=2
+    -Wformat-signedness
+    -Wformat-truncation=2
     -Wformat=2
     -Wframe-address
     -Wfree-nonheap-object
@@ -197,6 +201,8 @@ set(GCC_CXXFLAGS
     -Winvalid-offsetof
     -Winvalid-pch
     -Winvalid-utf8
+    -Wkeyword-macro
+    -Wleading-whitespace=spaces
     -Wliteral-suffix
     -Wlogical-not-parentheses
     -Wlogical-op
@@ -227,6 +233,7 @@ set(GCC_CXXFLAGS
     -Wnarrowing
     -Wnoexcept
     -Wnoexcept-type
+    -Wnon-c-typedef-for-linkage
     -Wnon-template-friend
     -Wnon-virtual-dtor
     -Wnonnull
@@ -269,6 +276,8 @@ set(GCC_CXXFLAGS
     -Wscalar-storage-order
     -Wself-move
     -Wsequence-point
+    -Wsfinae-incomplete
+    -Wsfinae-incomplete=2
     -Wshadow=compatible-local
     -Wshadow=global
     -Wshadow=local
@@ -289,6 +298,7 @@ set(GCC_CXXFLAGS
     -Wstrict-aliasing=3
     -Wstrict-null-sentinel
     -Wstrict-overflow
+    -Wstrict-overflow=5
     -Wstring-compare
     -Wstringop-overflow
     -Wstringop-overflow=4
@@ -333,8 +343,8 @@ set(GCC_CXXFLAGS
     -Wunreachable-code
     -Wunsafe-loop-optimizations
     -Wunused
-    -Wunused-but-set-parameter
-    -Wunused-but-set-variable
+    -Wunused-but-set-parameter=3
+    -Wunused-but-set-variable=3
     -Wunused-const-variable=2
     -Wunused-function
     -Wunused-label
