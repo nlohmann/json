@@ -18,6 +18,8 @@ header. See also the [macro overview page](../../features/macros.md).
 
 - [**JSON_PRECISE_STREAM_POSITION**](json_precise_stream_position.md) - opt in to leaving an input stream positioned
   right after a parsed number
+- [**JSON_STRICT_BINARY_UTF8**](json_strict_binary_utf8.md) - opt in to checking strings for valid UTF-8 in the CBOR,
+  UBJSON, BJData, and BSON writers
 - [**JSON_STRICT_NUL_HANDLING**](json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input instead of
   treating it as end of input
 
