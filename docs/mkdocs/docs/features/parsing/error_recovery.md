@@ -71,24 +71,25 @@ on whether the end of the item with the error is known, a distinction that
 
 If the item is complete, but cannot be passed on as it is, it is replaced, and parsing continues after it:
 
-| Mistake                                                             | Formats                                 | Repair                                                                  |
-|---------------------------------------------------------------------|-----------------------------------------|-------------------------------------------------------------------------|
-| tag                                                                 | CBOR                                    | ignored                                                                 |
-| simple value other than `false`, `true`, and `null`, like undefined | CBOR                                    | `#!json null`                                                           |
-| negative integer below the range of `number_integer_t`              | CBOR                                    | the nearest floating-point number                                       |
-| string that is not valid UTF-8                                      | BJData, BSON, CBOR, MessagePack, UBJSON | each ill-formed sequence becomes U+FFFD                                 |
-| character (`C`) that is not ASCII                                   | BJData, UBJSON                          | U+FFFD                                                                  |
-| invalid high-precision number (`H`)                                 | BJData, UBJSON                          | the longest valid beginning is kept, as for JSON text, or `#!json null` |
-| high-precision number too large                                     | BJData, UBJSON                          | passed as infinity, together with its text                              |
-| object key that is not a string                                     | BON8, CBOR, MessagePack                 | the member is skipped                                                   |
-| element of a type the library does not read, like ObjectId or date  | BSON                                    | `#!json null`                                                           |
-| string without its terminator                                       | BSON                                    | kept                                                                    |
-| document whose size does not match its content                      | BSON                                    | kept                                                                    |
+| Mistake                                                             | Formats                 | Repair                                                                  |
+|---------------------------------------------------------------------|-------------------------|-------------------------------------------------------------------------|
+| tag                                                                 | CBOR                    | ignored                                                                 |
+| simple value other than `false`, `true`, and `null`, like undefined | CBOR                    | `#!json null`                                                           |
+| negative integer below the range of `number_integer_t`              | CBOR                    | the nearest floating-point number                                       |
+| character (`C`) that is not ASCII                                   | BJData, UBJSON          | U+FFFD                                                                  |
+| invalid high-precision number (`H`)                                 | BJData, UBJSON          | the longest valid beginning is kept, as for JSON text, or `#!json null` |
+| high-precision number too large                                     | BJData, UBJSON          | passed as infinity, together with its text                              |
+| object key that is not a string                                     | BON8, CBOR, MessagePack | the member is skipped                                                   |
+| element of a type the library does not read, like ObjectId or date  | BSON                    | `#!json null`                                                           |
+| string without its terminator                                       | BSON                    | kept                                                                    |
+| document whose size does not match its content                      | BSON                    | kept                                                                    |
 
 CBOR tags and simple values are repaired as [RFC 8949, Section 6.1](https://www.rfc-editor.org/rfc/rfc8949.html#section-6.1)
 suggests for converting CBOR to JSON. Note that [`sax_parse`](../../api/basic_json/sax_parse.md) has no parameter for
 CBOR tags, so every tag is an error there; when recovering, tags are ignored like with
-[`cbor_tag_handler_t::ignore`](../../api/basic_json/cbor_tag_handler_t.md).
+[`cbor_tag_handler_t::ignore`](../../api/basic_json/cbor_tag_handler_t.md). Strings that are not valid UTF-8 are no
+error: like [`from_cbor`](../../api/basic_json/from_cbor.md) and the other functions by default, `sax_parse` passes
+them on as they are.
 
 After any other error, the end of the item is unknown: the input ended, a byte is not a valid type marker, or a size
 cannot be right. Parsing then stops, and the value read so far is completed: a key that waits for its value gets

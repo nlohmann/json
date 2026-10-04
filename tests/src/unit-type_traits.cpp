@@ -10,9 +10,13 @@
 
 #if JSON_TEST_USING_MULTIPLE_HEADERS
     #include <nlohmann/detail/meta/type_traits.hpp>
+    #include <nlohmann/ordered_map.hpp>
 #else
     #include <nlohmann/json.hpp>
 #endif
+
+#include <map>
+#include <string>
 
 TEST_CASE("type traits")
 {
@@ -82,5 +86,13 @@ TEST_CASE("type traits")
                 CHECK(signed_traits::to_int_type(static_cast<signed char>(i)) != signed_traits::eof());
             }
         }
+    }
+
+    SECTION("is_ordered_map")
+    {
+        using nlohmann::detail::is_ordered_map;
+
+        CHECK(is_ordered_map<nlohmann::ordered_map<std::string, int>>::value);
+        CHECK_FALSE(is_ordered_map<std::map<std::string, int>>::value);
     }
 }

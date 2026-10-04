@@ -26,6 +26,7 @@
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <nlohmann/detail/input/string_scan.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/detail/output/error_handler.hpp>
 #include <nlohmann/detail/output/output_adapters.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/string_utils.hpp>
@@ -93,8 +94,12 @@ class binary_writer
     @param[in] sink  output sink to write to (a value-type sink such as
                      output_vector_sink, or output_adapter_sink wrapping a
                      type-erased output adapter)
+    @param[in] error_handler_  how to treat a string value or object key that
+               is not valid UTF-8 (CBOR, MessagePack, UBJSON, BJData, and BSON;
+               never consulted by @ref write_bon8)
     */
-    explicit binary_writer(OutputSinkType sink) : oa(std::move(sink))
+    explicit binary_writer(OutputSinkType sink, const error_handler_t error_handler_ = binary_writer_default_error_handler())
+        : oa(std::move(sink)), error_handler(error_handler_)
     {}
 
     /*!
@@ -107,14 +112,20 @@ class binary_writer
     from one.
 
     @param[in] adapter  output adapter to write to
+    @param[in] error_handler_  how to treat a string value or object key that
+               is not valid UTF-8 (CBOR, MessagePack, UBJSON, BJData, and BSON;
+               never consulted by @ref write_bon8)
     */
     template < typename SinkType = OutputSinkType,
                typename std::enable_if < std::is_constructible<SinkType, output_adapter_t<CharType>>::value, int >::type = 0 >
-    explicit binary_writer(output_adapter_t<CharType> adapter) : oa(SinkType(std::move(adapter)))
+    explicit binary_writer(output_adapter_t<CharType> adapter, const error_handler_t error_handler_ = binary_writer_default_error_handler())
+        : oa(SinkType(std::move(adapter))), error_handler(error_handler_)
     {}
 
     /*!
     @param[in] j  JSON value to serialize
+    @throw type_error.316 if a string value or an object key is not valid
+           UTF-8
     @throw type_error.317 if @a j is not an object
     */
     void write_bson(const BasicJsonType& j)
@@ -145,6 +156,8 @@ class binary_writer
 
     /*!
     @param[in] j  JSON value to serialize
+    @throw type_error.316 if a string value or an object key is not valid
+           UTF-8
     */
     void write_cbor(const BasicJsonType& j)
     {
@@ -211,13 +224,16 @@ class binary_writer
 
             case value_t::string:
             {
+                string_t storage;
+                const string_t& value = sanitize_utf8_for_write(*j.m_data.m_value.string, j, storage);
+
                 // step 1: write control byte and the string length
-                write_cbor_head(0x60, j.m_data.m_value.string->size());
+                write_cbor_head(0x60, value.size());
 
                 // step 2: write the string
                 oa.write_characters(
-                      reinterpret_cast<const CharType*>(j.m_data.m_value.string->data()),
-                      j.m_data.m_value.string->size());
+                      reinterpret_cast<const CharType*>(value.data()),
+                      value.size());
                 break;
             }
 
@@ -287,6 +303,17 @@ class binary_writer
                 // step 2: write each element
                 for (const auto& el : *j.m_data.m_value.object)
                 {
+                    // el.first is checked here, against the object as
+                    // diagnostics context, because write_cbor(el.first)
+                    // converts it to a temporary basic_json that would be
+                    // used as the context instead; for error_handler_t::keep
+                    // and ::replace/::ignore the recursive write_cbor(el.first)
+                    // call below handles the key like any other string, so no
+                    // separate check is needed here for those
+                    if (error_handler == error_handler_t::strict)
+                    {
+                        check_utf8(el.first, j);
+                    }
                     write_cbor(el.first);
                     write_cbor(el.second);
                 }
@@ -434,8 +461,11 @@ class binary_writer
 
             case value_t::string:
             {
+                string_t storage;
+                const string_t& value = sanitize_utf8_for_write(*j.m_data.m_value.string, j, storage);
+
                 // step 1: write control byte and the string length
-                const auto N = to_msgpack_length(j.m_data.m_value.string->size(), j);
+                const auto N = to_msgpack_length(value.size(), j);
                 if (N <= 31)
                 {
                     // fixstr
@@ -462,8 +492,8 @@ class binary_writer
 
                 // step 2: write the string
                 oa.write_characters(
-                      reinterpret_cast<const CharType*>(j.m_data.m_value.string->data()),
-                      j.m_data.m_value.string->size());
+                      reinterpret_cast<const CharType*>(value.data()),
+                      value.size());
                 break;
             }
 
@@ -610,6 +640,13 @@ class binary_writer
                 // step 2: write each element
                 for (const auto& el : *j.m_data.m_value.object)
                 {
+                    // as in write_cbor, el.first is checked here against the
+                    // object as diagnostics context; the recursive call below
+                    // handles keep/replace/ignore like any other string
+                    if (error_handler == error_handler_t::strict)
+                    {
+                        check_utf8(el.first, j);
+                    }
                     write_msgpack(el.first);
                     write_msgpack(el.second);
                 }
@@ -629,6 +666,8 @@ class binary_writer
     @param[in] add_prefix  whether prefixes need to be used for this value
     @param[in] use_bjdata  whether write in BJData format, default is false
     @param[in] bjdata_version  which BJData version to use, default is draft2
+    @throw type_error.316 if a string value or an object key is not valid
+           UTF-8
     */
     void write_ubjson(const BasicJsonType& j, const bool use_count,
                       const bool use_type, const bool add_prefix = true,
@@ -678,14 +717,17 @@ class binary_writer
 
             case value_t::string:
             {
+                string_t storage;
+                const string_t& value = sanitize_utf8_for_write(*j.m_data.m_value.string, j, storage);
+
                 if (add_prefix)
                 {
                     oa.write_character(to_char_type('S'));
                 }
-                write_number_with_ubjson_prefix(j.m_data.m_value.string->size(), true, use_bjdata);
+                write_number_with_ubjson_prefix(value.size(), true, use_bjdata);
                 oa.write_characters(
-                      reinterpret_cast<const CharType*>(j.m_data.m_value.string->data()),
-                      j.m_data.m_value.string->size());
+                      reinterpret_cast<const CharType*>(value.data()),
+                      value.size());
                 break;
             }
 
@@ -840,10 +882,12 @@ class binary_writer
 
                 for (const auto& el : *j.m_data.m_value.object)
                 {
-                    write_number_with_ubjson_prefix(el.first.size(), true, use_bjdata);
+                    string_t storage;
+                    const string_t& key = sanitize_utf8_for_write(el.first, j, storage);
+                    write_number_with_ubjson_prefix(key.size(), true, use_bjdata);
                     oa.write_characters(
-                          reinterpret_cast<const CharType*>(el.first.data()),
-                          el.first.size());
+                          reinterpret_cast<const CharType*>(key.data()),
+                          key.size());
                     write_ubjson(el.second, use_count, use_type, prefix_required, use_bjdata, bjdata_version);
                 }
 
@@ -884,8 +928,12 @@ class binary_writer
     /*!
     @return The size of a BSON document entry header, including the id marker
             and the entry name size (and its null-terminator).
+    @throw out_of_range.409 if @a name contains U+0000, before anything is
+           written
+    @throw type_error.316 if @a name is not valid UTF-8, before anything is
+           written
     */
-    static std::size_t calc_bson_entry_header_size(const string_t& name, const BasicJsonType& j)
+    std::size_t calc_bson_entry_header_size(const string_t& name, const BasicJsonType& j)
     {
         const auto it = name.find(static_cast<typename string_t::value_type>(0));
         if (JSON_HEDLEY_UNLIKELY(it != BasicJsonType::string_t::npos))
@@ -893,8 +941,10 @@ class binary_writer
             JSON_THROW(out_of_range::create(409, concat("BSON key cannot contain code point U+0000 (at byte ", std::to_string(it), ")"), &j));
         }
 
-        static_cast<void>(j);
-        return /*id*/ 1ul + name.size() + /*zero-terminator*/1u;
+        string_t storage;
+        const string_t& sanitized = sanitize_utf8_for_write(name, j, storage);
+
+        return /*id*/ 1ul + sanitized.size() + /*zero-terminator*/1u;
     }
 
     /*!
@@ -914,14 +964,28 @@ class binary_writer
 
     /*!
     @brief Writes the given @a element_type and @a name to the output adapter
+
+    @a name has already been validated (and, for @ref error_handler_t::strict,
+    found well-formed) by @ref calc_bson_entry_header_size during the earlier
+    size pass, so only @ref error_handler_t::replace / @ref
+    error_handler_t::ignore need to sanitize it again here, to actually write
+    the bytes that size was computed from.
     */
     void write_bson_entry_header(const string_t& name,
                                  const std::uint8_t element_type)
     {
         oa.write_character(to_char_type(element_type));
-        oa.write_characters(
-              reinterpret_cast<const CharType*>(name.data()),
-              name.size());
+
+        if (error_handler == error_handler_t::keep || error_handler == error_handler_t::strict || is_valid_utf8(name))
+        {
+            oa.write_characters(reinterpret_cast<const CharType*>(name.data()), name.size());
+        }
+        else
+        {
+            const string_t sanitized = sanitize_utf8(name, error_handler);
+            oa.write_characters(reinterpret_cast<const CharType*>(sanitized.data()), sanitized.size());
+        }
+
         // the terminating null byte is written explicitly rather than taken
         // from the buffer, so that string_t::data() need not be null-terminated
         oa.write_character(to_char_type(0x00));
@@ -949,24 +1013,50 @@ class binary_writer
 
     /*!
     @return The size of the BSON-encoded string in @a value
+    @throw type_error.316 if @a value is not valid UTF-8, before anything is
+           written
+
+    @note The UTF-8 check is skipped if @a value is already too long for the
+          32-bit BSON length field (@ref to_bson_length rejects it later, once
+          the size of the whole document is known); this also keeps the check
+          from reading past a StringType that reports a size larger than what
+          it actually holds.
     */
-    static std::size_t calc_bson_string_size(const string_t& value)
+    std::size_t calc_bson_string_size(const string_t& value, const BasicJsonType& j)
     {
+        if (JSON_HEDLEY_LIKELY(value_in_range_of<std::int32_t>(value.size())))
+        {
+            string_t storage;
+            const string_t& sanitized = sanitize_utf8_for_write(value, j, storage);
+            return sizeof(std::int32_t) + sanitized.size() + 1ul;
+        }
         return sizeof(std::int32_t) + value.size() + 1ul;
     }
 
     /*!
     @brief Writes a BSON element with key @a name and string value @a value
+
+    @a value has already been validated (and, for @ref error_handler_t::strict,
+    found well-formed) by @ref calc_bson_string_size during the earlier size
+    pass, so only @ref error_handler_t::replace / @ref error_handler_t::ignore
+    need to sanitize it again here, to actually write the bytes that size was
+    computed from.
     */
     void write_bson_string(const string_t& name,
                            const string_t& value)
     {
         write_bson_entry_header(name, 0x02);
 
-        write_number<std::int32_t>(to_bson_length(value.size() + 1ul), true);
+        const bool sanitize = error_handler != error_handler_t::keep
+                              && error_handler != error_handler_t::strict
+                              && !is_valid_utf8(value);
+        const string_t sanitized = sanitize ? sanitize_utf8(value, error_handler) : string_t{};
+        const string_t& written = sanitize ? sanitized : value;
+
+        write_number<std::int32_t>(to_bson_length(written.size() + 1ul), true);
         oa.write_characters(
-              reinterpret_cast<const CharType*>(value.data()),
-              value.size());
+              reinterpret_cast<const CharType*>(written.data()),
+              written.size());
         // the terminating null byte is written explicitly rather than taken
         // from the buffer, so that string_t::data() need not be null-terminated
         oa.write_character(to_char_type(0x00));
@@ -1080,8 +1170,10 @@ class binary_writer
             is neither an object nor an array
     @throw out_of_range.415 if @a j is binary with a subtype that does not fit
            into a byte, before anything is written
+    @throw type_error.316 if @a j is a string that is not valid UTF-8, before
+           anything is written
     */
-    static std::size_t calc_bson_value_size(const BasicJsonType& j)
+    std::size_t calc_bson_value_size(const BasicJsonType& j)
     {
         switch (j.type())
         {
@@ -1101,7 +1193,7 @@ class binary_writer
                 return calc_bson_unsigned_size(j.m_data.m_value.number_unsigned);
 
             case value_t::string:
-                return calc_bson_string_size(*j.m_data.m_value.string);
+                return calc_bson_string_size(*j.m_data.m_value.string, j);
 
             case value_t::null:
                 return 0ul;
@@ -1214,8 +1306,10 @@ class binary_writer
            written
     @throw out_of_range.415 if a binary value's subtype does not fit into a
            byte, before anything is written
+    @throw type_error.316 if a string value or a key is not valid UTF-8,
+           before anything is written
     */
-    static std::size_t calc_bson_sizes(const BasicJsonType& document, std::vector<std::size_t>& nested_sizes)
+    std::size_t calc_bson_sizes(const BasicJsonType& document, std::vector<std::size_t>& nested_sizes)
     {
         // the object or array whose entries are being sized, and the ones it
         // is in; nothing is allocated unless the document nests
@@ -2092,7 +2186,7 @@ class binary_writer
     */
     void write_bon8_string(const string_t& s, bool& string_open, const BasicJsonType& context)
     {
-        check_bon8_utf8(s, context);
+        check_utf8(s, context);
 
         // a string that follows another string terminates it
         if (string_open)
@@ -2122,7 +2216,7 @@ class binary_writer
     @throw type_error.316 if @a s is not valid UTF-8; the message names the
            first byte of the first invalid or incomplete sequence
     */
-    static void check_bon8_utf8(const string_t& s, const BasicJsonType& context)
+    static void check_utf8(const string_t& s, const BasicJsonType& context)
     {
         static_cast<void>(context); // only used when exceptions are enabled
         const auto* data = reinterpret_cast<const unsigned char*>(s.data());
@@ -2130,6 +2224,57 @@ class binary_writer
         if (JSON_HEDLEY_UNLIKELY(valid != s.size()))
         {
             JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(valid), ": 0x", detail::hex_byte(data[valid])), &context));
+        }
+    }
+
+    /*!
+    @brief return @a s as it should be written, honoring @ref error_handler
+
+    Used by @ref write_cbor, @ref write_msgpack, @ref write_ubjson (and so
+    @ref write_bjdata), and the BSON writing functions for string values and
+    object keys; never by @ref write_bon8, which always validates, since UTF-8
+    lead bytes are structural there.
+
+    - @ref error_handler_t::keep: @a s is returned unchanged, without even
+      checking it (the behavior of release 3.12.0 and earlier).
+    - @ref error_handler_t::strict: @ref check_utf8 is called, which throws
+      type_error.316 if @a s is not valid UTF-8.
+    - @ref error_handler_t::replace / @ref error_handler_t::ignore: @a s is
+      sanitized into @a storage with exactly the rules @ref
+      serializer::dump_escaped_impl uses, so that parsing what @ref
+      basic_json::dump produces for the same string and the same handler
+      yields the same result.
+
+    Well-formed input is never copied: this returns a reference to @a s
+    itself in every case but a sanitized `replace`/`ignore` one, so @a
+    storage must outlive the returned reference only then.
+
+    @param[in] s        the string (value or object key) to write
+    @param[in] context  the value @a s belongs to (for diagnostics)
+    @param[out] storage  backing storage for a sanitized copy
+
+    @return a reference to @a s, or to @a storage once it holds a sanitized copy
+    */
+    const string_t& sanitize_utf8_for_write(const string_t& s, const BasicJsonType& context, string_t& storage) const
+    {
+        switch (error_handler)
+        {
+            case error_handler_t::keep:
+                return s;
+
+            case error_handler_t::strict:
+                check_utf8(s, context);
+                return s;
+
+            case error_handler_t::replace:
+            case error_handler_t::ignore:
+            default:
+                if (is_valid_utf8(s))
+                {
+                    return s;
+                }
+                storage = sanitize_utf8(s, error_handler);
+                return storage;
         }
     }
 
@@ -2461,6 +2606,10 @@ class binary_writer
 
     /// the output
     OutputSinkType oa;
+
+    /// how to treat a string value or object key that is not valid UTF-8
+    /// (CBOR, MessagePack, UBJSON, BJData, and BSON; not BON8)
+    const error_handler_t error_handler = binary_writer_default_error_handler();
 };
 
 }  // namespace detail
