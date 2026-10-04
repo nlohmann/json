@@ -27978,7 +27978,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     be destroyed.
     */
     template<typename BasicJsonType>
-    void convert_iteratively(const BasicJsonType& val)
+    void convert_iteratively(const BasicJsonType& val, std::true_type /*unused*/)
     {
         using other_const_iterator = typename BasicJsonType::const_iterator;
 
@@ -28072,21 +28072,38 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         if (JSON_HEDLEY_LIKELY(guard.okay()))
         {
-            // every element comes back to the converting constructor
-            if (val.is_object())
-            {
-                using other_object_t = typename BasicJsonType::object_t;
-                JSONSerializer<other_object_t>::to_json(*this, val.template get_ref<const other_object_t&>());
-            }
-            else
-            {
-                using other_array_t = typename BasicJsonType::array_t;
-                JSONSerializer<other_array_t>::to_json(*this, val.template get_ref<const other_array_t&>());
-            }
+            convert_by_serializers(val);
             return;
         }
 
-        convert_iteratively(val);
+        // the iterative conversion needs to construct this object type's keys
+        // from those of @a val; if it cannot, neither can the range constructor,
+        // and the serializers convert @a val some other way (see #3425)
+        convert_iteratively(val, std::is_constructible<typename object_t::key_type, const typename BasicJsonType::string_t&> {});
+    }
+
+    /// @brief convert the object or array @a val with the serializers; every
+    /// element comes back to the converting constructor
+    template<typename BasicJsonType>
+    void convert_by_serializers(const BasicJsonType& val)
+    {
+        if (val.is_object())
+        {
+            using other_object_t = typename BasicJsonType::object_t;
+            JSONSerializer<other_object_t>::to_json(*this, val.template get_ref<const other_object_t&>());
+        }
+        else
+        {
+            using other_array_t = typename BasicJsonType::array_t;
+            JSONSerializer<other_array_t>::to_json(*this, val.template get_ref<const other_array_t&>());
+        }
+    }
+
+    /// @brief convert @a val whose keys cannot be converted, see @ref convert_structured
+    template<typename BasicJsonType>
+    void convert_iteratively(const BasicJsonType& val, std::false_type /*unused*/)
+    {
+        convert_by_serializers(val);
     }
 
 
