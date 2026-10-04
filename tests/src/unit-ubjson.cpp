@@ -802,30 +802,24 @@ TEST_CASE("UBJSON")
                     CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec2), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A", json::parse_error);
                     std::vector<uint8_t> const vec3 = {'H', 'i', 2, '1', '.'};
                     CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec3), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1.", json::parse_error);
-                    // Reject trailing NULs, bytes hidden after NUL, and NULs in nested number payloads.
+                    // Reject NULs where they are read, including trailing NULs and payloads cut off after one.
                     SECTION("NUL in high-precision number (issue #5753)")
                     {
                         for (const auto& vec : std::vector<std::vector<uint8_t>>
                     {
                         {'H', 'i', 3, '1', 0, 'x'},
-                        {'H', 'i', 2, '1', 0}
+                        {'H', 'i', 2, '1', 0},
+                        {'H', 'i', 3, '1', 0}
                     })
                         {
                             CAPTURE(vec)
-                            const std::string expected_error = "[json.exception.parse_error.115] parse error at byte "
-                            + std::to_string(vec.size())
-                            + ": syntax error while parsing UBJSON high-precision number: invalid number text: 1<U+0000>";
-                            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec), expected_error.c_str(), json::parse_error);
+                            CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text; last byte: 0x00", json::parse_error);
                             CHECK(json::from_ubjson(vec, true, false).is_discarded());
                             CHECK(json::from_ubjson(vec, false, false).is_discarded());
                         }
 
-                        std::vector<uint8_t> const truncated = {'H', 'i', 3, '1', 0};
-                        CHECK_THROWS_WITH_AS(_ = json::from_ubjson(truncated), "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing UBJSON number: unexpected end of input", json::parse_error);
-                        CHECK(json::from_ubjson(truncated, true, false).is_discarded());
-
                         std::vector<uint8_t> const nested = {'[', 'H', 'i', 3, '1', 0, 'x', ']'};
-                        CHECK_THROWS_WITH_AS(_ = json::from_ubjson(nested), "[json.exception.parse_error.115] parse error at byte 7: syntax error while parsing UBJSON high-precision number: invalid number text: 1<U+0000>", json::parse_error);
+                        CHECK_THROWS_WITH_AS(_ = json::from_ubjson(nested), "[json.exception.parse_error.115] parse error at byte 6: syntax error while parsing UBJSON high-precision number: invalid number text; last byte: 0x00", json::parse_error);
                         CHECK(json::from_ubjson(nested, true, false).is_discarded());
 
                         std::vector<uint8_t> const valid = {'H', 'i', 1, '1'};
