@@ -189,6 +189,37 @@ struct actual_object_comparator
 template<typename BasicJsonType>
 using actual_object_comparator_t = typename actual_object_comparator<BasicJsonType>::type;
 
+template<typename T>
+using detect_key_comp = decltype(std::declval<const T&>().key_comp());
+
+// whether ObjectType can be constructed from a pair of Iterator together with
+// a copy of its own comparator, the way std::map can: it needs a nested
+// key_compare, a const key_comp() convertible to it, and a matching
+// (Iterator, Iterator, const key_compare&) constructor.
+//
+// used to preserve a stateful comparator when a copy is built from a range
+// past the iterative deep copy's nesting bound (see copy_object_level); an
+// object type that does not satisfy this, such as nlohmann::ordered_map
+// (which has key_compare for its std::map-like interface, but no key_comp()),
+// keeps default-constructing its comparator, just as it always has
+template<typename ObjectType, typename Iterator, typename = void>
+struct is_comparator_constructible_object_type_impl : std::false_type {};
+
+template<typename ObjectType, typename Iterator>
+struct is_comparator_constructible_object_type_impl <
+    ObjectType, Iterator, enable_if_t<is_detected<detect_key_compare, ObjectType>::value >>
+{
+    using key_compare = typename ObjectType::key_compare;
+
+    static constexpr bool value =
+        is_detected_convertible<key_compare, detect_key_comp, ObjectType>::value &&
+        std::is_constructible<ObjectType, Iterator, Iterator, const key_compare&>::value;
+};
+
+template<typename ObjectType, typename Iterator>
+struct is_comparator_constructible_object_type
+    : is_comparator_constructible_object_type_impl<ObjectType, Iterator> {};
+
 /////////////////
 // char_traits //
 /////////////////

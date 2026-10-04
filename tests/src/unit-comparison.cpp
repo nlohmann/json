@@ -849,6 +849,46 @@ Json nest(Json j, const std::size_t depth)
     return j;
 }
 
+// a std::map comparator with state: case-insensitive, unless constructed
+// case-sensitive. Used to check that copying an object copies the original's
+// comparator rather than default-constructing a new one (see #5649).
+struct key_case_less
+{
+    key_case_less() = default;
+    explicit key_case_less(const bool cs) noexcept : case_sensitive(cs) {}
+
+    bool operator()(const std::string& a, const std::string& b) const
+    {
+        if (case_sensitive)
+        {
+            return a < b;
+        }
+        return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end(),
+                                            [](unsigned char x, unsigned char y)
+        {
+            return std::tolower(x) < std::tolower(y);
+        });
+    }
+
+    bool case_sensitive = false;
+};
+
+template<class Key, class Value, class /*Compare*/, class Allocator>
+using key_case_map = std::map<Key, Value, key_case_less, Allocator>;
+using key_case_json = nlohmann::basic_json<key_case_map>;
+
+// the innermost value of a chain of single-element arrays
+template<typename Json>
+const Json& innermost(const Json& j)
+{
+    const Json* p = &j;
+    while (p->is_array())
+    {
+        p = &(*p)[0];
+    }
+    return *p;
+}
+
 // orders keys case-insensitively, so "key" and "KEY" compare equivalent
 // (neither less than the other) although they are not equal
 struct case_insensitive_less
@@ -910,6 +950,47 @@ TEST_CASE("equality of objects whose entries have no fixed order")
         const nlohmann::ordered_json ba = nest(nlohmann::ordered_json({{"b", 2}, {"a", 1}}), depth);
         CHECK_FALSE(ab == ba);
         CHECK(ab != ba);
+    }
+}
+
+TEST_CASE("copying an object preserves its comparator's state")
+{
+    // Past the iterative deep copy's nesting bound, an object copy used to be
+    // built with a default-constructed comparator instead of a copy of the
+    // original's. For an object type whose comparator carries state - here, a
+    // std::map that compares keys case-sensitively only when created that way
+    // - this reordered the copy's keys and could even drop entries that the
+    // original's comparator kept distinct (see #5649).
+    key_case_json object = key_case_json::object_t(key_case_less(true)); // case-sensitive
+    object["b"] = 1;
+    object["B"] = 2;
+    object["a"] = 3;
+    REQUIRE(object.dump() == R"({"B":2,"a":3,"b":1})");
+
+    for (const std::size_t depth : std::vector<std::size_t> {0, 127, 128, 200})
+    {
+        CAPTURE(depth);
+
+        key_case_json original = object;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            original = key_case_json::array({std::move(original)});
+        }
+
+        {
+            const key_case_json copy = original; // NOLINT(performance-unnecessary-copy-initialization)
+            CHECK(innermost(copy).size() == 3);
+            CHECK(innermost(copy).dump() == R"({"B":2,"a":3,"b":1})");
+            CHECK(copy == original);
+        }
+
+        {
+            key_case_json copy = key_case_json::array();
+            copy = original;
+            CHECK(innermost(copy).size() == 3);
+            CHECK(innermost(copy).dump() == R"({"B":2,"a":3,"b":1})");
+            CHECK(copy == original);
+        }
     }
 }
 
