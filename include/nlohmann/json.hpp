@@ -1048,6 +1048,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
           never name it to call this constructor itself.
     */
     basic_json(copy_construct_tag /*unused*/, const basic_json& src)
+    noexcept(std::is_nothrow_copy_constructible<json_base_class_t>::value)
         : json_base_class_t(src)
 #if JSON_DIAGNOSTIC_POSITIONS
         , start_position(src.start_position)
@@ -1641,15 +1642,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static compare_result compare_leaves(const_reference lhs, const_reference rhs, std::true_type /*ordered*/) noexcept
     {
         const std::partial_ordering order = lhs <=> rhs; // *NOPAD*
-        if (order == 0)
+        if (std::is_eq(order))
         {
             return compare_result::equal;
         }
-        if (order < 0)
+        if (std::is_lt(order))
         {
             return compare_result::less;
         }
-        if (order > 0)
+        if (std::is_gt(order))
         {
             return compare_result::greater;
         }
@@ -5075,7 +5076,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
     template<typename ScalarType>
     requires std::is_scalar_v<ScalarType>
-    friend bool operator<=(ScalarType lhs, const_reference rhs) noexcept
+    friend bool operator<=(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
     {
         return basic_json(lhs) <= rhs;
     }
@@ -5084,7 +5085,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
     template<typename ScalarType>
     requires std::is_scalar_v<ScalarType>
-    friend bool operator>=(ScalarType lhs, const_reference rhs) noexcept
+    friend bool operator>=(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
     {
         return basic_json(lhs) >= rhs;
     }

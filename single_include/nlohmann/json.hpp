@@ -13696,15 +13696,15 @@ class binary_reader
 
     @param[in] adapter  input adapter to read from
     @param[in] format   the binary format to parse
-    @param[in] error_handler  how to treat text strings and object keys that
+    @param[in] error_handler_  how to treat text strings and object keys that
                are not well-formed UTF-8; none of the supported formats
                requires a decoder to reject those, so the default is to
                @ref error_handler_t::keep them unchanged, as every binary
                reader did before this parameter existed
     */
     explicit binary_reader(InputAdapterType&& adapter, const input_format_t format = input_format_t::json,
-                           const error_handler_t error_handler = error_handler_t::keep) noexcept
-        : ia(std::move(adapter)), input_format(format), error_handler(error_handler)
+                           const error_handler_t error_handler_ = error_handler_t::keep) noexcept
+        : ia(std::move(adapter)), input_format(format), error_handler(error_handler_)
     {
         (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
     }
@@ -19998,6 +19998,8 @@ class json_pointer
         typename BasicJsonType::size_type idx{};
         switch (parse_array_index<BasicJsonType>(s, idx))
         {
+            // the branches differ in their messages, not after JSON_THROW's expansion
+            // NOLINTNEXTLINE(bugprone-branch-clone)
             case array_index_status::leading_zero:
                 JSON_THROW(detail::parse_error::create(106, 0, detail::concat("array index '", s, "' must not begin with '0'"), nullptr));
             case array_index_status::not_a_number:
@@ -20361,6 +20363,8 @@ class json_pointer
                     typename BasicJsonType::size_type idx{};
                     switch (parse_array_index<BasicJsonType>(reference_token, idx))
                     {
+                        // the branches differ in their messages, not after JSON_THROW's expansion
+                        // NOLINTNEXTLINE(bugprone-branch-clone)
                         case array_index_status::leading_zero:
                             JSON_THROW(detail::parse_error::create(106, 0, detail::concat("array index '", reference_token, "' must not begin with '0'"), nullptr));
                         case array_index_status::not_a_number:
@@ -23485,18 +23489,18 @@ class binary_writer
         switch (error_handler)
         {
             case error_handler_t::keep:
-                return s;
+                return s; // NOLINT(bugprone-return-const-ref-from-parameter): callers pass lvalues that outlive the call
 
             case error_handler_t::strict:
                 check_utf8(s, context);
-                return s;
+                return s; // NOLINT(bugprone-return-const-ref-from-parameter): callers pass lvalues that outlive the call
 
             case error_handler_t::replace:
             case error_handler_t::ignore:
             default:
                 if (is_valid_utf8(s))
                 {
-                    return s;
+                    return s; // NOLINT(bugprone-return-const-ref-from-parameter): callers pass lvalues that outlive the call
                 }
                 storage = sanitize_utf8(s, error_handler);
                 return storage;
@@ -25681,6 +25685,11 @@ class serializer
     @a ensure_ascii is a template parameter here so that the branch on it is
     resolved once, outside the loop; see @ref dump_escaped.
     */
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning(push)
+    // EnsureAscii is a template parameter; C++11 has no if constexpr
+#pragma warning(disable : 4127) // conditional expression is constant
+#endif
     template<bool EnsureAscii>
     void dump_escaped_impl(const string_t& s)
     {
@@ -26030,6 +26039,9 @@ class serializer
             }
         }
     }
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning(pop)
+#endif
 
   private:
     /*!
@@ -26612,7 +26624,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <functional> // equal_to, less
 #include <initializer_list> // initializer_list
 #include <iterator> // input_iterator_tag, iterator_traits
-#include <memory> // allocator
+#include <memory> // allocator // IWYU pragma: keep
 #include <new> // for operator new (placement new)
 #include <stdexcept> // for out_of_range
 #include <tuple> // forward_as_tuple
@@ -26681,7 +26693,7 @@ private:
     /// @brief find the entry for @a key, for either constness of @a self
     /// @note the single place that performs the linear key search
     template<typename Self, typename KeyType>
-    static auto find_impl(Self& self, KeyType&& key) -> decltype(self.begin())
+    static auto find_impl(Self& self, const KeyType& key) -> decltype(self.begin())
     {
         for (auto it = self.begin(); it != self.end(); ++it)
         {
@@ -27985,6 +27997,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
           never name it to call this constructor itself.
     */
     basic_json(copy_construct_tag /*unused*/, const basic_json& src)
+    noexcept(std::is_nothrow_copy_constructible<json_base_class_t>::value)
         : json_base_class_t(src)
 #if JSON_DIAGNOSTIC_POSITIONS
         , start_position(src.start_position)
@@ -28578,15 +28591,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static compare_result compare_leaves(const_reference lhs, const_reference rhs, std::true_type /*ordered*/) noexcept
     {
         const std::partial_ordering order = lhs <=> rhs; // *NOPAD*
-        if (order == 0)
+        if (std::is_eq(order))
         {
             return compare_result::equal;
         }
-        if (order < 0)
+        if (std::is_lt(order))
         {
             return compare_result::less;
         }
-        if (order > 0)
+        if (std::is_gt(order))
         {
             return compare_result::greater;
         }
@@ -32012,7 +32025,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
     template<typename ScalarType>
     requires std::is_scalar_v<ScalarType>
-    friend bool operator<=(ScalarType lhs, const_reference rhs) noexcept
+    friend bool operator<=(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
     {
         return basic_json(lhs) <= rhs;
     }
@@ -32021,7 +32034,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
     template<typename ScalarType>
     requires std::is_scalar_v<ScalarType>
-    friend bool operator>=(ScalarType lhs, const_reference rhs) noexcept
+    friend bool operator>=(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
     {
         return basic_json(lhs) >= rhs;
     }

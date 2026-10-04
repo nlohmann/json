@@ -12,7 +12,7 @@
 #include <functional> // equal_to, less
 #include <initializer_list> // initializer_list
 #include <iterator> // input_iterator_tag, iterator_traits
-#include <memory> // allocator
+#include <memory> // allocator // IWYU pragma: keep
 #include <new> // for operator new (placement new)
 #include <stdexcept> // for out_of_range
 #include <tuple> // forward_as_tuple
@@ -78,7 +78,7 @@ private:
     /// @brief find the entry for @a key, for either constness of @a self
     /// @note the single place that performs the linear key search
     template<typename Self, typename KeyType>
-    static auto find_impl(Self& self, KeyType&& key) -> decltype(self.begin())
+    static auto find_impl(Self& self, const KeyType& key) -> decltype(self.begin())
     {
         for (auto it = self.begin(); it != self.end(); ++it)
         {
