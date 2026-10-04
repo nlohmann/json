@@ -62,6 +62,8 @@ class huge_string_t : public std::string
 {
   public:
     using std::string::string;
+    // inheriting std::string's constructors does not inherit its default constructor
+    huge_string_t() = default;
     huge_string_t(const std::string& s) : std::string(s) {} // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
 
     // returns a copy of @a s whose size() pretends to be huge
@@ -174,7 +176,7 @@ TEST_CASE("BSON")
         REQUIRE(j.contains("s"));
         CHECK(j["s"].get_ref<const json::string_t&>() == std::string("\xc0\xae"));
         // dump() still requires valid UTF-8 and throws for such a value
-        CHECK_THROWS_AS(j.dump(), json::type_error&);
+        CHECK_THROWS_AS(utils::ignore_return_value(j.dump()), json::type_error&);
         // to_bson() writes the bytes back unchanged, as before 3.13.0,
         // unless JSON_STRICT_BINARY_UTF8 is enabled (see unit-binary_utf8_strict.cpp)
         CHECK(json::from_bson(json::to_bson(j)) == j);

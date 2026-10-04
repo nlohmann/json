@@ -2704,9 +2704,9 @@ TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
             CHECK(b["b"].end_pos() == nested_end);
 
             // the moved-from value is reset to a null and reports npos
-            CHECK(a.is_null()); // NOLINT(bugprone-use-after-move,clang-analyzer-cplusplus.Move)
-            CHECK(a.start_pos() == std::string::npos); // NOLINT(bugprone-use-after-move,clang-analyzer-cplusplus.Move)
-            CHECK(a.end_pos() == std::string::npos); // NOLINT(bugprone-use-after-move,clang-analyzer-cplusplus.Move)
+            CHECK(a.is_null()); // NOLINT(bugprone-use-after-move,hicpp-invalid-access-moved,clang-analyzer-cplusplus.Move)
+            CHECK(a.start_pos() == std::string::npos); // NOLINT(bugprone-use-after-move,hicpp-invalid-access-moved,clang-analyzer-cplusplus.Move)
+            CHECK(a.end_pos() == std::string::npos); // NOLINT(bugprone-use-after-move,hicpp-invalid-access-moved,clang-analyzer-cplusplus.Move)
         }
 
         SECTION("swap() exchanges positions along with values")

@@ -706,6 +706,11 @@ class serializer
     @a ensure_ascii is a template parameter here so that the branch on it is
     resolved once, outside the loop; see @ref dump_escaped.
     */
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning(push)
+    // EnsureAscii is a template parameter; C++11 has no if constexpr
+#pragma warning(disable : 4127) // conditional expression is constant
+#endif
     template<bool EnsureAscii>
     void dump_escaped_impl(const string_t& s)
     {
@@ -1055,6 +1060,9 @@ class serializer
             }
         }
     }
+#ifdef JSON_HEDLEY_MSVC_VERSION
+#pragma warning(pop)
+#endif
 
   private:
     /*!
