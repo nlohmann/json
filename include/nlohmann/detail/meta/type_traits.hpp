@@ -314,6 +314,13 @@ template<class B, class... Bn>
 struct conjunction<B, Bn...>
 : std::conditional<static_cast<bool>(B::value), conjunction<Bn...>, B>::type {};
 
+// https://en.cppreference.com/w/cpp/types/disjunction
+template<class...> struct disjunction : std::false_type { };
+template<class B> struct disjunction<B> : B { };
+template<class B, class... Bn>
+struct disjunction<B, Bn...>
+: std::conditional<static_cast<bool>(B::value), B, disjunction<Bn...>>::type {};
+
 // https://en.cppreference.com/w/cpp/types/negation
 template<class B> struct negation : std::integral_constant < bool, !B::value > { };
 
@@ -508,9 +515,7 @@ template<typename T> struct is_range_view_optional_type<std::optional<T>> : std:
 template<typename T> struct is_range_view_optional_type : std::false_type {};
 #endif
 
-// std::ranges does not work properly on MinGW due to incomplete C++20 support
-// see https://github.com/nlohmann/json/issues/4916
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 
 // SafeToCheck guards against types that trigger circular constraints when
 // std::ranges::view<T> is evaluated on GCC 12 / libstdc++ 12:
@@ -549,7 +554,7 @@ struct is_compatible_array_type_impl <
 // filter_view) can match BOTH this iterator-based specialization AND the view-based one
 // below, causing ambiguity. Exclude views here so the two specializations are mutually
 // exclusive: this one handles plain iterable containers, the other handles views.
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 && !is_compatible_range_view<CompatibleArrayType>::value
 #endif
             >>
@@ -559,7 +564,7 @@ struct is_compatible_array_type_impl <
         range_value_t<CompatibleArrayType>>::value;
 };
 
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type_impl <
     BasicJsonType, CompatibleArrayType,
@@ -635,7 +640,6 @@ struct is_compatible_integer_type_impl <
     std::is_integral<CompatibleNumberIntegerType>::value&&
     !std::is_same<bool, CompatibleNumberIntegerType>::value >>
 {
-    // is there an assert somewhere on overflows?
     using RealLimits = std::numeric_limits<RealIntegerType>;
     using CompatibleLimits = std::numeric_limits<CompatibleNumberIntegerType>;
 
@@ -863,20 +867,7 @@ struct has_capacity : std::integral_constant<bool, is_detected<detect_capacity, 
 // a naive helper to check if a type is an ordered_map (exploits the fact that
 // ordered_map inherits capacity() from std::vector)
 template <typename T>
-struct is_ordered_map
-{
-    using one = char;
-
-    struct two
-    {
-        char x[2]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-    };
-
-    template <typename C> static one test( decltype(&C::capacity) ) ;
-    template <typename C> static two test(...);
-
-    enum { value = sizeof(test<T>(nullptr)) == sizeof(char) }; // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg,cppcoreguidelines-use-enum-class)
-};
+struct is_ordered_map : has_capacity<T> {};
 
 // to avoid useless casts (see https://github.com/nlohmann/json/issues/2893#issuecomment-889152324)
 template < typename T, typename U, enable_if_t < !std::is_same<T, U>::value, int > = 0 >
@@ -900,10 +891,8 @@ using all_signed = conjunction<std::is_signed<Types>...>;
 template<typename... Types>
 using all_unsigned = conjunction<std::is_unsigned<Types>...>;
 
-// there's a disjunction trait in another PR; replace when merged
 template<typename... Types>
-using same_sign = std::integral_constant < bool,
-      all_signed<Types...>::value || all_unsigned<Types...>::value >;
+using same_sign = disjunction<all_signed<Types...>, all_unsigned<Types...>>;
 
 template<typename OfType, typename T>
 using never_out_of_range = std::integral_constant < bool,

@@ -53,7 +53,6 @@ cc_library(
         "include/nlohmann/detail/meta/detected.hpp",
         "include/nlohmann/detail/meta/identity_tag.hpp",
         "include/nlohmann/detail/meta/is_sax.hpp",
-        "include/nlohmann/detail/meta/logic.hpp",
         "include/nlohmann/detail/meta/std_fs.hpp",
         "include/nlohmann/detail/meta/type_traits.hpp",
         "include/nlohmann/detail/meta/void_t.hpp",
