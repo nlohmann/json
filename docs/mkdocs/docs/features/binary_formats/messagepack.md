@@ -153,14 +153,23 @@ The library maps MessagePack types to JSON value types as follows:
     This applies to the [SAX interface](../parsing/sax_interface.md) as well, as the key is read before it is passed
     on. Such input needs a general-purpose MessagePack library instead.
 
-!!! warning "UTF-8 validation of string values"
+!!! warning "Ill-formed UTF-8 in string values"
 
-    The MessagePack specification requires `str` values (`fixstr`, `str 8`, `str 16`, `str 32`) to be valid UTF-8.
-    This library validates the bytes of every such string (object keys included) at decode time and rejects
-    ill-formed UTF-8 with a [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) exception (or,
-    with `allow_exceptions` set to `false`, a discarded value), rather than only failing later when the resulting
-    value is dumped. `bin`/`ext`/`fixext` values are unaffected and are never validated, since they are not required
-    to hold text.
+    The MessagePack specification explicitly allows a `str` value (`fixstr`, `str 8`, `str 16`, `str 32`) to contain
+    a byte sequence that is not valid UTF-8, and expects a deserializer to hand the original bytes back unchanged.
+    This library follows that by default: with its
+    [`error_handler`](../../api/basic_json/from_msgpack.md) parameter left at `keep` (the default),
+    `from_msgpack()` reads `str` bytes (object keys included) as-is, without validating them, so such a value
+    round-trips through `from_msgpack(to_msgpack(j))` byte for byte. Passing `error_handler_t::strict` makes
+    `from_msgpack()` check anyway and throw
+    [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) for ill-formed UTF-8, and
+    `replace`/`ignore` sanitize the string instead of keeping it. `to_msgpack()` also writes `str` bytes as-is by
+    default, since the specification permits it; its [`error_handler`](../../api/basic_json/to_msgpack.md) parameter
+    can be set to `strict` to throw [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) instead, or
+    to `replace`/`ignore` to sanitize the string, for instance for a decoder that rejects ill-formed UTF-8. However,
+    [`dump()`](../../api/basic_json/dump.md) still requires valid UTF-8 and throws
+    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for a value read this way with the
+    default `keep` handler, unless an error handler is passed that replaces or ignores the ill-formed bytes.
 
 ??? example "Example: deserialize a JSON value from MessagePack"
 
