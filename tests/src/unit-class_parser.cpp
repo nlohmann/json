@@ -2684,12 +2684,10 @@ TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
 
         SECTION("move constructor resets the moved-from value to npos")
         {
-            // basic_json(basic_json&&) (json.hpp, around line 1951) copies
+            // basic_json(basic_json&&) copies
             // other's start_position/end_position into *this and then resets
-            // other's to npos (see the cppcheck-suppress[accessForwarded]
-            // annotation there, which flags this reset as worth a second
-            // look). Only the top-level moved-from value is affected; its
-            // (moved-away) children are gone along with it.
+            // other's to npos. Only the top-level moved-from value is
+            // affected; its (moved-away) children are gone along with it.
             const std::string s = R"({"a":1,"b":[1,2,3]})";
             json a = json::parse(s);
             const auto a_start = a.start_pos();
