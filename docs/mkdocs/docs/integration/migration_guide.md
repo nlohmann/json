@@ -2,11 +2,14 @@
 
 This page collects some guidelines on how to future-proof your code for future versions of this library. For how to
 add the library to your project in the first place, see [Integration](index.md), [CMake](cmake.md), or
-[Package Managers](package_managers.md).
+[Package Managers](package_managers.md). The [roadmap](../community/roadmap.md#version-40) lists what will change in
+version 4.0, including the macros that let you try its behavior with a 3.x release; this page describes how to adjust
+your code.
 
 ## Replace deprecated functions
 
-The following functions have been deprecated and will be removed in the next major version (i.e., 4.0.0). All
+The following functions have been deprecated and will be removed in the next major version (i.e., 4.0.0), see the
+[roadmap](../community/roadmap.md#removal-of-deprecated-functions) for an overview. All
 deprecations are annotated with
 [`HEDLEY_DEPRECATED_FOR`](https://nemequ.github.io/hedley/api-reference.html#HEDLEY_DEPRECATED_FOR) to report which
 function to use instead.

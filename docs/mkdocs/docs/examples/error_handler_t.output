@@ -1,3 +1,4 @@
 [json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9
 string with replaced invalid characters: "ä�ü"
 string with ignored invalid characters: "äü"
+string with the invalid byte kept as is (7 bytes, not valid UTF-8 itself)
