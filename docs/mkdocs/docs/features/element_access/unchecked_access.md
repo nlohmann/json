@@ -5,7 +5,7 @@
 Elements in a JSON object and a JSON array can be accessed via [`operator[]`](../../api/basic_json/operator%5B%5D.md)
 similar to a `#!cpp std::map` and a `#!cpp std::vector`, respectively.
 
-??? example "Read access"
+??? example "Example: read access"
 
     Consider the following JSON value:
     
@@ -31,7 +31,7 @@ similar to a `#!cpp std::map` and a `#!cpp std::vector`, respectively.
 The return value is a reference, so it can modify the original value. In case the passed object key is non-existing, a
 `#!json null` value is inserted which can immediately be overwritten.
 
-??? example "Write access"
+??? example "Example: write access"
 
     ```cpp
     j["name"] = "John Smith";
@@ -52,7 +52,7 @@ The return value is a reference, so it can modify the original value. In case th
 When accessing an invalid index (i.e., an index greater than or equal to the array size), the JSON array is resized such
 that the passed index is the new maximal index. Intermediate values are filled with `#!json null`.
 
-??? example "Filling up arrays with `#!json null` values"
+??? example "Example: filling up arrays with `#!json null` values"
 
     ```cpp
     j["hobbies"][0] = "running";
@@ -94,8 +94,8 @@ that the passed index is the new maximal index. Intermediate values are filled w
     - It is **undefined behavior** to access a const object with a non-existing key.
     - It is **undefined behavior** to access a const array with an invalid index.
     - In debug mode, an **assertion** will fire in both cases. You can disable assertions by defining the preprocessor
-      symbol `#!cpp NDEBUG` or redefine the macro [`JSON_ASSERT(x)`](../macros.md#json_assertx). See the documentation
-      on [runtime assertions](../assertions.md) for more information.
+      symbol `#!cpp NDEBUG` or redefine the macro [`JSON_ASSERT(x)`](../../api/macros/json_assert.md). See the
+      documentation on [runtime assertions](../assertions.md) for more information.
 
 !!! failure "Exceptions"
 
@@ -105,8 +105,9 @@ that the passed index is the new maximal index. Intermediate values are filled w
 ## Performance: reserving array capacity
 
 There is no public `reserve(count)` member on `basic_json` for pre-allocating array capacity. If you are building
-a large array incrementally (e.g., via repeated `push_back()`) and know its final size ahead of time, you can
-reserve capacity via `get_ref()` to access the underlying `array_t` directly:
+a large array incrementally (e.g., via repeated [`push_back()`](../../api/basic_json/push_back.md)) and know its final
+size ahead of time, you can reserve capacity via [`get_ref()`](../../api/basic_json/get_ref.md) to access the
+underlying `array_t` directly:
 
 ```cpp
 json j = json::array();

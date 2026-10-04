@@ -189,6 +189,37 @@ struct actual_object_comparator
 template<typename BasicJsonType>
 using actual_object_comparator_t = typename actual_object_comparator<BasicJsonType>::type;
 
+template<typename T>
+using detect_key_comp = decltype(std::declval<const T&>().key_comp());
+
+// whether ObjectType can be constructed from a pair of Iterator together with
+// a copy of its own comparator, the way std::map can: it needs a nested
+// key_compare, a const key_comp() convertible to it, and a matching
+// (Iterator, Iterator, const key_compare&) constructor.
+//
+// used to preserve a stateful comparator when a copy is built from a range
+// past the iterative deep copy's nesting bound (see copy_object_level); an
+// object type that does not satisfy this, such as nlohmann::ordered_map
+// (which has key_compare for its std::map-like interface, but no key_comp()),
+// keeps default-constructing its comparator, just as it always has
+template<typename ObjectType, typename Iterator, typename = void>
+struct is_comparator_constructible_object_type_impl : std::false_type {};
+
+template<typename ObjectType, typename Iterator>
+struct is_comparator_constructible_object_type_impl <
+    ObjectType, Iterator, enable_if_t<is_detected<detect_key_compare, ObjectType>::value >>
+{
+    using key_compare = typename ObjectType::key_compare;
+
+    static constexpr bool value =
+        is_detected_convertible<key_compare, detect_key_comp, ObjectType>::value &&
+        std::is_constructible<ObjectType, Iterator, Iterator, const key_compare&>::value;
+};
+
+template<typename ObjectType, typename Iterator>
+struct is_comparator_constructible_object_type
+    : is_comparator_constructible_object_type_impl<ObjectType, Iterator> {};
+
 /////////////////
 // char_traits //
 /////////////////
@@ -764,6 +795,30 @@ using is_usable_as_key_type = typename std::conditional <
                               std::true_type,
                               std::false_type >::type;
 
+#ifdef JSON_HAS_CPP_17
+// type trait to check if KeyType can only be used as an object key after
+// converting it to std::string_view: it is convertible to std::string_view, the
+// object's comparator cannot compare it with object_t::key_type directly, but
+// can compare a std::string_view. JSON pointers and JSON iterators are ruled out
+// first, so that the conversion checks are never instantiated for them (a JSON
+// pointer's deprecated conversion to string_t would be named otherwise).
+template < typename BasicJsonType, typename KeyTypeCVRef, typename KeyType = uncvref_t<KeyTypeCVRef>,
+           bool = is_json_pointer<KeyType>::value || is_json_iterator_of<BasicJsonType, KeyType>::value >
+struct is_string_view_convertible_key_type : std::false_type {};
+
+template<typename BasicJsonType, typename KeyTypeCVRef, typename KeyType>
+struct is_string_view_convertible_key_type<BasicJsonType, KeyTypeCVRef, KeyType, false>
+    : std::integral_constant < bool,
+      std::is_convertible<KeyTypeCVRef, std::string_view>::value
+      && !is_usable_as_key_type<typename BasicJsonType::object_comparator_t,
+      typename BasicJsonType::object_t::key_type, KeyTypeCVRef, true, false>::value
+      && is_usable_as_key_type<typename BasicJsonType::object_comparator_t,
+      typename BasicJsonType::object_t::key_type, std::string_view, true, false>::value > {};
+#else
+template<typename BasicJsonType, typename KeyTypeCVRef>
+struct is_string_view_convertible_key_type : std::false_type {};
+#endif
+
 // type trait to check if KeyType can be used as an object key
 // true if:
 //   - KeyType is comparable with BasicJsonType::object_t::key_type
@@ -777,9 +832,7 @@ using is_usable_as_basic_json_key_type = typename std::conditional <
      typename BasicJsonType::object_t::key_type, KeyTypeCVRef,
      RequireTransparentComparator, ExcludeObjectKeyType>::value
      && !is_json_iterator_of<BasicJsonType, KeyType>::value)
-#ifdef JSON_HAS_CPP_17
-    || std::is_convertible<KeyType, std::string_view>::value
-#endif
+    || is_string_view_convertible_key_type<BasicJsonType, KeyTypeCVRef>::value
     , std::true_type,
     std::false_type >::type;
 

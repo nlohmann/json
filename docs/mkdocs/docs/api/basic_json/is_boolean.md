@@ -34,6 +34,11 @@ Constant.
     --8<-- "examples/is_boolean.output"
     ```
 
+## See also
+
+- [boolean_t](boolean_t.md) the type used to store JSON booleans
+- [is_primitive](is_primitive.md) checks whether the JSON value is primitive
+
 ## Version history
 
 - Added in version 1.0.0.

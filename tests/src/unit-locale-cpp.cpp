@@ -406,6 +406,7 @@ struct LocaleSwitchingStreambuf final : std::streambuf
     std::string locale_after_first_write;
     bool switched = false;
 
+  protected:
     std::streamsize xsputn(const char* s, std::streamsize n) override
     {
         if (!switched)

@@ -233,8 +233,11 @@ struct external_constructor<value_t::array>
         for (auto&& x : std::forward<CompatibleArrayType>(arr))
         {
             j.m_data.m_value.array->push_back(x);
-            j.set_parent(j.m_data.m_value.array->back());
         }
+        // set the parents only once all elements are in place: a push_back
+        // that reallocates moves the earlier elements, which does not keep
+        // their parent pointers
+        j.set_parents();
         j.assert_invariant();
     }
 #endif
@@ -289,7 +292,9 @@ void to_json(BasicJsonType& j, const std::optional<T>& opt) noexcept(std::is_not
 {
     if (opt.has_value())
     {
-        j = *opt;
+        // explicit construction, as the conversion from a basic_json with a different
+        // string type is explicit if JSON_USE_IMPLICIT_CONVERSIONS is 0 (#2649)
+        j = BasicJsonType(*opt);
     }
     else
     {

@@ -78,7 +78,7 @@ class json_pointer
     }
 
     /// @brief return a string representation of the JSON pointer
-    /// @sa https://json.nlohmann.me/api/json_pointer/operator_string/
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_string_t/
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, to_string())
     operator string_t() const
     {
@@ -87,7 +87,7 @@ class json_pointer
 
 #ifndef JSON_NO_IO
     /// @brief write string representation of the JSON pointer to stream
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_ltlt/
+    /// @sa https://json.nlohmann.me/api/operator_ltlt/
     friend std::ostream& operator<<(std::ostream& o, const json_pointer& ptr)
     {
         o << ptr.to_string();
@@ -586,6 +586,10 @@ class json_pointer
     @return const reference to the JSON value pointed to by the JSON
     pointer
 
+    @pre Every object key and array index the pointer refers to exists.
+         Like the const operator[] for keys and indices, a missing one is
+         undefined behavior, guarded by a runtime assertion.
+
     @throw parse_error.106   if an array index begins with '0'
     @throw parse_error.109   if an array index was not a number
     @throw out_of_range.402  if the array index '-' is used
@@ -600,7 +604,8 @@ class json_pointer
             {
                 case detail::value_t::object:
                 {
-                    // use unchecked object access
+                    // use unchecked object access; the const operator[]
+                    // asserts that the key exists
                     ptr = &ptr->operator[](reference_token);
                     break;
                 }
@@ -613,7 +618,8 @@ class json_pointer
                         JSON_THROW(detail::out_of_range::create(402, detail::concat("array index '-' (", std::to_string(ptr->m_data.m_value.array->size()), ") is out of range"), ptr));
                     }
 
-                    // use unchecked array access
+                    // use unchecked array access; the const operator[]
+                    // asserts that the index exists
                     ptr = &ptr->operator[](array_index<BasicJsonType>(reference_token));
                     break;
                 }
@@ -1065,7 +1071,8 @@ class json_pointer
     friend bool operator!=(const StringType& lhs,
                            const json_pointer<RefStringTypeRhs>& rhs);
 
-    /// @brief compares two JSON pointer for less-than
+    /// @brief compares two JSON pointers for less-than
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_spaceship/
     template<typename RefStringTypeLhs, typename RefStringTypeRhs>
     // NOLINTNEXTLINE(readability-redundant-declaration)
     friend bool operator<(const json_pointer<RefStringTypeLhs>& lhs,

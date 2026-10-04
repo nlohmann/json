@@ -1602,9 +1602,15 @@ TEST_CASE("value conversion")
 
                 json const j7 = {0, 1, 2, 3};
                 json const j8 = 2;
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS((j7.get<std::map<int, int>>()),
+                                     "[json.exception.type_error.302] (/0) type must be array, "
+                                     "but is number", json::type_error&);
+#else
                 CHECK_THROWS_WITH_AS((j7.get<std::map<int, int>>()),
                                      "[json.exception.type_error.302] type must be array, "
                                      "but is number", json::type_error&);
+#endif
                 CHECK_THROWS_WITH_AS((j8.get<std::map<int, int>>()),
                                      "[json.exception.type_error.302] type must be array, "
                                      "but is number", json::type_error&);
@@ -1627,9 +1633,15 @@ TEST_CASE("value conversion")
 
                 json const j7 = {0, 1, 2, 3};
                 json const j8 = 2;
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS((j7.get<std::unordered_map<int, int>>()),
+                                     "[json.exception.type_error.302] (/0) type must be array, "
+                                     "but is number", json::type_error&);
+#else
                 CHECK_THROWS_WITH_AS((j7.get<std::unordered_map<int, int>>()),
                                      "[json.exception.type_error.302] type must be array, "
                                      "but is number", json::type_error&);
+#endif
                 CHECK_THROWS_WITH_AS((j8.get<std::unordered_map<int, int>>()),
                                      "[json.exception.type_error.302] type must be array, "
                                      "but is number", json::type_error&);
@@ -1806,6 +1818,12 @@ TEST_CASE("Strict JSON to enum mapping")
         CHECK(json(strict_cards::karo) == "karo");
 
         // json -> enum
+        CHECK(json("kreuz").get<strict_cards>() == strict_cards::kreuz);
+        CHECK(json("pik").get<strict_cards>() == strict_cards::pik);
+        CHECK(json("herz").get<strict_cards>() == strict_cards::herz);
+        CHECK(json("karo").get<strict_cards>() == strict_cards::karo);
+
+        // comparison of enum and json
         CHECK(strict_cards::kreuz == json("kreuz"));
         CHECK(strict_cards::pik == json("pik"));
         CHECK(strict_cards::herz == json("herz"));
@@ -1817,6 +1835,12 @@ TEST_CASE("Strict JSON to enum mapping")
 
         // conversion of unmapped enum -> exception thrown
         CHECK_THROWS_WITH_AS(json(strict_cards::andere), "[json.exception.out_of_range.410] enum value out of range for strict_cards", json::out_of_range&);
+
+        // comparing an unmapped enum with json throws the same exception
+        // (the scalar comparison operators used to be noexcept, so this
+        // called std::terminate)
+        CHECK_THROWS_WITH_AS(static_cast<void>(strict_cards::andere == json("andere")), "[json.exception.out_of_range.410] enum value out of range for strict_cards", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(static_cast<void>(json("andere") != strict_cards::andere), "[json.exception.out_of_range.410] enum value out of range for strict_cards", json::out_of_range&);
 
         // invalid UTF-8 -> out_of_range.410, not the type_error.316 thrown while building the
         // message (regression test for #5667); such strings can reach get<Enum>() unvalidated,
@@ -1834,6 +1858,12 @@ TEST_CASE("Strict JSON to enum mapping")
         CHECK(json(STRICT_TS_INVALID) == json());
 
         // json -> enum
+        CHECK(json("stopped").get<StrictTaskState>() == STRICT_TS_STOPPED);
+        CHECK(json("running").get<StrictTaskState>() == STRICT_TS_RUNNING);
+        CHECK(json("completed").get<StrictTaskState>() == STRICT_TS_COMPLETED);
+        CHECK(json().get<StrictTaskState>() == STRICT_TS_INVALID);
+
+        // comparison of enum and json
         CHECK(STRICT_TS_STOPPED == json("stopped"));
         CHECK(STRICT_TS_RUNNING == json("running"));
         CHECK(STRICT_TS_COMPLETED == json("completed"));
@@ -1845,6 +1875,9 @@ TEST_CASE("Strict JSON to enum mapping")
 
         // conversion of unmapped enum -> exception thrown
         CHECK_THROWS_WITH_AS(json(STRICT_TS_OTHER), "[json.exception.out_of_range.410] enum value out of range for StrictTaskState", json::out_of_range&);
+
+        // comparing an unmapped enum with json throws the same exception
+        CHECK_THROWS_WITH_AS(static_cast<void>(STRICT_TS_OTHER < json("x")), "[json.exception.out_of_range.410] enum value out of range for StrictTaskState", json::out_of_range&);
     }
 }
 
@@ -1969,6 +2002,8 @@ TEST_CASE("std::optional")
 
         CHECK(json(opt_string) == j_string);
         CHECK(std::optional<std::string>(j_string) == opt_string);
+        // false positive: Infer attributes the destruction of the temporaries above to opt_string
+        // @infer-ignore USE_AFTER_DELETE
     }
 
     SECTION("bool")
@@ -2019,8 +2054,8 @@ TEST_CASE("std::optional")
         CHECK_THROWS_WITH_AS(json(opt), "cannot serialize throwing_to_json_type", std::runtime_error&);
 
         // the conversion is noexcept exactly when converting the contained value is
-        static_assert(!std::is_nothrow_constructible<json, const std::optional<throwing_to_json_type>&>::value, "");
-        static_assert(std::is_nothrow_constructible<json, const std::optional<int>&>::value, "");
+        static_assert(!std::is_nothrow_constructible<json, const std::optional<throwing_to_json_type>&>::value);
+        static_assert(std::is_nothrow_constructible<json, const std::optional<int>&>::value);
     }
 #endif
 }
