@@ -54,7 +54,7 @@ The default value is `0` (disabled, the behavior of version 3.12.0 and earlier i
 
 ## Examples
 
-??? example "Default behavior (macro not defined)"
+??? example "Example: default behavior (macro not defined)"
 
     Without the macro, the bytes are written unchanged:
 
@@ -70,7 +70,7 @@ The default value is `0` (disabled, the behavior of version 3.12.0 and earlier i
     }
     ```
 
-??? example "Opt-in check (macro defined to 1)"
+??? example "Example: opt-in check (macro defined to 1)"
 
     With the macro, ill-formed UTF-8 is rejected:
 
