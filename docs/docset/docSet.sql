@@ -19,6 +19,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('format_as', 'Function', 'api/
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::accept', 'Function', 'api/basic_json/accept/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::array', 'Function', 'api/basic_json/array/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::array_t', 'Type', 'api/basic_json/array_t/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::as_base_class', 'Method', 'api/basic_json/as_base_class/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::at', 'Method', 'api/basic_json/at/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::back', 'Method', 'api/basic_json/back/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::basic_json', 'Constructor', 'api/basic_json/basic_json/index.html');
@@ -311,6 +312,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('JSON_NO_THREAD_LOCAL', 'Macro
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_PRECISE_STREAM_POSITION', 'Macro', 'api/macros/json_precise_stream_position/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_SKIP_LIBRARY_VERSION_CHECK', 'Macro', 'api/macros/json_skip_library_version_check/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_SKIP_UNSUPPORTED_COMPILER_CHECK', 'Macro', 'api/macros/json_skip_unsupported_compiler_check/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_STRICT_BINARY_UTF8', 'Macro', 'api/macros/json_strict_binary_utf8/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_STRICT_NUL_HANDLING', 'Macro', 'api/macros/json_strict_nul_handling/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_THROW_USER', 'Macro', 'api/macros/json_throw_user/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_TRY_USER', 'Macro', 'api/macros/json_throw_user/index.html');

@@ -109,6 +109,7 @@ nav:
       - integration/cmake.md
       - integration/package_managers.md
       - integration/pkg-config.md
+      - integration/compile_times.md
   - API Documentation:
       - basic_json:
           - 'Overview': api/basic_json/index.md
@@ -117,6 +118,7 @@ nav:
           - 'accept': api/basic_json/accept.md
           - 'array': api/basic_json/array.md
           - 'array_t': api/basic_json/array_t.md
+          - 'as_base_class': api/basic_json/as_base_class.md
           - 'at': api/basic_json/at.md
           - 'back': api/basic_json/back.md
           - 'begin': api/basic_json/begin.md
@@ -378,6 +380,7 @@ nav:
           - 'JSON_PRECISE_STREAM_POSITION': api/macros/json_precise_stream_position.md
           - 'JSON_SKIP_LIBRARY_VERSION_CHECK': api/macros/json_skip_library_version_check.md
           - 'JSON_SKIP_UNSUPPORTED_COMPILER_CHECK': api/macros/json_skip_unsupported_compiler_check.md
+          - 'JSON_STRICT_BINARY_UTF8': api/macros/json_strict_binary_utf8.md
           - 'JSON_STRICT_NUL_HANDLING': api/macros/json_strict_nul_handling.md
           - 'JSON_USE_GLOBAL_UDLS': api/macros/json_use_global_udls.md
           - 'JSON_USE_IMPLICIT_CONVERSIONS': api/macros/json_use_implicit_conversions.md
