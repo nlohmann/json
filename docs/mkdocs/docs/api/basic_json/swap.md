@@ -6,7 +6,9 @@ void swap(reference other) noexcept (
     std::is_nothrow_move_constructible<value_t>::value &&
     std::is_nothrow_move_assignable<value_t>::value &&
     std::is_nothrow_move_constructible<json_value>::value &&
-    std::is_nothrow_move_assignable<json_value>::value
+    std::is_nothrow_move_assignable<json_value>::value &&
+    std::is_nothrow_move_constructible<json_base_class_t>::value &&
+    std::is_nothrow_move_assignable<json_base_class_t>::value
 );
 
 // (2)
@@ -14,7 +16,9 @@ friend void swap(reference left, reference right) noexcept (
     std::is_nothrow_move_constructible<value_t>::value &&
     std::is_nothrow_move_assignable<value_t>::value &&
     std::is_nothrow_move_constructible<json_value>::value &&
-    std::is_nothrow_move_assignable<json_value>::value
+    std::is_nothrow_move_assignable<json_value>::value &&
+    std::is_nothrow_move_constructible<json_base_class_t>::value &&
+    std::is_nothrow_move_assignable<json_base_class_t>::value
 );
 
 // (3)
@@ -37,11 +41,15 @@ void swap(typename binary_t::container_type& other);
    individual elements. All iterators and references remain valid. The past-the-end iterator is invalidated. If macro
    [`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) is defined to `#!cpp 1`, the
    [`start_pos()`](start_pos.md)/[`end_pos()`](end_pos.md) diagnostic positions are exchanged along with the value.
+   The [`json_base_class_t`](json_base_class_t.md) subobject is exchanged along with the value as well, the same way it
+   is copied or moved by the copy/move constructors and assignment operators.
 2. Exchanges the contents of the JSON value from `left` with those of `right`. Does not invoke any move, copy, or swap
    operations on individual elements. All iterators and references remain valid. The past-the-end iterator is
    invalidated. Implemented as a friend function callable via ADL. If macro
    [`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) is defined to `#!cpp 1`, the
    [`start_pos()`](start_pos.md)/[`end_pos()`](end_pos.md) diagnostic positions are exchanged along with the value.
+   The [`json_base_class_t`](json_base_class_t.md) subobject is exchanged along with the value as well, the same way it
+   is copied or moved by the copy/move constructors and assignment operators.
 3. Exchanges the contents of a JSON array with those of `other`. Does not invoke any move, copy, or swap operations on
    individual elements. All iterators and references remain valid. The past-the-end iterator is invalidated. 
 4. Exchanges the contents of a JSON object with those of `other`. Does not invoke any move, copy, or swap operations on
@@ -65,6 +73,16 @@ void swap(typename binary_t::container_type& other);
 `right` (in, out)
 :   value to exchange the contents with
 
+## Exception safety
+
+1. No-throw guarantee: this function never throws exceptions.
+2. No-throw guarantee: this function never throws exceptions.
+3. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+4. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+5. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+6. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+7. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+
 ## Exceptions
 
 1. No-throw guarantee: this function never throws exceptions.
@@ -86,7 +104,7 @@ Constant.
 
 ## Examples
 
-??? example "Example: Swap JSON value (1, 2)"
+??? example "Example: (1, 2) swap JSON values"
 
     The example below shows how JSON values can be swapped with `swap()`.
     
@@ -100,7 +118,7 @@ Constant.
     --8<-- "examples/swap__reference.output"
     ```
 
-??? example "Example: Swap array (3)"
+??? example "Example: (3) swap array"
 
     The example below shows how arrays can be swapped with `swap()`.
     
@@ -114,7 +132,7 @@ Constant.
     --8<-- "examples/swap__array_t.output"
     ```
 
-??? example "Example: Swap object (4)"
+??? example "Example: (4) swap object"
 
     The example below shows how objects can be swapped with `swap()`.
     
@@ -128,7 +146,7 @@ Constant.
     --8<-- "examples/swap__object_t.output"
     ```
 
-??? example "Example: Swap string (5)"
+??? example "Example: (5) swap string"
 
     The example below shows how strings can be swapped with `swap()`.
     
@@ -142,7 +160,7 @@ Constant.
     --8<-- "examples/swap__string_t.output"
     ```
 
-??? example "Example: Swap binary (6)"
+??? example "Example: (6) swap binary"
 
     The example below shows how binary values can be swapped with `swap()`.
     
@@ -164,8 +182,8 @@ Constant.
 
 ## Version history
 
-1. Since version 1.0.0.
-2. Since version 1.0.0.
+1. Since version 1.0.0. Exchanges the `json_base_class_t` subobject along with the value since version 3.13.0.
+2. Since version 1.0.0. Exchanges the `json_base_class_t` subobject along with the value since version 3.13.0.
 3. Since version 1.0.0.
 4. Since version 1.0.0.
 5. Since version 1.0.0.

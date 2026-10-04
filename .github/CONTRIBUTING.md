@@ -142,6 +142,16 @@ The documentation will then be available at <http://127.0.0.1:8000/>. See the do
 [mkdocs](https://www.mkdocs.org) and [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/) for more
 information.
 
+Before opening a pull request, check the documentation like the CI does:
+
+```shell
+make build -C docs/mkdocs          # strict build: fails on broken links, anchors, and structure problems
+make check_mermaid -C docs/mkdocs  # checks the Mermaid diagrams (requires Node.js)
+```
+
+A new API page also needs an entry in [`docs/docset/docSet.sql`](https://github.com/nlohmann/json/blob/develop/docs/docset/docSet.sql),
+the search index of the docset; `make build` reports missing entries.
+
 ### Amalgamate the source code
 
 The single-header files

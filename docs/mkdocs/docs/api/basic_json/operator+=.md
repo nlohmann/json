@@ -48,6 +48,12 @@ invalidates all iterators and all references.
 
 `#!cpp *this`
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes to any JSON value. As an exception, a `#!json null`
+value is converted to an empty array or object before the element is added and keeps that type if adding the element
+throws.
+
 ## Exceptions
 
 1. Throws [`type_error.308`](../../home/exceptions.md#jsonexceptiontype_error308) when called on a type other than

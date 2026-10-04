@@ -849,13 +849,13 @@ TEST_CASE("issue #5338 - truncated CBOR tagged binary subtype is rejected")
 
     for (const auto& data : truncated_tags)
     {
-        CAPTURE(data);
+        CAPTURE(data)
         for (const auto tag_handler :
                 {
                     json::cbor_tag_handler_t::ignore, json::cbor_tag_handler_t::store
                 })
         {
-            CAPTURE(tag_handler);
+            CAPTURE(tag_handler)
             const auto result = json::from_cbor(data, true, false, tag_handler);
             CHECK(result.is_discarded());
         }

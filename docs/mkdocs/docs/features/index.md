@@ -10,7 +10,8 @@ C++ types, and finally serialize it again.
   understand the `#!cpp {}` vs. `#!cpp []` ambiguity.
 - [Parsing](parsing/index.md) — read a JSON value from a string, file, or stream, including
   [JSON Lines](parsing/json_lines.md), [callbacks](parsing/parser_callbacks.md), the
-  [SAX interface](parsing/sax_interface.md), and [error handling](parsing/parse_exceptions.md).
+  [SAX interface](parsing/sax_interface.md), [error handling](parsing/parse_exceptions.md), and
+  [parsing untrusted input](parsing/untrusted_input.md).
 - [Comments](comments.md) and [trailing commas](trailing_commas.md) — opt-in relaxations of the JSON grammar.
 
 ## Accessing and modifying values
@@ -43,7 +44,10 @@ C++ types, and finally serialize it again.
 
 - [Types](types/index.md) and [number handling](types/number_handling.md) — how JSON types map to C++ types and how
   numbers are treated.
+- [Template parameter requirements](types/template_parameters.md) — what a type passed as one of `basic_json`'s
+  template parameters has to provide.
 - [Object order](object_order.md) — keep insertion order with [`ordered_json`](../api/ordered_json.md).
+- [Performance](performance.md) — practical advice on parsing, memory use, serialization, and compile times.
 - [Runtime assertions](assertions.md), [supported macros](macros.md), the [`nlohmann` namespace](namespace.md), and
   [C++ modules](modules.md) — build-time and runtime configuration.
 

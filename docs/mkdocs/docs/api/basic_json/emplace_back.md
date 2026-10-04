@@ -28,6 +28,11 @@ iterator is invalidated.
 
 reference to the inserted element
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes to any JSON value. As an exception, a `#!json null`
+value is converted to an empty array before the element is added and keeps that type if adding the element throws.
+
 ## Exceptions
 
 Throws [`type_error.311`](../../home/exceptions.md#jsonexceptiontype_error311) when called on a type other than JSON

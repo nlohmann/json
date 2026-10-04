@@ -189,6 +189,37 @@ struct actual_object_comparator
 template<typename BasicJsonType>
 using actual_object_comparator_t = typename actual_object_comparator<BasicJsonType>::type;
 
+template<typename T>
+using detect_key_comp = decltype(std::declval<const T&>().key_comp());
+
+// whether ObjectType can be constructed from a pair of Iterator together with
+// a copy of its own comparator, the way std::map can: it needs a nested
+// key_compare, a const key_comp() convertible to it, and a matching
+// (Iterator, Iterator, const key_compare&) constructor.
+//
+// used to preserve a stateful comparator when a copy is built from a range
+// past the iterative deep copy's nesting bound (see copy_object_level); an
+// object type that does not satisfy this, such as nlohmann::ordered_map
+// (which has key_compare for its std::map-like interface, but no key_comp()),
+// keeps default-constructing its comparator, just as it always has
+template<typename ObjectType, typename Iterator, typename = void>
+struct is_comparator_constructible_object_type_impl : std::false_type {};
+
+template<typename ObjectType, typename Iterator>
+struct is_comparator_constructible_object_type_impl <
+    ObjectType, Iterator, enable_if_t<is_detected<detect_key_compare, ObjectType>::value >>
+{
+    using key_compare = typename ObjectType::key_compare;
+
+    static constexpr bool value =
+        is_detected_convertible<key_compare, detect_key_comp, ObjectType>::value &&
+        std::is_constructible<ObjectType, Iterator, Iterator, const key_compare&>::value;
+};
+
+template<typename ObjectType, typename Iterator>
+struct is_comparator_constructible_object_type
+    : is_comparator_constructible_object_type_impl<ObjectType, Iterator> {};
+
 /////////////////
 // char_traits //
 /////////////////
@@ -282,6 +313,13 @@ template<class B> struct conjunction<B> : B { };
 template<class B, class... Bn>
 struct conjunction<B, Bn...>
 : std::conditional<static_cast<bool>(B::value), conjunction<Bn...>, B>::type {};
+
+// https://en.cppreference.com/w/cpp/types/disjunction
+template<class...> struct disjunction : std::false_type { };
+template<class B> struct disjunction<B> : B { };
+template<class B, class... Bn>
+struct disjunction<B, Bn...>
+: std::conditional<static_cast<bool>(B::value), B, disjunction<Bn...>>::type {};
 
 // https://en.cppreference.com/w/cpp/types/negation
 template<class B> struct negation : std::integral_constant < bool, !B::value > { };
@@ -477,9 +515,7 @@ template<typename T> struct is_range_view_optional_type<std::optional<T>> : std:
 template<typename T> struct is_range_view_optional_type : std::false_type {};
 #endif
 
-// std::ranges does not work properly on MinGW due to incomplete C++20 support
-// see https://github.com/nlohmann/json/issues/4916
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 
 // SafeToCheck guards against types that trigger circular constraints when
 // std::ranges::view<T> is evaluated on GCC 12 / libstdc++ 12:
@@ -518,7 +554,7 @@ struct is_compatible_array_type_impl <
 // filter_view) can match BOTH this iterator-based specialization AND the view-based one
 // below, causing ambiguity. Exclude views here so the two specializations are mutually
 // exclusive: this one handles plain iterable containers, the other handles views.
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 && !is_compatible_range_view<CompatibleArrayType>::value
 #endif
             >>
@@ -528,7 +564,7 @@ struct is_compatible_array_type_impl <
         range_value_t<CompatibleArrayType>>::value;
 };
 
-#if JSON_HAS_RANGES && !defined(__MINGW32__)
+#if JSON_HAS_RANGE_VIEW_CONVERSION
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_array_type_impl <
     BasicJsonType, CompatibleArrayType,
@@ -604,7 +640,6 @@ struct is_compatible_integer_type_impl <
     std::is_integral<CompatibleNumberIntegerType>::value&&
     !std::is_same<bool, CompatibleNumberIntegerType>::value >>
 {
-    // is there an assert somewhere on overflows?
     using RealLimits = std::numeric_limits<RealIntegerType>;
     using CompatibleLimits = std::numeric_limits<CompatibleNumberIntegerType>;
 
@@ -635,6 +670,18 @@ struct is_compatible_type_impl <
 template<typename BasicJsonType, typename CompatibleType>
 struct is_compatible_type
     : is_compatible_type_impl<BasicJsonType, CompatibleType> {};
+
+// a one-element std::tuple holding a reference to BasicJsonType, as created by
+// std::forward_as_tuple(j); see JSON_DISABLE_TUPLE_REFERENCE_CONVERSION
+template<typename BasicJsonType, typename T>
+struct is_basic_json_reference_tuple : std::false_type {};
+
+template<typename BasicJsonType, typename T>
+struct is_basic_json_reference_tuple<BasicJsonType, std::tuple<T>>
+{
+    static constexpr bool value =
+        std::is_reference<T>::value && std::is_same<uncvref_t<T>, BasicJsonType>::value;
+};
 
 template<typename BasicJsonType, typename CompatibleArrayType>
 struct is_compatible_binary_type
@@ -725,7 +772,7 @@ std::is_constructible <decltype(std::declval<Compare>()(std::declval<A>(), std::
 // avoid their instantiation on all compilers, even when the first operand
 // is false. The dispatch on is_json_pointer_of can be removed once the
 // deprecated json_pointer comparison operators have been removed.
-template<typename Compare, typename A, typename B, bool = is_json_pointer_of<A, B>::value>
+template<typename Compare, typename A, typename B, bool = is_json_pointer_of<uncvref_t<A>, uncvref_t<B>>::value>
 struct is_comparable : std::false_type {};
 
 template<typename Compare, typename A, typename B>
@@ -748,6 +795,30 @@ using is_usable_as_key_type = typename std::conditional <
                               std::true_type,
                               std::false_type >::type;
 
+#ifdef JSON_HAS_CPP_17
+// type trait to check if KeyType can only be used as an object key after
+// converting it to std::string_view: it is convertible to std::string_view, the
+// object's comparator cannot compare it with object_t::key_type directly, but
+// can compare a std::string_view. JSON pointers and JSON iterators are ruled out
+// first, so that the conversion checks are never instantiated for them (a JSON
+// pointer's deprecated conversion to string_t would be named otherwise).
+template < typename BasicJsonType, typename KeyTypeCVRef, typename KeyType = uncvref_t<KeyTypeCVRef>,
+           bool = is_json_pointer<KeyType>::value || is_json_iterator_of<BasicJsonType, KeyType>::value >
+struct is_string_view_convertible_key_type : std::false_type {};
+
+template<typename BasicJsonType, typename KeyTypeCVRef, typename KeyType>
+struct is_string_view_convertible_key_type<BasicJsonType, KeyTypeCVRef, KeyType, false>
+    : std::integral_constant < bool,
+      std::is_convertible<KeyTypeCVRef, std::string_view>::value
+      && !is_usable_as_key_type<typename BasicJsonType::object_comparator_t,
+      typename BasicJsonType::object_t::key_type, KeyTypeCVRef, true, false>::value
+      && is_usable_as_key_type<typename BasicJsonType::object_comparator_t,
+      typename BasicJsonType::object_t::key_type, std::string_view, true, false>::value > {};
+#else
+template<typename BasicJsonType, typename KeyTypeCVRef>
+struct is_string_view_convertible_key_type : std::false_type {};
+#endif
+
 // type trait to check if KeyType can be used as an object key
 // true if:
 //   - KeyType is comparable with BasicJsonType::object_t::key_type
@@ -761,9 +832,7 @@ using is_usable_as_basic_json_key_type = typename std::conditional <
      typename BasicJsonType::object_t::key_type, KeyTypeCVRef,
      RequireTransparentComparator, ExcludeObjectKeyType>::value
      && !is_json_iterator_of<BasicJsonType, KeyType>::value)
-#ifdef JSON_HAS_CPP_17
-    || std::is_convertible<KeyType, std::string_view>::value
-#endif
+    || is_string_view_convertible_key_type<BasicJsonType, KeyTypeCVRef>::value
     , std::true_type,
     std::false_type >::type;
 
@@ -798,20 +867,7 @@ struct has_capacity : std::integral_constant<bool, is_detected<detect_capacity, 
 // a naive helper to check if a type is an ordered_map (exploits the fact that
 // ordered_map inherits capacity() from std::vector)
 template <typename T>
-struct is_ordered_map
-{
-    using one = char;
-
-    struct two
-    {
-        char x[2]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-    };
-
-    template <typename C> static one test( decltype(&C::capacity) ) ;
-    template <typename C> static two test(...);
-
-    enum { value = sizeof(test<T>(nullptr)) == sizeof(char) }; // NOLINT(cppcoreguidelines-pro-type-vararg,hicpp-vararg,cppcoreguidelines-use-enum-class)
-};
+struct is_ordered_map : has_capacity<T> {};
 
 // to avoid useless casts (see https://github.com/nlohmann/json/issues/2893#issuecomment-889152324)
 template < typename T, typename U, enable_if_t < !std::is_same<T, U>::value, int > = 0 >
@@ -835,10 +891,8 @@ using all_signed = conjunction<std::is_signed<Types>...>;
 template<typename... Types>
 using all_unsigned = conjunction<std::is_unsigned<Types>...>;
 
-// there's a disjunction trait in another PR; replace when merged
 template<typename... Types>
-using same_sign = std::integral_constant < bool,
-      all_signed<Types...>::value || all_unsigned<Types...>::value >;
+using same_sign = disjunction<all_signed<Types...>, all_unsigned<Types...>>;
 
 template<typename OfType, typename T>
 using never_out_of_range = std::integral_constant < bool,

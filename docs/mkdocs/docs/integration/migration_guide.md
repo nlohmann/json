@@ -1,15 +1,20 @@
 # Migration Guide
 
-This page collects some guidelines on how to future-proof your code for future versions of this library.
+This page collects some guidelines on how to future-proof your code for future versions of this library. For how to
+add the library to your project in the first place, see [Integration](index.md), [CMake](cmake.md), or
+[Package Managers](package_managers.md). The [roadmap](../community/roadmap.md#version-40) lists what will change in
+version 4.0, including the macros that let you try its behavior with a 3.x release; this page describes how to adjust
+your code.
 
 ## Replace deprecated functions
 
-The following functions have been deprecated and will be removed in the next major version (i.e., 4.0.0). All
+The following functions have been deprecated and will be removed in the next major version (i.e., 4.0.0), see the
+[roadmap](../community/roadmap.md#removal-of-deprecated-functions) for an overview. All
 deprecations are annotated with
 [`HEDLEY_DEPRECATED_FOR`](https://nemequ.github.io/hedley/api-reference.html#HEDLEY_DEPRECATED_FOR) to report which
 function to use instead.
 
-#### Parsing
+### Parsing
 
 - Function `friend std::istream& operator<<(basic_json&, std::istream&)` is deprecated since 3.0.0. Please use
   [`friend std::istream&  operator>>(std::istream&, basic_json&)`](../api/operator_gtgt.md) instead.
@@ -33,9 +38,11 @@ function to use instead.
 - Passing iterator pairs or pointer/length pairs to parsing functions ([`parse`](../api/basic_json/parse.md),
   [`accept`](../api/basic_json/accept.md), [`sax_parse`](../api/basic_json/sax_parse.md),
   [`from_cbor`](../api/basic_json/from_cbor.md), [`from_msgpack`](../api/basic_json/from_msgpack.md),
-  [`from_ubjson`](../api/basic_json/from_ubjson.md), and [`from_bson`](../api/basic_json/from_bson.md) via initializer
+  [`from_ubjson`](../api/basic_json/from_ubjson.md), and [`from_bson`](../api/basic_json/from_bson.md)) via initializer
   lists is deprecated since 3.8.0. Instead, pass two iterators; for instance, call `from_cbor(ptr, ptr+len)` instead of
-  `from_cbor({ptr, len})`.
+  `from_cbor({ptr, len})`. Likewise, passing a pointer and a length as two separate arguments to `from_cbor`,
+  `from_msgpack`, `from_ubjson`, and `from_bson` is deprecated since 3.8.0; call `from_cbor(ptr, ptr+len)` instead of
+  `from_cbor(ptr, len)`.
 
     === "Deprecated"
   
@@ -51,7 +58,7 @@ function to use instead.
           bool ok = nlohmann::json::accept(s, s + std::strlen(s));
           ```
 
-#### JSON Pointers
+### JSON Pointers
 
 - Comparing JSON Pointers with strings via [`operator==`](../api/json_pointer/operator_eq.md) and
   [`operator!=`](../api/json_pointer/operator_ne.md) is deprecated since 3.11.2. To compare a
@@ -93,7 +100,9 @@ function to use instead.
 
 - Passing a `basic_json` specialization as template parameter `RefStringType` to
   [`json_pointer`](../api/json_pointer/index.md) is deprecated since 3.11.0. The string type can now be directly
-  provided.
+  provided. This also applies to passing such a JSON pointer to [`at`](../api/basic_json/at.md),
+  [`contains`](../api/basic_json/contains.md), [`operator[]`](../api/basic_json/operator%5B%5D.md), and
+  [`value`](../api/basic_json/value.md).
   
     === "Deprecated"
   
@@ -108,10 +117,11 @@ function to use instead.
           nlohmann::json_pointer<my_string_type> ptr("/foo/bar/1");
           ```
   
-    Thereby, `nlohmann::my_json::json_pointer` is an alias for `nlohmann::json_pointer<my_string_type>` and is always an 
-    alias to the `json_pointer` with the appropriate string type for all specializations of `basic_json`.
+    Thereby, `my_json::json_pointer` is an alias for `nlohmann::json_pointer<my_string_type>`; in general,
+    `basic_json::json_pointer` is always an alias to the `json_pointer` with the appropriate string type for all
+    specializations of `basic_json`.
 
-#### Miscellaneous functions
+### Miscellaneous functions
 
 - The function `iterator_wrapper` is deprecated since 3.1.0. Please use the member function
   [`items`](../api/basic_json/items.md) instead.
@@ -260,7 +270,7 @@ exact version and configuration is relevant, use macro
       }
       ```
 
-## Do not use the `details` namespace
+## Do not use the `detail` namespace
 
-The `details` namespace is not part of the public API of the library and can change in any version without an
-announcement. Do not rely on any function or type in the `details` namespace.
+The `nlohmann::detail` namespace is not part of the public API of the library and can change in any version without
+an announcement. Do not rely on any function or type in the `detail` namespace.

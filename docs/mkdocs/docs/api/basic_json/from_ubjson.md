@@ -5,12 +5,14 @@
 template<typename InputType>
 static basic_json from_ubjson(InputType&& i,
                               const bool strict = true,
-                              const bool allow_exceptions = true);
+                              const bool allow_exceptions = true,
+                              const error_handler_t error_handler = error_handler_t::keep);
 // (2)
 template<typename IteratorType, typename SentinelType = IteratorType>
 static basic_json from_ubjson(IteratorType first, SentinelType last,
                               const bool strict = true,
-                              const bool allow_exceptions = true);
+                              const bool allow_exceptions = true,
+                              const error_handler_t error_handler = error_handler_t::keep);
 ```
 
 Deserializes a given input to a JSON value using the UBJSON (Universal Binary JSON) serialization format.
@@ -58,6 +60,12 @@ The exact mapping and its limitations are described on a [dedicated page](../../
 `allow_exceptions` (in)
 :   whether to throw exceptions in case of a parse error (optional, `#!cpp true` by default)
 
+`error_handler` (in)
+:   how to treat a string value or object key that is not valid UTF-8; see [`error_handler_t`](error_handler_t.md).
+    UBJSON does not require a decoder to reject ill-formed UTF-8, so checking is opt-in: the default, `keep`, does not
+    check at all, as every binary reader did before this parameter was added; `strict` checks and throws;
+    `replace`/`ignore` sanitize the string the same way [`dump`](dump.md) would
+
 ## Return value
 
 deserialized JSON value; in case of a parse error and `allow_exceptions` set to `#!cpp false`, the return value will be
@@ -73,7 +81,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
   the end of the file was not reached when `strict` was set to true
 - Throws [parse_error.112](../../home/exceptions.md#jsonexceptionparse_error112) if a parse error occurs
 - Throws [parse_error.113](../../home/exceptions.md#jsonexceptionparse_error113) if a string could not be parsed
-  successfully
+  successfully, or if a string value or object key is not valid UTF-8 and `error_handler` is `strict`
 - Throws [out_of_range.408](../../home/exceptions.md#jsonexceptionout_of_range408) if the size of an optimized container
   or n-dimensional array cannot be represented by `std::size_t`
 
@@ -112,6 +120,7 @@ Linear in the size of the input.
 - Added `allow_exceptions` parameter in version 3.2.0.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
+- Added `error_handler` parameter in version 3.13.0.
 
 !!! warning "Deprecation"
 
@@ -124,3 +133,5 @@ Linear in the size of the input.
 
     You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated
     function.
+
+    See the [migration guide](../../integration/migration_guide.md#parsing) for how to update existing code.
