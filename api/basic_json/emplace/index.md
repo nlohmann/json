@@ -95,3 +95,4 @@ null
 ## Version history
 
 - Since version 2.0.8.
+- Fixed in version 3.13.0 unreleased: for [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md), the value could previously only be passed as an rvalue; it can now also be passed as an lvalue or a `const` lvalue, matching the behavior of `json`.

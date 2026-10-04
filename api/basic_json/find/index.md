@@ -122,5 +122,5 @@ value at key "two": 2
 ## Version history
 
 1. Added in version 3.11.0.
-1. Added in version 1.0.0. Changed to support comparable types in version 3.11.0.
+1. Added in version 1.0.0. Changed to support comparable types in version 3.11.0. Fixed in version 3.13.0 unreleased to consistently accept `std::string_view`-convertible keys, as already supported by [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md), [`at`](https://json.nlohmann.me/api/basic_json/at/index.md), [`value`](https://json.nlohmann.me/api/basic_json/value/index.md), and other lookup functions.
 1. Deleted overloads for integral key types added in version 3.13.0 unreleased to reject such calls at compile time instead of causing undefined behavior at runtime.

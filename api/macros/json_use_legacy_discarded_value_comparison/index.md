@@ -74,3 +74,4 @@ The code below switches on the legacy discarded value comparison behavior in the
 ## Version history
 
 - Added in version 3.11.0.
+- Fixed in version 3.13.0 unreleased so `<=` and `>=` also emulate the legacy behavior in C++20 when the JSON value is the right-hand operand of a scalar comparison; before, only the 3-way-comparison-rewritten candidate was found, which yielded `false` instead of `true`.

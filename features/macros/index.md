@@ -104,6 +104,14 @@ When defined, the library will not create a compile error when a known unsupport
 
 See [full documentation of `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`](https://json.nlohmann.me/api/macros/json_skip_unsupported_compiler_check/index.md).
 
+## `JSON_STRICT_BINARY_UTF8`
+
+When defined to `1`, [`to_cbor`](https://json.nlohmann.me/api/basic_json/to_cbor/index.md), [`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md), [`to_bjdata`](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md), and [`to_bson`](https://json.nlohmann.me/api/basic_json/to_bson/index.md) throw [`type_error.316`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) for a string value or object key that is not valid UTF-8. The default value is `0`, which writes the bytes unchanged as before version 3.13.0 unreleased; this is planned to become the default in version 4.0.0.
+
+The check can also be enabled with the CMake option [`JSON_StrictBinaryUTF8`](https://json.nlohmann.me/integration/cmake/#json_strictbinaryutf8) (`OFF` by default) which sets `JSON_STRICT_BINARY_UTF8` accordingly.
+
+See [full documentation of `JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md).
+
 ## `JSON_STRICT_NUL_HANDLING`
 
 When defined to `1`, a `'\0'` (NUL) byte anywhere in the input is rejected with `parse_error.101`, like any other unexpected byte, instead of being silently treated as end of input (see the [FAQ entry](https://json.nlohmann.me/home/faq/#nul-bytes-in-the-input) for background). The default value is `0`, which preserves the existing behavior; this is planned to become the default in version 4.0.0.

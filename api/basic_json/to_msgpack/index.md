@@ -2,11 +2,14 @@
 
 ```
 // (1)
-static std::vector<std::uint8_t> to_msgpack(const basic_json& j);
+static std::vector<std::uint8_t> to_msgpack(const basic_json& j,
+                                            const error_handler_t error_handler = error_handler_t::keep);
 
 // (2)
-static void to_msgpack(const basic_json& j, detail::output_adapter<std::uint8_t> o);
-static void to_msgpack(const basic_json& j, detail::output_adapter<char> o);
+static void to_msgpack(const basic_json& j, detail::output_adapter<std::uint8_t> o,
+                       const error_handler_t error_handler = error_handler_t::keep);
+static void to_msgpack(const basic_json& j, detail::output_adapter<char> o,
+                       const error_handler_t error_handler = error_handler_t::keep);
 ```
 
 Serializes a given JSON value `j` to a byte vector using the MessagePack serialization format. MessagePack is a binary serialization format that aims to be more compact than JSON itself, yet more efficient to parse.
@@ -22,6 +25,8 @@ The exact mapping and its limitations are described on a [dedicated page](https:
 
 `o` (in) : output adapter to write serialization to
 
+`error_handler` (in) : how to treat a string or object key in `j` that is not valid UTF-8; see [`error_handler_t`](https://json.nlohmann.me/api/basic_json/error_handler_t/index.md). The default, `keep`, writes the ill-formed bytes to the output as is, as every version of `to_msgpack` did before this parameter was added and as the MessagePack specification allows; `strict` throws; `replace`/`ignore` sanitize it the same way [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) would. Unlike the other binary writers, the default stays `keep` even if [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) is enabled.
+
 ## Return value
 
 1. MessagePack serialization as a byte vector
@@ -35,6 +40,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 - Throws [`out_of_range.412`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range412) if the length of a string, binary value, array, or object exceeds 4294967295, the maximum MessagePack can store; example: `"MessagePack length 4294967296 exceeds maximum of 4294967295"`
 - Throws [`out_of_range.415`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range415) if the subtype of a binary value exceeds 255, the maximum of the MessagePack ext type; example: `"subtype 70000 is too large for the MessagePack ext type (max 255)"`
+- Throws [type_error.316](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) if a string or object key in `j` is not valid UTF-8 and `error_handler` is `strict`
 
 ## Complexity
 
@@ -123,4 +129,5 @@ Output:
 
 - Added in version 2.0.9.
 - Throws `out_of_range.412` and `out_of_range.415` since version 3.13.0 unreleased.
+- Added `error_handler` parameter in version 3.13.0 unreleased. Its default, `keep`, writes the bytes of a string or object key that is not valid UTF-8 unchanged, as before.
 - Fixed in version 3.13.0 unreleased to serialize `number_integer_t`/`number_unsigned_t` pairs of different width correctly; before, integers could be serialized with the wrong value if `number_integer_t` was narrower than `number_unsigned_t`.

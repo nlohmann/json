@@ -226,6 +226,12 @@ this requirement is not met.
 
   When used without parentheses around an empty initializer list, `basic_json()` is called instead of this function, yielding the JSON `null` value.
 
+- Overload 4:
+
+  Implicit conversion
+
+  The conversion is implicit unless [`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md) is defined to `0` and `BasicJsonType::string_t` differs from `string_t`. In that case, the constructor is `explicit`, so a JSON value with a different string type is no longer silently converted, for example when it is passed to a function taking `const json&`. Write `json(other)` or `other.get<json>()` instead.
+
 - Overload 7:
 
   Preconditions
@@ -824,7 +830,7 @@ null
 1. Since version 1.0.0.
 1. Since version 1.0.0.
 1. Since version 2.1.0.
-1. Since version 3.2.0.
+1. Since version 3.2.0. Explicit for different string types if `JSON_USE_IMPLICIT_CONVERSIONS` is `0` since version 3.13.0 unreleased.
 1. Since version 1.0.0.
 1. Since version 1.0.0.
 1. Since version 1.0.0. Fixed in version 3.13.0 unreleased to also check the iterator range for binary values; before, a range that did not cover the whole value (such as `(end(), end())`) was accepted and the whole binary value was copied, unlike the other primitive types.

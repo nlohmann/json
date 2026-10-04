@@ -34,9 +34,9 @@ The code below includes the library without the literals and adds them in a sing
 
 ```
 // compiled with -DJSON_NO_AUTOMATIC_UDLS for the whole project
-#include <nlohmann/json.hpp>
 
 // this file uses the literals, so it includes them explicitly
+// (the header includes <nlohmann/json.hpp> itself)
 #include <nlohmann/json_literals.hpp>
 
 int main()
@@ -53,6 +53,7 @@ Without the include of `<nlohmann/json_literals.hpp>`, the code would fail to co
 - [`operator""_json`](https://json.nlohmann.me/api/operator_literal_json/index.md)
 - [`operator""_json_pointer`](https://json.nlohmann.me/api/operator_literal_json_pointer/index.md)
 - [`JSON_USE_GLOBAL_UDLS`](https://json.nlohmann.me/api/macros/json_use_global_udls/index.md) - place user-defined string literals (UDLs) into the global namespace
+- [Compile times](https://json.nlohmann.me/integration/compile_times/index.md) - options to reduce compile times
 
 ## Version history
 

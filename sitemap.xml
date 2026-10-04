@@ -61,6 +61,10 @@
          <lastmod>2026-10-04</lastmod>
     </url>
     <url>
+         <loc>https://json.nlohmann.me/api/basic_json/as_base_class/</loc>
+         <lastmod>2026-10-04</lastmod>
+    </url>
+    <url>
          <loc>https://json.nlohmann.me/api/basic_json/at/</loc>
          <lastmod>2026-10-04</lastmod>
     </url>
@@ -765,6 +769,10 @@
          <lastmod>2026-10-04</lastmod>
     </url>
     <url>
+         <loc>https://json.nlohmann.me/api/macros/json_strict_binary_utf8/</loc>
+         <lastmod>2026-10-04</lastmod>
+    </url>
+    <url>
          <loc>https://json.nlohmann.me/api/macros/json_strict_nul_handling/</loc>
          <lastmod>2026-10-04</lastmod>
     </url>
@@ -1066,6 +1074,10 @@
     </url>
     <url>
          <loc>https://json.nlohmann.me/integration/cmake/</loc>
+         <lastmod>2026-10-04</lastmod>
+    </url>
+    <url>
+         <loc>https://json.nlohmann.me/integration/compile_times/</loc>
          <lastmod>2026-10-04</lastmod>
     </url>
     <url>

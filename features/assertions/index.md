@@ -12,11 +12,11 @@ The behavior of runtime assertions can be changed by defining macro [`JSON_ASSER
 
 ## Function with runtime assertions
 
-### Unchecked object access to a const value
+### Unchecked access to a const value
 
-Function [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) implements unchecked access for objects. Whereas a missing key is added in the case of non-const objects, accessing a const object with a missing key is undefined behavior (think of a dereferenced null pointer) and yields a runtime assertion.
+Function [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) implements unchecked access for arrays and objects. Whereas a missing element is added in the case of non-const values, accessing a const value with a missing object key or an invalid array index is undefined behavior (think of a dereferenced null pointer) and yields a runtime assertion. This also applies to a [JSON pointer](https://json.nlohmann.me/features/json_pointer/index.md) that refers to a missing key or an invalid index.
 
-If you are not sure whether an element in an object exists, use checked access with the [`at` function](https://json.nlohmann.me/api/basic_json/at/index.md) or call the [`contains` function](https://json.nlohmann.me/api/basic_json/contains/index.md) before.
+If you are not sure whether an element exists, use checked access with the [`at` function](https://json.nlohmann.me/api/basic_json/at/index.md) or call the [`contains` function](https://json.nlohmann.me/api/basic_json/contains/index.md) before.
 
 See also the documentation on [element access](https://json.nlohmann.me/features/element_access/index.md).
 
@@ -39,7 +39,30 @@ int main()
 Output:
 
 ```
-Assertion failed: (m_value.object->find(key) != m_value.object->end()), function operator[], file json.hpp, line 2144.
+Assertion failed: (it != m_data.m_value.object->end()), function operator[], file json.hpp, line 28795.
+```
+
+Example 2: Invalid array index in a JSON pointer
+
+The following code will trigger an assertion at runtime:
+
+```
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
+using namespace nlohmann::literals;
+
+int main()
+{
+    const json j = {{"array", {1, 2, 3}}};
+    auto v = j["/array/5"_json_pointer];
+}
+```
+
+Output:
+
+```
+Assertion failed: (idx < m_data.m_value.array->size()), function operator[], file json.hpp, line 28758.
 ```
 
 ### Constructing from an uninitialized iterator range

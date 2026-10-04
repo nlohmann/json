@@ -5,15 +5,18 @@
 static std::vector<std::uint8_t> to_bjdata(const basic_json& j,
                                            const bool use_size = false,
                                            const bool use_type = false,
-                                           const bjdata_version_t version = bjdata_version_t::draft2);
+                                           const bjdata_version_t version = bjdata_version_t::draft2,
+                                           const error_handler_t error_handler = error_handler_t::keep);
 
 // (2)
 static void to_bjdata(const basic_json& j, detail::output_adapter<std::uint8_t> o,
                       const bool use_size = false, const bool use_type = false,
-                      const bjdata_version_t version = bjdata_version_t::draft2);
+                      const bjdata_version_t version = bjdata_version_t::draft2,
+                      const error_handler_t error_handler = error_handler_t::keep);
 static void to_bjdata(const basic_json& j, detail::output_adapter<char> o,
                       const bool use_size = false, const bool use_type = false,
-                      const bjdata_version_t version = bjdata_version_t::draft2);
+                      const bjdata_version_t version = bjdata_version_t::draft2,
+                      const error_handler_t error_handler = error_handler_t::keep);
 ```
 
 Serializes a given JSON value `j` to a byte vector using the BJData (Binary JData) serialization format. BJData aims to be more compact than JSON itself, yet more efficient to parse.
@@ -35,6 +38,8 @@ The exact mapping and its limitations are described on a [dedicated page](https:
 
 `version` (in) : which version of BJData to use (see note on "Binary values" on [BJData](https://json.nlohmann.me/features/binary_formats/bjdata/index.md)); optional, `bjdata_version_t::draft2` by default.
 
+`error_handler` (in) : how to treat a string or object key in `j` that is not valid UTF-8; see [`error_handler_t`](https://json.nlohmann.me/api/basic_json/error_handler_t/index.md). The default, `keep`, writes the ill-formed bytes to the output as is, as every version of `to_bjdata` did before this parameter was added; `strict` throws; `replace`/`ignore` sanitize it the same way [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) would. If [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) is enabled, the default is `strict` instead.
+
 ## Return value
 
 1. BJData serialization as byte vector
@@ -47,6 +52,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 ## Exceptions
 
 - Throws [`other_error.502`](https://json.nlohmann.me/home/exceptions/#jsonexceptionother_error502) if `use_type` is true and `use_size` is false, and `j` contains a non-empty array, object, or binary value.
+- Throws [type_error.316](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) if a string or object key in `j` is not valid UTF-8 and `error_handler` is `strict` (the default only if [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) is enabled)
 
 ## Complexity
 
@@ -180,3 +186,4 @@ Output:
 
 - Added in version 3.11.0.
 - BJData version parameter (for draft3 binary encoding) added in version 3.12.0.
+- Added `error_handler` parameter in version 3.13.0 unreleased. Its default, `keep`, writes the bytes of a string or object key that is not valid UTF-8 unchanged, as before; `strict` (the default if [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) is enabled) throws `type_error.316`.

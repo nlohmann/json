@@ -63,6 +63,7 @@ JSON for Modern C++ is a C++11 header-only library implementing a JSON value typ
 
 - [Integration](https://json.nlohmann.me/integration/index.md)
 - [CMake](https://json.nlohmann.me/integration/cmake/index.md)
+- [Compile times](https://json.nlohmann.me/integration/compile_times/index.md)
 - [Migration Guide](https://json.nlohmann.me/integration/migration_guide/index.md)
 - [Package Managers](https://json.nlohmann.me/integration/package_managers/index.md)
 - [Pkg-config](https://json.nlohmann.me/integration/pkg-config/index.md)
@@ -83,6 +84,7 @@ JSON for Modern C++ is a C++11 header-only library implementing a JSON value typ
 - [accept](https://json.nlohmann.me/api/basic_json/accept/index.md)
 - [array](https://json.nlohmann.me/api/basic_json/array/index.md)
 - [array_t](https://json.nlohmann.me/api/basic_json/array_t/index.md)
+- [as_base_class](https://json.nlohmann.me/api/basic_json/as_base_class/index.md)
 - [at](https://json.nlohmann.me/api/basic_json/at/index.md)
 - [back](https://json.nlohmann.me/api/basic_json/back/index.md)
 - [(Constructor)](https://json.nlohmann.me/api/basic_json/basic_json/index.md)
@@ -259,6 +261,7 @@ JSON for Modern C++ is a C++11 header-only library implementing a JSON value typ
 - [JSON_PRECISE_STREAM_POSITION](https://json.nlohmann.me/api/macros/json_precise_stream_position/index.md)
 - [JSON_SKIP_LIBRARY_VERSION_CHECK](https://json.nlohmann.me/api/macros/json_skip_library_version_check/index.md)
 - [JSON_SKIP_UNSUPPORTED_COMPILER_CHECK](https://json.nlohmann.me/api/macros/json_skip_unsupported_compiler_check/index.md)
+- [JSON_STRICT_BINARY_UTF8](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md)
 - [JSON_STRICT_NUL_HANDLING](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md)
 - [JSON_CATCH_USER, JSON_THROW_USER, JSON_TRY_USER](https://json.nlohmann.me/api/macros/json_throw_user/index.md)
 - [JSON_USE_GLOBAL_UDLS](https://json.nlohmann.me/api/macros/json_use_global_udls/index.md)

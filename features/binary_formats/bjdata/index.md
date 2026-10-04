@@ -54,6 +54,10 @@ The following values can **not** be converted to a BJData value:
 
 - strings with more than 18446744073709551615 bytes, i.e., 264-1 bytes (theoretical)
 
+UTF-8 validation of string values and object keys
+
+BJData strings must use UTF-8 encoding. By default (the [`error_handler`](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md) parameter left at `keep`), `to_bjdata()` writes the bytes of string values and object keys unchanged, even if they are not valid UTF-8. With `error_handler_t::strict`, it throws [`type_error.316`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) for ill-formed UTF-8 instead; `replace`/`ignore` sanitize the string. [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) makes `strict` the default.
+
 Unused BJData markers
 
 The following markers are not used in the conversion:
@@ -229,6 +233,10 @@ The library maps BJData types to JSON value types as follows:
 Complete mapping
 
 The mapping is **complete** in the sense that any BJData value can be converted to a JSON value.
+
+Ill-formed UTF-8 in string values and object keys
+
+BJData strings must use UTF-8 encoding, but checking it on read is opt-in: with the [`error_handler`](https://json.nlohmann.me/api/basic_json/from_bjdata/index.md) parameter left at `keep` (the default), `from_bjdata()` accepts a string value or object key whose bytes are not valid UTF-8 and hands them back unchanged. Passing `error_handler_t::strict` makes `from_bjdata()` check and throw [`parse_error.113`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113) for ill-formed UTF-8, and `replace`/`ignore` sanitize the string instead of keeping it. However, [`dump()`](https://json.nlohmann.me/api/basic_json/dump/index.md) still requires valid UTF-8 and throws [`type_error.316`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) for a value read with the default `keep` handler, unless an error handler is passed that replaces or ignores the ill-formed bytes. `to_bjdata()`'s own `error_handler` parameter defaults to `keep` (see above), so such a value is written back unchanged.
 
 Round trips
 

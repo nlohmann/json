@@ -6,14 +6,16 @@ template<typename InputType>
 static basic_json from_cbor(InputType&& i,
                             const bool strict = true,
                             const bool allow_exceptions = true,
-                            const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error);
+                            const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error,
+                            const error_handler_t error_handler = error_handler_t::keep);
 
 // (2)
 template<typename IteratorType, typename SentinelType = IteratorType>
 static basic_json from_cbor(IteratorType first, SentinelType last,
                             const bool strict = true,
                             const bool allow_exceptions = true,
-                            const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error);
+                            const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error,
+                            const error_handler_t error_handler = error_handler_t::keep);
 ```
 
 Deserializes a given input to a JSON value using the CBOR (Concise Binary Object Representation) serialization format.
@@ -59,6 +61,8 @@ The exact mapping and its limitations are described on a [dedicated page](https:
 
 `tag_handler` (in) : how to treat CBOR tags (optional, `error` by default); see [`cbor_tag_handler_t`](https://json.nlohmann.me/api/basic_json/cbor_tag_handler_t/index.md) for more information
 
+`error_handler` (in) : how to treat a string value or object key that is not valid UTF-8; see [`error_handler_t`](https://json.nlohmann.me/api/basic_json/error_handler_t/index.md). CBOR does not require a decoder to reject ill-formed UTF-8, so checking is opt-in: the default, `keep`, does not check at all, as every binary reader did before this parameter was added; `strict` checks and throws; `replace`/`ignore` sanitize the string the same way [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) would
+
 ## Return value
 
 deserialized JSON value; in case of a parse error and `allow_exceptions` set to `false`, the return value will be `value_t::discarded`. The latter can be checked with [`is_discarded`](https://json.nlohmann.me/api/basic_json/is_discarded/index.md).
@@ -71,7 +75,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 - Throws [parse_error.110](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error110) if the given input ends prematurely or the end of the file was not reached when `strict` was set to true
 - Throws [parse_error.112](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error112) if unsupported features from CBOR were used in the given input or if the input is not valid CBOR
-- Throws [parse_error.113](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113) if a map key is not a string (keys of other types are not supported, as JSON object keys are always strings) or a string is malformed
+- Throws [parse_error.113](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error113) if a map key is not a string (keys of other types are not supported, as JSON object keys are always strings), or if a string value or object key is not valid UTF-8 and `error_handler` is `strict`
 
 ## Complexity
 
@@ -133,6 +137,7 @@ Output:
 - Added `tag_handler` parameter in version 3.9.0.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0 unreleased.
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0 unreleased.
+- Added `error_handler` parameter in version 3.13.0 unreleased.
 
 Deprecation
 

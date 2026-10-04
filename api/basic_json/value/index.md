@@ -327,5 +327,5 @@ Output:
 ## Version history
 
 1. Added in version 1.0.0. Changed parameter `default_value` type from `const ValueType&` to `ValueType&&` in version 3.11.0. Deleted overload for integral key types added in version 3.13.0 unreleased to reject such calls at compile time instead of causing undefined behavior at runtime.
-1. Added in version 3.11.0. Made `ValueType` the first template parameter in version 3.11.2.
+1. Added in version 3.11.0. Made `ValueType` the first template parameter in version 3.11.2. Fixed in version 3.13.0 unreleased to consistently accept `std::string_view`-convertible keys, as already supported by [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md), [`at`](https://json.nlohmann.me/api/basic_json/at/index.md), [`find`](https://json.nlohmann.me/api/basic_json/find/index.md), and other lookup functions.
 1. Added in version 2.0.2. Extended to work with arrays in version 3.13.0 unreleased, including fixing an issue where resolving `ptr` through an array unexpectedly threw `out_of_range` instead of returning the resolved element (or `default_value`, as documented).

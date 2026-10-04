@@ -179,6 +179,7 @@ Direct access to the stored value of a JSON value.
 - [**get_ref**](https://json.nlohmann.me/api/basic_json/get_ref/index.md) - get a reference value
 - [**operator ValueType**](https://json.nlohmann.me/api/basic_json/operator_ValueType/index.md) - get a value
 - [**get_binary**](https://json.nlohmann.me/api/basic_json/get_binary/index.md) - get a binary value
+- [**as_base_class**](https://json.nlohmann.me/api/basic_json/as_base_class/index.md) - access the custom base class
 
 ### Element access
 

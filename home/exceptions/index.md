@@ -405,7 +405,7 @@ Example messages
 
 ### json.exception.parse_error.113
 
-A string could not be read from a [binary format](https://json.nlohmann.me/features/binary_formats/index.md): either a value that is not a string was read where one was required (for instance as a map key), the string's length specification is invalid, or the string's bytes are not valid UTF-8.
+A string could not be read from a [binary format](https://json.nlohmann.me/features/binary_formats/index.md): either a value that is not a string was read where one was required (for instance as a map key), the string's length specification is invalid, or the string's bytes are not valid UTF-8 and the `error_handler` parameter of the corresponding `from_*` function is set to `strict`. By default (`error_handler_t::keep`), the bytes of a string are not checked for valid UTF-8 on read; see the ill-formed UTF-8 notes on the individual [binary format](https://json.nlohmann.me/features/binary_formats/index.md) pages for how such a string is handled depending on `error_handler`.
 
 CBOR and MessagePack allow map keys of any type, but JSON object keys are always strings. Maps with keys of any other type (for instance integers or `null`) are therefore not supported; see the notes on [CBOR](https://json.nlohmann.me/features/binary_formats/cbor/index.md) and [MessagePack](https://json.nlohmann.me/features/binary_formats/messagepack/index.md).
 
@@ -861,6 +861,8 @@ Calling `unflatten()` on an object `{"/1", [1,2,3]}`:
 ### json.exception.type_error.316
 
 The [`dump()`](https://json.nlohmann.me/api/basic_json/dump/index.md) function only works with UTF-8 encoded strings; that is, if you assign a `std::string` to a JSON value, make sure it is UTF-8 encoded. See the FAQ entry on [serializing untrusted or invalid UTF-8](https://json.nlohmann.me/home/faq/#serializing-untrusted-or-invalid-utf-8) for background and the recommended fix.
+
+The binary writers [`to_cbor()`](https://json.nlohmann.me/api/basic_json/to_cbor/index.md), [`to_ubjson()`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md), [`to_bjdata()`](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md), and [`to_bson()`](https://json.nlohmann.me/api/basic_json/to_bson/index.md) throw this exception as well for a string value or object key that is not valid UTF-8 if their `error_handler` is `strict` (the default if [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) is enabled). So does [`to_msgpack()`](https://json.nlohmann.me/api/basic_json/to_msgpack/index.md) if `error_handler_t::strict` is passed.
 
 Example message
 

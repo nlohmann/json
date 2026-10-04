@@ -309,5 +309,5 @@ Output:
 1. Added in version 1.0.0. Added support for binary types in version 3.8.0.
 1. Added in version 1.0.0. Added support for binary types in version 3.8.0.
 1. Added in version 1.0.0.
-1. Added in version 3.11.0.
+1. Added in version 3.11.0. Fixed in version 3.13.0 unreleased to consistently accept `std::string_view`-convertible keys, as already supported by [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md), [`at`](https://json.nlohmann.me/api/basic_json/at/index.md), [`value`](https://json.nlohmann.me/api/basic_json/value/index.md), and other lookup functions.
 1. Added in version 1.0.0.

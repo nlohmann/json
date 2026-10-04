@@ -17,7 +17,7 @@ Serialization function for JSON values. The function tries to mimic Python's [`j
 
 `ensure_ascii` (in) : If `ensure_ascii` is true, all non-ASCII characters in the output are escaped with `\uXXXX` sequences, and the result consists of ASCII characters only.
 
-`error_handler` (in) : how to react on decoding errors; there are three possible values (see [`error_handler_t`](https://json.nlohmann.me/api/basic_json/error_handler_t/index.md): `strict` (throws an exception in case a decoding error occurs; default), `replace` (replace invalid UTF-8 sequences with U+FFFD), and `ignore` (ignore invalid UTF-8 sequences during serialization; all valid bytes are copied to the output unchanged, and invalid bytes are dropped)).
+`error_handler` (in) : how to react on decoding errors; there are four possible values (see [`error_handler_t`](https://json.nlohmann.me/api/basic_json/error_handler_t/index.md): `strict` (throws an exception in case a decoding error occurs; default), `replace` (replace invalid UTF-8 sequences with U+FFFD), `ignore` (ignore invalid UTF-8 sequences during serialization; all valid bytes are copied to the output unchanged, and invalid bytes are dropped), and `keep` (write the ill-formed bytes to the output as is, without escaping them, even if `ensure_ascii` is `true`; the result is then not valid UTF-8, but equals the input bytes exactly, and well-formed characters around the ill-formed bytes are still escaped as usual)).
 
 ## Return value
 
@@ -177,3 +177,4 @@ string with ignored invalid characters: "äü"
 - Indentation character `indent_char`, option `ensure_ascii` and exceptions added in version 3.0.0.
 - Error handlers added in version 3.4.0.
 - Serialization of binary values added in version 3.8.0.
+- Error handler `keep` added in version 3.13.0 unreleased.

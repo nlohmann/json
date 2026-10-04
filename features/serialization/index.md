@@ -180,7 +180,8 @@ int main()
               << j_invalid.dump(-1, ' ', false, json::error_handler_t::replace)
               << "\nstring with ignored invalid characters: "
               << j_invalid.dump(-1, ' ', false, json::error_handler_t::ignore)
-              << '\n';
+              << "\nstring with the invalid byte kept as is (" << j_invalid.dump(-1, ' ', false, json::error_handler_t::keep).size()
+              << " bytes, not valid UTF-8 itself)\n";
 }
 ```
 
@@ -190,6 +191,7 @@ Output:
 [json.exception.type_error.316] invalid UTF-8 byte at index 2: 0xA9
 string with replaced invalid characters: "ä�ü"
 string with ignored invalid characters: "äü"
+string with the invalid byte kept as is (7 bytes, not valid UTF-8 itself)
 ```
 
 Avoiding invalid UTF-8
