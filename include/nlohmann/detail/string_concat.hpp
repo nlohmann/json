@@ -39,7 +39,6 @@ inline std::size_t concat_length(const char /*c*/, const Args& ... rest)
 template<typename... Args>
 inline std::size_t concat_length(const char* cstr, const Args& ... rest)
 {
-    // cppcheck-suppress ignoredReturnValue
     return ::strlen(cstr) + concat_length(rest...);
 }
 

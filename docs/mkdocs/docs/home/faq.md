@@ -305,6 +305,51 @@ Only very old NDKs (before r18), which defaulted to GCC and `gnustl`, lacked C++
 `std::to_string`. If you run into this, update to a current NDK.
 
 
+### Incomplete `detector` type with GCC < 11
+
+!!! question
+
+    Why does GCC 10 or older fail with `invalid use of incomplete type 'struct nlohmann::detail::detector<..., to_json_function, ...>'` for a type that holds an `optional` member?
+
+This happens with GCC 10 and older in C++11/C++14 mode when all of these hold:
+
+- a class `Holder` has an `optional<Dummy>` member (e.g., `boost::optional`),
+- `Dummy` has a constructor taking a `json` value, and
+- `to_json` for `Holder` is a free function in the namespace of `Dummy`.
+
+```cpp
+class Dummy {
+  public:
+    explicit Dummy(const nlohmann::json& j);
+};
+
+class Holder {
+    boost::optional<Dummy> d;
+};
+
+void to_json(nlohmann::json& j, const Holder& h);  // triggers the error
+```
+
+To decide whether `Dummy` is copyable, the compiler checks whether a `Dummy` can be converted to `json`. That check
+looks up `to_json` via argument-dependent lookup, finds the unrelated `to_json` for `Holder`, and eventually asks again
+whether `Dummy` is copyable. GCC before version 11 turns this cycle into a hard error; GCC 11 and later, Clang, and
+C++17 mode compile the code. The same error shows up without this library whenever a constrained converting constructor
+is involved, so the library can't avoid it.
+
+To work around this, define `to_json` (and `from_json`) as a *hidden friend* inside the class. That way,
+argument-dependent lookup only finds it for `Holder`:
+
+```cpp
+class Holder {
+    boost::optional<Dummy> d;
+
+    friend void to_json(nlohmann::json& j, const Holder& h) { /* ... */ }
+};
+```
+
+The [`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](../api/macros/nlohmann_define_type_intrusive.md) macros define hidden friends as
+well. See [#3669](https://github.com/nlohmann/json/issues/3669) for details.
+
 ### Missing STL function
 
 !!! question "Questions"
