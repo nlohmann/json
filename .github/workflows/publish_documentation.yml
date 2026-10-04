@@ -7,6 +7,16 @@ on:
       - develop
     paths:
       - docs/mkdocs/**
+      # the site also embeds these files via pymdownx.snippets
+      # (mkdocs.yml sets restrict_base_path: false for this)
+      - .clang-tidy
+      - .github/CODE_OF_CONDUCT.md
+      - .github/CONTRIBUTING.md
+      - .github/SECURITY.md
+      - cmake/clang_flags.cmake
+      - cmake/gcc_flags.cmake
+      - tests/fmt_formatter/project/main.cpp
+      - tools/astyle/.astylerc
   workflow_dispatch:
 
 # we don't want to have concurrent jobs, and we don't want to cancel running jobs to avoid broken publications
@@ -23,7 +33,7 @@ jobs:
       contents: write
 
     if: github.repository == 'nlohmann/json'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -31,6 +41,11 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # the git-revision-date-localized plugin needs the history for correct "last update" dates and so the
+          # strict build does not fail on a shallow clone
+          fetch-depth: 0
 
       - name: Install virtual environment
         run: make install_venv -C docs/mkdocs

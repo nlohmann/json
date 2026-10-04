@@ -5,7 +5,8 @@
 You can use the `nlohmann_json::nlohmann_json` interface target in CMake. This target populates the appropriate usage
 requirements for [`INTERFACE_INCLUDE_DIRECTORIES`](https://cmake.org/cmake/help/latest/prop_tgt/INTERFACE_INCLUDE_DIRECTORIES.html)
 to point to the appropriate include directories and [`INTERFACE_COMPILE_FEATURES`](https://cmake.org/cmake/help/latest/prop_tgt/INTERFACE_COMPILE_FEATURES.html)
-for the necessary C++11 flags.
+for the necessary C++11 flags. Most [package managers](package_managers.md) that provide a CMake package configuration
+for this library expose this same target.
 
 ### External
 
@@ -138,7 +139,7 @@ Enable [extended diagnostic messages](../home/exceptions.md#extended-diagnostic-
 !!! warning "Does not apply to a pre-installed package"
 
     This option only takes effect when building nlohmann/json from source as part of your own
-    CMake project (e.g. via [`FetchContent`](#fetchcontent) or [`add_subdirectory`](#external)).
+    CMake project (e.g. via [`FetchContent`](#fetchcontent) or [`add_subdirectory`](#embedded)).
     It has **no effect** on a package that was already built and installed elsewhere (Homebrew,
     vcpkg, a system package, etc.) — the resulting compile definition is baked into the exported
     `nlohmann_jsonTargets.cmake` at install time, and `set(JSON_Diagnostics ON)` before
@@ -169,6 +170,12 @@ Enable position diagnostics by defining macro [`JSON_DIAGNOSTIC_POSITIONS`](../a
 Disable default `enum` serialization by defining the macro
 [`JSON_DISABLE_ENUM_SERIALIZATION`](../api/macros/json_disable_enum_serialization.md). This option is `OFF` by default.
 
+### `JSON_DisableTupleReferenceConversion`
+
+Disable the conversion from a one-element `std::tuple` holding a reference to a JSON value by defining the macro
+[`JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`](../api/macros/json_disable_tuple_reference_conversion.md). This option is
+`OFF` by default.
+
 ### `JSON_FastTests`
 
 Skip expensive/slow test suites. This option is `OFF` by default. Depends on `JSON_BuildTests`.
@@ -176,15 +183,22 @@ Skip expensive/slow test suites. This option is `OFF` by default. Depends on `JS
 ### `JSON_GlobalUDLs`
 
 Place user-defined string literals in the global namespace by defining the macro
-[`JSON_USE_GLOBAL_UDLS`](../api/macros/json_use_global_udls.md). This option is `OFF` by default.
+[`JSON_USE_GLOBAL_UDLS`](../api/macros/json_use_global_udls.md). This option is `ON` by default; see the
+[migration guide](migration_guide.md#import-namespace-literals-for-udls) for how to prepare code for the next major
+release, where the literals are removed from the global namespace.
 
 ### `JSON_ImplicitConversions`
 
-Enable implicit conversions by defining macro [`JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md). This option is `ON` by default.
+Enable implicit conversions by defining macro
+[`JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md). This option is `ON` by default; see
+the [migration guide](migration_guide.md#replace-implicit-conversions) for how to prepare code for the next major
+release, where implicit conversions are switched off by default.
 
 ### `JSON_Install`
 
-Install CMake targets during install step. This option is `ON` by default if the library's CMake project is the top project.
+Install CMake targets during install step. This option is `ON` by default if the library's CMake project is the top
+project. Installing also generates a [pkg-config](pkg-config.md) file for tools that rely on `pkg-config` instead of
+CMake.
 
 ### `JSON_LegacyDiscardedValueComparison`
 
@@ -198,10 +212,22 @@ Use the non-amalgamated version of the library. This option is `ON` by default.
 
 Treat the library headers like system headers (i.e., adding `SYSTEM` to the [`target_include_directories`](https://cmake.org/cmake/help/latest/command/target_include_directories.html) call) to check for this library by tools like Clang-Tidy. This option is `OFF` by default.
 
+### `JSON_StrictBinaryUTF8`
+
+Check string values and object keys for valid UTF-8 in the CBOR, UBJSON, BJData, and BSON writers, by defining the
+macro [`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md). This option is `OFF` by default.
+
 ### `JSON_StrictNulHandling`
 
 Reject a `'\0'` (NUL) byte in the input instead of treating it as end of input, by defining the macro
 [`JSON_STRICT_NUL_HANDLING`](../api/macros/json_strict_nul_handling.md). This option is `OFF` by default.
+
+### `JSON_TestSimdutf`
+
+Build the unit tests against the [simdutf](https://github.com/simdutf/simdutf) UTF-8 validation backend by defining
+[`JSON_USE_SIMDUTF`](../api/macros/json_use_simdutf.md) for every test target. simdutf is fetched during configuration;
+its version is set by the cache variable `JSON_SIMDUTF_VERSION`. This option is `OFF` by default. Depends on
+`JSON_BuildTests`.
 
 ### `JSON_Valgrind`
 

@@ -55,11 +55,13 @@ option(JSON_Diagnostic_Positions           "Enable diagnostic positions." OFF)
 option(JSON_GlobalUDLs                     "Place user-defined string literals in the global namespace." ON)
 option(JSON_ImplicitConversions            "Enable implicit conversions." ON)
 option(JSON_DisableEnumSerialization       "Disable default integer enum serialization." OFF)
+option(JSON_DisableTupleReferenceConversion "Disable conversion from a one-element tuple of a JSON reference." OFF)
 option(JSON_LegacyDiscardedValueComparison "Enable legacy discarded value comparison." OFF)
 option(JSON_Install                        "Install CMake targets during install step." ${MAIN_PROJECT})
 option(JSON_MultipleHeaders                "Use non-amalgamated version of the library." ON)
 option(JSON_SystemInclude                  "Include as system headers (skip for clang-tidy)." OFF)
 option(JSON_StrictNulHandling              "Build with strict NUL-byte handling enabled." OFF)
+option(JSON_StrictBinaryUTF8               "Build with UTF-8 checks in the CBOR, UBJSON, BJData, and BSON writers enabled." OFF)
 
 if (JSON_CI)
     include(ci)
@@ -101,6 +103,10 @@ if (JSON_DisableEnumSerialization)
     message(STATUS "Enum integer serialization is disabled (JSON_DISABLE_ENUM_SERIALIZATION=1)")
 endif()
 
+if (JSON_DisableTupleReferenceConversion)
+    message(STATUS "Tuple reference conversion is disabled (JSON_DISABLE_TUPLE_REFERENCE_CONVERSION=1)")
+endif()
+
 if (JSON_LegacyDiscardedValueComparison)
     message(STATUS "Legacy discarded value comparison enabled (JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1)")
 endif()
@@ -111,6 +117,10 @@ endif()
 
 if (JSON_StrictNulHandling)
     message(STATUS "Strict NUL-byte handling enabled (JSON_STRICT_NUL_HANDLING=1)")
+endif()
+
+if (JSON_StrictBinaryUTF8)
+    message(STATUS "Strict UTF-8 checks in binary writers enabled (JSON_STRICT_BINARY_UTF8=1)")
 endif()
 
 if (JSON_Diagnostic_Positions)
@@ -143,10 +153,12 @@ target_compile_definitions(
     $<$<NOT:$<BOOL:${JSON_GlobalUDLs}>>:JSON_USE_GLOBAL_UDLS=0>
     $<$<NOT:$<BOOL:${JSON_ImplicitConversions}>>:JSON_USE_IMPLICIT_CONVERSIONS=0>
     $<$<BOOL:${JSON_DisableEnumSerialization}>:JSON_DISABLE_ENUM_SERIALIZATION=1>
+    $<$<BOOL:${JSON_DisableTupleReferenceConversion}>:JSON_DISABLE_TUPLE_REFERENCE_CONVERSION=1>
     $<$<BOOL:${JSON_Diagnostics}>:JSON_DIAGNOSTICS=1>
     $<$<BOOL:${JSON_Diagnostic_Positions}>:JSON_DIAGNOSTIC_POSITIONS=1>
     $<$<BOOL:${JSON_LegacyDiscardedValueComparison}>:JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1>
     $<$<BOOL:${JSON_StrictNulHandling}>:JSON_STRICT_NUL_HANDLING=1>
+    $<$<BOOL:${JSON_StrictBinaryUTF8}>:JSON_STRICT_BINARY_UTF8=1>
 )
 
 target_include_directories(

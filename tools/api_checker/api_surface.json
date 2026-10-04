@@ -221,6 +221,24 @@
       "tier": "type"
     },
     {
+      "identity_name": "as_base_class",
+      "kind": "CXX_METHOD",
+      "name": "as_base_class",
+      "pretty_signature": "nlohmann::basic_json::as_base_class",
+      "scope": "nlohmann::basic_json",
+      "signature": "const json_base_class_t& as_base_class() const noexcept",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "as_base_class",
+      "kind": "CXX_METHOD",
+      "name": "as_base_class",
+      "pretty_signature": "nlohmann::basic_json::as_base_class",
+      "scope": "nlohmann::basic_json",
+      "signature": "json_base_class_t& as_base_class() noexcept",
+      "tier": "callable"
+    },
+    {
       "identity_name": "at",
       "kind": "CXX_METHOD",
       "name": "at",
@@ -361,6 +379,15 @@
       "name": "basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>",
       "pretty_signature": "nlohmann::basic_json::basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>",
       "scope": "nlohmann::basic_json",
+      "signature": "basic_json(copy_construct_tag , const basic_json& src) noexcept(std::is_nothrow_copy_constructible<json_base_class_t>::value)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "CONSTRUCTOR",
+      "name": "basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>",
+      "pretty_signature": "nlohmann::basic_json::basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>",
+      "scope": "nlohmann::basic_json",
       "signature": "basic_json(initializer_list_t init, bool type_deduction = true, value_t manual_type = value_t::array)",
       "tier": "callable"
     },
@@ -397,7 +424,7 @@
       "name": "basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>",
       "pretty_signature": "nlohmann::basic_json::basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>",
       "scope": "nlohmann::basic_json",
-      "signature": "template < typename BasicJsonType, detail::enable_if_t < detail::is_basic_json<BasicJsonType>::value&& !std::is_same<basic_json, BasicJsonType>::value, int > = 0 > basic_json(const BasicJsonType& val) #if JSON_DIAGNOSTIC_POSITIONS",
+      "signature": "template < typename BasicJsonType, detail::enable_if_t < detail::is_basic_json<BasicJsonType>::value&& !std::is_same<basic_json, BasicJsonType>::value && !is_implicitly_convertible_basic_json<BasicJsonType>::value, int > = 0 > explicit basic_json(const BasicJsonType& val)",
       "tier": "callable"
     },
     {
@@ -406,7 +433,16 @@
       "name": "basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>",
       "pretty_signature": "nlohmann::basic_json::basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>",
       "scope": "nlohmann::basic_json",
-      "signature": "template < typename CompatibleType, typename U = detail::uncvref_t<CompatibleType>, detail::enable_if_t < !detail::is_basic_json<U>::value && detail::is_compatible_type<basic_json_t, U>::value, int > = 0 > basic_json(CompatibleType && val) noexcept(noexcept( JSONSerializer<U>::to_json(std::declval<basic_json_t&>(), std::forward<CompatibleType>(val))))",
+      "signature": "template < typename BasicJsonType, detail::enable_if_t < detail::is_basic_json<BasicJsonType>::value&& !std::is_same<basic_json, BasicJsonType>::value && is_implicitly_convertible_basic_json<BasicJsonType>::value, int > = 0 > basic_json(const BasicJsonType& val)",
+      "tier": "callable"
+    },
+    {
+      "identity_name": "(constructor)",
+      "kind": "FUNCTION_TEMPLATE",
+      "name": "basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>",
+      "pretty_signature": "nlohmann::basic_json::basic_json<ObjectType, ArrayType, StringType, BooleanType, NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>",
+      "scope": "nlohmann::basic_json",
+      "signature": "template < typename CompatibleType, typename U = detail::uncvref_t<CompatibleType>, detail::enable_if_t < !detail::is_basic_json<U>::value && detail::is_compatible_type<basic_json_t, U>::value #if JSON_DISABLE_TUPLE_REFERENCE_CONVERSION && !detail::is_basic_json_reference_tuple<basic_json_t, U>::value #endif , int > = 0 > basic_json(CompatibleType && val) noexcept(noexcept( JSONSerializer<U>::to_json(std::declval<basic_json_t&>(), std::forward<CompatibleType>(val))))",
       "tier": "callable"
     },
     {
@@ -874,7 +910,7 @@
       "name": "from_bjdata",
       "pretty_signature": "nlohmann::basic_json::from_bjdata",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename InputType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_bjdata(InputType&& i, const bool strict = true, const bool allow_exceptions = true)",
+      "signature": "template<typename InputType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_bjdata(InputType&& i, const bool strict = true, const bool allow_exceptions = true, const error_handler_t error_handler = error_handler_t::keep)",
       "tier": "callable"
     },
     {
@@ -883,7 +919,7 @@
       "name": "from_bjdata",
       "pretty_signature": "nlohmann::basic_json::from_bjdata",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename IteratorType, typename SentinelType = IteratorType, detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_bjdata(IteratorType first, SentinelType last, const bool strict = true, const bool allow_exceptions = true)",
+      "signature": "template<typename IteratorType, typename SentinelType = IteratorType, detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_bjdata(IteratorType first, SentinelType last, const bool strict = true, const bool allow_exceptions = true, const error_handler_t error_handler = error_handler_t::keep)",
       "tier": "callable"
     },
     {
@@ -919,7 +955,7 @@
       "name": "from_bson",
       "pretty_signature": "nlohmann::basic_json::from_bson",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename InputType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_bson(InputType&& i, const bool strict = true, const bool allow_exceptions = true)",
+      "signature": "template<typename InputType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_bson(InputType&& i, const bool strict = true, const bool allow_exceptions = true, const error_handler_t error_handler = error_handler_t::keep)",
       "tier": "callable"
     },
     {
@@ -928,7 +964,7 @@
       "name": "from_bson",
       "pretty_signature": "nlohmann::basic_json::from_bson",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename IteratorType, typename SentinelType = IteratorType, detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_bson(IteratorType first, SentinelType last, const bool strict = true, const bool allow_exceptions = true)",
+      "signature": "template<typename IteratorType, typename SentinelType = IteratorType, detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_bson(IteratorType first, SentinelType last, const bool strict = true, const bool allow_exceptions = true, const error_handler_t error_handler = error_handler_t::keep)",
       "tier": "callable"
     },
     {
@@ -955,7 +991,7 @@
       "name": "from_cbor",
       "pretty_signature": "nlohmann::basic_json::from_cbor",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename InputType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_cbor(InputType&& i, const bool strict = true, const bool allow_exceptions = true, const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)",
+      "signature": "template<typename InputType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_cbor(InputType&& i, const bool strict = true, const bool allow_exceptions = true, const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error, const error_handler_t error_handler = error_handler_t::keep)",
       "tier": "callable"
     },
     {
@@ -964,7 +1000,7 @@
       "name": "from_cbor",
       "pretty_signature": "nlohmann::basic_json::from_cbor",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename IteratorType, typename SentinelType = IteratorType, detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_cbor(IteratorType first, SentinelType last, const bool strict = true, const bool allow_exceptions = true, const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)",
+      "signature": "template<typename IteratorType, typename SentinelType = IteratorType, detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_cbor(IteratorType first, SentinelType last, const bool strict = true, const bool allow_exceptions = true, const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error, const error_handler_t error_handler = error_handler_t::keep)",
       "tier": "callable"
     },
     {
@@ -991,7 +1027,7 @@
       "name": "from_msgpack",
       "pretty_signature": "nlohmann::basic_json::from_msgpack",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename InputType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_msgpack(InputType&& i, const bool strict = true, const bool allow_exceptions = true)",
+      "signature": "template<typename InputType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_msgpack(InputType&& i, const bool strict = true, const bool allow_exceptions = true, const error_handler_t error_handler = error_handler_t::keep)",
       "tier": "callable"
     },
     {
@@ -1000,7 +1036,7 @@
       "name": "from_msgpack",
       "pretty_signature": "nlohmann::basic_json::from_msgpack",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename IteratorType, typename SentinelType = IteratorType, detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_msgpack(IteratorType first, SentinelType last, const bool strict = true, const bool allow_exceptions = true)",
+      "signature": "template<typename IteratorType, typename SentinelType = IteratorType, detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_msgpack(IteratorType first, SentinelType last, const bool strict = true, const bool allow_exceptions = true, const error_handler_t error_handler = error_handler_t::keep)",
       "tier": "callable"
     },
     {
@@ -1027,7 +1063,7 @@
       "name": "from_ubjson",
       "pretty_signature": "nlohmann::basic_json::from_ubjson",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename InputType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_ubjson(InputType&& i, const bool strict = true, const bool allow_exceptions = true)",
+      "signature": "template<typename InputType> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_ubjson(InputType&& i, const bool strict = true, const bool allow_exceptions = true, const error_handler_t error_handler = error_handler_t::keep)",
       "tier": "callable"
     },
     {
@@ -1036,7 +1072,7 @@
       "name": "from_ubjson",
       "pretty_signature": "nlohmann::basic_json::from_ubjson",
       "scope": "nlohmann::basic_json",
-      "signature": "template<typename IteratorType, typename SentinelType = IteratorType, detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_ubjson(IteratorType first, SentinelType last, const bool strict = true, const bool allow_exceptions = true)",
+      "signature": "template<typename IteratorType, typename SentinelType = IteratorType, detail::enable_if_t<detail::can_compare_ne<IteratorType, SentinelType>::value, int> = 0> JSON_HEDLEY_WARN_UNUSED_RESULT static basic_json from_ubjson(IteratorType first, SentinelType last, const bool strict = true, const bool allow_exceptions = true, const error_handler_t error_handler = error_handler_t::keep)",
       "tier": "callable"
     },
     {
@@ -1425,6 +1461,15 @@
       "scope": "nlohmann::basic_json",
       "signature": "JSON_HEDLEY_DEPRECATED_FOR(3.1.0, items()) static iteration_proxy<iterator> iterator_wrapper(reference ref) noexcept",
       "tier": "callable"
+    },
+    {
+      "identity_name": "json_base_class_t",
+      "kind": "TYPE_ALIAS_DECL",
+      "name": "json_base_class_t",
+      "pretty_signature": "nlohmann::basic_json::json_base_class_t",
+      "scope": "nlohmann::basic_json",
+      "signature": "using json_base_class_t = ::nlohmann::detail::json_base_class<CustomBaseClass>",
+      "tier": "type"
     },
     {
       "identity_name": "json_pointer",
@@ -1999,7 +2044,7 @@
       "name": "to_bjdata",
       "pretty_signature": "nlohmann::basic_json::to_bjdata",
       "scope": "nlohmann::basic_json",
-      "signature": "static std::vector<std::uint8_t> to_bjdata(const basic_json& j, const bool use_size = false, const bool use_type = false, const bjdata_version_t version = bjdata_version_t::draft2)",
+      "signature": "static std::vector<std::uint8_t> to_bjdata(const basic_json& j, const bool use_size = false, const bool use_type = false, const bjdata_version_t version = bjdata_version_t::draft2, const error_handler_t error_handler = detail::binary_writer_default_error_handler())",
       "tier": "callable"
     },
     {
@@ -2008,7 +2053,7 @@
       "name": "to_bjdata",
       "pretty_signature": "nlohmann::basic_json::to_bjdata",
       "scope": "nlohmann::basic_json",
-      "signature": "static void to_bjdata(const basic_json& j, detail::output_adapter<char> o, const bool use_size = false, const bool use_type = false, const bjdata_version_t version = bjdata_version_t::draft2)",
+      "signature": "static void to_bjdata(const basic_json& j, detail::output_adapter<char> o, const bool use_size = false, const bool use_type = false, const bjdata_version_t version = bjdata_version_t::draft2, const error_handler_t error_handler = detail::binary_writer_default_error_handler())",
       "tier": "callable"
     },
     {
@@ -2017,7 +2062,7 @@
       "name": "to_bjdata",
       "pretty_signature": "nlohmann::basic_json::to_bjdata",
       "scope": "nlohmann::basic_json",
-      "signature": "static void to_bjdata(const basic_json& j, detail::output_adapter<std::uint8_t> o, const bool use_size = false, const bool use_type = false, const bjdata_version_t version = bjdata_version_t::draft2)",
+      "signature": "static void to_bjdata(const basic_json& j, detail::output_adapter<std::uint8_t> o, const bool use_size = false, const bool use_type = false, const bjdata_version_t version = bjdata_version_t::draft2, const error_handler_t error_handler = detail::binary_writer_default_error_handler())",
       "tier": "callable"
     },
     {
@@ -2053,7 +2098,7 @@
       "name": "to_bson",
       "pretty_signature": "nlohmann::basic_json::to_bson",
       "scope": "nlohmann::basic_json",
-      "signature": "static std::vector<std::uint8_t> to_bson(const basic_json& j)",
+      "signature": "static std::vector<std::uint8_t> to_bson(const basic_json& j, const error_handler_t error_handler = detail::binary_writer_default_error_handler())",
       "tier": "callable"
     },
     {
@@ -2062,7 +2107,7 @@
       "name": "to_bson",
       "pretty_signature": "nlohmann::basic_json::to_bson",
       "scope": "nlohmann::basic_json",
-      "signature": "static void to_bson(const basic_json& j, detail::output_adapter<char> o)",
+      "signature": "static void to_bson(const basic_json& j, detail::output_adapter<char> o, const error_handler_t error_handler = detail::binary_writer_default_error_handler())",
       "tier": "callable"
     },
     {
@@ -2071,7 +2116,7 @@
       "name": "to_bson",
       "pretty_signature": "nlohmann::basic_json::to_bson",
       "scope": "nlohmann::basic_json",
-      "signature": "static void to_bson(const basic_json& j, detail::output_adapter<std::uint8_t> o)",
+      "signature": "static void to_bson(const basic_json& j, detail::output_adapter<std::uint8_t> o, const error_handler_t error_handler = detail::binary_writer_default_error_handler())",
       "tier": "callable"
     },
     {
@@ -2080,7 +2125,7 @@
       "name": "to_cbor",
       "pretty_signature": "nlohmann::basic_json::to_cbor",
       "scope": "nlohmann::basic_json",
-      "signature": "static std::vector<std::uint8_t> to_cbor(const basic_json& j)",
+      "signature": "static std::vector<std::uint8_t> to_cbor(const basic_json& j, const error_handler_t error_handler = detail::binary_writer_default_error_handler())",
       "tier": "callable"
     },
     {
@@ -2089,7 +2134,7 @@
       "name": "to_cbor",
       "pretty_signature": "nlohmann::basic_json::to_cbor",
       "scope": "nlohmann::basic_json",
-      "signature": "static void to_cbor(const basic_json& j, detail::output_adapter<char> o)",
+      "signature": "static void to_cbor(const basic_json& j, detail::output_adapter<char> o, const error_handler_t error_handler = detail::binary_writer_default_error_handler())",
       "tier": "callable"
     },
     {
@@ -2098,7 +2143,7 @@
       "name": "to_cbor",
       "pretty_signature": "nlohmann::basic_json::to_cbor",
       "scope": "nlohmann::basic_json",
-      "signature": "static void to_cbor(const basic_json& j, detail::output_adapter<std::uint8_t> o)",
+      "signature": "static void to_cbor(const basic_json& j, detail::output_adapter<std::uint8_t> o, const error_handler_t error_handler = detail::binary_writer_default_error_handler())",
       "tier": "callable"
     },
     {
@@ -2107,7 +2152,7 @@
       "name": "to_msgpack",
       "pretty_signature": "nlohmann::basic_json::to_msgpack",
       "scope": "nlohmann::basic_json",
-      "signature": "static std::vector<std::uint8_t> to_msgpack(const basic_json& j)",
+      "signature": "static std::vector<std::uint8_t> to_msgpack(const basic_json& j, const error_handler_t error_handler = error_handler_t::keep)",
       "tier": "callable"
     },
     {
@@ -2116,7 +2161,7 @@
       "name": "to_msgpack",
       "pretty_signature": "nlohmann::basic_json::to_msgpack",
       "scope": "nlohmann::basic_json",
-      "signature": "static void to_msgpack(const basic_json& j, detail::output_adapter<char> o)",
+      "signature": "static void to_msgpack(const basic_json& j, detail::output_adapter<char> o, const error_handler_t error_handler = error_handler_t::keep)",
       "tier": "callable"
     },
     {
@@ -2125,7 +2170,7 @@
       "name": "to_msgpack",
       "pretty_signature": "nlohmann::basic_json::to_msgpack",
       "scope": "nlohmann::basic_json",
-      "signature": "static void to_msgpack(const basic_json& j, detail::output_adapter<std::uint8_t> o)",
+      "signature": "static void to_msgpack(const basic_json& j, detail::output_adapter<std::uint8_t> o, const error_handler_t error_handler = error_handler_t::keep)",
       "tier": "callable"
     },
     {
@@ -2134,7 +2179,7 @@
       "name": "to_ubjson",
       "pretty_signature": "nlohmann::basic_json::to_ubjson",
       "scope": "nlohmann::basic_json",
-      "signature": "static std::vector<std::uint8_t> to_ubjson(const basic_json& j, const bool use_size = false, const bool use_type = false)",
+      "signature": "static std::vector<std::uint8_t> to_ubjson(const basic_json& j, const bool use_size = false, const bool use_type = false, const error_handler_t error_handler = detail::binary_writer_default_error_handler())",
       "tier": "callable"
     },
     {
@@ -2143,7 +2188,7 @@
       "name": "to_ubjson",
       "pretty_signature": "nlohmann::basic_json::to_ubjson",
       "scope": "nlohmann::basic_json",
-      "signature": "static void to_ubjson(const basic_json& j, detail::output_adapter<char> o, const bool use_size = false, const bool use_type = false)",
+      "signature": "static void to_ubjson(const basic_json& j, detail::output_adapter<char> o, const bool use_size = false, const bool use_type = false, const error_handler_t error_handler = detail::binary_writer_default_error_handler())",
       "tier": "callable"
     },
     {
@@ -2152,7 +2197,7 @@
       "name": "to_ubjson",
       "pretty_signature": "nlohmann::basic_json::to_ubjson",
       "scope": "nlohmann::basic_json",
-      "signature": "static void to_ubjson(const basic_json& j, detail::output_adapter<std::uint8_t> o, const bool use_size = false, const bool use_type = false)",
+      "signature": "static void to_ubjson(const basic_json& j, detail::output_adapter<std::uint8_t> o, const bool use_size = false, const bool use_type = false, const error_handler_t error_handler = detail::binary_writer_default_error_handler())",
       "tier": "callable"
     },
     {
@@ -2473,8 +2518,8 @@
     {
       "identity_name": "operator string_t",
       "kind": "CONVERSION_FUNCTION",
-      "name": "operator typename string_t_helper<type-parameter-0-0>::type",
-      "pretty_signature": "nlohmann::json_pointer::operator typename string_t_helper<type-parameter-0-0>::type",
+      "name": "operator nlohmann::json_pointer::string_t_helper<type-parameter-0-0>::type",
+      "pretty_signature": "nlohmann::json_pointer::operator nlohmann::json_pointer::string_t_helper<type-parameter-0-0>::type",
       "scope": "nlohmann::json_pointer",
       "signature": "JSON_HEDLEY_DEPRECATED_FOR(3.11.0, to_string()) operator string_t() const",
       "tier": "callable"
@@ -2877,11 +2922,11 @@
     },
     {
       "identity_name": "emplace",
-      "kind": "CXX_METHOD",
+      "kind": "FUNCTION_TEMPLATE",
       "name": "emplace",
       "pretty_signature": "nlohmann::ordered_map::emplace",
       "scope": "nlohmann::ordered_map",
-      "signature": "std::pair<iterator, bool> emplace(const key_type& key, T&& t)",
+      "signature": "template<class KeyType, class V, detail::enable_if_t< detail::conjunction<detail::is_usable_as_key_type<key_compare, key_type, KeyType>, detail::is_constructible<T, V>>::value, int> = 0> std::pair<iterator, bool> emplace(KeyType && key, V && t)",
       "tier": "callable"
     },
     {
@@ -2890,7 +2935,7 @@
       "name": "emplace",
       "pretty_signature": "nlohmann::ordered_map::emplace",
       "scope": "nlohmann::ordered_map",
-      "signature": "template<class KeyType, detail::enable_if_t< detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0> std::pair<iterator, bool> emplace(KeyType && key, T && t)",
+      "signature": "template<class V, detail::enable_if_t< detail::is_constructible<T, V>::value, int> = 0> std::pair<iterator, bool> emplace(const key_type& key, V && t)",
       "tier": "callable"
     },
     {

@@ -5,6 +5,11 @@ The **complete release notes** — including all changes, the download files, an
 published on the [GitHub releases page](https://github.com/nlohmann/json/releases). For a raw,
 signature-level diff of the public API between releases, see [API Changes](api_changes.md).
 
+!!! info "Unreleased changes"
+
+    This documentation is built from the `develop` branch and may describe changes that are not part of a release
+    yet. Their version numbers are followed by an <span class="unreleased-version">unreleased</span> badge.
+
 ## v3.12.0 (2025-04-11)
 
 Fixes bugs found in 3.11.3 and adds several features. All changes are backward-compatible.

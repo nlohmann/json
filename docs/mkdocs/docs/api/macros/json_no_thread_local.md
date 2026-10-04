@@ -43,6 +43,10 @@ Copying and comparing fall back to working without the call stack there, as they
     ...
     ```
 
+## See also
+
+- [FAQ: Thread safety](../../home/faq.md#thread-safety)
+
 ## Version history
 
-- Added in version 3.12.1.
+- Added in version 3.13.0.

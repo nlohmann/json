@@ -5,7 +5,9 @@
 ```
 
 When defined to `0`, implicit conversions are switched off. By default, implicit conversions are switched on. The
-value directly affects [`operator ValueType`](../basic_json/operator_ValueType.md).
+value directly affects [`operator ValueType`](../basic_json/operator_ValueType.md) and the
+[converting constructor](../basic_json/basic_json.md) from a `basic_json` specialization with a different string
+type (overload 4).
 
 ## Default definition
 
@@ -24,6 +26,8 @@ By default, implicit conversions are enabled.
     You can prepare existing code by already defining `JSON_USE_IMPLICIT_CONVERSIONS` to `0` and replace any implicit
     conversions with calls to [`get`](../basic_json/get.md).
 
+    See the [migration guide](../../integration/migration_guide.md#replace-implicit-conversions) for how to update existing code.
+
 !!! tip "Automatic migration"
 
     The community-maintained clang-tidy check `modernize-nlohmann-json-explicit-conversions` rewrites implicit
@@ -40,7 +44,7 @@ By default, implicit conversions are enabled.
 
 ## Examples
 
-??? example
+??? example "Example: implicit conversion"
 
     This is an example for an implicit conversion:
 
@@ -57,6 +61,25 @@ By default, implicit conversions are enabled.
     auto s = j.get<std::string>();
     ```
 
+??? example "Example: conversion between `basic_json` specializations"
+
+    A `basic_json` specialization with a different string type is also no longer converted implicitly when
+    `JSON_USE_IMPLICIT_CONVERSIONS` is defined to `0`:
+
+    ```cpp
+    using wjson = nlohmann::basic_json<std::map, std::vector, std::wstring>;
+
+    void load(const nlohmann::json& j);
+
+    wjson wj = /* ... */;
+    load(wj);                            // error: no implicit conversion
+    load(nlohmann::json(wj));            // OK: explicit conversion
+    load(wj.get<nlohmann::json>());      // OK: explicit conversion
+    ```
+
+    Specializations that share the same string type, such as `json` and `ordered_json`, remain implicitly
+    convertible.
+
 ## See also
 
 - [**operator ValueType**](../basic_json/operator_ValueType.md) - get a value (implicit)
@@ -66,3 +89,4 @@ By default, implicit conversions are enabled.
 ## Version history
 
 - Added in version 3.9.0.
+- Also affects the conversion between `basic_json` specializations with different string types since version 3.13.0.

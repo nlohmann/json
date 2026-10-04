@@ -105,8 +105,8 @@ This differs from `#!cpp std::map`, where the same operations are O(log n).
     | 16 000 | 3.3 ms | 181.6 ms       | 54×    |
 
     If key order matters for objects of that size, consider a container with a lookup index, such as
-    [`tsl::ordered_map`](https://github.com/Tessil/ordered-map)
-    ([integration](https://github.com/nlohmann/json/issues/546#issuecomment-304447518)), as the object type -- see
+    [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map)
+    ([integration](https://github.com/nlohmann/json/issues/485#issuecomment-333652309)), as the object type -- see
     [object order](../../features/object_order.md).
 
 ## Examples

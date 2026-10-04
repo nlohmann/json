@@ -93,9 +93,10 @@ conventions:
   add it as a regression test to the unit test of the affected format (e.g., `tests/src/unit-bjdata.cpp`), with a
   comment naming the OSS-Fuzz issue. This way the input is checked by every CI run rather than only by OSS-Fuzz, and
   it stays covered even if OSS-Fuzz later closes the report as not reproducible.
-- **Keep the fuzzer drivers and the unit tests in sync.** The round-trip checks of the UBJSON and BJData drivers are
-  also run on a fixed corpus in the unit tests (see `tests/src/round_trip_corpus.hpp` and the "round-trip invariants"
-  test cases), so a regression shows up in CI first. When a driver's checks change, change the unit tests with them.
+- **Keep the fuzzer drivers and the unit tests in sync.** The round-trip checks of the BJData, BON8, BSON, CBOR,
+  MessagePack and UBJSON drivers are also run on a fixed corpus in the unit tests (see
+  `tests/src/round_trip_corpus.hpp` and the "round-trip invariants" test cases), so a regression shows up in CI
+  first. When a driver's checks change, change the unit tests with them.
 - **Record in the report whether the bug shipped.** OSS-Fuzz asks whether a crash was a short-lived regression or
   affects a released version; answer it when the fix is merged, as it decides whether the fix needs a release note or
   a security advisory (see the [security policy](../.github/SECURITY.md)).

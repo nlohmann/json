@@ -12,13 +12,15 @@
 #include <functional> // equal_to, less
 #include <initializer_list> // initializer_list
 #include <iterator> // input_iterator_tag, iterator_traits
-#include <memory> // allocator
+#include <memory> // allocator // IWYU pragma: keep
+#include <new> // for operator new (placement new)
 #include <stdexcept> // for out_of_range
 #include <tuple> // forward_as_tuple
 #include <type_traits> // enable_if, integral_constant, is_convertible, is_nothrow_move_constructible
 #include <utility> // forward, move, pair, piecewise_construct
 #include <vector> // vector
 
+#include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
 
@@ -84,33 +86,61 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
         return *this;
     }
 
-    /// @sa https://json.nlohmann.me/api/ordered_map/emplace/
-    std::pair<iterator, bool> emplace(const key_type& key, T&& t)
+private:
+    /// @brief find the entry for @a key, for either constness of @a self
+    /// @note the single place that performs the linear key search
+    template<typename Self, typename KeyType>
+    static auto find_impl(Self& self, const KeyType& key) -> decltype(self.begin())
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        for (auto it = self.begin(); it != self.end(); ++it)
         {
-            if (m_compare(it->first, key))
+            if (self.m_compare(it->first, key))
             {
-                return {it, false};
+                return it;
             }
         }
-        append(key, std::forward<T>(t));
+        return self.end();
+    }
+
+    /// @brief remove the entry @a it points to, preserving order
+    /// @note keys are not movable, so the tail is destroyed and re-constructed in place
+    void erase_at(iterator it)
+    {
+        for (auto next = it; ++next != this->end(); ++it)
+        {
+            it->~value_type(); // Destroy but keep allocation
+            new (&*it) value_type{std::move(*next)};
+        }
+        Container::pop_back();
+    }
+
+public:
+    /// @sa https://json.nlohmann.me/api/ordered_map/emplace/
+    template<class V, detail::enable_if_t<
+                 detail::is_constructible<T, V>::value, int> = 0>
+    std::pair<iterator, bool> emplace(const key_type& key, V && t)
+    {
+        const auto it = find_impl(*this, key);
+        if (it != this->end())
+        {
+            return {it, false};
+        }
+        append(key, std::forward<V>(t));
         return {std::prev(this->end()), true};
     }
 
     /// @sa https://json.nlohmann.me/api/ordered_map/emplace/
-    template<class KeyType, detail::enable_if_t<
-                 detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
-    std::pair<iterator, bool> emplace(KeyType && key, T && t)
+    template<class KeyType, class V, detail::enable_if_t<
+                 detail::conjunction<detail::is_usable_as_key_type<key_compare, key_type, KeyType>,
+                                     detail::is_constructible<T, V>>::value, int> = 0>
+    std::pair<iterator, bool> emplace(KeyType && key, V && t)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        const auto it = find_impl(*this, key);
+        if (it != this->end())
         {
-            if (m_compare(it->first, key))
-            {
-                return {it, false};
-            }
+            return {it, false};
         }
-        append(std::forward<KeyType>(key), std::forward<T>(t));
+        append(std::forward<KeyType>(key), std::forward<V>(t));
         return {std::prev(this->end()), true};
     }
 
@@ -145,15 +175,12 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     /// @sa https://json.nlohmann.me/api/ordered_map/at/
     T& at(const key_type& key)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        const auto it = find_impl(*this, key);
+        if (it == this->end())
         {
-            if (m_compare(it->first, key))
-            {
-                return it->second;
-            }
+            JSON_THROW(std::out_of_range("key not found"));
         }
-
-        JSON_THROW(std::out_of_range("key not found"));
+        return it->second;
     }
 
     /// @sa https://json.nlohmann.me/api/ordered_map/at/
@@ -161,29 +188,23 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     T & at(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        const auto it = find_impl(*this, key);
+        if (it == this->end())
         {
-            if (m_compare(it->first, key))
-            {
-                return it->second;
-            }
+            JSON_THROW(std::out_of_range("key not found"));
         }
-
-        JSON_THROW(std::out_of_range("key not found"));
+        return it->second;
     }
 
     /// @sa https://json.nlohmann.me/api/ordered_map/at/
     const T& at(const key_type& key) const
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        const auto it = find_impl(*this, key);
+        if (it == this->end())
         {
-            if (m_compare(it->first, key))
-            {
-                return it->second;
-            }
+            JSON_THROW(std::out_of_range("key not found"));
         }
-
-        JSON_THROW(std::out_of_range("key not found"));
+        return it->second;
     }
 
     /// @sa https://json.nlohmann.me/api/ordered_map/at/
@@ -191,33 +212,22 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     const T & at(KeyType && key) const // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        const auto it = find_impl(*this, key);
+        if (it == this->end())
         {
-            if (m_compare(it->first, key))
-            {
-                return it->second;
-            }
+            JSON_THROW(std::out_of_range("key not found"));
         }
-
-        JSON_THROW(std::out_of_range("key not found"));
+        return it->second;
     }
 
     /// @sa https://json.nlohmann.me/api/ordered_map/erase/
     size_type erase(const key_type& key)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        const auto it = find_impl(*this, key);
+        if (it != this->end())
         {
-            if (m_compare(it->first, key))
-            {
-                // Since we cannot move const Keys, re-construct them in place
-                for (auto next = it; ++next != this->end(); ++it)
-                {
-                    it->~value_type(); // Destroy but keep allocation
-                    new (&*it) value_type{std::move(*next)};
-                }
-                Container::pop_back();
-                return 1;
-            }
+            erase_at(it);
+            return 1;
         }
         return 0;
     }
@@ -227,19 +237,11 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     size_type erase(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        const auto it = find_impl(*this, key);
+        if (it != this->end())
         {
-            if (m_compare(it->first, key))
-            {
-                // Since we cannot move const Keys, re-construct them in place
-                for (auto next = it; ++next != this->end(); ++it)
-                {
-                    it->~value_type(); // Destroy but keep allocation
-                    new (&*it) value_type{std::move(*next)};
-                }
-                Container::pop_back();
-                return 1;
-            }
+            erase_at(it);
+            return 1;
         }
         return 0;
     }
@@ -307,14 +309,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     /// @sa https://json.nlohmann.me/api/ordered_map/count/
     size_type count(const key_type& key) const
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
-        {
-            if (m_compare(it->first, key))
-            {
-                return 1;
-            }
-        }
-        return 0;
+        return find_impl(*this, key) != this->end() ? 1 : 0;
     }
 
     /// @sa https://json.nlohmann.me/api/ordered_map/count/
@@ -322,27 +317,13 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     size_type count(KeyType && key) const // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
-        {
-            if (m_compare(it->first, key))
-            {
-                return 1;
-            }
-        }
-        return 0;
+        return find_impl(*this, key) != this->end() ? 1 : 0;
     }
 
     /// @sa https://json.nlohmann.me/api/ordered_map/find/
     iterator find(const key_type& key)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
-        {
-            if (m_compare(it->first, key))
-            {
-                return it;
-            }
-        }
-        return Container::end();
+        return find_impl(*this, key);
     }
 
     /// @sa https://json.nlohmann.me/api/ordered_map/find/
@@ -350,27 +331,13 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     iterator find(KeyType && key) // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
-        {
-            if (m_compare(it->first, key))
-            {
-                return it;
-            }
-        }
-        return Container::end();
+        return find_impl(*this, key);
     }
 
     /// @sa https://json.nlohmann.me/api/ordered_map/find/
     const_iterator find(const key_type& key) const
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
-        {
-            if (m_compare(it->first, key))
-            {
-                return it;
-            }
-        }
-        return Container::end();
+        return find_impl(*this, key);
     }
 
     /// @sa https://json.nlohmann.me/api/ordered_map/find/
@@ -378,14 +345,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
                  detail::is_usable_as_key_type<key_compare, key_type, KeyType>::value, int> = 0>
     const_iterator find(KeyType && key) const // NOLINT(cppcoreguidelines-missing-std-forward)
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
-        {
-            if (m_compare(it->first, key))
-            {
-                return it;
-            }
-        }
-        return Container::end();
+        return find_impl(*this, key);
     }
 
     /// @sa https://json.nlohmann.me/api/ordered_map/insert/
@@ -397,12 +357,10 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     /// @sa https://json.nlohmann.me/api/ordered_map/insert/
     std::pair<iterator, bool> insert( const value_type& value )
     {
-        for (auto it = this->begin(); it != this->end(); ++it)
+        const auto it = find_impl(*this, value.first);
+        if (it != this->end())
         {
-            if (m_compare(it->first, value.first))
-            {
-                return {it, false};
-            }
+            return {it, false};
         }
         append(value);
         return {--this->end(), true};
