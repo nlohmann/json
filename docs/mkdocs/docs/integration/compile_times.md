@@ -50,15 +50,15 @@ parser. As `<nlohmann/json.hpp>` includes them by default, every translation uni
 never parses anything itself.
 
 Define [`JSON_NO_AUTOMATIC_UDLS`](../api/macros/json_no_automatic_udls.md) for the whole project and include
-`<nlohmann/json_literals.hpp>` only in the files that use the literals:
+`<nlohmann/json_literals.hpp>` instead of `<nlohmann/json.hpp>` in the files that use the literals (it includes
+`<nlohmann/json.hpp>` itself):
 
 ```cmake
 target_compile_definitions(my_target PRIVATE JSON_NO_AUTOMATIC_UDLS)
 ```
 
 ```cpp
-#include <nlohmann/json.hpp>
-#include <nlohmann/json_literals.hpp> // only where "..."_json is used
+#include <nlohmann/json_literals.hpp> // only where "..."_json is used; includes <nlohmann/json.hpp>
 ```
 
 The saving applies to translation units that do not parse JSON, for example ones that define types and their

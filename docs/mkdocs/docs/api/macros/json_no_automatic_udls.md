@@ -43,9 +43,9 @@ By default, `#!cpp JSON_NO_AUTOMATIC_UDLS` is not defined, and `<nlohmann/json.h
 
     ```cpp
     // compiled with -DJSON_NO_AUTOMATIC_UDLS for the whole project
-    #include <nlohmann/json.hpp>
 
     // this file uses the literals, so it includes them explicitly
+    // (the header includes <nlohmann/json.hpp> itself)
     #include <nlohmann/json_literals.hpp>
 
     int main()
