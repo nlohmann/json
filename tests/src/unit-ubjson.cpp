@@ -802,7 +802,7 @@ TEST_CASE("UBJSON")
                     CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec2), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1A", json::parse_error);
                     std::vector<uint8_t> const vec3 = {'H', 'i', 2, '1', '.'};
                     CHECK_THROWS_WITH_AS(_ = json::from_ubjson(vec3), "[json.exception.parse_error.115] parse error at byte 5: syntax error while parsing UBJSON high-precision number: invalid number text: 1.", json::parse_error);
-                    // 2026-10-05: Reject trailing NULs, bytes hidden after NUL, and NULs in nested number payloads.
+                    // Reject trailing NULs, bytes hidden after NUL, and NULs in nested number payloads.
                     SECTION("NUL in high-precision number (issue #5753)")
                     {
                         for (const auto& vec : std::vector<std::vector<uint8_t>>
