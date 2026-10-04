@@ -45,6 +45,10 @@ TEST_CASE("default namespace without version component")
         expected += "_snul";
 #endif
 
+#if JSON_STRICT_BINARY_UTF8
+        expected += "_sbu8";
+#endif
+
         expected += "::basic_json";
 
         // fallback for Clang
