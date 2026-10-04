@@ -27758,18 +27758,38 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     using copy_scratch_value_t = std::pair<typename object_t::key_type, basic_json>;
     using copy_scratch_t = std::vector<copy_scratch_value_t, AllocatorType<copy_scratch_value_t>>;
 
-    /// @brief copy everything of @a src into @a dst but its type and value
-    static void copy_metadata(const basic_json& src, basic_json& dst)
-    {
-        // a custom base class is only required to be copy-constructible and
-        // move-assignable, so the copy has to go through a temporary
-        static_cast<json_base_class_t&>(dst) = json_base_class_t(static_cast<const json_base_class_t&>(src));
+    /// @brief tag selecting the constructor below; used only to build the
+    /// elements of a deep copy (@ref copy_array_level, @ref copy_object_level)
+    struct copy_construct_tag {};
 
+  public:
+    /*!
+    @brief construct a null value whose base class - and, with @ref
+           JSON_DIAGNOSTIC_POSITIONS, positions - are copied from @a src
+
+    Copy-constructing @ref json_base_class_t here, rather than default-
+    constructing the element and assigning its base class afterwards, means
+    that copying a @ref basic_json only ever requires a copy-constructible
+    base class, and never a move-assignable one as well.
+
+    @note this constructor has to be public: @ref copy_array_level and
+          @ref copy_object_level reach it through @ref array_t's or @ref
+          object_t's own emplace_back(), which constructs the element from
+          outside @ref basic_json and so cannot call a private constructor.
+          @ref copy_construct_tag is private, though, and nothing in the
+          public interface hands out a value of it, so outside code can still
+          never name it to call this constructor itself.
+    */
+    basic_json(copy_construct_tag /*unused*/, const basic_json& src)
+        : json_base_class_t(src)
 #if JSON_DIAGNOSTIC_POSITIONS
-        dst.start_position = src.start_position;
-        dst.end_position = src.end_position;
+        , start_position(src.start_position)
+        , end_position(src.end_position)
 #endif
+    {
     }
+
+  private:
 
     /*!
     @brief copy the value of @a src into @a dst, which must not be structured
@@ -27833,8 +27853,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     /*!
-    @brief copy everything of @a src into the null value @a dst but the children
+    @brief finish the copy @a dst of @a src that a @ref copy_construct_tag
+           constructor started, other than the children of an object or array
 
+    @a dst already has @a src's base class and, with @ref
+    JSON_DIAGNOSTIC_POSITIONS, positions; only its value is still missing.
     Objects and arrays are not copied here; they are appended to @a worklist to
     be created later by @ref copy_iteratively. Until that happens, @a dst remains
     a null value, so that a partially built copy can be destroyed at any point
@@ -27842,8 +27865,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     */
     static void copy_shallow(const basic_json& src, basic_json& dst, copy_worklist_t& worklist)
     {
-        copy_metadata(src, dst);
-
         if (src.m_data.m_type == value_t::object || src.m_data.m_type == value_t::array)
         {
             // defer: dst stays a null value until its container exists
@@ -27864,15 +27885,19 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     {
         const array_t& src_array = *src.m_data.m_value.array;
 
-        // create all elements up front: growing the array afterwards could
-        // invalidate the pointers that are handed to the worklist; resize()
-        // rather than the fill constructor, because not every array type
-        // provides the latter (e.g., ones without a matching allocator-aware
-        // fill constructor)
         dst.m_data.m_value.array = create<array_t>();
         // only now that the array exists may dst stop being a null value
         dst.m_data.m_type = value_t::array;
-        dst.m_data.m_value.array->resize(src_array.size());
+
+        // create every element - its base class already copy-constructed from
+        // its counterpart in src, via the copy_construct_tag constructor -
+        // before any of their addresses are handed to worklist below: growing
+        // the array while that is going on could reallocate it and invalidate
+        // addresses taken from an earlier iteration
+        for (const auto& src_element : src_array)
+        {
+            dst.m_data.m_value.array->emplace_back(copy_construct_tag{}, src_element);
+        }
 
         auto dst_it = dst.m_data.m_value.array->begin();
         for (auto src_it = src_array.cbegin(); src_it != src_array.cend(); ++src_it, ++dst_it)
@@ -27890,12 +27915,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
         // build the complete key skeleton and hand it to the object's range
         // constructor: adding the keys one by one would be quadratic for object
-        // types that are backed by a vector, such as nlohmann::ordered_map
+        // types that are backed by a vector, such as nlohmann::ordered_map; each
+        // value's base class is already copy-constructed from its counterpart
+        // in src, via the copy_construct_tag constructor
         scratch.clear();
         scratch.reserve(src_object.size());
         for (const auto& element : src_object)
         {
-            scratch.emplace_back(element.first, basic_json());
+            scratch.emplace_back(element.first, basic_json(copy_construct_tag{}, element.second));
         }
 
         dst.m_data.m_value.object = create<object_t>(std::make_move_iterator(scratch.begin()),
