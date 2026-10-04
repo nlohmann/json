@@ -612,6 +612,68 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         /// constructor for rvalue binary arrays (internal type)
         json_value(binary_t&& value) : binary(create<binary_t>(std::move(value))) {}
 
+        // raw, allocation-free transfer of m_data from src to dst: no
+        // set_parents()/assert_invariant() (the former is O(#children) per
+        // call under JSON_DIAGNOSTICS, which would make the walk below
+        // quadratic); dst takes ownership, src is left as value_t::null.
+        static void take(basic_json& dst, basic_json& src) noexcept
+        {
+            dst.m_data.m_type = src.m_data.m_type;
+            dst.m_data.m_value = src.m_data.m_value;
+            src.m_data.m_type = value_t::null;
+        }
+
+        static bool is_empty_container(const basic_json& v) noexcept
+        {
+            return v.m_data.m_type == value_t::array
+                   ? v.m_data.m_value.array->empty()
+                   : v.m_data.m_value.object->empty();
+        }
+
+        static basic_json& last_child(basic_json& v)
+        {
+            return v.m_data.m_type == value_t::array
+                   ? v.m_data.m_value.array->back()
+                   : std::prev(v.m_data.m_value.object->end())->second;
+        }
+
+        // removes the last child of a non-empty array/object v; this never
+        // allocates, and since it is only ever called when that child is a
+        // scalar or an already-empty array/object, destroying it never
+        // recurses more than one level deep (see destroy() below)
+        static void pop_last_child(basic_json& v)
+        {
+            if (v.m_data.m_type == value_t::array)
+            {
+                v.m_data.m_value.array->pop_back();
+            }
+            else
+            {
+                v.m_data.m_value.object->erase(std::prev(v.m_data.m_value.object->end()));
+            }
+        }
+
+        // deallocates the (already empty) array/object held by v; this is
+        // the same allocator-based free the old recursive implementation
+        // used, just factored out so every level of the walk in destroy()
+        // can share it
+        static void free_container(basic_json& v) noexcept
+        {
+            if (v.m_data.m_type == value_t::array)
+            {
+                AllocatorType<array_t> alloc;
+                std::allocator_traits<decltype(alloc)>::destroy(alloc, v.m_data.m_value.array);
+                std::allocator_traits<decltype(alloc)>::deallocate(alloc, v.m_data.m_value.array, 1);
+            }
+            else
+            {
+                AllocatorType<object_t> alloc;
+                std::allocator_traits<decltype(alloc)>::destroy(alloc, v.m_data.m_value.object);
+                std::allocator_traits<decltype(alloc)>::deallocate(alloc, v.m_data.m_value.object, 1);
+            }
+            v.m_data.m_type = value_t::null; // avoid a double free if v is later destructed
+        }
+
         void destroy(value_t t)
         {
             if (
@@ -626,71 +688,88 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             }
             if (t == value_t::array || t == value_t::object)
             {
-                // flatten the current json_value to a heap-allocated stack
-                std::vector<basic_json, allocator_type> stack;
-
-                // move the top-level items to stack
+                // Destroy the tree without recursing per nesting level and
+                // without any heap allocation: a heap-allocated flattening
+                // stack (the previous implementation) can itself throw
+                // bad_alloc, which would escape this noexcept destructor and
+                // terminate the program (#5135).
+                //
+                // Instead, walk down the "last child" chain, reversing links
+                // as we go: cur is the container currently being emptied,
+                // and prev is its parent (value_t::null when there is none).
+                // Each parent's last child slot doubles as storage for that
+                // parent's own parent link while we are below it, so no
+                // extra memory is needed. We only ever remove a child once
+                // it is a scalar or an empty array/object, which neither
+                // allocates nor recurses more than one level deep.
+                //
+                // This json_value is not itself a basic_json, so the
+                // top-level container is first moved into a local stand-in
+                // ("cur"); this union's own pointer is cleared so it is
+                // never looked at or freed a second time.
+                basic_json cur;
+                cur.m_data.m_type = t;
+                cur.m_data.m_value = *this;
                 if (t == value_t::array)
                 {
-                    stack.reserve(array->size());
-                    std::move(array->begin(), array->end(), std::back_inserter(stack));
+                    array = nullptr;
                 }
                 else
                 {
-                    stack.reserve(object->size());
-                    for (auto&& it : *object)
-                    {
-                        stack.push_back(std::move(it.second));
-                    }
+                    object = nullptr;
                 }
 
-                while (!stack.empty())
+                basic_json prev; // value_t::null: no parent
+
+                while (true)
                 {
-                    // move the last item to a local variable to be processed
-                    basic_json current_item(std::move(stack.back()));
-                    stack.pop_back();
-
-                    // if current_item is array/object, move
-                    // its children to the stack to be processed later
-                    if (current_item.is_array())
+                    if (is_empty_container(cur))
                     {
-                        std::move(current_item.m_data.m_value.array->begin(), current_item.m_data.m_value.array->end(), std::back_inserter(stack));
-
-                        current_item.m_data.m_value.array->clear();
-                    }
-                    else if (current_item.is_object())
-                    {
-                        for (auto&& it : *current_item.m_data.m_value.object)
+                        if (prev.m_data.m_type == value_t::null)
                         {
-                            stack.push_back(std::move(it.second));
+                            break; // back at the top with nothing left to do
                         }
 
-                        current_item.m_data.m_value.object->clear();
+                        // ascend: detach the grandparent link from prev's
+                        // last slot, drop that (now null) slot, free cur
+                        // (it is empty), then move up one level
+                        basic_json gp;
+                        take(gp, last_child(prev));
+                        pop_last_child(prev);
+
+                        free_container(cur);
+
+                        take(cur, prev);
+                        take(prev, gp);
+                        continue;
                     }
 
-                    // it's now safe that current_item gets destructed
-                    // since it doesn't have any children
+                    basic_json& last = last_child(cur);
+                    const bool last_is_container = last.m_data.m_type == value_t::array || last.m_data.m_type == value_t::object;
+
+                    if (!last_is_container || is_empty_container(last))
+                    {
+                        // scalar, or already-empty array/object
+                        pop_last_child(cur);
+                        continue;
+                    }
+
+                    // descend into the non-empty last child, reversing the
+                    // link: its slot takes over prev, and the child becomes
+                    // the new cur
+                    basic_json tmp;
+                    take(tmp, last);
+                    take(last, prev);
+                    take(prev, cur);
+                    take(cur, tmp);
                 }
+
+                free_container(cur);
+                return;
             }
 
             switch (t)
             {
-                case value_t::object:
-                {
-                    AllocatorType<object_t> alloc;
-                    std::allocator_traits<decltype(alloc)>::destroy(alloc, object);
-                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, object, 1);
-                    break;
-                }
-
-                case value_t::array:
-                {
-                    AllocatorType<array_t> alloc;
-                    std::allocator_traits<decltype(alloc)>::destroy(alloc, array);
-                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, array, 1);
-                    break;
-                }
-
                 case value_t::string:
                 {
                     AllocatorType<string_t> alloc;
