@@ -794,6 +794,7 @@ TEST_CASE("Parse BON8 directly from a file using iterator and sentinel")
     CHECK((parsed.is_object() || parsed.is_array()));
 }
 
+#if !defined(JSON_NOEXCEPTION) // corpus values that do not survive the round trip are skipped by catching the exception
 TEST_CASE("BON8 round-trip invariants")
 {
     // This checks what the parse_bon8_fuzzer driver checks (see
@@ -826,6 +827,7 @@ TEST_CASE("BON8 round-trip invariants")
         CHECK(json::to_bon8(j2) == vec);
     }
 }
+#endif
 
 TEST_CASE("BON8 roundtrips" * doctest::skip())
 {

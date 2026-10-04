@@ -2260,18 +2260,18 @@ class binary_writer
         switch (error_handler)
         {
             case error_handler_t::keep:
-                return s;
+                return s; // NOLINT(bugprone-return-const-ref-from-parameter): callers pass lvalues that outlive the call
 
             case error_handler_t::strict:
                 check_utf8(s, context);
-                return s;
+                return s; // NOLINT(bugprone-return-const-ref-from-parameter): callers pass lvalues that outlive the call
 
             case error_handler_t::replace:
             case error_handler_t::ignore:
             default:
                 if (is_valid_utf8(s))
                 {
-                    return s;
+                    return s; // NOLINT(bugprone-return-const-ref-from-parameter): callers pass lvalues that outlive the call
                 }
                 storage = sanitize_utf8(s, error_handler);
                 return storage;

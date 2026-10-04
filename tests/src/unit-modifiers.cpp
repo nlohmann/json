@@ -1162,6 +1162,7 @@ TEST_CASE("update() on deeply nested values")
 
 TEST_CASE("update() with an argument that aliases *this (#5641)")
 {
+#if !defined(JSON_NOEXCEPTION) // checks which exception is thrown, and that nothing changed
     SECTION("the target is checked before the argument, as before the copy")
     {
         json j = 1;
@@ -1172,6 +1173,7 @@ TEST_CASE("update() with an argument that aliases *this (#5641)")
         CHECK_THROWS_WITH_AS(k.update(json::array()), "[json.exception.type_error.312] cannot use update() with array", json::type_error&);
         CHECK(k == json::object());
     }
+#endif
 
     SECTION("const reference")
     {
