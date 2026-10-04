@@ -516,6 +516,21 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     CHECK(j_array.value("/-"_json_pointer, 42) == 42);
                     CHECK(j_array_const.value("/-"_json_pointer, 42) == 42);
 
+                    // Test an index with a non-digit after a valid leading digit; this is
+                    // out_of_range (not parse_error) and must not throw (see #5672)
+                    CHECK(j_array.value("/1a"_json_pointer, 42) == 42);
+                    CHECK(j_array_const.value("/1a"_json_pointer, 42) == 42);
+
+                    // Test the empty reference token (JSON pointer "/"); see #5672
+                    CHECK(j_array.value("/"_json_pointer, 42) == 42);
+                    CHECK(j_array_const.value("/"_json_pointer, 42) == 42);
+
+                    // Test an index whose magnitude does not fit into size_type (see #5672)
+                    CHECK(j_array.value("/99999999999999999999999"_json_pointer, 42) == 42);
+                    CHECK(j_array_const.value("/99999999999999999999999"_json_pointer, 42) == 42);
+                    CHECK(j_array.value("/18446744073709551615"_json_pointer, 42) == 42);
+                    CHECK(j_array_const.value("/18446744073709551615"_json_pointer, 42) == 42);
+
 #if !defined(JSON_NOEXCEPTION)
                     // Test malformed index (non-numeric) throws parse_error
                     CHECK_THROWS_WITH_AS(j_array.value("/foo"_json_pointer, 1), "[json.exception.parse_error.109] parse error: array index 'foo' is not a number", typename Json::parse_error&);
@@ -1948,8 +1963,8 @@ TEST_CASE("operator[] with user-defined std::string_view-convertible types")
     };
 
     json j = {{"foo", "from_class"}, {"bar", "from_struct"}};
-    TestClass foo_obj;
-    TestStruct bar_obj;
+    const TestClass foo_obj;
+    const TestStruct bar_obj;
 
     SECTION("read access")
     {
@@ -1970,6 +1985,122 @@ TEST_CASE("operator[] with user-defined std::string_view-convertible types")
         {
             CHECK(j[std::string_view{"foo"}] == "updated_class");
             CHECK(j[std::string_view{"bar"}] == "updated_struct");
+        }
+    }
+}
+
+TEST_CASE("keys convertible to std::string_view work with all lookup functions (regression test for #5663)")
+{
+    // a key type convertible only to std::string_view: the case #4958 added
+    // support for, but only the non-const operator[] compiled with it
+    struct ViewKey
+    {
+        operator std::string_view() const
+        {
+            return "a";
+        }
+    };
+
+    // a key type convertible to both std::string and std::string_view: with
+    // 3.12.0, such a key worked with at, the const operator[], find, count and
+    // contains via the conversion to std::string; #4958 made the KeyType&&
+    // templates win overload resolution for it instead, and those then failed
+    // the lookups pick the conversion to std::string_view, which leaves the one
+    // to std::string unused; it has to exist to reproduce the ambiguity
+    DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+    DOCTEST_CLANG_SUPPRESS_WARNING("-Wunused-member-function")
+    struct DualKey
+    {
+        operator std::string() const
+        {
+            return "a";
+        }
+        operator std::string_view() const
+        {
+            return "a";
+        }
+    };
+    DOCTEST_CLANG_SUPPRESS_WARNING_POP
+
+    SECTION("nlohmann::json")
+    {
+        using json = nlohmann::json;
+
+        SECTION("ViewKey")
+        {
+            json j = {{"a", 1}};
+            const json& cj = j;
+
+            CHECK(j[ViewKey{}] == 1);
+            CHECK(cj[ViewKey{}] == 1);
+            CHECK(j.at(ViewKey{}) == 1);
+            CHECK(cj.at(ViewKey{}) == 1);
+            CHECK(j.find(ViewKey{}) != j.end());
+            CHECK(cj.find(ViewKey{}) != cj.end());
+            CHECK(j.count(ViewKey{}) == 1);
+            CHECK(j.contains(ViewKey{}));
+            CHECK(j.value(ViewKey{}, 0) == 1);
+            CHECK(j.erase(ViewKey{}) == 1);
+            CHECK(!j.contains("a"));
+        }
+
+        SECTION("DualKey")
+        {
+            json j = {{"a", 1}};
+            const json& cj = j;
+
+            CHECK(j[DualKey{}] == 1);
+            CHECK(cj[DualKey{}] == 1);
+            CHECK(j.at(DualKey{}) == 1);
+            CHECK(cj.at(DualKey{}) == 1);
+            CHECK(j.find(DualKey{}) != j.end());
+            CHECK(cj.find(DualKey{}) != cj.end());
+            CHECK(j.count(DualKey{}) == 1);
+            CHECK(j.contains(DualKey{}));
+            CHECK(j.value(DualKey{}, 0) == 1);
+            CHECK(j.erase(DualKey{}) == 1);
+            CHECK(!j.contains("a"));
+        }
+    }
+
+    SECTION("nlohmann::ordered_json")
+    {
+        using ordered_json = nlohmann::ordered_json;
+
+        SECTION("ViewKey")
+        {
+            ordered_json j = {{"a", 1}};
+            const ordered_json& cj = j;
+
+            CHECK(j[ViewKey{}] == 1);
+            CHECK(cj[ViewKey{}] == 1);
+            CHECK(j.at(ViewKey{}) == 1);
+            CHECK(cj.at(ViewKey{}) == 1);
+            CHECK(j.find(ViewKey{}) != j.end());
+            CHECK(cj.find(ViewKey{}) != cj.end());
+            CHECK(j.count(ViewKey{}) == 1);
+            CHECK(j.contains(ViewKey{}));
+            CHECK(j.value(ViewKey{}, 0) == 1);
+            CHECK(j.erase(ViewKey{}) == 1);
+            CHECK(!j.contains("a"));
+        }
+
+        SECTION("DualKey")
+        {
+            ordered_json j = {{"a", 1}};
+            const ordered_json& cj = j;
+
+            CHECK(j[DualKey{}] == 1);
+            CHECK(cj[DualKey{}] == 1);
+            CHECK(j.at(DualKey{}) == 1);
+            CHECK(cj.at(DualKey{}) == 1);
+            CHECK(j.find(DualKey{}) != j.end());
+            CHECK(cj.find(DualKey{}) != cj.end());
+            CHECK(j.count(DualKey{}) == 1);
+            CHECK(j.contains(DualKey{}));
+            CHECK(j.value(DualKey{}, 0) == 1);
+            CHECK(j.erase(DualKey{}) == 1);
+            CHECK(!j.contains("a"));
         }
     }
 }

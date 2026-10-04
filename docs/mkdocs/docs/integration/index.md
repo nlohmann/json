@@ -45,7 +45,7 @@ Clang).
 
 You can further use file
 [`single_include/nlohmann/json_fwd.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_fwd.hpp)
-for forward declarations, and file
+for forward declarations (see [Compile times](compile_times.md)), and file
 [`single_include/nlohmann/json_literals.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_literals.hpp)
 for the user-defined string literals if you define
 [`JSON_NO_AUTOMATIC_UDLS`](../api/macros/json_no_automatic_udls.md).

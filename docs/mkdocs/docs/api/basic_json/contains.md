@@ -131,7 +131,9 @@ Logarithmic in the size of the JSON object.
 ## Version history
 
 1. Added in version 3.11.0.
-2. Added in version 3.6.0. Extended template `KeyType` to support comparable types in version 3.11.0.
+2. Added in version 3.6.0. Extended template `KeyType` to support comparable types in version 3.11.0. Fixed in
+   version 3.13.0 to consistently accept `std::string_view`-convertible keys, as already supported by
+   [`operator[]`](operator[].md), [`at`](at.md), [`value`](value.md), and other lookup functions.
 3. Added in version 3.7.0.
 4. Deleted overloads for integral key types added in version 3.13.0 to reject such calls at compile time instead of
    causing undefined behavior at runtime.
