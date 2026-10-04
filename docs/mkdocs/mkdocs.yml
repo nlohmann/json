@@ -292,6 +292,7 @@ nav:
           - 'JSON_BRACE_INIT_COPY_SEMANTICS': api/macros/json_brace_init_copy_semantics.md
           - 'JSON_CATCH_USER, JSON_THROW_USER, JSON_TRY_USER': api/macros/json_throw_user.md
           - 'JSON_DIAGNOSTICS': api/macros/json_diagnostics.md
+          - 'JSON_DELETE_DEPRECATED_FUNCTIONS': api/macros/json_delete_deprecated_functions.md
           - 'JSON_DIAGNOSTIC_POSITIONS': api/macros/json_diagnostic_positions.md
           - 'JSON_DISABLE_ENUM_SERIALIZATION': api/macros/json_disable_enum_serialization.md
           - 'JSON_DISABLE_TUPLE_REFERENCE_CONVERSION': api/macros/json_disable_tuple_reference_conversion.md

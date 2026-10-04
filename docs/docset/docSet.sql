@@ -219,6 +219,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('Supported Macros', 'Guide', '
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_ASSERT', 'Macro', 'api/macros/json_assert/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_BRACE_INIT_COPY_SEMANTICS', 'Macro', 'api/macros/json_brace_init_copy_semantics/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_CATCH_USER', 'Macro', 'api/macros/json_throw_user/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DELETE_DEPRECATED_FUNCTIONS', 'Macro', 'api/macros/json_delete_deprecated_functions/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DIAGNOSTICS', 'Macro', 'api/macros/json_diagnostics/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DIAGNOSTIC_POSITIONS', 'Macro', 'api/macros/json_diagnostic_positions/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DISABLE_ENUM_SERIALIZATION', 'Macro', 'api/macros/json_disable_enum_serialization/index.html');

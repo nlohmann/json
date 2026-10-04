@@ -8,6 +8,14 @@
 
 #include "doctest_compatibility.h"
 
+// capture whether JSON_DELETE_DEPRECATED_FUNCTIONS was enabled on the command
+// line *before* including json.hpp, since the library #undefs it once the header
+// has been fully processed (see include/nlohmann/detail/macro_unscope.hpp); the
+// tests of deprecated functions are skipped if these functions are deleted
+#if defined(JSON_DELETE_DEPRECATED_FUNCTIONS) && (JSON_DELETE_DEPRECATED_FUNCTIONS == 1)
+    #define JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+#endif
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 #ifdef JSON_TEST_NO_GLOBAL_UDLS
@@ -1028,6 +1036,7 @@ TEST_CASE("issue #5648 - from_bon8(ptr, len) must read len bytes, not treat ptr 
     }
     REQUIRE(contains_nul);
 
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
     // before the fix, from_bon8 had no (ptr, len) overload, so this call
     // bound to from_bon8(InputType&&, bool strict) instead: ptr was read as
     // a NUL-terminated C string (stopping at the embedded 0x00 byte), and
@@ -1040,6 +1049,7 @@ TEST_CASE("issue #5648 - from_bon8(ptr, len) must read len bytes, not treat ptr 
 
     // len must not collapse into the strict flag either
     CHECK(json::from_bon8(packed.data(), packed.size(), false) == j);
+#endif
 }
 
 #ifdef JSON_HAS_CPP_17

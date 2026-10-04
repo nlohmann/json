@@ -14,6 +14,13 @@ deprecations are annotated with
 [`HEDLEY_DEPRECATED_FOR`](https://nemequ.github.io/hedley/api-reference.html#HEDLEY_DEPRECATED_FOR) to report which
 function to use instead.
 
+!!! tip "Find all calls of deprecated functions"
+
+    Define [`JSON_DELETE_DEPRECATED_FUNCTIONS`](../api/macros/json_delete_deprecated_functions.md) to `1` (or set the
+    CMake option [`JSON_DeleteDeprecatedFunctions`](cmake.md#json_deletedeprecatedfunctions)) to delete all deprecated
+    functions. Every remaining call then fails to compile, even if deprecation warnings are disabled, so your code is
+    ready for version 4.0.0 once it compiles with the macro.
+
 ### Parsing
 
 - Function `friend std::istream& operator<<(basic_json&, std::istream&)` is deprecated since 3.0.0. Please use
@@ -41,8 +48,10 @@ function to use instead.
   [`from_ubjson`](../api/basic_json/from_ubjson.md), and [`from_bson`](../api/basic_json/from_bson.md)) via initializer
   lists is deprecated since 3.8.0. Instead, pass two iterators; for instance, call `from_cbor(ptr, ptr+len)` instead of
   `from_cbor({ptr, len})`. Likewise, passing a pointer and a length as two separate arguments to `from_cbor`,
-  `from_msgpack`, `from_ubjson`, and `from_bson` is deprecated since 3.8.0; call `from_cbor(ptr, ptr+len)` instead of
-  `from_cbor(ptr, len)`.
+  `from_msgpack`, `from_ubjson`, and `from_bson` is deprecated since 3.8.0, and to
+  [`from_bjdata`](../api/basic_json/from_bjdata.md) and [`from_bon8`](../api/basic_json/from_bon8.md) since 3.13.0; call
+  `from_cbor(ptr, ptr+len)` instead of `from_cbor(ptr, len)`. These overloads will not be removed in version 4.0.0, but
+  deleted, so a call like `from_cbor(ptr, len)` cannot compile and convert `len` to the `strict` parameter.
 
     === "Deprecated"
   

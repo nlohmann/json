@@ -250,6 +250,20 @@ add_custom_target(ci_test_strict_nul_handling
 )
 
 ###############################################################################
+# Delete the deprecated functions.
+###############################################################################
+
+add_custom_target(ci_test_delete_deprecated_functions
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_DeleteDeprecatedFunctions=ON
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_delete_deprecated_functions
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_delete_deprecated_functions
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_delete_deprecated_functions && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with the deprecated functions deleted"
+)
+
+###############################################################################
 # Disable global UDLs.
 ###############################################################################
 
@@ -705,7 +719,7 @@ ci_get_cmake(4.0.0  CMAKE_4_0_0_BINARY)
 # the tests require CMake 3.13 or later, so they are excluded for CMake 3.5.0
 set(JSON_CMAKE_FLAGS_3_5_0 JSON_Diagnostics JSON_Diagnostic_Positions JSON_GlobalUDLs JSON_ImplicitConversions JSON_DisableEnumSerialization
     JSON_LegacyDiscardedValueComparison JSON_Install JSON_MultipleHeaders JSON_SystemInclude JSON_Valgrind
-    JSON_StrictNulHandling JSON_StrictBinaryUTF8)
+    JSON_StrictNulHandling JSON_StrictBinaryUTF8 JSON_DeleteDeprecatedFunctions)
 set(JSON_CMAKE_FLAGS_3_31_6 JSON_BuildTests ${JSON_CMAKE_FLAGS_3_5_0})
 set(JSON_CMAKE_FLAGS_4_0_0 JSON_BuildTests ${JSON_CMAKE_FLAGS_3_5_0})
 

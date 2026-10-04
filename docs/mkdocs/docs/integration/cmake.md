@@ -132,6 +132,12 @@ Build the unit tests when [`BUILD_TESTING`](https://cmake.org/cmake/help/latest/
 
 Enable CI build targets. The exact targets are used during the several CI steps and are subject to change without notice. This option is `OFF` by default.
 
+### `JSON_DeleteDeprecatedFunctions`
+
+Delete the deprecated functions instead of only deprecating them by defining the macro
+[`JSON_DELETE_DEPRECATED_FUNCTIONS`](../api/macros/json_delete_deprecated_functions.md). This option is `OFF` by
+default.
+
 ### `JSON_Diagnostics`
 
 Enable [extended diagnostic messages](../home/exceptions.md#extended-diagnostic-messages) by defining macro [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md). This option is `OFF` by default.
