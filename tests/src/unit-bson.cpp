@@ -62,6 +62,8 @@ class huge_string_t : public std::string
 {
   public:
     using std::string::string;
+    // inheriting std::string's constructors does not inherit its default constructor
+    huge_string_t() = default;
     huge_string_t(const std::string& s) : std::string(s) {} // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
 
     // returns a copy of @a s whose size() pretends to be huge
@@ -152,6 +154,43 @@ TEST_CASE("BSON")
 #else
         CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.out_of_range.409] BSON key cannot contain code point U+0000 (at byte 2)", json::out_of_range&);
 #endif
+    }
+
+    SECTION("ill-formed UTF-8 (see #5529, #5651)")
+    {
+        // a BSON document {"s": "\xC0\xAE"} (0xC0 0xAE is an overlong
+        // encoding of '.'); the BSON spec does not require a decoder to
+        // reject ill-formed UTF-8 in a string value, so the reader hands the
+        // bytes back unchanged
+        const std::vector<uint8_t> v =
+        {
+            0x0F, 0x00, 0x00, 0x00, // document length
+            0x02, 's', 0x00,        // type 0x02 (string), key "s"
+            0x03, 0x00, 0x00, 0x00, // string length (including null)
+            0xc0, 0xae, 0x00,       // string content and its null terminator
+            0x00                    // document terminator
+        };
+        json j;
+        CHECK_NOTHROW(j = json::from_bson(v));
+        REQUIRE(j.is_object());
+        REQUIRE(j.contains("s"));
+        CHECK(j["s"].get_ref<const json::string_t&>() == std::string("\xc0\xae"));
+        // dump() still requires valid UTF-8 and throws for such a value
+        CHECK_THROWS_AS(utils::ignore_return_value(j.dump()), json::type_error&);
+        // to_bson() writes the bytes back unchanged, as before 3.13.0,
+        // unless JSON_STRICT_BINARY_UTF8 is enabled (see unit-binary_utf8_strict.cpp)
+        CHECK(json::from_bson(json::to_bson(j)) == j);
+
+        CHECK(json::from_bson(json::to_bson(json{{"s", "\xFF"}})) == json{{"s", "\xFF"}});
+        // a truncated multi-byte sequence
+        CHECK(json::from_bson(json::to_bson(json{{"s", "\xC3"}})) == json{{"s", "\xC3"}});
+        // an encoded surrogate half (U+D800)
+        CHECK(json::from_bson(json::to_bson(json{{"s", "\xED\xA0\x80"}})) == json{{"s", "\xED\xA0\x80"}});
+        // an overlong encoding of '.'
+        CHECK(json::from_bson(json::to_bson(json{{"s", "\xC0\xAF"}})) == json{{"s", "\xC0\xAF"}});
+
+        // an object key with ill-formed UTF-8 is kept as well
+        CHECK(json::from_bson(json::to_bson(json{{"\xFF", 1}})) == json{{"\xFF", 1}});
     }
 
     SECTION("lengths exceeding INT32_MAX cannot be serialized to BSON")

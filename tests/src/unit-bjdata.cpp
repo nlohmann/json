@@ -3906,6 +3906,43 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             CHECK(json::to_bjdata(j) == v);
             CHECK(json::from_bjdata(v) == j);
         }
+
+        SECTION("ill-formed UTF-8 (see #5529, #5651)")
+        {
+            // none of the binary format specs requires a decoder to reject
+            // ill-formed UTF-8 in a text string, so a value whose bytes are
+            // not valid UTF-8 (0xC0 0xAE is an overlong encoding of '.')
+            // round-trips byte for byte as a string value; to_bjdata() writes
+            // the bytes unchanged, as before 3.13.0, unless
+            // JSON_STRICT_BINARY_UTF8 is enabled (see
+            // unit-binary_utf8_strict.cpp)
+            const std::vector<uint8_t> v = {'S', 'i', 2, 0xc0, 0xae};
+            json j;
+            CHECK_NOTHROW(j = json::from_bjdata(v));
+            REQUIRE(j.is_string());
+            CHECK(j.get_ref<const json::string_t&>() == std::string("\xc0\xae"));
+            CHECK_THROWS_AS(utils::ignore_return_value(j.dump()), json::type_error&);
+            CHECK(json::from_bjdata(json::to_bjdata(j)) == j);
+
+            // the same bytes as an object key round-trip as well
+            const std::vector<uint8_t> v_key = {'{', 'i', 2, 0xc0, 0xae, 'i', 1, '}'};
+            json j_key;
+            CHECK_NOTHROW(j_key = json::from_bjdata(v_key));
+            REQUIRE(j_key.is_object());
+            CHECK(j_key.contains(std::string("\xc0\xae")));
+            CHECK(json::from_bjdata(json::to_bjdata(j_key)) == j_key);
+
+            CHECK(json::from_bjdata(json::to_bjdata(json("\xFF"))) == json("\xFF"));
+            // a truncated multi-byte sequence
+            CHECK(json::from_bjdata(json::to_bjdata(json("\xC3"))) == json("\xC3"));
+            // an encoded surrogate half (U+D800)
+            CHECK(json::from_bjdata(json::to_bjdata(json("\xED\xA0\x80"))) == json("\xED\xA0\x80"));
+            // an overlong encoding of '.'
+            CHECK(json::from_bjdata(json::to_bjdata(json("\xC0\xAF"))) == json("\xC0\xAF"));
+
+            // an object key with ill-formed UTF-8 is kept the same way
+            CHECK(json::from_bjdata(json::to_bjdata(json{{"\xFF", 1}})) == json{{"\xFF", 1}});
+        }
     }
 
     SECTION("Array Type")
