@@ -611,6 +611,7 @@ TEST_CASE("bad my_allocator::construct")
 namespace
 {
 std::size_t counting_allocator_allocations = 0;
+std::size_t counting_allocator_deallocations = 0;
 
 template<class T>
 struct counting_allocator : std::allocator<T>
@@ -623,6 +624,12 @@ struct counting_allocator : std::allocator<T>
         return std::allocator<T>::allocate(n);
     }
 
+    void deallocate(T* p, std::size_t n)
+    {
+        ++counting_allocator_deallocations;
+        std::allocator<T>::deallocate(p, n);
+    }
+
     template <class U>
     struct rebind
     {
@@ -631,9 +638,15 @@ struct counting_allocator : std::allocator<T>
 };
 } // namespace
 
-TEST_CASE("destructor uses the provided allocator")
+TEST_CASE("destructor performs no allocation, only deallocation")
 {
-    // see https://github.com/nlohmann/json/issues/4842
+    // see https://github.com/nlohmann/json/issues/4842 and
+    // https://github.com/nlohmann/json/issues/5135: destroying nested
+    // arrays/objects used to allocate a temporary stack (first with
+    // std::allocator, later - after #4842 - with the provided allocator).
+    // Since that stack could itself throw bad_alloc from inside the
+    // noexcept destructor (#5135), destroy() no longer allocates anything:
+    // it only ever frees what is already there.
     using counting_json = nlohmann::basic_json<std::map,
           std::vector,
           std::string,
@@ -646,17 +659,20 @@ TEST_CASE("destructor uses the provided allocator")
     SECTION("array")
     {
         auto* j = new counting_json({1, {2, {3, 4}}, 5}); // NOLINT(cppcoreguidelines-owning-memory)
-        const auto before = counting_allocator_allocations;
+        const auto allocations_before = counting_allocator_allocations;
+        const auto deallocations_before = counting_allocator_deallocations;
         delete j; // NOLINT(cppcoreguidelines-owning-memory)
-        // the stack used to destroy the children is allocated with the provided allocator
-        CHECK(counting_allocator_allocations > before);
+        CHECK(counting_allocator_allocations == allocations_before);
+        CHECK(counting_allocator_deallocations > deallocations_before);
     }
 
     SECTION("object")
     {
         auto* j = new counting_json({{"a", {{"b", {1, 2}}}}, {"c", 3}}); // NOLINT(cppcoreguidelines-owning-memory)
-        const auto before = counting_allocator_allocations;
+        const auto allocations_before = counting_allocator_allocations;
+        const auto deallocations_before = counting_allocator_deallocations;
         delete j; // NOLINT(cppcoreguidelines-owning-memory)
-        CHECK(counting_allocator_allocations > before);
+        CHECK(counting_allocator_allocations == allocations_before);
+        CHECK(counting_allocator_deallocations > deallocations_before);
     }
 }

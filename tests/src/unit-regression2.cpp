@@ -112,44 +112,79 @@ using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
 namespace
 {
-bool fail_next_global_allocation = false;
+// An allocator whose allocate() can be told to fail on demand, so tests can
+// check that ~basic_json() tolerates - in fact, after #5135, never even
+// triggers - an allocation failure. This replaces an earlier version of
+// this test that overrode the process-wide ::operator new/::operator
+// delete, which affected every allocation in the whole unit-regression2
+// binary rather than just the values under test.
+std::size_t failing_allocator_allocations = 0;
+std::size_t failing_allocator_deallocations = 0;
+bool fail_next_allocation = false;
 
-void* checked_malloc(std::size_t size)
+template<class T>
+struct failing_allocator : std::allocator<T>
 {
-    if (fail_next_global_allocation)
+    using std::allocator<T>::allocator;
+
+    failing_allocator() noexcept = default;
+    template<class U>
+    failing_allocator(const failing_allocator<U>& /*unused*/) noexcept {} // NOLINT(google-explicit-constructor)
+
+    T* allocate(std::size_t n)
     {
-        fail_next_global_allocation = false;
-        throw std::bad_alloc();
+        if (fail_next_allocation)
+        {
+            fail_next_allocation = false;
+            throw std::bad_alloc();
+        }
+        ++failing_allocator_allocations;
+        return std::allocator<T>::allocate(n);
     }
 
-    if (void* const result = std::malloc(size))
+    void deallocate(T* p, std::size_t n)
     {
-        return result;
+        ++failing_allocator_deallocations;
+        std::allocator<T>::deallocate(p, n);
     }
 
-    throw std::bad_alloc();
+    template<class U>
+    struct rebind
+    {
+        using other = failing_allocator<U>;
+    };
+};
+
+using failing_json = nlohmann::basic_json<std::map, std::vector, std::string, bool,
+      std::int64_t, std::uint64_t, double, failing_allocator>;
+using failing_ordered_json = nlohmann::basic_json<nlohmann::ordered_map, std::vector, std::string, bool,
+      std::int64_t, std::uint64_t, double, failing_allocator>;
+
+// builds `depth` levels of nesting around a scalar, iteratively (never
+// recursing: each wrap only moves the previous, already-built value, which
+// is O(1)), each level an array or an object depending on `nest_objects`
+template<class BasicJsonType>
+BasicJsonType make_deep_nest(std::size_t depth, bool nest_objects)
+{
+    BasicJsonType v = 0;
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        if (nest_objects)
+        {
+            BasicJsonType wrapper = BasicJsonType::object();
+            wrapper["x"] = std::move(v);
+            v = std::move(wrapper);
+        }
+        else
+        {
+            BasicJsonType wrapper = BasicJsonType::array();
+            wrapper.push_back(std::move(v));
+            v = std::move(wrapper);
+        }
+    }
+    return v;
 }
 } // namespace
-
-void* operator new (std::size_t size)
-{
-    return checked_malloc(size);
-}
-
-void* operator new[](std::size_t size)
-{
-    return checked_malloc(size);
-}
-
-void operator delete (void* ptr) noexcept
-{
-    std::free(ptr);
-}
-
-void operator delete[](void* ptr) noexcept
-{
-    std::free(ptr);
-}
 #endif
 
 /////////////////////////////////////////////////////////////////////
@@ -986,17 +1021,98 @@ TEST_CASE("regression test - excessive binary container size honors allow_except
 }
 
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
-TEST_CASE("regression test #5135 - destructor tolerates stack allocation failure")
+TEST_CASE("regression test #5135 - destructor never allocates, even under memory pressure")
 {
+    // Before the fix, ~basic_json() flattened a nested array/object into a
+    // heap-allocated std::vector to avoid recursing; that allocation could
+    // itself throw bad_alloc, which escapes a noexcept destructor and
+    // terminates the program. destroy() no longer allocates anything, so
+    // none of the sections below ever observe fail_next_allocation being
+    // consumed: CHECK(fail_next_allocation) confirms it was never touched.
+
+    SECTION("the original report: a small, mixed array/object nest")
     {
-        json j = json::array({json::array({1, 2}), json::object({{"key", json::array({3})}})});
-        fail_next_global_allocation = true;
+        failing_allocator_allocations = 0;
+        failing_allocator_deallocations = 0;
+        {
+            failing_json j = failing_json::array(
+            {
+                failing_json::array({1, 2}),
+                failing_json::object({{"key", failing_json::array({3})}})
+            });
+            fail_next_allocation = true;
+        } // j is destroyed here, with every further allocation set to fail
+
+        CHECK(fail_next_allocation);
+        fail_next_allocation = false;
+        CHECK(failing_allocator_deallocations > 0);
     }
 
-    const bool allocation_failure_was_injected = !fail_next_global_allocation;
-    fail_next_global_allocation = false;
+    SECTION("100000-deep nested array")
+    {
+        std::size_t allocations_before = 0;
+        {
+            failing_json j = make_deep_nest<failing_json>(100000, false);
+            allocations_before = failing_allocator_allocations;
+            fail_next_allocation = true;
+        }
 
-    CHECK(allocation_failure_was_injected);
+        CHECK(fail_next_allocation);
+        fail_next_allocation = false;
+        CHECK(failing_allocator_allocations == allocations_before);
+    }
+
+    SECTION("100000-deep nested object")
+    {
+        std::size_t allocations_before = 0;
+        {
+            failing_json j = make_deep_nest<failing_json>(100000, true);
+            allocations_before = failing_allocator_allocations;
+            fail_next_allocation = true;
+        }
+
+        CHECK(fail_next_allocation);
+        fail_next_allocation = false;
+        CHECK(failing_allocator_allocations == allocations_before);
+    }
+
+    SECTION("100000-deep nested ordered_json")
+    {
+        std::size_t allocations_before = 0;
+        {
+            failing_ordered_json j = make_deep_nest<failing_ordered_json>(100000, true);
+            allocations_before = failing_allocator_allocations;
+            fail_next_allocation = true;
+        }
+
+        CHECK(fail_next_allocation);
+        fail_next_allocation = false;
+        CHECK(failing_allocator_allocations == allocations_before);
+    }
+
+    SECTION("wide and deep: 1000 arrays of 1000 elements, each a small nested object")
+    {
+        std::size_t allocations_before = 0;
+        {
+            failing_json wide = failing_json::array();
+            for (std::size_t i = 0; i < 1000; ++i)
+            {
+                failing_json inner = failing_json::array();
+                for (std::size_t k = 0; k < 1000; ++k)
+                {
+                    inner.push_back(failing_json::object({{"a", 1}, {"b", failing_json::array({1, 2, 3})}}));
+                }
+                wide.push_back(std::move(inner));
+            }
+
+            allocations_before = failing_allocator_allocations;
+            fail_next_allocation = true;
+        }
+
+        CHECK(fail_next_allocation);
+        fail_next_allocation = false;
+        CHECK(failing_allocator_allocations == allocations_before);
+    }
 }
 #endif
 
