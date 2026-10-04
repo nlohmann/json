@@ -49,6 +49,10 @@ TEST_CASE("default namespace without version component")
         expected += "_sbu8";
 #endif
 
+#if JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+        expected += "_ekmo";
+#endif
+
         expected += "::basic_json";
 
         // fallback for Clang
