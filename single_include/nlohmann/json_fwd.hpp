@@ -11,8 +11,7 @@
 
 #include <cstdint> // int64_t, uint64_t
 #include <map> // map
-#include <memory> // allocator
-#include <string> // string
+#include <string> // allocator, string
 #include <vector> // vector
 
 // #include <nlohmann/detail/abi_macros.hpp>
@@ -64,6 +63,10 @@
     #define JSON_STRICT_NUL_HANDLING 0
 #endif
 
+#ifndef JSON_STRICT_BINARY_UTF8
+    #define JSON_STRICT_BINARY_UTF8 0
+#endif
+
 #ifndef JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
     #define JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS 0
 #endif
@@ -104,6 +107,12 @@
     #define NLOHMANN_JSON_ABI_TAG_STRICT_NUL_HANDLING
 #endif
 
+#if JSON_STRICT_BINARY_UTF8
+    #define NLOHMANN_JSON_ABI_TAG_STRICT_BINARY_UTF8 _sbu8
+#else
+    #define NLOHMANN_JSON_ABI_TAG_STRICT_BINARY_UTF8
+#endif
+
 #if JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
     #define NLOHMANN_JSON_ABI_TAG_OBJECTS_FOR_ENUM_KEYED_MAPS _ekmo
 #else
@@ -115,9 +124,9 @@
 #endif
 
 // Construct the namespace ABI tags component
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g) json_abi ## a ## b ## c ## d ## e ## f ## g
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d, e, f, g) \
-    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g)
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g, h) json_abi ## a ## b ## c ## d ## e ## f ## g ## h
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d, e, f, g, h) \
+    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g, h)
 
 #define NLOHMANN_JSON_ABI_TAGS                                       \
     NLOHMANN_JSON_ABI_TAGS_CONCAT(                                   \
@@ -127,6 +136,7 @@
             NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS,         \
             NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION,           \
             NLOHMANN_JSON_ABI_TAG_STRICT_NUL_HANDLING,               \
+            NLOHMANN_JSON_ABI_TAG_STRICT_BINARY_UTF8,                \
             NLOHMANN_JSON_ABI_TAG_OBJECTS_FOR_ENUM_KEYED_MAPS)
 
 // Construct the namespace version component
@@ -188,7 +198,7 @@ This serializer ignores the template arguments and uses ADL
 for serialization.
 */
 template<typename T = void, typename SFINAE = void>
-struct adl_serializer;
+struct adl_serializer; // IWYU pragma: keep
 
 /// a class to store JSON values
 /// @sa https://json.nlohmann.me/api/basic_json/
@@ -204,12 +214,12 @@ template<template<typename U, typename V, typename... Args> class ObjectType =
          adl_serializer,
          class BinaryType = std::vector<std::uint8_t>, // cppcheck-suppress syntaxError
          class CustomBaseClass = void>
-class basic_json;
+class basic_json; // IWYU pragma: keep
 
 /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
 /// @sa https://json.nlohmann.me/api/json_pointer/
 template<typename RefStringType>
-class json_pointer;
+class json_pointer; // IWYU pragma: keep
 
 /*!
 @brief default specialization
@@ -220,7 +230,7 @@ using json = basic_json<>;
 /// @brief a minimal map-like container that preserves insertion order
 /// @sa https://json.nlohmann.me/api/ordered_map/
 template<class Key, class T, class IgnoredLess, class Allocator>
-struct ordered_map;
+struct ordered_map; // IWYU pragma: keep
 
 /// @brief specialization that maintains the insertion order of object keys
 /// @sa https://json.nlohmann.me/api/ordered_json/

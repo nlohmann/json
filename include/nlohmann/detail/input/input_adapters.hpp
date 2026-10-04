@@ -8,12 +8,12 @@
 
 #pragma once
 
+#include <algorithm> // min
 #include <array> // array
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstring> // strlen
 #include <iterator> // begin, end, iterator_traits, random_access_iterator_tag, distance, next
-#include <memory> // shared_ptr, make_shared, addressof
-#include <numeric> // accumulate
 #include <streambuf> // streambuf
 #include <string> // string, char_traits
 #include <type_traits> // enable_if, is_base_of, is_pointer, is_integral, remove_pointer
@@ -28,6 +28,7 @@
 #include <nlohmann/detail/iterators/iterator_traits.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
+#include <nlohmann/detail/string_utils.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -82,8 +83,9 @@ class file_input_adapter
 };
 
 /*!
-Input adapter for a (caching) istream. Ignores a UFT Byte Order Mark at
-beginning of input. Does not support changing the underlying std::streambuf
+Input adapter for a (caching) istream. Does not skip a UTF Byte Order Mark
+itself; that is done by the lexer's skip_bom(). Does not support changing
+the underlying std::streambuf
 in mid-input. Maintains underlying std::istream and std::streambuf to support
 subsequent use of standard std::istream operations to process any input
 characters following those used in parsing the JSON input.  Clears the
@@ -106,7 +108,13 @@ class input_stream_adapter
             // was given back with release_lookahead()
             commit_lookahead();
 #endif
-            is->clear(is->rdstate() & std::ios::eofbit);
+            // only call clear() if there is something to clear: it throws
+            // std::ios_base::failure if the stream has exceptions() enabled
+            // for a state bit that remains set, and a destructor must not throw
+            if ((is->rdstate() & ~std::ios::eofbit) != 0)
+            {
+                is->clear(is->rdstate() & std::ios::eofbit);
+            }
         }
     }
 
@@ -445,35 +453,19 @@ struct wide_string_input_helper<BaseInputAdapter, 4>
         }
         else
         {
-            // get the current character
-            const auto wc = input.get_character();
+            // get the current character; converted to an unsigned type so that
+            // a negative unit (wint_t is signed on some platforms) is not
+            // mistaken for an ASCII character or for EOF
+            const auto wc = static_cast<std::uint32_t>(input.get_character());
 
-            // UTF-32 to UTF-8 encoding
-            if (wc < 0x80)
+            if (wc <= 0x10FFFF)
             {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(wc);
-                utf8_bytes_filled = 1;
-            }
-            else if (wc <= 0x7FF)
-            {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xC0u | ((static_cast<unsigned int>(wc) >> 6u) & 0x1Fu));
-                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
-                utf8_bytes_filled = 2;
-            }
-            else if (wc <= 0xFFFF)
-            {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xE0u | ((static_cast<unsigned int>(wc) >> 12u) & 0x0Fu));
-                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((static_cast<unsigned int>(wc) >> 6u) & 0x3Fu));
-                utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
-                utf8_bytes_filled = 3;
-            }
-            else if (wc <= 0x10FFFF)
-            {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xF0u | ((static_cast<unsigned int>(wc) >> 18u) & 0x07u));
-                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((static_cast<unsigned int>(wc) >> 12u) & 0x3Fu));
-                utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | ((static_cast<unsigned int>(wc) >> 6u) & 0x3Fu));
-                utf8_bytes[3] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
-                utf8_bytes_filled = 4;
+                // UTF-32 to UTF-8 encoding
+                utf8_bytes_filled = 0;
+                encode_utf8(static_cast<std::uint32_t>(wc), [&utf8_bytes, &utf8_bytes_filled](std::uint32_t byte)
+                {
+                    utf8_bytes[utf8_bytes_filled++] = static_cast<std::char_traits<char>::int_type>(byte);
+                });
             }
             else
             {
@@ -510,24 +502,15 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
             // get the current character
             const auto wc = input.get_character();
 
-            // UTF-16 to UTF-8 encoding
-            if (wc < 0x80)
+            if (0xD800 > wc || wc >= 0xE000)
             {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(wc);
-                utf8_bytes_filled = 1;
-            }
-            else if (wc <= 0x7FF)
-            {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xC0u | ((static_cast<unsigned int>(wc) >> 6u)));
-                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
-                utf8_bytes_filled = 2;
-            }
-            else if (0xD800 > wc || wc >= 0xE000)
-            {
-                utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xE0u | ((static_cast<unsigned int>(wc) >> 12u)));
-                utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((static_cast<unsigned int>(wc) >> 6u) & 0x3Fu));
-                utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | (static_cast<unsigned int>(wc) & 0x3Fu));
-                utf8_bytes_filled = 3;
+                // a UTF-16 code unit outside the surrogate range is a valid
+                // code point (at most U+FFFF) on its own
+                utf8_bytes_filled = 0;
+                encode_utf8(static_cast<std::uint32_t>(wc), [&utf8_bytes, &utf8_bytes_filled](std::uint32_t byte)
+                {
+                    utf8_bytes[utf8_bytes_filled++] = static_cast<std::char_traits<char>::int_type>(byte);
+                });
             }
             else
             {
@@ -541,22 +524,25 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
                 bool valid_pair = false;
                 if (wc <= 0xDBFF && JSON_HEDLEY_UNLIKELY(!input.empty()))
                 {
-                    const auto wc2 = static_cast<unsigned int>(input.get_character());
+                    // only consume the next unit if it completes the pair
+                    const auto wc2 = static_cast<unsigned int>(*input.current);
                     if (0xDC00 <= wc2 && wc2 <= 0xDFFF)
                     {
+                        input.get_character();
                         const auto charcode = 0x10000u + (((static_cast<unsigned int>(wc) & 0x3FFu) << 10u) | (wc2 & 0x3FFu));
-                        utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(0xF0u | (charcode >> 18u));
-                        utf8_bytes[1] = static_cast<std::char_traits<char>::int_type>(0x80u | ((charcode >> 12u) & 0x3Fu));
-                        utf8_bytes[2] = static_cast<std::char_traits<char>::int_type>(0x80u | ((charcode >> 6u) & 0x3Fu));
-                        utf8_bytes[3] = static_cast<std::char_traits<char>::int_type>(0x80u | (charcode & 0x3Fu));
-                        utf8_bytes_filled = 4;
+                        utf8_bytes_filled = 0;
+                        encode_utf8(charcode, [&utf8_bytes, &utf8_bytes_filled](std::uint32_t byte)
+                        {
+                            utf8_bytes[utf8_bytes_filled++] = static_cast<std::char_traits<char>::int_type>(byte);
+                        });
                         valid_pair = true;
                     }
                 }
 
                 if (!valid_pair)
                 {
-                    utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(wc);
+                    // emit a byte that is never valid UTF-8 (see the UTF-32 case)
+                    utf8_bytes[0] = 0xFF;
                     utf8_bytes_filled = 1;
                 }
             }
@@ -763,6 +749,9 @@ struct container_input_adapter_factory< ContainerType,
 
            static adapter_type create(ContainerType&& container)
 {
+    // container is forwarded twice on purpose: the resulting begin/end
+    // iterator types must match adapter_type, computed the same way
+    // NOLINTNEXTLINE(bugprone-use-after-move,hicpp-invalid-access-moved)
     return input_adapter(begin(std::forward<ContainerType>(container)), end(std::forward<ContainerType>(container)));
 }
        };
@@ -811,12 +800,16 @@ inline file_input_adapter input_adapter(std::FILE* file)
 
 inline input_stream_adapter input_adapter(std::istream& stream)
 {
+    if (stream.rdbuf() == nullptr)
+    {
+        JSON_THROW(parse_error::create(101, 0, "attempting to parse an empty input; check that your input string or stream contains the expected JSON", nullptr));
+    }
     return input_stream_adapter(stream);
 }
 
 inline input_stream_adapter input_adapter(std::istream&& stream)
 {
-    return input_stream_adapter(stream);
+    return input_adapter(stream);
 }
 #endif  // JSON_NO_IO
 
@@ -845,16 +838,28 @@ template<typename T, std::size_t N>
 auto input_adapter(T (&array)[N]) -> decltype(input_adapter(array, array + N)) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 {
 #if JSON_STRICT_NUL_HANDLING
-    // A `char` array from string-literal initialization (e.g. json::parse("123"))
-    // carries a trailing '\0' contributed by the compiler, not by the source
-    // text; drop exactly that one byte so it is not mistaken for real trailing
-    // data. Every other element type (unsigned char, std::uint8_t, ...) keeps
-    // the full extent unconditionally, since a trailing zero byte there is
-    // genuine data (e.g. CBOR/MessagePack). This intentionally does not
-    // strlen()-scan the array (as the pointer overload above does for a
-    // null-delimited string): for a `char` array that is not NUL-terminated
-    // within its bounds, that would read past the end of the array.
-    if (std::is_same<typename std::remove_cv<T>::type, char>::value && N > 0 && array[N - 1] == 0)
+    // A text-literal array from string-literal initialization (e.g.
+    // json::parse("123") or json::parse(L"123")) carries a trailing '\0'
+    // contributed by the compiler, not by the source text; drop exactly that
+    // one byte so it is not mistaken for real trailing data. This covers all
+    // character types that string literals can use: char, wchar_t, char16_t,
+    // char32_t, and (C++20) char8_t. Every other element type (unsigned char,
+    // std::uint8_t, ...) keeps the full extent unconditionally, since a
+    // trailing zero byte there is genuine data (e.g. CBOR/MessagePack). This
+    // intentionally does not strlen()-scan the array (as the pointer overload
+    // above does for a null-delimited string): for an array that is not
+    // NUL-terminated within its bounds, that would read past the end of the
+    // array.
+    using char_t = typename std::remove_cv<T>::type;
+    constexpr bool is_text_literal_type = std::is_same<char_t, char>::value
+                                          || std::is_same<char_t, wchar_t>::value
+                                          || std::is_same<char_t, char16_t>::value
+                                          || std::is_same<char_t, char32_t>::value
+#if defined(__cpp_char8_t)
+                                          || std::is_same<char_t, char8_t>::value
+#endif
+                                          ;
+    if (is_text_literal_type && N > 0 && array[N - 1] == 0)
     {
         return input_adapter(array, array + N - 1);
     }
@@ -862,9 +867,9 @@ auto input_adapter(T (&array)[N]) -> decltype(input_adapter(array, array + N)) /
     return input_adapter(array, array + N);
 }
 
-// This class only handles inputs of input_buffer_adapter type.
-// It's required so that expressions like {ptr, len} can be implicitly cast
-// to the correct adapter.
+// This class only handles inputs that construct a contiguous_bytes_input_adapter
+// (e.g. span_input_adapter). It's required so that expressions like {ptr, len}
+// can be implicitly cast to the correct adapter.
 class span_input_adapter
 {
   public:

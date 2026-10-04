@@ -584,7 +584,7 @@ TEST_CASE("serialization of deeply nested values")
         // value are known to meet cleanly - wherever the bound is set.
         for (std::size_t d = 1; d <= 300; ++d)
         {
-            CAPTURE(d);
+            CAPTURE(d)
 
             const std::string array_text = std::string(d, '[') + '7' + std::string(d, ']');
             CHECK(json::parse(array_text).dump() == array_text);
@@ -604,7 +604,7 @@ TEST_CASE("serialization of deeply nested values")
     {
         for (std::size_t d = 120; d <= 140; ++d)
         {
-            CAPTURE(d);
+            CAPTURE(d)
 
             const json j = json::parse(std::string(d, '[') + '7' + std::string(d, ']'));
 
@@ -629,7 +629,7 @@ TEST_CASE("serialization of deeply nested values")
         // so it must not gain a newline when it is reached iteratively
         for (std::size_t d = 125; d <= 135; ++d)
         {
-            CAPTURE(d);
+            CAPTURE(d)
 
             const std::string compact = std::string(d, '[') + "[]" + std::string(d, ']');
             CHECK(json::parse(compact).dump() == compact);
@@ -711,10 +711,10 @@ TEST_CASE("serialization of every kind of value below the bound of the descent")
 
     for (const std::size_t depth : std::vector<std::size_t> {1, 200})
     {
-        CAPTURE(depth);
+        CAPTURE(depth)
         for (const auto& inner : values)
         {
-            CAPTURE(inner.dump());
+            CAPTURE(inner.dump())
             const json j = wrap_in_arrays(inner, depth);
             CHECK(j.dump() == std::string(depth, '[') + inner.dump() + std::string(depth, ']'));
             CHECK(j.dump(2) == expected_pretty_in_arrays(inner, depth));
@@ -725,7 +725,7 @@ TEST_CASE("serialization of every kind of value below the bound of the descent")
     {
         for (std::size_t d = 120; d <= 140; ++d)
         {
-            CAPTURE(d);
+            CAPTURE(d)
 
             // built from the inside out: {"k": <level below>, "n": <level>}
             json j = 7;

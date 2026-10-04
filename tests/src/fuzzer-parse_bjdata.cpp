@@ -11,15 +11,15 @@ This file implements a parser test suitable for fuzz testing. Given a byte
 array data, it performs the following steps:
 
 - j1 = from_bjdata(data)
-- vec = to_bjdata(j1)
-- j2 = from_bjdata(vec)
-- assert(j1 == j2)
-- vec2 = to_bjdata(j1, use_size = true, use_type = false)
-- j3 = from_bjdata(vec2)
-- assert(j1 == j3)
-- vec3 = to_bjdata(j1, use_size = true, use_type = true)
-- j4 = from_bjdata(vec3)
-- assert(j1 == j4)
+- vec2 = to_bjdata(j1, use_size = false, use_type = false)
+- vec3 = to_bjdata(j1, use_size = true, use_type = false)
+- vec4 = to_bjdata(j1, use_size = true, use_type = true)
+- j2 = from_bjdata(vec2)
+- j3 = from_bjdata(vec3)
+- j4 = from_bjdata(vec4)
+- assert(from_bjdata(to_bjdata(j2, use_size = false, use_type = false)) is value-stable with j2)
+- assert(from_bjdata(to_bjdata(j3, use_size = true, use_type = false)) is value-stable with j3)
+- assert(from_bjdata(to_bjdata(j4, use_size = true, use_type = true)) is value-stable with j4)
 
 Re-serializing j2/j3/j4 with the same use_size/use_type settings is checked
 for value-stability rather than byte-exact stability: from_bjdata(to_bjdata(j2))
@@ -50,8 +50,6 @@ drivers.
 */
 
 #include <cassert>
-#include <iostream>
-#include <sstream>
 #include <nlohmann/json.hpp>
 
 // the round-trip checks below are assertions; NDEBUG would compile them away

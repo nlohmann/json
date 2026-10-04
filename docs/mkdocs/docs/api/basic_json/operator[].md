@@ -70,6 +70,9 @@ Strong exception safety: if an exception occurs, the original value stays intact
 1. The function can throw the following exceptions:
     - Throws [`type_error.305`](../../home/exceptions.md#jsonexceptiontype_error305) if the JSON value is not an array
       or null; in that case, using the `[]` operator with an index makes no sense.
+    - Throws `#!cpp std::length_error` if `idx` equals the maximum value of `size_type`; the array is left unchanged.
+      (This is the one index for which growing the array to hold it cannot be expressed as a `size_type` size, the same
+      way an oversized [`resize`](https://en.cppreference.com/w/cpp/container/vector/resize) throws.)
 2. The function can throw the following exceptions:
     - Throws [`type_error.305`](../../home/exceptions.md#jsonexceptiontype_error305) if the JSON value is not an object
       or null; in that case, using the `[]` operator with a key makes no sense.
@@ -86,6 +89,9 @@ Strong exception safety: if an exception occurs, the original value stays intact
     - Throws [`out_of_range.410`](../../home/exceptions.md#jsonexceptionout_of_range410) if an array index in the passed
       JSON pointer `ptr` exceeds the range of `size_type` (e.g., on 32-bit platforms).
 
+    For the **const** version, an object key or array index in `ptr` that does not exist is not reported by an
+    exception, but is undefined behavior (see the notes below). Use [`at`](at.md) for checked access.
+
 ## Complexity
 
 1. Constant if `idx` is in the range of the array. Otherwise, linear in `idx - size()`.
@@ -100,9 +106,12 @@ Strong exception safety: if an exception occurs, the original value stays intact
     The following cases apply to the **const** overloads; the non-const overloads instead insert the missing element
     (see the notes below).
 
-    1. If the element at index `idx` does not exist, the behavior is undefined.
+    1. If the element at index `idx` does not exist, the behavior is undefined and is **guarded by a
+       [runtime assertion](../../features/assertions.md)**!
     2. If the element with key `key` does not exist, the behavior is undefined and is **guarded by a
        [runtime assertion](../../features/assertions.md)**!
+    3. If the JSON pointer `ptr` refers to an object key or an array index that does not exist, the behavior is
+       undefined and is **guarded by a [runtime assertion](../../features/assertions.md)**!
 
 1. The non-const version may add values: If `idx` is beyond the range of the array (i.e., `idx >= size()`), then the
    array is silently filled up with `#!json null` values to make `idx` a valid reference to the last stored element. In
@@ -132,6 +141,18 @@ Strong exception safety: if an exception occurs, the original value stays intact
         creates an object. For example, on an initially `#!json null` value, `/foo/0/0/0` creates nested arrays,
         while `/foo/one/one/one` creates nested objects. This is not specified by the JSON Pointer RFC; it is
         this library's own, intentional disambiguation rule. See also [JSON Pointer](../../features/json_pointer.md).
+
+!!! warning "Deprecation"
+
+    Overload (4) also accepts a [`json_pointer`](../json_pointer/index.md) whose template argument is a `basic_json`
+    specialization (e.g., `nlohmann::json_pointer<nlohmann::json>`) instead of a string type. This is deprecated since
+    version 3.11.0 and will be removed in a future major version; use `basic_json::json_pointer` (for `json`,
+    `nlohmann::json_pointer<std::string>`) instead.
+
+    You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated
+    function.
+
+    See the [migration guide](../../integration/migration_guide.md#json-pointers) for how to update existing code.
 
 ## Examples
 
@@ -257,9 +278,12 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## Version history
 
-1. Added in version 1.0.0.
+1. Added in version 1.0.0. Fixed in version 3.13.0 to throw `#!cpp std::length_error` instead of emptying the array and
+   accessing it out of bounds when `idx` equals the maximum value of `size_type`. A missing index in the const version
+   is guarded by a runtime assertion since version 3.13.0.
 2. Added in version 1.0.0. Added overloads for `T* key` in version 1.1.0. Removed overloads for `T* key` (replaced by 3)
    in version 3.11.0.
 3. Added in version 3.11.0. Fixed in version 3.13.0 to consistently accept `std::string_view`-convertible keys, as
    already supported by [`at`](at.md), [`value`](value.md), [`find`](find.md), and other lookup functions.
-4. Added in version 2.0.0.
+4. Added in version 2.0.0. A missing array index in the const version is guarded by a runtime assertion since
+   version 3.13.0.

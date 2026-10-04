@@ -1,0 +1,12 @@
+{
+  "_comment": "Used by the ci_infer CMake target (#5715 item 4b). fail-on-issue makes CI fail on Infer findings; disable-issue-type is a type-level baseline for the ~174 pre-existing findings (all PULSE_UNNECESSARY_COPY*/PULSE_RESOURCE_LEAK/PULSE_CONST_REFABLE, mostly in test code) triaged in run https://github.com/nlohmann/json/actions/runs/35829411620 on commit 1054b2097, so CI fails only on a NEW issue type. Remove an entry here once its findings have been fixed or explicitly accepted.",
+  "fail-on-issue": true,
+  "disable-issue-type": [
+    "PULSE_UNNECESSARY_COPY_ASSIGNMENT",
+    "PULSE_UNNECESSARY_COPY",
+    "PULSE_UNNECESSARY_COPY_INTERMEDIATE",
+    "PULSE_UNNECESSARY_COPY_OPTIONAL",
+    "PULSE_RESOURCE_LEAK",
+    "PULSE_CONST_REFABLE"
+  ]
+}

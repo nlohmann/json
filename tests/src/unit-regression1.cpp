@@ -1482,7 +1482,23 @@ TEST_CASE("regression tests 1")
 
     SECTION("issue #972 - Segmentation fault on G++ when trying to assign json string literal to custom json type")
     {
+        // this assignment used to crash outright
         my_json const foo = R"([1, 2, 3])"_json;
+
+        // fifo_map is the adapter the docs recommend for keeping object keys
+        // in insertion order (see docs/mkdocs/docs/features/object_order.md
+        // and docs/mkdocs/docs/features/types/template_parameters.md); check
+        // that recommendation actually holds, including through erase() and
+        // inserting a new key. The comparator is stateful, so this avoids
+        // deep copies of "order" (see #1763, #5649).
+        my_json order = my_json::parse(R"({"z":1,"a":2,"m":{"y":1,"b":2}})");
+        CHECK(order.dump() == R"({"z":1,"a":2,"m":{"y":1,"b":2}})");
+
+        order.erase("z");
+        CHECK(order.dump() == R"({"a":2,"m":{"y":1,"b":2}})");
+
+        order["new_key"] = 3;
+        CHECK(order.dump() == R"({"a":2,"m":{"y":1,"b":2},"new_key":3})");
     }
 
     SECTION("issue #977 - Assigning between different json types")

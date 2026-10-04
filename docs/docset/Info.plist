@@ -13,7 +13,7 @@
     <key>dashIndexFilePath</key>
     <string>index.html</string>
     <key>DashDocSetFallbackURL</key>
-    <string>https://nlohmann.github.io/json/</string>
+    <string>https://json.nlohmann.me/</string>
     <key>isJavaScriptEnabled</key>
     <true/>
 </dict>

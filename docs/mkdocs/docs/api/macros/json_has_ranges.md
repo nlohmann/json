@@ -40,6 +40,13 @@ When the macro is not defined, the library will define it to its default value.
     ...
     ```
 
+## See also
+
+- [JSON_HAS_CPP_11 / JSON_HAS_CPP_14 / JSON_HAS_CPP_17 / JSON_HAS_CPP_20 / JSON_HAS_CPP_23 /
+  JSON_HAS_CPP_26](json_has_cpp_11.md) - set supported C++ standard
+- [JSON_HAS_STD_FORMAT](json_has_std_format.md) - a similar feature-detection macro, for `std::format`/`std::formatter`
+  support
+
 ## Version history
 
 - Added in version 3.11.0.

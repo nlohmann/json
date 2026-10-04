@@ -44,9 +44,9 @@ for objects.
     json j = json::array({true});  // [true]
     ```
 
-**Opt-in copy semantics (since version 3.12.0)**
+**Opt-in copy semantics (since version 3.13.0)**
 
-If you define `JSON_BRACE_INIT_COPY_SEMANTICS` to `1` before including the library, single-element brace initialization is treated as copy/move instead of creating a single-element array:
+If you define [`JSON_BRACE_INIT_COPY_SEMANTICS`](../api/macros/json_brace_init_copy_semantics.md) to `1` before including the library, single-element brace initialization is treated as copy/move instead of creating a single-element array:
 
 ```cpp
 #define JSON_BRACE_INIT_COPY_SEMANTICS 1
@@ -85,7 +85,7 @@ The library supports **Unicode input** as follows:
 - The library will not replace [Unicode noncharacters](http://www.unicode.org/faq/private_use.html#nonchar1).
 - Invalid surrogates (e.g., incomplete pairs such as `\uDEAD`) will yield parse errors.
 - The strings stored in the library are UTF-8 encoded. When using the default string type (`std::string`), note that its length/size functions return the number of stored bytes rather than the number of characters or glyphs.
-- When you store strings with different encodings in the library, calling [`dump()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a50ec80b02d0f3f51130d4abb5d1cfdc5.html#a50ec80b02d0f3f51130d4abb5d1cfdc5) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
+- When you store strings with different encodings in the library, calling [`dump()`](../api/basic_json/dump.md) may throw an exception unless `json::error_handler_t::replace` or `json::error_handler_t::ignore` are used as error handlers.
 
 In most cases, the parser is right to complain, because the input is not UTF-8 encoded. This is especially true for Microsoft Windows, where Latin-1 or ISO 8859-1 is often the standard encoding.
 
@@ -94,7 +94,7 @@ In most cases, the parser is right to complain, because the input is not UTF-8 e
 
 !!! question "Questions"
 
-    - Why does `json::parse()` silently ignore part of my input?
+    - Why does [`json::parse()`](../api/basic_json/parse.md) silently ignore part of my input?
     - Why does a `std::string`/buffer with extra data after the JSON text parse without error, while a similar-looking string with extra text does not?
 
 A `'\0'` (NUL) byte anywhere in the input is treated the same as the real end of the input, rather than as an ordinary (and, outside of a string, invalid) byte. Everything from that byte onward is silently ignored, without a parse error — including further, otherwise well-formed JSON:
@@ -197,8 +197,8 @@ same object -- is a data race and requires external synchronization (e.g., a `st
     Does this library support JSON Schema validation?
 
 Not directly, but the companion project [json-schema-validator](https://github.com/pboettch/json-schema-validator)
-builds JSON Schema (draft 4, 6, 7, and 2019-09) validation on top of this library and is a common recommendation
-for this use case.
+builds JSON Schema (draft 7; draft 4 in its older, now-superseded 1.x releases) validation on top of this library
+and is a common recommendation for this use case.
 
 ## Exceptions
 
@@ -296,16 +296,59 @@ If you get ambiguous-overload errors when passing a JSON value to `fmt::format`/
 
     Why does the code not compile with Android SDK?
 
-Android defaults to using very old compilers and C++ libraries. To fix this, add the following to your `Application.mk`. This will switch to the LLVM C++ library, the Clang compiler, and enable C++11 and other features disabled by default.
+Since [NDK r18](https://github.com/android/ndk/wiki/Changelog-r18) (2018), GCC and the `gnustl`/`stlport` C++
+libraries have been removed from the Android NDK; Clang and `libc++` are now the only compiler and C++ library, and
+they support C++11 and later out of the box. With a current NDK, no special configuration is needed to use this
+library.
 
-```ini
-APP_STL := c++_shared
-NDK_TOOLCHAIN_VERSION := clang3.6
-APP_CPPFLAGS += -frtti -fexceptions
+Only very old NDKs (before r18), which defaulted to GCC and `gnustl`, lacked C++11 library features such as
+`std::to_string`. If you run into this, update to a current NDK.
+
+
+### Incomplete `detector` type with GCC < 11
+
+!!! question
+
+    Why does GCC 10 or older fail with `invalid use of incomplete type 'struct nlohmann::detail::detector<..., to_json_function, ...>'` for a type that holds an `optional` member?
+
+This happens with GCC 10 and older in C++11/C++14 mode when all of these hold:
+
+- a class `Holder` has an `optional<Dummy>` member (e.g., `boost::optional`),
+- `Dummy` has a constructor taking a `json` value, and
+- `to_json` for `Holder` is a free function in the namespace of `Dummy`.
+
+```cpp
+class Dummy {
+  public:
+    explicit Dummy(const nlohmann::json& j);
+};
+
+class Holder {
+    boost::optional<Dummy> d;
+};
+
+void to_json(nlohmann::json& j, const Holder& h);  // triggers the error
 ```
 
-The code compiles successfully with [Android NDK](https://developer.android.com/ndk/index.html?hl=ml), Revision 9 - 11 (and possibly later) and [CrystaX's Android NDK](https://www.crystax.net/en/android/ndk) version 10.
+To decide whether `Dummy` is copyable, the compiler checks whether a `Dummy` can be converted to `json`. That check
+looks up `to_json` via argument-dependent lookup, finds the unrelated `to_json` for `Holder`, and eventually asks again
+whether `Dummy` is copyable. GCC before version 11 turns this cycle into a hard error; GCC 11 and later, Clang, and
+C++17 mode compile the code. The same error shows up without this library whenever a constrained converting constructor
+is involved, so the library can't avoid it.
 
+To work around this, define `to_json` (and `from_json`) as a *hidden friend* inside the class. That way,
+argument-dependent lookup only finds it for `Holder`:
+
+```cpp
+class Holder {
+    boost::optional<Dummy> d;
+
+    friend void to_json(nlohmann::json& j, const Holder& h) { /* ... */ }
+};
+```
+
+The [`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](../api/macros/nlohmann_define_type_intrusive.md) macros define hidden friends as
+well. See [#3669](https://github.com/nlohmann/json/issues/3669) for details.
 
 ### Missing STL function
 
@@ -314,4 +357,6 @@ The code compiles successfully with [Android NDK](https://developer.android.com/
     - Why do I get a compilation error `'to_string' is not a member of 'std'` (or similarly, for `strtod` or `strtof`)?
     - Why does the code not compile with MinGW or Android SDK?
 
-This is not an issue with the code, but rather with the compiler itself. On Android, see above to build with a newer environment.  For MinGW, please refer to [this site](http://tehsausage.com/mingw-to-string) and [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug. For Android NDK using `APP_STL := gnustl_static`, please refer to [this discussion](https://github.com/nlohmann/json/issues/219).
+This is not an issue with the code, but rather with the compiler itself. On Android, use a current NDK (see above).
+For MinGW, please refer to [this site](http://tehsausage.com/mingw-to-string) and
+[this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug.

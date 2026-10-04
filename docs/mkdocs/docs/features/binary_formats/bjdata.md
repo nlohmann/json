@@ -61,7 +61,16 @@ The library uses the following mapping from JSON values types to BJData types ac
 
     The following values can **not** be converted to a BJData value:
 
-      - strings with more than 18446744073709551615 bytes, i.e., $2^{64}-1$ bytes (theoretical)
+      - strings with more than 18446744073709551615 bytes, i.e., 2<sup>64</sup>-1 bytes (theoretical)
+
+!!! warning "UTF-8 validation of string values and object keys"
+
+    BJData strings must use UTF-8 encoding. By default (the [`error_handler`](../../api/basic_json/to_bjdata.md)
+    parameter left at `keep`), `to_bjdata()` writes the bytes of string values and object keys unchanged, even if they
+    are not valid UTF-8. With `error_handler_t::strict`, it throws
+    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for ill-formed UTF-8 instead;
+    `replace`/`ignore` sanitize the string. [`JSON_STRICT_BINARY_UTF8`](../../api/macros/json_strict_binary_utf8.md)
+    makes `strict` the default.
 
 !!! info "Unused BJData markers"
 
@@ -73,7 +82,7 @@ The library uses the following mapping from JSON values types to BJData types ac
 !!! info "NaN/infinity handling"
 
     If NaN or Infinity are stored inside a JSON number, they are serialized properly. This behavior differs from the
-    `dump()` function which serializes NaN or Infinity to `#!json null`.
+    [`dump()`](../../api/basic_json/dump.md) function which serializes NaN or Infinity to `#!json null`.
 
 !!! info "Endianness"
 
@@ -163,7 +172,7 @@ The library uses the following mapping from JSON values types to BJData types ac
 
     [BJDataBinArr]: https://github.com/NeuroJSON/bjdata/blob/master/Binary_JData_Specification.md#optimized-binary-array
 
-??? example
+??? example "Example: serialize JSON values to BJData, with and without size/type optimization"
 
     ```cpp
     --8<-- "examples/to_bjdata.cpp"
@@ -208,6 +217,19 @@ The library maps BJData types to JSON value types as follows:
 
     The mapping is **complete** in the sense that any BJData value can be converted to a JSON value.
 
+!!! warning "Ill-formed UTF-8 in string values and object keys"
+
+    BJData strings must use UTF-8 encoding, but checking it on read is opt-in: with the
+    [`error_handler`](../../api/basic_json/from_bjdata.md) parameter left at `keep` (the default), `from_bjdata()`
+    accepts a string value or object key whose bytes are not valid UTF-8 and hands them back unchanged. Passing
+    `error_handler_t::strict` makes `from_bjdata()` check and throw
+    [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) for ill-formed UTF-8, and
+    `replace`/`ignore` sanitize the string instead of keeping it. However,
+    [`dump()`](../../api/basic_json/dump.md) still requires valid UTF-8 and throws
+    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for a value read with the default
+    `keep` handler, unless an error handler is passed that replaces or ignores the ill-formed bytes. `to_bjdata()`'s
+    own `error_handler` parameter defaults to `keep` (see above), so such a value is written back unchanged.
+
 !!! info "Round trips"
 
     A value returned by [`from_bjdata`](../../api/basic_json/from_bjdata.md) can be serialized with
@@ -218,7 +240,7 @@ The library maps BJData types to JSON value types as follows:
     binary values above), and serializing such an array again may choose different, but equally valid, type markers.
     The bytes can then differ, but parsing them again yields the same value.
 
-??? example
+??? example "Example: deserialize a JSON value from BJData"
 
     ```cpp
     --8<-- "examples/from_bjdata.cpp"
