@@ -195,9 +195,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // used by the vector-returning to_* overloads
     template<typename CharType> using vector_binary_writer =
         ::nlohmann::detail::binary_writer<basic_json, CharType, ::nlohmann::detail::output_vector_sink<CharType>>;
-    template<typename CharType> static vector_binary_writer<CharType> vector_writer(std::vector<CharType>& v)
+    template<typename CharType> static vector_binary_writer<CharType> vector_writer(
+        std::vector<CharType>& v, const ::nlohmann::detail::error_handler_t error_handler = ::nlohmann::detail::binary_writer_default_error_handler())
     {
-        return vector_binary_writer<CharType>(::nlohmann::detail::output_vector_sink<CharType>(v));
+        return vector_binary_writer<CharType>(::nlohmann::detail::output_vector_sink<CharType>(v), error_handler);
     }
 
   JSON_PRIVATE_UNLESS_TESTED:
@@ -5600,11 +5601,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template<typename InputAdapterType>
     static basic_json from_binary_impl(InputAdapterType ia, const input_format_t format,
                                        const bool strict, const bool allow_exceptions,
+                                       const error_handler_t error_handler = error_handler_t::keep,
                                        const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json, InputAdapterType> sdp(result, allow_exceptions);
-        binary_reader<InputAdapterType> reader(std::move(ia), format);
+        binary_reader<InputAdapterType> reader(std::move(ia), format, error_handler);
         if (!reader.sax_parse(&sdp, strict, tag_handler))
         {
             result = value_t::discarded;
@@ -5622,78 +5624,87 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
   public:
     /// @brief create a CBOR serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_cbor/
-    static std::vector<std::uint8_t> to_cbor(const basic_json& j)
+    static std::vector<std::uint8_t> to_cbor(const basic_json& j,
+            const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        vector_writer(result).write_cbor(j);
+        vector_writer(result, error_handler).write_cbor(j);
         return result;
     }
 
     /// @brief create a CBOR serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_cbor/
-    static void to_cbor(const basic_json& j, detail::output_adapter<std::uint8_t> o)
+    static void to_cbor(const basic_json& j, detail::output_adapter<std::uint8_t> o,
+                        const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<std::uint8_t>(o).write_cbor(j);
+        binary_writer<std::uint8_t>(o, error_handler).write_cbor(j);
     }
 
     /// @brief create a CBOR serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_cbor/
-    static void to_cbor(const basic_json& j, detail::output_adapter<char> o)
+    static void to_cbor(const basic_json& j, detail::output_adapter<char> o,
+                        const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<char>(o).write_cbor(j);
+        binary_writer<char>(o, error_handler).write_cbor(j);
     }
 
     /// @brief create a MessagePack serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_msgpack/
-    static std::vector<std::uint8_t> to_msgpack(const basic_json& j)
+    static std::vector<std::uint8_t> to_msgpack(const basic_json& j,
+            const error_handler_t error_handler = error_handler_t::keep)
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        vector_writer(result).write_msgpack(j);
+        vector_writer(result, error_handler).write_msgpack(j);
         return result;
     }
 
     /// @brief create a MessagePack serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_msgpack/
-    static void to_msgpack(const basic_json& j, detail::output_adapter<std::uint8_t> o)
+    static void to_msgpack(const basic_json& j, detail::output_adapter<std::uint8_t> o,
+                           const error_handler_t error_handler = error_handler_t::keep)
     {
-        binary_writer<std::uint8_t>(o).write_msgpack(j);
+        binary_writer<std::uint8_t>(o, error_handler).write_msgpack(j);
     }
 
     /// @brief create a MessagePack serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_msgpack/
-    static void to_msgpack(const basic_json& j, detail::output_adapter<char> o)
+    static void to_msgpack(const basic_json& j, detail::output_adapter<char> o,
+                           const error_handler_t error_handler = error_handler_t::keep)
     {
-        binary_writer<char>(o).write_msgpack(j);
+        binary_writer<char>(o, error_handler).write_msgpack(j);
     }
 
     /// @brief create a UBJSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_ubjson/
     static std::vector<std::uint8_t> to_ubjson(const basic_json& j,
             const bool use_size = false,
-            const bool use_type = false)
+            const bool use_type = false,
+            const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        vector_writer(result).write_ubjson(j, use_size, use_type);
+        vector_writer(result, error_handler).write_ubjson(j, use_size, use_type);
         return result;
     }
 
     /// @brief create a UBJSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_ubjson/
     static void to_ubjson(const basic_json& j, detail::output_adapter<std::uint8_t> o,
-                          const bool use_size = false, const bool use_type = false)
+                          const bool use_size = false, const bool use_type = false,
+                          const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<std::uint8_t>(o).write_ubjson(j, use_size, use_type);
+        binary_writer<std::uint8_t>(o, error_handler).write_ubjson(j, use_size, use_type);
     }
 
     /// @brief create a UBJSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_ubjson/
     static void to_ubjson(const basic_json& j, detail::output_adapter<char> o,
-                          const bool use_size = false, const bool use_type = false)
+                          const bool use_size = false, const bool use_type = false,
+                          const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<char>(o).write_ubjson(j, use_size, use_type);
+        binary_writer<char>(o, error_handler).write_ubjson(j, use_size, use_type);
     }
 
     /// @brief create a BJData serialization of a given JSON value
@@ -5701,11 +5712,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static std::vector<std::uint8_t> to_bjdata(const basic_json& j,
             const bool use_size = false,
             const bool use_type = false,
-            const bjdata_version_t version = bjdata_version_t::draft2)
+            const bjdata_version_t version = bjdata_version_t::draft2,
+            const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        vector_writer(result).write_ubjson(j, use_size, use_type, true, true, version);
+        vector_writer(result, error_handler).write_ubjson(j, use_size, use_type, true, true, version);
         return result;
     }
 
@@ -5713,42 +5725,47 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/to_bjdata/
     static void to_bjdata(const basic_json& j, detail::output_adapter<std::uint8_t> o,
                           const bool use_size = false, const bool use_type = false,
-                          const bjdata_version_t version = bjdata_version_t::draft2)
+                          const bjdata_version_t version = bjdata_version_t::draft2,
+                          const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<std::uint8_t>(o).write_ubjson(j, use_size, use_type, true, true, version);
+        binary_writer<std::uint8_t>(o, error_handler).write_ubjson(j, use_size, use_type, true, true, version);
     }
 
     /// @brief create a BJData serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bjdata/
     static void to_bjdata(const basic_json& j, detail::output_adapter<char> o,
                           const bool use_size = false, const bool use_type = false,
-                          const bjdata_version_t version = bjdata_version_t::draft2)
+                          const bjdata_version_t version = bjdata_version_t::draft2,
+                          const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<char>(o).write_ubjson(j, use_size, use_type, true, true, version);
+        binary_writer<char>(o, error_handler).write_ubjson(j, use_size, use_type, true, true, version);
     }
 
     /// @brief create a BSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bson/
-    static std::vector<std::uint8_t> to_bson(const basic_json& j)
+    static std::vector<std::uint8_t> to_bson(const basic_json& j,
+            const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        vector_writer(result).write_bson(j);
+        vector_writer(result, error_handler).write_bson(j);
         return result;
     }
 
     /// @brief create a BSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bson/
-    static void to_bson(const basic_json& j, detail::output_adapter<std::uint8_t> o)
+    static void to_bson(const basic_json& j, detail::output_adapter<std::uint8_t> o,
+                        const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<std::uint8_t>(o).write_bson(j);
+        binary_writer<std::uint8_t>(o, error_handler).write_bson(j);
     }
 
     /// @brief create a BSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bson/
-    static void to_bson(const basic_json& j, detail::output_adapter<char> o)
+    static void to_bson(const basic_json& j, detail::output_adapter<char> o,
+                        const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<char>(o).write_bson(j);
+        binary_writer<char>(o, error_handler).write_bson(j);
     }
 
     /// @brief create a BON8 serialization of a given JSON value
@@ -5782,9 +5799,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static basic_json from_cbor(InputType&& i,
                                 const bool strict = true,
                                 const bool allow_exceptions = true,
-                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
+                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error,
+                                const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::cbor, strict, allow_exceptions, tag_handler);
+        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::cbor, strict, allow_exceptions, error_handler, tag_handler);
     }
 
     /// @brief create a JSON value from an input in CBOR format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -5795,9 +5813,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static basic_json from_cbor(IteratorType first, SentinelType last,
                                 const bool strict = true,
                                 const bool allow_exceptions = true,
-                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
+                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error,
+                                const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::cbor, strict, allow_exceptions, tag_handler);
+        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::cbor, strict, allow_exceptions, error_handler, tag_handler);
     }
 
     template<typename T>
@@ -5818,7 +5837,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                 const bool allow_exceptions = true,
                                 const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
-        return from_binary_impl(i.get(), input_format_t::cbor, strict, allow_exceptions, tag_handler);
+        return from_binary_impl(i.get(), input_format_t::cbor, strict, allow_exceptions, error_handler_t::keep, tag_handler);
     }
 
     /// @brief create a JSON value from an input in MessagePack format
@@ -5827,9 +5846,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_msgpack(InputType&& i,
                                    const bool strict = true,
-                                   const bool allow_exceptions = true)
+                                   const bool allow_exceptions = true,
+                                   const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::msgpack, strict, allow_exceptions);
+        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::msgpack, strict, allow_exceptions, error_handler);
     }
 
     /// @brief create a JSON value from an input in MessagePack format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -5839,9 +5859,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_msgpack(IteratorType first, SentinelType last,
                                    const bool strict = true,
-                                   const bool allow_exceptions = true)
+                                   const bool allow_exceptions = true,
+                                   const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::msgpack, strict, allow_exceptions);
+        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::msgpack, strict, allow_exceptions, error_handler);
     }
 
     template<typename T>
@@ -5869,9 +5890,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_ubjson(InputType&& i,
                                   const bool strict = true,
-                                  const bool allow_exceptions = true)
+                                  const bool allow_exceptions = true,
+                                  const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::ubjson, strict, allow_exceptions);
+        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::ubjson, strict, allow_exceptions, error_handler);
     }
 
     /// @brief create a JSON value from an input in UBJSON format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -5881,9 +5903,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_ubjson(IteratorType first, SentinelType last,
                                   const bool strict = true,
-                                  const bool allow_exceptions = true)
+                                  const bool allow_exceptions = true,
+                                  const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::ubjson, strict, allow_exceptions);
+        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::ubjson, strict, allow_exceptions, error_handler);
     }
 
     template<typename T>
@@ -5911,9 +5934,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bjdata(InputType&& i,
                                   const bool strict = true,
-                                  const bool allow_exceptions = true)
+                                  const bool allow_exceptions = true,
+                                  const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::bjdata, strict, allow_exceptions);
+        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::bjdata, strict, allow_exceptions, error_handler);
     }
 
     /// @brief create a JSON value from an input in BJData format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -5923,9 +5947,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bjdata(IteratorType first, SentinelType last,
                                   const bool strict = true,
-                                  const bool allow_exceptions = true)
+                                  const bool allow_exceptions = true,
+                                  const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::bjdata, strict, allow_exceptions);
+        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::bjdata, strict, allow_exceptions, error_handler);
     }
 
     /// @brief create a JSON value from an input in BON8 format
@@ -5957,9 +5982,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bson(InputType&& i,
                                 const bool strict = true,
-                                const bool allow_exceptions = true)
+                                const bool allow_exceptions = true,
+                                const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::bson, strict, allow_exceptions);
+        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::bson, strict, allow_exceptions, error_handler);
     }
 
     /// @brief create a JSON value from an input in BSON format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -5969,9 +5995,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bson(IteratorType first, SentinelType last,
                                 const bool strict = true,
-                                const bool allow_exceptions = true)
+                                const bool allow_exceptions = true,
+                                const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::bson, strict, allow_exceptions);
+        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::bson, strict, allow_exceptions, error_handler);
     }
 
     template<typename T>
