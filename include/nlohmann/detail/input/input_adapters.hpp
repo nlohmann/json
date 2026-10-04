@@ -453,8 +453,10 @@ struct wide_string_input_helper<BaseInputAdapter, 4>
         }
         else
         {
-            // get the current character
-            const auto wc = input.get_character();
+            // get the current character; converted to an unsigned type so that
+            // a negative unit (wint_t is signed on some platforms) is not
+            // mistaken for an ASCII character or for EOF
+            const auto wc = static_cast<std::uint32_t>(input.get_character());
 
             if (wc <= 0x10FFFF)
             {
@@ -522,9 +524,11 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
                 bool valid_pair = false;
                 if (wc <= 0xDBFF && JSON_HEDLEY_UNLIKELY(!input.empty()))
                 {
-                    const auto wc2 = static_cast<unsigned int>(input.get_character());
+                    // only consume the next unit if it completes the pair
+                    const auto wc2 = static_cast<unsigned int>(*input.current);
                     if (0xDC00 <= wc2 && wc2 <= 0xDFFF)
                     {
+                        input.get_character();
                         const auto charcode = 0x10000u + (((static_cast<unsigned int>(wc) & 0x3FFu) << 10u) | (wc2 & 0x3FFu));
                         utf8_bytes_filled = 0;
                         encode_utf8(charcode, [&utf8_bytes, &utf8_bytes_filled](std::uint32_t byte)
@@ -537,7 +541,8 @@ struct wide_string_input_helper<BaseInputAdapter, 2>
 
                 if (!valid_pair)
                 {
-                    utf8_bytes[0] = static_cast<std::char_traits<char>::int_type>(wc);
+                    // emit a byte that is never valid UTF-8 (see the UTF-32 case)
+                    utf8_bytes[0] = 0xFF;
                     utf8_bytes_filled = 1;
                 }
             }
