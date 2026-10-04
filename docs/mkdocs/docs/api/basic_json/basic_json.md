@@ -293,6 +293,15 @@ basic_json(basic_json&& other) noexcept;
         When used without parentheses around an empty initializer list, `basic_json()` is called instead of this
         function, yielding the JSON `#!json null` value.
 
+- Overload 4:
+
+    !!! info "Implicit conversion"
+
+        The conversion is implicit unless [`JSON_USE_IMPLICIT_CONVERSIONS`](../macros/json_use_implicit_conversions.md)
+        is defined to `0` and `BasicJsonType::string_t` differs from `string_t`. In that case, the constructor is
+        `explicit`, so a JSON value with a different string type is no longer silently converted, for example when it is
+        passed to a function taking `#!cpp const json&`. Write `#!cpp json(other)` or `#!cpp other.get<json>()` instead.
+
 - Overload 7:
 
     !!! info "Preconditions"
@@ -466,7 +475,8 @@ basic_json(basic_json&& other) noexcept;
 1. Since version 1.0.0.
 2. Since version 1.0.0.
 3. Since version 2.1.0.
-4. Since version 3.2.0.
+4. Since version 3.2.0. Explicit for different string types if `JSON_USE_IMPLICIT_CONVERSIONS` is `0` since
+   version 3.13.0.
 5. Since version 1.0.0.
 6. Since version 1.0.0.
 7. Since version 1.0.0. Fixed in version 3.13.0 to also check the iterator range for binary values; before, a range

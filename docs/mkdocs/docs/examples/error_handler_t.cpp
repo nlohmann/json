@@ -20,5 +20,6 @@ int main()
               << j_invalid.dump(-1, ' ', false, json::error_handler_t::replace)
               << "\nstring with ignored invalid characters: "
               << j_invalid.dump(-1, ' ', false, json::error_handler_t::ignore)
-              << '\n';
+              << "\nstring with the invalid byte kept as is (" << j_invalid.dump(-1, ' ', false, json::error_handler_t::keep).size()
+              << " bytes, not valid UTF-8 itself)\n";
 }
