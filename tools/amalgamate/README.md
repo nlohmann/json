@@ -1,8 +1,8 @@
 # amalgamate.py - Amalgamate C source and header files
 
-Origin: https://bitbucket.org/erikedlund/amalgamate
-
-Mirror: https://github.com/edlund/amalgamate
+Origin: https://github.com/edlund/amalgamate (formerly hosted at
+https://bitbucket.org/erikedlund/amalgamate, which no longer exists; see
+`CHANGES.md` for the upstream commit this copy is based on)
 
 `amalgamate.py` aims to make it easy to use SQLite-style C source and header
 amalgamation in projects.
@@ -41,25 +41,34 @@ results.
 
 ## Installing amalgamate.py
 
-Python v.2.7.0 or higher is required.
+Python 3 is required.
 
-`amalgamate.py` can be tested and installed using the following commands:
-
-        ./test.sh && sudo -k cp ./amalgamate.py /usr/local/bin/
+In this repository, `amalgamate.py` is not installed separately; it is run in
+place through `make amalgamate`, which calls it once for `json.hpp` and once
+for `json_fwd.hpp` (see the root `Makefile`).
 
 ## Using amalgamate.py
 
-        amalgamate.py [-v] -c path/to/config.json -s path/to/source/dir \
-                [-p path/to/prologue.(c|h)]
+        amalgamate.py -c path/to/config.json -s path/to/source/dir \
+                [-p path/to/prologue.(c|h)] [--verbose=yes|no]
 
  * The `-c, --config` option should specify the path to a JSON config file which
    lists the source files, include paths and where to write the resulting
-   amalgamation. Have a look at `test/source.c.json` and `test/include.h.json`
-   to see two examples.
+   amalgamation. `config_json.json` and `config_json_fwd.json` in this
+   directory are the configs used for `json.hpp` and `json_fwd.hpp`; each
+   sets `target`, `sources` and `include_paths`.
+
+   The optional `external` list names include paths that are kept as `#include`
+   directives instead of being inlined, e.g. `["nlohmann/json.hpp"]` for a header
+   that includes another amalgamated header. Only the first directive for each
+   of these paths is kept; the repeated ones are commented out.
 
  * The `-s, --source` option should specify the path to the source directory.
    This is useful for supporting separate source and build directories.
 
  * The `-p, --prologue` option should specify the path to a file which will be
    added to the beginning of the amalgamation. It is optional.
+
+ * The `-v, --verbose` option takes `yes` or `no` (for example
+   `--verbose=yes`, as used by the Makefile). It is optional.
 

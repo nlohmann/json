@@ -32,6 +32,13 @@ json_pointer& operator/=(std::size_t array_idx)
 2. JSON pointer with `token` appended without escaping `token`
 3. JSON pointer with `array_idx` appended
 
+## Exception safety
+
+1. Basic guarantee: if an exception is thrown (for instance, if copying a reference token fails), the JSON pointer is
+   left in a valid state, but it may contain some of the reference tokens of `ptr`.
+2. Strong guarantee: if an exception is thrown, there are no changes to the JSON pointer.
+3. Strong guarantee: if an exception is thrown, there are no changes to the JSON pointer.
+
 ## Complexity
 
 1. Linear in the length of `ptr`.
@@ -53,6 +60,11 @@ json_pointer& operator/=(std::size_t array_idx)
     ```json
     --8<-- "examples/json_pointer__operator_add.output"
     ```
+
+## See also
+
+- [operator/](operator_slash.md) create JSON Pointer by appending
+- [push_back](push_back.md) append an unescaped token at the end of the pointer
 
 ## Version history
 

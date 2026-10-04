@@ -6,9 +6,13 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
+#include <algorithm>
 #include <set>
 #include <sstream>
 #include <string>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 #include "doctest_compatibility.h"
 
@@ -180,6 +184,76 @@ TEST_CASE("JSON Node Metadata")
             CHECK(val.metadata().at(1)  == 2);
         }
     }
+    SECTION("member swap")
+    {
+        using json = json_with_metadata<int>;
+        json a = 1;
+        a.metadata() = 100;
+        json b = 2;
+        b.metadata() = 200;
+
+        a.swap(b);
+
+        CHECK(a.get<int>()  == 2);
+        CHECK(b.get<int>()  == 1);
+        CHECK(a.metadata()  == 200);
+        CHECK(b.metadata()  == 100);
+    }
+    SECTION("nonmember swap")
+    {
+        using json = json_with_metadata<int>;
+        json a = 1;
+        a.metadata() = 100;
+        json b = 2;
+        b.metadata() = 200;
+
+        using std::swap;
+        swap(a, b);
+
+        CHECK(a.get<int>()  == 2);
+        CHECK(b.get<int>()  == 1);
+        CHECK(a.metadata()  == 200);
+        CHECK(b.metadata()  == 100);
+    }
+    SECTION("std::swap")
+    {
+        using json = json_with_metadata<int>;
+        json a = 1;
+        a.metadata() = 100;
+        json b = 2;
+        b.metadata() = 200;
+
+        std::swap(a, b);
+
+        CHECK(a.get<int>()  == 2);
+        CHECK(b.get<int>()  == 1);
+        CHECK(a.metadata()  == 200);
+        CHECK(b.metadata()  == 100);
+    }
+    SECTION("std::sort keeps metadata attached to its value")
+    {
+        // std::sort mixes swap() with moves; each value's metadata must
+        // travel with it, just as it does for copy, move, and assignment
+        using json = json_with_metadata<int>;
+        std::vector<json> values;
+        for (const int v :
+                {
+                    5, 3, 9, 1, 7, 2, 8, 4, 6, 0, 15, 13, 19, 11, 17, 12, 18, 14, 16, 10,
+                    25, 23, 29, 21, 27, 22, 28, 24, 26, 20, 35, 33
+                })
+        {
+            json value = v;
+            value.metadata() = v;
+            values.push_back(value);
+        }
+
+        std::sort(values.begin(), values.end());
+
+        for (const auto& value : values)
+        {
+            CHECK(value.metadata() == value.get<int>());
+        }
+    }
 }
 
 // Test extending nlohmann::json by using a custom base class.
@@ -332,4 +406,142 @@ TEST_CASE("JSON Visit Node")
     }
         );
     CHECK(expected.empty());
+}
+
+// Test accessing members of a custom base class that are hidden by members of nlohmann::basic_json
+class base_class_with_hidden_members
+{
+  public:
+    const char* type_name() const noexcept // NOLINT(readability-convert-member-functions-to-static)
+    {
+        return "custom type_name";
+    }
+
+    std::size_t size() const noexcept
+    {
+        return m_size;
+    }
+
+    std::size_t m_size = 42;
+};
+
+using json_with_hidden_base_members =
+    nlohmann::basic_json <
+    std::map,
+    std::vector,
+    std::string,
+    bool,
+    std::int64_t,
+    std::uint64_t,
+    double,
+    std::allocator,
+    nlohmann::adl_serializer,
+    std::vector<std::uint8_t>,
+    base_class_with_hidden_members
+    >;
+
+TEST_CASE("JSON Node as_base_class")
+{
+    using json = json_with_hidden_base_members;
+
+    static_assert(std::is_same<decltype(std::declval<json&>().as_base_class()), json::json_base_class_t&>::value, "");
+    static_assert(std::is_same<decltype(std::declval<const json&>().as_base_class()), const json::json_base_class_t&>::value, "");
+    static_assert(noexcept(std::declval<json&>().as_base_class()), "");
+    static_assert(noexcept(std::declval<const json&>().as_base_class()), "");
+
+    SECTION("non-const")
+    {
+        json j = {1, 2, 3};
+
+        CHECK(std::string(j.type_name()) == "array");
+        CHECK(j.size() == 3);
+        CHECK(std::string(j.as_base_class().type_name()) == "custom type_name");
+        CHECK(j.as_base_class().size() == 42);
+        CHECK(&j.as_base_class() == &static_cast<json::json_base_class_t&>(j));
+
+        j.as_base_class().m_size = 7;
+        CHECK(j.as_base_class().size() == 7);
+        CHECK(j.size() == 3);
+    }
+
+    SECTION("const")
+    {
+        const json j = {1, 2, 3};
+
+        CHECK(std::string(j.type_name()) == "array");
+        CHECK(j.size() == 3);
+        CHECK(std::string(j.as_base_class().type_name()) == "custom type_name");
+        CHECK(j.as_base_class().size() == 42);
+        CHECK(&j.as_base_class() == &static_cast<const json::json_base_class_t&>(j));
+    }
+}
+
+// A custom base class with a const member: copy-constructible (initializing a
+// const member works fine), but not copy-/move-assignable (assigning one does
+// not). Used to check that copy construction never requires more than that.
+struct const_member_base
+{
+    const int id = 7; // NOLINT(misc-non-private-member-variables-in-classes)
+};
+
+using json_with_const_base = nlohmann::basic_json <
+                             std::map,
+                             std::vector,
+                             std::string,
+                             bool,
+                             std::int64_t,
+                             std::uint64_t,
+                             double,
+                             std::allocator,
+                             nlohmann::adl_serializer,
+                             std::vector<std::uint8_t>,
+                             const_member_base
+                             >;
+
+// build an array nested @a depth levels deep, with the innermost value 1;
+// every level is constructed (never assigned), since const_member_base does
+// not support assignment
+static json_with_const_base make_nested_array(std::size_t depth)
+{
+    if (depth == 0)
+    {
+        return json_with_const_base(1); // NOLINT(modernize-return-braced-init-list): {1} would be an array
+    }
+    return json_with_const_base::array({make_nested_array(depth - 1)});
+}
+
+TEST_CASE("Regression test for issue #5674 - copy construction must not require an assignable base class")
+{
+    SECTION("depth 0")
+    {
+        // as in the original bug report: copy construction only, no assignment
+        const json_with_const_base j = {1, 2};
+        const json_with_const_base copy = j; // NOLINT(performance-unnecessary-copy-initialization)
+
+        CHECK(copy.size() == 2);
+        CHECK(copy.id == 7);
+    }
+
+    SECTION("nested deeper than the copy constructor's descent bound")
+    {
+        // beyond nesting_depth_limit() (128) levels, the copy constructor
+        // copies without the call stack (copy_iteratively / copy_array_level),
+        // which used to assign the base class of every element it created
+        const std::size_t depth = 300;
+
+        const json_with_const_base j = make_nested_array(depth);
+        const json_with_const_base copy = j; // NOLINT(performance-unnecessary-copy-initialization)
+
+        const json_with_const_base* c = &copy;
+        for (std::size_t level = 0; level <= depth; ++level)
+        {
+            CAPTURE(level)
+            REQUIRE(c->id == 7);
+            if (level < depth)
+            {
+                c = &c->at(0);
+            }
+        }
+        CHECK(*c == 1);
+    }
 }

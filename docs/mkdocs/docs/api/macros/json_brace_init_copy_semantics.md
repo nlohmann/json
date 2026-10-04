@@ -70,7 +70,7 @@ The default value is `0` (disabled — existing behavior is preserved).
 
 ## Examples
 
-??? example "Default behavior (macro not defined)"
+??? example "Example: default behavior (macro not defined)"
 
     Without the macro, single-element brace initialization wraps the value in an array:
 
@@ -88,7 +88,7 @@ The default value is `0` (disabled — existing behavior is preserved).
     }
     ```
 
-??? example "Opt-in copy semantics (macro defined to 1)"
+??? example "Example: opt-in copy semantics (macro defined to 1)"
 
     With the macro, single-element brace initialization copies/moves the value:
 
@@ -115,3 +115,4 @@ The default value is `0` (disabled — existing behavior is preserved).
 ## Version history
 
 - Added in version 3.13.0.
+- Planned to become the default (with the macro removed) in version 4.0.0.

@@ -17,84 +17,9 @@ using nlohmann::json;
 #include "make_test_data_available.hpp"
 #include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
+#include "sax_countdown.hpp"
+using utils::SaxCountdown;
 
-namespace
-{
-class SaxCountdown
-{
-  public:
-    explicit SaxCountdown(const int count) : events_left(count)
-    {}
-
-    bool null()
-    {
-        return events_left-- > 0;
-    }
-
-    bool boolean(bool /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_integer(json::number_integer_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_unsigned(json::number_unsigned_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_float(json::number_float_t /*unused*/, const std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool string(std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool binary(std::vector<std::uint8_t>& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool start_object(std::size_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool key(std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool end_object()
-    {
-        return events_left-- > 0;
-    }
-
-    bool start_array(std::size_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool end_array()
-    {
-        return events_left-- > 0;
-    }
-
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/) // NOLINT(readability-convert-member-functions-to-static)
-    {
-        return false;
-    }
-
-  private:
-    int events_left = 0;
-};
-} // namespace
 
 TEST_CASE("UBJSON")
 {
@@ -2580,6 +2505,43 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             CHECK(json::to_ubjson(j) == v);
             CHECK(json::from_ubjson(v) == j);
         }
+
+        SECTION("ill-formed UTF-8 (see #5529, #5651)")
+        {
+            // none of the binary format specs requires a decoder to reject
+            // ill-formed UTF-8 in a text string, so a value whose bytes are
+            // not valid UTF-8 (0xC0 0xAE is an overlong encoding of '.')
+            // round-trips byte for byte as a string value; to_ubjson() writes
+            // the bytes unchanged, as before 3.13.0, unless
+            // JSON_STRICT_BINARY_UTF8 is enabled (see
+            // unit-binary_utf8_strict.cpp)
+            const std::vector<uint8_t> v = {'S', 'i', 2, 0xc0, 0xae};
+            json j;
+            CHECK_NOTHROW(j = json::from_ubjson(v));
+            REQUIRE(j.is_string());
+            CHECK(j.get_ref<const json::string_t&>() == std::string("\xc0\xae"));
+            CHECK_THROWS_AS(utils::ignore_return_value(j.dump()), json::type_error&);
+            CHECK(json::from_ubjson(json::to_ubjson(j)) == j);
+
+            // the same bytes as an object key round-trip as well
+            const std::vector<uint8_t> v_key = {'{', 'i', 2, 0xc0, 0xae, 'i', 1, '}'};
+            json j_key;
+            CHECK_NOTHROW(j_key = json::from_ubjson(v_key));
+            REQUIRE(j_key.is_object());
+            CHECK(j_key.contains(std::string("\xc0\xae")));
+            CHECK(json::from_ubjson(json::to_ubjson(j_key)) == j_key);
+
+            CHECK(json::from_ubjson(json::to_ubjson(json("\xFF"))) == json("\xFF"));
+            // a truncated multi-byte sequence
+            CHECK(json::from_ubjson(json::to_ubjson(json("\xC3"))) == json("\xC3"));
+            // an encoded surrogate half (U+D800)
+            CHECK(json::from_ubjson(json::to_ubjson(json("\xED\xA0\x80"))) == json("\xED\xA0\x80"));
+            // an overlong encoding of '.'
+            CHECK(json::from_ubjson(json::to_ubjson(json("\xC0\xAF"))) == json("\xC0\xAF"));
+
+            // an object key with ill-formed UTF-8 is kept the same way
+            CHECK(json::from_ubjson(json::to_ubjson(json{{"\xFF", 1}})) == json{{"\xFF", 1}});
+        }
     }
 
     SECTION("Array Type")
@@ -3032,4 +2994,225 @@ TEST_CASE("UBJSON optimized array of unsigned integers beyond int64")
     };
     CHECK(json::to_ubjson(j, true, true) == expected);
     CHECK(json::from_ubjson(expected) == j);
+}
+
+namespace
+{
+// the bytes that follow the marker of an integer: the value in the width of
+// the marker (big endian for UBJSON, little endian for BJData), or, for a
+// high-precision number, the length and the decimal digits
+std::vector<std::uint8_t> integer_payload(const char marker, const json& value, const bool little_endian)
+{
+    std::size_t width = 0;
+    switch (marker)
+    {
+        case 'i':
+        case 'U':
+            width = 1;
+            break;
+        case 'I':
+        case 'u':
+            width = 2;
+            break;
+        case 'l':
+        case 'm':
+            width = 4;
+            break;
+        case 'L':
+        case 'M':
+            width = 8;
+            break;
+        default:
+        {
+            const std::string digits = value.dump();
+            std::vector<std::uint8_t> result = {'i', static_cast<std::uint8_t>(digits.size())};
+            for (const char c : digits)
+            {
+                result.push_back(static_cast<std::uint8_t>(c));
+            }
+            return result;
+        }
+    }
+
+    const std::uint64_t bits = value.is_number_unsigned()
+                               ? value.get<std::uint64_t>()
+                               : static_cast<std::uint64_t>(value.get<std::int64_t>());
+    std::vector<std::uint8_t> result(width);
+    for (std::size_t i = 0; i < width; ++i)
+    {
+        result[little_endian ? i : width - 1 - i] = static_cast<std::uint8_t>(bits >> (8 * i));
+    }
+    return result;
+}
+
+json i64(const std::int64_t v)
+{
+    return v;
+}
+
+json u64(const std::uint64_t v)
+{
+    return v;
+}
+} // namespace
+
+TEST_CASE("UBJSON and BJData integer markers at every range edge")
+{
+    // An optimized container announces the marker of its values after `$` and
+    // then writes every value without a marker, so the marker the writer
+    // announces and the width it writes must match for every value. This
+    // checks both for the values around each edge of the integer types, as
+    // scalars and as the values of optimized arrays and objects.
+    struct integer_case
+    {
+        json value;
+        char ubjson; // expected UBJSON marker
+        char bjdata; // expected BJData marker
+    };
+
+    const std::int64_t int64_min = (std::numeric_limits<std::int64_t>::min)();
+    const std::int64_t int64_max = (std::numeric_limits<std::int64_t>::max)();
+    const std::uint64_t uint64_max = (std::numeric_limits<std::uint64_t>::max)();
+
+    const std::vector<integer_case> cases =
+    {
+        // int8
+        {i64(-129), 'I', 'I'},
+        {i64(-128), 'i', 'i'},
+        {i64(-127), 'i', 'i'},
+        {i64(-1), 'i', 'i'},
+        {i64(0), 'i', 'i'},
+        {u64(0), 'i', 'i'},
+        {i64(126), 'i', 'i'},
+        {i64(127), 'i', 'i'},
+        {u64(127), 'i', 'i'},
+        {i64(128), 'U', 'U'},
+        {u64(128), 'U', 'U'},
+        // uint8
+        {i64(254), 'U', 'U'},
+        {i64(255), 'U', 'U'},
+        {u64(255), 'U', 'U'},
+        {i64(256), 'I', 'I'},
+        {u64(256), 'I', 'I'},
+        // int16
+        {i64(-32769), 'l', 'l'},
+        {i64(-32768), 'I', 'I'},
+        {i64(-32767), 'I', 'I'},
+        {i64(32766), 'I', 'I'},
+        {i64(32767), 'I', 'I'},
+        {u64(32767), 'I', 'I'},
+        {i64(32768), 'l', 'u'},
+        {u64(32768), 'l', 'u'},
+        // uint16 (BJData only)
+        {i64(65534), 'l', 'u'},
+        {i64(65535), 'l', 'u'},
+        {u64(65535), 'l', 'u'},
+        {i64(65536), 'l', 'l'},
+        {u64(65536), 'l', 'l'},
+        // int32
+        {i64(-2147483649LL), 'L', 'L'},
+        {i64(-2147483648LL), 'l', 'l'},
+        {i64(-2147483647LL), 'l', 'l'},
+        {i64(2147483646LL), 'l', 'l'},
+        {i64(2147483647LL), 'l', 'l'},
+        {u64(2147483647ULL), 'l', 'l'},
+        {i64(2147483648LL), 'L', 'm'},
+        {u64(2147483648ULL), 'L', 'm'},
+        // uint32 (BJData only)
+        {i64(4294967294LL), 'L', 'm'},
+        {i64(4294967295LL), 'L', 'm'},
+        {u64(4294967295ULL), 'L', 'm'},
+        {i64(4294967296LL), 'L', 'L'},
+        {u64(4294967296ULL), 'L', 'L'},
+        // int64
+        {i64(int64_min), 'L', 'L'},
+        {i64(int64_min + 1), 'L', 'L'},
+        {i64(int64_max - 1), 'L', 'L'},
+        {i64(int64_max), 'L', 'L'},
+        {u64(static_cast<std::uint64_t>(int64_max)), 'L', 'L'},
+        // uint64 (BJData only; UBJSON writes a high-precision number)
+        {u64(static_cast<std::uint64_t>(int64_max) + 1), 'H', 'M'},
+        {u64(uint64_max - 1), 'H', 'M'},
+        {u64(uint64_max), 'H', 'M'},
+    };
+
+    for (const auto& c : cases)
+    {
+        for (const bool bjdata :
+                {
+                    false, true
+                })
+        {
+            const char marker = bjdata ? c.bjdata : c.ubjson;
+            const std::vector<std::uint8_t> payload = integer_payload(marker, c.value, bjdata);
+            const auto to_binary = [bjdata](const json & j, const bool use_size, const bool use_type)
+            {
+                return bjdata ? json::to_bjdata(j, use_size, use_type) : json::to_ubjson(j, use_size, use_type);
+            };
+            const auto from_binary = [bjdata](const std::vector<std::uint8_t>& v)
+            {
+                return bjdata ? json::from_bjdata(v) : json::from_ubjson(v);
+            };
+            INFO("value = " << c.value.dump() << (c.value.is_number_unsigned() ? " (unsigned)" : "") << ", format = " << (bjdata ? "BJData" : "UBJSON"));
+
+            // scalar
+            std::vector<std::uint8_t> expected = {static_cast<std::uint8_t>(marker)};
+            expected.insert(expected.end(), payload.begin(), payload.end());
+            for (const bool use_size :
+                    {
+                        false, true
+                    })
+            {
+                CHECK(to_binary(c.value, use_size, false) == expected);
+            }
+            CHECK(from_binary(expected) == c.value);
+
+            const json arr = {c.value, c.value, c.value};
+
+            // array without count or type: every value has its marker
+            expected = {'['};
+            for (int i = 0; i < 3; ++i)
+            {
+                expected.push_back(static_cast<std::uint8_t>(marker));
+                expected.insert(expected.end(), payload.begin(), payload.end());
+            }
+            expected.push_back(']');
+            CHECK(to_binary(arr, false, false) == expected);
+            CHECK(from_binary(expected) == arr);
+
+            // array with count: every value has its marker
+            expected = {'[', '#', 'i', 3};
+            for (int i = 0; i < 3; ++i)
+            {
+                expected.push_back(static_cast<std::uint8_t>(marker));
+                expected.insert(expected.end(), payload.begin(), payload.end());
+            }
+            CHECK(to_binary(arr, true, false) == expected);
+            CHECK(from_binary(expected) == arr);
+
+            // array with type and count: the marker once, then the payloads
+            expected = {'[', '$', static_cast<std::uint8_t>(marker), '#', 'i', 3};
+            for (int i = 0; i < 3; ++i)
+            {
+                expected.insert(expected.end(), payload.begin(), payload.end());
+            }
+            CHECK(to_binary(arr, true, true) == expected);
+            CHECK(from_binary(expected) == arr);
+
+            // object with type and count: the marker once, then key and payload
+            const json obj = {{"a", c.value}, {"b", c.value}};
+            expected = {'{', '$', static_cast<std::uint8_t>(marker), '#', 'i', 2};
+            for (const char key :
+                    {'a', 'b'
+                    })
+            {
+                expected.push_back('i');
+                expected.push_back(1);
+                expected.push_back(static_cast<std::uint8_t>(key));
+                expected.insert(expected.end(), payload.begin(), payload.end());
+            }
+            CHECK(to_binary(obj, true, true) == expected);
+            CHECK(from_binary(expected) == obj);
+        }
+    }
 }

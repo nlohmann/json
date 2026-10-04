@@ -87,6 +87,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@fffaaafeea488556c2c12dad60690008bc1caacb # v4.4.2
       - name: Set extra CXX_FLAGS for latest std_version
@@ -123,6 +125,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Run CMake (Release)
         run: cmake -S . -B build -G "Visual Studio 18 2026" -A ARM64 -DJSON_BuildTests=On -DCMAKE_CXX_FLAGS="/W4 /WX"
         if: matrix.build_type == 'Release'

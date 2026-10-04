@@ -239,7 +239,7 @@ TEST_CASE("controlled bad_alloc")
             // iterative path instead, part-way through its worklist.
             const auto check_deep_copy = [](bool objects)
             {
-                CAPTURE(objects);
+                CAPTURE(objects)
 
                 next_construct_fails = false;
 
@@ -274,6 +274,139 @@ TEST_CASE("controlled bad_alloc")
             check_deep_copy(true);
         }
     }
+}
+
+namespace
+{
+// counts every allocation made on behalf of a basic_json value (of its own
+// object_t/array_t/string_t/binary_t or of its own type), and can be told to
+// fail one of them: the n-th call to allocate() throws std::bad_alloc instead
+// of allocating, whichever type it is allocating for
+std::size_t alloc_call_count = 0;
+long fail_at_alloc_call = -1; // -1: never fail
+
+template<class T>
+struct nth_alloc_fails_allocator : std::allocator<T>
+{
+    using std::allocator<T>::allocator;
+
+    T* allocate(std::size_t n)
+    {
+        const auto index = alloc_call_count++;
+        if (fail_at_alloc_call >= 0 && index == static_cast<std::size_t>(fail_at_alloc_call))
+        {
+            throw std::bad_alloc();
+        }
+        return std::allocator<T>::allocate(n);
+    }
+
+    template <class U>
+    struct rebind
+    {
+        using other = nth_alloc_fails_allocator<U>;
+    };
+};
+
+// builds a value nested more than 128 levels deep - the bound the copy
+// constructor descends into before it continues without the call stack - and
+// checks that a copy survives any single allocation of it failing: every
+// attempt either throws std::bad_alloc, without crashing or leaving the
+// source altered, or completes the copy
+template<class BasicJsonType>
+void check_deep_copy_survives_failing_allocation(bool nest_objects)
+{
+    CAPTURE(nest_objects)
+
+    fail_at_alloc_call = -1;
+
+    // [[[ ... [1] ... ]]], or the same nesting with objects, 130 levels deep
+    BasicJsonType src = 1;
+    for (std::size_t i = 0; i < 130; ++i)
+    {
+        if (nest_objects)
+        {
+            BasicJsonType wrapper = BasicJsonType::object();
+            wrapper["a"] = std::move(src);
+            src = std::move(wrapper);
+        }
+        else
+        {
+            src = BasicJsonType::array({std::move(src)});
+        }
+    }
+
+    const std::string original_dump = src.dump();
+
+    // first measure how many allocations an unhindered copy takes
+    alloc_call_count = 0;
+    {
+        // NOLINTNEXTLINE(performance-unnecessary-copy-initialization): the copy is what is measured
+        const BasicJsonType measure(src);
+    }
+    const std::size_t total_allocations = alloc_call_count;
+    REQUIRE(total_allocations > 0);
+    REQUIRE(src.dump() == original_dump);
+
+    // let the 0th, 1st, 2nd, ... allocation of the copy fail in turn; every
+    // such copy must throw std::bad_alloc rather than crash, and the source
+    // must come out exactly as it went in
+    for (std::size_t n = 0; n < total_allocations; ++n)
+    {
+        CAPTURE(n)
+        alloc_call_count = 0;
+        fail_at_alloc_call = static_cast<long>(n);
+
+        CHECK_THROWS_AS(BasicJsonType(src), std::bad_alloc&);
+
+        fail_at_alloc_call = -1;
+        CHECK(src.dump() == original_dump);
+    }
+
+    // once no allocation is made to fail, the copy itself must succeed
+    fail_at_alloc_call = -1;
+    const BasicJsonType copy(src);
+    CHECK(copy.dump() == original_dump);
+    CHECK(src.dump() == original_dump);
+}
+} // namespace
+
+TEST_CASE("copy of a deeply nested value survives a failing allocation (#5640)")
+{
+    // With iterator debugging (MSVC STL debug builds, also used by clang-cl),
+    // containers allocate a debug proxy through the allocator inside their
+    // noexcept move constructors, so failing that allocation terminates the
+    // program instead of throwing std::bad_alloc. Nothing to check there.
+#if !(defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0)
+    SECTION("std::map-backed object_t")
+    {
+        using bad_alloc_json = nlohmann::basic_json<std::map,
+              std::vector,
+              std::string,
+              bool,
+              std::int64_t,
+              std::uint64_t,
+              double,
+              nth_alloc_fails_allocator>;
+
+        check_deep_copy_survives_failing_allocation<bad_alloc_json>(false);
+        check_deep_copy_survives_failing_allocation<bad_alloc_json>(true);
+    }
+
+    SECTION("ordered_map-backed object_t")
+    {
+        using bad_alloc_ordered_json = nlohmann::basic_json<nlohmann::ordered_map,
+              std::vector,
+              std::string,
+              bool,
+              std::int64_t,
+              std::uint64_t,
+              double,
+              nth_alloc_fails_allocator>;
+
+        check_deep_copy_survives_failing_allocation<bad_alloc_ordered_json>(false);
+        check_deep_copy_survives_failing_allocation<bad_alloc_ordered_json>(true);
+    }
+#endif
 }
 
 namespace
@@ -354,12 +487,87 @@ TEST_CASE("deep copy uses the provided allocator")
 
 namespace
 {
+// the number of constructions countdown_allocator lets happen, including the
+// one that fails; 0 means none ever fails
+std::size_t constructions_until_failure = 0;
+
+template<class T>
+struct countdown_allocator : std::allocator<T>
+{
+    using std::allocator<T>::allocator;
+
+    template<class U, class... Args>
+    void construct(U* p, Args&& ... args)
+    {
+        if (constructions_until_failure != 0)
+        {
+            --constructions_until_failure;
+            if (constructions_until_failure == 0)
+            {
+                throw std::bad_alloc();
+            }
+        }
+
+        ::new (static_cast<void*>(p)) U(std::forward<Args>(args)...);
+    }
+
+    template <class U>
+    struct rebind
+    {
+        using other = countdown_allocator<U>;
+    };
+};
+} // namespace
+
+TEST_CASE("converting a deeply nested value from another specialization fails cleanly (#5650)")
+{
+    using countdown_json = nlohmann::basic_json<std::map,
+          std::vector,
+          std::string,
+          bool,
+          std::int64_t,
+          std::uint64_t,
+          double,
+          countdown_allocator>;
+
+    // deeper than the 128 levels the converting constructor descends into, so
+    // that failures land on both sides of the bound - or, built with
+    // JSON_NO_THREAD_LOCAL, all in the iterative conversion
+    json j = {1, "two", {{"three", 3}}};
+    for (std::size_t i = 0; i < 150; ++i)
+    {
+        j = json{{"a", json::array({j, "sibling"})}};
+    }
+
+    // Fail every construction in turn. Each failure has to reach the caller,
+    // and everything built until then has to be destroyed cleanly.
+    std::size_t failures = 0;
+    for (std::size_t n = 1;; ++n)
+    {
+        constructions_until_failure = n;
+        try
+        {
+            const countdown_json converted = j;
+            constructions_until_failure = 0;
+            CHECK(converted.dump() == j.dump());
+            break;
+        }
+        catch (const std::bad_alloc&)
+        {
+            ++failures;
+        }
+    }
+    CHECK(failures > 0);
+}
+
+namespace
+{
 template<class T>
 struct allocator_no_forward : std::allocator<T>
 {
     allocator_no_forward() = default;
     template <class U>
-    allocator_no_forward(allocator_no_forward<U> /*unused*/) {}
+    allocator_no_forward(const allocator_no_forward<U>& /*unused*/) {}
 
     template <class U>
     struct rebind

@@ -155,6 +155,18 @@ TEST_CASE("modifiers")
                 CHECK(j == json(json::value_t::binary));
                 CHECK(j == json(k.type()));
             }
+
+            SECTION("filled binary with subtype")
+            {
+                json j = json::binary({1, 2, 3, 4, 5}, 42);
+                json const k = j;
+
+                j.clear();
+                CHECK(!j.empty());
+                CHECK(!j.get_binary().has_subtype());
+                CHECK(j == json(json::value_t::binary));
+                CHECK(j == json(k.type()));
+            }
         }
 
         SECTION("number (integer)")
@@ -618,6 +630,49 @@ TEST_CASE("modifiers")
             }
         }
 
+        SECTION("rvalue at position moves rather than copies")
+        {
+            // regression test: insert(pos, basic_json&&) used to forward to
+            // insert(pos, const basic_json&) because the named rvalue
+            // reference parameter is itself an lvalue, so it always
+            // deep-copied its argument instead of moving it
+            json j_big = std::string(1000, 'x');
+            const auto* const original_buffer = j_big.get_ref<const std::string&>().data();
+
+            auto it = j_array.insert(j_array.begin(), std::move(j_big));
+            CHECK(j_array.size() == 5);
+            CHECK(*it == json(std::string(1000, 'x')));
+            CHECK((*it).get_ref<const std::string&>().data() == original_buffer);
+
+            // the moved-from value is null, the same as after push_back(&&)
+            CHECK(j_big.is_null()); // NOLINT(bugprone-use-after-move,hicpp-invalid-access-moved)
+        }
+
+        SECTION("self-aliasing insertion")
+        {
+            SECTION("without reallocation")
+            {
+                json j_self = {1, 2, 3, 4};
+                j_self.get_ref<json::array_t&>().reserve(j_self.size() + 1);
+
+                auto it = j_self.insert(j_self.begin(), std::move(j_self[1]));
+                CHECK(j_self.size() == 5);
+                CHECK(*it == json(2));
+                CHECK(j_self == json({2, 1, nullptr, 3, 4}));
+            }
+
+            SECTION("with reallocation")
+            {
+                json j_self = {1, 2, 3, 4};
+                j_self.get_ref<json::array_t&>().shrink_to_fit();
+
+                auto it = j_self.insert(j_self.begin(), std::move(j_self[1]));
+                CHECK(j_self.size() == 5);
+                CHECK(*it == json(2));
+                CHECK(j_self == json({2, 1, nullptr, 3, 4}));
+            }
+        }
+
         SECTION("copies at position")
         {
             SECTION("insert before begin()")
@@ -758,6 +813,34 @@ TEST_CASE("modifiers")
                 CHECK(*it == json(7));
                 CHECK((j_array.end() - it) == 3);
                 CHECK(j_array == json({1, 2, 3, 4, 7, 8, 9}));
+            }
+        }
+
+        SECTION("initializer list referring to the array's own elements (#5656)")
+        {
+            SECTION("sufficient capacity (no reallocation)")
+            {
+                json j_own = json::array();
+                j_own.get_ref<json::array_t&>().reserve(8);
+                j_own.push_back("a");
+                j_own.push_back("b");
+                j_own.push_back("c");
+
+                const json& j_own_cref = j_own;
+                auto it = j_own.insert(j_own.begin(), {j_own_cref[0], j_own_cref[1]});
+                CHECK(*it == json("a"));
+                CHECK(j_own == json({"a", "b", "a", "b", "c"}));
+            }
+
+            SECTION("insufficient capacity (reallocation)")
+            {
+                json j_own = {"a", "b", "c"};
+                j_own.get_ref<json::array_t&>().shrink_to_fit();
+
+                const json& j_own_cref = j_own;
+                auto it = j_own.insert(j_own.begin(), {j_own_cref[2]});
+                CHECK(*it == json("c"));
+                CHECK(j_own == json({"c", "a", "b", "c"}));
             }
         }
 
@@ -1044,10 +1127,10 @@ TEST_CASE("update() on deeply nested values")
         // over (detail::recursion_depth_limit(), 128)
         for (std::size_t depth = 0; depth <= 300; ++depth)
         {
-            CAPTURE(depth);
+            CAPTURE(depth)
             for (int variant = 0; variant < 3; ++variant)
             {
-                CAPTURE(variant);
+                CAPTURE(variant)
                 const json source = json::parse(nested_objects(depth, variant));
                 json result = json::parse(nested_objects(depth, (variant + 1) % 3));
                 json expected = result;
@@ -1074,5 +1157,76 @@ TEST_CASE("update() on deeply nested values")
         CHECK(p->size() == 2);
         CHECK(p->at("x") == 1);
         CHECK(p->at("y") == 2);
+    }
+}
+
+TEST_CASE("update() with an argument that aliases *this (#5641)")
+{
+#if !defined(JSON_NOEXCEPTION) // checks which exception is thrown, and that nothing changed
+    SECTION("the target is checked before the argument, as before the copy")
+    {
+        json j = 1;
+        CHECK_THROWS_WITH_AS(j.update(json::array()), "[json.exception.type_error.312] cannot use update() with number", json::type_error&);
+        CHECK_THROWS_WITH_AS(j.update(j.cbegin(), j.cend()), "[json.exception.type_error.312] cannot use update() with number", json::type_error&);
+
+        json k;
+        CHECK_THROWS_WITH_AS(k.update(json::array()), "[json.exception.type_error.312] cannot use update() with array", json::type_error&);
+        CHECK(k == json::object());
+    }
+#endif
+
+    SECTION("const reference")
+    {
+        SECTION("j.update(j[\"a\"]): assigning into the argument's parent destroys it mid-iteration")
+        {
+            // reproduces issue #5641, case 3
+            json j = {{"a", {{"a", 1}, {"b", 2}}}};
+            j.update(j["a"]);
+            CHECK(j == json({{"a", 1}, {"b", 2}}));
+        }
+
+        SECTION("merge_objects with an argument that is a member of *this")
+        {
+            json j = {{"defaults", {{"opts", {{"a", 1}}}}}, {"opts", {{"b", 2}}}};
+            j.update(j["defaults"], true);
+            CHECK(j == json({{"defaults", {{"opts", {{"a", 1}}}}}, {"opts", {{"a", 1}, {"b", 2}}}}));
+        }
+
+        SECTION("ordered_json: inserting a new key relocates the vector behind the argument")
+        {
+            // reproduces issue #5641, case 4
+            using nlohmann::ordered_json;
+            ordered_json j = {{"a", {{"x", 1}, {"y", 2}, {"z", 3}}}};
+            j.update(j["a"]);
+            CHECK(j == ordered_json({{"a", {{"x", 1}, {"y", 2}, {"z", 3}}}, {"x", 1}, {"y", 2}, {"z", 3}}));
+        }
+    }
+
+    SECTION("iterator range")
+    {
+        SECTION("range that is a member of *this")
+        {
+            json j = {{"a", {{"a", 1}, {"b", 2}}}};
+            j.update(j["a"].begin(), j["a"].end());
+            CHECK(j == json({{"a", 1}, {"b", 2}}));
+        }
+    }
+
+    SECTION("nested past the iterative descent bound aliases *this")
+    {
+        // every depth on either side of where the iterative version takes
+        // over (detail::recursion_depth_limit(), 128); merging *this into
+        // itself is idempotent, aliased or not
+        for (const std::size_t depth :
+                {
+                    std::size_t{0}, std::size_t{127}, std::size_t{128}, std::size_t{300}
+                })
+        {
+            CAPTURE(depth)
+            json j = json::parse(nested_objects(depth, 0));
+            const json expected = j;
+            j.update(j, true);
+            CHECK(j == expected);
+        }
     }
 }

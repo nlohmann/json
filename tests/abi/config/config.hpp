@@ -28,7 +28,7 @@ std::string namespace_name(std::string ns, T* /*unused*/ = nullptr) // NOLINT(pe
     std::smatch m;
 
     // extract the true namespace name from the function signature
-    CAPTURE(ns);
+    CAPTURE(ns)
     CHECK(std::regex_search(ns, m, std::regex("nlohmann(::[a-zA-Z0-9_]+)*::basic_json")));
 
     return m.str();

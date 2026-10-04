@@ -9,10 +9,9 @@
 #pragma once
 
 #include <array> // array
-#include <clocale> // localeconv
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstdio> // snprintf
-#include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
 #include <initializer_list> // initializer_list
 #include <string> // char_traits, string
 #include <utility> // move
@@ -24,6 +23,7 @@
 #include <nlohmann/detail/input/string_scan.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/type_traits.hpp>
+#include <nlohmann/detail/string_utils.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -206,7 +206,6 @@ class lexer : public lexer_base<BasicJsonType>
     explicit lexer(InputAdapterType&& adapter, bool ignore_comments_ = false, bool discard_number_values_ = false) noexcept
         : ia(std::move(adapter))
         , ignore_comments(ignore_comments_)
-        , decimal_point_char(static_cast<char_int_type>(get_decimal_point()))
         , discard_number_values(discard_number_values_)
     {}
 
@@ -219,26 +218,13 @@ class lexer : public lexer_base<BasicJsonType>
 
   private:
     /////////////////////
-    // locales
-    /////////////////////
-
-    /// return the locale-dependent decimal point
-    JSON_HEDLEY_PURE
-    static char get_decimal_point() noexcept
-    {
-        const auto* loc = localeconv();
-        JSON_ASSERT(loc != nullptr);
-        return (loc->decimal_point == nullptr) ? '.' : *(loc->decimal_point);
-    }
-
-    /////////////////////
     // scan functions
     /////////////////////
 
     /*!
-    @brief get codepoint from 4 hex characters following `\u`
+    @brief get codepoint from 4 hex characters following `\\u`
 
-    For input "\u c1 c2 c3 c4" the codepoint is:
+    For input "\\u c1 c2 c3 c4" the codepoint is:
       (c1 * 0x1000) + (c2 * 0x0100) + (c3 * 0x0010) + c4
     = (c1 << 12) + (c2 << 8) + (c3 << 4) + (c4 << 0)
 
@@ -502,32 +488,10 @@ class lexer : public lexer_base<BasicJsonType>
                             JSON_ASSERT(0x00 <= codepoint && codepoint <= 0x10FFFF);
 
                             // translate codepoint into bytes
-                            if (codepoint < 0x80)
+                            encode_utf8(static_cast<std::uint32_t>(codepoint), [this](std::uint32_t byte)
                             {
-                                // 1-byte characters: 0xxxxxxx (ASCII)
-                                add(static_cast<char_int_type>(codepoint));
-                            }
-                            else if (codepoint <= 0x7FF)
-                            {
-                                // 2-byte characters: 110xxxxx 10xxxxxx
-                                add(static_cast<char_int_type>(0xC0u | (static_cast<unsigned int>(codepoint) >> 6u)));
-                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
-                            else if (codepoint <= 0xFFFF)
-                            {
-                                // 3-byte characters: 1110xxxx 10xxxxxx 10xxxxxx
-                                add(static_cast<char_int_type>(0xE0u | (static_cast<unsigned int>(codepoint) >> 12u)));
-                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
-                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
-                            else
-                            {
-                                // 4-byte characters: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-                                add(static_cast<char_int_type>(0xF0u | (static_cast<unsigned int>(codepoint) >> 18u)));
-                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 12u) & 0x3Fu)));
-                                add(static_cast<char_int_type>(0x80u | ((static_cast<unsigned int>(codepoint) >> 6u) & 0x3Fu)));
-                                add(static_cast<char_int_type>(0x80u | (static_cast<unsigned int>(codepoint) & 0x3Fu)));
-                            }
+                                add(static_cast<char_int_type>(byte));
+                            });
 
                             break;
                         }
@@ -977,10 +941,15 @@ class lexer : public lexer_base<BasicJsonType>
                         case '\n':
                         case '\r':
                         case char_traits<char_type>::eof():
+                            return true;
+
 #if !JSON_STRICT_NUL_HANDLING
                         case '\0':
-#endif
+                            // a NUL byte is the end of the input (see scan()),
+                            // so leave it for scan() to see
+                            unget();
                             return true;
+#endif
 
                         default:
                             break;
@@ -1038,24 +1007,6 @@ class lexer : public lexer_base<BasicJsonType>
         }
     }
 
-    JSON_HEDLEY_NON_NULL(2)
-    static void strtof(float& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtof(str, endptr);
-    }
-
-    JSON_HEDLEY_NON_NULL(2)
-    static void strtof(double& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtod(str, endptr);
-    }
-
-    JSON_HEDLEY_NON_NULL(2)
-    static void strtof(long double& f, const char* str, char** endptr) noexcept
-    {
-        f = std::strtold(str, endptr);
-    }
-
     /*!
     @brief scan a number literal
 
@@ -1092,9 +1043,10 @@ class lexer : public lexer_base<BasicJsonType>
             token_type::value_float if number could be successfully scanned,
             token_type::parse_error otherwise
 
-    @note The scanner is independent of the current locale. Internally, the
-          locale's decimal point is used instead of `.` to work with the
-          locale-dependent converters.
+    @note The scanner is independent of the current locale: token_buffer
+          always holds `.`. Only the std::strtod fallback of convert_number()
+          depends on the locale, and it looks up the decimal point right
+          before converting (see detail::convert_float_locale_aware()).
     */
     token_type scan_number()  // lgtm [cpp/use-of-goto] `goto` is used in this function to implement the number-parsing state machine described above. By design, any finite input will eventually reach the "done" state or return token_type::parse_error. In each intermediate state, 1 byte of the input is appended to the token_buffer vector, and only the already initialized variables token_buffer, number_type, and error_message are manipulated.
     {
@@ -1183,7 +1135,7 @@ scan_number_zero:
         {
             case '.':
             {
-                add(decimal_point_char);
+                add(current);
                 decimal_point_position = token_buffer.size() - 1;
                 goto scan_number_decimal1;
             }
@@ -1220,7 +1172,7 @@ scan_number_any1:
 
             case '.':
             {
-                add(decimal_point_char);
+                add(current);
                 decimal_point_position = token_buffer.size() - 1;
                 goto scan_number_decimal1;
             }
@@ -1426,64 +1378,11 @@ scan_number_done:
     }
 
     /*!
-    @brief check whether Clinger's fast path can still succeed for this token
-
-    parse_float_fast() needs a significand below 2^53. A mantissa with 17 or
-    more significant digits is at least 10^16 and therefore always exceeds it,
-    so calling the fast path would walk the token one extra time only to
-    decline before strtod has to run anyway.
-
-    Significant digits are the mantissa's digits from the first nonzero one on;
-    the sign, the decimal point, leading zeros, and the exponent do not count.
-    The answer is derived from indices - the digits are not scanned again - so
-    this stays off the hot path of the number scanners.
-
-    @param[in] mantissa_end  offset just past the last mantissa byte in
-                             token_buffer
-    @return false if parse_float_fast() is guaranteed to decline
-    */
-    bool mantissa_fits_clinger(std::size_t mantissa_end) const
-    {
-        // 10^16 already exceeds 2^53, so 17 digits can never fit
-        constexpr std::size_t limit = 17;
-
-        const std::size_t neg = (!token_buffer.empty() && token_buffer[0] == '-') ? 1u : 0u;
-        const std::size_t has_dot = (decimal_point_position != std::string::npos) ? 1u : 0u;
-        // the JSON grammar restricts the integer part to "0" or [1-9][0-9]*, so
-        // a leading zero can only be a lone "0", which is not significant
-        const std::size_t lead_zero = (token_buffer[neg] == '0') ? 1u : 0u;
-        JSON_ASSERT(mantissa_end >= neg + has_dot + lead_zero);
-        std::size_t digits = mantissa_end - neg - has_dot - lead_zero;
-
-        if (JSON_HEDLEY_LIKELY(digits < limit))
-        {
-            return true;
-        }
-
-        // Only a number below 1 can carry further insignificant zeros, and only
-        // while the count stays at the limit does removing them change the
-        // answer - so this loop is skipped for all but a few tokens. Note
-        // token_buffer holds the locale's decimal point, so the fraction is
-        // located through decimal_point_position rather than by searching '.'.
-        if (lead_zero != 0)
-        {
-            JSON_ASSERT(has_dot != 0); // an integer "0" cannot reach the limit
-            for (std::size_t i = decimal_point_position + 1;
-                    digits >= limit && i < mantissa_end && token_buffer[i] == '0'; ++i)
-            {
-                --digits;
-            }
-        }
-
-        return digits < limit;
-    }
-
-    /*!
     @brief convert the number text in token_buffer to its value and token type
 
     The digit sequence in token_buffer has already been validated (by the
-    scan_number() state machine or by the contiguous fast path) and holds the
-    locale decimal point in place of '.'. Integers are parsed first and fall
+    scan_number() state machine or by the contiguous fast path) and holds '.'
+    as decimal point, independent of the locale. Integers are parsed first and fall
     back to floating point on overflow. This is shared so both scanners produce
     identical results.
 
@@ -1491,49 +1390,34 @@ scan_number_done:
                              token_buffer (the index of 'e'/'E', or
                              token_buffer.size() when there is no exponent);
                              used to skip Clinger's fast path when it cannot
-                             possibly succeed - see mantissa_fits_clinger()
+                             possibly succeed - see detail::mantissa_fits_clinger()
     */
     token_type convert_number(token_type number_type, std::size_t mantissa_end)
     {
-        // If the caller does not need the converted value (only whether the
-        // input is syntactically valid; see json_sax_acceptor/accept()), an
-        // unsigned/integer token can be reported without calling
-        // strtoull()/strtoll() at all, *provided* we can already tell from
-        // the digit count alone that the conversion cannot overflow 64 bits.
-        // Such tokens are always finite and are accepted unconditionally by
-        // the parser regardless of their actual value (parser::sax_parse_internal()
-        // never checks finiteness for value_unsigned/value_integer), so the
-        // classification below is all that is needed.
+        // accept() only needs to know whether the input is valid, so it sets
+        // discard_number_values (see json.hpp), and an integer token whose
+        // digit count shows that it fits is reported without calling
+        // convert_integer(). A number with up to 18 digits always fits into
+        // both std::uint64_t and std::int64_t (18 nines is about 1e18, below
+        // INT64_MAX, which is about 9.2e18). Longer tokens take the exact path
+        // below, including the fallback to floating point when the value does
+        // not fit.
         //
-        // A decimal number with up to 18 digits is always representable in
-        // both std::uint64_t and std::int64_t (18 nines is ~1e18, well below
-        // both UINT64_MAX ~1.8e19 and INT64_MAX ~9.2e18), so strtoull()/strtoll()
-        // could not have set errno to ERANGE for it. Numbers with more digits
-        // (rare in practice) fall through to the exact code below, unchanged,
-        // so their handling -- including reclassification to value_float when
-        // the value overflows 64 bits, and rejection when it is not even
-        // finite as a double -- is bit-for-bit identical to before this
-        // optimization.
+        // With a narrower number_unsigned_t/number_integer_t (e.g.
+        // std::uint32_t), the exact path would reclassify some of these tokens
+        // as (finite) floats, while this check reports integers. That does not
+        // change the result of accept(): it always parses through
+        // json_sax_acceptor, whose number callbacks discard their argument and
+        // return true, and the parser rejects neither integers nor finite
+        // floats. value_unsigned/value_integer are left unset here, so a caller
+        // that reads the converted value must not set discard_number_values.
         //
-        // Note this reasons about std::uint64_t/std::int64_t, not about
-        // number_unsigned_t/number_integer_t (BasicJsonType's own, possibly
-        // narrower, template parameters -- e.g. std::uint32_t). That is fine
-        // *only* because discard_number_values is exclusively set by
-        // accept() (see json.hpp), and accept() always parses through the
-        // library's own json_sax_acceptor -- never a user-supplied SAX
-        // consumer -- whose number_unsigned()/number_integer()/number_float()
-        // callbacks unconditionally discard their argument and return true.
-        // So for every caller that can reach this branch, neither the token
-        // classification below nor the eventual (possibly narrowed, and on
-        // this fast path left stale/unset) value_unsigned/value_integer is
-        // ever consulted -- an unsigned/integer token is accepted outright,
-        // and even a >18-digit token that this fast path deliberately falls
-        // through for is, once reclassified to value_float, still finite
-        // (and thus accepted) for any digit count that fits in number_unsigned_t
-        // or number_integer_t regardless of that type's width. If this
-        // function is ever taught to run with discard_number_values true for
-        // a caller that *does* read the converted value, this reasoning (and
-        // the fast path below) would need to be revisited.
+        // On contiguous input, scan_number_bulk_contiguous() converts integer
+        // tokens itself and does not pass them to this function, unless
+        // JSON_DIAGNOSTIC_POSITIONS is enabled. This check is therefore only
+        // reached for input without bulk access (e.g. streams), with
+        // JSON_DIAGNOSTIC_POSITIONS, or when scan_number_bulk_contiguous()
+        // falls back to scan_number().
         if (discard_number_values)
         {
             constexpr std::size_t safe_digit_count = 18;
@@ -1563,26 +1447,13 @@ scan_number_done:
         // integer conversion above overflowed. Prefer std::from_chars
         // (Eisel-Lemire, locale-independent, correctly rounded) when available;
         // otherwise the exact Clinger fast path (double only); otherwise the
-        // locale-aware strtof/strtod.
-        if (parse_float_from_chars(num_begin, num_end, value_float))
-        {
-            return token_type::value_float;
-        }
-        // Skipping a fast path that cannot succeed is lossless and saves a full
-        // extra pass over the token's bytes, which otherwise shows up on
-        // high-precision inputs such as canada.json
-        if (mantissa_fits_clinger(mantissa_end)
-                && parse_float_fast(num_begin, num_end, decimal_point_char, value_float))
+        // locale-aware strtof/strtod/strtold.
+        if (convert_float_fast(num_begin, num_end, decimal_point_position, mantissa_end, value_float))
         {
             return token_type::value_float;
         }
 
-        char* endptr = nullptr; // NOLINT(misc-const-correctness,cppcoreguidelines-pro-type-vararg,hicpp-vararg)
-        strtof(value_float, token_buffer.data(), &endptr);
-
-        // we checked the number format before
-        JSON_ASSERT(endptr == token_buffer.data() + token_buffer.size());
-
+        convert_float_locale_aware(token_buffer, decimal_point_position, value_float);
         return token_type::value_float;
     }
 
@@ -1591,7 +1462,7 @@ scan_number_done:
 
     Parses the whole number token straight from the input buffer, avoiding the
     per-character get()/add() of scan_number(). On success it fills token_buffer
-    (with the locale decimal point substituted, as scan_number() does) and
+    (as scan_number() does) and
     returns the token type. On anything it does not fully recognize as a
     well-formed number it makes no state change and returns
     token_type::uninitialized, so the caller falls back to scan_number(), which
@@ -1707,16 +1578,11 @@ scan_number_done:
         }
 #endif
 
-        // materialize the token exactly as scan_number() would, substituting the
-        // locale decimal point so convert_number()'s strtof fallback stays valid.
-        // reset() already cleared token_buffer, so append() fills it (assign() is
-        // avoided because custom string_t types need not provide it)
+        // materialize the token exactly as scan_number() would. reset() already
+        // cleared token_buffer, so append() fills it (assign() is avoided
+        // because custom string_t types need not provide it)
         token_buffer.append(reinterpret_cast<const typename string_t::value_type*>(data), len);
-        if (dot_index != std::string::npos)
-        {
-            token_buffer[dot_index] = static_cast<typename string_t::value_type>(decimal_point_char);
-            decimal_point_position = dot_index;
-        }
+        decimal_point_position = dot_index;
 
         ia.bulk_skip(len - 1);
         position.chars_read_total += (len - 1);
@@ -1980,14 +1846,10 @@ scan_number_done:
         return value_float;
     }
 
-    /// return current string value (implicitly resets the token; useful only once)
+    /// return current string value
     string_t& get_string()
     {
-        // translate decimal points from locale back to '.' (#4084)
-        if (decimal_point_char != '.' && decimal_point_position != std::string::npos)
-        {
-            token_buffer[decimal_point_position] = '.';
-        }
+        // a number token holds '.' regardless of the locale (#4084)
         return token_buffer;
     }
 
@@ -2283,16 +2145,14 @@ scan_number_done:
     number_unsigned_t value_unsigned = 0;
     number_float_t value_float = 0;
 
-    /// the decimal point
-    const char_int_type decimal_point_char = '.';
-    /// the position of the decimal point in the input
+    /// the position of the decimal point in token_buffer
     std::size_t decimal_point_position = std::string::npos;
 
-    /// whether the caller (e.g. accept()/json_sax_acceptor) only needs the
-    /// token classification and never looks at the converted numeric value;
-    /// when set, scan_number() may skip strtoull()/strtoll() for
-    /// value_unsigned/value_integer tokens whose digit count guarantees they
-    /// fit into 64 bits (see scan_number())
+    /// whether the caller only needs the token types and never looks at the
+    /// converted numeric values; set only by accept(), which parses through
+    /// json_sax_acceptor. When set, convert_number() skips converting integer
+    /// tokens whose digit count guarantees that they fit into 64 bits (see
+    /// there)
     const bool discard_number_values = false;
 };
 

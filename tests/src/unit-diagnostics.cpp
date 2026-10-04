@@ -17,6 +17,10 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <map>
+#include <unordered_map>
+#include <sstream>
+
 TEST_CASE("Better diagnostics")
 {
     SECTION("empty JSON Pointer")
@@ -73,6 +77,8 @@ TEST_CASE("Better diagnostics")
     SECTION("Parse error")
     {
         json _;
+        // false positive: a default-constructed json is a valid null value
+        // @infer-ignore NULLPTR_DEREFERENCE
         CHECK_THROWS_WITH_AS(_ = json::parse(""), "[json.exception.parse_error.101] parse error at line 1, column 1: attempting to parse an empty input; check that your input string or stream contains the expected JSON", json::parse_error);
     }
 
@@ -99,6 +105,12 @@ TEST_CASE("Regression tests for extended diagnostics")
         json j;
         j["/foo"] = {1, 2, 3};
         CHECK_THROWS_WITH_AS(j.unflatten(), "[json.exception.type_error.315] (/~1foo) values in object must be primitive", json::type_error);
+    }
+
+    SECTION("Regression test for issue #5675 - to_bson: out_of_range.415 has no diagnostics context")
+    {
+        json const j = {{"a", {{"b", json::binary({1, 2}, 300)}}}};
+        CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.out_of_range.415] (/a/b) subtype 300 is too large for the BSON binary subtype (max 255)", json::out_of_range);
     }
 
     SECTION("Regression test for issue #2838 - Assertion failure when inserting into arrays with JSON_DIAGNOSTICS set")
@@ -226,6 +238,31 @@ TEST_CASE("Regression tests for extended diagnostics")
         }
     }
 
+    SECTION("Regression test for issue #5641 - parent pointers after update()/merge_patch() with an aliasing argument")
+    {
+        // update()'s and merge_patch()'s argument may be *this or one of its
+        // descendants; the values moved out of the (temporary) copy must end
+        // up with their parent pointing at their new location in *this
+        {
+            json j = {{"a", {{"a", 1}, {"b", 2}}}};
+            j.update(j["a"]);
+            CHECK(j == json({{"a", 1}, {"b", 2}}));
+
+            // Must call operator[] on const element, otherwise m_parent gets updated.
+            auto const& constJ = j;
+            CHECK_THROWS_WITH_AS(constJ["a"].at(0), "[json.exception.type_error.304] (/a) cannot use at() with number", json::type_error);
+        }
+
+        {
+            json j = {{"a", {{"a", nullptr}, {"b", 2}}}};
+            j.merge_patch(j["a"]);
+            CHECK(j == json({{"b", 2}}));
+
+            auto const& constJ = j;
+            CHECK_THROWS_WITH_AS(constJ["b"].at(0), "[json.exception.type_error.304] (/b) cannot use at() with number", json::type_error);
+        }
+    }
+
     SECTION("Regression test for issue #3032 - Yet another assertion failure when inserting into arrays with JSON_DIAGNOSTICS set")
     {
         // reference operator[](size_type idx)
@@ -328,6 +365,58 @@ TEST_CASE("Regression tests for extended diagnostics")
             int i = 0;
             CHECK_THROWS_WITH_AS(i = inner->get<int>(), expected.c_str(), json::type_error);
             CHECK(i == 0);
+        }
+    }
+
+    SECTION("Regression test for issue #5650 - converting keeps the parents of nested values")
+    {
+        // A value nested deeper than the converting constructor's descent bound
+        // is converted without the call stack. Every container that path creates
+        // has to have the parents of its children set, or the JSON Pointer in the
+        // diagnostic is cut short. Objects and arrays take turns.
+        const std::size_t pairs = 150;
+
+        json j = "not a number";
+        std::string pointer;
+        for (std::size_t i = 0; i < pairs; ++i)
+        {
+            j = json{{"a", json::array({j})}};
+            pointer += "/a/0";
+        }
+
+        const nlohmann::ordered_json converted = j;
+
+        const nlohmann::ordered_json* inner = &converted;
+        for (std::size_t i = 0; i < pairs; ++i)
+        {
+            inner = &inner->at("a").at(0);
+        }
+
+        std::string const expected = "[json.exception.type_error.302] (" + pointer + ") type must be number, but is string";
+        int i = 0;
+        CHECK_THROWS_WITH_AS(i = inner->get<int>(), expected.c_str(), nlohmann::ordered_json::type_error);
+        CHECK(i == 0);
+    }
+
+    SECTION("Regression test for issue #5668 - wrong path for std::map/unordered_map with non-string keys")
+    {
+        // a map with non-string keys is read from an array of [key, value] arrays;
+        // element 2 of "m" is not an array, so the path must point at "m/2", not "m"
+        json j;
+        j["outer"]["m"] = json::array({json::array({1, 2}), json::array({3, 4}), 5});
+
+        SECTION("std::map")
+        {
+            CHECK_THROWS_WITH_AS((j["outer"]["m"].get<std::map<int, int>>()),
+                                 "[json.exception.type_error.302] (/outer/m/2) type must be array, "
+                                 "but is number", json::type_error);
+        }
+
+        SECTION("std::unordered_map")
+        {
+            CHECK_THROWS_WITH_AS((j["outer"]["m"].get<std::unordered_map<int, int>>()),
+                                 "[json.exception.type_error.302] (/outer/m/2) type must be array, "
+                                 "but is number", json::type_error);
         }
     }
 
@@ -460,6 +549,21 @@ TEST_CASE("Regression tests for extended diagnostics")
             ordered_json const copy = j;
             CHECK(copy == j);
         }
+    }
+
+    SECTION("Regression test for issue #5652 - operator>> leaves a partial value in its target on a parse error")
+    {
+        json j = "old value";
+        std::istringstream is("[1, x");
+        CHECK_THROWS_WITH_AS(is >> j, "[json.exception.parse_error.101] parse error at line 1, column 5: syntax error while parsing value - invalid literal; last read: '1, x'", json::parse_error);
+
+        // j must be left unchanged, as json::parse() guarantees for its result
+        CHECK(j == "old value");
+
+        // copying j must not trigger assert_invariant(): a failed parse must
+        // not leave array/object elements without a parent pointer
+        json const copy = j; // NOLINT(performance-unnecessary-copy-initialization)
+        CHECK(copy == j);
     }
 }
 

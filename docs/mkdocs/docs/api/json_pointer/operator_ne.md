@@ -73,6 +73,8 @@ tokens.
 
     Overload 2 is deprecated and will be removed in a future major version release.
 
+    See the [migration guide](../../integration/migration_guide.md#json-pointers) for how to update existing code.
+
 ## Examples
 
 ??? example "Example: (1) Comparing JSON pointers"
@@ -102,6 +104,11 @@ tokens.
     ```
     --8<-- "examples/json_pointer__operator__notequal_stringtype.output"
     ```
+
+## See also
+
+- [operator==](operator_eq.md) compare for equality
+- [operator<=>](operator_spaceship.md) comparison: 3-way (C++20)
 
 ## Version history
 

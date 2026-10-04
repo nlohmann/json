@@ -16,6 +16,11 @@ Linear.
 
 <!-- NOLINT Examples -->
 
+## See also
+
+- [basic_json](basic_json.md) constructs a JSON value
+- [clear](clear.md) clears the content of a JSON value without destroying it
+
 ## Version history
 
 - Added in version 1.0.0.

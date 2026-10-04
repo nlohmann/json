@@ -21,158 +21,13 @@ using nlohmann::json;
 #include "make_test_data_available.hpp"
 #include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
+#include "sax_countdown.hpp"
+using utils::SaxCountdown;
 
-namespace
-{
-class SaxCountdown
-{
-  public:
-    explicit SaxCountdown(const int count) : events_left(count)
-    {}
 
-    bool null()
-    {
-        return events_left-- > 0;
-    }
-
-    bool boolean(bool /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_integer(json::number_integer_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_unsigned(json::number_unsigned_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_float(json::number_float_t /*unused*/, const std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool string(std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool binary(std::vector<std::uint8_t>& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool start_object(std::size_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool key(std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool end_object()
-    {
-        return events_left-- > 0;
-    }
-
-    bool start_array(std::size_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool end_array()
-    {
-        return events_left-- > 0;
-    }
-
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/) // NOLINT(readability-convert-member-functions-to-static)
-    {
-        return false;
-    }
-
-  private:
-    int events_left = 0;
-};
-} // namespace
-
-// at some point in the future, a unit test dedicated to type traits might be a good idea
-template <typename OfType, typename T, bool MinInRange, bool MaxInRange>
-struct trait_test_arg
-{
-    using of_type = OfType;
-    using type = T;
-    static constexpr bool min_in_range = MinInRange;
-    static constexpr bool max_in_range = MaxInRange;
-};
-
-TEST_CASE_TEMPLATE_DEFINE("value_in_range_of trait", T, value_in_range_of_test) // NOLINT(readability-math-missing-parentheses)
-{
-    using nlohmann::detail::value_in_range_of;
-
-    using of_type = typename T::of_type;
-    using type = typename T::type;
-    constexpr bool min_in_range = T::min_in_range;
-    constexpr bool max_in_range = T::max_in_range;
-
-    type const val_min = std::numeric_limits<type>::min();
-    type const val_min2 = val_min + 1;
-    type const val_max = std::numeric_limits<type>::max();
-    type const val_max2 = val_max - 1;
-
-    REQUIRE(CHAR_BIT == 8);
-
-    std::string of_type_str;
-    if (std::is_unsigned<of_type>::value)
-    {
-        of_type_str += "u";
-    }
-    of_type_str += "int";
-    of_type_str += std::to_string(sizeof(of_type) * 8);
-
-    INFO("of_type := ", of_type_str);
-
-    std::string type_str;
-    if (std::is_unsigned<type>::value)
-    {
-        type_str += "u";
-    }
-    type_str += "int";
-    type_str += std::to_string(sizeof(type) * 8);
-
-    INFO("type := ", type_str);
-
-    CAPTURE(val_min);
-    CAPTURE(min_in_range);
-    CAPTURE(val_max);
-    CAPTURE(max_in_range);
-
-    if (min_in_range)
-    {
-        CHECK(value_in_range_of<of_type>(val_min));
-        CHECK(value_in_range_of<of_type>(val_min2));
-    }
-    else
-    {
-        CHECK_FALSE(value_in_range_of<of_type>(val_min));
-        CHECK_FALSE(value_in_range_of<of_type>(val_min2));
-    }
-
-    if (max_in_range)
-    {
-        CHECK(value_in_range_of<of_type>(val_max));
-        CHECK(value_in_range_of<of_type>(val_max2));
-    }
-    else
-    {
-        CHECK_FALSE(value_in_range_of<of_type>(val_max));
-        CHECK_FALSE(value_in_range_of<of_type>(val_max2));
-    }
-}
+// trait_test_arg and the "value_in_range_of trait" TEST_CASE_TEMPLATE_DEFINE
+// are shared with unit-32bit.cpp
+#include "value_in_range_of_test.hpp"
 
 // NOLINTNEXTLINE(bugprone-throwing-static-initialization)
 TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test, \
@@ -210,15 +65,41 @@ TEST_CASE_TEMPLATE_INVOKE(value_in_range_of_test, \
 
 TEST_CASE("BJData")
 {
-    SECTION("binary_reader BJData LUT arrays are sorted")
+    SECTION("binary_reader BJData lookup tables")
     {
+        // both lookups are static member functions
         std::vector<std::uint8_t> const data;
-        auto ia = nlohmann::detail::input_adapter(data);
-        // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-        nlohmann::detail::binary_reader<json, decltype(ia)> const br{std::move(ia), json::input_format_t::bjdata};
+        using reader_t = nlohmann::detail::binary_reader<json, decltype(nlohmann::detail::input_adapter(data))>;
 
-        CHECK(std::is_sorted(br.bjd_optimized_type_markers.begin(), br.bjd_optimized_type_markers.end()));
-        CHECK(std::is_sorted(br.bjd_types_map.begin(), br.bjd_types_map.end()));
+        // the excluded optimized-type markers must match binary_writer's
+        // is_bjdata_excluded_type_marker(), which encodes the same 8 markers
+        for (const char marker :
+                {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'
+                })
+        {
+            CHECK(reader_t::is_bjd_excluded_optimized_type(static_cast<unsigned char>(marker)));
+        }
+        for (const char marker :
+                {'U', 'i', 'u', 'I', 'm', 'l', 'M', 'L', 'd', 'D', 'C', 'B', 'x'
+                })
+        {
+            CHECK(!reader_t::is_bjd_excluded_optimized_type(static_cast<unsigned char>(marker)));
+        }
+
+        // every dtype marker must round-trip to its ND-array type name
+        const std::vector<std::pair<char, std::string>> types
+        {
+            {'B', "byte"}, {'C', "char"}, {'D', "double"}, {'I', "int16"},
+            {'L', "int64"}, {'M', "uint64"}, {'U', "uint8"}, {'d', "single"},
+            {'i', "int8"}, {'l', "int32"}, {'m', "uint32"}, {'u', "uint16"}
+        };
+        for (const auto& type : types)
+        {
+            const char* name = reader_t::bjd_type_name(static_cast<unsigned char>(type.first));
+            REQUIRE(name != nullptr);
+            CHECK(std::string(name) == type.second);
+        }
+        CHECK(reader_t::bjd_type_name(static_cast<unsigned char>('x')) == nullptr);
     }
 
     SECTION("individual values")
@@ -2641,7 +2522,7 @@ TEST_CASE("BJData")
                         {"uint8", "int8", "uint16", "int16", "uint32", "int32", "uint64", "int64", "char"
                         })
                 {
-                    CAPTURE(type);
+                    CAPTURE(type)
                     const std::string text = std::string(R"({"_ArrayType_":")") + type +
                                              R"(","_ArraySize_":[2,3],"_ArrayData_":[1,2,3,4,5,6]})";
                     const auto from_text = json::to_bjdata(json::parse(text));
@@ -2949,7 +2830,7 @@ TEST_CASE("BJData")
                             R"({"_ArrayType_":"int16","_ArraySize_":[0,2],"_ArrayData_":[]})"
                         })
                 {
-                    CAPTURE(text);
+                    CAPTURE(text)
                     const json j = json::parse(text);
                     for (const bool use_size :
                             {
@@ -2983,7 +2864,7 @@ TEST_CASE("BJData")
                             R"({"_ArrayType_":"int16","_ArraySize_":[],"_ArrayData_":null})"
                         })
                 {
-                    CAPTURE(text);
+                    CAPTURE(text)
                     const json j = json::parse(text);
                     const auto out = json::to_bjdata(j);
                     CHECK(out.at(0) == '{');
@@ -4025,6 +3906,43 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             CHECK(json::to_bjdata(j) == v);
             CHECK(json::from_bjdata(v) == j);
         }
+
+        SECTION("ill-formed UTF-8 (see #5529, #5651)")
+        {
+            // none of the binary format specs requires a decoder to reject
+            // ill-formed UTF-8 in a text string, so a value whose bytes are
+            // not valid UTF-8 (0xC0 0xAE is an overlong encoding of '.')
+            // round-trips byte for byte as a string value; to_bjdata() writes
+            // the bytes unchanged, as before 3.13.0, unless
+            // JSON_STRICT_BINARY_UTF8 is enabled (see
+            // unit-binary_utf8_strict.cpp)
+            const std::vector<uint8_t> v = {'S', 'i', 2, 0xc0, 0xae};
+            json j;
+            CHECK_NOTHROW(j = json::from_bjdata(v));
+            REQUIRE(j.is_string());
+            CHECK(j.get_ref<const json::string_t&>() == std::string("\xc0\xae"));
+            CHECK_THROWS_AS(utils::ignore_return_value(j.dump()), json::type_error&);
+            CHECK(json::from_bjdata(json::to_bjdata(j)) == j);
+
+            // the same bytes as an object key round-trip as well
+            const std::vector<uint8_t> v_key = {'{', 'i', 2, 0xc0, 0xae, 'i', 1, '}'};
+            json j_key;
+            CHECK_NOTHROW(j_key = json::from_bjdata(v_key));
+            REQUIRE(j_key.is_object());
+            CHECK(j_key.contains(std::string("\xc0\xae")));
+            CHECK(json::from_bjdata(json::to_bjdata(j_key)) == j_key);
+
+            CHECK(json::from_bjdata(json::to_bjdata(json("\xFF"))) == json("\xFF"));
+            // a truncated multi-byte sequence
+            CHECK(json::from_bjdata(json::to_bjdata(json("\xC3"))) == json("\xC3"));
+            // an encoded surrogate half (U+D800)
+            CHECK(json::from_bjdata(json::to_bjdata(json("\xED\xA0\x80"))) == json("\xED\xA0\x80"));
+            // an overlong encoding of '.'
+            CHECK(json::from_bjdata(json::to_bjdata(json("\xC0\xAF"))) == json("\xC0\xAF"));
+
+            // an object key with ill-formed UTF-8 is kept the same way
+            CHECK(json::from_bjdata(json::to_bjdata(json{{"\xFF", 1}})) == json{{"\xFF", 1}});
+        }
     }
 
     SECTION("Array Type")
@@ -4317,7 +4235,7 @@ TEST_CASE("BJData and UBJSON can be written to a string")
 
     for (const auto& j : values)
     {
-        CAPTURE(j.dump());
+        CAPTURE(j.dump())
         for (const bool use_size :
                 {
                     false, true
@@ -4332,8 +4250,8 @@ TEST_CASE("BJData and UBJSON can be written to a string")
                 {
                     continue;
                 }
-                CAPTURE(use_size);
-                CAPTURE(use_type);
+                CAPTURE(use_size)
+                CAPTURE(use_type)
 
                 const auto bjdata = json::to_bjdata(j, use_size, use_type);
                 std::string bjdata_string;

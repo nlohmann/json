@@ -2,7 +2,12 @@
 #define DOCTEST_COMPATIBILITY
 
 #define DOCTEST_CONFIG_VOID_CAST_EXPRESSIONS
-#define DOCTEST_THREAD_LOCAL // enable single-threaded builds on XCode 6/7 - https://github.com/onqtam/doctest/issues/172
+#define DOCTEST_THREAD_LOCAL // make doctest itself avoid thread_local - https://github.com/onqtam/doctest/issues/172
+                              // (Xcode 6/7, for which this define was originally added, is no longer
+                              // supported, but the define must stay: it keeps doctest itself working the
+                              // same way as JSON_NO_THREAD_LOCAL makes the library behave, for the same
+                              // Clang/MinGW crash - see ci_test_no_thread_local in cmake/ci.cmake and
+                              // include/nlohmann/detail/macro_scope.hpp)
 #include "doctest.h"
 
 // Catch doesn't require a semicolon after CAPTURE but doctest does
@@ -26,9 +31,12 @@
 #define CHECK_THROWS_WITH_STD_STR(expr, str)                                   \
     CHECK_THROWS_WITH_STD_STR_IMPL(expr, str, DOCTEST_ANONYMOUS(DOCTEST_STD_STRING_))
 
-// included here because for some tests in the json repository private is defined as
-// public and if no STL header is included before that then in the json include when STL
-// stuff is included the MSVC STL complains (errors) that C++ keywords are being redefined
+// No test under tests/src still defines "private" as "public" (the last one was removed
+// by #2352); this include predates that removal and stayed in case a test that does so
+// is reintroduced, since it must come before <nlohmann/json.hpp> in that case (MSVC's STL
+// errors that C++ keywords are being redefined if an STL header pulled in indirectly by
+// the json include is the first one to see the #define). Keep it: dropping it would need
+// the full CI matrix, including MSVC 2015+, to confirm nothing still depends on it.
 #include <iosfwd>
 
 // Catch does this by default

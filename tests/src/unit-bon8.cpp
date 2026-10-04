@@ -21,85 +21,13 @@ using nlohmann::json;
 #include <string>
 #include <vector>
 #include "make_test_data_available.hpp"
+#include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
+#include "sax_countdown.hpp"
+using utils::SaxCountdown;
 
 namespace
 {
-class SaxCountdown
-{
-  public:
-    explicit SaxCountdown(const int count) : events_left(count)
-    {}
-
-    bool null()
-    {
-        return events_left-- > 0;
-    }
-
-    bool boolean(bool /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_integer(json::number_integer_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_unsigned(json::number_unsigned_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_float(json::number_float_t /*unused*/, const std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool string(std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool binary(std::vector<std::uint8_t>& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool start_object(std::size_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool key(std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool end_object()
-    {
-        return events_left-- > 0;
-    }
-
-    bool start_array(std::size_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool end_array()
-    {
-        return events_left-- > 0;
-    }
-
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/) // NOLINT(readability-convert-member-functions-to-static)
-    {
-        return false;
-    }
-
-  private:
-    int events_left = 0;
-};
-
 using bytes = std::vector<std::uint8_t>;
 
 /// @return the string with the given bytes
@@ -531,6 +459,47 @@ TEST_CASE("BON8")
             CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{0x87, 'a'}), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BON8 string: unexpected end of input", json::parse_error&);
         }
 
+        SECTION("input that ends after a UTF-8 lead byte")
+        {
+            // the lead byte begins either a character or an integer; both are
+            // incomplete, so the lead byte must not end the string before it
+            for (const bool strict :
+                    {
+                        true, false
+                    })
+            {
+                CAPTURE(strict)
+                CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{'a', 0xC3}, strict), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BON8 string: unexpected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{0x81, 'a', 0xC3}, strict), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BON8 string: unexpected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{0x81, 'a', 0xE2}, strict), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BON8 string: unexpected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{0x81, 'a', 0xF0}, strict), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BON8 string: unexpected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{0x81, 0xC3, 0xA9, 0xC3}, strict), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing BON8 string: unexpected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{0x87, 'a', 0xC3}, strict), "[json.exception.parse_error.110] parse error at byte 4: syntax error while parsing BON8 string: unexpected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{0x87, 0xC3}, strict), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BON8 key: unexpected end of input", json::parse_error&);
+                CHECK_THROWS_WITH_AS(_ = json::from_bon8(bytes{0x88, 'a', 0x91, 0xE2}, strict), "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing BON8 key: unexpected end of input", json::parse_error&);
+            }
+        }
+
+        SECTION("a message that is cut off is not read as a shorter value")
+        {
+            const json values = {"\xC3\xA9", "a\xE2\x82\xAC", "\xF0\x9F\x98\x80\xC3\xA9", {"a\xC3\xA9"}, {{"\xC3\xA9", "\xE2\x82\xAC"}}, {{"a", {"b\xC3\xA9", 1}}}};
+            for (const auto& j : values)
+            {
+                const bytes message = json::to_bon8(j);
+                for (std::size_t length = 0; length < message.size(); ++length)
+                {
+                    CAPTURE(j)
+                    CAPTURE(length)
+                    bytes prefix = message;
+                    prefix.resize(length);
+                    CHECK(json::from_bon8(prefix, false, false).is_discarded());
+                    // a stream is read byte by byte rather than in bulk
+                    std::istringstream stream(str(prefix));
+                    CHECK(json::from_bon8(stream, false, false).is_discarded());
+                }
+            }
+        }
+
         SECTION("invalid UTF-8")
         {
             // overlong
@@ -816,6 +785,41 @@ TEST_CASE("Parse BON8 directly from a file using iterator and sentinel")
     const json parsed = json::from_bon8(first, utils::istreambuf_sentinel{});
     CHECK((parsed.is_object() || parsed.is_array()));
 }
+
+#if !defined(JSON_NOEXCEPTION) // corpus values that do not survive the round trip are skipped by catching the exception
+TEST_CASE("BON8 round-trip invariants")
+{
+    // This checks what the parse_bon8_fuzzer driver checks (see
+    // tests/src/fuzzer-parse_bon8.cpp), so that a regression shows up in CI
+    // rather than as an OSS-Fuzz report: anything from_bon8() returns (j1)
+    // can be serialized, parsed back (j2), and serialized again to reproduce
+    // the exact bytes. The stream-versus-contiguous input check the driver
+    // also performs is not covered here (see #5601).
+    for (const auto& j0 : utils::round_trip_corpus::values())
+    {
+        json j1;
+        try
+        {
+            // turn the corpus value into a value as from_bon8() returns it
+            j1 = json::from_bon8(json::to_bon8(j0));
+        }
+        catch (const json::exception&)
+        {
+            // BON8 cannot represent an unsigned integer above INT64_MAX, and
+            // the fuzzer driver only ever sees values from_bon8() actually
+            // produced, so skip such corpus values here, too
+            continue;
+        }
+
+        INFO("j1 = " << j1.dump());
+        const std::vector<std::uint8_t> vec = json::to_bon8(j1);
+        json j2;
+        // anything the library writes must be parsable by the library
+        REQUIRE_NOTHROW(j2 = json::from_bon8(vec));
+        CHECK(json::to_bon8(j2) == vec);
+    }
+}
+#endif
 
 TEST_CASE("BON8 roundtrips" * doctest::skip())
 {
