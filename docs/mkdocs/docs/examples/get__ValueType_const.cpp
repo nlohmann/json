@@ -1,5 +1,5 @@
 #include <iostream>
-#include <unordered_map>
+#include <map>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -29,7 +29,7 @@ int main()
     auto v5 = json_types["number"]["floating-point"].get<int>();
     auto v6 = json_types["string"].get<std::string>();
     auto v7 = json_types["array"].get<std::vector<short>>();
-    auto v8 = json_types.get<std::unordered_map<std::string, json>>();
+    auto v8 = json_types.get<std::map<std::string, json>>();
 
     // print the conversion results
     std::cout << v1 << '\n';

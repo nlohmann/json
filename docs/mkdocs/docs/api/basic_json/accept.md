@@ -96,7 +96,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
 
 ## Examples
 
-??? example
+??? example "Example: (1) reading from a string"
 
     The example below demonstrates the `accept()` function reading from a string.
 
@@ -108,6 +108,21 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     
     ```json
     --8<-- "examples/accept__string.output"
+    ```
+
+??? example "Example: (2) reading from an iterator pair"
+
+    The example below demonstrates the `accept()` function reading from an iterator pair. Only the first call covers
+    exactly the JSON text; the second one also covers the trailing bytes and is therefore rejected.
+
+    ```cpp
+    --8<-- "examples/accept__iterator_pair.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/accept__iterator_pair.output"
     ```
 
 ## See also
@@ -137,3 +152,5 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
 
     You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated
     function.
+
+    See the [migration guide](../../integration/migration_guide.md#parsing) for how to update existing code.

@@ -109,11 +109,11 @@ Strong exception safety: if an exception occurs, the original value stays intact
 2. Linear in `cnt` plus linear in the distance between `pos` and end of the container.
 3. Linear in `#!cpp std::distance(first, last)` plus linear in the distance between `pos` and end of the container.
 4. Linear in `ilist.size()` plus linear in the distance between `pos` and end of the container.
-5. Logarithmic: `O(N*log(size() + N))`, where `N` is the number of elements to insert.
+5. `O(N*log(size() + N))`, where `N` is the number of elements to insert.
 
 ## Examples
 
-??? example "Example (1): insert element into array"
+??? example "Example: (1) insert element into array"
 
     The example shows how `insert()` is used.
     
@@ -127,7 +127,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/insert.output"
     ```
 
-??? example "Example (2): insert copies of element into array"
+??? example "Example: (2) insert copies of element into array"
 
     The example shows how `insert()` is used.
     
@@ -141,7 +141,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/insert__count.output"
     ```
 
-??? example "Example (3): insert a range of elements into an array"
+??? example "Example: (3) insert a range of elements into an array"
 
     The example shows how `insert()` is used.
     
@@ -155,7 +155,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/insert__range.output"
     ```
 
-??? example "Example (4): insert elements from an initializer list into an array"
+??? example "Example: (4) insert elements from an initializer list into an array"
 
     The example shows how `insert()` is used.
     
@@ -169,7 +169,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
     --8<-- "examples/insert__ilist.output"
     ```
 
-??? example "Example (5): insert a range of elements into an object"
+??? example "Example: (5) insert a range of elements into an object"
 
     The example shows how `insert()` is used.
     
@@ -195,5 +195,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 1. Added in version 1.0.0.
 2. Added in version 1.0.0.
 3. Added in version 1.0.0.
-4. Added in version 1.0.0.
+4. Added in version 1.0.0. Fixed in version 3.13.0 to copy the values before inserting; before, an `ilist` that
+   referred to elements of the array being inserted into could insert wrong values, because the range insert could
+   move from or shift an element before it was copied.
 5. Added in version 3.0.0.

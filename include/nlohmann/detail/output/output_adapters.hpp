@@ -8,11 +8,10 @@
 
 #pragma once
 
-#include <algorithm> // copy
 #include <cstddef> // size_t
-#include <iterator> // back_inserter
 #include <memory> // shared_ptr, make_shared
 #include <string> // basic_string
+#include <type_traits> // conditional, integral_constant, is_same
 #include <utility> // move
 #include <vector> // vector
 
@@ -31,6 +30,10 @@ namespace detail
 template<typename CharType> struct output_adapter_protocol
 {
     virtual void write_character(CharType c) = 0;
+    /// @param[in] s      pointer to the characters to write; binary_writer legitimately
+    ///                   passes a null pointer together with length 0 for an empty
+    ///                   string or binary value, so implementations must tolerate that
+    /// @param[in] length number of characters at @a s
     virtual void write_characters(const CharType* s, std::size_t length) = 0;
     virtual ~output_adapter_protocol() = default;
 
@@ -97,7 +100,6 @@ class output_vector_adapter : public output_adapter_protocol<CharType>
         sink.write_character(c);
     }
 
-    JSON_HEDLEY_NON_NULL(2)
     void write_characters(const CharType* s, std::size_t length) override
     {
         sink.write_characters(s, length);
@@ -117,12 +119,13 @@ class output_stream_adapter : public output_adapter_protocol<CharType>
         : stream(s)
     {}
 
+    // NOLINTNEXTLINE(portability-template-virtual-member-function)
     void write_character(CharType c) override
     {
         stream.put(c);
     }
 
-    JSON_HEDLEY_NON_NULL(2)
+    // NOLINTNEXTLINE(portability-template-virtual-member-function)
     void write_characters(const CharType* s, std::size_t length) override
     {
         stream.write(s, static_cast<std::streamsize>(length));
@@ -147,7 +150,6 @@ class output_string_adapter : public output_adapter_protocol<CharType>
         str.push_back(c);
     }
 
-    JSON_HEDLEY_NON_NULL(2)
     void write_characters(const CharType* s, std::size_t length) override
     {
         str.append(s, length);
@@ -190,7 +192,82 @@ class output_adapter_sink
     output_adapter_t<CharType> oa;
 };
 
-template<typename CharType, typename StringType = std::basic_string<CharType>>
+/// @brief whether std::basic_string<CharType> has a non-deprecated std::char_traits
+///        specialization, and is therefore usable as output_adapter's default StringType
+///
+/// std::char_traits is only guaranteed (and, on some standard libraries, only
+/// implemented without a deprecation warning) for the character types listed
+/// below; std::char_traits<T> for any other T (e.g. std::uint8_t, as used by the
+/// binary writers) is a non-standard extension some standard libraries deprecate.
+/// See https://github.com/nlohmann/json/issues/5725 item 2.
+template<typename CharType>
+struct is_output_adapter_string_char_type : std::integral_constant < bool,
+    std::is_same<CharType, char>::value ||
+    std::is_same<CharType, wchar_t>::value ||
+    std::is_same<CharType, char16_t>::value ||
+    std::is_same<CharType, char32_t>::value
+#if defined(__cpp_lib_char8_t) && (__cpp_lib_char8_t >= 201907L)
+    || std::is_same<CharType, char8_t>::value
+#endif
+    > {};
+
+/// @brief placeholder type for output_adapter's StringType and (with JSON_NO_IO
+///        undefined) its std::basic_ostream constructor parameter, for CharType
+///        with no non-deprecated std::char_traits specialization
+///
+/// Never actually used: the StringType- and std::basic_ostream-based
+/// output_adapter constructors are neither documented nor tested for such
+/// CharType (only the std::vector-based constructor is used for them, by the
+/// binary writers). Naming std::basic_string<CharType> or
+/// std::basic_ostream<CharType> anywhere such a constructor would otherwise be
+/// declared - even as an unused default template argument or an unused,
+/// never-called overload - instantiates std::char_traits<CharType> merely to
+/// name the type, which is exactly what triggers the deprecation warning this
+/// placeholder avoids.
+template<typename CharType>
+struct output_adapter_no_string_type {};
+
+// Select output_adapter's default StringType (and, below, its ostream
+// constructor's parameter type) via partial specialization, not
+// std::conditional: std::conditional<B, T, F> requires both T and F to be named
+// as template arguments up front, which would still instantiate (and thus name)
+// std::basic_string<CharType> / std::basic_ostream<CharType> for every CharType,
+// defeating the point. A bool non-type parameter with two specializations only
+// ever names the type that is actually selected.
+template<typename CharType, bool = is_output_adapter_string_char_type<CharType>::value>
+struct output_adapter_default_string_type
+{
+    using type = output_adapter_no_string_type<CharType>;
+};
+
+template<typename CharType>
+struct output_adapter_default_string_type<CharType, true>
+{
+    using type = std::basic_string<CharType>;
+};
+
+#ifndef JSON_NO_IO
+/// distinct from output_adapter_no_string_type, so the placeholder overloads of
+/// output_adapter's constructor (used when CharType is not a character type)
+/// stay distinct overloads instead of colliding into a single redeclaration
+template<typename CharType>
+struct output_adapter_no_ostream_type {};
+
+template<typename CharType, bool = is_output_adapter_string_char_type<CharType>::value>
+struct output_adapter_ostream_type
+{
+    using type = output_adapter_no_ostream_type<CharType>;
+};
+
+template<typename CharType>
+struct output_adapter_ostream_type<CharType, true>
+{
+    using type = std::basic_ostream<CharType>;
+};
+#endif  // JSON_NO_IO
+
+template < typename CharType, typename StringType =
+           typename output_adapter_default_string_type<CharType>::type >
 class output_adapter
 {
   public:
@@ -199,7 +276,7 @@ class output_adapter
         : oa(std::make_shared<output_vector_adapter<CharType, AllocatorType>>(vec)) {}
 
 #ifndef JSON_NO_IO
-    output_adapter(std::basic_ostream<CharType>& s)
+    output_adapter(typename output_adapter_ostream_type<CharType>::type& s)
         : oa(std::make_shared<output_stream_adapter<CharType>>(s)) {}
 #endif  // JSON_NO_IO
 

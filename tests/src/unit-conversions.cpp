@@ -430,6 +430,37 @@ TEST_CASE("value conversion")
             CHECK(std::equal(std::begin(nbs[0][0][0]), std::end(nbs[1][1][1]), std::begin(nbs2[0][0][0])));
         }
 
+        SECTION("built-in arrays: 5D")
+        {
+            // NOLINTBEGIN(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            const int nbs[1][1][1][2][2] = {{{{{0, 1}, {2, 3}}}}};
+            int nbs2[1][1][1][2][2] = {{{{{0, 0}, {0, 0}}}}};
+            // NOLINTEND(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+
+            const json j2 = nbs;
+            j2.get_to(nbs2);
+            CHECK(std::equal(std::begin(nbs[0][0][0][0]), std::end(nbs[0][0][0][1]), std::begin(nbs2[0][0][0][0])));
+        }
+
+        SECTION("built-in arrays: mismatched shape")
+        {
+            // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            int nbs2[2][3] = {{0, 0, 0}, {0, 0, 0}};
+            // NOLINTEND(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+
+            SECTION("not an array")
+            {
+                const json j2 = 42;
+                CHECK_THROWS_WITH_AS(j2.get_to(nbs2), "[json.exception.type_error.304] cannot use at() with number", json::type_error&);
+            }
+
+            SECTION("too few elements")
+            {
+                const json j2 = {{0, 1, 2}};
+                CHECK_THROWS_WITH_AS(j2.get_to(nbs2), "[json.exception.out_of_range.401] array index 1 is out of range", json::out_of_range&);
+            }
+        }
+
         SECTION("std::deque<json>")
         {
             std::deque<json> a{"previous", "value"};
@@ -1358,6 +1389,14 @@ TEST_CASE("value conversion")
         CHECK(json(value_1).get<c_enum>() == value_1);
         CHECK(json(cpp_enum::value_1).get<cpp_enum>() == cpp_enum::value_1);
     }
+
+    SECTION("get an enum with underlying type bool (#5671)")
+    {
+        enum class bool_enum : bool { off, on };
+
+        CHECK(json(bool_enum::off).get<bool_enum>() == bool_enum::off);
+        CHECK(json(bool_enum::on).get<bool_enum>() == bool_enum::on);
+    }
 #endif
 
     SECTION("more involved conversions")
@@ -1372,21 +1411,22 @@ TEST_CASE("value conversion")
 
             SECTION("std::map")
             {
-                j1.get<std::map<std::string, int>>();
-                j2.get<std::map<std::string, unsigned int>>();
-                j3.get<std::map<std::string, double>>();
-                j4.get<std::map<std::string, bool>>();
-                j5.get<std::map<std::string, std::string>>();
+                CHECK(j1.get<std::map<std::string, int>>() == (std::map<std::string, int> {{"one", 1}, {"two", 2}, {"three", 3}}));
+                CHECK(j2.get<std::map<std::string, unsigned int>>() == (std::map<std::string, unsigned int> {{"one", 1u}, {"two", 2u}, {"three", 3u}}));
+                CHECK(j3.get<std::map<std::string, double>>() == (std::map<std::string, double> {{"one", 1.1}, {"two", 2.2}, {"three", 3.3}}));
+                CHECK(j4.get<std::map<std::string, bool>>() == (std::map<std::string, bool> {{"one", true}, {"two", false}, {"three", true}}));
+                CHECK(j5.get<std::map<std::string, std::string>>() == (std::map<std::string, std::string> {{"one", "eins"}, {"two", "zwei"}, {"three", "drei"}}));
             }
 
             SECTION("std::unordered_map")
             {
-                j1.get<std::unordered_map<std::string, int>>();
-                j2.get<std::unordered_map<std::string, unsigned int>>();
-                j3.get<std::unordered_map<std::string, double>>();
-                j4.get<std::unordered_map<std::string, bool>>();
-                j5.get<std::unordered_map<std::string, std::string>>();
-                // CHECK(m5["one"] == "eins");
+                CHECK(j1.get<std::unordered_map<std::string, int>>() == (std::unordered_map<std::string, int> {{"one", 1}, {"two", 2}, {"three", 3}}));
+                CHECK(j2.get<std::unordered_map<std::string, unsigned int>>() == (std::unordered_map<std::string, unsigned int> {{"one", 1u}, {"two", 2u}, {"three", 3u}}));
+                CHECK(j3.get<std::unordered_map<std::string, double>>() == (std::unordered_map<std::string, double> {{"one", 1.1}, {"two", 2.2}, {"three", 3.3}}));
+                CHECK(j4.get<std::unordered_map<std::string, bool>>() == (std::unordered_map<std::string, bool> {{"one", true}, {"two", false}, {"three", true}}));
+                const auto m5 = j5.get<std::unordered_map<std::string, std::string>>();
+                CHECK(m5 == (std::unordered_map<std::string, std::string> {{"one", "eins"}, {"two", "zwei"}, {"three", "drei"}}));
+                CHECK(m5.at("one") == "eins");
             }
 
             SECTION("reserve is called on containers that support it (#5406)")
@@ -1422,22 +1462,24 @@ TEST_CASE("value conversion")
 
             SECTION("std::multimap")
             {
-                j1.get<std::multimap<std::string, int>>();
-                j2.get<std::multimap<std::string, unsigned int>>();
-                j3.get<std::multimap<std::string, double>>();
-                j4.get<std::multimap<std::string, bool>>();
-                j5.get<std::multimap<std::string, std::string>>();
-                // CHECK(m5["one"] == "eins");
+                CHECK(j1.get<std::multimap<std::string, int>>() == (std::multimap<std::string, int> {{"one", 1}, {"two", 2}, {"three", 3}}));
+                CHECK(j2.get<std::multimap<std::string, unsigned int>>() == (std::multimap<std::string, unsigned int> {{"one", 1u}, {"two", 2u}, {"three", 3u}}));
+                CHECK(j3.get<std::multimap<std::string, double>>() == (std::multimap<std::string, double> {{"one", 1.1}, {"two", 2.2}, {"three", 3.3}}));
+                CHECK(j4.get<std::multimap<std::string, bool>>() == (std::multimap<std::string, bool> {{"one", true}, {"two", false}, {"three", true}}));
+                const auto m5 = j5.get<std::multimap<std::string, std::string>>();
+                CHECK(m5 == (std::multimap<std::string, std::string> {{"one", "eins"}, {"two", "zwei"}, {"three", "drei"}}));
+                CHECK(m5.find("one")->second == "eins");
             }
 
             SECTION("std::unordered_multimap")
             {
-                j1.get<std::unordered_multimap<std::string, int>>();
-                j2.get<std::unordered_multimap<std::string, unsigned int>>();
-                j3.get<std::unordered_multimap<std::string, double>>();
-                j4.get<std::unordered_multimap<std::string, bool>>();
-                j5.get<std::unordered_multimap<std::string, std::string>>();
-                // CHECK(m5["one"] == "eins");
+                CHECK(j1.get<std::unordered_multimap<std::string, int>>() == (std::unordered_multimap<std::string, int> {{"one", 1}, {"two", 2}, {"three", 3}}));
+                CHECK(j2.get<std::unordered_multimap<std::string, unsigned int>>() == (std::unordered_multimap<std::string, unsigned int> {{"one", 1u}, {"two", 2u}, {"three", 3u}}));
+                CHECK(j3.get<std::unordered_multimap<std::string, double>>() == (std::unordered_multimap<std::string, double> {{"one", 1.1}, {"two", 2.2}, {"three", 3.3}}));
+                CHECK(j4.get<std::unordered_multimap<std::string, bool>>() == (std::unordered_multimap<std::string, bool> {{"one", true}, {"two", false}, {"three", true}}));
+                const auto m5 = j5.get<std::unordered_multimap<std::string, std::string>>();
+                CHECK(m5 == (std::unordered_multimap<std::string, std::string> {{"one", "eins"}, {"two", "zwei"}, {"three", "drei"}}));
+                CHECK(m5.find("one")->second == "eins");
             }
 
             SECTION("exception in case of a non-object type")
@@ -1458,29 +1500,30 @@ TEST_CASE("value conversion")
 
             SECTION("std::list")
             {
-                j1.get<std::list<int>>();
-                j2.get<std::list<unsigned int>>();
-                j3.get<std::list<double>>();
-                j4.get<std::list<bool>>();
-                j5.get<std::list<std::string>>();
+                CHECK(j1.get<std::list<int>>() == (std::list<int> {1, 2, 3, 4}));
+                CHECK(j2.get<std::list<unsigned int>>() == (std::list<unsigned int> {1u, 2u, 3u, 4u}));
+                CHECK(j3.get<std::list<double>>() == (std::list<double> {1.2, 2.3, 3.4, 4.5}));
+                CHECK(j4.get<std::list<bool>>() == (std::list<bool> {true, false, true}));
+                CHECK(j5.get<std::list<std::string>>() == (std::list<std::string> {"one", "two", "three"}));
             }
 
             SECTION("std::forward_list")
             {
-                j1.get<std::forward_list<int>>();
-                j2.get<std::forward_list<unsigned int>>();
-                j3.get<std::forward_list<double>>();
-                j4.get<std::forward_list<bool>>();
-                j5.get<std::forward_list<std::string>>();
+                CHECK(j1.get<std::forward_list<int>>() == (std::forward_list<int> {1, 2, 3, 4}));
+                CHECK(j2.get<std::forward_list<unsigned int>>() == (std::forward_list<unsigned int> {1u, 2u, 3u, 4u}));
+                CHECK(j3.get<std::forward_list<double>>() == (std::forward_list<double> {1.2, 2.3, 3.4, 4.5}));
+                CHECK(j4.get<std::forward_list<bool>>() == (std::forward_list<bool> {true, false, true}));
+                CHECK(j5.get<std::forward_list<std::string>>() == (std::forward_list<std::string> {"one", "two", "three"}));
             }
 
             SECTION("std::array")
             {
-                j1.get<std::array<int, 4>>();
-                j2.get<std::array<unsigned int, 3>>();
-                j3.get<std::array<double, 4>>();
-                j4.get<std::array<bool, 3>>();
-                j5.get<std::array<std::string, 3>>();
+                CHECK(j1.get<std::array<int, 4>>() == (std::array<int, 4> {{1, 2, 3, 4}}));
+                // only the first 3 elements of j2 are converted, since the target array is smaller
+                CHECK(j2.get<std::array<unsigned int, 3>>() == (std::array<unsigned int, 3> {{1u, 2u, 3u}}));
+                CHECK(j3.get<std::array<double, 4>>() == (std::array<double, 4> {{1.2, 2.3, 3.4, 4.5}}));
+                CHECK(j4.get<std::array<bool, 3>>() == (std::array<bool, 3> {{true, false, true}}));
+                CHECK(j5.get<std::array<std::string, 3>>() == (std::array<std::string, 3> {{"one", "two", "three"}}));
 
                 SECTION("std::array is larger than JSON")
                 {
@@ -1500,47 +1543,53 @@ TEST_CASE("value conversion")
 
             SECTION("std::valarray")
             {
-                j1.get<std::valarray<int>>();
-                j2.get<std::valarray<unsigned int>>();
-                j3.get<std::valarray<double>>();
-                j4.get<std::valarray<bool>>();
-                j5.get<std::valarray<std::string>>();
+                // valarray has no operator== that returns bool, so compare via a vector copy
+                const auto v1 = j1.get<std::valarray<int>>();
+                CHECK((std::vector<int>(std::begin(v1), std::end(v1)) == std::vector<int> {1, 2, 3, 4}));
+                const auto v2 = j2.get<std::valarray<unsigned int>>();
+                CHECK((std::vector<unsigned int>(std::begin(v2), std::end(v2)) == std::vector<unsigned int> {1u, 2u, 3u, 4u}));
+                const auto v3 = j3.get<std::valarray<double>>();
+                CHECK((std::vector<double>(std::begin(v3), std::end(v3)) == std::vector<double> {1.2, 2.3, 3.4, 4.5}));
+                const auto v4 = j4.get<std::valarray<bool>>();
+                CHECK((std::vector<bool>(std::begin(v4), std::end(v4)) == std::vector<bool> {true, false, true}));
+                const auto v5 = j5.get<std::valarray<std::string>>();
+                CHECK((std::vector<std::string>(std::begin(v5), std::end(v5)) == std::vector<std::string> {"one", "two", "three"}));
             }
 
             SECTION("std::vector")
             {
-                j1.get<std::vector<int>>();
-                j2.get<std::vector<unsigned int>>();
-                j3.get<std::vector<double>>();
-                j4.get<std::vector<bool>>();
-                j5.get<std::vector<std::string>>();
+                CHECK(j1.get<std::vector<int>>() == (std::vector<int> {1, 2, 3, 4}));
+                CHECK(j2.get<std::vector<unsigned int>>() == (std::vector<unsigned int> {1u, 2u, 3u, 4u}));
+                CHECK(j3.get<std::vector<double>>() == (std::vector<double> {1.2, 2.3, 3.4, 4.5}));
+                CHECK(j4.get<std::vector<bool>>() == (std::vector<bool> {true, false, true}));
+                CHECK(j5.get<std::vector<std::string>>() == (std::vector<std::string> {"one", "two", "three"}));
             }
 
             SECTION("std::deque")
             {
-                j1.get<std::deque<int>>();
-                j2.get<std::deque<unsigned int>>();
-                j2.get<std::deque<double>>();
-                j4.get<std::deque<bool>>();
-                j5.get<std::deque<std::string>>();
+                CHECK(j1.get<std::deque<int>>() == (std::deque<int> {1, 2, 3, 4}));
+                CHECK(j2.get<std::deque<unsigned int>>() == (std::deque<unsigned int> {1u, 2u, 3u, 4u}));
+                CHECK(j3.get<std::deque<double>>() == (std::deque<double> {1.2, 2.3, 3.4, 4.5}));
+                CHECK(j4.get<std::deque<bool>>() == (std::deque<bool> {true, false, true}));
+                CHECK(j5.get<std::deque<std::string>>() == (std::deque<std::string> {"one", "two", "three"}));
             }
 
             SECTION("std::set")
             {
-                j1.get<std::set<int>>();
-                j2.get<std::set<unsigned int>>();
-                j3.get<std::set<double>>();
-                j4.get<std::set<bool>>();
-                j5.get<std::set<std::string>>();
+                CHECK(j1.get<std::set<int>>() == (std::set<int> {1, 2, 3, 4}));
+                CHECK(j2.get<std::set<unsigned int>>() == (std::set<unsigned int> {1u, 2u, 3u, 4u}));
+                CHECK(j3.get<std::set<double>>() == (std::set<double> {1.2, 2.3, 3.4, 4.5}));
+                CHECK(j4.get<std::set<bool>>() == (std::set<bool> {true, false, true}));
+                CHECK(j5.get<std::set<std::string>>() == (std::set<std::string> {"one", "two", "three"}));
             }
 
             SECTION("std::unordered_set")
             {
-                j1.get<std::unordered_set<int>>();
-                j2.get<std::unordered_set<unsigned int>>();
-                j3.get<std::unordered_set<double>>();
-                j4.get<std::unordered_set<bool>>();
-                j5.get<std::unordered_set<std::string>>();
+                CHECK(j1.get<std::unordered_set<int>>() == (std::unordered_set<int> {1, 2, 3, 4}));
+                CHECK(j2.get<std::unordered_set<unsigned int>>() == (std::unordered_set<unsigned int> {1u, 2u, 3u, 4u}));
+                CHECK(j3.get<std::unordered_set<double>>() == (std::unordered_set<double> {1.2, 2.3, 3.4, 4.5}));
+                CHECK(j4.get<std::unordered_set<bool>>() == (std::unordered_set<bool> {true, false, true}));
+                CHECK(j5.get<std::unordered_set<std::string>>() == (std::unordered_set<std::string> {"one", "two", "three"}));
             }
 
             SECTION("std::map (array of pairs)")
@@ -1553,9 +1602,15 @@ TEST_CASE("value conversion")
 
                 json const j7 = {0, 1, 2, 3};
                 json const j8 = 2;
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS((j7.get<std::map<int, int>>()),
+                                     "[json.exception.type_error.302] (/0) type must be array, "
+                                     "but is number", json::type_error&);
+#else
                 CHECK_THROWS_WITH_AS((j7.get<std::map<int, int>>()),
                                      "[json.exception.type_error.302] type must be array, "
                                      "but is number", json::type_error&);
+#endif
                 CHECK_THROWS_WITH_AS((j8.get<std::map<int, int>>()),
                                      "[json.exception.type_error.302] type must be array, "
                                      "but is number", json::type_error&);
@@ -1578,9 +1633,15 @@ TEST_CASE("value conversion")
 
                 json const j7 = {0, 1, 2, 3};
                 json const j8 = 2;
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS((j7.get<std::unordered_map<int, int>>()),
+                                     "[json.exception.type_error.302] (/0) type must be array, "
+                                     "but is number", json::type_error&);
+#else
                 CHECK_THROWS_WITH_AS((j7.get<std::unordered_map<int, int>>()),
                                      "[json.exception.type_error.302] type must be array, "
                                      "but is number", json::type_error&);
+#endif
                 CHECK_THROWS_WITH_AS((j8.get<std::unordered_map<int, int>>()),
                                      "[json.exception.type_error.302] type must be array, "
                                      "but is number", json::type_error&);
@@ -1622,7 +1683,7 @@ TEST_CASE("value conversion")
 
 enum class cards {kreuz, pik, herz, karo};
 
-// NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+// NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness) - false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(cards,
 {
     {cards::kreuz, "kreuz"},
@@ -1640,7 +1701,7 @@ enum TaskState // NOLINT(cert-int09-c,readability-enum-initial-value,cppcoreguid
     TS_INVALID = -1,
 };
 
-// NOLINTNEXTLINE(misc-const-correctness,misc-use-internal-linkage,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+// NOLINTNEXTLINE(misc-const-correctness,misc-use-internal-linkage) - false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(TaskState,
 {
     {TS_INVALID, nullptr},
@@ -1690,7 +1751,7 @@ TEST_CASE("JSON to enum mapping")
 
 enum class strict_cards {kreuz, pik, herz, karo, andere}; // andere not included in mapping
 
-// NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+// NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness) - false positive
 NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(strict_cards,
 {
     {strict_cards::kreuz, "kreuz"},
@@ -1709,7 +1770,7 @@ enum StrictTaskState // NOLINT(cert-int09-c,readability-enum-initial-value,cppco
     STRICT_TS_INVALID = -1,
 };
 
-// NOLINTNEXTLINE(misc-const-correctness,misc-use-internal-linkage,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+// NOLINTNEXTLINE(misc-const-correctness,misc-use-internal-linkage) - false positive
 NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(StrictTaskState,
 {
     {STRICT_TS_INVALID, nullptr},
@@ -1717,6 +1778,34 @@ NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(StrictTaskState,
     {STRICT_TS_RUNNING, "running"},
     {STRICT_TS_COMPLETED, "completed"},
 })
+
+// regression test for #5708 item 2: NLOHMANN_JSON_SERIALIZE_ENUM_STRICT must not rely on
+// unqualified lookup of a helper name that a user's own namespace may also declare
+namespace ns_with_colliding_name
+{
+// NOLINTNEXTLINE(misc-use-internal-linkage) - used to shadow the library's internal helper name
+inline void templated_json_throw(int /*unused*/) {}
+
+enum class colliding_enum { a, b };
+
+// NOLINTNEXTLINE(misc-use-internal-linkage,misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) - false positive
+NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(colliding_enum,
+{
+    {colliding_enum::a, "a"},
+    {colliding_enum::b, "b"}
+})
+} // namespace ns_with_colliding_name
+
+TEST_CASE("NLOHMANN_JSON_SERIALIZE_ENUM_STRICT in a namespace with a colliding name")
+{
+    using ns_with_colliding_name::colliding_enum;
+
+    CHECK(json(colliding_enum::a) == "a");
+    CHECK(colliding_enum::b == json("b"));
+
+    json _;
+    CHECK_THROWS_WITH_AS(_ = json("nope").get<colliding_enum>(), "[json.exception.out_of_range.410] enum value out of range for colliding_enum: \"nope\"", json::out_of_range&);
+}
 
 TEST_CASE("Strict JSON to enum mapping")
 {
@@ -1729,6 +1818,12 @@ TEST_CASE("Strict JSON to enum mapping")
         CHECK(json(strict_cards::karo) == "karo");
 
         // json -> enum
+        CHECK(json("kreuz").get<strict_cards>() == strict_cards::kreuz);
+        CHECK(json("pik").get<strict_cards>() == strict_cards::pik);
+        CHECK(json("herz").get<strict_cards>() == strict_cards::herz);
+        CHECK(json("karo").get<strict_cards>() == strict_cards::karo);
+
+        // comparison of enum and json
         CHECK(strict_cards::kreuz == json("kreuz"));
         CHECK(strict_cards::pik == json("pik"));
         CHECK(strict_cards::herz == json("herz"));
@@ -1740,6 +1835,18 @@ TEST_CASE("Strict JSON to enum mapping")
 
         // conversion of unmapped enum -> exception thrown
         CHECK_THROWS_WITH_AS(json(strict_cards::andere), "[json.exception.out_of_range.410] enum value out of range for strict_cards", json::out_of_range&);
+
+        // comparing an unmapped enum with json throws the same exception
+        // (the scalar comparison operators used to be noexcept, so this
+        // called std::terminate)
+        CHECK_THROWS_WITH_AS(static_cast<void>(strict_cards::andere == json("andere")), "[json.exception.out_of_range.410] enum value out of range for strict_cards", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(static_cast<void>(json("andere") != strict_cards::andere), "[json.exception.out_of_range.410] enum value out of range for strict_cards", json::out_of_range&);
+
+        // invalid UTF-8 -> out_of_range.410, not the type_error.316 thrown while building the
+        // message (regression test for #5667); such strings can reach get<Enum>() unvalidated,
+        // e.g. from from_cbor()/from_msgpack() (#5529)
+        const json j_invalid_utf8 = "\xFF";
+        CHECK_THROWS_WITH_AS(_ = j_invalid_utf8.get<strict_cards>(), "[json.exception.out_of_range.410] enum value out of range for strict_cards: \"\xEF\xBF\xBD\"", json::out_of_range&);
     }
 
     SECTION("traditional enum")
@@ -1751,6 +1858,12 @@ TEST_CASE("Strict JSON to enum mapping")
         CHECK(json(STRICT_TS_INVALID) == json());
 
         // json -> enum
+        CHECK(json("stopped").get<StrictTaskState>() == STRICT_TS_STOPPED);
+        CHECK(json("running").get<StrictTaskState>() == STRICT_TS_RUNNING);
+        CHECK(json("completed").get<StrictTaskState>() == STRICT_TS_COMPLETED);
+        CHECK(json().get<StrictTaskState>() == STRICT_TS_INVALID);
+
+        // comparison of enum and json
         CHECK(STRICT_TS_STOPPED == json("stopped"));
         CHECK(STRICT_TS_RUNNING == json("running"));
         CHECK(STRICT_TS_COMPLETED == json("completed"));
@@ -1762,6 +1875,9 @@ TEST_CASE("Strict JSON to enum mapping")
 
         // conversion of unmapped enum -> exception thrown
         CHECK_THROWS_WITH_AS(json(STRICT_TS_OTHER), "[json.exception.out_of_range.410] enum value out of range for StrictTaskState", json::out_of_range&);
+
+        // comparing an unmapped enum with json throws the same exception
+        CHECK_THROWS_WITH_AS(static_cast<void>(STRICT_TS_OTHER < json("x")), "[json.exception.out_of_range.410] enum value out of range for StrictTaskState", json::out_of_range&);
     }
 }
 
@@ -1826,6 +1942,21 @@ TEST_CASE("std::u8string")
 #endif
 #endif
 
+#if !defined(JSON_NOEXCEPTION)
+namespace
+{
+// a type whose to_json reports an error by throwing, used below to check that
+// converting a std::optional<T> to JSON propagates an exception thrown while
+// converting its contained value instead of calling std::terminate (#5642)
+struct throwing_to_json_type {};
+
+[[noreturn]] void to_json(json& /*unused*/, const throwing_to_json_type& /*unused*/)
+{
+    throw std::runtime_error("cannot serialize throwing_to_json_type");
+}
+}  // namespace
+#endif
+
 TEST_CASE("std::optional")
 {
     SECTION("null")
@@ -1871,6 +2002,8 @@ TEST_CASE("std::optional")
 
         CHECK(json(opt_string) == j_string);
         CHECK(std::optional<std::string>(j_string) == opt_string);
+        // false positive: Infer attributes the destruction of the temporaries above to opt_string
+        // @infer-ignore USE_AFTER_DELETE
     }
 
     SECTION("bool")
@@ -1908,6 +2041,23 @@ TEST_CASE("std::optional")
         CHECK(json(opt_object) == j_object);
         CHECK(std::map<std::string, std::optional<int>>(j_object) == opt_object);
     }
+
+#if !defined(JSON_NOEXCEPTION)
+    SECTION("exception from contained value's to_json propagates (#5642)")
+    {
+        // to_json(BasicJsonType&, const std::optional<T>&) must not be
+        // noexcept: it calls T's to_json, which may throw (a user-defined
+        // to_json that reports an error, or std::bad_alloc for T =
+        // std::string/vector/json). Before the fix, this called
+        // std::terminate() instead of letting the exception propagate.
+        const std::optional<throwing_to_json_type> opt = throwing_to_json_type{};
+        CHECK_THROWS_WITH_AS(json(opt), "cannot serialize throwing_to_json_type", std::runtime_error&);
+
+        // the conversion is noexcept exactly when converting the contained value is
+        static_assert(!std::is_nothrow_constructible<json, const std::optional<throwing_to_json_type>&>::value);
+        static_assert(std::is_nothrow_constructible<json, const std::optional<int>&>::value);
+    }
+#endif
 }
 #endif
 

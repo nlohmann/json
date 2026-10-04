@@ -62,6 +62,10 @@ class Amalgamation(object):
         return None
 
     def __init__(self, args):
+        # include paths that are kept as #include directives instead of
+        # being inlined (e.g. a header amalgamated on its own)
+        self.external = []
+        self.included_external = []
         with open(args.config, 'r') as f:
             config = json.loads(f.read())
             for key in config:
@@ -220,11 +224,14 @@ class TranslationUnit(object):
         while include_match:
             if not _is_within(include_match, skippable_contexts):
                 include_path = include_match.group("path")
-                search_same_dir = include_match.group(1) == '"'
-                found_included_path = self.amalgamation.find_included_file(
-                    include_path, self.file_dir if search_same_dir else None)
-                if found_included_path:
-                    includes.append((include_match, found_included_path))
+                if include_path in self.amalgamation.external:
+                    includes.append((include_match, None))
+                else:
+                    search_same_dir = include_match.group(1) == '"'
+                    found_included_path = self.amalgamation.find_included_file(
+                        include_path, self.file_dir if search_same_dir else None)
+                    if found_included_path:
+                        includes.append((include_match, found_included_path))
 
             include_match = self.include_pattern.search(self.content,
                                                         include_match.end())
@@ -235,6 +242,17 @@ class TranslationUnit(object):
         for include in includes:
             include_match, found_included_path = include
             tmp_content += self.content[prev_end:include_match.start()]
+            if found_included_path is None:
+                # an external header: keep the first directive and comment
+                # out the repeated ones
+                include_path = include_match.group("path")
+                if include_path in self.amalgamation.included_external:
+                    tmp_content += "// {0}".format(include_match.group(0))
+                else:
+                    self.amalgamation.included_external.append(include_path)
+                    tmp_content += include_match.group(0)
+                prev_end = include_match.end()
+                continue
             tmp_content += "// {0}\n".format(include_match.group(0))
             if found_included_path not in self.amalgamation.included_files:
                 t = TranslationUnit(found_included_path, self.amalgamation, False)

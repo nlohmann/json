@@ -25,7 +25,7 @@ To store objects in C++, a type is defined by the template parameters explained 
 
 ## Notes
 
-#### Default type
+### Default type
 
 With the default values for `ArrayType` (`std::vector`) and `AllocatorType` (`std::allocator`), the default value for
 `array_t` is:
@@ -37,7 +37,7 @@ std::vector<
 >
 ```
 
-#### Limits
+### Limits
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) specifies:
 > An implementation may set limits on the maximum depth of nesting.
@@ -46,7 +46,7 @@ In this class, the array's limit of nesting is not explicitly constrained. Howev
 introduced by the compiler or runtime environment. A theoretical limit can be queried by calling the
 [`max_size`](max_size.md) function of a JSON array.
 
-#### Storage
+### Storage
 
 Arrays are stored as pointers in a `basic_json` type. That is, for any access to array values, a pointer of type
 `#!cpp array_t*` must be dereferenced.
@@ -66,6 +66,13 @@ Arrays are stored as pointers in a `basic_json` type. That is, for any access to
     ```json
     --8<-- "examples/array_t.output"
     ```
+
+## See also
+
+- [object_t](object_t.md) the type used to store JSON objects
+- [binary_t](binary_t.md) the type used to store binary values
+- [is_array](is_array.md) checks whether the JSON value is an array
+- [max_size](max_size.md) returns the maximum possible number of elements
 
 ## Version history
 
