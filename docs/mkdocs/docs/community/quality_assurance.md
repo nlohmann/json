@@ -21,11 +21,6 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
       
         | Compiler                                     | Architecture | Operating System                  | CI        |
         |----------------------------------------------|--------------|-----------------------------------|-----------|
-        | AppleClang 15.0.0.15000040; Xcode 15.0.1     | arm64        | macOS 14.7.2 (Sonoma)             | GitHub    |
-        | AppleClang 15.0.0.15000100; Xcode 15.1       | arm64        | macOS 14.7.2 (Sonoma)             | GitHub    |
-        | AppleClang 15.0.0.15000100; Xcode 15.2       | arm64        | macOS 14.7.2 (Sonoma)             | GitHub    |
-        | AppleClang 15.0.0.15000309; Xcode 15.3       | arm64        | macOS 14.7.2 (Sonoma)             | GitHub    |
-        | AppleClang 15.0.0.15000309; Xcode 15.4       | arm64        | macOS 14.7.2 (Sonoma)             | GitHub    |
         | AppleClang 16.0.0.16000026; Xcode 16         | arm64        | macOS 15.2 (Sequoia)              | GitHub    |
         | AppleClang 16.0.0.16000026; Xcode 16.1       | arm64        | macOS 15.2 (Sequoia)              | GitHub    |
         | AppleClang 16.0.0.16000026; Xcode 16.2       | arm64        | macOS 15.2 (Sequoia)              | GitHub    |
