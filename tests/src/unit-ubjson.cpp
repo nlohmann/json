@@ -2520,7 +2520,7 @@ TEST_CASE("Universal Binary JSON Specification Examples 1")
             CHECK_NOTHROW(j = json::from_ubjson(v));
             REQUIRE(j.is_string());
             CHECK(j.get_ref<const json::string_t&>() == std::string("\xc0\xae"));
-            CHECK_THROWS_AS(j.dump(), json::type_error&);
+            CHECK_THROWS_AS(utils::ignore_return_value(j.dump()), json::type_error&);
             CHECK(json::from_ubjson(json::to_ubjson(j)) == j);
 
             // the same bytes as an object key round-trip as well

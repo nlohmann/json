@@ -14,6 +14,9 @@ DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+#ifdef JSON_TEST_NO_GLOBAL_UDLS
+    using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
+#endif
 
 /////////////////////////////////////////////////////////////////////
 // for #2824
