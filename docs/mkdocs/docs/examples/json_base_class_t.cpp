@@ -13,7 +13,7 @@ class visitor_adaptor_with_metadata
     void do_visit(const Ptr& ptr, const Fnc& fnc) const;
 };
 
-using json = nlohmann::json::with_changed_base_class_t<visitor_adaptor_with_metadata>;
+using json = nlohmann::json::with_base_class_t<visitor_adaptor_with_metadata>;
 
 template <class Fnc>
 void visitor_adaptor_with_metadata::visit(const Fnc& fnc) const
