@@ -286,6 +286,27 @@ class other_error : public exception
     other_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
 };
 
+/*!
+@brief helper function to call JSON_THROW from a template
+@note JSON_THROW is a macro that, depending on the JSON_THROW_USER /
+      JSON_TRY_USER / JSON_NOEXCEPTION configuration, may expand to code
+      that does not reference its argument (e.g. `std::abort()`), which
+      would trigger a compilation error if the argument's type depends on
+      a template parameter that is otherwise unused. Wrapping the call in
+      a templated function avoids this and gives the compiler a single
+      place to see the (possibly unused) parameter.
+*/
+template<typename ExceptionType>
+void templated_json_throw(ExceptionType exception)
+{
+    JSON_THROW(exception);
+
+    // JSON_THROW may expand to code that discards its argument (e.g. when
+    // exceptions are disabled) - the cast below avoids an unused-parameter
+    // warning with -Werror in that case
+    (void)exception;
+}
+
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
