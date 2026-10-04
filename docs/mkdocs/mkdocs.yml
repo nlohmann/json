@@ -232,6 +232,7 @@ nav:
           - 'update': api/basic_json/update.md
           - 'value': api/basic_json/value.md
           - 'value_t': api/basic_json/value_t.md
+- 'with_t': api/basic_json/with_t.md
       - byte_container_with_subtype:
           - 'Overview': api/byte_container_with_subtype/index.md
           - '(constructor)': api/byte_container_with_subtype/byte_container_with_subtype.md
