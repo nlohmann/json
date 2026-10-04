@@ -1,0 +1,3 @@
+j_invalid.is_discarded()               = true
+j_discarded_by_callback                = null
+j_discarded_by_callback.is_discarded() = false

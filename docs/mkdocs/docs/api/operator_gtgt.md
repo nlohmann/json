@@ -18,9 +18,18 @@ Deserializes an input stream to a JSON value.
 
 the stream `i`
 
+## Exception safety
+
+Strong guarantee: if an exception is thrown, there are no changes in `j`.
+
 ## Exceptions
 
-- Throws [`parse_error.101`](../home/exceptions.md#jsonexceptionparse_error101) in case of an unexpected token.
+- Throws [`parse_error.101`](../home/exceptions.md#jsonexceptionparse_error101) in case of an unexpected token, or if
+  `i` has no stream buffer (`#!cpp i.rdbuf() == nullptr`, for instance `#!cpp std::istream(nullptr)`).
+- If reading from `i` reaches the end of the input and `eofbit` is part of `i`'s
+  [`exceptions()`](https://en.cppreference.com/w/cpp/io/basic_ios/exceptions) mask, the `std::ios_base::failure`
+  thrown by `i` itself propagates instead of a `parse_error`, the same as it would for the standard library's own
+  extraction operators.
 
 ## Complexity
 
@@ -87,6 +96,8 @@ being read.
     been deprecated in version 3.0.0. It will be removed in version 4.0.0. Please replace calls like `#!cpp j << i;`
     with `#!cpp i >> j;`.
 
+    See the [migration guide](../integration/migration_guide.md#parsing) for how to update existing code.
+
 ## Examples
 
 ??? example
@@ -118,3 +129,7 @@ being read.
   it as end of input; planned to become the default in version 4.0.0.
 - `JSON_PRECISE_STREAM_POSITION` added in version 3.13.0 to optionally leave the character that terminates a number in
   the stream; planned to become the default in version 4.0.0.
+- Fixed a null pointer dereference for an `std::istream` without a stream buffer (now throws `parse_error.101`), and a
+  crash (`std::terminate`) when `i` has `eofbit` in its exception mask, in version 3.13.0.
+- Changed to the strong exception safety guarantee in version 3.13.0: `j` is no longer left with a partially parsed
+  value if parsing throws.

@@ -17,7 +17,10 @@ using nlohmann::json;
 #include <sstream>
 #include <vector>
 #include "make_test_data_available.hpp"
+#include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
+#include "sax_countdown.hpp"
+using utils::SaxCountdown;
 
 namespace
 {
@@ -797,7 +800,11 @@ TEST_CASE("regression test - BSON binary subtype rejects a value that doesn't fi
     CHECK(json::from_bson(json::to_bson(doc255))["b"].get_binary().subtype() == 255);
 
     CHECK_THROWS_AS(json::to_bson(json{{"b", json::binary({1, 2}, 256)}}), json::out_of_range);
-    CHECK_THROWS_WITH_AS(json::to_bson(json{{"b", json::binary({1, 2}, 300)}}), "[json.exception.out_of_range.415] subtype 300 is too large for the BSON binary subtype (max 255)", json::out_of_range);
+#if JSON_DIAGNOSTICS
+    CHECK_THROWS_WITH_AS(json::to_bson(json {{"b", json::binary({1, 2}, 300)}}), "[json.exception.out_of_range.415] (/b) subtype 300 is too large for the BSON binary subtype (max 255)", json::out_of_range);
+#else
+    CHECK_THROWS_WITH_AS(json::to_bson(json {{"b", json::binary({1, 2}, 300)}}), "[json.exception.out_of_range.415] subtype 300 is too large for the BSON binary subtype (max 255)", json::out_of_range);
+#endif
 }
 
 TEST_CASE("BSON input/output_adapters")
@@ -857,83 +864,6 @@ TEST_CASE("BSON input/output_adapters")
     }
 }
 
-namespace
-{
-class SaxCountdown
-{
-  public:
-    explicit SaxCountdown(const int count) : events_left(count)
-    {}
-
-    bool null()
-    {
-        return events_left-- > 0;
-    }
-
-    bool boolean(bool /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_integer(json::number_integer_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_unsigned(json::number_unsigned_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_float(json::number_float_t /*unused*/, const std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool string(std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool binary(std::vector<std::uint8_t>& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool start_object(std::size_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool key(std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool end_object()
-    {
-        return events_left-- > 0;
-    }
-
-    bool start_array(std::size_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool end_array()
-    {
-        return events_left-- > 0;
-    }
-
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/) // NOLINT(readability-convert-member-functions-to-static)
-    {
-        return false;
-    }
-
-  private:
-    int events_left = 0;
-};
-} // namespace
 
 TEST_CASE("Incomplete BSON Input")
 {
@@ -1688,6 +1618,44 @@ TEST_CASE("Parse BSON directly from a file using iterator and sentinel")
     CHECK(parsed == expected);
 }
 
+TEST_CASE("BSON round-trip invariants")
+{
+    // This checks what the parse_bson_fuzzer driver checks (see
+    // tests/src/fuzzer-parse_bson.cpp), so that a regression shows up in CI
+    // rather than as an OSS-Fuzz report: anything from_bson() returns (j1)
+    // can be serialized, parsed back (j2), and serialized again to reproduce
+    // the exact bytes. BSON only serializes objects, so non-object corpus
+    // values are skipped.
+    for (const auto& j0 : utils::round_trip_corpus::values())
+    {
+        if (!j0.is_object())
+        {
+            continue;
+        }
+
+        json j1;
+        try
+        {
+            // turn the corpus value into a value as from_bson() returns it
+            j1 = json::from_bson(json::to_bson(j0));
+        }
+        catch (const json::exception&)
+        {
+            // the fuzzer driver only ever sees values from_bson() actually
+            // produced, so skip corpus values that do not survive the
+            // round trip here, too
+            continue;
+        }
+
+        INFO("j1 = " << j1.dump());
+        const std::vector<std::uint8_t> vec = json::to_bson(j1);
+        json j2;
+        // anything the library writes must be parsable by the library
+        REQUIRE_NOTHROW(j2 = json::from_bson(vec));
+        CHECK(json::to_bson(j2) == vec);
+    }
+}
+
 TEST_CASE("BSON roundtrips" * doctest::skip())
 {
     SECTION("reference files")
@@ -1784,7 +1752,7 @@ TEST_CASE("BSON: deeply nested values")
         json value = "leaf";
         for (std::size_t depth = 0; depth <= 300; ++depth)
         {
-            CAPTURE(depth);
+            CAPTURE(depth)
             const json document = {{"value", value}, {"n", depth}};
             CHECK(json::from_bson(json::to_bson(document)) == document);
 
@@ -1805,6 +1773,21 @@ value = depth % 2 == 0 ? json{{"a", std::move(value)}, {"b", {1, "x"}}} :
         CHECK(output.empty());
     }
 
+    SECTION("a binary subtype that doesn't fit a byte is rejected before anything is written (#5675)")
+    {
+        // the offending value is nested, so this also covers that the check
+        // is not limited to a directly written value's own document
+        json const j = {{"a", {{"b", json::binary({1, 2}, 300)}}}};
+
+        std::vector<std::uint8_t> vector_output;
+        CHECK_THROWS_AS(json::to_bson(j, vector_output), json::out_of_range&);
+        CHECK(vector_output.empty());
+
+        std::string string_output;
+        CHECK_THROWS_AS(json::to_bson(j, string_output), json::out_of_range&);
+        CHECK(string_output.empty());
+    }
+
     SECTION("values nested too deeply for the call stack (#5392)")
     {
         // serializing recursed once per nesting level, and computed every
@@ -1817,7 +1800,7 @@ value = depth % 2 == 0 ? json{{"a", std::move(value)}, {"b", {1, "x"}}} :
                     false, true
                 })
         {
-            CAPTURE(objects);
+            CAPTURE(objects)
             std::string text = "{\"a\":";
             for (std::size_t i = 0; i < depth; ++i)
             {

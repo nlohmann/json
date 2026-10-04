@@ -40,7 +40,11 @@ Logarithmic in the size of the JSON object.
 
 ## Notes
 
-This method always returns `0` when executed on a JSON type that is not an object.
+- This method always returns `0` when executed on a JSON type that is not an object.
+- Calling this function with an integer argument (for example, `#!cpp count(0)`) does not compile: such an argument
+  would otherwise implicitly convert to a null `#!cpp const char*` and, from there, cause undefined behavior when
+  constructing a `#!cpp std::string` for the object key. To check for an array element instead, use [`at`](at.md),
+  [`operator[]`](operator%5B%5D.md), or compare against [`size`](size.md).
 
 ## Examples
 
@@ -80,4 +84,8 @@ This method always returns `0` when executed on a JSON type that is not an objec
 ## Version history
 
 1. Added in version 3.11.0.
-2. Added in version 1.0.0. Changed parameter `key` type to `KeyType&&` in version 3.11.0.
+2. Added in version 1.0.0. Changed parameter `key` type to `KeyType&&` in version 3.11.0. Fixed in version 3.13.0 to
+   consistently accept `std::string_view`-convertible keys, as already supported by [`operator[]`](operator[].md),
+   [`at`](at.md), [`value`](value.md), and other lookup functions.
+3. Deleted overload for integral key types added in version 3.13.0 to reject such calls at compile time instead of
+   causing undefined behavior at runtime.

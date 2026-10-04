@@ -48,7 +48,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 ## Exceptions
 
 - Throws [`other_error.502`](../../home/exceptions.md#jsonexceptionother_error502) if `use_type` is true and `use_size`
-  is false.
+  is false, and `j` contains a non-empty array, object, or binary value.
 
 ## Complexity
 
@@ -56,7 +56,7 @@ Linear in the size of the JSON value `j`.
 
 ## Examples
 
-??? example
+??? example "Example: serialize a JSON value to UBJSON"
 
     The example shows the serialization of a JSON value to a byte vector in UBJSON format.
      
@@ -68,6 +68,21 @@ Linear in the size of the JSON value `j`.
     
     ```json
     --8<-- "examples/to_ubjson.output"
+    ```
+
+??? example "Example: other_error.502 exception"
+
+    The example shows how requesting type annotations (`use_type`) without size annotations (`use_size`) throws an
+    exception, because type-optimized containers can only be read back with a preceding size.
+
+    ```cpp
+    --8<-- "examples/to_ubjson__exception.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/to_ubjson__exception.output"
     ```
 
 ## See also

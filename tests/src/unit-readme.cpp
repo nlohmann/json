@@ -28,7 +28,7 @@ using nlohmann::json;
 DOCTEST_MSVC_SUPPRESS_WARNING_PUSH
 DOCTEST_MSVC_SUPPRESS_WARNING(4189)
 
-TEST_CASE("README" * doctest::skip())
+TEST_CASE("README")
 {
     {
         // redirect std::cout for the README file

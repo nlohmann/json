@@ -60,6 +60,11 @@ itself is empty which is `#!cpp false` in the case of a string.
     --8<-- "examples/empty.output"
     ```
 
+## See also
+
+- [size](size.md) returns the number of elements
+- [clear](clear.md) clears the content and resets the value to the default value
+
 ## Version history
 
 - Added in version 1.0.0.

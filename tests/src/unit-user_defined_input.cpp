@@ -350,7 +350,7 @@ TEST_CASE("std::counted_iterator reaches the contiguous fast paths")
 
     for (const auto& text : diagnostic_docs)
     {
-        CAPTURE(text);
+        CAPTURE(text)
         const std::counted_iterator<const char*> it(text.data(), static_cast<std::iter_difference_t<const char*>>(text.size()));
         std::string counted_message;
         std::string string_message;
@@ -460,8 +460,8 @@ TEST_CASE("std::counted_iterator bulk scanning stops at the counted end")
 
     for (const auto& tc : cases)
     {
-        CAPTURE(tc.buffer);
-        CAPTURE(tc.count);
+        CAPTURE(tc.buffer)
+        CAPTURE(tc.count)
         const std::string buffer = tc.buffer;
         CHECK(via_counted(buffer, tc.count) == via_prefix(buffer, tc.count));
     }

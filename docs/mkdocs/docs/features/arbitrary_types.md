@@ -79,7 +79,31 @@ Some important things:
 * When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). (There is a way to bypass this requirement described later.)
 * In function `from_json`, use function [`at()`](../api/basic_json/at.md) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
 * You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
+* If you control the type, consider defining `to_json`/`from_json` as `friend` functions inside the class ("hidden friends"). Argument-dependent lookup then only finds them for your type, which also avoids a [GCC < 11 compilation error](../home/faq.md#incomplete-detector-type-with-gcc-11).
 
+??? example "Example: serialize a `person` to JSON with `to_json`"
+
+    ```cpp
+    --8<-- "examples/to_json.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/to_json.output"
+    ```
+
+??? example "Example: deserialize a `person` from JSON with `from_json`"
+
+    ```cpp
+    --8<-- "examples/from_json__default_constructible.cpp"
+    ```
+
+    Output:
+
+    ```
+    --8<-- "examples/from_json__default_constructible.output"
+    ```
 
 ## Simplify your life with macros
 
@@ -98,7 +122,29 @@ There are several macros to make your life easier as long as you want to use a J
 
 For all the macros, the first parameter is the name of the class/struct. The `DERIVED_TYPE` macros require a second parameter of a base class. All the remaining parameters name the member variables. The `WITH_NAMES` macros require a JSON name before each of the variables.
 
-| Need access to private members                                   | Need only de-serialization                                       | Allow missing values when de-serializing                         | macro                                                                                                        |
+```mermaid
+flowchart TD
+    A["choosing a NLOHMANN_DEFINE_* macro"] --> B{"adding fields to a base class?"}
+    B -->|"yes"| C["...DERIVED_TYPE..."]
+    B -->|"no"| D["...TYPE..."]
+    C --> E{"need access to private members?"}
+    D --> E
+    E -->|"yes"| F["...INTRUSIVE... (used inside the class)"]
+    E -->|"no"| G["...NON_INTRUSIVE... (used in the namespace)"]
+    F --> H{"only serializing, never parsing back?"}
+    G --> H
+    H -->|"yes"| I["...ONLY_SERIALIZE"]
+    H -->|"no"| J{"allow missing keys when parsing?"}
+    J -->|"yes"| K["...WITH_DEFAULT"]
+    J -->|"no"| L["plain (missing keys throw)"]
+    I --> M{"need custom JSON key names?"}
+    K --> M
+    L --> M
+    M -->|"yes"| N["...WITH_NAMES"]
+    M -->|"no"| O["done"]
+```
+
+| Need access to private members                                   | Need only serialization                                           | Allow missing values when de-serializing                         | macro                                                                                                        |
 |------------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------|
 | <div style="color: green;">:octicons-check-circle-fill-24:</div> | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | [**NLOHMANN_DEFINE_TYPE_INTRUSIVE**](../api/macros/nlohmann_define_type_intrusive.md)                        |
 | <div style="color: green;">:octicons-check-circle-fill-24:</div> | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: green;">:octicons-check-circle-fill-24:</div> | [**NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT**](../api/macros/nlohmann_define_type_intrusive.md)           |
@@ -109,7 +155,7 @@ For all the macros, the first parameter is the name of the class/struct. The `DE
 
 For _derived_ classes and structs, use the following macros
 
-| Need access to private members                                   | Need only de-serialization                                       | Allow missing values when de-serializing                         | macro                                                                                                          |
+| Need access to private members                                   | Need only serialization                                           | Allow missing values when de-serializing                         | macro                                                                                                          |
 |------------------------------------------------------------------|------------------------------------------------------------------|------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|
 | <div style="color: green;">:octicons-check-circle-fill-24:</div> | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | [**NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE**](../api/macros/nlohmann_define_derived_type.md)                    |
 | <div style="color: green;">:octicons-check-circle-fill-24:</div> | <div style="color: red;">:octicons-x-circle-fill-24:</div>       | <div style="color: green;">:octicons-check-circle-fill-24:</div> | [**NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT**](../api/macros/nlohmann_define_derived_type.md)       |
@@ -124,7 +170,7 @@ For _derived_ classes and structs, use the following macros
       types with more than 63 member variables, you need to define the `to_json`/`from_json` functions manually.
     - For the `WITH_NAMES` variants the limit is halved to 31 member variables.
 
-??? example
+??? example "Example: using the `NLOHMANN_DEFINE_TYPE_*` macros"
 
     The `to_json`/`from_json` functions for the `person` struct above can be created with:
 
@@ -245,6 +291,14 @@ For _derived_ classes and structs, use the following macros
 
 This requires a bit more advanced technique. But first, let us see how this conversion mechanism works:
 
+```mermaid
+flowchart LR
+    A["construct json j = t, or call j.get() for T"] --> B["JSONSerializer for T: to_json / from_json"]
+    B -->|"default JSONSerializer"| C["adl_serializer for T: to_json / from_json"]
+    C -->|"unqualified call, found via ADL"| D["free to_json(j, t) / from_json(j, t) in T's namespace"]
+    B -->|"user specialization replaces the default"| E["user's adl_serializer specialization for T"]
+```
+
 The library uses **JSON Serializers** to convert types to JSON.
 The default serializer for `nlohmann::json` is `nlohmann::adl_serializer` (ADL means [Argument-Dependent Lookup](https://en.cppreference.com/w/cpp/language/adl)).
 
@@ -300,7 +354,24 @@ NLOHMANN_JSON_NAMESPACE_END
 
 ## How can I use `get()` for non-default constructible/non-copyable types?
 
-There is a way if your type is [MoveConstructible](https://en.cppreference.com/w/cpp/named_req/MoveConstructible). You will need to specialize the `adl_serializer` as well, but with a special `from_json` overload:
+For a type that is not [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible) but is
+otherwise an ordinary value type, specialize `adl_serializer` with a `from_json` overload that returns the value instead
+of writing into a reference:
+
+??? example "Example: `get()` for a non-default-constructible type"
+
+    ```cpp
+    --8<-- "examples/from_json__non_default_constructible.cpp"
+    ```
+
+    Output:
+
+    ```
+    --8<-- "examples/from_json__non_default_constructible.output"
+    ```
+
+The same technique also works if your type is not copyable, as long as it is
+[MoveConstructible](https://en.cppreference.com/w/cpp/named_req/MoveConstructible):
 
 ```cpp
 struct move_only_type {
@@ -359,15 +430,10 @@ json any_to_json(const std::any& a) {
 
 ## Why does serializing a `std::map`/`std::unordered_map` with non-string keys produce an array?
 
-A `std::map`/`std::unordered_map` whose key type is not string-like (e.g., `std::map<int, std::string>`) is
-serialized as a JSON *array* of 2-element `[key, value]` arrays, not as a JSON object -- JSON object keys must be
-strings, so the library cannot represent an integer-keyed map as an object.
-
-```cpp
-std::map<int, std::string> m{{1, "one"}, {2, "two"}};
-json j = m;
-// j is [[1,"one"],[2,"two"]], not {"1":"one","2":"two"}
-```
+A `std::map`/`std::unordered_map` whose key type is not string-like (e.g., `std::map<int, std::string>`) cannot be
+serialized as a JSON object, because JSON object keys must be strings. See
+[Converting maps with non-string keys](types/index.md#converting-maps-with-non-string-keys) in the types article for
+what the library does instead.
 
 ## Why does `std::wstring` convert or dump incorrectly?
 
@@ -411,7 +477,7 @@ struct less_than_32_serializer {
 Be **very** careful when reimplementing your serializer, you can stack overflow if you don't pay attention:
 
 ```cpp
-template <typename T, void>
+template <typename T, typename = void>
 struct bad_serializer
 {
     template <typename BasicJsonType>
@@ -429,3 +495,10 @@ struct bad_serializer
     }
 };
 ```
+
+## See also
+
+- [Converting values](conversions.md) - the general overview of `get`/`get_to` and implicit conversions
+- [Specializing enum conversion](enum_conversion.md) - map enums to JSON strings instead of integers
+- [Supported macros](macros.md) - reference for `NLOHMANN_DEFINE_TYPE_*` and related macros
+- [`adl_serializer`](../api/adl_serializer/index.md) - the default `JSONSerializer` used in the conversion dispatch

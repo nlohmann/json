@@ -2,16 +2,23 @@ name: "Check amalgamation"
 
 on:
   pull_request:
+  # also check develop itself: a PR can be merged before its own run of this
+  # workflow completes (e.g. while it is still queued), leaving single_include
+  # stale on develop without any failing check
+  push:
+    branches:
+      - develop
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
   save:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
@@ -35,6 +42,7 @@ jobs:
       MAIN_DIR: ${{ github.workspace }}/main
       INCLUDE_DIR: ${{ github.workspace }}/main/single_include/nlohmann
       TOOL_DIR: ${{ github.workspace }}/tools/tools/amalgamate
+      NATVIS_TOOL_DIR: ${{ github.workspace }}/tools/tools/generate_natvis
 
     steps:
       - name: Harden Runner
@@ -42,11 +50,11 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Checkout pull request
+      - name: Checkout pull request or pushed commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: main
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
       - name: Checkout tools
@@ -61,12 +69,55 @@ jobs:
           python3 -mvenv venv
           venv/bin/pip3 install -r $MAIN_DIR/tools/astyle/requirements.txt
 
+      - name: Install generate_natvis dependencies
+        run: pip3 install -r $NATVIS_TOOL_DIR/requirements.txt
+
+      - name: Regenerate the tools/macro_builder tables in macro_scope.hpp
+        run: |
+          cd $MAIN_DIR
+
+          # Built from this PR's own tools/macro_builder/main.cpp, not a
+          # develop checkout: unlike amalgamate.py and generate_natvis.py,
+          # this tool has no other source of truth to check against (its
+          # own README documents that it must reproduce macro_scope.hpp
+          # byte for byte), so there is nothing to gain from checking out a
+          # separate copy, and doing so would make this step fail on a PR
+          # that adds support for a new dispatch table until that PR itself
+          # merges to develop, the same way generate_natvis.py's --version
+          # requirement briefly did.
+          TMPDIR=$(mktemp -d ./macro_builder_check.XXXXXX)
+          c++ -std=c++11 tools/macro_builder/main.cpp -o "$TMPDIR/macro_builder"
+          "$TMPDIR/macro_builder" > "$TMPDIR/paste.hpp"
+          "$TMPDIR/macro_builder" type_body > "$TMPDIR/type_body.hpp"
+
+          # Splice the (still unindented) generated blocks back into
+          # macro_scope.hpp; the astyle pass below indents their
+          # continuation lines the same way it does for the rest of
+          # include/, so a correctly regenerated file comes out unchanged.
+          awk -v newfile="$TMPDIR/paste.hpp" '
+            BEGIN { while ((getline line < newfile) > 0) { new = new line "\n" } }
+            /^#define NLOHMANN_JSON_EXPAND\( x \) x$/ { printf "%s", new; skip=1 }
+            skip && /^#define NLOHMANN_JSON_DOUBLE_PASTE63\(/ { skip=0; next }
+            skip { next }
+            { print }
+          ' include/nlohmann/detail/macro_scope.hpp > "$TMPDIR/macro_scope_1.hpp"
+          awk -v newfile="$TMPDIR/type_body.hpp" '
+            BEGIN { while ((getline line < newfile) > 0) { new = new line "\n" } }
+            /^#define NLOHMANN_JSON_TYPE_BODY\(Prefix, \.\.\.\)/ { printf "%s", new; skip=1 }
+            skip && /^[[:space:]]*NLOHMANN_JSON_TYPE_BODY_SENTINEL\)\)$/ { skip=0; next }
+            skip { next }
+            { print }
+          ' "$TMPDIR/macro_scope_1.hpp" > "$TMPDIR/macro_scope_2.hpp"
+          mv "$TMPDIR/macro_scope_2.hpp" include/nlohmann/detail/macro_scope.hpp
+          rm -rf "$TMPDIR"
+
       - name: Regenerate amalgamation, formatting, and BUILD.bazel
         run: |
           cd $MAIN_DIR
 
           python3 $TOOL_DIR/amalgamate.py -c $TOOL_DIR/config_json.json -s .
           python3 $TOOL_DIR/amalgamate.py -c $TOOL_DIR/config_json_fwd.json -s .
+          cp include/nlohmann/json_literals.hpp $INCLUDE_DIR/json_literals.hpp
 
           # the header list of the Bazel "json" target must match the files in include/
           cmake -P cmake/scripts/gen_bazel_build_file.cmake
@@ -86,6 +137,19 @@ jobs:
 
           ${{ github.workspace }}/venv/bin/astyle --project=tools/astyle/.astylerc --suffix=none --quiet \
             $(find $SOURCE_DIRS -type f \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' \) -not -path 'tests/thirdparty/*' -not -path 'tests/abi/include/nlohmann/*' | sort)
+
+      - name: Regenerate nlohmann_json.natvis
+        run: |
+          cd $MAIN_DIR
+          # Pass --version explicitly so this step also works with the tool
+          # copy from develop before this repository's own generate_natvis.py
+          # learns to derive the version itself: the older script requires
+          # --version, and the newer one accepts it as an explicit override.
+          ABI_MACROS=include/nlohmann/detail/abi_macros.hpp
+          VERSION_MAJOR=$(grep -m1 'define NLOHMANN_JSON_VERSION_MAJOR' $ABI_MACROS | grep -o '[0-9]\+')
+          VERSION_MINOR=$(grep -m1 'define NLOHMANN_JSON_VERSION_MINOR' $ABI_MACROS | grep -o '[0-9]\+')
+          VERSION_PATCH=$(grep -m1 'define NLOHMANN_JSON_VERSION_PATCH' $ABI_MACROS | grep -o '[0-9]\+')
+          python3 $NATVIS_TOOL_DIR/generate_natvis.py --version "$VERSION_MAJOR.$VERSION_MINOR.$VERSION_PATCH" $MAIN_DIR
 
       - name: Build patch and check for differences
         id: diff

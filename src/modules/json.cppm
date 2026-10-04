@@ -18,6 +18,7 @@ module;
 // See: https://github.com/nlohmann/json/issues/5103
 
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_literals.hpp>
 
 export module nlohmann.json;
 

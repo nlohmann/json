@@ -43,6 +43,9 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [`out_of_range.412`](../../home/exceptions.md#jsonexceptionout_of_range412) if the length of a document, array,
   string, or binary value exceeds the range of the 32-bit BSON length field; example:
   `"BSON length 2147483661 exceeds maximum of 2147483647"`
+- Throws [`out_of_range.415`](../../home/exceptions.md#jsonexceptionout_of_range415) if the subtype of a binary value
+  exceeds 255, the maximum of the BSON binary subtype; example:
+  `"subtype 70000 is too large for the BSON binary subtype (max 255)"`
 
 ## Complexity
 
@@ -51,7 +54,7 @@ pass before anything is written.
 
 ## Examples
 
-??? example
+??? example "Example: serialize a JSON value to BSON"
 
     The example shows the serialization of a JSON value to a byte vector in BSON format.
      
@@ -63,6 +66,21 @@ pass before anything is written.
     
     ```json
     --8<-- "examples/to_bson.output"
+    ```
+
+??? example "Example: out_of_range.409 exception"
+
+    The example shows how serializing a JSON object whose key contains a null byte (U+0000) throws an exception, because
+    BSON keys are null-terminated C strings and cannot contain U+0000 themselves.
+
+    ```cpp
+    --8<-- "examples/to_bson__exception.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/to_bson__exception.output"
     ```
 
 ## See also
@@ -77,4 +95,6 @@ pass before anything is written.
 ## Version history
 
 - Added in version 3.4.0.
+- Throws `out_of_range.412` and `out_of_range.415` since version 3.13.0.
 - Linear in the size of `j`, and no longer limited by the call stack for deeply nested values, since version 3.13.0.
+- `out_of_range.415` is now detected before anything is written, like the other exceptions above, since version 3.13.0.
