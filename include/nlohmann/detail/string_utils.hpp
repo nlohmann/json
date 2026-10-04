@@ -117,13 +117,14 @@ This is a single-byte step of a "shift-based" UTF-8 decoder originally
 written by Björn Hoehrmann. See
 http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
 
-The library checks UTF-8 well-formedness (RFC 3629, section 4) in four
+The library checks UTF-8 well-formedness (RFC 3629, section 4) in three
 places, which differ in speed, diagnostics, and how they read the input:
 
-- decode() and @ref is_valid_utf8 below: the serializer (to escape and, in
-  strict mode, reject ill-formed UTF-8 when dumping a string) and the CBOR,
-  MessagePack, BSON, UBJSON and BJData readers (to reject ill-formed UTF-8 in
-  text strings at decode time).
+- decode() below: the serializer, to escape and, in strict mode, reject
+  ill-formed UTF-8 when dumping a string. The CBOR, MessagePack, BSON,
+  UBJSON and BJData readers do not use it: none of those specs requires a
+  decoder to reject ill-formed UTF-8 in text strings, so the readers keep
+  the bytes as is and leave the check to dump() and the binary writers.
 - the per-lead-byte switch in lexer::scan_string(): JSON text, with a
   diagnostic for each kind of error.
 - validate_one_utf8() and valid_utf8_prefix() in string_scan.hpp: the lexer's
@@ -176,39 +177,6 @@ inline std::uint8_t decode(std::uint8_t& state, std::uint32_t& codep, const std:
     JSON_ASSERT(index < utf8d.size());
     state = utf8d[index];
     return state;
-}
-
-/*!
-@brief check whether a string consists solely of valid UTF-8
-
-Used by the CBOR/MessagePack/BSON/UBJSON binary readers to reject text
-strings that are not valid UTF-8 at decode time (RFC 8949 §3.1 and the
-MessagePack/BSON specifications all require text strings to be UTF-8), so
-that malformed input is caught immediately instead of only surfacing later
-as a type_error.316 when the resulting value is dumped.
-
-@param[in] s      the string to check
-@param[in] first  index of the first byte to check; the bytes before it are
-                  assumed to have been validated already and to end on a
-                  code point boundary
-@return whether @a s (from index @a first on) is valid UTF-8
-*/
-template<typename StringType>
-inline bool is_valid_utf8(const StringType& s, const std::size_t first = 0) noexcept
-{
-    std::uint8_t state = UTF8_ACCEPT;
-    std::uint32_t codepoint = 0;
-
-    for (std::size_t i = first; i < s.size(); ++i)
-    {
-        decode(state, codepoint, static_cast<std::uint8_t>(s[i]));
-        if (state == UTF8_REJECT)
-        {
-            return false;
-        }
-    }
-
-    return state == UTF8_ACCEPT;
 }
 
 }  // namespace detail
