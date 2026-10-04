@@ -19759,11 +19759,11 @@ class json_pointer
 
     /// @brief return a string representation of the JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_string_t/
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    operator string_t() const = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, to_string())
     operator string_t() const
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+        = delete;
+#else
     {
         return to_string();
     }
@@ -20704,11 +20704,11 @@ class json_pointer
 
     /// @brief compares JSON pointer and string for equality
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_eq/
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    bool operator==(const string_t& rhs) const = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator==(json_pointer))
     bool operator==(const string_t& rhs) const
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+        = delete;
+#else
     {
         return *this == json_pointer(rhs);
     }
@@ -20787,13 +20787,12 @@ inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
 
 template<typename RefStringTypeLhs,
          typename StringType = typename json_pointer<RefStringTypeLhs>::string_t>
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
-                       const StringType& rhs) = delete;
-#else
 JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator==(json_pointer, json_pointer))
 inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
                        const StringType& rhs)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
 {
     return lhs == json_pointer<RefStringTypeLhs>(rhs);
 }
@@ -20801,13 +20800,12 @@ inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
 
 template<typename RefStringTypeRhs,
          typename StringType = typename json_pointer<RefStringTypeRhs>::string_t>
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-inline bool operator==(const StringType& lhs,
-                       const json_pointer<RefStringTypeRhs>& rhs) = delete;
-#else
 JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator==(json_pointer, json_pointer))
 inline bool operator==(const StringType& lhs,
                        const json_pointer<RefStringTypeRhs>& rhs)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
 {
     return json_pointer<RefStringTypeRhs>(lhs) == rhs;
 }
@@ -20822,13 +20820,12 @@ inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
 
 template<typename RefStringTypeLhs,
          typename StringType = typename json_pointer<RefStringTypeLhs>::string_t>
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
-                       const StringType& rhs) = delete;
-#else
 JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator!=(json_pointer, json_pointer))
 inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
                        const StringType& rhs)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
 {
     return !(lhs == rhs);
 }
@@ -20836,13 +20833,12 @@ inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
 
 template<typename RefStringTypeRhs,
          typename StringType = typename json_pointer<RefStringTypeRhs>::string_t>
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-inline bool operator!=(const StringType& lhs,
-                       const json_pointer<RefStringTypeRhs>& rhs) = delete;
-#else
 JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator!=(json_pointer, json_pointer))
 inline bool operator!=(const StringType& lhs,
                        const json_pointer<RefStringTypeRhs>& rhs)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
 {
     return !(lhs == rhs);
 }
@@ -30471,11 +30467,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    detail::is_basic_json<BasicJsonType>::value
                    && detail::is_getable<basic_json_t, ValueType>::value
                    && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    ValueType value(const ::nlohmann::json_pointer<BasicJsonType>& ptr, const ValueType& default_value) const = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     ValueType value(const ::nlohmann::json_pointer<BasicJsonType>& ptr, const ValueType& default_value) const
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
     {
         return value(ptr.convert(), default_value);
     }
@@ -30486,11 +30482,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    detail::is_basic_json<BasicJsonType>::value
                    && detail::is_getable<basic_json_t, ReturnType>::value
                    && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    ReturnType value(const ::nlohmann::json_pointer<BasicJsonType>& ptr, ValueType && default_value) const = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     ReturnType value(const ::nlohmann::json_pointer<BasicJsonType>& ptr, ValueType && default_value) const
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
     {
         return value(ptr.convert(), std::forward<ValueType>(default_value));
     }
@@ -30850,11 +30846,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    bool contains(const typename ::nlohmann::json_pointer<BasicJsonType>& ptr) const = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     bool contains(const typename ::nlohmann::json_pointer<BasicJsonType>& ptr) const
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
     {
         return ptr.contains(this);
     }
@@ -30967,11 +30963,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @deprecated This function is deprecated since 3.1.0 and will be removed in
     ///             version 4.0.0 of the library. Please use @ref items() instead;
     ///             that is, replace `json::iterator_wrapper(j)` with `j.items()`.
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    static iteration_proxy<iterator> iterator_wrapper(reference ref) noexcept = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.1.0, items())
     static iteration_proxy<iterator> iterator_wrapper(reference ref) noexcept
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+        = delete;
+#else
     {
         return ref.items();
     }
@@ -30982,11 +30978,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @deprecated This function is deprecated since 3.1.0 and will be removed in
     ///         version 4.0.0 of the library. Please use @ref items() instead;
     ///         that is, replace `json::iterator_wrapper(j)` with `j.items()`.
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    static iteration_proxy<const_iterator> iterator_wrapper(const_reference ref) noexcept = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.1.0, items())
     static iteration_proxy<const_iterator> iterator_wrapper(const_reference ref) noexcept
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+        = delete;
+#else
     {
         return ref.items();
     }
@@ -32306,11 +32302,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     ///             version 4.0.0 of the library. Please use
     ///             operator<<(std::ostream&, const basic_json&) instead; that is,
     ///             replace calls like `j >> o;` with `o << j;`.
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    friend std::ostream& operator>>(const basic_json& j, std::ostream& o) = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.0.0, operator<<(std::ostream&, const basic_json&))
     friend std::ostream& operator>>(const basic_json& j, std::ostream& o)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+        = delete;
+#else
     {
         return o << j;
     }
@@ -32360,19 +32356,15 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     JSON_HEDLEY_WARN_UNUSED_RESULT
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    static basic_json parse(detail::span_input_adapter&& i,
-                            parser_callback_t cb = nullptr,
-                            const bool allow_exceptions = true,
-                            const bool ignore_comments = false,
-                            const bool ignore_trailing_commas = false) = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, parse(ptr, ptr + len))
     static basic_json parse(detail::span_input_adapter&& i,
                             parser_callback_t cb = nullptr,
                             const bool allow_exceptions = true,
                             const bool ignore_comments = false,
                             const bool ignore_trailing_commas = false)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+        = delete;
+#else
     {
         basic_json result;
         auto p = parser(i.get(), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
@@ -32405,15 +32397,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     JSON_HEDLEY_WARN_UNUSED_RESULT
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    static bool accept(detail::span_input_adapter&& i,
-                       const bool ignore_comments = false,
-                       const bool ignore_trailing_commas = false) = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, accept(ptr, ptr + len))
     static bool accept(detail::span_input_adapter&& i,
                        const bool ignore_comments = false,
                        const bool ignore_trailing_commas = false)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+        = delete;
+#else
     {
         return parser(i.get(), nullptr, false, ignore_comments, ignore_trailing_commas, true).accept(true);
     }
@@ -32471,14 +32461,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #pragma clang diagnostic ignored "-Wdocumentation-deprecated-sync"
 #endif
     template <typename SAX>
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    JSON_HEDLEY_NON_NULL(2)
-    static bool sax_parse(detail::span_input_adapter&& i, SAX* sax,
-                          input_format_t format = input_format_t::json,
-                          const bool strict = true,
-                          const bool ignore_comments = false,
-                          const bool ignore_trailing_commas = false) = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, sax_parse(ptr, ptr + len, ...))
     JSON_HEDLEY_NON_NULL(2)
     static bool sax_parse(detail::span_input_adapter&& i, SAX* sax,
@@ -32486,6 +32468,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                           const bool strict = true,
                           const bool ignore_comments = false,
                           const bool ignore_trailing_commas = false)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
     {
         auto ia = i.get();
         return format == input_format_t::json
@@ -32505,11 +32490,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     ///             version 4.0.0 of the library. Please use
     ///             operator>>(std::istream&, basic_json&) instead; that is,
     ///             replace calls like `j << i;` with `i >> j;`.
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    friend std::istream& operator<<(basic_json& j, std::istream& i) = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.0.0, operator>>(std::istream&, basic_json&))
     friend std::istream& operator<<(basic_json& j, std::istream& i)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+        = delete;
+#else
     {
         return operator>>(i, j);
     }
@@ -32856,34 +32841,28 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    static basic_json from_cbor(const T* ptr, std::size_t len,
-                                const bool strict = true,
-                                const bool allow_exceptions = true,
-                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error) = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_cbor(ptr, ptr + len))
     static basic_json from_cbor(const T* ptr, std::size_t len,
                                 const bool strict = true,
                                 const bool allow_exceptions = true,
                                 const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
     {
         return from_cbor(ptr, ptr + len, strict, allow_exceptions, tag_handler);
     }
 #endif
 
     JSON_HEDLEY_WARN_UNUSED_RESULT
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    static basic_json from_cbor(detail::span_input_adapter&& i,
-                                const bool strict = true,
-                                const bool allow_exceptions = true,
-                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error) = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_cbor(ptr, ptr + len))
     static basic_json from_cbor(detail::span_input_adapter&& i,
                                 const bool strict = true,
                                 const bool allow_exceptions = true,
                                 const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+        = delete;
+#else
     {
         return from_binary_impl(i.get(), input_format_t::cbor, strict, allow_exceptions, error_handler_t::keep, tag_handler);
     }
@@ -32916,30 +32895,26 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    static basic_json from_msgpack(const T* ptr, std::size_t len,
-                                   const bool strict = true,
-                                   const bool allow_exceptions = true) = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_msgpack(ptr, ptr + len))
     static basic_json from_msgpack(const T* ptr, std::size_t len,
                                    const bool strict = true,
                                    const bool allow_exceptions = true)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
     {
         return from_msgpack(ptr, ptr + len, strict, allow_exceptions);
     }
 #endif
 
     JSON_HEDLEY_WARN_UNUSED_RESULT
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    static basic_json from_msgpack(detail::span_input_adapter&& i,
-                                   const bool strict = true,
-                                   const bool allow_exceptions = true) = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_msgpack(ptr, ptr + len))
     static basic_json from_msgpack(detail::span_input_adapter&& i,
                                    const bool strict = true,
                                    const bool allow_exceptions = true)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+        = delete;
+#else
     {
         return from_binary_impl(i.get(), input_format_t::msgpack, strict, allow_exceptions);
     }
@@ -32972,30 +32947,26 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    static basic_json from_ubjson(const T* ptr, std::size_t len,
-                                  const bool strict = true,
-                                  const bool allow_exceptions = true) = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_ubjson(ptr, ptr + len))
     static basic_json from_ubjson(const T* ptr, std::size_t len,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
     {
         return from_ubjson(ptr, ptr + len, strict, allow_exceptions);
     }
 #endif
 
     JSON_HEDLEY_WARN_UNUSED_RESULT
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    static basic_json from_ubjson(detail::span_input_adapter&& i,
-                                  const bool strict = true,
-                                  const bool allow_exceptions = true) = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_ubjson(ptr, ptr + len))
     static basic_json from_ubjson(detail::span_input_adapter&& i,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+        = delete;
+#else
     {
         return from_binary_impl(i.get(), input_format_t::ubjson, strict, allow_exceptions);
     }
@@ -33028,15 +32999,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    static basic_json from_bjdata(const T* ptr, std::size_t len,
-                                  const bool strict = true,
-                                  const bool allow_exceptions = true) = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.13.0, from_bjdata(ptr, ptr + len))
     static basic_json from_bjdata(const T* ptr, std::size_t len,
                                   const bool strict = true,
                                   const bool allow_exceptions = true)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
     {
         return from_bjdata(ptr, ptr + len, strict, allow_exceptions);
     }
@@ -33067,15 +33036,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    static basic_json from_bon8(const T* ptr, std::size_t len,
-                                const bool strict = true,
-                                const bool allow_exceptions = true) = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.13.0, from_bon8(ptr, ptr + len))
     static basic_json from_bon8(const T* ptr, std::size_t len,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
     {
         return from_bon8(ptr, ptr + len, strict, allow_exceptions);
     }
@@ -33108,30 +33075,26 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     template<typename T>
     JSON_HEDLEY_WARN_UNUSED_RESULT
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    static basic_json from_bson(const T* ptr, std::size_t len,
-                                const bool strict = true,
-                                const bool allow_exceptions = true) = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_bson(ptr, ptr + len))
     static basic_json from_bson(const T* ptr, std::size_t len,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
     {
         return from_bson(ptr, ptr + len, strict, allow_exceptions);
     }
 #endif
 
     JSON_HEDLEY_WARN_UNUSED_RESULT
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    static basic_json from_bson(detail::span_input_adapter&& i,
-                                const bool strict = true,
-                                const bool allow_exceptions = true) = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_bson(ptr, ptr + len))
     static basic_json from_bson(detail::span_input_adapter&& i,
                                 const bool strict = true,
                                 const bool allow_exceptions = true)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+        = delete;
+#else
     {
         return from_binary_impl(i.get(), input_format_t::bson, strict, allow_exceptions);
     }
@@ -33153,11 +33116,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr) = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
     {
         return ptr.get_unchecked(this);
     }
@@ -33171,11 +33134,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    const_reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr) const = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     const_reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr) const
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
     {
         return ptr.get_unchecked(this);
     }
@@ -33189,11 +33152,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr) = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr)
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
     {
         return ptr.get_checked(this);
     }
@@ -33207,11 +33170,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-    const_reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr) const = delete;
-#else
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     const_reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr) const
+#if JSON_DELETE_DEPRECATED_FUNCTIONS
+    = delete;
+#else
     {
         return ptr.get_checked(this);
     }
