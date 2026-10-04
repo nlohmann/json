@@ -38,10 +38,49 @@ TEST_CASE("CBOR")
     {
         SECTION("discarded")
         {
-            // discarded values are not serialized
+            // a discarded value cannot be serialized to CBOR
             json const j = json::value_t::discarded;
-            const auto result = json::to_cbor(j);
-            CHECK(result.empty());
+            CHECK_THROWS_WITH_AS(json::to_cbor(j), "[json.exception.type_error.321] cannot serialize discarded value to CBOR", json::type_error&);
+        }
+
+        SECTION("discarded values nested in a container")
+        {
+            json const discarded = json::value_t::discarded;
+
+            SECTION("in an array")
+            {
+                json const j = {1, discarded, 2};
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_cbor(j), "[json.exception.type_error.321] (/1) cannot serialize discarded value to CBOR", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_cbor(j), "[json.exception.type_error.321] cannot serialize discarded value to CBOR", json::type_error&);
+#endif
+            }
+
+            SECTION("as an object value")
+            {
+                json j;
+                j["a"] = 1;
+                j["b"] = discarded;
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_cbor(j), "[json.exception.type_error.321] (/b) cannot serialize discarded value to CBOR", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_cbor(j), "[json.exception.type_error.321] cannot serialize discarded value to CBOR", json::type_error&);
+#endif
+            }
+
+            SECTION("nested deeper (array in object in array)")
+            {
+                json inner_array = {1, discarded};
+                json middle_object;
+                middle_object["x"] = inner_array;
+                json const j = {middle_object};
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_cbor(j), "[json.exception.type_error.321] (/0/x/1) cannot serialize discarded value to CBOR", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_cbor(j), "[json.exception.type_error.321] cannot serialize discarded value to CBOR", json::type_error&);
+#endif
+            }
         }
 
         SECTION("NaN")
