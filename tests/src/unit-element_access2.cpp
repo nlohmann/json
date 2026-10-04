@@ -516,6 +516,21 @@ TEST_CASE_TEMPLATE("element access 2", Json, nlohmann::json, nlohmann::ordered_j
                     CHECK(j_array.value("/-"_json_pointer, 42) == 42);
                     CHECK(j_array_const.value("/-"_json_pointer, 42) == 42);
 
+                    // Test an index with a non-digit after a valid leading digit; this is
+                    // out_of_range (not parse_error) and must not throw (see #5672)
+                    CHECK(j_array.value("/1a"_json_pointer, 42) == 42);
+                    CHECK(j_array_const.value("/1a"_json_pointer, 42) == 42);
+
+                    // Test the empty reference token (JSON pointer "/"); see #5672
+                    CHECK(j_array.value("/"_json_pointer, 42) == 42);
+                    CHECK(j_array_const.value("/"_json_pointer, 42) == 42);
+
+                    // Test an index whose magnitude does not fit into size_type (see #5672)
+                    CHECK(j_array.value("/99999999999999999999999"_json_pointer, 42) == 42);
+                    CHECK(j_array_const.value("/99999999999999999999999"_json_pointer, 42) == 42);
+                    CHECK(j_array.value("/18446744073709551615"_json_pointer, 42) == 42);
+                    CHECK(j_array_const.value("/18446744073709551615"_json_pointer, 42) == 42);
+
 #if !defined(JSON_NOEXCEPTION)
                     // Test malformed index (non-numeric) throws parse_error
                     CHECK_THROWS_WITH_AS(j_array.value("/foo"_json_pointer, 1), "[json.exception.parse_error.109] parse error: array index 'foo' is not a number", typename Json::parse_error&);
