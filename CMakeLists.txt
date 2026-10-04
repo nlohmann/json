@@ -50,6 +50,7 @@ else()
 endif()
 option(JSON_BuildTests                     "Build the unit tests when BUILD_TESTING is enabled." ${JSON_BuildTests_INIT})
 option(JSON_CI                             "Enable CI build targets." OFF)
+option(JSON_ClangTidyPlugin                "Build clang-tidy plug-in." OFF)
 option(JSON_Diagnostics                    "Use extended diagnostic messages." OFF)
 option(JSON_Diagnostic_Positions           "Enable diagnostic positions." OFF)
 option(JSON_GlobalUDLs                     "Place user-defined string literals in the global namespace." ON)
@@ -186,6 +187,16 @@ configure_file(
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
     @ONLY
 )
+
+if (JSON_ClangTidyPlugin)
+    # Clang-16's LLVMConfig.cmake requires FindFFI.cmake, which requires
+    # CheckCSourceCompiles.cmake so we need a C compiler.
+    enable_language(C)
+
+    find_package(LLVM REQUIRED CONFIG)
+    find_package(Clang REQUIRED CONFIG)
+    add_subdirectory(clang_tidy_plugin)
+endif()
 
 ##
 ## TESTS

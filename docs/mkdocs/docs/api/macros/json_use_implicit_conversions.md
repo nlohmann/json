@@ -30,11 +30,10 @@ By default, implicit conversions are enabled.
 
 !!! tip "Automatic migration"
 
-    The community-maintained clang-tidy check `modernize-nlohmann-json-explicit-conversions` rewrites implicit
-    conversions into explicit calls to [`get`](../basic_json/get.md); for example, `#!cpp int i = j;` becomes
-    `#!cpp int i = j.get<int>();`. The check is not part of clang-tidy itself, and it does not catch every case (for
-    example, constructing a `std::optional` from a JSON value), so review the result. See
-    [discussion #4610](https://github.com/nlohmann/json/discussions/4610) for how to build and use it.
+    The community-maintained clang-tidy check [`modernize-nlohmann-json-explicit-conversions`](../../integration/clang-tidy.md)
+    rewrites implicit conversions into explicit calls to [`get`](../basic_json/get.md); for example, `#!cpp int i = j;`
+    becomes `#!cpp int i = j.get<int>();`. The check is not part of clang-tidy itself, and it does not catch every case
+    (for example, constructing a `std::optional` from a JSON value), so review the result.
 
 !!! hint "CMake option"
 

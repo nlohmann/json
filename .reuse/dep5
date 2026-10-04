@@ -34,3 +34,7 @@ License: BSD-3-Clause
 Files: tools/gdb_pretty_printer/*
 Copyright: 2020 Hannes Domani <https://github.com/ssbssa>
 License: MIT
+
+Files: tests/clang_tidy_plugin/check_clang_tidy.py
+Copyright: 2003-2019 University of Illinois at Urbana-Champaign.
+License: Apache-2.0 WITH LLVM-exception
