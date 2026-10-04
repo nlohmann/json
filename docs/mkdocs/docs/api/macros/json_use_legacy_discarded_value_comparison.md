@@ -81,3 +81,6 @@ When the macro is not defined, the library will define it to its default value.
 ## Version history
 
 - Added in version 3.11.0.
+- Fixed in version 3.13.0 so `<=` and `>=` also emulate the legacy behavior in C++20 when the JSON value is the
+  right-hand operand of a scalar comparison; before, only the 3-way-comparison-rewritten candidate was found, which
+  yielded `#!cpp false` instead of `#!cpp true`.

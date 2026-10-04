@@ -196,3 +196,44 @@ TEST_CASE("regression test - diff() must account for ordered_json member order")
         CHECK(a.patch(p) == b);
     }
 }
+
+TEST_CASE("regression test for issue #5673 - ordered_json::emplace with a non-rvalue value")
+{
+    SECTION("lvalue value")
+    {
+        ordered_json oj = ordered_json::object();
+        ordered_json value = 1;
+        auto res = oj.emplace("a", value);
+        CHECK(res.second == true);
+        CHECK(oj.dump() == "{\"a\":1}");
+    }
+
+    SECTION("const lvalue value")
+    {
+        ordered_json oj = ordered_json::object();
+        const ordered_json value = 1;
+        auto res = oj.emplace("a", value);
+        CHECK(res.second == true);
+        CHECK(oj.dump() == "{\"a\":1}");
+    }
+
+    SECTION("rvalue value")
+    {
+        ordered_json oj = ordered_json::object();
+        auto res = oj.emplace("a", ordered_json(1));
+        CHECK(res.second == true);
+        CHECK(oj.dump() == "{\"a\":1}");
+    }
+
+    SECTION("existing key is not overwritten (std::map-compatible semantics)")
+    {
+        ordered_json oj = ordered_json::object();
+        ordered_json value = 1;
+        oj.emplace("a", value);
+
+        ordered_json other_value = 2;
+        auto res = oj.emplace("a", other_value);
+        CHECK(res.second == false);
+        CHECK(oj.dump() == "{\"a\":1}");
+    }
+}
