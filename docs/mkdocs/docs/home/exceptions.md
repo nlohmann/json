@@ -340,9 +340,11 @@ An unexpected byte was read in a [binary format](../features/binary_formats/inde
 ### json.exception.parse_error.113
 
 A string could not be read from a [binary format](../features/binary_formats/index.md): either a value that is not a
-string was read where one was required (for instance as a map key), or the string's length specification is invalid.
-The bytes of a string itself are not checked for valid UTF-8 on read; see the ill-formed UTF-8 notes on the
-individual [binary format](../features/binary_formats/index.md) pages for how such a string is handled afterward.
+string was read where one was required (for instance as a map key), the string's length specification is invalid, or
+the string's bytes are not valid UTF-8 and the `error_handler` parameter of the corresponding `from_*` function is
+set to `strict`. By default (`error_handler_t::keep`), the bytes of a string are not checked for valid UTF-8 on read;
+see the ill-formed UTF-8 notes on the individual [binary format](../features/binary_formats/index.md) pages for how
+such a string is handled depending on `error_handler`.
 
 CBOR and MessagePack allow map keys of any type, but JSON object keys are always strings. Maps with keys of any other
 type (for instance integers or `null`) are therefore not supported; see the notes on
@@ -364,6 +366,9 @@ type (for instance integers or `null`) are therefore not supported; see the note
     ```
     ```
     [json.exception.parse_error.113] parse error at byte 3: syntax error while parsing BJData string: string length must not be negative
+    ```
+    ```
+    [json.exception.parse_error.113] parse error at byte 3: syntax error while parsing CBOR string: invalid string: ill-formed UTF-8 byte
     ```
 
 ### json.exception.parse_error.114
@@ -747,10 +752,11 @@ The [`unflatten()`](../api/basic_json/unflatten.md) function only works for an o
 
 The [`dump()`](../api/basic_json/dump.md) function only works with UTF-8 encoded strings; that is, if you assign a `std::string` to a JSON value, make sure it is UTF-8 encoded. See the FAQ entry on [serializing untrusted or invalid UTF-8](faq.md#serializing-untrusted-or-invalid-utf-8) for background and the recommended fix.
 
-If [`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md) is enabled, the binary writers
-[`to_cbor()`](../api/basic_json/to_cbor.md), [`to_ubjson()`](../api/basic_json/to_ubjson.md),
+The binary writers [`to_cbor()`](../api/basic_json/to_cbor.md), [`to_ubjson()`](../api/basic_json/to_ubjson.md),
 [`to_bjdata()`](../api/basic_json/to_bjdata.md), and [`to_bson()`](../api/basic_json/to_bson.md) throw this exception
-for a string value or object key that is not valid UTF-8 as well.
+as well for a string value or object key that is not valid UTF-8 if their `error_handler` is `strict` (the default if
+[`JSON_STRICT_BINARY_UTF8`](../api/macros/json_strict_binary_utf8.md) is enabled). So does
+[`to_msgpack()`](../api/basic_json/to_msgpack.md) if `error_handler_t::strict` is passed.
 
 !!! failure "Example message"
 

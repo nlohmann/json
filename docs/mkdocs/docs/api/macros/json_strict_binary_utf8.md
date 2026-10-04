@@ -4,15 +4,18 @@
 #define JSON_STRICT_BINARY_UTF8 /* value */
 ```
 
-When defined to `1`, the binary writers [`to_cbor`](../basic_json/to_cbor.md), [`to_ubjson`](../basic_json/to_ubjson.md),
-[`to_bjdata`](../basic_json/to_bjdata.md), and [`to_bson`](../basic_json/to_bson.md) check every string value and
-object key for valid UTF-8 and throw [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for
-ill-formed UTF-8, like [`dump`](../basic_json/dump.md) does. Without it, they write the bytes unchanged.
+When defined to `1`, the `error_handler` parameter of the binary writers [`to_cbor`](../basic_json/to_cbor.md),
+[`to_ubjson`](../basic_json/to_ubjson.md), [`to_bjdata`](../basic_json/to_bjdata.md), and
+[`to_bson`](../basic_json/to_bson.md) defaults to [`error_handler_t::strict`](../basic_json/error_handler_t.md) instead
+of `error_handler_t::keep`. These writers then check every string value and object key for valid UTF-8 and throw
+[`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for ill-formed UTF-8, like
+[`dump`](../basic_json/dump.md) does. Without it, they write the bytes unchanged. An `error_handler` passed explicitly
+always takes precedence.
 
 The macro does not affect:
 
 - [`to_msgpack`](../basic_json/to_msgpack.md): the MessagePack specification allows a `str` value to contain bytes that
-  are not valid UTF-8, so it always writes them unchanged.
+  are not valid UTF-8, so its `error_handler` always defaults to `keep`.
 - [`to_bon8`](../basic_json/to_bon8.md): BON8 always checks, because the UTF-8 lead bytes mark where a string ends.
 - The binary readers ([`from_cbor`](../basic_json/from_cbor.md), [`from_msgpack`](../basic_json/from_msgpack.md),
   [`from_ubjson`](../basic_json/from_ubjson.md), [`from_bjdata`](../basic_json/from_bjdata.md),
@@ -33,8 +36,9 @@ The default value is `0` (disabled, the behavior of version 3.12.0 and earlier i
 
     CBOR, UBJSON, BJData, and BSON all require strings to be UTF-8. Up to version 3.12.0, the writers did not check
     this, so they could produce output that other decoders reject. Checking by default would break code that stores
-    other encodings (for instance ISO 8859-1) in a string and only ever writes it to a binary format, so this macro
-    offers the check as an opt-in ahead of version 4.0.0, where it is planned to become the default (see
+    other encodings (for instance ISO 8859-1) in a string and only ever writes it to a binary format. You can pass
+    `error_handler_t::strict` to each call, or use this macro to check by default ahead of version 4.0.0, where
+    `strict` is planned to become the default (see
     [#5529](https://github.com/nlohmann/json/issues/5529) and [#5651](https://github.com/nlohmann/json/issues/5651)).
 
 !!! warning "Opt-in only"

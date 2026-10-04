@@ -112,13 +112,18 @@ The library maps BSON record types to JSON value types as follows:
 !!! warning "Ill-formed UTF-8 in string values"
 
     The BSON specification requires `string` values (type `0x02`) to be valid UTF-8, but this is not required of a
-    decoder. `from_bson()` accepts a `string` value whose bytes are not valid UTF-8 and hands them back unchanged.
-    However, [`dump()`](../../api/basic_json/dump.md) still requires valid UTF-8 and throws
-    [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for such a value, unless an error handler is
-    passed that replaces or ignores the ill-formed bytes. By default, `to_bson()` writes such a string value or element
-    (key) name unchanged; if [`JSON_STRICT_BINARY_UTF8`](../../api/macros/json_strict_binary_utf8.md) is enabled, it
-    throws the same exception instead. Element (key) names are never validated on read, since they are read byte-by-byte
-    as a C string. `binary` values (type `0x05`) are unaffected, since they are not required to hold text.
+    decoder, so checking is opt-in: with the [`error_handler`](../../api/basic_json/from_bson.md) parameter left at
+    `keep` (the default), `from_bson()` accepts a `string` value whose bytes are not valid UTF-8 and hands them back
+    unchanged. Passing `error_handler_t::strict` makes `from_bson()` check and throw
+    [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) for ill-formed UTF-8, and
+    `replace`/`ignore` sanitize the string instead of keeping it. However, [`dump()`](../../api/basic_json/dump.md)
+    still requires valid UTF-8 and throws [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316) for a
+    value read with the default `keep` handler, unless an error handler is passed that replaces or ignores the
+    ill-formed bytes. `to_bson()`'s own `error_handler` parameter defaults to `keep`, so such a string value or element
+    (key) name is written unchanged; with `strict` (the default if
+    [`JSON_STRICT_BINARY_UTF8`](../../api/macros/json_strict_binary_utf8.md) is enabled), it throws the same exception
+    instead. Element (key) names are never validated on read, since they are read byte-by-byte as a C string. `binary`
+    values (type `0x05`) are unaffected, since they are not required to hold text.
 
 ??? example "Example: deserialize a JSON value from BSON"
 

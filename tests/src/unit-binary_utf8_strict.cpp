@@ -100,11 +100,23 @@ TEST_CASE("JSON_STRICT_BINARY_UTF8 (see #5529, #5651)")
         CHECK_THROWS_WITH_AS(json::to_bson(json{{"\xFF", 1}}), "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF", json::type_error&);
     }
 
+    SECTION("an explicit error_handler overrides the default")
+    {
+        // the macro only changes the default of the error_handler parameter
+        CHECK(json::to_cbor(json("\xFF"), json::error_handler_t::keep) == std::vector<std::uint8_t>({0x61, 0xff}));
+        CHECK(json::to_ubjson(json("\xFF"), false, false, json::error_handler_t::keep) == std::vector<std::uint8_t>({'S', 'i', 1, 0xff}));
+        CHECK(json::to_bjdata(json("\xFF"), false, false, json::bjdata_version_t::draft2, json::error_handler_t::keep) == std::vector<std::uint8_t>({'S', 'i', 1, 0xff}));
+        CHECK(json::from_bson(json::to_bson(json{{"s", "\xFF"}}, json::error_handler_t::keep)) == json{{"s", "\xFF"}});
+        CHECK(json::to_cbor(json("\xFF"), json::error_handler_t::replace) == std::vector<std::uint8_t>({0x63, 0xef, 0xbf, 0xbd}));
+    }
+
     SECTION("MessagePack and BON8 are unaffected")
     {
-        // MessagePack allows any bytes in a str, so to_msgpack() writes them as
-        // is; BON8 always checks, because the lead bytes mark where strings end
+        // MessagePack allows any bytes in a str, so to_msgpack() still
+        // defaults to keep (strict only if passed explicitly); BON8 always
+        // checks, because the lead bytes mark where strings end
         CHECK(json::to_msgpack(json("\xFF")) == std::vector<std::uint8_t>({0xa1, 0xff}));
+        CHECK_THROWS_AS(json::to_msgpack(json("\xFF"), json::error_handler_t::strict), json::type_error&);
         CHECK_THROWS_AS(json::to_bon8(json("\xFF")), json::type_error&);
     }
 }
