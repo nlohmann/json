@@ -75,7 +75,7 @@ If the item is complete, but cannot be passed on as it is, it is replaced, and p
 |---------------------------------------------------------------------|-------------------------|-------------------------------------------------------------------------|
 | tag                                                                 | CBOR                    | ignored                                                                 |
 | simple value other than `false`, `true`, and `null`, like undefined | CBOR                    | `#!json null`                                                           |
-| negative integer below the range of `number_integer_t`              | CBOR                    | the nearest floating-point number                                       |
+| number too large for a custom `number_float_t`, like `float`        | all                     | infinity                                                                |
 | character (`C`) that is not ASCII                                   | BJData, UBJSON          | U+FFFD                                                                  |
 | invalid high-precision number (`H`)                                 | BJData, UBJSON          | the longest valid beginning is kept, as for JSON text, or `#!json null` |
 | high-precision number too large                                     | BJData, UBJSON          | passed as infinity, together with its text                              |

@@ -944,10 +944,11 @@ namespace
 {
 /// builds a value from SAX events, asks the parser to recover from its first
 /// 100 errors, and checks that the events are balanced (see #3989)
-class RecoveringParser
+template<typename BasicJsonType>
+class BasicRecoveringParser
 {
   public:
-    explicit RecoveringParser(json& j)
+    explicit BasicRecoveringParser(BasicJsonType& j)
         : dom(j, false)
     {}
 
@@ -963,19 +964,19 @@ class RecoveringParser
         return dom.boolean(val);
     }
 
-    bool number_integer(json::number_integer_t val)
+    bool number_integer(typename BasicJsonType::number_integer_t val)
     {
         value();
         return dom.number_integer(val);
     }
 
-    bool number_unsigned(json::number_unsigned_t val)
+    bool number_unsigned(typename BasicJsonType::number_unsigned_t val)
     {
         value();
         return dom.number_unsigned(val);
     }
 
-    bool number_float(json::number_float_t val, const std::string& s)
+    bool number_float(typename BasicJsonType::number_float_t val, const std::string& s)
     {
         value();
         return dom.number_float(val, s);
@@ -987,7 +988,7 @@ class RecoveringParser
         return dom.string(val);
     }
 
-    bool binary(json::binary_t& val)
+    bool binary(typename BasicJsonType::binary_t& val)
     {
         value();
         return dom.binary(val);
@@ -1055,7 +1056,7 @@ class RecoveringParser
     }
 
     /// builds the value
-    nlohmann::detail::json_sax_dom_parser<json> dom;
+    nlohmann::detail::json_sax_dom_parser<BasicJsonType> dom;
     std::size_t errors = 0;
     std::vector<std::string> messages {}; // NOLINT(readability-redundant-member-init)
     std::vector<char> stack {}; // NOLINT(readability-redundant-member-init)
@@ -1078,6 +1079,8 @@ class RecoveringParser
     }
 
 };
+
+using RecoveringParser = BasicRecoveringParser<json>;
 
 struct BinaryParseResult
 {
@@ -1395,11 +1398,17 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
 
     SECTION("binary formats repair numbers that are out of range")
     {
-        // CBOR: a negative integer below the range of number_integer_t
-        const auto cbor = parse_binary_recovering({0x3B, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, json::input_format_t::cbor);
-        CHECK(cbor.errors == 1);
-        CHECK(cbor.value.is_number_float());
-        CHECK(cbor.value.get<double>() == -18446744073709551616.0);
+        // CBOR: a double too large for a float number_float_t
+        using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+        float_json cbor;
+        BasicRecoveringParser<float_json> sax(cbor);
+        const std::vector<std::uint8_t> cbor_input = {0x82, 0xFB, 0x7E, 0x37, 0xE4, 0x3C, 0x88, 0x00, 0x75, 0x9C, 0x01}; // [1e300, 1]
+        CHECK(!float_json::sax_parse(cbor_input, &sax, float_json::input_format_t::cbor));
+        CHECK(sax.errors == 1);
+        CHECK(sax.messages.front() == "[json.exception.out_of_range.406] syntax error while parsing CBOR value: number overflow");
+        REQUIRE(cbor.size() == 2);
+        CHECK(std::isinf(cbor[0].get<float>()));
+        CHECK(cbor[1] == 1);
 
         // UBJSON: a high-precision number too large for number_float_t
         const auto ubjson = parse_binary_recovering({'H', 'i', 5, '1', 'e', '9', '9', '9'}, json::input_format_t::ubjson);

@@ -331,9 +331,6 @@ An unexpected byte was read in a [binary format](../features/binary_formats/inde
     [json.exception.parse_error.112] parse error at byte 15: syntax error while parsing BSON binary: byte array length cannot be negative, is -1
     ```
     ```
-    [json.exception.parse_error.112] parse error at byte 9: syntax error while parsing CBOR value: negative integer overflow
-    ```
-    ```
     [json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: document size 6 does not match the number of bytes read (5)
     ```
 
@@ -599,6 +596,9 @@ During implicit or explicit value conversion, the JSON type must be compatible w
     [json.exception.type_error.302] type must be string, but is object
     ```
 
+This exception is also thrown with [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](../api/macros/json_use_objects_for_enum_keyed_maps.md)
+if a key of a map with enum keys is not converted to a string, for instance, because the enum is stored as an integer.
+
 ### json.exception.type_error.303
 
 To retrieve a reference to a value stored in a `basic_json` object with `get_ref`, the type of the reference must match the value type. For instance, for a JSON array, the `ReferenceType` must be `array_t &`.
@@ -791,6 +791,19 @@ The dynamic type of the object cannot be represented in the requested serializat
 
     Encapsulate the JSON value in an object. That is, instead of serializing `#!json true`, serialize `#!json {"value": true}`
 
+### json.exception.type_error.318
+
+With [`JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS`](../api/macros/json_use_objects_for_enum_keyed_maps.md), a map with enum
+keys is stored as an object. This exception is thrown if two of its keys are converted to the same string, so one of the
+entries would be lost. This happens, for instance, if [`NLOHMANN_JSON_SERIALIZE_ENUM`](../api/macros/nlohmann_json_serialize_enum.md)
+does not list an enumerator and it is therefore converted like the first listed one.
+
+!!! failure "Example message"
+
+    ```
+    [json.exception.type_error.318] duplicate object key 'red'
+    ```
+
 ## Out of range
 
 This exception is thrown in case a library function is called on an input parameter that exceeds the expected range, for instance, in the case of array indices or nonexisting object keys.
@@ -863,12 +876,17 @@ The JSON Patch operations 'remove' and 'add' cannot be applied to the root eleme
 
 ### json.exception.out_of_range.406
 
-A parsed number could not be stored as without changing it to NaN or INF.
+A parsed number could not be stored without changing it to NaN or INF. For the binary formats, this happens when a
+finite floating-point number does not fit into [`number_float_t`](../api/basic_json/number_float_t.md), for example a
+double-precision number when `number_float_t` is `#!cpp float`.
 
-!!! failure "Example message"
+!!! failure "Example messages"
 
     ```
     number overflow parsing '10E1000'
+    ```
+    ```
+    [json.exception.out_of_range.406] syntax error while parsing CBOR value: number overflow
     ```
 
 ### json.exception.out_of_range.407
