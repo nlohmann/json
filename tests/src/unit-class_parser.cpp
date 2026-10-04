@@ -592,6 +592,45 @@ TEST_CASE("parser class")
 
                 // parsing from a string literal is unaffected either way
                 CHECK(json::parse("123") == json(123));
+
+                // a NUL byte that ends a // comment ends the input just
+                // like a NUL byte anywhere else (issue #5659); before the
+                // fix, the NUL was consumed as part of the comment, and
+                // scanning continued with whatever followed it
+                {
+                    // same as "//c" alone (real end of input after the
+                    // comment), rather than continuing with "[1]"
+                    std::string s1 = "//c";
+                    s1.push_back('\0');
+                    s1 += "[1]";
+                    json _; // NOLINT(readability-identifier-naming)
+                    CHECK_THROWS_WITH_AS(_ = json::parse(s1, nullptr, true, true),
+                                         "[json.exception.parse_error.101] parse error at line 1, column 4: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal",
+                                         json::parse_error&);
+                    CHECK_FALSE(json::accept(s1, true, true));
+                }
+
+                {
+                    // same as "[1, //c" alone, rather than continuing with " 2]"
+                    std::string s2 = "[1, //c";
+                    s2.push_back('\0');
+                    s2 += " 2]";
+                    json _; // NOLINT(readability-identifier-naming)
+                    CHECK_THROWS_WITH_AS(_ = json::parse(s2, nullptr, true, true),
+                                         "[json.exception.parse_error.101] parse error at line 1, column 8: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal",
+                                         json::parse_error&);
+                    CHECK_FALSE(json::accept(s2, true, true));
+                }
+
+                {
+                    // same as "1 //c" alone: the comment (and the NUL that
+                    // ends it) is ignored, and "x" is never reached
+                    std::string s3 = "1 //c";
+                    s3.push_back('\0');
+                    s3 += "x";
+                    CHECK(json::parse(s3, nullptr, true, true) == json(1));
+                    CHECK(json::accept(s3, true, true));
+                }
             }
 #endif
 
