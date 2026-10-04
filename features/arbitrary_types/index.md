@@ -78,6 +78,7 @@ Some important things:
 - When using `get<your_type>()`, `your_type` **MUST** be [DefaultConstructible](https://en.cppreference.com/w/cpp/named_req/DefaultConstructible). (There is a way to bypass this requirement described later.)
 - In function `from_json`, use function [`at()`](https://json.nlohmann.me/api/basic_json/at/index.md) to access the object values rather than `operator[]`. In case a key does not exist, `at` throws an exception that you can handle, whereas `operator[]` exhibits undefined behavior.
 - You do not need to add serializers or deserializers for STL types like `std::vector`: the library already implements these.
+- If you control the type, consider defining `to_json`/`from_json` as `friend` functions inside the class ("hidden friends"). Argument-dependent lookup then only finds them for your type, which also avoids a [GCC < 11 compilation error](https://json.nlohmann.me/home/faq/#incomplete-detector-type-with-gcc-11).
 
 Example: serialize a `person` to JSON with `to_json`
 
