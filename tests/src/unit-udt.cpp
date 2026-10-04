@@ -23,6 +23,7 @@ using nlohmann::json;
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 #endif
 
+#include <deque>
 #include <map>
 #include <memory>
 #include <string>
@@ -731,6 +732,68 @@ TEST_CASE("custom serializer that does adl by default" * doctest::test_suite("ud
 
     CHECK(me == j.get<udt::person>());
     CHECK(me == cj.get<udt::person>());
+}
+
+TEST_CASE("with_*_t aliases" * doctest::test_suite("udt"))
+{
+    // a custom base class used to check with_base_class_t
+    struct custom_base_class {};
+
+    CHECK(std::is_same<json::with_object_t<std::deque>,
+          nlohmann::basic_json<std::deque, std::vector, std::string, bool,
+          std::int64_t, std::uint64_t, double, std::allocator,
+          nlohmann::adl_serializer, std::vector<std::uint8_t>>>::value);
+
+    CHECK(std::is_same<json::with_array_t<std::deque>,
+          nlohmann::basic_json<std::map, std::deque, std::string, bool,
+          std::int64_t, std::uint64_t, double, std::allocator,
+          nlohmann::adl_serializer, std::vector<std::uint8_t>>>::value);
+
+    CHECK(std::is_same<json::with_string_t<std::wstring>,
+          nlohmann::basic_json<std::map, std::vector, std::wstring, bool,
+          std::int64_t, std::uint64_t, double, std::allocator,
+          nlohmann::adl_serializer, std::vector<std::uint8_t>>>::value);
+
+    CHECK(std::is_same<json::with_boolean_t<int>,
+          nlohmann::basic_json<std::map, std::vector, std::string, int,
+          std::int64_t, std::uint64_t, double, std::allocator,
+          nlohmann::adl_serializer, std::vector<std::uint8_t>>>::value);
+
+    CHECK(std::is_same<json::with_integers_t<std::int32_t, std::uint32_t>,
+          nlohmann::basic_json<std::map, std::vector, std::string, bool,
+          std::int32_t, std::uint32_t, double, std::allocator,
+          nlohmann::adl_serializer, std::vector<std::uint8_t>>>::value);
+
+    CHECK(std::is_same<json::with_float_t<float>,
+          nlohmann::basic_json<std::map, std::vector, std::string, bool,
+          std::int64_t, std::uint64_t, float, std::allocator,
+          nlohmann::adl_serializer, std::vector<std::uint8_t>>>::value);
+
+    CHECK(std::is_same<json::with_allocator_t<std::allocator>,
+          nlohmann::basic_json<std::map, std::vector, std::string, bool,
+          std::int64_t, std::uint64_t, double, std::allocator,
+          nlohmann::adl_serializer, std::vector<std::uint8_t>>>::value);
+
+    CHECK(std::is_same<json::with_json_serializer_t<nlohmann::adl_serializer>,
+          nlohmann::basic_json<std::map, std::vector, std::string, bool,
+          std::int64_t, std::uint64_t, double, std::allocator,
+          nlohmann::adl_serializer, std::vector<std::uint8_t>>>::value);
+
+    CHECK(std::is_same<json::with_binary_t<std::vector<char>>,
+          nlohmann::basic_json<std::map, std::vector, std::string, bool,
+          std::int64_t, std::uint64_t, double, std::allocator,
+          nlohmann::adl_serializer, std::vector<char>>>::value);
+
+    CHECK(std::is_same<json::with_base_class_t<custom_base_class>,
+          nlohmann::basic_json<std::map, std::vector, std::string, bool,
+          std::int64_t, std::uint64_t, double, std::allocator,
+          nlohmann::adl_serializer, std::vector<std::uint8_t>, custom_base_class>>::value);
+
+    // with_string_t on ordered_json must keep ordered_map as the object type
+    CHECK(std::is_same<nlohmann::ordered_json::with_string_t<std::wstring>,
+          nlohmann::basic_json<nlohmann::ordered_map, std::vector, std::wstring, bool,
+          std::int64_t, std::uint64_t, double, std::allocator,
+          nlohmann::adl_serializer, std::vector<std::uint8_t>>>::value);
 }
 
 TEST_CASE("different basic_json types conversions")
