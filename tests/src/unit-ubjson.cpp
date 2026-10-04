@@ -820,6 +820,10 @@ TEST_CASE("UBJSON")
                             CHECK(json::from_ubjson(vec, false, false).is_discarded());
                         }
 
+                        std::vector<uint8_t> const truncated = {'H', 'i', 3, '1', 0};
+                        CHECK_THROWS_WITH_AS(_ = json::from_ubjson(truncated), "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing UBJSON number: unexpected end of input", json::parse_error);
+                        CHECK(json::from_ubjson(truncated, true, false).is_discarded());
+
                         std::vector<uint8_t> const nested = {'[', 'H', 'i', 3, '1', 0, 'x', ']'};
                         CHECK_THROWS_WITH_AS(_ = json::from_ubjson(nested), "[json.exception.parse_error.115] parse error at byte 7: syntax error while parsing UBJSON high-precision number: invalid number text: 1<U+0000>", json::parse_error);
                         CHECK(json::from_ubjson(nested, true, false).is_discarded());

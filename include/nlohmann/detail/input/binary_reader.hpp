@@ -3241,7 +3241,9 @@ class binary_reader
         }
 
         // get number string
+        // 2026-10-05: Track NULs while reading to avoid a separate payload scan.
         std::vector<char> number_vector;
+        bool contains_nul = false;
         for (std::size_t i = 0; i < size; ++i)
         {
             get();
@@ -3249,6 +3251,7 @@ class binary_reader
             {
                 return false;
             }
+            contains_nul = contains_nul || current == '\0';
             number_vector.push_back(static_cast<char>(current));
         }
 
@@ -3267,8 +3270,8 @@ class binary_reader
                                     exception_message(concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));
         }
 
-        // 2026-10-05: A NUL must not terminate a length-delimited number payload; preserve the lexer diagnostic.
-        if (JSON_HEDLEY_UNLIKELY(std::find(number_vector.begin(), number_vector.end(), '\0') != number_vector.end()))
+        // 2026-10-05: Reject NULs after a complete read to preserve EOF errors and lexer diagnostics.
+        if (JSON_HEDLEY_UNLIKELY(contains_nul))
         {
             return sax->parse_error(chars_read, number_string, parse_error::create(115, chars_read,
                                     exception_message(concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));

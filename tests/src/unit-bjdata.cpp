@@ -1304,6 +1304,10 @@ TEST_CASE("BJData")
                             CHECK(json::from_bjdata(vec, false, false).is_discarded());
                         }
 
+                        std::vector<uint8_t> const truncated = {'H', 'i', 3, '1', 0};
+                        CHECK_THROWS_WITH_AS(_ = json::from_bjdata(truncated), "[json.exception.parse_error.110] parse error at byte 6: syntax error while parsing BJData number: unexpected end of input", json::parse_error);
+                        CHECK(json::from_bjdata(truncated, true, false).is_discarded());
+
                         std::vector<uint8_t> const nested = {'[', 'H', 'i', 3, '1', 0, 'x', ']'};
                         CHECK_THROWS_WITH_AS(_ = json::from_bjdata(nested), "[json.exception.parse_error.115] parse error at byte 7: syntax error while parsing BJData high-precision number: invalid number text: 1<U+0000>", json::parse_error);
                         CHECK(json::from_bjdata(nested, true, false).is_discarded());
