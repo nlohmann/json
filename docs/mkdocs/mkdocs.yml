@@ -108,6 +108,7 @@ nav:
       - integration/cmake.md
       - integration/package_managers.md
       - integration/pkg-config.md
+      - integration/compile_times.md
   - API Documentation:
       - basic_json:
           - 'Overview': api/basic_json/index.md
