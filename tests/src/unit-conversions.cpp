@@ -1764,12 +1764,24 @@ TEST_CASE("Strict JSON to enum mapping")
         CHECK(json("herz").get<strict_cards>() == strict_cards::herz);
         CHECK(json("karo").get<strict_cards>() == strict_cards::karo);
 
+        // comparison of enum and json
+        CHECK(strict_cards::kreuz == json("kreuz"));
+        CHECK(strict_cards::pik == json("pik"));
+        CHECK(strict_cards::herz == json("herz"));
+        CHECK(strict_cards::karo == json("karo"));
+
         // invalid json -> exception thrown
         json _;
         CHECK_THROWS_WITH_AS(_ = json("what?").get<strict_cards>(), "[json.exception.out_of_range.410] enum value out of range for strict_cards: \"what?\"", json::out_of_range&);
 
         // conversion of unmapped enum -> exception thrown
         CHECK_THROWS_WITH_AS(json(strict_cards::andere), "[json.exception.out_of_range.410] enum value out of range for strict_cards", json::out_of_range&);
+
+        // comparing an unmapped enum with json throws the same exception
+        // (the scalar comparison operators used to be noexcept, so this
+        // called std::terminate)
+        CHECK_THROWS_WITH_AS(static_cast<void>(strict_cards::andere == json("andere")), "[json.exception.out_of_range.410] enum value out of range for strict_cards", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(static_cast<void>(json("andere") != strict_cards::andere), "[json.exception.out_of_range.410] enum value out of range for strict_cards", json::out_of_range&);
 
         // invalid UTF-8 -> out_of_range.410, not the type_error.316 thrown while building the
         // message (regression test for #5667); such strings can reach get<Enum>() unvalidated,
@@ -1792,12 +1804,21 @@ TEST_CASE("Strict JSON to enum mapping")
         CHECK(json("completed").get<StrictTaskState>() == STRICT_TS_COMPLETED);
         CHECK(json().get<StrictTaskState>() == STRICT_TS_INVALID);
 
+        // comparison of enum and json
+        CHECK(STRICT_TS_STOPPED == json("stopped"));
+        CHECK(STRICT_TS_RUNNING == json("running"));
+        CHECK(STRICT_TS_COMPLETED == json("completed"));
+        CHECK(STRICT_TS_INVALID == json());
+
         // invalid json -> exception thrown
         json _;
         CHECK_THROWS_WITH_AS(_ = json("what?").get<StrictTaskState>(), "[json.exception.out_of_range.410] enum value out of range for StrictTaskState: \"what?\"", json::out_of_range&);
 
         // conversion of unmapped enum -> exception thrown
         CHECK_THROWS_WITH_AS(json(STRICT_TS_OTHER), "[json.exception.out_of_range.410] enum value out of range for StrictTaskState", json::out_of_range&);
+
+        // comparing an unmapped enum with json throws the same exception
+        CHECK_THROWS_WITH_AS(static_cast<void>(STRICT_TS_OTHER < json("x")), "[json.exception.out_of_range.410] enum value out of range for StrictTaskState", json::out_of_range&);
     }
 }
 

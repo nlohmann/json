@@ -536,6 +536,10 @@ class json_pointer
     @return const reference to the JSON value pointed to by the JSON
     pointer
 
+    @pre Every object key and array index the pointer refers to exists.
+         Like the const operator[] for keys and indices, a missing one is
+         undefined behavior, guarded by a runtime assertion.
+
     @throw parse_error.106   if an array index begins with '0'
     @throw parse_error.109   if an array index was not a number
     @throw out_of_range.402  if the array index '-' is used
@@ -550,7 +554,8 @@ class json_pointer
             {
                 case detail::value_t::object:
                 {
-                    // use unchecked object access
+                    // use unchecked object access; the const operator[]
+                    // asserts that the key exists
                     ptr = &ptr->operator[](reference_token);
                     break;
                 }
@@ -563,7 +568,8 @@ class json_pointer
                         JSON_THROW(detail::out_of_range::create(402, detail::concat("array index '-' (", std::to_string(ptr->m_data.m_value.array->size()), ") is out of range"), ptr));
                     }
 
-                    // use unchecked array access
+                    // use unchecked array access; the const operator[]
+                    // asserts that the index exists
                     ptr = &ptr->operator[](array_index<BasicJsonType>(reference_token));
                     break;
                 }
@@ -679,19 +685,29 @@ class json_pointer
                         return nullptr;
                     }
 
-                    // may throw parse_error.106/109 for a malformed index; an
-                    // index that is syntactically valid but cannot be
-                    // represented (out_of_range.404/410) is treated like an
-                    // out-of-range index below
-                    typename BasicJsonType::size_type idx{};
-                    JSON_TRY
+                    // tokens that array_index() rejects with parse_error.106/109
+                    // are passed on to it; all other tokens that it would reject
+                    // with out_of_range.404/410 are detected here, so that this
+                    // also works without exceptions
+                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() > 1 && !(reference_token[0] >= '1' && reference_token[0] <= '9')))
                     {
-                        idx = array_index<BasicJsonType>(reference_token);
+                        static_cast<void>(array_index<BasicJsonType>(reference_token)); // throws parse_error.106/109
                     }
-                    JSON_INTERNAL_CATCH (detail::out_of_range&)
+                    if (JSON_HEDLEY_UNLIKELY(reference_token.empty() || !std::all_of(reference_token.begin(), reference_token.end(), [](const char c)
+                {
+                    return c >= '0' && c <= '9';
+                })))
                     {
                         return nullptr;
                     }
+                    errno = 0; // strtoull() does not reset errno on success
+                    char* p_end = nullptr; // NOLINT(misc-const-correctness)
+                    const unsigned long long magnitude = std::strtoull(reference_token.data(), &p_end, 10); // NOLINT(runtime/int)
+                    if (JSON_HEDLEY_UNLIKELY(errno == ERANGE || magnitude >= static_cast<unsigned long long>((std::numeric_limits<typename BasicJsonType::size_type>::max)()))) // NOLINT(runtime/int)
+                    {
+                        return nullptr;
+                    }
+                    const auto idx = static_cast<typename BasicJsonType::size_type>(magnitude);
 
                     if (JSON_HEDLEY_UNLIKELY(idx >= ptr->m_data.m_value.array->size()))
                     {
