@@ -16,18 +16,19 @@ before including the `json.hpp` header.
 
 ## Function with runtime assertions
 
-### Unchecked object access to a const value
+### Unchecked access to a const value
 
-Function [`operator[]`](../api/basic_json/operator%5B%5D.md) implements unchecked access for objects. Whereas a missing
-key is added in the case of non-const objects, accessing a const object with a missing key is undefined behavior (think
-of a dereferenced null pointer) and yields a runtime assertion.
+Function [`operator[]`](../api/basic_json/operator%5B%5D.md) implements unchecked access for arrays and objects. Whereas
+a missing element is added in the case of non-const values, accessing a const value with a missing object key or an
+invalid array index is undefined behavior (think of a dereferenced null pointer) and yields a runtime assertion. This
+also applies to a [JSON pointer](json_pointer.md) that refers to a missing key or an invalid index.
 
-If you are not sure whether an element in an object exists, use checked access with the
-[`at` function](../api/basic_json/at.md) or call the [`contains` function](../api/basic_json/contains.md) before.
+If you are not sure whether an element exists, use checked access with the [`at` function](../api/basic_json/at.md)
+or call the [`contains` function](../api/basic_json/contains.md) before.
 
 See also the documentation on [element access](element_access/index.md).
 
-??? example "Example 1: Missing object key"
+??? example "Example: missing object key"
 
     The following code will trigger an assertion at runtime:
 
@@ -46,7 +47,30 @@ See also the documentation on [element access](element_access/index.md).
     Output:
 
     ```
-    Assertion failed: (m_value.object->find(key) != m_value.object->end()), function operator[], file json.hpp, line 2144.
+    Assertion failed: (it != m_data.m_value.object->end()), function operator[], file json.hpp, line 28795.
+    ```
+
+??? example "Example 2: Invalid array index in a JSON pointer"
+
+    The following code will trigger an assertion at runtime:
+
+    ```cpp
+    #include <nlohmann/json.hpp>
+    
+    using json = nlohmann::json;
+    using namespace nlohmann::literals;
+    
+    int main()
+    {
+        const json j = {{"array", {1, 2, 3}}};
+        auto v = j["/array/5"_json_pointer];
+    }
+    ```
+
+    Output:
+
+    ```
+    Assertion failed: (idx < m_data.m_value.array->size()), function operator[], file json.hpp, line 28758.
     ```
 
 ### Constructing from an uninitialized iterator range
@@ -54,7 +78,7 @@ See also the documentation on [element access](element_access/index.md).
 Constructing a JSON value from an iterator range (see [constructor](../api/basic_json/basic_json.md)) with an
 uninitialized iterator is undefined behavior and yields a runtime assertion.
 
-??? example "Example 2: Uninitialized iterator range"
+??? example "Example: uninitialized iterator range"
 
     The following code will trigger an assertion at runtime:
 
@@ -81,7 +105,7 @@ uninitialized iterator is undefined behavior and yields a runtime assertion.
 Any operation on uninitialized iterators (i.e., iterators that are not associated with any JSON value) is undefined
 behavior and yields a runtime assertion.
 
-??? example "Example 3: Uninitialized iterator"
+??? example "Example: uninitialized iterator"
 
     The following code will trigger an assertion at runtime:
 
@@ -112,7 +136,7 @@ library asserted that the pointer was not `nullptr` using a runtime assertion. I
 result in undefined behavior. Since version 3.12.0, this library checks for `nullptr` and throws a
 [`parse_error.101`](../home/exceptions.md#jsonexceptionparse_error101) to prevent the undefined behavior.
 
-??? example "Example 4: Reading from null pointer"
+??? example "Example: reading from null pointer"
 
     The following code will trigger an assertion at runtime:
 

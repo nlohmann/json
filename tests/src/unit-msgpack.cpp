@@ -21,85 +21,11 @@ using nlohmann::json;
 #include <limits>
 #include <set>
 #include "make_test_data_available.hpp"
+#include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
+#include "sax_countdown.hpp"
+using utils::SaxCountdown;
 
-namespace
-{
-class SaxCountdown
-{
-  public:
-    explicit SaxCountdown(const int count) : events_left(count)
-    {}
-
-    bool null()
-    {
-        return events_left-- > 0;
-    }
-
-    bool boolean(bool /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_integer(json::number_integer_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_unsigned(json::number_unsigned_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool number_float(json::number_float_t /*unused*/, const std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool string(std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool binary(std::vector<std::uint8_t>& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool start_object(std::size_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool key(std::string& /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool end_object()
-    {
-        return events_left-- > 0;
-    }
-
-    bool start_array(std::size_t /*unused*/)
-    {
-        return events_left-- > 0;
-    }
-
-    bool end_array()
-    {
-        return events_left-- > 0;
-    }
-
-    bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const json::exception& /*unused*/) // NOLINT(readability-convert-member-functions-to-static)
-    {
-        return false;
-    }
-
-  private:
-    int events_left = 0;
-};
-} // namespace
 
 TEST_CASE("MessagePack")
 {
@@ -1930,6 +1856,38 @@ TEST_CASE("Parse MessagePack directly from a file using iterator and sentinel")
     CHECK((parsed.is_object() || parsed.is_array()));
 }
 
+TEST_CASE("MessagePack round-trip invariants")
+{
+    // This checks what the parse_msgpack_fuzzer driver checks (see
+    // tests/src/fuzzer-parse_msgpack.cpp), so that a regression shows up in
+    // CI rather than as an OSS-Fuzz report: anything from_msgpack() returns
+    // (j1) can be serialized, parsed back (j2), and serialized again to
+    // reproduce the exact bytes.
+    for (const auto& j0 : utils::round_trip_corpus::values())
+    {
+        json j1;
+        try
+        {
+            // turn the corpus value into a value as from_msgpack() returns it
+            j1 = json::from_msgpack(json::to_msgpack(j0));
+        }
+        catch (const json::exception&)
+        {
+            // the fuzzer driver only ever sees values from_msgpack() actually
+            // produced, so skip corpus values that do not survive the
+            // round trip here, too
+            continue;
+        }
+
+        INFO("j1 = " << j1.dump());
+        const std::vector<std::uint8_t> vec = json::to_msgpack(j1);
+        json j2;
+        // anything the library writes must be parsable by the library
+        REQUIRE_NOTHROW(j2 = json::from_msgpack(vec));
+        CHECK(json::to_msgpack(j2) == vec);
+    }
+}
+
 TEST_CASE("MessagePack roundtrips" * doctest::skip())
 {
     SECTION("input from msgpack-python")
@@ -2474,4 +2432,61 @@ TEST_CASE("MessagePack lengths beyond UINT32_MAX cannot be serialized")
 #endif
     }
 #endif
+}
+
+TEST_CASE("MessagePack numbers use the active union member (see #5644)")
+{
+    // when number_integer_t is narrower than number_unsigned_t, to_msgpack()
+    // used to read the union member that was not the active one, writing
+    // wrong bytes for some values; std::int64_t/std::uint64_t (the default
+    // types, where both members have the same width) were not affected
+    using int32_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int32_t, std::uint64_t, double>;
+    using int16_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int16_t, std::uint64_t, double>;
+
+    SECTION("number_integer_t = std::int32_t")
+    {
+        SECTION("6442450944 (uint 64; the low 32 bits used to be sign-extended)")
+        {
+            const int32_json j = 6442450944ULL;
+            CHECK(j.is_number_unsigned());
+
+            std::vector<uint8_t> const expected{0xcf, 0x00, 0x00, 0x00, 0x01, 0x80, 0x00, 0x00, 0x00};
+            const auto result = int32_json::to_msgpack(j);
+            CHECK(result == expected);
+            CHECK(int32_json::from_msgpack(result) == j);
+        }
+
+        SECTION("4294967496 (uint 64; the low 32 bits used to be the whole value)")
+        {
+            const int32_json j = 4294967496ULL;
+            CHECK(j.is_number_unsigned());
+
+            std::vector<uint8_t> const expected{0xcf, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0xc8};
+            const auto result = int32_json::to_msgpack(j);
+            CHECK(result == expected);
+            CHECK(int32_json::from_msgpack(result) == j);
+        }
+    }
+
+    SECTION("number_integer_t = std::int16_t, 98304 (uint 32)")
+    {
+        const int16_json j = 98304ULL;
+        CHECK(j.is_number_unsigned());
+
+        std::vector<uint8_t> const expected{0xce, 0x00, 0x01, 0x80, 0x00};
+        const auto result = int16_json::to_msgpack(j);
+        CHECK(result == expected);
+        CHECK(int16_json::from_msgpack(result) == j);
+    }
+
+    SECTION("default types (std::int64_t/std::uint64_t) are unaffected")
+    {
+        const json j = 4294967496ULL;
+        CHECK(j.is_number_unsigned());
+
+        std::vector<uint8_t> const expected{0xcf, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0xc8};
+        const auto result = json::to_msgpack(j);
+        CHECK(result == expected);
+        CHECK(json::from_msgpack(result) == j);
+    }
 }

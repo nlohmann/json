@@ -52,6 +52,14 @@ This is equivalent to Python's `dict.get(key, default)`.
     - Unlike [`operator[]`](operator[].md), this function does not implicitly add an element to the position defined by
      `key`/`ptr` key. This function is furthermore also applicable to const objects.
 
+!!! note "Integer keys"
+
+    Calling this function with an integer `key` argument (for example, `#!cpp value(0, 1)`) does not compile in
+    C++11, where `object_comparator_t` is not transparent: such an argument would otherwise implicitly convert to a
+    null `#!cpp const char*` and, from there, cause undefined behavior when constructing a `#!cpp std::string` for the
+    object key. To access an array element with a default value, use [`at`](at.md) together with a `#!cpp try`/`#!cpp
+    catch` block, or compare against [`size`](size.md) instead.
+
 ## Template parameters
 
 `KeyType`
@@ -133,6 +141,18 @@ changes to any JSON value.
     --8<-- "examples/value__return_type.output"
     ```
 
+!!! warning "Deprecation"
+
+    Overload (3) also accepts a [`json_pointer`](../json_pointer/index.md) whose template argument is a `basic_json`
+    specialization (e.g., `nlohmann::json_pointer<nlohmann::json>`) instead of a string type. This is deprecated since
+    version 3.11.0 and will be removed in a future major version; use `basic_json::json_pointer` (for `json`,
+    `nlohmann::json_pointer<std::string>`) instead.
+
+    You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated
+    function.
+
+    See the [migration guide](../../integration/migration_guide.md#json-pointers) for how to update existing code.
+
 ## Examples
 
 ??? example "Example: (1) access specified object element with default value"
@@ -177,6 +197,21 @@ changes to any JSON value.
     --8<-- "examples/value__json_ptr.output"
     ```
 
+??? example "Example: (1) type_error.302 and type_error.306 exceptions"
+
+    The example below shows how `value()` throws `type_error.302` when the default value's type does not match the type
+    of the stored value, and `type_error.306` when `value()` is called on a JSON value that is not an object.
+
+    ```cpp
+    --8<-- "examples/value__exception.cpp"
+    ```
+
+    Output:
+
+    ```json
+    --8<-- "examples/value__exception.output"
+    ```
+
 ## See also
 
 - see [`at`](at.md) for access by reference with range checking
@@ -184,8 +219,12 @@ changes to any JSON value.
 
 ## Version history
 
-1. Added in version 1.0.0. Changed parameter `default_value` type from `const ValueType&` to `ValueType&&` in version 3.11.0.
-2. Added in version 3.11.0. Made `ValueType` the first template parameter in version 3.11.2.
+1. Added in version 1.0.0. Changed parameter `default_value` type from `const ValueType&` to `ValueType&&` in version
+   3.11.0. Deleted overload for integral key types added in version 3.13.0 to reject such calls at compile time
+   instead of causing undefined behavior at runtime.
+2. Added in version 3.11.0. Made `ValueType` the first template parameter in version 3.11.2. Fixed in version 3.13.0
+   to consistently accept `std::string_view`-convertible keys, as already supported by
+   [`operator[]`](operator[].md), [`at`](at.md), [`find`](find.md), and other lookup functions.
 3. Added in version 2.0.2. Extended to work with arrays in version 3.13.0, including fixing an issue where resolving
    `ptr` through an array unexpectedly threw `out_of_range` instead of returning the resolved element (or
    `default_value`, as documented).

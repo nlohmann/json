@@ -11,8 +11,7 @@
 
 #include <cstdint> // int64_t, uint64_t
 #include <map> // map
-#include <memory> // allocator
-#include <string> // string
+#include <string> // allocator, string
 #include <vector> // vector
 
 #include <nlohmann/detail/abi_macros.hpp>
@@ -32,7 +31,7 @@ This serializer ignores the template arguments and uses ADL
 for serialization.
 */
 template<typename T = void, typename SFINAE = void>
-struct adl_serializer;
+struct adl_serializer; // IWYU pragma: keep
 
 /// a class to store JSON values
 /// @sa https://json.nlohmann.me/api/basic_json/
@@ -48,12 +47,12 @@ template<template<typename U, typename V, typename... Args> class ObjectType =
          adl_serializer,
          class BinaryType = std::vector<std::uint8_t>, // cppcheck-suppress syntaxError
          class CustomBaseClass = void>
-class basic_json;
+class basic_json; // IWYU pragma: keep
 
 /// @brief JSON Pointer defines a string syntax for identifying a specific value within a JSON document
 /// @sa https://json.nlohmann.me/api/json_pointer/
 template<typename RefStringType>
-class json_pointer;
+class json_pointer; // IWYU pragma: keep
 
 /*!
 @brief default specialization
@@ -64,7 +63,7 @@ using json = basic_json<>;
 /// @brief a minimal map-like container that preserves insertion order
 /// @sa https://json.nlohmann.me/api/ordered_map/
 template<class Key, class T, class IgnoredLess, class Allocator>
-struct ordered_map;
+struct ordered_map; // IWYU pragma: keep
 
 /// @brief specialization that maintains the insertion order of object keys
 /// @sa https://json.nlohmann.me/api/ordered_json/

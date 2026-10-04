@@ -1,0 +1,1 @@
+[json.exception.out_of_range.415] subtype 300 is too large for the MessagePack ext type (max 255)

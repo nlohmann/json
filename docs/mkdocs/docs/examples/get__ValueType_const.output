@@ -4,8 +4,8 @@
 Hello, world!
 1 2 3 4 5 
 
-number: {"floating-point":17.23,"integer":42}
-null: null
-string: "Hello, world!"
-boolean: true
 array: [1,2,3,4,5]
+boolean: true
+null: null
+number: {"floating-point":17.23,"integer":42}
+string: "Hello, world!"

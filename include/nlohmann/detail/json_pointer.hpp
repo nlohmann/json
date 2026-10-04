@@ -26,6 +26,7 @@
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/string_escape.hpp>
+#include <nlohmann/detail/string_utils.hpp>
 #include <nlohmann/detail/value_t.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -77,7 +78,7 @@ class json_pointer
     }
 
     /// @brief return a string representation of the JSON pointer
-    /// @sa https://json.nlohmann.me/api/json_pointer/operator_string/
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_string_t/
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, to_string())
     operator string_t() const
     {
@@ -86,7 +87,7 @@ class json_pointer
 
 #ifndef JSON_NO_IO
     /// @brief write string representation of the JSON pointer to stream
-    /// @sa https://json.nlohmann.me/api/basic_json/operator_ltlt/
+    /// @sa https://json.nlohmann.me/api/operator_ltlt/
     friend std::ostream& operator<<(std::ostream& o, const json_pointer& ptr)
     {
         o << ptr.to_string();
@@ -116,7 +117,7 @@ class json_pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slasheq/
     json_pointer& operator/=(std::size_t array_idx)
     {
-        return *this /= std::to_string(array_idx);
+        return *this /= detail::to_string<string_t>(array_idx);
     }
 
     /// @brief create a new JSON pointer by appending the right JSON pointer at the end of the left JSON pointer
@@ -277,11 +278,11 @@ class json_pointer
             JSON_THROW(detail::out_of_range::create(404, detail::concat("unresolved reference token '", s, "'"), nullptr));
         }
 
-        // only triggered on special platforms (like 32bit), see also
-        // https://github.com/nlohmann/json/pull/2203
+        // the index does not fit into size_type; on 64-bit platforms this is
+        // only SIZE_MAX itself (see #2203 and #5395)
         if (res >= static_cast<unsigned long long>((std::numeric_limits<size_type>::max)()))  // NOLINT(runtime/int)
         {
-            JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));   // LCOV_EXCL_LINE
+            JSON_THROW(detail::out_of_range::create(410, detail::concat("array index ", s, " exceeds size_type"), nullptr));
         }
 
         return static_cast<size_type>(res);
@@ -315,7 +316,7 @@ class json_pointer
     /*!
     @brief create and return a reference to the pointed to value
 
-    @complexity Linear in the number of reference tokens.
+    Complexity: Linear in the number of reference tokens.
 
     @throw parse_error.106 if an array index begins with '0'
     @throw parse_error.109 if array index is not a number
@@ -402,7 +403,7 @@ class json_pointer
 
     @return reference to the JSON value pointed to by the JSON pointer
 
-    @complexity Linear in the length of the JSON pointer.
+    Complexity: Linear in the length of the JSON pointer.
 
     @throw parse_error.106   if an array index begins with '0'
     @throw parse_error.109   if an array index was not a number
@@ -535,6 +536,10 @@ class json_pointer
     @return const reference to the JSON value pointed to by the JSON
     pointer
 
+    @pre Every object key and array index the pointer refers to exists.
+         Like the const operator[] for keys and indices, a missing one is
+         undefined behavior, guarded by a runtime assertion.
+
     @throw parse_error.106   if an array index begins with '0'
     @throw parse_error.109   if an array index was not a number
     @throw out_of_range.402  if the array index '-' is used
@@ -549,7 +554,8 @@ class json_pointer
             {
                 case detail::value_t::object:
                 {
-                    // use unchecked object access
+                    // use unchecked object access; the const operator[]
+                    // asserts that the key exists
                     ptr = &ptr->operator[](reference_token);
                     break;
                 }
@@ -562,7 +568,8 @@ class json_pointer
                         JSON_THROW(detail::out_of_range::create(402, detail::concat("array index '-' (", std::to_string(ptr->m_data.m_value.array->size()), ") is out of range"), ptr));
                     }
 
-                    // use unchecked array access
+                    // use unchecked array access; the const operator[]
+                    // asserts that the index exists
                     ptr = &ptr->operator[](array_index<BasicJsonType>(reference_token));
                     break;
                 }
@@ -678,19 +685,29 @@ class json_pointer
                         return nullptr;
                     }
 
-                    // may throw parse_error.106/109 for a malformed index; an
-                    // index that is syntactically valid but cannot be
-                    // represented (out_of_range.404/410) is treated like an
-                    // out-of-range index below
-                    typename BasicJsonType::size_type idx{};
-                    JSON_TRY
+                    // tokens that array_index() rejects with parse_error.106/109
+                    // are passed on to it; all other tokens that it would reject
+                    // with out_of_range.404/410 are detected here, so that this
+                    // also works without exceptions
+                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() > 1 && !(reference_token[0] >= '1' && reference_token[0] <= '9')))
                     {
-                        idx = array_index<BasicJsonType>(reference_token);
+                        static_cast<void>(array_index<BasicJsonType>(reference_token)); // throws parse_error.106/109
                     }
-                    JSON_INTERNAL_CATCH (detail::out_of_range&)
+                    if (JSON_HEDLEY_UNLIKELY(reference_token.empty() || !std::all_of(reference_token.begin(), reference_token.end(), [](const char c)
+                {
+                    return c >= '0' && c <= '9';
+                })))
                     {
                         return nullptr;
                     }
+                    errno = 0; // strtoull() does not reset errno on success
+                    char* p_end = nullptr; // NOLINT(misc-const-correctness)
+                    const unsigned long long magnitude = std::strtoull(reference_token.data(), &p_end, 10); // NOLINT(runtime/int)
+                    if (JSON_HEDLEY_UNLIKELY(errno == ERANGE || magnitude >= static_cast<unsigned long long>((std::numeric_limits<typename BasicJsonType::size_type>::max)()))) // NOLINT(runtime/int)
+                    {
+                        return nullptr;
+                    }
+                    const auto idx = static_cast<typename BasicJsonType::size_type>(magnitude);
 
                     if (JSON_HEDLEY_UNLIKELY(idx >= ptr->m_data.m_value.array->size()))
                     {
@@ -746,7 +763,13 @@ class json_pointer
                         // "-" always fails the range check
                         return false;
                     }
-                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() == 1 && !("0" <= reference_token && reference_token <= "9")))
+                    if (JSON_HEDLEY_UNLIKELY(reference_token.empty()))
+                    {
+                        // an empty reference token is not an array index; array_index()
+                        // would throw out_of_range.404 -- contains() must not throw (see #5395)
+                        return false;
+                    }
+                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() == 1 && !('0' <= reference_token[0] && reference_token[0] <= '9')))
                     {
                         // invalid char
                         return false;
@@ -774,7 +797,7 @@ class json_pointer
                     // not throw (see #5395), so such a reference token is treated as "not found"
                     errno = 0; // strtoull() does not reset errno on success
                     char* p_end = nullptr; // NOLINT(misc-const-correctness)
-                    const unsigned long long magnitude = std::strtoull(reference_token.c_str(), &p_end, 10); // NOLINT(runtime/int)
+                    const unsigned long long magnitude = std::strtoull(reference_token.data(), &p_end, 10); // NOLINT(runtime/int)
                     if (JSON_HEDLEY_UNLIKELY(errno == ERANGE // the value exceeds ULLONG_MAX
                                              || magnitude >= static_cast<unsigned long long>((std::numeric_limits<typename BasicJsonType::size_type>::max)()))) // NOLINT(runtime/int)
                     {
@@ -1092,7 +1115,8 @@ class json_pointer
     friend bool operator!=(const StringType& lhs,
                            const json_pointer<RefStringTypeRhs>& rhs);
 
-    /// @brief compares two JSON pointer for less-than
+    /// @brief compares two JSON pointers for less-than
+    /// @sa https://json.nlohmann.me/api/json_pointer/operator_spaceship/
     template<typename RefStringTypeLhs, typename RefStringTypeRhs>
     // NOLINTNEXTLINE(readability-redundant-declaration)
     friend bool operator<(const json_pointer<RefStringTypeLhs>& lhs,

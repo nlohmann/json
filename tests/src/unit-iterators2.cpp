@@ -893,8 +893,6 @@ TEST_CASE("iterators 2")
             CHECK(std::ranges::input_range<items_type>);
         }
 
-        // libstdc++ algorithms don't work with Clang 15 (04/2022)
-#if !DOCTEST_CLANG || (DOCTEST_CLANG && defined(__GLIBCXX__))
         SECTION("algorithms")
         {
             SECTION("copy")
@@ -929,11 +927,7 @@ TEST_CASE("iterators 2")
                 CHECK(*it == 2);
             }
         }
-#endif
 
-        // libstdc++ views don't work with Clang 15 (04/2022)
-        // libc++ hides limited ranges implementation behind guard macro
-#if !(DOCTEST_CLANG && (defined(__GLIBCXX__) || defined(_LIBCPP_HAS_NO_INCOMPLETE_RANGES)))
         SECTION("views")
         {
             SECTION("reverse")
@@ -966,7 +960,6 @@ TEST_CASE("iterators 2")
                 CHECK(j_transformed == j_expected);
             }
         }
-#endif
     }
 #endif
 }

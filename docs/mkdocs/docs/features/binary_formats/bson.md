@@ -48,7 +48,7 @@ The library uses the following mapping from JSON values types to BSON types:
     As a result, serializing and deserializing a JSON object containing such a value produces a different JSON object,
     even though the binary data is unchanged.
 
-??? example
+??? example "Example: serialize a JSON value to BSON"
 
     ```cpp
     --8<-- "examples/to_bson.cpp"
@@ -118,7 +118,7 @@ The library maps BSON record types to JSON value types as follows:
     (key) names and `binary` values (type `0x05`) are unaffected and are never validated, since they are read
     byte-by-byte as a C string, or are not required to hold text, respectively.
 
-??? example
+??? example "Example: deserialize a JSON value from BSON"
 
     ```cpp
     --8<-- "examples/from_bson.cpp"

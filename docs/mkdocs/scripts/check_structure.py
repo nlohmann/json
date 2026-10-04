@@ -4,6 +4,7 @@ import glob
 import os.path
 import re
 import sys
+import urllib.parse
 
 import yaml
 
@@ -79,9 +80,9 @@ def check_structure() -> None:
                     report("whitespace/line_length", f"{file}:{lineno+1} ({current_section})", f"line is too long ({len(line)} vs. 160 chars)")
 
                 # sections in `<!-- NOLINT -->` comments are treated as present
-                if line.startswith("<!-- NOLINT"):
-                    current_section = line.strip("<!-- NOLINT")
-                    current_section = current_section.strip(" -->")
+                nolint_match = re.match(r"<!--\s*NOLINT\s+(.*?)\s*-->", line)
+                if nolint_match:
+                    current_section = nolint_match.group(1)
                     existing_sections.append(current_section)
 
                 # check if sections are correct
@@ -97,7 +98,7 @@ def check_structure() -> None:
                             if len(unexpected):
                                 report("style/numbering", f"{file}:{lineno} ({current_section})", f'unexpected overloads: {", ".join([f"({x})" for x in unexpected])}')
 
-                    current_section = line.strip("## ")
+                    current_section = line[3:]
                     existing_sections.append(current_section)
 
                     if current_section in expected_sections:
@@ -141,7 +142,7 @@ def check_structure() -> None:
                 # check that non-example admonitions have titles
                 untitled_admonition = re.match(r"^(\?\?\?|!!!) ([^ ]+)$", line)
                 if untitled_admonition and untitled_admonition.group(2) != "example":
-                    report("style/admonition_title", f"{file}:{lineno} ({current_section})", f'"{untitled_admonition.group(2)}" admonitions should have a title')
+                    report("style/admonition_title", f"{file}:{lineno+1} ({current_section})", f'"{untitled_admonition.group(2)}" admonitions should have a title')
 
                 previous_line = line
 
@@ -152,7 +153,7 @@ def check_structure() -> None:
 
 
 def check_examples() -> None:
-    example_files = sorted(glob.glob("../../examples/*.cpp"))
+    example_files = sorted(glob.glob("examples/*.cpp"))
     markdown_files = sorted(glob.glob("**/*.md", recursive=True))
 
     # check if every example file is used in at least one markdown file
@@ -211,11 +212,122 @@ def check_links() -> None:
             report("nav/duplicate_files", "mkdocs.yml", f'file "{duplicate_file}" is linked with multiple keys in "nav": {file_list_str}; only one is rendered properly, see #4564')
 
 
+FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
+INLINE_CODE_RE = re.compile(r"(`+).+?\1")
+
+
+def markdown_lines(file):
+    """Yield (lineno, line) for all lines outside fenced code blocks."""
+    fence = None
+    with open(file, encoding="utf-8") as content:
+        for lineno, line in enumerate(content, 1):
+            line = line.rstrip("\n")
+            match = FENCE_RE.match(line)
+            if fence is None:
+                if match:
+                    fence = match.group(1)
+                else:
+                    yield lineno, line
+            elif match and line.strip() == match.group(1) and match.group(1)[0] == fence[0] \
+                    and len(match.group(1)) >= len(fence):
+                fence = None
+
+
+def check_example_titles() -> None:
+    """On API pages with more than one example, every example needs a title of the form "Example: ..."."""
+    example_re = re.compile(r'^\s*(?:\?\?\?\+?|!!!) example(?: "(.*)")?\s*$')
+    for file in sorted(glob.glob("api/**/*.md", recursive=True)):
+        examples = [(lineno, m.group(1)) for lineno, line in markdown_lines(file) if (m := example_re.match(line))]
+        if len(examples) < 2:
+            continue
+        for lineno, title in examples:
+            if title is None or not title.startswith("Example: "):
+                report("style/example_title", f"{file}:{lineno}",
+                       f'pages with several examples need titles like "Example: ..." (found: {title!r})')
+
+
+def check_heading_levels() -> None:
+    """Headings start at level 1 and never skip a level."""
+    heading_re = re.compile(r"^(#{1,6})\s|^<h([1-6])[\s>]")
+    for file in sorted(glob.glob("**/*.md", recursive=True)):
+        previous = 0
+        for lineno, line in markdown_lines(file):
+            match = heading_re.match(line)
+            if not match:
+                continue
+            level = len(match.group(1)) if match.group(1) else int(match.group(2))
+            if previous == 0 and level != 1:
+                report("structure/heading_level", f"{file}:{lineno}", f"first heading should have level 1, not {level}")
+            elif level > previous + 1 and previous != 0:
+                report("structure/heading_level", f"{file}:{lineno}", f"heading level jumps from {previous} to {level}")
+            previous = level
+
+
+def check_image_alt_text() -> None:
+    """Images need an alternative text."""
+    empty_alt_re = re.compile(r"!\[\s*\][(\[]")
+    img_re = re.compile(r"<img\b[^>]*>", re.IGNORECASE)
+    alt_re = re.compile(r'\balt\s*=\s*"[^"]*\S[^"]*"', re.IGNORECASE)
+    for file in sorted(glob.glob("**/*.md", recursive=True)):
+        for lineno, line in markdown_lines(file):
+            line = INLINE_CODE_RE.sub("", line)
+            if empty_alt_re.search(line) or any(not alt_re.search(tag) for tag in img_re.findall(line)):
+                report("style/image_alt_text", f"{file}:{lineno}", "image without alternative text")
+
+
+def check_header_links() -> None:
+    """Links to the documentation in the library's headers point to existing pages."""
+    url_re = re.compile(r"https://json\.nlohmann\.me/([^\s#)>\"']*)")
+    for header in sorted(glob.glob("../../../include/nlohmann/**/*.hpp", recursive=True)):
+        with open(header, encoding="utf-8") as content:
+            for lineno, line in enumerate(content, 1):
+                for match in url_re.finditer(line):
+                    path = urllib.parse.unquote(match.group(1)).strip("/")
+                    if path and not (os.path.isfile(f"{path}.md") or os.path.isfile(f"{path}/index.md")):
+                        report("links/header_link", f"{os.path.relpath(header, '../../..')}:{lineno}",
+                               f'link to "{match.group(0)}" does not point to a documentation page')
+
+
+def check_docset() -> None:
+    """Every API page and every macro has an entry in the docset index; no entry points to a missing page."""
+    entry_re = re.compile(r"VALUES \('((?:[^']|'')*)', '(\w+)', '([^']*)'\);")
+    names_by_path = {}
+    with open("../../docset/docSet.sql", encoding="utf-8") as sql:
+        for name, _, path in entry_re.findall(sql.read()):
+            names_by_path.setdefault(path, set()).add(name.replace("''", "'"))
+
+    def to_path(page):
+        if os.path.basename(page) == "index.md":
+            return page[:-len("index.md")] + "index.html"
+        return page[:-len(".md")] + "/index.html"
+
+    pages = sorted(glob.glob("**/*.md", recursive=True))
+    for path in sorted(set(names_by_path) - {to_path(p) for p in pages}):
+        report("docset/stale_entry", "../../docset/docSet.sql", f'entry "{path}" has no documentation page')
+    for page in (p for p in pages if p.startswith("api/")):
+        names = names_by_path.get(to_path(page))
+        if not names:
+            report("docset/missing_entry", page, "page has no entry in docs/docset/docSet.sql")
+        elif page.startswith("api/macros/") and os.path.basename(page) != "index.md":
+            with open(page, encoding="utf-8") as content:
+                text = content.read()
+            match = re.search(r"^# (.+)$", text, re.MULTILINE) or re.search(r"<h1>(.*?)</h1>", text, re.DOTALL)
+            title = re.sub(r"<[^>]+>|\s+", " ", match.group(1))
+            for macro in filter(None, (x.strip() for x in re.split(r"[,/]", title))):
+                if macro not in names:
+                    report("docset/missing_macro", page, f'macro "{macro}" has no entry in docs/docset/docSet.sql')
+
+
 if __name__ == "__main__":
     print(120 * "-")
     check_structure()
     check_examples()
     check_links()
+    check_example_titles()
+    check_heading_levels()
+    check_image_alt_text()
+    check_header_links()
+    check_docset()
     print(120 * "-")
 
     if warnings > 0:

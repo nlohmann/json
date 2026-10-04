@@ -27,8 +27,17 @@ The function can throw the following exceptions:
 - Throws [`type_error.315`](../../home/exceptions.md#jsonexceptiontype_error315) if object values are not primitive
 - Throws [`type_error.313`](../../home/exceptions.md#jsonexceptiontype_error313) if a key (JSON pointer) leads to a
   conflicting nesting; example: `"invalid value to unflatten"`
+- Throws [`parse_error.106`](../../home/exceptions.md#jsonexceptionparse_error106) if an array index in a key begins
+  with '0'; example: `"array index '01' must not begin with '0'"`
+- Throws [`parse_error.107`](../../home/exceptions.md#jsonexceptionparse_error107) if a key is not empty and does not
+  begin with a slash (`/`); example: `"JSON pointer must be empty or begin with '/' - was: 'a'"`
+- Throws [`parse_error.108`](../../home/exceptions.md#jsonexceptionparse_error108) if a tilde (`~`) in a key is not
+  followed by `0` or `1`; example: `"escape character '~' must be followed with '0' or '1'"`
 - Throws [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) if an array index in a key is not a
   number; example: `"array index 'one' is not a number"`
+- Throws [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) if a level becomes an array
+  (because one of its keys is `0`) and another key at that level cannot be an array index; example:
+  `"unresolved reference token 'x'"`
 
 ## Complexity
 

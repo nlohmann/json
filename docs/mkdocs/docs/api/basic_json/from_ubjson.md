@@ -124,3 +124,5 @@ Linear in the size of the input.
 
     You should be warned by your compiler with a `-Wdeprecated-declarations` warning if you are using a deprecated
     function.
+
+    See the [migration guide](../../integration/migration_guide.md#parsing) for how to update existing code.

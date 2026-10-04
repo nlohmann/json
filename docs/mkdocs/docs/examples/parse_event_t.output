@@ -1,0 +1,10 @@
+0 object_start
+1 key
+1 value
+1 key
+1 array_start
+2 value
+2 value
+1 array_end
+0 object_end
+{"numbers":[1,2],"pi":3.141}

@@ -195,13 +195,6 @@
     #define JSON_NO_THREAD_LOCAL 1
 #endif
 
-// disable documentation warnings on clang
-#if defined(__clang__)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wdocumentation"
-    #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
-#endif
-
 // allow disabling exceptions
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
     #define JSON_THROW(exception) throw exception
@@ -260,7 +253,7 @@
     {                                                                                           \
         /* NOLINTNEXTLINE(modernize-type-traits) we use C++11 */                                \
         static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");          \
-        /* NOLINTNEXTLINE(modernize-avoid-c-arrays) we don't want to depend on <array> */       \
+        /* NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) we don't want to depend on <array> */ \
         static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                     \
         auto it = std::find_if(std::begin(m), std::end(m),                                      \
                                [e](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool  \
@@ -274,7 +267,7 @@
     {                                                                                           \
         /* NOLINTNEXTLINE(modernize-type-traits) we use C++11 */                                \
         static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");          \
-        /* NOLINTNEXTLINE(modernize-avoid-c-arrays) we don't want to depend on <array> */       \
+        /* NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) we don't want to depend on <array> */ \
         static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                     \
         auto it = std::find_if(std::begin(m), std::end(m),                                      \
                                [&j](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool \
@@ -305,7 +298,7 @@ void templated_json_throw(ExceptionType exception)
 @brief macro to briefly define a mapping between an enum and JSON with exception
        on invalid input
 @def NLOHMANN_JSON_SERIALIZE_ENUM_STRICT
-@since version 3.12.0
+@since version 3.13.0
 */
 #define NLOHMANN_JSON_SERIALIZE_ENUM_STRICT(ENUM_TYPE, ...)                                     \
     template<typename BasicJsonType>                                                            \
@@ -313,7 +306,7 @@ void templated_json_throw(ExceptionType exception)
     {                                                                                           \
         /* NOLINTNEXTLINE(modernize-type-traits) we use C++11 */                                \
         static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");          \
-        /* NOLINTNEXTLINE(modernize-avoid-c-arrays) we don't want to depend on <array> */       \
+        /* NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) we don't want to depend on <array> */ \
         static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                     \
         auto it = std::find_if(std::begin(m), std::end(m),                                      \
                                [e](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool  \
@@ -328,7 +321,7 @@ void templated_json_throw(ExceptionType exception)
     {                                                                                           \
         /* NOLINTNEXTLINE(modernize-type-traits) we use C++11 */                                \
         static_assert(std::is_enum<ENUM_TYPE>::value, #ENUM_TYPE " must be an enum!");          \
-        /* NOLINTNEXTLINE(modernize-avoid-c-arrays) we don't want to depend on <array> */       \
+        /* NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays) we don't want to depend on <array> */ \
         static const std::pair<ENUM_TYPE, BasicJsonType> m[] = __VA_ARGS__;                     \
         auto it = std::find_if(std::begin(m), std::end(m),                                      \
                                [&j](const std::pair<ENUM_TYPE, BasicJsonType>& ej_pair) -> bool \
@@ -336,7 +329,7 @@ void templated_json_throw(ExceptionType exception)
             return ej_pair.second == j;                                                         \
         });                                                                                     \
         if (it != std::end(m)) e = it->first;                                                   \
-        else templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(410,"enum value out of range for " #ENUM_TYPE ": " + j.dump(), &j)); \
+        else templated_json_throw<nlohmann::detail::out_of_range>(nlohmann::detail::out_of_range::create(410, nlohmann::detail::concat("enum value out of range for " #ENUM_TYPE ": ", j.dump(-1, ' ', false, nlohmann::detail::error_handler_t::replace)), &j)); \
     }
 
 // Ugly macros to avoid uglier copy-paste when specializing basic_json. They
@@ -359,6 +352,7 @@ void templated_json_throw(ExceptionType exception)
 
 // Macros to simplify conversion from/to types
 
+// NLOHMANN_JSON_EXPAND to NLOHMANN_JSON_DOUBLE_PASTE63 are generated by tools/macro_builder (see its README.md)
 #define NLOHMANN_JSON_EXPAND( x ) x
 #define NLOHMANN_JSON_GET_MACRO(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40, _41, _42, _43, _44, _45, _46, _47, _48, _49, _50, _51, _52, _53, _54, _55, _56, _57, _58, _59, _60, _61, _62, _63, _64, NAME,...) NAME
 #define NLOHMANN_JSON_PASTE(...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_GET_MACRO(__VA_ARGS__, \
@@ -621,6 +615,10 @@ void templated_json_throw(ExceptionType exception)
 // arguments, so dispatching on Type,BaseType,member... directly would run out
 // one slot early and cap the derived-type macros at 62 members instead of the
 // 63 that NLOHMANN_JSON_PASTE supports.
+//
+// The slot table below (down to the closing NLOHMANN_JSON_TYPE_BODY_SENTINEL))
+// is generated by tools/macro_builder (see its README.md; run with the
+// "type_body" argument).
 #define NLOHMANN_JSON_TYPE_BODY(Prefix, ...) NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_GET_MACRO(__VA_ARGS__, \
         Prefix ## MEMBERS, Prefix ## MEMBERS, Prefix ## MEMBERS, Prefix ## MEMBERS, Prefix ## MEMBERS, Prefix ## MEMBERS, Prefix ## MEMBERS, Prefix ## MEMBERS, \
         Prefix ## MEMBERS, Prefix ## MEMBERS, Prefix ## MEMBERS, Prefix ## MEMBERS, Prefix ## MEMBERS, Prefix ## MEMBERS, Prefix ## MEMBERS, Prefix ## MEMBERS, \
@@ -916,6 +914,6 @@ void templated_json_throw(ExceptionType exception)
     #define JSON_DISABLE_ENUM_SERIALIZATION 0
 #endif
 
-#ifndef JSON_USE_GLOBAL_UDLS
-    #define JSON_USE_GLOBAL_UDLS 1
+#ifndef JSON_DISABLE_TUPLE_REFERENCE_CONVERSION
+    #define JSON_DISABLE_TUPLE_REFERENCE_CONVERSION 0
 #endif

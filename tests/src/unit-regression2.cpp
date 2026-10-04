@@ -18,6 +18,19 @@
 // for some reason including this after the json header leads to linker errors with VS 2017...
 #include <locale>
 
+// skip tests if JSON_DISABLE_TUPLE_REFERENCE_CONVERSION=1 (#2226)
+#if defined(JSON_DISABLE_TUPLE_REFERENCE_CONVERSION) && (JSON_DISABLE_TUPLE_REFERENCE_CONVERSION == 1)
+    #define SKIP_TESTS_FOR_TUPLE_REFERENCE_CONVERSION
+#endif
+
+// clang before 4 and GCC before 5 cannot create a std::tuple of basic_json
+// references at all, with or without JSON_DISABLE_TUPLE_REFERENCE_CONVERSION:
+// the tuple constructors make them instantiate basic_json's conversion operator
+// for libstdc++'s internal tuple bases, which fails hard
+#if (defined(__clang__) && __clang_major__ < 4) || (!defined(__clang__) && defined(__GNUC__) && __GNUC__ < 5)
+    #define SKIP_TESTS_FOR_JSON_REFERENCE_TUPLES
+#endif
+
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -28,6 +41,7 @@ using ordered_json = nlohmann::ordered_json;
 
 #include <cstdio>
 #include <list>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 
@@ -112,7 +126,7 @@ enum class for_1647
     two
 };
 
-// NOLINTNEXTLINE(misc-const-correctness,cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays): this is a false positive
+// NOLINTNEXTLINE(misc-const-correctness): this is a false positive
 NLOHMANN_JSON_SERIALIZE_ENUM(for_1647,
 {
     {for_1647::one, "one"},
@@ -200,28 +214,6 @@ struct adl_serializer<NonDefaultConstructible>
 }  // namespace nlohmann
 
 /////////////////////////////////////////////////////////////////////
-// for #2824
-/////////////////////////////////////////////////////////////////////
-
-class sax_no_exception : public nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type>
-{
-  public:
-    explicit sax_no_exception(json& j)
-        : nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type>(j, false)
-    {}
-
-    static bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& ex)
-    {
-        error_string = new std::string(ex.what());  // NOLINT(cppcoreguidelines-owning-memory)
-        return false;
-    }
-
-    static std::string* error_string;
-};
-
-std::string* sax_no_exception::error_string = nullptr;
-
-/////////////////////////////////////////////////////////////////////
 // for #2982
 /////////////////////////////////////////////////////////////////////
 
@@ -239,6 +231,52 @@ class my_allocator : public std::allocator<T>
     {
         using other = my_allocator<U>;
     };
+};
+
+/////////////////////////////////////////////////////////////////////
+// for #3669
+/////////////////////////////////////////////////////////////////////
+
+// mimics boost::optional's converting constructor, whose SFINAE check asks
+// whether T is constructible from const U&
+template<class T, class Arg>
+struct issue3669_is_constructible
+{
+    template<class T2, class A2, class = decltype(T2(std::declval<A2>()))>
+    static char test(int);
+    template<class, class>
+    static long test(...);
+    static constexpr bool value = sizeof(test<T, Arg>(0)) == 1;
+};
+
+template<class T>
+class issue3669_optional
+{
+  public:
+    issue3669_optional() = default;
+    template<class U>
+    issue3669_optional(const issue3669_optional<U>& /*unused*/, // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
+                       typename std::enable_if<issue3669_is_constructible<T, const U&>::value, bool>::type /*unused*/ = true) {}
+};
+
+class Issue3669Dummy
+{
+  public:
+    explicit Issue3669Dummy(const json& /*unused*/) {}
+};
+
+class Issue3669Holder
+{
+    issue3669_optional<Issue3669Dummy> d{};
+
+    // GCC < 11 (C++11/14) rejects a free to_json(json&, const Issue3669Holder&)
+    // here, because ADL for Issue3669Dummy finds it and closes an instantiation
+    // cycle; a hidden friend is only visible to ADL for Issue3669Holder
+    friend void to_json(json& j, const Issue3669Holder& h)
+    {
+        static_cast<void>(h.d); // silence -Wunused-private-field
+        j = "holder";
+    }
 };
 
 TEST_CASE("regression tests 2")
@@ -542,6 +580,20 @@ TEST_CASE("regression tests 2")
                       )));
     }
 
+#ifndef SKIP_TESTS_FOR_TUPLE_REFERENCE_CONVERSION
+    SECTION("issue #2226 - std::tuple dangling reference - implicit conversion")
+    {
+        // by default, a one-element tuple holding a json reference converts to
+        // a one-element array; JSON_DISABLE_TUPLE_REFERENCE_CONVERSION removes
+        // this conversion (see unit-disable-tuple-reference-conversion.cpp)
+        const json j = true;
+        CHECK(std::is_constructible<json, std::tuple<const json&>>::value);
+#ifndef SKIP_TESTS_FOR_JSON_REFERENCE_TUPLES
+        CHECK(json(std::forward_as_tuple(j)) == json::array({true}));
+#endif
+    }
+#endif
+
     SECTION("PR #2181 - regression bug with lvalue")
     {
         // see https://github.com/nlohmann/json/pull/2181#issuecomment-653326060
@@ -723,16 +775,6 @@ TEST_CASE("regression tests 2")
         }
     }
 
-    SECTION("issue #2824 - encoding of json::exception::what()")
-    {
-        json j;
-        sax_no_exception sax(j);
-
-        CHECK(!json::sax_parse("xyz", &sax));
-        CHECK(*sax_no_exception::error_string == "[json.exception.parse_error.101] parse error at line 1, column 1: syntax error while parsing value - invalid literal; last read: 'x'");
-        delete sax_no_exception::error_string;  // NOLINT(cppcoreguidelines-owning-memory)
-    }
-
     SECTION("issue #2825 - Properly constrain the basic_json conversion operator")
     {
         static_assert(std::is_copy_assignable<nlohmann::ordered_json>::value, "ordered_json must be copy assignable");
@@ -785,6 +827,15 @@ TEST_CASE("regression tests 2")
 #endif
     }
 #endif
+
+    SECTION("issue #3669 - invalid use of incomplete type with optional member and to_json")
+    {
+        const Issue3669Holder h{};
+        const Issue3669Holder h2(h); // NOLINT(performance-unnecessary-copy-initialization)
+        const json j = h2;
+        CHECK(j == "holder");
+    }
+
 }
 
 TEST_CASE("regression test - parser callback must not lose a duplicate key's prior value")
