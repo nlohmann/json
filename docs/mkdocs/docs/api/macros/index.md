@@ -58,6 +58,8 @@ header. See also the [macro overview page](../../features/macros.md).
 - [**JSON_DISABLE_ENUM_SERIALIZATION**](json_disable_enum_serialization.md) - switch off default serialization/deserialization functions for enums
 - [**JSON_DISABLE_TUPLE_REFERENCE_CONVERSION**](json_disable_tuple_reference_conversion.md) - switch off conversion from a one-element tuple of a JSON reference
 - [**JSON_USE_IMPLICIT_CONVERSIONS**](json_use_implicit_conversions.md) - control implicit conversions
+- [**JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS**](json_use_objects_for_enum_keyed_maps.md) - opt in to storing maps with enum
+  keys as objects
 
 ## Deprecated functions
 

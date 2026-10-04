@@ -23,6 +23,7 @@
 #include <valarray> // valarray
 #include <vector> // vector
 
+#include <nlohmann/detail/exceptions.hpp>
 #include <nlohmann/detail/iterators/iteration_proxy.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/std_fs.hpp>
@@ -385,6 +386,9 @@ template < typename BasicJsonType, typename CompatibleArrayType,
 #if JSON_HAS_RANGE_VIEW_CONVERSION
     && !is_compatible_range_view<CompatibleArrayType>::value
 #endif
+#if JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+    && !is_enum_keyed_map<CompatibleArrayType>::value
+#endif
                          ,
                          int > = 0 >
 inline void to_json(BasicJsonType& j, const CompatibleArrayType& arr)
@@ -437,6 +441,33 @@ inline void to_json(BasicJsonType& j, const CompatibleObjectType& obj)
 {
     external_constructor<value_t::object>::construct(j, obj);
 }
+
+#if JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
+// store a map with enum keys as an object, using the enum's own to_json for the
+// keys (e.g., from NLOHMANN_JSON_SERIALIZE_ENUM); without the macro, such maps
+// are stored as arrays of [key, value] pairs
+template < typename BasicJsonType, typename EnumKeyedMap,
+           enable_if_t < is_enum_keyed_map<EnumKeyedMap>::value&& !is_basic_json<EnumKeyedMap>::value, int > = 0 >
+inline void to_json(BasicJsonType& j, const EnumKeyedMap& map)
+{
+    typename BasicJsonType::object_t obj;
+    for (const auto& p : map)
+    {
+        BasicJsonType key = p.first;
+        if (JSON_HEDLEY_UNLIKELY(!key.is_string()))
+        {
+            JSON_THROW(type_error::create(302, concat("type must be string, but is ", key.type_name()), &key));
+        }
+
+        auto& key_string = *key.template get_ptr<typename BasicJsonType::string_t*>();
+        if (JSON_HEDLEY_UNLIKELY(!obj.emplace(key_string, BasicJsonType(p.second)).second))
+        {
+            JSON_THROW(type_error::create(318, concat("duplicate object key '", key_string, "'"), &key));
+        }
+    }
+    external_constructor<value_t::object>::construct(j, std::move(obj));
+}
+#endif
 
 template<typename BasicJsonType>
 inline void to_json(BasicJsonType& j, typename BasicJsonType::object_t&& obj)

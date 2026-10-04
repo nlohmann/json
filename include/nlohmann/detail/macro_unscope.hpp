@@ -44,6 +44,7 @@
     #undef JSON_STRICT_NUL_HANDLING
     #undef JSON_STRICT_BINARY_UTF8
     #undef JSON_DELETE_DEPRECATED_FUNCTIONS
+    #undef JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
 #endif
 
 #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>
