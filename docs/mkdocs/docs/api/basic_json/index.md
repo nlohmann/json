@@ -200,6 +200,7 @@ Direct access to the stored value of a JSON value.
 - [**get_ref**](get_ref.md) - get a reference value
 - [**operator ValueType**](operator_ValueType.md) - get a value
 - [**get_binary**](get_binary.md) - get a binary value
+- [**as_base_class**](as_base_class.md) - access the custom base class
 
 ### Element access
 

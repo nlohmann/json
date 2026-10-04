@@ -213,5 +213,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 1. Added in version 1.0.0. Added support for binary types in version 3.8.0.
 2. Added in version 1.0.0. Added support for binary types in version 3.8.0.
 3. Added in version 1.0.0.
-4. Added in version 3.11.0.
+4. Added in version 3.11.0. Fixed in version 3.13.0 to consistently accept `std::string_view`-convertible keys, as
+   already supported by [`operator[]`](operator[].md), [`at`](at.md), [`value`](value.md), and other lookup
+   functions.
 5. Added in version 1.0.0.
