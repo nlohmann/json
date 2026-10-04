@@ -19,6 +19,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('format_as', 'Function', 'api/
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::accept', 'Function', 'api/basic_json/accept/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::array', 'Function', 'api/basic_json/array/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::array_t', 'Type', 'api/basic_json/array_t/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::as_base_class', 'Method', 'api/basic_json/as_base_class/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::at', 'Method', 'api/basic_json/at/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::back', 'Method', 'api/basic_json/back/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('basic_json::basic_json', 'Constructor', 'api/basic_json/basic_json/index.html');
