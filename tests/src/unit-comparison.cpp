@@ -1020,3 +1020,51 @@ TEST_CASE("containers are compared element by element")
         }
     }
 }
+
+#if JSON_HAS_THREE_WAY_COMPARISON
+// JSON_HAS_CPP_20 (do not remove; see note at top of file)
+TEST_CASE("operator<=> of binary values with a different subtype does not depend on nesting depth")
+{
+    // #5654: std::vector<std::uint8_t>::operator<=>, which the binary type's
+    // own operator<=> uses, ignores the subtype that operator== checks. So a
+    // pair of binary values with the same bytes but a different subtype is
+    // unequal, yet <=>-equivalent - the same inconsistency between == and <=>
+    // that a NaN has. Within the nesting bound, an array compares itself
+    // with std::vector's own operator<=>, which treats an equivalent pair as
+    // undecided and lets the next element decide, same as
+    // std::lexicographical_compare_three_way does. Past the bound,
+    // compare_iteratively<true>() takes over and must classify the pair the
+    // same way, or the result of operator<=> - and of <, which C++20 derives
+    // from it - depends on how deeply the values are nested.
+    const json a = json::array({json::binary({1}, 1), 1});
+    const json b = json::array({json::binary({1}, 2), 2});
+
+    // the root inconsistency: unequal, yet <=>-equivalent
+    CHECK_FALSE(a[0] == b[0]);
+    CHECK((a[0] <=> b[0]) == std::partial_ordering::equivalent); // *NOPAD*
+
+    const auto deep = [](const json & j, const std::size_t depth)
+    {
+        json result = j;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            result = json::array({std::move(result)});
+        }
+        return result;
+    };
+
+    // 127 levels stay within nesting_depth_limit() (128); 128 and 200 do not,
+    // and must still agree with the levels that do
+    for (const std::size_t depth : std::vector<std::size_t> {0, 127, 128, 200})
+    {
+        CAPTURE(depth);
+        const json x = deep(a, depth);
+        const json y = deep(b, depth);
+        CHECK((x <=> y) == std::partial_ordering::less); // *NOPAD*
+        CHECK((y <=> x) == std::partial_ordering::greater); // *NOPAD*
+        CHECK(x < y);
+        CHECK(y > x);
+        CHECK_FALSE(y < x);
+    }
+}
+#endif
