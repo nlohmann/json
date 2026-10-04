@@ -104,6 +104,10 @@
     #define JSON_STRICT_NUL_HANDLING 0
 #endif
 
+#ifndef JSON_STRICT_BINARY_UTF8
+    #define JSON_STRICT_BINARY_UTF8 0
+#endif
+
 #if JSON_DIAGNOSTICS
     #define NLOHMANN_JSON_ABI_TAG_DIAGNOSTICS _diag
 #else
@@ -140,14 +144,20 @@
     #define NLOHMANN_JSON_ABI_TAG_STRICT_NUL_HANDLING
 #endif
 
+#if JSON_STRICT_BINARY_UTF8
+    #define NLOHMANN_JSON_ABI_TAG_STRICT_BINARY_UTF8 _sbu8
+#else
+    #define NLOHMANN_JSON_ABI_TAG_STRICT_BINARY_UTF8
+#endif
+
 #ifndef NLOHMANN_JSON_NAMESPACE_NO_VERSION
     #define NLOHMANN_JSON_NAMESPACE_NO_VERSION 0
 #endif
 
 // Construct the namespace ABI tags component
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f) json_abi ## a ## b ## c ## d ## e ## f
-#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d, e, f) \
-    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f)
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g) json_abi ## a ## b ## c ## d ## e ## f ## g
+#define NLOHMANN_JSON_ABI_TAGS_CONCAT(a, b, c, d, e, f, g) \
+    NLOHMANN_JSON_ABI_TAGS_CONCAT_EX(a, b, c, d, e, f, g)
 
 #define NLOHMANN_JSON_ABI_TAGS                                       \
     NLOHMANN_JSON_ABI_TAGS_CONCAT(                                   \
@@ -156,7 +166,8 @@
             NLOHMANN_JSON_ABI_TAG_DIAGNOSTIC_POSITIONS,              \
             NLOHMANN_JSON_ABI_TAG_BRACE_INIT_COPY_SEMANTICS,         \
             NLOHMANN_JSON_ABI_TAG_PRECISE_STREAM_POSITION,           \
-            NLOHMANN_JSON_ABI_TAG_STRICT_NUL_HANDLING)
+            NLOHMANN_JSON_ABI_TAG_STRICT_NUL_HANDLING,               \
+            NLOHMANN_JSON_ABI_TAG_STRICT_BINARY_UTF8)
 
 // Construct the namespace version component
 #define NLOHMANN_JSON_NAMESPACE_VERSION_CONCAT_EX(major, minor, patch) \
@@ -6151,6 +6162,59 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
+// #include <nlohmann/detail/output/error_handler.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.12.0
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
+
+
+// #include <nlohmann/detail/abi_macros.hpp>
+
+
+NLOHMANN_JSON_NAMESPACE_BEGIN
+namespace detail
+{
+
+/// how to treat decoding errors
+///
+/// @ref basic_json::dump uses this to decide what to do with ill-formed
+/// UTF-8 while escaping a string, and the binary writers (@ref
+/// basic_json::to_cbor, @ref basic_json::to_ubjson, @ref
+/// basic_json::to_bjdata, @ref basic_json::to_bson) use it the same way for
+/// string values and object keys. The binary readers (@ref
+/// basic_json::from_cbor, @ref basic_json::from_msgpack, @ref
+/// basic_json::from_ubjson, @ref basic_json::from_bjdata, @ref
+/// basic_json::from_bson) use it to decide whether to check text strings
+/// and object keys for well-formed UTF-8 at all, since none of those
+/// formats requires a decoder to do so.
+enum class error_handler_t
+{
+    strict,  ///< throw a type_error/parse_error exception in case of invalid UTF-8
+    replace, ///< replace invalid UTF-8 sequences with U+FFFD
+    ignore,  ///< ignore invalid UTF-8 sequences
+    keep     ///< keep invalid UTF-8 sequences unchanged
+};
+
+/// the default error handler of the CBOR, UBJSON, BJData, and BSON writers:
+/// error_handler_t::strict if JSON_STRICT_BINARY_UTF8 is enabled, otherwise
+/// error_handler_t::keep (the behavior before version 3.13.0)
+constexpr error_handler_t binary_writer_default_error_handler() noexcept
+{
+#if JSON_STRICT_BINARY_UTF8
+    return error_handler_t::strict;
+#else
+    return error_handler_t::keep;
+#endif
+}
+
+}  // namespace detail
+NLOHMANN_JSON_NAMESPACE_END
+
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -6252,13 +6316,14 @@ This is a single-byte step of a "shift-based" UTF-8 decoder originally
 written by Björn Hoehrmann. See
 http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
 
-The library checks UTF-8 well-formedness (RFC 3629, section 4) in four
+The library checks UTF-8 well-formedness (RFC 3629, section 4) in three
 places, which differ in speed, diagnostics, and how they read the input:
 
-- decode() and @ref is_valid_utf8 below: the serializer (to escape and, in
-  strict mode, reject ill-formed UTF-8 when dumping a string) and the CBOR,
-  MessagePack, BSON, UBJSON and BJData readers (to reject ill-formed UTF-8 in
-  text strings at decode time).
+- decode() below: the serializer, to escape and, in strict mode, reject
+  ill-formed UTF-8 when dumping a string. The CBOR, MessagePack, BSON,
+  UBJSON and BJData readers do not use it: none of those specs requires a
+  decoder to reject ill-formed UTF-8 in text strings, so the readers keep
+  the bytes as is and leave the check to dump() and the binary writers.
 - the per-lead-byte switch in lexer::scan_string(): JSON text, with a
   diagnostic for each kind of error.
 - validate_one_utf8() and valid_utf8_prefix() in string_scan.hpp: the lexer's
@@ -6314,19 +6379,19 @@ inline std::uint8_t decode(std::uint8_t& state, std::uint32_t& codep, const std:
 }
 
 /*!
-@brief check whether a string consists solely of valid UTF-8
+@brief check a string for well-formed UTF-8 (RFC 3629, section 4)
 
-Used by the CBOR/MessagePack/BSON/UBJSON binary readers to reject text
-strings that are not valid UTF-8 at decode time (RFC 8949 §3.1 and the
-MessagePack/BSON specifications all require text strings to be UTF-8), so
-that malformed input is caught immediately instead of only surfacing later
-as a type_error.316 when the resulting value is dumped.
+Used by the binary readers (CBOR, MessagePack, UBJSON, BJData, BSON) when an
+@ref error_handler_t other than `keep` is requested for a text string value
+or object key: none of those formats requires a decoder to reject ill-formed
+UTF-8 on its own, so the check is opt-in there, unlike the JSON lexer and the
+serializer's @ref decode -based escaping, which always run it.
 
 @param[in] s      the string to check
-@param[in] first  index of the first byte to check; the bytes before it are
-                  assumed to have been validated already and to end on a
-                  code point boundary
-@return whether @a s (from index @a first on) is valid UTF-8
+@param[in] first  the index to start checking at
+@return whether `s.substr(first)` is well-formed UTF-8
+
+@sa @ref decode
 */
 template<typename StringType>
 inline bool is_valid_utf8(const StringType& s, const std::size_t first = 0) noexcept
@@ -6344,6 +6409,102 @@ inline bool is_valid_utf8(const StringType& s, const std::size_t first = 0) noex
     }
 
     return state == UTF8_ACCEPT;
+}
+
+/*!
+@brief sanitize a string with ill-formed UTF-8 for @ref error_handler_t::replace or @ref error_handler_t::ignore
+
+Replaces every maximal ill-formed subsequence with U+FFFD (`replace`) or
+drops it (`ignore`), using exactly the same boundaries @ref
+serializer::dump_escaped_impl uses while escaping a string: a byte that does
+not extend the sequence started by the previous byte(s) is reread as the
+start of a new one, instead of being swallowed along with them.
+
+@pre @a error_handler is @ref error_handler_t::replace or @ref error_handler_t::ignore
+@note Well-formed input is copied through unchanged, including bytes (e.g.
+      control characters or quotes) that @ref serializer::dump_escaped_impl
+      would itself escape; this function only concerns itself with
+      well-formedness, not with producing valid JSON text.
+
+@param[in] s              the string to sanitize
+@param[in] error_handler  @ref error_handler_t::replace or @ref error_handler_t::ignore
+
+@return @a s with every ill-formed subsequence replaced or removed
+
+@sa @ref decode
+*/
+template<typename StringType>
+inline StringType sanitize_utf8(const StringType& s, const error_handler_t error_handler)
+{
+    JSON_ASSERT(error_handler == error_handler_t::replace || error_handler == error_handler_t::ignore);
+
+    StringType result;
+    result.reserve(s.size());
+
+    std::uint32_t codepoint = 0;
+    std::uint8_t state = UTF8_ACCEPT;
+    // length of result after the last accepted code point
+    std::size_t result_len_after_last_accept = 0;
+    // whether bytes of an as yet unresolved sequence were already appended
+    bool pending = false;
+
+    for (std::size_t i = 0; i < s.size(); ++i)
+    {
+        switch (decode(state, codepoint, static_cast<std::uint8_t>(s[i])))
+        {
+            case UTF8_ACCEPT: // decode found a well-formed code point
+            {
+                result.push_back(s[i]);
+                result_len_after_last_accept = result.size();
+                pending = false;
+                break;
+            }
+
+            case UTF8_REJECT: // decode found an ill-formed byte
+            {
+                // in case we saw this byte for the first time, read it again,
+                // because it may be fine for itself, just not for the
+                // sequence that came before it
+                if (pending)
+                {
+                    --i;
+                }
+
+                // drop the bytes of the ill-formed sequence buffered below
+                result.resize(result_len_after_last_accept);
+
+                if (error_handler == error_handler_t::replace)
+                {
+                    result.append("\xEF\xBF\xBD");
+                    result_len_after_last_accept = result.size();
+                }
+
+                pending = false;
+                state = UTF8_ACCEPT;
+                break;
+            }
+
+            default: // decode found yet incomplete multibyte code point
+            {
+                result.push_back(s[i]);
+                pending = true;
+                break;
+            }
+        }
+    }
+
+    // the string ended with an incomplete sequence
+    if (state != UTF8_ACCEPT)
+    {
+        result.resize(result_len_after_last_accept);
+
+        if (error_handler == error_handler_t::replace)
+        {
+            result.append("\xEF\xBF\xBD");
+        }
+    }
+
+    return result;
 }
 
 }  // namespace detail
@@ -13452,6 +13613,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/meta/type_traits.hpp>
 
+// #include <nlohmann/detail/output/error_handler.hpp>
+
 // #include <nlohmann/detail/string_concat.hpp>
 
 // #include <nlohmann/detail/string_utils.hpp>
@@ -13532,8 +13695,16 @@ class binary_reader
     @brief create a binary reader
 
     @param[in] adapter  input adapter to read from
+    @param[in] format   the binary format to parse
+    @param[in] error_handler  how to treat text strings and object keys that
+               are not well-formed UTF-8; none of the supported formats
+               requires a decoder to reject those, so the default is to
+               @ref error_handler_t::keep them unchanged, as every binary
+               reader did before this parameter existed
     */
-    explicit binary_reader(InputAdapterType&& adapter, const input_format_t format = input_format_t::json) noexcept : ia(std::move(adapter)), input_format(format)
+    explicit binary_reader(InputAdapterType&& adapter, const input_format_t format = input_format_t::json,
+                           const error_handler_t error_handler = error_handler_t::keep) noexcept
+        : ia(std::move(adapter)), input_format(format), error_handler(error_handler)
     {
         (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
     }
@@ -13852,7 +14023,7 @@ class binary_reader
     {
         if (get_bson_cstr_bulk(result, std::integral_constant<bool, bulk_scan> {}))
         {
-            return true;
+            return check_string_utf8(result, "key");
         }
 
         auto out = std::back_inserter(result);
@@ -13865,7 +14036,7 @@ class binary_reader
             }
             if (current == 0x00)
             {
-                return true;
+                return check_string_utf8(result, "key");
             }
             *out++ = static_cast<typename string_t::value_type>(current);
         }
@@ -13946,7 +14117,7 @@ class binary_reader
                                             "string"), nullptr));
         }
 
-        return true;
+        return check_string_utf8(result, "string");
     }
 
     /*!
@@ -14573,7 +14744,7 @@ class binary_reader
 
     @return whether string creation completed
     */
-    bool get_cbor_string(string_t& result)
+    bool get_cbor_string(string_t& result, const char* context = "string")
     {
         // number of indefinite-length strings that have been opened and not
         // closed yet. RFC 8949, Section 3.2.3 does not permit nesting them,
@@ -14603,7 +14774,7 @@ class binary_reader
             {
                 if (--open == 0)
                 {
-                    return true;
+                    return check_string_utf8(result, context);
                 }
                 get();
                 continue;
@@ -14616,7 +14787,7 @@ class binary_reader
 
             if (open == 0)
             {
-                return true;
+                return check_string_utf8(result, context);
             }
 
             get();
@@ -14640,7 +14811,7 @@ class binary_reader
         // EOF and major type 3 (text string) are left to get_cbor_string
         if (current == char_traits<char_type>::eof() || (static_cast<unsigned int>(current) & 0xE0u) == 0x60u)
         {
-            return get_cbor_string(result);
+            return get_cbor_string(result, "key");
         }
 
         const char* found = nullptr;
@@ -15428,7 +15599,7 @@ class binary_reader
 
     @return whether string creation completed
     */
-    bool get_msgpack_string(string_t& result)
+    bool get_msgpack_string(string_t& result, const char* context = "string")
     {
         if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::msgpack, "string")))
         {
@@ -15471,25 +15642,25 @@ class binary_reader
             case 0xBE:
             case 0xBF:
             {
-                return get_string(input_format_t::msgpack, static_cast<unsigned int>(current) & 0x1Fu, result);
+                return get_string(input_format_t::msgpack, static_cast<unsigned int>(current) & 0x1Fu, result) && check_string_utf8(result, context);
             }
 
             case 0xD9: // str 8
             {
                 std::uint8_t len{};
-                return get_number(input_format_t::msgpack, len) && get_string(input_format_t::msgpack, len, result);
+                return get_number(input_format_t::msgpack, len) && get_string(input_format_t::msgpack, len, result) && check_string_utf8(result, context);
             }
 
             case 0xDA: // str 16
             {
                 std::uint16_t len{};
-                return get_number(input_format_t::msgpack, len) && get_string(input_format_t::msgpack, len, result);
+                return get_number(input_format_t::msgpack, len) && get_string(input_format_t::msgpack, len, result) && check_string_utf8(result, context);
             }
 
             case 0xDB: // str 32
             {
                 std::uint32_t len{};
-                return get_number(input_format_t::msgpack, len) && get_string(input_format_t::msgpack, len, result);
+                return get_number(input_format_t::msgpack, len) && get_string(input_format_t::msgpack, len, result) && check_string_utf8(result, context);
             }
 
             default:
@@ -15567,7 +15738,7 @@ class binary_reader
                 // byte 0xC1 are left to get_msgpack_string
                 if (current == char_traits<char_type>::eof())
                 {
-                    return get_msgpack_string(result);
+                    return get_msgpack_string(result, "key");
                 }
                 if (current <= 0x7F || current >= 0xE0)
                 {
@@ -15583,7 +15754,7 @@ class binary_reader
                 }
                 else
                 {
-                    return get_msgpack_string(result);
+                    return get_msgpack_string(result, "key");
                 }
                 break;
         }
@@ -15829,7 +16000,7 @@ class binary_reader
                         if (top.is_object)
                         {
                             key.clear();
-                            if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key) || !sax->key(key)))
+                            if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key, true, "key") || !sax->key(key)))
                             {
                                 return false;
                             }
@@ -15851,7 +16022,7 @@ class binary_reader
                     if (top.is_object)
                     {
                         key.clear();
-                        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key, false) || !sax->key(key)))
+                        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_string(key, false, "key") || !sax->key(key)))
                         {
                             return false;
                         }
@@ -15919,7 +16090,7 @@ class binary_reader
 
     @return whether string creation completed
     */
-    bool get_ubjson_string(string_t& result, const bool get_char = true)
+    bool get_ubjson_string(string_t& result, const bool get_char = true, const char* context = "string")
     {
         if (get_char)
         {
@@ -15940,31 +16111,31 @@ class binary_reader
             case 'U':
             {
                 std::uint8_t len{};
-                return get_number(input_format, len) && get_string(input_format, len, result);
+                return get_number(input_format, len) && get_string(input_format, len, result) && check_string_utf8(result, context);
             }
 
             case 'i':
             {
                 std::int8_t len{};
-                return get_number(input_format, len) && check_ubjson_string_length(len) && get_string(input_format, len, result);
+                return get_number(input_format, len) && check_ubjson_string_length(len) && get_string(input_format, len, result) && check_string_utf8(result, context);
             }
 
             case 'I':
             {
                 std::int16_t len{};
-                return get_number(input_format, len) && check_ubjson_string_length(len) && get_string(input_format, len, result);
+                return get_number(input_format, len) && check_ubjson_string_length(len) && get_string(input_format, len, result) && check_string_utf8(result, context);
             }
 
             case 'l':
             {
                 std::int32_t len{};
-                return get_number(input_format, len) && check_ubjson_string_length(len) && get_string(input_format, len, result);
+                return get_number(input_format, len) && check_ubjson_string_length(len) && get_string(input_format, len, result) && check_string_utf8(result, context);
             }
 
             case 'L':
             {
                 std::int64_t len{};
-                return get_number(input_format, len) && check_ubjson_string_length(len) && get_string(input_format, len, result);
+                return get_number(input_format, len) && check_ubjson_string_length(len) && get_string(input_format, len, result) && check_string_utf8(result, context);
             }
 
             case 'u':
@@ -15974,7 +16145,7 @@ class binary_reader
                     break;
                 }
                 std::uint16_t len{};
-                return get_number(input_format, len) && get_string(input_format, len, result);
+                return get_number(input_format, len) && get_string(input_format, len, result) && check_string_utf8(result, context);
             }
 
             case 'm':
@@ -15984,7 +16155,7 @@ class binary_reader
                     break;
                 }
                 std::uint32_t len{};
-                return get_number(input_format, len) && get_string(input_format, len, result);
+                return get_number(input_format, len) && get_string(input_format, len, result) && check_string_utf8(result, context);
             }
 
             case 'M':
@@ -15994,7 +16165,7 @@ class binary_reader
                     break;
                 }
                 std::uint64_t len{};
-                return get_number(input_format, len) && get_string(input_format, len, result);
+                return get_number(input_format, len) && get_string(input_format, len, result) && check_string_utf8(result, context);
             }
 
             default:
@@ -17468,27 +17639,50 @@ class binary_reader
                     const NumberType len,
                     string_t& result)
     {
-        // get_bytes() appends to result, and CBOR indefinite-length strings
-        // collect all their chunks in the same result; validating only the
-        // newly read bytes keeps the check linear in the input size
-        const std::size_t old_size = result.size();
-        if (JSON_HEDLEY_UNLIKELY(!get_bytes(format, len, "string", result)))
+        // Strings are taken as is by default: none of CBOR (RFC 8949 §3.1
+        // leaves the choice to the decoder), MessagePack (whose spec
+        // explicitly allows a str object to contain an invalid byte
+        // sequence), UBJSON, BJData, or BSON requires a decoder to reject
+        // ill-formed UTF-8. Checking (and, with @ref error_handler_t::strict,
+        // rejecting, or with `replace`/`ignore`, sanitizing) is opt-in via
+        // @ref error_handler, applied once the whole string (all chunks of
+        // an indefinite-length CBOR string included) has been assembled, by
+        // @ref check_string_utf8 at the call site.
+        return get_bytes(format, len, "string", result);
+    }
+
+    /*!
+    @brief validate a decoded text string (value or object key) against @ref error_handler
+
+    None of the binary formats requires a decoder to reject ill-formed UTF-8
+    in a text string (see @ref get_string), so by default
+    (@ref error_handler_t::keep) this does nothing. A stricter
+    @ref error_handler opts into the same well-formedness check @ref
+    serializer::dump_escaped_impl applies when dumping a string:
+    @ref error_handler_t::strict rejects ill-formed input with
+    parse_error.113 (honoring `allow_exceptions` via @a sax), while
+    @ref error_handler_t::replace / @ref error_handler_t::ignore sanitize
+    @a result in place, using the exact same rules.
+
+    @param[in,out] result  the already assembled string to check
+    @param[in] context     further context information (for diagnostics)
+    @return whether @a result is acceptable (always true for `keep`)
+    */
+    bool check_string_utf8(string_t& result, const char* context)
+    {
+        if (error_handler == error_handler_t::keep || is_valid_utf8(result))
         {
-            return false;
+            return true;
         }
 
-        // RFC 8949 (CBOR) §3.1 and the MessagePack/BSON/UBJSON specifications
-        // all require text strings to be valid UTF-8; reject anything else
-        // right here so malformed input is caught at decode time instead of
-        // only surfacing later as a type_error.316 when the value is dumped
-        // (which would defeat allow_exceptions=false / strict discarding).
-        if (JSON_HEDLEY_UNLIKELY(!is_valid_utf8(result, old_size)))
+        if (error_handler == error_handler_t::strict)
         {
-            return sax->parse_error(chars_read, get_token_string(),
-                                    parse_error::create(113, chars_read,
-                                            exception_message(format, "invalid string: ill-formed UTF-8 byte", "string"), nullptr));
+            auto last_token = get_token_string();
+            return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
+                                    exception_message(input_format, "invalid string: ill-formed UTF-8 byte", context), nullptr));
         }
 
+        result = sanitize_utf8(result, error_handler);
         return true;
     }
 
@@ -17664,6 +17858,9 @@ class binary_reader
 
     /// input format
     const input_format_t input_format = input_format_t::json;
+
+    /// how to treat text strings/object keys that are not well-formed UTF-8
+    const error_handler_t error_handler = error_handler_t::keep;
 
     /// the SAX parser
     json_sax_t* sax = nullptr;
@@ -20753,6 +20950,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/macro_scope.hpp>
 
+// #include <nlohmann/detail/output/error_handler.hpp>
+
 // #include <nlohmann/detail/output/output_adapters.hpp>
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++
@@ -21120,8 +21319,12 @@ class binary_writer
     @param[in] sink  output sink to write to (a value-type sink such as
                      output_vector_sink, or output_adapter_sink wrapping a
                      type-erased output adapter)
+    @param[in] error_handler_  how to treat a string value or object key that
+               is not valid UTF-8 (CBOR, MessagePack, UBJSON, BJData, and BSON;
+               never consulted by @ref write_bon8)
     */
-    explicit binary_writer(OutputSinkType sink) : oa(std::move(sink))
+    explicit binary_writer(OutputSinkType sink, const error_handler_t error_handler_ = binary_writer_default_error_handler())
+        : oa(std::move(sink)), error_handler(error_handler_)
     {}
 
     /*!
@@ -21134,14 +21337,20 @@ class binary_writer
     from one.
 
     @param[in] adapter  output adapter to write to
+    @param[in] error_handler_  how to treat a string value or object key that
+               is not valid UTF-8 (CBOR, MessagePack, UBJSON, BJData, and BSON;
+               never consulted by @ref write_bon8)
     */
     template < typename SinkType = OutputSinkType,
                typename std::enable_if < std::is_constructible<SinkType, output_adapter_t<CharType>>::value, int >::type = 0 >
-    explicit binary_writer(output_adapter_t<CharType> adapter) : oa(SinkType(std::move(adapter)))
+    explicit binary_writer(output_adapter_t<CharType> adapter, const error_handler_t error_handler_ = binary_writer_default_error_handler())
+        : oa(SinkType(std::move(adapter))), error_handler(error_handler_)
     {}
 
     /*!
     @param[in] j  JSON value to serialize
+    @throw type_error.316 if a string value or an object key is not valid
+           UTF-8
     @throw type_error.317 if @a j is not an object
     */
     void write_bson(const BasicJsonType& j)
@@ -21172,6 +21381,8 @@ class binary_writer
 
     /*!
     @param[in] j  JSON value to serialize
+    @throw type_error.316 if a string value or an object key is not valid
+           UTF-8
     */
     void write_cbor(const BasicJsonType& j)
     {
@@ -21238,13 +21449,16 @@ class binary_writer
 
             case value_t::string:
             {
+                string_t storage;
+                const string_t& value = sanitize_utf8_for_write(*j.m_data.m_value.string, j, storage);
+
                 // step 1: write control byte and the string length
-                write_cbor_head(0x60, j.m_data.m_value.string->size());
+                write_cbor_head(0x60, value.size());
 
                 // step 2: write the string
                 oa.write_characters(
-                      reinterpret_cast<const CharType*>(j.m_data.m_value.string->data()),
-                      j.m_data.m_value.string->size());
+                      reinterpret_cast<const CharType*>(value.data()),
+                      value.size());
                 break;
             }
 
@@ -21314,6 +21528,17 @@ class binary_writer
                 // step 2: write each element
                 for (const auto& el : *j.m_data.m_value.object)
                 {
+                    // el.first is checked here, against the object as
+                    // diagnostics context, because write_cbor(el.first)
+                    // converts it to a temporary basic_json that would be
+                    // used as the context instead; for error_handler_t::keep
+                    // and ::replace/::ignore the recursive write_cbor(el.first)
+                    // call below handles the key like any other string, so no
+                    // separate check is needed here for those
+                    if (error_handler == error_handler_t::strict)
+                    {
+                        check_utf8(el.first, j);
+                    }
                     write_cbor(el.first);
                     write_cbor(el.second);
                 }
@@ -21461,8 +21686,11 @@ class binary_writer
 
             case value_t::string:
             {
+                string_t storage;
+                const string_t& value = sanitize_utf8_for_write(*j.m_data.m_value.string, j, storage);
+
                 // step 1: write control byte and the string length
-                const auto N = to_msgpack_length(j.m_data.m_value.string->size(), j);
+                const auto N = to_msgpack_length(value.size(), j);
                 if (N <= 31)
                 {
                     // fixstr
@@ -21489,8 +21717,8 @@ class binary_writer
 
                 // step 2: write the string
                 oa.write_characters(
-                      reinterpret_cast<const CharType*>(j.m_data.m_value.string->data()),
-                      j.m_data.m_value.string->size());
+                      reinterpret_cast<const CharType*>(value.data()),
+                      value.size());
                 break;
             }
 
@@ -21637,6 +21865,13 @@ class binary_writer
                 // step 2: write each element
                 for (const auto& el : *j.m_data.m_value.object)
                 {
+                    // as in write_cbor, el.first is checked here against the
+                    // object as diagnostics context; the recursive call below
+                    // handles keep/replace/ignore like any other string
+                    if (error_handler == error_handler_t::strict)
+                    {
+                        check_utf8(el.first, j);
+                    }
                     write_msgpack(el.first);
                     write_msgpack(el.second);
                 }
@@ -21656,6 +21891,8 @@ class binary_writer
     @param[in] add_prefix  whether prefixes need to be used for this value
     @param[in] use_bjdata  whether write in BJData format, default is false
     @param[in] bjdata_version  which BJData version to use, default is draft2
+    @throw type_error.316 if a string value or an object key is not valid
+           UTF-8
     */
     void write_ubjson(const BasicJsonType& j, const bool use_count,
                       const bool use_type, const bool add_prefix = true,
@@ -21705,14 +21942,17 @@ class binary_writer
 
             case value_t::string:
             {
+                string_t storage;
+                const string_t& value = sanitize_utf8_for_write(*j.m_data.m_value.string, j, storage);
+
                 if (add_prefix)
                 {
                     oa.write_character(to_char_type('S'));
                 }
-                write_number_with_ubjson_prefix(j.m_data.m_value.string->size(), true, use_bjdata);
+                write_number_with_ubjson_prefix(value.size(), true, use_bjdata);
                 oa.write_characters(
-                      reinterpret_cast<const CharType*>(j.m_data.m_value.string->data()),
-                      j.m_data.m_value.string->size());
+                      reinterpret_cast<const CharType*>(value.data()),
+                      value.size());
                 break;
             }
 
@@ -21867,10 +22107,12 @@ class binary_writer
 
                 for (const auto& el : *j.m_data.m_value.object)
                 {
-                    write_number_with_ubjson_prefix(el.first.size(), true, use_bjdata);
+                    string_t storage;
+                    const string_t& key = sanitize_utf8_for_write(el.first, j, storage);
+                    write_number_with_ubjson_prefix(key.size(), true, use_bjdata);
                     oa.write_characters(
-                          reinterpret_cast<const CharType*>(el.first.data()),
-                          el.first.size());
+                          reinterpret_cast<const CharType*>(key.data()),
+                          key.size());
                     write_ubjson(el.second, use_count, use_type, prefix_required, use_bjdata, bjdata_version);
                 }
 
@@ -21911,8 +22153,12 @@ class binary_writer
     /*!
     @return The size of a BSON document entry header, including the id marker
             and the entry name size (and its null-terminator).
+    @throw out_of_range.409 if @a name contains U+0000, before anything is
+           written
+    @throw type_error.316 if @a name is not valid UTF-8, before anything is
+           written
     */
-    static std::size_t calc_bson_entry_header_size(const string_t& name, const BasicJsonType& j)
+    std::size_t calc_bson_entry_header_size(const string_t& name, const BasicJsonType& j)
     {
         const auto it = name.find(static_cast<typename string_t::value_type>(0));
         if (JSON_HEDLEY_UNLIKELY(it != BasicJsonType::string_t::npos))
@@ -21920,8 +22166,10 @@ class binary_writer
             JSON_THROW(out_of_range::create(409, concat("BSON key cannot contain code point U+0000 (at byte ", std::to_string(it), ")"), &j));
         }
 
-        static_cast<void>(j);
-        return /*id*/ 1ul + name.size() + /*zero-terminator*/1u;
+        string_t storage;
+        const string_t& sanitized = sanitize_utf8_for_write(name, j, storage);
+
+        return /*id*/ 1ul + sanitized.size() + /*zero-terminator*/1u;
     }
 
     /*!
@@ -21941,14 +22189,28 @@ class binary_writer
 
     /*!
     @brief Writes the given @a element_type and @a name to the output adapter
+
+    @a name has already been validated (and, for @ref error_handler_t::strict,
+    found well-formed) by @ref calc_bson_entry_header_size during the earlier
+    size pass, so only @ref error_handler_t::replace / @ref
+    error_handler_t::ignore need to sanitize it again here, to actually write
+    the bytes that size was computed from.
     */
     void write_bson_entry_header(const string_t& name,
                                  const std::uint8_t element_type)
     {
         oa.write_character(to_char_type(element_type));
-        oa.write_characters(
-              reinterpret_cast<const CharType*>(name.data()),
-              name.size());
+
+        if (error_handler == error_handler_t::keep || error_handler == error_handler_t::strict || is_valid_utf8(name))
+        {
+            oa.write_characters(reinterpret_cast<const CharType*>(name.data()), name.size());
+        }
+        else
+        {
+            const string_t sanitized = sanitize_utf8(name, error_handler);
+            oa.write_characters(reinterpret_cast<const CharType*>(sanitized.data()), sanitized.size());
+        }
+
         // the terminating null byte is written explicitly rather than taken
         // from the buffer, so that string_t::data() need not be null-terminated
         oa.write_character(to_char_type(0x00));
@@ -21976,24 +22238,50 @@ class binary_writer
 
     /*!
     @return The size of the BSON-encoded string in @a value
+    @throw type_error.316 if @a value is not valid UTF-8, before anything is
+           written
+
+    @note The UTF-8 check is skipped if @a value is already too long for the
+          32-bit BSON length field (@ref to_bson_length rejects it later, once
+          the size of the whole document is known); this also keeps the check
+          from reading past a StringType that reports a size larger than what
+          it actually holds.
     */
-    static std::size_t calc_bson_string_size(const string_t& value)
+    std::size_t calc_bson_string_size(const string_t& value, const BasicJsonType& j)
     {
+        if (JSON_HEDLEY_LIKELY(value_in_range_of<std::int32_t>(value.size())))
+        {
+            string_t storage;
+            const string_t& sanitized = sanitize_utf8_for_write(value, j, storage);
+            return sizeof(std::int32_t) + sanitized.size() + 1ul;
+        }
         return sizeof(std::int32_t) + value.size() + 1ul;
     }
 
     /*!
     @brief Writes a BSON element with key @a name and string value @a value
+
+    @a value has already been validated (and, for @ref error_handler_t::strict,
+    found well-formed) by @ref calc_bson_string_size during the earlier size
+    pass, so only @ref error_handler_t::replace / @ref error_handler_t::ignore
+    need to sanitize it again here, to actually write the bytes that size was
+    computed from.
     */
     void write_bson_string(const string_t& name,
                            const string_t& value)
     {
         write_bson_entry_header(name, 0x02);
 
-        write_number<std::int32_t>(to_bson_length(value.size() + 1ul), true);
+        const bool sanitize = error_handler != error_handler_t::keep
+                              && error_handler != error_handler_t::strict
+                              && !is_valid_utf8(value);
+        const string_t sanitized = sanitize ? sanitize_utf8(value, error_handler) : string_t{};
+        const string_t& written = sanitize ? sanitized : value;
+
+        write_number<std::int32_t>(to_bson_length(written.size() + 1ul), true);
         oa.write_characters(
-              reinterpret_cast<const CharType*>(value.data()),
-              value.size());
+              reinterpret_cast<const CharType*>(written.data()),
+              written.size());
         // the terminating null byte is written explicitly rather than taken
         // from the buffer, so that string_t::data() need not be null-terminated
         oa.write_character(to_char_type(0x00));
@@ -22107,8 +22395,10 @@ class binary_writer
             is neither an object nor an array
     @throw out_of_range.415 if @a j is binary with a subtype that does not fit
            into a byte, before anything is written
+    @throw type_error.316 if @a j is a string that is not valid UTF-8, before
+           anything is written
     */
-    static std::size_t calc_bson_value_size(const BasicJsonType& j)
+    std::size_t calc_bson_value_size(const BasicJsonType& j)
     {
         switch (j.type())
         {
@@ -22128,7 +22418,7 @@ class binary_writer
                 return calc_bson_unsigned_size(j.m_data.m_value.number_unsigned);
 
             case value_t::string:
-                return calc_bson_string_size(*j.m_data.m_value.string);
+                return calc_bson_string_size(*j.m_data.m_value.string, j);
 
             case value_t::null:
                 return 0ul;
@@ -22241,8 +22531,10 @@ class binary_writer
            written
     @throw out_of_range.415 if a binary value's subtype does not fit into a
            byte, before anything is written
+    @throw type_error.316 if a string value or a key is not valid UTF-8,
+           before anything is written
     */
-    static std::size_t calc_bson_sizes(const BasicJsonType& document, std::vector<std::size_t>& nested_sizes)
+    std::size_t calc_bson_sizes(const BasicJsonType& document, std::vector<std::size_t>& nested_sizes)
     {
         // the object or array whose entries are being sized, and the ones it
         // is in; nothing is allocated unless the document nests
@@ -23119,7 +23411,7 @@ class binary_writer
     */
     void write_bon8_string(const string_t& s, bool& string_open, const BasicJsonType& context)
     {
-        check_bon8_utf8(s, context);
+        check_utf8(s, context);
 
         // a string that follows another string terminates it
         if (string_open)
@@ -23149,7 +23441,7 @@ class binary_writer
     @throw type_error.316 if @a s is not valid UTF-8; the message names the
            first byte of the first invalid or incomplete sequence
     */
-    static void check_bon8_utf8(const string_t& s, const BasicJsonType& context)
+    static void check_utf8(const string_t& s, const BasicJsonType& context)
     {
         static_cast<void>(context); // only used when exceptions are enabled
         const auto* data = reinterpret_cast<const unsigned char*>(s.data());
@@ -23157,6 +23449,57 @@ class binary_writer
         if (JSON_HEDLEY_UNLIKELY(valid != s.size()))
         {
             JSON_THROW(type_error::create(316, concat("invalid UTF-8 byte at index ", std::to_string(valid), ": 0x", detail::hex_byte(data[valid])), &context));
+        }
+    }
+
+    /*!
+    @brief return @a s as it should be written, honoring @ref error_handler
+
+    Used by @ref write_cbor, @ref write_msgpack, @ref write_ubjson (and so
+    @ref write_bjdata), and the BSON writing functions for string values and
+    object keys; never by @ref write_bon8, which always validates, since UTF-8
+    lead bytes are structural there.
+
+    - @ref error_handler_t::keep: @a s is returned unchanged, without even
+      checking it (the behavior of release 3.12.0 and earlier).
+    - @ref error_handler_t::strict: @ref check_utf8 is called, which throws
+      type_error.316 if @a s is not valid UTF-8.
+    - @ref error_handler_t::replace / @ref error_handler_t::ignore: @a s is
+      sanitized into @a storage with exactly the rules @ref
+      serializer::dump_escaped_impl uses, so that parsing what @ref
+      basic_json::dump produces for the same string and the same handler
+      yields the same result.
+
+    Well-formed input is never copied: this returns a reference to @a s
+    itself in every case but a sanitized `replace`/`ignore` one, so @a
+    storage must outlive the returned reference only then.
+
+    @param[in] s        the string (value or object key) to write
+    @param[in] context  the value @a s belongs to (for diagnostics)
+    @param[out] storage  backing storage for a sanitized copy
+
+    @return a reference to @a s, or to @a storage once it holds a sanitized copy
+    */
+    const string_t& sanitize_utf8_for_write(const string_t& s, const BasicJsonType& context, string_t& storage) const
+    {
+        switch (error_handler)
+        {
+            case error_handler_t::keep:
+                return s;
+
+            case error_handler_t::strict:
+                check_utf8(s, context);
+                return s;
+
+            case error_handler_t::replace:
+            case error_handler_t::ignore:
+            default:
+                if (is_valid_utf8(s))
+                {
+                    return s;
+                }
+                storage = sanitize_utf8(s, error_handler);
+                return storage;
         }
     }
 
@@ -23488,6 +23831,10 @@ class binary_writer
 
     /// the output
     OutputSinkType oa;
+
+    /// how to treat a string value or object key that is not valid UTF-8
+    /// (CBOR, MessagePack, UBJSON, BJData, and BSON; not BON8)
+    const error_handler_t error_handler = binary_writer_default_error_handler();
 };
 
 }  // namespace detail
@@ -24649,6 +24996,8 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/meta/cpp_future.hpp>
 
+// #include <nlohmann/detail/output/error_handler.hpp>
+
 // #include <nlohmann/detail/output/output_adapters.hpp>
 
 // #include <nlohmann/detail/recursion_depth_limit.hpp>
@@ -24667,14 +25016,6 @@ namespace detail
 ///////////////////
 // serialization //
 ///////////////////
-
-/// how to treat decoding errors
-enum class error_handler_t
-{
-    strict,  ///< throw a type_error exception in case of invalid UTF-8
-    replace, ///< replace invalid UTF-8 sequences with U+FFFD
-    ignore   ///< ignore invalid UTF-8 sequences
-};
 
 template<typename BasicJsonType>
 class serializer
@@ -25466,6 +25807,16 @@ class serializer
                             // EnsureAscii parameter is used, non-ASCII characters
                             if ((codepoint <= 0x1F) || (EnsureAscii && (codepoint >= 0x7F)))
                             {
+                                if (EnsureAscii && error_handler == error_handler_t::keep)
+                                {
+                                    // this character was buffered as raw bytes
+                                    // below in case it turned out to be part of
+                                    // an ill-formed sequence (which is kept as
+                                    // is); now that it decoded to a well-formed
+                                    // code point, undo that and \u-escape it
+                                    // like any other character instead
+                                    bytes = bytes_after_last_accept;
+                                }
                                 if (codepoint <= 0xFFFF)
                                 {
                                     write_u_escape(bytes, static_cast<std::uint16_t>(codepoint));
@@ -25564,6 +25915,44 @@ class serializer
                             break;
                         }
 
+                        case error_handler_t::keep:
+                        {
+                            // the bytes of this (now abandoned) ill-formed
+                            // sequence seen so far are already buffered below
+                            // and are kept unchanged in the output
+                            if (undumped_chars > 0)
+                            {
+                                // the byte that ended the sequence may be OK
+                                // for itself (e.g., a quote that must still be
+                                // escaped, or the lead byte of a well-formed
+                                // code point), so read it again
+                                --i;
+                            }
+                            else
+                            {
+                                // a byte that cannot start a sequence (e.g.,
+                                // 0xFF or a stray continuation byte) is kept
+                                // as well
+                                string_buffer[bytes++] = s[i];
+                            }
+
+                            // write buffer and reset index; there must be 13 bytes
+                            // left, as this is the maximal number of bytes to be
+                            // written ("\uxxxx\uxxxx\0") for one code point
+                            if (string_buffer.size() - bytes < 13)
+                            {
+                                put_buffer(string_buffer, bytes);
+                                bytes = 0;
+                            }
+
+                            bytes_after_last_accept = bytes;
+                            undumped_chars = 0;
+
+                            // continue processing the string
+                            state = UTF8_ACCEPT;
+                            break;
+                        }
+
                         default:            // LCOV_EXCL_LINE
                             JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
                     }
@@ -25572,9 +25961,12 @@ class serializer
 
                 default:  // decode found yet incomplete multibyte code point
                 {
-                    if (!EnsureAscii)
+                    if (!EnsureAscii || error_handler == error_handler_t::keep)
                     {
-                        // code point will not be escaped - copy byte to buffer
+                        // code point will not be escaped (or will be kept as
+                        // is if it turns out to be ill-formed) - copy byte to
+                        // buffer; dropped again above if it decodes to a
+                        // well-formed code point that needs \u-escaping
                         string_buffer[bytes++] = s[i];
                     }
                     ++undumped_chars;
@@ -25622,6 +26014,14 @@ class serializer
                     {
                         put_literal("\xEF\xBF\xBD");
                     }
+                    break;
+                }
+
+                case error_handler_t::keep:
+                {
+                    // write the ill-formed trailing bytes as is; they were
+                    // buffered above regardless of EnsureAscii
+                    put_buffer(string_buffer, bytes);
                     break;
                 }
 
@@ -26732,9 +27132,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     // used by the vector-returning to_* overloads
     template<typename CharType> using vector_binary_writer =
     ::nlohmann::detail::binary_writer<basic_json, CharType, ::nlohmann::detail::output_vector_sink<CharType>>;
-    template<typename CharType> static vector_binary_writer<CharType> vector_writer(std::vector<CharType>& v)
+    template<typename CharType> static vector_binary_writer<CharType> vector_writer(
+        std::vector<CharType>& v, const ::nlohmann::detail::error_handler_t error_handler = ::nlohmann::detail::binary_writer_default_error_handler())
     {
-        return vector_binary_writer<CharType>(::nlohmann::detail::output_vector_sink<CharType>(v));
+        return vector_binary_writer<CharType>(::nlohmann::detail::output_vector_sink<CharType>(v), error_handler);
     }
 
   JSON_PRIVATE_UNLESS_TESTED:
@@ -32120,11 +32521,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     template<typename InputAdapterType>
     static basic_json from_binary_impl(InputAdapterType ia, const input_format_t format,
                                        const bool strict, const bool allow_exceptions,
+                                       const error_handler_t error_handler = error_handler_t::keep,
                                        const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json, InputAdapterType> sdp(result, allow_exceptions);
-        binary_reader<InputAdapterType> reader(std::move(ia), format);
+        binary_reader<InputAdapterType> reader(std::move(ia), format, error_handler);
         if (!reader.sax_parse(&sdp, strict, tag_handler))
         {
             result = value_t::discarded;
@@ -32142,78 +32544,87 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
   public:
     /// @brief create a CBOR serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_cbor/
-    static std::vector<std::uint8_t> to_cbor(const basic_json& j)
+    static std::vector<std::uint8_t> to_cbor(const basic_json& j,
+            const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        vector_writer(result).write_cbor(j);
+        vector_writer(result, error_handler).write_cbor(j);
         return result;
     }
 
     /// @brief create a CBOR serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_cbor/
-    static void to_cbor(const basic_json& j, detail::output_adapter<std::uint8_t> o)
+    static void to_cbor(const basic_json& j, detail::output_adapter<std::uint8_t> o,
+                        const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<std::uint8_t>(o).write_cbor(j);
+        binary_writer<std::uint8_t>(o, error_handler).write_cbor(j);
     }
 
     /// @brief create a CBOR serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_cbor/
-    static void to_cbor(const basic_json& j, detail::output_adapter<char> o)
+    static void to_cbor(const basic_json& j, detail::output_adapter<char> o,
+                        const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<char>(o).write_cbor(j);
+        binary_writer<char>(o, error_handler).write_cbor(j);
     }
 
     /// @brief create a MessagePack serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_msgpack/
-    static std::vector<std::uint8_t> to_msgpack(const basic_json& j)
+    static std::vector<std::uint8_t> to_msgpack(const basic_json& j,
+            const error_handler_t error_handler = error_handler_t::keep)
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        vector_writer(result).write_msgpack(j);
+        vector_writer(result, error_handler).write_msgpack(j);
         return result;
     }
 
     /// @brief create a MessagePack serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_msgpack/
-    static void to_msgpack(const basic_json& j, detail::output_adapter<std::uint8_t> o)
+    static void to_msgpack(const basic_json& j, detail::output_adapter<std::uint8_t> o,
+                           const error_handler_t error_handler = error_handler_t::keep)
     {
-        binary_writer<std::uint8_t>(o).write_msgpack(j);
+        binary_writer<std::uint8_t>(o, error_handler).write_msgpack(j);
     }
 
     /// @brief create a MessagePack serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_msgpack/
-    static void to_msgpack(const basic_json& j, detail::output_adapter<char> o)
+    static void to_msgpack(const basic_json& j, detail::output_adapter<char> o,
+                           const error_handler_t error_handler = error_handler_t::keep)
     {
-        binary_writer<char>(o).write_msgpack(j);
+        binary_writer<char>(o, error_handler).write_msgpack(j);
     }
 
     /// @brief create a UBJSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_ubjson/
     static std::vector<std::uint8_t> to_ubjson(const basic_json& j,
             const bool use_size = false,
-            const bool use_type = false)
+            const bool use_type = false,
+            const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        vector_writer(result).write_ubjson(j, use_size, use_type);
+        vector_writer(result, error_handler).write_ubjson(j, use_size, use_type);
         return result;
     }
 
     /// @brief create a UBJSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_ubjson/
     static void to_ubjson(const basic_json& j, detail::output_adapter<std::uint8_t> o,
-                          const bool use_size = false, const bool use_type = false)
+                          const bool use_size = false, const bool use_type = false,
+                          const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<std::uint8_t>(o).write_ubjson(j, use_size, use_type);
+        binary_writer<std::uint8_t>(o, error_handler).write_ubjson(j, use_size, use_type);
     }
 
     /// @brief create a UBJSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_ubjson/
     static void to_ubjson(const basic_json& j, detail::output_adapter<char> o,
-                          const bool use_size = false, const bool use_type = false)
+                          const bool use_size = false, const bool use_type = false,
+                          const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<char>(o).write_ubjson(j, use_size, use_type);
+        binary_writer<char>(o, error_handler).write_ubjson(j, use_size, use_type);
     }
 
     /// @brief create a BJData serialization of a given JSON value
@@ -32221,11 +32632,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static std::vector<std::uint8_t> to_bjdata(const basic_json& j,
             const bool use_size = false,
             const bool use_type = false,
-            const bjdata_version_t version = bjdata_version_t::draft2)
+            const bjdata_version_t version = bjdata_version_t::draft2,
+            const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        vector_writer(result).write_ubjson(j, use_size, use_type, true, true, version);
+        vector_writer(result, error_handler).write_ubjson(j, use_size, use_type, true, true, version);
         return result;
     }
 
@@ -32233,42 +32645,47 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/to_bjdata/
     static void to_bjdata(const basic_json& j, detail::output_adapter<std::uint8_t> o,
                           const bool use_size = false, const bool use_type = false,
-                          const bjdata_version_t version = bjdata_version_t::draft2)
+                          const bjdata_version_t version = bjdata_version_t::draft2,
+                          const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<std::uint8_t>(o).write_ubjson(j, use_size, use_type, true, true, version);
+        binary_writer<std::uint8_t>(o, error_handler).write_ubjson(j, use_size, use_type, true, true, version);
     }
 
     /// @brief create a BJData serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bjdata/
     static void to_bjdata(const basic_json& j, detail::output_adapter<char> o,
                           const bool use_size = false, const bool use_type = false,
-                          const bjdata_version_t version = bjdata_version_t::draft2)
+                          const bjdata_version_t version = bjdata_version_t::draft2,
+                          const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<char>(o).write_ubjson(j, use_size, use_type, true, true, version);
+        binary_writer<char>(o, error_handler).write_ubjson(j, use_size, use_type, true, true, version);
     }
 
     /// @brief create a BSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bson/
-    static std::vector<std::uint8_t> to_bson(const basic_json& j)
+    static std::vector<std::uint8_t> to_bson(const basic_json& j,
+            const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
         std::vector<std::uint8_t> result;
         result.reserve(detail::binary_reserve_hint(j));
-        vector_writer(result).write_bson(j);
+        vector_writer(result, error_handler).write_bson(j);
         return result;
     }
 
     /// @brief create a BSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bson/
-    static void to_bson(const basic_json& j, detail::output_adapter<std::uint8_t> o)
+    static void to_bson(const basic_json& j, detail::output_adapter<std::uint8_t> o,
+                        const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<std::uint8_t>(o).write_bson(j);
+        binary_writer<std::uint8_t>(o, error_handler).write_bson(j);
     }
 
     /// @brief create a BSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bson/
-    static void to_bson(const basic_json& j, detail::output_adapter<char> o)
+    static void to_bson(const basic_json& j, detail::output_adapter<char> o,
+                        const error_handler_t error_handler = detail::binary_writer_default_error_handler())
     {
-        binary_writer<char>(o).write_bson(j);
+        binary_writer<char>(o, error_handler).write_bson(j);
     }
 
     /// @brief create a BON8 serialization of a given JSON value
@@ -32302,9 +32719,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static basic_json from_cbor(InputType&& i,
                                 const bool strict = true,
                                 const bool allow_exceptions = true,
-                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
+                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error,
+                                const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::cbor, strict, allow_exceptions, tag_handler);
+        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::cbor, strict, allow_exceptions, error_handler, tag_handler);
     }
 
     /// @brief create a JSON value from an input in CBOR format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -32315,9 +32733,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     static basic_json from_cbor(IteratorType first, SentinelType last,
                                 const bool strict = true,
                                 const bool allow_exceptions = true,
-                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
+                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error,
+                                const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::cbor, strict, allow_exceptions, tag_handler);
+        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::cbor, strict, allow_exceptions, error_handler, tag_handler);
     }
 
     template<typename T>
@@ -32338,7 +32757,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                                 const bool allow_exceptions = true,
                                 const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
-        return from_binary_impl(i.get(), input_format_t::cbor, strict, allow_exceptions, tag_handler);
+        return from_binary_impl(i.get(), input_format_t::cbor, strict, allow_exceptions, error_handler_t::keep, tag_handler);
     }
 
     /// @brief create a JSON value from an input in MessagePack format
@@ -32347,9 +32766,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_msgpack(InputType&& i,
                                    const bool strict = true,
-                                   const bool allow_exceptions = true)
+                                   const bool allow_exceptions = true,
+                                   const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::msgpack, strict, allow_exceptions);
+        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::msgpack, strict, allow_exceptions, error_handler);
     }
 
     /// @brief create a JSON value from an input in MessagePack format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -32359,9 +32779,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_msgpack(IteratorType first, SentinelType last,
                                    const bool strict = true,
-                                   const bool allow_exceptions = true)
+                                   const bool allow_exceptions = true,
+                                   const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::msgpack, strict, allow_exceptions);
+        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::msgpack, strict, allow_exceptions, error_handler);
     }
 
     template<typename T>
@@ -32389,9 +32810,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_ubjson(InputType&& i,
                                   const bool strict = true,
-                                  const bool allow_exceptions = true)
+                                  const bool allow_exceptions = true,
+                                  const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::ubjson, strict, allow_exceptions);
+        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::ubjson, strict, allow_exceptions, error_handler);
     }
 
     /// @brief create a JSON value from an input in UBJSON format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -32401,9 +32823,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_ubjson(IteratorType first, SentinelType last,
                                   const bool strict = true,
-                                  const bool allow_exceptions = true)
+                                  const bool allow_exceptions = true,
+                                  const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::ubjson, strict, allow_exceptions);
+        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::ubjson, strict, allow_exceptions, error_handler);
     }
 
     template<typename T>
@@ -32431,9 +32854,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bjdata(InputType&& i,
                                   const bool strict = true,
-                                  const bool allow_exceptions = true)
+                                  const bool allow_exceptions = true,
+                                  const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::bjdata, strict, allow_exceptions);
+        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::bjdata, strict, allow_exceptions, error_handler);
     }
 
     /// @brief create a JSON value from an input in BJData format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -32443,9 +32867,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bjdata(IteratorType first, SentinelType last,
                                   const bool strict = true,
-                                  const bool allow_exceptions = true)
+                                  const bool allow_exceptions = true,
+                                  const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::bjdata, strict, allow_exceptions);
+        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::bjdata, strict, allow_exceptions, error_handler);
     }
 
     /// @brief create a JSON value from an input in BON8 format
@@ -32477,9 +32902,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bson(InputType&& i,
                                 const bool strict = true,
-                                const bool allow_exceptions = true)
+                                const bool allow_exceptions = true,
+                                const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::bson, strict, allow_exceptions);
+        return from_binary_impl(detail::input_adapter(std::forward<InputType>(i)), input_format_t::bson, strict, allow_exceptions, error_handler);
     }
 
     /// @brief create a JSON value from an input in BSON format (iterator pair, or iterator+sentinel pair for C++20 ranges support)
@@ -32489,9 +32915,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_bson(IteratorType first, SentinelType last,
                                 const bool strict = true,
-                                const bool allow_exceptions = true)
+                                const bool allow_exceptions = true,
+                                const error_handler_t error_handler = error_handler_t::keep)
     {
-        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::bson, strict, allow_exceptions);
+        return from_binary_impl(detail::input_adapter(std::move(first), std::move(last)), input_format_t::bson, strict, allow_exceptions, error_handler);
     }
 
     template<typename T>
@@ -33734,6 +34161,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
     #undef JSON_BRACE_INIT_COPY_SEMANTICS
     #undef JSON_PRECISE_STREAM_POSITION
     #undef JSON_STRICT_NUL_HANDLING
+    #undef JSON_STRICT_BINARY_UTF8
 #endif
 
 // #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>

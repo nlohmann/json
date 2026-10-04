@@ -27,6 +27,7 @@
 #include <nlohmann/detail/input/string_scan.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
+#include <nlohmann/detail/output/error_handler.hpp>
 #include <nlohmann/detail/output/output_adapters.hpp>
 #include <nlohmann/detail/recursion_depth_limit.hpp>
 #include <nlohmann/detail/string_concat.hpp>
@@ -40,14 +41,6 @@ namespace detail
 ///////////////////
 // serialization //
 ///////////////////
-
-/// how to treat decoding errors
-enum class error_handler_t
-{
-    strict,  ///< throw a type_error exception in case of invalid UTF-8
-    replace, ///< replace invalid UTF-8 sequences with U+FFFD
-    ignore   ///< ignore invalid UTF-8 sequences
-};
 
 template<typename BasicJsonType>
 class serializer
@@ -839,6 +832,16 @@ class serializer
                             // EnsureAscii parameter is used, non-ASCII characters
                             if ((codepoint <= 0x1F) || (EnsureAscii && (codepoint >= 0x7F)))
                             {
+                                if (EnsureAscii && error_handler == error_handler_t::keep)
+                                {
+                                    // this character was buffered as raw bytes
+                                    // below in case it turned out to be part of
+                                    // an ill-formed sequence (which is kept as
+                                    // is); now that it decoded to a well-formed
+                                    // code point, undo that and \u-escape it
+                                    // like any other character instead
+                                    bytes = bytes_after_last_accept;
+                                }
                                 if (codepoint <= 0xFFFF)
                                 {
                                     write_u_escape(bytes, static_cast<std::uint16_t>(codepoint));
@@ -937,6 +940,44 @@ class serializer
                             break;
                         }
 
+                        case error_handler_t::keep:
+                        {
+                            // the bytes of this (now abandoned) ill-formed
+                            // sequence seen so far are already buffered below
+                            // and are kept unchanged in the output
+                            if (undumped_chars > 0)
+                            {
+                                // the byte that ended the sequence may be OK
+                                // for itself (e.g., a quote that must still be
+                                // escaped, or the lead byte of a well-formed
+                                // code point), so read it again
+                                --i;
+                            }
+                            else
+                            {
+                                // a byte that cannot start a sequence (e.g.,
+                                // 0xFF or a stray continuation byte) is kept
+                                // as well
+                                string_buffer[bytes++] = s[i];
+                            }
+
+                            // write buffer and reset index; there must be 13 bytes
+                            // left, as this is the maximal number of bytes to be
+                            // written ("\uxxxx\uxxxx\0") for one code point
+                            if (string_buffer.size() - bytes < 13)
+                            {
+                                put_buffer(string_buffer, bytes);
+                                bytes = 0;
+                            }
+
+                            bytes_after_last_accept = bytes;
+                            undumped_chars = 0;
+
+                            // continue processing the string
+                            state = UTF8_ACCEPT;
+                            break;
+                        }
+
                         default:            // LCOV_EXCL_LINE
                             JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
                     }
@@ -945,9 +986,12 @@ class serializer
 
                 default:  // decode found yet incomplete multibyte code point
                 {
-                    if (!EnsureAscii)
+                    if (!EnsureAscii || error_handler == error_handler_t::keep)
                     {
-                        // code point will not be escaped - copy byte to buffer
+                        // code point will not be escaped (or will be kept as
+                        // is if it turns out to be ill-formed) - copy byte to
+                        // buffer; dropped again above if it decodes to a
+                        // well-formed code point that needs \u-escaping
                         string_buffer[bytes++] = s[i];
                     }
                     ++undumped_chars;
@@ -995,6 +1039,14 @@ class serializer
                     {
                         put_literal("\xEF\xBF\xBD");
                     }
+                    break;
+                }
+
+                case error_handler_t::keep:
+                {
+                    // write the ill-formed trailing bytes as is; they were
+                    // buffered above regardless of EnsureAscii
+                    put_buffer(string_buffer, bytes);
                     break;
                 }
 
