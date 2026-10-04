@@ -8,6 +8,14 @@
 
 #include "doctest_compatibility.h"
 
+// capture whether JSON_DELETE_DEPRECATED_FUNCTIONS was enabled on the command
+// line *before* including json.hpp, since the library #undefs it once the header
+// has been fully processed (see include/nlohmann/detail/macro_unscope.hpp); the
+// tests of deprecated functions are skipped if these functions are deleted
+#if defined(JSON_DELETE_DEPRECATED_FUNCTIONS) && (JSON_DELETE_DEPRECATED_FUNCTIONS == 1)
+    #define JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+#endif
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
@@ -2215,8 +2223,10 @@ TEST_CASE("CBOR input that cannot be read is discarded by every overload")
     CHECK_THROWS_AS(_ = json::from_cbor(input.begin(), input.end()), json::parse_error&);
     CHECK(json::from_cbor(input, true, false).is_discarded());
     CHECK(json::from_cbor(input.begin(), input.end(), true, false).is_discarded());
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
     CHECK(json::from_cbor(input.data(), input.size(), true, false).is_discarded());
     CHECK(json::from_cbor({input.data(), input.size()}, true, false).is_discarded());
+#endif
 
     // a string that ends early, read through iterators that are not
     // contiguous and have to be copied from one element at a time
@@ -2611,12 +2621,14 @@ TEST_CASE("CBOR roundtrips" * doctest::skip())
                 CHECK(j1 == j2);
             }
 
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
             {
                 INFO_WITH_TEMP(filename + ": uint8_t* and size");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_cbor({packed.data(), packed.size()}));
                 CHECK(j1 == j2);
             }
+#endif
 
             {
                 INFO_WITH_TEMP(filename + ": output to output adapters");

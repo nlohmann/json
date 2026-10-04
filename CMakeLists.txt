@@ -62,6 +62,7 @@ option(JSON_MultipleHeaders                "Use non-amalgamated version of the l
 option(JSON_SystemInclude                  "Include as system headers (skip for clang-tidy)." OFF)
 option(JSON_StrictNulHandling              "Build with strict NUL-byte handling enabled." OFF)
 option(JSON_StrictBinaryUTF8               "Build with UTF-8 checks in the CBOR, UBJSON, BJData, and BSON writers enabled." OFF)
+option(JSON_DeleteDeprecatedFunctions      "Delete the deprecated functions instead of only deprecating them." OFF)
 
 if (JSON_CI)
     include(ci)
@@ -123,6 +124,10 @@ if (JSON_StrictBinaryUTF8)
     message(STATUS "Strict UTF-8 checks in binary writers enabled (JSON_STRICT_BINARY_UTF8=1)")
 endif()
 
+if (JSON_DeleteDeprecatedFunctions)
+    message(STATUS "Deprecated functions are deleted (JSON_DELETE_DEPRECATED_FUNCTIONS=1)")
+endif()
+
 if (JSON_Diagnostic_Positions)
     message(STATUS "Diagnostic positions enabled (JSON_DIAGNOSTIC_POSITIONS=1)")
 endif()
@@ -159,6 +164,7 @@ target_compile_definitions(
     $<$<BOOL:${JSON_LegacyDiscardedValueComparison}>:JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1>
     $<$<BOOL:${JSON_StrictNulHandling}>:JSON_STRICT_NUL_HANDLING=1>
     $<$<BOOL:${JSON_StrictBinaryUTF8}>:JSON_STRICT_BINARY_UTF8=1>
+    $<$<BOOL:${JSON_DeleteDeprecatedFunctions}>:JSON_DELETE_DEPRECATED_FUNCTIONS=1>
 )
 
 target_include_directories(

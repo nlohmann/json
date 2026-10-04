@@ -59,6 +59,11 @@ header. See also the [macro overview page](../../features/macros.md).
 - [**JSON_DISABLE_TUPLE_REFERENCE_CONVERSION**](json_disable_tuple_reference_conversion.md) - switch off conversion from a one-element tuple of a JSON reference
 - [**JSON_USE_IMPLICIT_CONVERSIONS**](json_use_implicit_conversions.md) - control implicit conversions
 
+## Deprecated functions
+
+- [**JSON_DELETE_DEPRECATED_FUNCTIONS**](json_delete_deprecated_functions.md) - opt in to deleting the deprecated
+  functions ahead of their removal in version 4.0.0
+
 ## Comparison behavior
 
 - [**JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON**](json_use_legacy_discarded_value_comparison.md) -

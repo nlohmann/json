@@ -43,6 +43,7 @@
     #undef JSON_PRECISE_STREAM_POSITION
     #undef JSON_STRICT_NUL_HANDLING
     #undef JSON_STRICT_BINARY_UTF8
+    #undef JSON_DELETE_DEPRECATED_FUNCTIONS
 #endif
 
 #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>

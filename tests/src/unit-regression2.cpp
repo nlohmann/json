@@ -569,7 +569,7 @@ TEST_CASE("regression tests 2")
     SECTION("issue #2067 - cannot serialize binary data to text JSON")
     {
         const std::array<unsigned char, 23> data = {{0x81, 0xA4, 0x64, 0x61, 0x74, 0x61, 0xC4, 0x0F, 0x33, 0x30, 0x30, 0x32, 0x33, 0x34, 0x30, 0x31, 0x30, 0x37, 0x30, 0x35, 0x30, 0x31, 0x30}};
-        const json j = json::from_msgpack(data.data(), data.size());
+        const json j = json::from_msgpack(data.begin(), data.end());
         // dump() is nodiscard; this only checks that dumping does not throw
         CHECK_NOTHROW(
             utils::ignore_return_value(

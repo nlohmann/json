@@ -23,6 +23,17 @@ This macro overrides [`#!cpp catch`](https://en.cppreference.com/w/cpp/language/
 
 See [full documentation of `JSON_CATCH_USER(exception)`](../api/macros/json_throw_user.md).
 
+## `JSON_DELETE_DEPRECATED_FUNCTIONS`
+
+When defined to `1`, all deprecated functions are declared as deleted instead of only being marked as deprecated, so
+code that still calls them no longer compiles. This way, you can find all calls that need to be replaced before version
+4.0.0 removes these functions.
+
+The macro can also be set with the CMake option
+[`JSON_DeleteDeprecatedFunctions`](../integration/cmake.md#json_deletedeprecatedfunctions) (`OFF` by default).
+
+See [full documentation of `JSON_DELETE_DEPRECATED_FUNCTIONS`](../api/macros/json_delete_deprecated_functions.md).
+
 ## `JSON_DIAGNOSTICS`
 
 This macro enables extended diagnostics for exception messages. Possible values are `1` to enable or `0` to disable
@@ -86,7 +97,8 @@ See [full documentation of `JSON_DISABLE_ENUM_SERIALIZATION`](../api/macros/json
 ## `JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`
 
 When defined to `1`, a JSON value can no longer be created from a one-element `std::tuple` holding a reference to a JSON
-value, such as the result of `std::forward_as_tuple(j)`. This lets `std::tuple` convert such tuples element-wise.
+value, such as the result of `std::forward_as_tuple(j)`. This lets `std::tuple` convert such tuples element-wise. This
+is planned to become the default in version 4.0.0.
 
 See [full documentation of `JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`](../api/macros/json_disable_tuple_reference_conversion.md).
 

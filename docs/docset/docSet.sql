@@ -219,6 +219,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('Supported Macros', 'Guide', '
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_ASSERT', 'Macro', 'api/macros/json_assert/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_BRACE_INIT_COPY_SEMANTICS', 'Macro', 'api/macros/json_brace_init_copy_semantics/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_CATCH_USER', 'Macro', 'api/macros/json_throw_user/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DELETE_DEPRECATED_FUNCTIONS', 'Macro', 'api/macros/json_delete_deprecated_functions/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DIAGNOSTICS', 'Macro', 'api/macros/json_diagnostics/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DIAGNOSTIC_POSITIONS', 'Macro', 'api/macros/json_diagnostic_positions/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_DISABLE_ENUM_SERIALIZATION', 'Macro', 'api/macros/json_disable_enum_serialization/index.html');
@@ -242,6 +243,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('JSON_NO_THREAD_LOCAL', 'Macro
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_PRECISE_STREAM_POSITION', 'Macro', 'api/macros/json_precise_stream_position/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_SKIP_LIBRARY_VERSION_CHECK', 'Macro', 'api/macros/json_skip_library_version_check/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_SKIP_UNSUPPORTED_COMPILER_CHECK', 'Macro', 'api/macros/json_skip_unsupported_compiler_check/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_STRICT_BINARY_UTF8', 'Macro', 'api/macros/json_strict_binary_utf8/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_STRICT_NUL_HANDLING', 'Macro', 'api/macros/json_strict_nul_handling/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_THROW_USER', 'Macro', 'api/macros/json_throw_user/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_TRY_USER', 'Macro', 'api/macros/json_throw_user/index.html');
