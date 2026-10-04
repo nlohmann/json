@@ -1820,7 +1820,7 @@ TEST_CASE("CBOR")
             // dump() still requires valid UTF-8 and throws for such a value,
             // unless an error handler that replaces or ignores the bytes is
             // passed
-            CHECK_THROWS_AS(j_value.dump(), json::type_error&);
+            CHECK_THROWS_AS(utils::ignore_return_value(j_value.dump()), json::type_error&);
             // to_cbor() writes the bytes back unchanged, as before 3.13.0,
             // unless JSON_STRICT_BINARY_UTF8 is enabled (see unit-binary_utf8_strict.cpp)
             CHECK(json::from_cbor(json::to_cbor(j_value)) == j_value);
@@ -1878,13 +1878,13 @@ TEST_CASE("CBOR")
             // a truncated code point is kept as is
             CHECK_NOTHROW(_ = json::from_cbor(std::vector<uint8_t>({0x7f, 0x61, 0xc3, 0xff})));
             CHECK(_ == "\xc3");
-            CHECK_THROWS_AS(_.dump(), json::type_error&);
+            CHECK_THROWS_AS(utils::ignore_return_value(_.dump()), json::type_error&);
             CHECK(json::from_cbor(json::to_cbor(_)) == _);
 
             // an ill-formed later chunk is kept after valid ones
             CHECK_NOTHROW(_ = json::from_cbor(std::vector<uint8_t>({0x7f, 0x62, 0xc3, 0xa9, 0x62, 0xc0, 0xae, 0xff})));
             CHECK(_ == "\xc3\xa9\xc0\xae");
-            CHECK_THROWS_AS(_.dump(), json::type_error&);
+            CHECK_THROWS_AS(utils::ignore_return_value(_.dump()), json::type_error&);
 
             // valid multi-byte chunks are accepted
             CHECK(json::from_cbor(std::vector<uint8_t>({0x7f, 0x62, 0xc3, 0xa9, 0x62, 0xc3, 0xb6, 0xff})) == "\xc3\xa9\xc3\xb6");
@@ -2390,6 +2390,7 @@ TEST_CASE("issue #5405 - array reserve for definite-length CBOR arrays")
     }
 }
 
+#if !defined(JSON_NOEXCEPTION) // corpus values that do not survive the round trip are skipped by catching the exception
 TEST_CASE("CBOR round-trip invariants")
 {
     // This checks what the parse_cbor_fuzzer driver checks (see
@@ -2422,6 +2423,7 @@ TEST_CASE("CBOR round-trip invariants")
         CHECK(json::to_cbor(j2) == vec);
     }
 }
+#endif
 
 TEST_CASE("CBOR roundtrips" * doctest::skip())
 {

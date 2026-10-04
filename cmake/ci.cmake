@@ -596,8 +596,9 @@ foreach(SRC_FILE ${SRC_FILES})
     add_executable(single_${RELATIVE_SRC_FILE} EXCLUDE_FROM_ALL ${PROJECT_BINARY_DIR}/src_single/${RELATIVE_SRC_FILE}.cpp)
     target_include_directories(single_${RELATIVE_SRC_FILE} PRIVATE ${PROJECT_SOURCE_DIR}/include)
     target_compile_features(single_${RELATIVE_SRC_FILE} PRIVATE cxx_std_11)
-    if(RELATIVE_SRC_FILE STREQUAL "json")
-        # see below: report json.hpp's diagnostics without --error, so they do not fail the build
+    if(RELATIVE_SRC_FILE STREQUAL "json" OR RELATIVE_SRC_FILE STREQUAL "json_literals")
+        # see below: report the diagnostics of json.hpp and json_literals.hpp without --error, so they
+        # do not fail the build
         set_property(TARGET single_${RELATIVE_SRC_FILE} PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_TOOL} -Xiwyu --max_line_length=300)
     else()
         set_property(TARGET single_${RELATIVE_SRC_FILE} PROPERTY CXX_INCLUDE_WHAT_YOU_USE "${iwyu_path_and_options}")
@@ -611,7 +612,10 @@ foreach(SRC_FILE ${SRC_FILES})
     # reporting its diagnostics (informational, via CXX_INCLUDE_WHAT_YOU_USE above) but exclude it
     # from the hard gate below so a fresh IWYU/compiler combination does not fail this target on a
     # nondeterministic suggestion for a header that already re-exports everything on purpose.
-    if(NOT RELATIVE_SRC_FILE STREQUAL "json")
+    # json_literals.hpp and json.hpp include each other on purpose (json.hpp includes it at its end
+    # unless JSON_NO_AUTOMATIC_UDLS is defined), and IWYU, not following the cycle, suggests replacing
+    # json.hpp with json_fwd.hpp although the literals need the complete basic_json; exclude it, too.
+    if(NOT RELATIVE_SRC_FILE STREQUAL "json" AND NOT RELATIVE_SRC_FILE STREQUAL "json_literals")
         list(APPEND single_binaries_tus src_single/${RELATIVE_SRC_FILE}.cpp)
     endif()
 endforeach()

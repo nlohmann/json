@@ -969,7 +969,7 @@ TEST_CASE("copying an object preserves its comparator's state")
 
     for (const std::size_t depth : std::vector<std::size_t> {0, 127, 128, 200})
     {
-        CAPTURE(depth);
+        CAPTURE(depth)
 
         key_case_json original = object;
         for (std::size_t i = 0; i < depth; ++i)
@@ -1138,7 +1138,7 @@ TEST_CASE("operator<=> of binary values with a different subtype does not depend
     // and must still agree with the levels that do
     for (const std::size_t depth : std::vector<std::size_t> {0, 127, 128, 200})
     {
-        CAPTURE(depth);
+        CAPTURE(depth)
         const json x = deep(a, depth);
         const json y = deep(b, depth);
         CHECK((x <=> y) == std::partial_ordering::less); // *NOPAD*

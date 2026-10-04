@@ -505,7 +505,7 @@ static json_with_const_base make_nested_array(std::size_t depth)
 {
     if (depth == 0)
     {
-        return json_with_const_base(1);
+        return json_with_const_base(1); // NOLINT(modernize-return-braced-init-list): {1} would be an array
     }
     return json_with_const_base::array({make_nested_array(depth - 1)});
 }
