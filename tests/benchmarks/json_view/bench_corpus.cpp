@@ -29,6 +29,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <functional>
@@ -195,6 +196,11 @@ static void walk(const boost::json::value& v, stats& st)
 static std::string slurp(const std::string& p)
 {
     std::ifstream f(p, std::ios::binary);
+    if (!f)
+    {
+        std::fprintf(stderr, "cannot open %s\n", p.c_str());
+        std::exit(1);
+    }
     std::stringstream ss;
     ss << f.rdbuf();
     return ss.str();
@@ -222,6 +228,7 @@ int main(int argc, char** argv)
     }
     std::FILE* csv = std::fopen("bench_corpus.csv", "w");
     std::fprintf(csv, "file,bytes,workload,engine,ns\n");
+    json_document reused;
     simdjson::dom::parser sj;
     for (const auto& path : files)
     {
@@ -272,8 +279,10 @@ int main(int argc, char** argv)
             {
                 "parse", {
                     {"json_view", [&] { auto x = json_document::parse(s); g_sink = static_cast<double>(x.node_count()); }},
+                    {"json_view (reused)", [&] { reused.read(s); g_sink = static_cast<double>(reused.node_count()); }},
                     {"yyjson", [&] { yyjson_doc* x = yyjson_read(s.data(), s.size(), 0); g_sink = static_cast<double>(yyjson_doc_get_val_count(x)); yyjson_doc_free(x); }},
                     {"simdjson DOM", [&] { auto e = sj.parse(ps).value_unsafe(); g_sink = e.is_object(); }},
+                    {"simdjson DOM (fresh)", [&] { simdjson::dom::parser p; auto e = p.parse(ps).value_unsafe(); g_sink = e.is_object(); }},
 #if JSON_VIEW_BENCH_BOOST
                     {"Boost.JSON", [&] { boost::json::monotonic_resource mr; auto v = boost::json::parse(s, &mr); g_sink = v.is_object(); }},
 #endif
@@ -306,6 +315,9 @@ int main(int argc, char** argv)
             {
                 for (std::size_t k = 0; k < wl.second.size(); ++k)
                 {
+                    // an untimed call first: whatever the previous engine left to the allocator
+                    // (e.g. thousands of freed json nodes) is cleaned up here, not in the timing
+                    wl.second[k].fn();
                     const auto t0 = std::chrono::steady_clock::now();
                     wl.second[k].fn();
                     best[k] = std::min(best[k], std::chrono::duration<double, std::nano>(std::chrono::steady_clock::now() - t0).count());

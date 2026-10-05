@@ -10,7 +10,8 @@
 //
 //   json_view      nlohmann/json_view.hpp (fresh document per parse / reused)
 //   yyjson         yyjson_read(): immutable document, random access
-//   simdjson DOM   dom::parser (reused, as recommended): immutable, random access
+//   simdjson DOM   dom::parser (reused, as recommended; "fresh": a new parser
+//                  per parse): immutable, random access
 // references (different feature sets):
 //   simdjson OD    On-Demand: forward-only, lazy
 //   Boost.JSON     owning, mutable DOM (monotonic resource)
@@ -19,7 +20,8 @@
 // Workloads: parse (build + free), traverse (visit everything, convert every
 // number, touch every string and key), select (a few fields per document),
 // dump (compact serialization of the parsed document).
-// All engines run interleaved in every round; the best round is reported.
+// All engines run interleaved in every round, each timed call after an untimed
+// one of the same engine; the best round is reported.
 #include <nlohmann/json_view.hpp>
 
 #if JSON_VIEW_BENCH_BOOST
@@ -33,6 +35,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 #include <functional>
 #include <map>
@@ -581,6 +584,11 @@ static double pick_od(const std::string& name, simdjson::ondemand::document& d)
 static std::string slurp(const std::string& p)
 {
     std::ifstream f(p, std::ios::binary);
+    if (!f)
+    {
+        std::fprintf(stderr, "cannot open %s\n", p.c_str());
+        std::exit(1);
+    }
     std::stringstream ss;
     ss << f.rdbuf();
     return ss.str();
@@ -657,6 +665,7 @@ int main(int argc, char** argv)
                 {"json_view (reused)", [&] { reused.read(s); g_sink = static_cast<double>(reused.node_count()); }},
                 {"yyjson", [&] { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); g_sink = static_cast<double>(yyjson_doc_get_val_count(d)); yyjson_doc_free(d); }},
                 {"simdjson DOM", [&] { auto e = sj.parse(ps).value_unsafe(); g_sink = e.is_object(); }},
+                {"simdjson DOM (fresh)", [&] { simdjson::dom::parser p; auto e = p.parse(ps).value_unsafe(); g_sink = e.is_object(); }},
 #if JSON_VIEW_BENCH_BOOST
                 {"Boost.JSON", [&] { boost::json::monotonic_resource mr; auto v = boost::json::parse(s, &mr); g_sink = v.is_object(); }},
 #endif
@@ -664,6 +673,7 @@ int main(int argc, char** argv)
             }});
         workloads.push_back({"traverse", {
                 {"json_view", [&] { auto d = json_document::parse(s); stats st; walk(d.root(), st); g_sink = st.num; }},
+                {"json_view (reused)", [&] { reused.read(s); stats st; walk(reused.root(), st); g_sink = st.num; }},
                 {"yyjson", [&] { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); stats st; walk(yyjson_doc_get_root(d), st); g_sink = st.num; yyjson_doc_free(d); }},
                 {"simdjson DOM", [&] { stats st; walk(sj.parse(ps).value_unsafe(), st); g_sink = st.num; }},
                 {"simdjson OD", [&] { auto d = od.iterate(ps).value_unsafe(); stats st; walk_od(d.get_value().value_unsafe(), st); g_sink = st.num; }},
@@ -674,6 +684,7 @@ int main(int argc, char** argv)
             }});
         workloads.push_back({"select", {
                 {"json_view", [&] { auto d = json_document::parse(s); g_sink = pick(name, d.root()); }},
+                {"json_view (reused)", [&] { reused.read(s); g_sink = pick(name, reused.root()); }},
                 {"yyjson", [&] { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); g_sink = pick(name, yyjson_doc_get_root(d)); yyjson_doc_free(d); }},
                 {"simdjson DOM", [&] { g_sink = pick(name, sj.parse(ps).value_unsafe()); }},
                 {"simdjson OD", [&] { auto d = od.iterate(ps).value_unsafe(); g_sink = pick_od(name, d); }},
@@ -710,6 +721,9 @@ int main(int argc, char** argv)
             {
                 for (std::size_t k = 0; k < wl.second.size(); ++k)
                 {
+                    // an untimed call first: whatever the previous engine left to the allocator
+                    // (e.g. thousands of freed json nodes) is cleaned up here, not in the timing
+                    wl.second[k].fn();
                     const auto t0 = std::chrono::steady_clock::now();
                     for (int b = 0; b < dc.batch; ++b)
                     {

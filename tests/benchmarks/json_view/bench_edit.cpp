@@ -479,6 +479,11 @@ static std::string edit_boost(const std::string& name, const std::string& s, boo
 static std::string slurp(const std::string& p)
 {
     std::ifstream f(p, std::ios::binary);
+    if (!f)
+    {
+        std::fprintf(stderr, "cannot open %s\n", p.c_str());
+        std::exit(1);
+    }
     std::stringstream ss;
     ss << f.rdbuf();
     return ss.str();
@@ -550,6 +555,9 @@ int main(int argc, char** argv)
             {
                 for (std::size_t k = 0; k < engines.size(); ++k)
                 {
+                    // an untimed call first: whatever the previous engine left to the allocator
+                    // (e.g. thousands of freed json nodes) is cleaned up here, not in the timing
+                    g_sink = engines[k].second(dc.name, dc.text, update).size();
                     const auto t0 = std::chrono::steady_clock::now();
                     for (int b = 0; b < dc.batch; ++b)
                     {

@@ -154,11 +154,14 @@ def download_library(name, work):
     if not os.path.isfile(archive):
         print(f'downloading {pin["url"]}', flush=True)
         # the URLs are the https constants in PINNED, and the SHA-256 is checked below
-        urllib.request.urlretrieve(pin['url'], archive)  # nosec B310
+        # (into a .part file first, so that an interrupted download is not kept)
+        urllib.request.urlretrieve(pin['url'], archive + '.part')  # nosec B310
+        os.replace(archive + '.part', archive)
     with open(archive, 'rb') as f:
         digest = hashlib.sha256(f.read()).hexdigest()
     if digest != pin['sha256']:
-        sys.exit(f'error: SHA-256 of {archive} is {digest}, expected {pin["sha256"]}')
+        os.remove(archive)  # downloaded again by the next run
+        sys.exit(f'error: SHA-256 of {archive} is {digest}, expected {pin["sha256"]} (removed)')
     src = os.path.join(work, 'download', pin['dir'])
     if not os.path.isdir(src):
         with tarfile.open(archive) as t:
@@ -214,6 +217,10 @@ def main():
     ap.add_argument('--corpus', nargs='*', default=[], help='more files for bench_corpus')
     ap.add_argument('--build-dir', default=os.path.join(HERE, 'build'), help='where to build (default: build/ next to this script)')
     args = ap.parse_args()
+    # the benchmarks run in the build directory: make the paths absolute
+    args.data = os.path.abspath(args.data)
+    args.corpus = [os.path.abspath(f) for f in args.corpus]
+    args.build_dir = os.path.abspath(args.build_dir)
 
     cxx = os.environ.get('CXX', 'c++')
     cc = os.environ.get('CC', 'cc')

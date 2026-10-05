@@ -60,7 +60,10 @@ outputs are checked to describe the same value.
 
 Before anything is timed, all engines must accept each document and agree on the traversal: the number of values, the
 bytes of all strings and keys, and the sum of all numbers. All engines run interleaved in every round, and the best
-round is reported, as time and as a factor of the `json_view` time (below 1 means faster than `json_view`).
+round is reported, as time and as a factor of the `json_view` time (below 1 means faster than `json_view`). Each timed
+call follows an untimed call of the same engine: otherwise the engine after `json::parse` pays for the allocator
+cleaning up the tens of thousands of nodes `json::parse` just freed (with glibc, this made `json_view` look 1.7 times
+slower on citm_catalog traverse).
 
 The engines do not all offer the same features, which the numbers should be read with:
 
@@ -68,10 +71,17 @@ The engines do not all offer the same features, which the numbers should be read
 |---|---|---|---|---|
 | `json_view` | immutable index into the text | yes | no | a fresh document per parse; "reused" parses into the same document |
 | yyjson | immutable (`yyjson_read`) | yes | via a mutable copy | |
-| simdjson DOM | immutable, parser reused | yes | no | |
+| simdjson DOM | immutable, parser reused | yes | no | "fresh" uses a new parser per parse |
 | simdjson On-Demand | none: forward-only, lazy | no | no | only traverse and select |
 | Boost.JSON | owning, mutable DOM | yes | yes | monotonic resource |
 | `json::parse` | owning, mutable DOM | yes | yes | |
+
+Reusing memory matters as much as the parser. simdjson DOM reuses its parser, so it writes into memory it already
+touched; a fresh `json_view` document or yyjson document gets new memory for every parse. On Linux, glibc returns large
+blocks to the system when they are freed, so every fresh parse of a large document pays a page fault per 4 KiB page:
+on x86-64 Linux, a fresh `json_view` parse of jeopardy took about twice as long as a reused one. On macOS on Apple
+silicon, with 16 KiB pages, the difference is much smaller. Compare "json_view (reused)" with "simdjson DOM", and the
+fresh `json_view` with "simdjson DOM (fresh)" and yyjson.
 
 ## Published results
 
