@@ -662,10 +662,11 @@ class binary_reader
         }
 
         // the value is -1 - number, which fits into number_integer_t
-        // whenever number does
+        // whenever number does; the outer cast undoes the integral promotion
+        // for number_integer_t types narrower than int
         if (JSON_HEDLEY_LIKELY(value_in_range_of<number_integer_t>(number)))
         {
-            return sax->number_integer(static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(number));
+            return sax->number_integer(conditional_static_cast<number_integer_t>(static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(number)));
         }
 
         // like the lexer does for JSON text, store a value too small for

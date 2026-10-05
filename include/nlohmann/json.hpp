@@ -5319,6 +5319,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return o;
     }
 
+#if !JSON_DELETE_DEPRECATED_FUNCTIONS
+    // the deleted version is a function template after the class, because
+    // GCC < 5 and Clang < 10 reject deleted friend functions in class templates
     /// @brief serialize to stream
     /// @sa https://json.nlohmann.me/api/operator_ltlt/
     /// @deprecated This function is deprecated since 3.0.0 and will be removed in
@@ -5327,9 +5330,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     ///             replace calls like `j >> o;` with `o << j;`.
     JSON_HEDLEY_DEPRECATED_FOR(3.0.0, operator<<(std::ostream&, const basic_json&))
     friend std::ostream& operator>>(const basic_json& j, std::ostream& o)
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-        = delete;
-#else
     {
         return o << j;
     }
@@ -5507,6 +5507,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #pragma clang diagnostic pop
 #endif
 #ifndef JSON_NO_IO
+#if !JSON_DELETE_DEPRECATED_FUNCTIONS
+    // the deleted version is a function template after the class, because
+    // GCC < 5 and Clang < 10 reject deleted friend functions in class templates
     /// @brief deserialize from stream
     /// @sa https://json.nlohmann.me/api/operator_gtgt/
     /// @deprecated This stream operator is deprecated since 3.0.0 and will be removed in
@@ -5515,9 +5518,6 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     ///             replace calls like `j << i;` with `i >> j;`.
     JSON_HEDLEY_DEPRECATED_FOR(3.0.0, operator>>(std::istream&, basic_json&))
     friend std::istream& operator<<(basic_json& j, std::istream& i)
-#if JSON_DELETE_DEPRECATED_FUNCTIONS
-        = delete;
-#else
     {
         return operator>>(i, j);
     }
@@ -7177,6 +7177,18 @@ std::string format_as(const NLOHMANN_BASIC_JSON_TPL& j)
 {
     return j.dump();
 }
+
+#if JSON_DELETE_DEPRECATED_FUNCTIONS && !defined(JSON_NO_IO)
+    /// @brief serialize to stream (deleted; use operator<<(std::ostream&, const basic_json&))
+    /// @sa https://json.nlohmann.me/api/operator_ltlt/
+    NLOHMANN_BASIC_JSON_TPL_DECLARATION
+    std::ostream& operator>>(const NLOHMANN_BASIC_JSON_TPL& j, std::ostream& o) = delete;
+
+    /// @brief deserialize from stream (deleted; use operator>>(std::istream&, basic_json&))
+    /// @sa https://json.nlohmann.me/api/operator_gtgt/
+    NLOHMANN_BASIC_JSON_TPL_DECLARATION
+    std::istream& operator<<(NLOHMANN_BASIC_JSON_TPL& j, std::istream& i) = delete;
+#endif
 
 NLOHMANN_JSON_NAMESPACE_END
 
