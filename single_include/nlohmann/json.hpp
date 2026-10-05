@@ -16969,9 +16969,8 @@ class binary_reader
             // the lexer would stop at a NUL and accept the digits before it
             if (JSON_HEDLEY_UNLIKELY(current == '\0'))
             {
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(115, chars_read,
-                                        exception_message(concat("invalid number text; last byte: 0x", last_token), "high-precision number"), nullptr));
+                return sax->parse_error(chars_read, "00", parse_error::create(115, chars_read,
+                                        exception_message("invalid number text; last byte: 0x00", "high-precision number"), nullptr));
             }
             number_vector.push_back(static_cast<char>(current));
         }
