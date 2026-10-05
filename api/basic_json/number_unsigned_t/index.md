@@ -34,7 +34,7 @@ With the default values for `NumberUnsignedType` (`std::uint64_t`), the default 
 
 > An implementation may set limits on the range and precision of numbers.
 
-When the default type is used, the maximal integer number that can be stored is `18446744073709551615` (UINT64_MAX) and the minimal integer number that can be stored is `0`. Integer numbers that are out of range will yield over/underflow when used in a constructor. During deserialization, too large or small integer numbers will automatically be stored as [`number_integer_t`](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md) or [`number_float_t`](https://json.nlohmann.me/api/basic_json/number_float_t/index.md).
+When the default type is used, the maximal integer number that can be stored is `18446744073709551615` (UINT64_MAX) and the minimal integer number that can be stored is `0`. Integer numbers that are out of range will yield over/underflow when used in a constructor. During deserialization (from JSON text or any of the binary formats), too large or small integer numbers will automatically be stored as [`number_integer_t`](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md) or [`number_float_t`](https://json.nlohmann.me/api/basic_json/number_float_t/index.md).
 
 [RFC 8259](https://tools.ietf.org/html/rfc8259) further states:
 

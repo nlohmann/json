@@ -181,7 +181,7 @@ Tagged items (0xC0..0xDB) are not interpreted either; see the note on tagged ite
 
 Negative integer overflow
 
-CBOR negative integers (major type 1) are decoded as `-1 - n`. If the encoded magnitude `n` is too large for the result to fit into `number_integer_t` (`std::int64_t` by default), parsing fails with a [`parse_error.112`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error112) exception rather than overflowing silently.
+CBOR negative integers (major type 1) are decoded as `-1 - n`. If the encoded magnitude `n` is too large for the result to fit into `number_integer_t` (`std::int64_t` by default), the result is stored as `number_float_t`, like a too small integer in JSON text. For example, `-18446744073709551616` (`0x3B` followed by eight `0xFF` bytes) is stored as `-1.8446744073709552e+19`.
 
 Object keys
 

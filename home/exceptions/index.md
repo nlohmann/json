@@ -396,10 +396,6 @@ Example messages
 ```
 
 ```
-[json.exception.parse_error.112] parse error at byte 9: syntax error while parsing CBOR value: negative integer overflow
-```
-
-```
 [json.exception.parse_error.112] parse error at byte 5: syntax error while parsing BSON document: document size 6 does not match the number of bytes read (5)
 ```
 
@@ -993,12 +989,16 @@ JSON pointer has no parent
 
 ### json.exception.out_of_range.406
 
-A parsed number could not be stored as without changing it to NaN or INF.
+A parsed number could not be stored without changing it to NaN or INF. For the binary formats, this happens when a finite floating-point number does not fit into [`number_float_t`](https://json.nlohmann.me/api/basic_json/number_float_t/index.md), for example a double-precision number when `number_float_t` is `float`.
 
-Example message
+Example messages
 
 ```
 number overflow parsing '10E1000'
+```
+
+```
+[json.exception.out_of_range.406] syntax error while parsing CBOR value: number overflow
 ```
 
 ### json.exception.out_of_range.407
