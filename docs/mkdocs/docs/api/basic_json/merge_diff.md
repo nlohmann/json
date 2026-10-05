@@ -11,7 +11,7 @@ added members with their new values, and removed members with the value `#!json 
 member by member; any other value that differs, including an array, is replaced as a whole.
 
 For two JSON values `source` and `target`, where `target` contains no object member whose value is `#!json null`, the
-following code yields always `#!cpp true`:
+following code always yields `#!cpp true`:
 ```cpp
 basic_json patched = source;
 patched.merge_patch(merge_diff(source, target));
@@ -32,13 +32,14 @@ a JSON Merge Patch to convert the `source` to `target`
 
 ## Exception safety
 
-Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
+Strong guarantee: `source` and `target` are never modified.
 
 ## Complexity
 
-Linear in the sizes of `source` and `target`, times the cost of looking up a key in an object: logarithmic in the size
-of the object for [`json`](../json.md), and linear for [`ordered_json`](../ordered_json.md). For `ordered_json`,
-comparing two objects with `n` and `m` members therefore takes O(n·m).
+Linear in the sizes of `source` and `target`, times the cost of a key-based object operation (looking up a key, or
+adding one to the patch): logarithmic for [`json`](../json.md), and linear for [`ordered_json`](../ordered_json.md)
+(see [`ordered_map` complexity](../ordered_map.md#complexity)). For `ordered_json`, diffing two objects with `n` and
+`m` members therefore takes O((n+m)²).
 
 ## Notes
 
