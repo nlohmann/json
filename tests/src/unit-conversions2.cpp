@@ -853,11 +853,11 @@ TEST_CASE("std::optional")
         CHECK_THROWS_WITH_AS(json(opt), "cannot serialize throwing_to_json_type", std::runtime_error&);
 
         // the conversion is noexcept exactly when converting the contained value is
-        // (MSVC 2017 evaluates the conditional noexcept of this conversion as true)
-#if !defined(_MSC_VER) || _MSC_VER >= 1920
+        // (except with MSVC 2017, where it is never noexcept, see to_json.hpp)
+#if !defined(_MSC_VER) || defined(__clang__) || _MSC_VER >= 1920
         static_assert(!std::is_nothrow_constructible<json, const std::optional<throwing_to_json_type>&>::value);
-#endif
         static_assert(std::is_nothrow_constructible<json, const std::optional<int>&>::value);
+#endif
     }
 #endif
 }
