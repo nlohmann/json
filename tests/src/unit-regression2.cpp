@@ -1116,4 +1116,115 @@ TEST_CASE("regression test #5135 - destructor never allocates, even under memory
 }
 #endif
 
+namespace
+{
+// a single-element chain of `depth` arrays, built iteratively (never
+// recursing: each wrap only moves the previous, already-built value)
+template<class BasicJsonType>
+BasicJsonType make_single_chain(std::size_t depth)
+{
+    BasicJsonType v = 1;
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        BasicJsonType wrapper = BasicJsonType::array();
+        wrapper.push_back(std::move(v));
+        v = std::move(wrapper);
+    }
+    return v;
+}
+
+// copies value first, to make sure nothing was corrupted by building it,
+// then lets both the copy and the original destruct via normal scope exit
+template<class BasicJsonType>
+void check_destroy_edge_case(const BasicJsonType& value)
+{
+    const BasicJsonType copy = value;
+    CHECK(copy == value);
+}
+} // namespace
+
+TEST_CASE_TEMPLATE("regression test #5135 - destroy() edge cases", BasicJsonType, json, ordered_json)
+{
+    using binary_t = typename BasicJsonType::binary_t;
+
+    SECTION("mix of empty objects, empty arrays, non-empty containers, and scalars")
+    {
+        BasicJsonType root = BasicJsonType::array();
+        root.push_back(BasicJsonType::object());
+        root.push_back(BasicJsonType::array());
+        root.push_back(BasicJsonType::object({{"k", 1}}));
+        root.push_back(BasicJsonType::array({1, 2, 3}));
+        root.push_back(nullptr);
+        root.push_back(true);
+        root.push_back(42);
+        root.push_back(3.14);
+        root.push_back("a string");
+        root.push_back(BasicJsonType(binary_t({1, 2, 3})));
+        check_destroy_edge_case(root);
+    }
+
+    SECTION("container child in first position only")
+    {
+        BasicJsonType root = BasicJsonType::array({BasicJsonType::array({1, 2}), 3, 4, 5});
+        check_destroy_edge_case(root);
+    }
+
+    SECTION("container child in last position only")
+    {
+        BasicJsonType root = BasicJsonType::array({1, 2, 3, BasicJsonType::array({4, 5})});
+        check_destroy_edge_case(root);
+    }
+
+    SECTION("container children in first and last position")
+    {
+        BasicJsonType root = BasicJsonType::array({BasicJsonType::array({1}), 2, 3, BasicJsonType::array({4})});
+        check_destroy_edge_case(root);
+    }
+
+    SECTION("single-element chain, 1000 levels deep")
+    {
+        BasicJsonType root = make_single_chain<BasicJsonType>(1000);
+        check_destroy_edge_case(root);
+    }
+
+    SECTION("top-level empty array")
+    {
+        BasicJsonType root = BasicJsonType::array();
+        check_destroy_edge_case(root);
+    }
+
+    SECTION("top-level empty object")
+    {
+        BasicJsonType root = BasicJsonType::object();
+        check_destroy_edge_case(root);
+    }
+
+    SECTION("object whose last child is a non-empty array whose last child is an empty object")
+    {
+        BasicJsonType inner_array = BasicJsonType::array({1, 2, BasicJsonType::object()});
+        BasicJsonType root = BasicJsonType::object({{"a", 1}, {"b", inner_array}});
+        check_destroy_edge_case(root);
+    }
+
+    SECTION("destruction via erase() on a deeply nested child")
+    {
+        BasicJsonType root = BasicJsonType::array();
+        root.push_back(make_single_chain<BasicJsonType>(500));
+        root.push_back(BasicJsonType::object({{"k", BasicJsonType::array({1, 2, 3})}}));
+        // erase() must destroy the removed subtree without recursing or
+        // allocating beyond what erase() itself needs
+        root.erase(0);
+        CAPTURE(root.size())
+        CHECK(root.size() == 1);
+    }
+
+    SECTION("destruction via assignment on a deep tree")
+    {
+        BasicJsonType root = make_single_chain<BasicJsonType>(2000);
+        // assigning a new value destroys the old one in place
+        root = nullptr;
+        CHECK(root.is_null());
+    }
+}
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP

@@ -675,4 +675,20 @@ TEST_CASE("destructor performs no allocation, only deallocation")
         CHECK(counting_allocator_allocations == allocations_before);
         CHECK(counting_allocator_deallocations > deallocations_before);
     }
+
+    SECTION("mixed tree of empty/non-empty arrays and objects")
+    {
+        auto* j = new counting_json( // NOLINT(cppcoreguidelines-owning-memory)
+        {
+            {"empty_obj", counting_json::object()},
+            {"empty_arr", counting_json::array()},
+            {"nested", {{"a", counting_json::array({1, 2, counting_json::object()})}, {"b", 3}}},
+            {"tail", counting_json::array({counting_json::array({1}), 2, counting_json::array({3})})}
+        });
+        const auto allocations_before = counting_allocator_allocations;
+        const auto deallocations_before = counting_allocator_deallocations;
+        delete j; // NOLINT(cppcoreguidelines-owning-memory)
+        CHECK(counting_allocator_allocations == allocations_before);
+        CHECK(counting_allocator_deallocations > deallocations_before);
+    }
 }
