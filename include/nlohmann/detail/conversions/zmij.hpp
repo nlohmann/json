@@ -157,10 +157,22 @@ inline std::uint64_t umul128_add_hi64(std::uint64_t x, std::uint64_t y, std::uin
     return p.high + (p.low + c < p.low ? 1u : 0u);
 }
 
+/// the result of Zmij: the shorter candidate and, if that is outside the
+/// rounding interval, the digit after it (16 bytes: returned in registers)
+struct shortest_decimal
+{
+    std::uint64_t integral;  ///< the shorter candidate (15 or 16 digits for normal doubles)
+    int exponent;            ///< the decimal exponent of the digit after it
+    unsigned char digit;     ///< the digit after it (if has_digit)
+    bool has_digit;          ///< whether the shortest decimal is integral * 10 + digit
+};
+
 /// The shortest decimal in the rounding interval of a positive finite double
 /// given by its bits, the closest one if there are several (to_decimal of
-/// Zmij). The significand can end in zeros.
-inline decimal to_decimal(std::uint64_t bits) noexcept
+/// Zmij, which keeps the last digit apart: the 15 or 16 digits before it can be
+/// converted without a multiplication by 10 first). Always inlined: GCC
+/// otherwise calls it, and its result goes through memory.
+JSON_HEDLEY_ALWAYS_INLINE shortest_decimal to_shortest(std::uint64_t bits) noexcept
 {
     constexpr int extra_shift = 9;
     const auto raw_exp = static_cast<int>((bits >> 52u) & 0x7FFu);
@@ -205,12 +217,20 @@ inline decimal to_decimal(std::uint64_t bits) noexcept
         digit = digit < lowest ? lowest : digit;
     }
     integral += round_up ? 1u : 0u;
-    if (!round_up && !round_down)
+    // if the shorter candidate is outside the rounding interval: one digit more
+    return shortest_decimal{integral, dec_exp, static_cast<unsigned char>(digit), !round_up && !round_down};
+}
+
+/// The shortest decimal in the rounding interval of a positive finite double
+/// given by its bits, as one number. The significand can end in zeros.
+inline decimal to_decimal(std::uint64_t bits) noexcept
+{
+    const shortest_decimal d = to_shortest(bits);
+    if (d.has_digit)
     {
-        // the shorter candidate is outside the rounding interval: one digit more
-        return decimal{(integral * 10) + digit, dec_exp};
+        return decimal{(d.integral * 10) + d.digit, d.exponent};
     }
-    return decimal{integral, dec_exp + 1};
+    return decimal{d.integral, d.exponent + 1};
 }
 
 }  // namespace zmij

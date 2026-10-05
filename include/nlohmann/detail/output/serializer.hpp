@@ -1366,8 +1366,9 @@ class serializer
     /*!
     @brief dump an integer
 
-    Dump a given integer, appending it to @ref write_buffer. Works internally with
-    @a number_buffer.
+    Dump a given integer, appending it to @ref write_buffer (directly: copying
+    the digits from another buffer right after writing them waits until the
+    stores are done).
 
     @param[in] x  integer number (signed or unsigned) to dump
     @tparam NumberType either @a number_integer_t or @a number_unsigned_t
@@ -1402,33 +1403,57 @@ class serializer
             return;
         }
 
-        // use a pointer to fill the buffer
-        auto buffer_ptr = number_buffer.begin(); // NOLINT(llvm-qualified-auto,readability-qualified-auto)
+        // use a pointer to fill the buffer (room for as much as number_buffer holds)
+        if (JSON_HEDLEY_UNLIKELY(write_buffer_pos + number_buffer.size() > write_buffer.size()))
+        {
+            flush();
+        }
+        auto* buffer_ptr = write_buffer.data() + write_buffer_pos;
 
         number_unsigned_t abs_value;
 
-        unsigned int n_chars{};
+        // one byte for the minus sign
+        unsigned int n_chars = 0;
 
         if (is_negative_number(x))
         {
             *buffer_ptr = '-';
             abs_value = remove_sign(static_cast<number_integer_t>(x));
-
-            // account one more byte for the minus sign
-            n_chars = 1 + count_digits(abs_value);
+            n_chars = 1;
         }
         else
         {
             abs_value = static_cast<number_unsigned_t>(x);
-            n_chars = count_digits(abs_value);
         }
+
+        // up to 16 digits: eight at a time (as the digits of floats), written
+        // without leading zeros
+        if (abs_value < 10000000000000000u)
+        {
+            const std::uint64_t value = abs_value;
+            const std::uint64_t upper = value / 100000000u;
+            const std::uint64_t first = dtoa_impl::eight_digit_bytes(upper != 0 ? upper : value);
+            const auto leading = static_cast<unsigned>(count_leading_zeros(first) / 8); // (first is not 0)
+            char* const p = buffer_ptr + n_chars;
+            dtoa_impl::store_msb_first(p, (first << (8 * leading)) + 0x3030303030303030u);
+            n_chars += 8 - leading;
+            if (upper != 0)
+            {
+                dtoa_impl::store_msb_first(p + 8 - leading, dtoa_impl::eight_digit_bytes(value - (upper * 100000000u)) + 0x3030303030303030u);
+                n_chars += 8;
+            }
+            write_buffer_pos += n_chars;
+            return;
+        }
+
+        n_chars += count_digits(abs_value);
 
         // spare 1 byte for '\0'
         JSON_ASSERT(n_chars < number_buffer.size() - 1);
 
         // jump to the end to generate the string from backward,
         // so we later avoid reversing the result
-        buffer_ptr += static_cast<typename decltype(number_buffer)::difference_type>(n_chars);
+        buffer_ptr += n_chars;
 
         // Fast int2ascii implementation inspired by "Fastware" talk by Andrei Alexandrescu
         // See: https://www.youtube.com/watch?v=o4-CwDo2zpg
@@ -1451,14 +1476,13 @@ class serializer
             *(--buffer_ptr) = static_cast<char>('0' + abs_value);
         }
 
-        put_buffer(number_buffer, n_chars);
+        write_buffer_pos += n_chars;
     }
 
     /*!
     @brief dump a floating-point number
 
-    Dump a given floating-point number, appending it to @ref write_buffer. Works internally
-    with @a number_buffer.
+    Dump a given floating-point number, appending it to @ref write_buffer.
 
     @param[in] x  floating-point number to dump
     */
@@ -1485,10 +1509,15 @@ class serializer
 
     void dump_float(number_float_t x, std::true_type /*is_ieee_single_or_double*/)
     {
-        auto* begin = number_buffer.data();
+        // directly into the write buffer: copying the text from number_buffer
+        // right after to_chars() wrote it waits until its stores are done
+        if (JSON_HEDLEY_UNLIKELY(write_buffer_pos + number_buffer.size() > write_buffer.size()))
+        {
+            flush();
+        }
+        auto* begin = write_buffer.data() + write_buffer_pos;
         auto* end = ::nlohmann::detail::to_chars(begin, begin + number_buffer.size(), x);
-
-        put_buffer(number_buffer, static_cast<std::size_t>(end - begin));
+        write_buffer_pos += static_cast<std::size_t>(end - begin);
     }
 
     JSON_HEDLEY_NON_NULL(1)

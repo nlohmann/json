@@ -21,6 +21,21 @@
     #include <cstdlib> // _byteswap_uint64
 #endif
 
+// SSE2 (every x86-64 CPU) and NEON (every 64-bit Arm CPU) convert the 16
+// digits of a double at once
+#if defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64EC))
+    #include <emmintrin.h>
+    #define JSON_DTOA_SSE2 1
+    #define JSON_DTOA_NEON 0
+#elif (defined(__aarch64__) || defined(_M_ARM64)) && !defined(_M_ARM64EC) && !defined(__ARM_BIG_ENDIAN)
+    #include <arm_neon.h>
+    #define JSON_DTOA_SSE2 0
+    #define JSON_DTOA_NEON 1
+#else
+    #define JSON_DTOA_SSE2 0
+    #define JSON_DTOA_NEON 0
+#endif
+
 #include <nlohmann/detail/conversions/zmij.hpp>
 #include <nlohmann/detail/macro_scope.hpp>
 
@@ -1253,6 +1268,203 @@ inline char* write_decimal(char* first, std::uint64_t digits, int exp) noexcept
     return end + (three ? 5 : 4);
 }
 
+/*!
+@brief the shortest decimal of a positive double (Zmij), as write_decimal()
+writes it
+
+For a normal double, the shorter candidate has 15 or 16 digits: they are
+converted at once (two halves of eight digits) and followed by the digit
+after them, if there is one, without the multiplication and division by 10
+that counting the digits of one number would take. The fixed layouts move
+the digits after the point by one byte.
+
+@return a pointer past the text; up to 41 bytes at @a first are written
+        (some beyond the returned end)
+*/
+JSON_HEDLEY_NON_NULL(1)
+JSON_HEDLEY_RETURNS_NON_NULL
+inline char* write_shortest(char* first, const zmij::shortest_decimal d) noexcept
+{
+    const std::uint64_t sig = d.integral;
+    if (JSON_HEDLEY_UNLIKELY(sig < 100000000000000u || sig >= 10000000000000000u))
+    {
+        // (subnormals)
+        return d.has_digit ? write_decimal(first, (sig * 10) + d.digit, d.exponent) : write_decimal(first, sig, d.exponent + 1);
+    }
+    const bool sixteen = sig >= 1000000000000000u; // (else 15 digits)
+    const int last = d.has_digit ? d.digit : 0;
+    const std::uint64_t upper = sig / 100000000u;
+#if JSON_DTOA_SSE2
+    // NOLINTBEGIN(portability-simd-intrinsics)
+    // the two halves in the 64-bit lanes, each as abcd * 2^32 + efgh, then as
+    // bytes (as eight_digit_bytes(), one lane each)
+    const __m128i x = _mm_set_epi64x(static_cast<long long>(sig - (upper * 100000000u)), static_cast<long long>(upper));
+    const __m128i abcd = _mm_srli_epi64(_mm_mul_epu32(x, _mm_set1_epi64x(109951163)), 40); // 2^40 / 10000 + 1
+    const __m128i abcd_efgh = _mm_add_epi64(x, _mm_mul_epu32(abcd, _mm_set1_epi64x(4294957296))); // 2^32 - 10000
+    // 32-bit lanes in the order of the text: abcd, efgh of both halves
+    const __m128i fours = _mm_shuffle_epi32(abcd_efgh, _MM_SHUFFLE(2, 3, 0, 1));
+    const __m128i ab = _mm_srli_epi16(_mm_mulhi_epu16(fours, _mm_set1_epi32(5243)), 3);
+    const __m128i ab_cd = _mm_or_si128(_mm_slli_epi32(_mm_sub_epi16(fours, _mm_mullo_epi16(ab, _mm_set1_epi32(100))), 16), ab);
+    // 16-bit lanes ab (< 100) -> bytes a, b: 256 * ab - 2559 * (ab / 10)
+    const __m128i bytes = _mm_sub_epi16(_mm_slli_epi16(ab_cd, 8), _mm_mullo_epi16(_mm_set1_epi16(2559), _mm_mulhi_epu16(ab_cd, _mm_set1_epi16(6554))));
+    // the last digit that is not 0 (sig is not 0)
+    const auto nonzero = static_cast<std::uint64_t>(_mm_movemask_epi8(_mm_cmpgt_epi8(bytes, _mm_setzero_si128())));
+    const int digits = 63 - count_leading_zeros(nonzero) + (sixteen ? 1 : 0); // without trailing zeros
+    const __m128i chars = _mm_add_epi8(bytes, _mm_set1_epi8('0'));
+    // the 16 characters from the first digit
+    const __m128i s = sixteen ? chars : _mm_or_si128(_mm_srli_si128(chars, 1), _mm_slli_si128(_mm_cvtsi32_si128('0' + last), 15));
+    const char s16 = static_cast<char>(sixteen ? '0' + last : '0'); // the 17th
+    const auto store_16 = [&s](char* p) noexcept
+    {
+        std::memcpy(p, &s, 16);
+    };
+    const char first_digit = static_cast<char>(_mm_cvtsi128_si32(s));
+    // NOLINTEND(portability-simd-intrinsics)
+#elif JSON_DTOA_NEON
+    // as with SSE2: the halves in 32-bit lanes, then abcd, efgh of both
+    const uint32x2_t halves = vcreate_u32(upper | ((sig - (upper * 100000000u)) << 32u));
+    const uint32x2_t abcd = vmovn_u64(vshrq_n_u64(vmull_n_u32(halves, static_cast<std::uint32_t>(((std::uint64_t{1} << 40u) / 10000u) + 1u)), 40));
+    const uint32x2_t efgh = vmls_n_u32(halves, abcd, 10000u);
+    const uint32x4_t fours = vcombine_u32(vzip1_u32(abcd, efgh), vzip2_u32(abcd, efgh));
+    const uint32x4_t ab = vshrq_n_u32(vmulq_n_u32(fours, 5243u), 19);
+    const uint16x8_t ab_cd = vreinterpretq_u16_u32(vorrq_u32(ab, vshlq_n_u32(vmlsq_n_u32(fours, ab, 100u), 16)));
+    const uint16x8_t tens = vshrq_n_u16(vmulq_n_u16(ab_cd, 103u), 10);
+    const uint8x16_t bytes = vreinterpretq_u8_u16(vorrq_u16(tens, vshlq_n_u16(vmlsq_n_u16(ab_cd, tens, 10u), 8)));
+    // the last digit that is not 0 (sig is not 0): a nibble per byte
+    const std::uint64_t nonzero = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(vtstq_u8(bytes, bytes)), 4)), 0);
+    const int digits = ((63 - count_leading_zeros(nonzero)) / 4) + (sixteen ? 1 : 0); // without trailing zeros
+    const uint8x16_t chars = vaddq_u8(bytes, vdupq_n_u8('0'));
+    // the 16 characters from the first digit
+    const uint8x16_t s = sixteen ? chars : vextq_u8(chars, vdupq_n_u8(static_cast<std::uint8_t>('0' + last)), 1);
+    const char s16 = static_cast<char>(sixteen ? '0' + last : '0'); // the 17th
+    const auto store_16 = [&s](char* p) noexcept
+    {
+        vst1q_u8(reinterpret_cast<std::uint8_t*>(p), s); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    };
+    const auto first_digit = static_cast<char>(vgetq_lane_u8(s, 0));
+#else
+    const std::uint64_t hi = eight_digit_bytes(upper);
+    const std::uint64_t lo = eight_digit_bytes(sig - (upper * 100000000u));
+    // trailing zero digits: zero bytes (sig is not 0)
+    const int zeros = lo != 0 ? count_trailing_zeros(lo) / 8 : 8 + (count_trailing_zeros(hi) / 8);
+    const int digits = 15 - zeros + (sixteen ? 1 : 0); // without trailing zeros
+    // the 16 characters from the first digit
+    const std::uint64_t s_hi = (sixteen ? hi : (hi << 8u) | (lo >> 56u)) + 0x3030303030303030u;
+    const std::uint64_t s_lo = (sixteen ? lo : (lo << 8u) | static_cast<std::uint64_t>(last)) + 0x3030303030303030u;
+    const char s16 = static_cast<char>(sixteen ? '0' + last : '0'); // the 17th
+    const auto store_16 = [s_hi, s_lo](char* p) noexcept
+    {
+        store_msb_first(p, s_hi);
+        store_msb_first(p + 8, s_lo);
+    };
+    const auto first_digit = static_cast<char>(s_hi >> 56u);
+#endif
+    const int len = d.has_digit ? 16 + (sixteen ? 1 : 0) : digits; // significant digits
+    const int n = 16 + (sixteen ? 1 : 0) + d.exponent;           // digits before the point
+
+    if (JSON_HEDLEY_LIKELY(n >= 1 && n <= 15))
+    {
+        // "dig.its" and "digits[000].0": the digits after the point move by
+        // one byte ('0's follow the digits)
+#if JSON_DTOA_SSE2
+        // NOLINTBEGIN(portability-simd-intrinsics)
+        // (in the register: reading the digits back from memory right after
+        // storing them waits until the stores are done)
+        const __m128i at = _mm_set1_epi8(static_cast<char>(n));
+        const __m128i index = _mm_setr_epi8(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+        const __m128i before = _mm_cmpgt_epi8(at, index);
+        const __m128i after = _mm_cmpgt_epi8(index, at);
+        const __m128i text = _mm_or_si128(_mm_or_si128(_mm_and_si128(s, before), _mm_and_si128(_mm_slli_si128(s, 1), after)),
+                                          _mm_andnot_si128(_mm_or_si128(before, after), _mm_set1_epi8('.')));
+        std::memcpy(first, &text, 16);
+        first[16] = static_cast<char>(_mm_extract_epi16(s, 7) >> 8);
+        first[17] = s16;
+        // NOLINTEND(portability-simd-intrinsics)
+#elif JSON_DTOA_NEON
+        const uint8x16_t index = vcombine_u8(vcreate_u8(0x0706050403020100u), vcreate_u8(0x0F0E0D0C0B0A0908u));
+        const uint8x16_t at = vdupq_n_u8(static_cast<std::uint8_t>(n));
+        const uint8x16_t after_point = vbslq_u8(vcgtq_u8(index, at), vextq_u8(vdupq_n_u8(0), s, 15), vdupq_n_u8('.'));
+        vst1q_u8(reinterpret_cast<std::uint8_t*>(first), vbslq_u8(vcltq_u8(index, at), s, after_point)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        first[16] = static_cast<char>(vgetq_lane_u8(s, 15));
+        first[17] = s16;
+#else
+        store_16(first);
+        first[16] = s16;
+        std::uint64_t after_point[2]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
+        std::memcpy(after_point, first + n, 16);
+        std::memcpy(first + n + 1, after_point, 16);
+        first[n] = '.';
+#endif
+        return first + (n >= len ? n + 2 : len + 1);
+    }
+    if (n <= 0 && n > -4)
+    {
+        // "0.[000]digits"
+        std::memset(first, '0', 8);
+        first[1] = '.';
+        store_16(first + 2 - n);
+        first[18 - n] = s16;
+        return first + 2 - n + len;
+    }
+    // d.igitse+XX, with at least two exponent digits (as append_exponent())
+    store_16(first + 1);
+    first[17] = s16;
+    first[0] = first_digit;
+    first[1] = '.';
+    char* const end = first + (len == 1 ? 1 : len + 1);
+    const int e = n - 1;
+    const auto ea = static_cast<unsigned>(e < 0 ? -e : e);
+    const bool three = ea >= 100;
+    end[0] = 'e';
+    end[1] = e < 0 ? '-' : '+';
+    end[2] = static_cast<char>('0' + (three ? ea / 100 : (ea / 10) % 10));
+    end[3] = static_cast<char>('0' + (three ? (ea / 10) % 10 : ea % 10));
+    end[4] = static_cast<char>('0' + (ea % 10));
+    return end + (three ? 5 : 4);
+}
+
+/// the powers of ten up to 10^16
+inline const std::array<std::uint64_t, 17>& powers_of_ten_16() noexcept
+{
+    static const std::array<std::uint64_t, 17> powers =
+    {
+        {
+            1u, 10u, 100u, 1000u, 10000u, 100000u, 1000000u, 10000000u, 100000000u, 1000000000u, 10000000000u,
+            100000000000u, 1000000000000u, 10000000000000u, 100000000000000u, 1000000000000000u, 10000000000000000u
+        }
+    };
+    return powers;
+}
+
+/*!
+@brief digits * 10^exp, as write_decimal() writes it, for the digits of a
+double that need no conversion (count digits, at most 15, the first not 0;
+trailing zeros allowed): extended to 16 digits and written by write_shortest()
+
+@return a pointer past the text; up to 41 bytes at @a first are written
+        (some beyond the returned end)
+*/
+JSON_HEDLEY_NON_NULL(1)
+JSON_HEDLEY_RETURNS_NON_NULL
+inline char* write_short_decimal(char* first, std::uint64_t digits, int count, int exp) noexcept
+{
+    JSON_ASSERT(digits >= powers_of_ten_16()[static_cast<std::size_t>(count - 1)] && count <= 15);
+    const int scale = 16 - count;
+    return write_shortest(first, zmij::shortest_decimal{digits * powers_of_ten_16()[static_cast<std::size_t>(scale)], exp - scale - 1, 0, false});
+}
+
+/// as write_short_decimal(), counting the digits (not 0, less than 10^15)
+JSON_HEDLEY_NON_NULL(1)
+JSON_HEDLEY_RETURNS_NON_NULL
+inline char* write_short_decimal(char* first, std::uint64_t digits, int exp) noexcept
+{
+    JSON_ASSERT(digits != 0 && digits < 1000000000000000u);
+    // floor(log10(2^bits)) + 1 digits, or one less
+    const int log2_bound = ((64 - count_leading_zeros(digits)) * 1233) >> 12;
+    const int count = log2_bound + (digits >= powers_of_ten_16()[static_cast<std::size_t>(log2_bound)] ? 1 : 0);
+    return write_short_decimal(first, digits, count, exp);
+}
+
 /// a positive finite float (other than double): Grisu2 and format_buffer()
 template<typename FloatType>
 JSON_HEDLEY_NON_NULL(1, 2)
@@ -1284,7 +1496,7 @@ char* write_positive(char* first, const char* last, FloatType value)
 }
 
 /// a positive finite double: the shortest digits (Zmij), laid out by
-/// write_decimal() (through a local buffer if [first, last) is shorter than
+/// write_shortest() (through a local buffer if [first, last) is shorter than
 /// the 41 bytes it may write)
 JSON_HEDLEY_NON_NULL(1, 2)
 JSON_HEDLEY_RETURNS_NON_NULL
@@ -1294,13 +1506,13 @@ inline char* write_positive(char* first, const char* last, double value)
                   "internal error: the conversion of Zmij needs IEEE 754 binary64 doubles");
     std::uint64_t bits = 0;
     std::memcpy(&bits, &value, sizeof(bits));
-    const zmij::decimal d = zmij::to_decimal(bits);
+    const zmij::shortest_decimal d = zmij::to_shortest(bits);
     if (JSON_HEDLEY_LIKELY(last - first >= 41))
     {
-        return write_decimal(first, d.significand, d.exponent);
+        return write_shortest(first, d);
     }
     std::array<char, 64> buf; // NOLINT(cppcoreguidelines-pro-type-member-init,hicpp-member-init): written before read
-    const auto len = static_cast<std::size_t>(write_decimal(buf.data(), d.significand, d.exponent) - buf.data());
+    const auto len = static_cast<std::size_t>(write_shortest(buf.data(), d) - buf.data());
     JSON_ASSERT(static_cast<std::size_t>(last - first) >= len);
     std::memcpy(first, buf.data(), len);
     return first + len;
