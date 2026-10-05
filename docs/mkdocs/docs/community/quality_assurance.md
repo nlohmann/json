@@ -27,6 +27,12 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
         | AppleClang 17.0.0.17000013; Xcode 16.3       | arm64        | macOS 15.5 (Sequoia)              | GitHub    |
         | AppleClang 17.0.0.17000013; Xcode 16.4       | arm64        | macOS 15.5 (Sequoia)              | GitHub    |
         | AppleClang 17.0.0.17000319; Xcode 26.0.1     | arm64        | macOS 15.5 (Sequoia)              | GitHub    |
+        | AppleClang 17.0.0.17000404; Xcode 26.1.1     | arm64        | macOS 15.7.9 (Sequoia)            | GitHub    |
+        | AppleClang 17.0.0.17000603; Xcode 26.2       | arm64        | macOS 15.7.9 (Sequoia)            | GitHub    |
+        | AppleClang 17.0.0.17000604; Xcode 26.3       | arm64        | macOS 15.7.9 (Sequoia)            | GitHub    |
+        | AppleClang 21.0.0.21000099; Xcode 26.4.1     | arm64        | macOS 26.6.2 (Tahoe)              | GitHub    |
+        | AppleClang 21.0.0.21000101; Xcode 26.5       | arm64        | macOS 26.6.2 (Tahoe)              | GitHub    |
+        | AppleClang 21.0.0.21000101; Xcode 26.6       | arm64        | macOS 26.6.2 (Tahoe)              | GitHub    |
         | Clang 3.4.2                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | Clang 3.5.2                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | Clang 3.6.2                                  | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
@@ -84,7 +90,7 @@ Note: Some modern features (like C++20 ranges or filesystem support) may be disa
         | GNU 13.3.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 14.2.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 15.1.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
-        | GNU 16.1.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
+        | GNU 16.2.0                                   | x86_64       | Ubuntu 22.04.1 LTS                | GitHub    |
         | GNU 16.1.0                                   | arm64        | Ubuntu 24.04                      | GitHub    |
         | icpc (ICC) 2021.10.0 20230609                | x86_64       | Ubuntu 22.04 LTS                  | GitHub    |
         | icpx (Intel oneAPI DPC++/C++) 2025.3.2       | x86_64       | Ubuntu 24.04 LTS                  | GitHub    |
