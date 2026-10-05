@@ -96,6 +96,18 @@ with_base_class_t&lt;CustomBaseClass2&gt;
 All other template parameters are kept unchanged, so the resulting type still uses, for instance, the same
 `ObjectType` unless `with_object_t` itself is used.
 
+The aliases are members of every `basic_json` specialization, including [`ordered_json`](../ordered_json.md), and the
+type they produce is again a `basic_json` specialization. They can therefore be chained to replace several template
+parameters at once:
+
+```cpp
+using my_json = nlohmann::json::with_integers_t<int, unsigned int>::with_float_t<float>;
+using my_ordered_json = nlohmann::ordered_json::with_string_t<std::wstring>;
+```
+
+The result is the same type as spelling out all template parameters, so the order of the chained aliases does not
+matter. For instance, `nlohmann::json::with_object_t<nlohmann::ordered_map>` is `nlohmann::ordered_json`.
+
 ## Examples
 
 ??? example

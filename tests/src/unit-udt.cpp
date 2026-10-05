@@ -794,6 +794,18 @@ TEST_CASE("with_*_t aliases" * doctest::test_suite("udt"))
           nlohmann::basic_json<nlohmann::ordered_map, std::vector, std::wstring, bool,
           std::int64_t, std::uint64_t, double, std::allocator,
           nlohmann::adl_serializer, std::vector<std::uint8_t>>>::value);
+
+    // the aliases are members of the resulting type, so they can be chained
+    CHECK(std::is_same<json::with_integers_t<int, unsigned int>::with_float_t<float>,
+          nlohmann::basic_json<std::map, std::vector, std::string, bool,
+          int, unsigned int, float, std::allocator,
+          nlohmann::adl_serializer, std::vector<std::uint8_t>>>::value);
+    CHECK(std::is_same<json::with_float_t<float>::with_integers_t<int, unsigned int>,
+          json::with_integers_t<int, unsigned int>::with_float_t<float>>::value);
+
+    // replacing the object type of json with ordered_map yields ordered_json
+    CHECK(std::is_same<json::with_object_t<nlohmann::ordered_map>, nlohmann::ordered_json>::value);
+    CHECK(std::is_same<nlohmann::ordered_json::with_object_t<std::map>, json>::value);
 }
 
 TEST_CASE("different basic_json types conversions")
