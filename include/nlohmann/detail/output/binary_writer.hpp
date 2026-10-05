@@ -224,16 +224,7 @@ class binary_writer
 
             case value_t::string:
             {
-                string_t storage;
-                const string_t& value = sanitize_utf8_for_write(*j.m_data.m_value.string, j, storage);
-
-                // step 1: write control byte and the string length
-                write_cbor_head(0x60, value.size());
-
-                // step 2: write the string
-                oa.write_characters(
-                      reinterpret_cast<const CharType*>(value.data()),
-                      value.size());
+                write_cbor_string(*j.m_data.m_value.string, j);
                 break;
             }
 
@@ -303,18 +294,7 @@ class binary_writer
                 // step 2: write each element
                 for (const auto& el : *j.m_data.m_value.object)
                 {
-                    // el.first is checked here, against the object as
-                    // diagnostics context, because write_cbor(el.first)
-                    // converts it to a temporary basic_json that would be
-                    // used as the context instead; for error_handler_t::keep
-                    // and ::replace/::ignore the recursive write_cbor(el.first)
-                    // call below handles the key like any other string, so no
-                    // separate check is needed here for those
-                    if (error_handler == error_handler_t::strict)
-                    {
-                        check_utf8(el.first, j);
-                    }
-                    write_cbor(el.first);
+                    write_cbor_string(el.first, j);
                     write_cbor(el.second);
                 }
                 break;
@@ -378,6 +358,48 @@ class binary_writer
             oa.write_character(to_char_type(0xCF));
             write_number(n);
         }
+    }
+
+    /*!
+    @brief write a MessagePack string
+    @param[in] s        the string to write
+    @param[in] context  the value the string belongs to (for diagnostics)
+    */
+    void write_msgpack_string(const string_t& s, const BasicJsonType& context)
+    {
+        string_t storage;
+        const string_t& value = sanitize_utf8_for_write(s, context, storage);
+
+        // step 1: write control byte and the string length
+        const auto N = to_msgpack_length(value.size(), context);
+        if (N <= 31)
+        {
+            // fixstr
+            write_number(static_cast<std::uint8_t>(0xA0 | N));
+        }
+        else if (N <= (std::numeric_limits<std::uint8_t>::max)())
+        {
+            // str 8
+            oa.write_character(to_char_type(0xD9));
+            write_number(static_cast<std::uint8_t>(N));
+        }
+        else if (N <= (std::numeric_limits<std::uint16_t>::max)())
+        {
+            // str 16
+            oa.write_character(to_char_type(0xDA));
+            write_number(static_cast<std::uint16_t>(N));
+        }
+        else
+        {
+            // str 32
+            oa.write_character(to_char_type(0xDB));
+            write_number(static_cast<std::uint32_t>(N));
+        }
+
+        // step 2: write the string
+        oa.write_characters(
+              reinterpret_cast<const CharType*>(value.data()),
+              value.size());
     }
 
     /*!
@@ -461,39 +483,7 @@ class binary_writer
 
             case value_t::string:
             {
-                string_t storage;
-                const string_t& value = sanitize_utf8_for_write(*j.m_data.m_value.string, j, storage);
-
-                // step 1: write control byte and the string length
-                const auto N = to_msgpack_length(value.size(), j);
-                if (N <= 31)
-                {
-                    // fixstr
-                    write_number(static_cast<std::uint8_t>(0xA0 | N));
-                }
-                else if (N <= (std::numeric_limits<std::uint8_t>::max)())
-                {
-                    // str 8
-                    oa.write_character(to_char_type(0xD9));
-                    write_number(static_cast<std::uint8_t>(N));
-                }
-                else if (N <= (std::numeric_limits<std::uint16_t>::max)())
-                {
-                    // str 16
-                    oa.write_character(to_char_type(0xDA));
-                    write_number(static_cast<std::uint16_t>(N));
-                }
-                else
-                {
-                    // str 32
-                    oa.write_character(to_char_type(0xDB));
-                    write_number(static_cast<std::uint32_t>(N));
-                }
-
-                // step 2: write the string
-                oa.write_characters(
-                      reinterpret_cast<const CharType*>(value.data()),
-                      value.size());
+                write_msgpack_string(*j.m_data.m_value.string, j);
                 break;
             }
 
@@ -640,14 +630,7 @@ class binary_writer
                 // step 2: write each element
                 for (const auto& el : *j.m_data.m_value.object)
                 {
-                    // as in write_cbor, el.first is checked here against the
-                    // object as diagnostics context; the recursive call below
-                    // handles keep/replace/ignore like any other string
-                    if (error_handler == error_handler_t::strict)
-                    {
-                        check_utf8(el.first, j);
-                    }
-                    write_msgpack(el.first);
+                    write_msgpack_string(el.first, j);
                     write_msgpack(el.second);
                 }
                 break;
@@ -1520,6 +1503,25 @@ class binary_writer
             oa.write_character(to_char_type(static_cast<std::uint8_t>(major_type + 0x1B)));
             write_number(argument);
         }
+    }
+
+    /*!
+    @brief write a CBOR string
+    @param[in] s        the string to write
+    @param[in] context  the value the string belongs to (for diagnostics)
+    */
+    void write_cbor_string(const string_t& s, const BasicJsonType& context)
+    {
+        string_t storage;
+        const string_t& value = sanitize_utf8_for_write(s, context, storage);
+
+        // step 1: write control byte and the string length
+        write_cbor_head(0x60, value.size());
+
+        // step 2: write the string
+        oa.write_characters(
+              reinterpret_cast<const CharType*>(value.data()),
+              value.size());
     }
 
     ////////////

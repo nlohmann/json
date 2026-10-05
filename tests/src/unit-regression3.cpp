@@ -920,4 +920,52 @@ TEST_CASE("regression test #5476 - array type without reserve()")
     }
 }
 
+TEST_CASE("issue #5318 - to_cbor()/to_msgpack() avoid temporary basic_json for object keys")
+{
+    SECTION("CBOR and MessagePack object serialization and error handler handling")
+    {
+        json j = {
+            {"short_key", 1},
+            {"a_much_longer_key_that_exceeds_small_string_optimization_buffer_length", 2},
+            {"", 3},
+            {"nested", {{"child_key", "value"}, {"another_long_child_key_for_testing", 42}}}
+        };
+
+        const auto cbor_bytes = json::to_cbor(j);
+        CHECK(json::from_cbor(cbor_bytes) == j);
+
+        const auto msgpack_bytes = json::to_msgpack(j);
+        CHECK(json::from_msgpack(msgpack_bytes) == j);
+
+        // test error handlers on invalid UTF-8 in object keys
+        const std::string invalid_key = "\xFF\xFF_invalid";
+        json invalid_key_obj;
+        invalid_key_obj[invalid_key] = 123;
+
+        // strict throws type_error.316
+        CHECK_THROWS_WITH_AS(
+            json::to_cbor(invalid_key_obj, json::error_handler_t::strict),
+            "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF",
+            json::type_error&);
+
+        CHECK_THROWS_WITH_AS(
+            json::to_msgpack(invalid_key_obj, json::error_handler_t::strict),
+            "[json.exception.type_error.316] invalid UTF-8 byte at index 0: 0xFF",
+            json::type_error&);
+
+        // replace substitutes invalid characters
+        const auto cbor_replaced = json::to_cbor(invalid_key_obj, json::error_handler_t::replace);
+        CHECK(!cbor_replaced.empty());
+        const auto msgpack_replaced = json::to_msgpack(invalid_key_obj, json::error_handler_t::replace);
+        CHECK(!msgpack_replaced.empty());
+
+        // ignore discards invalid characters
+        const auto cbor_ignored = json::to_cbor(invalid_key_obj, json::error_handler_t::ignore);
+        CHECK(!cbor_ignored.empty());
+        const auto msgpack_ignored = json::to_msgpack(invalid_key_obj, json::error_handler_t::ignore);
+        CHECK(!msgpack_ignored.empty());
+    }
+}
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
+
