@@ -542,6 +542,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 #include <array> // array
+#include <atomic> // atomic
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint64_t
 
@@ -551,11 +552,13 @@ NLOHMANN_JSON_NAMESPACE_END
 
 // Vector code for long runs of string bytes. NEON (AArch64) and SSE2 (x86-64)
 // belong to the baseline instruction sets and are used by default. The vector
-// UTF-8 check needs NEON, or SSSE3 if JSON_VIEW_USE_SSSE3 is defined: SSSE3 is
-// not part of x86-64, so it must not depend on the flags of a translation unit
-// (two translation units with different flags would have different
-// definitions of the same inline functions). JSON_VIEW_NO_SIMD selects the
-// portable code.
+// UTF-8 check needs NEON or SSSE3. SSSE3 is not part of x86-64, and the code
+// must not depend on the flags of a translation unit (two translation units
+// with different flags would have different definitions of the same inline
+// functions): the check is compiled for SSSE3 with a function attribute and
+// used where the CPU has SSSE3 (all x86-64 CPUs since about 2011), else the
+// portable check. JSON_VIEW_USE_SSSE3 skips the CPU check (for code compiled
+// for SSSE3 anyway); JSON_VIEW_NO_SIMD selects the portable code.
 #if !defined(JSON_VIEW_NO_SIMD) && defined(__aarch64__) && (defined(__GNUC__) || defined(__clang__)) && NLOHMANN_VIEW_LITTLE_ENDIAN
     #include <arm_neon.h>
     #define NLOHMANN_VIEW_NEON 1
@@ -574,8 +577,24 @@ NLOHMANN_JSON_NAMESPACE_END
 #else
     #define NLOHMANN_VIEW_SSSE3 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 #endif
+#if NLOHMANN_VIEW_SSE2 && !NLOHMANN_VIEW_SSSE3 && ((defined(__clang__) && __clang_major__ >= 4) || (defined(__GNUC__) && !defined(__clang__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))))
+    // (GCC before 4.9 has no SSSE3 intrinsics without -mssse3)
+    #include <cpuid.h>
+    #include <tmmintrin.h>
+    #define NLOHMANN_VIEW_SSSE3_DISPATCH 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define NLOHMANN_VIEW_SSSE3_TARGET __attribute__((target("ssse3")))
+#elif NLOHMANN_VIEW_SSE2 && !NLOHMANN_VIEW_SSSE3 && defined(_MSC_VER)
+    // (MSVC compiles intrinsics of any instruction set)
+    #include <intrin.h>
+    #include <tmmintrin.h>
+    #define NLOHMANN_VIEW_SSSE3_DISPATCH 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define NLOHMANN_VIEW_SSSE3_TARGET
+#else
+    #define NLOHMANN_VIEW_SSSE3_DISPATCH 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define NLOHMANN_VIEW_SSSE3_TARGET
+#endif
 #define NLOHMANN_VIEW_VECTOR (NLOHMANN_VIEW_NEON || NLOHMANN_VIEW_SSE2)
-#define NLOHMANN_VIEW_VECTOR_UTF8 (NLOHMANN_VIEW_NEON || NLOHMANN_VIEW_SSSE3)
+#define NLOHMANN_VIEW_VECTOR_UTF8 (NLOHMANN_VIEW_NEON || NLOHMANN_VIEW_SSSE3 || NLOHMANN_VIEW_SSSE3_DISPATCH)
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -620,6 +639,40 @@ NLOHMANN_VIEW_ALWAYS_INLINE const unsigned char* vector_plain_run(const unsigned
         p += 16;
     }
     return p;
+}
+#endif
+
+#if NLOHMANN_VIEW_SSSE3_DISPATCH
+/// whether the CPU has SSSE3 (CPUID leaf 1, ECX bit 9)
+inline bool cpu_ssse3() noexcept
+{
+#if defined(_MSC_VER) && !defined(__clang__)
+    std::array<int, 4> regs {{}};
+    __cpuid(regs.data(), 1);
+    return (static_cast<unsigned>(regs[2]) & (1u << 9u)) != 0;
+#else
+    unsigned eax = 0;
+    unsigned ebx = 0;
+    unsigned ecx = 0;
+    unsigned edx = 0;
+    return __get_cpuid(1, &eax, &ebx, &ecx, &edx) != 0 && (ecx & (1u << 9u)) != 0;
+#endif
+}
+
+/// whether the CPU has SSSE3, asked once: the answer is kept in an atomic
+/// that is initialized at compile time, so that neither a guard of a local
+/// static nor a global constructor is needed (threads that ask at the same
+/// time all store the same answer)
+NLOHMANN_VIEW_ALWAYS_INLINE bool cpu_has_ssse3() noexcept
+{
+    static std::atomic<int> known{0}; // 0: not asked yet, 1: no, 2: yes
+    int state = known.load(std::memory_order_relaxed);
+    if (NLOHMANN_VIEW_UNLIKELY(state == 0))
+    {
+        state = cpu_ssse3() ? 2 : 1;
+        known.store(state, std::memory_order_relaxed);
+    }
+    return state == 2;
 }
 #endif
 
@@ -725,8 +778,9 @@ compares, and the UTF-8 check covers the bytes up to it. Returns where the
 string scan stops, like scan_string_run: before ill-formed UTF-8 and for the
 last bytes of the input, the bytes are checked one sequence at a time. Out of
 line, so that no constants of the check occupy registers in the parse loop.
+On x86-64, it is compiled for SSSE3 (see cpu_has_ssse3()).
 */
-NLOHMANN_VIEW_NOINLINE inline const unsigned char* scan_string_vector(const unsigned char* p, const unsigned char* e, const std::uint8_t* plain) noexcept
+NLOHMANN_VIEW_SSSE3_TARGET NLOHMANN_VIEW_NOINLINE inline const unsigned char* scan_string_vector(const unsigned char* p, const unsigned char* e, const std::uint8_t* plain) noexcept
 {
     using lookup = utf8_lookup4<>;
     const unsigned char* block = p;
@@ -917,9 +971,15 @@ stop:
             return p; // quote, backslash, or control character
         }
 #if NLOHMANN_VIEW_VECTOR_UTF8
-        // non-ASCII: the vector check, out of line
-        return scan_string_vector(p, e, plain);
-#else
+#if NLOHMANN_VIEW_SSSE3_DISPATCH
+        if (NLOHMANN_VIEW_LIKELY(cpu_has_ssse3()))
+#endif
+        {
+            // non-ASCII: the vector check, out of line
+            return scan_string_vector(p, e, plain);
+        }
+#endif
+#if !NLOHMANN_VIEW_VECTOR_UTF8 || NLOHMANN_VIEW_SSSE3_DISPATCH
         // non-ASCII: a run of well-formed sequences (the library's check, so
         // that exactly what json::parse accepts is accepted)
         do
@@ -7891,6 +7951,8 @@ class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert
 #undef NLOHMANN_VIEW_NEON
 #undef NLOHMANN_VIEW_SSE2
 #undef NLOHMANN_VIEW_SSSE3
+#undef NLOHMANN_VIEW_SSSE3_DISPATCH
+#undef NLOHMANN_VIEW_SSSE3_TARGET
 #undef NLOHMANN_VIEW_VECTOR
 #undef NLOHMANN_VIEW_VECTOR_UTF8
 

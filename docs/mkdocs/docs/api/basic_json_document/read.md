@@ -49,6 +49,11 @@ whether or not the new parse succeeds; take fresh views from [`root()`](root.md)
 `input` is borrowed or owned by the same rules as [`parse()`](parse.md#notes); a document can borrow on one call and
 own on the next, since ownership is decided freshly each time.
 
+Reusing a document matters most for large inputs: the operating system provides the memory of a fresh node index one
+page at a time, and every page costs a page fault the first time it is written. On x86-64 Linux (4 KiB pages), parsing
+a 55 MB document into a reused document took about 40 % less time than parsing it into a fresh one. Programs that parse
+many documents of similar size should therefore keep one document and call `read()`.
+
 ## Examples
 
 ??? example

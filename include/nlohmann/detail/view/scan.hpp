@@ -121,9 +121,15 @@ stop:
             return p; // quote, backslash, or control character
         }
 #if NLOHMANN_VIEW_VECTOR_UTF8
-        // non-ASCII: the vector check, out of line
-        return scan_string_vector(p, e, plain);
-#else
+#if NLOHMANN_VIEW_SSSE3_DISPATCH
+        if (NLOHMANN_VIEW_LIKELY(cpu_has_ssse3()))
+#endif
+        {
+            // non-ASCII: the vector check, out of line
+            return scan_string_vector(p, e, plain);
+        }
+#endif
+#if !NLOHMANN_VIEW_VECTOR_UTF8 || NLOHMANN_VIEW_SSSE3_DISPATCH
         // non-ASCII: a run of well-formed sequences (the library's check, so
         // that exactly what json::parse accepts is accepted)
         do

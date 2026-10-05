@@ -8860,8 +8860,9 @@ inline uint128_parts full_multiplication(std::uint64_t a, std::uint64_t b) noexc
 }
 
 /// eight bytes as a little-endian word (compilers fold this into one load on
-/// little-endian targets)
-inline std::uint64_t read_eight_bytes(const unsigned char* b) noexcept
+/// little-endian targets; always inlined, as GCC otherwise calls it in the
+/// number loops)
+JSON_HEDLEY_ALWAYS_INLINE std::uint64_t read_eight_bytes(const unsigned char* b) noexcept
 {
     return static_cast<std::uint64_t>(b[0]) | (static_cast<std::uint64_t>(b[1]) << 8u)
            | (static_cast<std::uint64_t>(b[2]) << 16u) | (static_cast<std::uint64_t>(b[3]) << 24u)
@@ -8870,7 +8871,7 @@ inline std::uint64_t read_eight_bytes(const unsigned char* b) noexcept
 }
 
 /// eight bytes as a little-endian word
-inline std::uint64_t read_eight_bytes(const char* p) noexcept
+JSON_HEDLEY_ALWAYS_INLINE std::uint64_t read_eight_bytes(const char* p) noexcept
 {
     return read_eight_bytes(reinterpret_cast<const unsigned char*>(p)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
 }
@@ -9479,8 +9480,9 @@ template<typename FloatType>
 using native_float_t = typename std::conditional<std::numeric_limits<FloatType>::digits == 24, float, double>::type;
 
 /// the value of the eight ASCII digits in @a v (see read_eight_bytes()), three
-/// multiplications instead of eight (after simdjson and fast_float)
-inline std::uint32_t parse_eight_digits(std::uint64_t v) noexcept
+/// multiplications instead of eight (after simdjson and fast_float); always
+/// inlined, as GCC otherwise calls it in the number loops
+JSON_HEDLEY_ALWAYS_INLINE std::uint32_t parse_eight_digits(std::uint64_t v) noexcept
 {
     v = ((v & 0x0F0F0F0F0F0F0F0Fu) * 2561u) >> 8u;
     v = ((v & 0x00FF00FF00FF00FFu) * 6553601u) >> 16u;
