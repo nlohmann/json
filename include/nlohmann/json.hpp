@@ -5098,7 +5098,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
     template<typename ScalarType>
     requires std::is_scalar_v<ScalarType>
-    friend bool operator<=(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
+    friend bool operator<=(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<detail::uncvref_t<decltype(rhs)>, ScalarType>::value)
     {
         return basic_json(lhs) <= rhs;
     }
@@ -5107,7 +5107,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
     template<typename ScalarType>
     requires std::is_scalar_v<ScalarType>
-    friend bool operator>=(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
+    friend bool operator>=(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<detail::uncvref_t<decltype(rhs)>, ScalarType>::value)
     {
         return basic_json(lhs) >= rhs;
     }
@@ -5128,11 +5128,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 #endif
     }
 
+    // The friend comparisons with a scalar name the JSON type via decltype of
+    // their parameter in noexcept, because older MSVC versions do not see the
+    // class scope there: MSVC 2015 and 2017 take basic_json as the template,
+    // and MSVC 2019 16.0 rejects member types and template parameters.
+
     /// @brief comparison: equal
     /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator==(const_reference lhs, ScalarType rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
+    friend bool operator==(const_reference lhs, ScalarType rhs) noexcept(std::is_nothrow_constructible<detail::uncvref_t<decltype(lhs)>, ScalarType>::value)
     {
         return lhs == basic_json(rhs);
     }
@@ -5141,7 +5146,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator==(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
+    friend bool operator==(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<detail::uncvref_t<decltype(rhs)>, ScalarType>::value)
     {
         return basic_json(lhs) == rhs;
     }
@@ -5157,7 +5162,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator!=(const_reference lhs, ScalarType rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
+    friend bool operator!=(const_reference lhs, ScalarType rhs) noexcept(std::is_nothrow_constructible<detail::uncvref_t<decltype(lhs)>, ScalarType>::value)
     {
         return lhs != basic_json(rhs);
     }
@@ -5166,7 +5171,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_ne/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator!=(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
+    friend bool operator!=(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<detail::uncvref_t<decltype(rhs)>, ScalarType>::value)
     {
         return basic_json(lhs) != rhs;
     }
@@ -5186,7 +5191,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_lt/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator<(const_reference lhs, ScalarType rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
+    friend bool operator<(const_reference lhs, ScalarType rhs) noexcept(std::is_nothrow_constructible<detail::uncvref_t<decltype(lhs)>, ScalarType>::value)
     {
         return lhs < basic_json(rhs);
     }
@@ -5195,7 +5200,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_lt/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator<(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
+    friend bool operator<(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<detail::uncvref_t<decltype(rhs)>, ScalarType>::value)
     {
         return basic_json(lhs) < rhs;
     }
@@ -5215,7 +5220,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator<=(const_reference lhs, ScalarType rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
+    friend bool operator<=(const_reference lhs, ScalarType rhs) noexcept(std::is_nothrow_constructible<detail::uncvref_t<decltype(lhs)>, ScalarType>::value)
     {
         return lhs <= basic_json(rhs);
     }
@@ -5224,7 +5229,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_le/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator<=(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
+    friend bool operator<=(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<detail::uncvref_t<decltype(rhs)>, ScalarType>::value)
     {
         return basic_json(lhs) <= rhs;
     }
@@ -5245,7 +5250,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_gt/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator>(const_reference lhs, ScalarType rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
+    friend bool operator>(const_reference lhs, ScalarType rhs) noexcept(std::is_nothrow_constructible<detail::uncvref_t<decltype(lhs)>, ScalarType>::value)
     {
         return lhs > basic_json(rhs);
     }
@@ -5254,7 +5259,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_gt/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator>(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
+    friend bool operator>(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<detail::uncvref_t<decltype(rhs)>, ScalarType>::value)
     {
         return basic_json(lhs) > rhs;
     }
@@ -5274,7 +5279,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator>=(const_reference lhs, ScalarType rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
+    friend bool operator>=(const_reference lhs, ScalarType rhs) noexcept(std::is_nothrow_constructible<detail::uncvref_t<decltype(lhs)>, ScalarType>::value)
     {
         return lhs >= basic_json(rhs);
     }
@@ -5283,7 +5288,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @sa https://json.nlohmann.me/api/basic_json/operator_ge/
     template<typename ScalarType, typename std::enable_if<
                  std::is_scalar<ScalarType>::value, int>::type = 0>
-    friend bool operator>=(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<basic_json, ScalarType>::value)
+    friend bool operator>=(ScalarType lhs, const_reference rhs) noexcept(std::is_nothrow_constructible<detail::uncvref_t<decltype(rhs)>, ScalarType>::value)
     {
         return basic_json(lhs) >= rhs;
     }

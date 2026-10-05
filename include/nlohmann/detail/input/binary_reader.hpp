@@ -4004,7 +4004,8 @@ class binary_reader
         {
             return sax->number_unsigned(static_cast<number_unsigned_t>(number));
         }
-        return emit_float(number);
+        // std::isfinite has no integer overloads in MSVC's <cmath>
+        return emit_float(static_cast<long double>(number));
     }
 
     /*!
@@ -4027,7 +4028,8 @@ class binary_reader
         {
             return sax->number_unsigned(static_cast<number_unsigned_t>(number));
         }
-        return emit_float(number);
+        // std::isfinite has no integer overloads in MSVC's <cmath>
+        return emit_float(static_cast<long double>(number));
     }
 
     /*!
@@ -4038,7 +4040,8 @@ class binary_reader
     and NaN in the input are passed on unchanged. Integers only overflow if
     number_float_t cannot represent 2^64, e.g., a half-precision type.
 
-    @tparam NumberType a floating-point or integer type
+    @tparam NumberType a floating-point type (emit_signed and emit_unsigned
+                       convert integers to long double first)
     @param[in] number  the number
     @return whether the SAX parser accepted the value
 
