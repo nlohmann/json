@@ -32283,9 +32283,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     }
 
     // The friend comparisons with a scalar name the JSON type via decltype of
-    // their parameter in noexcept: older MSVC versions (2015 to 2019 16.0) do
-    // not see the class scope there, so basic_json would name the template
-    // and member types or template parameters would be undeclared.
+    // their parameter in noexcept, because older MSVC versions do not see the
+    // class scope there: MSVC 2015 and 2017 take basic_json as the template,
+    // and MSVC 2019 16.0 rejects member types and template parameters.
 
     /// @brief comparison: equal
     /// @sa https://json.nlohmann.me/api/basic_json/operator_eq/
