@@ -191,8 +191,10 @@ TEST_CASE("value conversion")
     {
         enum class bool_enum : bool { off, on };
 
-        CHECK(json(bool_enum::off).get<bool_enum>() == bool_enum::off);
-        CHECK(json(bool_enum::on).get<bool_enum>() == bool_enum::on);
+        // the extra parentheses keep doctest from printing the enum via its
+        // underlying type, which MSVC 2015 reports as C4800
+        CHECK((json(bool_enum::off).get<bool_enum>() == bool_enum::off));
+        CHECK((json(bool_enum::on).get<bool_enum>() == bool_enum::on));
     }
 #endif
 

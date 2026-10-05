@@ -172,7 +172,7 @@ inline void from_json(const BasicJsonType& j, EnumType& e)
           typename BasicJsonType::number_unsigned_t, underlying_type>::type;
     value_type val;
     get_arithmetic_value(j, val);
-    e = static_cast<EnumType>(static_cast<underlying_type>(val));
+    e = static_cast<EnumType>(bool_aware_static_cast<underlying_type>(val));
 }
 #endif  // JSON_DISABLE_ENUM_SERIALIZATION
 

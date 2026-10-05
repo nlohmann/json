@@ -4905,6 +4905,21 @@ T conditional_static_cast(U value)
     return value;
 }
 
+// like conditional_static_cast, but converts to bool by comparing with zero,
+// because MSVC 2015 warns about any conversion to bool (C4800), even with an
+// explicit cast; used for enums whose underlying type is bool
+template < typename T, typename U, enable_if_t < !std::is_same<T, bool>::value, int > = 0 >
+T bool_aware_static_cast(U value)
+{
+    return conditional_static_cast<T>(value);
+}
+
+template<typename T, typename U, enable_if_t<std::is_same<T, bool>::value, int> = 0>
+bool bool_aware_static_cast(U value)
+{
+    return value != U();
+}
+
 template<typename... Types>
 using all_integral = conjunction<std::is_integral<Types>...>;
 
@@ -5700,7 +5715,7 @@ inline void from_json(const BasicJsonType& j, EnumType& e)
           typename BasicJsonType::number_unsigned_t, underlying_type>::type;
     value_type val;
     get_arithmetic_value(j, val);
-    e = static_cast<EnumType>(static_cast<underlying_type>(val));
+    e = static_cast<EnumType>(bool_aware_static_cast<underlying_type>(val));
 }
 #endif  // JSON_DISABLE_ENUM_SERIALIZATION
 
@@ -7144,7 +7159,7 @@ inline void to_json(BasicJsonType& j, EnumType e) noexcept
 {
     using underlying_type = typename std::underlying_type<EnumType>::type;
     static constexpr value_t integral_value_t = std::is_unsigned<underlying_type>::value ? value_t::number_unsigned : value_t::number_integer;
-    external_constructor<integral_value_t>::construct(j, static_cast<underlying_type>(e));
+    external_constructor<integral_value_t>::construct(j, bool_aware_static_cast<underlying_type>(e));
 }
 #endif  // JSON_DISABLE_ENUM_SERIALIZATION
 
