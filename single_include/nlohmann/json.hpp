@@ -14812,13 +14812,13 @@ class binary_reader
     into the same string.
 
     @param[out] result  string the bytes are appended to
-    @param[in] is_chunk  whether the bytes belong to an indefinite-length string
+    @param[in] inside_indefinite  whether the bytes belong to an indefinite-length string
 
     @return whether string creation completed
 
     @pre @a current is not EOF
     */
-    bool get_cbor_string_chunk(string_t& result, const bool is_chunk)
+    bool get_cbor_string_chunk(string_t& result, const bool inside_indefinite)
     {
         switch (current)
         {
@@ -14879,7 +14879,7 @@ class binary_reader
             {
                 auto last_token = get_token_string();
                 return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(concat("expected length specification (0x60-0x7B)", is_chunk ? "" : " or indefinite string type (0x7F)", "; last byte: 0x", last_token), "string"), nullptr));
+                                        exception_message(concat("expected length specification (0x60-0x7B)", inside_indefinite ? "" : " or indefinite string type (0x7F)", "; last byte: 0x", last_token), "string"), nullptr));
             }
         }
     }
@@ -14897,8 +14897,8 @@ class binary_reader
     */
     bool get_cbor_string(string_t& result, const char* context = "string")
     {
-        // Read chunks iteratively, but reject a second indefinite-length
-        // level as required by RFC 8949, Section 3.2.3.
+        // read chunks iteratively, but reject a second indefinite-length
+        // level as required by RFC 8949, Section 3.2.3
         bool indefinite = false;
 
         while (true)
@@ -14919,8 +14919,8 @@ class binary_reader
                 continue;
             }
 
-            // A break marker closes the indefinite-length string; outside
-            // of one it falls through to the error below.
+            // a break marker closes the indefinite-length string; outside
+            // of one it falls through to the error below
             if (indefinite && current == 0xFF)
             {
                 return check_string_utf8(result, context);
@@ -15023,13 +15023,13 @@ class binary_reader
     read into the same byte array.
 
     @param[out] result  byte array the bytes are appended to
-    @param[in] is_chunk  whether the bytes belong to an indefinite-length string
+    @param[in] inside_indefinite  whether the bytes belong to an indefinite-length string
 
     @return whether byte array creation completed
 
     @pre @a current is not EOF
     */
-    bool get_cbor_binary_chunk(binary_t& result, const bool is_chunk)
+    bool get_cbor_binary_chunk(binary_t& result, const bool inside_indefinite)
     {
         switch (current)
         {
@@ -15094,7 +15094,7 @@ class binary_reader
             {
                 auto last_token = get_token_string();
                 return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(concat("expected length specification (0x40-0x5B)", is_chunk ? "" : " or indefinite binary array type (0x5F)", "; last byte: 0x", last_token), "binary"), nullptr));
+                                        exception_message(concat("expected length specification (0x40-0x5B)", inside_indefinite ? "" : " or indefinite binary array type (0x5F)", "; last byte: 0x", last_token), "binary"), nullptr));
             }
         }
     }
@@ -15112,8 +15112,8 @@ class binary_reader
     */
     bool get_cbor_binary(binary_t& result)
     {
-        // Read chunks iteratively, but reject a second indefinite-length
-        // level as required by RFC 8949, Section 3.2.3.
+        // read chunks iteratively, but reject a second indefinite-length
+        // level as required by RFC 8949, Section 3.2.3
         bool indefinite = false;
 
         while (true)
@@ -15134,8 +15134,8 @@ class binary_reader
                 continue;
             }
 
-            // A break marker closes the indefinite-length string; outside
-            // of one it falls through to the error below.
+            // a break marker closes the indefinite-length string; outside
+            // of one it falls through to the error below
             if (indefinite && current == 0xFF)
             {
                 return true;

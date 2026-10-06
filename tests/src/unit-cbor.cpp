@@ -2309,14 +2309,14 @@ TEST_CASE("CBOR indefinite-length strings do not recurse per chunk")
     // chunks are now rejected at the second byte, without recursing.
     json _;
 
-    SECTION("many open levels are reported, not crashed on")
+    SECTION("nested levels are rejected, not crashed on")
     {
         const std::vector<uint8_t> input(200000, 0x7F);
         CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR string: indefinite-length string is not allowed inside indefinite-length string; last byte: 0x7F", json::parse_error&);
         CHECK(json::from_cbor(input, true, false).is_discarded());
     }
 
-    SECTION("many open levels are reported, not crashed on (binary)")
+    SECTION("nested levels are rejected, not crashed on (binary)")
     {
         const std::vector<uint8_t> input(200000, 0x5F);
         CHECK_THROWS_WITH_AS(_ = json::from_cbor(input), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing CBOR binary: indefinite-length binary array is not allowed inside indefinite-length binary array; last byte: 0x5F", json::parse_error&);
@@ -2327,7 +2327,7 @@ TEST_CASE("CBOR indefinite-length strings do not recurse per chunk")
     {
         CHECK(json::from_cbor(std::vector<uint8_t>({0x7F, 0xFF})) == json(""));
         CHECK(json::from_cbor(std::vector<uint8_t>({0x7F, 0x61, 0x61, 0xFF})) == json("a"));
-        // Empty and nonempty definite-length chunks concatenate in order.
+        // empty and nonempty definite-length chunks concatenate in order
         CHECK(json::from_cbor(std::vector<uint8_t>({0x7F, 0x61, 'a', 0x60, 0x61, 'b', 0x61, 'c', 0xFF})) == json("abc"));
         CHECK(json::from_cbor(std::vector<uint8_t>({0xA1, 0x7F, 0x61, 0x61, 0xFF, 0x01})) == json({{"a", 1}}));
     }
@@ -2895,10 +2895,10 @@ TEST_CASE("examples from RFC 8949 Appendix A")
     {
         const auto packed = utils::read_binary_file(TEST_DATA_DIRECTORY "/binary_data/cbor_binary.cbor");
         json j;
-        // The fixture's tail contains nested indefinite-length byte strings.
+        // the fixture's tail contains nested indefinite-length byte strings.
         CHECK_THROWS_WITH_AS(j = json::from_cbor(packed), "[json.exception.parse_error.113] parse error at byte 513: syntax error while parsing CBOR binary: indefinite-length binary array is not allowed inside indefinite-length binary array; last byte: 0x5F", json::parse_error&);
 
-        // Keep the byte-for-byte decoding check for its valid prefix: the first
+        // keep the byte-for-byte decoding check for its valid prefix: the first
         // 512 encoded bytes contain 468 payload bytes in definite-length chunks.
         auto valid_prefix = packed;
         valid_prefix.resize(512);
