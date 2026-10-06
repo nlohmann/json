@@ -1429,3 +1429,298 @@ TEST_CASE("json_view JSON pointers")
     }
 #endif
 }
+
+TEST_CASE("json_view dump")
+{
+    SECTION("the output of ordered_json::dump()")
+    {
+        generator g;
+        for (int i = 0; i < 2000; ++i)
+        {
+            std::string text;
+            g.value(text, 0);
+            const ordered_json_document d = ordered_json_document::parse(text);
+            if (has_duplicate_keys(d.root()))
+            {
+                continue;
+            }
+            CAPTURE(text)
+            const ordered_json j = ordered_json::parse(text);
+            for (const int indent :
+                    {
+                        -1, 0, 2
+                    })
+            {
+                for (const bool ensure_ascii :
+                        {
+                            false, true
+                        })
+                {
+                    CHECK(d.root().dump(indent, i % 2 == 0 ? ' ' : '\t', ensure_ascii) == j.dump(indent, i % 2 == 0 ? ' ' : '\t', ensure_ascii));
+                }
+            }
+            // also of each element
+            for (const ordered_json_view e : d.root())
+            {
+                CHECK(e.dump() == e.materialize().dump());
+            }
+        }
+    }
+
+    SECTION("strings")
+    {
+        const std::string text = R"(["plain", "\u0000\u0001\u001f\u007f\u0080é€￿😀", "\"\\\/\b\f\n\r\t", "aéあ😀b", "long text beyond the eight bytes of a word \n with an escape in the middle"])";
+        const ordered_json_document d = ordered_json_document::parse(text);
+        const ordered_json j = ordered_json::parse(text);
+        CHECK(d.root().dump() == j.dump());
+        CHECK(d.root().dump(-1, ' ', true) == j.dump(-1, ' ', true));
+        CHECK(d.root().dump(4, ' ', true) == j.dump(4, ' ', true));
+        const ordered_json_document keys = ordered_json_document::parse(R"({"é\n": {"\"": [], "": {}}})");
+        CHECK(keys.root().dump(2, ' ', true) == ordered_json::parse(R"({"é\n": {"\"": [], "": {}}})").dump(2, ' ', true));
+    }
+
+    SECTION("numbers")
+    {
+        const std::string text = "[1.50, 1E2, -0, -0.0, 123456789012345678901234567890, 18446744073709551615, -9223372036854775808, 0.1, 1e-7, 5e-324]";
+        const json_document d = json_document::parse(text);
+        CHECK(d.root().dump() == json::parse(text).dump());
+        CHECK(d.root().dump() == "[1.5,100.0,0,-0.0,1.2345678901234568e+29,18446744073709551615,-9223372036854775808,0.1,1e-07,5e-324]");
+        CHECK(d.root().dump(-1, ' ', false, json_view::number_format::source) == "[1.50,1E2,-0,-0.0,123456789012345678901234567890,18446744073709551615,-9223372036854775808,0.1,1e-7,5e-324]");
+        // also indented, and with ensure_ascii
+        CHECK(d.root().dump(0, ' ', false, json_view::number_format::source) == "[\n1.50,\n1E2,\n-0,\n-0.0,\n123456789012345678901234567890,\n18446744073709551615,\n-9223372036854775808,\n0.1,\n1e-7,\n5e-324\n]");
+        CHECK(d.root().dump(-1, ' ', true, json_view::number_format::source) == "[1.50,1E2,-0,-0.0,123456789012345678901234567890,18446744073709551615,-9223372036854775808,0.1,1e-7,5e-324]");
+
+        // float tokens of up to 17 significant digits in every spelling: those
+        // of at most 15 digits are written from their digits, the others
+        // through the conversion; both as dump() writes them
+        {
+            std::mt19937_64 tokens(1170); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
+            // a number below n; the remainder is a std::uint64_t, which is
+            // std::size_t on some platforms and wider on others
+            const auto draw = [&tokens](std::size_t n)
+            {
+                const std::uint64_t r = tokens() % n;
+                return static_cast<std::size_t>(r);
+            };
+            std::string many_tokens = "[";
+            for (int i = 0; i < 20000; ++i)
+            {
+                const std::size_t length = 1 + draw(17);
+                std::string digits(1, static_cast<char>('1' + draw(9)));
+                for (std::size_t k = 1; k < length; ++k)
+                {
+                    digits += static_cast<char>('0' + draw(10));
+                }
+                digits += std::string(draw(4), '0'); // trailing zeros
+                std::string token = draw(3) == 0 ? "-" : "";
+                const std::size_t point = draw(digits.size() + 1);
+                if (point == 0)
+                {
+                    token += "0." + std::string(draw(5), '0') + digits;
+                }
+                else
+                {
+                    token += digits.substr(0, point) + (point < digits.size() ? "." + digits.substr(point) : "");
+                }
+                // an exponent that keeps the value between about 1e-320 and 1e300
+                const int exponent = static_cast<int>(draw(600)) - 300 - static_cast<int>(point);
+                if (draw(4) != 0)
+                {
+                    token += (draw(2) == 0 ? "e" : "E") + std::string(exponent >= 0 && draw(2) == 0 ? "+" : "") + std::to_string(exponent);
+                }
+                else if (point == digits.size())
+                {
+                    token += ".0"; // (a float, not an integer)
+                }
+                many_tokens += (i != 0 ? "," : "") + token;
+            }
+            many_tokens += ']';
+            CHECK(json_document::parse(many_tokens).root().dump() == json::parse(many_tokens).dump());
+        }
+
+        // random doubles, written as parse() and dump() would
+        std::mt19937_64 rng(1170); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed)
+        std::string many = "[";
+        for (int i = 0; i < 5000; ++i)
+        {
+            const std::uint64_t bits = rng();
+            double x = 0;
+            std::memcpy(&x, &bits, sizeof(x));
+            if (std::isfinite(x))
+            {
+                many += (many.size() > 1 ? "," : "") + json(x).dump();
+            }
+        }
+        many += ']';
+        CHECK(json_document::parse(many).root().dump() == json::parse(many).dump());
+
+        using json_float = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+        CHECK(nlohmann::basic_json_document<json_float>::parse("[0.1, 1.5e10, 3.4028235e38]").root().dump() == json_float::parse("[0.1, 1.5e10, 3.4028235e38]").dump());
+    }
+
+    SECTION("members in document order, all of them")
+    {
+        const json_document d = json_document::parse(R"({"b": 1, "a": 2, "b": 3})");
+        CHECK(d.root().dump() == R"({"b":1,"a":2,"b":3})");
+        CHECK(d.root().dump(1) == "{\n \"b\": 1,\n \"a\": 2,\n \"b\": 3\n}");
+    }
+
+    SECTION("deep nesting")
+    {
+        const std::string deep = std::string(100000, '[') + std::string(100000, ']');
+        CHECK(json_document::parse(deep).root().dump() == deep);
+    }
+
+    SECTION("streams and discarded views")
+    {
+        const json_document d = json_document::parse(R"({"a": [1, 2]})");
+        std::ostringstream compact;
+        compact << d.root();
+        CHECK(compact.str() == R"({"a":[1,2]})");
+        std::ostringstream pretty;
+        pretty << std::setw(2) << std::setfill('.') << d.root() << d.root()["a"];
+        CHECK(pretty.str() == "{\n..\"a\": [\n....1,\n....2\n..]\n}[1,2]");
+        CHECK(json_view().dump() == json(json::value_t::discarded).dump());
+    }
+}
+
+TEST_CASE("json_view comparison")
+{
+    SECTION("equality of the values parse() produces")
+    {
+        generator g;
+        std::vector<std::string> texts;
+        for (int i = 0; i < 600; ++i)
+        {
+            std::string text;
+            g.value(text, 0);
+            texts.push_back(text);
+            // the same value written differently: sorted keys, canonical numbers
+            texts.push_back(json::parse(text).dump(1));
+        }
+        for (std::size_t i = 0; i + 2 < texts.size(); ++i)
+        {
+            for (std::size_t k = i; k < i + 3; ++k)
+            {
+                CAPTURE(texts[i])
+                CAPTURE(texts[k])
+                const json_document a = json_document::parse(texts[i]);
+                const json_document b = json_document::parse(texts[k]);
+                const json ja = json::parse(texts[i]);
+                const json jb = json::parse(texts[k]);
+                CHECK((a.root() == b.root()) == (ja == jb));
+                CHECK((a.root() != b.root()) == (ja != jb));
+                CHECK((a.root() == jb) == (ja == jb));
+                CHECK((jb == a.root()) == (ja == jb));
+                CHECK((a.root() != jb) == (ja != jb));
+                CHECK((jb != a.root()) == (ja != jb));
+
+                // ordered_json compares members in order
+                const ordered_json_document oa = ordered_json_document::parse(texts[i]);
+                const ordered_json_document ob = ordered_json_document::parse(texts[k]);
+                const ordered_json oja = ordered_json::parse(texts[i]);
+                const ordered_json ojb = ordered_json::parse(texts[k]);
+                CHECK((oa.root() == ob.root()) == (oja == ojb));
+                CHECK((oa.root() == ojb) == (oja == ojb));
+            }
+        }
+    }
+
+    SECTION("numbers, duplicate keys, member order")
+    {
+        const auto same = [](const char* x, const char* y)
+        {
+            return json_document::parse(x).root() == json_document::parse(y).root();
+        };
+        CHECK(same("1", "1.0"));
+        CHECK(same("[1, -1, 2.5]", "[1.0, -1.0, 25e-1]"));
+        CHECK(!same("1", "1.5"));
+        CHECK(same("18446744073709551615", "18446744073709551615"));
+        CHECK(same(R"({"a": 1, "a": 2})", R"({"a": 2})"));
+        CHECK(!same(R"({"a": 1, "a": 2})", R"({"a": 1})"));
+        CHECK(same(R"({"a": 1, "b": 2})", R"({"b": 2, "a": 1})"));
+        CHECK(!same(R"({"a": 1})", R"({"a": 1, "b": 2})"));
+        CHECK(!same("[1, 2]", "[2, 1]"));
+        CHECK(!same("\"a\"", "\"b\""));
+        CHECK(same("\"\\u00e9\"", "\"\xc3\xa9\""));
+        CHECK(!same("null", "false"));
+        CHECK(!same("[]", "{}"));
+        CHECK(ordered_json_document::parse(R"({"a": 1, "b": 2, "a": 3})").root() == ordered_json_document::parse(R"({"a": 3, "b": 2})").root());
+        CHECK(ordered_json_document::parse(R"({"a": 1, "b": 2})").root() != ordered_json_document::parse(R"({"b": 2, "a": 1})").root());
+
+        // discarded values compare as basic_json's do
+        const json discarded(json::value_t::discarded);
+        CHECK((json_view() == json_view()) == (discarded == discarded)); // NOLINT(readability-container-size-empty): operator== is tested
+        CHECK((json_view() == discarded) == (discarded == discarded));
+        CHECK(!(json_view() == json_document::parse("null").root())); // NOLINT(readability-container-size-empty)
+        CHECK(!(json_document::parse("null").root() == discarded));
+    }
+
+    SECTION("deep nesting")
+    {
+        const std::string deep = std::string(100000, '[') + std::string(100000, ']');
+        const json_document a = json_document::parse(deep);
+        const json_document b = json_document::parse(deep);
+        CHECK(a.root() == b.root());
+        CHECK(a.root() == json::parse(deep));
+        const std::string other = std::string(100000, '[') + "1" + std::string(100000, ']');
+        CHECK(a.root() != json_document::parse(other).root());
+    }
+}
+
+TEST_CASE("json_view large objects")
+{
+    // objects with 128 members or more are looked up with a hash index
+    for (const std::size_t members :
+            {
+                127u, 128u, 129u, 10000u
+            })
+    {
+        CAPTURE(members)
+        std::string text = "{";
+        for (std::size_t i = 0; i < members; ++i)
+        {
+            text += (i != 0 ? ",\"" : "\"") + std::string(i % 23, 'k') + std::to_string(i) + (i % 7 == 0 ? "\\n" : "") + "\":" + std::to_string(i);
+        }
+        text += R"(,"":"empty key","k1":"a duplicate of an earlier key"})";
+        const json_document d = json_document::parse(text);
+        const json_view v = d.root();
+        const json j = json::parse(text);
+        for (std::size_t i = 0; i < members; ++i)
+        {
+            const std::string key = std::string(i % 23, 'k') + std::to_string(i) + (i % 7 == 0 ? "\n" : "");
+            CHECK(v[key].get<std::size_t>() == i);
+            CHECK(v.contains(key));
+            CHECK(v.find(key).key() == key);
+            CHECK(v.at(key).get<std::size_t>() == i);
+            CHECK(!v.contains(key + "x"));
+        }
+        CHECK(v[""].get_string() == "empty key");
+        CHECK(v["k1"].get<int>() == 1); // the first of duplicate keys, as for small objects
+        CHECK(!v.contains("missing"));
+        CHECK_THROWS_WITH_AS(v.at("missing"), "[json.exception.out_of_range.403] key 'missing' not found", json::out_of_range&);
+        CHECK(v == j);
+        CHECK(v.materialize() == j);
+    }
+
+    SECTION("nested, reused, and in arrays")
+    {
+        std::string inner = "{";
+        for (int i = 0; i < 300; ++i)
+        {
+            inner += (i != 0 ? ",\"m" : "\"m") + std::to_string(i) + "\":" + std::to_string(i);
+        }
+        inner += '}';
+        const std::string text = "[" + inner + ",{\"x\":" + inner + "}," + inner + "]";
+        json_document d = json_document::parse(text);
+        CHECK(d.root()[0]["m299"].get<int>() == 299);
+        CHECK(d.root()[1]["x"]["m150"].get<int>() == 150);
+        CHECK(d.root()[2]["m0"].get<int>() == 0);
+        const std::size_t with_index = d.memory_usage();
+        d.read(std::string("{\"small\": 1}"));
+        CHECK(d.root()["small"].get<int>() == 1);
+        d.read(text);
+        CHECK(d.root()[2]["m7"].get<int>() == 7);
+        CHECK(d.memory_usage() >= with_index / 2);
+    }
+}
