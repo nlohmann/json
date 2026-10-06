@@ -87,9 +87,4 @@ build_script:
   - cmake --build . --config "%configuration%" --parallel 2
 
 test_script:
-  - if "%configuration%"=="Release" ctest -C "%configuration%" --parallel 2 --output-on-failure
-  # On Debug builds, skip test-unicode_all
-  # as it is extremely slow to run and cause
-  # occasional timeouts on AppVeyor.
-  # More info: https://github.com/nlohmann/json/pull/1570
-  - if "%configuration%"=="Debug" ctest --exclude-regex "test-unicode" -C "%configuration%" --parallel 2 --output-on-failure
+  - ctest -C "%configuration%" --parallel 2 --output-on-failure
