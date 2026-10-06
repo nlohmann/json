@@ -27877,21 +27877,49 @@ private:
             }
         }
 
-        static basic_json& last_child(basic_json& v)
+        // The walk in destroy_container() may take the children of a
+        // container in any order, as long as it picks the same child again
+        // while that container is not modified in between. Arrays and
+        // objects with bidirectional iterators (std::map, ordered_map, ...)
+        // use their last child, which a vector-based container can remove
+        // in O(1). ObjectType only needs forward iterators, though (e.g.
+        // std::unordered_map), so other objects use their first child.
+        template<typename ObjectType_>
+        static typename ObjectType_::iterator walk_child_it(ObjectType_& o, std::bidirectional_iterator_tag /*unused*/)
+        {
+            return std::prev(o.end());
+        }
+
+        template<typename ObjectType_>
+        static typename ObjectType_::iterator walk_child_it(ObjectType_& o, std::forward_iterator_tag /*unused*/)
+        {
+            return o.begin();
+        }
+
+        template<typename ObjectType_>
+        static typename ObjectType_::iterator walk_child_it(ObjectType_& o)
+        {
+            JSON_ASSERT(!o.empty());
+            return walk_child_it(o, typename std::iterator_traits<typename ObjectType_::iterator>::iterator_category());
+        }
+
+        // the child of a non-empty array/object v that the walk in
+        // destroy_container() continues with (see walk_child_it() above)
+        static basic_json& walk_child(basic_json& v)
         {
             if (v.m_data.m_type == value_t::array)
             {
                 return v.m_data.m_value.array->back();
             }
             JSON_ASSERT(v.m_data.m_type == value_t::object);
-            return v.m_data.m_value.object->rbegin()->second;
+            return walk_child_it(*v.m_data.m_value.object)->second;
         }
 
-        // removes the last child of a non-empty array/object v; this never
+        // removes walk_child(v) from a non-empty array/object v; this never
         // allocates, and since it is only ever called when that child is a
         // scalar or an already-empty array/object, destroying it never
         // recurses more than one level deep (see destroy() below)
-        static void pop_last_child(basic_json& v)
+        static void pop_walk_child(basic_json& v)
         {
             if (v.m_data.m_type == value_t::array)
             {
@@ -27900,9 +27928,7 @@ private:
             else
             {
                 JSON_ASSERT(v.m_data.m_type == value_t::object);
-                // erase() needs a forward iterator, so std::prev(end()) is
-                // used here rather than rbegin() (see last_child() above)
-                v.m_data.m_value.object->erase(std::prev(v.m_data.m_value.object->end()));
+                v.m_data.m_value.object->erase(walk_child_it(*v.m_data.m_value.object));
             }
         }
 
@@ -27973,14 +27999,17 @@ public:
             // bad_alloc, which would escape this noexcept destructor and
             // terminate the program (#5135).
             //
-            // Instead, walk down the "last child" chain, reversing links
-            // as we go: cur is the container currently being emptied,
-            // and prev is its parent (value_t::null when there is none).
-            // Each parent's last child slot doubles as storage for that
-            // parent's own parent link while we are below it, so no
-            // extra memory is needed. We only ever remove a child once
-            // it is a scalar or an empty array/object, which neither
-            // allocates nor recurses more than one level deep.
+            // Instead, walk down a chain of children (always the one
+            // walk_child() picks), reversing links as we go: cur is the
+            // container currently being emptied, and prev is its parent
+            // (value_t::null when there is none). Each parent's
+            // walk_child() slot doubles as storage for that parent's own
+            // parent link while we are below it, so no extra memory is
+            // needed; the parent is not modified meanwhile, so
+            // walk_child() finds that same slot again on the way up. We
+            // only ever remove a child once it is a scalar or an empty
+            // array/object, which neither allocates nor recurses more
+            // than one level deep.
             //
             // This json_value is not itself a basic_json, so the
             // top-level container is first moved into a local stand-in
@@ -28006,11 +28035,11 @@ public:
                     }
 
                     // ascend: detach the grandparent link from prev's
-                    // last slot, drop that (now null) slot, free cur
+                    // walk_child() slot, drop that (now null) slot, free cur
                     // (it is empty), then move up one level
                     basic_json gp;
-                    take(gp, last_child(prev));
-                    pop_last_child(prev);
+                    take(gp, walk_child(prev));
+                    pop_walk_child(prev);
 
                     free_container(cur);
 
@@ -28019,21 +28048,21 @@ public:
                     continue;
                 }
 
-                basic_json& cur_last_ref = last_child(cur);
+                basic_json& cur_child_ref = walk_child(cur);
 
-                if (has_no_children(cur_last_ref))
+                if (has_no_children(cur_child_ref))
                 {
                     // scalar, or already-empty array/object
-                    pop_last_child(cur);
+                    pop_walk_child(cur);
                     continue;
                 }
 
-                // descend into the non-empty last child, reversing the
+                // descend into the non-empty child, reversing the
                 // link: its slot takes over prev, and the child becomes
                 // the new cur
                 basic_json tmp;
-                take(tmp, cur_last_ref);
-                take(cur_last_ref, prev);
+                take(tmp, cur_child_ref);
+                take(cur_child_ref, prev);
                 take(prev, cur);
                 take(cur, tmp);
             }
