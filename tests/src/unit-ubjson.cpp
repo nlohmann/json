@@ -35,10 +35,59 @@ TEST_CASE("UBJSON")
     {
         SECTION("discarded")
         {
-            // discarded values are not serialized
+            // a discarded value cannot be serialized to UBJSON
             json const j = json::value_t::discarded;
-            const auto result = json::to_ubjson(j);
-            CHECK(result.empty());
+            CHECK_THROWS_WITH_AS(json::to_ubjson(j), "[json.exception.type_error.321] cannot serialize discarded value to UBJSON", json::type_error&);
+        }
+
+        SECTION("discarded values nested in a container")
+        {
+            json const discarded = json::value_t::discarded;
+
+            SECTION("in an array")
+            {
+                json const j = {1, discarded, 2};
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_ubjson(j), "[json.exception.type_error.321] (/1) cannot serialize discarded value to UBJSON", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_ubjson(j), "[json.exception.type_error.321] cannot serialize discarded value to UBJSON", json::type_error&);
+#endif
+            }
+
+            SECTION("as an object value")
+            {
+                json j;
+                j["a"] = 1;
+                j["b"] = discarded;
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_ubjson(j), "[json.exception.type_error.321] (/b) cannot serialize discarded value to UBJSON", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_ubjson(j), "[json.exception.type_error.321] cannot serialize discarded value to UBJSON", json::type_error&);
+#endif
+            }
+
+            SECTION("nested deeper (array in object in array)")
+            {
+                json inner_array = {1, discarded};
+                json middle_object;
+                middle_object["x"] = inner_array;
+                json const j = {middle_object};
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_ubjson(j), "[json.exception.type_error.321] (/0/x/1) cannot serialize discarded value to UBJSON", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_ubjson(j), "[json.exception.type_error.321] cannot serialize discarded value to UBJSON", json::type_error&);
+#endif
+            }
+
+            SECTION("optimized array of all-discarded elements")
+            {
+                json const j = {discarded, discarded};
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_ubjson(j, true, true), "[json.exception.type_error.321] (/0) cannot serialize discarded value to UBJSON", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_ubjson(j, true, true), "[json.exception.type_error.321] cannot serialize discarded value to UBJSON", json::type_error&);
+#endif
+            }
         }
 
         SECTION("null")
@@ -2099,9 +2148,14 @@ TEST_CASE("UBJSON")
 
         SECTION("discarded")
         {
+            // a discarded value cannot be serialized to UBJSON, even as part
+            // of an optimized array of a single (here: valueless) type
             json const j = {json::value_t::discarded, json::value_t::discarded};
-            std::vector<uint8_t> expected = {'[', '$', 'N', '#', 'i', 2};
-            CHECK(json::to_ubjson(j, true, true) == expected);
+#if JSON_DIAGNOSTICS
+            CHECK_THROWS_WITH_AS(json::to_ubjson(j, true, true), "[json.exception.type_error.321] (/0) cannot serialize discarded value to UBJSON", json::type_error&);
+#else
+            CHECK_THROWS_WITH_AS(json::to_ubjson(j, true, true), "[json.exception.type_error.321] cannot serialize discarded value to UBJSON", json::type_error&);
+#endif
         }
     }
 }
