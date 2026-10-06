@@ -40,6 +40,7 @@ Constant.
 - [is_object](is_object.md) checks whether the JSON value is an object
 - [type](type.md) returns the type of the JSON value
 - [value_t](value_t.md) the enumeration of JSON types
+- [basic_json_view::is_null](../basic_json_view/is_null.md) - the same check on a zero-copy view
 
 ## Version history
 
