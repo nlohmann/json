@@ -27792,6 +27792,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         /// constructor for rvalue binary arrays (internal type)
         json_value(binary_t&& value) : binary(create<binary_t>(std::move(value))) {}
 
+private:
         // raw, allocation-free transfer of m_data from src to dst: no
         // set_parents()/assert_invariant() (the former is O(#children) per
         // call under JSON_DIAGNOSTICS, which would make the walk below
@@ -27870,6 +27871,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             v.m_data.m_type = value_t::null; // avoid a double free if v is later destructed
         }
 
+public:
         void destroy_string() noexcept
         {
             if (string == nullptr)
