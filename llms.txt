@@ -200,6 +200,7 @@ JSON for Modern C++ is a C++11 header-only library implementing a JSON value typ
 - [update](https://json.nlohmann.me/api/basic_json/update/index.md)
 - [value](https://json.nlohmann.me/api/basic_json/value/index.md)
 - [value_t](https://json.nlohmann.me/api/basic_json/value_t/index.md)
+- [with_t](https://json.nlohmann.me/api/basic_json/with_t/index.md)
 - [(Destructor)](https://json.nlohmann.me/api/basic_json/~basic_json/index.md)
 - [Overview](https://json.nlohmann.me/api/byte_container_with_subtype/index.md)
 - [(constructor)](https://json.nlohmann.me/api/byte_container_with_subtype/byte_container_with_subtype/index.md)

@@ -88,6 +88,7 @@ The class satisfies the following concept requirements:
 - **initializer_list_t** - type for initializer lists of `basic_json` values
 - [**input_format_t**](https://json.nlohmann.me/api/basic_json/input_format_t/index.md) - type to choose the format to parse
 - [**json_sax_t**](https://json.nlohmann.me/api/json_sax/index.md) - type for SAX events
+- [**with_object_t, with_array_t, with_string_t, with_boolean_t, with_integers_t, with_float_t, with_allocator_t, with_json_serializer_t, with_binary_t, with_base_class_t**](https://json.nlohmann.me/api/basic_json/with_t/index.md) - types to create a `basic_json` type with one (or two) replaced template parameters
 
 ### Exceptions
 
