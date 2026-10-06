@@ -127,6 +127,7 @@ class binary_writer
     @throw type_error.316 if a string value or an object key is not valid
            UTF-8
     @throw type_error.317 if @a j is not an object
+    @throw type_error.321 if a value nested in @a j is discarded
     */
     void write_bson(const BasicJsonType& j)
     {
@@ -158,6 +159,7 @@ class binary_writer
     @param[in] j  JSON value to serialize
     @throw type_error.316 if a string value or an object key is not valid
            UTF-8
+    @throw type_error.321 if @a j or a value nested in it is discarded
     */
     void write_cbor(const BasicJsonType& j)
     {
@@ -322,7 +324,7 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                break;
+                throw_on_discarded(j, "CBOR");
         }
     }
 
@@ -382,6 +384,7 @@ class binary_writer
 
     /*!
     @param[in] j  JSON value to serialize
+    @throw type_error.321 if @a j or a value nested in it is discarded
     */
     void write_msgpack(const BasicJsonType& j)
     {
@@ -655,7 +658,7 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                break;
+                throw_on_discarded(j, "MessagePack");
         }
     }
 
@@ -668,6 +671,7 @@ class binary_writer
     @param[in] bjdata_version  which BJData version to use, default is draft2
     @throw type_error.316 if a string value or an object key is not valid
            UTF-8
+    @throw type_error.321 if @a j or a value nested in it is discarded
     */
     void write_ubjson(const BasicJsonType& j, const bool use_count,
                       const bool use_type, const bool add_prefix = true,
@@ -901,7 +905,7 @@ class binary_writer
 
             case value_t::discarded:
             default:
-                break;
+                throw_on_discarded(j, use_bjdata ? "BJData" : "UBJSON");
         }
     }
 
@@ -921,6 +925,15 @@ class binary_writer
     }
 
   private:
+    /*!
+    @brief throws because @a j is discarded and cannot be serialized
+    @throw type_error.321 always
+    */
+    JSON_HEDLEY_NO_RETURN static void throw_on_discarded(const BasicJsonType& j, const char* format_name)
+    {
+        JSON_THROW(type_error::create(321, concat("cannot serialize discarded value to ", format_name), &j));
+    }
+
     //////////
     // BSON //
     //////////
@@ -1172,6 +1185,7 @@ class binary_writer
            into a byte, before anything is written
     @throw type_error.316 if @a j is a string that is not valid UTF-8, before
            anything is written
+    @throw type_error.321 if @a j is discarded
     */
     std::size_t calc_bson_value_size(const BasicJsonType& j)
     {
@@ -1198,10 +1212,12 @@ class binary_writer
             case value_t::null:
                 return 0ul;
 
+            case value_t::discarded:
+                throw_on_discarded(j, "BSON");
+
             // LCOV_EXCL_START
             case value_t::object:
             case value_t::array:
-            case value_t::discarded:
             default:
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
                 return 0ul;
@@ -1238,10 +1254,12 @@ class binary_writer
             case value_t::null:
                 return write_bson_null(name);
 
+            case value_t::discarded:
+                throw_on_discarded(j, "BSON");
+
             // LCOV_EXCL_START
             case value_t::object:
             case value_t::array:
-            case value_t::discarded:
             default:
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
                 return;
@@ -1307,6 +1325,8 @@ class binary_writer
     @throw out_of_range.415 if a binary value's subtype does not fit into a
            byte, before anything is written
     @throw type_error.316 if a string value or a key is not valid UTF-8,
+           before anything is written
+    @throw type_error.321 if a value nested in @a document is discarded,
            before anything is written
     */
     std::size_t calc_bson_sizes(const BasicJsonType& document, std::vector<std::size_t>& nested_sizes)

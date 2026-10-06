@@ -17,11 +17,11 @@ permissions:
   contents: read
 
 jobs:
-  macos-14:
-    runs-on: macos-14 # https://github.com/actions/runner-images/blob/main/images/macos/macos-14-Readme.md
+  macos-15:
+    runs-on: macos-15 # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
     strategy:
       matrix:
-        xcode: ['15.0.1', '15.1', '15.2', '15.3', '15.4']
+        xcode: ['16.0', '16.1', '16.2', '16.3', '16.4', '26.0.1', '26.1.1', '26.2', '26.3']
     env:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 
@@ -36,11 +36,11 @@ jobs:
       - name: Test
         run: cd build ; ctest -j 10 --output-on-failure
 
-  macos-15:
-    runs-on: macos-15 # https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
+  macos-26:
+    runs-on: macos-26 # https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md
     strategy:
       matrix:
-        xcode: ['16.0', '16.1', '16.2', '16.3', '16.4', '26.0.1']
+        xcode: ['26.4.1', '26.5', '26.6']
     env:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer
 

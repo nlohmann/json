@@ -3249,6 +3249,12 @@ class binary_reader
             {
                 return false;
             }
+            // the lexer would stop at a NUL and accept the digits before it
+            if (JSON_HEDLEY_UNLIKELY(current == '\0'))
+            {
+                return sax->parse_error(chars_read, "00", parse_error::create(115, chars_read,
+                                        exception_message("invalid number text; last byte: 0x00", "high-precision number"), nullptr));
+            }
             number_vector.push_back(static_cast<char>(current));
         }
 

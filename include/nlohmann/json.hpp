@@ -226,6 +226,70 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// SAX interface type, see @ref nlohmann::json_sax
     using json_sax_t = json_sax<basic_json>;
 
+    ////////////////////////////////////////////////////////////////////////////////
+    // utility templates to create a json type with different template parameters //
+    ////////////////////////////////////////////////////////////////////////////////
+
+    /// Json type using a different type for storing objects
+    /// @sa https://json.nlohmann.me/api/basic_json/with_t/
+    template<template<typename, typename, typename...> class ObjectType2>
+    using with_object_t = basic_json<ObjectType2, ArrayType, StringType, BooleanType,
+          NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>;
+
+    /// Json type using a different type for storing arrays
+    /// @sa https://json.nlohmann.me/api/basic_json/with_t/
+    template<template<typename, typename...> class ArrayType2>
+    using with_array_t =  basic_json<ObjectType, ArrayType2, StringType, BooleanType,
+          NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>;
+
+    /// Json type using a different type for storing strings
+    /// @sa https://json.nlohmann.me/api/basic_json/with_t/
+    template<class StringType2>
+    using with_string_t =  basic_json<ObjectType, ArrayType, StringType2, BooleanType,
+          NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>;
+
+    /// Json type using a different type for storing booleans
+    /// @sa https://json.nlohmann.me/api/basic_json/with_t/
+    template<class BooleanType2>
+    using with_boolean_t =  basic_json<ObjectType, ArrayType, StringType, BooleanType2,
+          NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>;
+
+    /// Json type using different types for storing signed and unsigned integers
+    /// @sa https://json.nlohmann.me/api/basic_json/with_t/
+    template<class NumberIntegerType2, class NumberUnsignedType2>
+    using with_integers_t =  basic_json<ObjectType, ArrayType, StringType, BooleanType,
+          NumberIntegerType2, NumberUnsignedType2, NumberFloatType, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>;
+
+    /// Json type using a different type for storing floating point numbers
+    /// @sa https://json.nlohmann.me/api/basic_json/with_t/
+    template<class NumberFloatType2>
+    using with_float_t =  basic_json<ObjectType, ArrayType, StringType, BooleanType,
+          NumberIntegerType, NumberUnsignedType, NumberFloatType2, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass>;
+
+    /// Json type using a different type as base allocator
+    /// @sa https://json.nlohmann.me/api/basic_json/with_t/
+    template<template<typename> class AllocatorType2>
+    using with_allocator_t =  basic_json<ObjectType, ArrayType, StringType, BooleanType,
+          NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType2, JSONSerializer, BinaryType, CustomBaseClass>;
+
+    /// Json type using a different type as json serializer
+    /// @sa https://json.nlohmann.me/api/basic_json/with_t/
+    template<template<typename, typename = void> class JSONSerializer2>
+    using with_json_serializer_t =  basic_json<ObjectType, ArrayType, StringType, BooleanType,
+          NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer2, BinaryType, CustomBaseClass>;
+
+    /// Json type using a different type for storing binary data
+    /// @sa https://json.nlohmann.me/api/basic_json/with_t/
+    template<class BinaryType2>
+    using with_binary_t =  basic_json<ObjectType, ArrayType, StringType, BooleanType,
+          NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType2, CustomBaseClass>;
+
+    /// Json type using a different type as base class
+    /// @sa https://json.nlohmann.me/api/basic_json/with_t/
+    template<class CustomBaseClass2>
+    using with_base_class_t =  basic_json<ObjectType, ArrayType, StringType, BooleanType,
+          NumberIntegerType, NumberUnsignedType, NumberFloatType, AllocatorType, JSONSerializer, BinaryType, CustomBaseClass2>;
+
     ////////////////
     // exceptions //
     ////////////////
@@ -612,100 +676,247 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         /// constructor for rvalue binary arrays (internal type)
         json_value(binary_t&& value) : binary(create<binary_t>(std::move(value))) {}
 
-        void destroy(value_t t)
+private:
+        // raw, allocation-free transfer of m_data from src to dst: no
+        // set_parents()/assert_invariant() (the former is O(#children) per
+        // call under JSON_DIAGNOSTICS, which would make the walk below
+        // quadratic); dst takes ownership, src is left as value_t::null.
+        static void take(basic_json& dst, basic_json& src) noexcept
+        {
+            dst.m_data.m_type = src.m_data.m_type;
+            dst.m_data.m_value = src.m_data.m_value;
+            src.m_data.m_type = value_t::null;
+        }
+
+        // true if v is not an array/object, or is an already-empty one
+        static bool has_no_children(const basic_json& v) noexcept
+        {
+            switch (v.m_data.m_type)
+            {
+                case value_t::array:
+                    return v.m_data.m_value.array->empty();
+                case value_t::object:
+                    return v.m_data.m_value.object->empty();
+                case value_t::null:
+                case value_t::string:
+                case value_t::boolean:
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                case value_t::number_float:
+                case value_t::binary:
+                case value_t::discarded:
+                default:
+                    return true;
+            }
+        }
+
+        // The walk in destroy_container() may take the children of a
+        // container in any order, as long as it picks the same child again
+        // while that container is not modified in between. Arrays and
+        // objects with bidirectional iterators (std::map, ordered_map, ...)
+        // use their last child, which a vector-based container can remove
+        // in O(1). ObjectType only needs forward iterators, though (e.g.
+        // std::unordered_map), so other objects use their first child.
+        template<typename ObjectType_>
+        static typename ObjectType_::iterator walk_child_it(ObjectType_& o, std::bidirectional_iterator_tag /*unused*/)
+        {
+            return std::prev(o.end());
+        }
+
+        template<typename ObjectType_>
+        static typename ObjectType_::iterator walk_child_it(ObjectType_& o, std::forward_iterator_tag /*unused*/)
+        {
+            return o.begin();
+        }
+
+        template<typename ObjectType_>
+        static typename ObjectType_::iterator walk_child_it(ObjectType_& o)
+        {
+            JSON_ASSERT(!o.empty());
+            return walk_child_it(o, typename std::iterator_traits<typename ObjectType_::iterator>::iterator_category());
+        }
+
+        // the child of a non-empty array/object v that the walk in
+        // destroy_container() continues with (see walk_child_it() above)
+        static basic_json& walk_child(basic_json& v)
+        {
+            if (v.m_data.m_type == value_t::array)
+            {
+                return v.m_data.m_value.array->back();
+            }
+            JSON_ASSERT(v.m_data.m_type == value_t::object);
+            return walk_child_it(*v.m_data.m_value.object)->second;
+        }
+
+        // removes walk_child(v) from a non-empty array/object v; this never
+        // allocates, and since it is only ever called when that child is a
+        // scalar or an already-empty array/object, destroying it never
+        // recurses more than one level deep (see destroy() below)
+        static void pop_walk_child(basic_json& v)
+        {
+            if (v.m_data.m_type == value_t::array)
+            {
+                v.m_data.m_value.array->pop_back();
+            }
+            else
+            {
+                JSON_ASSERT(v.m_data.m_type == value_t::object);
+                v.m_data.m_value.object->erase(walk_child_it(*v.m_data.m_value.object));
+            }
+        }
+
+        // deallocates the (already empty) array/object held by v; this is
+        // the same allocator-based free the old recursive implementation
+        // used, just factored out so every level of the walk in destroy()
+        // can share it
+        static void free_container(basic_json& v) noexcept
+        {
+            if (v.m_data.m_type == value_t::array)
+            {
+                JSON_ASSERT(v.m_data.m_value.array->empty());
+                AllocatorType<array_t> alloc;
+                std::allocator_traits<decltype(alloc)>::destroy(alloc, v.m_data.m_value.array);
+                std::allocator_traits<decltype(alloc)>::deallocate(alloc, v.m_data.m_value.array, 1);
+            }
+            else
+            {
+                JSON_ASSERT(v.m_data.m_type == value_t::object);
+                JSON_ASSERT(v.m_data.m_value.object->empty());
+                AllocatorType<object_t> alloc;
+                std::allocator_traits<decltype(alloc)>::destroy(alloc, v.m_data.m_value.object);
+                std::allocator_traits<decltype(alloc)>::deallocate(alloc, v.m_data.m_value.object, 1);
+            }
+            v.m_data.m_type = value_t::null; // avoid a double free if v is later destructed
+        }
+
+public:
+        void destroy_string() noexcept
+        {
+            if (string == nullptr)
+            {
+                // not initialized (e.g., due to exception in the ctor)
+                return;
+            }
+            AllocatorType<string_t> alloc;
+            std::allocator_traits<decltype(alloc)>::destroy(alloc, string);
+            std::allocator_traits<decltype(alloc)>::deallocate(alloc, string, 1);
+        }
+
+        void destroy_binary() noexcept
+        {
+            if (binary == nullptr)
+            {
+                // not initialized (e.g., due to exception in the ctor)
+                return;
+            }
+            AllocatorType<binary_t> alloc;
+            std::allocator_traits<decltype(alloc)>::destroy(alloc, binary);
+            std::allocator_traits<decltype(alloc)>::deallocate(alloc, binary, 1);
+        }
+
+        // t must be value_t::array or value_t::object
+        void destroy_container(value_t t) noexcept
         {
             if (
                 (t == value_t::object && object == nullptr) ||
-                (t == value_t::array && array == nullptr) ||
-                (t == value_t::string && string == nullptr) ||
-                (t == value_t::binary && binary == nullptr)
+                (t == value_t::array && array == nullptr)
             )
             {
                 // not initialized (e.g., due to exception in the ctor)
                 return;
             }
-            if (t == value_t::array || t == value_t::object)
+
+            // Destroy the tree without recursing per nesting level and
+            // without any heap allocation: a heap-allocated flattening
+            // stack (the previous implementation) can itself throw
+            // bad_alloc, which would escape this noexcept destructor and
+            // terminate the program (#5135).
+            //
+            // Instead, walk down a chain of children (always the one
+            // walk_child() picks), reversing links as we go: cur is the
+            // container currently being emptied, and prev is its parent
+            // (value_t::null when there is none). Each parent's
+            // walk_child() slot doubles as storage for that parent's own
+            // parent link while we are below it, so no extra memory is
+            // needed; the parent is not modified meanwhile, so
+            // walk_child() finds that same slot again on the way up. We
+            // only ever remove a child once it is a scalar or an empty
+            // array/object, which neither allocates nor recurses more
+            // than one level deep.
+            //
+            // This json_value is not itself a basic_json, so the
+            // top-level container is first moved into a local stand-in
+            // ("cur"); a default-constructed basic_json has a null
+            // pointer in its m_value (see data::m_value's initializer),
+            // so swapping it with *this leaves this union's own pointer
+            // null, and it is never looked at or freed a second time.
+            basic_json cur;
+            cur.m_data.m_type = t;
+            using std::swap;
+            swap(cur.m_data.m_value, *this);
+
+            basic_json prev; // value_t::null: no parent
+
+            while (true)
             {
-                // flatten the current json_value to a heap-allocated stack
-                std::vector<basic_json> stack;
-
-                // move the top-level items to stack
-                if (t == value_t::array)
+                if (has_no_children(cur))
                 {
-                    stack.reserve(array->size());
-                    std::move(array->begin(), array->end(), std::back_inserter(stack));
-                }
-                else
-                {
-                    stack.reserve(object->size());
-                    for (auto&& it : *object)
+                    if (prev.m_data.m_type == value_t::null)
                     {
-                        stack.push_back(std::move(it.second));
-                    }
-                }
-
-                while (!stack.empty())
-                {
-                    // move the last item to a local variable to be processed
-                    basic_json current_item(std::move(stack.back()));
-                    stack.pop_back();
-
-                    // if current_item is array/object, move
-                    // its children to the stack to be processed later
-                    if (current_item.is_array())
-                    {
-                        std::move(current_item.m_data.m_value.array->begin(), current_item.m_data.m_value.array->end(), std::back_inserter(stack));
-
-                        current_item.m_data.m_value.array->clear();
-                    }
-                    else if (current_item.is_object())
-                    {
-                        for (auto&& it : *current_item.m_data.m_value.object)
-                        {
-                            stack.push_back(std::move(it.second));
-                        }
-
-                        current_item.m_data.m_value.object->clear();
+                        free_container(cur);
+                        return; // back at the top with nothing left to do
                     }
 
-                    // it's now safe that current_item gets destructed
-                    // since it doesn't have any children
+                    // ascend: detach the grandparent link from prev's
+                    // walk_child() slot, drop that (now null) slot, free cur
+                    // (it is empty), then move up one level
+                    basic_json gp;
+                    take(gp, walk_child(prev));
+                    pop_walk_child(prev);
+
+                    free_container(cur);
+
+                    take(cur, prev);
+                    take(prev, gp);
+                    continue;
                 }
+
+                basic_json& cur_child_ref = walk_child(cur);
+
+                if (has_no_children(cur_child_ref))
+                {
+                    // scalar, or already-empty array/object
+                    pop_walk_child(cur);
+                    continue;
+                }
+
+                // descend into the non-empty child, reversing the
+                // link: its slot takes over prev, and the child becomes
+                // the new cur
+                basic_json tmp;
+                take(tmp, cur_child_ref);
+                take(cur_child_ref, prev);
+                take(prev, cur);
+                take(cur, tmp);
             }
+        }
 
+        void destroy(value_t t)
+        {
             switch (t)
             {
-                case value_t::object:
-                {
-                    AllocatorType<object_t> alloc;
-                    std::allocator_traits<decltype(alloc)>::destroy(alloc, object);
-                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, object, 1);
-                    break;
-                }
-
-                case value_t::array:
-                {
-                    AllocatorType<array_t> alloc;
-                    std::allocator_traits<decltype(alloc)>::destroy(alloc, array);
-                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, array, 1);
-                    break;
-                }
-
                 case value_t::string:
-                {
-                    AllocatorType<string_t> alloc;
-                    std::allocator_traits<decltype(alloc)>::destroy(alloc, string);
-                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, string, 1);
+                    destroy_string();
                     break;
-                }
 
                 case value_t::binary:
-                {
-                    AllocatorType<binary_t> alloc;
-                    std::allocator_traits<decltype(alloc)>::destroy(alloc, binary);
-                    std::allocator_traits<decltype(alloc)>::deallocate(alloc, binary, 1);
+                    destroy_binary();
                     break;
-                }
+
+                case value_t::object:
+                case value_t::array:
+                    destroy_container(t);
+                    break;
 
                 case value_t::null:
                 case value_t::boolean:
@@ -714,9 +925,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 case value_t::number_float:
                 case value_t::discarded:
                 default:
-                {
                     break;
-                }
             }
         }
     };

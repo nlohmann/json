@@ -149,6 +149,54 @@ TEST_CASE("BSON")
             json const j = std::vector<int> {1, 2, 3, 4, 5, 6, 7};
             CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is array", json::type_error&);
         }
+
+        SECTION("discarded")
+        {
+            json const j = json::value_t::discarded;
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.317] to serialize to BSON, top-level type must be object, but is discarded", json::type_error&);
+        }
+    }
+
+    SECTION("discarded values nested in a container cannot be serialized to BSON")
+    {
+        json const discarded = json::value_t::discarded;
+
+        SECTION("as an object value")
+        {
+            json j;
+            j["a"] = 1;
+            j["b"] = discarded;
+#if JSON_DIAGNOSTICS
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.321] (/b) cannot serialize discarded value to BSON", json::type_error&);
+#else
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.321] cannot serialize discarded value to BSON", json::type_error&);
+#endif
+        }
+
+        SECTION("in an array that is an object value")
+        {
+            json j;
+            j["a"] = json::array({1, discarded, 2});
+#if JSON_DIAGNOSTICS
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.321] (/a/1) cannot serialize discarded value to BSON", json::type_error&);
+#else
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.321] cannot serialize discarded value to BSON", json::type_error&);
+#endif
+        }
+
+        SECTION("nested deeper (array in object in object)")
+        {
+            json inner_array = {1, discarded};
+            json middle_object;
+            middle_object["x"] = inner_array;
+            json j;
+            j["outer"] = middle_object;
+#if JSON_DIAGNOSTICS
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.321] (/outer/x/1) cannot serialize discarded value to BSON", json::type_error&);
+#else
+            CHECK_THROWS_WITH_AS(json::to_bson(j), "[json.exception.type_error.321] cannot serialize discarded value to BSON", json::type_error&);
+#endif
+        }
     }
 
     SECTION("keys containing code-point U+0000 cannot be serialized to BSON")

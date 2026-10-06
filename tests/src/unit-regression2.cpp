@@ -40,7 +40,9 @@ using ordered_json = nlohmann::ordered_json;
 #endif
 
 #include <cstdio>
+#include <cstdlib>
 #include <list>
+#include <new>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -106,6 +108,84 @@ DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
 /////////////////////////////////////////////////////////////////////
 
 using float_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+
+#if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
+namespace
+{
+// An allocator whose allocate() can be told to fail on demand, so tests can
+// check that ~basic_json() tolerates - in fact, after #5135, never even
+// triggers - an allocation failure. This replaces an earlier version of
+// this test that overrode the process-wide ::operator new/::operator
+// delete, which affected every allocation in the whole unit-regression2
+// binary rather than just the values under test.
+std::size_t failing_allocator_allocations = 0;
+std::size_t failing_allocator_deallocations = 0;
+bool fail_next_allocation = false;
+
+template<class T>
+struct failing_allocator : std::allocator<T>
+{
+    using std::allocator<T>::allocator;
+
+    failing_allocator() noexcept = default;
+    template<class U>
+    failing_allocator(const failing_allocator<U>& /*unused*/) noexcept {} // NOLINT(google-explicit-constructor)
+
+    T* allocate(std::size_t n)
+    {
+        if (fail_next_allocation)
+        {
+            fail_next_allocation = false;
+            throw std::bad_alloc();
+        }
+        ++failing_allocator_allocations;
+        return std::allocator<T>::allocate(n);
+    }
+
+    void deallocate(T* p, std::size_t n)
+    {
+        ++failing_allocator_deallocations;
+        std::allocator<T>::deallocate(p, n);
+    }
+
+    template<class U>
+    struct rebind
+    {
+        using other = failing_allocator<U>;
+    };
+};
+
+using failing_json = nlohmann::basic_json<std::map, std::vector, std::string, bool,
+      std::int64_t, std::uint64_t, double, failing_allocator>;
+using failing_ordered_json = nlohmann::basic_json<nlohmann::ordered_map, std::vector, std::string, bool,
+      std::int64_t, std::uint64_t, double, failing_allocator>;
+
+// builds `depth` levels of nesting around a scalar, iteratively (never
+// recursing: each wrap only moves the previous, already-built value, which
+// is O(1)), each level an array or an object depending on `nest_objects`
+template<class BasicJsonType>
+BasicJsonType make_deep_nest(std::size_t depth, bool nest_objects)
+{
+    BasicJsonType v = 0;
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        if (nest_objects)
+        {
+            BasicJsonType wrapper = BasicJsonType::object();
+            wrapper["x"] = std::move(v);
+            v = std::move(wrapper);
+        }
+        else
+        {
+            BasicJsonType wrapper = BasicJsonType::array();
+            wrapper.push_back(std::move(v));
+            v = std::move(wrapper);
+        }
+    }
+    return v;
+}
+} // namespace
+#endif
 
 /////////////////////////////////////////////////////////////////////
 // for #1647
@@ -938,6 +1018,213 @@ TEST_CASE("regression test - excessive binary container size honors allow_except
 
     // regression guard: a genuinely truncated CBOR input must remain discarded
     CHECK(json::from_cbor(std::vector<std::uint8_t> {0x9b, 0, 0, 0, 0, 0, 0, 0, 0x02}, true, false).is_discarded());
+}
+
+#if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
+TEST_CASE("regression test #5135 - destructor never allocates, even under memory pressure")
+{
+    // Before the fix, ~basic_json() flattened a nested array/object into a
+    // heap-allocated std::vector to avoid recursing; that allocation could
+    // itself throw bad_alloc, which escapes a noexcept destructor and
+    // terminates the program. destroy() no longer allocates anything, so
+    // none of the sections below ever observe fail_next_allocation being
+    // consumed: CHECK(fail_next_allocation) confirms it was never touched.
+
+    SECTION("the original report: a small, mixed array/object nest")
+    {
+        failing_allocator_allocations = 0;
+        failing_allocator_deallocations = 0;
+        {
+            failing_json j = failing_json::array(
+            {
+                failing_json::array({1, 2}),
+                failing_json::object({{"key", failing_json::array({3})}})
+            });
+            fail_next_allocation = true;
+        } // j is destroyed here, with every further allocation set to fail
+
+        CHECK(fail_next_allocation);
+        fail_next_allocation = false;
+        CHECK(failing_allocator_deallocations > 0);
+    }
+
+    SECTION("100000-deep nested array")
+    {
+        std::size_t allocations_before = 0;
+        {
+            failing_json j = make_deep_nest<failing_json>(100000, false);
+            allocations_before = failing_allocator_allocations;
+            fail_next_allocation = true;
+        }
+
+        CHECK(fail_next_allocation);
+        fail_next_allocation = false;
+        CHECK(failing_allocator_allocations == allocations_before);
+    }
+
+    SECTION("100000-deep nested object")
+    {
+        std::size_t allocations_before = 0;
+        {
+            failing_json j = make_deep_nest<failing_json>(100000, true);
+            allocations_before = failing_allocator_allocations;
+            fail_next_allocation = true;
+        }
+
+        CHECK(fail_next_allocation);
+        fail_next_allocation = false;
+        CHECK(failing_allocator_allocations == allocations_before);
+    }
+
+    SECTION("100000-deep nested ordered_json")
+    {
+        std::size_t allocations_before = 0;
+        {
+            failing_ordered_json j = make_deep_nest<failing_ordered_json>(100000, true);
+            allocations_before = failing_allocator_allocations;
+            fail_next_allocation = true;
+        }
+
+        CHECK(fail_next_allocation);
+        fail_next_allocation = false;
+        CHECK(failing_allocator_allocations == allocations_before);
+    }
+
+    SECTION("wide and deep: 1000 arrays of 1000 elements, each a small nested object")
+    {
+        std::size_t allocations_before = 0;
+        {
+            failing_json wide = failing_json::array();
+            for (std::size_t i = 0; i < 1000; ++i)
+            {
+                failing_json inner = failing_json::array();
+                for (std::size_t k = 0; k < 1000; ++k)
+                {
+                    inner.push_back(failing_json::object({{"a", 1}, {"b", failing_json::array({1, 2, 3})}}));
+                }
+                wide.push_back(std::move(inner));
+            }
+
+            allocations_before = failing_allocator_allocations;
+            fail_next_allocation = true;
+        }
+
+        CHECK(fail_next_allocation);
+        fail_next_allocation = false;
+        CHECK(failing_allocator_allocations == allocations_before);
+    }
+}
+#endif
+
+namespace
+{
+// a single-element chain of `depth` arrays, built iteratively (never
+// recursing: each wrap only moves the previous, already-built value)
+template<class BasicJsonType>
+BasicJsonType make_single_chain(std::size_t depth)
+{
+    BasicJsonType v = 1;
+    for (std::size_t i = 0; i < depth; ++i)
+    {
+        BasicJsonType wrapper = BasicJsonType::array();
+        wrapper.push_back(std::move(v));
+        v = std::move(wrapper);
+    }
+    return v;
+}
+
+// copies value first, to make sure nothing was corrupted by building it,
+// then lets both the copy and the original destruct via normal scope exit
+template<class BasicJsonType>
+void check_destroy_edge_case(const BasicJsonType& value)
+{
+    const BasicJsonType copy = value;
+    CHECK(copy == value);
+}
+} // namespace
+
+TEST_CASE_TEMPLATE("regression test #5135 - destroy() edge cases", BasicJsonType, json, ordered_json)
+{
+    using binary_t = typename BasicJsonType::binary_t;
+
+    SECTION("mix of empty objects, empty arrays, non-empty containers, and scalars")
+    {
+        BasicJsonType root = BasicJsonType::array();
+        root.push_back(BasicJsonType::object());
+        root.push_back(BasicJsonType::array());
+        root.push_back(BasicJsonType::object({{"k", 1}}));
+        root.push_back(BasicJsonType::array({1, 2, 3}));
+        root.push_back(nullptr);
+        root.push_back(true);
+        root.push_back(42);
+        root.push_back(3.14);
+        root.push_back("a string");
+        root.push_back(BasicJsonType(binary_t({1, 2, 3})));
+        check_destroy_edge_case(root);
+    }
+
+    SECTION("container child in first position only")
+    {
+        BasicJsonType root = BasicJsonType::array({BasicJsonType::array({1, 2}), 3, 4, 5});
+        check_destroy_edge_case(root);
+    }
+
+    SECTION("container child in last position only")
+    {
+        BasicJsonType root = BasicJsonType::array({1, 2, 3, BasicJsonType::array({4, 5})});
+        check_destroy_edge_case(root);
+    }
+
+    SECTION("container children in first and last position")
+    {
+        BasicJsonType root = BasicJsonType::array({BasicJsonType::array({1}), 2, 3, BasicJsonType::array({4})});
+        check_destroy_edge_case(root);
+    }
+
+    SECTION("single-element chain, 1000 levels deep")
+    {
+        BasicJsonType root = make_single_chain<BasicJsonType>(1000);
+        check_destroy_edge_case(root);
+    }
+
+    SECTION("top-level empty array")
+    {
+        BasicJsonType root = BasicJsonType::array();
+        check_destroy_edge_case(root);
+    }
+
+    SECTION("top-level empty object")
+    {
+        BasicJsonType root = BasicJsonType::object();
+        check_destroy_edge_case(root);
+    }
+
+    SECTION("object whose last child is a non-empty array whose last child is an empty object")
+    {
+        BasicJsonType inner_array = BasicJsonType::array({1, 2, BasicJsonType::object()});
+        BasicJsonType root = BasicJsonType::object({{"a", 1}, {"b", inner_array}});
+        check_destroy_edge_case(root);
+    }
+
+    SECTION("destruction via erase() on a deeply nested child")
+    {
+        BasicJsonType root = BasicJsonType::array();
+        root.push_back(make_single_chain<BasicJsonType>(500));
+        root.push_back(BasicJsonType::object({{"k", BasicJsonType::array({1, 2, 3})}}));
+        // erase() must destroy the removed subtree without recursing or
+        // allocating beyond what erase() itself needs
+        root.erase(0);
+        CAPTURE(root.size())
+        CHECK(root.size() == 1);
+    }
+
+    SECTION("destruction via assignment on a deep tree")
+    {
+        BasicJsonType root = make_single_chain<BasicJsonType>(2000);
+        // assigning a new value destroys the old one in place
+        root = nullptr;
+        CHECK(root.is_null());
+    }
 }
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
