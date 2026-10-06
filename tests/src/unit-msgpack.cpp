@@ -8,6 +8,14 @@
 
 #include "doctest_compatibility.h"
 
+// capture whether JSON_DELETE_DEPRECATED_FUNCTIONS was enabled on the command
+// line *before* including json.hpp, since the library #undefs it once the header
+// has been fully processed (see include/nlohmann/detail/macro_unscope.hpp); the
+// tests of deprecated functions are skipped if these functions are deleted
+#if defined(JSON_DELETE_DEPRECATED_FUNCTIONS) && (JSON_DELETE_DEPRECATED_FUNCTIONS == 1)
+    #define JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
+#endif
+
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 #ifdef JSON_TEST_NO_GLOBAL_UDLS
@@ -33,10 +41,49 @@ TEST_CASE("MessagePack")
     {
         SECTION("discarded")
         {
-            // discarded values are not serialized
+            // a discarded value cannot be serialized to MessagePack
             json const j = json::value_t::discarded;
-            const auto result = json::to_msgpack(j);
-            CHECK(result.empty());
+            CHECK_THROWS_WITH_AS(json::to_msgpack(j), "[json.exception.type_error.321] cannot serialize discarded value to MessagePack", json::type_error&);
+        }
+
+        SECTION("discarded values nested in a container")
+        {
+            json const discarded = json::value_t::discarded;
+
+            SECTION("in an array")
+            {
+                json const j = {1, discarded, 2};
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_msgpack(j), "[json.exception.type_error.321] (/1) cannot serialize discarded value to MessagePack", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_msgpack(j), "[json.exception.type_error.321] cannot serialize discarded value to MessagePack", json::type_error&);
+#endif
+            }
+
+            SECTION("as an object value")
+            {
+                json j;
+                j["a"] = 1;
+                j["b"] = discarded;
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_msgpack(j), "[json.exception.type_error.321] (/b) cannot serialize discarded value to MessagePack", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_msgpack(j), "[json.exception.type_error.321] cannot serialize discarded value to MessagePack", json::type_error&);
+#endif
+            }
+
+            SECTION("nested deeper (array in object in array)")
+            {
+                json inner_array = {1, discarded};
+                json middle_object;
+                middle_object["x"] = inner_array;
+                json const j = {middle_object};
+#if JSON_DIAGNOSTICS
+                CHECK_THROWS_WITH_AS(json::to_msgpack(j), "[json.exception.type_error.321] (/0/x/1) cannot serialize discarded value to MessagePack", json::type_error&);
+#else
+                CHECK_THROWS_WITH_AS(json::to_msgpack(j), "[json.exception.type_error.321] cannot serialize discarded value to MessagePack", json::type_error&);
+#endif
+            }
         }
 
         SECTION("null")
@@ -1795,8 +1842,10 @@ TEST_CASE("MessagePack input that cannot be read is discarded by every overload"
     CHECK_THROWS_AS(_ = json::from_msgpack(input.begin(), input.end()), json::parse_error&);
     CHECK(json::from_msgpack(input, true, false).is_discarded());
     CHECK(json::from_msgpack(input.begin(), input.end(), true, false).is_discarded());
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
     CHECK(json::from_msgpack(input.data(), input.size(), true, false).is_discarded());
     CHECK(json::from_msgpack({input.data(), input.size()}, true, false).is_discarded());
+#endif
 }
 
 TEST_CASE("MessagePack SAX parsing stops at every event")
@@ -2099,12 +2148,14 @@ TEST_CASE("MessagePack roundtrips" * doctest::skip())
                 CHECK(j1 == j2);
             }
 
+#ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
             {
                 INFO_WITH_TEMP(filename + ": uint8_t* and size");
                 json j2;
                 CHECK_NOTHROW(j2 = json::from_msgpack({packed.data(), packed.size()}));
                 CHECK(j1 == j2);
             }
+#endif
 
             {
                 INFO_WITH_TEMP(filename + ": output to output adapters");

@@ -836,10 +836,11 @@ class binary_reader
         }
 
         // the value is -1 - number, which fits into number_integer_t
-        // whenever number does
+        // whenever number does; the outer cast undoes the integral promotion
+        // for number_integer_t types narrower than int
         if (JSON_HEDLEY_LIKELY(value_in_range_of<number_integer_t>(number)))
         {
-            return sax->number_integer(static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(number));
+            return sax->number_integer(conditional_static_cast<number_integer_t>(static_cast<number_integer_t>(-1) - static_cast<number_integer_t>(number)));
         }
 
         // like the lexer does for JSON text, store a value too small for
@@ -4683,7 +4684,8 @@ class binary_reader
         {
             return sax->number_unsigned(static_cast<number_unsigned_t>(number));
         }
-        return emit_float(number);
+        // std::isfinite has no integer overloads in MSVC's <cmath>
+        return emit_float(static_cast<long double>(number));
     }
 
     /*!
@@ -4706,7 +4708,8 @@ class binary_reader
         {
             return sax->number_unsigned(static_cast<number_unsigned_t>(number));
         }
-        return emit_float(number);
+        // std::isfinite has no integer overloads in MSVC's <cmath>
+        return emit_float(static_cast<long double>(number));
     }
 
     /*!
@@ -4717,7 +4720,8 @@ class binary_reader
     and NaN in the input are passed on unchanged. Integers only overflow if
     number_float_t cannot represent 2^64, e.g., a half-precision type.
 
-    @tparam NumberType a floating-point or integer type
+    @tparam NumberType a floating-point type (emit_signed and emit_unsigned
+                       convert integers to long double first)
     @param[in] number  the number
     @return whether the SAX parser accepted the value
 

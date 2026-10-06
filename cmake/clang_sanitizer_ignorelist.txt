@@ -1,0 +1,8 @@
+# Sanitizer ignore list for ci_test_clang_sanitizer (-fsanitize-ignorelist).
+#
+# libstdc++ 14's <format> declares `_Scanner(basic_string_view<_CharT>, size_t __nargs = -1)`, so every std::format
+# call converts -1 to size_t, which -fsanitize=integer reports as implicit-integer-sign-change. This is
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=119429, not a bug in this library. Only that check and only <format> are
+# excluded, so implicit sign changes in the library and the tests are still reported.
+[implicit-integer-sign-change]
+src:*/include/c++/*/format

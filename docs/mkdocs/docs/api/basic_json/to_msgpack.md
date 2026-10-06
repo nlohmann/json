@@ -54,6 +54,8 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
   `"subtype 70000 is too large for the MessagePack ext type (max 255)"`
 - Throws [type_error.316](../../home/exceptions.md#jsonexceptiontype_error316) if a string or object key in `j` is
   not valid UTF-8 and `error_handler` is `strict`
+- Throws [type_error.321](../../home/exceptions.md#jsonexceptiontype_error321) if `j` or a value nested in it is
+  discarded; example: `"cannot serialize discarded value to MessagePack"`
 
 ## Complexity
 
@@ -108,3 +110,5 @@ Linear in the size of the JSON value `j`.
 - Fixed in version 3.13.0 to serialize `number_integer_t`/`number_unsigned_t` pairs of different width correctly;
   before, integers could be serialized with the wrong value if `number_integer_t` was narrower than
   `number_unsigned_t`.
+- Throws `type_error.321` for a discarded value since version 3.13.0; previously, a discarded value nested in an
+  array or object was silently skipped, producing invalid MessagePack.

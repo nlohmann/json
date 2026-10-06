@@ -191,8 +191,10 @@ TEST_CASE("value conversion")
     {
         enum class bool_enum : bool { off, on };
 
-        CHECK(json(bool_enum::off).get<bool_enum>() == bool_enum::off);
-        CHECK(json(bool_enum::on).get<bool_enum>() == bool_enum::on);
+        // the extra parentheses keep doctest from printing the enum via its
+        // underlying type, which MSVC 2015 reports as C4800
+        CHECK((json(bool_enum::off).get<bool_enum>() == bool_enum::off));
+        CHECK((json(bool_enum::on).get<bool_enum>() == bool_enum::on));
     }
 #endif
 
@@ -851,8 +853,11 @@ TEST_CASE("std::optional")
         CHECK_THROWS_WITH_AS(json(opt), "cannot serialize throwing_to_json_type", std::runtime_error&);
 
         // the conversion is noexcept exactly when converting the contained value is
+        // (except with MSVC 2017, where it is never noexcept, see to_json.hpp)
+#if !defined(_MSC_VER) || defined(__clang__) || _MSC_VER >= 1920
         static_assert(!std::is_nothrow_constructible<json, const std::optional<throwing_to_json_type>&>::value);
         static_assert(std::is_nothrow_constructible<json, const std::optional<int>&>::value);
+#endif
     }
 #endif
 }

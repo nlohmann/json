@@ -804,6 +804,20 @@ does not list an enumerator and it is therefore converted like the first listed 
     [json.exception.type_error.318] duplicate object key 'red'
     ```
 
+### json.exception.type_error.321
+
+A discarded value (one created by [`parse()`](../api/basic_json/parse.md) with a callback that returns `false` for the
+value, or by default-constructing a [`basic_json`](../api/basic_json/index.md) with
+[`value_t::discarded`](../api/basic_json/value_t.md)) was passed to a binary serialization function, either directly or
+nested in an array or object. There is no way to represent a discarded value in CBOR, MessagePack, UBJSON, BJData, or BSON.
+
+!!! failure "Example message"
+
+    Serializing `#!json [1, 2]` to CBOR, where the second element was discarded by a parser callback:
+    ```
+    [json.exception.type_error.321] cannot serialize discarded value to CBOR
+    ```
+
 ## Out of range
 
 This exception is thrown in case a library function is called on an input parameter that exceeds the expected range, for instance, in the case of array indices or nonexisting object keys.

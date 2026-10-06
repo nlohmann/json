@@ -44,7 +44,7 @@ By default, implicit conversions are enabled.
 
 ## Examples
 
-??? example "Example: implicit conversion"
+??? example "Example: implicit and explicit conversions"
 
     This is an example for an implicit conversion:
 

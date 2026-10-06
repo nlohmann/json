@@ -61,6 +61,11 @@ header. See also the [macro overview page](../../features/macros.md).
 - [**JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS**](json_use_objects_for_enum_keyed_maps.md) - opt in to storing maps with enum
   keys as objects
 
+## Deprecated functions
+
+- [**JSON_DELETE_DEPRECATED_FUNCTIONS**](json_delete_deprecated_functions.md) - opt in to deleting the deprecated
+  functions ahead of their removal in version 4.0.0
+
 ## Comparison behavior
 
 - [**JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON**](json_use_legacy_discarded_value_comparison.md) -
