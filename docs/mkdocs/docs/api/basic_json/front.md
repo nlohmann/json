@@ -51,6 +51,7 @@ Constant.
 ## See also
 
 - [back](back.md) to access the last element
+- [basic_json_view::front](../basic_json_view/front.md) - the same access on a zero-copy view
 
 ## Version history
 
