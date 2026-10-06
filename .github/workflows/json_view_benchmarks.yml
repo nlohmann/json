@@ -1,0 +1,78 @@
+name: "json_view benchmarks"
+
+# On demand only: runs the comparison of json_view with yyjson, simdjson, and
+# Boost.JSON (tests/benchmarks/json_view/compare.py) on GitHub-hosted runners,
+# for numbers from x86-64 and AArch64 Linux. It runs when started by hand, or
+# when a pull request gets the label "benchmark" (on both architectures, with
+# GCC and the default settings). Shared runners are noisy: the results show
+# where json_view stands, but published numbers need a quiet machine (see
+# tests/benchmarks/json_view/README.md).
+
+on:
+  pull_request:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: "Runner image"
+        type: choice
+        options:
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
+        default: ubuntu-24.04
+      compiler:
+        description: "Compiler"
+        type: choice
+        options:
+          - g++
+          - clang++
+        default: g++
+      native:
+        description: "Compile for the runner's CPU (-march=native)"
+        type: boolean
+        default: false
+      rounds:
+        description: "Rounds of bench_view"
+        type: number
+        default: 30
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'benchmark'
+    strategy:
+      matrix:
+        runner: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('["{0}"]', inputs.runner) || '["ubuntu-24.04", "ubuntu-24.04-arm"]') }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download test data
+        run: |
+          cmake -S . -B build -DJSON_BuildTests=On
+          cmake --build build --target download_test_data
+
+      - name: Run the comparison
+        env:
+          CXX: ${{ inputs.compiler || 'g++' }}
+          CC: ${{ inputs.compiler == 'clang++' && 'clang' || 'gcc' }}
+          ROUNDS: ${{ inputs.rounds || 30 }}
+          NATIVE: ${{ inputs.native && '--native' || '' }}
+        run: python3 tests/benchmarks/json_view/compare.py --data build/test_files --download --rounds "$ROUNDS" $NATIVE
+
+      - name: Summary
+        run: cat tests/benchmarks/json_view/results/*.md >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: json_view-benchmarks-${{ matrix.runner }}-${{ inputs.compiler || 'g++' }}
+          path: tests/benchmarks/json_view/results/
