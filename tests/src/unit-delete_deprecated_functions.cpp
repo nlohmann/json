@@ -22,6 +22,7 @@ using nlohmann::json;
 #include <cstdint>
 #include <istream>
 #include <ostream>
+#include <sstream>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -109,6 +110,10 @@ JSON_TEST_DETECT(ptr_at, std::declval<J&>().at(std::declval<const typename J::js
 
 TEST_CASE("JSON_DELETE_DEPRECATED_FUNCTIONS")
 {
+    // MSVC 2015 does not treat selecting a deleted function in decltype as a
+    // substitution failure, so the traits cannot tell deleted functions apart
+    // there; calling them still fails to compile
+#if !(defined(_MSC_VER) && _MSC_VER < 1910)
     SECTION("from_* with a pointer and a length")
     {
         // the overloads are deleted rather than removed, so the length cannot
@@ -197,6 +202,8 @@ TEST_CASE("JSON_DELETE_DEPRECATED_FUNCTIONS")
         CHECK(ptr_at<json>::value);
     }
 
+#endif
+
     SECTION("the non-deprecated functions still work")
     {
         const json j = {{"a", {1, 2}}};
@@ -210,5 +217,13 @@ TEST_CASE("JSON_DELETE_DEPRECATED_FUNCTIONS")
         CHECK(j.at(ptr) == 2);
         CHECK(j.value(ptr, 0) == 2);
         CHECK(j.contains(ptr));
+
+        std::ostringstream os;
+        os << j;
+        CHECK(os.str() == R"({"a":[1,2]})");
+        std::istringstream is(os.str());
+        json parsed;
+        is >> parsed;
+        CHECK(parsed == j);
     }
 }

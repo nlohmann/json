@@ -250,6 +250,7 @@ INSERT INTO searchIndex(name, type, path) VALUES ('JSON_TRY_USER', 'Macro', 'api
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_USE_GLOBAL_UDLS', 'Macro', 'api/macros/json_use_global_udls/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_USE_IMPLICIT_CONVERSIONS', 'Macro', 'api/macros/json_use_implicit_conversions/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON', 'Macro', 'api/macros/json_use_legacy_discarded_value_comparison/index.html');
+INSERT INTO searchIndex(name, type, path) VALUES ('JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS', 'Macro', 'api/macros/json_use_objects_for_enum_keyed_maps/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('JSON_USE_SIMDUTF', 'Macro', 'api/macros/json_use_simdutf/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('Macros', 'Macro', 'api/macros/index.html');
 INSERT INTO searchIndex(name, type, path) VALUES ('NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE', 'Macro', 'api/macros/nlohmann_define_derived_type/index.html');

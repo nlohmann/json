@@ -521,6 +521,10 @@ struct countdown_allocator : std::allocator<T>
 
 TEST_CASE("converting a deeply nested value from another specialization fails cleanly (#5650)")
 {
+    // MSVC 2015's debug STL constructs the containers' debug proxies through
+    // the allocator in noexcept constructors, so a failing construction crashes
+    // the program there instead of throwing std::bad_alloc. Nothing to check.
+#if !(defined(_MSC_VER) && _MSC_VER < 1910 && defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0)
     using countdown_json = nlohmann::basic_json<std::map,
           std::vector,
           std::string,
@@ -558,6 +562,7 @@ TEST_CASE("converting a deeply nested value from another specialization fails cl
         }
     }
     CHECK(failures > 0);
+#endif
 }
 
 namespace

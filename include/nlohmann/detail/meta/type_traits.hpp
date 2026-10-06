@@ -906,6 +906,21 @@ T conditional_static_cast(U value)
     return value;
 }
 
+// like conditional_static_cast, but converts to bool by comparing with zero,
+// because MSVC 2015 warns about any conversion to bool (C4800), even with an
+// explicit cast; used for enums whose underlying type is bool
+template < typename T, typename U, enable_if_t < !std::is_same<T, bool>::value, int > = 0 >
+T bool_aware_static_cast(U value)
+{
+    return conditional_static_cast<T>(value);
+}
+
+template<typename T, typename U, enable_if_t<std::is_same<T, bool>::value, int> = 0>
+bool bool_aware_static_cast(U value)
+{
+    return value != U();
+}
+
 template<typename... Types>
 using all_integral = conjunction<std::is_integral<Types>...>;
 
