@@ -21,6 +21,7 @@ Micro-benchmarks for parsing, serialization and the binary formats, written with
 | `ViewParseIndented` | as `ParseIndented`, with a reused `json_document` |
 | `ViewAccept` | validate with `json_document::accept`; compare with `Accept` |
 | `ViewMaterialize` | convert a parsed `json_document` into a `json` value |
+| `ViewDump` | serialize a parsed `json_document`; compare with `Dump` |
 
 The input files are those of [nativejson-benchmark](https://github.com/miloyip/nativejson-benchmark) (`canada`,
 `citm_catalog`, `twitter`), a large `jeopardy` file, and number-heavy files (`floats`, `signed_ints`, ...).
