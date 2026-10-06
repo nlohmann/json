@@ -251,7 +251,20 @@ nav:
       - basic_json_view:
           - 'Overview': api/basic_json_view/index.md
           - '(Constructor)': api/basic_json_view/basic_json_view.md
+          - 'at': api/basic_json_view/at.md
+          - 'back': api/basic_json_view/back.md
+          - 'begin': api/basic_json_view/begin.md
+          - 'cbegin': api/basic_json_view/cbegin.md
+          - 'cend': api/basic_json_view/cend.md
+          - 'contains': api/basic_json_view/contains.md
+          - 'count': api/basic_json_view/count.md
           - 'empty': api/basic_json_view/empty.md
+          - 'end': api/basic_json_view/end.md
+          - 'find': api/basic_json_view/find.md
+          - 'front': api/basic_json_view/front.md
+          - 'get': api/basic_json_view/get.md
+          - 'get_string': api/basic_json_view/get_string.md
+          - 'get_to': api/basic_json_view/get_to.md
           - 'is_array': api/basic_json_view/is_array.md
           - 'is_binary': api/basic_json_view/is_binary.md
           - 'is_boolean': api/basic_json_view/is_boolean.md
@@ -265,11 +278,16 @@ nav:
           - 'is_primitive': api/basic_json_view/is_primitive.md
           - 'is_string': api/basic_json_view/is_string.md
           - 'is_structured': api/basic_json_view/is_structured.md
+          - 'items': api/basic_json_view/items.md
           - 'materialize': api/basic_json_view/materialize.md
+          - 'number_token': api/basic_json_view/number_token.md
           - 'operator bool': api/basic_json_view/operator_bool.md
+          - 'operator[]': api/basic_json_view/operator[].md
           - 'size': api/basic_json_view/size.md
           - 'source_offset': api/basic_json_view/source_offset.md
           - 'type': api/basic_json_view/type.md
+          - 'type_name': api/basic_json_view/type_name.md
+          - 'value': api/basic_json_view/value.md
       - byte_container_with_subtype:
           - 'Overview': api/byte_container_with_subtype/index.md
           - '(constructor)': api/byte_container_with_subtype/byte_container_with_subtype.md

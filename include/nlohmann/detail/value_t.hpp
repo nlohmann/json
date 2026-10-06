@@ -68,6 +68,39 @@ enum class value_t : std::uint8_t
 };
 
 /*!
+@brief the name of a JSON type, as returned by basic_json::type_name()
+
+Used in exception messages; also by code that reports types without a
+basic_json value at hand (such as the zero-copy view).
+*/
+inline const char* value_type_name(const value_t t) noexcept
+{
+    switch (t)
+    {
+        case value_t::null:
+            return "null";
+        case value_t::object:
+            return "object";
+        case value_t::array:
+            return "array";
+        case value_t::string:
+            return "string";
+        case value_t::boolean:
+            return "boolean";
+        case value_t::binary:
+            return "binary";
+        case value_t::discarded:
+            return "discarded";
+        case value_t::number_integer:
+        case value_t::number_unsigned:
+        case value_t::number_float:
+            return "number";
+        default:
+            return "invalid";
+    }
+}
+
+/*!
 @brief comparison operator for JSON types
 
 Returns an ordering that is similar to Python:

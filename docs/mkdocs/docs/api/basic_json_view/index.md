@@ -19,9 +19,12 @@ to the document and a pointer into its index), trivially copyable. A view is val
 Moving the document itself does not invalidate its views: the index is heap-allocated independently of the
 `basic_json_document` object.
 
-`basic_json_view` provides the read-only part of the `BasicJsonType` interface: the type-inspection functions, and
-[`materialize()`](materialize.md) to build the `BasicJsonType` value of a subtree on demand. It does not (yet) provide
-element access, iteration, `get<T>()`, JSON Pointer support, `dump()`, or comparison.
+`basic_json_view` provides the read-only part of the `BasicJsonType` interface: the type-inspection functions, element
+access, lookup, iteration, and conversion -- [`get<T>()`](get.md), [`get_string()`](get_string.md),
+[`number_token()`](number_token.md), and [`materialize()`](materialize.md) to build the `BasicJsonType` value of a
+subtree on demand. [`operator[]`](operator%5B%5D.md), [`at`](at.md), [`contains`](contains.md), and
+[`value`](value.md) also accept a [`json_pointer`](../json_pointer/index.md). It does not (yet) provide `dump()` or
+comparison.
 
 ## Template parameters
 
@@ -41,6 +44,9 @@ element access, iteration, `get<T>()`, JSON Pointer support, `dump()`, or compar
   member types of `BasicJsonType`
 - **size_type** - `#!cpp std::size_t`
 - **string_view_t** - `#!cpp std::string_view` on C++17 and newer, a minimal internal substitute otherwise
+- **iterator**, **const_iterator** - a forward iterator over the elements of an array or the member values of an
+  object, in document order; both names refer to the same type, since a view is always read-only
+- **item** - a (key, value) pair produced by [`items()`](items.md)
 
 ## Member functions
 
@@ -49,6 +55,7 @@ element access, iteration, `get<T>()`, JSON Pointer support, `dump()`, or compar
 ### Object inspection
 
 - [**type**](type.md) - return the type of the value
+- [**type_name**](type_name.md) - return the type as string
 - [**is_null**](is_null.md) - return whether the value is null
 - [**is_boolean**](is_boolean.md) - return whether the value is a boolean
 - [**is_number**](is_number.md) - return whether the value is a number
@@ -64,6 +71,28 @@ element access, iteration, `get<T>()`, JSON Pointer support, `dump()`, or compar
 - [**is_discarded**](is_discarded.md) - return whether the view is invalid
 - [**operator bool**](operator_bool.md) - return whether the view refers to a value
 
+### Element access
+
+- [**at**](at.md) - access specified element with bounds checking
+- [**operator[]**](operator[].md) - access specified element
+- [**value**](value.md) - access specified element with default value
+- [**front**](front.md) - access the first element
+- [**back**](back.md) - access the last element
+
+### Lookup
+
+- [**find**](find.md) - find an element in an object
+- [**count**](count.md) - returns the number of occurrences of a key in an object
+- [**contains**](contains.md) - check the existence of an element in an object
+
+### Iterators
+
+- [**begin**](begin.md) - returns an iterator to the first element
+- [**cbegin**](cbegin.md) - returns a const iterator to the first element
+- [**end**](end.md) - returns an iterator to one past the last element
+- [**cend**](cend.md) - returns a const iterator to one past the last element
+- [**items**](items.md) - wrapper to access iterator member functions in range-based for
+
 ### Capacity
 
 - [**size**](size.md) - return the number of elements
@@ -71,6 +100,10 @@ element access, iteration, `get<T>()`, JSON Pointer support, `dump()`, or compar
 
 ### Conversion
 
+- [**get**](get.md) - get a value
+- [**get_to**](get_to.md) - get a value and write it to a destination
+- [**get_string**](get_string.md) - get a string value without a copy
+- [**number_token**](number_token.md) - get a number's token text without a copy
 - [**materialize**](materialize.md) - build the `BasicJsonType` value of this subtree
 
 ### Source access

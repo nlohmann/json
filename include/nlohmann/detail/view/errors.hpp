@@ -40,6 +40,12 @@ namespace view
     NLOHMANN_VIEW_THROW(invalid_iterator::create(id, msg, nullptr));
 }
 
+/// a parse error without a position (as those of json_pointer)
+[[noreturn]] NLOHMANN_VIEW_NOINLINE inline void throw_parse_error(int id, const std::string& msg)
+{
+    NLOHMANN_VIEW_THROW(parse_error::create(id, 0, msg, nullptr));
+}
+
 /*!
 @brief throw the exception BasicJsonType::parse would throw for this input
 

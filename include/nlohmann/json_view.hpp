@@ -27,10 +27,14 @@
 #include <cstddef> // size_t
 #include <cstring> // memcpy, strlen
 #include <iterator> // distance, input_iterator_tag, iterator_traits
+#include <map> // map
 #include <memory> // unique_ptr
 #include <string> // string
-#include <type_traits> // enable_if, integral_constant, is_base_of, is_integral, is_same, remove_cv, remove_extent
+#include <tuple> // tuple_element, tuple_size
+#include <type_traits> // decay, enable_if, integral_constant, is_arithmetic, is_base_of, is_integral, is_same, remove_cv, remove_extent
+#include <unordered_map> // unordered_map
 #include <utility> // forward, move
+#include <vector> // vector
 
 #include <nlohmann/json.hpp>
 
@@ -43,10 +47,14 @@
 #include <nlohmann/detail/view/document_data.hpp>
 #include <nlohmann/detail/view/errors.hpp>
 #include <nlohmann/detail/view/input.hpp>
+#include <nlohmann/detail/view/iterator.hpp>
+#include <nlohmann/detail/view/lookup.hpp>
 #include <nlohmann/detail/view/macro_scope.hpp>
 #include <nlohmann/detail/view/materialize.hpp>
 #include <nlohmann/detail/view/node.hpp>
+#include <nlohmann/detail/view/pointer.hpp>
 #include <nlohmann/detail/view/string_ref.hpp>
+#include <nlohmann/detail/view/value.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
@@ -75,6 +83,11 @@ class basic_json_view
     using size_type = std::size_t;
     /// std::string_view from C++17 on
     using string_view_t = detail::view::string_ref;
+    /// forward iterator over elements (arrays) or member values (objects)
+    using iterator = detail::view::view_iterator<basic_json_view>;
+    using const_iterator = iterator;
+    /// a (key, value) item of items()
+    using item = detail::view::view_item<basic_json_view>;
 
     /// an invalid view (type() == value_t::discarded)
     basic_json_view() noexcept = default;
@@ -162,6 +175,12 @@ class basic_json_view
         return m_node != nullptr;
     }
 
+    /// the name of the type, as basic_json::type_name()
+    const char* type_name() const noexcept
+    {
+        return detail::value_type_name(type());
+    }
+
     //////////////
     // capacity //
     //////////////
@@ -211,6 +230,323 @@ class basic_json_view
         }
     }
 
+    ////////////////////
+    // element access //
+    ////////////////////
+
+    /// the value of the member with this key (the first one, should the key
+    /// occur more than once); a discarded view if there is none. Throws
+    /// type_error.305 if this is not an object.
+    NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view operator[](string_view_t key) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
+        {
+            detail::view::throw_type_error(305, "cannot use operator[] with a string argument with ", type_name());
+        }
+        return lookup(key);
+    }
+
+    basic_json_view operator[](const char* key) const
+    {
+        return operator[](string_view_t(key));
+    }
+
+    basic_json_view operator[](const string_t& key) const
+    {
+        return operator[](string_view_t(key.data(), key.size()));
+    }
+
+    /// the element at this index; a discarded view if the index is out of
+    /// range. Throws type_error.305 if this is not an array.
+    basic_json_view operator[](size_type idx) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_array()))
+        {
+            detail::view::throw_type_error(305, "cannot use operator[] with a numeric argument with ", type_name());
+        }
+        return idx < m_node->len ? basic_json_view(m_doc, detail::view::element_at(m_node, idx)) : basic_json_view();
+    }
+
+    /// (an int argument would be ambiguous between size_type and const char*)
+    basic_json_view operator[](int idx) const
+    {
+        return operator[](static_cast<size_type>(idx));
+    }
+
+    /// the value a JSON pointer refers to; a discarded view if a key is
+    /// missing or an index is out of range. Other errors throw what const
+    /// basic_json::operator[] throws.
+    basic_json_view operator[](const json_pointer& ptr) const
+    {
+        return detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::unchecked);
+    }
+
+    /// the value of the member with this key (the first one, should the key
+    /// occur more than once). Throws type_error.304 if this is not an object,
+    /// and out_of_range.403 if there is no such member.
+    basic_json_view at(string_view_t key) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
+        {
+            detail::view::throw_type_error(304, "cannot use at() with ", type_name());
+        }
+        const basic_json_view r = lookup(key);
+        if (NLOHMANN_VIEW_UNLIKELY(!r))
+        {
+            detail::view::throw_out_of_range(403, detail::concat("key '", std::string(key.data(), key.size()), "' not found"));
+        }
+        return r;
+    }
+
+    basic_json_view at(const char* key) const
+    {
+        return at(string_view_t(key));
+    }
+
+    basic_json_view at(const string_t& key) const
+    {
+        return at(string_view_t(key.data(), key.size()));
+    }
+
+    /// the element at this index. Throws type_error.304 if this is not an
+    /// array, and out_of_range.401 if the index is out of range.
+    basic_json_view at(size_type idx) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_array()))
+        {
+            detail::view::throw_type_error(304, "cannot use at() with ", type_name());
+        }
+        if (NLOHMANN_VIEW_UNLIKELY(idx >= m_node->len))
+        {
+            detail::view::throw_out_of_range(401, detail::concat("array index ", std::to_string(idx), " is out of range"));
+        }
+        return basic_json_view(m_doc, detail::view::element_at(m_node, idx));
+    }
+
+    basic_json_view at(int idx) const
+    {
+        return at(static_cast<size_type>(idx));
+    }
+
+    /// the value a JSON pointer refers to; throws what basic_json::at()
+    /// throws if it cannot be resolved
+    basic_json_view at(const json_pointer& ptr) const
+    {
+        return detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::checked);
+    }
+
+    /// the member with this key converted to T, or the default value if there
+    /// is no such member (the first one, should the key occur more than
+    /// once). Throws type_error.306 if this is not an object.
+    template < typename T, typename std::enable_if < !std::is_same<typename std::decay<T>::type, const char*>::value, int >::type = 0 >
+    T value(string_view_t key, const T& default_value) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_object()))
+        {
+            detail::view::throw_type_error(306, "cannot use value() with ", type_name());
+        }
+        const basic_json_view r = lookup(key);
+        return r ? r.template get<T>() : default_value;
+    }
+
+    string_t value(string_view_t key, const char* default_value) const
+    {
+        return value(key, string_t(default_value));
+    }
+
+    /// the value a JSON pointer refers to converted to T, or the default
+    /// value if the pointer cannot be resolved. Throws type_error.306 if this
+    /// is neither an object nor an array.
+    template < typename T, typename std::enable_if < !std::is_same<typename std::decay<T>::type, const char*>::value, int >::type = 0 >
+    T value(const json_pointer& ptr, const T& default_value) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_structured()))
+        {
+            detail::view::throw_type_error(306, "cannot use value() with ", type_name());
+        }
+        const basic_json_view r = detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::value);
+        return r ? r.template get<T>() : default_value;
+    }
+
+    string_t value(const json_pointer& ptr, const char* default_value) const
+    {
+        return value(ptr, string_t(default_value));
+    }
+
+    /// the first element or member value; a primitive value itself. Throws
+    /// invalid_iterator.214 for null, discarded views, and empty containers.
+    basic_json_view front() const
+    {
+        const iterator it = begin();
+        if (NLOHMANN_VIEW_UNLIKELY(it == end()))
+        {
+            detail::view::throw_invalid_iterator(214, "cannot get value");
+        }
+        return *it;
+    }
+
+    /// the last element or member value (linear in the size); a primitive
+    /// value itself. Throws invalid_iterator.214 for null, discarded views,
+    /// and empty containers.
+    basic_json_view back() const
+    {
+        if (is_structured() && m_node->len != 0)
+        {
+            return basic_json_view(m_doc, detail::view::last_child(m_node) + (is_object() ? 1 : 0));
+        }
+        return front();
+    }
+
+    ////////////
+    // lookup //
+    ////////////
+
+    /// an iterator to the member with this key (the first one, should the
+    /// key occur more than once), or end(); end() also for non-objects
+    iterator find(string_view_t key) const
+    {
+        if (!is_object())
+        {
+            return end();
+        }
+        const node* const k = detail::view::find_member(*m_doc, m_node, key.data(), key.size());
+        return k != nullptr ? iterator(m_doc, k, true) : end();
+    }
+
+    iterator find(const char* key) const
+    {
+        return find(string_view_t(key));
+    }
+
+    iterator find(const string_t& key) const
+    {
+        return find(string_view_t(key.data(), key.size()));
+    }
+
+    /// whether this is an object with a member with this key
+    bool contains(string_view_t key) const
+    {
+        return is_object() && detail::view::find_member(*m_doc, m_node, key.data(), key.size()) != nullptr;
+    }
+
+    bool contains(const char* key) const
+    {
+        return contains(string_view_t(key));
+    }
+
+    bool contains(const string_t& key) const
+    {
+        return contains(string_view_t(key.data(), key.size()));
+    }
+
+    /// whether a JSON pointer can be resolved (never throws, as
+    /// basic_json::contains())
+    bool contains(const json_pointer& ptr) const
+    {
+        return static_cast<bool>(detail::view::resolve_pointer(*this, detail::json_pointer_access::reference_tokens(ptr), detail::view::pointer_mode::contains));
+    }
+
+    /// 1 if this is an object with a member with this key, else 0 (duplicate
+    /// keys count once)
+    size_type count(string_view_t key) const
+    {
+        return contains(key) ? 1 : 0;
+    }
+
+    size_type count(const char* key) const
+    {
+        return count(string_view_t(key));
+    }
+
+    size_type count(const string_t& key) const
+    {
+        return count(string_view_t(key.data(), key.size()));
+    }
+
+    ///////////////
+    // iteration //
+    ///////////////
+
+    /// the first element or member value, in document order; a primitive
+    /// value is a range of one element (itself), null an empty range
+    NLOHMANN_VIEW_ALWAYS_INLINE iterator begin() const noexcept
+    {
+        if (NLOHMANN_VIEW_LIKELY(is_structured()))
+        {
+            return iterator(m_doc, document_data::first_child(m_node), is_object());
+        }
+        return iterator(m_doc, m_node, false);
+    }
+
+    NLOHMANN_VIEW_ALWAYS_INLINE iterator end() const noexcept
+    {
+        if (NLOHMANN_VIEW_LIKELY(is_structured()))
+        {
+            return iterator(m_doc, document_data::child_end(m_node), is_object());
+        }
+        return iterator(m_doc, (is_null() || is_discarded()) ? m_node : m_node + 1, false);
+    }
+
+    iterator cbegin() const noexcept
+    {
+        return begin();
+    }
+
+    iterator cend() const noexcept
+    {
+        return end();
+    }
+
+    /// (key, value) items; the key of an array element is its index
+    detail::view::view_items<basic_json_view> items() const noexcept
+    {
+        return detail::view::view_items<basic_json_view>(*this);
+    }
+
+    ////////////////
+    // conversion //
+    ////////////////
+
+    /// the value converted to T, as BasicJsonType::get<T>(): arithmetic types,
+    /// strings (string_view_t without a copy), std::nullptr_t, std::vector,
+    /// maps with string keys, and views are converted directly; other types
+    /// through materialize().get<T>()
+    template<typename T>
+    NLOHMANN_VIEW_ALWAYS_INLINE T get() const
+    {
+        return get_impl(detail::view::value_tag<T> {}, detail::priority_tag<2> {});
+    }
+
+    template<typename T>
+    T& get_to(T& v) const
+    {
+        v = get<T>();
+        return v;
+    }
+
+    /// the string, without a copy; valid as long as the view is. Throws
+    /// type_error.302 for other types.
+    string_view_t get_string() const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_string()))
+        {
+            detail::view::throw_type_error(302, "type must be string, but is ", type_name());
+        }
+        return {m_doc->str(*m_node), m_node->len};
+    }
+
+    /// the text of a number as it appears in the source (e.g. "1.50", "1E2",
+    /// or an integer with more digits than any number type holds). Throws
+    /// type_error.302 for other types.
+    string_view_t number_token() const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_number()))
+        {
+            detail::view::throw_type_error(302, "type must be number, but is ", type_name());
+        }
+        return {m_doc->str(*m_node), detail::view::number_length(*m_node)};
+    }
+
     /////////////////
     // materialize //
     /////////////////
@@ -237,10 +573,96 @@ class basic_json_view
 
   private:
     template<typename> friend class basic_json_document;
+    friend iterator;
 
     basic_json_view(const document_data* d, const node* n) noexcept
         : m_doc(d), m_node(n)
     {}
+
+    /// the value of the first member with this key, or a discarded view
+    /// (object required)
+    NLOHMANN_VIEW_ALWAYS_INLINE basic_json_view lookup(string_view_t key) const noexcept
+    {
+        const node* const k = detail::view::find_member(*m_doc, m_node, key.data(), key.size());
+        return k != nullptr ? basic_json_view(m_doc, k + 1) : basic_json_view();
+    }
+
+    // --- get() dispatch ---
+
+    bool get_impl(detail::view::value_tag<bool> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_boolean()))
+        {
+            detail::view::throw_type_error(302, "type must be boolean, but is ", type_name());
+        }
+        return (m_node->flags & detail::view::node_flags::is_true) != 0;
+    }
+
+    template < typename T, typename std::enable_if < std::is_arithmetic<T>::value && !std::is_same<T, bool>::value, int >::type = 0 >
+    NLOHMANN_VIEW_ALWAYS_INLINE T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(m_node == nullptr))
+        {
+            detail::view::throw_type_error(302, "type must be number, but is ", type_name());
+        }
+        return detail::view::arithmetic_value<T, BasicJsonType>(*m_doc, *m_node);
+    }
+
+    std::nullptr_t get_impl(detail::view::value_tag<std::nullptr_t> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(!is_null()))
+        {
+            detail::view::throw_type_error(302, "type must be null, but is ", type_name());
+        }
+        return nullptr;
+    }
+
+    string_view_t get_impl(detail::view::value_tag<string_view_t> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        return get_string();
+    }
+
+    template<typename Traits, typename Alloc>
+    std::basic_string<char, Traits, Alloc> get_impl(detail::view::value_tag<std::basic_string<char, Traits, Alloc>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        const string_view_t s = get_string();
+        return std::basic_string<char, Traits, Alloc>(s.data(), s.size());
+    }
+
+    BasicJsonType get_impl(detail::view::value_tag<BasicJsonType> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        return materialize();
+    }
+
+    basic_json_view get_impl(detail::view::value_tag<basic_json_view> /*unused*/, detail::priority_tag<2> /*unused*/) const noexcept
+    {
+        return *this;
+    }
+
+    template<typename U, typename A>
+    std::vector<U, A> get_impl(detail::view::value_tag<std::vector<U, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        return detail::view::vector_value<basic_json_view, U, A>(*this);
+    }
+
+    template<typename K, typename V, typename C, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
+    std::map<K, V, C, A> get_impl(detail::view::value_tag<std::map<K, V, C, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        return detail::view::map_value<std::map<K, V, C, A>>(*this);
+    }
+
+    template<typename K, typename V, typename H, typename E, typename A, typename std::enable_if<detail::view::is_string_key<K>::value, int>::type = 0>
+    std::unordered_map<K, V, H, E, A> get_impl(detail::view::value_tag<std::unordered_map<K, V, H, E, A>> /*unused*/, detail::priority_tag<2> /*unused*/) const
+    {
+        return detail::view::map_value<std::unordered_map<K, V, H, E, A>>(*this);
+    }
+
+    /// everything else through the BasicJsonType value (from_json included)
+    template<typename T>
+    T get_impl(detail::view::value_tag<T> /*unused*/, detail::priority_tag<0> /*unused*/) const
+    {
+        return materialize().template get<T>();
+    }
 
     const document_data* m_doc = nullptr;
     const node* m_node = nullptr;
@@ -589,6 +1011,31 @@ using ordered_json_document = basic_json_document<ordered_json>;
 using ordered_json_view = basic_json_view<ordered_json>;
 
 NLOHMANN_JSON_NAMESPACE_END
+
+// tuple protocol for the items of basic_json_view::items() (structured bindings)
+namespace std // NOLINT(cert-dcl58-cpp)
+{
+
+#if defined(__clang__)
+    // Fix: https://github.com/nlohmann/json/issues/1401
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wmismatched-tags"
+#endif
+template<typename View>
+class tuple_size<::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp)
+    : public std::integral_constant<std::size_t, 2> {};
+
+template<std::size_t N, typename View>
+class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert-dcl58-cpp)
+{
+  public:
+    using type = decltype(std::declval<::nlohmann::detail::view::view_item<View>>().template get<N>());
+};
+#if defined(__clang__)
+    #pragma clang diagnostic pop
+#endif
+
+}  // namespace std
 
 #include <nlohmann/detail/view/macro_unscope.hpp>
 

@@ -275,6 +275,8 @@ Strong exception safety: if an exception occurs, the original value stays intact
 - documentation on [runtime assertions](../../features/assertions.md)
 - see [`at`](at.md) for access by reference with range checking
 - see [`value`](value.md) for access with default value
+- [basic_json_view::operator[]](../basic_json_view/operator%5B%5D.md) - the same access on a zero-copy view (always
+  returns a discarded view instead of assuming undefined behavior)
 
 ## Version history
 
