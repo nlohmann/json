@@ -73,6 +73,7 @@ cc_library(
         "include/nlohmann/detail/view/edit.hpp",
         "include/nlohmann/detail/view/edit_storage.hpp",
         "include/nlohmann/detail/view/errors.hpp",
+        "include/nlohmann/detail/view/image.hpp",
         "include/nlohmann/detail/view/input.hpp",
         "include/nlohmann/detail/view/iterator.hpp",
         "include/nlohmann/detail/view/lookup.hpp",
