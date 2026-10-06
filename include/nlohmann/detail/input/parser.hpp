@@ -308,7 +308,7 @@ class parser
                         }
 
                         // parse separator (:)
-                        if (JSON_HEDLEY_UNLIKELY(get_token() != token_type::name_separator))
+                        if (JSON_HEDLEY_UNLIKELY(!get_token_expecting(token_type::name_separator)))
                         {
                             if (!continue_after(key_error(sax, allow_recovery, true), skip_to_state_evaluation))
                             {
@@ -538,7 +538,7 @@ class parser
             {
                 // comma -> next value
                 // or end of array (ignore_trailing_commas = true)
-                if (get_token() == token_type::value_separator)
+                if (get_token_expecting(token_type::value_separator))
                 {
                     // parse a new value
                     get_token();
@@ -599,7 +599,7 @@ class parser
 
             // comma -> next value
             // or end of object (ignore_trailing_commas = true)
-            if (get_token() == token_type::value_separator)
+            if (get_token_expecting(token_type::value_separator))
             {
                 get_token();
 
@@ -621,7 +621,7 @@ class parser
                     }
 
                     // parse separator (:)
-                    if (JSON_HEDLEY_UNLIKELY(get_token() != token_type::name_separator))
+                    if (JSON_HEDLEY_UNLIKELY(!get_token_expecting(token_type::name_separator)))
                     {
                         if (!continue_after(key_error(sax, allow_recovery, true), skip_to_state_evaluation))
                         {
@@ -1132,6 +1132,13 @@ class parser
     token_type get_token()
     {
         return last_token = m_lexer.scan();
+    }
+
+    /// get next token from lexer; true if it is the separator @a expected_type
+    /// (name_separator or value_separator), which it usually is
+    bool get_token_expecting(token_type expected_type)
+    {
+        return (last_token = m_lexer.scan_expecting(expected_type)) == expected_type;
     }
 
     std::string exception_message(const token_type expected, const std::string& context)
