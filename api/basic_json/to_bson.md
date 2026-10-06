@@ -58,6 +58,9 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [type_error.316](../../home/exceptions.md#jsonexceptiontype_error316) if a string or object key is
   not valid UTF-8 and `error_handler` is `strict` (the default only if
   [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md) is enabled)
+- Throws [type_error.321](../../home/exceptions.md#jsonexceptiontype_error321) if a value nested in `j` is discarded
+  (the top-level value itself is covered by `type_error.317` above, since it must be an object); example:
+  `"cannot serialize discarded value to BSON"`
 
 ## Complexity
 
@@ -110,6 +113,8 @@ pass before anything is written.
 - Throws `out_of_range.412` and `out_of_range.415` since version 3.13.0.
 - Linear in the size of `j`, and no longer limited by the call stack for deeply nested values, since version 3.13.0.
 - `out_of_range.415` is now detected before anything is written, like the other exceptions above, since version 3.13.0.
+- Throws `type_error.321` for a discarded value nested in `j` since version 3.13.0; previously, it was silently
+  skipped, producing a document whose declared size did not match what was actually written.
 - Added `error_handler` parameter in version 3.13.0. Its default, `keep`, writes the bytes of a string or object key
   that is not valid UTF-8 unchanged, as before; `strict` (the default if
   [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md) is enabled) throws `type_error.316` before anything

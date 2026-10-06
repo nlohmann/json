@@ -43,6 +43,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [`out_of_range.412`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range412) if the length of a document, array, string, or binary value exceeds the range of the 32-bit BSON length field; example: `"BSON length 2147483661 exceeds maximum of 2147483647"`
 - Throws [`out_of_range.415`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range415) if the subtype of a binary value exceeds 255, the maximum of the BSON binary subtype; example: `"subtype 70000 is too large for the BSON binary subtype (max 255)"`
 - Throws [type_error.316](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) if a string or object key is not valid UTF-8 and `error_handler` is `strict` (the default only if [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) is enabled)
+- Throws [type_error.321](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error321) if a value nested in `j` is discarded (the top-level value itself is covered by `type_error.317` above, since it must be an object); example: `"cannot serialize discarded value to BSON"`
 
 ## Complexity
 
@@ -136,4 +137,5 @@ Output:
 - Throws `out_of_range.412` and `out_of_range.415` since version 3.13.0 unreleased.
 - Linear in the size of `j`, and no longer limited by the call stack for deeply nested values, since version 3.13.0 unreleased.
 - `out_of_range.415` is now detected before anything is written, like the other exceptions above, since version 3.13.0 unreleased.
+- Throws `type_error.321` for a discarded value nested in `j` since version 3.13.0 unreleased; previously, it was silently skipped, producing a document whose declared size did not match what was actually written.
 - Added `error_handler` parameter in version 3.13.0 unreleased. Its default, `keep`, writes the bytes of a string or object key that is not valid UTF-8 unchanged, as before; `strict` (the default if [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) is enabled) throws `type_error.316` before anything is written.

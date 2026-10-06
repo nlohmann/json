@@ -41,6 +41,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [`out_of_range.412`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range412) if the length of a string, binary value, array, or object exceeds 4294967295, the maximum MessagePack can store; example: `"MessagePack length 4294967296 exceeds maximum of 4294967295"`
 - Throws [`out_of_range.415`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range415) if the subtype of a binary value exceeds 255, the maximum of the MessagePack ext type; example: `"subtype 70000 is too large for the MessagePack ext type (max 255)"`
 - Throws [type_error.316](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) if a string or object key in `j` is not valid UTF-8 and `error_handler` is `strict`
+- Throws [type_error.321](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error321) if `j` or a value nested in it is discarded; example: `"cannot serialize discarded value to MessagePack"`
 
 ## Complexity
 
@@ -131,3 +132,4 @@ Output:
 - Throws `out_of_range.412` and `out_of_range.415` since version 3.13.0 unreleased.
 - Added `error_handler` parameter in version 3.13.0 unreleased. Its default, `keep`, writes the bytes of a string or object key that is not valid UTF-8 unchanged, as before.
 - Fixed in version 3.13.0 unreleased to serialize `number_integer_t`/`number_unsigned_t` pairs of different width correctly; before, integers could be serialized with the wrong value if `number_integer_t` was narrower than `number_unsigned_t`.
+- Throws `type_error.321` for a discarded value since version 3.13.0 unreleased; previously, a discarded value nested in an array or object was silently skipped, producing invalid MessagePack.

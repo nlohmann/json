@@ -53,6 +53,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 - Throws [`other_error.502`](https://json.nlohmann.me/home/exceptions/#jsonexceptionother_error502) if `use_type` is true and `use_size` is false, and `j` contains a non-empty array, object, or binary value.
 - Throws [type_error.316](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316) if a string or object key in `j` is not valid UTF-8 and `error_handler` is `strict` (the default only if [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) is enabled)
+- Throws [type_error.321](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error321) if `j` or a value nested in it is discarded; example: `"cannot serialize discarded value to BJData"`
 
 ## Complexity
 
@@ -187,3 +188,4 @@ Output:
 - Added in version 3.11.0.
 - BJData version parameter (for draft3 binary encoding) added in version 3.12.0.
 - Added `error_handler` parameter in version 3.13.0 unreleased. Its default, `keep`, writes the bytes of a string or object key that is not valid UTF-8 unchanged, as before; `strict` (the default if [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) is enabled) throws `type_error.316`.
+- Throws `type_error.321` for a discarded value since version 3.13.0 unreleased; previously, a discarded value nested in an array or object was silently skipped, producing invalid BJData.
