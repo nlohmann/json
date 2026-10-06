@@ -27872,6 +27872,14 @@ private:
                     return v.m_data.m_value.array->empty();
                 case value_t::object:
                     return v.m_data.m_value.object->empty();
+                case value_t::null:
+                case value_t::string:
+                case value_t::boolean:
+                case value_t::number_integer:
+                case value_t::number_unsigned:
+                case value_t::number_float:
+                case value_t::binary:
+                case value_t::discarded:
                 default:
                     return true;
             }
