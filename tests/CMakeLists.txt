@@ -141,6 +141,11 @@ json_test_set_test_options(test-unicode4 TEST_PROPERTIES TIMEOUT 3000)
 # only the #972 regression test needs thirdparty/fifo_map on its include path
 json_test_set_test_options(test-regression1 LINK_LIBRARIES fifo_map_include)
 
+# GCC's false -Warray-bounds error with JSON_DIAGNOSTICS only shows up when optimizing (#5742)
+json_test_set_test_options(test-diagnostics-optimized
+    COMPILE_OPTIONS $<$<CXX_COMPILER_ID:GNU>:-O3 -Werror=array-bounds>
+)
+
 #############################################################################
 # add unit tests
 #############################################################################

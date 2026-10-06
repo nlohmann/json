@@ -12,6 +12,11 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <valarray>
+#if JSON_HAS_RANGES
+    #include <ranges>
+#endif
+
 namespace
 {
 // special test case to check if memory is leaked if constructor throws
@@ -607,3 +612,173 @@ TEST_CASE("bad my_allocator::construct")
         j["test"].push_back("should not leak");
     }
 }
+
+// the no-exceptions CI job skips every CHECK_THROWS_AS, which would leave
+// next_construct_fails set for the next allocation outside a check
+#if !defined(JSON_NOEXCEPTION)
+TEST_CASE("a failed allocation leaves the value unchanged")
+{
+    // create JSON type using the throwing allocator
+    using my_json = nlohmann::basic_json<std::map,
+          std::vector,
+          std::string,
+          bool,
+          std::int64_t,
+          std::uint64_t,
+          double,
+          my_allocator>;
+
+    // Each of these creates a string, array, object, or binary value. The
+    // value must be created before the type is changed: otherwise, a failed
+    // creation left a value of the new type without anything behind it (an
+    // assertion in its destructor, a null pointer everywhere else) or, when
+    // an old value was destroyed first, with a pointer to that destroyed one.
+
+    SECTION("creating a binary value")
+    {
+        const std::vector<std::uint8_t> bytes = {1, 2, 3};
+        my_json _;
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(_ = my_json::binary(bytes), std::bad_alloc&);
+        next_construct_fails = true;
+        CHECK_THROWS_AS(_ = my_json::binary(bytes, 42), std::bad_alloc&);
+        next_construct_fails = true;
+        CHECK_THROWS_AS(_ = my_json::binary(std::vector<std::uint8_t>(bytes)), std::bad_alloc&);
+        next_construct_fails = true;
+        CHECK_THROWS_AS(_ = my_json::binary(std::vector<std::uint8_t>(bytes), 42), std::bad_alloc&);
+        next_construct_fails = false;
+    }
+
+    SECTION("turning a null value into an array or object")
+    {
+        my_json j;
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j[0], std::bad_alloc&);
+        CHECK(j.is_null());
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j["key"], std::bad_alloc&);
+        CHECK(j.is_null());
+
+#ifdef JSON_HAS_CPP_17
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j[std::string_view("key")], std::bad_alloc&);
+        CHECK(j.is_null());
+#endif
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j.push_back(my_json(1)), std::bad_alloc&);
+        CHECK(j.is_null());
+
+        const my_json one = 1;
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j.push_back(one), std::bad_alloc&);
+        CHECK(j.is_null());
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j.push_back(my_json::object_t::value_type("key", 1)), std::bad_alloc&);
+        CHECK(j.is_null());
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j.emplace_back(1), std::bad_alloc&);
+        CHECK(j.is_null());
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j.emplace("key", 1), std::bad_alloc&);
+        CHECK(j.is_null());
+
+        const my_json object = {{"key", 1}};
+        next_construct_fails = true;
+        CHECK_THROWS_AS(j.update(object), std::bad_alloc&);
+        CHECK(j.is_null());
+
+        next_construct_fails = false;
+    }
+
+    // With iterator debugging, VS 2015's containers construct a proxy with the
+    // allocator in constructors that cannot report its failure, so a failing
+    // allocator crashes this section there (SIGSEGV with VS 2015 Debug x86).
+#if !(defined(_MSC_VER) && _MSC_VER < 1910 && defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0)
+    SECTION("converting into an existing value")
+    {
+        // to_json replaces the value it is given; the old one must survive a
+        // failed creation of the new one
+        my_json j = "old";
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, std::string("new")), std::bad_alloc&);
+        CHECK(j == "old");
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, std::vector<int> {1, 2}), std::bad_alloc&);
+        CHECK(j == "old");
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, std::vector<bool> {true, false}), std::bad_alloc&);
+        CHECK(j == "old");
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, std::map<std::string, int> {{"a", 1}}), std::bad_alloc&);
+        CHECK(j == "old");
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, my_json::binary_t({1, 2})), std::bad_alloc&);
+        CHECK(j == "old");
+
+        // the overloads for lvalues of the value types, for the value types
+        // themselves, and for the remaining compatible types
+        const std::string string = "new";
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, string), std::bad_alloc&);
+        CHECK(j == "old");
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, "new"), std::bad_alloc&);
+        CHECK(j == "old");
+
+        // to_json only moves a binary value that it converted from another
+        // container type, which my_json's std::vector<std::uint8_t> is not
+        using binary_constructor = nlohmann::detail::external_constructor<nlohmann::detail::value_t::binary>;
+        next_construct_fails = true;
+        CHECK_THROWS_AS(binary_constructor::construct(j, my_json::binary_t({1, 2})), std::bad_alloc&);
+        CHECK(j == "old");
+
+        my_json::array_t array = {1, 2};
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, array), std::bad_alloc&);
+        CHECK(j == "old");
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, std::move(array)), std::bad_alloc&);
+        CHECK(j == "old");
+
+        my_json::object_t object = {{"a", 1}};
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, object), std::bad_alloc&);
+        CHECK(j == "old");
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, std::move(object)), std::bad_alloc&);
+        CHECK(j == "old");
+
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, std::valarray<int> {1, 2}), std::bad_alloc&);
+        CHECK(j == "old");
+
+#if JSON_HAS_RANGES && !defined(__MINGW32__)
+        const std::vector<int> numbers = {1, 2};
+        next_construct_fails = true;
+        CHECK_THROWS_AS(nlohmann::to_json(j, numbers | std::views::filter([](int /*unused*/)
+        {
+            return true;
+        })), std::bad_alloc&);
+        CHECK(j == "old");
+#endif
+
+        next_construct_fails = false;
+        nlohmann::to_json(j, std::vector<int> {1, 2});
+        CHECK(j == my_json({1, 2}));
+    }
+#endif
+}
+#endif
