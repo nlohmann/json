@@ -209,7 +209,7 @@ jobs:
     strategy:
       matrix:
         # older GCC docker images (4, 5, 6) fail to check out code
-        compiler: ['7', '8', '9', '10', '11', '12', '13', '14', '15', 'latest']
+        compiler: ['7', '8', '9', '10', '11', '12', '13', '14', '15', '16', 'latest']
     container: gcc:${{ matrix.compiler }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
