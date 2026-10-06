@@ -19,6 +19,7 @@ module;
 
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_literals.hpp>
+#include <nlohmann/json_view.hpp>
 
 export module nlohmann.json;
 
@@ -27,9 +28,15 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 
 using NLOHMANN_JSON_NAMESPACE::adl_serializer;
 using NLOHMANN_JSON_NAMESPACE::basic_json;
+using NLOHMANN_JSON_NAMESPACE::basic_json_document;
+using NLOHMANN_JSON_NAMESPACE::basic_json_view;
 using NLOHMANN_JSON_NAMESPACE::json;
+using NLOHMANN_JSON_NAMESPACE::json_document;
 using NLOHMANN_JSON_NAMESPACE::json_pointer;
+using NLOHMANN_JSON_NAMESPACE::json_view;
 using NLOHMANN_JSON_NAMESPACE::ordered_json;
+using NLOHMANN_JSON_NAMESPACE::ordered_json_document;
+using NLOHMANN_JSON_NAMESPACE::ordered_json_view;
 using NLOHMANN_JSON_NAMESPACE::ordered_map;
 using NLOHMANN_JSON_NAMESPACE::to_string;
 
