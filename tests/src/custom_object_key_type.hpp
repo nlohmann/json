@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <map>
 #include <memory>
 #include <string>
@@ -34,8 +35,13 @@ class key
         return m_value;
     }
 
-    // Kept for compatibility with serialization paths that access object keys
-    // through c_str(); CBOR and MessagePack themselves do not require it.
+    // UBJSON and BJData access object keys through size() and c_str()
+    // directly; CBOR and MessagePack themselves do not require them.
+    std::size_t size() const noexcept
+    {
+        return m_value.size();
+    }
+
     const char* c_str() const noexcept
     {
         return m_value.c_str();
