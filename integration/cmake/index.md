@@ -122,7 +122,7 @@ However, the repository <https://github.com/nlohmann/json> download size is quit
 
 ### `JSON_BuildTests`
 
-Build the unit tests when [`BUILD_TESTING`](https://cmake.org/cmake/help/latest/command/enable_testing.html) is enabled. This option is `ON` by default if the library's CMake project is the top project. That is, when integrating the library as described above, the test suite is not built unless explicitly switched on with this option.
+Build the unit tests when [`BUILD_TESTING`](https://cmake.org/cmake/help/latest/command/enable_testing.html) is enabled. This option is `ON` by default if the library's CMake project is the top project and the `tests` directory exists (the release archive `json.tar.xz` does not contain it). That is, when integrating the library as described above, the test suite is not built unless explicitly switched on with this option.
 
 ### `JSON_CI`
 
